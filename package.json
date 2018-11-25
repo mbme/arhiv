@@ -1,0 +1,23 @@
+{
+  "name": "typed-v",
+  "private": true,
+  "version": "0.0.1",
+  "description": "like v, but typed!",
+  "scripts": {
+    "build": "stencil build",
+    "start": "stencil build --dev --watch --serve",
+    "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
+    "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
+  },
+  "dependencies": {
+    "@stencil/core": "~0.16.0-5",
+    "@stencil/router": "~0.3.1",
+    "@stencil/state-tunnel": "~0.0.8"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.1.6"
+  }
+}

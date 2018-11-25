@@ -1,0 +1,17 @@
+{
+  "linterOptions": {
+    "exclude": [
+      "node_modules"
+    ]
+  },
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:latest",
+    "tslint-config-standard",
+    "tslint-eslint-rules"
+  ],
+  "rules": {
+    "no-any": true,
+    "no-null-keyword": true
+  }
+}

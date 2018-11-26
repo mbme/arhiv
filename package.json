@@ -12,10 +12,12 @@
   "dependencies": {
     "@stencil/core": "~0.16.0-5",
     "@stencil/router": "~0.3.1",
-    "@stencil/state-tunnel": "~0.0.8"
+    "@stencil/state-tunnel": "~0.0.8",
+    "date-fns": "^1.29.0"
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^10.12.10",
     "tslint": "^5.11.0",
     "tslint-config-standard": "^8.0.1",
     "typescript": "^3.1.6"

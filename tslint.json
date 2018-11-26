@@ -11,10 +11,11 @@
     "tslint-eslint-rules"
   ],
   "rules": {
-    "no-any": true,
     "no-null-keyword": true,
     "object-literal-sort-keys": false,
     "quotemark": [true, "single", "avoid-escape", "jsx-double"],
+    "one-variable-per-declaration": [true, "ignore-for-loop"],
+    "await-promise": [true, "PromiseLike"],
     "trailing-comma": [true, {
       "multiline": {
         "objects": "always",

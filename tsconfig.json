@@ -6,7 +6,10 @@
     "experimentalDecorators": true,
     "lib": [
       "dom",
-      "es2015"
+      "es2015",
+      "es2016",
+      "es2017",
+      "es2018"
     ],
     "moduleResolution": "node",
     "module": "esnext",
@@ -15,7 +18,8 @@
     "noUnusedParameters": true,
     "jsx": "preserve",
     "noImplicitAny": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "preserveConstEnums": true
   },
   "include": [
     "src"

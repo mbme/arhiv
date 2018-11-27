@@ -98,6 +98,14 @@ export function flatten(arr: any[]) {
 
 export const isSha256 = (str: string) => /^[a-f0-9]{64}$/i.test(str)
 
+export function isSubSequence(str: string, i: number, seq: string) {
+  for (let pos = 0; pos < seq.length; pos += 1) {
+    if (str[i + pos] !== seq[pos]) return false
+  }
+
+  return true
+}
+
 export function formatTs(ts: number) {
   const date = new Date(ts)
 

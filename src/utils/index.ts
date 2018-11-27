@@ -3,8 +3,10 @@ export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1
 export const isObject = (x: any) => getType(x) === 'Object'
 export const isArray = (x: any) => getType(x) === 'Array'
 export const isString = (x: any): x is string => getType(x) === 'String'
-export const isFunction = (x: any) => ['Function', 'AsyncFunction'].includes(getType(x))
-export const isAsyncFunction = (x: any) => getType(x) === 'AsyncFunction'
+// tslint:disable-next-line:ban-types
+export const isFunction = (x: any): x is Function => ['Function', 'AsyncFunction'].includes(getType(x))
+// tslint:disable-next-line:ban-types
+export const isAsyncFunction = (x: any): x is Function => getType(x) === 'AsyncFunction'
 
 /**
  * Check if needle fuzzy matches haystack.
@@ -36,7 +38,7 @@ export function fuzzySearch(needle: string, haystack: string, ignoreCase = true)
 
 export const capitalize = (str: string) => str[0].toUpperCase() + str.substring(1)
 
-export function createArray<T>(size: number, val: (index: number) => T | T): T[] {
+export function createArray<T>(size: number, val: ((index: number) => T) | T): T[] {
   const arr = Array(size)
 
   return isFunction(val) ? arr.fill(0).map((_, i) => val(i)) : arr.fill(val)

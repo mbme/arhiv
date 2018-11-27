@@ -26,6 +26,7 @@
       "esSpecCompliant": true
     }],
     "space-before-function-paren": false,
+    "ordered-imports": false,
     "member-access": false
   }
 }

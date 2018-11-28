@@ -1,34 +1,39 @@
-export default class PrimaryInMemStorage {
-  _records = [];
-  _rev = 0;
-  _attachments = {};
+import { IPrimaryStorage, IRecord } from './types'
+
+export default class PrimaryInMemStorage implements IPrimaryStorage {
+  _records: IRecord[] = []
+  _rev = 0
+  _attachments: { [id: string]: string } = {}
 
   getRecords() {
-    return this._records.slice(0);
+    return this._records.slice(0)
   }
 
   getRev() {
-    return this._rev;
+    return this._rev
   }
 
-  setRev(rev) {
-    this._rev = rev;
+  setRev(rev: number) {
+    this._rev = rev
   }
 
-  getAttachment(id) {
-    return this._attachments[id];
+  getAttachment(id: string) {
+    return this._attachments[id]
   }
 
-  putRecord(record, attachment) {
-    this.removeRecord(record._id);
-    this._records.push(record);
-    this._attachments[record._id] = attachment;
+  putRecord(record: IRecord, attachmentPath?: string) {
+    this.removeRecord(record._id)
+    this._records.push(record)
+    if (attachmentPath) {
+      this._attachments[record._id] = attachmentPath
+    }
   }
 
-  removeRecord(id) {
-    const pos = this._records.findIndex(item => item._id === id);
+  removeRecord(id: string) {
+    const pos = this._records.findIndex((item) => item._id === id)
     if (pos > -1) {
-      this._records.splice(pos, 1);
+      this._records.splice(pos, 1)
+      delete this._attachments[id]
     }
   }
 }

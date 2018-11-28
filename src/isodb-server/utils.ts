@@ -69,16 +69,10 @@ export function readFormData(req: Request) {
   });
 }
 
-const CLOSE_PROCESSOR = Symbol('close-processor');
-
-export function closeProcessor(processor) {
-  return processor[CLOSE_PROCESSOR]();
-}
-
-export function createProcessor(db) {
+export function createProcessor(db: any) {
   const queue = createQueue();
 
-  const proxy = createProxy(db, prop => (...params) => queue.push(async () => db[prop](...params)));
+  const proxy = createProxy(db, prop => (...params: any[]) => queue.push(async () => db[prop](...params)));
   proxy[CLOSE_PROCESSOR] = () => queue.close();
 
   return proxy;

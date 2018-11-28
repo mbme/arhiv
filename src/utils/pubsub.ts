@@ -1,5 +1,5 @@
 export default function createPubSub<T>() {
-  type Handler = (params: T) => void
+  type Handler = (params?: T) => void
 
   const subs = new Map<string, Set<Handler>>()
 
@@ -22,8 +22,8 @@ export default function createPubSub<T>() {
       }
     },
 
-    emit(name: string, params: T) {
-      getEventSubs(name).forEach((handler) => handler(params))
+    emit(name: string, params?: T) {
+      getEventSubs(name).forEach(handler => handler(params))
     },
   }
 }

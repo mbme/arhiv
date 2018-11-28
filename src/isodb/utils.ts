@@ -1,12 +1,10 @@
-import { randomId } from '../randomizer';
+import { randomId } from '../randomizer'
+import { IAttachment, IChangedAttachment } from './types'
 
-const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
-const ID_LENGTH = 15;
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+const ID_LENGTH = 15
 
-export const getRandomId = () => randomId(ID_ALPHABET, ID_LENGTH);
+export const getRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 
-export const findById = (records, id) => records.find(item => item._id === id);
-
-export const RECORD_TYPES = {
-  note: 'note',
-};
+export const isAttachment = (item: any): item is (IAttachment | IChangedAttachment) => item._attachment || false
+export const isDeleted = (item: any): boolean => item._deleted || false

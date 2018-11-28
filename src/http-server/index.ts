@@ -2,6 +2,7 @@ import http from 'http'
 import urlParser from 'url'
 import log from '../logger'
 import { isString } from '../utils'
+import { Stream } from 'stream';
 
 export enum HttpMethod {
   OPTIONS = 'OPTIONS',
@@ -14,7 +15,11 @@ export enum HttpMethod {
 }
 
 export type Request = http.IncomingMessage
-export type Response = http.ServerResponse
+export type Response = {
+  status: number,
+  headers: { [name: string]: string },
+  body?: string | object | Stream
+}
 
 type Next = () => Promise<void>
 interface IContext {
@@ -48,6 +53,15 @@ async function loggerMiddleware({ req, res }: IContext, next: Next) {
     const hrend = process.hrtime(hrstart)
     const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
     log.debug('%s %s %d %s - %dms', req.method!.padEnd(4), req.url, res.statusCode, res.statusMessage || 'OK', ms)
+  }
+}
+
+async function gzipMiddleware({ req, res }: IContext, next: Next) {
+  const acceptEncoding = req.headers['accept-encoding'] as string || ''
+  const isGzipSupported = /\bgzip\b/.test(acceptEncoding);
+
+  if (isGzipSupported) {
+    res.setHeader('Content-Encoding', 'gzip');
   }
 }
 

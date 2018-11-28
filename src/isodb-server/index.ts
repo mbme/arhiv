@@ -4,6 +4,7 @@ import zlib from 'zlib';
 import * as utils from '../utils/node';
 import { rmrfSync } from '../fs/utils';
 import { extend } from '../utils';
+import createQueue from '../utils/queue';
 import { getMimeType } from '../file-prober';
 import Server from '../http-server';
 import {
@@ -11,16 +12,14 @@ import {
   extractToken,
   resolveAsset,
   readFormData,
-  createProcessor,
-  closeProcessor,
 } from './utils';
+import PrimaryDB from '../isodb/primary';
 
 const STATIC_DIR = path.join(__dirname, '../client/static');
 const DIST_DIR = path.join(__dirname, '../../dist');
 
-export default async function startServer(db, port, password = '') {
-  const processor = createProcessor(db);
-
+export default async function startServer(db: PrimaryDB, port: number, password = '') {
+  const queue = createQueue()
   const server = new Server();
 
   server.use(async function bootstrapMiddleware(context, next) {
@@ -56,7 +55,7 @@ export default async function startServer(db, port, password = '') {
       const rev = parseInt(data.rev, 10);
       const records = JSON.parse(data.records);
 
-      const success = await processor.applyChanges(rev, records, assets);
+      const success = await queue.push(async () => db.applyChanges(rev, records, assets));
       res.writeHead(success ? 200 : 409);
       // FIXME send patch in response
     } finally {
@@ -71,7 +70,7 @@ export default async function startServer(db, port, password = '') {
       return;
     }
 
-    const patch = await processor.getPatch(parseInt(rev, 10));
+    const patch = await queue.push(async () => db.getPatch(parseInt(rev, 10)));
     const patchStr = JSON.stringify(patch);
 
     res.setHeader('Content-Type', 'application/json');
@@ -91,7 +90,7 @@ export default async function startServer(db, port, password = '') {
       return;
     }
 
-    const filePath = await processor.getAttachment(fileId);
+    const filePath = await queue.push(async () => db.getAttachment(fileId));
 
     if (filePath) {
       res.writeHead(200, {
@@ -108,8 +107,8 @@ export default async function startServer(db, port, password = '') {
   server.get(() => true, async ({ url, res, isGzipSupported }) => {
     const fileName = url.path.substring(1); // skip leading /
     const filePath = await resolveAsset(STATIC_DIR, fileName)
-          || await resolveAsset(DIST_DIR, fileName)
-          || await resolveAsset(STATIC_DIR, 'index.html'); // html5 history fallback
+      || await resolveAsset(DIST_DIR, fileName)
+      || await resolveAsset(STATIC_DIR, 'index.html'); // html5 history fallback
 
     if (filePath) {
       res.setHeader('Content-Type', await getMimeType(filePath));
@@ -131,7 +130,7 @@ export default async function startServer(db, port, password = '') {
 
   return extend(server, {
     stop() {
-      return Promise.all([ server.stop(), closeProcessor(processor) ]);
+      return Promise.all([server.stop(), queue.close()]);
     },
   });
 }

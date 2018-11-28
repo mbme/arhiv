@@ -3,12 +3,23 @@ import urlParser from 'url'
 import log from '../logger'
 import { isString } from '../utils'
 
-export enum HttpMethod { OPTIONS, HEAD, GET, POST, PUT, DELETE, PATCH }
+export enum HttpMethod {
+  OPTIONS = 'OPTIONS',
+  HEAD = 'HEAD',
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  PATCH = 'PATCH',
+}
+
+export type Request = http.IncomingMessage
+export type Response = http.ServerResponse
 
 type Next = () => Promise<void>
 interface IContext {
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
+  req: Request,
+  res: Response,
   url: urlParser.UrlWithParsedQuery,
 }
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
@@ -86,7 +97,7 @@ export default class Server {
       }
     })
 
-    this._server = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
+    this._server = http.createServer(async (req: Request, res: Response) => {
       try {
         const url = urlParser.parse(req.url!, true)
         await runMiddlewares(this._middlewares, { ...this._initialContext, req, res, url }, 0)

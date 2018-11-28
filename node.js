@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+require('ts-node').register({
+  compilerOptions: {
+    module: 'commonjs',
+  },
+});
+
+const path = require('path');
+
+global.__DEVELOPMENT__ = process.env.NODE_ENV !== 'production';
+global.__SERVER__ = true;
+
+const { default: run } = require(path.join(process.cwd(), process.argv[2]));
+
+Promise.resolve(run(...process.argv.slice(3))).catch((e) => {
+  console.error('process failed', e);
+  process.exit(2);
+});

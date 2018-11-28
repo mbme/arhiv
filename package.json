@@ -7,19 +7,24 @@
     "build": "stencil build",
     "start": "stencil build --dev --watch --serve",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
+    "test": "LOG=ERROR ./node.js src/tester/bin",
+    "test-update": "yarn test --update-snapshots",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },
   "dependencies": {
     "@stencil/core": "~0.16.0-5",
     "@stencil/router": "~0.3.1",
     "@stencil/state-tunnel": "~0.0.8",
-    "date-fns": "^1.29.0"
+    "@types/node": "^10.12.10",
+    "busboy": "^0.2.14",
+    "date-fns": "^1.29.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.1.6"
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^10.12.10",
+    "@types/busboy": "^0.2.3",
     "tslint": "^5.11.0",
-    "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.1.6"
+    "tslint-config-standard": "^8.0.1"
   }
 }

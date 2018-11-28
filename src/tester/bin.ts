@@ -1,4 +1,3 @@
-/* eslint-disable import/no-dynamic-require, global-require */
 import path from 'path'
 import { walkSync } from '../fs/utils'
 import log from '../logger'
@@ -10,7 +9,7 @@ export default async function run(...args: string[]) {
 
   const basePath = path.join(__dirname, '..')
   const testFiles = walkSync(basePath)
-    .filter((relPath) => relPath.endsWith('.test.js') && relPath.includes(filter))
+    .filter((relPath) => relPath.endsWith('.test.ts') && relPath.includes(filter))
 
   const testPlans = []
   for (const testFile of testFiles) {

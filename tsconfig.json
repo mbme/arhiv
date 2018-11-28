@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "declaration": false,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "lib": [
       "dom",
@@ -14,11 +12,13 @@
     "moduleResolution": "node",
     "module": "esnext",
     "target": "es2017",
+    "jsx": "preserve",
+    "keyofStringsOnly": true,
+    "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "jsx": "preserve",
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": true,
+    "removeComments": true,
     "preserveConstEnums": true
   },
   "include": [

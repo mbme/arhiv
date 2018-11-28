@@ -5,12 +5,12 @@ import { createImageLink } from '../v-parser';
 import { randomInt, shuffle, randomArrValue } from './index';
 import { sha256File } from '../utils/node';
 import { readText, listFiles } from '../fs/utils';
-import createTextGenerator from './text-generator';
+import createTextGenerator, { ITextGenerator } from './text-generator';
 
 /**
  * @param {[hash: filePath]} imageUrls images to use
  */
-async function getFakeNote(generator, images) {
+async function getFakeNote(generator: ITextGenerator, images) {
   const name = generator.sentence(1, 8);
 
   const refs = new Set();
@@ -45,7 +45,8 @@ async function getFakeNote(generator, images) {
   };
 }
 
-async function listImages(basePath) {
+interface IImages { }
+async function listImages(basePath: string) {
   const files = await listFiles(basePath);
   const images = files.filter(name => name.match(/\.(jpg|jpeg)$/i));
 

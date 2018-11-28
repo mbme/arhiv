@@ -5,8 +5,9 @@ import * as utils from '../utils/node';
 import { listFiles, createTempDir } from '../fs/utils';
 import createQueue from '../utils/queue';
 import { createProxy } from '../utils';
+import { Request } from '../http-server';
 
-export async function resolveAsset(dir, name) {
+export async function resolveAsset(dir: string, name: string) {
   if (!fs.existsSync(dir)) return null;
   if (!await listFiles(dir).then(files => files.includes(name))) return null;
 
@@ -14,8 +15,8 @@ export async function resolveAsset(dir, name) {
 }
 
 // extract auth token from cookies
-export function extractToken(cookies) {
-  const [ tokenCookie ] = cookies.split(';').filter(c => c.startsWith('token='));
+export function extractToken(cookies: string) {
+  const [tokenCookie] = cookies.split(';').filter(c => c.startsWith('token='));
 
   if (!tokenCookie) return '';
 
@@ -23,7 +24,7 @@ export function extractToken(cookies) {
 }
 
 // token: AES("valid <generation timestamp>", SHA256(password))
-export function isValidAuth(token, password) {
+export function isValidAuth(token: string, password: string) {
   try {
     return /^valid \d+$/.test(utils.aesDecrypt(token || '', utils.sha256(password)));
   } catch (ignored) {
@@ -32,10 +33,11 @@ export function isValidAuth(token, password) {
 }
 
 // Extract action & assets from multipart/form-data POST request
-export function readFormData(req) {
-  const assets = {};
-  const data = {};
-  let tmpDir;
+export function readFormData(req: Request) {
+  const assets: { [key: string]: string } = {};
+  const fields: { [key: string]: string } = {};
+
+  let tmpDir: string | undefined;
 
   const busboy = new Busboy({ headers: req.headers });
 
@@ -54,15 +56,15 @@ export function readFormData(req) {
   });
 
   busboy.on('field', (fieldName, val) => {
-    if (data[fieldName]) {
+    if (fields[fieldName]) {
       throw new Error(`request contains duplicate field "${fieldName}"`);
     }
 
-    data[fieldName] = val;
+    fields[fieldName] = val;
   });
 
   return new Promise((resolve) => {
-    busboy.on('finish', () => resolve({ data, assets, tmpDir }));
+    busboy.on('finish', () => resolve({ fields, assets, tmpDir }));
     req.pipe(busboy);
   });
 }

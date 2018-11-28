@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import path from 'path';
 import fs from 'fs';
 import zlib from 'zlib';

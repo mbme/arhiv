@@ -14,18 +14,24 @@ export enum HttpMethod {
   PATCH = 'PATCH',
 }
 
-export type Request = http.IncomingMessage
+export type Headers = { [name: string]: string }
+
+export type Request = {
+  url: urlParser.UrlWithParsedQuery,
+  method: HttpMethod,
+  headers: Headers,
+}
+
 export type Response = {
-  status: number,
-  headers: { [name: string]: string },
-  body?: string | object | Stream
+  statusCode: number,
+  headers: Headers,
+  body?: string | object | Stream,
 }
 
 type Next = () => Promise<void>
 interface IContext {
   req: Request,
   res: Response,
-  url: urlParser.UrlWithParsedQuery,
 }
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
 type RequestHandler = (context: IContext) => Promise<void> | void
@@ -52,16 +58,7 @@ async function loggerMiddleware({ req, res }: IContext, next: Next) {
   } finally {
     const hrend = process.hrtime(hrstart)
     const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
-    log.debug('%s %s %d %s - %dms', req.method!.padEnd(4), req.url, res.statusCode, res.statusMessage || 'OK', ms)
-  }
-}
-
-async function gzipMiddleware({ req, res }: IContext, next: Next) {
-  const acceptEncoding = req.headers['accept-encoding'] as string || ''
-  const isGzipSupported = /\bgzip\b/.test(acceptEncoding);
-
-  if (isGzipSupported) {
-    res.setHeader('Content-Encoding', 'gzip');
+    log.debug('%s %s %d %s - %dms', req.method.padEnd(4), req.url, res.statusCode, res.statusMessage || 'OK', ms)
   }
 }
 
@@ -70,11 +67,6 @@ export default class Server {
 
   _middlewares: Middleware[] = [loggerMiddleware]
   _routes: IRoute[] = []
-  _initialContext = {}
-
-  constructor(initialContext: object = {}) {
-    this._initialContext = initialContext
-  }
 
   use(cb: Middleware) {
     this._middlewares.push(cb)
@@ -82,10 +74,10 @@ export default class Server {
 
   addRoute(method: HttpMethod, pathTest: PathTest, cb: RequestHandler) {
     this._routes.push({
-      test({ req, url }: IContext) {
+      test({ req }: IContext) {
         if (req.method !== method.toString()) return false
-        if (isString(pathTest)) return url.pathname === pathTest
-        return pathTest(url.pathname!)
+        if (isString(pathTest)) return req.url.pathname === pathTest
+        return pathTest(req.url.pathname!)
       },
       cb,
     })
@@ -107,20 +99,36 @@ export default class Server {
       if (route) {
         await Promise.resolve(route.cb(context))
       } else {
-        context.res.writeHead(404)
+        context.res.statusCode = 404
       }
     })
 
-    this._server = http.createServer(async (req: Request, res: Response) => {
+    this._server = http.createServer(async (httpReq: http.IncomingMessage, httpRes: http.ServerResponse) => {
+      const isGzipSupported = /\bgzip\b/.test((httpReq.headers as Headers)['accept-encoding']);
+      const req: Request = {
+        url: urlParser.parse(httpReq.url!, true),
+        method: HttpMethod[httpReq.method!],
+        headers: httpReq.headers as Headers,
+      };
+      const res: Response = {
+        statusCode: 200,
+        headers: {},
+        body: undefined,
+      };
       try {
-        const url = urlParser.parse(req.url!, true)
-        await runMiddlewares(this._middlewares, { ...this._initialContext, req, res, url }, 0)
-        res.end()
+        await runMiddlewares(this._middlewares, { req, res }, 0)
       } catch (e) {
         log.warn('failed to handle request', e)
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: e.toString() }))
+        res.statusCode = 400
+        res.body = { error: e.toString() };
       }
+
+      if (isGzipSupported) {
+        res.headers['Content-Encoding'] = 'gzip'
+      }
+
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: e.toString() }))
     })
 
     return new Promise((resolve) => this._server!.listen(port, resolve))

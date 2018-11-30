@@ -1,8 +1,10 @@
 import http from 'http'
 import urlParser from 'url'
+import zlib from 'zlib'
 import log from '../logger'
-import { isString } from '../utils'
-import { Stream } from 'stream';
+import { isString, isObject } from '../utils'
+import { gzip, pipePromise } from '../utils/node'
+import { Stream } from 'stream'
 
 export enum HttpMethod {
   OPTIONS = 'OPTIONS',
@@ -13,25 +15,45 @@ export enum HttpMethod {
   DELETE = 'DELETE',
   PATCH = 'PATCH',
 }
+const string2HttpMethod = (s: string) => {
+  switch (s.toUpperCase()) {
+    case HttpMethod.OPTIONS.toString():
+      return HttpMethod.OPTIONS
+    case HttpMethod.HEAD.toString():
+      return HttpMethod.HEAD
+    case HttpMethod.GET.toString():
+      return HttpMethod.GET
+    case HttpMethod.POST.toString():
+      return HttpMethod.POST
+    case HttpMethod.PUT.toString():
+      return HttpMethod.PUT
+    case HttpMethod.DELETE.toString():
+      return HttpMethod.DELETE
+    case HttpMethod.PATCH.toString():
+      return HttpMethod.PATCH
+  }
 
-export type Headers = { [name: string]: string }
-
-export type Request = {
-  url: urlParser.UrlWithParsedQuery,
-  method: HttpMethod,
-  headers: Headers,
+  return undefined
 }
 
-export type Response = {
+export interface IHeaders { [name: string]: string }
+
+export interface IRequest {
+  url: urlParser.UrlWithParsedQuery,
+  method: HttpMethod,
+  headers: IHeaders,
+}
+
+export interface IResponse {
   statusCode: number,
-  headers: Headers,
+  headers: IHeaders,
   body?: string | object | Stream,
 }
 
 type Next = () => Promise<void>
 interface IContext {
-  req: Request,
-  res: Response,
+  req: IRequest,
+  res: IResponse,
 }
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
 type RequestHandler = (context: IContext) => Promise<void> | void
@@ -51,21 +73,10 @@ async function runMiddlewares(middlewares: Middleware[], context: IContext, pos:
   await Promise.resolve(middleware(context, next))
 }
 
-async function loggerMiddleware({ req, res }: IContext, next: Next) {
-  const hrstart = process.hrtime()
-  try {
-    await next()
-  } finally {
-    const hrend = process.hrtime(hrstart)
-    const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
-    log.debug('%s %s %d %s - %dms', req.method.padEnd(4), req.url, res.statusCode, res.statusMessage || 'OK', ms)
-  }
-}
-
 export default class Server {
   _server: http.Server | undefined
 
-  _middlewares: Middleware[] = [loggerMiddleware]
+  _middlewares: Middleware[] = []
   _routes: IRoute[] = []
 
   use(cb: Middleware) {
@@ -104,31 +115,61 @@ export default class Server {
     })
 
     this._server = http.createServer(async (httpReq: http.IncomingMessage, httpRes: http.ServerResponse) => {
-      const isGzipSupported = /\bgzip\b/.test((httpReq.headers as Headers)['accept-encoding']);
-      const req: Request = {
+      const hrstart = process.hrtime()
+
+      const isGzipSupported = /\bgzip\b/.test((httpReq.headers as IHeaders)['accept-encoding'])
+
+      const req: IRequest = {
         url: urlParser.parse(httpReq.url!, true),
-        method: HttpMethod[httpReq.method!],
-        headers: httpReq.headers as Headers,
-      };
-      const res: Response = {
+        method: string2HttpMethod(httpReq.method!)!,
+        headers: httpReq.headers as IHeaders,
+      }
+
+      const res: IResponse = {
         statusCode: 200,
         headers: {},
         body: undefined,
-      };
+      }
+
       try {
         await runMiddlewares(this._middlewares, { req, res }, 0)
       } catch (e) {
         log.warn('failed to handle request', e)
         res.statusCode = 400
-        res.body = { error: e.toString() };
+        res.body = { error: e.toString() }
+      }
+
+      httpRes.writeHead(res.statusCode)
+
+      for (const [header, value] of Object.values(res.headers)) {
+        httpRes.setHeader(header, value)
       }
 
       if (isGzipSupported) {
-        res.headers['Content-Encoding'] = 'gzip'
+        httpRes.setHeader('Content-Encoding', 'gzip')
       }
 
-      res.writeHead(400, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ error: e.toString() }))
+      if (res.body instanceof Stream.Readable) {
+        const stream = isGzipSupported ? res.body.pipe(zlib.createGzip()) : res.body
+        await pipePromise(stream, httpRes)
+      } else if (isObject(res.body)) {
+        httpRes.setHeader('Content-Type', 'application/json')
+        const str = JSON.stringify(res.body)
+        httpRes.end(isGzipSupported ? await gzip(str) : str)
+      } else {
+        httpRes.end(res.body)
+      }
+
+      const hrend = process.hrtime(hrstart)
+      const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
+      log.debug(
+        '%s %s %d %s - %dms',
+        httpReq.method!.padEnd(4),
+        httpReq.url,
+        httpRes.statusCode,
+        httpRes.statusMessage || 'OK',
+        ms
+      )
     })
 
     return new Promise((resolve) => this._server!.listen(port, resolve))

@@ -12,14 +12,14 @@
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },
   "dependencies": {
-    "@stencil/core": "~0.16.0-5",
+    "@stencil/core": "~0.16.0",
     "@stencil/router": "~0.3.1",
     "@stencil/state-tunnel": "~0.0.8",
-    "@types/node": "^10.12.10",
+    "@types/node": "^10.12.11",
     "busboy": "^0.2.14",
     "date-fns": "^1.29.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.1.6"
+    "typescript": "^3.2.1"
   },
   "license": "MIT",
   "devDependencies": {

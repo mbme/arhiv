@@ -15,7 +15,7 @@ export enum HttpMethod {
   DELETE = 'DELETE',
   PATCH = 'PATCH',
 }
-const string2HttpMethod = (s: string) => {
+const parseHttpMethod = (s: string) => {
   switch (s.toUpperCase()) {
     case HttpMethod.OPTIONS.toString():
       return HttpMethod.OPTIONS
@@ -50,10 +50,12 @@ export interface IResponse {
   body?: string | object | Stream,
 }
 
-type Next = () => Promise<void>
-interface IContext {
+export type Next = () => Promise<void>
+export interface IContext {
   req: IRequest,
   res: IResponse,
+  httpReq: http.IncomingMessage,
+  httpRes: http.ServerResponse,
 }
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
 type RequestHandler = (context: IContext) => Promise<void> | void
@@ -62,15 +64,6 @@ type PathTest = ((path: string) => boolean) | string
 interface IRoute {
   test: (context: IContext) => boolean
   cb: RequestHandler
-}
-
-async function runMiddlewares(middlewares: Middleware[], context: IContext, pos: number) {
-  const middleware = middlewares[pos]
-
-  if (!middleware) return // no more middlewares, stop evaluation
-
-  const next = () => runMiddlewares(middlewares, context, pos + 1)
-  await Promise.resolve(middleware(context, next))
 }
 
 export default class Server {
@@ -102,6 +95,15 @@ export default class Server {
     this.addRoute(HttpMethod.POST, pathTest, cb)
   }
 
+  async _runMiddlewares(context: IContext, pos: number) {
+    const middleware = this._middlewares[pos]
+
+    if (!middleware) return // no more middlewares, stop evaluation
+
+    const next = () => this._runMiddlewares(context, pos + 1)
+    await Promise.resolve(middleware(context, next))
+  }
+
   start(port: number) {
     // router middleware
     this._middlewares.push(async (context) => {
@@ -121,7 +123,7 @@ export default class Server {
 
       const req: IRequest = {
         url: urlParser.parse(httpReq.url!, true),
-        method: string2HttpMethod(httpReq.method!)!,
+        method: parseHttpMethod(httpReq.method!)!,
         headers: httpReq.headers as IHeaders,
       }
 
@@ -132,7 +134,7 @@ export default class Server {
       }
 
       try {
-        await runMiddlewares(this._middlewares, { req, res }, 0)
+        await this._runMiddlewares({ req, res, httpReq, httpRes }, 0)
       } catch (e) {
         log.warn('failed to handle request', e)
         res.statusCode = 400

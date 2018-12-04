@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { rmrfSync, createTempDir } from '../fs/utils';
-import { extend, lazy } from '../utils';
+import { lazy } from '../utils';
 import createQueue from '../utils/queue';
 import { getMimeType } from '../file-prober';
 import Server from '../http-server';
@@ -16,7 +16,7 @@ import PrimaryDB from '../isodb/primary';
 const STATIC_DIR = path.join(__dirname, '../client/static');
 const DIST_DIR = path.join(__dirname, '../../dist');
 
-export default async function startServer(db: PrimaryDB, port: number, password = '') {
+export default function createServer(db: PrimaryDB, password = '') {
   const queue = createQueue()
   const server = new Server();
 
@@ -104,11 +104,13 @@ export default async function startServer(db: PrimaryDB, port: number, password 
     }
   });
 
-  await server.start(port);
+  return {
+    start(port: number) {
+      return server.start(port)
+    },
 
-  return extend(server, {
     stop() {
       return Promise.all([server.stop(), queue.close()]);
     },
-  });
+  }
 }

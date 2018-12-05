@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 require('ts-node').register({
+  files: true,
   compilerOptions: {
     module: 'commonjs',
   },

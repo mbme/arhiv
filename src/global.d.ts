@@ -1,3 +1,4 @@
+/* tslint:disable */
 interface Window {
   __SERVER__: boolean
 }

@@ -13,7 +13,7 @@ export function sha256File(filePath: string): Promise<string> {
     (resolve, reject) => fs.createReadStream(filePath)
       .on('error', reject)
       .pipe(crypto.createHash('sha256').setEncoding('hex'))
-      .on('finish', function onFinish() {
+      .on('finish', function onFinish(this: fs.ReadStream) {
         resolve(this.read())
       })
   )
@@ -42,6 +42,10 @@ export function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
     stream.on('end', () => resolve(Buffer.concat(body)))
     stream.on('error', reject)
   })
+}
+export async function readStreamAsString(stream: NodeJS.ReadableStream): Promise<string> {
+  const data = await readStream(stream)
+  return data.toString('utf8')
 }
 
 export const gzip = promisify(zlib.gzip)

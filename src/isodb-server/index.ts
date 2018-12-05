@@ -1,83 +1,82 @@
-import path from 'path';
-import fs from 'fs';
-import { rmrfSync, createTempDir } from '../fs/utils';
-import { lazy } from '../utils';
-import createQueue from '../utils/queue';
-import { getMimeType } from '../file-prober';
-import Server from '../http-server';
+import path from 'path'
+import fs from 'fs'
+import createQueue from '../utils/queue'
+import { getMimeType } from '../file-prober'
+import { Server, MultipartBody } from '../http-server'
 import {
   isValidAuth,
   extractToken,
   resolveAsset,
-  readFormData,
-} from './utils';
-import PrimaryDB from '../isodb/primary';
+} from './utils'
+import PrimaryDB from '../isodb/primary'
 
-const STATIC_DIR = path.join(__dirname, '../client/static');
-const DIST_DIR = path.join(__dirname, '../../dist');
+const STATIC_DIR = path.join(__dirname, '../client/static')
+const DIST_DIR = path.join(__dirname, '../../dist')
 
 export default function createServer(db: PrimaryDB, password = '') {
   const queue = createQueue()
-  const server = new Server();
+  const server = new Server()
 
   server.use(async function bootstrapMiddleware(context, next) {
-    const { req, res } = context;
+    const { req, res } = context
 
     res.headers['Referrer-Policy'] = 'no-referrer'
 
-    const isAuthorized = isValidAuth(extractToken(req.headers.cookie || ''), password);
+    const isAuthorized = isValidAuth(extractToken(req.headers.cookie || ''), password)
     if (req.url.pathname!.startsWith('/api') && !isAuthorized) {
       res.statusCode = 403
-      return;
+      return
     }
 
-    await next();
-  });
+    await next()
+  })
 
   server.post('/api/changes', async ({ res, req }) => {
-    const isMultipartRequest = (req.headers['content-type'] || '').startsWith('multipart/form-data');
-    if (!isMultipartRequest) {
+    const body = req.body!
+    if (!(body instanceof MultipartBody)) {
       res.statusCode = 415
-      return;
+      return
     }
 
-    const tmpDir = lazy(createTempDir)
-    const {
-      data,
-      assets,
-    } = await readFormData(tmpDir, req);
+    const revField = body.getField('rev')
+    if (!revField) throw new Error(`rev field is mandatory`)
 
-    try {
-      const rev = parseInt(data.rev, 10);
-      const records = JSON.parse(data.records);
+    const recordsField = body.getField('records')
+    if (!recordsField) throw new Error(`records field is mandatory`)
 
-      const success = await queue.push(async () => db.applyChanges(rev, records, assets));
-      res.statusCode = success ? 200 : 409
-      // FIXME send patch in response
-    } finally {
-      if (tmpDir.initialized) rmrfSync(await tmpDir.value);
+    const rev = parseInt(revField.value, 10)
+    const records = JSON.parse(recordsField.value)
+
+    // TODO validate hashes
+    const assets: { [hash: string]: string } = {}
+    for (const file of body.files) {
+      assets[file.field] = file.file
     }
-  });
+
+    const success = await queue.push(async () => db.applyChanges(rev, records, assets))
+    res.statusCode = success ? 200 : 409
+    // FIXME send patch in response
+  })
 
   server.get('/api/patch', async ({ req, res }) => {
-    const rev = req.url.query.rev as string;
+    const rev = req.url.query.rev as string
     if (!rev) {
       res.statusCode = 400
-      return;
+      return
     }
 
-    const patch = await queue.push(async () => db.getPatch(parseInt(rev, 10)));
+    const patch = await queue.push(async () => db.getPatch(parseInt(rev, 10)))
     res.body = patch
-  });
+  })
 
   server.get('/api', async ({ req, res }) => {
-    const fileId = req.url.query.fileId as string;
+    const fileId = req.url.query.fileId as string
     if (!fileId) {
       res.statusCode = 400
-      return;
+      return
     }
 
-    const filePath = await queue.push(async () => db.getAttachment(fileId));
+    const filePath = await queue.push(async () => db.getAttachment(fileId))
 
     if (filePath) {
       res.headers['Content-Disposition'] = `inline; filename=${fileId}`
@@ -87,14 +86,14 @@ export default function createServer(db: PrimaryDB, password = '') {
     } else {
       res.statusCode = 404
     }
-  });
+  })
 
   // Handle assets + html5 history fallback
   server.get(() => true, async ({ req, res }) => {
-    const fileName = req.url.path!.substring(1); // skip leading /
+    const fileName = req.url.path!.substring(1) // skip leading /
     const filePath = await resolveAsset(STATIC_DIR, fileName)
       || await resolveAsset(DIST_DIR, fileName)
-      || await resolveAsset(STATIC_DIR, 'index.html'); // html5 history fallback
+      || await resolveAsset(STATIC_DIR, 'index.html') // html5 history fallback
 
     if (filePath) {
       res.headers['Content-Type'] = await getMimeType(filePath)
@@ -102,7 +101,7 @@ export default function createServer(db: PrimaryDB, password = '') {
     } else {
       res.statusCode = 404
     }
-  });
+  })
 
   return {
     start(port: number) {
@@ -110,7 +109,7 @@ export default function createServer(db: PrimaryDB, password = '') {
     },
 
     stop() {
-      return Promise.all([server.stop(), queue.close()]);
+      return Promise.all([server.stop(), queue.close()])
     },
   }
 }

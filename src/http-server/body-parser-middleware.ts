@@ -1,33 +1,39 @@
+/// <reference types="node" />
 import path from 'path'
 import fs from 'fs'
 import http from 'http'
 import Busboy from 'busboy'
 import { rmrfSync, createTempDir } from '../fs/utils'
 import { ILazy, lazy } from '../utils'
-import { IContext, Next, HttpMethod } from './index'
 import { readStreamAsString } from '../utils/node'
-import { IMultipartField, IMultipartFile, MultipartBody, JSONBody, StringBody } from './types'
+import {
+  MultipartBody,
+  JSONBody,
+  StringBody,
+  IContext,
+  Next,
+  HttpMethod
+} from './types'
 
 // Extract action & assets from multipart/form-data POST request
 function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage): Promise<MultipartBody> {
-  const fields: IMultipartField[] = []
-  const files: IMultipartFile[] = []
+  const body = new MultipartBody([], [])
   let fileCounter = 0
 
   const busboy = new Busboy({ headers: req.headers })
 
   busboy.on('field', (field, value) => {
-    fields.push({ field, value })
+    body.fields.push({ field, value })
   })
 
   busboy.on('file', async (field, fileStream) => {
     const file = path.join(await tmpDir.value, (fileCounter += 1).toString())
     fileStream.pipe(fs.createWriteStream(file))
-    files.push({ field, file })
+    body.files.push({ field, file })
   })
 
   return new Promise((resolve) => {
-    busboy.on('finish', () => resolve(new MultipartBody(fields, files)))
+    busboy.on('finish', () => resolve(body))
     req.pipe(busboy)
   })
 }

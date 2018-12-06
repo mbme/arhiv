@@ -26,11 +26,17 @@ export default function createQueue() {
   }
 
   return {
-    push<T>(action: () => Promise<T>): Promise<T> {
+    push<T>(action: () => T): Promise<T> {
       return new Promise((resolve, reject) => {
         if (_onClose) throw new Error('queue has been closed')
 
-        _queue.push(() => action().then(resolve, reject))
+        _queue.push(async () => {
+          try {
+            resolve(action())
+          } catch (e) {
+            reject(e)
+          }
+        })
         scheduleQueueProcessing()
       })
     },

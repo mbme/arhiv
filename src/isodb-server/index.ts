@@ -53,9 +53,9 @@ export default function createServer(db: PrimaryDB, password = '') {
       assets[file.field] = file.file
     }
 
-    const success = await queue.push(async () => db.applyChanges(rev, records, assets))
+    const success = await queue.push(() => db.applyChanges(rev, records, assets))
     res.statusCode = success ? 200 : 409
-    res.body = await queue.push(async () => db.getPatch(rev))
+    res.body = await queue.push(() => db.getPatch(rev))
   })
 
   server.get('/api/patch', async ({ req, res }) => {
@@ -65,7 +65,7 @@ export default function createServer(db: PrimaryDB, password = '') {
       return
     }
 
-    res.body = await queue.push(async () => db.getPatch(parseInt(rev, 10)))
+    res.body = await queue.push(() => db.getPatch(parseInt(rev, 10)))
   })
 
   server.get('/api', async ({ req, res }) => {
@@ -75,7 +75,7 @@ export default function createServer(db: PrimaryDB, password = '') {
       return
     }
 
-    const filePath = await queue.push(async () => db.getAttachment(fileId))
+    const filePath = await queue.push(() => db.getAttachment(fileId))
 
     if (filePath) {
       res.headers['Content-Disposition'] = `inline; filename=${fileId}`

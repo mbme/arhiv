@@ -9,7 +9,7 @@ import { MultipartBody, JSONBody, StringBody, IContext, Next, HttpMethod } from 
 
 // Extract action & assets from multipart/form-data POST request
 function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage): Promise<MultipartBody> {
-  const body = new MultipartBody([], [])
+  const body = new MultipartBody()
   let fileCounter = 0
 
   const busboy = new Busboy({ headers: req.headers })

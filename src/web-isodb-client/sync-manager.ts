@@ -2,13 +2,12 @@ import {
   fetchPatch,
   pushChanges,
 } from './api';
+import LockManager from './lock-manager';
+import ReplicaDB from '../isodb/replica';
 
 // TODO logs
 export default class SyncManager {
-  constructor(replica, lockManager) {
-    this._replica = replica;
-    this._lockManager = lockManager;
-  }
+  constructor(public _replica: ReplicaDB, public _lockManager: LockManager) { }
 
   _merge = async (baseRecord, newBaseRecord, localRecord) => {
     // FIXME implement merge
@@ -86,5 +85,5 @@ export default class SyncManager {
     // FIXME schedule sync once per minute
     this._sync();
   }
-  stop() {}
+  stop() { }
 }

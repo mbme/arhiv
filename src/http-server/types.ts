@@ -65,7 +65,7 @@ interface IMultipartFile {
 }
 
 export class MultipartBody {
-  constructor(public fields: IMultipartField[], public files: IMultipartFile[]) { }
+  constructor(public fields: IMultipartField[] = [], public files: IMultipartFile[] = []) { }
 
   getField(field: string) {
     return this.fields.find(item => item.field === field)

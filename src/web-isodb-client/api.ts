@@ -1,6 +1,4 @@
-/* eslint-env browser */
-
-export async function fetchPatch(rev) {
+export async function fetchPatch(rev: number) {
   const response = await fetch(`/api/patch?rev=${rev}`);
 
   if (!response.ok) {
@@ -13,11 +11,11 @@ export async function fetchPatch(rev) {
 /**
  * @param {Object<string, blob>} attachments
  */
-export async function pushChanges(rev, records, attachments) {
+export async function pushChanges(rev: number, records, attachments) {
   const data = new FormData();
-  data.append('rev', rev);
+  data.append('rev', rev.toString());
   data.append('records', JSON.stringify(records));
-  for (const [ hash, blob ] of Object.entries(attachments)) {
+  for (const [hash, blob] of Object.entries(attachments)) {
     data.append(hash, blob);
   }
 

@@ -3,11 +3,11 @@ export default class LockManager {
   async lockDB(timeoutSec = 30) {
     return () => this._unlockDB();
   }
-  _unlockDB() {}
+  _unlockDB() { }
 
   // lock request would be rejected in timeoutSec seconds
-  async lockRecord(id, timeoutSec = 30) {
+  async lockRecord(id: string, timeoutSec = 30) {
     return () => this._unlockRecord(id);
   }
-  unlockRecord(id) {}
+  _unlockRecord(id: string) { }
 }

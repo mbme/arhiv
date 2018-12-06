@@ -55,11 +55,11 @@ export interface IContext {
   httpRes: http.ServerResponse,
 }
 
-export interface IMultipartField {
+interface IMultipartField {
   field: string
   value: string
 }
-export interface IMultipartFile {
+interface IMultipartFile {
   field: string
   file: string
 }

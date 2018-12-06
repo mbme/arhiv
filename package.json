@@ -6,6 +6,7 @@
   "scripts": {
     "build": "stencil build",
     "start": "stencil build --dev --watch --serve",
+    "dev": "NODE_NO_WARNINGS=1 LOG=DEBUG ./node.js src/isodb-server/bin 8080 pass /tmp/db",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./node.js src/tester/bin",
     "test-update": "yarn test --update-snapshots",

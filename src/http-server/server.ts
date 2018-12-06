@@ -92,9 +92,9 @@ export default class Server {
         res.body = { error: e.toString() }
       }
 
-      httpRes.writeHead(res.statusCode)
+      httpRes.statusCode = res.statusCode
 
-      for (const [header, value] of Object.values(res.headers)) {
+      for (const [header, value] of Object.entries(res.headers)) {
         httpRes.setHeader(header, value)
       }
 

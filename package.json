@@ -4,7 +4,6 @@
   "version": "0.0.1",
   "description": "like v, but typed!",
   "scripts": {
-    "b": "tsc",
     "build": "stencil build",
     "start": "stencil build --dev --watch --serve",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",

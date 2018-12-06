@@ -55,7 +55,7 @@ export default function createServer(db: PrimaryDB, password = '') {
 
     const success = await queue.push(async () => db.applyChanges(rev, records, assets))
     res.statusCode = success ? 200 : 409
-    // FIXME send patch in response
+    res.body = await queue.push(async () => db.getPatch(rev))
   })
 
   server.get('/api/patch', async ({ req, res }) => {
@@ -65,8 +65,7 @@ export default function createServer(db: PrimaryDB, password = '') {
       return
     }
 
-    const patch = await queue.push(async () => db.getPatch(parseInt(rev, 10)))
-    res.body = patch
+    res.body = await queue.push(async () => db.getPatch(parseInt(rev, 10)))
   })
 
   server.get('/api', async ({ req, res }) => {

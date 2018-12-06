@@ -3,13 +3,17 @@ import { Config } from '@stencil/core';
 // https://stenciljs.com/docs/config
 
 export const config: Config = {
-  globalStyle: 'src/global/app.css',
-  globalScript: 'src/global/app.ts',
+  globalStyle: 'src/isodb-web-client/global/app.css',
+  globalScript: 'src/isodb-web-client/global/app.ts',
+  srcDir: 'src/isodb-web-client',
   outputTargets: [
     {
       type: 'www',
-      // uncomment the following line to disable service workers in production
-      // serviceWorker: null
+      buildDir: 'dist',
+      dir: 'dist',
     }
-  ]
+  ],
+  devServer: {
+    openBrowser: false,
+  },
 };

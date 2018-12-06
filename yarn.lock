@@ -11,23 +11,6 @@
     jsdom "11.11.0"
     typescript "~3.1.6"
 
-"@stencil/router@~0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@stencil/router/-/router-0.3.1.tgz#14d5dbd723590034c16e3a3e31675d3215a0cfda"
-  integrity sha512-FytA0vLV2+8cGrzqxRltjMycK3T5UNRo1p6ii948RFbRy2AEqe+Zzr7GQOK2cbDPZu6X3fZbLfhiZyK5hGgyIw==
-  dependencies:
-    "@stencil/state-tunnel" "0.0.9-1"
-
-"@stencil/state-tunnel@0.0.9-1":
-  version "0.0.9-1"
-  resolved "https://registry.yarnpkg.com/@stencil/state-tunnel/-/state-tunnel-0.0.9-1.tgz#15bcb569779fc5ca4ffbc489d57e4c076457eefd"
-  integrity sha512-Dn04TXjwM+H+1HB6R5B9WwLOKTq/kT/YIwGtAAxiAwYFCugiSWZuE2vf3I8dkCLlEetib5/QAz9MYJ4H4BRKZg==
-
-"@stencil/state-tunnel@~0.0.8":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@stencil/state-tunnel/-/state-tunnel-0.0.8.tgz#c7425719e622e8ab5009f89edd6478dc69719c38"
-  integrity sha512-fpFU91hgEirWyzMD7hsTWkIK8li4VQgx5G+dZr2Iv/AU2ofF6AiAxqP2N5SGyszleJCn9UcgWKS31/+efaBxFw==
-
 "@types/busboy@^0.2.3":
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@types/busboy/-/busboy-0.2.3.tgz#6697ad29873246c530f09a3ff5a40861824230d5"

@@ -6,16 +6,14 @@
   "scripts": {
     "build": "stencil build",
     "start": "stencil build --dev --watch --serve",
-    "dev": "NODE_NO_WARNINGS=1 LOG=DEBUG ./node.js src/isodb-server/bin 8080 pass /tmp/db",
-    "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
-    "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./node.js src/tester/bin",
+    "dev": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
+    "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
+    "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },
   "dependencies": {
     "@stencil/core": "~0.16.0",
-    "@stencil/router": "~0.3.1",
-    "@stencil/state-tunnel": "~0.0.8",
     "@types/node": "^10.12.11",
     "busboy": "^0.2.14",
     "date-fns": "^1.29.0",

@@ -5,7 +5,8 @@ import readline from 'readline'
 import { promisify } from 'util'
 import zlib from 'zlib'
 
-export const hash = (hashType: string) => (value: any) => crypto.createHash(hashType).update(value).digest('hex')
+export const hash = (hashType: string) =>
+  (value: any, buffer = false) => crypto.createHash(hashType).update(value).digest(buffer ? undefined as any : 'hex')
 export const sha256 = hash('sha256')
 
 export function sha256File(filePath: string): Promise<string> {
@@ -22,7 +23,7 @@ export function sha256File(filePath: string): Promise<string> {
 export function aesEncrypt(text: string, password: string) {
   const iv = crypto.randomBytes(16) // always 16 for AES
 
-  const cipher = crypto.createCipheriv('aes-256-cbc', sha256(password), iv)
+  const cipher = crypto.createCipheriv('aes-256-cbc', sha256(password, true), iv)
 
   return iv.toString('hex') + ':' + cipher.update(text, 'utf8', 'hex') + cipher.final('hex')
 }
@@ -30,7 +31,7 @@ export function aesEncrypt(text: string, password: string) {
 export function aesDecrypt(text: string, password: string) {
   const [iv, encryptedText] = text.split(':')
 
-  const decipher = crypto.createDecipheriv('aes-256-cbc', sha256(password), Buffer.from(iv, 'hex'))
+  const decipher = crypto.createDecipheriv('aes-256-cbc', sha256(password, true), Buffer.from(iv, 'hex'))
 
   return decipher.update(encryptedText, 'hex', 'utf8') + decipher.final('utf8')
 }

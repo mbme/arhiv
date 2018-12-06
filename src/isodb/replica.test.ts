@@ -2,7 +2,7 @@ import { test } from '../tester'
 import ReplicaDB from './replica'
 import InMemStorage from './replica-in-mem-storage'
 
-const testFile = new File([], 'test')
+const testFile: any = {}
 
 function initDB(remote: number, local: number) {
   const storage = new InMemStorage()

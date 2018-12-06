@@ -1,25 +1,25 @@
 /* tslint:disable:no-console */
 import { format as formatDate } from 'date-fns'
 
-enum LEVEL {
-  DEBUG,
-  INFO,
-  WARN,
-  ERROR,
+const LEVEL = {
+  DEBUG: 'DEBUG',
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
 }
 
 const PRIORITY = {
-  [LEVEL.DEBUG.toString()]: 0,
-  [LEVEL.INFO.toString()]: 1,
-  [LEVEL.WARN.toString()]: 2,
-  [LEVEL.ERROR.toString()]: 3,
+  [LEVEL.DEBUG]: 0,
+  [LEVEL.INFO]: 1,
+  [LEVEL.WARN]: 2,
+  [LEVEL.ERROR]: 3,
 }
 
 const minLogLevel = process.env.LOG || LEVEL.INFO
 if (!Object.values(LEVEL).includes(minLogLevel)) throw new Error(`Illegal log level ${minLogLevel}`)
 
-function createLevelLogger(level: LEVEL, namespace: string) {
-  const name = level.toString().padEnd(5)
+function createLevelLogger(level: string, namespace: string) {
+  const name = level.padEnd(5)
 
   return (msg: string, ...params: any[]) => { // tslint:disable-line no-any
     if (PRIORITY[level] < PRIORITY[minLogLevel]) return

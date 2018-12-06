@@ -7,7 +7,7 @@
     "build": "stencil build",
     "start": "stencil build --dev --watch --serve",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
-    "test": "LOG=ERROR ./node.js src/tester/bin",
+    "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./node.js src/tester/bin",
     "test-update": "yarn test --update-snapshots",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },

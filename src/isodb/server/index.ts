@@ -1,14 +1,18 @@
 import path from 'path'
 import fs from 'fs'
-import createQueue from '../utils/queue'
-import { getMimeType } from '../file-prober'
-import { Server, MultipartBody } from '../http-server'
+import { createLogger } from '../../logger'
+import createQueue from '../../utils/queue'
+import { getMimeType } from '../../file-prober'
+import { Server, MultipartBody } from '../../http-server'
 import {
   isValidAuth,
   extractToken,
   resolveAsset,
 } from './utils'
-import PrimaryDB from '../isodb/primary'
+import PrimaryDB from '../core/primary'
+import { IPatchResponse } from '../core/types'
+
+const log = createLogger('isodb-server')
 
 const STATIC_DIR = path.join(__dirname, '../client/static')
 const DIST_DIR = path.join(__dirname, '../../dist')
@@ -31,7 +35,7 @@ export default function createServer(db: PrimaryDB, password = '') {
     await next()
   })
 
-  server.post('/api/changes', async ({ res, req }) => {
+  server.post('/api/patch', async ({ res, req }) => {
     const body = req.body!
     if (!(body instanceof MultipartBody)) {
       res.statusCode = 415
@@ -39,10 +43,18 @@ export default function createServer(db: PrimaryDB, password = '') {
     }
 
     const revField = body.getField('rev')
-    if (!revField) throw new Error(`rev field is mandatory`)
+    if (!revField) {
+      log.error(`rev field is mandatory`)
+      res.statusCode = 400
+      return
+    }
 
     const recordsField = body.getField('records')
-    if (!recordsField) throw new Error(`records field is mandatory`)
+    if (!recordsField) {
+      log.error(`records field is mandatory`)
+      res.statusCode = 400
+      return
+    }
 
     const rev = parseInt(revField.value, 10)
     const records = JSON.parse(recordsField.value)
@@ -54,18 +66,13 @@ export default function createServer(db: PrimaryDB, password = '') {
     }
 
     const success = await queue.push(() => db.applyChanges(rev, records, assets))
-    res.statusCode = success ? 200 : 409
-    res.body = await queue.push(() => db.getPatch(rev))
-  })
-
-  server.get('/api/patch', async ({ req, res }) => {
-    const rev = req.url.query.rev as string
-    if (!rev) {
-      res.statusCode = 400
-      return
+    const patch: IPatchResponse = {
+      applied: success,
+      baseRev: rev,
+      currentRev: db.getRev(),
+      records: db.getAll(rev),
     }
-
-    res.body = await queue.push(() => db.getPatch(parseInt(rev, 10)))
+    res.body = patch
   })
 
   server.get('/api', async ({ req, res }) => {

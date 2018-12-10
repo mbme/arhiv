@@ -2,7 +2,6 @@ import {
   RecordInfo,
   Record,
   ChangedRecord,
-  IPatch,
   IPrimaryStorage,
 } from './types'
 import { isAttachment, isDeleted } from './utils'
@@ -47,14 +46,6 @@ export default class PrimaryDB {
    */
   getAttachment(id: string) {
     return this._storage.getAttachment(id)
-  }
-
-  getPatch(rev = 0): IPatch {
-    return {
-      baseRev: rev,
-      storageRev: this.getRev(),
-      records: this.getAll(rev),
-    }
   }
 
   /**

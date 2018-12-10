@@ -1,11 +1,17 @@
-import IsodbReplica from '../isodb/replica';
-import ReplicaInMemStorage from '../isodb/replica-in-mem-storage';
-import createPubSub from '../utils/pubsub';
+import IsodbReplica from '../core/replica';
+import ReplicaInMemStorage from '../core/replica-in-mem-storage';
+import createPubSub from '../../utils/pubsub';
 import LockManager from './lock-manager';
 import SyncManager from './sync-manager';
+import { IReplicaStorage } from '../core/types';
 
 export default class IsodbClient {
   events = createPubSub();
+
+  _storage: IReplicaStorage
+  _db: IsodbReplica
+  _lockManager: LockManager
+  _syncManager: SyncManager
 
   constructor() {
     this._storage = new ReplicaInMemStorage();
@@ -22,7 +28,10 @@ export default class IsodbClient {
     this.events.emit('update');
   };
 
-  lockRecord(id) {
+  canLockRecord(id: string) {
+    return this._lockManager.canLockRecord(id)
+  }
+  lockRecord(id: string) {
     return this._lockManager.lockRecord(id);
   }
 

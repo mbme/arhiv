@@ -1,12 +1,12 @@
-import { isString, array2object, flatten } from '../utils'
-import { createLogger } from '../logger'
+import { isString, array2object, flatten } from '../../utils'
+import { createLogger } from '../../logger'
 import { getRandomId, isAttachment } from './utils'
 import {
   IReplicaStorage,
   Record,
   ChangedRecord,
-  IPatch,
   MergeFunction,
+  IPatchResponse,
 } from './types'
 
 const logger = createLogger('isodb-replica')
@@ -126,25 +126,24 @@ export default class ReplicaDB {
     this._compact()
   }
 
-  getChanges() {
-    return {
-      rev: this.getRev(),
-      records: this._storage.getLocalRecords(),
-      newAttachments: this._storage.getLocalAttachments(),
-    }
+  _getLocalRecords() {
+    return this._storage.getLocalRecords()
   }
 
-  async applyPatch({ baseRev, storageRev, records }: IPatch, ack: boolean, merge: MergeFunction) {
-    const currentRev = this.getRev()
-    if (currentRev !== baseRev) {
-      throw new Error(`Got rev ${baseRev} instead of ${currentRev}`)
+  _getLocalAttachments() {
+    return this._storage.getLocalAttachments()
+  }
+
+  async applyPatch({ applied, baseRev, currentRev, records }: IPatchResponse, merge: MergeFunction) {
+    if (this.getRev() !== baseRev) {
+      throw new Error(`Got rev ${baseRev} instead of ${this.getRev()}`)
     }
 
     const currentRecords = array2object(this._storage.getRecords(), record => record._id)
     const newRecords = records.map(item => isString(item) ? currentRecords[item] : item)
 
-    if (ack) {
-      this._storage.setRecords(storageRev, newRecords)
+    if (applied) {
+      this._storage.setRecords(currentRev, newRecords)
       this._storage.clearLocalRecords()
       return
     }
@@ -187,7 +186,7 @@ export default class ReplicaDB {
     }
 
     // merge patch
-    this._storage.setRecords(storageRev, newRecords)
+    this._storage.setRecords(currentRev, newRecords)
   }
 
   /**

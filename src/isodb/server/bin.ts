@@ -1,8 +1,8 @@
-import { createLogger } from '../logger'
+import { createLogger } from '../../logger'
 import createServer from './index'
-import PrimaryDB from '../isodb/primary'
-import InMemStorage from '../isodb/primary-in-mem-storage'
-import { getFakeNotes } from '../randomizer/faker'
+import PrimaryDB from '../core/primary'
+import InMemStorage from '../core/primary-in-mem-storage'
+import { getFakeNotes } from '../../randomizer/faker'
 
 const log = createLogger('isodb-server')
 

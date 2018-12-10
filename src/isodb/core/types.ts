@@ -37,12 +37,6 @@ export interface INote extends IRecord {
 // record or record id
 export type RecordInfo = IRecord | IAttachment | string
 
-export interface IPatch {
-  baseRev: number
-  storageRev: number
-  records: RecordInfo[]
-}
-
 export interface IPrimaryStorage {
   /**
    * @returns storage revision
@@ -86,3 +80,10 @@ export interface IReplicaStorage {
 }
 
 export type MergeFunction = (base: Record, updated: Record, local: ChangedRecord) => Promise<ChangedRecord>
+
+export interface IPatchResponse {
+  applied: boolean
+  baseRev: number
+  currentRev: number
+  records: RecordInfo[]
+}

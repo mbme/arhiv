@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import * as utils from '../../utils/node'
-import { listFiles } from '../../fs/utils'
+import { listFiles } from '../../utils/fs'
 
 export async function resolveAsset(dir: string, name: string) {
   if (!fs.existsSync(dir)) return undefined

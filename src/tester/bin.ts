@@ -1,5 +1,5 @@
 import path from 'path'
-import { walkSync } from '../fs/utils'
+import { walkSync } from '../utils/fs'
 import log from '../logger'
 import { getTestPlan, initTestPlan, runTests } from './index'
 

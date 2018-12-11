@@ -1,6 +1,6 @@
 import assert from 'assert'
 import fs from 'fs'
-import { readJSON, writeJSON } from '../fs/utils'
+import { readJSON, writeJSON } from '../utils/fs'
 import log from '../logger'
 import { uniq } from '../utils'
 

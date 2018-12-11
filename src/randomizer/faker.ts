@@ -1,11 +1,11 @@
 import path from 'path'
-import { getRandomId } from '../isodb/utils'
-import { INote } from '../isodb/types'
+import { getRandomId } from '../isodb/core/utils'
+import { INote } from '../isodb/core/types'
 import { createArray } from '../utils'
 import { createImageLink } from '../v-parser'
 import { randomInt, shuffle, randomArrValue } from './index'
 import { sha256File } from '../utils/node'
-import { readText, listFiles } from '../fs/utils'
+import { readText, listFiles } from '../utils/fs'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
 /**

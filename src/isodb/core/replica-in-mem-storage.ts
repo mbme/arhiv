@@ -1,5 +1,5 @@
-import createPubSub from '../utils/pubsub'
 import { IReplicaStorage, Record, ChangedRecord } from './types'
+import { removeMut, Callback } from '../../utils'
 
 export default class ReplicaInMemStorage implements IReplicaStorage {
   _records: Record[] = []
@@ -8,7 +8,7 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
   _localRecords: { [id: string]: ChangedRecord } = {}
   _localAttachments: { [id: string]: Blob } = {}
 
-  events = createPubSub()
+  _listeners: Callback[] = []
 
   getRev() {
     return this._rev
@@ -21,7 +21,7 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
   setRecords(rev: number, records: Record[]) {
     this._rev = rev
     this._records = records
-    this.events.emit('update')
+    this._onUpdate()
   }
 
   getLocalRecords() {
@@ -40,13 +40,13 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
     if (blob) {
       this._localAttachments[record._id] = blob
     }
-    this.events.emit('update')
+    this._onUpdate()
   }
 
   removeLocalRecord(id: string) {
     delete this._localRecords[id]
     delete this._localAttachments[id]
-    this.events.emit('update')
+    this._onUpdate()
   }
 
   getAttachmentUrl(id: string) {
@@ -60,6 +60,18 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
   clearLocalRecords() {
     this._localRecords = {}
     this._localAttachments = {}
-    this.events.emit('update')
+    this._onUpdate()
+  }
+
+  _onUpdate() {
+    this._listeners.forEach(cb => cb())
+  }
+
+  onUpdate(cb: Callback) {
+    this._listeners.push(cb)
+  }
+
+  offUpdate(cb: Callback) {
+    removeMut(this._listeners, cb)
   }
 }

@@ -28,6 +28,8 @@ async function pushChanges(
 }
 
 // TODO logs
+// TODO listen to network
+// TODO circuit breaker
 export default class SyncManager {
   _syncIntervalId: number | undefined
 
@@ -46,8 +48,8 @@ export default class SyncManager {
       while (true) {
         const result = await pushChanges(
           this._replica.getRev(),
-          this._replica._getLocalRecords(),
-          this._replica._getLocalAttachments()
+          this._replica.storage.getLocalRecords(),
+          this._replica.storage.getLocalAttachments()
         )
 
         await this._replica.applyPatch(result, this._merge)

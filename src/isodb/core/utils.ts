@@ -1,4 +1,4 @@
-import { randomId } from '../randomizer'
+import { randomId } from '../../randomizer'
 import { IAttachment, IChangedAttachment } from './types'
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'

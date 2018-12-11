@@ -170,3 +170,5 @@ export function lazy<T>(createVal: () => T): ILazy<T> {
     },
   }
 }
+
+export type Callback = () => void

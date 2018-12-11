@@ -12,17 +12,13 @@ import {
 const logger = createLogger('isodb-replica')
 
 export default class ReplicaDB {
-  _storage: IReplicaStorage
-
-  constructor(storage: IReplicaStorage) {
-    this._storage = storage
-  }
+  constructor(public storage: IReplicaStorage) { }
 
   /**
    * @returns storage revision
    */
   getRev() {
-    return this._storage.getRev()
+    return this.storage.getRev()
   }
 
   /**
@@ -34,25 +30,25 @@ export default class ReplicaDB {
       return undefined
     }
 
-    return this._storage.getAttachmentUrl(id)
+    return this.storage.getAttachmentUrl(id)
   }
 
   /**
    * @param id record id
    */
   getRecord(id: string): Record | ChangedRecord | undefined {
-    return this._storage.getLocalRecords().find(item => item._id === id)
-      || this._storage.getRecords().find(item => item._id === id)
+    return this.storage.getLocalRecords().find(item => item._id === id)
+      || this.storage.getRecords().find(item => item._id === id)
   }
 
   /**
    * @returns all records, including local
    */
   getAll(): Array<Record | ChangedRecord> {
-    const localRecords = this._storage.getLocalRecords()
+    const localRecords = this.storage.getLocalRecords()
     const localIds = new Set(localRecords.map(item => item._id))
 
-    const records = this._storage.getRecords().filter(item => !localIds.has(item._id))
+    const records = this.storage.getRecords().filter(item => !localIds.has(item._id))
 
     return [
       ...records,
@@ -69,7 +65,7 @@ export default class ReplicaDB {
     if (this.getRecord(id)) throw new Error(`can't add attachment ${id}: already exists`)
 
     // FIXME in transaction
-    this._storage.addLocalRecord({
+    this.storage.addLocalRecord({
       _id: id,
       _attachment: true,
       ...fields,
@@ -81,7 +77,7 @@ export default class ReplicaDB {
     if (!record) throw new Error(`can't update attachment ${id}: doesn't exist`)
     if (!isAttachment(record)) throw new Error(`can't update attachment ${id}: not an attachment`)
 
-    this._storage.addLocalRecord({
+    this.storage.addLocalRecord({
       ...record,
       ...fields,
     })
@@ -94,7 +90,7 @@ export default class ReplicaDB {
   addRecord(fields: object, refs: string[] = []) {
     const id = getRandomId()
 
-    this._storage.addLocalRecord({
+    this.storage.addLocalRecord({
       _id: getRandomId(),
       _refs: refs,
       ...fields,
@@ -116,7 +112,7 @@ export default class ReplicaDB {
     if (!record) throw new Error(`can't update record ${id}: doesn't exist`)
     if (isAttachment(record)) throw new Error(`can't update record ${id}: its an attachment`)
 
-    this._storage.addLocalRecord({
+    this.storage.addLocalRecord({
       ...record,
       _refs: refs || record._refs,
       _deleted: deleted,
@@ -126,44 +122,36 @@ export default class ReplicaDB {
     this._compact()
   }
 
-  _getLocalRecords() {
-    return this._storage.getLocalRecords()
-  }
-
-  _getLocalAttachments() {
-    return this._storage.getLocalAttachments()
-  }
-
   async applyPatch({ applied, baseRev, currentRev, records }: IPatchResponse, merge: MergeFunction) {
     if (this.getRev() !== baseRev) {
       throw new Error(`Got rev ${baseRev} instead of ${this.getRev()}`)
     }
 
-    const currentRecords = array2object(this._storage.getRecords(), record => record._id)
+    const currentRecords = array2object(this.storage.getRecords(), record => record._id)
     const newRecords = records.map(item => isString(item) ? currentRecords[item] : item)
 
     if (applied) {
-      this._storage.setRecords(currentRev, newRecords)
-      this._storage.clearLocalRecords()
+      this.storage.setRecords(currentRev, newRecords)
+      this.storage.clearLocalRecords()
       return
     }
 
     // for each local record
-    for (const localRecord of this._storage.getLocalRecords()) {
+    for (const localRecord of this.storage.getLocalRecords()) {
       const existingRecord = currentRecords[localRecord._id]
       const newRecord = newRecords.find(item => item._id === localRecord._id)!
 
       // if is existing record & revision changed
       //   merge
       if (existingRecord._rev !== newRecord._rev) {
-        this._storage.addLocalRecord(await merge(existingRecord, newRecord, localRecord))
+        this.storage.addLocalRecord(await merge(existingRecord, newRecord, localRecord))
       }
     }
 
     // for each local record
     //   if references deleted record
     //     restore deleted record & all deleted records referenced by it
-    const idsToCheck = flatten(this._storage.getLocalRecords().map(item => (item as any)._refs || []))
+    const idsToCheck = flatten(this.storage.getLocalRecords().map(item => (item as any)._refs || []))
     const idsChecked = new Set()
     while (idsToCheck.length) {
       const id = idsToCheck.shift()
@@ -177,7 +165,7 @@ export default class ReplicaDB {
           logger.warn(`Can't restore attachment ${id}, skipping`)
         } else {
           logger.info(`Restoring record ${id}`)
-          this._storage.addLocalRecord(existingRecord) // restore record
+          this.storage.addLocalRecord(existingRecord) // restore record
           idsToCheck.push(...existingRecord._refs)
         }
       }
@@ -186,7 +174,7 @@ export default class ReplicaDB {
     }
 
     // merge patch
-    this._storage.setRecords(currentRev, newRecords)
+    this.storage.setRecords(currentRev, newRecords)
   }
 
   /**
@@ -195,7 +183,7 @@ export default class ReplicaDB {
   _compact() {
     const idsInUse = new Set()
     const attachmentIds = new Set()
-    for (const record of this._storage.getLocalRecords()) {
+    for (const record of this.storage.getLocalRecords()) {
       if (isAttachment(record)) {
         attachmentIds.add(record._id)
       } else {
@@ -204,12 +192,12 @@ export default class ReplicaDB {
     }
 
     for (const id of attachmentIds) {
-      const existingRecord = this._storage.getRecords().find(item => item._id === id)
+      const existingRecord = this.storage.getRecords().find(item => item._id === id)
 
       // remove unused new local attachments
       if (!idsInUse.has(id) && !existingRecord) {
         logger.info(`Removing unused local attachment ${id}`)
-        this._storage.removeLocalRecord(id)
+        this.storage.removeLocalRecord(id)
       }
     }
   }

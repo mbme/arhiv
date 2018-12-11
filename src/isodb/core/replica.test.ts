@@ -1,4 +1,4 @@
-import { test } from '../tester'
+import { test } from '../../tester'
 import ReplicaDB from './replica'
 import InMemStorage from './replica-in-mem-storage'
 

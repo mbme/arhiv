@@ -2,14 +2,14 @@ import IsodbReplica from '../core/replica'
 import ReplicaInMemStorage from '../core/replica-in-mem-storage'
 import createPubSub from '../../utils/pubsub'
 import LockManager from './lock-manager'
-import SyncManager from './sync-manager'
+import SyncAgent from './sync-agent'
 
 export default class IsodbClient {
   events = createPubSub()
 
   _db: IsodbReplica
   _lockManager: LockManager
-  _syncManager: SyncManager
+  _syncAgent: SyncAgent
 
   constructor() {
     this._db = new IsodbReplica(new ReplicaInMemStorage())
@@ -17,8 +17,8 @@ export default class IsodbClient {
 
     this._lockManager = new LockManager()
 
-    this._syncManager = new SyncManager(this._db, this._lockManager)
-    this._syncManager.start()
+    this._syncAgent = new SyncAgent(this._db, this._lockManager)
+    this._syncAgent.start()
   }
 
   _onUpdate = () => {
@@ -34,6 +34,6 @@ export default class IsodbClient {
 
   destroy() {
     this._db.storage.offUpdate(this._onUpdate)
-    this._syncManager.stop()
+    this._syncAgent.stop()
   }
 }

@@ -30,7 +30,7 @@ async function pushChanges(
 // TODO logs
 // TODO listen to network
 // TODO circuit breaker
-export default class SyncManager {
+export default class SyncAgent {
   _syncIntervalId: number | undefined
 
   constructor(public _replica: ReplicaDB, public _lockManager: LockManager) { }

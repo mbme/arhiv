@@ -1,11 +1,10 @@
 {
   "name": "typed-v",
   "private": true,
+  "license": "MIT",
   "version": "0.0.1",
   "description": "like v, but typed!",
   "scripts": {
-    "build": "stencil build",
-    "start": "stencil build --dev --watch --serve",
     "dev": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
@@ -13,16 +12,14 @@
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },
   "dependencies": {
-    "@stencil/core": "^0.16.0",
+    "@types/busboy": "^0.2.3",
     "@types/node": "^10.12.11",
     "busboy": "^0.2.14",
     "date-fns": "^1.29.0",
     "ts-node": "^7.0.1",
     "typescript": "^3.2.1"
   },
-  "license": "MIT",
   "devDependencies": {
-    "@types/busboy": "^0.2.3",
     "tslint": "^5.11.0",
     "tslint-config-standard": "^8.0.1"
   }

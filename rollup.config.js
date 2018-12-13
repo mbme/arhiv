@@ -1,11 +1,13 @@
+import nodeResolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import typescript from 'rollup-plugin-typescript';
+import css from 'rollup-plugin-css-only';
 import { terser } from "rollup-plugin-terser";
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 export default {
-  input: 'src/web-client/index.jsx',
+  input: 'src/web-app/index.tsx',
 
   output: {
     file: 'dist/bundle.js',
@@ -14,7 +16,14 @@ export default {
   },
 
   plugins: [
+    nodeResolve({
+      jsnext: true,
+      extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx' ],
+    }),
+
     typescript(),
+
+    css({ output: 'dist/bundle.css' }),
 
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),

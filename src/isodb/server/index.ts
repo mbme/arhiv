@@ -14,8 +14,8 @@ import { IPatchResponse } from '../core/types'
 
 const log = createLogger('isodb-server')
 
-const STATIC_DIR = path.join(__dirname, '../client/static')
-const DIST_DIR = path.join(__dirname, '../../dist')
+const STATIC_DIR = path.join(__dirname, '../../web-app/static')
+const DIST_DIR = path.join(__dirname, '../../../dist')
 
 export default function createServer(db: PrimaryDB, password = '') {
   const queue = createQueue()

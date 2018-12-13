@@ -6,7 +6,9 @@
   "description": "like v, but typed!",
   "scripts": {
     "build": "NODE_ENV=production rollup -c",
-    "start": "rollup -c --watch & NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
+    "start:server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb/server/bin 8080 pass /tmp/db",
+    "start:client": "rollup -c --watch",
+    "start": "yarn start:server & yarn start:client",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
@@ -17,12 +19,15 @@
     "@types/node": "^10.12.11",
     "busboy": "^0.2.14",
     "date-fns": "^1.29.0",
-    "inferno": "^7.0.2",
+    "preact": "^8.4.2",
+    "tachyons": "^4.11.1",
     "ts-node": "^7.0.1",
     "typescript": "^3.2.1"
   },
   "devDependencies": {
     "rollup": "^0.67.4",
+    "rollup-plugin-css-only": "^0.4.0",
+    "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-replace": "^2.1.0",
     "rollup-plugin-terser": "^3.0.0",
     "rollup-plugin-typescript": "^1.0.0",

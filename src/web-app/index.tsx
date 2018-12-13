@@ -1,5 +1,3 @@
-import 'tachyons'
-import './static/styles.css'
 import { render } from 'inferno'
 import { h as infernoH } from 'inferno-hyperscript'
 import App from './app'

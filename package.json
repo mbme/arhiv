@@ -18,14 +18,12 @@
     "busboy": "^0.2.14",
     "date-fns": "^1.29.0",
     "inferno": "^7.0.4",
-    "inferno-hyperscript": "^7.0.4",
-    "tachyons": "^4.11.1"
+    "inferno-hyperscript": "^7.0.4"
   },
   "devDependencies": {
     "@types/busboy": "^0.2.3",
     "@types/node": "^10.12.11",
     "rollup": "^0.67.4",
-    "rollup-plugin-css-only": "^0.4.0",
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-replace": "^2.1.0",
     "rollup-plugin-terser": "^3.0.0",

@@ -13,7 +13,7 @@
     "module": "esnext",
     "target": "es2017",
     "jsx": "react",
-    "jsxFactory": "preact.h",
+    "jsxFactory": "_h",
     "keyofStringsOnly": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

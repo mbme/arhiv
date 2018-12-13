@@ -33,4 +33,8 @@ export default {
 
     isProduction && terser(),
   ],
+
+  watch: {
+    clearScreen: false,
+  },
 };

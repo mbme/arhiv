@@ -1,12 +1,14 @@
 import 'tachyons'
 import './static/styles.css'
-import preact from 'preact'
+import { render } from 'inferno'
+import { h as infernoH } from 'inferno-hyperscript'
+import App from './app'
+
+// needed for tsx to work
+(window as any)._h = infernoH
 
 const rootEl = document.getElementById('root')!
 
-preact.render(
-  <h1>HELLO WORLD!</h1>,
-  rootEl
-)
-
-rootEl.style.visibility = 'visible'
+render(<App />, rootEl, () => {
+  rootEl.style.visibility = 'visible'
+})

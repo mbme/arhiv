@@ -1,0 +1,35 @@
+.Button {
+  padding: var(--spacing-fine) var(--spacing-medium);
+  border: var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 100ms linear, transform 50ms ease-in;
+
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-size: 80%;
+}
+
+.Button.is-disabled {
+  cursor: auto;
+  color: var(--color-secondary);
+  background-color: var(--bg-color-darker);
+}
+
+.Button.is-secondary {
+  color: var(--color-text);
+  background-color: var(--bg-color);
+}
+.Button.is-secondary:hover {
+  background-color: var(--bg-color-darker);
+}
+
+.Button.is-primary {
+  background-color: var(--color-primary);
+  color: var(--color-light);
+  box-shadow: var(--box-shadow);
+}
+.Button.is-primary:hover {
+  transform: scale(1.05);
+}

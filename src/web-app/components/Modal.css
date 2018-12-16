@@ -1,0 +1,17 @@
+.Modal-modal {
+  background-color: var(--bg-color);
+  margin-top: 17vh;
+  min-width: 375px;
+  padding: var(--spacing-medium);
+  border: var(--border);
+  box-shadow: var(--box-shadow);
+}
+
+.Modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.Modal-buttons .Button {
+  margin-left: var(--spacing-medium);
+}

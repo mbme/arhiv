@@ -13,7 +13,6 @@
     "module": "esnext",
     "target": "es2017",
     "jsx": "react",
-    "jsxFactory": "_h",
     "keyofStringsOnly": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

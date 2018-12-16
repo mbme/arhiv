@@ -1,12 +1,16 @@
-import { render } from 'inferno'
-import { h as infernoH } from 'inferno-hyperscript'
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
 import App from './app'
-
-// needed for tsx to work
-(window as any)._h = infernoH
+import './static/styles.css'
 
 const rootEl = document.getElementById('root')!
 
-render(<App />, rootEl, () => {
-  rootEl.style.visibility = 'visible'
-})
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  rootEl,
+  () => {
+    rootEl.style.visibility = 'visible'
+  }
+)

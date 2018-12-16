@@ -1,0 +1,13 @@
+.Textarea {
+  background-color: var(--bg-color);
+  display: block;
+  width: 100%;
+  padding: var(--spacing-medium);
+
+  resize: none;
+  min-height: 300px;
+  overflow-y: hidden;
+
+  border: var(--border);
+  box-shadow: var(--box-shadow);
+}

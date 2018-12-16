@@ -1,0 +1,8 @@
+.Link {
+  cursor: pointer;
+  display: inline-block;
+}
+
+.Link:not(.is-clean) {
+  color: var(--color-link);
+}

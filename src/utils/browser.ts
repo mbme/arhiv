@@ -1,8 +1,3 @@
-import {
-  isObject,
-  isString,
-} from './index'
-
 export function readFile(file: Blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -29,18 +24,4 @@ export async function aesEncrypt(text: string, password: string) {
   const encrypted = await crypto.subtle.encrypt(alg, key, text2buffer(text)).then(bytesToHexString)
 
   return bytesToHexString(alg.iv as any) + ':' + encrypted
-}
-
-export function classNames(...args: Array<string | object>) {
-  return args.reduce<string[]>((acc, val) => {
-    if (isString(val)) {
-      acc.push(val)
-    } else if (isObject(val)) {
-      Object.entries(val).forEach(([key, assertion]) => {
-        if (assertion) acc.push(key)
-      })
-    }
-
-    return acc
-  }, []).join(' ')
 }

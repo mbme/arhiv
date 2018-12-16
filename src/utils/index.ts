@@ -171,4 +171,18 @@ export function lazy<T>(createVal: () => T): ILazy<T> {
   }
 }
 
-export type Callback = () => void
+export function classNames(...args: any[]) {
+  return args.reduce<string[]>((acc, val) => {
+    if (isString(val)) {
+      acc.push(val)
+    } else if (isObject(val)) {
+      Object.entries(val).forEach(([key, assertion]) => {
+        if (assertion) acc.push(key)
+      })
+    }
+
+    return acc
+  }, []).join(' ')
+}
+
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>

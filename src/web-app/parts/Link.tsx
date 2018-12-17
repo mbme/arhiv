@@ -1,22 +1,23 @@
-import React, { PureComponent } from 'react';
-import { classNames } from '../../utils';
-import { Consumer, locationShape } from '../chrome/Router';
+import React, { PureComponent } from 'react'
+import { classNames } from '../../utils'
+import { IRoute } from '../../web-router'
+import { inject, IStore } from '../store'
 import './Link.css'
 
 interface IProps {
   className?: string
-  children: React.ReactNode
   clean?: boolean
+  children: React.ReactNode
+  to: IRoute
+  push: (route: IRoute) => void
 }
-export default class Link extends PureComponent<IProps, {}> {
-  router = null;
-
+class Link extends PureComponent<IProps, {}> {
   onClick = () => {
-    this.router.push(this.props.to);
-  };
+    this.props.push(this.props.to)
+  }
 
   render() {
-    const { className, children, clean } = this.props;
+    const { className, children, clean } = this.props
 
     return (
       <div
@@ -25,14 +26,14 @@ export default class Link extends PureComponent<IProps, {}> {
         tabIndex={0}
         onClick={this.onClick}
       >
-        <Consumer>
-          {(router) => {
-            this.router = router;
-          }}
-        </Consumer>
-
         {children}
       </div>
-    );
+    )
   }
 }
+
+const mapStoreToProps = (store: IStore) => ({
+  push: store.push,
+})
+
+export default inject(mapStoreToProps, Link)

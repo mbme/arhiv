@@ -4,12 +4,6 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { inject } from '../store';
 
-import NotFoundView from './NotFoundView';
-import ThemeView from './ThemeView';
-import NotesView from '../notes/NotesView';
-import NoteView from '../notes/NoteView';
-import NoteEditorView from '../notes/NoteEditorView';
-
 const RouterContext = React.createContext({
   push: noop,
   replace: noop,
@@ -23,48 +17,11 @@ export const locationShape = PropTypes.shape({
   params: PropTypes.object,
 });
 
-export class Redirect extends PureComponent {
-  static propTypes = {
-    to: locationShape.isRequired,
-  };
-
-  router = null;
-
-  componentDidMount() {
-    this.router.replace(this.props.to);
-  }
-
-  render() {
-    return (
-      <Consumer>
-        {(router) => {
-          this.router = router;
-        }}
-      </Consumer>
-    );
-  }
-}
-
-const Routes = {
-  '': () => <Redirect to={{ name: 'notes' }} />,
-  'theme': () => <ThemeView />,
-  'notes': () => <NotesView />,
-  'note': ({ id }) => {
-    if (!id) {
-      return <NotFoundView />;
-    }
-
-    return <NoteView id={parseInt(id, 10)} />;
-  },
-  'note-editor': ({ id }) => <NoteEditorView id={id ? parseInt(id, 10) : null} />,
-};
-
-
 function createUrl({ name, params = {} }) {
   if (!Routes[name]) throw new Error(`Unexpected route "${name}"`);
 
   const queryParams = new URLSearchParams();
-  Object.entries(params).forEach(([ key, value ]) => {
+  Object.entries(params).forEach(([key, value]) => {
     queryParams.set(key, value);
   });
   const paramsStr = queryParams.toString();
@@ -111,7 +68,7 @@ class Router extends PureComponent {
   propagateCurrentLocation() {
     const location = new URL(document.location);
     const params = {};
-    for (const [ key, value ] of location.searchParams) {
+    for (const [key, value] of location.searchParams) {
       params[key] = value;
     }
 

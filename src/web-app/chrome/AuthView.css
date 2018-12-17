@@ -1,0 +1,18 @@
+.Auth-backdrop {
+  background-color: var(--bg-color);
+  padding-top: 20vh;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.Auth-logo {
+  width: 150px;
+  margin-bottom: var(--spacing-medium);
+}
+
+.Auth-input {
+  width: 300px;
+}

@@ -1,0 +1,77 @@
+.App-container {
+  display: grid;
+  grid-template-areas: "content";
+}
+
+.App-navbar-container {
+  grid-area: sidemenu;
+  position: sticky;
+  top: 0;
+
+  display: none;
+}
+
+@media screen and (min-width: 1024px) {
+  .App-container {
+    grid-template-columns: minmax(180px, 30%) var(--max-width) auto;
+    grid-template-areas: "sidemenu content whitespace";
+  }
+
+  .App-navbar-container {
+    display: block;
+  }
+}
+
+.App-navbar {
+  position: sticky;
+  top: 0;
+
+  height: 100vh;
+  width: 100%;
+  padding: var(--spacing-small) var(--spacing-large);
+
+  background-color: var(--color-secondary);
+  color: var(--color-light);
+  font-size: var(--font-size-medium);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.App-logout {
+  position: absolute;
+  bottom: var(--spacing-small);
+  cursor: pointer;
+}
+
+.App-navlink {
+  display: inline-block;
+  margin: var(--spacing-medium) 0;
+}
+.App-navlink.is-selected {
+  color: var(--color-primary);
+}
+
+.App-view {
+  grid-area: content;
+  justify-self: center;
+  padding: 0 var(--spacing-small);
+  width: 100%;
+  max-width: var(--max-width);
+
+  display: flex;
+  flex-direction: column;
+}
+
+@media screen and (min-width: 768px) {
+  .App-view {
+    padding: 0 var(--spacing-medium);
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .App-view {
+    padding: 0 var(--spacing-large);
+  }
+}

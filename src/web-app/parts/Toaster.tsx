@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { inject } from '../store';
+import './Toaster.css'
 
 const TOAST_TIMEOUT_MS = 8000;
 

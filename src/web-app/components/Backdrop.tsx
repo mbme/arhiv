@@ -7,7 +7,7 @@ export type BackdropClickEvent = React.MouseEvent<HTMLDivElement>
 
 interface IProps {
   children: JSX.Element
-  onClick: (e: BackdropClickEvent) => void
+  onClick?: (e: BackdropClickEvent) => void
   className?: string
 }
 export default class Backdrop extends PureComponent<IProps, {}> {

@@ -5,6 +5,7 @@ import log from '../../logger';
 import { api } from '../utils';
 import { authorize } from '../utils/auth';
 import { Backdrop, Input } from '../components';
+import './AuthView.css'
 
 async function checkPassword(password) {
   await authorize(password);

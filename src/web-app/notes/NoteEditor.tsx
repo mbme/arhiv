@@ -18,8 +18,9 @@ import { Consumer } from '../chrome/Router';
 import Note from './Note';
 import AttachFileButton from './AttachFileButton';
 import DeleteNoteButton from './DeleteNoteButton';
+import './Note.css'
 
-const isImage = name => [ '.png', '.jpg', '.jpeg' ].reduce((acc, ext) => acc || name.endsWith(ext), false);
+const isImage = name => ['.png', '.jpg', '.jpeg'].reduce((acc, ext) => acc || name.endsWith(ext), false);
 
 export default class NoteEditor extends PureComponent {
   static propTypes = {
@@ -60,13 +61,13 @@ export default class NoteEditor extends PureComponent {
   getAssets() {
     const ids = extractFileIds(parse(this.state.data));
     // TODO filter out known files
-    return Object.entries(this.localFiles).filter(([ id ]) => ids.includes(id)).map(([ , file ]) => file.file);
+    return Object.entries(this.localFiles).filter(([id]) => ids.includes(id)).map(([, file]) => file.file);
   }
 
   onFilesSelected = async (files) => {
     const links = [];
 
-    Object.entries(files).forEach(([ hash, { file, data } ]) => {
+    Object.entries(files).forEach(([hash, { file, data }]) => {
       links.push((isImage(file.name) ? createImageLink : createLink)(file.name, hash));
 
       if (!this.localFiles[hash]) {

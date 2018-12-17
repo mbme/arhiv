@@ -10,6 +10,7 @@ import {
   Toolbar,
 } from '../components';
 import { ICON_TYPES } from '../components/Icon';
+import './ThemeView.css'
 
 const colorSquare = color => <div className="Theme-color-square" style={{ backgroundColor: color }} />;
 const spacingSquare = size => <div className="Theme-spacing-square" style={{ width: size, height: size }} />;

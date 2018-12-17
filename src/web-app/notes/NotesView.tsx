@@ -10,6 +10,7 @@ import {
   Link,
   Filter,
 } from '../components';
+import './NotesView.css'
 
 class NotesView extends PureComponent {
   static propTypes = {
@@ -45,13 +46,13 @@ class NotesView extends PureComponent {
 
     const left = (
       <Consumer>{
-          ({ replaceParam }) => (
-            <Filter
-              placeholder="Filter notes"
-              filter={this.props.filter}
-              onChange={newFilter => replaceParam('filter', newFilter)}
-            />
-          )}
+        ({ replaceParam }) => (
+          <Filter
+            placeholder="Filter notes"
+            filter={this.props.filter}
+            onChange={newFilter => replaceParam('filter', newFilter)}
+          />
+        )}
       </Consumer>
     );
 

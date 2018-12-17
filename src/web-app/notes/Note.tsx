@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { parse } from '../../v-parser';
 import { getFileUrl } from '../utils';
+import './Note.css'
 
 export default class Note extends PureComponent {
   static propTypes = {

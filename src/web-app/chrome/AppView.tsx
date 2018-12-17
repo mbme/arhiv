@@ -1,109 +1,91 @@
 import React, { PureComponent, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { inject } from '../store';
-import { Link, Backdrop } from '../components';
-import { classNames } from '../../utils/browser';
-import { deauthorize } from '../utils';
-import AuthView from './AuthView';
-import Router from './Router';
-import ProgressLocker from './ProgressLocker';
-import NetworkEventsObserver from './NetworkEventsObserver';
-import Toaster from './Toaster';
+import { ProgressLocker } from '../components';
+import Redirect from '../parts/Redirect';
 
-class AppView extends PureComponent {
+import AuthView from './AuthView';
+import NotFoundView from './NotFoundView';
+import ThemeView from './ThemeView';
+import NotesView from '../notes/NotesView';
+import NoteView from '../notes/NoteView';
+import NoteEditorView from '../notes/NoteEditorView';
+import { IRoute } from '../../web-router';
+
+const Routes: { [key: string]: (params: any) => JSX.Element } = {
+  '/': () => <Redirect to={{ name: 'notes' }} />,
+  '/theme': () => <ThemeView />,
+  '/notes': () => <NotesView />,
+  '/note': ({ id }) => {
+    if (!id) {
+      return <NotFoundView />;
+    }
+
+    return <NoteView id={parseInt(id, 10)} />;
+  },
+  '/note-editor': ({ id }) => <NoteEditorView id={id ? parseInt(id, 10) : null} />,
+};
+
+interface IProps {
+  route?: IRoute
+  isAuthorized: boolean
+  isLockerVisible: boolean
+}
+
+interface IState {
+  view?: JSX.Element
+}
+
+class AppView extends PureComponent<IProps, IState> {
   static propTypes = {
     route: PropTypes.object,
-    isNavVisible: PropTypes.bool.isRequired,
-    showNav: PropTypes.func.isRequired,
     isAuthorized: PropTypes.bool,
     isLockerVisible: PropTypes.bool.isRequired,
   };
 
-  logout = () => {
-    deauthorize();
-    window.location.reload();
+  state = {
+    view: undefined,
   };
 
-  renderNavbar() {
-    const routeName = this.props.route ? this.props.route.name : null;
-
-    const isNoteNavTree = [ 'notes', 'note', 'note-editor' ].includes(routeName);
-
-    const navbar = (
-      <nav className="App-navbar">
-        <Link
-          clean
-          to={{ name: 'notes' }}
-          className={classNames('App-navlink', { 'is-selected': isNoteNavTree })}
-        >
-          Notes
-        </Link>
-
-        <Link
-          clean
-          to={{ name: 'theme' }}
-          className={classNames('App-navlink', { 'is-selected': routeName === 'theme' })}
-        >
-          Theme
-        </Link>
-
-        <div className="App-logout" onClick={this.logout}>
-          Logout
-        </div>
-      </nav>
-    );
-
-    return (
-      <Fragment>
-        <div className="App-navbar-container">{navbar}</div>
-
-        {this.props.isNavVisible && (
-          <Backdrop onClick={() => this.props.showNav(false)}>
-            {navbar}
-          </Backdrop>
-        )}
-      </Fragment>
-    );
-  }
-
-  renderAuth = () => (
-    <Fragment>
-      <AuthView />
-      <NetworkEventsObserver />
-      {this.props.isLockerVisible && <ProgressLocker />}
-    </Fragment>
-  );
-
-  renderApp = view => (
-    <div className="App-container">
-      {this.renderNavbar()}
-
-      <div className="App-view">
-        {view}
-      </div>
-
-      <Toaster />
-      <NetworkEventsObserver withToasts />
-      {this.props.isLockerVisible && <ProgressLocker />}
-    </div>
-  );
-
-  render() {
-    if (!this.props.isAuthorized) {
-      return this.renderAuth();
+  static getDerivedStateFromProps({ route, isAuthorized }: IProps) {
+    if (!isAuthorized) {
+      return {
+        view: <AuthView />,
+      }
     }
 
+    if (!route) {
+      return {
+        view: null,
+      };
+    }
+
+    const getView = Routes[route.path];
+    if (!getView) {
+      return {
+        view: <NotFoundView />,
+      };
+    }
+
+    return {
+      view: getView(route.params),
+    };
+  }
+
+
+  render() {
     return (
-      <Router render={this.renderApp} />
+      <Fragment>
+        {this.state.view}
+        {this.props.isLockerVisible && <ProgressLocker />}
+      </Fragment>
     );
   }
 }
 
 const mapStoreToProps = (state, actions) => ({
   isLockerVisible: state.showLocker,
-  isNavVisible: state.showNav,
   isAuthorized: state.isAuthorized,
-  showNav: actions.showNav,
   route: state.route,
 });
 

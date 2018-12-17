@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { inject } from '../store';
-import Icon from './Icon'
+import { Icon } from '../components'
 import './Toolbar.css'
 
 interface IProps {

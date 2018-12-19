@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { inject } from '../store';
+import { inject, IStore } from '../store';
 import log from '../../logger';
 import { api } from '../utils';
 import { authorize } from '../utils/auth';
@@ -60,8 +60,8 @@ class AuthView extends PureComponent {
   }
 }
 
-const mapStoreToProps = state => ({
-  isAuthorized: state.isAuthorized,
+const mapStoreToProps = (store: IStore) => ({
+  isAuthorized: store.isAuthorized,
 });
 
 export default inject(mapStoreToProps, AuthView);

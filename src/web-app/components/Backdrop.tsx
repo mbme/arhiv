@@ -6,7 +6,7 @@ import './Backdrop.css'
 export type BackdropClickEvent = React.MouseEvent<HTMLDivElement>
 
 interface IProps {
-  children: JSX.Element
+  children: React.ReactNode
   onClick?: (e: BackdropClickEvent) => void
   className?: string
 }

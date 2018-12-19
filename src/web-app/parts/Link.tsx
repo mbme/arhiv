@@ -4,16 +4,24 @@ import { IRoute } from '../../web-router'
 import { inject, IStore } from '../store'
 import './Link.css'
 
+interface ILinkRoute {
+  path: string
+  params?: { [key: string]: string }
+}
+
 interface IProps {
   className?: string
   clean?: boolean
   children: React.ReactNode
-  to: IRoute
+  to: ILinkRoute
   push: (route: IRoute) => void
 }
 class Link extends PureComponent<IProps, {}> {
   onClick = () => {
-    this.props.push(this.props.to)
+    this.props.push({
+      path: this.props.to.path,
+      params: this.props.to.params || {},
+    })
   }
 
   render() {

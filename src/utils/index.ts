@@ -186,9 +186,3 @@ export function classNames(...args: any[]) {
 }
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-
-export type Merge<L, R> =
-  // Mandatory properties
-  Pick<L, Exclude<keyof L, keyof R>>
-  // Optional properties
-  & Partial<R>

@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react'
 import { Backdrop } from '../components'
-import { classNames } from '../../utils';
-import { deauthorize } from '../utils';
+import { classNames } from '../../utils'
+import { deauthorize } from '../utils'
 import Link from './Link'
 import Toaster from './Toaster'
 import './Navbar.css'
@@ -16,9 +16,9 @@ interface IProps {
 }
 
 export default class ViewLayout extends PureComponent<IProps, {}> {
-  logout = () => {
-    deauthorize();
-    window.location.reload();
+  logout = async () => {
+    await deauthorize()
+    window.location.reload()
   }
 
   render() {
@@ -51,7 +51,7 @@ export default class ViewLayout extends PureComponent<IProps, {}> {
           Logout
         </div>
       </nav>
-    );
+    )
 
     return (
       <div className="App-container">
@@ -69,6 +69,6 @@ export default class ViewLayout extends PureComponent<IProps, {}> {
 
         <Toaster />
       </div>
-    );
+    )
   }
 }

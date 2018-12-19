@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react'
 import WebRouter, { IRoute } from '../web-router'
-import { Merge } from '../utils'
+import { Omit } from '../utils'
 
 export interface IStore {
   route?: IRoute
@@ -66,14 +66,14 @@ export class StoreProvider extends PureComponent {
   }
 }
 
-export function inject<TMappedProps, TOwnProps>(
-  mapStoreToProps: (store: IStore, props: TOwnProps) => TMappedProps,
-  Component: React.ComponentType<Merge<TMappedProps, TOwnProps>>
+export function inject<P extends PI, PI>(
+  mapStoreToProps: (store: IStore) => PI,
+  Component: React.ComponentType<P>
 ) {
   // tslint:disable-next-line:max-classes-per-file
-  return class StoreInjector extends PureComponent<TOwnProps> {
+  return class StoreInjector extends PureComponent<Omit<P, keyof PI>> {
     renderComponent = (store: IStore) => {
-      const mappedProps = mapStoreToProps(store, this.props)
+      const mappedProps = mapStoreToProps(store)
 
       return (
         <Component {...{ ...this.props, ...mappedProps }} />

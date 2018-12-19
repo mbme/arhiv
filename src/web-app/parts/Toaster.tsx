@@ -1,27 +1,25 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { inject } from '../store';
+import React, { PureComponent } from 'react'
+import { inject, IStore } from '../store'
 import './Toaster.css'
 
-const TOAST_TIMEOUT_MS = 8000;
+const TOAST_TIMEOUT_MS = 8000
 
-class Toaster extends PureComponent {
-  static propTypes = {
-    toast: PropTypes.node,
-    showToast: PropTypes.func.isRequired,
-  };
+interface IProps {
+  toast?: JSX.Element
+  hideToast: () => void
+}
+class Toaster extends PureComponent<IProps, {}> {
+  toastTimeout?: number
 
-  toastTimeout = null;
-
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: IProps) {
     if (this.props.toast && this.props.toast !== prevProps.toast) { // hide toast in few seconds
-      clearTimeout(this.toastTimeout);
-      this.toastTimeout = setTimeout(this.props.showToast, TOAST_TIMEOUT_MS, null);
+      clearTimeout(this.toastTimeout)
+      this.toastTimeout = window.setTimeout(this.props.hideToast, TOAST_TIMEOUT_MS)
     }
   }
 
   componentWillUnmount() {
-    clearTimeout(this.toastTimeout);
+    clearTimeout(this.toastTimeout)
   }
 
   render() {
@@ -29,13 +27,13 @@ class Toaster extends PureComponent {
       <div className="Toaster-container">
         {this.props.toast}
       </div>
-    );
+    )
   }
 }
 
-const mapStoreToProps = (state, actions) => ({
-  toast: state.toast,
-  showToast: actions.showToast,
-});
+const mapStoreToProps = (store: IStore) => ({
+  toast: store.toast,
+  hideToast: store.hideToast,
+})
 
-export default inject(mapStoreToProps, Toaster);
+export default inject(mapStoreToProps, Toaster)

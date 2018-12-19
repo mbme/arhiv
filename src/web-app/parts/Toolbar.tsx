@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
-import { inject } from '../store';
+import React, { PureComponent } from 'react'
+import { inject, IStore } from '../store'
 import { Icon } from '../components'
 import './Toolbar.css'
 
@@ -10,7 +10,7 @@ interface IProps {
   showNav: (show: boolean) => void
 }
 class Toolbar extends PureComponent<IProps, {}> {
-  toggleNav = () => this.props.showNav(!this.props.isNavVisible);
+  toggleNav = () => this.props.showNav(!this.props.isNavVisible)
 
   render() {
     return (
@@ -23,13 +23,13 @@ class Toolbar extends PureComponent<IProps, {}> {
           {this.props.right}
         </div>
       </div>
-    );
+    )
   }
 }
 
-const mapStoreToProps = (state, actions) => ({
-  isNavVisible: state.showNav,
-  showNav: actions.showNav,
-});
+const mapStoreToProps = (store: IStore) => ({
+  isNavVisible: store.isNavVisible,
+  showNav: store.showNav,
+})
 
-export default inject(mapStoreToProps, Toolbar);
+export default inject(mapStoreToProps, Toolbar)

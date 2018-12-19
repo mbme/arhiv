@@ -1,19 +1,14 @@
 import React, { PureComponent } from 'react'
-import { classNames } from '../../utils'
+import { classNames, OptionalProps } from '../../utils'
 import { IRoute } from '../../web-router'
 import { inject, IStore } from '../store'
 import './Link.css'
-
-interface ILinkRoute {
-  path: string
-  params?: { [key: string]: string }
-}
 
 interface IProps {
   className?: string
   clean?: boolean
   children: React.ReactNode
-  to: ILinkRoute
+  to: OptionalProps<IRoute, 'params'>
   push: (route: IRoute) => void
 }
 class Link extends PureComponent<IProps, {}> {

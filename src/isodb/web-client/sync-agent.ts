@@ -1,58 +1,74 @@
 import LockManager from './lock-manager'
 import { IPatchResponse, ChangedRecord, Record } from '../core/types'
 import ReplicaDB from '../core/replica'
+import PubSub from '../../utils/pubsub'
 
-async function pushChanges(
-  rev: number,
-  records: ChangedRecord[],
-  attachments: { [hash: string]: Blob }
-): Promise<IPatchResponse> {
-  const data = new FormData()
-  data.append('rev', rev.toString())
-  data.append('records', JSON.stringify(records))
-  for (const [hash, blob] of Object.entries(attachments)) {
-    data.append(hash, blob)
-  }
-
-  const response = await fetch('/api/changes', {
-    method: 'post',
-    credentials: 'include',
-    body: data,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Server responded with code ${response.status}`)
-  }
-
-  return response.json()
+interface IEvents {
+  'unauthorized': undefined
+  'network-error': number
 }
 
 // TODO logs
-// TODO listen to network
+// TODO listen to network availability
 // TODO circuit breaker
+// TODO run isodb/web-client in a Shared Worker
 export default class SyncAgent {
+  events: PubSub<IEvents> = new PubSub()
   _syncIntervalId: number | undefined
 
-  constructor(public _replica: ReplicaDB, public _lockManager: LockManager) { }
+  constructor(
+    public replica: ReplicaDB,
+    public lockManager: LockManager
+  ) { }
 
   _merge = async (_base: Record, _newBase: Record, local: ChangedRecord) => {
     // FIXME implement merge
     return local
   }
 
+  async _pushChanges(
+    rev: number,
+    records: ChangedRecord[],
+    attachments: { [hash: string]: Blob }
+  ): Promise<IPatchResponse> {
+    const data = new FormData()
+    data.append('rev', rev.toString())
+    data.append('records', JSON.stringify(records))
+    for (const [hash, blob] of Object.entries(attachments)) {
+      data.append(hash, blob)
+    }
+
+    const response = await fetch('/api/changes', {
+      method: 'post',
+      credentials: 'include',
+      body: data,
+    })
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        this.events.emit('unauthorized', undefined)
+      } else {
+        this.events.emit('network-error', response.status)
+      }
+      throw new Error(`Server responded with code ${response.status}`)
+    }
+
+    return response.json()
+  }
+
   async _sync() {
-    if (!this._lockManager.lockDB()) return false
+    if (!this.lockManager.lockDB()) return false
 
     try {
       let tries = 0
       while (true) {
-        const result = await pushChanges(
-          this._replica.getRev(),
-          this._replica.storage.getLocalRecords(),
-          this._replica.storage.getLocalAttachments()
+        const result = await this._pushChanges(
+          this.replica.getRev(),
+          this.replica.storage.getLocalRecords(),
+          this.replica.storage.getLocalAttachments()
         )
 
-        await this._replica.applyPatch(result, this._merge)
+        await this.replica.applyPatch(result, this._merge)
 
         if (result.applied) {
           return true
@@ -64,7 +80,7 @@ export default class SyncAgent {
         }
       }
     } finally {
-      this._lockManager.unlockDB()
+      this.lockManager.unlockDB()
     }
   }
 

@@ -1,29 +1,33 @@
-export default function createPubSub<T>() {
-  type Handler = (params?: T) => void
+type Event<T> = keyof T
+type Params<T> = T[Event<T>]
+type Handler<T> = (params: Params<T>) => void
+type Handlers<T> = Set<Handler<T>>
+type HandlersMap<T> = Map<Event<T>, Handlers<T>>
 
-  const subs = new Map<string, Set<Handler>>()
+export default class PubSub<T> {
+  subs: HandlersMap<T> = new Map()
 
-  const getEventSubs = (name: string) => (subs.get(name) || new Set())
+  getEventSubs(name: Event<T>) {
+    return this.subs.get(name) || new Set()
+  }
 
-  return {
-    on(name: string, handler: Handler) {
-      const eventSubs = getEventSubs(name)
-      eventSubs.add(handler)
+  on(name: Event<T>, handler: Handler<T>) {
+    const eventSubs = this.getEventSubs(name)
+    eventSubs.add(handler)
 
-      subs.set(name, eventSubs)
-    },
+    this.subs.set(name, eventSubs)
+  }
 
-    off(name: string, handler: Handler) {
-      const eventSubs = getEventSubs(name)
-      eventSubs.delete(handler)
+  off(name: Event<T>, handler: Handler<T>) {
+    const eventSubs = this.getEventSubs(name)
+    eventSubs.delete(handler)
 
-      if (!eventSubs.size) {
-        subs.delete(name)
-      }
-    },
+    if (!eventSubs.size) {
+      this.subs.delete(name)
+    }
+  }
 
-    emit(name: string, params?: T) {
-      getEventSubs(name).forEach(handler => handler(params))
-    },
+  emit(name: Event<T>, params: Params<T>) {
+    this.getEventSubs(name).forEach(handler => handler(params))
   }
 }

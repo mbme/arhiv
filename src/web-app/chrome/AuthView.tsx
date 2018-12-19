@@ -2,12 +2,11 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { inject, IStore } from '../store';
 import log from '../../logger';
-import { api } from '../utils';
-import { authorize } from '../utils/auth';
+import { authorize } from '../utils';
 import { Backdrop, Input } from '../components';
 import './AuthView.css'
 
-async function checkPassword(password) {
+async function checkPassword(password: string) {
   await authorize(password);
 
   try {

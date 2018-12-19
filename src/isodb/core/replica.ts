@@ -141,6 +141,7 @@ export default class ReplicaDB {
       const existingRecord = currentRecords[localRecord._id]
       const newRecord = newRecords.find(item => item._id === localRecord._id)!
 
+      // FIXME resolve merge conflicts in a batch
       // if is existing record & revision changed
       //   merge
       if (existingRecord._rev !== newRecord._rev) {

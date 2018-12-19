@@ -1,4 +1,3 @@
-// FIXME implement through the SharedWorker
 export default class LockManager {
   _dbLocked = false
   _recordLocks = new Set<string>()

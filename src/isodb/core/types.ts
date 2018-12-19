@@ -1,5 +1,3 @@
-import { Callback } from '../../utils'
-
 export type RecordType = 'note' | 'other'
 
 export interface IRecord {
@@ -79,9 +77,6 @@ export interface IReplicaStorage {
   removeLocalRecord(id: string): void
 
   clearLocalRecords(): void
-
-  onUpdate(cb: Callback): void
-  offUpdate(cb: Callback): void
 }
 
 export type MergeFunction = (base: Record, updated: Record, local: ChangedRecord) => Promise<ChangedRecord>

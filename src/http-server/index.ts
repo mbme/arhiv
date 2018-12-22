@@ -1,2 +1,2 @@
 export { default as Server } from './server'
-export { MultipartBody } from './types'
+export { MultipartBody, StringBody, JSONBody } from './types'

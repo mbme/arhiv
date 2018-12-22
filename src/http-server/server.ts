@@ -5,7 +5,15 @@ import log from '../logger'
 import { isString, isObject } from '../utils'
 import { gzip, pipePromise } from '../utils/node'
 import { Stream } from 'stream'
-import { IContext, Next, HttpMethod, parseHttpMethod, IHeaders, IRequest, IResponse } from './types'
+import {
+  IContext,
+  Next,
+  HttpMethod,
+  parseHttpMethod,
+  IHeaders,
+  IRequest,
+  IResponse,
+} from './types'
 import bodyParserMiddleware from './body-parser-middleware'
 
 type Middleware = (context: IContext, next: Next) => Promise<void> | void

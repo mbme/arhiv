@@ -1,11 +1,6 @@
 import IsodbReplica from '../core/replica'
 import ReplicaInMemStorage from '../core/replica-in-mem-storage'
 import PubSub from '../../utils/pubsub'
-import {
-  aesEncrypt,
-  text2buffer,
-  sha256,
-} from '../../utils/browser'
 import LockManager from './lock-manager'
 import SyncAgent from './sync-agent'
 
@@ -33,8 +28,12 @@ export default class IsodbClient {
   }
 
   async authorize(password: string) {
-    const token = await aesEncrypt(`valid ${Date.now()}`, await sha256(text2buffer(password)))
-    document.cookie = `token=${token}; path=/`
+    const response = await fetch('/api/auth', {
+      method: 'post',
+      body: password,
+    })
+
+    return response.ok
   }
 
   async deauthorize() {

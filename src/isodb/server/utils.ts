@@ -1,17 +1,27 @@
 import path from 'path'
-import fs from 'fs'
 import * as utils from '../../utils/node'
 import { listFiles } from '../../utils/fs'
 
-export async function resolveAsset(dir: string, name: string) {
-  if (!fs.existsSync(dir)) return undefined
-  if (!await listFiles(dir).then(files => files.includes(name))) return undefined
+export async function resolveAsset(dirs: string[], name: string) {
+  for (const dir of dirs) {
+    const files = await listFiles(dir)
 
-  return path.join(dir, name)
+    if (files.includes(name)) return path.join(dir, name)
+  }
+
+  return undefined
+}
+
+// create auth token cookie
+export function createToken(password: string) {
+  const token = utils.aesEncrypt(`valid ${Date.now()}`, utils.sha256(password))
+
+  const oneHour = 1 * 60 * 60 // seconds
+  return `token=${encodeURIComponent(token)}; path=/; Max-Age=${oneHour}; SameSite=Strict`
 }
 
 // extract auth token from cookies
-export function extractToken(cookies: string) {
+export function extractTokenCookie(cookies: string) {
   const [tokenCookie] = cookies.split(';').filter(c => c.startsWith('token='))
 
   if (!tokenCookie) return ''

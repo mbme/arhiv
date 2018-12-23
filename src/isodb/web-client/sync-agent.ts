@@ -8,6 +8,24 @@ interface IEvents {
   'network-error': number
 }
 
+interface ISyncState {
+  state: 'sync'
+}
+
+interface IMergeState {
+  state: 'merge'
+}
+
+interface ISyncedState {
+  state: 'synced'
+}
+
+interface INotSyncedState {
+  state: 'not-synced'
+}
+
+type AgentState = ISyncState | IMergeState | ISyncedState | INotSyncedState
+
 // TODO logs
 // TODO listen to network availability
 // TODO circuit breaker
@@ -15,6 +33,8 @@ interface IEvents {
 export default class SyncAgent {
   events: PubSub<IEvents> = new PubSub()
   _syncIntervalId: number | undefined
+
+  _state: AgentState = { state: 'not-synced' }
 
   constructor(
     public replica: ReplicaDB,

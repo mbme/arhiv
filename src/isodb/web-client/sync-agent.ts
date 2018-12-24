@@ -1,7 +1,14 @@
 import LockManager from './lock-manager'
-import { IPatchResponse, ChangedRecord, Record } from '../core/types'
+import {
+  IPatchResponse,
+  ChangedRecord,
+  IMergeConflict,
+} from '../core/types'
 import ReplicaDB from '../core/replica'
 import PubSub from '../../utils/pubsub'
+import { createLogger } from '../../logger'
+
+const log = createLogger('isodb-web-client:sync-agent')
 
 interface IEvents {
   'unauthorized': undefined
@@ -41,9 +48,10 @@ export default class SyncAgent {
     public lockManager: LockManager
   ) { }
 
-  _merge = async (_base: Record, _newBase: Record, local: ChangedRecord) => {
+  _merge = async (conflicts: IMergeConflict[]) => {
+    log.warn(`${conflicts.length} merge conflicts`)
     // FIXME implement merge
-    return local
+    return conflicts.map(conflict => conflict.local)
   }
 
   async _pushChanges(

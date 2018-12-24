@@ -136,16 +136,28 @@ export default class ReplicaDB {
       return
     }
 
+    const conflicts = []
+
     // for each local record
     for (const localRecord of this.storage.getLocalRecords()) {
       const existingRecord = currentRecords[localRecord._id]
       const newRecord = newRecords.find(item => item._id === localRecord._id)!
 
-      // FIXME resolve merge conflicts in a batch
       // if is existing record & revision changed
-      //   merge
+      //   mark as a conflict
       if (existingRecord._rev !== newRecord._rev) {
-        this.storage.addLocalRecord(await merge(existingRecord, newRecord, localRecord))
+        conflicts.push({
+          base: existingRecord,
+          updated: newRecord,
+          local: localRecord,
+        })
+      }
+    }
+
+    // resolve conflicts if needed
+    if (conflicts.length) {
+      for (const updatedRecord of await merge(conflicts)) {
+        this.storage.addLocalRecord(updatedRecord)
       }
     }
 

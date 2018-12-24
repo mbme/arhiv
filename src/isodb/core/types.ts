@@ -79,7 +79,13 @@ export interface IReplicaStorage {
   clearLocalRecords(): void
 }
 
-export type MergeFunction = (base: Record, updated: Record, local: ChangedRecord) => Promise<ChangedRecord>
+export interface IMergeConflict {
+  base: Record
+  updated: Record
+  local: ChangedRecord
+}
+
+export type MergeFunction = (conflicts: IMergeConflict[]) => Promise<ChangedRecord[]>
 
 export interface IPatchResponse {
   applied: boolean

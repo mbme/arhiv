@@ -1,46 +1,42 @@
 import IsodbReplica from '../core/replica'
 import ReplicaInMemStorage from '../core/replica-in-mem-storage'
-import PubSub from '../../utils/pubsub'
-import LockManager from './lock-manager'
+import { createEventsPubSub } from './events'
+import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'
+import NetworkAgent from './network-agent'
+import AuthAgent from './auth-agent'
 
 export default class IsodbClient {
-  events = new PubSub()
+  db = new IsodbReplica(new ReplicaInMemStorage())
+  events = createEventsPubSub()
 
-  _db: IsodbReplica
-  _lockManager: LockManager
-  _syncAgent: SyncAgent
+  _networkAgent = new NetworkAgent(this.events)
+  _lockAgent = new LockAgent(this.events)
+  _authAgent = new AuthAgent(this.events, this._networkAgent)
 
-  constructor() {
-    this._db = new IsodbReplica(new ReplicaInMemStorage(this.events))
+  _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent)
 
-    this._lockManager = new LockManager()
-
-    this._syncAgent = new SyncAgent(this._db, this._lockManager)
+  start() {
+    this._networkAgent.start()
+    this._authAgent.start()
     this._syncAgent.start()
   }
 
-  canLockRecord(id: string) {
-    return this._lockManager.canLockRecord(id)
+  stop() {
+    this._networkAgent.stop()
+    this._authAgent.stop()
+    this._syncAgent.stop()
   }
+
   lockRecord(id: string) {
-    return this._lockManager.lockRecord(id)
+    return this._lockAgent.lockRecord(id)
   }
 
   async authorize(password: string) {
-    const response = await fetch('/api/auth', {
-      method: 'post',
-      body: password,
-    })
-
-    return response.ok
+    return this._networkAgent.authorize(password)
   }
 
   async deauthorize() {
-    document.cookie = 'token=0; path=/'
-  }
-
-  destroy() {
-    this._syncAgent.stop()
+    return this._networkAgent.deauthorize()
   }
 }

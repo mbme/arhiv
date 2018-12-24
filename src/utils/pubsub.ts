@@ -1,24 +1,20 @@
-type Event<T> = keyof T
-type Params<T> = T[Event<T>]
-type Handler<T> = (params: Params<T>) => void
-type Handlers<T> = Set<Handler<T>>
-type HandlersMap<T> = Map<Event<T>, Handlers<T>>
+type Handler<T, K extends keyof T> = (params: T[K]) => void
 
 export default class PubSub<T> {
-  subs: HandlersMap<T> = new Map()
+  subs = new Map()
 
-  getEventSubs(name: Event<T>) {
+  getEventSubs<K extends keyof T>(name: K): Set<Handler<T, K>> {
     return this.subs.get(name) || new Set()
   }
 
-  on(name: Event<T>, handler: Handler<T>) {
+  on<K extends keyof T>(name: K, handler: Handler<T, K>) {
     const eventSubs = this.getEventSubs(name)
     eventSubs.add(handler)
 
     this.subs.set(name, eventSubs)
   }
 
-  off(name: Event<T>, handler: Handler<T>) {
+  off<K extends keyof T>(name: K, handler: Handler<T, K>) {
     const eventSubs = this.getEventSubs(name)
     eventSubs.delete(handler)
 
@@ -27,7 +23,7 @@ export default class PubSub<T> {
     }
   }
 
-  emit(name: Event<T>, params: Params<T>) {
-    this.getEventSubs(name).forEach(handler => handler(params))
+  emit<K extends keyof T>(name: K, params: T[K]) {
+    this.getEventSubs<K>(name).forEach(handler => handler(params))
   }
 }

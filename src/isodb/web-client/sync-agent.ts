@@ -1,19 +1,12 @@
-import LockManager from './lock-manager'
+import LockAgent from './lock-agent'
 import {
-  IPatchResponse,
-  ChangedRecord,
   IMergeConflict,
 } from '../core/types'
 import ReplicaDB from '../core/replica'
-import PubSub from '../../utils/pubsub'
 import { createLogger } from '../../logger'
+import NetworkAgent from './network-agent'
 
 const log = createLogger('isodb-web-client:sync-agent')
-
-interface IEvents {
-  'unauthorized': undefined
-  'network-error': number
-}
 
 interface ISyncState {
   state: 'sync'
@@ -34,18 +27,16 @@ interface INotSyncedState {
 type AgentState = ISyncState | IMergeState | ISyncedState | INotSyncedState
 
 // TODO logs
-// TODO listen to network availability
 // TODO circuit breaker
-// TODO run isodb/web-client in a Shared Worker
 export default class SyncAgent {
-  events: PubSub<IEvents> = new PubSub()
   _syncIntervalId: number | undefined
 
   _state: AgentState = { state: 'not-synced' }
 
   constructor(
     public replica: ReplicaDB,
-    public lockManager: LockManager
+    public lockAgent: LockAgent,
+    public networkAgent: NetworkAgent
   ) { }
 
   _merge = async (conflicts: IMergeConflict[]) => {
@@ -54,43 +45,13 @@ export default class SyncAgent {
     return conflicts.map(conflict => conflict.local)
   }
 
-  async _pushChanges(
-    rev: number,
-    records: ChangedRecord[],
-    attachments: { [hash: string]: Blob }
-  ): Promise<IPatchResponse> {
-    const data = new FormData()
-    data.append('rev', rev.toString())
-    data.append('records', JSON.stringify(records))
-    for (const [hash, blob] of Object.entries(attachments)) {
-      data.append(hash, blob)
-    }
-
-    const response = await fetch('/api/changes', {
-      method: 'post',
-      credentials: 'include',
-      body: data,
-    })
-
-    if (!response.ok) {
-      if (response.status === 403) {
-        this.events.emit('unauthorized', undefined)
-      } else {
-        this.events.emit('network-error', response.status)
-      }
-      throw new Error(`Server responded with code ${response.status}`)
-    }
-
-    return response.json()
-  }
-
   async _sync() {
-    if (!this.lockManager.lockDB()) return false
+    if (!this.lockAgent.lockDB()) return false
 
     try {
       let tries = 0
       while (true) {
-        const result = await this._pushChanges(
+        const result = await this.networkAgent.syncChanges(
           this.replica.getRev(),
           this.replica.storage.getLocalRecords(),
           this.replica.storage.getLocalAttachments()
@@ -108,19 +69,28 @@ export default class SyncAgent {
         }
       }
     } finally {
-      this.lockManager.unlockDB()
+      this.lockAgent.unlockDB()
     }
   }
 
-  start() {
+  _scheduleSync() {
     // tslint:disable-next-line:no-floating-promises
     this._sync()
 
     // schedule sync once per minute
+    clearInterval(this._syncIntervalId)
     this._syncIntervalId = window.setInterval(this._sync, 60 * 1000)
   }
 
-  stop() {
+  _cancelSync() {
     clearInterval(this._syncIntervalId)
+  }
+
+  start() {
+    this._scheduleSync()
+  }
+
+  stop() {
+    this._cancelSync()
   }
 }

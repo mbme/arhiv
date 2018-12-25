@@ -11,8 +11,12 @@ export default class AuthAgent {
     public networkAgent: NetworkAgent
   ) { }
 
+  isAuthorized() {
+    return this.state === 'authorized'
+  }
+
   _notify() {
-    this.events.emit('authorized', this.state === 'authorized')
+    this.events.emit('authorized', this.isAuthorized())
   }
 
   async authorize(password: string) {

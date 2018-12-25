@@ -5,6 +5,7 @@ import {
 import ReplicaDB from '../core/replica'
 import { createLogger } from '../../logger'
 import NetworkAgent from './network-agent'
+import AuthAgent from './auth-agent'
 
 const log = createLogger('isodb-web-client:sync-agent')
 
@@ -36,7 +37,8 @@ export default class SyncAgent {
   constructor(
     public replica: ReplicaDB,
     public lockAgent: LockAgent,
-    public networkAgent: NetworkAgent
+    public networkAgent: NetworkAgent,
+    public authAgent: AuthAgent
   ) { }
 
   _merge = async (conflicts: IMergeConflict[]) => {
@@ -46,11 +48,27 @@ export default class SyncAgent {
   }
 
   async _sync() {
-    if (!this.lockAgent.lockDB()) return false
+    if (!this.lockAgent.isFree()) {
+      log.debug('Skipping sync: lock is not free')
+      return false
+    }
+
+    if (!this.networkAgent.isOnline()) {
+      log.debug('Skipping sync: network is offline')
+      return false
+    }
+
+    if (!this.authAgent.isAuthorized()) {
+      log.debug('Skipping sync: not authorized')
+      return false
+    }
 
     try {
+      this.lockAgent.lockDB()
+
       let tries = 0
       while (true) {
+        log.debug(`sync: trial #${tries + 1}`)
         const result = await this.networkAgent.syncChanges(
           this.replica.getRev(),
           this.replica.storage.getLocalRecords(),
@@ -60,14 +78,19 @@ export default class SyncAgent {
         await this.replica.applyPatch(result, this._merge)
 
         if (result.applied) {
+          log.debug('sync: ok')
           return true
         }
 
         tries += 1
         if (tries > 2) {
-          throw new Error('Failed to sync, try again later')
+          log.error('Failed to sync: exceeded max attemts')
+          return false
         }
       }
+    } catch (e) {
+      log.error('Failed to sync', e)
+      return false
     } finally {
       this.lockAgent.unlockDB()
     }
@@ -84,6 +107,10 @@ export default class SyncAgent {
 
   _cancelSync() {
     clearInterval(this._syncIntervalId)
+  }
+
+  syncNow() {
+    this._scheduleSync()
   }
 
   start() {

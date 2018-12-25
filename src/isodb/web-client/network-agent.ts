@@ -73,6 +73,10 @@ export default class NetworkAgent {
     this.events.emit('network-online', this.state === 'online')
   }
 
+  isOnline() {
+    return this.state === 'online'
+  }
+
   start() {
     window.addEventListener('online', this._onNetworkConnectionChange)
     window.addEventListener('offline', this._onNetworkConnectionChange)

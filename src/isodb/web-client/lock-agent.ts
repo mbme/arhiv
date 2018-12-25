@@ -26,8 +26,12 @@ export default class LockAgent {
     this.events.emit('isodb-lock', [dbLocked, recordsLocked])
   }
 
+  isFree() {
+    return this.state.state === 'free'
+  }
+
   lockDB() {
-    if (this.state.state !== 'free') {
+    if (!this.isFree()) {
       throw new Error("Can't lock db: not free")
     }
 

@@ -7,14 +7,15 @@ import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
 
 export default class IsodbClient {
-  db = new IsodbReplica(new ReplicaInMemStorage())
   events = createEventsPubSub()
+
+  // FIXME watch for db updates
+  db = new IsodbReplica(new ReplicaInMemStorage())
 
   _networkAgent = new NetworkAgent(this.events)
   _lockAgent = new LockAgent(this.events)
   _authAgent = new AuthAgent(this.events, this._networkAgent)
-
-  _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent)
+  _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent, this._authAgent)
 
   start() {
     this._networkAgent.start()
@@ -38,5 +39,9 @@ export default class IsodbClient {
 
   async deauthorize() {
     return this._networkAgent.deauthorize()
+  }
+
+  syncNow() {
+    return this._syncAgent.syncNow()
   }
 }

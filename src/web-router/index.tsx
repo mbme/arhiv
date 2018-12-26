@@ -1,12 +1,18 @@
+import PubSub from '../utils/pubsub'
+
 export interface IRoute {
   path: string
   params: { [key: string]: string }
 }
 
+export interface IEvents {
+  'route-changed': IRoute
+}
+
 export default class WebRouter {
   route?: IRoute
 
-  constructor(public onChange: (route: IRoute) => void) { }
+  constructor(public events = new PubSub<IEvents>()) { }
 
   _createUrl(route: IRoute) {
     const queryParams = new URLSearchParams()
@@ -35,7 +41,7 @@ export default class WebRouter {
       path: location.pathname,
       params,
     }
-    this.onChange(this.route)
+    this.events.emit('route-changed', this.route)
   }
 
   push(route: IRoute) {

@@ -1,5 +1,4 @@
 import { test } from '../../tester'
-import PubSub from '../../utils/pubsub'
 import ReplicaDB from './replica'
 import InMemStorage from './replica-in-mem-storage'
 
@@ -19,7 +18,7 @@ function initDB(remote: number, local: number) {
 
   return {
     storage,
-    db: new ReplicaDB(storage, new PubSub()),
+    db: new ReplicaDB(storage),
   }
 }
 

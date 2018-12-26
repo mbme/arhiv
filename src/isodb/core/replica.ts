@@ -1,4 +1,5 @@
 import { isString, array2object, flatten } from '../../utils'
+import PubSub from '../../utils/pubsub'
 import { createLogger } from '../../logger'
 import { getRandomId, isAttachment } from './utils'
 import {
@@ -8,7 +9,6 @@ import {
   MergeFunction,
   IPatchResponse,
 } from './types'
-import PubSub from '../../utils/pubsub';
 
 const logger = createLogger('isodb-replica')
 
@@ -19,7 +19,7 @@ export interface IEvents {
 export default class ReplicaDB {
   constructor(
     public storage: IReplicaStorage,
-    public events: PubSub<IEvents>
+    public events = new PubSub<IEvents>()
   ) { }
 
   _notify() {

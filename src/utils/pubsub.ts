@@ -1,21 +1,17 @@
 type Handler<T, K extends keyof T> = (params: T[K]) => void
 
 export default class PubSub<T> {
-  subs = new Map()
-
-  getEventSubs<K extends keyof T>(name: K): Set<Handler<T, K>> {
-    return this.subs.get(name) || new Set()
-  }
+  private subs = new Map()
 
   on<K extends keyof T>(name: K, handler: Handler<T, K>) {
-    const eventSubs = this.getEventSubs(name)
+    const eventSubs = this._getEventSubs(name)
     eventSubs.add(handler)
 
     this.subs.set(name, eventSubs)
   }
 
   off<K extends keyof T>(name: K, handler: Handler<T, K>) {
-    const eventSubs = this.getEventSubs(name)
+    const eventSubs = this._getEventSubs(name)
     eventSubs.delete(handler)
 
     if (!eventSubs.size) {
@@ -24,6 +20,10 @@ export default class PubSub<T> {
   }
 
   emit<K extends keyof T>(name: K, params: T[K]) {
-    this.getEventSubs<K>(name).forEach(handler => handler(params))
+    this._getEventSubs(name).forEach(handler => handler(params))
+  }
+
+  private _getEventSubs(name: string): Set<any> {
+    return this.subs.get(name) || new Set()
   }
 }

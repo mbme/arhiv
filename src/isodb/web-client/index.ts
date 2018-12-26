@@ -9,8 +9,7 @@ import AuthAgent from './auth-agent'
 export default class IsodbClient {
   events = createEventsPubSub()
 
-  // FIXME watch for db updates
-  db = new IsodbReplica(new ReplicaInMemStorage())
+  db = new IsodbReplica(new ReplicaInMemStorage(), this.events)
 
   _networkAgent = new NetworkAgent(this.events)
   _lockAgent = new LockAgent(this.events)

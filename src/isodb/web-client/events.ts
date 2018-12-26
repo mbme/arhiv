@@ -1,6 +1,7 @@
 import PubSub from '../../utils/pubsub'
+import { IEvents as IDBEvents } from '../core/replica'
 
-interface IEvents {
+interface IEvents extends IDBEvents {
   'authorized': boolean
   'network-online': boolean
   'network-error': number

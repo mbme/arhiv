@@ -8,11 +8,23 @@ import {
   MergeFunction,
   IPatchResponse,
 } from './types'
+import PubSub from '../../utils/pubsub';
 
 const logger = createLogger('isodb-replica')
 
+export interface IEvents {
+  'db-update': undefined
+}
+
 export default class ReplicaDB {
-  constructor(public storage: IReplicaStorage) { }
+  constructor(
+    public storage: IReplicaStorage,
+    public events: PubSub<IEvents>
+  ) { }
+
+  _notify() {
+    this.events.emit('db-update', undefined)
+  }
 
   /**
    * @returns storage revision
@@ -70,6 +82,8 @@ export default class ReplicaDB {
       _attachment: true,
       ...fields,
     }, blob)
+
+    this._notify()
   }
 
   updateAttachment(id: string, fields: object) {
@@ -81,6 +95,8 @@ export default class ReplicaDB {
       ...record,
       ...fields,
     })
+
+    this._notify()
   }
 
   /**
@@ -97,6 +113,8 @@ export default class ReplicaDB {
     })
 
     this._compact()
+
+    this._notify()
 
     return id
   }
@@ -120,6 +138,8 @@ export default class ReplicaDB {
     })
 
     this._compact()
+
+    this._notify()
   }
 
   async applyPatch({ applied, baseRev, currentRev, records }: IPatchResponse, merge: MergeFunction) {
@@ -188,6 +208,8 @@ export default class ReplicaDB {
 
     // merge patch
     this.storage.setRecords(currentRev, newRecords)
+
+    this._notify()
   }
 
   /**

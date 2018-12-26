@@ -1,7 +1,70 @@
 // tslint:disable:max-line-length
 import React, { PureComponent } from 'react'
 import WebRouter, { IRoute } from '../web-router'
+import IsodbWebClient from '../isodb/web-client'
 import { Omit } from '../utils'
+
+function routerStore(getState, setState) {
+  const router = new WebRouter()
+
+  const updateRoute = (route: IRoute) => setState(route)
+  return {
+    initialState: undefined,
+    actions: {
+      push(route: IRoute) {
+        router.push(route)
+      }
+    },
+    start() {
+      router.events.on('route-changed', updateRoute)
+      router.start()
+    },
+    stop() {
+      router.events.off('route-changed', updateRoute)
+      router.stop()
+    }
+  }
+}
+
+class Store {
+  router = new WebRouter()
+  client = new IsodbWebClient()
+
+  state = {
+    route: undefined,
+    toast: undefined,
+    isLockerVisible: false,
+    isNavVisible: false,
+    isAuthorized: undefined,
+  }
+
+  actions = {
+    showToast: (toast: JSX.Element) => this.setState({ toast }),
+    push: (route: IRoute) => this.router.push(route),
+  }
+
+  saveAuth = (isAuthorized: boolean) => {
+    this.setState({ isAuthorized })
+  };
+
+  updateRoute = (route: IRoute) => {
+    this.setState({ route });
+  };
+
+  start() {
+    this.router.events.on('route-changed', this.updateRoute)
+    this.client.events.on('authorized', this.saveAuth)
+    this.router.start()
+    this.client.start()
+  }
+
+  stop() {
+    this.router.events.off('route-changed', this.updateRoute)
+    this.client.events.off('authorized', this.saveAuth)
+    this.router.stop()
+    this.client.stop()
+  }
+}
 
 export interface IStore {
   route?: IRoute

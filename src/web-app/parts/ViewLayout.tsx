@@ -4,7 +4,7 @@ import { Backdrop } from '../components'
 import { classNames } from '../../utils'
 import Link from './Link'
 import Toaster from './Toaster'
-import './Navbar.css'
+import './ViewLayout.css'
 import { IRoute } from '../../web-router'
 
 interface IProps {

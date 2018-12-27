@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import { classNames, OptionalProps } from '../../utils'
 import { IRoute } from '../../web-router'
-import { inject, IStore } from '../store'
+import { inject, ActionsType, StateType } from '../store'
 import './Link.css'
 
 interface IProps {
@@ -35,8 +35,8 @@ class Link extends PureComponent<IProps, {}> {
   }
 }
 
-const mapStoreToProps = (store: IStore) => ({
-  push: store.push,
+const mapStoreToProps = (_: StateType, actions: ActionsType) => ({
+  push: actions.push,
 })
 
 export default inject(mapStoreToProps, Link)

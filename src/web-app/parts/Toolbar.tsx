@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react'
-import { inject, IStore } from '../store'
+import { inject, ActionsType, StateType } from '../store'
 import { Icon } from '../components'
 import './Toolbar.css'
 
@@ -27,9 +27,9 @@ class Toolbar extends PureComponent<IProps, {}> {
   }
 }
 
-const mapStoreToProps = (store: IStore) => ({
-  isNavVisible: store.isNavVisible,
-  showNav: store.showNav,
+const mapStoreToProps = (state: StateType, actions: ActionsType) => ({
+  isNavVisible: state.isNavVisible,
+  showNav: actions.showNav,
 })
 
 export default inject(mapStoreToProps, Toolbar)

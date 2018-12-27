@@ -1,47 +1,31 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { inject, IStore } from '../store';
-import log from '../../logger';
-import { authorize } from '../utils';
-import { Backdrop, Input } from '../components';
+import React, { PureComponent } from 'react'
+import { inject, ActionsType, StateType } from '../store'
+import { Backdrop, Input } from '../components'
 import './AuthView.css'
 
-async function checkPassword(password: string) {
-  await authorize(password);
-
-  try {
-    await api.PING();
-  } catch (e) {
-    log.error('auth failed', e);
-  }
+interface IProps {
+  authorize: (password: string) => Promise<void>
 }
 
-class AuthView extends PureComponent {
-  static propTypes = {
-    isAuthorized: PropTypes.bool,
-  };
+interface IState {
+  password: string
+}
 
+class AuthView extends PureComponent<IProps, IState> {
   state = {
     password: '',
-  };
+  }
 
-  componentDidMount() {
-    if (this.props.isAuthorized === undefined) {
-      api.PING();
+  onPasswordChange = (password: string) => this.setState({ password })
+
+  onKeyDown = async (e: React.KeyboardEvent) => {
+    // TODO add error message
+    if (e.key === 'Enter') {
+      await this.props.authorize(this.state.password)
     }
   }
 
-  onPasswordChange = password => this.setState({ password });
-
-  onKeyDown = (e) => {
-    if (e.key === 'Enter') checkPassword(this.state.password);
-  };
-
   render() {
-    if (this.props.isAuthorized === undefined) {
-      return null;
-    }
-
     return (
       <Backdrop className="Auth-backdrop">
         <img alt="logo" src="/logo.svg" className="Auth-logo" />
@@ -55,12 +39,12 @@ class AuthView extends PureComponent {
           onKeyDown={this.onKeyDown}
         />
       </Backdrop>
-    );
+    )
   }
 }
 
-const mapStoreToProps = (store: IStore) => ({
-  isAuthorized: store.isAuthorized,
-});
+const mapStoreToProps = (_: StateType, actions: ActionsType) => ({
+  authorize: actions.authorize,
+})
 
-export default inject(mapStoreToProps, AuthView);
+export default inject(mapStoreToProps, AuthView)

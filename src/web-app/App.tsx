@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { IRoute } from '../web-router'
-import { inject, IStore } from './store'
+import { inject, StateType } from './store'
 import { ProgressLocker } from './components'
 import Redirect from './parts/Redirect'
 
@@ -75,10 +75,10 @@ class App extends PureComponent<IProps, IState> {
   }
 }
 
-const mapStoreToProps = (store: IStore) => ({
-  isLockerVisible: store.isLockerVisible,
-  isAuthorized: store.isAuthorized,
-  route: store.route,
+const mapStoreToProps = (state: StateType) => ({
+  isLockerVisible: state.isLockerVisible,
+  isAuthorized: state.isAuthorized,
+  route: state.route,
 })
 
 export default inject(mapStoreToProps, App)

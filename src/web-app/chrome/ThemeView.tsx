@@ -1,31 +1,33 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent } from 'react'
+import { noop } from '../../utils'
 import {
-  Link,
   Textarea,
   Input,
   ConfirmationDialog,
   Select,
   Button,
   Icon,
-  Toolbar,
-} from '../components';
-import { ICON_TYPES } from '../components/Icon';
+} from '../components'
+import { ICON_TYPES } from '../components/Icon'
+import Link from '../parts/Link'
+import Toolbar from '../parts/Toolbar'
+import ViewLayout from '../parts/ViewLayout'
 import './ThemeView.css'
 
-const colorSquare = color => <div className="Theme-color-square" style={{ backgroundColor: color }} />;
-const spacingSquare = size => <div className="Theme-spacing-square" style={{ width: size, height: size }} />;
+const colorSquare = (color: string) => <div className="Theme-color-square" style={{ backgroundColor: color }} />
+const spacingSquare = (size: string) => <div className="Theme-spacing-square" style={{ width: size, height: size }} />
 
 export default class ThemeView extends PureComponent {
   state = {
     showModal: false,
-  };
+  }
 
-  showModal = () => this.setState({ showModal: true });
-  hideModal = () => this.setState({ showModal: false });
+  showModal = () => this.setState({ showModal: true })
+  hideModal = () => this.setState({ showModal: false })
 
   render() {
     return (
-      <div>
+      <ViewLayout>
         <Toolbar />
 
         <h1 className="g-centered">THEME</h1>
@@ -93,7 +95,7 @@ export default class ThemeView extends PureComponent {
           </div>
 
           <div className="g-section">
-            <Link to={{ name: 'theme' }}>Link to theme</Link>
+            <Link to={{ path: '/theme' }}>Link to theme</Link>
           </div>
         </div>
 
@@ -124,7 +126,7 @@ export default class ThemeView extends PureComponent {
         </div>
 
         <div className="g-section">
-          <Button raised onClick={this.showModal}>Show modal</Button>
+          <Button onClick={this.showModal}>Show modal</Button>
 
           {this.state.showModal && (
             <ConfirmationDialog confirmation="Remove" onConfirmed={this.hideModal} onCancel={this.hideModal}>
@@ -133,7 +135,7 @@ export default class ThemeView extends PureComponent {
           )
           }
         </div>
-      </div>
-    );
+      </ViewLayout>
+    )
   }
 }

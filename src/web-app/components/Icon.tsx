@@ -26,7 +26,7 @@ function FeatherIcon({ children, ...otherProps }: IFeatherIconProps) {
   )
 }
 
-type IconType = 'log-out'
+export type IconType = 'log-out'
   | 'loader'
   | 'eye-off'
   | 'eye'
@@ -125,7 +125,7 @@ const icons: { [key in IconType]: JSX.Element } = {
   ),
 }
 
-export const ICON_TYPES = Object.keys(icons)
+export const ICON_TYPES = Object.keys(icons) as IconType[]
 
 interface IProps extends React.SVGProps<SVGSVGElement> {
   type: IconType

@@ -148,28 +148,8 @@ export function createProxy<T extends object>(target: T, handler: (prop: string,
   })
 }
 
-export interface ILazy<T> {
-  readonly initialized: boolean
-  readonly value: T
-}
-export function lazy<T>(createVal: () => T): ILazy<T> {
-  let val: T
-  let initialized = false
-
-  return {
-    get initialized() {
-      return initialized
-    },
-    get value(): T {
-      if (!val) {
-        initialized = true
-        val = createVal()
-      }
-
-      return val
-    },
-  }
-}
+// tslint:disable-next-line:no-empty
+export const noop = () => { }
 
 export function classNames(...args: any[]) {
   return args.reduce<string[]>((acc, val) => {

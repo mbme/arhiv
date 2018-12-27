@@ -3,7 +3,7 @@ import fs from 'fs'
 import http from 'http'
 import Busboy from 'busboy'
 import { rmrfSync, createTempDir } from '../utils/fs'
-import { ILazy, lazy } from '../utils'
+import { ILazy, lazy } from '../utils/lazy'
 import { readStreamAsString } from '../utils/node'
 import {
   MultipartBody,

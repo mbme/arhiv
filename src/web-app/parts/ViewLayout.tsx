@@ -1,40 +1,44 @@
 import React, { PureComponent } from 'react'
+import { inject, ActionsType, StateType } from '../store'
 import { Backdrop } from '../components'
 import { classNames } from '../../utils'
-import { deauthorize } from '../utils'
 import Link from './Link'
 import Toaster from './Toaster'
 import './Navbar.css'
-
-type Route = 'notes' | 'theme'
+import { IRoute } from '../../web-router'
 
 interface IProps {
-  selected: Route
+  children: React.ReactNode
+
+  route: IRoute
   isNavVisible: boolean
   showNav: (show: boolean) => void
-  children: JSX.Element
+  deauthorize: () => void
 }
 
-export default class ViewLayout extends PureComponent<IProps, {}> {
+class ViewLayout extends PureComponent<IProps, {}> {
   logout = async () => {
-    await deauthorize()
+    this.props.deauthorize()
     window.location.reload()
   }
 
   render() {
     const {
-      selected,
+      route,
       children,
       showNav,
       isNavVisible,
     } = this.props
+
+    const isNotes = route.path.startsWith('/notes')
+    const isTheme = route.path.startsWith('/theme')
 
     const navbar = (
       <nav className="App-navbar">
         <Link
           clean
           to={{ path: '/notes' }}
-          className={classNames('App-navlink', { 'is-selected': selected === 'notes' })}
+          className={classNames('App-navlink', { 'is-selected': isNotes })}
         >
           Notes
         </Link>
@@ -42,7 +46,7 @@ export default class ViewLayout extends PureComponent<IProps, {}> {
         <Link
           clean
           to={{ path: '/theme' }}
-          className={classNames('App-navlink', { 'is-selected': selected === 'theme' })}
+          className={classNames('App-navlink', { 'is-selected': isTheme })}
         >
           Theme
         </Link>
@@ -72,3 +76,12 @@ export default class ViewLayout extends PureComponent<IProps, {}> {
     )
   }
 }
+
+const mapStoreToProps = (state: StateType, actions: ActionsType) => ({
+  route: state.route,
+  isNavVisible: state.isNavVisible,
+  showNav: actions.showNav,
+  deauthorize: actions.deauthorize,
+})
+
+export default inject(mapStoreToProps, ViewLayout)

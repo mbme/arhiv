@@ -1,4 +1,7 @@
+import { createLogger } from '../../logger'
 import { WebClientEvents } from './events'
+
+const log = createLogger('isodb-lock-agent')
 
 interface IFree {
   state: 'free'
@@ -22,8 +25,9 @@ export default class LockAgent {
 
   _notify() {
     const dbLocked = this.state.state === 'db-locked'
-    const recordsLocked = this.state.state === 'records-locked' ? this.state.records : new Set()
+    const recordsLocked = this.state.state === 'records-locked' ? this.state.records : new Set<string>()
     this.events.emit('isodb-lock', [dbLocked, recordsLocked])
+    log.info(`state -> ${this.state.state}${recordsLocked.size ? ' ' + Array.from(recordsLocked).join(', ') : ''}`)
   }
 
   isFree() {

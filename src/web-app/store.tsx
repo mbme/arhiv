@@ -49,12 +49,14 @@ export class StoreProvider extends PureComponent<{}, IStoreState> {
     this.client.events.on('authorized', this._saveAuth)
     this.router.events.on('route-changed', this._updateRoute)
     this.router.start()
+    this.client.start()
   }
 
   componentWillUnmount() {
     this.client.events.off('authorized', this._saveAuth)
     this.router.events.off('route-changed', this._updateRoute)
     this.router.stop()
+    this.client.stop()
   }
 
   render() {
@@ -101,8 +103,12 @@ export function inject<PropsType, MappedPropsType>(
     }
 
     componentWillUnmount() {
+      const {
+        client,
+      } = this.context as IStoreContext
+
       if (this._subscribed) {
-        (this.context as IStoreContext).client.events.off('db-update', this._onDBUpdate)
+        client.events.off('db-update', this._onDBUpdate)
       }
     }
 

@@ -1,5 +1,8 @@
+import { createLogger } from '../../logger'
 import NetworkAgent from './network-agent'
 import { WebClientEvents } from './events'
+
+const log = createLogger('isodb-web-client:auth-agent')
 
 type State = 'unauthorized' | 'authorized'
 
@@ -17,6 +20,7 @@ export default class AuthAgent {
 
   _notify() {
     this.events.emit('authorized', this.isAuthorized())
+    log.info(`-> ${this.state}`)
   }
 
   async authorize(password: string) {
@@ -26,7 +30,7 @@ export default class AuthAgent {
     }
   }
 
-  async deauthorize() {
+  deauthorize() {
     document.cookie = 'token=0; path=/'
     this.state = 'unauthorized'
     this._notify()
@@ -41,9 +45,11 @@ export default class AuthAgent {
 
   start() {
     this.events.on('network-error', this.onNetworkError)
+    log.debug('started')
   }
 
   stop() {
     this.events.off('network-error', this.onNetworkError)
+    log.debug('stopped')
   }
 }

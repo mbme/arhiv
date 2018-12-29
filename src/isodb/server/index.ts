@@ -39,7 +39,7 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
     await next()
   })
 
-  server.get('/api/auth', async ({ req, res }) => {
+  server.post('/api/auth', async ({ req, res }) => {
     const body = req.body!
     if (!(body instanceof StringBody)) {
       res.statusCode = 415

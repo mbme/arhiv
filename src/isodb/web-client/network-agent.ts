@@ -1,3 +1,4 @@
+import { createLogger } from '../../logger'
 import {
   Record,
   IAttachment,
@@ -6,18 +7,14 @@ import {
 } from '../core/types'
 import { WebClientEvents } from './events'
 
+const log = createLogger('isodb-web-client:network-agent')
+
 type State = 'online' | 'offline'
 
 export default class NetworkAgent {
   state: State = 'online'
 
   constructor(public events: WebClientEvents) { }
-
-  _assertNetworkState() {
-    if (this.state === 'offline') {
-      throw new Error('Network is offline')
-    }
-  }
 
   async authorize(password: string) {
     this._assertNetworkState()
@@ -27,19 +24,13 @@ export default class NetworkAgent {
       body: password,
     })
 
-    if (response.status === 200) {
+    if (response.ok) {
       return true
     }
 
-    if (response.status !== 401) {
-      this.events.emit('network-error', response.status)
-    }
+    this._onNetworkError(response.status)
 
     return false
-  }
-
-  deauthorize() {
-    document.cookie = 'token=0; path=/'
   }
 
   async syncChanges(
@@ -69,16 +60,28 @@ export default class NetworkAgent {
     })
 
     if (!response.ok) {
-      this.events.emit('network-error', response.status)
+      this._onNetworkError(response.status)
       throw new Error(`Server responded with code ${response.status}`)
     }
 
     return response.json()
   }
 
+  _assertNetworkState() {
+    if (this.state === 'offline') {
+      throw new Error('Network is offline')
+    }
+  }
+
+  _onNetworkError(status: number) {
+    this.events.emit('network-error', status)
+    log.warn(`network error, http status code ${status}`)
+  }
+
   _onNetworkConnectionChange = () => {
     this.state = window.navigator.onLine ? 'online' : 'offline'
     this.events.emit('network-online', this.state === 'online')
+    log.info(`network gone ${this.state}`)
   }
 
   isOnline() {
@@ -88,10 +91,12 @@ export default class NetworkAgent {
   start() {
     window.addEventListener('online', this._onNetworkConnectionChange)
     window.addEventListener('offline', this._onNetworkConnectionChange)
+    log.debug('started')
   }
 
   stop() {
     window.removeEventListener('online', this._onNetworkConnectionChange)
     window.removeEventListener('offline', this._onNetworkConnectionChange)
+    log.debug('stopped')
   }
 }

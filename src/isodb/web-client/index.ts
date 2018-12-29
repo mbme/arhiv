@@ -33,11 +33,11 @@ export default class IsodbClient {
   }
 
   async authorize(password: string) {
-    return this._networkAgent.authorize(password)
+    return this._authAgent.authorize(password)
   }
 
   deauthorize() {
-    this._networkAgent.deauthorize()
+    this._authAgent.deauthorize()
   }
 
   syncNow() {

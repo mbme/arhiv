@@ -18,14 +18,14 @@ const PRIORITY = {
 const minLogLevel = process.env.LOG || LEVEL.INFO
 if (!Object.values(LEVEL).includes(minLogLevel)) throw new Error(`Illegal log level ${minLogLevel}`)
 
-function createLevelLogger(level: string, namespace: string) {
-  const name = level.padEnd(5)
+class Logger {
+  constructor(public namespace: string) { }
 
-  return (msg: string, ...params: any[]) => { // tslint:disable-line no-any
+  _log(level: string, msg: string, ...params: any[]) {
     if (PRIORITY[level] < PRIORITY[minLogLevel]) return
 
     const args = [
-      `${formatDate(new Date())} ${namespace ? `[${namespace}]` : ''} ${name} ${msg}`,
+      `${formatDate(new Date())} ${this.namespace ? `[${this.namespace}]` : ''} ${level.padEnd(5)} ${msg}`,
       ...params,
     ]
 
@@ -46,19 +46,19 @@ function createLevelLogger(level: string, namespace: string) {
         throw new Error(`Wrong level ${level}`)
     }
   }
-}
 
-export function createLogger(namespace: string) {
-  return {
-    debug: createLevelLogger(LEVEL.DEBUG, namespace),
-    info: createLevelLogger(LEVEL.INFO, namespace),
-    warn: createLevelLogger(LEVEL.WARN, namespace),
-    error: createLevelLogger(LEVEL.ERROR, namespace),
+  debug = this._log.bind(this, LEVEL.DEBUG)
+  info = this._log.bind(this, LEVEL.INFO)
+  warn = this._log.bind(this, LEVEL.WARN)
+  error = this._log.bind(this, LEVEL.ERROR)
 
-    simple(...params: any[]) { // tslint:disable-line no-any
-      console.log(...params)
-    },
+  simple(...params: any[]) {
+    console.log(...params)
   }
 }
 
-export default createLogger('')
+export function createLogger(namespace: string) {
+  return new Logger(namespace)
+}
+
+export default new Logger('')

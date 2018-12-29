@@ -1,5 +1,5 @@
 /* tslint:disable:no-console */
-import { format as formatDate } from 'date-fns'
+import { formatDate } from '../utils/date'
 
 const LEVEL = {
   DEBUG: 'DEBUG',
@@ -25,7 +25,7 @@ function createLevelLogger(level: string, namespace: string) {
     if (PRIORITY[level] < PRIORITY[minLogLevel]) return
 
     const args = [
-      `${formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss,SSS')} ${namespace ? `[${namespace}]` : ''} ${name} ${msg}`,
+      `${formatDate(new Date())} ${namespace ? `[${namespace}]` : ''} ${name} ${msg}`,
       ...params,
     ]
 
@@ -42,6 +42,8 @@ function createLevelLogger(level: string, namespace: string) {
       case LEVEL.ERROR:
         console.error(...args)
         break
+      default:
+        throw new Error(`Wrong level ${level}`)
     }
   }
 }

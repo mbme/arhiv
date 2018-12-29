@@ -1,14 +1,14 @@
 import { PureComponent } from 'react'
 import { OptionalProps } from '../../utils'
 import { IRoute } from '../../web-router'
-import { inject, ActionsType, StateType } from '../store'
+import { inject, ActionsType, IStoreState } from '../store'
 
 interface IProps {
   to: OptionalProps<IRoute, 'params'>
-  replace: (route: IRoute) => void
+  replace(route: IRoute): void
 }
 
-class Redirect extends PureComponent<IProps, {}> {
+class Redirect extends PureComponent<IProps> {
   componentDidMount() {
     this.props.replace({
       path: this.props.to.path,
@@ -17,11 +17,11 @@ class Redirect extends PureComponent<IProps, {}> {
   }
 
   render() {
-    return undefined
+    return null
   }
 }
 
-const mapStoreToProps = (_: StateType, actions: ActionsType) => ({
+const mapStoreToProps = (_: IStoreState, actions: ActionsType) => ({
   replace: actions.replace,
 })
 

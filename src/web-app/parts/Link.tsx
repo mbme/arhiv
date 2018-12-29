@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react'
 import { classNames, OptionalProps } from '../../utils'
 import { IRoute } from '../../web-router'
-import { inject, ActionsType, StateType } from '../store'
+import { inject, ActionsType, IStoreState } from '../store'
 import './Link.css'
 
 interface IProps {
@@ -9,9 +9,9 @@ interface IProps {
   clean?: boolean
   children: React.ReactNode
   to: OptionalProps<IRoute, 'params'>
-  push: (route: IRoute) => void
+  push(route: IRoute): void
 }
-class Link extends PureComponent<IProps, {}> {
+class Link extends PureComponent<IProps> {
   onClick = () => {
     this.props.push({
       path: this.props.to.path,
@@ -35,7 +35,7 @@ class Link extends PureComponent<IProps, {}> {
   }
 }
 
-const mapStoreToProps = (_: StateType, actions: ActionsType) => ({
+const mapStoreToProps = (_: IStoreState, actions: ActionsType) => ({
   push: actions.push,
 })
 

@@ -236,6 +236,7 @@ export default function createTextGenerator(corpus: string) {
 
     word() {
       const words = Object.keys(stats.words)
+
       return randomArrValue(words)
     },
   }

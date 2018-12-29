@@ -6,7 +6,7 @@ import { promisify } from 'util'
 import zlib from 'zlib'
 
 export const hash = (hashType: string) =>
-  (value: any, buffer = false) => crypto.createHash(hashType).update(value).digest(buffer ? undefined as any : 'hex')
+  (value: string, buffer = false) => crypto.createHash(hashType).update(value).digest(buffer ? undefined as any : 'hex')
 export const sha256 = hash('sha256')
 
 export function sha256File(filePath: string): Promise<string> {
@@ -15,7 +15,7 @@ export function sha256File(filePath: string): Promise<string> {
       .on('error', reject)
       .pipe(crypto.createHash('sha256').setEncoding('hex'))
       .on('finish', function onFinish(this: fs.ReadStream) {
-        resolve(this.read())
+        resolve(this.read() as string)
       })
   )
 }
@@ -39,13 +39,14 @@ export function aesDecrypt(text: string, password: string) {
 export function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const body: Uint8Array[] = []
-    stream.on('data', (chunk) => body.push(chunk))
+    stream.on('data', (chunk: Uint8Array) => body.push(chunk))
     stream.on('end', () => resolve(Buffer.concat(body)))
     stream.on('error', reject)
   })
 }
 export async function readStreamAsString(stream: NodeJS.ReadableStream): Promise<string> {
   const data = await readStream(stream)
+
   return data.toString('utf8')
 }
 

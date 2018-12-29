@@ -14,7 +14,7 @@ import {
   createToken,
 } from './utils'
 import PrimaryDB from '../core/primary'
-import { IPatchResponse } from '../core/types'
+import { IChangeset } from '../core/types'
 
 const log = createLogger('isodb-server')
 
@@ -32,6 +32,7 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
       && req.url.pathname!.startsWith('/api')
       && req.url.pathname !== '/api/auth') {
       res.statusCode = 403
+
       return
     }
 
@@ -42,40 +43,36 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
     const body = req.body!
     if (!(body instanceof StringBody)) {
       res.statusCode = 415
+
       return
     }
 
     if (body.value !== password) {
       res.statusCode = 401
+
       return
     }
 
     res.headers['set-cookie'] = createToken(password)
   })
 
-  server.post('/api/patch', async ({ res, req }) => {
+  server.post('/api/changeset', async ({ res, req }) => {
     const body = req.body!
     if (!(body instanceof MultipartBody)) {
       res.statusCode = 415
+
       return
     }
 
-    const revField = body.getField('rev')
-    if (!revField) {
-      log.error(`rev field is mandatory`)
+    const changesetField = body.getField('changeset')
+    if (!changesetField) {
+      log.error(`changeset field is mandatory`)
       res.statusCode = 400
+
       return
     }
 
-    const recordsField = body.getField('records')
-    if (!recordsField) {
-      log.error(`records field is mandatory`)
-      res.statusCode = 400
-      return
-    }
-
-    const rev = parseInt(revField.value, 10)
-    const records = JSON.parse(recordsField.value)
+    const changeset = JSON.parse(changesetField.value) as IChangeset
 
     // TODO validate hashes
     const assets: { [hash: string]: string } = {}
@@ -83,24 +80,18 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
       assets[file.field] = file.file
     }
 
-    const success = await queue.push(() => db.applyChanges(rev, records, assets))
-    const patch: IPatchResponse = {
-      applied: success,
-      baseRev: rev,
-      currentRev: db.getRev(),
-      records: db.getAll(rev),
-    }
-    res.body = patch
+    res.body = await queue.push(() => db.applyChangeset(changeset, assets))
   })
 
   server.get('/api/file', async ({ req, res }) => {
     const fileId = req.url.query.fileId as string
     if (!fileId) {
       res.statusCode = 400
+
       return
     }
 
-    const filePath = await queue.push(() => db.getAttachment(fileId))
+    const filePath = await queue.push(() => db.getAttachmentPath(fileId))
 
     if (filePath) {
       res.headers['Content-Disposition'] = `inline; filename=${fileId}`
@@ -116,6 +107,7 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
   server.get(() => true, async ({ req, res }) => {
     if (req.url.pathname!.startsWith('/api')) {
       res.statusCode = 404
+
       return
     }
 

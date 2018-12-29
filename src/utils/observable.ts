@@ -18,6 +18,7 @@ export default function observable<T>(initialValue: T) {
 
     on(sub: Sub) {
       subs.push(sub)
+
       return () => removeMut(subs, sub)
     },
   }

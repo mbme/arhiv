@@ -9,9 +9,11 @@ import {
   Icon,
 } from '../components'
 import { ICON_TYPES } from '../components/Icon'
-import Link from '../parts/Link'
-import Toolbar from '../parts/Toolbar'
-import ViewLayout from '../parts/ViewLayout'
+import {
+  Link,
+  Toolbar,
+  ViewLayout,
+} from '../parts'
 import './ThemeView.css'
 
 const colorSquare = (color: string) => <div className="Theme-color-square" style={{ backgroundColor: color }} />

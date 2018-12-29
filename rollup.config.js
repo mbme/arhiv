@@ -1,11 +1,10 @@
-import nodeResolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import replace from 'rollup-plugin-replace';
-import typescript from 'rollup-plugin-typescript';
-import { terser } from 'rollup-plugin-terser';
-import rollupPluginCss from './rollup-plugin-css';
+import nodeResolve from 'rollup-plugin-node-resolve'
+import commonjs from 'rollup-plugin-commonjs'
+import replace from 'rollup-plugin-replace'
+import typescript from 'rollup-plugin-typescript'
+import rollupPluginCss from './rollup-plugin-css'
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production'
 
 export default {
   input: 'src/web-app/index.tsx',
@@ -27,7 +26,7 @@ export default {
     typescript(),
 
     replace({
-      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
       'process.env.LOG': JSON.stringify(process.env.LOG),
       __SERVER__: JSON.stringify(false),
     }),
@@ -49,11 +48,9 @@ export default {
         ],
       },
     }),
-
-    isProduction && terser(),
   ],
 
   watch: {
     clearScreen: false,
   },
-};
+}

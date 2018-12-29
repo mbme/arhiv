@@ -21,7 +21,7 @@ type RequestHandler = (context: IContext) => Promise<void> | void
 type PathTest = ((path: string) => boolean) | string
 
 interface IRoute {
-  test: (context: IContext) => boolean
+  test(context: IContext): boolean
   cb: RequestHandler
 }
 
@@ -40,6 +40,7 @@ export default class Server {
       test({ req }: IContext) {
         if (req.method !== method.toString()) return false
         if (isString(pathTest)) return req.url.pathname === pathTest
+
         return pathTest(req.url.pathname!)
       },
       cb,
@@ -97,7 +98,7 @@ export default class Server {
       } catch (e) {
         log.warn('failed to handle request', e)
         res.statusCode = 400
-        res.body = { error: e.toString() }
+        res.body = { error: e }
       }
 
       httpRes.statusCode = res.statusCode
@@ -133,10 +134,10 @@ export default class Server {
       )
     })
 
-    return new Promise((resolve) => this._server!.listen(port, resolve))
+    return new Promise<void>((resolve) => this._server!.listen(port, resolve))
   }
 
   stop() {
-    return new Promise((resolve) => this._server!.close(resolve))
+    return new Promise<void>((resolve) => this._server!.close(resolve))
   }
 }

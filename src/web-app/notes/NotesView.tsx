@@ -1,83 +1,78 @@
-import React, { PureComponent, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { formatTs } from '../../utils';
-import { api } from '../utils';
-import { inject } from '../store';
-import { Consumer } from '../chrome/Router';
+import React, { PureComponent } from 'react'
+import { formatTs } from '../../utils'
+import {
+  inject,
+  IStoreState,
+  ActionsType,
+  IsodbReplica,
+  Note,
+} from '../store'
 import {
   Button,
+  Filter,
+} from '../components'
+import {
   Toolbar,
   Link,
-  Filter,
-} from '../components';
+  ViewLayout,
+} from '../parts'
 import './NotesView.css'
 
-class NotesView extends PureComponent {
-  static propTypes = {
-    filter: PropTypes.string.isRequired,
-  };
+interface IProps {
+  filter: string
+  replaceParam(param: string, value: string): void
+  notes: Note[]
+}
 
-  state = {
-    notes: [],
-  };
-
-  async loadData() {
-    const result = await api.LIST_NOTES({ size: 0, filter: this.props.filter });
-    this.setState({ notes: result.items });
-  }
-
-  componentDidMount() {
-    this.loadData();
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.filter !== prevProps.filter) this.loadData();
-  }
-
+class NotesView extends PureComponent<IProps> {
   render() {
-    const notes = this.state.notes.map(note => (
-      <Link key={note.id} clean to={{ name: 'note', params: { id: note.id } }} className="Notes-link">
+    const {
+      filter,
+      replaceParam,
+      notes,
+    } = this.props
+
+    const items = notes.map(note => (
+      <Link key={note._id} clean to={{ path: '/note', params: { id: note._id } }} className="Notes-link">
         <small className="Notes-ts">
           {formatTs(note.updatedTs)}
         </small>
-        {note.fields.name}
+        {note.name}
       </Link>
-    ));
+    ))
 
     const left = (
-      <Consumer>{
-        ({ replaceParam }) => (
-          <Filter
-            placeholder="Filter notes"
-            filter={this.props.filter}
-            onChange={newFilter => replaceParam('filter', newFilter)}
-          />
-        )}
-      </Consumer>
-    );
+      <Filter
+        placeholder="Filter notes"
+        filter={filter}
+        onChange={newFilter => replaceParam('filter', newFilter)}
+      />
+    )
 
     const addBtn = (
-      <Link to={{ name: 'note-editor' }}>
+      <Link to={{ path: '/note-editor' }}>
         <Button primary>Add</Button>
       </Link>
-    );
+    )
 
     return (
-      <Fragment>
+      <ViewLayout>
         <Toolbar left={left} right={addBtn} />
 
         <small className="Notes-counter">
-          {notes.length} items
+          {items.length} items
         </small>
 
-        {notes}
-      </Fragment>
-    );
+        {items}
+      </ViewLayout>
+    )
   }
 }
 
-const mapStoreToProps = ({ route }) => ({
-  filter: route.params.filter || '',
-});
+const mapStoreToProps = (state: IStoreState, actions: ActionsType, db: IsodbReplica) => ({
+  filter: state.route!.params.filter || '',
+  replaceParam: actions.replaceParam,
+  notes: db.getRecords(),
+})
 
-export default inject(mapStoreToProps, NotesView);
+export default inject(mapStoreToProps, NotesView)

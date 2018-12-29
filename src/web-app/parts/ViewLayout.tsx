@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react'
-import { inject, ActionsType, StateType } from '../store'
+import { inject, ActionsType, IStoreState } from '../store'
 import { Backdrop } from '../components'
 import { classNames } from '../../utils'
 import Link from './Link'
@@ -12,21 +12,24 @@ interface IProps {
 
   route: IRoute
   isNavVisible: boolean
-  showNav: (show: boolean) => void
-  deauthorize: () => void
+  showNav(show: boolean): void
+  deauthorize(): void
 }
 
-class ViewLayout extends PureComponent<IProps, {}> {
+class ViewLayout extends PureComponent<IProps> {
   logout = async () => {
     this.props.deauthorize()
     window.location.reload()
+  }
+
+  hideNav = () => {
+    this.props.showNav(false)
   }
 
   render() {
     const {
       route,
       children,
-      showNav,
       isNavVisible,
     } = this.props
 
@@ -62,7 +65,7 @@ class ViewLayout extends PureComponent<IProps, {}> {
         <div className="App-navbar-container">{navbar}</div>
 
         {isNavVisible && (
-          <Backdrop onClick={() => showNav(false)}>
+          <Backdrop onClick={this.hideNav}>
             {navbar}
           </Backdrop>
         )}
@@ -77,7 +80,7 @@ class ViewLayout extends PureComponent<IProps, {}> {
   }
 }
 
-const mapStoreToProps = (state: StateType, actions: ActionsType) => ({
+const mapStoreToProps = (state: IStoreState, actions: ActionsType) => ({
   route: state.route,
   isNavVisible: state.isNavVisible,
   showNav: actions.showNav,

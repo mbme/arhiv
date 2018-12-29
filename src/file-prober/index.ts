@@ -1,3 +1,4 @@
+/* tslint:disable:no-unsafe-any */
 import path from 'path'
 import { exec } from '../utils/node'
 
@@ -8,6 +9,7 @@ const SUPPORTED_MEDIA_FORMATS = ['mp3']
 async function probeMediaFileMeta(filePath: string) {
   const { format } = JSON.parse(await exec(`ffprobe -v quiet -of json -show_format -i ${filePath}`).catch((e) => {
     if (e.code !== 1) throw e
+
     return e.stdout
   }))
 

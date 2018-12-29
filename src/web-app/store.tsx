@@ -2,30 +2,32 @@
 import React, { PureComponent } from 'react'
 import WebRouter, { IRoute } from '../web-router'
 import { Omit, TypeOfProperty } from '../utils'
-import IsodbWebClient from '../isodb/web-client'
+import IsodbClient from '../isodb/web-client'
 import IsodbReplica from '../isodb/core/replica'
+import * as CoreTypes from '../isodb/core/types'
+
+export type Note = CoreTypes.INote
 
 const StoreContext = React.createContext({} as any)
 
-// tslint:disable-next-line:interface-over-type-literal
-export type StateType = {
+export interface IStoreState {
   route?: IRoute
   toast?: JSX.Element
   isLockerVisible: boolean
   isNavVisible: boolean
-  isAuthorized?: boolean
+  isAuthorized: boolean
 }
 
-export class StoreProvider extends PureComponent<{}, StateType> {
+export class StoreProvider extends PureComponent<{}, IStoreState> {
   router = new WebRouter()
-  client = new IsodbWebClient()
+  client = new IsodbClient()
 
-  state: StateType = {
+  state: IStoreState = {
     route: undefined,
     toast: undefined,
     isLockerVisible: false,
     isNavVisible: false,
-    isAuthorized: undefined,
+    isAuthorized: true,
   }
 
   actions = {
@@ -35,6 +37,7 @@ export class StoreProvider extends PureComponent<{}, StateType> {
     showNav: (show: boolean) => this.setState({ isNavVisible: show }),
     push: (route: IRoute) => this.router.push(route),
     replace: (route: IRoute) => this.router.replace(route),
+    replaceParam: (param: string, value: string) => this.router.replaceParam(param, value),
     authorize: (password: string) => this.client.authorize(password),
     deauthorize: () => this.client.deauthorize(),
   }
@@ -75,11 +78,17 @@ type Shared<
   }
 
 export function inject<PropsType, MappedPropsType>(
-  mapStoreToProps: (state: StateType, actions: ActionsType, db?: IsodbReplica) => MappedPropsType,
+  mapStoreToProps: (state: IStoreState, actions: ActionsType, db: IsodbReplica) => MappedPropsType,
   Component: React.ComponentType<PropsType>
 ) {
   type InjectedPropsType = Shared<PropsType, MappedPropsType>
   type PropsWithoutInjectedPropsType = Omit<PropsType, keyof InjectedPropsType>
+
+  interface IStoreContext {
+    state: IStoreState,
+    actions: ActionsType,
+    client: IsodbClient,
+  }
 
   // tslint:disable-next-line:max-classes-per-file
   return class StoreInjector extends PureComponent<PropsWithoutInjectedPropsType> {
@@ -87,11 +96,13 @@ export function inject<PropsType, MappedPropsType>(
     context!: React.ContextType<typeof StoreContext>
 
     _subscribed = false
-    _onDBUpdate = () => this.forceUpdate()
+    _onDBUpdate = () => {
+      this.forceUpdate()
+    }
 
     componentWillUnmount() {
       if (this._subscribed) {
-        this.context.client.events.off('db-update', this._onDBUpdate)
+        (this.context as IStoreContext).client.events.off('db-update', this._onDBUpdate)
       }
     }
 
@@ -100,7 +111,7 @@ export function inject<PropsType, MappedPropsType>(
         state,
         actions,
         client,
-      } = this.context
+      } = this.context as IStoreContext
 
       const mappedProps = mapStoreToProps(state, actions, client.db)
 

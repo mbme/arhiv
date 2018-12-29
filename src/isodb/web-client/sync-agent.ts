@@ -1,8 +1,8 @@
 import LockAgent from './lock-agent'
 import {
-  IMergeConflict,
-} from '../core/types'
-import ReplicaDB from '../core/replica'
+  default as ReplicaDB,
+  IMergeConflicts,
+} from '../core/replica'
 import { createLogger } from '../../logger'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
@@ -41,25 +41,36 @@ export default class SyncAgent {
     public authAgent: AuthAgent
   ) { }
 
-  _merge = async (conflicts: IMergeConflict[]) => {
-    log.warn(`${conflicts.length} merge conflicts`)
+  _merge = async (conflicts: IMergeConflicts) => {
+    // tslint:disable-next-line:max-line-length
+    log.warn(`${conflicts.records.length} record merge conflicts, ${conflicts.attachments.length} attachment merge conflicts`)
+
     // FIXME implement merge
-    return conflicts.map(conflict => conflict.local)
+    const records = conflicts.records.map(conflict => conflict.local)
+    const attachments = conflicts.attachments.map(conflict => conflict.local)
+
+    return {
+      records,
+      attachments,
+    }
   }
 
-  async _sync() {
+  _sync = async () => {
     if (!this.lockAgent.isFree()) {
       log.debug('Skipping sync: lock is not free')
+
       return false
     }
 
     if (!this.networkAgent.isOnline()) {
       log.debug('Skipping sync: network is offline')
+
       return false
     }
 
     if (!this.authAgent.isAuthorized()) {
       log.debug('Skipping sync: not authorized')
+
       return false
     }
 
@@ -71,25 +82,29 @@ export default class SyncAgent {
         log.debug(`sync: trial #${tries + 1}`)
         const result = await this.networkAgent.syncChanges(
           this.replica.getRev(),
-          this.replica.storage.getLocalRecords(),
-          this.replica.storage.getLocalAttachments()
+          this.replica._storage.getLocalRecords(),
+          this.replica._storage.getLocalAttachments(),
+          this.replica._storage.getLocalAttachmentsData()
         )
 
-        await this.replica.applyPatch(result, this._merge)
+        await this.replica.applyChangesetResult(result, this._merge)
 
-        if (result.applied) {
+        if (result.success) {
           log.debug('sync: ok')
+
           return true
         }
 
         tries += 1
         if (tries > 2) {
           log.error('Failed to sync: exceeded max attemts')
+
           return false
         }
       }
     } catch (e) {
       log.error('Failed to sync', e)
+
       return false
     } finally {
       this.lockAgent.unlockDB()

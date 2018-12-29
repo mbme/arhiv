@@ -1,10 +1,11 @@
+// tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
 import fs from 'fs'
 import { readJSON, writeJSON } from '../utils/fs'
 import log from '../logger'
 import { uniq } from '../utils'
 
-type Callback = () => void
+type Callback = () => void | Promise<void>
 interface IAsserts {
   equal(actual: any, expected: any): void
   deepEqual(actual: any, expected: any): void
@@ -13,7 +14,7 @@ interface IAsserts {
   matchSnapshot(actual: any): void
   throws(block: () => void, error?: any): void
 }
-type TestFn = (asserts: IAsserts) => void
+type TestFn = (asserts: IAsserts) => void | Promise<void>
 interface ITest {
   name: string
   fn: TestFn
@@ -109,9 +110,11 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
     }))
 
     log.simple(`  ${name}: ${okAsserts} ok`, snapshotPos ? `/ ${snapshotPos} snapshots` : '')
+
     return [snapshots, true]
   } catch (e) {
     log.simple(`\n  ${name}: failed\n`, e, '\n')
+
     return [oldSnapshots, false]
   }
 }
@@ -121,9 +124,9 @@ export async function runTests(file: string, tests: ITest[], updateSnapshots: bo
     throw new Error(`${file} contains tests with similar names`)
   }
 
-  const snapshotsFile = file + '.snap.json'
+  const snapshotsFile = `${file}.snap.json`
   const snapshotsFileExists = fs.existsSync(snapshotsFile)
-  const oldSnapshots = snapshotsFileExists ? await readJSON(snapshotsFile) : {}
+  const oldSnapshots: { [name: string]: any[] } = snapshotsFileExists ? await readJSON(snapshotsFile) : {}
 
   const newSnapshots: { [key: string]: any } = {}
   let failures = 0

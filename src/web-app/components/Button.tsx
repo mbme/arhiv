@@ -3,7 +3,7 @@ import { classNames } from '../../utils'
 import './Button.css'
 
 interface IProps {
-  onClick?: () => void
+  onClick?(): void
   disabled?: boolean
   primary?: boolean
   children: React.ReactNode

@@ -1,12 +1,20 @@
 import { test } from '../../tester'
 import PrimaryDB from './primary'
-import InMemStorage from './primary-in-mem-storage'
+import PrimaryInMemStorage from './primary-in-mem-storage'
 
 function initDB(size: number) {
-  const storage = new InMemStorage()
+  const storage = new PrimaryInMemStorage()
   storage._rev = size - 1
   for (let i = 0; i < size; i += 1) {
-    storage._records.push({ _id: `${i}`, _rev: i, _refs: [] })
+    storage._records.push({
+      _id: `${i}`,
+      _type: 'note',
+      _rev: i,
+      _refs: [],
+      _attachmentRefs: [],
+      name: 'test',
+      data: 'test',
+    })
   }
 
   return {
@@ -17,7 +25,7 @@ function initDB(size: number) {
 
 test('getAll', (assert) => {
   const { db } = initDB(2)
-  const records = db.getAll(1)
+  const records = db.getPatch(1).records
 
   assert.equal(records.length, 2)
   assert.equal(records[0], '0')
@@ -38,21 +46,21 @@ test('applyChanges', (assert) => {
   assert.true(db.applyChanges(1, []))
 
   // update
-  assert.true(db.applyChanges(1, [{ _id: '0', _rev: 3, _refs: [] }]))
+  assert.true(db.applyChanges(1, [{ _id: '0', _refs: [] }]))
 
   // add
-  assert.true(db.applyChanges(2, [{ _id: '2', _rev: 4, _refs: [] }]))
+  assert.true(db.applyChanges(2, [{ _id: '2', _refs: [] }]))
 
   assert.equal(db.getRev(), 3)
   assert.equal(db.getAll().length, 3)
 
   // add attachment
-  assert.true(db.applyChanges(3, [{ _id: '3', _rev: 5, _attachment: true }], { 3: '/path' }))
+  assert.true(db.applyChanges(3, [{ _id: '3', _attachment: true }], { 3: '/path' }))
   assert.equal(db.getAttachment('3'), '/path')
 
   // update attachment data should fail
   assert.throws(() => {
-    db.applyChanges(4, [{ _id: '3', _rev: 6, _attachment: true }], { 3: '/path1' })
+    db.applyChanges(4, [{ _id: '3', _attachment: true }], { 3: '/path1' })
   })
 })
 
@@ -93,8 +101,8 @@ test('compact deleted record referenced only by another deleted record', (assert
 test('compact attachments not referenced by records', (assert) => {
   const { db, storage } = initDB(2)
   db.applyChanges(1, [
-    { _id: '3', _rev: 3, _attachment: true },
-    { _id: '4', _rev: 3, _attachment: true },
+    { _id: '3', _attachment: true },
+    { _id: '4', _attachment: true },
   ], { 3: '/path', 4: '/path' })
   storage._records[0]._refs = ['3']
   db.compact()

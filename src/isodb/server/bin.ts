@@ -2,7 +2,7 @@ import path from 'path'
 import { createLogger } from '../../logger'
 import createServer from './index'
 import PrimaryDB from '../core/primary'
-import InMemStorage from '../core/primary-in-mem-storage'
+import PrimaryInMemStorage from '../core/primary-in-mem-storage'
 import { getFakeNotes } from '../../randomizer/faker'
 
 const log = createLogger('isodb-server')
@@ -15,13 +15,18 @@ const DIST_DIR = path.join(__dirname, '../../../dist')
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')
 
-  const db = new PrimaryDB(new InMemStorage())
+  const db = new PrimaryDB(new PrimaryInMemStorage())
   if (!isProduction && args.includes('--gen-data')) {
     const {
       records,
       attachments,
+      attachedFiles,
     } = await getFakeNotes(30)
-    db.applyChanges(0, records, attachments)
+    db.applyChangeset({
+      baseRev: 0,
+      records,
+      attachments,
+    }, attachedFiles)
     log.info(`Generated ${records.length} fake notes`)
   }
 

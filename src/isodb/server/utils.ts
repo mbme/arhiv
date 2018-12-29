@@ -17,6 +17,7 @@ export function createToken(password: string) {
   const token = utils.aesEncrypt(`valid ${Date.now()}`, utils.sha256(password))
 
   const oneHour = 1 * 60 * 60 // seconds
+
   return `token=${encodeURIComponent(token)}; path=/; Max-Age=${oneHour}; SameSite=Strict`
 }
 

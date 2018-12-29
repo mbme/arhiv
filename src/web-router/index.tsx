@@ -21,7 +21,7 @@ export default class WebRouter {
     })
     const paramsStr = queryParams.toString()
 
-    const url = `${window.location.origin}/${name}`
+    const url = `${window.location.origin}${route.path}`
 
     if (!paramsStr) {
       return url
@@ -33,9 +33,8 @@ export default class WebRouter {
   _propagateCurrentLocation = () => {
     const location = new URL(document.location.toString())
     const params: { [key: string]: string } = {}
-    for (const [key, value] of (location.searchParams as any)) {
-      params[key] = value
-    }
+
+    location.searchParams.forEach((value, key) => params[key] = value)
 
     this.route = {
       path: location.pathname,

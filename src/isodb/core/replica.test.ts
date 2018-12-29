@@ -1,11 +1,11 @@
 import { test } from '../../tester'
-import ReplicaDB from './replica'
-import InMemStorage from './replica-in-mem-storage'
+import IsodbReplica from './replica'
+import ReplicaInMemStorage from './replica-in-mem-storage'
 
 const testFile: any = {}
 
 function initDB(remote: number, local: number) {
-  const storage = new InMemStorage()
+  const storage = new ReplicaInMemStorage()
   storage._rev = remote - 1
   for (let i = 0; i < remote; i += 1) {
     storage._records.push({ _id: `${i}`, _rev: i, _refs: [] })
@@ -18,7 +18,7 @@ function initDB(remote: number, local: number) {
 
   return {
     storage,
-    db: new ReplicaDB(storage),
+    db: new IsodbReplica(storage),
   }
 }
 

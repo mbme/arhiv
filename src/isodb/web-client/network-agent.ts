@@ -1,6 +1,8 @@
 import {
-  IPatchResponse,
-  ChangedRecord,
+  Record,
+  IAttachment,
+  IChangesetResult,
+  IChangeset,
 } from '../core/types'
 import { WebClientEvents } from './events'
 
@@ -42,19 +44,25 @@ export default class NetworkAgent {
 
   async syncChanges(
     rev: number,
-    records: ChangedRecord[],
-    attachments: { [hash: string]: Blob }
-  ): Promise<IPatchResponse> {
+    records: Record[],
+    attachments: IAttachment[],
+    files: { [hash: string]: Blob }
+  ): Promise<IChangesetResult> {
     this._assertNetworkState()
 
+    const changeset: IChangeset = {
+      baseRev: rev,
+      records,
+      attachments,
+    }
+
     const data = new FormData()
-    data.append('rev', rev.toString())
-    data.append('records', JSON.stringify(records))
-    for (const [hash, blob] of Object.entries(attachments)) {
+    data.append('changeset', JSON.stringify(changeset))
+    for (const [hash, blob] of Object.entries(files)) {
       data.append(hash, blob)
     }
 
-    const response = await fetch('/api/changes', {
+    const response = await fetch('/api/changeset', {
       method: 'post',
       credentials: 'include',
       body: data,

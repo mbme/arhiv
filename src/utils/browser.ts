@@ -1,8 +1,8 @@
 export function readFile(file: Blob) {
-  return new Promise((resolve, reject) => {
+  return new Promise<Uint8Array>((resolve, reject) => {
     const reader = new FileReader()
 
-    reader.onload = (e: any) => resolve(new Uint8Array(e.target.result))
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer))
     reader.onerror = reject
 
     reader.readAsArrayBuffer(file)

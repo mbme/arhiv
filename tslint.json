@@ -1,33 +1,102 @@
 {
+  "extends": [
+    "tslint:all"
+  ],
+  "defaultSeverity": "error",
   "linterOptions": {
     "exclude": [
       "node_modules"
     ]
   },
-  "defaultSeverity": "error",
-  "extends": [
-    "tslint:latest",
-    "tslint-config-standard",
-    "tslint-eslint-rules"
-  ],
   "rules": {
-    "no-null-keyword": true,
-    "object-literal-sort-keys": false,
-    "quotemark": [true, "single", "avoid-escape", "jsx-double"],
-    "one-variable-per-declaration": [true, "ignore-for-loop"],
-    "await-promise": [true, "PromiseLike"],
-    "trailing-comma": [true, {
-      "multiline": {
-        "objects": "always",
-        "arrays": "always",
-        "functions": "never",
-        "typeLiterals": "ignore"
-      },
-      "esSpecCompliant": true
-    }],
-    "space-before-function-paren": false,
-    "arrow-parens": false,
+    "member-access": false,
     "ordered-imports": false,
-    "member-access": false
+    "arrow-parens": false,
+    "object-literal-sort-keys": false,
+    "no-null-keyword": false,
+    "completed-docs": false,
+    "member-ordering": false,
+    "typedef": false,
+    "no-default-import": false,
+    "no-default-export": false,
+    "type-literal-delimiter": false,
+    "only-arrow-functions": false,
+    "file-name-casing": false,
+    "no-import-side-effect": [true, {"ignore-module": "(\\.html|\\.css)$"}],
+    "prefer-function-over-method": false,
+    "strict-boolean-expressions": false,
+    "no-parameter-properties": false,
+    "newline-per-chained-call": false,
+    "no-non-null-assertion": false,
+    "no-magic-numbers": false,
+    "no-any": false,
+    "promise-function-async": false,
+    "prefer-template": false,
+    "no-void-expression": [
+      true,
+      "ignore-arrow-function-shorthand"
+    ],
+    "align": {
+      "options": ["parameters", "statements", "members"]
+    },
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-leading-underscore",
+      "allow-pascal-case"
+    ],
+    "semicolon": [
+      true,
+      "never"
+    ],
+    "quotemark": [
+      true,
+      "single",
+      "avoid-escape",
+      "jsx-double"
+    ],
+    "one-variable-per-declaration": [
+      true,
+      "ignore-for-loop"
+    ],
+    "comment-format": [
+      true,
+      "check-space"
+    ],
+    "trailing-comma": [
+      true,
+      {
+        "esSpecCompliant": true,
+        "multiline": {
+          "typeLiterals": "ignore",
+          "functions": "never",
+          "arrays": "always",
+          "objects": "always"
+        }
+      }
+    ],
+    "triple-equals": [
+      true,
+      "allow-null-check"
+    ],
+    "space-within-parens": [
+      true,
+      0
+    ],
+    "no-unused-expression": [
+      true,
+      "allow-fast-null-checks",
+      "allow-tagged-template"
+    ],
+    "no-switch-case-fall-through": true,
+    "curly": [
+      true,
+      "ignore-same-line"
+    ],
+    "await-promise": [
+      true,
+      "PromiseLike"
+    ]
   }
 }

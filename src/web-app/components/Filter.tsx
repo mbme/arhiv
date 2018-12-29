@@ -5,7 +5,7 @@ import Icon from './Icon'
 interface IProps {
   placeholder: string
   filter: string
-  onChange: (value: string) => void
+  onChange(value: string): void
 }
 
 interface IState {

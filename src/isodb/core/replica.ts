@@ -1,24 +1,69 @@
 import { isString, array2object, flatten } from '../../utils'
 import PubSub from '../../utils/pubsub'
 import { createLogger } from '../../logger'
-import { getRandomId, isAttachment } from './utils'
+import { getRandomId } from './utils'
 import {
-  IReplicaStorage,
+  IAttachment,
+  MutableAttachmentFields,
   Record,
-  ChangedRecord,
-  MergeFunction,
-  IPatchResponse,
+  MutableRecordFields,
+  IChangesetResult,
 } from './types'
 
 const logger = createLogger('isodb-replica')
+
+export interface IReplicaStorage {
+  getRev(): number
+
+  getRecords(): Record[]
+  getLocalRecords(): Record[]
+
+  getAttachments(): IAttachment[]
+  getLocalAttachments(): IAttachment[]
+
+  getRecord(id: string): Record | undefined
+  getLocalRecord(id: string): Record | undefined
+
+  getAttachment(id: string): IAttachment | undefined
+  getLocalAttachment(id: string): IAttachment | undefined
+
+  addLocalRecord(record: Record): void
+  addLocalAttachment(attachment: IAttachment, blob?: File): void
+
+  removeLocalRecord(id: string): void
+  removeLocalAttachment(id: string): void
+
+  getAttachmentUrl(id: string): string | undefined
+  getLocalAttachmentsData(): { [id: string]: Blob }
+  upgrade(rev: number, records: Record[], attachments: IAttachment[]): void
+  clearLocalData(): void
+}
+
+interface IMergeConflict<T> {
+  base: T
+  updated: T
+  local: T
+}
+
+export interface IMergeConflicts {
+  records: Array<IMergeConflict<Record>>
+  attachments: Array<IMergeConflict<IAttachment>>
+}
+
+export interface IResolvedConflicts {
+  records: Record[]
+  attachments: IAttachment[]
+}
+
+export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedConflicts>
 
 export interface IEvents {
   'db-update': undefined
 }
 
-export default class ReplicaDB {
+export default class IsodbReplica {
   constructor(
-    public storage: IReplicaStorage,
+    public _storage: IReplicaStorage,
     public events = new PubSub<IEvents>()
   ) { }
 
@@ -26,41 +71,36 @@ export default class ReplicaDB {
     this.events.emit('db-update', undefined)
   }
 
-  /**
-   * @returns storage revision
-   */
   getRev() {
-    return this.storage.getRev()
+    return this._storage.getRev()
   }
 
-  /**
-   * @param id attachment id
-   * @returns path to attachment
-   */
   getAttachmentUrl(id: string) {
-    if (!this.getRecord(id)) {
+    if (!this.getAttachment(id)) {
       return undefined
     }
 
-    return this.storage.getAttachmentUrl(id)
+    return this._storage.getAttachmentUrl(id)
   }
 
-  /**
-   * @param id record id
-   */
-  getRecord(id: string): Record | ChangedRecord | undefined {
-    return this.storage.getLocalRecords().find(item => item._id === id)
-      || this.storage.getRecords().find(item => item._id === id)
+  getRecord(id: string) {
+    return this._storage.getLocalRecord(id)
+      || this._storage.getRecord(id)
+  }
+
+  getAttachment(id: string) {
+    return this._storage.getLocalAttachment(id)
+      || this._storage.getAttachment(id)
   }
 
   /**
    * @returns all records, including local
    */
-  getAll(): Array<Record | ChangedRecord> {
-    const localRecords = this.storage.getLocalRecords()
+  getRecords() {
+    const localRecords = this._storage.getLocalRecords()
     const localIds = new Set(localRecords.map(item => item._id))
 
-    const records = this.storage.getRecords().filter(item => !localIds.has(item._id))
+    const records = this._storage.getRecords().filter(item => !localIds.has(item._id))
 
     return [
       ...records,
@@ -73,11 +113,10 @@ export default class ReplicaDB {
    * @param blob file content
    * @param [fields] additional fields
    */
-  addAttachment(id: string, blob: File, fields = {}) {
-    if (this.getRecord(id)) throw new Error(`can't add attachment ${id}: already exists`)
+  addAttachment(id: string, blob: File, fields: MutableAttachmentFields = {}) {
+    if (this.getAttachment(id)) throw new Error(`can't add attachment ${id}: already exists`)
 
-    // FIXME in transaction
-    this.storage.addLocalRecord({
+    this._storage.addLocalAttachment({
       _id: id,
       _attachment: true,
       ...fields,
@@ -86,13 +125,12 @@ export default class ReplicaDB {
     this._notify()
   }
 
-  updateAttachment(id: string, fields: object) {
-    const record = this.getRecord(id)
-    if (!record) throw new Error(`can't update attachment ${id}: doesn't exist`)
-    if (!isAttachment(record)) throw new Error(`can't update attachment ${id}: not an attachment`)
+  updateAttachment(id: string, fields: MutableAttachmentFields) {
+    const attachment = this.getAttachment(id)
+    if (!attachment) throw new Error(`can't update attachment ${id}: doesn't exist`)
 
-    this.storage.addLocalRecord({
-      ...record,
+    this._storage.addLocalAttachment({
+      ...attachment,
       ...fields,
     })
 
@@ -101,14 +139,12 @@ export default class ReplicaDB {
 
   /**
    * @param fields key-value object with fields
-   * @param [refs=[]] record's refs
    */
-  addRecord(fields: object, refs: string[] = []) {
+  addRecord(fields: MutableRecordFields) {
     const id = getRandomId()
 
-    this.storage.addLocalRecord({
+    this._storage.addLocalRecord({
       _id: getRandomId(),
-      _refs: refs,
       ...fields,
     })
 
@@ -122,18 +158,13 @@ export default class ReplicaDB {
   /**
    * @param id record id
    * @param fields key-value object with changed fields
-   * @param [refs] new refs (not used if record is attachment)
-   * @param [deleted=false] if record is deleted
    */
-  updateRecord(id: string, fields: object, refs?: string[], deleted = false) {
+  updateRecord(id: string, fields: MutableRecordFields) {
     const record = this.getRecord(id)
     if (!record) throw new Error(`can't update record ${id}: doesn't exist`)
-    if (isAttachment(record)) throw new Error(`can't update record ${id}: its an attachment`)
 
-    this.storage.addLocalRecord({
+    this._storage.addLocalRecord({
       ...record,
-      _refs: refs || record._refs,
-      _deleted: deleted,
       ...fields,
     })
 
@@ -142,72 +173,93 @@ export default class ReplicaDB {
     this._notify()
   }
 
-  async applyPatch({ applied, baseRev, currentRev, records }: IPatchResponse, merge: MergeFunction) {
-    if (this.getRev() !== baseRev) {
-      throw new Error(`Got rev ${baseRev} instead of ${this.getRev()}`)
+  async applyChangesetResult(changesetResult: IChangesetResult, merge: MergeFunction) {
+    if (this.getRev() !== changesetResult.baseRev) {
+      throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }
 
-    const currentRecords = array2object(this.storage.getRecords(), record => record._id)
-    const newRecords = records.map(item => isString(item) ? currentRecords[item] : item)
+    const currentRecords = array2object(this._storage.getRecords(), item => item._id)
+    const newRecords = changesetResult.records.map(item => isString(item) ? currentRecords[item] : item)
 
-    if (applied) {
-      this.storage.setRecords(currentRev, newRecords)
-      this.storage.clearLocalRecords()
+    const currentAttachments = array2object(this._storage.getAttachments(), item => item._id)
+    const newAttachments = changesetResult.attachments.map(item => isString(item) ? currentAttachments[item] : item)
+
+    if (changesetResult.success) {
+      this._storage.upgrade(changesetResult.currentRev, newRecords, newAttachments)
+      this._storage.clearLocalData()
+      this._notify()
+
       return
     }
 
-    const conflicts = []
-
+    const recordConflicts = []
     // for each local record
-    for (const localRecord of this.storage.getLocalRecords()) {
+    for (const localRecord of this._storage.getLocalRecords()) {
       const existingRecord = currentRecords[localRecord._id]
       const newRecord = newRecords.find(item => item._id === localRecord._id)!
 
       // if is existing record & revision changed
       //   mark as a conflict
       if (existingRecord._rev !== newRecord._rev) {
-        conflicts.push({
+        recordConflicts.push({
           base: existingRecord,
           updated: newRecord,
           local: localRecord,
         })
       }
     }
+    const attachmentConflicts = []
+    // for each local attachment
+    for (const localAttachment of this._storage.getLocalAttachments()) {
+      const existingAttachment = currentAttachments[localAttachment._id]
+      const newAttachment = newAttachments.find(item => item._id === localAttachment._id)!
+
+      // if is existing attachment & revision changed
+      //   mark as a conflict
+      if (existingAttachment._rev !== newAttachment._rev) {
+        attachmentConflicts.push({
+          base: existingAttachment,
+          updated: newAttachment,
+          local: localAttachment,
+        })
+      }
+    }
 
     // resolve conflicts if needed
-    if (conflicts.length) {
-      for (const updatedRecord of await merge(conflicts)) {
-        this.storage.addLocalRecord(updatedRecord)
+    if (recordConflicts.length || attachmentConflicts.length) {
+      const resolvedConflicts = await merge({ records: recordConflicts, attachments: attachmentConflicts })
+
+      for (const updatedRecord of resolvedConflicts.records) {
+        this._storage.addLocalRecord(updatedRecord)
+      }
+
+      for (const updatedAttachment of resolvedConflicts.attachments) {
+        this._storage.addLocalAttachment(updatedAttachment)
       }
     }
 
     // for each local record
     //   if references deleted record
     //     restore deleted record & all deleted records referenced by it
-    const idsToCheck = flatten(this.storage.getLocalRecords().map(item => (item as any)._refs || []))
+    const idsToCheck = flatten(this._storage.getLocalRecords().map(item => item._refs))
     const idsChecked = new Set()
     while (idsToCheck.length) {
-      const id = idsToCheck.shift()
+      const id = idsToCheck.shift()!
 
       if (idsChecked.has(id)) continue
 
       const existingRecord = currentRecords[id]
       const newRecord = newRecords.find(item => item._id === id)
       if (existingRecord && !newRecord) {
-        if (isAttachment(existingRecord)) {
-          logger.warn(`Can't restore attachment ${id}, skipping`)
-        } else {
-          logger.info(`Restoring record ${id}`)
-          this.storage.addLocalRecord(existingRecord) // restore record
-          idsToCheck.push(...existingRecord._refs)
-        }
+        logger.info(`Restoring record ${id}`)
+        this._storage.addLocalRecord(existingRecord) // restore record
+        idsToCheck.push(...existingRecord._refs)
       }
 
       idsChecked.add(id)
     }
 
-    // merge patch
-    this.storage.setRecords(currentRev, newRecords)
+    this._storage.upgrade(changesetResult.currentRev, newRecords, newAttachments)
 
     this._notify()
   }
@@ -217,22 +269,18 @@ export default class ReplicaDB {
    */
   _compact() {
     const idsInUse = new Set()
-    const attachmentIds = new Set()
-    for (const record of this.storage.getLocalRecords()) {
-      if (isAttachment(record)) {
-        attachmentIds.add(record._id)
-      } else {
-        record._refs.forEach(id => idsInUse.add(id))
+    for (const record of this._storage.getRecords()) {
+      for (const id of record._attachmentRefs) {
+        idsInUse.add(id)
       }
     }
+    const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
 
-    for (const id of attachmentIds) {
-      const existingRecord = this.storage.getRecords().find(item => item._id === id)
-
+    for (const id of localAttachmentIds) {
       // remove unused new local attachments
-      if (!idsInUse.has(id) && !existingRecord) {
+      if (!idsInUse.has(id)) {
         logger.info(`Removing unused local attachment ${id}`)
-        this.storage.removeLocalRecord(id)
+        this._storage.removeLocalAttachment(id)
       }
     }
   }

@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import http from 'http'
+// tslint:disable-next-line:match-default-export-name
 import Busboy from 'busboy'
 import { rmrfSync, createTempDir } from '../utils/fs'
 import { ILazy, lazy } from '../utils/lazy'
@@ -21,7 +22,7 @@ function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage)
 
   const busboy = new Busboy({ headers: req.headers })
 
-  busboy.on('field', (field, value) => {
+  busboy.on('field', (field: string, value: string) => {
     body.fields.push({ field, value })
   })
 
@@ -50,15 +51,18 @@ export default async function bodyParserMiddleware({ req, httpReq }: IContext, n
     } finally {
       if (tmpDir.initialized) rmrfSync(await tmpDir.value)
     }
+
     return
   }
 
   if (contentType.startsWith('application/json')) {
-    req.body = new JSONBody(JSON.parse(await readStreamAsString(httpReq)))
+    req.body = new JSONBody(JSON.parse(await readStreamAsString(httpReq)) as object)
+
     return next()
   }
 
   // just string
   req.body = new StringBody(await readStreamAsString(httpReq))
+
   return next()
 }

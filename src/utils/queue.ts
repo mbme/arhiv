@@ -42,7 +42,7 @@ export default function createQueue() {
     },
 
     close() {
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         _onClose = resolve
         scheduleQueueProcessing()
       })

@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react'
-import { inject, ActionsType, StateType } from '../store'
+import { inject, ActionsType, IStoreState } from '../store'
 import './Toaster.css'
 
 const TOAST_TIMEOUT_MS = 8000
 
 interface IProps {
   toast?: JSX.Element
-  hideToast: () => void
+  hideToast(): void
 }
-class Toaster extends PureComponent<IProps, {}> {
+class Toaster extends PureComponent<IProps> {
   toastTimeout?: number
 
   componentDidUpdate(prevProps: IProps) {
@@ -31,7 +31,7 @@ class Toaster extends PureComponent<IProps, {}> {
   }
 }
 
-const mapStoreToProps = (state: StateType, actions: ActionsType) => ({
+const mapStoreToProps = (state: IStoreState, actions: ActionsType) => ({
   toast: state.toast,
   hideToast: actions.hideToast,
 })

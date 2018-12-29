@@ -1,29 +1,56 @@
 import {
-  RecordInfo,
   Record,
-  ChangedRecord,
-  IPrimaryStorage,
+  IAttachment,
+  IChangesetResult,
+  IChangeset,
 } from './types'
-import { isAttachment, isDeleted } from './utils'
+
+export interface IPrimaryStorage {
+  getRev(): number
+  setRev(rev: number): void
+
+  getRecords(): Record[]
+  getAttachments(): IAttachment[]
+
+  getRecord(id: string): Record | undefined
+  getAttachment(id: string): IAttachment | undefined
+  getAttachmentPath(id: string): string | undefined
+
+  putRecord(updatedRecord: Record): void
+  addAttachment(attachment: IAttachment, attachmentPath: string): void
+  updateAttachment(attachment: IAttachment): void
+
+  removeRecord(id: string): void
+  removeAttachment(id: string): void
+}
 
 export default class PrimaryDB {
-  _storage: IPrimaryStorage
+  constructor(public _storage: IPrimaryStorage) { }
 
-  constructor(storage: IPrimaryStorage) {
-    this._storage = storage
+  getRecords() {
+    return this._storage.getRecords()
+  }
+
+  getAttachments() {
+    return this._storage.getAttachments()
   }
 
   /**
    * @param rev minimum revision to include
-   * @returns array of record if _id is >= rev, id otherwise
    */
-  getAll(rev = 0): RecordInfo[] {
+  _getChangesetResult(rev = 0, success: boolean): IChangesetResult {
     const currentRev = this.getRev()
     if (rev > currentRev) {
       throw new Error(`Got request for the future rev ${rev}, current rev is ${currentRev}`)
     }
 
-    return this._storage.getRecords().map(item => item._rev >= rev ? item : item._id)
+    return {
+      success,
+      baseRev: rev,
+      currentRev,
+      records: this._storage.getRecords().map(item => item._rev! >= rev ? item : item._id),
+      attachments: this._storage.getAttachments().map(item => item._rev! >= rev ? item : item._id),
+    }
   }
 
   /**
@@ -36,118 +63,69 @@ export default class PrimaryDB {
   /**
    * @param id record id
    */
-  getRecord(id: string): Record | undefined {
-    return this._storage.getRecords().find(item => item._id === id)
+  getRecord(id: string) {
+    return this._storage.getRecord(id)
   }
 
   /**
    * @param id attachment id
-   * @returns path to attachment
    */
   getAttachment(id: string) {
     return this._storage.getAttachment(id)
   }
 
   /**
-   * @param rev client's storage revision
-   * @param records new or updated records
-   * @param [newAttachments] id -> path map of new attachments
+   * @param id attachment id
+   * @returns path to attachment
    */
-  applyChanges(rev: number, records: ChangedRecord[], newAttachments: { [id: string]: string } = {}) {
-    if (this._storage.getRev() !== rev) { // ensure client had latest revision
-      return false
+  getAttachmentPath(id: string) {
+    return this._storage.getAttachmentPath(id)
+  }
+
+  applyChangeset(changeset: IChangeset, attachedFiles: { [id: string]: string }) {
+    if (this._storage.getRev() !== changeset.baseRev) { // ensure client had latest revision
+      return this._getChangesetResult(changeset.baseRev, false)
     }
 
-    if (!records.length) { // skip empty changesets
-      return true
+    if (!changeset.records.length && !changeset.attachments.length) { // skip empty changesets
+      return this._getChangesetResult(changeset.baseRev, true)
     }
 
-    const newRev = rev + 1
+    const newRev = changeset.baseRev + 1
 
-    for (const changedRecord of records) {
-      const attachment = newAttachments[changedRecord._id]
-      const existingRecord = this.getRecord(changedRecord._id)
-
-      if (existingRecord && isAttachment(existingRecord) !== isAttachment(changedRecord)) {
-        throw new Error(`Can't change _attachment status for the record ${changedRecord._id}`)
-      }
-
-      if (existingRecord && isAttachment(existingRecord) && attachment) {
-        throw new Error(`Can't replace attachment for the record ${changedRecord._id}`)
-      }
-
-      if (isAttachment(changedRecord) && !attachment) {
-        throw new Error(`Missing attachment for the record ${changedRecord._id}`)
-      }
-
-      if (!isAttachment(changedRecord) && attachment) {
-        throw new Error(`Unexpected attachment for the record ${changedRecord._id}`)
-      }
-
+    for (const changedRecord of changeset.records) {
       this._storage.putRecord({
         ...changedRecord,
         _rev: newRev,
-      }, attachment)
+      })
+    }
+
+    for (const changedAttachment of changeset.attachments) {
+      const existingAttachment = this.getAttachment(changedAttachment._id)
+      const attachedFile = attachedFiles[changedAttachment._id]
+
+      if (!existingAttachment && !attachedFile) {
+        throw new Error(`File is missing for the new attachment ${changedAttachment._id}`)
+      }
+      if (existingAttachment && attachedFile) {
+        throw new Error(`Can't update file for the attachment ${changedAttachment._id}`)
+      }
+
+      if (existingAttachment) {
+        this._storage.updateAttachment({
+          ...changedAttachment,
+          _rev: newRev,
+        })
+      } else {
+        this._storage.addAttachment({
+          ...changedAttachment,
+          _rev: newRev,
+        }, attachedFile)
+      }
     }
 
     this._storage.setRev(newRev)
 
-    return true
-  }
-
-  /**
-   * Physically remove orphan deleted records & orphan attachments.
-   */
-  compact() {
-    const records = this._storage.getRecords()
-
-    const validIds = new Set(
-      records.filter(item => !isAttachment(item) && !isDeleted(item)).map(item => item._id)
-    )
-
-    const idsToCheck = Array.from(validIds)
-    const idsChecked = new Set()
-    while (idsToCheck.length) {
-      const record = records.find(item => item._id === idsToCheck[0])!
-
-      const refs: string[] = (record as any)._refs || []
-
-      for (const id of refs) {
-        if (validIds.has(id)) {
-          continue
-        }
-
-        if (!isDeleted(record)) {
-          validIds.add(id)
-        }
-
-        if (!idsToCheck.includes(id) && !idsChecked.has(id)) {
-          idsToCheck.push(id)
-        }
-      }
-
-      idsChecked.add(idsToCheck.shift()) // pop first item
-    }
-
-    let removedRecords = 0
-    let removedAttachments = 0
-
-    for (const record of records) {
-      if (validIds.has(record._id)) {
-        continue
-      }
-
-      if (isAttachment(record)) {
-        removedAttachments += 1
-      } else {
-        removedRecords += 1
-      }
-      this._storage.removeRecord(record._id) // FIXME in transaction
-    }
-
-    if (removedRecords + removedAttachments) { // update revision if there were any changes
-      this._storage.setRev(this._storage.getRev() + 1)
-      // TODO log numbers
-    }
+    return this._getChangesetResult(changeset.baseRev, true)
   }
 }

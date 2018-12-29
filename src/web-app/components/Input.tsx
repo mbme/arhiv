@@ -4,14 +4,14 @@ import Icon from './Icon'
 import './Input.css'
 
 interface IProps extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange'> {
-  onChange: (value: string) => void
+  onChange(value: string): void
   autoFocus?: boolean
   light?: boolean
-  onClear?: () => void
+  onClear?(): void
   className?: string
 }
 
-export default class Input extends PureComponent<IProps, {}> {
+export default class Input extends PureComponent<IProps> {
   ref = createRef<HTMLInputElement>()
 
   componentDidMount() {

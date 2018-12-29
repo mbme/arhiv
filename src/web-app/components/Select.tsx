@@ -3,7 +3,7 @@ import { Omit } from '../../utils'
 
 interface IProps extends Omit<React.HTMLProps<HTMLSelectElement>, 'onChange'> {
   options: { [key: string]: string }
-  onChange: (value: string) => void
+  onChange(value: string): void
 }
 
 export default function Select({ options, onChange, ...other }: IProps) {

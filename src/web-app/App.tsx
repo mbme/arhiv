@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { IRoute } from '../web-router'
-import { inject, StateType } from './store'
+import { inject, IStoreState } from './store'
 import { ProgressLocker } from './components'
 import Redirect from './parts/Redirect'
 
@@ -61,7 +61,7 @@ class App extends PureComponent<IProps, IState> {
     }
   }
 
-  state = {
+  state: IState = {
     view: undefined,
   }
 
@@ -75,7 +75,7 @@ class App extends PureComponent<IProps, IState> {
   }
 }
 
-const mapStoreToProps = (state: StateType) => ({
+const mapStoreToProps = (state: IStoreState) => ({
   isLockerVisible: state.isLockerVisible,
   isAuthorized: state.isAuthorized,
   route: state.route,

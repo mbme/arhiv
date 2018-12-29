@@ -59,14 +59,15 @@ export default class LockAgent {
         state: 'records-locked',
         records: new Set([id]),
       }
-      return
-    } else {
-      if (this.state.records.has(id)) {
-        throw new Error(`Can't lock record ${id}: already locked`)
-      }
 
-      this.state.records.add(id)
+      return
     }
+
+    if (this.state.records.has(id)) {
+      throw new Error(`Can't lock record ${id}: already locked`)
+    }
+
+    this.state.records.add(id)
   }
 
   unlockRecord(id: string) {

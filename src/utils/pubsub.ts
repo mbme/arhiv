@@ -1,7 +1,7 @@
 type Handler<T, K extends keyof T> = (params: T[K]) => void
 
 export default class PubSub<T> {
-  private subs = new Map()
+  private readonly subs = new Map()
 
   on<K extends keyof T>(name: K, handler: Handler<T, K>) {
     const eventSubs = this._getEventSubs(name)
@@ -20,10 +20,10 @@ export default class PubSub<T> {
   }
 
   emit<K extends keyof T>(name: K, params: T[K]) {
-    this._getEventSubs(name).forEach(handler => handler(params))
+    this._getEventSubs(name).forEach((handler: Handler<T, K>) => handler(params))
   }
 
   private _getEventSubs(name: string): Set<any> {
-    return this.subs.get(name) || new Set()
+    return this.subs.get(name) as Set<any> || new Set()
   }
 }

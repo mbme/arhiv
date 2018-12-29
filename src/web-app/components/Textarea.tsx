@@ -4,17 +4,17 @@ import './Textarea.css'
 interface IProps {
   name: string
   value: string
-  onChange: (value: string) => void
+  onChange(value: string): void
 }
 
-export default class Textarea extends PureComponent<IProps, {}> {
+export default class Textarea extends PureComponent<IProps> {
   ref = createRef<HTMLTextAreaElement>()
   selectionStart = 0
   selectionEnd = 0
 
   updateHeight = () => {
     this.ref.current!.style.height = 'auto'
-    this.ref.current!.style.height = this.ref.current!.scrollHeight + 'px'
+    this.ref.current!.style.height = `${this.ref.current!.scrollHeight}px'`
   }
 
   componentDidMount() {

@@ -1,17 +1,17 @@
 import React, { PureComponent } from 'react'
-import { inject, ActionsType, StateType } from '../store'
+import { inject, ActionsType, IStoreState } from '../store'
 import { Backdrop, Input } from '../components'
 import './AuthView.css'
 
 interface IProps {
-  authorize: (password: string) => Promise<void>
+  authorize(password: string): Promise<void>
 }
 
-interface IState {
+interface IStoreState {
   password: string
 }
 
-class AuthView extends PureComponent<IProps, IState> {
+class AuthView extends PureComponent<IProps, IStoreState> {
   state = {
     password: '',
   }
@@ -43,7 +43,7 @@ class AuthView extends PureComponent<IProps, IState> {
   }
 }
 
-const mapStoreToProps = (_: StateType, actions: ActionsType) => ({
+const mapStoreToProps = (_: IStoreState, actions: ActionsType) => ({
   authorize: actions.authorize,
 })
 

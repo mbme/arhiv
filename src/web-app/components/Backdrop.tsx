@@ -7,10 +7,10 @@ export type BackdropClickEvent = React.MouseEvent<HTMLDivElement>
 
 interface IProps {
   children: React.ReactNode
-  onClick?: (e: BackdropClickEvent) => void
+  onClick?(e: BackdropClickEvent): void
   className?: string
 }
-export default class Backdrop extends PureComponent<IProps, {}> {
+export default class Backdrop extends PureComponent<IProps> {
   rootEl = document.getElementById('modal')!
 
   render() {

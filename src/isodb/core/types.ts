@@ -1,95 +1,71 @@
-export type RecordType = 'note' | 'other'
+import { Omit } from '../../utils'
 
-export interface IRecord {
-  _id: string
-  _rev: number
-  _refs: string[]
-  _deleted?: boolean
-
-  [key: string]: any
-}
+// Attachments
 export interface IAttachment {
-  _id: string
-  _rev: number
-  _attachment: true
+  readonly _id: string
+  readonly _attachment: true
+  readonly _rev?: number
 }
-export type Record = IRecord | IAttachment
+export type MutableAttachmentFields = Omit<IAttachment, '_id' | '_rev' | '_attachment'>
 
-export interface IChangedRecord {
-  _id: string
+// Records
+interface IRecord {
+  readonly _id: string
+  readonly _type: string
+  readonly _rev?: number
   _refs: string[]
+  _attachmentRefs: string[]
   _deleted?: boolean
-
-  [key: string]: any
 }
-export interface IChangedAttachment {
-  _id: string
-  _attachment: true
-}
-export type ChangedRecord = IChangedRecord | IChangedAttachment
 
+// Record types
 export interface INote extends IRecord {
-  type: RecordType
+  readonly _type: 'note'
   name: string
   data: string
+  updatedTs: number
 }
 
-// record or record id
-export type RecordInfo = IRecord | IAttachment | string
+export type Record = INote // | IProject | ISong | IPlaylist etc.
+export type MutableRecordFields = Omit<Record, '_id' | '_rev'>
 
-export interface IPrimaryStorage {
+export interface IChangeset {
   /**
-   * @returns storage revision
+   * replica storage revision
    */
-  getRev(): number
-
-  setRev(rev: number): void
-
-  /**
-   * @param id attachment id
-   * @returns path to attachment
-   */
-  getAttachment(id: string): string | undefined
-
-  getRecords(): Record[]
-
-  putRecord(updatedRecord: Record, attachmentPath?: string): void
-
-  removeRecord(id: string): void
-}
-
-export interface IReplicaStorage {
-  getRev(): number
-
-  /**
-   * @param id attachment id
-   * @returns attachment url
-   */
-  getAttachmentUrl(id: string): string | undefined
-
-  setRecords(rev: number, records: Record[]): void
-  getRecords(): Record[]
-  getLocalRecords(): ChangedRecord[]
-
-  getLocalAttachments(): { [id: string]: Blob }
-
-  addLocalRecord(record: ChangedRecord, blob?: File): void
-  removeLocalRecord(id: string): void
-
-  clearLocalRecords(): void
-}
-
-export interface IMergeConflict {
-  base: Record
-  updated: Record
-  local: ChangedRecord
-}
-
-export type MergeFunction = (conflicts: IMergeConflict[]) => Promise<ChangedRecord[]>
-
-export interface IPatchResponse {
-  applied: boolean
   baseRev: number
+
+  /**
+   * new or updated records
+   */
+  records: Record[]
+
+  /**
+   * new or updated attachments
+   */
+  attachments: IAttachment[]
+}
+
+export interface IChangesetResult {
+  success: boolean
+
+  /**
+   * replica storage revision
+   */
+  baseRev: number
+
+  /**
+   * primary storage revision
+   */
   currentRev: number
-  records: RecordInfo[]
+
+  /**
+   * record or record id
+   */
+  records: Array<Record | string>
+
+  /**
+   * attachment or attachment id
+   */
+  attachments: Array<IAttachment | string>
 }

@@ -96,13 +96,13 @@ type Node =
 
 interface IElementParser {
   children: NodeType[]
-  isValid: (children: Node[]) => boolean
-  isStart: (str: string, pos: number) => boolean
-  isBreak: (str: string, pos: number) => boolean
-  isEnd: (str: string, pos: number) => boolean
+  isValid(children: Node[]): boolean
+  isStart(str: string, pos: number): boolean
+  isBreak(str: string, pos: number): boolean
+  isEnd(str: string, pos: number): boolean
   skip: [number, number]
   escapeChar: string
-  postprocess: (children: Node[]) => Node
+  postprocess(children: Node[]): Node
 }
 
 // BOF === Beginning Of File
@@ -189,6 +189,7 @@ const Grammar: { [key in NodeType]: IElementParser } = {
     postprocess(children: Node[]): INodeHeader {
       const text = children[0] as string
       const lvl = text.startsWith('# ') ? 1 : 2
+
       return {
         type: NodeType.Header,
         lvl,
@@ -224,7 +225,7 @@ const Grammar: { [key in NodeType]: IElementParser } = {
       if (children.length !== 1 && children.length !== 2) return false
 
       // ensure link has only LinkParts
-      return children.filter((item: any) => item.type !== NodeType.LinkPart).length === 0
+      return children.filter(item => isString(item) || item.type !== NodeType.LinkPart).length === 0
     },
     postprocess(children: Node[]): INodeLink {
       const [addressItem, nameItem] = children as INodeLinkPart[]
@@ -233,6 +234,7 @@ const Grammar: { [key in NodeType]: IElementParser } = {
         linkType,
         address,
       } = parseLink(addressItem.text)
+
       return {
         type: NodeType.Link,
         linkType,
@@ -414,7 +416,7 @@ export function select(tree: Node, type: NodeType): Node[] {
 
   if (tree.type === type) result.push(tree)
 
-  const items = (tree as any).items || []
+  const items = (tree as any).items as Node[] || []
   items.forEach((child: Node) => result.push(...select(child, type)))
 
   return result

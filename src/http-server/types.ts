@@ -27,9 +27,9 @@ export const parseHttpMethod = (s: string) => {
       return HttpMethod.DELETE
     case HttpMethod.PATCH.toString():
       return HttpMethod.PATCH
+    default:
+      return undefined
   }
-
-  return undefined
 }
 
 export interface IHeaders { [name: string]: string }

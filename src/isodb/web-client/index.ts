@@ -29,18 +29,18 @@ export default class IsodbClient {
   }
 
   lockRecord(id: string) {
-    return this._lockAgent.lockRecord(id)
+    this._lockAgent.lockRecord(id)
   }
 
   async authorize(password: string) {
     return this._networkAgent.authorize(password)
   }
 
-  async deauthorize() {
-    return this._networkAgent.deauthorize()
+  deauthorize() {
+    this._networkAgent.deauthorize()
   }
 
   syncNow() {
-    return this._syncAgent.syncNow()
+    this._syncAgent.syncNow()
   }
 }

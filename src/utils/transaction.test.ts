@@ -15,6 +15,7 @@ after(() => {
 
 const getRandomFilePath = () => {
   counter += 1
+
   return path.join(tmpDir!, counter.toString())
 }
 
@@ -89,9 +90,9 @@ test('rollback', async (assert) => {
   t.removeFile(file2)
   t.addFile(file3, '')
 
-  const err = await t.commit().catch((e) => e)
+  const isErr = await t.commit().catch((e) => !!e)
 
-  assert.true(!!err)
+  assert.true(isErr)
   assert.equal(await readText(file1), '1')
   assert.equal(await readText(file2), '1')
 })

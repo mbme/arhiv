@@ -1,5 +1,5 @@
 const getRandomBytes: (bytes: number) => Uint8Array = __SERVER__
-  // tslint:disable-next-line:no-var-requires
+  // tslint:disable-next-line:no-var-requires no-unsafe-any no-require-imports
   ? require('crypto').randomBytes
   : (bytes: number) => window.crypto.getRandomValues(new Uint8Array(bytes))
 

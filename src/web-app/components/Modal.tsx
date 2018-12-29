@@ -5,9 +5,9 @@ import './Modal.css'
 
 interface IModalProps {
   children: React.ReactNode
-  onCancel: () => void
+  onCancel(): void
 }
-export default class Modal extends PureComponent<IModalProps, {}> {
+export default class Modal extends PureComponent<IModalProps> {
   onModalClick = (e: BackdropClickEvent) => {
     if (e.target === e.currentTarget) this.props.onCancel()
   }
@@ -24,8 +24,8 @@ export default class Modal extends PureComponent<IModalProps, {}> {
 interface IDialogProps {
   children: React.ReactNode
   confirmation: React.ReactNode
-  onConfirmed: () => void
-  onCancel: () => void
+  onConfirmed(): void
+  onCancel(): void
 }
 export function ConfirmationDialog({ children, confirmation, onConfirmed, onCancel }: IDialogProps) {
   return (

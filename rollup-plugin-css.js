@@ -1,5 +1,5 @@
-import path from 'path';
-import fs from 'fs';
+import path from 'path'
+import fs from 'fs'
 
 export default function rollupPluginCss() {
   const styles = new Map()
@@ -36,7 +36,7 @@ export default function rollupPluginCss() {
       const basename = path.basename(opts.file, path.extname(opts.file))
       const outputFile = path.join(path.dirname(opts.file), basename + '.css')
 
-      return fs.promises.writeFile(outputFile, css);
-    }
+      return fs.promises.writeFile(outputFile, css)
+    },
   }
 }

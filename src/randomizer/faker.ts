@@ -1,6 +1,6 @@
 import path from 'path'
 import { getRandomId } from '../isodb/core/utils'
-import { INote } from '../isodb/core/types'
+import { INote, IAttachment } from '../isodb/core/types'
 import { createArray } from '../utils'
 import { createImageLink } from '../v-parser'
 import { randomInt, shuffle, randomArrValue } from './index'
@@ -8,9 +8,6 @@ import { sha256File } from '../utils/node'
 import { readText, listFiles } from '../utils/fs'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
-/**
- * @param {[hash: filePath]} imageUrls images to use
- */
 async function getFakeNote(generator: ITextGenerator, images: Images): Promise<INote> {
   const name = generator.sentence(1, 8)
 
@@ -38,9 +35,11 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
 
   return {
     _id: getRandomId(),
-    _refs: Array.from(refs),
+    _refs: [],
+    _attachmentRefs: Array.from(refs),
     _rev: 0,
-    type: 'note',
+    _type: 'note',
+    updatedTs: Date.now(),
     name: name.substring(0, name.length - 1),
     data,
   }
@@ -63,6 +62,17 @@ async function listImages(basePath: string): Promise<Images> {
   return result
 }
 
+function createAttachments(ids: string[]) {
+  return ids.map(id => {
+    const attachment: IAttachment = {
+      _id: id,
+      _attachment: true,
+    }
+
+    return attachment
+  })
+}
+
 export async function getFakeNotes(count: number) {
   const resourcesPath = path.join(__dirname, '../../resources')
   const images = await listImages(resourcesPath)
@@ -70,7 +80,8 @@ export async function getFakeNotes(count: number) {
   const generator = createTextGenerator(text)
 
   return {
-    attachments: images,
     records: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
+    attachments: createAttachments(Object.keys(images)),
+    attachedFiles: images,
   }
 }

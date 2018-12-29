@@ -38,12 +38,13 @@ export const isDirectory = (filePath: string) => fs.promises.lstat(filePath).the
 export async function listFiles(filePath: string) {
   const dirContent = await fs.promises.readdir(filePath)
   const fileCheckResults = await Promise.all(dirContent.map((item) => isFile(path.join(filePath, item))))
+
   return dirContent.filter((_, i) => fileCheckResults[i])
 }
 
 export const createTempDir = () => fs.promises.mkdtemp(path.join(os.tmpdir(), 'v-'))
 
-export async function withTempFiles(files: string[], cb: (tempFiles: string[]) => void) {
+export async function withTempFiles(files: string[], cb: (tempFiles: string[]) => void | Promise<void>) {
   if (!files.length) {
     return cb([])
   }
@@ -57,14 +58,14 @@ export async function withTempFiles(files: string[], cb: (tempFiles: string[]) =
     const paths = files.map((_, i) => path.join(dir!, `temp-file-${i}`))
     await Promise.all(paths.map((filePath, i) => fs.promises.writeFile(filePath, files[i])))
 
-    return await Promise.resolve(cb(paths))
+    await Promise.resolve(cb(paths))
   } finally { // do cleanup in any case
     if (dir) rmrfSync(dir)
   }
 }
 
 export const readText = (name: string) => fs.promises.readFile(name, 'utf8')
-export const readJSON = async (name: string) => JSON.parse(await readText(name))
+export const readJSON = async <T>(name: string) => JSON.parse(await readText(name)) as T
 
 export const writeText = (name: string, data: string) => fs.promises.writeFile(name, data, 'utf8')
 export const writeJSON = (name: string, data: object) => writeText(name, JSON.stringify(data, undefined, 2))

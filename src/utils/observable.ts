@@ -1,25 +1,28 @@
 import { removeMut } from './index'
 
-export default function observable<T>(initialValue: T) {
-  type Sub = (value: T) => void
+type Sub<T> = (value: T) => void
 
-  const subs: Sub[] = []
-  let value = initialValue
+export default class Observable<T> {
+  _subs: Array<Sub<T>> = []
 
-  return {
-    get value() {
-      return value
-    },
+  constructor(public _value: T) { }
 
-    set(newValue: T) {
-      value = newValue
-      subs.forEach((sub) => sub(newValue))
-    },
+  get value() {
+    return this._value
+  }
 
-    on(sub: Sub) {
-      subs.push(sub)
+  set value(newValue: T) {
+    this._value = newValue
+    this._subs.forEach(sub => sub(newValue))
+  }
 
-      return () => removeMut(subs, sub)
-    },
+  on(sub: Sub<T>) {
+    this._subs.push(sub)
+
+    return () => this.off(sub)
+  }
+
+  off(sub: Sub<T>) {
+    removeMut(this._subs, sub)
   }
 }

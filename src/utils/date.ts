@@ -11,3 +11,13 @@ const SSS = (date: Date) => pad(date.getSeconds().toString(), 3)
 export function formatDate(date: Date) {
   return `${YYYY(date)}-${MM(date)}-${DD(date)} ${HH(date)}:${mm(date)}:${ss(date)},${SSS(date)}`
 }
+
+export function formatTs(ts: number) {
+  const date = new Date(ts)
+
+  return [
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate(),
+  ].join('/')
+}

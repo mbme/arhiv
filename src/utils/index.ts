@@ -97,16 +97,6 @@ export function isSubSequence(str: string, i: number, seq: string) {
   return true
 }
 
-export function formatTs(ts: number) {
-  const date = new Date(ts)
-
-  return [
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate(),
-  ].join('/')
-}
-
 export function mapObject<T, V>(obj: { [key: string]: T }, fn: (value: T, key: string) => V) {
   const result: { [key: string]: V } = {}
 

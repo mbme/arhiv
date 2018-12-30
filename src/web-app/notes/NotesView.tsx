@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react'
-import { formatTs } from '../../utils'
+import { formatTs } from '../../utils/date'
 import {
   inject,
   IStoreState,

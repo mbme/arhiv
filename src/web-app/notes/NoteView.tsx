@@ -1,41 +1,33 @@
 import React, { PureComponent, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { Link, Toolbar, Icon } from '../components';
-import { api } from '../utils';
+import {
+  inject,
+  IStoreState,
+  ActionsType,
+  IsodbReplica,
+  Note as NoteType,
+} from '../store'
+import { Icon } from '../components';
+import { Link, Toolbar } from '../parts';
 import NotFoundView from '../chrome/NotFoundView';
 import DeleteNoteButton from './DeleteNoteButton';
 import Note from './Note';
 
-export default class NoteView extends PureComponent {
-  static propTypes = {
-    id: PropTypes.number.isRequired,
-  };
+interface IProps {
+  note?: NoteType
+}
 
-  state = {
-    note: undefined,
-  };
-
-  async loadData() {
-    const result = await api.READ_NOTE({ id: this.props.id });
-    this.setState({ note: result });
-  }
-
-  componentDidMount() {
-    this.loadData();
-  }
-
+class NoteView extends PureComponent<IProps> {
   render() {
-    const { note } = this.state;
+    const { note } = this.props;
 
-    if (note === null) return <NotFoundView />;
-    if (note === undefined) return null;
+    if (!note) return <NotFoundView />;
 
     const deleteBtn = (
-      <DeleteNoteButton key="delete" id={note.id} />
+      <DeleteNoteButton key="delete" id={note._id} />
     );
 
     const editBtn = (
-      <Link to={{ name: 'note-editor', params: { id: note.id } }} clean>
+      <Link to={{ path: 'note-editor', params: { id: note._id } }} clean>
         <Icon type="edit-2" />
       </Link>
     );
@@ -43,8 +35,14 @@ export default class NoteView extends PureComponent {
     return (
       <Fragment>
         <Toolbar left={deleteBtn} right={editBtn} />
-        <Note name={note.fields.name} data={note.fields.data} />
+        <Note name={note.name} data={note.data} />
       </Fragment>
     );
   }
 }
+
+const mapStoreToProps = (state: IStoreState, actions: ActionsType, db: IsodbReplica) => ({
+  notes: db.getRecords(),
+})
+
+export default inject(mapStoreToProps, NoteView)

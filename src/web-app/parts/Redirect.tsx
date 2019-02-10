@@ -1,7 +1,7 @@
 import { PureComponent } from 'react'
 import { OptionalProps } from '../../utils'
 import { IRoute } from '../../web-router'
-import { inject, ActionsType, IStoreState } from '../store'
+import { inject, AppStore } from '../store'
 
 interface IProps {
   to: OptionalProps<IRoute, 'params'>
@@ -21,8 +21,8 @@ class Redirect extends PureComponent<IProps> {
   }
 }
 
-const mapStoreToProps = (_: IStoreState, actions: ActionsType) => ({
-  replace: actions.replace,
+const mapStoreToProps = (store: AppStore) => ({
+  replace: store.replace,
 })
 
 export default inject(mapStoreToProps, Redirect)

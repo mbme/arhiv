@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react'
-import { inject, ActionsType, IStoreState } from '../store'
+import { inject, AppStore } from '../store'
 import { Backdrop } from '../components'
 import { classNames } from '../../utils'
 import Link from './Link'
@@ -80,11 +80,11 @@ class ViewLayout extends PureComponent<IProps> {
   }
 }
 
-const mapStoreToProps = (state: IStoreState, actions: ActionsType) => ({
-  route: state.route,
-  isNavVisible: state.isNavVisible,
-  showNav: actions.showNav,
-  deauthorize: actions.deauthorize,
+const mapStoreToProps = (store: AppStore) => ({
+  route: store.state.route,
+  isNavVisible: store.state.isNavVisible,
+  showNav: store.showNav,
+  deauthorize: store.deauthorize,
 })
 
 export default inject(mapStoreToProps, ViewLayout)

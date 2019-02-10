@@ -2,10 +2,9 @@ import React, { PureComponent } from 'react'
 import { formatTs } from '../../utils/date'
 import {
   inject,
-  IStoreState,
-  ActionsType,
   IsodbReplica,
-  Note,
+  CoreTypes,
+  AppStore,
 } from '../store'
 import {
   Button,
@@ -21,7 +20,7 @@ import './NotesView.css'
 interface IProps {
   filter: string
   replaceParam(param: string, value: string): void
-  notes: Note[]
+  notes: CoreTypes.INote[]
 }
 
 class NotesView extends PureComponent<IProps> {
@@ -69,9 +68,9 @@ class NotesView extends PureComponent<IProps> {
   }
 }
 
-const mapStoreToProps = (state: IStoreState, actions: ActionsType, db: IsodbReplica) => ({
-  filter: state.route!.params.filter || '',
-  replaceParam: actions.replaceParam,
+const mapStoreToProps = (store: AppStore, _props: Partial<IProps>, db: IsodbReplica) => ({
+  filter: store.state.route!.params.filter || '',
+  replaceParam: store.replaceParam,
   notes: db.getRecords(),
 })
 

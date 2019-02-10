@@ -163,3 +163,10 @@ export type OptionalProps<T, TOptional extends keyof T> = Omit<T, TOptional> & P
 
 // Get type of object/class property
 export type TypeOfProperty<T, P extends keyof T> = T[P]
+
+// tslint:disable-next-line:max-line-length
+// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93d063e00ef7eddb4d5ef5c910b5028d6fec6099/types/react-redux/index.d.ts#L75-L90
+// Get shared props
+export type Shared<A, B extends Shared<A, B>> = {
+  [P in Extract<keyof A, keyof B>]?: A[P] extends B[P] ? B[P] : never;
+}

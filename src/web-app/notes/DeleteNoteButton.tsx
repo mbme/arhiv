@@ -6,7 +6,7 @@ import { Consumer } from '../chrome/Router';
 
 export default class DeleteNoteButton extends PureComponent {
   static propTypes = {
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
   };
 
   state = {

@@ -1,4 +1,4 @@
-import Observable from '../../utils/observable'
+import Observable from './observable'
 
 export default class Store<S extends {}> {
   $state: Observable<S>

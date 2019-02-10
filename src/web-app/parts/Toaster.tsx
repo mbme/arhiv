@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react'
-import { inject, ActionsType, IStoreState } from '../store'
+import { inject, AppStore } from '../store'
 import './Toaster.css'
 
 const TOAST_TIMEOUT_MS = 8000
@@ -31,9 +31,9 @@ class Toaster extends PureComponent<IProps> {
   }
 }
 
-const mapStoreToProps = (state: IStoreState, actions: ActionsType) => ({
-  toast: state.toast,
-  hideToast: actions.hideToast,
+const mapStoreToProps = (store: AppStore) => ({
+  toast: store.state.toast,
+  hideToast: store.hideToast,
 })
 
 export default inject(mapStoreToProps, Toaster)

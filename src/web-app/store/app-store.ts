@@ -1,4 +1,4 @@
-import Store from './store'
+import Store from '../../utils/store'
 import WebRouter, { IRoute } from '../../web-router'
 import IsodbClient from '../../isodb/web-client'
 
@@ -11,8 +11,8 @@ interface IState {
 }
 
 export default class AppStore extends Store<IState> {
-  router = new WebRouter()
-  client = new IsodbClient()
+  _router = new WebRouter()
+  _client = new IsodbClient()
 
   constructor() {
     super({
@@ -25,13 +25,13 @@ export default class AppStore extends Store<IState> {
   }
 
   // router actions
-  push = (route: IRoute) => this.router.push(route)
-  replace = (route: IRoute) => this.router.replace(route)
-  replaceParam = (param: string, value: string) => this.router.replaceParam(param, value)
+  push = (route: IRoute) => this._router.push(route)
+  replace = (route: IRoute) => this._router.replace(route)
+  replaceParam = (param: string, value: string) => this._router.replaceParam(param, value)
 
   // auth actions
-  authorize = (password: string) => this.client.authorize(password)
-  deauthorize = () => this.client.deauthorize()
+  authorize = (password: string) => this._client.authorize(password)
+  deauthorize = () => this._client.deauthorize()
 
   // other
   showToast = (toast: JSX.Element) => this.setState({ toast })
@@ -44,18 +44,18 @@ export default class AppStore extends Store<IState> {
   _saveAuth = (isAuthorized: boolean) => this.setState({ isAuthorized })
 
   start() {
-    this.client.events.on('authorized', this._saveAuth)
-    this.router.events.on('route-changed', this._updateRoute)
+    this._client.events.on('authorized', this._saveAuth)
+    this._router.events.on('route-changed', this._updateRoute)
 
-    this.client.start()
-    this.router.start()
+    this._client.start()
+    this._router.start()
   }
 
   stop() {
-    this.client.events.off('authorized', this._saveAuth)
-    this.router.events.off('route-changed', this._updateRoute)
+    this._client.events.off('authorized', this._saveAuth)
+    this._router.events.off('route-changed', this._updateRoute)
 
-    this.router.stop()
-    this.client.stop()
+    this._router.stop()
+    this._client.stop()
   }
 }

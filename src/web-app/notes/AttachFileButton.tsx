@@ -15,7 +15,7 @@ class AttachFileButton extends PureComponent {
   onClick = () => this.formRef.firstElementChild.click();
 
   onFilesSelected = async (e) => {
-    const filesArr = [ ...e.target.files ]; // FileList -> Array
+    const filesArr = [...e.target.files]; // FileList -> Array
 
     if (filesArr.length) {
       this.props.showLocker(true);
@@ -54,4 +54,4 @@ const mapStoreToProps = (state, actions) => ({
   showLocker: actions.showLocker,
 });
 
-export default inject(mapStoreToProps, AttachFileButton);
+export default inject(mapStoreToProps)(AttachFileButton);

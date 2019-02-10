@@ -1,6 +1,6 @@
 import React, { PureComponent, Fragment } from 'react'
 import { IRoute } from '../web-router'
-import { inject, IStoreState } from './store'
+import { inject, AppStore } from './store'
 import { ProgressLocker } from './components'
 import Redirect from './parts/Redirect'
 
@@ -20,7 +20,7 @@ const Routes: { [key: string]: (params: { [key: string]: string }) => JSX.Elemen
       return <NotFoundView />
     }
 
-    return <NoteView id={parseInt(id, 10)} />
+    return <NoteView id={id} />
   },
   /* '/note-editor': ({ id }) => <NoteEditorView id={id ? parseInt(id, 10) : undefined} />, */
 }
@@ -75,10 +75,10 @@ class App extends PureComponent<IProps, IState> {
   }
 }
 
-const mapStoreToProps = (state: IStoreState) => ({
-  isLockerVisible: state.isLockerVisible,
-  isAuthorized: state.isAuthorized,
-  route: state.route,
+const mapStoreToProps = (store: AppStore) => ({
+  isLockerVisible: store.state.isLockerVisible,
+  isAuthorized: store.state.isAuthorized,
+  route: store.state.route,
 })
 
 export default inject(mapStoreToProps, App)

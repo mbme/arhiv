@@ -26,6 +26,7 @@ export default class AppStore extends Store<IState> {
 
   // router actions
   push = (route: IRoute) => this._router.push(route)
+  pushTo = (path: string) => this._router.push({ path, params: {} })
   replace = (route: IRoute) => this._router.replace(route)
   replaceParam = (param: string, value: string) => this._router.replaceParam(param, value)
 
@@ -38,6 +39,12 @@ export default class AppStore extends Store<IState> {
   hideToast = () => this.setState({ toast: undefined })
   showLocker = (show: boolean) => this.setState({ isLockerVisible: show })
   showNav = (show: boolean) => this.setState({ isNavVisible: show })
+
+  // manipulate records
+  deleteRecord = (id: string) => {
+    this._client.lockRecord(id)
+    this._client.db.updateRecord(id, { _deleted: true })
+  }
 
   // helpers
   _updateRoute = (route: IRoute) => this.setState({ route })

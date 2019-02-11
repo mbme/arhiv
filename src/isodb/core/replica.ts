@@ -159,7 +159,7 @@ export default class IsodbReplica {
    * @param id record id
    * @param fields key-value object with changed fields
    */
-  updateRecord(id: string, fields: MutableRecordFields) {
+  updateRecord(id: string, fields: Partial<MutableRecordFields>) {
     const record = this.getRecord(id)
     if (!record) throw new Error(`can't update record ${id}: doesn't exist`)
 

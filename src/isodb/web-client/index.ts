@@ -32,6 +32,10 @@ export default class IsodbClient {
     this._lockAgent.lockRecord(id)
   }
 
+  unlockRecord(id: string) {
+    this._lockAgent.unlockRecord(id)
+  }
+
   async authorize(password: string) {
     return this._authAgent.authorize(password)
   }

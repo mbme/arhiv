@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { parse } from '../../v-parser';
-import { getFileUrl } from '../utils';
 import './Note.css'
 
 export default class Note extends PureComponent {
@@ -28,7 +27,7 @@ export default class Note extends PureComponent {
   getFileUrl(fileId) {
     const { localFiles } = this.props;
 
-    if (!localFiles[fileId]) return getFileUrl(fileId);
+    if (!localFiles[fileId]) return `/api/file?fileId=${fileId}`
 
     if (!this.fileUrls[fileId]) {
       this.fileUrls[fileId] = URL.createObjectURL(localFiles[fileId].file);

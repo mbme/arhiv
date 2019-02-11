@@ -6,9 +6,8 @@
   "description": "like v, but typed!",
   "scripts": {
     "build": "NODE_ENV=production rollup -c",
-    "start:server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb/server/bin 8080 pass /tmp/db",
-    "start:client": "rollup -c --watch",
-    "start": "yarn start:server & yarn start:client && fg",
+    "start-server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb/server/bin 8080 pass /tmp/db",
+    "start-client": "rollup -c --watch",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",

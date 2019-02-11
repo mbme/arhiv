@@ -1,51 +1,66 @@
-import React, { PureComponent, Fragment } from 'react';
-import PropTypes from 'prop-types';
-import { api } from '../utils';
-import { Icon, ConfirmationDialog } from '../components';
-import { Consumer } from '../chrome/Router';
+import React, { PureComponent, Fragment } from 'react'
+import {
+  inject,
+  AppStore,
+} from '../store'
+import { Icon, ConfirmationDialog } from '../components'
 
-export default class DeleteNoteButton extends PureComponent {
-  static propTypes = {
-    id: PropTypes.string.isRequired,
-  };
+interface IProps {
+  id: string
+  pushTo(path: string): void
+  deleteRecord(id: string): void
+}
 
+interface IState {
+  showConfirmation: boolean
+}
+
+class DeleteNoteButton extends PureComponent<IProps, IState> {
   state = {
     showConfirmation: false,
-  };
+  }
 
-  router = null;
+  showConfirmationDialog = () => this.setState({ showConfirmation: true })
+  hideConfirmationDialog = () => this.setState({ showConfirmation: false })
 
-  deleteNote = async () => {
-    await api.DELETE_NOTE({ id: this.props.id });
-    this.router.push({ name: 'notes' });
-  };
+  deleteNote = () => {
+    const {
+      id,
+      deleteRecord,
+      pushTo,
+    } = this.props
+
+    deleteRecord(id)
+    pushTo('/notes')
+  }
 
   render() {
     return (
       <Fragment>
-        <Consumer>
-          {(router) => {
-            this.router = router;
-          }}
-        </Consumer>
-
         <Icon
           title="Delete note"
           type="trash-2"
-          onClick={() => this.setState({ showConfirmation: true })}
+          onClick={this.showConfirmationDialog}
         />
 
         {this.state.showConfirmation && (
           <ConfirmationDialog
             confirmation="Delete"
             onConfirmed={this.deleteNote}
-            onCancel={() => this.setState({ showConfirmation: false })}
+            onCancel={this.hideConfirmationDialog}
           >
             Are you sure you want to <b>delete this note?</b>
           </ConfirmationDialog>
         )
         }
       </Fragment>
-    );
+    )
   }
 }
+
+const mapStoreToProps = (store: AppStore) => ({
+  pushTo: store.pushTo,
+  deleteRecord: store.deleteRecord,
+})
+
+export default inject(mapStoreToProps, DeleteNoteButton)

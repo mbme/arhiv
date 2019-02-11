@@ -4,11 +4,12 @@ import { classNames } from '../../utils'
 import './Input.css'
 
 interface IFeatherIconProps {
-  children: JSX.Element | JSX.Element[]
+  children?: React.ReactNode
+  title?: string
 }
 
 // https://feathericons.com/
-function FeatherIcon({ children, ...otherProps }: IFeatherIconProps) {
+function FeatherIcon({ children, title, ...otherProps }: IFeatherIconProps) {
   return (
     <svg
       width="24"
@@ -21,6 +22,7 @@ function FeatherIcon({ children, ...otherProps }: IFeatherIconProps) {
       strokeLinejoin="round"
       {...otherProps}
     >
+      {title && <title>{title}</title>}
       {children}
     </svg>
   )
@@ -127,7 +129,7 @@ const icons: { [key in IconType]: JSX.Element } = {
 
 export const ICON_TYPES = Object.keys(icons) as IconType[]
 
-interface IProps extends React.SVGProps<SVGSVGElement> {
+interface IProps extends IFeatherIconProps, React.SVGProps<SVGSVGElement> {
   type: IconType
   className?: string
 }

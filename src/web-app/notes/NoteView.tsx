@@ -1,4 +1,4 @@
-import React, { PureComponent, Fragment } from 'react'
+import React, { PureComponent } from 'react'
 import {
   inject,
   AppStore,
@@ -6,7 +6,11 @@ import {
   CoreTypes,
 } from '../store'
 import { Icon } from '../components'
-import { Link, Toolbar } from '../parts'
+import {
+  Link,
+  Toolbar,
+  ViewLayout,
+} from '../parts'
 import NotFoundView from '../chrome/NotFoundView'
 import DeleteNoteButton from './DeleteNoteButton'
 import Note from './Note'
@@ -33,16 +37,17 @@ class NoteView extends PureComponent<IProps> {
     )
 
     return (
-      <Fragment>
+      <ViewLayout>
         <Toolbar left={deleteBtn} right={editBtn} />
+
         <Note name={note.name} data={note.data} />
-      </Fragment>
+      </ViewLayout>
     )
   }
 }
 
 const mapStoreToProps = (_store: AppStore, props: Partial<IProps>, db: IsodbReplica) => ({
-  notes: db.getRecord(props.id!),
+  note: db.getRecord(props.id!),
 })
 
 export default inject(mapStoreToProps, NoteView)

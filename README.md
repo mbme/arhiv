@@ -10,13 +10,10 @@ Physicist Devashish Singh
 ### Build Scripts
 
 ```sh
-# prod mode
-yarn start
-
 # dev mode
-yarn dev
+yarn start-client
 # start dev server and generate random data
-yarn dev --gen-data
+yarn start-server --gen-data
 
 # run tests
 yarn test

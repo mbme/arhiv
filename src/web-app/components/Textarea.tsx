@@ -14,7 +14,7 @@ export default class Textarea extends PureComponent<IProps> {
 
   updateHeight = () => {
     this.ref.current!.style.height = 'auto'
-    this.ref.current!.style.height = `${this.ref.current!.scrollHeight}px'`
+    this.ref.current!.style.height = `${this.ref.current!.scrollHeight}px`
   }
 
   componentDidMount() {

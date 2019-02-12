@@ -1,43 +1,68 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import NotFoundView from '../chrome/NotFoundView';
-import { api } from '../utils';
-import NoteEditor from './NoteEditor';
+import React, { PureComponent } from 'react'
+import NotFoundView from '../chrome/NotFoundView'
+import NoteEditor from './NoteEditor'
+import {
+  AppStore,
+  inject,
+  CoreTypes,
+  IsodbReplica,
+} from '../store'
+import {
+  ViewLayout,
+} from '../parts'
+import { IRoute } from '../../web-router'
 
-export default class NoteEditorView extends PureComponent {
-  static propTypes = {
-    id: PropTypes.number,
-  };
+interface IProps {
+  id?: string
+  note?: CoreTypes.INote
+  push(route: IRoute): void
+}
 
-  state = {
-    note: undefined,
-  };
+class NoteEditorView extends PureComponent<IProps> {
+  closeEditor = () => {
+    const {
+      id,
+      push,
+    } = this.props
 
-  async loadData() {
-    if (!this.props.id) return;
-
-    const result = await api.READ_NOTE({ id: this.props.id });
-    this.setState({ note: result });
+    push(
+      id
+        ? { path: '/note', params: { id } }
+        : { path: '/notes', params: {} }
+    )
   }
 
-  componentDidMount() {
-    this.loadData();
+  onSave = () => {
+
   }
 
   render() {
-    const { id } = this.props;
-    const { note } = this.state;
+    const {
+      id,
+      note,
+    } = this.props
 
-    if (note === null) return <NotFoundView />;
-
-    if (id && note === undefined) return null; // loading...
+    if (id && !note) {
+      return <NotFoundView />
+    }
 
     return (
-      <NoteEditor
-        id={id}
-        name={note ? note.fields.name : ''}
-        data={note ? note.fields.data : ''}
-      />
-    );
+      <ViewLayout>
+        <NoteEditor
+          id={id}
+          name={note ? note.name : ''}
+          data={note ? note.data : ''}
+          onSave={this.onSave}
+          onCancel={this.closeEditor}
+        />
+      </ViewLayout>
+    )
   }
 }
+
+const mapStoreToProps = (store: AppStore, props: Partial<IProps>, db: IsodbReplica) => ({
+  note: props.id ? db.getRecord(props.id) : null,
+  push: store.push,
+})
+
+export default inject(mapStoreToProps, NoteEditorView)

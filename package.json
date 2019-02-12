@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/busboy": "^0.2.3",
-    "@types/node": "^10.12.17",
+    "@types/node": "^11.9.0",
     "@types/react": "^16.7.17",
     "@types/react-dom": "^16.0.11",
     "rollup": "^1.1.0",

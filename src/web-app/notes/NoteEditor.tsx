@@ -1,128 +1,160 @@
-import React, { PureComponent, Fragment } from 'react';
-import PropTypes from 'prop-types';
+import React, { PureComponent, Fragment } from 'react'
 import {
   createLink,
   createImageLink,
   extractFileIds,
   parse,
-} from '../../v-parser';
-import { api } from '../utils';
+} from '../../v-parser'
 import {
   Button,
   Textarea,
-  Toolbar,
   Input,
   Icon,
-} from '../components';
-import { Consumer } from '../chrome/Router';
-import Note from './Note';
-import AttachFileButton from './AttachFileButton';
-import DeleteNoteButton from './DeleteNoteButton';
+} from '../components'
+import { Toolbar } from '../parts'
+import Note from './Note'
+import AttachFileButton, { ISelectedFiles } from './AttachFileButton'
+import DeleteNoteButton from './DeleteNoteButton'
 import './Note.css'
 
-const isImage = name => ['.png', '.jpg', '.jpeg'].reduce((acc, ext) => acc || name.endsWith(ext), false);
+const isImage = (name: string) => ['.png', '.jpg', '.jpeg'].reduce((acc, ext) => acc || name.endsWith(ext), false)
 
-export default class NoteEditor extends PureComponent {
-  static propTypes = {
-    id: PropTypes.number,
-    name: PropTypes.string.isRequired,
-    data: PropTypes.string.isRequired,
-  };
+interface IProps {
+  id?: string,
+  name: string
+  data: string
+  onSave(name: string, data: string, assets: File[]): void
+  onCancel(): void
+}
 
-  state = {
+interface IState {
+  preview: boolean
+  name: string
+  data: string
+  localFiles: ISelectedFiles
+  localLinks: { [hash: string]: string }
+}
+
+export default class NoteEditor extends PureComponent<IProps, IState> {
+  state: IState = {
     preview: false,
     name: this.props.name,
     data: this.props.data,
-  };
-
-  localFiles = {};
-
-  textAreaRef = null;
-  router = null;
-
-  hasChanges = () => this.state.name !== this.props.name || this.state.data !== this.props.data;
-  onNameChange = name => this.setState({ name });
-  onDataChange = data => this.setState({ data });
-
-  closeEditor = id => this.router.push(id ? { name: 'note', params: { id } } : { name: 'notes' });
-
-  togglePreview = () => this.setState(state => ({ preview: !state.preview }));
-
-  onSave = async () => {
-    await api.UPDATE_NOTE({ id: this.props.id, name: this.state.name, data: this.state.data }, this.getAssets());
-    this.closeEditor(this.props.id);
-  };
-
-  onCreate = async () => {
-    const note = await api.CREATE_NOTE({ name: this.state.name, data: this.state.data }, this.getAssets());
-    this.closeEditor(note.id);
-  };
-
-  getAssets() {
-    const ids = extractFileIds(parse(this.state.data));
-    // TODO filter out known files
-    return Object.entries(this.localFiles).filter(([id]) => ids.includes(id)).map(([, file]) => file.file);
+    localFiles: {},
+    localLinks: {},
   }
 
-  onFilesSelected = async (files) => {
-    const links = [];
+  textAreaRef = React.createRef<Textarea>()
 
-    Object.entries(files).forEach(([hash, { file, data }]) => {
-      links.push((isImage(file.name) ? createImageLink : createLink)(file.name, hash));
+  hasChanges = () => this.state.name !== this.props.name || this.state.data !== this.props.data
+  changeName = (name: string) => this.setState({ name })
+  changeData = (data: string) => this.setState({ data })
 
-      if (!this.localFiles[hash]) {
-        this.localFiles = {
-          ...this.localFiles,
-          [hash]: { file, data },
-        };
-      }
-    });
+  togglePreview = () => this.setState(state => ({ preview: !state.preview }))
 
-    this.textAreaRef.insert(links.join(' '));
-    this.textAreaRef.focus();
-  };
+  onFilesSelected = async (files: ISelectedFiles) => {
+    const links = []
+
+    const newLocalFiles = {
+      ...this.state.localFiles,
+    }
+    const newLocalLinks = {
+      ...this.state.localLinks,
+    }
+
+    for (const [hash, { file, data }] of Object.entries(files)) {
+      links.push(
+        isImage(file.name)
+          ? createImageLink(file.name, hash)
+          : createLink(file.name, hash)
+      )
+
+      newLocalFiles[hash] = newLocalFiles[hash] || { file, data }
+      newLocalLinks[hash] = newLocalLinks[hash] || URL.createObjectURL(file)
+    }
+
+    this.setState({
+      localFiles: newLocalFiles,
+      localLinks: newLocalLinks,
+    })
+
+    this.textAreaRef.current!.insert(links.join(' '))
+    this.textAreaRef.current!.focus()
+  }
+
+  onSave = async () => {
+    const {
+      name,
+      data,
+      localFiles,
+    } = this.state
+
+    const ids = extractFileIds(parse(data))
+
+    // TODO filter out known files
+    const assets = Object.entries(localFiles).filter(([id]) => ids.includes(id)).map(([, file]) => file.file)
+
+    this.props.onSave(name, data, assets)
+  }
+
+  componentWillUnmount() {
+    for (const url of Object.values(this.state.localLinks)) {
+      URL.revokeObjectURL(url)
+    }
+  }
 
   render() {
-    const { preview, name, data } = this.state;
-    const { id } = this.props;
-    const isValid = name && this.hasChanges();
+    const {
+      preview,
+      name,
+      data,
+      localLinks,
+    } = this.state
+
+    const {
+      id,
+      onCancel,
+    } = this.props
+
+    const isValid = name && name !== this.props.name || data !== this.props.data
 
     const leftIcons = (
       <Fragment>
         {id && <DeleteNoteButton id={id} />}
+
         <AttachFileButton onSelected={this.onFilesSelected} />
+
         <Icon title="Preview" type={preview ? 'eye-off' : 'eye'} onClick={this.togglePreview} />
       </Fragment>
-    );
+    )
 
     const rightIcons = (
       <Fragment>
-        <Button onClick={() => this.closeEditor(id)}>Cancel</Button>
-        {id && <Button primary onClick={this.onSave} disabled={!isValid}>Save</Button>}
-        {!id && <Button primary onClick={this.onCreate} disabled={!isValid}>Create</Button>}
+        <Button onClick={onCancel}>Cancel</Button>
+
+        <Button primary onClick={this.onSave} disabled={!isValid}>Save</Button>
       </Fragment>
-    );
+    )
 
     return (
       <Fragment>
-        <Consumer>
-          {(router) => {
-            this.router = router;
-          }}
-        </Consumer>
-
         <Toolbar left={leftIcons} right={rightIcons} />
 
         <div className="g-section" hidden={preview}>
-          <Input className="Note-title" name="name" value={name} onChange={this.onNameChange} autoFocus />
+          <Input className="Note-title" name="name" value={name} onChange={this.changeName} autoFocus />
         </div>
 
         <div className="g-section" hidden={preview}>
-          <Textarea name="data" value={data} onChange={this.onDataChange} ref={(ref) => { this.textAreaRef = ref; }} />
+          <Textarea
+            name="data"
+            value={data}
+            onChange={this.changeData}
+            ref={this.textAreaRef}
+          />
         </div>
 
-        {preview && <Note name={name} data={data} localFiles={this.localFiles} />}
+        {preview && <Note name={name} data={data} localLinks={localLinks} />}
       </Fragment>
-    );
+    )
   }
 }

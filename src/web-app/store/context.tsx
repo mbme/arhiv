@@ -11,6 +11,7 @@ const StoreContext = React.createContext<AppStore>(null as any)
 type PropsWithoutInjectedProps<Props, MappedProps> = Omit<Props, keyof Shared<Props, MappedProps>>
 
 export function inject<Props, MappedProps>(
+  // tslint:disable-next-line:max-line-length
   mapStoreToProps: (store: AppStore, props: PropsWithoutInjectedProps<Props, MappedProps>, db: IsodbReplica) => MappedProps,
   Component: React.ComponentType<Props>
 ) {

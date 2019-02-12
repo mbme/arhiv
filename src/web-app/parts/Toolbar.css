@@ -28,7 +28,7 @@
 }
 
 @media screen and (min-width: 1024px) {
-  .Toolbar-menu-icon {
+  .Icon.Toolbar-menu-icon {
     display: none;
   }
 }

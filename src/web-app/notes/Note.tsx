@@ -1,91 +1,30 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { parse } from '../../v-parser';
+import React, { PureComponent } from 'react'
+import { MarkupRenderer } from '../components'
 import './Note.css'
 
-export default class Note extends PureComponent {
-  static propTypes = {
-    name: PropTypes.string.isRequired,
-    data: PropTypes.string.isRequired,
-    localFiles: PropTypes.object,
-  };
+interface IProps {
+  name: string
+  data: string
+  localLinks: { [hash: string]: string }
+}
 
+export default class Note extends PureComponent<IProps> {
   static defaultProps = {
-    localFiles: {},
-  };
-
-  fileUrls = {};
-
-  componentDidUpdate(prevProps) {
-    if (this.props.localFiles !== prevProps.localFiles) throw new Error('update not supported');
+    localLinks: {},
   }
-
-  componentWillUnmount() {
-    for (const url of Object.values(this.fileUrls)) URL.revokeObjectURL(url);
-  }
-
-  getFileUrl(fileId) {
-    const { localFiles } = this.props;
-
-    if (!localFiles[fileId]) return `/api/file?fileId=${fileId}`
-
-    if (!this.fileUrls[fileId]) {
-      this.fileUrls[fileId] = URL.createObjectURL(localFiles[fileId].file);
-    }
-
-    return this.fileUrls[fileId];
-  }
-
-  renderItem = (item) => {
-    switch (item.type) {
-      case 'Document': {
-        return React.createElement('article', { className: 'Note-document' }, ...item.items.map(this.renderItem));
-      }
-
-      case 'Paragraph': {
-        return React.createElement('p', {}, ...item.items.map(this.renderItem));
-      }
-
-      case 'Header':
-        return (
-          <h1>{item.text}</h1>
-        );
-
-      case 'Mono':
-        return (
-          <code>{item.text}</code>
-        );
-
-      case 'Bold':
-        return (
-          <strong>{item.text}</strong>
-        );
-
-      case 'Link': {
-        const url = item.link.isInternal ? this.getFileUrl(item.link.address) : item.link.address;
-
-        if (item.link.type === 'image') {
-          return (
-            <img className="Note-image" alt={item.link.name} src={url} />
-          );
-        }
-
-        return (
-          <a href={url}>{item.link.name}</a>
-        );
-      }
-
-      default:
-        return item;
-    }
-  };
 
   render() {
+    const {
+      name,
+      data,
+      localLinks,
+    } = this.props
+
     return (
       <div>
-        <h1 className="Note-title">{this.props.name}</h1>
-        {this.renderItem(parse(this.props.data))}
+        <h1 className="Note-title">{name}</h1>
+        <MarkupRenderer value={data} localLinks={localLinks} />
       </div>
-    );
+    )
   }
 }

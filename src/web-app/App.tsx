@@ -9,7 +9,7 @@ import NotFoundView from './chrome/NotFoundView'
 import ThemeView from './chrome/ThemeView'
 import NotesView from './notes/NotesView'
 import NoteView from './notes/NoteView'
-/* import NoteEditorView from './notes/NoteEditorView' */
+import NoteEditorView from './notes/NoteEditorView'
 
 const Routes: { [key: string]: (params: { [key: string]: string }) => JSX.Element } = {
   '/': () => <Redirect to={{ path: '/notes' }} />,
@@ -22,7 +22,7 @@ const Routes: { [key: string]: (params: { [key: string]: string }) => JSX.Elemen
 
     return <NoteView id={id} />
   },
-  /* '/note-editor': ({ id }) => <NoteEditorView id={id ? parseInt(id, 10) : undefined} />, */
+  '/note-editor': ({ id }) => <NoteEditorView id={id} />,
 }
 
 interface IProps {
@@ -61,7 +61,7 @@ class App extends PureComponent<IProps, IState> {
     }
   }
 
-  state: IState = {
+  state = {
     view: undefined,
   }
 

@@ -15,10 +15,10 @@ export default class ProgressLocker extends PureComponent<{}, IState> {
 
   timer?: number
 
-  makeVisible = () => this.setState({ visible: true })
-
   componentDidMount() {
-    this.timer = window.setTimeout(this.makeVisible, 1000)
+    this.timer = window.setTimeout(() => {
+      this.setState({ visible: true })
+    }, 1000)
   }
 
   componentWillUnmount() {

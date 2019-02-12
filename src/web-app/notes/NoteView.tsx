@@ -31,7 +31,7 @@ class NoteView extends PureComponent<IProps> {
     )
 
     const editBtn = (
-      <Link to={{ path: 'note-editor', params: { id: note._id } }} clean>
+      <Link to={{ path: '/note-editor', params: { id: note._id } }} clean>
         <Icon type="edit-2" />
       </Link>
     )

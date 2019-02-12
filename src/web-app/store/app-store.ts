@@ -44,6 +44,7 @@ export default class AppStore extends Store<IState> {
   deleteRecord = (id: string) => {
     this._client.lockRecord(id)
     this._client.db.updateRecord(id, { _deleted: true })
+    // FIXME locks
   }
 
   // helpers

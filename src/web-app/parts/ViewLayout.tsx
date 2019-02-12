@@ -33,7 +33,7 @@ class ViewLayout extends PureComponent<IProps> {
       isNavVisible,
     } = this.props
 
-    const isNotes = route.path.startsWith('/notes')
+    const isNotes = route.path.startsWith('/note')
     const isTheme = route.path.startsWith('/theme')
 
     const navbar = (

@@ -81,7 +81,7 @@ export interface INodeDocument {
   items: INodeParagraph[]
 }
 
-type Node =
+export type Node =
   string
   | INodeDocument
   | INodeParagraph

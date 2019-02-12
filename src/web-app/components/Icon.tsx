@@ -1,7 +1,7 @@
 // tslint:disable:max-line-length
 import React from 'react'
 import { classNames } from '../../utils'
-import './Input.css'
+import './Icon.css'
 
 interface IFeatherIconProps {
   children?: React.ReactNode

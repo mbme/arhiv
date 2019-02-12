@@ -1,0 +1,10 @@
+.Note-document {
+  hyphens: auto;
+  text-align: justify;
+}
+
+.Note-image {
+  display: block;
+  padding: var(--spacing-medium) 0;
+  margin-bottom: var(--spacing-medium);
+}

@@ -125,7 +125,7 @@ export default class IsodbReplica {
     this._notify()
   }
 
-  updateAttachment(id: string, fields: MutableAttachmentFields) {
+  updateAttachment(id: string, fields: Partial<MutableAttachmentFields>) {
     const attachment = this.getAttachment(id)
     if (!attachment) throw new Error(`can't update attachment ${id}: doesn't exist`)
 
@@ -208,8 +208,7 @@ export default class IsodbReplica {
         })
       }
     }
-    const attachmentConflicts = []
-    // for each local attachment
+    const attachmentConflicts = [] // for each local attachment
     for (const localAttachment of this._storage.getLocalAttachments()) {
       const existingAttachment = currentAttachments[localAttachment._id]
       const newAttachment = newAttachments.find(item => item._id === localAttachment._id)!

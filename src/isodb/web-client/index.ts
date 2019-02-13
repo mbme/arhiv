@@ -6,6 +6,12 @@ import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
 
+interface ILock {
+  updateRecord(): void
+  deleteRecord(): void
+  release(): void
+}
+
 export default class IsodbClient {
   events = createEventsPubSub()
 
@@ -28,12 +34,24 @@ export default class IsodbClient {
     this._syncAgent.stop()
   }
 
-  lockRecord(id: string) {
+  getRecord(id: string) {
+
+  }
+
+  getRecords() {
+
+  }
+
+  addRecord() {
+
+  }
+
+  lockRecord(id: string): ILock {
     this._lockAgent.lockRecord(id)
   }
 
-  unlockRecord(id: string) {
-    this._lockAgent.unlockRecord(id)
+  getAttachmentUrl(id: string) {
+
   }
 
   async authorize(password: string) {

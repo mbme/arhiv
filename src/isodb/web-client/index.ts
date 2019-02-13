@@ -5,11 +5,29 @@ import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
+import { MutableRecordFields } from '../core/types';
 
-interface ILock {
-  updateRecord(): void
-  deleteRecord(): void
-  release(): void
+class RecordLock {
+  constructor(
+    public id: string,
+    private _lockAgent: LockAgent,
+    private _db: IsodbReplica,
+  ) {
+    _lockAgent.lockRecord(id);
+  }
+
+  updateRecord() {
+
+  }
+
+  deleteRecord() {
+    this._db.updateRecord(this.id, { _deleted: true })
+    this.release()
+  }
+
+  release() {
+    this._lockAgent.unlockRecord(this.id)
+  }
 }
 
 export default class IsodbClient {
@@ -35,23 +53,25 @@ export default class IsodbClient {
   }
 
   getRecord(id: string) {
-
+    return this.db.getRecord(id)
   }
 
   getRecords() {
-
+    return this.db.getRecords()
   }
 
-  addRecord() {
+  addRecord(fields: MutableRecordFields) {
+    return this.db.addRecord({
 
+    })
   }
 
-  lockRecord(id: string): ILock {
-    this._lockAgent.lockRecord(id)
+  lockRecord(id: string) {
+    return new RecordLock(id, this._lockAgent, this.db)
   }
 
   getAttachmentUrl(id: string) {
-
+    return this.db.getAttachmentUrl(id)
   }
 
   async authorize(password: string) {

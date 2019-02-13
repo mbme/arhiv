@@ -23,6 +23,8 @@
     "only-arrow-functions": false,
     "file-name-casing": false,
     "no-import-side-effect": [true, {"ignore-module": "(\\.html|\\.css)$"}],
+    "no-submodule-imports": [true, "~"],
+    "no-implicit-dependencies": [true, ["~"]],
     "prefer-function-over-method": false,
     "strict-boolean-expressions": false,
     "no-parameter-properties": false,

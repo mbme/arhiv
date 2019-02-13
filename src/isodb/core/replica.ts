@@ -1,4 +1,9 @@
-import { isString, array2object, flatten } from '../../utils'
+import {
+  isString,
+  array2object,
+  flatten,
+  nowS,
+} from '../../utils'
 import PubSub from '../../utils/pubsub'
 import { createLogger } from '../../logger'
 import { getRandomId } from './utils'
@@ -117,9 +122,9 @@ export default class IsodbReplica {
     if (this.getAttachment(id)) throw new Error(`can't add attachment ${id}: already exists`)
 
     this._storage.addLocalAttachment({
+      ...fields,
       _id: id,
       _attachment: true,
-      ...fields,
     }, blob)
 
     this._notify()
@@ -143,9 +148,12 @@ export default class IsodbReplica {
   addRecord(fields: MutableRecordFields) {
     const id = getRandomId()
 
+    const now = nowS()
     this._storage.addLocalRecord({
-      _id: getRandomId(),
       ...fields,
+      _id: getRandomId(),
+      _createdTs: now,
+      _updatedTs: now,
     })
 
     this._compact()
@@ -166,6 +174,7 @@ export default class IsodbReplica {
     this._storage.addLocalRecord({
       ...record,
       ...fields,
+      _updatedTs: nowS(),
     })
 
     this._compact()

@@ -1,5 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
-import { IRoute } from '../web-router'
+import { IRoute } from '~/web-router'
 import { inject, AppStore } from './store'
 import { ProgressLocker } from './components'
 import Redirect from './parts/Redirect'

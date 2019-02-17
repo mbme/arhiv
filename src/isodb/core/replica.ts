@@ -9,9 +9,7 @@ import { createLogger } from '../../logger'
 import { getRandomId } from './utils'
 import {
   IAttachment,
-  MutableAttachmentFields,
-  Record,
-  MutableRecordFields,
+  IRecord,
   IChangesetResult,
 } from './types'
 
@@ -20,19 +18,19 @@ const logger = createLogger('isodb-replica')
 export interface IReplicaStorage {
   getRev(): number
 
-  getRecords(): Record[]
-  getLocalRecords(): Record[]
+  getRecords(): IRecord[]
+  getLocalRecords(): IRecord[]
 
   getAttachments(): IAttachment[]
   getLocalAttachments(): IAttachment[]
 
-  getRecord(id: string): Record | undefined
-  getLocalRecord(id: string): Record | undefined
+  getRecord(id: string): IRecord | undefined
+  getLocalRecord(id: string): IRecord | undefined
 
   getAttachment(id: string): IAttachment | undefined
   getLocalAttachment(id: string): IAttachment | undefined
 
-  addLocalRecord(record: Record): void
+  addLocalRecord(record: IRecord): void
   addLocalAttachment(attachment: IAttachment, blob?: File): void
 
   removeLocalRecord(id: string): void
@@ -40,7 +38,7 @@ export interface IReplicaStorage {
 
   getAttachmentUrl(id: string): string | undefined
   getLocalAttachmentsData(): { [id: string]: Blob }
-  upgrade(rev: number, records: Record[], attachments: IAttachment[]): void
+  upgrade(rev: number, records: IRecord[], attachments: IAttachment[]): void
   clearLocalData(): void
 }
 
@@ -51,12 +49,12 @@ interface IMergeConflict<T> {
 }
 
 export interface IMergeConflicts {
-  records: Array<IMergeConflict<Record>>
+  records: Array<IMergeConflict<IRecord>>
   attachments: Array<IMergeConflict<IAttachment>>
 }
 
 export interface IResolvedConflicts {
-  records: Record[]
+  records: IRecord[]
   attachments: IAttachment[]
 }
 

@@ -1,4 +1,4 @@
-import { test } from '../../tester'
+import { test } from '~/tester'
 import PrimaryDB from './primary'
 import PrimaryInMemStorage from './primary-in-mem-storage'
 

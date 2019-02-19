@@ -1,4 +1,4 @@
-import { createLogger } from '../../logger'
+import { createLogger } from '~/logger'
 import NetworkAgent from './network-agent'
 import { WebClientEvents } from './events'
 

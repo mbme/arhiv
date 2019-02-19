@@ -1,6 +1,6 @@
 import { createLogger } from '../../logger'
 import {
-  Record,
+  IRecord,
   IAttachment,
   IChangesetResult,
   IChangeset,
@@ -35,7 +35,7 @@ export default class NetworkAgent {
 
   async syncChanges(
     rev: number,
-    records: Record[],
+    records: IRecord[],
     attachments: IAttachment[],
     files: { [hash: string]: Blob }
   ): Promise<IChangesetResult> {

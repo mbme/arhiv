@@ -1,8 +1,11 @@
-import { Record, IAttachment } from './types'
+import {
+  IRecord,
+  IAttachment,
+} from './types'
 import { IPrimaryStorage } from './primary'
 
 export default class PrimaryInMemStorage implements IPrimaryStorage {
-  _records: Record[] = []
+  _records: IRecord[] = []
   _attachments: IAttachment[] = []
   _rev = 0
   _files = new Map<string, string>()
@@ -35,7 +38,7 @@ export default class PrimaryInMemStorage implements IPrimaryStorage {
     return this._files.get(id)
   }
 
-  putRecord(record: Record) {
+  putRecord(record: IRecord) {
     this.removeRecord(record._id)
     this._records.push(record)
   }

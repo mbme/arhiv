@@ -3,7 +3,8 @@ import {
   array2object,
   flatten,
   nowS,
-} from '../../utils'
+  Omit,
+} from '~/utils'
 import PubSub from '../../utils/pubsub'
 import { createLogger } from '../../logger'
 import { getRandomId } from './utils'
@@ -60,6 +61,9 @@ export interface IResolvedConflicts {
 
 export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedConflicts>
 
+type MutableRecordFields = Omit<IRecord, '_id' | '_type' | '_rev'>
+type MutableAttachmentFields = Omit<IAttachment, '_id' | '_rev'>
+
 export interface IEvents {
   'db-update': undefined
 }
@@ -114,15 +118,14 @@ export default class IsodbReplica {
   /**
    * @param id sha256 of file content
    * @param blob file content
-   * @param [fields] additional fields
+   * @param fields additional fields
    */
-  addAttachment(id: string, blob: File, fields: MutableAttachmentFields = {}) {
+  addAttachment(id: string, blob: File, fields: MutableAttachmentFields) {
     if (this.getAttachment(id)) throw new Error(`can't add attachment ${id}: already exists`)
 
     this._storage.addLocalAttachment({
       ...fields,
       _id: id,
-      _attachment: true,
     }, blob)
 
     this._notify()
@@ -143,12 +146,13 @@ export default class IsodbReplica {
   /**
    * @param fields key-value object with fields
    */
-  addRecord(fields: MutableRecordFields) {
+  addRecord(recordType: string, fields: MutableRecordFields) {
     const id = getRandomId()
 
     const now = nowS()
     this._storage.addLocalRecord({
       ...fields,
+      _type: recordType,
       _id: getRandomId(),
       _createdTs: now,
       _updatedTs: now,

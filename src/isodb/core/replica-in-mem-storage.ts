@@ -1,16 +1,16 @@
+import { map2object } from '~/utils'
 import {
-  Record,
+  IRecord,
   IAttachment,
 } from './types'
 import { IReplicaStorage } from './replica'
-import { map2object } from '../../utils'
 
 export default class ReplicaInMemStorage implements IReplicaStorage {
-  _records: Record[] = []
+  _records: IRecord[] = []
   _attachments: IAttachment[] = []
   _rev = 0
 
-  _localRecords = new Map<string, Record>()
+  _localRecords = new Map<string, IRecord>()
   _localAttachments = new Map<string, IAttachment>()
   _localFiles = new Map<string, Blob>()
 
@@ -53,7 +53,7 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
   /**
    * add or update existing local record
    */
-  addLocalRecord(record: Record) {
+  addLocalRecord(record: IRecord) {
     this._localRecords.set(record._id, record)
   }
 
@@ -88,7 +88,7 @@ export default class ReplicaInMemStorage implements IReplicaStorage {
     return map2object(this._localFiles)
   }
 
-  upgrade(rev: number, records: Record[], attachments: IAttachment[]) {
+  upgrade(rev: number, records: IRecord[], attachments: IAttachment[]) {
     this._rev = rev
     this._records = records
     this._attachments = attachments

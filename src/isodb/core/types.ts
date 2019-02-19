@@ -1,10 +1,8 @@
 // Attachments
 export interface IAttachment {
   readonly _id: string
-  readonly _attachment: true // FIXME remove this?
   readonly _rev?: number
 }
-// export type MutableAttachmentFields = Omit<IAttachment, '_id' | '_rev' | '_attachment'>
 
 // Records
 export interface IRecord {
@@ -32,7 +30,6 @@ export interface IRecord {
 // }
 
 // export type Record = INote | ITrack // | IProject | ITrack | IPlaylist etc.
-// export type MutableRecordFields = Omit<Record, '_id' | '_type' | '_rev'>
 
 export interface IChangeset {
   /**

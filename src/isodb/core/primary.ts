@@ -1,5 +1,5 @@
 import {
-  Record,
+  IRecord,
   IAttachment,
   IChangesetResult,
   IChangeset,
@@ -9,14 +9,14 @@ export interface IPrimaryStorage {
   getRev(): number
   setRev(rev: number): void
 
-  getRecords(): Record[]
+  getRecords(): IRecord[]
   getAttachments(): IAttachment[]
 
-  getRecord(id: string): Record | undefined
+  getRecord(id: string): IRecord | undefined
   getAttachment(id: string): IAttachment | undefined
   getAttachmentPath(id: string): string | undefined
 
-  putRecord(updatedRecord: Record): void
+  putRecord(updatedRecord: IRecord): void
   addAttachment(attachment: IAttachment, attachmentPath: string): void
   updateAttachment(attachment: IAttachment): void
 

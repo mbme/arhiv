@@ -72,7 +72,7 @@
         "esSpecCompliant": true,
         "multiline": {
           "typeLiterals": "ignore",
-          "functions": "never",
+          "functions": "always",
           "arrays": "always",
           "objects": "always"
         }

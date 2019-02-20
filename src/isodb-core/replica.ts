@@ -71,7 +71,7 @@ export interface IEvents {
 export default class IsodbReplica {
   constructor(
     public _storage: IReplicaStorage,
-    public events = new PubSub<IEvents>()
+    public events = new PubSub<IEvents>(),
   ) { }
 
   _notify() {

@@ -5,8 +5,8 @@ import {
   nowS,
   Omit,
 } from '~/utils'
-import PubSub from '../../utils/pubsub'
-import { createLogger } from '../../logger'
+import PubSub from '~/utils/pubsub'
+import { createLogger } from '~/logger'
 import { getRandomId } from './utils'
 import {
   IAttachment,

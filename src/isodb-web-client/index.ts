@@ -1,11 +1,11 @@
-import IsodbReplica from '../core/replica'
-import ReplicaInMemStorage from '../core/replica-in-mem-storage'
+import IsodbReplica from '~/isodb-core/replica'
+import ReplicaInMemStorage from '~/isodb-core/replica-in-mem-storage'
+import { MutableRecordFields } from '~/isodb-core/types';
 import { createEventsPubSub } from './events'
 import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
-import { MutableRecordFields } from '../core/types';
 
 class RecordLock {
   constructor(

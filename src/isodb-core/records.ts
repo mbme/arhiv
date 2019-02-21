@@ -1,13 +1,7 @@
 import {
   nowS,
 } from '~/utils'
-import { randomId } from '~/randomizer'
 import { IRecord } from './types'
-
-const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
-const ID_LENGTH = 15
-
-const getRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 
 // Record types
 export interface INote extends IRecord {

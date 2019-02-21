@@ -5,6 +5,7 @@ import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
+import { IRecord } from '~/isodb-core/types';
 
 class RecordLock {
   constructor(
@@ -59,10 +60,10 @@ export default class IsodbClient {
     return this.db.getRecords()
   }
 
-  addRecord(fields: MutableRecordFields) {
-    return this.db.addRecord({
-
-    })
+  addRecord(record: IRecord) { // FIXME files?
+    // TODO lock new record
+    if (this.getRecord(record._id)) throw new Error(`can't add record`)
+    return this.db.saveRecord(record)
   }
 
   lockRecord(id: string) {

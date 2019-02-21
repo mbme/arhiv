@@ -4,6 +4,7 @@ import {
   flatten,
 } from '~/utils'
 import PubSub from '~/utils/pubsub'
+import { randomId } from '~/randomizer'
 import { createLogger } from '~/logger'
 import {
   IAttachment,
@@ -61,6 +62,11 @@ export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedCon
 export interface IEvents {
   'db-update': undefined
 }
+
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+const ID_LENGTH = 15
+
+const getRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 
 export default class IsodbReplica {
   constructor(
@@ -122,6 +128,16 @@ export default class IsodbReplica {
     this._storage.addLocalAttachment(attachment, blob)
 
     this._notify()
+  }
+
+  getNewRecordId() {
+    let id: string
+
+    do {
+      id = getRandomId()
+    } while (this.getRecord(id)) // make sure generated id is unused
+
+    return id
   }
 
   saveRecord(record: IRecord) {

@@ -1,6 +1,5 @@
 import IsodbReplica from '~/isodb-core/replica'
 import ReplicaInMemStorage from '~/isodb-core/replica-in-mem-storage'
-import { MutableRecordFields } from '~/isodb-core/types';
 import { createEventsPubSub } from './events'
 import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'

@@ -2,12 +2,9 @@ import {
   isString,
   array2object,
   flatten,
-  nowS,
-  Omit,
 } from '~/utils'
 import PubSub from '~/utils/pubsub'
 import { createLogger } from '~/logger'
-import { getRandomId } from './utils'
 import {
   IAttachment,
   IRecord,
@@ -60,9 +57,6 @@ export interface IResolvedConflicts {
 }
 
 export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedConflicts>
-
-type MutableRecordFields = Omit<IRecord, '_id' | '_type' | '_rev'>
-type MutableAttachmentFields = Omit<IAttachment, '_id' | '_rev'>
 
 export interface IEvents {
   'db-update': undefined
@@ -120,64 +114,18 @@ export default class IsodbReplica {
    * @param blob file content
    * @param fields additional fields
    */
-  addAttachment(id: string, blob: File, fields: MutableAttachmentFields) {
-    if (this.getAttachment(id)) throw new Error(`can't add attachment ${id}: already exists`)
+  saveAttachment(attachment: IAttachment, blob?: File) {
+    if (!this.getAttachment(attachment._id) && !blob) {
+      throw new Error(`new attachment ${attachment._id}: blob missing`)
+    }
 
-    this._storage.addLocalAttachment({
-      ...fields,
-      _id: id,
-    }, blob)
-
-    this._notify()
-  }
-
-  updateAttachment(id: string, fields: Partial<MutableAttachmentFields>) {
-    const attachment = this.getAttachment(id)
-    if (!attachment) throw new Error(`can't update attachment ${id}: doesn't exist`)
-
-    this._storage.addLocalAttachment({
-      ...attachment,
-      ...fields,
-    })
+    this._storage.addLocalAttachment(attachment, blob)
 
     this._notify()
   }
 
-  /**
-   * @param fields key-value object with fields
-   */
-  addRecord(recordType: string, fields: MutableRecordFields) {
-    const id = getRandomId()
-
-    const now = nowS()
-    this._storage.addLocalRecord({
-      ...fields,
-      _type: recordType,
-      _id: getRandomId(),
-      _createdTs: now,
-      _updatedTs: now,
-    })
-
-    this._compact()
-
-    this._notify()
-
-    return id
-  }
-
-  /**
-   * @param id record id
-   * @param fields key-value object with changed fields
-   */
-  updateRecord(id: string, fields: Partial<MutableRecordFields>) {
-    const record = this.getRecord(id)
-    if (!record) throw new Error(`can't update record ${id}: doesn't exist`)
-
-    this._storage.addLocalRecord({
-      ...record,
-      ...fields,
-      _updatedTs: nowS(),
-    })
+  saveRecord(record: IRecord) {
+    this._storage.addLocalRecord(record)
 
     this._compact()
 

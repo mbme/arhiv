@@ -16,21 +16,6 @@ export interface IRecord {
   _updatedTs: number
 }
 
-// Record types
-// export interface INote extends IRecord {
-//   readonly _type: 'note'
-//   name: string
-//   data: string
-// }
-
-// export interface ITrack extends IRecord {
-//   readonly _type: 'track'
-//   artist: string
-//   title: string
-// }
-
-// export type Record = INote | ITrack // | IProject | ITrack | IPlaylist etc.
-
 export interface IChangeset {
   /**
    * replica storage revision

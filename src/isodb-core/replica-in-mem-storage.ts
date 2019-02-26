@@ -3,7 +3,7 @@ import {
   IRecord,
   IAttachment,
 } from './types'
-import { IReplicaStorage } from './replica'
+import { IReplicaStorage } from './replica-storage'
 
 export default class ReplicaInMemStorage implements IReplicaStorage {
   _records: IRecord[] = []

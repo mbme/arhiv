@@ -6,58 +6,15 @@ import {
 import PubSub from '~/utils/pubsub'
 import { randomId } from '~/randomizer'
 import { createLogger } from '~/logger'
+import { IReplicaStorage } from './replica-storage';
 import {
   IAttachment,
   IRecord,
   IChangesetResult,
+  MergeFunction,
 } from './types'
 
 const logger = createLogger('isodb-replica')
-
-export interface IReplicaStorage {
-  getRev(): number
-
-  getRecords(): IRecord[]
-  getLocalRecords(): IRecord[]
-
-  getAttachments(): IAttachment[]
-  getLocalAttachments(): IAttachment[]
-
-  getRecord(id: string): IRecord | undefined
-  getLocalRecord(id: string): IRecord | undefined
-
-  getAttachment(id: string): IAttachment | undefined
-  getLocalAttachment(id: string): IAttachment | undefined
-
-  addLocalRecord(record: IRecord): void
-  addLocalAttachment(attachment: IAttachment, blob?: File): void
-
-  removeLocalRecord(id: string): void
-  removeLocalAttachment(id: string): void
-
-  getAttachmentUrl(id: string): string | undefined
-  getLocalAttachmentsData(): { [id: string]: Blob }
-  upgrade(rev: number, records: IRecord[], attachments: IAttachment[]): void
-  clearLocalData(): void
-}
-
-interface IMergeConflict<T> {
-  base: T
-  updated: T
-  local: T
-}
-
-export interface IMergeConflicts {
-  records: Array<IMergeConflict<IRecord>>
-  attachments: Array<IMergeConflict<IAttachment>>
-}
-
-export interface IResolvedConflicts {
-  records: IRecord[]
-  attachments: IAttachment[]
-}
-
-export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedConflicts>
 
 export interface IEvents {
   'db-update': undefined
@@ -130,14 +87,20 @@ export default class IsodbReplica {
     this._notify()
   }
 
-  getNewRecordId() {
+  _getNewRecordId() {
     let id: string
 
     do {
       id = getRandomId()
-    } while (this.getRecord(id)) // make sure generated id is unused
+    } while (this.getRecord(id)) // make sure generated id is free
 
     return id
+  }
+
+  getRecordFactory(recordType: string) {
+    const id = this._getNewRecordId
+
+    return getRecordFactory(recordType, id)
   }
 
   saveRecord(record: IRecord) {

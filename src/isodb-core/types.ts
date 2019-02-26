@@ -56,3 +56,21 @@ export interface IChangesetResult {
    */
   attachments: Array<IAttachment | string>
 }
+
+interface IMergeConflict<T> {
+  base: T
+  updated: T
+  local: T
+}
+
+export interface IMergeConflicts {
+  records: Array<IMergeConflict<IRecord>>
+  attachments: Array<IMergeConflict<IAttachment>>
+}
+
+export interface IResolvedConflicts {
+  records: IRecord[]
+  attachments: IAttachment[]
+}
+
+export type MergeFunction = (conflicts: IMergeConflicts) => Promise<IResolvedConflicts>

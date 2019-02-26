@@ -3,15 +3,21 @@ import {
 } from '~/utils'
 import { IRecord } from './types'
 
+enum RecordType {
+  Note = 'note',
+  Track = 'track',
+}
+
+
 // Record types
 export interface INote extends IRecord {
-  readonly _type: 'note'
+  readonly _type: RecordType.Note
   name: string
   data: string
 }
 
 export interface ITrack extends IRecord {
-  readonly _type: 'track'
+  readonly _type: RecordType.Track
   artist: string
   title: string
 }

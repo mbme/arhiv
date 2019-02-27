@@ -1,79 +1,88 @@
 import {
   nowS,
 } from '~/utils'
-import { IRecord } from './types'
+import {
+  IRecord,
+  INote,
+  RecordType,
+} from './types'
+import { randomId } from '~/randomizer'
+import IsodbReplica from './replica';
 
-enum RecordType {
-  Note = 'note',
-  Track = 'track',
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+const ID_LENGTH = 15
+
+function getRandomId(replica: IsodbReplica) {
+  let id: string
+
+  do {
+    id = randomId(ID_ALPHABET, ID_LENGTH)
+  } while (replica.getRecord(id)) // make sure generated id is free
+
+  return id
 }
 
-
-// Record types
-export interface INote extends IRecord {
-  readonly _type: RecordType.Note
-  name: string
-  data: string
-}
-
-export interface ITrack extends IRecord {
-  readonly _type: RecordType.Track
-  artist: string
-  title: string
-}
-
-function createRecord(refs = [], attachmentRefs = []) {
+function createRecord(replica: IsodbReplica, recordType: RecordType): IRecord {
   const now = nowS()
 
   return {
-    _id: getRandomId(),
+    _type: recordType,
+    _id: getRandomId(replica),
     _createdTs: now,
     _updatedTs: now,
-    _refs: refs,
-    _attachmentRefs: attachmentRefs,
+    _refs: [],
+    _attachmentRefs: [],
   }
 }
 
-function updateRecord(refs = [], attachmentRefs = []) {
-  return {
-    _updatedTs: nowS(),
-    _refs: refs,
-    _attachmentRefs: attachmentRefs,
+
+// Active Record
+abstract class Record {
+  constructor(
+    private replica: IsodbReplica,
+    protected record: IRecord,
+  ) { }
+
+  protected parse(value: string) {
+
+  }
+
+  save() {
+    this.replica.saveRecord({
+      ...this.record,
+      _updatedTs: nowS(),
+    })
   }
 }
 
-export function createNote(name: string, data: string): INote {
-  return {
-    ...createRecord(),
-    _type: 'note',
-    name,
-    data,
+
+class Note extends Record {
+  constructor(replica: IsodbReplica, note?: INote) {
+    super(replica, note || createRecord(replica, RecordType.Note))
+  }
+
+  get name() {
+    return this.record.name
+  }
+
+  set name(value: string) {
+    this.record.name = value
+  }
+
+  get data() {
+    return this.record.data
+  }
+
+  set data(value: string) {
+    const {
+      refs,
+      attachmentRefs,
+    } = this.parse(value)
+
+    this.record.data = value
+    this.record._refs = refs
+    this.record._attachmentRefs = attachmentRefs
   }
 }
 
-export function updateNote(note: INote, name: string, data: string): INote {
-  return {
-    ...note,
-    ...updateRecord(),
-    name,
-    data,
-  }
-}
-
-export function createTrack(artist: string, title: string): ITrack {
-  return {
-    ...createRecord(),
-    _type: 'track',
-    artist,
-    title,
-  }
-}
-
-export function updateTrack(track: ITrack, artist: string, title: string): ITrack {
-  return {
-    ...track,
-    ...updateRecord(),
-    title,
-    artist,
-  }
-}
+class Track extends Record { }

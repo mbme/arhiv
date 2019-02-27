@@ -16,6 +16,24 @@ export interface IRecord {
   _updatedTs: number
 }
 
+export enum RecordType {
+  Note = 'note',
+  Track = 'track',
+}
+
+// Record types
+export interface INote extends IRecord {
+  readonly _type: RecordType.Note
+  name: string
+  data: string
+}
+
+export interface ITrack extends IRecord {
+  readonly _type: RecordType.Track
+  artist: string
+  title: string
+}
+
 export interface IChangeset {
   /**
    * replica storage revision

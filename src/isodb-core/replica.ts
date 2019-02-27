@@ -4,7 +4,6 @@ import {
   flatten,
 } from '~/utils'
 import PubSub from '~/utils/pubsub'
-import { randomId } from '~/randomizer'
 import { createLogger } from '~/logger'
 import { IReplicaStorage } from './replica-storage';
 import {
@@ -19,11 +18,6 @@ const logger = createLogger('isodb-replica')
 export interface IEvents {
   'db-update': undefined
 }
-
-const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
-const ID_LENGTH = 15
-
-const getRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 
 export default class IsodbReplica {
   constructor(
@@ -87,19 +81,7 @@ export default class IsodbReplica {
     this._notify()
   }
 
-  _getNewRecordId() {
-    let id: string
-
-    do {
-      id = getRandomId()
-    } while (this.getRecord(id)) // make sure generated id is free
-
-    return id
-  }
-
   getRecordFactory(recordType: string) {
-    const id = this._getNewRecordId
-
     return getRecordFactory(recordType, id)
   }
 

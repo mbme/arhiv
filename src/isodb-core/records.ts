@@ -22,11 +22,10 @@ function getRandomId(replica: IsodbReplica) {
   return id
 }
 
-function createRecord(replica: IsodbReplica, recordType: RecordType): IRecord {
+function createRecord(replica: IsodbReplica) {
   const now = nowS()
 
   return {
-    _type: recordType,
     _id: getRandomId(replica),
     _createdTs: now,
     _updatedTs: now,
@@ -37,14 +36,26 @@ function createRecord(replica: IsodbReplica, recordType: RecordType): IRecord {
 
 
 // Active Record
-abstract class Record {
+abstract class Record<T extends IRecord> {
+  protected record: T
   constructor(
-    private replica: IsodbReplica,
-    protected record: IRecord,
-  ) { }
+    protected replica: IsodbReplica,
+    record?: T,
+  ) {
+    this.record = record || this.create()
+  }
 
-  protected parse(value: string) {
+  protected parse(_value: string) {
+    return {
+      refs: [],
+      attachmentRefs: [],
+    }
+  }
 
+  protected abstract create(): T
+
+  setDeleted(deleted = true) {
+    this.record._deleted = deleted
   }
 
   save() {
@@ -56,9 +67,14 @@ abstract class Record {
 }
 
 
-class Note extends Record {
-  constructor(replica: IsodbReplica, note?: INote) {
-    super(replica, note || createRecord(replica, RecordType.Note))
+class Note extends Record<INote> {
+  create(): INote {
+    return {
+      ...createRecord(this.replica),
+      _type: RecordType.Note,
+      name: '',
+      data: '',
+    }
   }
 
   get name() {
@@ -85,4 +101,5 @@ class Note extends Record {
   }
 }
 
-class Track extends Record { }
+class Track extends Record {
+}

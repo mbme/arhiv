@@ -19,6 +19,7 @@ import {
   Note,
   Track,
   Attachment,
+  Record,
 } from './records'
 
 const logger = createLogger('isodb-replica')
@@ -26,8 +27,6 @@ const logger = createLogger('isodb-replica')
 export interface IEvents {
   'db-update': undefined
 }
-
-type Record = Note | Track
 
 export default class IsodbReplica {
   constructor(

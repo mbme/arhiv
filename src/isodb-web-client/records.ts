@@ -15,7 +15,7 @@ const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
 const ID_LENGTH = 15
 
 // Active Record
-abstract class Record<T extends IRecord> {
+abstract class BaseRecord<T extends IRecord> {
   protected _record: T
 
   constructor(
@@ -78,7 +78,7 @@ abstract class Record<T extends IRecord> {
     return this._record._refs
   }
 
-  get attachmentRefs(): ReadonlyArray<string> {
+  get attachments(): ReadonlyArray<Attachment> {
     return this._record._attachmentRefs
   }
 
@@ -99,7 +99,7 @@ abstract class Record<T extends IRecord> {
   }
 }
 
-export class Note extends Record<INote> {
+export class Note extends BaseRecord<INote> {
   _create(): INote {
     return {
       ...this._createRecord(),
@@ -127,7 +127,7 @@ export class Note extends Record<INote> {
   }
 }
 
-export class Track extends Record<ITrack> {
+export class Track extends BaseRecord<ITrack> {
   _create(): ITrack {
     return {
       ...this._createRecord(),
@@ -153,6 +153,8 @@ export class Track extends Record<ITrack> {
     this._record.artist = value
   }
 }
+
+export type Record = Note | Track
 
 export class Attachment {
   constructor(

@@ -17,6 +17,7 @@ const ID_LENGTH = 15
 // Active Record
 abstract class BaseRecord<T extends IRecord> {
   protected _record: T
+  private _attachments: Attachment[] | undefined
 
   constructor(
     protected _replica: IsodbReplica,
@@ -29,6 +30,7 @@ abstract class BaseRecord<T extends IRecord> {
     // FIXME implement parsing
     this._record._refs = []
     this._record._attachmentRefs = []
+    this._attachments = undefined
   }
 
   protected abstract _create(): T
@@ -78,8 +80,17 @@ abstract class BaseRecord<T extends IRecord> {
     return this._record._refs
   }
 
-  get attachments(): ReadonlyArray<Attachment> {
-    return this._record._attachmentRefs
+  get attachments(): Attachment[] {
+    this._attachments = this._attachments || this._record._attachmentRefs.map(id => {
+      const attachment = this._replica.getAttachment(id)
+      if (!attachment) {
+        throw new Error(`record ${this._record._id} references unknown attachment ${id}`)
+      }
+
+      return attachment
+    })
+
+    return this._attachments
   }
 
   get deleted() {
@@ -159,17 +170,18 @@ export type Record = Note | Track
 export class Attachment {
   constructor(
     private _replica: IsodbReplica,
-    private attachment: IAttachment,
+    private _attachment: IAttachment,
   ) { }
 
-  getUrl() {
-    return this._replica.getAttachmentUrl(this.attachment._id)
+  get url() {
+    return this._replica.getAttachmentUrl(this._attachment._id)
+  }
+
+  get id() {
+    return this._attachment._id
   }
 
   save() {
-    this._replica.saveAttachment({
-      ...this._record,
-      _updatedTs: nowS(),
-    })
+    this._replica.saveAttachment(this._attachment)
   }
 }

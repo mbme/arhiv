@@ -6,6 +6,7 @@ import {
   INote,
   ITrack,
   RecordType,
+  IAttachment,
 } from '~/isodb-core/types'
 import { randomId } from '~/randomizer'
 import IsodbReplica from './replica'
@@ -16,6 +17,7 @@ const ID_LENGTH = 15
 // Active Record
 abstract class Record<T extends IRecord> {
   protected _record: T
+
   constructor(
     protected _replica: IsodbReplica,
     record?: T,
@@ -149,5 +151,23 @@ export class Track extends Record<ITrack> {
 
   set artist(value: string) {
     this._record.artist = value
+  }
+}
+
+export class Attachment {
+  constructor(
+    private _replica: IsodbReplica,
+    private attachment: IAttachment,
+  ) { }
+
+  getUrl() {
+    return this._replica.getAttachmentUrl(this.attachment._id)
+  }
+
+  save() {
+    this._replica.saveAttachment({
+      ...this._record,
+      _updatedTs: nowS(),
+    })
   }
 }

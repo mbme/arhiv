@@ -18,6 +18,7 @@ import { IReplicaStorage } from './replica-storage'
 import {
   Note,
   Track,
+  Attachment,
 } from './records'
 
 const logger = createLogger('isodb-replica')
@@ -38,7 +39,7 @@ export default class IsodbReplica {
     this.events.emit('db-update', undefined)
   }
 
-  private readonly _intoRecord = (record: IRecord): Record => {
+  private _intoRecord = (record: IRecord): Record => {
     switch (record._type) {
       case RecordType.Note:
         return new Note(this, record as INote)
@@ -66,9 +67,13 @@ export default class IsodbReplica {
     return undefined
   }
 
-  getAttachment(id: string) {
-    return this._storage.getLocalAttachment(id)
-      || this._storage.getAttachment(id)
+  getAttachment(id: string): Attachment | undefined {
+    const attachment = this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
+    if (attachment) {
+      return new Attachment(this, attachment)
+    }
+
+    return undefined
   }
 
   /**
@@ -86,11 +91,6 @@ export default class IsodbReplica {
     ].map(this._intoRecord)
   }
 
-  /**
-   * @param id sha256 of file content
-   * @param blob file content
-   * @param fields additional fields
-   */
   saveAttachment(attachment: IAttachment, blob?: File) {
     if (!this.getAttachment(attachment._id) && !blob) {
       throw new Error(`new attachment ${attachment._id}: blob missing`)

@@ -70,10 +70,6 @@ export default class IsodbClient {
     return new RecordLock(id, this._lockAgent, this.db)
   }
 
-  getAttachmentUrl(id: string) {
-    return this.db.getAttachmentUrl(id)
-  }
-
   async authorize(password: string) {
     return this._authAgent.authorize(password)
   }

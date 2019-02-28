@@ -35,6 +35,7 @@
     "no-any": false,
     "promise-function-async": false,
     "prefer-template": false,
+    "prefer-readonly": false,
     "no-void-expression": [
       true,
       "ignore-arrow-function-shorthand"

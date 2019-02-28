@@ -5,13 +5,20 @@ import {
 } from '~/utils'
 import PubSub from '~/utils/pubsub'
 import { createLogger } from '~/logger'
-import { IReplicaStorage } from './replica-storage';
 import {
   IAttachment,
   IRecord,
+  INote,
+  ITrack,
   IChangesetResult,
   MergeFunction,
-} from './types'
+  RecordType,
+} from '~/isodb-core/types'
+import { IReplicaStorage } from './replica-storage'
+import {
+  Note,
+  Track,
+} from './records'
 
 const logger = createLogger('isodb-replica')
 
@@ -19,14 +26,27 @@ export interface IEvents {
   'db-update': undefined
 }
 
+type Record = Note | Track
+
 export default class IsodbReplica {
   constructor(
     public _storage: IReplicaStorage,
     public events = new PubSub<IEvents>(),
   ) { }
 
-  _notify() {
+  private _notify() {
     this.events.emit('db-update', undefined)
+  }
+
+  private readonly _intoRecord = (record: IRecord): Record => {
+    switch (record._type) {
+      case RecordType.Note:
+        return new Note(this, record as INote)
+      case RecordType.Track:
+        return new Track(this, record as ITrack)
+      default:
+        throw new Error('unreachable')
+    }
   }
 
   getRev() {
@@ -34,16 +54,16 @@ export default class IsodbReplica {
   }
 
   getAttachmentUrl(id: string) {
-    if (!this.getAttachment(id)) {
-      return undefined
-    }
-
     return this._storage.getAttachmentUrl(id)
   }
 
-  getRecord(id: string) {
-    return this._storage.getLocalRecord(id)
-      || this._storage.getRecord(id)
+  getRecord(id: string): Record | undefined {
+    const record = this._storage.getLocalRecord(id) || this._storage.getRecord(id)
+    if (record) {
+      return this._intoRecord(record)
+    }
+
+    return undefined
   }
 
   getAttachment(id: string) {
@@ -54,7 +74,7 @@ export default class IsodbReplica {
   /**
    * @returns all records, including local
    */
-  getRecords() {
+  getRecords(): Record[] {
     const localRecords = this._storage.getLocalRecords()
     const localIds = new Set(localRecords.map(item => item._id))
 
@@ -63,7 +83,7 @@ export default class IsodbReplica {
     return [
       ...records,
       ...localRecords,
-    ]
+    ].map(this._intoRecord)
   }
 
   /**
@@ -81,8 +101,17 @@ export default class IsodbReplica {
     this._notify()
   }
 
-  getRecordFactory(recordType: string) {
-    return getRecordFactory(recordType, id)
+  createRecord(recordType: RecordType): Record {
+    switch (recordType) {
+      case RecordType.Note:
+        return new Note(this)
+
+      case RecordType.Track:
+        return new Track(this)
+
+      default:
+        throw new Error('unreachable')
+    }
   }
 
   saveRecord(record: IRecord) {
@@ -186,7 +215,7 @@ export default class IsodbReplica {
   /**
    * Remove unused local attachments
    */
-  _compact() {
+  private _compact() {
     const idsInUse = new Set()
     for (const record of this._storage.getRecords()) {
       for (const id of record._attachmentRefs) {

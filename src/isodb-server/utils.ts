@@ -1,6 +1,6 @@
 import path from 'path'
-import * as utils from '../../utils/node'
-import { listFiles } from '../../utils/fs'
+import * as utils from '~/utils/node'
+import { listFiles } from '~/utils/fs'
 
 export async function resolveAsset(dirs: string[], name: string) {
   for (const dir of dirs) {

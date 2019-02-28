@@ -1,5 +1,5 @@
-import PubSub from '../../utils/pubsub'
-import { IEvents as IDBEvents } from '../core/replica'
+import PubSub from '~/utils/pubsub'
+import { IEvents as IDBEvents } from './replica'
 
 interface IEvents extends IDBEvents {
   'authorized': boolean

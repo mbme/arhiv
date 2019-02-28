@@ -2,7 +2,7 @@ import { map2object } from '~/utils'
 import {
   IRecord,
   IAttachment,
-} from './types'
+} from '~/isodb-core/types'
 import { IReplicaStorage } from './replica-storage'
 
 export default class ReplicaInMemStorage implements IReplicaStorage {

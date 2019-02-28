@@ -4,21 +4,21 @@ export interface IAttachment {
   readonly _rev?: number
 }
 
+export enum RecordType {
+  Note = 'note',
+  Track = 'track',
+}
+
 // Records
 export interface IRecord {
   readonly _id: string
-  readonly _type: string
+  readonly _type: RecordType
   readonly _rev?: number
   _refs: string[]
   _attachmentRefs: string[]
   _deleted?: boolean
   _createdTs: number
   _updatedTs: number
-}
-
-export enum RecordType {
-  Note = 'note',
-  Track = 'track',
 }
 
 // Record types

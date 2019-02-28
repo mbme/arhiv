@@ -1,20 +1,20 @@
 import fs from 'fs'
-import { createLogger } from '../../logger'
-import createQueue from '../../utils/queue'
-import { getMimeType } from '../../file-prober'
+import { createLogger } from '~/logger'
+import createQueue from '~/utils/queue'
+import { getMimeType } from '~/file-prober'
 import {
   Server,
   MultipartBody,
   StringBody,
-} from '../../http-server'
+} from '~/http-server'
+import { IChangeset } from '~/isodb-core/types'
 import {
   isValidAuth,
   extractTokenCookie,
   resolveAsset,
   createToken,
 } from './utils'
-import PrimaryDB from '../core/primary'
-import { IChangeset } from '../core/types'
+import PrimaryDB from './primary'
 
 const log = createLogger('isodb-server')
 

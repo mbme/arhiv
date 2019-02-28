@@ -1,8 +1,8 @@
 import {
   IRecord,
   IAttachment,
-} from './types'
-import { IPrimaryStorage } from './primary'
+} from '~/isodb-core/types'
+import { IPrimaryStorage } from './primary-storage'
 
 export default class PrimaryInMemStorage implements IPrimaryStorage {
   _records: IRecord[] = []

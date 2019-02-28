@@ -1,7 +1,7 @@
 import {
   IRecord,
   IAttachment,
-} from './types'
+} from '~/isodb-core/types'
 
 export interface IReplicaStorage {
   getRev(): number

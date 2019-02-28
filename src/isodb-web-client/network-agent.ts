@@ -1,10 +1,10 @@
-import { createLogger } from '../../logger'
+import { createLogger } from '~/logger'
 import {
   IRecord,
   IAttachment,
   IChangesetResult,
   IChangeset,
-} from '../core/types'
+} from '~/isodb-core/types'
 import { WebClientEvents } from './events'
 
 const log = createLogger('isodb-web-client:network-agent')
@@ -37,7 +37,7 @@ export default class NetworkAgent {
     rev: number,
     records: IRecord[],
     attachments: IAttachment[],
-    files: { [hash: string]: Blob }
+    files: { [hash: string]: Blob },
   ): Promise<IChangesetResult> {
     this._assertNetworkState()
 

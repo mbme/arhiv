@@ -1,16 +1,16 @@
 import path from 'path'
-import { createLogger } from '../../logger'
-import createServer from './index'
-import PrimaryDB from '../core/primary'
-import PrimaryInMemStorage from '../core/primary-in-mem-storage'
-import { getFakeNotes } from '../../randomizer/faker'
+import { createLogger } from '~/logger'
+import { getFakeNotes } from '~/randomizer/faker'
+import PrimaryDB from './primary'
+import PrimaryInMemStorage from './primary-in-mem-storage'
+import createServer from './server'
 
 const log = createLogger('isodb-server')
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-const STATIC_DIR = path.join(__dirname, '../../web-app/static')
-const DIST_DIR = path.join(__dirname, '../../../dist')
+const STATIC_DIR = path.join(__dirname, '../web-app/static')
+const DIST_DIR = path.join(__dirname, '../../dist')
 
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')

@@ -1,9 +1,9 @@
-import LockAgent from './lock-agent'
+import { createLogger } from '~/logger'
 import {
-  default as ReplicaDB,
   IMergeConflicts,
-} from '../core/replica'
-import { createLogger } from '../../logger'
+} from '~/isodb-core/types'
+import IsodbReplica from './replica'
+import LockAgent from './lock-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
 
@@ -35,10 +35,10 @@ export default class SyncAgent {
   _state: AgentState = { state: 'not-synced' }
 
   constructor(
-    public replica: ReplicaDB,
+    public replica: IsodbReplica,
     public lockAgent: LockAgent,
     public networkAgent: NetworkAgent,
-    public authAgent: AuthAgent
+    public authAgent: AuthAgent,
   ) { }
 
   _merge = async (conflicts: IMergeConflicts) => {
@@ -84,7 +84,7 @@ export default class SyncAgent {
           this.replica.getRev(),
           this.replica._storage.getLocalRecords(),
           this.replica._storage.getLocalAttachments(),
-          this.replica._storage.getLocalAttachmentsData()
+          this.replica._storage.getLocalAttachmentsData(),
         )
 
         await this.replica.applyChangesetResult(result, this._merge)

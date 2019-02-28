@@ -1,28 +1,8 @@
 import {
-  IRecord,
-  IAttachment,
   IChangesetResult,
   IChangeset,
-} from './types'
-
-export interface IPrimaryStorage {
-  getRev(): number
-  setRev(rev: number): void
-
-  getRecords(): IRecord[]
-  getAttachments(): IAttachment[]
-
-  getRecord(id: string): IRecord | undefined
-  getAttachment(id: string): IAttachment | undefined
-  getAttachmentPath(id: string): string | undefined
-
-  putRecord(updatedRecord: IRecord): void
-  addAttachment(attachment: IAttachment, attachmentPath: string): void
-  updateAttachment(attachment: IAttachment): void
-
-  removeRecord(id: string): void
-  removeAttachment(id: string): void
-}
+} from '~/isodb-core/types'
+import { IPrimaryStorage } from './primary-storage'
 
 export default class PrimaryDB {
   constructor(public _storage: IPrimaryStorage) { }

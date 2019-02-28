@@ -1,0 +1,153 @@
+import {
+  nowS,
+} from '~/utils'
+import {
+  IRecord,
+  INote,
+  ITrack,
+  RecordType,
+} from '~/isodb-core/types'
+import { randomId } from '~/randomizer'
+import IsodbReplica from './replica'
+
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+const ID_LENGTH = 15
+
+// Active Record
+abstract class Record<T extends IRecord> {
+  protected _record: T
+  constructor(
+    protected _replica: IsodbReplica,
+    record?: T,
+  ) {
+    this._record = record || this._create()
+  }
+
+  protected updateRefs(_value: string) {
+    // FIXME implement parsing
+    this._record._refs = []
+    this._record._attachmentRefs = []
+  }
+
+  protected abstract _create(): T
+
+  private _getRandomId() {
+    let id: string
+
+    do {
+      id = randomId(ID_ALPHABET, ID_LENGTH)
+    } while (this._replica.getRecord(id)) // make sure generated id is free
+
+    return id
+  }
+
+  protected _createRecord() {
+    const now = nowS()
+
+    return {
+      _id: this._getRandomId(),
+      _createdTs: now,
+      _updatedTs: now,
+      _refs: [],
+      _attachmentRefs: [],
+    }
+  }
+
+  save() {
+    this._replica.saveRecord({
+      ...this._record,
+      _updatedTs: nowS(),
+    })
+  }
+
+  get id() {
+    return this._record._id
+  }
+
+  get type() {
+    return this._record._type
+  }
+
+  get rev() {
+    return this._record._rev
+  }
+
+  get refs(): ReadonlyArray<string> {
+    return this._record._refs
+  }
+
+  get attachmentRefs(): ReadonlyArray<string> {
+    return this._record._attachmentRefs
+  }
+
+  get deleted() {
+    return this._record._deleted || false
+  }
+
+  set deleted(value: boolean) {
+    this._record._deleted = value
+  }
+
+  get createdTs() {
+    return this._record._createdTs
+  }
+
+  get updatedTs() {
+    return this._record._updatedTs
+  }
+}
+
+export class Note extends Record<INote> {
+  _create(): INote {
+    return {
+      ...this._createRecord(),
+      _type: RecordType.Note,
+      name: '',
+      data: '',
+    }
+  }
+
+  get name() {
+    return this._record.name
+  }
+
+  set name(value: string) {
+    this._record.name = value
+  }
+
+  get data() {
+    return this._record.data
+  }
+
+  set data(value: string) {
+    this._record.data = value
+    this.updateRefs(value)
+  }
+}
+
+export class Track extends Record<ITrack> {
+  _create(): ITrack {
+    return {
+      ...this._createRecord(),
+      _type: RecordType.Track,
+      title: '',
+      artist: '',
+    }
+  }
+
+  get title() {
+    return this._record.title
+  }
+
+  set title(value: string) {
+    this._record.title = value
+  }
+
+  get artist() {
+    return this._record.artist
+  }
+
+  set artist(value: string) {
+    this._record.artist = value
+  }
+}

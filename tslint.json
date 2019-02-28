@@ -31,6 +31,7 @@
     "newline-per-chained-call": false,
     "no-non-null-assertion": false,
     "no-magic-numbers": false,
+    "max-classes-per-file": false,
     "no-any": false,
     "promise-function-async": false,
     "prefer-template": false,

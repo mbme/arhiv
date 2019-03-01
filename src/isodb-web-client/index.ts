@@ -1,4 +1,4 @@
-import { IRecord } from '~/isodb-core/types';
+import { RecordType } from '~/isodb-core/types'
 import IsodbReplica from './replica'
 import ReplicaInMemStorage from './replica-in-mem-storage'
 import { createEventsPubSub } from './events'
@@ -6,29 +6,6 @@ import LockAgent from './lock-agent'
 import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
-
-class RecordLock {
-  constructor(
-    public id: string,
-    private _lockAgent: LockAgent,
-    private _db: IsodbReplica,
-  ) {
-    _lockAgent.lockRecord(id);
-  }
-
-  updateRecord() {
-
-  }
-
-  deleteRecord() {
-    this._db.updateRecord(this.id, { _deleted: true })
-    this.release()
-  }
-
-  release() {
-    this._lockAgent.unlockRecord(this.id)
-  }
-}
 
 export default class IsodbClient {
   events = createEventsPubSub()
@@ -60,14 +37,16 @@ export default class IsodbClient {
     return this.db.getRecords()
   }
 
-  addRecord(record: IRecord) { // FIXME files?
-    // TODO lock new record
-    if (this.getRecord(record._id)) throw new Error(`can't add record`)
-    return this.db.saveRecord(record)
+  createRecord(recordType: RecordType) {
+    return this.db.createRecord(recordType)
   }
 
   lockRecord(id: string) {
-    return new RecordLock(id, this._lockAgent, this.db)
+    this._lockAgent.lockRecord(id)
+  }
+
+  release(id: string) {
+    this._lockAgent.unlockRecord(id)
   }
 
   async authorize(password: string) {

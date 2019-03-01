@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react'
 import {
   Omit,
   Shared,
-} from '../../utils'
-import IsodbReplica from '../../isodb/core/replica'
+} from '~/utils'
+import IsodbReplica from '~/isodb-web-client/replica'
 import AppStore from './app-store'
 
 const StoreContext = React.createContext<AppStore>(null as any)

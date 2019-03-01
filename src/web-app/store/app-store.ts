@@ -1,6 +1,6 @@
-import Store from '../../utils/store'
-import WebRouter, { IRoute } from '../../web-router'
-import IsodbClient from '../../isodb/web-client'
+import Store from '~/utils/store'
+import WebRouter, { IRoute } from '~/web-router'
+import IsodbClient from '~/isodb-web-client'
 
 interface IState {
   route?: IRoute

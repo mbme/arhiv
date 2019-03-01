@@ -1,5 +1,5 @@
-import IsodbReplica from '../../isodb/core/replica'
-import * as CoreTypes from '../../isodb/core/types'
+import IsodbReplica from '~/isodb-web-client/replica'
+import * as CoreTypes from '~/isodb-core/types'
 
 export { default as AppStore } from './app-store'
 

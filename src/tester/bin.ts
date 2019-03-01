@@ -1,6 +1,6 @@
 import path from 'path'
-import { walkSync } from '../utils/fs'
-import log from '../logger'
+import { walkSync } from '~/utils/fs'
+import log from '~/logger'
 import { getTestPlan, initTestPlan, runTests } from './index'
 
 export default async function run(...args: string[]) {
@@ -41,7 +41,7 @@ export default async function run(...args: string[]) {
     failures += await runTests(
       path.join(basePath, testPlan.file),
       testPlan.tests,
-      updateSnapshots
+      updateSnapshots,
     )
 
     if (testPlan.after) {

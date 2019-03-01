@@ -1,11 +1,21 @@
 import path from 'path'
-import { getRandomId } from '../isodb/core/utils'
-import { INote, IAttachment } from '../isodb/core/types'
-import { createArray } from '../utils'
-import { createImageLink } from '../v-parser'
-import { randomInt, shuffle, randomArrValue } from './index'
-import { sha256File } from '../utils/node'
-import { readText, listFiles } from '../utils/fs'
+import { INote, IAttachment, RecordType } from '~/isodb-core/types'
+import { generateRecordId } from '~/isodb-core/utils'
+import {
+  createArray,
+  nowS,
+} from '~/utils'
+import { sha256File } from '~/utils/node'
+import {
+  readText,
+  listFiles,
+} from '~/utils/fs'
+import { createImageLink } from '~/v-parser'
+import {
+  randomInt,
+  shuffle,
+  randomArrValue,
+} from './index'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
 async function getFakeNote(generator: ITextGenerator, images: Images): Promise<INote> {
@@ -18,7 +28,7 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
     () => {
       const sentences = createArray(
         randomInt(1, 7), // sentences
-        () => generator.sentence()
+        () => generator.sentence(),
       )
 
       if (Math.random() < 0.34) {
@@ -30,16 +40,19 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
       }
 
       return shuffle(sentences).join(' ')
-    }
+    },
   ).join('\n\n')
 
+  const now = nowS()
+
   return {
-    _id: getRandomId(),
+    _id: generateRecordId(),
     _refs: [],
     _attachmentRefs: Array.from(refs),
     _rev: 0,
-    _type: 'note',
-    updatedTs: Date.now(),
+    _type: RecordType.Note,
+    _createdTs: now,
+    _updatedTs: now,
     name: name.substring(0, name.length - 1),
     data,
   }
@@ -66,7 +79,6 @@ function createAttachments(ids: string[]) {
   return ids.map(id => {
     const attachment: IAttachment = {
       _id: id,
-      _attachment: true,
     }
 
     return attachment

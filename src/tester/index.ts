@@ -60,8 +60,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
               ${expected}
             actual:
               ${actual}
-          `
-          )
+          `)
         }
       },
 
@@ -85,7 +84,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
           try {
             assert.strictEqual(
               JSON.stringify(actual, undefined, 2),
-              JSON.stringify(oldSnapshots[snapshotPos], undefined, 2)
+              JSON.stringify(oldSnapshots[snapshotPos], undefined, 2),
             )
           } catch (e) {
             if (!updateSnapshots) throw e

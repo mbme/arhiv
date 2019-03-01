@@ -8,11 +8,8 @@ import {
   RecordType,
   IAttachment,
 } from '~/isodb-core/types'
-import { randomId } from '~/randomizer'
+import { generateRecordId } from '~/isodb-core/utils'
 import IsodbReplica from './replica'
-
-const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
-const ID_LENGTH = 15
 
 // Active Record
 abstract class BaseRecord<T extends IRecord> {
@@ -39,7 +36,7 @@ abstract class BaseRecord<T extends IRecord> {
     let id: string
 
     do {
-      id = randomId(ID_ALPHABET, ID_LENGTH)
+      id = generateRecordId()
     } while (this._replica.getRecord(id)) // make sure generated id is free
 
     return id

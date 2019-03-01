@@ -1,5 +1,10 @@
 #!/usr/bin/env -S node
 
+require('tsconfig-paths').register({
+  baseUrl: './',
+  paths: require('./tsconfig.json').compilerOptions.paths
+});
+
 require('ts-node').register({
   files: true,
   compilerOptions: {

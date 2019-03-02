@@ -11,7 +11,7 @@ export default class AuthAgent {
 
   constructor(
     public events: WebClientEvents,
-    public networkAgent: NetworkAgent
+    public networkAgent: NetworkAgent,
   ) { }
 
   isAuthorized() {

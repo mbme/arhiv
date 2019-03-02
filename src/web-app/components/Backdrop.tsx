@@ -24,7 +24,7 @@ export default class Backdrop extends PureComponent<IProps> {
       <div className={classNames('Backdrop-container', className)} onClick={onClick}>
         {children}
       </div>,
-      this.rootEl
+      this.rootEl,
     )
   }
 }

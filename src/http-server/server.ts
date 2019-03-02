@@ -130,7 +130,7 @@ export default class Server {
         httpReq.url,
         httpRes.statusCode,
         httpRes.statusMessage || 'OK',
-        ms
+        ms,
       )
     })
 

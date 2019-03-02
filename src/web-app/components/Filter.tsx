@@ -34,7 +34,7 @@ export default class Filter extends PureComponent<IProps, IState> {
     this.updateTimoutId = window.setTimeout(
       this.props.onChange,
       60,
-      filter.trim().length ? filter : undefined
+      filter.trim().length ? filter : undefined,
     )
   }
 

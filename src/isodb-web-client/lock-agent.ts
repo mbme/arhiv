@@ -1,4 +1,4 @@
-import { createLogger } from '../../logger'
+import { createLogger } from '~/logger'
 import { WebClientEvents } from './events'
 
 const log = createLogger('isodb-lock-agent')

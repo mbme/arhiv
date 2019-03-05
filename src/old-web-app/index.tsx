@@ -1,19 +1,20 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { cssRaw } from 'typestyle'
 
-import globalStyles from './styles'
-
-cssRaw(globalStyles)
+import './static/styles.css'
+import { StoreProvider } from './store'
+import App from './App'
 
 const rootEl = document.getElementById('root')!
 
 ReactDOM.render(
   <React.StrictMode>
-    <h1>Hello World</h1>
+    <StoreProvider>
+      <App />
+    </StoreProvider>
   </React.StrictMode>,
   rootEl,
   () => {
     rootEl.style.visibility = 'visible'
-  },
+  }
 )

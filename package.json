@@ -7,6 +7,7 @@
   "scripts": {
     "build": "NODE_ENV=production rollup -c",
     "start-server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
+    "start-server-with-data": "yarn start-server --gen-data",
     "start-client": "rollup -c --watch",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
@@ -17,7 +18,8 @@
   "dependencies": {
     "busboy": "^0.3.0",
     "react": "^16.6.3",
-    "react-dom": "^16.6.3"
+    "react-dom": "^16.6.3",
+    "typestyle": "^2.0.1"
   },
   "devDependencies": {
     "@types/busboy": "^0.2.3",

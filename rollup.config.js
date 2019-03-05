@@ -2,7 +2,6 @@ import nodeResolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
 import typescript from 'rollup-plugin-typescript'
-import rollupPluginCss from './rollup-plugin-css'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -15,13 +14,15 @@ export default {
     sourcemap: true,
   },
 
+  moduleContext: {  // HACK: suppress useless rollup warning for 3rd party library
+    'node_modules/free-style/dist.es2015/free-style.js': 'window',
+  },
+
   plugins: [
     nodeResolve({
       jsnext: true,
       extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx' ],
     }),
-
-    rollupPluginCss(),
 
     typescript(),
 

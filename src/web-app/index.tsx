@@ -5,6 +5,7 @@ import { cssRaw } from 'typestyle'
 import {
   Router,
   IRoute,
+  Redirect,
 } from '~/web-router'
 
 import globalStyles from './styles'
@@ -14,6 +15,12 @@ cssRaw(globalStyles)
 const rootEl = document.getElementById('root')!
 
 function renderView(route: IRoute) {
+  if (route.path === '/') {
+    return (
+      <Redirect to={{ path: '/notes' }} />
+    )
+  }
+
   return (
     <code>
       {JSON.stringify(route, null, 2)}

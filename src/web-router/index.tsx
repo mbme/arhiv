@@ -1,2 +1,13 @@
-export { WebRouter, IRoute } from './router'
-export { Router, RouterContext } from './Router'
+export {
+  WebRouter,
+  IRoute,
+} from './router'
+
+export {
+  Router,
+  RouterContext,
+} from './Router'
+
+export {
+  Redirect,
+} from './Redirect'

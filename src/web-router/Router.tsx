@@ -1,13 +1,16 @@
 import * as React from 'react'
+import { OptionalProps } from '~/utils'
 import {
   WebRouter,
   IRoute,
 } from './router'
 
+export type Route = OptionalProps<IRoute, 'params'>
+
 interface IRouteActions {
-  push(route: IRoute): void
+  push(route: Route): void
   pushTo(path: string): void
-  replace(route: IRoute): void
+  replace(route: Route): void
   replaceParam(param: string, value: string): void
 }
 
@@ -18,16 +21,20 @@ interface IProps {
 }
 
 interface IState {
-  route?: IRoute,
+  view: React.ReactNode,
 }
 
 export class Router extends React.PureComponent<IProps, IState> {
   state: IState = {
-    route: undefined,
+    view: null,
   }
 
   _router = new WebRouter()
-  _updateRoute = (route: IRoute) => this.setState({ route })
+  _updateRoute = (route: IRoute) => {
+    this.setState({
+      view: this.props.renderView(route),
+    })
+  }
 
   componentDidMount() {
     this._router.events.on('route-changed', this._updateRoute)
@@ -40,28 +47,33 @@ export class Router extends React.PureComponent<IProps, IState> {
   }
 
   actions: IRouteActions = {
-    push: (route: IRoute) => this._router.push(route),
+    push: (route: Route) => {
+      this._router.push({
+        path: route.path,
+        params: route.params || {},
+      })
+    },
+
     pushTo: (path: string) => this._router.push({ path, params: {} }),
-    replace: (route: IRoute) => this._router.replace(route),
+
+    replace: (route: Route) => {
+      this._router.replace({
+        path: route.path,
+        params: route.params || {},
+      })
+    },
+
     replaceParam: (param: string, value: string) => this._router.replaceParam(param, value),
   }
 
   render() {
     const {
-      renderView,
-    } = this.props
-
-    const {
-      route,
+      view,
     } = this.state
-
-    if (!route) {
-      return null
-    }
 
     return (
       <RouterContext.Provider value={this.actions}>
-        {renderView(route)}
+        {view}
       </RouterContext.Provider>
     )
   }

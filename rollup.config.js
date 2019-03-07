@@ -1,7 +1,7 @@
 import nodeResolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
-import typescript from 'rollup-plugin-typescript'
+import typescript from 'rollup-plugin-typescript2'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -24,7 +24,9 @@ export default {
       extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx' ],
     }),
 
-    typescript(),
+    typescript({
+      cacheRoot: './node_modules/.cache/rts2_cache',
+    }),
 
     replace({
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
@@ -42,6 +44,9 @@ export default {
           'createRef',
           'createContext',
           'createElement',
+          'useEffect',
+          'useContext',
+          'memo',
           'render',
         ],
         'node_modules/react-dom/index.js': [

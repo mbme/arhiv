@@ -12,6 +12,7 @@ interface IRouteActions {
   pushTo(path: string): void
   replace(route: Route): void
   replaceParam(param: string, value: string): void
+  getUrl(route: Route): string
 }
 
 export const RouterContext = React.createContext<IRouteActions>({} as any)
@@ -23,6 +24,11 @@ interface IProps {
 interface IState {
   view: React.ReactNode,
 }
+
+const normalizeRoute = (route: Route): IRoute => ({
+  path: route.path,
+  params: route.params || {},
+})
 
 export class Router extends React.PureComponent<IProps, IState> {
   state: IState = {
@@ -48,22 +54,23 @@ export class Router extends React.PureComponent<IProps, IState> {
 
   actions: IRouteActions = {
     push: (route: Route) => {
-      this._router.push({
-        path: route.path,
-        params: route.params || {},
-      })
+      this._router.push(normalizeRoute(route))
     },
 
-    pushTo: (path: string) => this._router.push({ path, params: {} }),
+    pushTo: (path: string) => {
+      this._router.push({ path, params: {} })
+    },
 
     replace: (route: Route) => {
-      this._router.replace({
-        path: route.path,
-        params: route.params || {},
-      })
+      this._router.replace(normalizeRoute(route))
     },
 
-    replaceParam: (param: string, value: string) => this._router.replaceParam(param, value),
+    replaceParam: (param: string, value: string) => {
+      this._router.replaceParam(param, value)
+    },
+
+    getUrl: (route: Route) =>
+      this._router.getUrl(normalizeRoute(route)),
   }
 
   render() {

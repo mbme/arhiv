@@ -11,3 +11,7 @@ export {
 export {
   Redirect,
 } from './Redirect'
+
+export {
+  Link,
+} from './Link'

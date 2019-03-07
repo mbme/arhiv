@@ -14,7 +14,20 @@ export class WebRouter {
 
   constructor(public events = new PubSub<IEvents>()) { }
 
-  _createUrl(route: IRoute) {
+  _propagateCurrentLocation = () => {
+    const location = new URL(document.location.toString())
+    const params: { [key: string]: string } = {}
+
+    location.searchParams.forEach((value, key) => params[key] = value)
+
+    this.route = {
+      path: location.pathname,
+      params,
+    }
+    this.events.emit('route-changed', this.route)
+  }
+
+  getUrl(route: IRoute) {
     const queryParams = new URLSearchParams()
     Object.entries(route.params).forEach(([key, value]) => {
       queryParams.set(key, value)
@@ -30,26 +43,13 @@ export class WebRouter {
     return `${url}?${paramsStr}`
   }
 
-  _propagateCurrentLocation = () => {
-    const location = new URL(document.location.toString())
-    const params: { [key: string]: string } = {}
-
-    location.searchParams.forEach((value, key) => params[key] = value)
-
-    this.route = {
-      path: location.pathname,
-      params,
-    }
-    this.events.emit('route-changed', this.route)
-  }
-
   push(route: IRoute) {
-    window.history.pushState(undefined, '', this._createUrl(route))
+    window.history.pushState(undefined, '', this.getUrl(route))
     this._propagateCurrentLocation()
   }
 
   replace(route: IRoute) {
-    window.history.replaceState(undefined, '', this._createUrl(route))
+    window.history.replaceState(undefined, '', this.getUrl(route))
     this._propagateCurrentLocation()
   }
 
@@ -64,7 +64,7 @@ export class WebRouter {
       },
     }
 
-    window.history.replaceState(undefined, '', this._createUrl(newRoute))
+    window.history.replaceState(undefined, '', this.getUrl(newRoute))
     this._propagateCurrentLocation()
   }
 

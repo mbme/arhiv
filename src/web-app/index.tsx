@@ -6,6 +6,7 @@ import {
   Router,
   IRoute,
   Redirect,
+  Link,
 } from '~/web-router'
 
 import globalStyles from './styles'
@@ -23,6 +24,9 @@ function renderView(route: IRoute) {
 
   return (
     <code>
+      <Link to={{ path: '/test' }}>
+        Test!
+      </Link>
       {JSON.stringify(route, null, 2)}
     </code>
   )

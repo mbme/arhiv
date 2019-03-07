@@ -1,6 +1,7 @@
 {
   "extends": [
-    "tslint:all"
+    "tslint:all",
+    "tslint-react-hooks"
   ],
   "defaultSeverity": "error",
   "linterOptions": {
@@ -101,6 +102,7 @@
     "await-promise": [
       true,
       "PromiseLike"
-    ]
+    ],
+    "react-hooks-nesting": "error"
   }
 }

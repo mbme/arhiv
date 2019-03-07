@@ -40,6 +40,7 @@ export default {
           'Fragment',
           'StrictMode',
           'createRef',
+          'createContext',
           'createElement',
           'render',
         ],

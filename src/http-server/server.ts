@@ -26,10 +26,8 @@ interface IRoute {
 }
 
 export default class Server {
-  _server: http.Server | undefined
-
-  _middlewares: Middleware[] = [bodyParserMiddleware]
-  _routes: IRoute[] = []
+  private _middlewares: Middleware[] = [bodyParserMiddleware]
+  private _routes: IRoute[] = []
 
   use(cb: Middleware) {
     this._middlewares.push(cb)
@@ -55,7 +53,7 @@ export default class Server {
     this.addRoute(HttpMethod.POST, pathTest, cb)
   }
 
-  async _runMiddlewares(context: IContext, pos: number) {
+  private async _runMiddlewares(context: IContext, pos: number) {
     const middleware = this._middlewares[pos]
 
     if (!middleware) return // no more middlewares, stop evaluation
@@ -63,6 +61,66 @@ export default class Server {
     const next = () => this._runMiddlewares(context, pos + 1)
     await Promise.resolve(middleware(context, next))
   }
+
+  private _requestHandler = async (httpReq: http.IncomingMessage, httpRes: http.ServerResponse) => {
+    const hrstart = process.hrtime()
+
+    const isGzipSupported = /\bgzip\b/.test((httpReq.headers as IHeaders)['accept-encoding'])
+
+    const req: IRequest = {
+      url: urlParser.parse(httpReq.url!, true),
+      method: parseHttpMethod(httpReq.method!)!,
+      headers: httpReq.headers as IHeaders,
+    }
+
+    const res: IResponse = {
+      statusCode: 200,
+      headers: {},
+      body: undefined,
+    }
+
+    try {
+      await this._runMiddlewares({ req, res, httpReq, httpRes }, 0)
+    } catch (e) {
+      log.warn('failed to handle request', e)
+      res.statusCode = 400
+      res.body = { error: e }
+    }
+
+    httpRes.statusCode = res.statusCode
+
+    for (const [header, value] of Object.entries(res.headers)) {
+      httpRes.setHeader(header, value)
+    }
+
+    if (isGzipSupported) {
+      httpRes.setHeader('Content-Encoding', 'gzip')
+    }
+
+    if (res.body instanceof Stream.Readable) {
+      const stream = isGzipSupported ? res.body.pipe(zlib.createGzip()) : res.body
+      await pipePromise(stream, httpRes)
+    } else if (isObject(res.body)) {
+      httpRes.setHeader('Content-Type', 'application/json')
+      const str = JSON.stringify(res.body)
+      httpRes.end(isGzipSupported ? await gzip(str) : str)
+    } else {
+      httpRes.end(res.body)
+    }
+
+    const hrend = process.hrtime(hrstart)
+    const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
+    log.debug(
+      '%s %s %d %s - %dms',
+      httpReq.method!.padEnd(4),
+      httpReq.url,
+      httpRes.statusCode,
+      httpRes.statusMessage || 'OK',
+      ms,
+    )
+  }
+
+  private _server = http.createServer(this._requestHandler)
 
   start(port: number) {
     // router middleware
@@ -76,68 +134,10 @@ export default class Server {
       }
     })
 
-    this._server = http.createServer(async (httpReq: http.IncomingMessage, httpRes: http.ServerResponse) => {
-      const hrstart = process.hrtime()
-
-      const isGzipSupported = /\bgzip\b/.test((httpReq.headers as IHeaders)['accept-encoding'])
-
-      const req: IRequest = {
-        url: urlParser.parse(httpReq.url!, true),
-        method: parseHttpMethod(httpReq.method!)!,
-        headers: httpReq.headers as IHeaders,
-      }
-
-      const res: IResponse = {
-        statusCode: 200,
-        headers: {},
-        body: undefined,
-      }
-
-      try {
-        await this._runMiddlewares({ req, res, httpReq, httpRes }, 0)
-      } catch (e) {
-        log.warn('failed to handle request', e)
-        res.statusCode = 400
-        res.body = { error: e }
-      }
-
-      httpRes.statusCode = res.statusCode
-
-      for (const [header, value] of Object.entries(res.headers)) {
-        httpRes.setHeader(header, value)
-      }
-
-      if (isGzipSupported) {
-        httpRes.setHeader('Content-Encoding', 'gzip')
-      }
-
-      if (res.body instanceof Stream.Readable) {
-        const stream = isGzipSupported ? res.body.pipe(zlib.createGzip()) : res.body
-        await pipePromise(stream, httpRes)
-      } else if (isObject(res.body)) {
-        httpRes.setHeader('Content-Type', 'application/json')
-        const str = JSON.stringify(res.body)
-        httpRes.end(isGzipSupported ? await gzip(str) : str)
-      } else {
-        httpRes.end(res.body)
-      }
-
-      const hrend = process.hrtime(hrstart)
-      const ms = (hrend[0] * 1000) + Math.round(hrend[1] / 1000000)
-      log.debug(
-        '%s %s %d %s - %dms',
-        httpReq.method!.padEnd(4),
-        httpReq.url,
-        httpRes.statusCode,
-        httpRes.statusMessage || 'OK',
-        ms,
-      )
-    })
-
-    return new Promise<void>((resolve) => this._server!.listen(port, resolve))
+    return new Promise<void>((resolve) => this._server.listen(port, resolve))
   }
 
   stop() {
-    return new Promise<void>((resolve) => this._server!.close(resolve))
+    return new Promise<Error | undefined>((resolve) => this._server.close(resolve))
   }
 }

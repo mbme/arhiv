@@ -4,12 +4,13 @@ import {
   RouterContext,
 } from './Router'
 
-type Props = JSX.IntrinsicElements['a'] & {
+interface IProps {
   to: Route
   newTab?: boolean
+  children: string
 }
 
-export function Link({ to, newTab, ...otherProps }: Props) {
+export function Link({ to, newTab, children }: IProps) {
   const routerContext = React.useContext(RouterContext)
 
   const url = React.useMemo(() => routerContext.getUrl(to), [to])
@@ -18,7 +19,8 @@ export function Link({ to, newTab, ...otherProps }: Props) {
     <a
       href={url}
       target={newTab ? '_blank' : undefined}
-      {...otherProps}
-    />
+    >
+      {children}
+    </a>
   )
 }

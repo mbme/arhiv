@@ -8,10 +8,20 @@ import {
   Redirect,
   Link,
 } from '~/web-router'
+import {
+  globalStyles,
+  Library,
+} from '~/web-components'
 
-import globalStyles from './styles'
+cssRaw(`
+  ${globalStyles}
 
-cssRaw(globalStyles)
+  #root {
+    overflow-y: scroll;
+    height: 100vh;
+    visibility: hidden;
+  }
+`)
 
 const rootEl = document.getElementById('root')!
 
@@ -19,6 +29,12 @@ function renderView(route: IRoute) {
   if (route.path === '/') {
     return (
       <Redirect to={{ path: '/notes' }} />
+    )
+  }
+
+  if (route.path === '/library') {
+    return (
+      <Library />
     )
   }
 

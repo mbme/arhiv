@@ -1,52 +1,17 @@
+import theme from './theme'
 
-export default `
+export const globalStyles = `
 /* based on reboot.css */
 
 :root {
-  --font-family-base: -apple-system, BlinkMacSystemFont, /* Safari Mac/iOS, Chrome */
-    "Segoe UI", Roboto, Oxygen, /* Windows, Android, KDE */
-    Ubuntu, Cantarell, "Fira Sans", /* Ubuntu, Gnome, Firefox OS */
-    "Droid Sans", "Helvetica Neue", sans-serif; /* Old Android */
-  --font-family-mono: monospace, monospace;
-
-  --line-height: 1.30;
   --font-size: 16px;
-
-  --color-text: #333333;
-  --color-heading: #000000;
-
-  --color-primary: #FF553C;
-  --color-primary-lighter: #FF7B67;
-  --color-secondary: #5E5A57;
-  --color-link: #FDAF3C;
-  --color-light: #ffffff;
-  --color-dark: #484642;
-
-  --bg-color: #ffffff;
-  --bg-color-darker: #f5f5f5;
-  --bg-color-backdrop: rgba(255,255,255, .65);
-
-  --border: 1px solid rgba(0,0,0,.09);
-  --box-shadow: 0 2px 4px rgba(0,0,0,.2);
-
-  --spacing-large: 2rem;
-  --spacing-medium: 1.25rem;
-  --spacing-small: 0.5rem;
-  --spacing-fine: 0.25rem;
-
-  --font-size-xlarge: 2.369rem;
-  --font-size-large: 1.777rem;
-  --font-size-medium: 1rem;
-  --font-size-small: 0.875rem;
-  --font-size-fine: 0.75rem;
-
-  --max-width: 35rem;
+  --line-height: 1.30;
 }
 
 @media screen and (min-width: 768px) {
   :root {
+    --font-size: 20px;
     --line-height: 1.35;
-    --font-size: 22px;
   }
 }
 
@@ -57,9 +22,11 @@ export default `
 }
 
 html {
-  font-family: var(--font-family-base);
+  font-family: ${theme.fontFamily.base};
   font-size: var(--font-size);
   line-height: var(--line-height);
+  height: 100%;
+  width: 100%;
 }
 
 /* Body */
@@ -71,15 +38,18 @@ html {
 body {
   margin: 0; /* 1 */
   padding: 0;
-  font-family: var(--font-family-base);
+  font-family: ${theme.fontFamily.base};
   font-size: var(--font-size);
-  font-weight: 400;
   line-height: var(--line-height);
+  font-weight: 400;
   text-align: left; /* 3 */
   text-rendering: optimizeLegibility;
 
-  background-color: var(--bg-color); /* 2 */
-  color: var(--color-text);
+  background-color: ${theme.color.bg}; /* 2 */
+  color: ${theme.color.text};
+
+  height: 100%;
+  width: 100%;
 }
 
 /* Suppress the focus outline on elements that cannot be accessed via keyboard. */
@@ -106,8 +76,8 @@ hr {
 /* margin for easier control within type scales as it avoids margin collapsing. */
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
-  margin-bottom: var(--spacing-medium);
-  color: var(--color-heading);
+  margin-bottom: ${theme.spacing.medium};
+  color: ${theme.color.heading};
 }
 
 /* Reset margins on paragraphs */
@@ -115,7 +85,7 @@ h1, h2, h3, h4, h5, h6 {
 /* bottom margin to use rem units instead of em. */
 p {
   margin-top: 0;
-  margin-bottom: var(--spacing-medium);
+  margin-bottom: ${theme.spacing.medium};
 }
 
 /* Abbreviations */
@@ -128,7 +98,7 @@ abbr[title] {
 }
 
 address {
-  margin-bottom: var(--spacing-medium);
+  margin-bottom: ${theme.spacing.medium};
   font-style: normal;
   line-height: inherit;
 }
@@ -137,7 +107,7 @@ ol,
 ul,
 dl {
   margin-top: 0;
-  margin-bottom: var(--spacing-medium);
+  margin-bottom: ${theme.spacing.medium};
 }
 
 ol ol,
@@ -157,7 +127,7 @@ dd {
 }
 
 blockquote {
-  margin: 0 0 var(--spacing-medium);
+  margin: 0 0 ${theme.spacing.medium};
 }
 
 b,
@@ -166,8 +136,8 @@ strong {
 }
 
 small {
-  font-size: var(--font-size-fine);
-  color: var(--color-secondary);
+  font-size: ${theme.fontSize.fine};
+  color: ${theme.color.secondary};
 }
 
 /* Prevent sub and sup elements from affecting the line height in all browsers. */
@@ -185,11 +155,11 @@ sup { top: -.5em; }
 
 /* Links */
 a {
-  color: var(--color-link);
+  color: ${theme.color.link};
   text-decoration: none;
 }
 a:hover {
-  color: var(--color-link);
+  color: ${theme.color.link};
   text-decoration: none;
 }
 
@@ -198,19 +168,19 @@ pre,
 code,
 kbd,
 samp {
-  font-family: var(--font-family-mono); /* Correct the inheritance and scaling of font size in all browsers. */
+  font-family: ${theme.fontFamily.mono}; /* Correct the inheritance and scaling of font size in all browsers. */
   font-size: 1em; /* Correct the odd em font sizing in all browsers. */
 }
 
 pre {
   margin-top: 0; /* Remove browser default top margin */
-  margin-bottom: var(--spacing-medium);
+  margin-bottom: ${theme.spacing.medium};
   overflow: auto; /* Don't allow content to break outside */
 }
 
 
 figure {
-  margin: 0 0 var(--spacing-medium);
+  margin: 0 0 ${theme.spacing.medium};
 }
 
 /* Images and content */
@@ -317,18 +287,5 @@ select {
 /* Always hide an element with the hidden HTML attribute (from PureCSS). */
 [hidden] {
   display: none !important;
-}
-
-/* -------------------------------------------------------------------------------- */
-
-html, body {
-  height: 100%;
-  width: 100%;
-}
-
-#root {
-  overflow-y: scroll;
-  height: 100vh;
-  visibility: hidden;
 }
 `

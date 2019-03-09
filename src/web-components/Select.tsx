@@ -1,11 +1,11 @@
 import React from 'react'
 import {
-  Omit,
   noop,
 } from '~/utils'
 
-interface IProps extends Omit<JSX.IntrinsicElements['select'], 'onChange'> {
+interface IProps {
   options: { [key: string]: string }
+  name: string
   onChange(value: string): void
 }
 

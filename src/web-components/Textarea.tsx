@@ -1,14 +1,34 @@
-import React, { PureComponent, createRef } from 'react'
-import './Textarea.css'
+import * as React from 'react'
+import {
+  style,
+  classes,
+} from 'typestyle'
+import { noop } from '~/utils'
+import theme from './theme'
+
+const baseStyle = style({
+  backgroundColor: theme.color.bg,
+  display: 'block',
+  width: '100%',
+  padding: theme.spacing.medium,
+
+  resize: 'none',
+  minHeight: '19rem',
+  overflowY: 'hidden',
+
+  border: theme.border,
+  boxShadow: theme.boxShadow,
+})
 
 interface IProps {
   name: string
   value: string
   onChange(value: string): void
+  className?: string
 }
 
-export default class Textarea extends PureComponent<IProps> {
-  ref = createRef<HTMLTextAreaElement>()
+export class Textarea extends React.PureComponent<IProps> {
+  ref = React.createRef<HTMLTextAreaElement>()
   selectionStart = 0
   selectionEnd = 0
 
@@ -53,11 +73,16 @@ export default class Textarea extends PureComponent<IProps> {
   }
 
   render() {
-    const { name, value, onChange } = this.props
+    const {
+      name,
+      value,
+      onChange,
+      className,
+    } = this.props
 
     return (
       <textarea
-        className="Textarea"
+        className={classes(baseStyle, className)}
         ref={this.ref}
         name={name}
         value={value}
@@ -66,4 +91,10 @@ export default class Textarea extends PureComponent<IProps> {
       />
     )
   }
+}
+
+export const examples = {
+  '': (
+    <Textarea name="textarea" value="Textarea example" onChange={noop} />
+  ),
 }

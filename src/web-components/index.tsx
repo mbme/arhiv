@@ -1,12 +1,14 @@
 import * as React from 'react'
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
+import { Textarea, examples as textareaExamples } from './Textarea'
 
 export { globalStyles } from './global-styles'
 
 export {
   Button,
   Select,
+  Textarea,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (
@@ -28,6 +30,7 @@ export function Library() {
     <div>
       {renderExamples('Buttons', buttonExamples)}
       {renderExamples('Select', selectExamples)}
+      {renderExamples('Textarea', textareaExamples)}
     </div>
   )
 }

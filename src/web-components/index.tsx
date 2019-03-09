@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
+import { Input, examples as inputExamples } from './Input'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
 
@@ -9,6 +10,7 @@ export { globalStyles } from './global-styles'
 export {
   Button,
   Select,
+  Input,
   Textarea,
   Icon,
 }
@@ -32,6 +34,7 @@ export function Library() {
     <div>
       {renderExamples('Buttons', buttonExamples)}
       {renderExamples('Select', selectExamples)}
+      {renderExamples('Input', inputExamples)}
       {renderExamples('Textarea', textareaExamples)}
       {renderExamples('Icons', iconExamples)}
     </div>

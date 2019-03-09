@@ -117,6 +117,15 @@ export function array2object<T>(array: T[], getKey: (value: T) => string) {
   return result
 }
 
+export function entries2object<V>(entries: Array<[string, V]>): { [key: string]: V } {
+  const result: { [key: string]: V } = {}
+  for (const [key, value] of entries) {
+    result[key] = value
+  }
+
+  return result
+}
+
 export function map2object<V>(map: Map<string, V>) {
   const result: { [key: string]: V } = {}
   for (const [key, value] of map.entries()) {

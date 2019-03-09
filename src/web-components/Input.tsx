@@ -3,7 +3,7 @@ import {
   style,
   classes,
 } from 'typestyle'
-import { noop } from '~/utils'
+import { noop, Omit } from '~/utils'
 import theme from './theme'
 import { Icon } from './Icon'
 
@@ -49,13 +49,11 @@ const clearIconStyles = style({
   color: theme.color.secondary,
 })
 
-interface IProps {
+interface IProps extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange'> {
   onChange(value: string): void
   autoFocus?: boolean
   light?: boolean
   onClear?(): void
-  name: string
-  value: string
   className?: string
 }
 
@@ -97,21 +95,21 @@ export class Input extends React.PureComponent<IProps> {
     const {
       light,
       className,
-      name,
-      value,
       onClear,
+      onChange,
+      ...otherProps
     } = this.props
 
     return (
       <div className={classes(containerStyles(light), className)}>
         <input
           ref={this.ref}
-          name={name}
-          value={value}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
           className={classes(inputStyles(light, !!onClear))}
+          {...otherProps}
         />
+
         {onClear && (
           <Icon
             type="x"

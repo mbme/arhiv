@@ -1,6 +1,6 @@
-import React, { PureComponent } from 'react'
-import Input from './Input'
-import Icon from './Icon'
+import * as React from 'react'
+import { Input } from './Input'
+import { Icon } from './Icon'
 
 interface IProps {
   placeholder: string
@@ -12,7 +12,7 @@ interface IState {
   expanded: boolean
 }
 
-export default class Filter extends PureComponent<IProps, IState> {
+export class FilterInput extends React.PureComponent<IProps, IState> {
   state = {
     expanded: false,
   }

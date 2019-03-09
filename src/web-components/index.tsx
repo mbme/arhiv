@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
 import { Input, examples as inputExamples } from './Input'
+import { FilterInput } from './FilterInput'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
 
@@ -12,6 +13,7 @@ export {
   Select,
   Input,
   Textarea,
+  FilterInput,
   Icon,
 }
 

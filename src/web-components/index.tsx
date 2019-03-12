@@ -5,6 +5,11 @@ import { Input, examples as inputExamples } from './Input'
 import { FilterInput } from './FilterInput'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
+import {
+  Overlay,
+  OverlayRenderer,
+  ProgressLocker,
+} from './Overlay'
 
 export { globalStyles } from './global-styles'
 
@@ -15,6 +20,9 @@ export {
   Textarea,
   FilterInput,
   Icon,
+  Overlay,
+  OverlayRenderer,
+  ProgressLocker,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (

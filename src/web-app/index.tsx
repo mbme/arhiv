@@ -11,6 +11,8 @@ import {
 import {
   globalStyles,
   Library,
+  OverlayRenderer,
+  ProgressLocker,
 } from '~/web-components'
 
 cssRaw(`
@@ -44,13 +46,16 @@ function renderView(route: IRoute) {
         Test!
       </Link>
       {JSON.stringify(route, null, 2)}
+      <ProgressLocker />
     </code>
   )
 }
 
 ReactDOM.render(
   <React.StrictMode>
-    <Router renderView={renderView} />
+    <OverlayRenderer>
+      <Router renderView={renderView} />
+    </OverlayRenderer>
   </React.StrictMode>,
   rootEl,
   () => {

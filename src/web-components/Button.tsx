@@ -46,14 +46,16 @@ const secondaryStyle = style({
 })
 
 interface IProps {
+  className?: string
   onClick?(): void
   disabled?: boolean
   primary?: boolean
   children: React.ReactNode
 }
 
-export function Button({ onClick, disabled, primary, children }: IProps) {
-  const className = classes(
+export function Button({ className, onClick, disabled, primary, children }: IProps) {
+  const styles = classes(
+    className,
     baseStyle,
     disabled && disabledStyle,
     !disabled && primary && primaryStyle,
@@ -62,7 +64,7 @@ export function Button({ onClick, disabled, primary, children }: IProps) {
 
   return (
     <button
-      className={className}
+      className={styles}
       onClick={onClick}
       disabled={disabled}
       type="button"

@@ -30,16 +30,6 @@ export class Overlay extends React.PureComponent<IProps> {
   static contextType = OverlayContext
   context!: React.ContextType<typeof OverlayContext>
 
-  rootEl = document.getElementById('modal')!
-
-  componentDidMount() {
-    this.renderOverlay()
-  }
-
-  componentDidUpdate() {
-    this.renderOverlay()
-  }
-
   onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const {
       onClick,
@@ -50,20 +40,33 @@ export class Overlay extends React.PureComponent<IProps> {
     }
   }
 
-  renderOverlay() {
+  renderOverlay(content: React.ReactNode) {
     const {
       className,
-      children,
     } = this.props
 
     this.context(
-      <div
-        className={classes(containerStyles, className)}
-        onClick={this.onClick}
-      >
-        {children}
-      </div>,
+      content ? (
+        <div
+          className={classes(containerStyles, className)}
+          onClick={this.onClick}
+        >
+          {content}
+        </div>
+      ) : null,
     )
+  }
+
+  componentDidMount() {
+    this.renderOverlay(this.props.children)
+  }
+
+  componentDidUpdate() {
+    this.renderOverlay(this.props.children)
+  }
+
+  componentWillUnmount() {
+    this.renderOverlay(null)
   }
 
   render() {

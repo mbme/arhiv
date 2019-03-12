@@ -9,6 +9,9 @@ import {
   Overlay,
   OverlayRenderer,
   ProgressLocker,
+  Modal,
+  ConfirmationDialog,
+  confirmationDialogExamples,
 } from './Overlay'
 
 export { globalStyles } from './global-styles'
@@ -23,6 +26,8 @@ export {
   Overlay,
   OverlayRenderer,
   ProgressLocker,
+  Modal,
+  ConfirmationDialog,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (
@@ -47,6 +52,7 @@ export function Library() {
       {renderExamples('Input', inputExamples)}
       {renderExamples('Textarea', textareaExamples)}
       {renderExamples('Icons', iconExamples)}
+      {renderExamples('ConfirmationDialog', confirmationDialogExamples)}
     </div>
   )
 }

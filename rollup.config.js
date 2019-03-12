@@ -46,6 +46,7 @@ export default {
           'createElement',
           'useEffect',
           'useContext',
+          'useState',
           'useMemo',
           'memo',
           'render',

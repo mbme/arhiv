@@ -1,24 +1,8 @@
 import * as React from 'react'
-import {
-  style,
-  keyframes,
-} from 'typestyle'
+import { style } from 'typestyle'
+import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
-
-const pulseAnimation = keyframes({
-  '0%': {
-    opacity: 0.7,
-  },
-
-  '50%': {
-    opacity: 1,
-  },
-
-  '100%': {
-    opacity: 0.7,
-  },
-})
 
 const backdropStyles = (isVisible?: boolean) => style(
   {
@@ -27,24 +11,14 @@ const backdropStyles = (isVisible?: boolean) => style(
     opacity: 0,
   },
   isVisible && {
-    animation: `${pulseAnimation} 3s infinite`,
+    animation: `${animation.pulse} 3s infinite`,
   },
 )
-
-const spinningAnimation = keyframes({
-  from: {
-    transform: 'rotate(0deg)',
-  },
-
-  to: {
-    transform: 'rotate(359deg)',
-  },
-})
 
 const spinnerStyles = style({
   width: '24px',
   height: '24px',
-  animation: `${spinningAnimation} 1.5s infinite`,
+  animation: `${animation.spin} 1.5s infinite`,
 })
 
 interface IState {

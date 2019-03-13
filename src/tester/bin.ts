@@ -24,9 +24,9 @@ export default async function run(...args: string[]) {
       testPlans.length = 0
       testPlans.push({ file: testFile, ...testPlan, tests: [only] })
       break
-    } else {
-      testPlans.push({ file: testFile, ...testPlan })
     }
+
+    testPlans.push({ file: testFile, ...testPlan })
   }
 
   let failures = 0

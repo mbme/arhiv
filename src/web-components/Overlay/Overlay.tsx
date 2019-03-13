@@ -14,7 +14,7 @@ const containerStyles = style({
   right: '0',
   bottom: '0',
   left: '0',
-  zIndex: 10,
+  zIndex: theme.zIndex.modal,
 
   display: 'flex',
   justifyContent: 'center',

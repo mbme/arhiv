@@ -37,4 +37,7 @@ export default {
     xlarge: '2.369rem',
   },
   maxWidth: '35rem',
+  zIndex: {
+    modal: 10,
+  },
 }

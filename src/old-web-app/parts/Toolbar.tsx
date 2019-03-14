@@ -1,6 +1,4 @@
 import React, { PureComponent } from 'react'
-import { inject, AppStore } from '../store'
-import { Icon } from '../components'
 import './Toolbar.css'
 
 interface IProps {
@@ -10,13 +8,10 @@ interface IProps {
   showNav(show: boolean): void
 }
 class Toolbar extends PureComponent<IProps> {
-  toggleNav = () => this.props.showNav(!this.props.isNavVisible)
-
   render() {
     return (
       <div className="Toolbar">
         <div className="Toolbar-cell is-left">
-          <Icon type="menu" className="Toolbar-menu-icon" onClick={this.toggleNav} />
           {this.props.left}
         </div>
         <div className="Toolbar-cell is-right">
@@ -26,10 +21,3 @@ class Toolbar extends PureComponent<IProps> {
     )
   }
 }
-
-const mapStoreToProps = (store: AppStore) => ({
-  isNavVisible: store.state.isNavVisible,
-  showNav: store.showNav,
-})
-
-export default inject(mapStoreToProps, Toolbar)

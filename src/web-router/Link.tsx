@@ -7,18 +7,26 @@ import {
 interface IProps {
   to: Route
   newTab?: boolean
+  className?: string
   children: string
 }
 
-export function Link({ to, newTab, children }: IProps) {
+export function Link({ to, newTab, className, children }: IProps) {
   const routerContext = React.useContext(RouterContext)
 
-  const url = React.useMemo(() => routerContext.getUrl(to), [to])
+  const url = routerContext.getUrl(to)
+
+  const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    routerContext.push(to)
+    e.preventDefault()
+  }
 
   return (
     <a
       href={url}
+      onClick={onClick}
       target={newTab ? '_blank' : undefined}
+      className={className}
     >
       {children}
     </a>

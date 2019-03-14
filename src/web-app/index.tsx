@@ -3,17 +3,17 @@ import * as ReactDOM from 'react-dom'
 import { cssRaw } from 'typestyle'
 
 import {
+  globalStyles,
+  OverlayRenderer,
+} from '~/web-components'
+import {
   Router,
   IRoute,
-  Redirect,
-  Link,
 } from '~/web-router'
-import {
-  globalStyles,
-  Library,
-  OverlayRenderer,
-  ProgressLocker,
-} from '~/web-components'
+
+import { IApp, View } from './chrome'
+import AppNotes from './app-notes'
+import AppLibrary from './app-library'
 
 cssRaw(`
   ${globalStyles}
@@ -25,37 +25,24 @@ cssRaw(`
   }
 `)
 
-const rootEl = document.getElementById('root')!
+const apps: IApp[] = [
+  AppNotes,
+  AppLibrary,
+]
 
 function renderView(route: IRoute) {
-  if (route.path === '/') {
-    return (
-      <Redirect to={{ path: '/notes' }} />
-    )
-  }
-
-  if (route.path === '/library') {
-    return (
-      <Library />
-    )
-  }
-
   return (
-    <code>
-      <Link to={{ path: '/test' }}>
-        Test!
-      </Link>
-      {JSON.stringify(route, null, 2)}
-      <ProgressLocker />
-    </code>
+    <OverlayRenderer>
+      <View route={route} apps={apps} />
+    </OverlayRenderer>
   )
 }
 
+const rootEl = document.getElementById('root')!
+
 ReactDOM.render(
   <React.StrictMode>
-    <OverlayRenderer>
-      <Router renderView={renderView} />
-    </OverlayRenderer>
+    <Router renderView={renderView} />
   </React.StrictMode>,
   rootEl,
   () => {

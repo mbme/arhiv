@@ -26,9 +26,3 @@
 .Toolbar-cell.is-right .Button {
   margin-left: var(--spacing-medium);
 }
-
-@media screen and (min-width: 1024px) {
-  .Icon.Toolbar-menu-icon {
-    display: none;
-  }
-}

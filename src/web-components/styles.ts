@@ -48,6 +48,7 @@ export const section = margin({ bottom: 'medium' })
 
 export const flexRow = (justifyContent: string = 'center') => style({
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
   justifyContent,
 })

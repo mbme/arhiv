@@ -1,10 +1,14 @@
 import * as React from 'react'
+import {
+  style,
+} from 'typestyle'
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
 import { Input, examples as inputExamples } from './Input'
 import { FilterInput } from './FilterInput'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
+import theme, { examples as themeExamples } from './theme'
 import {
   Overlay,
   OverlayRenderer,
@@ -15,9 +19,9 @@ import {
 } from './Overlay'
 
 export { globalStyles } from './global-styles'
-export { default as theme } from './theme'
 
 export {
+  theme,
   Button,
   Select,
   Input,
@@ -32,10 +36,10 @@ export {
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (
-  <div>
+  <div className={style({ marginBottom: '3rem' })}>
     <h1>{title}</h1>
     {Object.entries(examples).map(([description, el], i) => (
-      <div key={i}>
+      <div key={i} className={style({ marginBottom: '1rem' })}>
         {description && (
           <h2>{description}</h2>
         )}
@@ -48,6 +52,7 @@ const renderExamples = (title: string, examples: { [description: string]: JSX.El
 export function Library() {
   return (
     <div>
+      {renderExamples('Theme', themeExamples)}
       {renderExamples('Buttons', buttonExamples)}
       {renderExamples('Select', selectExamples)}
       {renderExamples('Input', inputExamples)}

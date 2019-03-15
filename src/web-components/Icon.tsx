@@ -4,8 +4,8 @@ import {
   style,
   classes,
 } from 'typestyle'
-import { entries2object } from '~/utils'
 import theme from './theme'
+import { flexRow } from './styles'
 
 const icons = {
   'log-out': (
@@ -135,7 +135,20 @@ export function Icon({ type, className, children, title, ...otherProps }: IFeath
   )
 }
 
-export const examples = entries2object(Object.keys(icons).map((iconType): [string, JSX.Element] => [
-  `Icon ${iconType}`,
-  <Icon type={iconType as IconType} />,
-]))
+export const examples = {
+  '': (
+    <div className={flexRow()}>
+      {Object.keys(icons).map(iconType => (
+        <Icon
+          key={iconType}
+          className={style({
+            margin: '1rem',
+            flex: '1 1 auto',
+          })}
+          type={iconType as IconType}
+          title={iconType}
+        />
+      ))}
+    </div>
+  ),
+}

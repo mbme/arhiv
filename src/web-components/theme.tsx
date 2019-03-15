@@ -1,4 +1,9 @@
-export default {
+import * as React from 'react'
+import {
+  style,
+} from 'typestyle'
+
+const theme = {
   spacing: {
     fine: '0.25rem',
     small: '0.5rem',
@@ -40,4 +45,27 @@ export default {
   zIndex: {
     modal: 10,
   },
+}
+
+export default theme
+
+export const examples = {
+  Colors: (
+    <div>
+      {Object.entries(theme.color).map(([name, value]) => (
+        <div
+          key={name}
+          className={style({
+            height: '3rem',
+            backgroundColor: value,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          })}
+        >
+          {name}
+        </div>
+      ))}
+    </div>
+  ),
 }

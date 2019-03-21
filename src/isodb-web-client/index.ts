@@ -7,15 +7,14 @@ import SyncAgent from './sync-agent'
 import NetworkAgent from './network-agent'
 import AuthAgent from './auth-agent'
 
-export default class IsodbClient {
+export class IsodbWebClient {
   events = createEventsPubSub()
-
   db = new IsodbReplica(new ReplicaInMemStorage(), this.events)
 
-  _networkAgent = new NetworkAgent(this.events)
-  _lockAgent = new LockAgent(this.events)
-  _authAgent = new AuthAgent(this.events, this._networkAgent)
-  _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent, this._authAgent)
+  private _networkAgent = new NetworkAgent(this.events)
+  private _lockAgent = new LockAgent(this.events)
+  private _authAgent = new AuthAgent(this.events, this._networkAgent)
+  private _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent, this._authAgent)
 
   start() {
     this._networkAgent.start()
@@ -27,6 +26,10 @@ export default class IsodbClient {
     this._networkAgent.stop()
     this._authAgent.stop()
     this._syncAgent.stop()
+  }
+
+  isAuthorized() {
+    return this._authAgent.isAuthorized()
   }
 
   getRecord(id: string) {

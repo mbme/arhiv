@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { cssRaw } from 'typestyle'
 
+import { IsodbWebClient } from '~/isodb-web-client'
 import {
   globalStyles,
   OverlayRenderer,
@@ -11,7 +12,11 @@ import {
   IRoute,
 } from '~/web-router'
 
-import { IApp, View } from './chrome'
+import {
+  IApp,
+  View,
+  AuthManager,
+} from './chrome'
 import AppNotes from './app-notes'
 import AppLibrary from './app-library'
 
@@ -30,10 +35,18 @@ const apps: IApp[] = [
   AppLibrary,
 ]
 
+const client = new IsodbWebClient()
+client.start()
+
 function renderView(route: IRoute) {
   return (
     <OverlayRenderer>
-      <View route={route} apps={apps} />
+      <View
+        route={route}
+        apps={apps}
+        client={client}
+      />
+      <AuthManager client={client} />
     </OverlayRenderer>
   )
 }

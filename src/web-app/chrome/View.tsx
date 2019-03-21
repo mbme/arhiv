@@ -1,5 +1,9 @@
 import * as React from 'react'
 import {
+  media,
+  style,
+} from 'typestyle'
+import {
   IRoute,
   Link,
 } from '~/web-router'
@@ -8,10 +12,7 @@ import {
   Overlay,
   Icon,
 } from '~/web-components'
-import {
-  media,
-  style,
-} from 'typestyle'
+import { IsodbWebClient } from '~/isodb-web-client'
 
 const maxWidth = '35rem'
 const containerStyle = style(
@@ -110,6 +111,7 @@ export interface IApp {
 interface IProps {
   apps: IApp[]
   route: IRoute
+  client: IsodbWebClient
 }
 
 interface IState {
@@ -136,7 +138,7 @@ export class View extends React.PureComponent<IProps, IState> {
   }
 
   logout = () => {
-    // FIXME implement
+    this.props.client.deauthorize()
   }
 
   toggleNav = () => {
@@ -189,6 +191,7 @@ export class View extends React.PureComponent<IProps, IState> {
     const view = currentApp ? currentApp.routes[route.path]() : null
     const navbar = this.renderNavbar()
 
+    console.error(isNavVisible);
     return (
       <div className={containerStyle}>
         {!isNavVisible && (

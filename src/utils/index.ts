@@ -1,4 +1,6 @@
 export { Counter } from './counter'
+export * from './types'
+export * from './fuzzy-search'
 
 export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1)
 
@@ -9,36 +11,6 @@ export const isString = (x: any): x is string => getType(x) === 'String'
 export const isFunction = (x: any): x is Function => ['Function', 'AsyncFunction'].includes(getType(x))
 // tslint:disable-next-line:ban-types
 export const isAsyncFunction = (x: any): x is Function => getType(x) === 'AsyncFunction'
-
-/**
- * Check if needle fuzzy matches haystack.
- * @see https://github.com/bevacqua/fuzzysearch
- */
-export function fuzzySearch(needle: string, haystack: string, ignoreCase = true): boolean {
-  if (ignoreCase) return fuzzySearch(needle.toLowerCase(), haystack.toLowerCase(), false)
-
-  const nlen = needle.length
-
-  // if needle is empty then it matches everything
-  if (!nlen) return true
-
-  const hlen = haystack.length
-  if (nlen > hlen) return false
-
-  if (nlen === hlen) return needle === haystack
-
-  outer: for (let i = 0, j = 0; i < nlen; i += 1) {
-    const nch = needle.charCodeAt(i)
-    while (j < hlen) {
-      // tslint:disable-next-line:increment-decrement
-      if (haystack.charCodeAt(j++) === nch) continue outer
-    }
-
-    return false
-  }
-
-  return true
-}
 
 export const capitalize = (str: string) => str[0].toUpperCase() + str.substring(1)
 
@@ -166,20 +138,4 @@ export function classNames(...args: any[]) {
 
     return acc
   }, []).join(' ')
-}
-
-// Pick all props from type T except enumerated in K
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-
-// Make props enumerated in TOptional optional
-export type OptionalProps<T, TOptional extends keyof T> = Omit<T, TOptional> & Partial<Pick<T, TOptional>>
-
-// Get type of object/class property
-export type TypeOfProperty<T, P extends keyof T> = T[P]
-
-// tslint:disable-next-line:max-line-length
-// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93d063e00ef7eddb4d5ef5c910b5028d6fec6099/types/react-redux/index.d.ts#L75-L90
-// Get shared props
-export type Shared<A, B extends Shared<A, B>> = {
-  [P in Extract<keyof A, keyof B>]?: A[P] extends B[P] ? B[P] : never;
 }

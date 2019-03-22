@@ -165,7 +165,7 @@ export class View extends React.PureComponent<IProps, IState> {
     ))
 
     return (
-      <nav className={navbarStyle}>
+      <nav className={navbarStyle} onClick={this.toggleNav}>
         {links}
 
         <div
@@ -191,7 +191,6 @@ export class View extends React.PureComponent<IProps, IState> {
     const view = currentApp ? currentApp.routes[route.path]() : null
     const navbar = this.renderNavbar()
 
-    console.error(isNavVisible);
     return (
       <div className={containerStyle}>
         {!isNavVisible && (

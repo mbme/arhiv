@@ -1,3 +1,5 @@
+export { Counter } from './counter'
+
 export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1)
 
 export const isObject = (x: any): x is object => getType(x) === 'Object'

@@ -3,6 +3,7 @@ import {
   style,
   classes,
 } from 'typestyle'
+import { Counter } from '~/utils'
 import theme from '../theme'
 import { OverlayContext } from './OverlayRenderer'
 
@@ -21,55 +22,36 @@ const containerStyles = style({
   alignItems: 'flex-start',
 })
 
+const idCounter = new Counter()
+
 interface IProps {
   children: React.ReactNode
   onClick?(): void
   className?: string
 }
-export class Overlay extends React.PureComponent<IProps> {
-  static contextType = OverlayContext
-  context!: React.ContextType<typeof OverlayContext>
 
-  onClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const {
-      onClick,
-    } = this.props
+export function Overlay({ children, onClick, className }: IProps) {
+  const renderer = React.useContext(OverlayContext)
 
+  const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onClick && e.target === e.currentTarget) {
       onClick()
     }
   }
 
-  renderOverlay(content: React.ReactNode) {
-    const {
-      className,
-    } = this.props
+  React.useEffect(() => {
+    const id = idCounter.incAndGet()
+    renderer.show(id, (
+      <div
+        className={classes(containerStyles, className)}
+        onClick={clickHandler}
+      >
+        {children}
+      </div>
+    ))
 
-    this.context(
-      content ? (
-        <div
-          className={classes(containerStyles, className)}
-          onClick={this.onClick}
-        >
-          {content}
-        </div>
-      ) : null,
-    )
-  }
+    return () => renderer.hide(id)
+  })
 
-  componentDidMount() {
-    this.renderOverlay(this.props.children)
-  }
-
-  componentDidUpdate() {
-    this.renderOverlay(this.props.children)
-  }
-
-  componentWillUnmount() {
-    this.renderOverlay(null)
-  }
-
-  render() {
-    return null
-  }
+  return null
 }

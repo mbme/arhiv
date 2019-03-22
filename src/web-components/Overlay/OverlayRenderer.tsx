@@ -1,24 +1,51 @@
 import * as React from 'react'
 
-type RenderOverlay = (overlay: React.ReactNode) => void
+interface IOverlayRenderer {
+  show(id: number, overlay: React.ReactNode): void
+  hide(id: number): void
+}
 
-export const OverlayContext = React.createContext<RenderOverlay>(null as any)
+export const OverlayContext = React.createContext<IOverlayRenderer>(null as any)
 
 interface IProps {
   children: React.ReactNode,
 }
 
 interface IState {
-  overlay: React.ReactNode,
+  overlays: ReadonlyArray<[number, React.ReactNode]>,
 }
 
 export class OverlayRenderer extends React.PureComponent<IProps, IState> {
   state: IState = {
-    overlay: null,
+    overlays: [],
   }
 
-  renderOverlay: RenderOverlay = (overlay) => {
-    this.setState({ overlay })
+  renderer: IOverlayRenderer = {
+    show: (id, overlay) => {
+      this.setState(state => ({
+        overlays: [...state.overlays, [id, overlay]],
+      }))
+    },
+
+    hide: (id) => {
+      this.setState(state => ({
+        overlays: state.overlays.filter(item => item[0] !== id),
+      }))
+    },
+  }
+
+  getOverlay() {
+    const {
+      overlays,
+    } = this.state
+
+    if (!overlays.length) {
+      return null
+    }
+
+    const [, overlay] = overlays[overlays.length - 1]
+
+    return overlay
   }
 
   render() {
@@ -26,13 +53,9 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
       children,
     } = this.props
 
-    const {
-      overlay,
-    } = this.state
-
     return (
-      <OverlayContext.Provider value={this.renderOverlay}>
-        {overlay}
+      <OverlayContext.Provider value={this.renderer}>
+        {this.getOverlay()}
         {children}
       </OverlayContext.Provider>
     )

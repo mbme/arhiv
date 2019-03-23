@@ -5,7 +5,6 @@ import {
 } from 'typestyle'
 import { Counter } from '~/utils'
 import theme from '../theme'
-import { OverlayContext } from './OverlayRenderer'
 
 const containerStyles = style({
   backgroundColor: theme.color.backdrop,
@@ -22,33 +21,96 @@ const containerStyles = style({
   alignItems: 'flex-start',
 })
 
-const idCounter = new Counter()
-
-interface IProps {
+interface IOverlay {
   children: React.ReactNode
   onClick?(): void
   className?: string
 }
 
-export function Overlay({ children, onClick, className }: IProps) {
-  const renderer = React.useContext(OverlayContext)
+interface IOverlayRenderer {
+  show(id: number, overlay: IOverlay): void
+  hide(id: number): void
+}
 
-  const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (onClick && e.target === e.currentTarget) {
-      onClick()
-    }
+const OverlayContext = React.createContext<IOverlayRenderer>(null as any)
+
+interface IProps {
+  children: React.ReactNode,
+}
+
+interface IState {
+  overlays: ReadonlyArray<[number, IOverlay]>,
+}
+
+export class OverlayRenderer extends React.PureComponent<IProps, IState> {
+  state: IState = {
+    overlays: [],
   }
+
+  renderer: IOverlayRenderer = {
+    show: (id, overlay) => {
+      this.setState(state => ({
+        overlays: [...state.overlays, [id, overlay]],
+      }))
+    },
+
+    hide: (id) => {
+      this.setState(state => ({
+        overlays: state.overlays.filter(item => item[0] !== id),
+      }))
+    },
+  }
+
+  getOverlay() {
+    const {
+      overlays,
+    } = this.state
+
+    if (!overlays.length) {
+      return null
+    }
+
+    const [id, overlay] = overlays[overlays.length - 1]
+
+    const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (overlay.onClick && e.target === e.currentTarget) {
+        overlay.onClick()
+      }
+    }
+
+    return (
+      <div
+        key={id}
+        className={classes(containerStyles, overlay.className)}
+        onClick={clickHandler}
+      >
+        {overlay.children}
+      </div>
+    )
+  }
+
+  render() {
+    const {
+      children,
+    } = this.props
+
+    return (
+      <OverlayContext.Provider value={this.renderer}>
+        {children}
+        {this.getOverlay()}
+      </OverlayContext.Provider>
+    )
+  }
+}
+
+const idCounter = new Counter()
+export function Overlay(props: IOverlay) {
+  const renderer = React.useContext(OverlayContext)
 
   React.useEffect(() => {
     const id = idCounter.incAndGet()
-    renderer.show(id, (
-      <div
-        className={classes(containerStyles, className)}
-        onClick={clickHandler}
-      >
-        {children}
-      </div>
-    ))
+
+    renderer.show(id, props)
 
     return () => renderer.hide(id)
   })

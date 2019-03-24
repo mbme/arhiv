@@ -1,4 +1,4 @@
-import PubSub from '~/utils/pubsub'
+import { PubSub } from '~/utils'
 import { IEvents as IDBEvents } from './replica'
 
 interface IEvents extends IDBEvents {

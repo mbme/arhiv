@@ -20,6 +20,7 @@
     "typedef": false,
     "no-default-import": false,
     "no-default-export": false,
+    "no-unbound-method": [true, "ignore-static"],
     "type-literal-delimiter": false,
     "only-arrow-functions": false,
     "file-name-casing": false,

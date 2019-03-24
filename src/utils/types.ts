@@ -6,3 +6,7 @@ export type OptionalProps<T, TOptional extends keyof T> = Omit<T, TOptional> & P
 
 // Get type of object/class property
 export type TypeOfProperty<T, P extends keyof T> = T[P]
+
+export interface IDict<T = string> {
+  [key: string]: T
+}

@@ -1,12 +1,12 @@
 import { createLogger } from '~/logger'
-import NetworkAgent from './network-agent'
-import { WebClientEvents } from './events'
+import { NetworkAgent } from './network-agent'
+import { WebClientEvents } from '../events'
 
 const log = createLogger('isodb-web-client:auth-agent')
 
 type State = 'unauthorized' | 'authorized'
 
-export default class AuthAgent {
+export class AuthAgent {
   state: State = 'authorized'
 
   constructor(

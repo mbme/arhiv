@@ -1,6 +1,8 @@
 export { Counter } from './counter'
 export * from './types'
+export * from './date'
 export * from './fuzzy-search'
+export { PubSub } from './pubsub'
 
 export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1)
 

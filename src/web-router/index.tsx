@@ -1,6 +1,7 @@
 export {
   WebRouter,
   ILocation,
+  IParams,
 } from './router'
 
 export {

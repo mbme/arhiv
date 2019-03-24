@@ -5,13 +5,13 @@ import {
   IChangesetResult,
   IChangeset,
 } from '~/isodb-core/types'
-import { WebClientEvents } from './events'
+import { WebClientEvents } from '../events'
 
 const log = createLogger('isodb-web-client:network-agent')
 
 type State = 'online' | 'offline'
 
-export default class NetworkAgent {
+export class NetworkAgent {
   state: State = 'online'
 
   constructor(public events: WebClientEvents) { }

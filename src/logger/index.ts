@@ -1,5 +1,5 @@
 /* tslint:disable:no-console */
-import { formatDate } from '../utils/date'
+import { formatDate } from '~/utils'
 
 const LEVEL = {
   DEBUG: 'DEBUG',

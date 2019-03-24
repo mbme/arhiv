@@ -1,5 +1,5 @@
 import { createLogger } from '~/logger'
-import { WebClientEvents } from './events'
+import { WebClientEvents } from '../events'
 
 const log = createLogger('isodb-lock-agent')
 
@@ -18,7 +18,7 @@ interface IRecordsLocked {
 
 type State = IFree | IDBLocked | IRecordsLocked
 
-export default class LockAgent {
+export class LockAgent {
   state: State = { state: 'free' }
 
   constructor(public events: WebClientEvents) { }

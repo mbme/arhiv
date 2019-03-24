@@ -1,5 +1,8 @@
 import * as React from 'react'
 import {
+  classes,
+} from 'typestyle'
+import {
   Location,
   RouterContext,
 } from './Router'
@@ -7,11 +10,12 @@ import {
 interface IProps {
   to: Location
   newTab?: boolean
+  clean?: boolean
   className?: string
-  children: string
+  children: React.ReactNode
 }
 
-export function Link({ to, newTab, className, children }: IProps) {
+export function Link({ to, newTab, clean, className, children }: IProps) {
   const routerContext = React.useContext(RouterContext)
 
   const url = routerContext.getUrl(to)
@@ -26,7 +30,7 @@ export function Link({ to, newTab, className, children }: IProps) {
       href={url}
       onClick={onClick}
       target={newTab ? '_blank' : undefined}
-      className={className}
+      className={classes(className, clean && 'is-clean')}
     >
       {children}
     </a>

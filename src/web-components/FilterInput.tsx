@@ -5,7 +5,7 @@ import { Icon } from './Icon'
 interface IProps {
   placeholder: string
   filter: string
-  onChange(value: string): void
+  onChange(value?: string): void
 }
 
 interface IState {
@@ -24,7 +24,7 @@ export class FilterInput extends React.PureComponent<IProps, IState> {
   collapse = () => this.setState({ expanded: false })
 
   onBlur = () => {
-    if (!this.props.filter.trim()) this.collapse()
+    if (!this.props.filter) this.collapse()
   }
 
   onChange = (filter: string) => {
@@ -43,13 +43,22 @@ export class FilterInput extends React.PureComponent<IProps, IState> {
   }
 
   render() {
-    if (this.state.expanded) {
+    const {
+      filter,
+      placeholder,
+    } = this.props
+
+    const {
+      expanded,
+    } = this.state
+
+    if (expanded || filter) {
       return (
         <Input
           name="filter"
           light
-          defaultValue={this.props.filter}
-          placeholder={this.props.placeholder}
+          defaultValue={filter}
+          placeholder={placeholder}
           onChange={this.onChange}
           onClear={this.collapse}
           onBlur={this.onBlur}

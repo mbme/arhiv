@@ -11,7 +11,7 @@ interface IRouteActions {
   push(location: Location): void
   pushTo(path: string): void
   replace(location: Location): void
-  replaceParam(param: string, value: string): void
+  replaceParam(param: string, value?: string): void
   getUrl(location: Location): string
 }
 
@@ -65,7 +65,7 @@ export class Router extends React.PureComponent<IProps, IState> {
       this._router.replace(normalizeLocation(location))
     },
 
-    replaceParam: (param: string, value: string) => {
+    replaceParam: (param: string, value?: string) => {
       this._router.replaceParam(param, value)
     },
 

@@ -1,6 +1,6 @@
 type Handler<T, K extends keyof T> = (params: T[K]) => void
 
-export default class PubSub<T> {
+export class PubSub<T> {
   private readonly subs = new Map()
 
   on<K extends keyof T>(name: K, handler: Handler<T, K>) {

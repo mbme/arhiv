@@ -18,6 +18,8 @@ import {
   confirmationDialogExamples,
 } from './Overlay'
 
+export * from './styles'
+
 export { globalStyles } from './global-styles'
 
 export {

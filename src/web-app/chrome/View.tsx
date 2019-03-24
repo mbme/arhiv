@@ -5,6 +5,7 @@ import {
 } from 'typestyle'
 import {
   ILocation,
+  IParams,
   Link,
 } from '~/web-router'
 import {
@@ -105,7 +106,7 @@ const viewStyle = style(
 export interface IApp {
   name: string,
   rootRoute: string,
-  routes: { [route: string]: () => React.ReactNode },
+  routes: { [route: string]: (params: IParams) => React.ReactNode },
 }
 
 interface IProps {
@@ -188,7 +189,7 @@ export class View extends React.PureComponent<IProps, IState> {
       isNavVisible,
     } = this.state
 
-    const view = currentApp ? currentApp.routes[location.path]() : null
+    const view = currentApp ? currentApp.routes[location.path](location.params) : null
     const navbar = this.renderNavbar()
 
     return (

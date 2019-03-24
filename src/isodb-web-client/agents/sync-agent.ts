@@ -2,10 +2,10 @@ import { createLogger } from '~/logger'
 import {
   IMergeConflicts,
 } from '~/isodb-core/types'
-import IsodbReplica from './replica'
-import LockAgent from './lock-agent'
-import NetworkAgent from './network-agent'
-import AuthAgent from './auth-agent'
+import { IsodbReplica } from '../replica'
+import { LockAgent } from './lock-agent'
+import { NetworkAgent } from './network-agent'
+import { AuthAgent } from './auth-agent'
 
 const log = createLogger('isodb-web-client:sync-agent')
 
@@ -29,7 +29,7 @@ type AgentState = ISyncState | IMergeState | ISyncedState | INotSyncedState
 
 // TODO logs
 // TODO circuit breaker
-export default class SyncAgent {
+export class SyncAgent {
   _syncIntervalId: number | undefined
 
   _state: AgentState = { state: 'not-synced' }

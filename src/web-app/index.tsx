@@ -2,7 +2,10 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { cssRaw } from 'typestyle'
 
-import { IsodbWebClient } from '~/isodb-web-client'
+import {
+  IsodbWebClient,
+  IsodbContext,
+} from '~/isodb-web-client'
 import {
   globalStyles,
   OverlayRenderer,
@@ -55,7 +58,9 @@ const rootEl = document.getElementById('root')!
 
 ReactDOM.render(
   <React.StrictMode>
-    <Router renderView={renderView} />
+    <IsodbContext.Provider value={client}>
+      <Router renderView={renderView} />
+    </IsodbContext.Provider>
   </React.StrictMode>,
   rootEl,
   () => {

@@ -9,7 +9,7 @@ import {
   IAttachment,
 } from '~/isodb-core/types'
 import { generateRecordId } from '~/isodb-core/utils'
-import IsodbReplica from './replica'
+import { IsodbReplica } from './replica'
 
 // Active Record
 abstract class BaseRecord<T extends IRecord> {
@@ -133,6 +133,10 @@ export class Note extends BaseRecord<INote> {
     this._record.data = value
     this.updateRefs(value)
   }
+
+  static is(x: any): x is Note {
+    return x instanceof Note
+  }
 }
 
 export class Track extends BaseRecord<ITrack> {
@@ -159,6 +163,10 @@ export class Track extends BaseRecord<ITrack> {
 
   set artist(value: string) {
     this._record.artist = value
+  }
+
+  static is(x: any): x is Track {
+    return x instanceof Track
   }
 }
 

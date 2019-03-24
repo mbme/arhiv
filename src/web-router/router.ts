@@ -1,8 +1,12 @@
-import PubSub from '~/utils/pubsub'
+import { PubSub } from '~/utils'
+
+export interface IParams {
+  [key: string]: string | undefined
+}
 
 export interface ILocation {
   path: string
-  params: { [key: string]: string }
+  params: IParams
 }
 
 export interface IEvents {
@@ -30,7 +34,9 @@ export class WebRouter {
   getUrl(location: ILocation) {
     const queryParams = new URLSearchParams()
     Object.entries(location.params).forEach(([key, value]) => {
-      queryParams.set(key, value)
+      if (value !== undefined) {
+        queryParams.set(key, value)
+      }
     })
     const paramsStr = queryParams.toString()
 
@@ -53,7 +59,7 @@ export class WebRouter {
     this._propagateCurrentLocation()
   }
 
-  replaceParam(param: string, value: string) {
+  replaceParam(param: string, value?: string) {
     if (!this.location) throw new Error('not started yet')
 
     const newLocation: ILocation = {

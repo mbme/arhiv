@@ -5,7 +5,7 @@ import {
 } from '~/isodb-core/types'
 import { IReplicaStorage } from './replica-storage'
 
-export default class ReplicaInMemStorage implements IReplicaStorage {
+export class ReplicaInMemStorage implements IReplicaStorage {
   _records: IRecord[] = []
   _attachments: IAttachment[] = []
   _rev = 0

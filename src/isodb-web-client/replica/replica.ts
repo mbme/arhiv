@@ -2,8 +2,8 @@ import {
   isString,
   array2object,
   flatten,
+  PubSub,
 } from '~/utils'
-import PubSub from '~/utils/pubsub'
 import { createLogger } from '~/logger'
 import {
   IAttachment,
@@ -28,7 +28,7 @@ export interface IEvents {
   'db-update': undefined
 }
 
-export default class IsodbReplica {
+export class IsodbReplica {
   constructor(
     public _storage: IReplicaStorage,
     public events = new PubSub<IEvents>(),

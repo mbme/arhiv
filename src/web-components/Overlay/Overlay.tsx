@@ -7,7 +7,7 @@ import { Counter } from '~/utils'
 import theme from '../theme'
 
 const containerStyles = style({
-  backgroundColor: theme.color.backdrop,
+  backgroundColor: theme.color.bgOverlay,
 
   position: 'fixed',
   top: '0',

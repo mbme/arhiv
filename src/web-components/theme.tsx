@@ -14,16 +14,14 @@ const theme = {
   boxShadow: '0 2px 4px rgba(0,0,0,.2)',
   color: {
     primary: '#FF553C',
-    primaryLighter: '#FF7B67',
     secondary: '#5E5A57',
     light: '#ffffff',
-    dark: '#484642',
     text: '#333333',
     heading: '#000000',
     link: '#FDAF3C',
     bg: '#ffffff',
     bgDarker: '#f5f5f5',
-    backdrop: 'rgba(255,255,255, .65)',
+    bgOverlay: 'rgba(255,255,255, .65)',
   },
   fontFamily: {
     base: [
@@ -41,7 +39,6 @@ const theme = {
     large: '1.777rem',
     xlarge: '2.369rem',
   },
-  maxWidth: '35rem',
   zIndex: {
     modal: 10,
   },

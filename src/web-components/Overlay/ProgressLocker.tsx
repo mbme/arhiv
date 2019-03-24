@@ -4,7 +4,7 @@ import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 
-const backdropStyles = (isVisible?: boolean) => style(
+const overlayStyles = (isVisible?: boolean) => style(
   {
     cursor: 'progress',
     alignItems: 'center',
@@ -49,7 +49,7 @@ export class ProgressLocker extends React.PureComponent<{}, IState> {
 
     return (
       <Overlay
-        className={backdropStyles(visible)}
+        className={overlayStyles(visible)}
       >
         <Icon type="loader" className={spinnerStyles} />
       </Overlay>

@@ -211,7 +211,9 @@ export class View extends React.PureComponent<IProps, IState> {
         )}
 
         <div className={viewStyle}>
-          {view}
+          {view || (
+            <h1>Not Found</h1>
+          )}
         </div>
       </div>
     )

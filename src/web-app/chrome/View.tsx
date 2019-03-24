@@ -4,7 +4,7 @@ import {
   style,
 } from 'typestyle'
 import {
-  IRoute,
+  ILocation,
   Link,
 } from '~/web-router'
 import {
@@ -110,7 +110,7 @@ export interface IApp {
 
 interface IProps {
   apps: IApp[]
-  route: IRoute
+  location: ILocation
   client: IsodbWebClient
 }
 
@@ -125,10 +125,10 @@ export class View extends React.PureComponent<IProps, IState> {
     isNavVisible: false,
   }
 
-  static getDerivedStateFromProps({ apps, route }: IProps) {
+  static getDerivedStateFromProps({ apps, location }: IProps) {
     for (const app of apps) {
       for (const path of Object.keys(app.routes)) {
-        if (path === route.path) {
+        if (path === location.path) {
           return { currentApp: app }
         }
       }
@@ -180,7 +180,7 @@ export class View extends React.PureComponent<IProps, IState> {
 
   render() {
     const {
-      route,
+      location,
     } = this.props
 
     const {
@@ -188,7 +188,7 @@ export class View extends React.PureComponent<IProps, IState> {
       isNavVisible,
     } = this.state
 
-    const view = currentApp ? currentApp.routes[route.path]() : null
+    const view = currentApp ? currentApp.routes[location.path]() : null
     const navbar = this.renderNavbar()
 
     return (

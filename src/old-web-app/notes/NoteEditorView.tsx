@@ -10,12 +10,12 @@ import {
 import {
   ViewLayout,
 } from '../parts'
-import { IRoute } from '../../web-router'
+import { ILocation } from '../../web-router'
 
 interface IProps {
   id?: string
   note?: CoreTypes.INote
-  push(route: IRoute): void
+  push(route: ILocation): void
 }
 
 class NoteEditorView extends PureComponent<IProps> {

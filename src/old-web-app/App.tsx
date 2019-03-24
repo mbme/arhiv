@@ -1,5 +1,5 @@
 import React, { PureComponent, Fragment } from 'react'
-import { IRoute } from '~/web-router'
+import { ILocation } from '~/web-router'
 import { inject, AppStore } from './store'
 import { ProgressLocker } from './components'
 import Redirect from './parts/Redirect'
@@ -26,7 +26,7 @@ const Routes: { [key: string]: (params: { [key: string]: string }) => JSX.Elemen
 }
 
 interface IProps {
-  route?: IRoute
+  route?: ILocation
   isAuthorized: boolean
   isLockerVisible: boolean
 }

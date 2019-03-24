@@ -9,7 +9,7 @@ import {
 } from '~/web-components'
 import {
   Router,
-  IRoute,
+  ILocation,
 } from '~/web-router'
 
 import {
@@ -38,11 +38,11 @@ const apps: IApp[] = [
 const client = new IsodbWebClient()
 client.start()
 
-function renderView(route: IRoute) {
+function renderView(location: ILocation) {
   return (
     <OverlayRenderer>
       <View
-        route={route}
+        location={location}
         apps={apps}
         client={client}
       />

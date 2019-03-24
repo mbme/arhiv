@@ -1,11 +1,11 @@
 import * as React from 'react'
 import {
-  Route,
+  Location,
   RouterContext,
 } from './Router'
 
 interface IProps {
-  to: Route
+  to: Location
 }
 
 export function Redirect({ to }: IProps) {

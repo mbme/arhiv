@@ -1,6 +1,6 @@
 export {
   WebRouter,
-  IRoute,
+  ILocation,
 } from './router'
 
 export {

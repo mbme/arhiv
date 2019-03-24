@@ -2,32 +2,32 @@ import * as React from 'react'
 import { OptionalProps } from '~/utils'
 import {
   WebRouter,
-  IRoute,
+  ILocation,
 } from './router'
 
-export type Route = OptionalProps<IRoute, 'params'>
+export type Location = OptionalProps<ILocation, 'params'>
 
 interface IRouteActions {
-  push(route: Route): void
+  push(location: Location): void
   pushTo(path: string): void
-  replace(route: Route): void
+  replace(location: Location): void
   replaceParam(param: string, value: string): void
-  getUrl(route: Route): string
+  getUrl(location: Location): string
 }
 
 export const RouterContext = React.createContext<IRouteActions>({} as any)
 
 interface IProps {
-  renderView(route: IRoute): React.ReactNode
+  renderView(location: ILocation): React.ReactNode
 }
 
 interface IState {
   view: React.ReactNode,
 }
 
-const normalizeRoute = (route: Route): IRoute => ({
-  path: route.path,
-  params: route.params || {},
+const normalizeLocation = (location: Location): ILocation => ({
+  path: location.path,
+  params: location.params || {},
 })
 
 export class Router extends React.PureComponent<IProps, IState> {
@@ -36,41 +36,41 @@ export class Router extends React.PureComponent<IProps, IState> {
   }
 
   _router = new WebRouter()
-  _updateRoute = (route: IRoute) => {
+  _updateLocation = (location: ILocation) => {
     this.setState({
-      view: this.props.renderView(route),
+      view: this.props.renderView(location),
     })
   }
 
   componentDidMount() {
-    this._router.events.on('route-changed', this._updateRoute)
+    this._router.events.on('location-changed', this._updateLocation)
     this._router.start()
   }
 
   componentWillUnmount() {
-    this._router.events.off('route-changed', this._updateRoute)
+    this._router.events.off('location-changed', this._updateLocation)
     this._router.stop()
   }
 
   actions: IRouteActions = {
-    push: (route: Route) => {
-      this._router.push(normalizeRoute(route))
+    push: (location: Location) => {
+      this._router.push(normalizeLocation(location))
     },
 
     pushTo: (path: string) => {
       this._router.push({ path, params: {} })
     },
 
-    replace: (route: Route) => {
-      this._router.replace(normalizeRoute(route))
+    replace: (location: Location) => {
+      this._router.replace(normalizeLocation(location))
     },
 
     replaceParam: (param: string, value: string) => {
       this._router.replaceParam(param, value)
     },
 
-    getUrl: (route: Route) =>
-      this._router.getUrl(normalizeRoute(route)),
+    getUrl: (location: Location) =>
+      this._router.getUrl(normalizeLocation(location)),
   }
 
   render() {

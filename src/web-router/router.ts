@@ -1,16 +1,16 @@
 import PubSub from '~/utils/pubsub'
 
-export interface IRoute {
+export interface ILocation {
   path: string
   params: { [key: string]: string }
 }
 
 export interface IEvents {
-  'route-changed': IRoute
+  'location-changed': ILocation
 }
 
 export class WebRouter {
-  route?: IRoute
+  location?: ILocation
 
   constructor(public events = new PubSub<IEvents>()) { }
 
@@ -20,21 +20,21 @@ export class WebRouter {
 
     location.searchParams.forEach((value, key) => params[key] = value)
 
-    this.route = {
+    this.location = {
       path: location.pathname,
       params,
     }
-    this.events.emit('route-changed', this.route)
+    this.events.emit('location-changed', this.location)
   }
 
-  getUrl(route: IRoute) {
+  getUrl(location: ILocation) {
     const queryParams = new URLSearchParams()
-    Object.entries(route.params).forEach(([key, value]) => {
+    Object.entries(location.params).forEach(([key, value]) => {
       queryParams.set(key, value)
     })
     const paramsStr = queryParams.toString()
 
-    const url = `${window.location.origin}${route.path}`
+    const url = `${window.location.origin}${location.path}`
 
     if (!paramsStr) {
       return url
@@ -43,28 +43,28 @@ export class WebRouter {
     return `${url}?${paramsStr}`
   }
 
-  push(route: IRoute) {
-    window.history.pushState(undefined, '', this.getUrl(route))
+  push(location: ILocation) {
+    window.history.pushState(undefined, '', this.getUrl(location))
     this._propagateCurrentLocation()
   }
 
-  replace(route: IRoute) {
-    window.history.replaceState(undefined, '', this.getUrl(route))
+  replace(location: ILocation) {
+    window.history.replaceState(undefined, '', this.getUrl(location))
     this._propagateCurrentLocation()
   }
 
   replaceParam(param: string, value: string) {
-    if (!this.route) throw new Error('not started yet')
+    if (!this.location) throw new Error('not started yet')
 
-    const newRoute: IRoute = {
-      path: this.route.path,
+    const newLocation: ILocation = {
+      path: this.location.path,
       params: {
-        ...this.route.params,
+        ...this.location.params,
         [param]: value,
       },
     }
 
-    window.history.replaceState(undefined, '', this.getUrl(newRoute))
+    window.history.replaceState(undefined, '', this.getUrl(newLocation))
     this._propagateCurrentLocation()
   }
 

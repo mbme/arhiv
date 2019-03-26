@@ -41,6 +41,15 @@ export class IsodbWebClient {
     return this.db.getRecord(id)
   }
 
+  getNote(id: string) {
+    const record = this.db.getRecord(id)
+    if (Note.is(record)) {
+      return record
+    }
+
+    return undefined
+  }
+
   getRecords() {
     return this.db.getRecords()
   }

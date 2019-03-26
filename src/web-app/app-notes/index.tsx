@@ -4,6 +4,7 @@ import {
   IParams,
 } from '~/web-router'
 import { NotesListView } from './NotesListView'
+import { NoteView } from './NoteView'
 
 export default {
   name: 'Notes',
@@ -19,7 +20,7 @@ export default {
       }
 
       return (
-        <h1>Note {id}</h1>
+        <NoteView id={id} />
       )
     },
 

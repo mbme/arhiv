@@ -14,6 +14,7 @@ import {
   Icon,
 } from '~/web-components'
 import { IsodbWebClient } from '~/isodb-web-client'
+import { NotFound } from '../parts'
 
 const maxWidth = '35rem'
 const containerStyle = style(
@@ -212,9 +213,7 @@ export class View extends React.PureComponent<IProps, IState> {
         )}
 
         <div className={viewStyle}>
-          {view || (
-            <h1>Not Found</h1>
-          )}
+          {view || NotFound}
         </div>
       </div>
     )

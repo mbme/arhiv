@@ -1,40 +1,32 @@
-// tslint:disable:max-line-length
-
-interface IParseResult {
-  kind: string
-}
-
-interface ISuccess<T extends IParseResult> {
+interface ISuccess<T> {
   success: true
+
   result: T,
   nextPos: number
 }
-const success = <T extends IParseResult>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 
 interface IFailure {
   success: false
+
+  label: string
   msg: string
   pos: number
 }
-const failure = (msg: string, pos: number): IFailure => ({ success: false, msg, pos })
 
-interface IParser<T extends IParseResult> {
+interface IParser<T> {
   (src: string, pos: number): ISuccess<T> | IFailure
 
   parserName?: string
 }
 
-// COMBINATORS
-interface ICombinedResult<T extends IParseResult> extends IParseResult {
-  kind: 'combined'
-  values: T[]
-}
+const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
+const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
 
-export const andThen = <T extends IParseResult>(...parsers: Array<IParser<T>>): IParser<ICombinedResult<T>> => (msg, pos) => {
-  const combined: ICombinedResult<T> = {
-    kind: 'combined',
-    values: [],
-  }
+// COMBINATORS
+
+// sequence of matchers
+export const andThen = <T>(...parsers: Array<IParser<T>>): IParser<T[]> => (msg, pos) => {
+  const values: T[] = []
 
   let currentPos = pos
   for (const parser of parsers) {
@@ -44,13 +36,14 @@ export const andThen = <T extends IParseResult>(...parsers: Array<IParser<T>>): 
     }
 
     currentPos = result.nextPos
-    combined.values.push(result.result)
+    values.push(result.result)
   }
 
-  return success(combined, currentPos)
+  return success(values, currentPos)
 }
 
-export const orElse = <T extends IParseResult>(...parsers: Array<IParser<T>>): IParser<T> => (msg, pos) => {
+// one | two | three
+export const orElse = <T>(...parsers: Array<IParser<T>>): IParser<T> => (msg, pos) => {
   for (const parser of parsers) {
     const result = parser(msg, pos)
     if (result.success) {
@@ -61,7 +54,8 @@ export const orElse = <T extends IParseResult>(...parsers: Array<IParser<T>>): I
   return failure('No matches', pos)
 }
 
-export const mapP = <T extends IParseResult, V extends IParseResult>(fn: (p: T) => V, parser: IParser<T>): IParser<V> => (msg, pos) => {
+// transform result
+export const mapP = <T, V>(fn: (p: T) => V, parser: IParser<T>): IParser<V> => (msg, pos) => {
   const result = parser(msg, pos)
   if (!result.success) {
     return result
@@ -70,25 +64,86 @@ export const mapP = <T extends IParseResult, V extends IParseResult>(fn: (p: T) 
   return success(fn(result.result), result.nextPos)
 }
 
-// PARSERS
+// a+
+export const oneOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+  const values: T[] = []
 
-interface IParsedString extends IParseResult {
-  kind: 'string'
-  value: string
+  let currentPos = pos
+  let latestResult = parser(msg, currentPos)
+  if (!latestResult.success) {
+    return latestResult
+  }
+
+  do {
+    values.push(latestResult.result)
+
+    currentPos = latestResult.nextPos
+    latestResult = parser(msg, currentPos)
+  } while (latestResult.success)
+
+  return success(values, currentPos)
 }
-export const expectStr = (s: string): IParser<IParsedString> => (src, pos) => {
+
+// a*
+export const zeroOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+  const values: T[] = []
+
+  let currentPos = pos
+  let latestResult = parser(msg, currentPos)
+
+  while (latestResult.success) {
+    values.push(latestResult.result)
+
+    currentPos = latestResult.nextPos
+    latestResult = parser(msg, currentPos)
+  }
+
+  return success(values, currentPos)
+}
+
+// a?
+export const optional = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+  const result = parser(msg, pos)
+  if (result.success) {
+    return success([result.result], result.nextPos)
+  }
+
+  return success([], pos)
+}
+
+// set failure label
+export const setLabel = <T>(parser: IParser<T>, label: string): IParser<T> => (msg, pos) => {
+  const result = parser(msg, pos)
+  if (result.success) {
+    return result
+  }
+
+  return failure(result.msg, result.pos, label)
+}
+
+// MATCHERS
+
+export const satisfy = (predicate: (current: string) => [boolean, string]): IParser<string> => (src, pos) => {
   if (pos === src.length) {
     return failure('No more input', pos)
   }
 
-  if (pos + s.length > src.length) {
-    return failure('Not enough input', pos)
+  const result = predicate(src.substring(pos))
+  if (!result[0]) {
+    return failure(result[1], pos)
   }
 
-  const match = src.substring(pos, pos + s.length)
-  if (s === match) {
-    return success({ kind: 'string', value: s } as IParsedString, pos + s.length)
-  }
-
-  return failure(`No match: expected "${s}" but got "${match}"`, pos)
+  return success(result[1], pos + result[1].length)
 }
+
+export const expect = (s: string) => satisfy((current) => {
+  if (s.length > current.length) {
+    return [false, 'Not enough input']
+  }
+
+  if (!current.startsWith(s)) {
+    return [false, 'No match']
+  }
+
+  return [true, s]
+})

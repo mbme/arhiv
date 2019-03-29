@@ -1,20 +1,24 @@
 import { test } from '~/tester'
 import {
-  expectStr,
+  expect,
   andThen,
   orElse,
   mapP,
+  oneOrMore,
+  zeroOrMore,
+  optional,
+  setLabel,
 } from './index'
 
-test('matcher expectStr', (assert) => {
-  assert.true(expectStr('test')('test', 0).success)
-  assert.false(expectStr('test')('te', 0).success)
-  assert.false(expectStr('test')('test', 3).success)
-  assert.false(expectStr('test')('not ok', 0).success)
+test('expect', (assert) => {
+  assert.true(expect('test')('test', 0).success)
+  assert.false(expect('test')('te', 0).success)
+  assert.false(expect('test')('test', 3).success)
+  assert.false(expect('test')('not ok', 0).success)
 })
 
 test('mapP', (assert) => {
-  const mapper = mapP(() => ({ kind: 'dummy' }), expectStr('test'))
+  const mapper = mapP(() => ({ kind: 'dummy' }), expect('test'))
   assert.false(mapper('te', 0).success)
 
   const result = mapper('test', 0)
@@ -25,24 +29,73 @@ test('mapP', (assert) => {
   }
 })
 
-test('combinator andThen', (assert) => {
-  const parser = andThen(expectStr('x1'), expectStr('x2'))
+test('andThen', (assert) => {
+  const parser = andThen(expect('x1'), expect('x2'))
 
   assert.false(parser('0x1x23', 0).success)
   assert.true(parser('0x1x23', 1).success)
 })
 
-test('combinator orElse', (assert) => {
-  const parser = orElse(expectStr('x1'), expectStr('y'))
+test('orElse', (assert) => {
+  const parser = orElse(expect('x1'), expect('y'))
 
   assert.false(parser('0x1y', 0).success)
   assert.true(parser('0x1y', 1).success)
   assert.true(parser('0x1y', 3).success)
 })
 
-test('combine andThen and orElse', (assert) => {
-  const parser = andThen(expectStr('x1'), orElse(expectStr('2'), expectStr('3')))
+test('andThen and orElse', (assert) => {
+  const parser = andThen(expect('x1'), orElse(expect('2'), expect('3')))
   assert.false(parser('x11', 0).success)
   assert.true(parser('x12', 0).success)
   assert.true(parser('x13', 0).success)
+})
+
+test('oneOrMore', (assert) => {
+  const parser = oneOrMore(expect('x1'))
+
+  assert.false(parser('x2', 0).success)
+  assert.true(parser('x1', 0).success)
+
+  const result = parser('x1x1x12', 0)
+  assert.true(result.success)
+  if (result.success) {
+    assert.equal(result.result.length, 3)
+  }
+})
+
+test('zeroOrMore', (assert) => {
+  const parser = zeroOrMore(expect('x1'))
+
+  assert.true(parser('x2', 0).success)
+  assert.true(parser('x1', 0).success)
+})
+
+test('optional', (assert) => {
+  const parser = optional(expect('x1'))
+
+  {
+    const result = parser('x2', 0)
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.length, 0)
+    }
+  }
+  {
+    const result = parser('x1', 0)
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.length, 1)
+    }
+  }
+})
+
+test('setLabel', (assert) => {
+  const parser = setLabel(expect('test'), 'WORKS')
+
+  const result = parser('te', 0)
+  assert.false(result.success)
+  if (!result.success) {
+    assert.equal(result.label, 'WORKS')
+  }
 })

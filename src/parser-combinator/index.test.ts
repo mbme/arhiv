@@ -39,3 +39,10 @@ test('combinator orElse', (assert) => {
   assert.true(parser('0x1y', 1).success)
   assert.true(parser('0x1y', 3).success)
 })
+
+test('combine andThen and orElse', (assert) => {
+  const parser = andThen(expectStr('x1'), orElse(expectStr('2'), expectStr('3')))
+  assert.false(parser('x11', 0).success)
+  assert.true(parser('x12', 0).success)
+  assert.true(parser('x13', 0).success)
+})

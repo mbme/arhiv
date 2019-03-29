@@ -1,4 +1,4 @@
-import { test } from '../tester'
+import { test } from '~/tester'
 import { aesEncrypt, aesDecrypt } from './node'
 
 test('Encrypt/decrypt', (assert) => {

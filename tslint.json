@@ -38,6 +38,7 @@
     "promise-function-async": false,
     "prefer-template": false,
     "prefer-readonly": false,
+    "no-object-literal-type-assertion": [true, { "allow-arguments": true }],
     "no-void-expression": [
       true,
       "ignore-arrow-function-shorthand"

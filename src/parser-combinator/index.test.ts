@@ -8,14 +8,8 @@ import {
   zeroOrMore,
   optional,
   setLabel,
+  satisfy,
 } from './index'
-
-test('expect', (assert) => {
-  assert.true(expect('test')('test', 0).success)
-  assert.false(expect('test')('te', 0).success)
-  assert.false(expect('test')('test', 3).success)
-  assert.false(expect('test')('not ok', 0).success)
-})
 
 test('mapP', (assert) => {
   const mapper = mapP(() => ({ kind: 'dummy' }), expect('test'))
@@ -98,4 +92,24 @@ test('setLabel', (assert) => {
   if (!result.success) {
     assert.equal(result.label, 'WORKS')
   }
+})
+
+test('satisfy', (assert) => {
+  const matcher = satisfy((x: string) => {
+    if (/#test/.test(x)) {
+      return [true, '#test']
+    }
+
+    return [false, 'No match']
+  })
+
+  assert.true(matcher('#test', 0).success)
+  assert.false(matcher('#htest', 0).success)
+})
+
+test('expect', (assert) => {
+  assert.true(expect('test')('test', 0).success)
+  assert.false(expect('test')('te', 0).success)
+  assert.false(expect('test')('test', 3).success)
+  assert.false(expect('test')('not ok', 0).success)
 })

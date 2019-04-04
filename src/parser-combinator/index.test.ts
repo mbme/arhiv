@@ -9,6 +9,8 @@ import {
   optional,
   setLabel,
   satisfy,
+  regex,
+  eof,
 } from './index'
 
 test('mapP', (assert) => {
@@ -94,6 +96,11 @@ test('setLabel', (assert) => {
   }
 })
 
+test('eof', (assert) => {
+  assert.true(eof('test', 4).success)
+  assert.false(eof('test', 3).success)
+})
+
 test('satisfy', (assert) => {
   const matcher = satisfy((x: string) => {
     if (/#test/.test(x)) {
@@ -112,4 +119,16 @@ test('expect', (assert) => {
   assert.false(expect('test')('te', 0).success)
   assert.false(expect('test')('test', 3).success)
   assert.false(expect('test')('not ok', 0).success)
+})
+
+test('regex', (assert) => {
+  assert.true(regex(/^test/)('test', 0).success)
+
+  const result = regex(/^0*1+/)('001', 0)
+  assert.true(result.success)
+  if (result.success) {
+    assert.equal(result.result, '001')
+  }
+
+  assert.false(regex(/^test/)('not test', 0).success)
 })

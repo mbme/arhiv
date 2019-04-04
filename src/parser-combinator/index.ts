@@ -111,6 +111,10 @@ export const optional = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
   return success([], pos)
 }
 
+export const everythingUntil = <T>(parser: IParser<T>): IParser<T> => (msg, pos) => {
+
+}
+
 // set failure label
 export const setLabel = <T>(parser: IParser<T>, label: string): IParser<T> => (msg, pos) => {
   const result = parser(msg, pos)
@@ -122,6 +126,14 @@ export const setLabel = <T>(parser: IParser<T>, label: string): IParser<T> => (m
 }
 
 // MATCHERS
+
+export const eof: IParser<string> = (src, pos) => {
+  if (pos === src.length) {
+    return success('', pos)
+  }
+
+  return failure('Not EOF', pos)
+}
 
 export const satisfy = (predicate: (current: string) => [boolean, string]): IParser<string> => (src, pos) => {
   if (pos === src.length) {
@@ -146,4 +158,17 @@ export const expect = (s: string) => satisfy((current) => {
   }
 
   return [true, s]
+})
+
+export const regex = (re: RegExp) => satisfy((current) => {
+  if (re.toString()[1] !== '^') {
+    throw new Error(`regex parsers must contain '^' start assertion.`)
+  }
+
+  const result = re.exec(current)
+  if (!result) {
+    return [false, 'No match']
+  }
+
+  return [true, result[0]]
 })

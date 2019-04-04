@@ -13,11 +13,7 @@ interface IFailure {
   pos: number
 }
 
-interface IParser<T> {
-  (src: string, pos: number): ISuccess<T> | IFailure
-
-  parserName?: string
-}
+type Parser<T> = (src: string, pos: number) => ISuccess<T> | IFailure
 
 const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
@@ -27,7 +23,7 @@ export const stringifyFailure = (f: IFailure) => `Failed to parse ${f.label} at 
 // COMBINATORS
 
 // sequence of matchers
-export const andThen = <T>(...parsers: Array<IParser<T>>): IParser<T[]> => (msg, pos) => {
+export const andThen = <T>(...parsers: Array<Parser<T>>): Parser<T[]> => (msg, pos) => {
   const values: T[] = []
 
   let currentPos = pos
@@ -45,7 +41,7 @@ export const andThen = <T>(...parsers: Array<IParser<T>>): IParser<T[]> => (msg,
 }
 
 // one | two | three
-export const orElse = <T>(...parsers: Array<IParser<T>>): IParser<T> => (msg, pos) => {
+export const orElse = <T>(...parsers: Array<Parser<T>>): Parser<T> => (msg, pos) => {
   for (const parser of parsers) {
     const result = parser(msg, pos)
     if (result.success) {
@@ -57,7 +53,7 @@ export const orElse = <T>(...parsers: Array<IParser<T>>): IParser<T> => (msg, po
 }
 
 // transform result
-export const mapP = <T, V>(fn: (p: T) => V, parser: IParser<T>): IParser<V> => (msg, pos) => {
+export const mapP = <T, V>(fn: (p: T) => V, parser: Parser<T>): Parser<V> => (msg, pos) => {
   const result = parser(msg, pos)
   if (!result.success) {
     return result
@@ -67,7 +63,7 @@ export const mapP = <T, V>(fn: (p: T) => V, parser: IParser<T>): IParser<V> => (
 }
 
 // a+
-export const oneOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+export const oneOrMore = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
   const values: T[] = []
 
   let currentPos = pos
@@ -87,7 +83,7 @@ export const oneOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => 
 }
 
 // a*
-export const zeroOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+export const zeroOrMore = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
   const values: T[] = []
 
   let currentPos = pos
@@ -104,7 +100,7 @@ export const zeroOrMore = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) =>
 }
 
 // a?
-export const optional = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
+export const optional = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
   const result = parser(msg, pos)
   if (result.success) {
     return success([result.result], result.nextPos)
@@ -113,7 +109,7 @@ export const optional = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
   return success([], pos)
 }
 
-export const everythingUntil = <T>(parser: IParser<T>): IParser<string> => (msg, pos) => {
+export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, pos) => {
   let currentPos = pos
   let result
   do {
@@ -135,7 +131,7 @@ export const everythingUntil = <T>(parser: IParser<T>): IParser<string> => (msg,
 }
 
 // set failure label
-export const setLabel = <T>(parser: IParser<T>, label: string): IParser<T> => (msg, pos) => {
+export const setLabel = <T>(parser: Parser<T>, label: string): Parser<T> => (msg, pos) => {
   const result = parser(msg, pos)
   if (result.success) {
     return result
@@ -146,7 +142,7 @@ export const setLabel = <T>(parser: IParser<T>, label: string): IParser<T> => (m
 
 // MATCHERS
 
-export const eof: IParser<string> = (src, pos) => {
+export const eof: Parser<string> = (src, pos) => {
   if (pos === src.length) {
     return success('', pos)
   }
@@ -154,7 +150,7 @@ export const eof: IParser<string> = (src, pos) => {
   return failure('Not EOF', pos)
 }
 
-export const satisfy = (predicate: (current: string) => [boolean, string]): IParser<string> => (src, pos) => {
+export const satisfy = (predicate: (current: string) => [boolean, string]): Parser<string> => (src, pos) => {
   if (pos === src.length) {
     return failure('No more input', pos)
   }

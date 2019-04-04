@@ -22,6 +22,8 @@ interface IParser<T> {
 const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
 
+export const stringifyFailure = (f: IFailure) => `Failed to parse ${f.label} at pos ${f.pos}: ${f.msg}`
+
 // COMBINATORS
 
 // sequence of matchers

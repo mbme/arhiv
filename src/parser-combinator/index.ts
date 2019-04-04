@@ -113,8 +113,25 @@ export const optional = <T>(parser: IParser<T>): IParser<T[]> => (msg, pos) => {
   return success([], pos)
 }
 
-export const everythingUntil = <T>(parser: IParser<T>): IParser<T> => (msg, pos) => {
+export const everythingUntil = <T>(parser: IParser<T>): IParser<string> => (msg, pos) => {
+  let currentPos = pos
+  let result
+  do {
+    result = parser(msg, currentPos)
+    if (!result.success) {
+      currentPos += 1
+    }
 
+    if (currentPos > msg.length) {
+      return failure('no match: eof', pos, 'everythingUntil')
+    }
+  } while (!result.success)
+
+  if (currentPos === pos) {
+    return failure('no match', pos, 'everythingUntil')
+  }
+
+  return success(msg.substring(pos, currentPos), currentPos + 1)
 }
 
 // set failure label

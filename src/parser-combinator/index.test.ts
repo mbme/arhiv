@@ -11,6 +11,7 @@ import {
   satisfy,
   regex,
   eof,
+  everythingUntil,
 } from './index'
 
 test('mapP', (assert) => {
@@ -84,6 +85,20 @@ test('optional', (assert) => {
       assert.equal(result.result.length, 1)
     }
   }
+})
+
+test('everythingUntil', (assert) => {
+  const parser = everythingUntil(expect('x1'))
+
+  {
+    const result = parser('testx1', 0)
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result, 'test')
+    }
+  }
+
+  assert.false(parser('x2', 0).success)
 })
 
 test('setLabel', (assert) => {

@@ -7,9 +7,9 @@ import {
   setLabel,
 } from '~/parser-combinator'
 
-const newlines = setLabel(regex(/\n{2,}/), 'newlines')
+export const newlines = setLabel(regex(/^\n{2,}/), 'newlines')
 
-const paragraph = setLabel(
+export const paragraph = setLabel(
   everythingUntil(
     orElse(
       eof,
@@ -19,4 +19,4 @@ const paragraph = setLabel(
   'paragraph',
 )
 
-const markupParser = zeroOrMore(orElse(newlines, paragraph))
+export const markupParser = zeroOrMore(orElse(newlines, paragraph))

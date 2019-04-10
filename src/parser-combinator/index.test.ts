@@ -12,6 +12,7 @@ import {
   regex,
   eof,
   everythingUntil,
+  parse,
 } from './index'
 
 test('mapP', (assert) => {
@@ -109,6 +110,13 @@ test('setLabel', (assert) => {
   if (!result.success) {
     assert.equal(result.label, 'WORKS')
   }
+})
+
+test('parse', (assert) => {
+  const parser = expect('x1')
+
+  assert.true(parse(parser, 'x1').success)
+  assert.false(parse(parser, 'x1 ').success)
 })
 
 test('eof', (assert) => {

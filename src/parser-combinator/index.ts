@@ -128,6 +128,34 @@ export const optional = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
   return success([], pos, pos === msg.length)
 }
 
+export const between = <T>(start: Parser<T>, stop: Parser<T>): Parser<T> => (msg, pos) => {
+  const startResult = start(msg, pos)
+  if (!startResult.success) {
+    return startResult
+  }
+
+  let currentPos = startResult.nextPos
+  let result
+  do {
+    result = stop(msg, currentPos)
+    if (!result.success) {
+      currentPos += 1
+    }
+
+    if (currentPos > msg.length) {
+      return failure('no match: eof', pos, 'between')
+    }
+  } while (!result.success)
+
+  if (currentPos === pos) {
+    return failure('no match', pos, 'between')
+  }
+
+  const nextPos = (result as ISuccess<T>).nextPos
+
+  return success(msg.substring(pos, currentPos), nextPos, nextPos === msg.length)
+};
+
 export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, pos) => {
   let currentPos = pos
   let result
@@ -146,7 +174,8 @@ export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, p
     return failure('no match', pos, 'everythingUntil')
   }
 
-  return success(msg.substring(pos, currentPos), currentPos + 1, currentPos + 1 === msg.length)
+  const nextPos = currentPos + 1
+  return success(msg.substring(pos, currentPos), nextPos, nextPos === msg.length)
 }
 
 // set failure label

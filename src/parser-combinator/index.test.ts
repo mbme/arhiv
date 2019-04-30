@@ -12,6 +12,7 @@ import {
   regex,
   eof,
   everythingUntil,
+  between,
   parse,
 } from './index'
 
@@ -100,6 +101,21 @@ test('everythingUntil', (assert) => {
   }
 
   assert.false(parser('x2', 0).success)
+})
+
+test('between', (assert) => {
+  const parser = between(expect('x1'), expect('x1'))
+
+  {
+    const result = parser('x1testx1', 0)
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result, 'test')
+    }
+  }
+
+  assert.false(parser('x1test', 0).success)
+  assert.false(parser('x1testx2', 0).success)
 })
 
 test('setLabel', (assert) => {

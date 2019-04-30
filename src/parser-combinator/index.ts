@@ -128,7 +128,7 @@ export const optional = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
   return success([], pos, pos === msg.length)
 }
 
-export const between = <T>(start: Parser<T>, stop: Parser<T>): Parser<T> => (msg, pos) => {
+export const between = (start: Parser<string>, stop: Parser<string>): Parser<string> => (msg, pos) => {
   const startResult = start(msg, pos)
   if (!startResult.success) {
     return startResult
@@ -151,10 +151,12 @@ export const between = <T>(start: Parser<T>, stop: Parser<T>): Parser<T> => (msg
     return failure('no match', pos, 'between')
   }
 
-  const nextPos = (result as ISuccess<T>).nextPos
+  const nextPos = (result as ISuccess<string>).nextPos
 
-  return success(msg.substring(pos, currentPos), nextPos, nextPos === msg.length)
-};
+  const str = msg.substring(pos + startResult.result.length, currentPos)
+
+  return success(str, nextPos, nextPos === msg.length)
+}
 
 export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, pos) => {
   let currentPos = pos
@@ -175,6 +177,7 @@ export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, p
   }
 
   const nextPos = currentPos + 1
+
   return success(msg.substring(pos, currentPos), nextPos, nextPos === msg.length)
 }
 

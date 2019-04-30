@@ -3,7 +3,18 @@ import { parse } from '~/parser-combinator'
 import {
   newlines,
   paragraph,
+  mono,
+  bold,
 } from './index'
+
+
+test('inline', (assert) => {
+  assert.true(parse(mono, '`test`').success)
+  assert.false(parse(mono, '`te\nst`').success)
+
+  assert.true(parse(bold, '*test*').success)
+  assert.false(parse(bold, '*te\nst*').success)
+})
 
 test('newlines', (assert) => {
   assert.true(parse(newlines, '\n\n\n').success)

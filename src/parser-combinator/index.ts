@@ -3,7 +3,6 @@ interface ISuccess<T> {
 
   result: T,
   nextPos: number
-  eof: boolean
 }
 
 interface IFailure {
@@ -14,126 +13,147 @@ interface IFailure {
   pos: number
 }
 
-type Parser<T> = (src: string, pos: number) => ISuccess<T> | IFailure
-
-const success = <T>(result: T, nextPos: number, isEof: boolean): ISuccess<T> => ({
-  success: true,
-  result,
-  nextPos,
-  eof: isEof,
-})
+const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
+
+class Parser<T> {
+  constructor(public apply: (src: string, pos: number) => ISuccess<T> | IFailure) { }
+
+  parseAll(src: string) {
+    const result = this.apply(src, 0)
+    if (!result.success) {
+      return result
+    }
+
+    if (result.nextPos < src.length) {
+      return failure('Failed to parse whole string', 0, 'parseAll')
+    }
+
+    return result
+  }
+
+  // COMBINATORS
+
+  // sequence of matchers
+  andThen<K>(p2: Parser<K>): Parser<[T, K]> {
+    return new Parser((msg, pos) => {
+      const result1 = this.apply(msg, pos)
+      if (!result1.success) {
+        return result1
+      }
+
+      const result2 = p2.apply(msg, result1.nextPos)
+      if (!result2.success) {
+        return result2
+      }
+
+      return success([result1.result, result2.result], result2.nextPos)
+    })
+  }
+
+  // one | two
+  orElse<K>(p2: Parser<K>): Parser<T | K> {
+    return new Parser<T | K>((msg, pos) => {
+      {
+        const result = this.apply(msg, pos)
+        if (result.success) {
+          return result
+        }
+      }
+
+      {
+        const result = p2.apply(msg, pos)
+        if (result.success) {
+          return result
+        }
+      }
+
+      return failure('No matches', pos)
+    })
+  }
+
+  // transform result
+  map<K>(fn: (value: T) => K): Parser<K> {
+    return new Parser((msg, pos) => {
+      const result = this.apply(msg, pos)
+      if (!result.success) {
+        return result
+      }
+
+      return success(fn(result.result), result.nextPos)
+    })
+  }
+
+  // set failure label
+  withLabel(label: string): Parser<T> {
+    return new Parser((msg, pos) => {
+      const result = this.apply(msg, pos)
+      if (result.success) {
+        return result
+      }
+
+      return failure(result.msg, result.pos, label)
+    })
+  }
+
+  // a+
+  oneOrMore(): Parser<T[]> {
+    return new Parser((msg, pos) => {
+      const values: T[] = []
+
+      let currentPos = pos
+      let latestResult = this.apply(msg, currentPos)
+      if (!latestResult.success) {
+        return latestResult
+      }
+
+      do {
+        values.push(latestResult.result)
+
+        currentPos = latestResult.nextPos
+        latestResult = this.apply(msg, currentPos)
+      } while (latestResult.success)
+
+      return success(values, currentPos)
+    })
+  }
+
+  // a*
+  zeroOrMore(): Parser<T[]> {
+    return new Parser((msg, pos) => {
+      const values: T[] = []
+
+      let currentPos = pos
+      let latestResult = this.apply(msg, currentPos)
+
+      while (latestResult.success) {
+        values.push(latestResult.result)
+
+        currentPos = latestResult.nextPos
+        latestResult = this.apply(msg, currentPos)
+      }
+
+      return success(values, currentPos)
+    })
+  }
+
+  // a?
+  optional(): Parser<T[]> {
+    return new Parser((msg, pos) => {
+      const result = this.apply(msg, pos)
+      if (result.success) {
+        return success([result.result], result.nextPos)
+      }
+
+      return success([], pos)
+    })
+  }
+}
 
 export const stringifyFailure = (f: IFailure) => `Failed to parse ${f.label} at pos ${f.pos}: ${f.msg}`
 
-export const parse = <T>(parser: Parser<T>, s: string) => {
-  const result = parser(s, 0)
-  if (!result.success) {
-    return result
-  }
-
-  if (!result.eof) {
-    return failure('Failed to parse whole string', 0, 'parseAll')
-  }
-
-  return result
-}
-
-// COMBINATORS
-
-// sequence of matchers
-export const andThen = <T1, T2>(p1: Parser<T1>, p2: Parser<T2>): Parser<[T1, T2]> => (msg, pos) => {
-  const result1 = p1(msg, pos)
-  if (!result1.success) {
-    return result1
-  }
-
-  const result2 = p2(msg, result1.nextPos)
-  if (!result2.success) {
-    return result2
-  }
-
-  return success([result1.result, result2.result], result2.nextPos, result2.nextPos === msg.length)
-}
-
-// one | two
-export const orElse = <T1, T2>(p1: Parser<T1>, p2: Parser<T2>): Parser<T1 | T2> => (msg, pos) => {
-  {
-    const result = p1(msg, pos)
-    if (result.success) {
-      return result
-    }
-  }
-
-  {
-    const result = p2(msg, pos)
-    if (result.success) {
-      return result
-    }
-  }
-
-  return failure('No matches', pos)
-}
-
-// transform result
-export const mapP = <T, V>(fn: (p: T) => V, parser: Parser<T>): Parser<V> => (msg, pos) => {
-  const result = parser(msg, pos)
-  if (!result.success) {
-    return result
-  }
-
-  return success(fn(result.result), result.nextPos, result.nextPos === msg.length)
-}
-
-// a+
-export const oneOrMore = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
-  const values: T[] = []
-
-  let currentPos = pos
-  let latestResult = parser(msg, currentPos)
-  if (!latestResult.success) {
-    return latestResult
-  }
-
-  do {
-    values.push(latestResult.result)
-
-    currentPos = latestResult.nextPos
-    latestResult = parser(msg, currentPos)
-  } while (latestResult.success)
-
-  return success(values, currentPos, currentPos === msg.length)
-}
-
-// a*
-export const zeroOrMore = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
-  const values: T[] = []
-
-  let currentPos = pos
-  let latestResult = parser(msg, currentPos)
-
-  while (latestResult.success) {
-    values.push(latestResult.result)
-
-    currentPos = latestResult.nextPos
-    latestResult = parser(msg, currentPos)
-  }
-
-  return success(values, currentPos, currentPos === msg.length)
-}
-
-// a?
-export const optional = <T>(parser: Parser<T>): Parser<T[]> => (msg, pos) => {
-  const result = parser(msg, pos)
-  if (result.success) {
-    return success([result.result], result.nextPos, result.nextPos === msg.length)
-  }
-
-  return success([], pos, pos === msg.length)
-}
-
-export const between = (start: Parser<string>, stop: Parser<string>): Parser<string> => (msg, pos) => {
-  const startResult = start(msg, pos)
+export const between = (start: Parser<string>, stop: Parser<string>): Parser<string> => new Parser((msg, pos) => {
+  const startResult = start.apply(msg, pos)
   if (!startResult.success) {
     return startResult
   }
@@ -141,7 +161,7 @@ export const between = (start: Parser<string>, stop: Parser<string>): Parser<str
   let currentPos = startResult.nextPos
   let result
   do {
-    result = stop(msg, currentPos)
+    result = stop.apply(msg, currentPos)
     if (!result.success) {
       currentPos += 1
     }
@@ -159,14 +179,14 @@ export const between = (start: Parser<string>, stop: Parser<string>): Parser<str
 
   const str = msg.substring(pos + startResult.result.length, currentPos)
 
-  return success(str, nextPos, nextPos === msg.length)
-}
+  return success(str, nextPos)
+})
 
-export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, pos) => {
+export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => new Parser((msg, pos) => {
   let currentPos = pos
   let result
   do {
-    result = parser(msg, currentPos)
+    result = parser.apply(msg, currentPos)
     if (!result.success) {
       currentPos += 1
     }
@@ -182,30 +202,20 @@ export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => (msg, p
 
   const nextPos = currentPos + 1
 
-  return success(msg.substring(pos, currentPos), nextPos, nextPos === msg.length)
-}
-
-// set failure label
-export const setLabel = <T>(parser: Parser<T>, label: string): Parser<T> => (msg, pos) => {
-  const result = parser(msg, pos)
-  if (result.success) {
-    return result
-  }
-
-  return failure(result.msg, result.pos, label)
-}
+  return success(msg.substring(pos, currentPos), nextPos)
+})
 
 // MATCHERS
 
-export const eof: Parser<string> = (msg, pos) => {
+export const eof: Parser<string> = new Parser((msg, pos) => {
   if (pos === msg.length) {
-    return success('', pos, true)
+    return success('', pos)
   }
 
   return failure('Not EOF', pos)
-}
+})
 
-export const satisfy = (predicate: (current: string) => [boolean, string]): Parser<string> => (msg, pos) => {
+export const satisfy = (predicate: (current: string) => [boolean, string]): Parser<string> => new Parser((msg, pos) => {
   if (pos === msg.length) {
     return failure('No more input', pos)
   }
@@ -217,8 +227,8 @@ export const satisfy = (predicate: (current: string) => [boolean, string]): Pars
 
   const nextPos = pos + result[1].length
 
-  return success(result[1], nextPos, nextPos === msg.length)
-}
+  return success(result[1], nextPos)
+})
 
 export const expect = (s: string) => satisfy((current) => {
   if (s.length > current.length) {

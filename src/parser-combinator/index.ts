@@ -42,27 +42,31 @@ export const parse = <T>(parser: Parser<T>, s: string) => {
 // COMBINATORS
 
 // sequence of matchers
-export const andThen = <T>(...parsers: Array<Parser<T>>): Parser<T[]> => (msg, pos) => {
-  const values: T[] = []
-
-  let currentPos = pos
-  for (const parser of parsers) {
-    const result = parser(msg, currentPos)
-    if (!result.success) {
-      return result
-    }
-
-    currentPos = result.nextPos
-    values.push(result.result)
+export const andThen = <T1, T2>(p1: Parser<T1>, p2: Parser<T2>): Parser<[T1, T2]> => (msg, pos) => {
+  const result1 = p1(msg, pos)
+  if (!result1.success) {
+    return result1
   }
 
-  return success(values, currentPos, currentPos === msg.length)
+  const result2 = p2(msg, result1.nextPos)
+  if (!result2.success) {
+    return result2
+  }
+
+  return success([result1.result, result2.result], result2.nextPos, result2.nextPos === msg.length)
 }
 
-// one | two | three
-export const orElse = <T>(...parsers: Array<Parser<T>>): Parser<T> => (msg, pos) => {
-  for (const parser of parsers) {
-    const result = parser(msg, pos)
+// one | two
+export const orElse = <T1, T2>(p1: Parser<T1>, p2: Parser<T2>): Parser<T1 | T2> => (msg, pos) => {
+  {
+    const result = p1(msg, pos)
+    if (result.success) {
+      return result
+    }
+  }
+
+  {
+    const result = p2(msg, pos)
     if (result.success) {
       return result
     }

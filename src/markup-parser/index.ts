@@ -3,13 +3,11 @@ import {
   orElse,
   regex,
   eof,
-  everythingUntil,
   setLabel,
   satisfy,
   oneOrMore,
   andThen,
 } from '~/parser-combinator'
-import { oneOf } from 'prop-types';
 
 export const newlines = setLabel(regex(/^\n{2,}/), 'newlines')
 export const bold = setLabel(regex(/^\*.*\*/), 'bold')

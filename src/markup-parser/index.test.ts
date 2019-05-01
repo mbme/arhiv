@@ -1,5 +1,4 @@
 import { test } from '~/tester'
-import { parse } from '~/parser-combinator'
 import {
   newlines,
   paragraph,
@@ -7,27 +6,28 @@ import {
   bold,
 } from './index'
 
-
 test('inline', (assert) => {
-  assert.true(parse(mono, '`test`').success)
-  assert.false(parse(mono, '`te\nst`').success)
+  assert.true(mono.parseAll('`test`').success)
+  assert.false(mono.parseAll('`te\nst`').success)
 
-  assert.true(parse(bold, '*test*').success)
-  assert.false(parse(bold, '*te\nst*').success)
+  assert.true(bold.parseAll('*test*').success)
+  assert.false(bold.parseAll('*te\nst*').success)
 })
 
 test('newlines', (assert) => {
-  assert.true(parse(newlines, '\n\n\n').success)
-  assert.false(parse(newlines, '\n ').success)
+  assert.true(newlines.parseAll('\n\n\n').success)
+  assert.false(newlines.parseAll('\n ').success)
 })
 
 test('paragraph', (assert) => {
-  assert.true(paragraph('test', 0).success)
+  assert.true(paragraph.parseAll('test').success)
+
   {
-    const result = paragraph('test\n\n', 0)
+    const result = paragraph.apply('te\ns*t*\n\n', 0)
     assert.true(result.success)
     if (result.success) {
-      assert.equal(result.result, 'test')
+      assert.equal(result.result.value[0].value, 'te\ns')
+      assert.equal(result.result.value[1].value, 't')
     }
   }
 })

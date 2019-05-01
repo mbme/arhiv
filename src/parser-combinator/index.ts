@@ -16,6 +16,11 @@ interface IFailure {
 const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
 
+interface INode<T> {
+  type: string
+  value: T
+}
+
 class Parser<T> {
   constructor(public apply: (src: string, pos: number) => ISuccess<T> | IFailure) { }
 
@@ -82,6 +87,10 @@ class Parser<T> {
 
       return success(fn(result.result), result.nextPos)
     })
+  }
+
+  asNode(type: string): Parser<INode<T>> {
+    return this.map(value => ({ type, value })).withLabel(type)
   }
 
   // set failure label
@@ -215,39 +224,41 @@ export const eof: Parser<string> = new Parser((msg, pos) => {
   return failure('Not EOF', pos)
 })
 
-export const satisfy = (predicate: (current: string) => [boolean, string]): Parser<string> => new Parser((msg, pos) => {
-  if (pos === msg.length) {
-    return failure('No more input', pos)
-  }
+export const satisfy = (predicate: (msg: string, pos: number) => [boolean, string]): Parser<string> =>
+  new Parser((msg, pos) => {
+    if (pos === msg.length) {
+      return failure('No more input', pos)
+    }
 
-  const result = predicate(msg.substring(pos))
-  if (!result[0]) {
-    return failure(result[1], pos)
-  }
+    const result = predicate(msg, pos)
+    if (!result[0]) {
+      return failure(result[1], pos)
+    }
 
-  const nextPos = pos + result[1].length
+    const nextPos = pos + result[1].length
 
-  return success(result[1], nextPos)
-})
+    return success(result[1], nextPos)
+  })
 
-export const expect = (s: string) => satisfy((current) => {
-  if (s.length > current.length) {
+export const expect = (s: string) => satisfy((msg, pos) => {
+  const match = msg.substring(pos, pos + s.length)
+  if (s.length > match.length) {
     return [false, 'Not enough input']
   }
 
-  if (!current.startsWith(s)) {
+  if (s !== match) {
     return [false, 'No match']
   }
 
   return [true, s]
 })
 
-export const regex = (re: RegExp) => satisfy((current) => {
+export const regex = (re: RegExp) => satisfy((msg, pos) => {
   if (re.toString()[1] !== '^') {
     throw new Error(`regex parsers must contain '^' start assertion.`)
   }
 
-  const result = re.exec(current)
+  const result = re.exec(msg.substring(pos))
   if (!result) {
     return [false, 'No match']
   }

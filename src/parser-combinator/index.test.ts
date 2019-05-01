@@ -135,8 +135,8 @@ test('eof', (assert) => {
 })
 
 test('satisfy', (assert) => {
-  const matcher = satisfy((x: string) => {
-    if (/#test/.test(x)) {
+  const matcher = satisfy((x, pos) => {
+    if (/#test/.test(x.substring(pos))) {
       return [true, '#test']
     }
 

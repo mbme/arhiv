@@ -1,44 +1,51 @@
 import {
-  zeroOrMore,
-  orElse,
   regex,
-  eof,
-  setLabel,
   satisfy,
-  oneOrMore,
-  andThen,
 } from '~/parser-combinator'
 
-export const newlines = setLabel(regex(/^\n{2,}/), 'newlines')
-export const bold = setLabel(regex(/^\*.*\*/), 'bold')
-export const mono = setLabel(regex(/^`.*`/), 'mono')
-const anyChar = setLabel(satisfy(str => [true, str[0]]), 'char')
+export const newlines = regex(/^\n{2,}/)
+  .asNode('Newlines')
 
-const line = setLabel(
-  orElse(
-    bold,
-    mono,
+export const bold = regex(/^\*.*\*/)
+  .map(value => value.substring(1, value.length - 1))
+  .asNode('Bold')
 
-    anyChar,
-  ),
-  'line',
-)
+export const mono = regex(/^`.*`/)
+  .map(value => value.substring(1, value.length - 1))
+  .asNode('Mono')
 
-export const paragraph = setLabel(
-  andThen(
-    oneOrMore(
-      orElse(
-        bold,
-        mono,
-        anyChar,
-      )
-    ),
-    orElse(
-      eof,
-      newlines,
-    ),
-  ),
-  'paragraph',
-)
+const paragraphChar = satisfy((msg, pos) => {
+  if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
+    return [false, 'found newlines']
+  }
 
-export const markupParser = zeroOrMore(orElse(newlines, paragraph))
+  return [true, msg[pos]]
+}).asNode('ParagraphChar')
+
+export const paragraph = bold.orElse(mono).orElse(paragraphChar).oneOrMore()
+  .map(nodes => { // group chars into strings
+    const values = []
+    let str = ''
+    for (const node of nodes) {
+      if (node.type === 'ParagraphChar') {
+        str += node.value
+        continue
+      }
+
+      if (str.length) {
+        values.push({ type: 'String', value: str })
+        str = ''
+      }
+
+      values.push(node)
+    }
+
+    if (str.length) {
+      values.push({ type: 'String', value: str })
+    }
+
+    return values
+  })
+  .asNode('Paragraph')
+
+export const markupParser = newlines.orElse(paragraph).zeroOrMore()

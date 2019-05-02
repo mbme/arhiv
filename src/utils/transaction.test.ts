@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { after, before, test } from '../tester'
+import { after, before, test } from '~/tester'
 import createFsTransaction from './transaction'
 import { createTempDir, readText, rmrfSync, writeText } from './fs'
 

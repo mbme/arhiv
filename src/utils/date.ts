@@ -21,3 +21,5 @@ export function formatTs(ts: number) {
     date.getDate(),
   ].join('/')
 }
+
+export const nowS = () => Date.now() / 1000

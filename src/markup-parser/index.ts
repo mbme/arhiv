@@ -2,16 +2,17 @@ import {
   regex,
   satisfy,
 } from '~/parser-combinator'
+import { trim } from '~/utils'
 
 export const newlines = regex(/^\n{2,}/)
   .asNode('Newlines')
 
 export const bold = regex(/^\*.*\*/)
-  .map(value => value.substring(1, value.length - 1))
+  .map(value => trim(value, '*'))
   .asNode('Bold')
 
 export const mono = regex(/^`.*`/)
-  .map(value => value.substring(1, value.length - 1))
+  .map(value => trim(value, '`'))
   .asNode('Mono')
 
 const paragraphChar = satisfy((msg, pos) => {

@@ -1,7 +1,7 @@
-export { Counter } from './counter'
 export * from './types'
 export * from './date'
-export * from './fuzzy-search'
+export * from './string'
+export { Counter } from './counter'
 export { PubSub } from './pubsub'
 
 export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1)
@@ -125,8 +125,6 @@ export function createProxy<T extends object>(target: T, handler: (prop: string,
 
 // tslint:disable-next-line:no-empty
 export const noop = () => { }
-
-export const nowS = () => Date.now() / 1000
 
 export function classNames(...args: any[]) {
   return args.reduce<string[]>((acc, val) => {

@@ -27,3 +27,27 @@ export function fuzzySearch(needle: string, haystack: string, ignoreCase = true)
 
   return true
 }
+
+export function reverse(str: string) {
+  return Array.from(str).reverse().join('')
+}
+
+export function trimLeft(str: string, chars = ' ') {
+  if (!chars) throw new Error('chars must not be empty ')
+
+  for (let i = 0; i < str.length; i += 1) {
+    if (!chars.includes(str[i])) {
+      return str.substring(i)
+    }
+  }
+
+  return ''
+}
+
+export function trimRight(str: string, chars = ' ') {
+  return reverse(trimLeft(reverse(str), chars))
+}
+
+export function trim(str: string, chars = ' ') {
+  return trimRight(trimLeft(str, chars), chars)
+}

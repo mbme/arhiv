@@ -1,19 +1,38 @@
 import {
   regex,
   satisfy,
+  expect,
+  bof,
 } from '~/parser-combinator'
-import { trim } from '~/utils'
+import { trim, trimLeft } from '~/utils'
 
 export const newlines = regex(/^\n{2,}/)
   .asNode('Newlines')
 
+// some *bold* text
 export const bold = regex(/^\*.*\*/)
   .map(value => trim(value, '*'))
   .asNode('Bold')
 
+// some `monospace` text
 export const mono = regex(/^`.*`/)
   .map(value => trim(value, '`'))
   .asNode('Mono')
+
+// some ~striketrough~ text
+export const strikethrough = regex(/^~.*~/)
+  .map(value => trim(value, '~'))
+  .asNode('Strikethrough')
+
+// # Header lvl 1 or ## Header lvl 2
+export const header = bof.orElse(expect('\n')).andThen(regex(/^#{1,2} .*/))
+  .map(value => {
+    const headerStr = value[1]
+    const level = headerStr.startsWith('## ') ? 2 : 1
+
+    return [level, trimLeft(headerStr, '# ')]
+  })
+  .asNode('Header')
 
 const paragraphChar = satisfy((msg, pos) => {
   if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
@@ -23,7 +42,12 @@ const paragraphChar = satisfy((msg, pos) => {
   return [true, msg[pos]]
 }).asNode('ParagraphChar')
 
-export const paragraph = bold.orElse(mono).orElse(paragraphChar).oneOrMore()
+export const paragraph = header
+  .orElse(bold)
+  .orElse(mono)
+  .orElse(strikethrough)
+  .orElse(paragraphChar)
+  .oneOrMore()
   .map(nodes => { // group chars into strings
     const values = []
     let str = ''

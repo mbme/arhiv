@@ -4,14 +4,47 @@ import {
   paragraph,
   mono,
   bold,
+  strikethrough,
+  header,
 } from './index'
 
 test('inline', (assert) => {
-  assert.true(mono.parseAll('`test`').success)
-  assert.false(mono.parseAll('`te\nst`').success)
+  {
+    const result = mono.parseAll('`test`')
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.type, 'Mono')
+      assert.equal(result.result.value, 'test')
+    }
+
+    assert.false(mono.parseAll('`te\nst`').success)
+  }
 
   assert.true(bold.parseAll('*test*').success)
-  assert.false(bold.parseAll('*te\nst*').success)
+  assert.true(strikethrough.parseAll('~test~').success)
+})
+
+test('header', (assert) => {
+  {
+    const result = header.parseAll('# header')
+    assert.true(result.success)
+    if (result.success) {
+      const { type, value: [level, str] } = result.result
+      assert.equal(type, 'Header')
+      assert.equal(level, 1)
+      assert.equal(str, 'header')
+    }
+  }
+
+  {
+    const result = header.apply('test\n## header\ntest', 4)
+    assert.true(result.success)
+    if (result.success) {
+      const { value: [level, str] } = result.result
+      assert.equal(level, 2)
+      assert.equal(str, 'header')
+    }
+  }
 })
 
 test('newlines', (assert) => {

@@ -216,12 +216,22 @@ export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => new Par
 
 // MATCHERS
 
+// matches end of the string
 export const eof: Parser<string> = new Parser((msg, pos) => {
   if (pos === msg.length) {
     return success('', pos)
   }
 
   return failure('Not EOF', pos)
+})
+
+// matches beginning of the string
+export const bof: Parser<string> = new Parser((_msg, pos) => {
+  if (pos === 0) {
+    return success('', pos)
+  }
+
+  return failure('Not BOF', pos)
 })
 
 export const satisfy = (predicate: (msg: string, pos: number) => [boolean, string]): Parser<string> =>

@@ -6,6 +6,7 @@ import {
   bold,
   strikethrough,
   header,
+  link,
 } from './index'
 
 test('inline', (assert) => {
@@ -18,6 +19,14 @@ test('inline', (assert) => {
     }
 
     assert.false(mono.parseAll('`te\nst`').success)
+  }
+
+  {
+    const result = bold.apply('*test**', 0)
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.value, 'test')
+    }
   }
 
   assert.true(bold.parseAll('*test*').success)
@@ -43,6 +52,28 @@ test('header', (assert) => {
       const { value: [level, str] } = result.result
       assert.equal(level, 2)
       assert.equal(str, 'header')
+    }
+  }
+})
+
+test('link', (assert) => {
+  {
+    const result = link.parseAll('[[url][description]]')
+    assert.true(result.success)
+    if (result.success) {
+      const [url, description] = result.result.value
+      assert.equal(url, 'url')
+      assert.equal(description, 'description')
+    }
+  }
+
+  {
+    const result = link.parseAll('[[url]]')
+    assert.true(result.success)
+    if (result.success) {
+      const [url, description] = result.result.value
+      assert.equal(url, 'url')
+      assert.equal(description, undefined)
     }
   }
 })

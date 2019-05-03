@@ -48,7 +48,6 @@ based on org-mode and markdown
 `$ref = http://link | file-id`
 
 * link `[[$ref][description]]`, description is optional
-* image `[[image:$ref][description]]`, description is optional
 
 * bold `*text*`
 * mono `` `text` ``

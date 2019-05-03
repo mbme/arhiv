@@ -5,7 +5,6 @@ import {
   regex,
   eof,
   everythingUntil,
-  between,
 } from './index'
 
 test('map', (assert) => {
@@ -71,14 +70,14 @@ test('optional', (assert) => {
     const result = parser.apply('x2', 0)
     assert.true(result.success)
     if (result.success) {
-      assert.equal(result.result.length, 0)
+      assert.equal(result.result, undefined)
     }
   }
   {
     const result = parser.apply('x1', 0)
     assert.true(result.success)
     if (result.success) {
-      assert.equal(result.result.length, 1)
+      assert.equal(result.result, 'x1')
     }
   }
 })
@@ -98,7 +97,7 @@ test('everythingUntil', (assert) => {
 })
 
 test('between', (assert) => {
-  const parser = between(expect('x1'), expect('x1'))
+  const parser = expect('test').between(expect('x1'), expect('x1'))
 
   {
     const result = parser.apply('x1testx1', 0)
@@ -118,7 +117,7 @@ test('withLabel', (assert) => {
   const result = parser.apply('te', 0)
   assert.false(result.success)
   if (!result.success) {
-    assert.equal(result.label, 'WORKS')
+    assert.true(result.label.includes('WORKS'))
   }
 })
 

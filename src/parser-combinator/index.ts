@@ -101,7 +101,7 @@ class Parser<T> {
         return result
       }
 
-      return failure(result.msg, result.pos, label)
+      return failure(result.msg, result.pos, `${label}>${result.label}`)
     })
   }
 
@@ -147,49 +147,23 @@ class Parser<T> {
   }
 
   // a?
-  optional(): Parser<T[]> {
-    return new Parser((msg, pos) => {
+  optional(): Parser<T | undefined> {
+    return new Parser<T | undefined>((msg, pos) => {
       const result = this.apply(msg, pos)
       if (result.success) {
-        return success([result.result], result.nextPos)
+        return success(result.result, result.nextPos)
       }
 
-      return success([], pos)
+      return success(undefined, pos)
     })
+  }
+
+  between(left: Parser<string>, right: Parser<string>): Parser<T> {
+    return left.andThen(this).andThen(right).map(value => value[0][1])
   }
 }
 
 export const stringifyFailure = (f: IFailure) => `Failed to parse ${f.label} at pos ${f.pos}: ${f.msg}`
-
-export const between = (start: Parser<string>, stop: Parser<string>): Parser<string> => new Parser((msg, pos) => {
-  const startResult = start.apply(msg, pos)
-  if (!startResult.success) {
-    return startResult
-  }
-
-  let currentPos = startResult.nextPos
-  let result
-  do {
-    result = stop.apply(msg, currentPos)
-    if (!result.success) {
-      currentPos += 1
-    }
-
-    if (currentPos > msg.length) {
-      return failure('no match: eof', pos, 'between')
-    }
-  } while (!result.success)
-
-  if (currentPos === pos) {
-    return failure('no match', pos, 'between')
-  }
-
-  const nextPos = (result as ISuccess<string>).nextPos
-
-  const str = msg.substring(pos + startResult.result.length, currentPos)
-
-  return success(str, nextPos)
-})
 
 export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => new Parser((msg, pos) => {
   let currentPos = pos
@@ -234,10 +208,11 @@ export const bof: Parser<string> = new Parser((_msg, pos) => {
   return failure('Not BOF', pos)
 })
 
-export const satisfy = (predicate: (msg: string, pos: number) => [boolean, string]): Parser<string> =>
+type Predicate = (msg: string, pos: number) => [boolean, string]
+export const satisfy = (predicate: Predicate, label = 'unknown'): Parser<string> =>
   new Parser((msg, pos) => {
     if (pos === msg.length) {
-      return failure('No more input', pos)
+      return failure('No more input', pos, `satisfy>${label}`)
     }
 
     const result = predicate(msg, pos)
@@ -261,7 +236,7 @@ export const expect = (s: string) => satisfy((msg, pos) => {
   }
 
   return [true, s]
-})
+}, `expect(${s})`)
 
 export const regex = (re: RegExp) => satisfy((msg, pos) => {
   if (re.toString()[1] !== '^') {
@@ -274,4 +249,12 @@ export const regex = (re: RegExp) => satisfy((msg, pos) => {
   }
 
   return [true, result[0]]
-})
+}, `regex(${re})`)
+
+export const anyCharExcept = (chars: string) => satisfy((msg, pos) => {
+  if (chars.includes(msg[pos])) {
+    return [false, 'Matched forbidden char']
+  }
+
+  return [true, msg[pos]]
+}, `anyCharExcept(${chars})`)

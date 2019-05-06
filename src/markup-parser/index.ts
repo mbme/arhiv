@@ -4,6 +4,7 @@ import {
   expect,
   bof,
   anyCharExcept,
+  everythingUntil,
 } from '~/parser-combinator'
 import { trimLeft } from '~/utils'
 
@@ -49,6 +50,14 @@ export const unorderedList = bof.orElse(newline).andThen(regex(/^\* .*/))
   .map(value => trimLeft(value[1], '* '))
   .asNode('UnorderedList')
 
+// ```js
+// codeBlock()
+// ```
+export const codeBlock = bof.orElse(newline).andThen(expect('```'))
+  .andThen(everythingUntil(newline)).map(value => value[1]) // lang
+  .andThen(everythingUntil(expect('\n```')))
+  .asNode('CodeBlock')
+
 const paragraphChar = satisfy((msg, pos) => {
   if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
     return [false, 'found newlines']
@@ -59,6 +68,7 @@ const paragraphChar = satisfy((msg, pos) => {
 
 export const paragraph = header
   .orElse(unorderedList)
+  .orElse(codeBlock)
   .orElse(bold)
   .orElse(mono)
   .orElse(strikethrough)

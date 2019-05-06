@@ -8,6 +8,7 @@ import {
   header,
   link,
   unorderedList,
+  codeBlock,
 } from './index'
 
 test('inline', (assert) => {
@@ -102,5 +103,15 @@ test('paragraph', (assert) => {
       assert.equal(result.result.value[0].value, 'te\ns')
       assert.equal(result.result.value[1].value, 't')
     }
+  }
+})
+
+test('code block', (assert) => {
+  const result = codeBlock.apply('```js\ntest\n```', 0)
+  assert.true(result.success)
+  if (result.success) {
+    const [lang, code] = result.result.value
+    assert.equal(lang, 'js')
+    assert.equal(code, 'test')
   }
 })

@@ -39,9 +39,15 @@ export const header = bof.orElse(newline).andThen(regex(/^#{1,2} .*/))
   })
   .asNode('Header')
 
+// [[link][with optional description]]
 const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']')).map(value => value.join(''))
 export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
   .asNode('Link')
+
+// * unordered list
+export const unorderedList = bof.orElse(newline).andThen(regex(/^\* .*/))
+  .map(value => trimLeft(value[1], '* '))
+  .asNode('UnorderedList')
 
 const paragraphChar = satisfy((msg, pos) => {
   if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
@@ -52,6 +58,7 @@ const paragraphChar = satisfy((msg, pos) => {
 }).asNode('ParagraphChar')
 
 export const paragraph = header
+  .orElse(unorderedList)
   .orElse(bold)
   .orElse(mono)
   .orElse(strikethrough)

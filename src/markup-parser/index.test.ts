@@ -7,6 +7,7 @@ import {
   strikethrough,
   header,
   link,
+  unorderedList,
 } from './index'
 
 test('inline', (assert) => {
@@ -53,6 +54,14 @@ test('header', (assert) => {
       assert.equal(level, 2)
       assert.equal(str, 'header')
     }
+  }
+})
+
+test('unordered list', (assert) => {
+  const result = unorderedList.parseAll('* test')
+  assert.true(result.success)
+  if (result.success) {
+    assert.equal(result.result.value, 'test')
   }
 })
 

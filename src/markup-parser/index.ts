@@ -30,20 +30,22 @@ export const strikethrough = anyCharExcept('~\n').oneOrMore().between(expect('~'
   .map(value => value.join(''))
   .asNode('Strikethrough')
 
+// [[link][with optional description]]
+const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']')).map(value => value.join(''))
+export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
+  .asNode('Link')
+
+const inlineElements = bold.orElse(mono).orElse(strikethrough).orElse(link)
+
 // # Header lvl 1 or ## Header lvl 2
 export const header = bof.orElse(newline).andThen(regex(/^#{1,2} .*/))
   .map(value => {
     const headerStr = value[1]
     const level = headerStr.startsWith('## ') ? 2 : 1
 
-    return [level, trimLeft(headerStr, '# ')]
+    return [level, trimLeft(headerStr, '# ')] as [number, string]
   })
   .asNode('Header')
-
-// [[link][with optional description]]
-const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']')).map(value => value.join(''))
-export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
-  .asNode('Link')
 
 // * unordered list
 export const unorderedList = bof.orElse(newline).andThen(regex(/^\* .*/))
@@ -69,10 +71,7 @@ const paragraphChar = satisfy((msg, pos) => {
 export const paragraph = header
   .orElse(unorderedList)
   .orElse(codeBlock)
-  .orElse(bold)
-  .orElse(mono)
-  .orElse(strikethrough)
-  .orElse(link)
+  .orElse(inlineElements)
   .orElse(paragraphChar)
   .oneOrMore()
   .map(nodes => { // group chars into strings

@@ -11,9 +11,6 @@ import { groupCharsIntoStrings } from './utils'
 
 const newline = expect('\n')
 
-export const newlines = regex(/^\n{2,}/)
-  .asNode('Newlines')
-
 // FIXME handle escaped chars like \*
 
 // some *bold* text
@@ -98,4 +95,11 @@ export const paragraph = header
   .map(groupCharsIntoStrings)
   .asNode('Paragraph')
 
-export const markupParser = newlines.orElse(paragraph).zeroOrMore()
+export const newlines = regex(/^\n{2,}/)
+  .asNode('Newlines')
+
+export const markupParser =
+  newlines
+    .orElse(paragraph)
+    .zeroOrMore()
+    .asNode('Markup')

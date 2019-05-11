@@ -26,3 +26,5 @@ export const groupCharsIntoStrings = (nodes: Array<INode<any>>) => { // group ch
 
   return values
 }
+
+export const createLink = (url: string, text: string = '') => text ? `[[${url}][${text}]]` : `[[${url}]]`

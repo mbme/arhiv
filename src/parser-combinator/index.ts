@@ -1,3 +1,8 @@
+import {
+  flatten,
+  isArray,
+} from '~/utils'
+
 interface ISuccess<T> {
   success: true
 
@@ -21,6 +26,20 @@ export interface INode<T> {
   value: T
 }
 export const inode = <T>(type: string, value: T): INode<T> => ({ type, value })
+
+export const select = (type: string, node: INode<any>): Array<INode<any>> => {
+  if (node.type === type) {
+    return [node]
+  }
+
+  if (isArray(node.value)) {
+    const children = node.value as Array<INode<any>>
+
+    return flatten(children.map(value => select(type, value)))
+  }
+
+  return []
+}
 
 class Parser<T> {
   constructor(public apply: (src: string, pos: number) => ISuccess<T> | IFailure) { }

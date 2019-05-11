@@ -10,7 +10,7 @@ import {
   readText,
   listFiles,
 } from '~/utils/fs'
-import { createImageLink } from '~/v-parser'
+import { createLink } from '~/markup-parser/utils'
 import {
   randomInt,
   shuffle,
@@ -35,7 +35,7 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
         const hash = randomArrValue(Object.keys(images))
         refs.add(hash)
 
-        const link = createImageLink(path.basename(images[hash]), hash)
+        const link = createLink(hash, path.basename(images[hash]))
         sentences.push(` ${link} `)
       }
 

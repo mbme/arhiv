@@ -14,7 +14,7 @@ interface IFailure {
 }
 
 const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
-const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
+const failure = (msg: string, pos: number, label: string): IFailure => ({ success: false, msg, pos, label })
 
 export interface INode<T> {
   type: string
@@ -74,7 +74,7 @@ class Parser<T> {
         }
       }
 
-      return failure('No matches', pos)
+      return failure('No matches', pos, 'orElse')
     })
   }
 
@@ -197,7 +197,7 @@ export const eof: Parser<string> = new Parser((msg, pos) => {
     return success('', pos)
   }
 
-  return failure('Not EOF', pos)
+  return failure('Not EOF', pos, 'eof')
 })
 
 // matches beginning of the string
@@ -206,7 +206,7 @@ export const bof: Parser<string> = new Parser((_msg, pos) => {
     return success('', pos)
   }
 
-  return failure('Not BOF', pos)
+  return failure('Not BOF', pos, 'bof')
 })
 
 type Predicate = (msg: string, pos: number) => [boolean, string]
@@ -218,7 +218,7 @@ export const satisfy = (predicate: Predicate, label = 'unknown'): Parser<string>
 
     const result = predicate(msg, pos)
     if (!result[0]) {
-      return failure(result[1], pos)
+      return failure(result[1], pos, `satisfy>${label}`)
     }
 
     const nextPos = pos + result[1].length

@@ -16,10 +16,11 @@ interface IFailure {
 const success = <T>(result: T, nextPos: number): ISuccess<T> => ({ success: true, result, nextPos })
 const failure = (msg: string, pos: number, label: string = 'unknown'): IFailure => ({ success: false, msg, pos, label })
 
-interface INode<T> {
+export interface INode<T> {
   type: string
   value: T
 }
+export const inode = <T>(type: string, value: T): INode<T> => ({ type, value })
 
 class Parser<T> {
   constructor(public apply: (src: string, pos: number) => ISuccess<T> | IFailure) { }

@@ -7,6 +7,7 @@ import {
   everythingUntil,
 } from '~/parser-combinator'
 import { trimLeft } from '~/utils'
+import { groupCharsIntoStrings } from './utils'
 
 const newline = expect('\n')
 
@@ -48,8 +49,28 @@ export const header = bof.orElse(newline).andThen(regex(/^#{1,2} .*/))
   .asNode('Header')
 
 // * unordered list
-export const unorderedList = bof.orElse(newline).andThen(regex(/^\* .*/))
-  .map(value => trimLeft(value[1], '* '))
+const listChar = satisfy((msg, pos) => {
+  if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
+    return [false, 'found newlines']
+  }
+
+  if (msg[pos] === '\n' && msg[pos + 1] === '*') {
+    return [false, 'found new list item']
+  }
+
+  return [true, msg[pos]]
+}).asNode('Char')
+
+const unorderedListItem =
+  inlineElements.orElse(listChar)
+    .oneOrMore()
+    .map(groupCharsIntoStrings)
+
+export const unorderedList = bof.orElse(newline)
+  .andThen(expect('* '))
+  .andThen(unorderedListItem)
+  .map(value => value[1])
+  .oneOrMore()
   .asNode('UnorderedList')
 
 // ```js
@@ -66,7 +87,7 @@ const paragraphChar = satisfy((msg, pos) => {
   }
 
   return [true, msg[pos]]
-}).asNode('ParagraphChar')
+}).asNode('Char')
 
 export const paragraph = header
   .orElse(unorderedList)
@@ -74,29 +95,7 @@ export const paragraph = header
   .orElse(inlineElements)
   .orElse(paragraphChar)
   .oneOrMore()
-  .map(nodes => { // group chars into strings
-    const values = []
-    let str = ''
-    for (const node of nodes) {
-      if (node.type === 'ParagraphChar') {
-        str += node.value
-        continue
-      }
-
-      if (str.length) {
-        values.push({ type: 'String', value: str })
-        str = ''
-      }
-
-      values.push(node)
-    }
-
-    if (str.length) {
-      values.push({ type: 'String', value: str })
-    }
-
-    return values
-  })
+  .map(groupCharsIntoStrings)
   .asNode('Paragraph')
 
 export const markupParser = newlines.orElse(paragraph).zeroOrMore()

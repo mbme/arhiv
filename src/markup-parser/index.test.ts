@@ -59,10 +59,26 @@ test('header', (assert) => {
 })
 
 test('unordered list', (assert) => {
-  const result = unorderedList.parseAll('* test')
-  assert.true(result.success)
-  if (result.success) {
-    assert.equal(result.result.value, 'test')
+  {
+    const result = unorderedList.parseAll('* test')
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.value.length, 1)
+      assert.equal(result.result.value[0][0].value, 'test')
+    }
+  }
+
+  {
+    const result = unorderedList.parseAll('* test\ntest\n* ok *go*')
+    assert.true(result.success)
+    if (result.success) {
+      assert.equal(result.result.value.length, 2)
+      assert.equal(result.result.value[0][0].value, 'test\ntest')
+
+      assert.equal(result.result.value[1][0].value, 'ok ')
+      assert.equal(result.result.value[1][1].type, 'Bold')
+      assert.equal(result.result.value[1][1].value, 'go')
+    }
   }
 })
 

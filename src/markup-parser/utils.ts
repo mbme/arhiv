@@ -1,13 +1,14 @@
 import {
   INode,
   inode,
+  isINode,
 } from '~/parser-combinator'
 
-export const groupCharsIntoStrings = (nodes: Array<INode<any>>) => { // group chars into strings
+export const groupCharsIntoStrings = <T, K>(nodes: Array<K | INode<T> | INode<string>>) => { // group chars into strings
   const values = []
   let str = ''
   for (const node of nodes) {
-    if (node.type === 'Char') {
+    if (isINode(node) && node.type === 'Char') {
       str += node.value
       continue
     }

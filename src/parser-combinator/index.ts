@@ -26,6 +26,8 @@ export interface INode<T> {
   value: T
 }
 export const inode = <T>(type: string, value: T): INode<T> => ({ type, value })
+// tslint:disable-next-line:no-unsafe-any
+export const isINode = <T>(x: any): x is INode<T> => x && x.type
 
 export const select = (type: string, node: INode<any>): Array<INode<any>> => {
   if (node.type === type) {

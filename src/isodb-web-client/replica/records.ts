@@ -73,7 +73,7 @@ abstract class BaseRecord<T extends IRecord> {
     return this._record._rev
   }
 
-  get refs(): ReadonlyArray<string> {
+  get refs(): readonly string[] {
     return this._record._refs
   }
 
@@ -169,8 +169,6 @@ export class Track extends BaseRecord<ITrack> {
     return x instanceof Track
   }
 }
-
-export type Record = Note | Track
 
 export class Attachment {
   constructor(

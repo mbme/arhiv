@@ -1,116 +1,8 @@
-import {
-  nowS,
-} from '~/utils'
-import {
-  IRecord,
-  INote,
-  ITrack,
-  RecordType,
-  IAttachment,
-} from '~/isodb-core/types'
-import { generateRecordId } from '~/isodb-core/utils'
-import { IsodbReplica } from './replica'
-
-// Active Record
-abstract class BaseRecord<T extends IRecord> {
-  protected _record: T
-  private _attachments: Attachment[] | undefined
-
-  constructor(
-    protected _replica: IsodbReplica,
-    record?: T,
-  ) {
-    this._record = record || this._create()
-  }
-
-  protected updateRefs(_value: string) {
-    // FIXME implement parsing
-    this._record._refs = []
-    this._record._attachmentRefs = []
-    this._attachments = undefined
-  }
-
-  protected abstract _create(): T
-
-  private _getRandomId() {
-    let id: string
-
-    do {
-      id = generateRecordId()
-    } while (this._replica.getRecord(id)) // make sure generated id is free
-
-    return id
-  }
-
-  protected _createRecord() {
-    const now = nowS()
-
-    return {
-      _id: this._getRandomId(),
-      _createdTs: now,
-      _updatedTs: now,
-      _refs: [],
-      _attachmentRefs: [],
-    }
-  }
-
-  save() {
-    this._replica.saveRecord({
-      ...this._record,
-      _updatedTs: nowS(),
-    })
-  }
-
-  get id() {
-    return this._record._id
-  }
-
-  get type() {
-    return this._record._type
-  }
-
-  get rev() {
-    return this._record._rev
-  }
-
-  get refs(): readonly string[] {
-    return this._record._refs
-  }
-
-  get attachments(): Attachment[] {
-    this._attachments = this._attachments || this._record._attachmentRefs.map(id => {
-      const attachment = this._replica.getAttachment(id)
-      if (!attachment) {
-        throw new Error(`record ${this._record._id} references unknown attachment ${id}`)
-      }
-
-      return attachment
-    })
-
-    return this._attachments
-  }
-
-  get deleted() {
-    return this._record._deleted || false
-  }
-
-  set deleted(value: boolean) {
-    this._record._deleted = value
-  }
-
-  get createdTs() {
-    return this._record._createdTs
-  }
-
-  get updatedTs() {
-    return this._record._updatedTs
-  }
-}
 
 export class Note extends BaseRecord<INote> {
-  _create(): INote {
+  public static create(id: string): INote {
     return {
-      ...this._createRecord(),
+      ...BaseRecord.create(id),
       _type: RecordType.Note,
       name: '',
       data: '',
@@ -140,9 +32,9 @@ export class Note extends BaseRecord<INote> {
 }
 
 export class Track extends BaseRecord<ITrack> {
-  _create(): ITrack {
+  public static create(id: string): ITrack {
     return {
-      ...this._createRecord(),
+      ...BaseRecord.create(id),
       _type: RecordType.Track,
       title: '',
       artist: '',

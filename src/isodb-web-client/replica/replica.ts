@@ -14,6 +14,7 @@ import {
   MergeFunction,
   RecordType,
 } from '~/isodb-core/types'
+import { generateRecordId } from '~/isodb-core/utils'
 import { IReplicaStorage } from './replica-storage'
 import {
   Note,
@@ -47,6 +48,17 @@ export class IsodbReplica {
         throw new Error('unreachable')
     }
   }
+
+  private _getRandomId() {
+    let id: string
+
+    do {
+      id = generateRecordId()
+    } while (this.getRecord(id)) // make sure generated id is free
+
+    return id
+  }
+
 
   getRev() {
     return this._storage.getRev()
@@ -100,12 +112,14 @@ export class IsodbReplica {
   }
 
   createRecord(recordType: RecordType): Record {
+    const id = this._getRandomId();
+
     switch (recordType) {
       case RecordType.Note:
-        return new Note(this)
+        return this._intoRecord(Note.create(id))
 
       case RecordType.Track:
-        return new Track(this)
+        return this._intoRecord(Track.create(id))
 
       default:
         throw new Error('unreachable')

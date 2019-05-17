@@ -1,8 +1,6 @@
-import { RecordType } from '~/isodb-core/types'
 import {
   IsodbReplica,
   ReplicaInMemStorage,
-  Note,
 } from './replica'
 import { createEventsPubSub } from './events'
 import {
@@ -11,15 +9,21 @@ import {
   NetworkAgent,
   AuthAgent,
 } from './agents'
+import {
+  NotesRepository,
+  TracksRepository,
+} from './records'
 
 export class IsodbWebClient {
   events = createEventsPubSub()
-  db = new IsodbReplica(new ReplicaInMemStorage(), this.events)
-
+  private _db = new IsodbReplica(new ReplicaInMemStorage(), this.events)
   private _networkAgent = new NetworkAgent(this.events)
   private _lockAgent = new LockAgent(this.events)
   private _authAgent = new AuthAgent(this.events, this._networkAgent)
-  private _syncAgent = new SyncAgent(this.db, this._lockAgent, this._networkAgent, this._authAgent)
+  private _syncAgent = new SyncAgent(this._db, this._lockAgent, this._networkAgent, this._authAgent)
+
+  public notes = new NotesRepository(this._db)
+  public tracks = new TracksRepository(this._db)
 
   start() {
     this._networkAgent.start()
@@ -37,36 +41,11 @@ export class IsodbWebClient {
     return this._authAgent.isAuthorized()
   }
 
-  getRecord(id: string) {
-    return this.db.getRecord(id)
-  }
-
-  getNote(id: string) {
-    const record = this.db.getRecord(id)
-    if (Note.is(record)) {
-      return record
-    }
-
-    return undefined
-  }
-
-  getRecords() {
-    return this.db.getRecords()
-  }
-
-  getNotes(): Note[] {
-    return this.getRecords().filter(Note.is)
-  }
-
-  createRecord(recordType: RecordType) {
-    return this.db.createRecord(recordType)
-  }
-
   lockRecord(id: string) {
     this._lockAgent.lockRecord(id)
   }
 
-  release(id: string) {
+  releaseRecord(id: string) {
     this._lockAgent.unlockRecord(id)
   }
 

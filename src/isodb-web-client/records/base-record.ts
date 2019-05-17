@@ -3,15 +3,12 @@ import {
 } from '~/utils'
 import {
   IRecord,
-  INote,
-  ITrack,
-  RecordType,
-  IAttachment,
 } from '~/isodb-core/types'
-import { IsodbReplica } from './replica'
+import { IsodbReplica } from '../replica'
+import { Attachment } from './attachment'
 
 // Active Record
-abstract class BaseRecord<T extends IRecord> {
+export abstract class BaseRecord<T extends IRecord> {
   public static create(id: string) {
     const now = nowS()
 
@@ -24,7 +21,7 @@ abstract class BaseRecord<T extends IRecord> {
     }
   }
 
-  private _attachments: Attachment[] | undefined
+  private _attachments?: Attachment[]
 
   constructor(
     protected _replica: IsodbReplica,
@@ -69,7 +66,7 @@ abstract class BaseRecord<T extends IRecord> {
         throw new Error(`record ${this._record._id} references unknown attachment ${id}`)
       }
 
-      return attachment
+      return new Attachment(this._replica, attachment)
     })
 
     return this._attachments

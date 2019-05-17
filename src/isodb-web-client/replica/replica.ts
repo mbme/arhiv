@@ -8,19 +8,10 @@ import { createLogger } from '~/logger'
 import {
   IAttachment,
   IRecord,
-  INote,
-  ITrack,
   IChangesetResult,
   MergeFunction,
-  RecordType,
 } from '~/isodb-core/types'
-import { generateRecordId } from '~/isodb-core/utils'
 import { IReplicaStorage } from './replica-storage'
-import {
-  Note,
-  Track,
-  Attachment,
-} from './records'
 
 const logger = createLogger('isodb-replica')
 
@@ -38,28 +29,6 @@ export class IsodbReplica {
     this.events.emit('db-update', undefined)
   }
 
-  private _intoRecord = (record: IRecord): Record => {
-    switch (record._type) {
-      case RecordType.Note:
-        return new Note(this, record as INote)
-      case RecordType.Track:
-        return new Track(this, record as ITrack)
-      default:
-        throw new Error('unreachable')
-    }
-  }
-
-  private _getRandomId() {
-    let id: string
-
-    do {
-      id = generateRecordId()
-    } while (this.getRecord(id)) // make sure generated id is free
-
-    return id
-  }
-
-
   getRev() {
     return this._storage.getRev()
   }
@@ -68,28 +37,18 @@ export class IsodbReplica {
     return this._storage.getAttachmentUrl(id)
   }
 
-  getRecord(id: string): Record | undefined {
-    const record = this._storage.getLocalRecord(id) || this._storage.getRecord(id)
-    if (record) {
-      return this._intoRecord(record)
-    }
-
-    return undefined
+  getRecord(id: string): IRecord | undefined {
+    return this._storage.getLocalRecord(id) || this._storage.getRecord(id)
   }
 
-  getAttachment(id: string): Attachment | undefined {
-    const attachment = this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
-    if (attachment) {
-      return new Attachment(this, attachment)
-    }
-
-    return undefined
+  getAttachment(id: string): IAttachment | undefined {
+    return this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
   }
 
   /**
    * @returns all records, including local
    */
-  getRecords(): Record[] {
+  getRecords(): IRecord[] {
     const localRecords = this._storage.getLocalRecords()
     const localIds = new Set(localRecords.map(item => item._id))
 
@@ -98,7 +57,7 @@ export class IsodbReplica {
     return [
       ...records,
       ...localRecords,
-    ].map(this._intoRecord)
+    ]
   }
 
   saveAttachment(attachment: IAttachment, blob?: File) {
@@ -109,21 +68,6 @@ export class IsodbReplica {
     this._storage.addLocalAttachment(attachment, blob)
 
     this._notify()
-  }
-
-  createRecord(recordType: RecordType): Record {
-    const id = this._getRandomId();
-
-    switch (recordType) {
-      case RecordType.Note:
-        return this._intoRecord(Note.create(id))
-
-      case RecordType.Track:
-        return this._intoRecord(Track.create(id))
-
-      default:
-        throw new Error('unreachable')
-    }
   }
 
   saveRecord(record: IRecord) {

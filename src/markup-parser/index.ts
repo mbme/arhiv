@@ -66,7 +66,7 @@ const unorderedListItem =
 export const unorderedList = bof.orElse(newline)
   .andThen(expect('* '))
   .andThen(unorderedListItem)
-  .map(value => value[1])
+  .map(value => value[1]).asNode('ListItem')
   .oneOrMore()
   .asNode('UnorderedList')
 

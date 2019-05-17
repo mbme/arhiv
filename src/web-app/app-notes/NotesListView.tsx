@@ -36,7 +36,7 @@ export function NotesListView({ filter }: IProps) {
   const router = React.useContext(RouterContext)
   const client = useIsodb()
 
-  const items = client
+  const items = client.notes
     .getNotes()
     .filter(note => fuzzySearch(filter, note.name))
     .map(note => (

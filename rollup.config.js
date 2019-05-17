@@ -20,7 +20,6 @@ export default {
 
   plugins: [
     nodeResolve({
-      jsnext: true,
       extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx' ],
     }),
 

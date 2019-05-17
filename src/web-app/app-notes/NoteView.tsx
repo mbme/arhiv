@@ -2,7 +2,11 @@ import * as React from 'react'
 import { Link } from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
 import { Icon } from '~/web-components'
-import { Toolbar, NotFound } from '../parts'
+import {
+  Toolbar,
+  NotFound,
+  Markup,
+} from '../parts'
 
 interface IProps {
   id: string
@@ -10,7 +14,7 @@ interface IProps {
 
 export function NoteView({ id }: IProps) {
   const client = useIsodb()
-  const note = client.getNote(id)
+  const note = client.notes.getNote(id)
   if (!note) {
     return NotFound
   }
@@ -24,6 +28,12 @@ export function NoteView({ id }: IProps) {
   return (
     <>
       <Toolbar right={right} />
+
+      <h1>
+        {note.name}
+      </h1>
+
+      <Markup value={note.data} />
     </>
   )
 }

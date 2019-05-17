@@ -15,7 +15,8 @@ import {
 } from './records'
 
 export class IsodbWebClient {
-  events = createEventsPubSub()
+  public events = createEventsPubSub()
+
   private _db = new IsodbReplica(new ReplicaInMemStorage(), this.events)
   private _networkAgent = new NetworkAgent(this.events)
   private _lockAgent = new LockAgent(this.events)

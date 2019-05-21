@@ -5,8 +5,8 @@ import { Icon } from '~/web-components'
 import {
   Toolbar,
   NotFound,
-  Markup,
 } from '../parts'
+import { Note } from './Note'
 
 interface IProps {
   id: string
@@ -30,11 +30,7 @@ export function NoteView({ id }: IProps) {
     <>
       <Toolbar right={right} />
 
-      <h1>
-        {note.name}
-      </h1>
-
-      <Markup value={note.data} />
+      <Note name={note.name} data={note.data} />
     </>
   )
 }

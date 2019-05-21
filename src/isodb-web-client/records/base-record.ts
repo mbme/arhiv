@@ -21,12 +21,15 @@ export abstract class BaseRecord<T extends IRecord> {
     }
   }
 
+  protected _record: T
   private _attachments?: Attachment[]
 
   constructor(
     protected _replica: IsodbReplica,
-    protected _record: T,
-  ) { }
+    record: T,
+  ) {
+    this._record = Object.create(record) as T // to avoid accidental mutation of the original object
+  }
 
   protected updateRefs(_value: string) {
     // FIXME implement parsing
@@ -41,6 +44,10 @@ export abstract class BaseRecord<T extends IRecord> {
       _updatedTs: nowS(),
     })
     // FIXME save attachments?
+  }
+
+  isNew() {
+    return !this._replica.getRecord(this.id)
   }
 
   get id() {

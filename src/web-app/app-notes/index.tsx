@@ -3,8 +3,12 @@ import {
   Redirect,
   IParams,
 } from '~/web-router'
+
+import { NotFound } from '../parts'
+
 import { NotesListView } from './NotesListView'
 import { NoteView } from './NoteView'
+import { NoteEditorView } from './NoteEditorView'
 
 export default {
   name: 'Notes',
@@ -16,7 +20,7 @@ export default {
 
     '/note': ({ id }: IParams) => {
       if (!id) {
-        return null
+        return NotFound
       }
 
       return (
@@ -24,6 +28,6 @@ export default {
       )
     },
 
-    '/note-editor': () => <h1>Note editor view</h1>,
+    '/note-editor': ({ id }: IParams) => <NoteEditorView key={id} id={id} />,
   },
 }

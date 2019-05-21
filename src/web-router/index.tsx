@@ -6,7 +6,7 @@ export {
 
 export {
   Router,
-  RouterContext,
+  useRouter,
 } from './Router'
 
 export {

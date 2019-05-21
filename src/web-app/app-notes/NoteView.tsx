@@ -19,6 +19,7 @@ export function NoteView({ id }: IProps) {
     return NotFound
   }
 
+  // TODO show lock
   const right = (
     <Link to={{ path: '/note-editor', params: { id: note.id } }} clean>
       <Icon type="edit-2" />

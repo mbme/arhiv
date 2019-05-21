@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   Location,
-  RouterContext,
+  useRouter,
 } from './Router'
 
 interface IProps {
@@ -9,9 +9,9 @@ interface IProps {
 }
 
 export function Redirect({ to }: IProps) {
-  const routerContext = React.useContext(RouterContext)
+  const router = useRouter()
   React.useEffect(() => {
-    routerContext.push(to)
+    router.push(to)
   }, [])
 
   return null

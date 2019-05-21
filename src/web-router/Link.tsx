@@ -4,7 +4,7 @@ import {
 } from 'typestyle'
 import {
   Location,
-  RouterContext,
+  useRouter,
 } from './Router'
 
 interface IProps {
@@ -16,12 +16,12 @@ interface IProps {
 }
 
 export function Link({ to, newTab, clean, className, children }: IProps) {
-  const routerContext = React.useContext(RouterContext)
+  const router = useRouter()
 
-  const url = routerContext.getUrl(to)
+  const url = router.getUrl(to)
 
   const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    routerContext.push(to)
+    router.push(to)
     e.preventDefault()
   }
 

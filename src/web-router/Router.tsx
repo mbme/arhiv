@@ -17,6 +17,8 @@ interface IRouteActions {
 
 export const RouterContext = React.createContext<IRouteActions>({} as any)
 
+export const useRouter = () => React.useContext(RouterContext)
+
 interface IProps {
   renderView(location: ILocation): React.ReactNode
 }

@@ -6,7 +6,10 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
-import { RouterContext, Link } from '~/web-router'
+import {
+  Link,
+  useRouter,
+} from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
 import {
   theme,
@@ -33,7 +36,7 @@ interface IProps {
 }
 
 export function NotesListView({ filter }: IProps) {
-  const router = React.useContext(RouterContext)
+  const router = useRouter()
   const client = useIsodb()
 
   const items = client.notes

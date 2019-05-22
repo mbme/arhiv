@@ -1,5 +1,8 @@
 import * as React from 'react'
-import { useIsodb } from '~/isodb-web-client'
+import {
+  useIsodb,
+  Note,
+} from '~/isodb-web-client'
 import {
   NotFound,
 } from '../../parts'
@@ -12,24 +15,40 @@ interface IProps {
 export function NoteEditorView({ id }: IProps) {
   const client = useIsodb()
 
-  let note = id ? client.notes.getNote(id) : null
-  React.useEffect(() => { // create note if needed
-    if (!id) {
-      note = client.notes.createNote()
+  const [note, setNote] = React.useState<Note | undefined | null>(null)
+
+  React.useEffect(() => {
+    setNote(id ? client.notes.getNote(id) : client.notes.createNote())
+
+    return () => {
+      if (note && note.lock) {
+        note.lock.release()
+      }
     }
   }, [id])
 
-  if (!note) {
+  // acquire lock when possible
+  React.useEffect(() => {
+    if (note && !note.lock && !note.isLocked()) {
+      note.acquireLock()
+    }
+  })
+
+  if (note === null) {
+    return null
+  }
+
+  if (note === undefined) {
     return NotFound
   }
 
-  if (note.isLocked()) {
+  if (!note.lock) {
     return (
-      <h1>Note is being edited, please wait</h1>
+      <h1>Note is in a read-only state, please wait</h1>
     )
   }
 
   return (
-    <NoteEditor key={note.id} note={note} />
+    <NoteEditor note={note} />
   )
 }

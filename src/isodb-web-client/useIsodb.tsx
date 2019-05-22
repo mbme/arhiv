@@ -11,8 +11,12 @@ export function useIsodb(): IsodbWebClient {
   React.useEffect(() => {
     const onUpdate = () => setValue(Date.now())
     isodb.events.on('db-update', onUpdate)
+    isodb.events.on('isodb-lock', onUpdate)
 
-    return () => isodb.events.off('db-update', onUpdate)
+    return () => {
+      isodb.events.off('db-update', onUpdate)
+      isodb.events.off('isodb-lock', onUpdate)
+    }
   }, [])
 
   return isodb

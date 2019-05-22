@@ -8,11 +8,11 @@ import {
   Input,
   Textarea,
 } from '~/web-components'
+import { Note } from '~/isodb-web-client'
 import {
   Toolbar,
 } from '../../parts'
 import { Note as NoteRenderer } from '../Note'
-import { Note } from '~/isodb-web-client/records'
 
 interface IProps {
   note: Note,
@@ -21,16 +21,9 @@ interface IProps {
 export function NoteEditor({ note }: IProps) {
   const router = useRouter()
 
-  React.useEffect(() => {
-    note.lock()
-
-    return () => note.unlock()
-  }, [note])
-
   const [isPreview, setPreview] = React.useState(false)
   const [name, setName] = React.useState(note.name)
   const [data, setData] = React.useState(note.data)
-  const textAreaRef = React.useRef(null)
 
   const onPreview = () => setPreview(!isPreview)
   const left = (
@@ -75,7 +68,6 @@ export function NoteEditor({ note }: IProps) {
           name="data"
           value={data}
           onChange={setData}
-          ref={textAreaRef}
         />
       </div>
 

@@ -8,6 +8,10 @@ import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
 
+interface ILock {
+  release(): void
+}
+
 // Active Record
 export abstract class BaseRecord<T extends IRecord> {
   public static create(id: string) {
@@ -24,6 +28,7 @@ export abstract class BaseRecord<T extends IRecord> {
 
   protected _record: T
   private _attachments?: Attachment[]
+  public lock?: ILock
 
   constructor(
     protected _replica: IsodbReplica,
@@ -56,12 +61,14 @@ export abstract class BaseRecord<T extends IRecord> {
     return this._lockAgent.isRecordLocked(this.id)
   }
 
-  lock() {
+  acquireLock() {
     this._lockAgent.lockRecord(this.id)
-  }
-
-  unlock() {
-    this._lockAgent.unlockRecord(this.id)
+    this.lock = {
+      release: () => {
+        this._lockAgent.unlockRecord(this.id)
+        this.lock = undefined
+      },
+    }
   }
 
   get id() {

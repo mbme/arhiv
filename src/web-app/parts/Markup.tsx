@@ -1,5 +1,3 @@
-// tslint:disable:no-null-undefined-union
-
 import React from 'react'
 import { markupParser } from '~/markup-parser'
 import { INode } from '~/parser-combinator'

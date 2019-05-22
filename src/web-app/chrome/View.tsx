@@ -147,6 +147,10 @@ export class View extends React.PureComponent<IProps, IState> {
     this.setState(state => ({ isNavVisible: !state.isNavVisible }))
   }
 
+  hideNav = () => {
+    this.setState({ isNavVisible: false })
+  }
+
   renderNavbar() {
     const {
       apps,
@@ -167,7 +171,7 @@ export class View extends React.PureComponent<IProps, IState> {
     ))
 
     return (
-      <nav className={navbarStyle} onClick={this.toggleNav}>
+      <nav className={navbarStyle} onClick={this.hideNav}>
         {links}
 
         <div

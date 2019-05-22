@@ -15,6 +15,7 @@
     "arrow-parens": false,
     "object-literal-sort-keys": false,
     "no-null-keyword": false,
+    "no-null-undefined-union": false,
     "completed-docs": false,
     "member-ordering": false,
     "typedef": false,

@@ -99,6 +99,12 @@ export class LockAgent {
     if (this.state.state === 'records-locked' && this.state.records.has(id)) {
       this.state.records.delete(id)
 
+      if (!this.state.records.size) {
+        this.state = {
+          state: 'free',
+        }
+      }
+
       this._notify()
 
       return

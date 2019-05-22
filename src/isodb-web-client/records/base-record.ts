@@ -5,6 +5,7 @@ import {
   IRecord,
 } from '~/isodb-core/types'
 import { IsodbReplica } from '../replica'
+import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
 
 // Active Record
@@ -26,6 +27,7 @@ export abstract class BaseRecord<T extends IRecord> {
 
   constructor(
     protected _replica: IsodbReplica,
+    protected _lockAgent: LockAgent,
     record: T,
   ) {
     this._record = Object.create(record) as T // to avoid accidental mutation of the original object
@@ -48,6 +50,18 @@ export abstract class BaseRecord<T extends IRecord> {
 
   isNew() {
     return !this._replica.getRecord(this.id)
+  }
+
+  isLocked() {
+    return this._lockAgent.isRecordLocked(this.id)
+  }
+
+  lock() {
+    this._lockAgent.lockRecord(this.id)
+  }
+
+  unlock() {
+    this._lockAgent.unlockRecord(this.id)
   }
 
   get id() {

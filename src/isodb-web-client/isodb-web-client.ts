@@ -23,8 +23,8 @@ export class IsodbWebClient {
   private _authAgent = new AuthAgent(this.events, this._networkAgent)
   private _syncAgent = new SyncAgent(this._db, this._lockAgent, this._networkAgent, this._authAgent)
 
-  public notes = new NotesRepository(this._db)
-  public tracks = new TracksRepository(this._db)
+  public notes = new NotesRepository(this._db, this._lockAgent)
+  public tracks = new TracksRepository(this._db, this._lockAgent)
 
   start() {
     this._networkAgent.start()
@@ -40,14 +40,6 @@ export class IsodbWebClient {
 
   isAuthorized() {
     return this._authAgent.isAuthorized()
-  }
-
-  lockRecord(id: string) {
-    this._lockAgent.lockRecord(id)
-  }
-
-  releaseRecord(id: string) {
-    this._lockAgent.unlockRecord(id)
   }
 
   async authorize(password: string) {

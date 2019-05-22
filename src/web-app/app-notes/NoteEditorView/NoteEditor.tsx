@@ -21,6 +21,12 @@ interface IProps {
 export function NoteEditor({ note }: IProps) {
   const router = useRouter()
 
+  React.useEffect(() => {
+    note.lock()
+
+    return () => note.unlock()
+  }, [note])
+
   const [isPreview, setPreview] = React.useState(false)
   const [name, setName] = React.useState(note.name)
   const [data, setData] = React.useState(note.data)

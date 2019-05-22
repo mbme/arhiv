@@ -22,9 +22,14 @@ export function NoteEditorView({ id }: IProps) {
   if (!note) {
     return NotFound
   }
-  // TODO lock and unlock on unmount
+
+  if (note.isLocked()) {
+    return (
+      <h1>Note is being edited, please wait</h1>
+    )
+  }
 
   return (
-    <NoteEditor note={note} />
+    <NoteEditor key={note.id} note={note} />
   )
 }

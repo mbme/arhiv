@@ -23,7 +23,7 @@ export class LockAgent {
 
   constructor(public events: WebClientEvents) { }
 
-  _notify() {
+  private _notify() {
     const dbLocked = this.state.state === 'db-locked'
     const recordsLocked = this.state.state === 'records-locked' ? this.state.records : new Set<string>()
     this.events.emit('isodb-lock', [dbLocked, recordsLocked])
@@ -42,7 +42,10 @@ export class LockAgent {
     this.state = {
       state: 'db-locked',
     }
+
+    this._notify()
   }
+
   unlockDB() {
     if (this.state.state !== 'db-locked') {
       throw new Error("Can't unlock db: not locked")
@@ -51,6 +54,20 @@ export class LockAgent {
     this.state = {
       state: 'free',
     }
+
+    this._notify()
+  }
+
+  isRecordLocked(id: string) {
+    if (this.state.state === 'db-locked') {
+      return true
+    }
+
+    if (this.state.state === 'records-locked' && this.state.records.has(id)) {
+      return true
+    }
+
+    return false
   }
 
   lockRecord(id: string) {
@@ -64,6 +81,8 @@ export class LockAgent {
         records: new Set([id]),
       }
 
+      this._notify()
+
       return
     }
 
@@ -72,11 +91,17 @@ export class LockAgent {
     }
 
     this.state.records.add(id)
+
+    this._notify()
   }
 
   unlockRecord(id: string) {
     if (this.state.state === 'records-locked' && this.state.records.has(id)) {
       this.state.records.delete(id)
+
+      this._notify()
+
+      return
     }
 
     throw new Error(`Can't unlock record ${id}: not locked`)

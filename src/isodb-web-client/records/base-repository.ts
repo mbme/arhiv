@@ -1,8 +1,12 @@
 import { generateRecordId } from '~/isodb-core/utils'
 import { IsodbReplica } from '../replica'
+import { LockAgent } from '../agents'
 
 export abstract class BaseRepository {
-  constructor(protected _replica: IsodbReplica) { }
+  constructor(
+    protected _replica: IsodbReplica,
+    protected _lockAgent: LockAgent,
+  ) { }
 
   protected getRandomId() {
     let id: string

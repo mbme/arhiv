@@ -18,7 +18,7 @@ export class AuthAgent {
     return this.state === 'authorized'
   }
 
-  _notify() {
+  private _notify() {
     this.events.emit('authorized', this.isAuthorized())
     log.info(`-> ${this.state}`)
   }

@@ -18,11 +18,12 @@ export function NoteEditorView({ id }: IProps) {
   const [note, setNote] = React.useState<Note | undefined | null>(null)
 
   React.useEffect(() => {
-    setNote(id ? client.notes.getNote(id) : client.notes.createNote())
+    const n = id ? client.notes.getNote(id) : client.notes.createNote()
+    setNote(n)
 
     return () => {
-      if (note && note.lock) {
-        note.lock.release()
+      if (n && n.lock) {
+        n.lock.release()
       }
     }
   }, [id])

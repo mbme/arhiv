@@ -7,20 +7,9 @@ import { noop, Omit } from '~/utils'
 import theme from './theme'
 import { Icon } from './Icon'
 
-const containerStyles = (isLight?: boolean) => style(
-  {
-    position: 'relative',
-  },
-  isLight && {
-    backgroundColor: 'inherit',
-    borderBottom: theme.border,
-  },
-  !isLight && {
-    backgroundColor: theme.color.bg,
-    boxShadow: theme.boxShadow,
-    border: theme.border,
-  },
-)
+const containerStyles = style({
+  position: 'relative',
+})
 
 const inputStyles = (isLight?: boolean, withClear?: boolean) => style(
   {
@@ -35,6 +24,13 @@ const inputStyles = (isLight?: boolean, withClear?: boolean) => style(
   isLight && {
     paddingTop: theme.spacing.fine,
     paddingBottom: theme.spacing.fine,
+    backgroundColor: 'inherit',
+    borderBottom: theme.border,
+  },
+  !isLight && {
+    backgroundColor: theme.color.bg,
+    boxShadow: theme.boxShadow,
+    border: theme.border,
   },
   withClear && {
     paddingRight: theme.spacing.medium,
@@ -101,12 +97,12 @@ export class Input extends React.PureComponent<IProps> {
     } = this.props
 
     return (
-      <div className={classes(containerStyles(light), className)}>
+      <div className={containerStyles}>
         <input
           ref={this.ref}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={classes(inputStyles(light, !!onClear))}
+          className={classes(inputStyles(light, !!onClear), className)}
           {...otherProps}
         />
 

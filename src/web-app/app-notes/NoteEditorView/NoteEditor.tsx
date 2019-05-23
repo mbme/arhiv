@@ -6,7 +6,6 @@ import {
   Button,
   Input,
   Textarea,
-  section,
 } from '~/web-components'
 import { Toolbar } from '../../parts'
 import {
@@ -59,7 +58,7 @@ export function NoteEditor({ note }: IProps) {
     <>
       <Toolbar left={left} right={right} />
 
-      <div className={section} hidden={isPreview}>
+      <div hidden={isPreview}>
         <Input
           className={titleStyle}
           name="name"
@@ -69,7 +68,7 @@ export function NoteEditor({ note }: IProps) {
         />
       </div>
 
-      <div className={section} hidden={isPreview}>
+      <div hidden={isPreview}>
         <Textarea
           name="data"
           value={data}

@@ -1,8 +1,0 @@
-.Icon {
-  display: inline-block;
-  cursor: pointer;
-  transition: color 0.17s ease;
-}
-.Icon:hover {
-  color: var(--color-primary);
-}

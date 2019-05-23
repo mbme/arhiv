@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { style } from 'typestyle'
 import {
   useRouter,
 } from '~/web-router'
@@ -7,6 +8,8 @@ import {
   Button,
   Input,
   Textarea,
+  section,
+  theme,
 } from '~/web-components'
 import { Note } from '~/isodb-web-client'
 import {
@@ -17,6 +20,15 @@ import { Note as NoteRenderer } from '../Note'
 interface IProps {
   note: Note,
 }
+
+const titleStyle = style({
+  textAlign: 'center',
+  letterSpacing: '1.4px',
+  fontWeight: 'bold',
+  fontSize: theme.fontSize.large,
+
+  marginBottom: theme.spacing.medium,
+})
 
 export function NoteEditor({ note }: IProps) {
   const router = useRouter()
@@ -59,11 +71,17 @@ export function NoteEditor({ note }: IProps) {
     <>
       <Toolbar left={left} right={right} />
 
-      <div className="g-section" hidden={isPreview}>
-        <Input className="Note-title" name="name" value={name} onChange={setName} autoFocus />
+      <div className={section} hidden={isPreview}>
+        <Input
+          className={titleStyle}
+          name="name"
+          value={name}
+          onChange={setName}
+          autoFocus
+        />
       </div>
 
-      <div className="g-section" hidden={isPreview}>
+      <div className={section} hidden={isPreview}>
         <Textarea
           name="data"
           value={data}

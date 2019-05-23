@@ -9,39 +9,23 @@ import { AuthAgent } from './auth-agent'
 
 const log = createLogger('isodb-web-client:sync-agent')
 
-interface ISyncState {
-  state: 'sync'
-}
-
-interface IMergeState {
-  state: 'merge'
-}
-
-interface ISyncedState {
-  state: 'synced'
-}
-
-interface INotSyncedState {
-  state: 'not-synced'
-}
-
-type AgentState = ISyncState | IMergeState | ISyncedState | INotSyncedState
+type AgentState = 'sync' | 'merge' | 'synced' | 'not-synced'
 
 // TODO logs
 // TODO circuit breaker
 export class SyncAgent {
-  _syncIntervalId: number | undefined
+  private _syncIntervalId: number | undefined
 
-  _state: AgentState = { state: 'not-synced' }
+  _state: AgentState = 'not-synced' // FIXME use this
 
   constructor(
-    public replica: IsodbReplica,
-    public lockAgent: LockAgent,
-    public networkAgent: NetworkAgent,
-    public authAgent: AuthAgent,
+    private replica: IsodbReplica,
+    private lockAgent: LockAgent,
+    private networkAgent: NetworkAgent,
+    private authAgent: AuthAgent,
   ) { }
 
-  _merge = async (conflicts: IMergeConflicts) => {
+  private _merge = async (conflicts: IMergeConflicts) => {
     // tslint:disable-next-line:max-line-length
     log.warn(`${conflicts.records.length} record merge conflicts, ${conflicts.attachments.length} attachment merge conflicts`)
 
@@ -55,7 +39,7 @@ export class SyncAgent {
     }
   }
 
-  _sync = async () => {
+  private _sync = async () => {
     if (!this.lockAgent.isFree()) {
       log.debug('Skipping sync: lock is not free')
 
@@ -75,6 +59,8 @@ export class SyncAgent {
     }
 
     try {
+      this._state = 'sync'
+
       this.lockAgent.lockDB()
 
       let tries = 0
@@ -92,6 +78,8 @@ export class SyncAgent {
         if (result.success) {
           log.debug('sync: ok')
 
+          this._state = 'synced'
+
           return true
         }
 
@@ -99,11 +87,15 @@ export class SyncAgent {
         if (tries > 2) {
           log.error('Failed to sync: exceeded max attemts')
 
+          this._state = 'not-synced'
+
           return false
         }
       }
     } catch (e) {
       log.error('Failed to sync', e)
+
+      this._state = 'not-synced'
 
       return false
     } finally {
@@ -111,7 +103,7 @@ export class SyncAgent {
     }
   }
 
-  _scheduleSync() {
+  private _scheduleSync() {
     // tslint:disable-next-line:no-floating-promises
     this._sync()
 
@@ -124,15 +116,19 @@ export class SyncAgent {
     clearInterval(this._syncIntervalId)
   }
 
-  syncNow() {
+  syncNow = () => {
     this._scheduleSync()
   }
 
   start() {
     this._scheduleSync()
+
+    this.authAgent.events.on('authorized', this.syncNow)
   }
 
   stop() {
     this._cancelSync()
+
+    this.authAgent.events.off('authorized', this.syncNow)
   }
 }

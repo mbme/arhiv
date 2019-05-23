@@ -1,34 +1,22 @@
 import * as React from 'react'
-import { style } from 'typestyle'
-import {
-  useRouter,
-} from '~/web-router'
+import { useRouter } from '~/web-router'
+import { Note } from '~/isodb-web-client'
 import {
   Icon,
   Button,
   Input,
   Textarea,
   section,
-  theme,
 } from '~/web-components'
-import { Note } from '~/isodb-web-client'
+import { Toolbar } from '../../parts'
 import {
-  Toolbar,
-} from '../../parts'
-import { Note as NoteRenderer } from '../Note'
+  Note as NoteRenderer,
+  titleStyle,
+} from '../Note'
 
 interface IProps {
   note: Note,
 }
-
-const titleStyle = style({
-  textAlign: 'center',
-  letterSpacing: '1.4px',
-  fontWeight: 'bold',
-  fontSize: theme.fontSize.large,
-
-  marginBottom: theme.spacing.medium,
-})
 
 export function NoteEditor({ note }: IProps) {
   const router = useRouter()

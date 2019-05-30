@@ -67,7 +67,7 @@ export function spawn(command: string, ...args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const process = childProcess.spawn(command, args)
     let result = ''
-    process.stdout!.on('data', (data) => {
+    process.stdout.on('data', (data) => {
       result += data
     })
     process.on('close', (code) => {

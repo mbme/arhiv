@@ -27,9 +27,7 @@ export class AuthManager extends React.PureComponent<IProps, IState> {
     this.props.client.events.off('authorized', this.onAuthorized)
   }
 
-  tryPassword = (password: string) => {
-    this.props.client.authorize(password)
-  }
+  tryPassword = (password: string) => this.props.client.authorize(password)
 
   render() {
     const {

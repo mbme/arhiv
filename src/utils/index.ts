@@ -22,7 +22,7 @@ export function createArray<T>(size: number, val: ((index: number) => T) | T): T
   return isFunction(val) ? arr.fill(0).map((_, i) => val(i)) : arr.fill(val)
 }
 
-export function uniq<T>(arr: T[], getKey: (item: T) => string = (val) => val.toString()) {
+export function uniq<T>(arr: T[], getKey: (item: T) => string) {
   const result: T[] = []
   const keys: string[] = []
 

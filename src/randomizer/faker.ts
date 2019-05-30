@@ -18,10 +18,13 @@ import {
 } from './index'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
+// tslint:disable-next-line:interface-over-type-literal
+type Images = { [hash: string]: string }
+
 async function getFakeNote(generator: ITextGenerator, images: Images): Promise<INote> {
   const name = generator.sentence(1, 8)
 
-  const refs = new Set()
+  const refs = new Set<string>()
 
   const data = createArray(
     randomInt(1, 7), // paragraphs
@@ -57,8 +60,6 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
     data,
   }
 }
-
-interface Images { [hash: string]: string }
 
 async function listImages(basePath: string): Promise<Images> {
   const files = await listFiles(basePath)

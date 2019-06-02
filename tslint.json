@@ -17,6 +17,7 @@
     "object-literal-sort-keys": false,
     "no-null-keyword": false,
     "no-null-undefined-union": false,
+    "no-use-before-declare": false,
     "completed-docs": false,
     "member-ordering": false,
     "typedef": false,

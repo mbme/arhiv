@@ -73,7 +73,7 @@ export class IsodbReplica {
   saveRecord(record: IRecord) {
     this._storage.addLocalRecord(record)
 
-    this._compact()
+    this.compact()
 
     this._notify()
   }
@@ -171,7 +171,7 @@ export class IsodbReplica {
   /**
    * Remove unused local attachments
    */
-  private _compact() {
+  compact() {
     const idsInUse = new Set()
     for (const record of this._storage.getRecords()) {
       for (const id of record._attachmentRefs) {

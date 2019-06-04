@@ -1,4 +1,4 @@
-import { generateRecordId } from '~/isodb-core/utils'
+import { generateRandomId } from '~/isodb-core/utils'
 import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
 
@@ -12,7 +12,7 @@ export abstract class BaseRepository {
     let id: string
 
     do {
-      id = generateRecordId()
+      id = generateRandomId()
     } while (this._replica.getRecord(id)) // make sure generated id is free
 
     return id

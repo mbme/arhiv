@@ -1,6 +1,6 @@
 import path from 'path'
 import { INote, IAttachment, RecordType } from '~/isodb-core/types'
-import { generateRecordId } from '~/isodb-core/utils'
+import { generateRandomId } from '~/isodb-core/utils'
 import {
   createArray,
   nowS,
@@ -49,7 +49,7 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
   const now = nowS()
 
   return {
-    _id: generateRecordId(),
+    _id: generateRandomId(),
     _refs: [],
     _attachmentRefs: Array.from(refs),
     _rev: 0,

@@ -6,12 +6,14 @@ import {
   Button,
   Input,
   Textarea,
+  AttachFileButton,
 } from '~/web-components'
 import { Toolbar } from '../../parts'
 import {
   Note as NoteRenderer,
   titleStyle,
 } from '../Note'
+import { createLink } from '~/markup-parser/utils'
 
 interface IProps {
   note: Note,
@@ -24,13 +26,24 @@ export function NoteEditor({ note }: IProps) {
   const [name, setName] = React.useState(note.name)
   const [data, setData] = React.useState(note.data)
 
+  const textAreaRef = React.useRef<Textarea>(null)
+
+  const attachFiles = (files: File[]) => {
+    const links = files.map(file => createLink(note.createAttachment(file), file.name))
+    textAreaRef.current!.insert(links.join(' '))
+    textAreaRef.current!.focus()
+  }
   const onPreview = () => setPreview(!isPreview)
   const left = (
-    <Icon
-      title="Preview"
-      type={isPreview ? 'eye-off' : 'eye'}
-      onClick={onPreview}
-    />
+    <>
+      <AttachFileButton onSelected={attachFiles} />
+
+      <Icon
+        title="Preview"
+        type={isPreview ? 'eye-off' : 'eye'}
+        onClick={onPreview}
+      />
+    </>
   )
 
   const isValid = name && name !== note.name || data !== note.data
@@ -73,6 +86,7 @@ export function NoteEditor({ note }: IProps) {
           name="data"
           value={data}
           onChange={setData}
+          ref={textAreaRef}
         />
       </div>
 

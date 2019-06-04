@@ -7,6 +7,7 @@ import {
 import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
+import { generateRandomId } from '~/isodb-core/utils'
 
 interface ILock {
   release(): void
@@ -28,6 +29,7 @@ export abstract class BaseRecord<T extends IRecord> {
 
   protected _record: T
   private _attachments?: Attachment[]
+  private _hasNewAttachments = false
   public lock?: ILock
 
   constructor(
@@ -45,12 +47,31 @@ export abstract class BaseRecord<T extends IRecord> {
     this._attachments = undefined
   }
 
+  private _getRandomAttachmentId() {
+    let id: string
+
+    do {
+      id = generateRandomId()
+    } while (this._replica.getAttachment(id)) // make sure generated id is free
+
+    return id
+  }
+
+  createAttachment(file: File) {
+    const id = this._getRandomAttachmentId()
+
+    this._replica.saveAttachment({ _id: id }, file)
+    this._hasNewAttachments = true
+
+    return id
+  }
+
   save() {
     this._replica.saveRecord({
       ...this._record,
       _updatedTs: nowS(),
     })
-    // FIXME save attachments?
+    this._hasNewAttachments = false
   }
 
   isNew() {
@@ -67,6 +88,11 @@ export abstract class BaseRecord<T extends IRecord> {
       release: () => {
         this._lockAgent.unlockRecord(this.id)
         this.lock = undefined
+
+        // remove unused new attachments if record wasn't saved
+        if (this._hasNewAttachments) {
+          this._replica.compact()
+        }
       },
     }
   }

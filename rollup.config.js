@@ -46,6 +46,7 @@ export default {
           'useEffect',
           'useContext',
           'useState',
+          'useRef',
           'useMemo',
           'memo',
           'render',

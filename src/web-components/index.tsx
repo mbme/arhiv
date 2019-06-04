@@ -8,6 +8,7 @@ import { Input, examples as inputExamples } from './Input'
 import { FilterInput } from './FilterInput'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
+import { AttachFileButton } from './AttachFileButton'
 import theme, { examples as themeExamples } from './theme'
 import {
   Overlay,
@@ -35,6 +36,7 @@ export {
   ProgressLocker,
   Modal,
   ConfirmationDialog,
+  AttachFileButton,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (

@@ -37,7 +37,7 @@ export abstract class BaseRecord<T extends IRecord> {
     protected _lockAgent: LockAgent,
     record: T,
   ) {
-    this._record = Object.create(record) as T // to avoid accidental mutation of the original object
+    this._record = { ...record }
   }
 
   protected updateRefs(_value: string) {

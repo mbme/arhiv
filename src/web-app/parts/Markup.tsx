@@ -1,4 +1,5 @@
 import React from 'react'
+import { style } from 'typestyle'
 import { markupParser } from '~/markup-parser'
 import { INode } from '~/parser-combinator'
 
@@ -6,12 +7,17 @@ interface IProps {
   value: string
 }
 
+const articleStyle = style({
+  hyphens: 'auto',
+  textAlign: 'justify',
+})
+
 function renderNode(node: INode<any>): React.ReactNode {
   switch (node.type) {
     case 'Markup': {
       const children = (node.value as Array<INode<any>>).map(renderNode)
 
-      return React.createElement('article', {}, ...children)
+      return React.createElement('article', { className: articleStyle }, ...children)
     }
 
     case 'Paragraph': {

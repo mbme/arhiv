@@ -8,12 +8,13 @@ import {
   Textarea,
   AttachFileButton,
 } from '~/web-components'
+import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
 import {
   Note as NoteRenderer,
   titleStyle,
 } from '../Note'
-import { createLink } from '~/markup-parser/utils'
+import { DeleteNoteButton } from './DeleteNoteButton'
 
 interface IProps {
   note: Note,
@@ -28,6 +29,11 @@ export function NoteEditor({ note }: IProps) {
 
   const textAreaRef = React.useRef<Textarea>(null)
 
+  const deleteNote = () => {
+    note.deleted = true
+    note.save()
+    router.pushTo('/notes')
+  }
   const attachFiles = (files: File[]) => {
     const links = files.map(file => createLink(note.createAttachment(file), file.name))
     textAreaRef.current!.insert(links.join(' '))
@@ -36,6 +42,7 @@ export function NoteEditor({ note }: IProps) {
   const onPreview = () => setPreview(!isPreview)
   const left = (
     <>
+      {note.isNew() || <DeleteNoteButton onConfirmed={deleteNote} />}
       <AttachFileButton onSelected={attachFiles} />
 
       <Icon

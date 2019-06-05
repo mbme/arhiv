@@ -54,10 +54,11 @@ export class IsodbReplica {
 
     const records = this._storage.getRecords().filter(item => !localIds.has(item._id))
 
+    // TODO sort
     return [
       ...records,
       ...localRecords,
-    ]
+    ].filter(record => !record._deleted) // FIXME what to do with deleted records?
   }
 
   saveAttachment(attachment: IAttachment, blob?: File) {

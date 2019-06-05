@@ -23,7 +23,7 @@ export class ReplicaInMemStorage implements IReplicaStorage {
   }
 
   getLocalRecords() {
-    return Object.values(this._localRecords)
+    return Array.from(this._localRecords.values())
   }
 
   getAttachments() {
@@ -31,7 +31,7 @@ export class ReplicaInMemStorage implements IReplicaStorage {
   }
 
   getLocalAttachments() {
-    return Object.values(this._localAttachments)
+    return Array.from(this._localAttachments.values())
   }
 
   getRecord(id: string) {

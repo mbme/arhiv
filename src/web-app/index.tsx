@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { cssRaw } from 'typestyle'
 
+import { setLogLevel } from '~/logger'
 import {
   IsodbWebClient,
   IsodbContext,
@@ -22,6 +23,8 @@ import {
 } from './chrome'
 import AppNotes from './app-notes'
 import AppLibrary from './app-library'
+
+setLogLevel('WARN')
 
 cssRaw(`
   ${globalStyles}

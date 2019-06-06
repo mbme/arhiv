@@ -1,10 +1,11 @@
 import path from 'path'
-import { createLogger } from '~/logger'
+import { createLogger, setLogLevel } from '~/logger'
 import { getFakeNotes } from '~/randomizer/faker'
 import PrimaryDB from './primary'
 import PrimaryInMemStorage from './primary-in-mem-storage'
 import createServer from './server'
 
+setLogLevel('WARN')
 const log = createLogger('isodb-server')
 
 const isProduction = process.env.NODE_ENV === 'production'

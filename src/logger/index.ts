@@ -1,27 +1,22 @@
 /* tslint:disable:no-console */
 import { formatDate } from '~/utils'
 
-const LEVEL = {
-  DEBUG: 'DEBUG',
-  INFO: 'INFO',
-  WARN: 'WARN',
-  ERROR: 'ERROR',
+const LEVELS = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
 }
 
-const PRIORITY = {
-  [LEVEL.DEBUG]: 0,
-  [LEVEL.INFO]: 1,
-  [LEVEL.WARN]: 2,
-  [LEVEL.ERROR]: 3,
-}
+type LogLevel = keyof typeof LEVELS
 
-const minLogLevel = LEVEL.INFO // FIXME allow to change log level
+let minLogLevel: LogLevel = 'INFO'
 
 class Logger {
   constructor(public namespace: string) { }
 
-  _log(level: string, msg: string, ...params: any[]) {
-    if (PRIORITY[level] < PRIORITY[minLogLevel]) return
+  private _log(level: LogLevel, msg: string, ...params: any[]) {
+    if (LEVELS[level] < LEVELS[minLogLevel]) return
 
     const args = [
       `${formatDate(new Date())} ${this.namespace ? `[${this.namespace}]` : ''} ${level.padEnd(5)} ${msg}`,
@@ -29,16 +24,16 @@ class Logger {
     ]
 
     switch (level) {
-      case LEVEL.DEBUG:
+      case 'DEBUG':
         console.debug(...args)
         break
-      case LEVEL.INFO:
+      case 'INFO':
         console.info(...args)
         break
-      case LEVEL.WARN:
+      case 'WARN':
         console.warn(...args)
         break
-      case LEVEL.ERROR:
+      case 'ERROR':
         console.error(...args)
         break
       default:
@@ -46,10 +41,10 @@ class Logger {
     }
   }
 
-  debug = this._log.bind(this, LEVEL.DEBUG)
-  info = this._log.bind(this, LEVEL.INFO)
-  warn = this._log.bind(this, LEVEL.WARN)
-  error = this._log.bind(this, LEVEL.ERROR)
+  debug = this._log.bind(this, 'DEBUG')
+  info = this._log.bind(this, 'INFO')
+  warn = this._log.bind(this, 'WARN')
+  error = this._log.bind(this, 'ERROR')
 
   simple(...params: any[]) {
     console.log(...params)
@@ -58,6 +53,10 @@ class Logger {
 
 export function createLogger(namespace: string) {
   return new Logger(namespace)
+}
+
+export function setLogLevel(level: LogLevel) {
+  minLogLevel = level
 }
 
 export default new Logger('')

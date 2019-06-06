@@ -34,7 +34,6 @@ export default {
 
     replace({
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
-      'process.env.LOG': JSON.stringify(process.env.LOG),
       '__BROWSER__': true,
     }),
 

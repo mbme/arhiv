@@ -15,8 +15,7 @@ const PRIORITY = {
   [LEVEL.ERROR]: 3,
 }
 
-const minLogLevel = process.env.LOG || LEVEL.INFO
-if (!Object.values(LEVEL).includes(minLogLevel)) throw new Error(`Illegal log level ${minLogLevel}`)
+const minLogLevel = LEVEL.INFO // FIXME allow to change log level
 
 class Logger {
   constructor(public namespace: string) { }

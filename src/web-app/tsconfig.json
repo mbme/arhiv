@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.json",
   "include": [
-    "./globals.d.ts",
     "./index.tsx"
   ],
   "compilerOptions": {

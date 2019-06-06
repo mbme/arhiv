@@ -17,6 +17,9 @@ require('ts-node').register({
   },
 });
 
+
+global.__BROWSER__ = false
+
 const path = require('path');
 
 const { default: run } = require(path.join(process.cwd(), process.argv[2]));

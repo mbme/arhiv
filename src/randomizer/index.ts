@@ -1,4 +1,6 @@
-const getRandomBytes: (bytes: number) => Uint8Array = __SERVER__
+import { isNode } from '~/utils'
+
+const getRandomBytes: (bytes: number) => Uint8Array = isNode()
   // tslint:disable-next-line:no-var-requires no-unsafe-any no-require-imports
   ? require('crypto').randomBytes
   : (bytes: number) => window.crypto.getRandomValues(new Uint8Array(bytes))

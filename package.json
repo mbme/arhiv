@@ -7,7 +7,9 @@
   "scripts": {
     "build": "NODE_ENV=production rollup -c",
     "build1": "NODE_ENV=development rollup -c",
-    "build2": "NODE_ENV=development tsc -w --module amd --diagnostics --out dist/out.js",
+    "build2": "NODE_ENV=development tsc -p src/web-app/tsconfig.json --noEmitOnError --module amd --out dist/out.js",
+    "build2-debug": "yarn build2 --diagnostics --listEmittedFiles --listFiles",
+    "build2-debug-extened": "yarn build2 --traceResolution",
     "start-server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
     "start-server-with-data": "yarn start-server --gen-data",
     "start-client": "rollup -c --watch",

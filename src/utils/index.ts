@@ -139,3 +139,6 @@ export function classNames(...args: any[]) {
     return acc
   }, []).join(' ')
 }
+
+// tslint:disable-next-line:strict-type-predicates
+export const isNode = () => (typeof process !== 'undefined') && (process.release.name === 'node')

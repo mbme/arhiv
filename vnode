@@ -1,22 +1,23 @@
 #!/usr/bin/env -S node
 
+// make nodejs support TypeScript's type aliases
 // https://github.com/Microsoft/TypeScript/issues/15479#issuecomment-468122916
 require('tsconfig-paths').register({
   baseUrl: './',
   paths: require('./tsconfig.json').compilerOptions.paths
 });
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 require('ts-node').register({
-  files: true,
+  transpileOnly: isProduction,
   compilerOptions: {
     module: 'commonjs',
+    types: ['node'],
   },
 });
 
 const path = require('path');
-
-global.__DEVELOPMENT__ = process.env.NODE_ENV !== 'production';
-global.__SERVER__ = true;
 
 const { default: run } = require(path.join(process.cwd(), process.argv[2]));
 

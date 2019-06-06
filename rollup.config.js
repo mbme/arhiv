@@ -33,7 +33,6 @@ export default {
     replace({
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
       'process.env.LOG': JSON.stringify(process.env.LOG),
-      __SERVER__: JSON.stringify(false),
     }),
 
     commonjs({

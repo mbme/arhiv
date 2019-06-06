@@ -6,6 +6,8 @@
   "description": "like v, but typed!",
   "scripts": {
     "build": "NODE_ENV=production rollup -c",
+    "build1": "NODE_ENV=development rollup -c",
+    "build2": "NODE_ENV=development tsc -w --module amd --diagnostics --out dist/out.js",
     "start-server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
     "start-server-with-data": "yarn start-server --gen-data",
     "start-client": "rollup -c --watch",

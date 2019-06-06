@@ -1,5 +1,6 @@
 #!/usr/bin/env -S node
 
+// https://github.com/Microsoft/TypeScript/issues/15479#issuecomment-468122916
 require('tsconfig-paths').register({
   baseUrl: './',
   paths: require('./tsconfig.json').compilerOptions.paths

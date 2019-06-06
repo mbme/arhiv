@@ -11,8 +11,10 @@ export default {
   output: {
     file: 'dist/bundle.js',
     format: 'iife',
-    sourcemap: true,
+    sourcemap: isProduction,
   },
+
+  treeshake: isProduction,
 
   moduleContext: {  // HACK: suppress useless rollup warning for 3rd party library
     'node_modules/free-style/dist.es2015/free-style.js': 'window',
@@ -24,7 +26,8 @@ export default {
     }),
 
     typescript({
-      cacheRoot: './node_modules/.cache/rts2_cache',
+      /* cacheRoot: './node_modules/.cache/rts2_cache', */
+      cacheRoot: require('os').tmpdir() + '/rts2_cache',
     }),
 
     replace({
@@ -61,5 +64,6 @@ export default {
 
   watch: {
     clearScreen: false,
+    exclude: 'node_modules/**',
   },
 }

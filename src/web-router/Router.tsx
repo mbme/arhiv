@@ -3,7 +3,7 @@ import { OptionalProps } from '~/utils'
 import {
   WebRouter,
   ILocation,
-} from './router'
+} from './web-router'
 
 export type Location = OptionalProps<ILocation, 'params'>
 

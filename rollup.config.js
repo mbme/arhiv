@@ -1,17 +1,28 @@
+import path from 'path';
 import nodeResolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
-import typescript from 'rollup-plugin-typescript2'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
+const aliasPlugin = {
+  resolveId(importee) {
+    if (importee.startsWith('~/')) {
+      return this.resolveId(path.resolve(__dirname, 'tsdist', importee.substring(2)));
+    }
+
+    return null;
+  }
+
+}
+
 export default {
-  input: 'src/web-app/index.tsx',
+  input: 'tsdist/web-app/index',
 
   output: {
     file: 'dist/bundle.js',
     format: 'iife',
-    sourcemap: isProduction,
+    name: 'WebApp',
   },
 
   treeshake: isProduction,
@@ -21,14 +32,9 @@ export default {
   },
 
   plugins: [
-    nodeResolve({
-      extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx' ],
-    }),
+    aliasPlugin,
 
-    typescript({
-      /* cacheRoot: './node_modules/.cache/rts2_cache', */
-      cacheRoot: require('os').tmpdir() + '/rts2_cache',
-    }),
+    nodeResolve(),
 
     replace({
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),

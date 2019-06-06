@@ -2,7 +2,7 @@ export {
   WebRouter,
   ILocation,
   IParams,
-} from './router'
+} from './web-router'
 
 export {
   Router,

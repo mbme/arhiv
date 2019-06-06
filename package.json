@@ -5,15 +5,6 @@
   "version": "0.0.1",
   "description": "like v, but typed!",
   "scripts": {
-    "build": "NODE_ENV=production rollup -c",
-    "build1": "NODE_ENV=development rollup -c",
-    "build2": "NODE_ENV=development tsc -p src/web-app/tsconfig.json --noEmitOnError --module commonjs --outDir ./tsdist",
-    "build2-debug": "yarn build2 --diagnostics --listEmittedFiles --listFiles",
-    "build2-debug-extened": "yarn build2 --traceResolution",
-    "buildw": "webpack",
-    "start-server": "NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb-server/bin 8080 pass /tmp/db",
-    "start-server-with-data": "yarn start-server --gen-data",
-    "start-client": "rollup -c --watch",
     "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
@@ -32,7 +23,6 @@
     "@types/react": "^16.7.17",
     "@types/react-dom": "^16.0.11",
     "rollup": "^1.12.1",
-    "rollup-plugin-alias": "^1.5.2",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-node-resolve": "^5.0.0",
     "rollup-plugin-replace": "^2.1.0",
@@ -40,8 +30,6 @@
     "tsconfig-paths": "^3.8.0",
     "tslint": "^5.12.0",
     "tslint-react-hooks": "^2.0.0",
-    "typescript": "^3.2.2",
-    "webpack": "^4.33.0",
-    "webpack-cli": "^3.3.2"
+    "typescript": "^3.2.2"
   }
 }

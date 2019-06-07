@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { cssRaw } from 'typestyle'
 
 import { setLogLevel } from '~/logger'
 import {
@@ -10,6 +9,7 @@ import {
 import {
   globalStyles,
   OverlayRenderer,
+  RawCss,
 } from '~/web-components'
 import {
   Router,
@@ -25,16 +25,6 @@ import AppNotes from './app-notes'
 import AppLibrary from './app-library'
 
 setLogLevel('WARN')
-
-cssRaw(`
-  ${globalStyles}
-
-  #root {
-    overflow-y: scroll;
-    height: 100vh;
-    visibility: hidden;
-  }
-`)
 
 const apps: IApp[] = [
   AppNotes,
@@ -62,6 +52,17 @@ const rootEl = document.getElementById('root')!
 ReactDOM.render(
   <React.StrictMode>
     <IsodbContext.Provider value={client}>
+      <RawCss>
+        {`
+        ${globalStyles}
+
+        #root {
+          overflow - y: scroll;
+          height: 100vh;
+          visibility: hidden;
+        }
+        `}
+      </RawCss>
       <Router renderView={renderView} />
     </IsodbContext.Provider>
   </React.StrictMode>,

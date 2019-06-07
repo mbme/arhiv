@@ -6,16 +6,15 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
-import {
-  Link,
-  useRouter,
-} from '~/web-router'
+import { useRouter } from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
 import {
   theme,
   margin,
   Button,
   FilterInput,
+  CleanLink,
+  Link,
 } from '~/web-components'
 import { Toolbar } from '../parts'
 
@@ -43,9 +42,8 @@ export function NotesListView({ filter }: IProps) {
     .getNotes()
     .filter(note => fuzzySearch(filter, note.name))
     .map(note => (
-      <Link
+      <CleanLink
         key={note.id}
-        clean
         to={{ path: '/note', params: { id: note.id } }}
         className={itemStyles}
       >
@@ -53,7 +51,7 @@ export function NotesListView({ filter }: IProps) {
           {formatTs(note.updatedTs)}
         </small>
         {note.name}
-      </Link>
+      </CleanLink>
     ))
 
   const left = (

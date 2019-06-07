@@ -71,8 +71,9 @@ export class Router extends React.PureComponent<IProps, IState> {
       this._router.replaceParam(param, value)
     },
 
-    getUrl: (location: Location) =>
-      this._router.getUrl(normalizeLocation(location)),
+    getUrl: (location: Location) => (
+      this._router.getUrl(normalizeLocation(location))
+    ),
   }
 
   render() {

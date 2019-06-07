@@ -1,7 +1,9 @@
 import * as React from 'react'
-import { Link } from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
-import { Icon } from '~/web-components'
+import {
+  Icon,
+  CleanLink,
+} from '~/web-components'
 import {
   Toolbar,
   NotFound,
@@ -20,9 +22,9 @@ export function NoteView({ id }: IProps) {
   }
 
   const right = note.isLocked() || (
-    <Link to={{ path: '/note-editor', params: { id: note.id } }} clean>
+    <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
       <Icon type="edit-2" />
-    </Link>
+    </CleanLink>
   )
 
   return (

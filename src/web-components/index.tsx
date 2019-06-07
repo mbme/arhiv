@@ -23,6 +23,8 @@ export * from './styles'
 
 export { globalStyles } from './global-styles'
 
+export { Link } from '~/web-router'
+export { CleanLink } from './CleanLink'
 export { Box } from './Box'
 
 export {

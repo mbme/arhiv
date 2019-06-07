@@ -163,11 +163,6 @@ a:hover {
   text-decoration: none;
 }
 
-a.is-clean,
-a.is-clean:hover {
-  color: inherit;
-}
-
 /* Code */
 pre,
 code,

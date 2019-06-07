@@ -6,12 +6,10 @@ import {
 import { noop, Omit } from '~/utils'
 import theme from './theme'
 import { Icon } from './Icon'
+import { Box } from './Box'
 
-const containerStyles = style({
-  position: 'relative',
-})
-
-const inputStyles = (isLight?: boolean, withClear?: boolean) => style(
+type InputVariant = 'normal' | 'light'
+const inputStyles = (variant: InputVariant, withClear?: boolean) => style(
   {
     display: 'block',
     width: '100%',
@@ -21,13 +19,13 @@ const inputStyles = (isLight?: boolean, withClear?: boolean) => style(
 
     padding: theme.spacing.small,
   },
-  isLight && {
+  variant === 'light' && {
     paddingTop: theme.spacing.fine,
     paddingBottom: theme.spacing.fine,
     backgroundColor: 'inherit',
     borderBottom: theme.border,
   },
-  !isLight && {
+  variant === 'normal' && {
     backgroundColor: theme.color.bg,
     boxShadow: theme.boxShadow,
     border: theme.border,
@@ -97,12 +95,12 @@ export class Input extends React.PureComponent<IProps> {
     } = this.props
 
     return (
-      <div className={containerStyles}>
+      <Box position="relative">
         <input
           ref={this.ref}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={classes(inputStyles(light, !!onClear), className)}
+          className={classes(inputStyles(light ? 'light' : 'normal', !!onClear), className)}
           {...otherProps}
         />
 
@@ -113,7 +111,7 @@ export class Input extends React.PureComponent<IProps> {
             onClick={this.onClickClear}
           />
         )}
-      </div>
+      </Box>
     )
   }
 }

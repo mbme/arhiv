@@ -23,6 +23,8 @@ export * from './styles'
 
 export { globalStyles } from './global-styles'
 
+export { Box } from './Box'
+
 export {
   theme,
   Button,

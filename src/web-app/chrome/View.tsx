@@ -1,6 +1,5 @@
 import * as React from 'react'
 import {
-  media,
   style,
 } from 'typestyle'
 import {
@@ -12,6 +11,8 @@ import {
   theme,
   Overlay,
   Icon,
+  fromMd,
+  fromSm,
 } from '~/web-components'
 import { IsodbWebClient } from '~/isodb-web-client'
 import { NotFound } from '../parts'
@@ -22,7 +23,7 @@ const containerStyle = style(
     display: 'grid',
     gridTemplateAreas: '"content"',
   },
-  media({ minWidth: '1024px' }, {
+  fromMd({
     gridTemplateColumns: `minmax(180px, 30%) ${maxWidth} auto`,
     gridTemplateAreas: '"sidemenu content whitespace"',
   }),
@@ -36,7 +37,7 @@ const navbarContainerStyle = style(
 
     display: 'none',
   },
-  media({ minWidth: '1024px' }, {
+  fromMd({
     display: 'block',
   }),
 )
@@ -80,7 +81,7 @@ const menuIconStyle = style(
     top: theme.spacing.fine,
     left: theme.spacing.small,
   },
-  media({ minWidth: '1024px' }, {
+  fromMd({
     display: 'none',
   }),
 )
@@ -96,10 +97,10 @@ const viewStyle = style(
     display: 'flex',
     flexDirection: 'column',
   },
-  media({ minWidth: '768px' }, {
+  fromSm({
     padding: `0 ${theme.spacing.medium}`,
   }),
-  media({ minWidth: '1024px' }, {
+  fromMd({
     padding: `0 ${theme.spacing.large}`,
   }),
 )

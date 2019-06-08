@@ -27,6 +27,7 @@ export { RawCss } from './RawCss'
 export { Link } from '~/web-router'
 export { CleanLink } from './CleanLink'
 export { Box } from './Box'
+export { Image } from './Image'
 
 export {
   theme,

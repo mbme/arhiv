@@ -25,6 +25,11 @@ interface IStyle extends Pick<types.CSSProperties, 'position'> {
   pb?: SpacingType
   pl?: SpacingType
 
+  top?: SpacingType
+  left?: SpacingType
+  bottom?: SpacingType
+  right?: SpacingType
+
   color?: keyof typeof theme.color
   bg?: keyof typeof theme.color
 
@@ -81,6 +86,19 @@ const getStyles = (props: IStyle) => style(
   },
   props.pl && {
     paddingLeft: theme.spacing[props.pl],
+  },
+
+  props.top && {
+    top: theme.spacing[props.top],
+  },
+  props.left && {
+    left: theme.spacing[props.left],
+  },
+  props.bottom && {
+    bottom: theme.spacing[props.bottom],
+  },
+  props.right && {
+    right: theme.spacing[props.right],
   },
 
   props.color && {

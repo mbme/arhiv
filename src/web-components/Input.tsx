@@ -8,8 +8,7 @@ import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 
-type InputVariant = 'normal' | 'light'
-const inputStyles = (variant: InputVariant, withClear?: boolean) => style(
+const $input = (variant: 'normal' | 'light', withClear?: boolean) => style(
   {
     display: 'block',
     width: '100%',
@@ -35,7 +34,7 @@ const inputStyles = (variant: InputVariant, withClear?: boolean) => style(
   },
 )
 
-const clearIconStyles = style({
+const $clearIcon = style({
   position: 'absolute',
   right: theme.spacing.fine,
   top: '50%',
@@ -100,14 +99,14 @@ export class Input extends React.PureComponent<IProps> {
           ref={this.ref}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={classes(inputStyles(light ? 'light' : 'normal', !!onClear), className)}
+          className={classes($input(light ? 'light' : 'normal', !!onClear), className)}
           {...otherProps}
         />
 
         {onClear && (
           <Icon
             type="x"
-            className={clearIconStyles}
+            className={$clearIcon}
             onClick={this.onClickClear}
           />
         )}

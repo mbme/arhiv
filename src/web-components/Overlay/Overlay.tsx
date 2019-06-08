@@ -104,6 +104,7 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
 }
 
 const idCounter = new Counter()
+
 export function Overlay(props: IOverlay) {
   const renderer = React.useContext(OverlayContext)
 

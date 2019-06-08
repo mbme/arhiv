@@ -12,7 +12,7 @@ import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
 import {
   Note as NoteRenderer,
-  titleStyle,
+  $title,
 } from '../Note'
 import { DeleteNoteButton } from './DeleteNoteButton'
 
@@ -80,7 +80,7 @@ export function NoteEditor({ note }: IProps) {
 
       <div hidden={isPreview}>
         <Input
-          className={titleStyle}
+          className={$title}
           name="name"
           value={name}
           onChange={setName}

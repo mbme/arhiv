@@ -1,6 +1,8 @@
 import {
   style,
   keyframes,
+  types,
+  media,
 } from 'typestyle'
 import theme from './theme'
 
@@ -78,3 +80,7 @@ export const animation = {
     },
   }),
 }
+
+export const fromSm = (...styles: types.NestedCSSProperties[]) => media({ minWidth: '768px' }, ...styles)
+export const fromMd = (...styles: types.NestedCSSProperties[]) => media({ minWidth: '1024px' }, ...styles)
+export const fromLg = (...styles: types.NestedCSSProperties[]) => media({ minWidth: '1366px' }, ...styles)

@@ -6,9 +6,11 @@ import {
   Overlay,
   Input,
   theme,
+  Box,
+  Image,
 } from '~/web-components'
 
-const overlayStyles = style({
+const $overlay = style({
   backgroundColor: theme.color.bg,
   paddingTop: '20vh',
 
@@ -16,11 +18,6 @@ const overlayStyles = style({
   flexDirection: 'column',
   justifyContent: 'flex-start',
   alignItems: 'center',
-})
-
-const logoStyles = style({
-  width: '150px',
-  marginBottom: theme.spacing.medium,
 })
 
 interface IProps {
@@ -37,8 +34,16 @@ export function AuthOverlay({ submit }: IProps) {
   }
 
   return (
-    <Overlay className={overlayStyles}>
-      <img alt="logo" src="/logo.svg" className={logoStyles} />
+    <Overlay className={$overlay}>
+      <Box mb="medium">
+        <Image
+          width="150px"
+          // FIXME image should have mb="medium" itself
+          src="/logo.svg"
+          alt="logo"
+        />
+      </Box>
+
       <Input
         className={style({ width: '300px' })}
         name="password"

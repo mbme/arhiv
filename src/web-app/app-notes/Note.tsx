@@ -5,7 +5,7 @@ import {
   Markup,
 } from '../parts'
 
-export const titleStyle = style({
+export const $title = style({
   textAlign: 'center',
   letterSpacing: '1.4px',
   fontWeight: 'bold',
@@ -22,7 +22,7 @@ interface IProps {
 export function Note({ name, data }: IProps) {
   return (
     <>
-      <h1 className={titleStyle}>
+      <h1 className={$title}>
         {name}
       </h1>
 

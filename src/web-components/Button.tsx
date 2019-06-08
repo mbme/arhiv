@@ -5,45 +5,47 @@ import {
 } from 'typestyle'
 import theme from './theme'
 
-const baseStyle = style({
-  padding: `${theme.spacing.fine} ${theme.spacing.medium}`,
-  border: theme.border,
-  borderRadius: '2px',
-  cursor: 'pointer',
-  userSelect: 'none',
-  transition: 'background-color 100ms linear, transform 50ms ease-in',
+const buttonStyles = (variant: 'primary' | 'secondary', disabled?: boolean) => style(
+  {
+    padding: `${theme.spacing.fine} ${theme.spacing.medium}`,
+    border: theme.border,
+    borderRadius: '2px',
+    cursor: 'pointer',
+    userSelect: 'none',
+    transition: 'background-color 100ms linear, transform 50ms ease-in',
 
-  textTransform: 'uppercase',
-  letterSpacing: '1.2px',
-  fontSize: '80%',
-})
+    textTransform: 'uppercase',
+    letterSpacing: '1.2px',
+    fontSize: '80%',
+  },
 
-const disabledStyle = style({
-  cursor: 'auto',
-  color: theme.color.secondary,
-  backgroundColor: theme.color.bgDarker,
-})
+  disabled && {
+    cursor: 'auto',
+    color: theme.color.secondary,
+    backgroundColor: theme.color.bgDarker,
+  },
 
-const primaryStyle = style({
-  backgroundColor: theme.color.primary,
-  color: theme.color.light,
-  boxShadow: theme.boxShadow,
-  $nest: {
-    '&:hover': {
-      transform: 'scale(1.05)',
+  !disabled && variant === 'primary' && {
+    backgroundColor: theme.color.primary,
+    color: theme.color.light,
+    boxShadow: theme.boxShadow,
+    $nest: {
+      '&:hover': {
+        transform: 'scale(1.05)',
+      },
     },
   },
-})
 
-const secondaryStyle = style({
-  color: theme.color.text,
-  backgroundColor: theme.color.bg,
-  $nest: {
-    '&:hover': {
-      backgroundColor: theme.color.bgDarker,
+  !disabled && variant === 'secondary' && {
+    color: theme.color.text,
+    backgroundColor: theme.color.bg,
+    $nest: {
+      '&:hover': {
+        backgroundColor: theme.color.bgDarker,
+      },
     },
   },
-})
+)
 
 interface IProps {
   className?: string
@@ -54,17 +56,9 @@ interface IProps {
 }
 
 export function Button({ className, onClick, disabled, primary, children }: IProps) {
-  const styles = classes(
-    className,
-    baseStyle,
-    disabled && disabledStyle,
-    !disabled && primary && primaryStyle,
-    !disabled && !primary && secondaryStyle,
-  )
-
   return (
     <button
-      className={styles}
+      className={classes(buttonStyles(primary ? 'primary' : 'secondary', disabled), className)}
       onClick={onClick}
       disabled={disabled}
       type="button"

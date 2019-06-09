@@ -6,7 +6,7 @@ import {
 import { Renderer } from './Renderer'
 import { createStyleElement } from './utils'
 
-type Rule = (props: Obj) => Obj | false | null | undefined
+type Rule = (props: Obj) => (Obj | false | null | undefined)
 
 const renderer = new Renderer(createStyleElement())
 
@@ -15,6 +15,7 @@ const renderer = new Renderer(createStyleElement())
 export function style(...items: Obj[]): string {
   const styleClass = items.map(item => renderer.render(item)).join(' ')
 
+  // add whitespace just to simplify class concatenation: style({ width: 100 }) + 'other-class'
   return styleClass + ' '
 }
 

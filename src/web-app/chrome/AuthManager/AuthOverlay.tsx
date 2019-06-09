@@ -18,7 +18,7 @@ const $overlay = style({
   alignItems: 'center',
 })
 
-const $input = style({
+const $input = style({ // FIXME this should have higher priority than input styles
   width: '300px',
 })
 

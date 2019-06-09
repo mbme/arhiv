@@ -1,0 +1,14 @@
+{
+  "Style with nested selectors": [
+    [
+      ".s--1827507567 { font-size: 1 }",
+      ".test .s--1827507567:hover { font-size: 2 }"
+    ]
+  ],
+  "style with media query": [
+    [
+      ".s-28071606 { font-size: 1 }",
+      "@media screen and (min-width: 800px) { .s-28071606 { font-size: 2 }\n.s-28071606:hover { margin: 0 } }"
+    ]
+  ]
+}

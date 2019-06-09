@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "description": "like v, but typed!",
   "scripts": {
-    "test": "NODE_NO_WARNINGS=1 LOG=ERROR ./vnode src/tester/bin",
+    "test": "NODE_NO_WARNINGS=1 ./vnode src/tester/bin",
     "test-update": "yarn test --update-snapshots",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
     "check-compiler-errors": "tsc --noEmit --project tsconfig.json",

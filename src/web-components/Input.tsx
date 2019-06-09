@@ -1,14 +1,11 @@
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
 import { noop, Omit } from '~/utils'
+import { styleRules, style } from '~/styler'
 import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 
-const $input = (variant: 'normal' | 'light', withClear?: boolean) => style(
+const $input = styleRules(
   {
     display: 'block',
     width: '100%',
@@ -18,20 +15,25 @@ const $input = (variant: 'normal' | 'light', withClear?: boolean) => style(
 
     padding: theme.spacing.small,
   },
-  variant === 'light' && {
-    paddingTop: theme.spacing.fine,
-    paddingBottom: theme.spacing.fine,
-    backgroundColor: 'inherit',
-    borderBottom: theme.border,
-  },
-  variant === 'normal' && {
-    backgroundColor: theme.color.bg,
-    boxShadow: theme.boxShadow,
-    border: theme.border,
-  },
-  withClear && {
-    paddingRight: theme.spacing.medium,
-  },
+  props => (
+    props.light
+      ? {
+        paddingTop: theme.spacing.fine,
+        paddingBottom: theme.spacing.fine,
+        backgroundColor: 'inherit',
+        borderBottom: theme.border,
+      }
+      : {
+        backgroundColor: theme.color.bg,
+        boxShadow: theme.boxShadow,
+        border: theme.border,
+      }
+  ),
+  props => (
+    props.onClear && {
+      paddingRight: theme.spacing.medium,
+    }
+  ),
 )
 
 const $clearIcon = style({
@@ -99,7 +101,7 @@ export class Input extends React.PureComponent<IProps> {
           ref={this.ref}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={classes($input(light ? 'light' : 'normal', !!onClear), className)}
+          className={$input(this.props, className)}
           {...otherProps}
         />
 

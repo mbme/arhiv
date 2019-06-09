@@ -3,6 +3,11 @@
   "include": [
     "./index.tsx"
   ],
+  "exclude": [
+    "node_modules",
+    "*/**/*.test.ts",
+    "*/**/flycheck_*"
+  ],
   "compilerOptions": {
     "types": ["react", "react-dom"]
   }

@@ -6,10 +6,10 @@ import {
   IsodbWebClient,
   IsodbContext,
 } from '~/isodb-web-client'
+import { injectGlobalStyles } from '~/styler'
 import {
   globalStyles,
   OverlayRenderer,
-  RawCss,
 } from '~/web-components'
 import {
   Router,
@@ -26,13 +26,23 @@ import AppLibrary from './app-library'
 
 setLogLevel('WARN')
 
+injectGlobalStyles(`
+  ${globalStyles}
+
+  #root {
+    overflow - y: scroll;
+    height: 100vh;
+    visibility: hidden;
+  }
+`)
+
+const client = new IsodbWebClient()
+client.start()
+
 const apps: IApp[] = [
   AppNotes,
   AppLibrary,
 ]
-
-const client = new IsodbWebClient()
-client.start()
 
 function renderView(location: ILocation) {
   return (
@@ -52,17 +62,6 @@ const rootEl = document.getElementById('root')!
 ReactDOM.render(
   <React.StrictMode>
     <IsodbContext.Provider value={client}>
-      <RawCss>
-        {`
-        ${globalStyles}
-
-        #root {
-          overflow - y: scroll;
-          height: 100vh;
-          visibility: hidden;
-        }
-        `}
-      </RawCss>
       <Router renderView={renderView} />
     </IsodbContext.Provider>
   </React.StrictMode>,

@@ -1,4 +1,4 @@
-import { test } from '../tester'
+import { test } from '~/tester'
 import { createArray, flatten, isFunction, isObject } from './index'
 
 test('isObject', (assert) => {

@@ -10,3 +10,5 @@ export type TypeOfProperty<T, P extends keyof T> = T[P]
 export interface IDict<T = string> {
   [key: string]: T
 }
+
+export type Obj = IDict<any>

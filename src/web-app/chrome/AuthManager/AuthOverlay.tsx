@@ -1,7 +1,5 @@
 import * as React from 'react'
-import {
-  style,
-} from 'typestyle'
+import { style } from '~/styler'
 import {
   Overlay,
   Input,
@@ -18,6 +16,10 @@ const $overlay = style({
   flexDirection: 'column',
   justifyContent: 'flex-start',
   alignItems: 'center',
+})
+
+const $input = style({
+  width: '300px',
 })
 
 interface IProps {
@@ -45,7 +47,7 @@ export function AuthOverlay({ submit }: IProps) {
       </Box>
 
       <Input
-        className={style({ width: '300px' })}
+        className={$input}
         name="password"
         type="password"
         autoFocus

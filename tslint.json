@@ -42,6 +42,7 @@
     "prefer-template": false,
     "prefer-readonly": false,
     "no-object-literal-type-assertion": [true, { "allow-arguments": true }],
+    "object-literal-key-quotes": false,
     "no-void-expression": [
       true,
       "ignore-arrow-function-shorthand"

@@ -1,7 +1,13 @@
 import path from 'path'
 import { walkSync } from '~/utils/fs'
-import log from '~/logger'
-import { getTestPlan, initTestPlan, runTests } from './index'
+import log, { setLogLevel } from '~/logger'
+import {
+  getTestPlan,
+  initTestPlan,
+  runTests,
+} from './index'
+
+setLogLevel('ERROR')
 
 export default async function run(...args: string[]) {
   const filter = args.filter((arg) => !arg.startsWith('--'))[0] || ''
@@ -9,7 +15,11 @@ export default async function run(...args: string[]) {
 
   const basePath = path.join(__dirname, '..')
   const testFiles = walkSync(basePath)
-    .filter((relPath) => relPath.endsWith('.test.ts') && relPath.includes(filter))
+    .filter((relPath) => (
+      relPath.endsWith('.test.ts')
+      && !relPath.includes('FLYCHECK')
+      && relPath.includes(filter)
+    ))
 
   const testPlans = []
   for (const testFile of testFiles) {
@@ -39,7 +49,7 @@ export default async function run(...args: string[]) {
     }
 
     failures += await runTests(
-      path.join(basePath, testPlan.file),
+      testPlan.file,
       testPlan.tests,
       updateSnapshots,
     )

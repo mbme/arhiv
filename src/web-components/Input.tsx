@@ -1,6 +1,9 @@
 import * as React from 'react'
-import { noop, Omit } from '~/utils'
-import { styleRules, style } from '~/styler'
+import { noop } from '~/utils'
+import {
+  styleRules,
+  Style,
+} from '~/styler'
 import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
@@ -15,6 +18,7 @@ const $input = styleRules(
 
     padding: theme.spacing.small,
   },
+
   props => (
     props.light
       ? {
@@ -29,6 +33,7 @@ const $input = styleRules(
         border: theme.border,
       }
   ),
+
   props => (
     props.onClear && {
       paddingRight: theme.spacing.medium,
@@ -36,20 +41,20 @@ const $input = styleRules(
   ),
 )
 
-const $clearIcon = style({
+const $clearIcon = {
   position: 'absolute',
   right: theme.spacing.fine,
   top: '50%',
   transform: 'translateY(-50%)',
   color: theme.color.secondary,
-})
+}
 
-interface IProps extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange'> {
+interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, 'type' | 'name' | 'value' | 'onKeyDown'> {
+  $style?: Style
   onChange(value: string): void
   autoFocus?: boolean
   light?: boolean
   onClear?(): void
-  className?: string
 }
 
 export class Input extends React.PureComponent<IProps> {
@@ -63,8 +68,16 @@ export class Input extends React.PureComponent<IProps> {
     this.props.onChange(e.target.value)
   }
 
-  onKeyDown = (e: React.KeyboardEvent) => {
+  onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const {
+      onKeyDown,
+    } = this.props
+
     if (e.key === 'Escape') this.blur()
+
+    if (onKeyDown) {
+      onKeyDown(e)
+    }
   }
 
   focus = () => {
@@ -88,27 +101,30 @@ export class Input extends React.PureComponent<IProps> {
 
   render() {
     const {
-      light,
-      className,
       onClear,
-      onChange,
-      ...otherProps
+      autoFocus,
+      type,
+      name,
+      value,
     } = this.props
 
     return (
       <Box position="relative">
         <input
           ref={this.ref}
+          type={type}
+          name={name}
+          value={value}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={$input(this.props, className)}
-          {...otherProps}
+          className={$input(this.props)}
+          autoFocus={autoFocus}
         />
 
         {onClear && (
           <Icon
             type="x"
-            className={$clearIcon}
+            $style={$clearIcon}
             onClick={this.onClickClear}
           />
         )}
@@ -119,18 +135,38 @@ export class Input extends React.PureComponent<IProps> {
 
 export const examples = {
   'Light input': (
-    <Input name="input1" value="Input example (light)" light onChange={noop} />
+    <Input
+      name="input1"
+      value="Input example (light)"
+      light
+      onChange={noop}
+    />
   ),
 
   'Light input wiht clear': (
-    <Input name="input11" value="Input example (light) with clear" light onChange={noop} onClear={noop} />
+    <Input
+      name="input11"
+      value="Input example (light) with clear"
+      light
+      onChange={noop}
+      onClear={noop}
+    />
   ),
 
   'Input': (
-    <Input name="input2" value="Input example" onChange={noop} />
+    <Input
+      name="input2"
+      value="Input example"
+      onChange={noop}
+    />
   ),
 
   'Input with clear': (
-    <Input name="input21" value="Input example with clear" onChange={noop} onClear={noop} />
+    <Input
+      name="input21"
+      value="Input example with clear"
+      onChange={noop}
+      onClear={noop}
+    />
   ),
 }

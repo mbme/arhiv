@@ -3,24 +3,27 @@ import {
   isString,
   Obj,
 } from '~/utils'
-import { Renderer } from './Renderer'
-import { createStyleElement } from './utils'
+import { Renderer } from './Renderer/Renderer'
+import {
+  createStyleElement,
+  injectGlobalStyles,
+} from './utils'
+import {
+  Style,
+  StyleRule,
+} from './types'
 
-type Rule = (props: Obj) => (Obj | false | null | undefined)
+export {
+  injectGlobalStyles,
+  Style,
+}
 
 const renderer = new Renderer(createStyleElement())
 
 // TODO keyframes
 
-export function style(...items: Obj[]): string {
-  const styleClass = items.map(item => renderer.render(item)).join(' ')
-
-  // add whitespace just to simplify class concatenation: style({ width: 100 }) + 'other-class'
-  return styleClass + ' '
-}
-
-export function styleRules(...items: Array<Rule | Obj>): (props: Obj, className?: string) => string {
-  const preps: Array<string | Rule> = items.map((item) => {
+export function styleRules(...items: Style[]) {
+  const preps: Array<string | StyleRule> = items.map((item) => {
     if (isObject(item)) {
       return renderer.render(item)
     }
@@ -28,25 +31,18 @@ export function styleRules(...items: Array<Rule | Obj>): (props: Obj, className?
     return item
   })
 
-  return (props: Obj, className?: string) => {
-    const c1 = preps.map((item) => {
-      if (isString(item)) {
-        return item
-      }
+  return (props: Obj = {}) => preps.map((item) => {
+    // TODO handle props.$style
 
-      const ruleResult = item(props)
-      if (!ruleResult) {
-        return ''
-      }
+    if (isString(item)) {
+      return item
+    }
 
-      return renderer.render(ruleResult)
-    }).join(' ')
+    const ruleResult = item(props)
+    if (!ruleResult) {
+      return ''
+    }
 
-    return `${c1} ${className}`
-  }
-}
-
-export function injectGlobalStyles(styles: string) {
-  const el = createStyleElement(true)
-  el.textContent = styles
+    return renderer.render(ruleResult)
+  }).join(' ')
 }

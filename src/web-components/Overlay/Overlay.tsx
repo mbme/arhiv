@@ -1,12 +1,9 @@
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
 import { Counter } from '~/utils'
+import { Style, styleRules } from '~/styler'
 import theme from '../theme'
 
-const containerStyles = style({
+const $container = styleRules({
   backgroundColor: theme.color.bgOverlay,
 
   position: 'fixed',
@@ -24,7 +21,7 @@ const containerStyles = style({
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  className?: string
+  $style?: Style
 }
 
 interface IOverlayRenderer {
@@ -81,7 +78,7 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
     return (
       <div
         key={id}
-        className={classes(containerStyles, overlay.className)}
+        className={$container(overlay)}
         onClick={clickHandler}
       >
         {overlay.children}

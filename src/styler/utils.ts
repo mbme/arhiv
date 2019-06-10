@@ -11,5 +11,7 @@ export function createStyleElement(prepend = false) {
   return el
 }
 
-export const hash2className = (hash: string) => `s-${hash}`
-export const hash2class = (hash: string) => '.' + hash2className(hash)
+export function injectGlobalStyles(styles: string) {
+  const el = createStyleElement(true)
+  el.textContent = styles
+}

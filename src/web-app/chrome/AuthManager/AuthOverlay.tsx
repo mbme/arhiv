@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { style } from '~/styler'
 import {
   Overlay,
   Input,
@@ -8,7 +7,7 @@ import {
   Image,
 } from '~/web-components'
 
-const $overlay = style({
+const $overlay = {
   backgroundColor: theme.color.bg,
   paddingTop: '20vh',
 
@@ -16,11 +15,11 @@ const $overlay = style({
   flexDirection: 'column',
   justifyContent: 'flex-start',
   alignItems: 'center',
-})
+}
 
-const $input = style({ // FIXME this should have higher priority than input styles
+const $input = { // FIXME this should have higher priority than input styles
   width: '300px',
-})
+}
 
 interface IProps {
   submit(password: string): void
@@ -36,7 +35,7 @@ export function AuthOverlay({ submit }: IProps) {
   }
 
   return (
-    <Overlay className={$overlay}>
+    <Overlay $style={$overlay}>
       <Box mb="medium">
         <Image
           width="150px"
@@ -47,7 +46,7 @@ export function AuthOverlay({ submit }: IProps) {
       </Box>
 
       <Input
-        className={$input}
+        $style={$input}
         name="password"
         type="password"
         autoFocus

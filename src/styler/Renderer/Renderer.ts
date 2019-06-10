@@ -1,6 +1,8 @@
 import { Obj } from '~/utils'
-import { Style } from './Style'
-import { hash2className } from './utils'
+import {
+  StyleNode,
+  hash2className,
+} from './StyleNode'
 
 export class Renderer {
   private _classes = new Set<string>()
@@ -8,7 +10,7 @@ export class Renderer {
   constructor(private _el: HTMLStyleElement) { }
 
   render(styleObj: Obj): string {
-    const style = new Style(styleObj)
+    const style = new StyleNode(styleObj)
     const className = hash2className(style.hash)
 
     if (!this._classes.has(className)) {

@@ -1,11 +1,8 @@
 // tslint:disable:max-line-length
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
 import theme from './theme'
 import { flexRow } from './styles'
+import { Style, styleRules } from '~/styler'
 
 const icons = {
   'log-out': (
@@ -96,7 +93,7 @@ const icons = {
 
 type IconType = keyof typeof icons
 
-const baseStyle = style({
+const $icon = styleRules({
   display: 'inline-block',
   cursor: 'pointer',
   transition: 'color 0.17s ease',
@@ -107,15 +104,20 @@ const baseStyle = style({
   },
 })
 
-interface IFeatherIconProps extends React.SVGProps<SVGSVGElement> {
+interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  className?: string
-  children?: React.ReactNode
+  $style?: Style
   title?: string
 }
 
 // https://feathericons.com/
-export function Icon({ type, className, children, title, ...otherProps }: IFeatherIconProps) {
+export function Icon(props: IFeatherIconProps) {
+  const {
+    type,
+    title,
+    onClick,
+  } = props
+
   return (
     <svg
       width="24"
@@ -126,8 +128,8 @@ export function Icon({ type, className, children, title, ...otherProps }: IFeath
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={classes(baseStyle, className)}
-      {...otherProps}
+      className={$icon(props)}
+      onClick={onClick}
     >
       {title && <title>{title}</title>}
       {icons[type]}
@@ -141,10 +143,10 @@ export const examples = {
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
-          className={style({
+          $style={{
             margin: '1rem',
             flex: '1 1 auto',
-          })}
+          }}
           type={iconType as IconType}
           title={iconType}
         />

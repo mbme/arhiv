@@ -1,9 +1,11 @@
 import { test } from '~/tester'
-import { Style } from './Style'
-import { hash2class } from './utils'
+import {
+  StyleNode,
+  hash2class,
+} from './StyleNode'
 
 test('Style works', (assert) => {
-  const style = new Style({
+  const style = new StyleNode({
     fontSize: 1,
   })
 
@@ -14,7 +16,7 @@ test('Style works', (assert) => {
 })
 
 test('Style generates consistent hashes', (assert) => {
-  const style1 = new Style({
+  const style1 = new StyleNode({
     fontSize: 1,
     '@media': {
       fontSize: 1,
@@ -27,7 +29,7 @@ test('Style generates consistent hashes', (assert) => {
     margin: 0,
   })
 
-  const style2 = new Style({
+  const style2 = new StyleNode({
     margin: 0,
     '@media': {
       margin: 0,
@@ -44,9 +46,9 @@ test('Style generates consistent hashes', (assert) => {
 })
 
 test('Style with nested selectors', (assert) => {
-  const style = new Style({
+  const style = new StyleNode({
     fontSize: 1,
-    '.test &:hover': {
+    '.test &:hover, &': {
       fontSize: 2,
     },
   })
@@ -55,7 +57,7 @@ test('Style with nested selectors', (assert) => {
 })
 
 test('style with media query', (assert) => {
-  const style = new Style({
+  const style = new StyleNode({
     fontSize: 1,
     '@media screen and (min-width: 800px)': {
       fontSize: 2,

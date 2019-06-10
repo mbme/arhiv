@@ -1,8 +1,8 @@
 {
   "Style with nested selectors": [
     [
-      ".s--1827507567 { font-size: 1 }",
-      ".test .s--1827507567:hover { font-size: 2 }"
+      ".s-613978509 { font-size: 1 }",
+      ".test .s-613978509:hover, .s-613978509 { font-size: 2 }"
     ]
   ],
   "style with media query": [

@@ -4,12 +4,16 @@ import {
   hashCode,
   camelCase2kebabCase,
 } from '~/utils'
-import { hash2class } from './utils'
+
+export const hash2className = (hash: string) => `s-${hash}`
+export const hash2class = (hash: string) => '.' + hash2className(hash)
+
+const pattern = /&/g
 
 // Helper class, which parses & transforms style object
-export class Style {
-  private media: Map<string, Style> = new Map()
-  private nested: Map<string, Style> = new Map()
+export class StyleNode {
+  private media: Map<string, StyleNode> = new Map()
+  private nested: Map<string, StyleNode> = new Map()
   private propsStr: string
 
   hash: string
@@ -30,14 +34,14 @@ export class Style {
           throw new Error('media queries are allowed only on the top level')
         }
 
-        this.media.set(prop, new Style(value, false, true))
+        this.media.set(prop, new StyleNode(value, false, true))
       } else {
         if (!isTopLevel && !isInMediaQuery) {
           throw new Error('nested blocks are allowed only on the top level or in media queries')
         }
 
         // nested selector, like "&:hover" or ".test & .other" etc
-        this.nested.set(prop, new Style(value, false, false))
+        this.nested.set(prop, new StyleNode(value, false, false))
       }
     }
 
@@ -84,7 +88,7 @@ export class Style {
     const styles = []
 
     for (const [selectorTemplate, style] of this.nested.entries()) {
-      const selector = selectorTemplate.replace('&', cssClass)
+      const selector = selectorTemplate.replace(pattern, cssClass)
       styles.push(style._serializeProps(selector))
     }
 

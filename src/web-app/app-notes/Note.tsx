@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { style } from 'typestyle'
 import { theme } from '~/web-components'
+import { styleRules } from '~/styler'
 import {
   Markup,
 } from '../parts'
 
-export const $title = style({
+export const $title = styleRules({
   textAlign: 'center',
   letterSpacing: '1.4px',
   fontWeight: 'bold',
@@ -22,7 +22,7 @@ interface IProps {
 export function Note({ name, data }: IProps) {
   return (
     <>
-      <h1 className={$title}>
+      <h1 className={$title()}>
         {name}
       </h1>
 

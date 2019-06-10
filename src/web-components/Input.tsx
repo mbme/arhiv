@@ -49,7 +49,16 @@ const $clearIcon = {
   color: theme.color.secondary,
 }
 
-interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, 'type' | 'name' | 'value' | 'onKeyDown'> {
+type NativeProps =
+  'type'
+  | 'name'
+  | 'value'
+  | 'onKeyDown'
+  | 'onBlur'
+  | 'defaultValue'
+  | 'placeholder'
+
+interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   $style?: Style
   onChange(value: string): void
   autoFocus?: boolean
@@ -106,6 +115,9 @@ export class Input extends React.PureComponent<IProps> {
       type,
       name,
       value,
+      defaultValue,
+      placeholder,
+      onBlur,
     } = this.props
 
     return (
@@ -115,10 +127,13 @@ export class Input extends React.PureComponent<IProps> {
           type={type}
           name={name}
           value={value}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
           className={$input(this.props)}
           autoFocus={autoFocus}
+          onBlur={onBlur}
         />
 
         {onClear && (

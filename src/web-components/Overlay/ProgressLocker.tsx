@@ -1,25 +1,25 @@
 import * as React from 'react'
-import { style } from 'typestyle'
 import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
+import { styleRules } from '~/styler';
 
-const overlayStyles = (isVisible?: boolean) => style(
+const $overlay = styleRules(
   {
     cursor: 'progress',
     alignItems: 'center',
     opacity: 0,
   },
-  isVisible && {
+  props => props.isVisible && {
     animation: `${animation.pulse} 3s infinite`,
   },
 )
 
-const spinnerStyles = style({
+const $spinner = {
   width: '24px',
   height: '24px',
   animation: `${animation.spin} 1.5s infinite`,
-})
+}
 
 interface IState {
   visible: boolean
@@ -43,15 +43,12 @@ export class ProgressLocker extends React.PureComponent<{}, IState> {
   }
 
   render() {
-    const {
-      visible,
-    } = this.state
-
     return (
-      <Overlay
-        className={overlayStyles(visible)}
-      >
-        <Icon type="loader" className={spinnerStyles} />
+      <Overlay $style={$overlay(this.state)}>
+        <Icon
+          type="loader"
+          $style={$spinner}
+        />
       </Overlay>
     )
   }

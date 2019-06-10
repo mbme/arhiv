@@ -80,7 +80,7 @@ export function NoteEditor({ note }: IProps) {
 
       <div hidden={isPreview}>
         <Input
-          className={$title}
+          $style={$title}
           name="name"
           value={name}
           onChange={setName}

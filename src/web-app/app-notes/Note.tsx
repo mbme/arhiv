@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { theme } from '~/web-components'
-import { styleRules } from '~/styler'
+import { stylish } from '~/stylish'
 import {
   Markup,
 } from '../parts'
 
-export const $title = styleRules({
+export const $title = stylish({
   textAlign: 'center',
   letterSpacing: '1.4px',
   fontWeight: 'bold',

@@ -2,7 +2,7 @@
 import * as React from 'react'
 import theme from './theme'
 import { flexRow } from './styles'
-import { Style, styleRules } from '~/styler'
+import { Stylish, stylish } from '~/stylish'
 
 const icons = {
   'log-out': (
@@ -93,7 +93,7 @@ const icons = {
 
 type IconType = keyof typeof icons
 
-const $icon = styleRules({
+const $icon = stylish({
   display: 'inline-block',
   cursor: 'pointer',
   transition: 'color 0.17s ease',
@@ -104,7 +104,7 @@ const $icon = styleRules({
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: Style
+  $style?: Stylish
   title?: string
 }
 
@@ -141,10 +141,10 @@ export const examples = {
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
-          $style={{
+          $style={stylish({
             margin: '1rem',
             flex: '1 1 auto',
-          }}
+          })}
           type={iconType as IconType}
           title={iconType}
         />

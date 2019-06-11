@@ -1,15 +1,15 @@
 import * as React from 'react'
 import { noop } from '~/utils'
 import {
-  styleRules,
-  Style,
-} from '~/styler'
+  stylish,
+  Stylish,
+} from '~/stylish'
 import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 
 // TODO (props) => IStyleObject[]
-const $input = styleRules(
+const $input = stylish(
   {
     display: 'block',
     width: '100%',
@@ -42,13 +42,13 @@ const $input = styleRules(
   ),
 )
 
-const $clearIcon = {
+const $clearIcon = stylish({
   position: 'absolute',
   right: theme.spacing.fine,
   top: '50%',
   transform: 'translateY(-50%)',
   color: theme.color.secondary,
-}
+})
 
 type NativeProps =
   'type'
@@ -60,7 +60,7 @@ type NativeProps =
   | 'placeholder'
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
-  $style?: Style
+  $style?: Stylish
   onChange(value: string): void
   autoFocus?: boolean
   light?: boolean

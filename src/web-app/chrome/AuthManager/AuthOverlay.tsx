@@ -6,8 +6,9 @@ import {
   Box,
   Image,
 } from '~/web-components'
+import { stylish } from '~/stylish'
 
-const $overlay = {
+const $overlay = stylish({
   backgroundColor: theme.color.bg,
   paddingTop: '20vh',
 
@@ -15,11 +16,11 @@ const $overlay = {
   flexDirection: 'column',
   justifyContent: 'flex-start',
   alignItems: 'center',
-}
+})
 
-const $input = { // FIXME this should have higher priority than input styles
+const $input = stylish({
   width: '300px',
-}
+})
 
 interface IProps {
   submit(password: string): void

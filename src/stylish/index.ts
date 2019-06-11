@@ -10,26 +10,32 @@ import {
 
 export { injectGlobalStyles }
 
-const log = createLogger('Styler')
+const log = createLogger('Stylish')
 
 interface IStyleObject {
   [property: string]: IStyleObject | string | number | boolean | null | undefined
 }
-interface IProps {
-  $style?: Style
-  [property: string]: any
-}
 type StyleRule = (props: IProps) => (IStyleObject | false | null | undefined)
 
-export type Style = Styler | IStyleObject
+interface IProps {
+  $style?: Stylish
+  [property: string]: any
+}
 
-// FIXME merge properly
 function mergeStyles(styles: IStyleObject[]): IStyleObject {
-  return styles.reduce((acc, style) => ({ ...acc, ...style }), {})
+  const result: IStyleObject = {}
+
+  for (const style of styles) {
+    for (const [key, value] of Object.entries(style)) {
+      result[key] = value // TODO maybe merge value objects (queries, selectors)
+    }
+  }
+
+  return result
 }
 
 const renderer = new Renderer(createStyleElement())
-class Styler {
+export class Stylish {
   private _hasRules: boolean
 
   constructor(private _items: Array<IStyleObject | StyleRule>) {
@@ -51,28 +57,26 @@ class Styler {
       items.push(item)
     }
 
-    const styler = new Styler(items)
+    const stylish = new Stylish(items)
     if (props.$style) {
-      return styler.and(props.$style)
+      return stylish.and(props.$style)
     }
 
-    return styler
+    return stylish
   }
 
-  and($style?: Style) { // FIXME improve this to be incompatible with and() method
+  and($style?: Stylish) {
     if (!$style) {
       return this
     }
 
-    const items = $style instanceof Styler ? $style._items : [$style]
-
-    return new Styler(this._items.concat(...items))
+    return new Stylish(this._items.concat(...$style._items))
   }
 
   // FIXME cache classname
   get className() {
     if (this._hasRules) {
-      log.warn('Styler has rules but no props were provided, empty object will be used instead')
+      log.warn('Stylish has rules but no props were provided, empty object will be used instead')
     }
 
     // FIXME ensure no rules
@@ -82,30 +86,8 @@ class Styler {
   }
 }
 
-// TODO keyframes
+// FIXME keyframes
 
-export function styleRules(...items: Array<IStyleObject | StyleRule>) {
-  return new Styler(items)
-  // const preps: Array<string | StyleRule> = items.map((item) => {
-  //   if (isObject(item)) {
-  //     return renderer.render(item)
-  //   }
-
-  //   return item
-  // })
-
-  // return (props: Obj = {}) => preps.map((item) => {
-  //   // TODO handle props.$style
-
-  //   if (isString(item)) {
-  //     return item
-  //   }
-
-  //   const ruleResult = item(props)
-  //   if (!ruleResult) {
-  //     return ''
-  //   }
-
-  //   return renderer.render(ruleResult)
-  // }).join(' ')
+export function stylish(...items: Array<IStyleObject | StyleRule>) {
+  return new Stylish(items)
 }

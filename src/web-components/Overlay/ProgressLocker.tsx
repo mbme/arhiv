@@ -1,10 +1,10 @@
 import * as React from 'react'
-import { styleRules } from '~/styler'
+import { stylish } from '~/stylish'
 import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 
-const $overlay = styleRules(
+const $overlay = stylish(
   {
     cursor: 'progress',
     alignItems: 'center',
@@ -15,11 +15,11 @@ const $overlay = styleRules(
   },
 )
 
-const $spinner = {
+const $spinner = stylish({
   width: '24px',
   height: '24px',
   animation: `${animation.spin} 1.5s infinite`,
-}
+})
 
 interface IState {
   visible: boolean

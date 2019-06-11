@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { Counter } from '~/utils'
-import { Style, styleRules } from '~/styler'
+import { Stylish, stylish } from '~/stylish'
 import theme from '../theme'
 
-const $container = styleRules({
+const $container = stylish({
   backgroundColor: theme.color.bgOverlay,
 
   position: 'fixed',
@@ -21,7 +21,7 @@ const $container = styleRules({
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  $style?: Style
+  $style?: Stylish
 }
 
 interface IOverlayRenderer {

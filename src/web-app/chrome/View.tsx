@@ -14,6 +14,7 @@ import {
   fromMd,
   fromSm,
 } from '~/web-components'
+import { stylish } from '~/stylish'
 import { IsodbWebClient } from '~/isodb-web-client'
 import { NotFound } from '../parts'
 
@@ -75,15 +76,15 @@ const logoutLinkStyle = style({
   cursor: 'pointer',
 })
 
-const menuIconStyle = style(
+const $menuIcon = stylish(
   {
     position: 'fixed',
     top: theme.spacing.fine,
     left: theme.spacing.small,
+    '@media screen and (min-width: 1024px)': {
+      display: 'none',
+    },
   },
-  fromMd({
-    display: 'none',
-  }),
 )
 
 const viewStyle = style(
@@ -203,7 +204,7 @@ export class View extends React.PureComponent<IProps, IState> {
         {!isNavVisible && (
           <Icon
             type="menu"
-            className={menuIconStyle}
+            $style={$menuIcon}
             onClick={this.toggleNav}
           />
         )}

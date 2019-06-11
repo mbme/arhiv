@@ -22,7 +22,7 @@ interface IProps {
 export function Note({ name, data }: IProps) {
   return (
     <>
-      <h1 className={$title()}>
+      <h1 className={$title.className}>
         {name}
       </h1>
 

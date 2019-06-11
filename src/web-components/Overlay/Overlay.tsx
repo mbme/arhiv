@@ -78,7 +78,7 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
     return (
       <div
         key={id}
-        className={$container(overlay)}
+        className={$container.and(overlay.$style).className}
         onClick={clickHandler}
       >
         {overlay.children}

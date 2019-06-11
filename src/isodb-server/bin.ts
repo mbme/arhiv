@@ -5,13 +5,13 @@ import PrimaryDB from './primary'
 import PrimaryInMemStorage from './primary-in-mem-storage'
 import createServer from './server'
 
-setLogLevel('WARN')
-const log = createLogger('isodb-server')
-
 const isProduction = process.env.NODE_ENV === 'production'
 
 const STATIC_DIR = path.join(__dirname, '../web-app/static')
 const DIST_DIR = path.join(__dirname, '../../dist')
+
+const log = createLogger('isodb-server')
+setLogLevel('WARN')
 
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')

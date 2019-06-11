@@ -8,6 +8,7 @@ import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 
+// TODO (props) => IStyleObject[]
 const $input = styleRules(
   {
     display: 'block',
@@ -123,6 +124,7 @@ export class Input extends React.PureComponent<IProps> {
     return (
       <Box position="relative">
         <input
+          className={$input.with(this.props).className}
           ref={this.ref}
           type={type}
           name={name}
@@ -131,7 +133,6 @@ export class Input extends React.PureComponent<IProps> {
           placeholder={placeholder}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          className={$input(this.props)}
           autoFocus={autoFocus}
           onBlur={onBlur}
         />

@@ -97,10 +97,8 @@ const $icon = styleRules({
   display: 'inline-block',
   cursor: 'pointer',
   transition: 'color 0.17s ease',
-  $nest: {
-    '&:hover': {
-      color: theme.color.primary,
-    },
+  '&:hover': {
+    color: theme.color.primary,
   },
 })
 
@@ -128,7 +126,7 @@ export function Icon(props: IFeatherIconProps) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={$icon(props)}
+      className={$icon.with(props).className}
       onClick={onClick}
     >
       {title && <title>{title}</title>}

@@ -1,8 +1,8 @@
 import * as React from 'react'
+import { styleRules } from '~/styler'
 import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
-import { styleRules } from '~/styler';
 
 const $overlay = styleRules(
   {
@@ -44,7 +44,7 @@ export class ProgressLocker extends React.PureComponent<{}, IState> {
 
   render() {
     return (
-      <Overlay $style={$overlay(this.state)}>
+      <Overlay $style={$overlay.with(this.state)}>
         <Icon
           type="loader"
           $style={$spinner}

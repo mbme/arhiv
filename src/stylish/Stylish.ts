@@ -8,7 +8,9 @@ const log = createLogger('Stylish')
 interface IStyleObject {
   [property: string]: IStyleObject | string | number | boolean | null | undefined
 }
-type StyleRule = (props: IProps) => (IStyleObject | false | null | undefined)
+
+type StyleRuleResult = IStyleObject | false | null | undefined
+type StyleRule = (props: IProps) => StyleRuleResult
 
 export type StylishDeclaration = IStyleObject | StyleRule
 
@@ -17,10 +19,14 @@ interface IProps {
   [property: string]: any
 }
 
-function mergeStyles(styles: IStyleObject[]): IStyleObject {
+function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
   const result: IStyleObject = {}
 
   for (const style of styles) {
+    if (!style) {
+      continue
+    }
+
     for (const [key, value] of Object.entries(style)) {
       result[key] = value // TODO maybe merge value objects (queries, selectors)
     }
@@ -29,17 +35,19 @@ function mergeStyles(styles: IStyleObject[]): IStyleObject {
   return result
 }
 
-// FIXME keyframes
+// TODO:
+// keyframes
+// custom @media support?
+// do not sort props before hashing
+// merge objects
+// hashing without "avalanche"?
+// atomic css?
 
 export class Stylish {
-  private _hasRules: boolean
-
   constructor(
     private _items: StylishDeclaration[],
     private _renderer: Renderer,
-  ) {
-    this._hasRules = !!this._items.find(isFunction)
-  }
+  ) { }
 
   with(props: IProps) {
     const items: IStyleObject[] = []
@@ -72,15 +80,28 @@ export class Stylish {
     return new Stylish(this._items.concat(...$style._items), this._renderer)
   }
 
-  // FIXME cache classname
-  get className() {
-    if (this._hasRules) {
-      log.warn('Stylish has rules but no props were provided, empty object will be used instead')
-    }
+  private _generateClassName(): string {
+    let warned = true
+    const style = mergeStyles(this._items.map((item) => {
+      if (!isFunction(item)) {
+        return item
+      }
 
-    // FIXME ensure no rules
-    const style = mergeStyles(this._items.map(item => isFunction(item) ? item({}) || {} : item))
+      if (!warned) {
+        log.warn('Stylish has rules but no props were provided, empty object will be used instead')
+        warned = true
+      }
+
+      return item({})
+    }))
 
     return this._renderer.render(style)
+  }
+
+  private _className?: string
+  get className() {
+    this._className = this._className || this._generateClassName()
+
+    return this._className
   }
 }

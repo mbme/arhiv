@@ -1,4 +1,7 @@
-import { isFunction } from '~/utils'
+import {
+  isFunction,
+  merge,
+} from '~/utils'
 import { createLogger } from '~/logger'
 import { Renderer } from './Renderer'
 
@@ -27,7 +30,7 @@ function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
     }
 
     for (const [key, value] of Object.entries(style)) {
-      result[key] = value // TODO maybe merge value objects (queries, selectors)
+      result[key] = merge(result[key], value)
     }
   }
 
@@ -35,8 +38,6 @@ function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
 }
 
 // TODO:
-// custom @media support?
-// merge objects
 // hashing without "avalanche"?
 // atomic css?
 

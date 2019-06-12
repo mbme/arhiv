@@ -1,5 +1,11 @@
 import { test } from '~/tester'
-import { createArray, flatten, isFunction, isObject } from './index'
+import {
+  createArray,
+  flatten,
+  isFunction,
+  isObject,
+  merge,
+} from './index'
 
 test('isObject', (assert) => {
   assert.equal(isObject(undefined), false)
@@ -21,4 +27,10 @@ test('createArray', (assert) => {
 
 test('flatten', (assert) => {
   assert.equal(flatten([[1, 2], 3]).toString(), [1, 2, 3].toString())
+})
+
+test('merge', (assert) => {
+  assert.equal(merge(null, true), true)
+  assert.deepEqual(merge({}, { x: 1 }), { x: 1 })
+  assert.deepEqual(merge({ x: 0 }, { x: { y: 2 } }), { x: { y: 2 } })
 })

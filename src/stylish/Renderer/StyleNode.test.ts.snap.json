@@ -12,6 +12,6 @@
     ]
   ],
   "it renders @keyframes": [
-    "@keyframes sa-1599852473 { from { margin-left: 0;width: 300% }\nto { margin-left: 100px;width: 100% } }"
+    "@keyframes sa-1559177345 { from { width: 300%; margin-left: 0 }\nto { margin-left: 100px; width: 100% } }"
   ]
 }

@@ -10,8 +10,8 @@ import {
 setLogLevel('ERROR')
 
 export default async function run(...args: string[]) {
-  const filter = args.filter((arg) => !arg.startsWith('--'))[0] || ''
-  const updateSnapshots = args.includes('--update-snapshots')
+  const filter = args.filter((arg) => !arg.startsWith('-'))[0] || ''
+  const updateSnapshots = args.includes('-u')
 
   const basePath = path.join(__dirname, '..')
   const testFiles = walkSync(basePath)

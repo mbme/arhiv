@@ -1,3 +1,5 @@
+import { Obj } from './types'
+
 export * from './types'
 export * from './date'
 export * from './string'
@@ -109,6 +111,20 @@ export function map2object<V>(map: Map<string, V>) {
   }
 
   return result
+}
+
+export function merge<T>(origVal: T, newVal: T): T {
+  if (!isObject(origVal) || !isObject(newVal)) {
+    return newVal
+  }
+
+  const result: Obj = { ...origVal }
+
+  for (const [key, value] of Object.entries(newVal)) {
+    result[key] = merge(result[key], value)
+  }
+
+  return result as T
 }
 
 export async function promiseTimeout(timeout: number): Promise<void> {

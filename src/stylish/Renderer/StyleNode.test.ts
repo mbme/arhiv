@@ -16,7 +16,7 @@ test('it works', (assert) => {
 })
 
 test('it generates consistent hashes', (assert) => {
-  const style1 = new StyleNode({
+  const obj = {
     fontSize: 1,
     '@media': {
       fontSize: 1,
@@ -27,20 +27,10 @@ test('it generates consistent hashes', (assert) => {
       margin: 0,
     },
     margin: 0,
-  })
+  }
 
-  const style2 = new StyleNode({
-    margin: 0,
-    '@media': {
-      margin: 0,
-      fontSize: 1,
-    },
-    fontSize: 1,
-    '&:hover': {
-      margin: 0,
-      fontSize: 1,
-    },
-  })
+  const style1 = new StyleNode(obj)
+  const style2 = new StyleNode(obj)
 
   assert.equal(style1.hash, style2.hash)
 })

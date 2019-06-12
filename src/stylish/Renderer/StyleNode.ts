@@ -45,7 +45,7 @@ export class StyleNode {
       }
     }
 
-    this.propsStr = props.sort().join(';')
+    this.propsStr = props.join(';')
     this.hash = this._calculateHash()
   }
 

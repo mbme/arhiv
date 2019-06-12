@@ -36,7 +36,6 @@ function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
 
 // TODO:
 // custom @media support?
-// do not sort props before hashing
 // merge objects
 // hashing without "avalanche"?
 // atomic css?

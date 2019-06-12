@@ -30,7 +30,7 @@ injectGlobalStyles(`
   ${globalStyles}
 
   #root {
-    overflow - y: scroll;
+    overflow-y: scroll;
     height: 100vh;
     visibility: hidden;
   }

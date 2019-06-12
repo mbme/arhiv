@@ -4,7 +4,7 @@ import {
   hash2class,
 } from './StyleNode'
 
-test('Style works', (assert) => {
+test('it works', (assert) => {
   const style = new StyleNode({
     fontSize: 1,
   })
@@ -15,7 +15,7 @@ test('Style works', (assert) => {
   )
 })
 
-test('Style generates consistent hashes', (assert) => {
+test('it generates consistent hashes', (assert) => {
   const style1 = new StyleNode({
     fontSize: 1,
     '@media': {
@@ -45,7 +45,7 @@ test('Style generates consistent hashes', (assert) => {
   assert.equal(style1.hash, style2.hash)
 })
 
-test('Style with nested selectors', (assert) => {
+test('it supports with nested selectors', (assert) => {
   const style = new StyleNode({
     fontSize: 1,
     '.test &:hover, &': {
@@ -56,7 +56,7 @@ test('Style with nested selectors', (assert) => {
   assert.matchSnapshot(style.intoCss())
 })
 
-test('style with media query', (assert) => {
+test('it supports media query', (assert) => {
   const style = new StyleNode({
     fontSize: 1,
     '@media screen and (min-width: 800px)': {
@@ -68,4 +68,19 @@ test('style with media query', (assert) => {
   })
 
   assert.matchSnapshot(style.intoCss())
+})
+
+test('it renders @keyframes', (assert) => {
+  const style = new StyleNode({
+    from: {
+      width: '300%',
+      marginLeft: '0',
+    },
+    to: {
+      marginLeft: '100px',
+      width: '100%',
+    },
+  })
+
+  assert.matchSnapshot(style.asKeyframes())
 })

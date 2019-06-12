@@ -1,8 +1,7 @@
-import {
-  isFunction,
-} from '~/utils'
+import { isFunction } from '~/utils'
 import { createLogger } from '~/logger'
 import { Renderer } from './Renderer'
+
 const log = createLogger('Stylish')
 
 interface IStyleObject {
@@ -36,7 +35,6 @@ function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
 }
 
 // TODO:
-// keyframes
 // custom @media support?
 // do not sort props before hashing
 // merge objects

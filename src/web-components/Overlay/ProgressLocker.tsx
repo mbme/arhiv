@@ -10,7 +10,7 @@ const $overlay = stylish(
     alignItems: 'center',
     opacity: 0,
   },
-  props => props.isVisible && {
+  props => props.visible && {
     animation: `${animation.pulse} 3s infinite`,
   },
 )

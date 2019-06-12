@@ -1,9 +1,9 @@
 import {
   style,
-  keyframes,
   types,
   media,
 } from 'typestyle'
+import { keyframes } from '~/stylish'
 import theme from './theme'
 
 type Spacing = keyof typeof theme.spacing

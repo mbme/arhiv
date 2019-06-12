@@ -7,6 +7,7 @@ import {
 
 export const hash2className = (hash: string) => `s-${hash}`
 export const hash2class = (hash: string) => '.' + hash2className(hash)
+export const hash2animation = (hash: string) => `sa-${hash}`
 
 const pattern = /&/g
 
@@ -27,9 +28,8 @@ export class StyleNode {
         continue
       }
 
-      // nested media rule, e.g. media query
-      // https://developer.mozilla.org/en-US/docs/Web/CSS/At-rule
-      if (prop.startsWith('@')) {
+      // nested media query
+      if (prop.startsWith('@media')) {
         if (!isTopLevel) {
           throw new Error('media queries are allowed only on the top level')
         }
@@ -104,5 +104,11 @@ export class StyleNode {
       ...this._serializeNested(cssClass),
       ...this._serializeMedia(cssClass),
     ]
+  }
+
+  asKeyframes(): string {
+    const keyframeBlocks = this._serializeNested('')
+
+    return `@keyframes ${hash2animation(this.hash)} { ${keyframeBlocks.join('\n')} }`
   }
 }

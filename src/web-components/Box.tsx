@@ -1,145 +1,157 @@
 import * as React from 'react'
 import {
-  style,
-  classes,
-  types,
-} from 'typestyle'
+  Obj,
+  isFunction,
+} from '~/utils'
+import {
+  stylish,
+} from '~/stylish'
 import theme from './theme'
 
-type SpacingType = keyof typeof theme.spacing
+// tslint:disable-next-line:no-unsafe-any
+const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val
+const getSpacing = getThemeProp('spacing')
 
-interface IStyle extends Pick<types.CSSProperties, 'position'> {
-  m?: SpacingType
-  mx?: SpacingType
-  my?: SpacingType
-  mt?: SpacingType
-  mr?: SpacingType
-  mb?: SpacingType
-  ml?: SpacingType
+type Rule = (val: any) => Obj
+const Rules: { [name: string]: Rule | Obj | undefined } = {
+  m: val => ({
+    margin: getSpacing(val),
+  }),
+  mx: val => ({
+    marginLeft: getSpacing(val),
+    marginRight: getSpacing(val),
+  }),
+  my: val => ({
+    marginTop: getSpacing(val),
+    marginBottom: getSpacing(val),
+  }),
+  mt: val => ({
+    marginTop: getSpacing(val),
+  }),
+  mr: val => ({
+    marginRight: getSpacing(val),
+  }),
+  mb: val => ({
+    marginBottom: getSpacing(val),
+  }),
+  ml: val => ({
+    marginLeft: getSpacing(val),
+  }),
 
-  p?: SpacingType
-  px?: SpacingType
-  py?: SpacingType
-  pt?: SpacingType
-  pr?: SpacingType
-  pb?: SpacingType
-  pl?: SpacingType
+  p: val => ({
+    padding: getSpacing(val),
+  }),
+  px: val => ({
+    paddingLeft: getSpacing(val),
+    paddingRight: getSpacing(val),
+  }),
+  py: val => ({
+    paddingTop: getSpacing(val),
+    paddingBottom: getSpacing(val),
+  }),
+  pt: val => ({
+    paddingTop: getSpacing(val),
+  }),
+  pr: val => ({
+    paddingRight: getSpacing(val),
+  }),
+  pb: val => ({
+    paddingBottom: getSpacing(val),
+  }),
+  pl: val => ({
+    paddingLeft: getSpacing(val),
+  }),
 
-  top?: SpacingType
-  left?: SpacingType
-  bottom?: SpacingType
-  right?: SpacingType
+  top: val => ({
+    top: getSpacing(val),
+  }),
+  left: val => ({
+    left: getSpacing(val),
+  }),
+  bottom: val => ({
+    bottom: getSpacing(val),
+  }),
+  right: val => ({
+    right: getSpacing(val),
+  }),
 
-  color?: keyof typeof theme.color
-  bg?: keyof typeof theme.color
+  fontSize: val => ({
+    fontSize: getThemeProp('fontSize')(val),
+  }),
+  fontFamily: val => ({
+    fontFamily: getThemeProp('fontFamily')(val),
+  }),
+  zIndex: val => ({
+    zIndex: getThemeProp('zIndex')(val),
+  }),
 
-  fontSize?: keyof typeof theme.fontSize
-  fontFamily?: keyof typeof theme.fontFamily
-
-  zIndex?: keyof typeof theme.zIndex
+  relative: {
+    position: 'relative',
+  },
 }
 
-const getStyles = (props: IStyle) => style(
-  props.m && {
-    margin: theme.spacing[props.m],
-  },
-  props.mx && {
-    marginLeft: theme.spacing[props.mx],
-    marginRight: theme.spacing[props.mx],
-  },
-  props.my && {
-    marginTop: theme.spacing[props.my],
-    marginBottom: theme.spacing[props.my],
-  },
-  props.mt && {
-    marginTop: theme.spacing[props.mt],
-  },
-  props.mr && {
-    marginRight: theme.spacing[props.mr],
-  },
-  props.mb && {
-    marginBottom: theme.spacing[props.mb],
-  },
-  props.ml && {
-    marginLeft: theme.spacing[props.ml],
-  },
+function mergeInto(target: Obj, source: Obj) {
+  for (const [key, value] of Object.entries(source)) {
+    target[key] = value
+  }
+}
 
-  props.p && {
-    padding: theme.spacing[props.p],
-  },
-  props.px && {
-    paddingLeft: theme.spacing[props.px],
-    paddingRight: theme.spacing[props.px],
-  },
-  props.py && {
-    paddingTop: theme.spacing[props.py],
-    paddingBottom: theme.spacing[props.py],
-  },
-  props.pt && {
-    paddingTop: theme.spacing[props.pt],
-  },
-  props.pr && {
-    paddingRight: theme.spacing[props.pr],
-  },
-  props.pb && {
-    paddingBottom: theme.spacing[props.pb],
-  },
-  props.pl && {
-    paddingLeft: theme.spacing[props.pl],
-  },
-
-  props.top && {
-    top: theme.spacing[props.top],
-  },
-  props.left && {
-    left: theme.spacing[props.left],
-  },
-  props.bottom && {
-    bottom: theme.spacing[props.bottom],
-  },
-  props.right && {
-    right: theme.spacing[props.right],
-  },
-
-  props.color && {
-    color: theme.color[props.color],
-  },
-  props.bg && {
-    background: theme.color[props.bg],
-  },
-
-  props.fontSize && {
-    fontSize: theme.fontSize[props.fontSize],
-  },
-  props.fontFamily && {
-    fontFamily: theme.fontFamily[props.fontFamily],
-  },
-
-  props.zIndex && {
-    zIndex: theme.zIndex[props.zIndex],
-  },
-
-  props.position && {
-    position: props.position,
-  },
-)
-
-interface IProps extends IStyle {
-  as?: string,
-  className?: string,
+interface IProps {
+  as?: string
   children?: React.ReactNode
+  [prop: string]: any
 }
-
 export class Box extends React.PureComponent<IProps> {
+  static withProps(props: IProps) {
+    return withProps(Box, props)
+  }
+
+  splitProps() {
+    const props: Obj = {}
+    const $props: Obj = {}
+
+    for (const [key, value] of Object.entries(this.props)) {
+      if (key === 'as') { // skip "as" prop cause we handle it separately
+        continue
+      }
+
+      if (!key.startsWith('$')) {
+        props[key] = value
+        continue
+      }
+
+      // TODO handle media queries
+      const prop = key.substring(1)
+
+      const $rule = Rules[prop]
+      if ($rule) {
+        mergeInto($props, isFunction($rule) ? $rule(value) : $rule)
+      } else {
+        $props[prop] = value
+      }
+    }
+
+    props.className = stylish($props)
+
+    return props
+  }
+
   render() {
     const {
-      as = 'div',
-      className,
-      children,
-
-      ...props
+      as: Component = 'as',
     } = this.props
 
-    return React.createElement(as, { className: classes(getStyles(props), className) }, children)
+    const props = this.splitProps()
+
+    return (
+      <Component {...props} />
+    )
   }
+}
+
+function withProps(Component: React.ComponentType, predefinedProps: Obj) {
+  const ComponentWithProps = (props: Obj) => <Component {...predefinedProps} {...props} />
+  ComponentWithProps.withProps = withProps.bind(null, ComponentWithProps)
+
+  return ComponentWithProps
 }

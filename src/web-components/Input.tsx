@@ -121,7 +121,7 @@ export class Input extends React.PureComponent<IProps> {
     } = this.props
 
     return (
-      <Box position="relative">
+      <Box $relative>
         <input
           className={$input.with(this.props).className}
           ref={this.ref}

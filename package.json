@@ -7,7 +7,7 @@
   "scripts": {
     "test": "NODE_NO_WARNINGS=1 ./vnode src/tester/bin",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
-    "check-compiler-errors": "tsc --noEmit --project tsconfig.json",
+    "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },
   "dependencies": {

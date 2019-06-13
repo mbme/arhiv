@@ -1,28 +1,25 @@
 import * as React from 'react'
 import {
-  style,
-  classes,
-} from 'typestyle'
+  stylish,
+  Stylish,
+} from '~/stylish'
 
-const imageStyles = (width?: string, height?: string) => style(
-  !!width && {
-    width,
-  },
-  !!height && {
-    height,
-  },
+const $image = stylish(
+  props => props.width && ({ width: props.width }),
+  props => props.height && ({ height: props.height }),
 )
 
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
+  $style?: Stylish
 }
 
-export function Image({ className, width, height, ...props }: IProps) {
+export function Image({ width, height, $style, ...props }: IProps) {
   return (
     <img
-      className={classes(imageStyles(width, height), className)}
       {...props}
+      className={$image.with({ width, height }).and($style).className}
     />
   )
 }

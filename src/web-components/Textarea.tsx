@@ -1,12 +1,12 @@
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
 import { noop } from '~/utils'
+import {
+  stylish,
+  Stylish,
+} from '~/stylish'
 import theme from './theme'
 
-const baseStyle = style({
+const $textarea = stylish({
   backgroundColor: theme.color.bg,
   display: 'block',
   width: '100%',
@@ -24,7 +24,7 @@ interface IProps {
   name: string
   value: string
   onChange(value: string): void
-  className?: string
+  $style?: Stylish
 }
 
 export class Textarea extends React.PureComponent<IProps> {
@@ -77,12 +77,12 @@ export class Textarea extends React.PureComponent<IProps> {
       name,
       value,
       onChange,
-      className,
+      $style,
     } = this.props
 
     return (
       <textarea
-        className={classes(baseStyle, className)}
+        className={$textarea.and($style).className}
         ref={this.ref}
         name={name}
         value={value}

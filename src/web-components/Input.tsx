@@ -8,7 +8,6 @@ import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 
-// TODO (props) => IStyleObject[]
 const $input = stylish(
   {
     display: 'block',

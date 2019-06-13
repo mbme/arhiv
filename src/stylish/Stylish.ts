@@ -7,12 +7,12 @@ import { Renderer } from './Renderer'
 
 const log = createLogger('Stylish')
 
-interface IStyleObject {
+export interface IStyleObject {
   [property: string]: IStyleObject | string | number | boolean | null | undefined
 }
 
 type StyleRuleResult = IStyleObject | false | null | undefined
-type StyleRule = (props: IProps) => StyleRuleResult
+export type StyleRule = (props: IProps) => StyleRuleResult
 
 export type StylishDeclaration = IStyleObject | StyleRule
 

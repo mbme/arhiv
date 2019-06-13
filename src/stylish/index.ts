@@ -7,11 +7,16 @@ import {
 import {
   Stylish,
   StylishDeclaration,
+  IStyleObject,
+  StyleRule,
 } from './Stylish'
 
 export {
   injectGlobalStyles,
   Stylish,
+  IStyleObject,
+  StyleRule,
+  StylishDeclaration,
 }
 
 const renderer = new Renderer(createStyleElement())

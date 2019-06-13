@@ -1,92 +1,136 @@
 import * as React from 'react'
-import { Obj } from '~/utils';
-import theme from './theme';
+import { Obj } from '~/utils'
+import {
+  stylish,
+} from '~/stylish'
+import theme from './theme'
 
-const getSpacing = (val: any) => (theme.spacing as any)[val] || val
+// tslint:disable-next-line:no-unsafe-any
+const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val
+const getSpacing = getThemeProp('spacing')
 
-const Rules = {
-  m: (props: Obj) => ({
-    margin: getSpacing(props.m),
+type Rule = (val: any) => Obj
+const Rules: { [name: string]: Rule | undefined } = {
+  m: val => ({
+    margin: getSpacing(val),
   }),
-  mx: (props: Obj) => ({
-    marginLeft: getSpacing(props.mx),
-    marginRight: getSpacing(props.mx),
+  mx: val => ({
+    marginLeft: getSpacing(val),
+    marginRight: getSpacing(val),
   }),
-  my: (props: Obj) => ({
-    marginTop: getSpacing(props.my),
-    marginBottom: getSpacing(props.my),
+  my: val => ({
+    marginTop: getSpacing(val),
+    marginBottom: getSpacing(val),
   }),
-  mt: (props: Obj) => ({
-    marginTop: getSpacing(props.mt),
+  mt: val => ({
+    marginTop: getSpacing(val),
   }),
-  mr: (props: Obj) => ({
-    marginRight: getSpacing(props.mr),
+  mr: val => ({
+    marginRight: getSpacing(val),
   }),
-  mb: (props: Obj) => ({
-    marginBottom: getSpacing(props.mb),
+  mb: val => ({
+    marginBottom: getSpacing(val),
   }),
-  ml: (props: Obj) => ({
-    marginLeft: getSpacing(props.ml),
-  }),
-
-  p: (props: Obj) => ({
-    padding: getSpacing(props.p),
-  }),
-  px: (props: Obj) => ({
-    paddingLeft: getSpacing(props.px),
-    paddingRight: getSpacing(props.px),
-  }),
-  py: (props: Obj) => ({
-    paddingTop: getSpacing(props.py),
-    paddingBottom: getSpacing(props.py),
-  }),
-  pt: (props: Obj) => ({
-    paddingTop: getSpacing(props.pt),
-  }),
-  pr: (props: Obj) => ({
-    paddingRight: getSpacing(props.pr),
-  }),
-  pb: (props: Obj) => ({
-    paddingBottom: getSpacing(props.pb),
-  }),
-  pl: (props: Obj) => ({
-    paddingLeft: getSpacing(props.pl),
+  ml: val => ({
+    marginLeft: getSpacing(val),
   }),
 
-  top: (props: Obj) => ({
-    top: getSpacing(props.top),
+  p: val => ({
+    padding: getSpacing(val),
   }),
-  left: (props: Obj) => ({
-    left: getSpacing(props.left),
+  px: val => ({
+    paddingLeft: getSpacing(val),
+    paddingRight: getSpacing(val),
   }),
-  bottom: (props: Obj) => ({
-    bottom: getSpacing(props.bottom),
+  py: val => ({
+    paddingTop: getSpacing(val),
+    paddingBottom: getSpacing(val),
   }),
-  right: (props: Obj) => ({
-    right: getSpacing(props.right),
+  pt: val => ({
+    paddingTop: getSpacing(val),
+  }),
+  pr: val => ({
+    paddingRight: getSpacing(val),
+  }),
+  pb: val => ({
+    paddingBottom: getSpacing(val),
+  }),
+  pl: val => ({
+    paddingLeft: getSpacing(val),
   }),
 
-  fontSize: (props: Obj) => ({
-    fontSize: (theme.fontSize as any)[props.fontSize] || props.fontSize,
+  top: val => ({
+    top: getSpacing(val),
   }),
-  fontFamily: (props: Obj) => ({
-    fontFamily: (theme.fontFamily as any)[props.fontFamily] || props.fontFamily,
+  left: val => ({
+    left: getSpacing(val),
   }),
-  zIndex: (props: Obj) => ({
-    zIndex: (theme.zIndex as any)[props.zIndex],
+  bottom: val => ({
+    bottom: getSpacing(val),
   }),
+  right: val => ({
+    right: getSpacing(val),
+  }),
+
+  fontSize: val => ({
+    fontSize: (theme.fontSize as any)[val] || val,
+  }),
+  fontFamily: val => ({
+    fontFamily: (theme.fontFamily as any)[val] || val,
+  }),
+  zIndex: val => ({
+    zIndex: (theme.zIndex as any)[val],
+  }),
+}
+
+function mergeInto(target: Obj, source: Obj) {
+  for (const [key, value] of Object.entries(source)) {
+    target[key] = value
+  }
+}
+
+function splitProps(allProps: Obj) {
+  let as: any = 'div'
+  const props: Obj = {}
+  const $props: Obj = {}
+
+  for (const [key, value] of Object.entries(allProps)) {
+    if (key === 'as') {
+      as = value
+      continue
+    }
+
+    if (!key.startsWith('$')) {
+      props[key] = value
+      continue
+    }
+
+    // TODO handle media queries
+    const prop = key.substring(1)
+
+    const $rule = Rules[prop]
+    if ($rule) {
+      mergeInto($props, $rule(value))
+    } else {
+      $props[prop] = value
+    }
+  }
+
+  props.className = stylish($props)
+
+  return { as, props }
 }
 
 export class Box extends React.PureComponent<Obj> {
   render() {
     const {
-      as = 'div',
-      className,
-      children,
+      as: Component,
+      props,
+    } = splitProps(this.props)
 
-      ...props
-    } = this.props
-
-    return React.createElement(as, { className: classes(getStyles(props), className) }, children)
+    return (
+      // tslint:disable-next-line:no-unsafe-any
+      <Component {...props} />
+    )
   }
 }

@@ -1,7 +1,6 @@
 import {
   isString,
   array2object,
-  flatten,
   PubSub,
 } from '~/utils'
 import { createLogger } from '~/logger'
@@ -146,7 +145,7 @@ export class IsodbReplica {
     // for each local record
     //   if references deleted record
     //     restore deleted record & all deleted records referenced by it
-    const idsToCheck = flatten(this._storage.getLocalRecords().map(item => item._refs))
+    const idsToCheck = this._storage.getLocalRecords().flatMap(item => item._refs)
     const idsChecked = new Set()
     while (idsToCheck.length) {
       const id = idsToCheck.shift()!

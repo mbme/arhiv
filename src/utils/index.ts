@@ -51,20 +51,6 @@ export function removeMut<T>(arr: T[], value: T) {
 
 export const findById = <T>(arr: Array<{ id: T }>, id: T) => arr.find((item) => item.id === id)
 
-// [ [ 1, 2 ], 3 ] => [ 1, 2, 3 ]
-export function flatten<T>(arr: Array<T | T[]>): T[] {
-  const result = []
-  for (const item of arr) {
-    if (isArray<T>(item)) {
-      result.push(...item)
-    } else {
-      result.push(item)
-    }
-  }
-
-  return result
-}
-
 export const isSha256 = (str: string) => /^[a-f0-9]{64}$/i.test(str)
 
 export function isSubSequence(str: string, i: number, seq: string) {

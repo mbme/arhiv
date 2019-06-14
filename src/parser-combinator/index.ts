@@ -1,5 +1,4 @@
 import {
-  flatten,
   isArray,
 } from '~/utils'
 
@@ -37,7 +36,7 @@ export const select = (type: string, node: INode<any>): Array<INode<any>> => {
   if (isArray(node.value)) {
     const children = node.value as Array<INode<any>>
 
-    return flatten(children.map(value => select(type, value)))
+    return children.flatMap(value => select(type, value))
   }
 
   return []

@@ -1,7 +1,4 @@
 import * as React from 'react'
-import {
-  style,
-} from 'typestyle'
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
 import { Input, examples as inputExamples } from './Input'
@@ -11,6 +8,10 @@ import { Icon, examples as iconExamples } from './Icon'
 import { AttachFileButton } from './AttachFileButton'
 import theme, { examples as themeExamples } from './theme'
 import {
+  Box,
+  FlexRow,
+} from './Box'
+import {
   Overlay,
   OverlayRenderer,
   ProgressLocker,
@@ -19,13 +20,10 @@ import {
   confirmationDialogExamples,
 } from './Overlay'
 
-export * from './styles'
-
 export { globalStyles } from './global-styles'
 
 export { Link } from '~/web-router'
 export { CleanLink } from './CleanLink'
-export { Box } from './Box'
 export { Image } from './Image'
 
 export {
@@ -42,20 +40,22 @@ export {
   Modal,
   ConfirmationDialog,
   AttachFileButton,
+  Box,
+  FlexRow,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (
-  <div className={style({ marginBottom: '3rem' })}>
+  <Box $mb="xlarge">
     <h1>{title}</h1>
     {Object.entries(examples).map(([description, el], i) => (
-      <div key={i} className={style({ marginBottom: '1rem' })}>
+      <Box key={i} $mb="medium">
         {description && (
           <h2>{description}</h2>
         )}
         {el}
-      </div>
+      </Box>
     ))}
-  </div>
+  </Box>
 )
 
 export function Library() {

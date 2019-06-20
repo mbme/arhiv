@@ -1,11 +1,8 @@
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
+import { Stylish, stylish } from '~/stylish'
 import theme from './theme'
 
-const buttonStyles = (variant: 'primary' | 'secondary', disabled?: boolean) => style(
+const $button = stylish(
   {
     padding: `${theme.spacing.fine} ${theme.spacing.medium}`,
     border: theme.border,
@@ -19,46 +16,48 @@ const buttonStyles = (variant: 'primary' | 'secondary', disabled?: boolean) => s
     fontSize: '80%',
   },
 
-  disabled && {
+  props => props.disabled && {
     cursor: 'auto',
     color: theme.color.secondary,
     backgroundColor: theme.color.bgDarker,
   },
 
-  !disabled && variant === 'primary' && {
+  props => !props.disabled && props.primary && {
     backgroundColor: theme.color.primary,
     color: theme.color.light,
     boxShadow: theme.boxShadow,
-    $nest: {
-      '&:hover': {
-        transform: 'scale(1.05)',
-      },
+    '&:hover': {
+      transform: 'scale(1.05)',
     },
   },
 
-  !disabled && variant === 'secondary' && {
+  props => !props.disabled && !props.primary && {
     color: theme.color.text,
     backgroundColor: theme.color.bg,
-    $nest: {
-      '&:hover': {
-        backgroundColor: theme.color.bgDarker,
-      },
+    '&:hover': {
+      backgroundColor: theme.color.bgDarker,
     },
   },
 )
 
 interface IProps {
-  className?: string
   onClick?(): void
   disabled?: boolean
   primary?: boolean
   children: React.ReactNode
+  $style?: Stylish
 }
 
-export function Button({ className, onClick, disabled, primary, children }: IProps) {
+export function Button(props: IProps) {
+  const {
+    onClick,
+    disabled,
+    children,
+  } = props
+
   return (
     <button
-      className={classes(buttonStyles(primary ? 'primary' : 'secondary', disabled), className)}
+      className={$button.with(props).className}
       onClick={onClick}
       disabled={disabled}
       type="button"

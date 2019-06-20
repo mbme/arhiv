@@ -1,7 +1,8 @@
 import * as React from 'react'
 import {
-  style,
-} from 'typestyle'
+  stylish,
+  keyframes,
+} from '~/stylish'
 
 const theme = {
   spacing: {
@@ -9,6 +10,7 @@ const theme = {
     small: '0.5rem',
     medium: '1.25rem',
     large: '2rem',
+    xlarge: '3rem',
   },
   border: '1px solid rgba(0,0,0,.09)',
   boxShadow: '0 2px 4px rgba(0,0,0,.2)',
@@ -42,6 +44,36 @@ const theme = {
   zIndex: {
     modal: 10,
   },
+  media: {
+    fromSm: '@media screen and (min-width: 768px)',
+    fromMd: '@media screen and (min-width: 1024px)',
+    fromLg: '@media screen and (min-width: 1366px)',
+  },
+  animation: {
+    pulse: keyframes({
+      '0%': {
+        opacity: 0.7,
+      },
+
+      '50%': {
+        opacity: 1,
+      },
+
+      '100%': {
+        opacity: 0.7,
+      },
+    }),
+
+    spin: keyframes({
+      from: {
+        transform: 'rotate(0deg)',
+      },
+
+      to: {
+        transform: 'rotate(359deg)',
+      },
+    }),
+  },
 }
 
 export default theme
@@ -52,13 +84,13 @@ export const examples = {
       {Object.entries(theme.color).map(([name, value]) => (
         <div
           key={name}
-          className={style({
+          className={stylish({
             height: '3rem',
             backgroundColor: value,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          })}
+          }).className}
         >
           {name}
         </div>

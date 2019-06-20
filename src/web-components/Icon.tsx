@@ -1,8 +1,11 @@
 // tslint:disable:max-line-length
 import * as React from 'react'
+import {
+  Stylish,
+  stylish,
+} from '~/stylish'
+import { FlexRow } from './Box'
 import theme from './theme'
-import { flexRow } from './styles'
-import { Stylish, stylish } from '~/stylish'
 
 const icons = {
   'log-out': (
@@ -137,7 +140,7 @@ export function Icon(props: IFeatherIconProps) {
 
 export const examples = {
   '': (
-    <div className={flexRow()}>
+    <FlexRow>
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
@@ -149,6 +152,6 @@ export const examples = {
           title={iconType}
         />
       ))}
-    </div>
+    </FlexRow>
   ),
 }

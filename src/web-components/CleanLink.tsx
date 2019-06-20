@@ -1,20 +1,21 @@
 import * as React from 'react'
-import {
-  style,
-  classes,
-} from 'typestyle'
 import { Link } from '~/web-router'
+import {
+  stylish,
+  Stylish,
+} from '~/stylish'
 
-const cleanLinkStyles = style({
+const $cleanLink = stylish({
   color: 'inherit',
-
-  $nest: {
-    '&:hover': {
-      color: 'inherit',
-    },
+  '&:hover': {
+    color: 'inherit',
   },
 })
 
-export const CleanLink = ({ className, ...props }: React.ComponentProps<typeof Link>) => (
-  <Link className={classes(cleanLinkStyles, className)} {...props} />
+interface IProps extends Omit<React.ComponentProps<typeof Link>, 'className'> {
+  $style?: Stylish
+}
+
+export const CleanLink = ({ $style, ...props }: IProps) => (
+  <Link className={$cleanLink.and($style).className} {...props} />
 )

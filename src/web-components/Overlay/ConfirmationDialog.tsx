@@ -1,11 +1,9 @@
 import * as React from 'react'
-import {
-  flexRow,
-  margin,
-  section,
-} from '../styles'
+import { stylish } from '~/stylish'
 import { Button } from '../Button'
 import { Modal } from './Modal'
+import { Box, FlexRow } from '../Box'
+import theme from '../theme'
 
 interface IProps {
   children: React.ReactNode
@@ -17,11 +15,11 @@ interface IProps {
 export function ConfirmationDialog({ children, confirmation, onConfirmed, onCancel }: IProps) {
   return (
     <Modal onCancel={onCancel}>
-      <div className={section}>
+      <Box $mb="medium">
         {children}
-      </div>
+      </Box>
 
-      <div className={flexRow('flex-end')}>
+      <FlexRow justify="flex-end">
         <Button onClick={onCancel}>
           CANCEL
         </Button>
@@ -29,11 +27,11 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
         <Button
           primary
           onClick={onConfirmed}
-          className={margin({ left: 'medium' })}
+          $style={stylish({ marginLeft: theme.spacing.medium })}
         >
           {confirmation}
         </Button>
-      </div>
+      </FlexRow>
     </Modal>
   )
 }

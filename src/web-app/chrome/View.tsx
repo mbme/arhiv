@@ -1,8 +1,5 @@
 import * as React from 'react'
 import {
-  style,
-} from 'typestyle'
-import {
   ILocation,
   IParams,
   Link,
@@ -11,39 +8,34 @@ import {
   theme,
   Overlay,
   Icon,
-  fromMd,
-  fromSm,
 } from '~/web-components'
 import { stylish } from '~/stylish'
 import { IsodbWebClient } from '~/isodb-web-client'
 import { NotFound } from '../parts'
 
 const maxWidth = '35rem'
-const containerStyle = style(
-  {
-    display: 'grid',
-    gridTemplateAreas: '"content"',
-  },
-  fromMd({
+const $container = stylish({
+  display: 'grid',
+  gridTemplateAreas: '"content"',
+  [theme.media.fromMd]: {
     gridTemplateColumns: `minmax(180px, 30%) ${maxWidth} auto`,
     gridTemplateAreas: '"sidemenu content whitespace"',
-  }),
-)
-
-const navbarContainerStyle = style(
-  {
-    gridArea: 'sidemenu',
-    position: 'sticky',
-    top: '0',
-
-    display: 'none',
   },
-  fromMd({
-    display: 'block',
-  }),
-)
+})
 
-const navbarStyle = style({
+const $navbarContainer = stylish({
+  gridArea: 'sidemenu',
+  position: 'sticky',
+  top: '0',
+
+  display: 'none',
+
+  [theme.media.fromMd]: {
+    display: 'block',
+  },
+})
+
+const $navbar = stylish({
   position: 'sticky',
   top: '0',
 
@@ -60,51 +52,49 @@ const navbarStyle = style({
   alignItems: 'flex-end',
 })
 
-const navlinkStyle = (isSelected?: boolean) => style(
+const $navlink = stylish(
   {
     display: 'inline-block',
     margin: `${theme.spacing.medium} 0`,
   },
-  isSelected && {
+  props => props.isSelected && {
     color: theme.color.primary,
   },
 )
 
-const logoutLinkStyle = style({
+const $logoutLink = stylish({
   position: 'absolute',
   bottom: theme.spacing.small,
   cursor: 'pointer',
 })
 
-const $menuIcon = stylish(
-  {
-    position: 'fixed',
-    top: theme.spacing.fine,
-    left: theme.spacing.small,
-    '@media screen and (min-width: 1024px)': {
-      display: 'none',
-    },
+const $menuIcon = stylish({
+  position: 'fixed',
+  top: theme.spacing.fine,
+  left: theme.spacing.small,
+  [theme.media.fromMd]: {
+    display: 'none',
   },
-)
+})
 
-const viewStyle = style(
-  {
-    gridArea: 'content',
-    justifySelf: 'center',
-    padding: `0 ${theme.spacing.small}`,
-    width: '100%',
-    maxWidth,
+const $view = stylish({
+  gridArea: 'content',
+  justifySelf: 'center',
+  padding: `0 ${theme.spacing.small}`,
+  width: '100%',
+  maxWidth,
 
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  fromSm({
+  display: 'flex',
+  flexDirection: 'column',
+
+  [theme.media.fromSm]: {
     padding: `0 ${theme.spacing.medium}`,
-  }),
-  fromMd({
+  },
+
+  [theme.media.fromMd]: {
     padding: `0 ${theme.spacing.large}`,
-  }),
-)
+  },
+})
 
 export interface IApp {
   name: string,
@@ -166,18 +156,18 @@ export class View extends React.PureComponent<IProps, IState> {
       <Link
         key={app.name}
         to={{ path: app.rootRoute }}
-        className={navlinkStyle(app === currentApp)}
+        className={$navlink.with({ isSelected: app === currentApp }).className}
       >
         {app.name}
       </Link>
     ))
 
     return (
-      <nav className={navbarStyle} onClick={this.hideNav}>
+      <nav className={$navbar.className} onClick={this.hideNav}>
         {links}
 
         <div
-          className={logoutLinkStyle}
+          className={$logoutLink.className}
           onClick={this.logout}
         >
           Logout
@@ -200,7 +190,7 @@ export class View extends React.PureComponent<IProps, IState> {
     const navbar = this.renderNavbar()
 
     return (
-      <div className={containerStyle}>
+      <div className={$container.className}>
         {!isNavVisible && (
           <Icon
             type="menu"
@@ -208,7 +198,7 @@ export class View extends React.PureComponent<IProps, IState> {
             onClick={this.toggleNav}
           />
         )}
-        <div className={navbarContainerStyle}>
+        <div className={$navbarContainer.className}>
           {navbar}
         </div>
 
@@ -218,7 +208,7 @@ export class View extends React.PureComponent<IProps, IState> {
           </Overlay>
         )}
 
-        <div className={viewStyle}>
+        <div className={$view.className}>
           {view || NotFound}
         </div>
       </div>

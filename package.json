@@ -13,8 +13,7 @@
   "dependencies": {
     "busboy": "^0.3.0",
     "react": "^16.6.3",
-    "react-dom": "^16.6.3",
-    "typestyle": "^2.0.1"
+    "react-dom": "^16.6.3"
   },
   "devDependencies": {
     "@types/busboy": "^0.2.3",

@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { stylish } from '~/stylish'
-import { animation } from '../styles'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
+import theme from '../theme'
 
 const $overlay = stylish(
   {
@@ -11,14 +11,14 @@ const $overlay = stylish(
     opacity: 0,
   },
   props => props.visible && {
-    animation: `${animation.pulse} 3s infinite`,
+    animation: `${theme.animation.pulse} 3s infinite`,
   },
 )
 
 const $spinner = stylish({
   width: '24px',
   height: '24px',
-  animation: `${animation.spin} 1.5s infinite`,
+  animation: `${theme.animation.spin} 1.5s infinite`,
 })
 
 interface IState {

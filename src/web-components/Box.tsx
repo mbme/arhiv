@@ -155,3 +155,15 @@ function withProps(Component: React.ComponentType, predefinedProps: Obj) {
 
   return ComponentWithProps
 }
+
+export function FlexRow({ justify = 'center', ...props }: Obj) {
+  return (
+    <Box
+      $display="flex"
+      $flexWrap="wrap"
+      $alignItems="center"
+      $justifyContent={justify as string}
+      {...props}
+    />
+  )
+}

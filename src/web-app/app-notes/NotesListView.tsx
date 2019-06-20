@@ -1,8 +1,5 @@
 import * as React from 'react'
 import {
-  style,
-} from 'typestyle'
-import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
@@ -10,22 +7,23 @@ import { useRouter } from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
 import {
   theme,
-  margin,
   Button,
   FilterInput,
   CleanLink,
   Link,
+  Box,
 } from '~/web-components'
+import { stylish } from '~/stylish'
 import { Toolbar } from '../parts'
 
-const itemStyles = style({
+const $item = stylish({
   marginBottom: theme.spacing.medium,
   display: 'flex',
   alignItems: 'baseline',
   cursor: 'pointer',
 })
 
-const counterStyles = style({
+const $counter = stylish({
   marginLeft: theme.spacing.small,
   whiteSpace: 'nowrap',
 })
@@ -45,11 +43,12 @@ export function NotesListView({ filter }: IProps) {
       <CleanLink
         key={note.id}
         to={{ path: '/note', params: { id: note.id } }}
-        className={itemStyles}
+        $style={$item}
       >
-        <small className={margin({ right: 'small' })}>
+        <Box as="small" mr="small">
           {formatTs(note.updatedTs)}
-        </small>
+        </Box>
+
         {note.name}
       </CleanLink>
     ))
@@ -74,7 +73,7 @@ export function NotesListView({ filter }: IProps) {
     <>
       <Toolbar left={left} right={right} />
 
-      <small className={counterStyles}>
+      <small className={$counter.className}>
         {items.length} items
       </small>
 

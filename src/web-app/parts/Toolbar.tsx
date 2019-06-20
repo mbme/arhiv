@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { style } from 'typestyle'
 import { theme } from '~/web-components'
+import { stylish } from '~/stylish'
 
-const toolbarStyles = style({
+const $toolbar = stylish({
   position: 'sticky',
   top: 0,
   backgroundColor: theme.color.bg,
@@ -16,21 +16,13 @@ const toolbarStyles = style({
   flexWrap: 'nowrap',
 })
 
-const leftContainerStyles = style({
-  $nest: {
+const $container = stylish(
+  props => ({
     '& > *': {
-      marginRight: '1rem',
+      [props.left ? 'marginRight' : 'marginLeft']: '1rem',
     },
-  },
-})
-
-const rightContainerStyles = style({
-  $nest: {
-    '& > *': {
-      marginLeft: '1rem',
-    },
-  },
-})
+  }),
+)
 
 interface IProps {
   left?: React.ReactNode
@@ -39,11 +31,11 @@ interface IProps {
 
 export function Toolbar({ left, right }: IProps) {
   return (
-    <div className={toolbarStyles}>
-      <div className={leftContainerStyles}>
+    <div className={$toolbar.className}>
+      <div className={$container.with({ left: true }).className}>
         {left}
       </div>
-      <div className={rightContainerStyles}>
+      <div className={$container.with({ left: false }).className}>
         {right}
       </div>
     </div>

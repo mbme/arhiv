@@ -5,8 +5,8 @@ import {
 } from '~/stylish'
 
 const $image = stylish(
-  props => props.width && ({ width: props.width }),
-  props => props.height && ({ height: props.height }),
+  props => props.width && { width: props.width as string },
+  props => props.height && { height: props.height as string },
 )
 
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {

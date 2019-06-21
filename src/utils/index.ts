@@ -128,6 +128,8 @@ export function createProxy<T extends object>(target: T, handler: (prop: string,
 // tslint:disable-next-line:no-empty
 export const noop = () => { }
 
+export const identity = <T>(x: T) => x
+
 export function classNames(...args: any[]) {
   return args.reduce<string[]>((acc, val) => {
     if (isString(val)) {

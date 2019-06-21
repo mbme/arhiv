@@ -4,22 +4,16 @@ import {
 } from '~/utils'
 import { createLogger } from '~/logger'
 import { Renderer } from './Renderer'
+import {
+  IStyleObject,
+  StylishDeclaration,
+  StyleRuleResult,
+  IProps,
+  StyleTransformer,
+} from './types'
+import { applyTransformer } from './utils'
 
 const log = createLogger('Stylish')
-
-export interface IStyleObject {
-  [property: string]: IStyleObject | string | number | boolean | null | undefined
-}
-
-type StyleRuleResult = IStyleObject | false | null | undefined
-export type StyleRule = (props: IProps) => StyleRuleResult
-
-export type StylishDeclaration = IStyleObject | StyleRule
-
-interface IProps {
-  $style?: Stylish
-  [property: string]: any
-}
 
 function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
   const result: IStyleObject = {}
@@ -45,11 +39,13 @@ export class Stylish {
   constructor(
     private _items: StylishDeclaration[],
     private _renderer: Renderer,
+    private _transformer?: StyleTransformer,
   ) { }
 
   with(props: IProps) {
     const items: IStyleObject[] = []
 
+    // evaluate rules with props
     for (const item of this._items) {
       if (isFunction(item)) {
         const result = item(props)
@@ -62,12 +58,11 @@ export class Stylish {
       items.push(item)
     }
 
-    const stylish = new Stylish(items, this._renderer)
-    if (props.$style) {
-      return stylish.and(props.$style)
-    }
-
-    return stylish
+    return new Stylish(
+      items,
+      this._renderer,
+      this._transformer,
+    )
   }
 
   and($style?: Stylish) {
@@ -75,12 +70,16 @@ export class Stylish {
       return this
     }
 
-    return new Stylish(this._items.concat(...$style._items), this._renderer)
+    return new Stylish(
+      this._items.concat(...$style._items),
+      this._renderer,
+      this._transformer,
+    )
   }
 
   private _generateClassName(): string {
     let warned = true
-    const style = mergeStyles(this._items.map((item) => {
+    const styles = this._items.map((item) => {
       if (!isFunction(item)) {
         return item
       }
@@ -91,9 +90,9 @@ export class Stylish {
       }
 
       return item({})
-    }))
+    })
 
-    return this._renderer.render(style)
+    return this._renderer.render(applyTransformer(mergeStyles(styles), this._transformer))
   }
 
   private _className?: string

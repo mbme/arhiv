@@ -29,7 +29,7 @@ export class Renderer {
     return className
   }
 
-  renderKeyframe(styleObj: Obj): string {
+  renderKeyframes(styleObj: Obj): string {
     const style = new StyleNode(styleObj)
     const animationName = hash2animation(style.hash)
 

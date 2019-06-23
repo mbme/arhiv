@@ -2,8 +2,8 @@ import * as React from 'react'
 import {
   StylishStyle,
   stylish,
+  theme,
 } from './style'
-import theme from './theme'
 
 const $button = stylish(
   {

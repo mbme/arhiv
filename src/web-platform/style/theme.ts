@@ -1,10 +1,4 @@
-import * as React from 'react'
-import {
-  stylish,
-  keyframes,
-} from './style'
-
-const theme = {
+export const theme = {
   spacing: {
     fine: '0.25rem',
     small: '0.5rem',
@@ -49,52 +43,4 @@ const theme = {
     fromMd: '@media screen and (min-width: 1024px)',
     fromLg: '@media screen and (min-width: 1366px)',
   },
-  animation: {
-    pulse: keyframes({
-      '0%': {
-        opacity: 0.7,
-      },
-
-      '50%': {
-        opacity: 1,
-      },
-
-      '100%': {
-        opacity: 0.7,
-      },
-    }),
-
-    spin: keyframes({
-      from: {
-        transform: 'rotate(0deg)',
-      },
-
-      to: {
-        transform: 'rotate(359deg)',
-      },
-    }),
-  },
-}
-
-export default theme
-
-export const examples = {
-  Colors: (
-    <div>
-      {Object.entries(theme.color).map(([name, value]) => (
-        <div
-          key={name}
-          className={stylish({
-            height: '3rem',
-            backgroundColor: value,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }).className}
-        >
-          {name}
-        </div>
-      ))}
-    </div>
-  ),
 }

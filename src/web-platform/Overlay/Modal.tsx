@@ -1,6 +1,8 @@
 import * as React from 'react'
-import { stylish } from '../style'
-import theme from '../theme'
+import {
+  stylish,
+  theme,
+} from '../style'
 import { Overlay } from './Overlay'
 
 const $modal = stylish({

@@ -3,8 +3,8 @@ import { Counter } from '~/utils'
 import {
   StylishStyle,
   stylish,
+  theme,
 } from '../style'
-import theme from '../theme'
 
 const $container = stylish({
   backgroundColor: theme.color.bgOverlay,

@@ -3,9 +3,9 @@ import * as React from 'react'
 import {
   StylishStyle,
   stylish,
+  theme,
 } from './style'
 import { FlexRow } from './Box'
-import theme from './theme'
 
 const icons = {
   'log-out': (

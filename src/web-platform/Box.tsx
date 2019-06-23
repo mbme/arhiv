@@ -3,8 +3,10 @@ import {
   Obj,
   isFunction,
 } from '~/utils'
-import { stylish } from './style'
-import theme from './theme'
+import {
+  stylish,
+  theme,
+} from './style'
 
 // tslint:disable-next-line:no-unsafe-any
 const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val

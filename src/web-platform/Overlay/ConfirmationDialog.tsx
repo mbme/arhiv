@@ -1,9 +1,11 @@
 import * as React from 'react'
-import { stylish } from '../style'
+import {
+  stylish,
+  theme,
+} from '../style'
 import { Button } from '../Button'
 import { Modal } from './Modal'
 import { Box, FlexRow } from '../Box'
-import theme from '../theme'
 
 interface IProps {
   children: React.ReactNode

@@ -9,7 +9,7 @@ import { FilterInput } from './FilterInput'
 import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
 import { AttachFileButton } from './AttachFileButton'
-import theme, { examples as themeExamples } from './theme'
+import { examples as themeExamples } from './style'
 import {
   Box,
   FlexRow,
@@ -23,14 +23,11 @@ import {
   confirmationDialogExamples,
 } from './Overlay'
 
-export { globalStyles } from './global-styles'
-
 export { Link } from '~/web-router'
 export { CleanLink } from './CleanLink'
 export { Image } from './Image'
 
 export {
-  theme,
   Button,
   Select,
   Input,

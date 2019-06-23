@@ -2,7 +2,7 @@ import {
   Obj,
   isFunction,
 } from '~/utils'
-import theme from './theme'
+import { theme } from './theme'
 
 // tslint:disable-next-line:no-unsafe-any
 const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val

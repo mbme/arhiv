@@ -3,8 +3,8 @@ import { noop } from '~/utils'
 import {
   stylish,
   StylishStyle,
+  theme,
 } from './style'
-import theme from './theme'
 import { Icon } from './Icon'
 import { Box } from './Box'
 

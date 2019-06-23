@@ -8,7 +8,7 @@ import {
   theme,
   Overlay,
   Icon,
-} from '~/web-components'
+} from '~/web-platform'
 import { stylish } from '~/stylish'
 import { IsodbWebClient } from '~/isodb-web-client'
 import { NotFound } from '../parts'

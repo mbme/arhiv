@@ -10,7 +10,7 @@ import { injectGlobalStyles } from '~/stylish'
 import {
   globalStyles,
   OverlayRenderer,
-} from '~/web-components'
+} from '~/web-platform'
 import {
   Router,
   ILocation,

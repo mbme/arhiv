@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { theme } from '~/web-components'
+import { theme } from '~/web-platform'
 import { stylish } from '~/stylish'
 import {
   Markup,

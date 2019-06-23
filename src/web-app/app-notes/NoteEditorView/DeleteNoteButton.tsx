@@ -2,7 +2,7 @@ import React from 'react'
 import {
   Icon,
   ConfirmationDialog,
-} from '~/web-components'
+} from '~/web-platform'
 
 interface IProps {
   onConfirmed(): void

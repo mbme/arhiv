@@ -3,7 +3,7 @@ import { useIsodb } from '~/isodb-web-client'
 import {
   Icon,
   CleanLink,
-} from '~/web-components'
+} from '~/web-platform'
 import {
   Toolbar,
   NotFound,

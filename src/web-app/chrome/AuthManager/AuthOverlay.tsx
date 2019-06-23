@@ -5,7 +5,7 @@ import {
   theme,
   Box,
   Image,
-} from '~/web-components'
+} from '~/web-platform'
 import { stylish } from '~/stylish'
 
 const $overlay = stylish({

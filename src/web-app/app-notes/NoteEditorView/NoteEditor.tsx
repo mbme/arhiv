@@ -7,7 +7,7 @@ import {
   Input,
   Textarea,
   AttachFileButton,
-} from '~/web-components'
+} from '~/web-platform'
 import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
 import {

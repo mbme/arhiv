@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import {
   Library,
-} from '~/web-components'
+} from '~/web-platform'
 
 export default {
   name: 'Component Library',

@@ -12,7 +12,7 @@ import {
   CleanLink,
   Link,
   Box,
-} from '~/web-components'
+} from '~/web-platform'
 import { stylish } from '~/stylish'
 import { Toolbar } from '../parts'
 

@@ -5,8 +5,8 @@ import {
   theme,
   Box,
   Image,
+  stylish,
 } from '~/web-platform'
-import { stylish } from '~/stylish'
 
 const $overlay = stylish({
   backgroundColor: theme.color.bg,

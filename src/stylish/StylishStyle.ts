@@ -3,7 +3,7 @@ import {
   merge,
 } from '~/utils'
 import { createLogger } from '~/logger'
-import { Renderer } from './Renderer'
+import { StylishRenderer } from './StylishRenderer'
 import {
   IStyleObject,
   StylishDeclaration,
@@ -35,10 +35,10 @@ function mergeStyles(styles: StyleRuleResult[]): IStyleObject {
 // hashing without "avalanche"?
 // atomic css?
 
-export class Stylish {
+export class StylishStyle {
   constructor(
     private _items: StylishDeclaration[],
-    private _renderer: Renderer,
+    private _renderer: StylishRenderer,
     private _transformer?: StyleTransformer,
   ) { }
 
@@ -58,19 +58,19 @@ export class Stylish {
       items.push(item)
     }
 
-    return new Stylish(
+    return new StylishStyle(
       items,
       this._renderer,
       this._transformer,
     )
   }
 
-  and($style?: Stylish) {
+  and($style?: StylishStyle) {
     if (!$style) {
       return this
     }
 
-    return new Stylish(
+    return new StylishStyle(
       this._items.concat(...$style._items),
       this._renderer,
       this._transformer,

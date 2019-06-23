@@ -2,8 +2,8 @@ import * as React from 'react'
 import { Link } from '~/web-router'
 import {
   stylish,
-  Stylish,
-} from '~/stylish'
+  StylishStyle,
+} from './style'
 
 const $cleanLink = stylish({
   color: 'inherit',
@@ -13,7 +13,7 @@ const $cleanLink = stylish({
 })
 
 interface IProps extends Omit<React.ComponentProps<typeof Link>, 'className'> {
-  $style?: Stylish
+  $style?: StylishStyle
 }
 
 export const CleanLink = ({ $style, ...props }: IProps) => (

@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   stylish,
   keyframes,
-} from '~/stylish'
+} from './style'
 
 const theme = {
   spacing: {

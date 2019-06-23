@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { stylish } from '~/stylish'
+import { stylish } from '../style'
 import { Button } from '../Button'
 import { Modal } from './Modal'
 import { Box, FlexRow } from '../Box'

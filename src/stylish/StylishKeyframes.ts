@@ -2,13 +2,13 @@ import {
   IStyleObject,
   StyleTransformer,
 } from './types'
-import { Renderer } from './Renderer'
+import { StylishRenderer } from './StylishRenderer'
 import { applyTransformer } from './utils'
 
 export class StylishKeyframes {
   constructor(
     private _keyframes: IStyleObject,
-    private _renderer: Renderer,
+    private _renderer: StylishRenderer,
     private _transformer?: StyleTransformer,
   ) { }
 

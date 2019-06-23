@@ -1,13 +1,8 @@
 import * as React from 'react'
 import {
   stylish,
-  Stylish,
-} from '~/stylish'
-
-// FIXME
-// * stylish should handle shortcuts, mediaqueries and theme
-// $style attr should accept objects
-// Box should accept attributes without $ prefix
+  StylishStyle,
+} from './style'
 
 const $image = stylish(
   props => props.width && { width: props.width as string },
@@ -17,7 +12,7 @@ const $image = stylish(
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
-  $style?: Stylish
+  $style?: StylishStyle
 }
 
 export function Image({ width, height, $style, ...props }: IProps) {

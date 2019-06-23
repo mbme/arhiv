@@ -5,7 +5,7 @@ import {
   hash2animation,
 } from './StyleNode'
 
-export class Renderer {
+export class StylishRenderer {
   private _rendered = new Set<string>()
 
   constructor(private _el: HTMLStyleElement) { }

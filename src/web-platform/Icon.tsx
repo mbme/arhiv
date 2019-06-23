@@ -1,9 +1,9 @@
 // tslint:disable:max-line-length
 import * as React from 'react'
 import {
-  Stylish,
+  StylishStyle,
   stylish,
-} from '~/stylish'
+} from './style'
 import { FlexRow } from './Box'
 import theme from './theme'
 
@@ -107,7 +107,7 @@ const $icon = stylish({
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: Stylish
+  $style?: StylishStyle
   title?: string
 }
 

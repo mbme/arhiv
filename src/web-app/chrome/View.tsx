@@ -8,8 +8,8 @@ import {
   theme,
   Overlay,
   Icon,
+  stylish,
 } from '~/web-platform'
-import { stylish } from '~/stylish'
 import { IsodbWebClient } from '~/isodb-web-client'
 import { NotFound } from '../parts'
 

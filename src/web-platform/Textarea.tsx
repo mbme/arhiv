@@ -2,8 +2,8 @@ import * as React from 'react'
 import { noop } from '~/utils'
 import {
   stylish,
-  Stylish,
-} from '~/stylish'
+  StylishStyle,
+} from './style'
 import theme from './theme'
 
 const $textarea = stylish({
@@ -24,7 +24,7 @@ interface IProps {
   name: string
   value: string
   onChange(value: string): void
-  $style?: Stylish
+  $style?: StylishStyle
 }
 
 export class Textarea extends React.PureComponent<IProps> {

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { stylish } from '~/stylish'
+import { stylish } from '../style'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 import theme from '../theme'

@@ -7,13 +7,13 @@ import { useRouter } from '~/web-router'
 import { useIsodb } from '~/isodb-web-client'
 import {
   theme,
+  stylish,
   Button,
   FilterInput,
   CleanLink,
   Link,
   Box,
 } from '~/web-platform'
-import { stylish } from '~/stylish'
 import { Toolbar } from '../parts'
 
 const $item = stylish({

@@ -1,4 +1,7 @@
 import * as React from 'react'
+
+export * from './style'
+
 import { Button, examples as buttonExamples } from './Button'
 import { Select, examples as selectExamples } from './Select'
 import { Input, examples as inputExamples } from './Input'

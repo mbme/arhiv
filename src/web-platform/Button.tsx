@@ -1,5 +1,8 @@
 import * as React from 'react'
-import { Stylish, stylish } from '~/stylish'
+import {
+  StylishStyle,
+  stylish,
+} from './style'
 import theme from './theme'
 
 const $button = stylish(
@@ -45,7 +48,7 @@ interface IProps {
   disabled?: boolean
   primary?: boolean
   children: React.ReactNode
-  $style?: Stylish
+  $style?: StylishStyle
 }
 
 export function Button(props: IProps) {

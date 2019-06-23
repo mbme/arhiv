@@ -3,9 +3,7 @@ import {
   Obj,
   isFunction,
 } from '~/utils'
-import {
-  stylish,
-} from '~/stylish'
+import { stylish } from './style'
 import theme from './theme'
 
 // tslint:disable-next-line:no-unsafe-any

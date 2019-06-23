@@ -6,8 +6,8 @@ import {
   IsodbWebClient,
   IsodbContext,
 } from '~/isodb-web-client'
-import { injectGlobalStyles } from '~/stylish'
 import {
+  injectGlobalStyles,
   globalStyles,
   OverlayRenderer,
 } from '~/web-platform'

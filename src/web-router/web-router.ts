@@ -33,11 +33,12 @@ export class WebRouter {
 
   getUrl(location: ILocation) {
     const queryParams = new URLSearchParams()
-    Object.entries(location.params).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(location.params)) {
       if (value !== undefined) {
         queryParams.set(key, value)
       }
-    })
+    }
+
     const paramsStr = queryParams.toString()
 
     const url = `${window.location.origin}${location.path}`

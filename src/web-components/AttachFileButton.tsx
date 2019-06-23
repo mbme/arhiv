@@ -11,7 +11,7 @@ export class AttachFileButton extends PureComponent<IProps> {
 
   onClick = () => this.inputRef.current!.click()
 
-  onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  onFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {
       onSelected,
     } = this.props

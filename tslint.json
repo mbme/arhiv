@@ -43,10 +43,8 @@
     "prefer-readonly": false,
     "no-object-literal-type-assertion": [true, { "allow-arguments": true }],
     "object-literal-key-quotes": false,
-    "no-void-expression": [
-      true,
-      "ignore-arrow-function-shorthand"
-    ],
+    "no-void-expression": [true, "ignore-arrow-function-shorthand"],
+    "strict-comparisons": [true, { "allow-object-equal-comparison": true }],
     "align": {
       "options": ["parameters", "statements", "members"]
     },

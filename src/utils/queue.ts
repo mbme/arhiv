@@ -30,6 +30,7 @@ export default function createQueue() {
       return new Promise((resolve, reject) => {
         if (_onClose) throw new Error('queue has been closed')
 
+        // tslint:disable-next-line:no-async-without-await
         _queue.push(async () => {
           try {
             resolve(action())

@@ -117,6 +117,7 @@ export function Icon(props: IFeatherIconProps) {
     type,
     title,
     onClick,
+    $style,
   } = props
 
   return (
@@ -129,7 +130,7 @@ export function Icon(props: IFeatherIconProps) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={$icon.with(props).className}
+      className={$icon.and($style).with(props).className}
       onClick={onClick}
     >
       {title && <title>{title}</title>}

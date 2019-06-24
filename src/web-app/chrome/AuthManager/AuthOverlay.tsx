@@ -37,7 +37,7 @@ export function AuthOverlay({ submit }: IProps) {
 
   return (
     <Overlay $style={$overlay}>
-      <Box $mb="medium">
+      <Box mb="medium">
         <Image
           width="150px"
           src="/logo.svg"

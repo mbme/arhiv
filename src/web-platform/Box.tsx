@@ -16,38 +16,16 @@ export class Box extends React.PureComponent<IProps> {
     return withProps(Box, props)
   }
 
-  splitProps() {
-    const props: Obj = {}
-    const $props: Obj = {}
-
-    for (const [key, value] of Object.entries(this.props)) {
-      if (key === 'as') { // skip "as" prop cause we handle it separately
-        continue
-      }
-
-      if (!key.startsWith('$')) {
-        props[key] = value
-        continue
-      }
-
-      $props[key.substring(1)] = value
-    }
-
-    props.className = stylish($props)
-
-    return props
-  }
-
   render() {
     const {
-      as: Component = 'as',
+      as: Component = 'div',
+      children,
+      ...styleProps
     } = this.props
 
-    const props = this.splitProps()
+    const className = stylish(styleProps).className
 
-    return (
-      <Component {...props} />
-    )
+    return React.createElement(Component, { className }, children)
   }
 }
 
@@ -61,10 +39,10 @@ function withProps(Component: React.ComponentType, predefinedProps: Obj) {
 export function FlexRow({ justify = 'center', ...props }: Obj) {
   return (
     <Box
-      $display="flex"
-      $flexWrap="wrap"
-      $alignItems="center"
-      $justifyContent={justify as string}
+      display="flex"
+      flexWrap="wrap"
+      alignItems="center"
+      justifyContent={justify as string}
       {...props}
     />
   )

@@ -17,7 +17,7 @@ interface IProps {
 export function ConfirmationDialog({ children, confirmation, onConfirmed, onCancel }: IProps) {
   return (
     <Modal onCancel={onCancel}>
-      <Box $mb="medium">
+      <Box mb="medium">
         {children}
       </Box>
 

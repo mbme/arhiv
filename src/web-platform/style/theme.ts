@@ -38,9 +38,9 @@ export const theme = {
   zIndex: {
     modal: 10,
   },
-  media: {
-    fromSm: '@media screen and (min-width: 768px)',
-    fromMd: '@media screen and (min-width: 1024px)',
-    fromLg: '@media screen and (min-width: 1366px)',
+  breakpoints: {
+    sm: '768px',
+    md: '1024px',
+    lg: '1366px',
   },
 }

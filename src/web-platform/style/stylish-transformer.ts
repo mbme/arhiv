@@ -8,6 +8,8 @@ import { theme } from './theme'
 const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val
 const getSpacing = getThemeProp('spacing')
 
+const mediaFrom = (minWidth: string) => `@media screen and (min-width: ${minWidth})`
+
 type Rule = (val: any) => Obj
 const Rules: { [name: string]: Rule | Obj | undefined } = {
   m: val => ({
@@ -84,6 +86,16 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
   relative: {
     position: 'relative',
   },
+
+  fromSm: val => ({
+    [mediaFrom(theme.breakpoints.sm)]: val,
+  }),
+  fromMd: val => ({
+    [mediaFrom(theme.breakpoints.md)]: val,
+  }),
+  fromLg: val => ({
+    [mediaFrom(theme.breakpoints.lg)]: val,
+  }),
 }
 
 function mergeInto(target: Obj, source: Obj) {
@@ -96,9 +108,9 @@ export function stylishTransformer(src: Obj): Obj {
   const result: Obj = {}
 
   for (const [prop, value] of Object.entries(src)) {
-    const $rule = Rules[prop]
-    if ($rule) {
-      mergeInto(result, isFunction($rule) ? $rule(value) : $rule)
+    const rule = Rules[prop]
+    if (rule) {
+      mergeInto(result, isFunction(rule) ? rule(value) : rule)
     } else {
       result[prop] = value
     }

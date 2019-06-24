@@ -17,7 +17,8 @@ const maxWidth = '35rem'
 const $container = stylish({
   display: 'grid',
   gridTemplateAreas: '"content"',
-  [theme.media.fromMd]: {
+
+  fromMd: {
     gridTemplateColumns: `minmax(180px, 30%) ${maxWidth} auto`,
     gridTemplateAreas: '"sidemenu content whitespace"',
   },
@@ -30,7 +31,7 @@ const $navbarContainer = stylish({
 
   display: 'none',
 
-  [theme.media.fromMd]: {
+  fromMd: {
     display: 'block',
   },
 })
@@ -70,9 +71,11 @@ const $logoutLink = stylish({
 
 const $menuIcon = stylish({
   position: 'fixed',
+
   top: theme.spacing.fine,
   left: theme.spacing.small,
-  [theme.media.fromMd]: {
+
+  fromMd: {
     display: 'none',
   },
 })
@@ -87,11 +90,11 @@ const $view = stylish({
   display: 'flex',
   flexDirection: 'column',
 
-  [theme.media.fromSm]: {
+  fromSm: {
     padding: `0 ${theme.spacing.medium}`,
   },
 
-  [theme.media.fromMd]: {
+  fromMd: {
     padding: `0 ${theme.spacing.large}`,
   },
 })

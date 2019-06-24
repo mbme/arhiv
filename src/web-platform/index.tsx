@@ -45,10 +45,10 @@ export {
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (
-  <Box $mb="xlarge">
+  <Box mb="xlarge">
     <h1>{title}</h1>
     {Object.entries(examples).map(([description, el], i) => (
-      <Box key={i} $mb="medium">
+      <Box key={i} mb="medium">
         {description && (
           <h2>{description}</h2>
         )}

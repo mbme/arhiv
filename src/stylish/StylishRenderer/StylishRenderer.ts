@@ -7,11 +7,17 @@ import {
 
 export class StylishRenderer {
   private _rendered = new Set<string>()
+  private _sheet: CSSStyleSheet
 
-  constructor(private _el: HTMLStyleElement) { }
+  constructor(el: HTMLStyleElement) {
+    if (!el.sheet) {
+      throw new Error("Element doesn't have a stylesheet attached")
+    }
+    this._sheet = el.sheet as CSSStyleSheet
+  }
 
   private _insert(rule: string) {
-    (this._el.sheet as CSSStyleSheet).insertRule(rule)
+    this._sheet.insertRule(rule, this._sheet.cssRules.length)
   }
 
   render(styleObj: Obj): string {

@@ -118,12 +118,13 @@ export class Input extends React.PureComponent<IProps> {
       defaultValue,
       placeholder,
       onBlur,
+      $style,
     } = this.props
 
     return (
-      <Box $relative>
+      <Box relative>
         <input
-          className={$input.with(this.props).className}
+          className={$input.and($style).with(this.props).className}
           ref={this.ref}
           type={type}
           name={name}

@@ -56,11 +56,12 @@ export function Button(props: IProps) {
     onClick,
     disabled,
     children,
+    $style,
   } = props
 
   return (
     <button
-      className={$button.with(props).className}
+      className={$button.and($style).with(props).className}
       onClick={onClick}
       disabled={disabled}
       type="button"

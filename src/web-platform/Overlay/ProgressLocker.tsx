@@ -17,12 +17,6 @@ const $overlay = stylish(
   },
 )
 
-const $spinner = stylish({
-  width: '24px',
-  height: '24px',
-  animation: `${animations.spin} 1.5s infinite`,
-})
-
 interface IState {
   visible: boolean
 }
@@ -49,7 +43,11 @@ export class ProgressLocker extends React.PureComponent<{}, IState> {
       <Overlay $style={$overlay.with(this.state)}>
         <Icon
           type="loader"
-          $style={$spinner}
+          $style={{
+            width: '24px',
+            height: '24px',
+            animation: `${animations.spin} 1.5s infinite`,
+          }}
         />
       </Overlay>
     )

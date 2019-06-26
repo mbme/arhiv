@@ -65,13 +65,13 @@ export class StylishStyle {
     )
   }
 
-  and($style?: StylishStyle) {
+  and($style?: StylishStyle | IStyleObject) {
     if (!$style) {
       return this
     }
 
     return new StylishStyle(
-      this._items.concat(...$style._items),
+      this._items.concat(...($style instanceof StylishStyle ? $style._items : [$style])),
       this._renderer,
       this._transformer,
     )

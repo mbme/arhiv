@@ -2,7 +2,7 @@ import * as React from 'react'
 import { noop } from '~/utils'
 import {
   stylish,
-  StylishStyle,
+  $Style,
   theme,
 } from './style'
 import { Icon } from './Icon'
@@ -59,7 +59,7 @@ type NativeProps =
   | 'placeholder'
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
-  $style?: StylishStyle
+  $style?: $Style
   onChange(value: string): void
   autoFocus?: boolean
   light?: boolean

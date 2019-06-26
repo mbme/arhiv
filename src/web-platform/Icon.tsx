@@ -1,7 +1,7 @@
 // tslint:disable:max-line-length
 import * as React from 'react'
 import {
-  StylishStyle,
+  $Style,
   stylish,
   theme,
 } from './style'
@@ -107,7 +107,7 @@ const $icon = stylish({
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: StylishStyle
+  $style?: $Style
   title?: string
 }
 
@@ -145,10 +145,10 @@ export const examples = {
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
-          $style={stylish({
+          $style={{
             margin: '1rem',
             flex: '1 1 auto',
-          })}
+          }}
           type={iconType as IconType}
           title={iconType}
         />

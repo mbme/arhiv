@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {
-  StylishStyle,
+  $Style,
   stylish,
   theme,
 } from './style'
@@ -48,7 +48,7 @@ interface IProps {
   disabled?: boolean
   primary?: boolean
   children: React.ReactNode
-  $style?: StylishStyle
+  $style?: $Style
 }
 
 export function Button(props: IProps) {

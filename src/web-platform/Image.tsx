@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   stylish,
-  StylishStyle,
+  $Style,
 } from './style'
 
 const $image = stylish(
@@ -12,7 +12,7 @@ const $image = stylish(
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
-  $style?: StylishStyle
+  $style?: $Style
 }
 
 export function Image({ width, height, $style, ...props }: IProps) {

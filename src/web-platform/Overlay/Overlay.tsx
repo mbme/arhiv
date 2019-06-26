@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Counter } from '~/utils'
 import {
-  StylishStyle,
+  $Style,
   stylish,
   theme,
 } from '../style'
@@ -24,7 +24,7 @@ const $container = stylish({
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  $style?: StylishStyle
+  $style?: $Style
 }
 
 interface IOverlayRenderer {

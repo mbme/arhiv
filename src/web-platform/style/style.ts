@@ -9,16 +9,9 @@ import {
 } from '~/stylish'
 import { stylishTransformer } from './stylish-transformer'
 
-export {
-  injectGlobalStyles,
-  StylishStyle,
-}
+export { injectGlobalStyles }
 
-// FIXME
-// stylish should handle shortcuts, mediaqueries and theme
-// $style attr should accept objects
-// Box should accept attributes without $ prefix
-// handle media queries
+export type $Style = StylishStyle | IStyleObject
 
 const renderer = new StylishRenderer(createStyleElement())
 

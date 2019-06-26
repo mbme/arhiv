@@ -1,8 +1,4 @@
 import * as React from 'react'
-import {
-  stylish,
-  theme,
-} from '../style'
 import { Button } from '../Button'
 import { Modal } from './Modal'
 import { Box, FlexRow } from '../Box'
@@ -29,7 +25,7 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
         <Button
           primary
           onClick={onConfirmed}
-          $style={stylish({ marginLeft: theme.spacing.medium })}
+          $style={{ ml: 'medium' }}
         >
           {confirmation}
         </Button>

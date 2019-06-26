@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Link } from '~/web-router'
 import {
   stylish,
-  StylishStyle,
+  $Style,
 } from './style'
 
 const $cleanLink = stylish({
@@ -13,7 +13,7 @@ const $cleanLink = stylish({
 })
 
 interface IProps extends Omit<React.ComponentProps<typeof Link>, 'className'> {
-  $style?: StylishStyle
+  $style?: $Style
 }
 
 export const CleanLink = ({ $style, ...props }: IProps) => (

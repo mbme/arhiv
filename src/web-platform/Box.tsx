@@ -11,6 +11,7 @@ interface IProps {
   children?: React.ReactNode
   [prop: string]: any
 }
+
 export class Box extends React.PureComponent<IProps> {
   static withProps(props: IProps) {
     return withProps(Box, props)
@@ -36,7 +37,7 @@ function withProps(Component: React.ComponentType, predefinedProps: Obj) {
   return ComponentWithProps
 }
 
-export function FlexRow({ justify = 'center', ...props }: Obj) {
+export function FlexRow({ justify = 'center', ...props }: IProps) {
   return (
     <Box
       display="flex"

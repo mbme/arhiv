@@ -1,9 +1,12 @@
 import { Obj } from '~/utils'
+import { createLogger } from '~/logger'
 import {
   StyleNode,
   hash2className,
   hash2animation,
 } from './StyleNode'
+
+const log = createLogger('StylishRenderer')
 
 export class StylishRenderer {
   private _rendered = new Set<string>()
@@ -30,6 +33,7 @@ export class StylishRenderer {
       }
 
       this._rendered.add(className)
+      this._logRendered()
     }
 
     return className
@@ -41,9 +45,17 @@ export class StylishRenderer {
 
     if (!this._rendered.has(animationName)) {
       this._insert(style.asKeyframes())
+
       this._rendered.add(animationName)
+      this._logRendered()
     }
 
     return animationName
+  }
+
+  private _logRendered() {
+    if (this._rendered.size % 100 === 0) {
+      log.warn('rendered %s entities', this._rendered.size)
+    }
   }
 }

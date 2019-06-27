@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { noop } from '~/utils'
 import {
   stylish,
   $Style,
@@ -24,6 +23,7 @@ interface IProps {
   name: string
   value: string
   onChange(value: string): void
+  placeholder?: string
   $style?: $Style
 }
 
@@ -77,6 +77,7 @@ export class Textarea extends React.PureComponent<IProps> {
       name,
       value,
       onChange,
+      placeholder,
       $style,
     } = this.props
 
@@ -86,15 +87,10 @@ export class Textarea extends React.PureComponent<IProps> {
         ref={this.ref}
         name={name}
         value={value}
+        placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
         onBlur={this.onBlur}
       />
     )
   }
-}
-
-export const examples = {
-  '': (
-    <Textarea name="textarea" value="Textarea example" onChange={noop} />
-  ),
 }

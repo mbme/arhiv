@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { markupParser } from '~/markup-parser'
 import { INode } from '~/parser-combinator'
 import { stylish } from '~/web-platform'

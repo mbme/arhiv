@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { noop } from '~/utils'
 import {
   stylish,
   $Style,
@@ -147,42 +146,4 @@ export class Input extends React.PureComponent<IProps> {
       </Box>
     )
   }
-}
-
-export const examples = {
-  'Light input': (
-    <Input
-      name="input1"
-      value="Input example (light)"
-      light
-      onChange={noop}
-    />
-  ),
-
-  'Light input wiht clear': (
-    <Input
-      name="input11"
-      value="Input example (light) with clear"
-      light
-      onChange={noop}
-      onClear={noop}
-    />
-  ),
-
-  'Input': (
-    <Input
-      name="input2"
-      value="Input example"
-      onChange={noop}
-    />
-  ),
-
-  'Input with clear': (
-    <Input
-      name="input21"
-      value="Input example with clear"
-      onChange={noop}
-      onClear={noop}
-    />
-  ),
 }

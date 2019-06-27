@@ -1,11 +1,11 @@
-import React, { PureComponent } from 'react'
+import * as React from 'react'
 import { Icon } from './Icon'
 
 interface IProps {
   onSelected(files: File[]): void
 }
 
-export class AttachFileButton extends PureComponent<IProps> {
+export class AttachFileButton extends React.PureComponent<IProps> {
   formRef = React.createRef<HTMLFormElement>()
   inputRef = React.createRef<HTMLInputElement>()
 

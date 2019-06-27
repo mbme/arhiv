@@ -1,8 +1,6 @@
 import * as React from 'react'
 
-import {
-  Library,
-} from '~/web-platform'
+import { Library } from '~/web-platform/Library'
 
 export default {
   name: 'Component Library',

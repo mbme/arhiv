@@ -3,7 +3,7 @@ import { theme } from './theme'
 import { stylish } from './style'
 
 export const examples = {
-  Colors: (
+  'Colors': (
     <div>
       {Object.entries(theme.color).map(([name, value]) => (
         <div

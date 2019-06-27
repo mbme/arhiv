@@ -5,9 +5,8 @@ import {
   stylish,
   theme,
 } from './style'
-import { Row } from './Layout'
 
-const icons = {
+export const icons = {
   'log-out': (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -94,7 +93,7 @@ const icons = {
   ),
 }
 
-type IconType = keyof typeof icons
+export type IconType = keyof typeof icons
 
 const $icon = stylish({
   display: 'inline-block',
@@ -137,22 +136,4 @@ export function Icon(props: IFeatherIconProps) {
       {icons[type]}
     </svg >
   )
-}
-
-export const examples = {
-  '': (
-    <Row>
-      {Object.keys(icons).map(iconType => (
-        <Icon
-          key={iconType}
-          $style={{
-            margin: '1rem',
-            flex: '1 1 auto',
-          }}
-          type={iconType as IconType}
-          title={iconType}
-        />
-      ))}
-    </Row>
-  ),
 }

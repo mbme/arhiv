@@ -2,6 +2,7 @@ import * as React from 'react'
 import { isFunction } from '~/utils'
 
 import { Box } from './Box'
+import { Heading } from './Heading'
 
 import { examples as buttonExamples } from './Button.examples'
 import { examples as selectExamples } from './Select.examples'
@@ -19,12 +20,14 @@ interface IProps {
 function Examples({ title, examples }: IProps) {
   return (
     <Box mb="xlarge">
-      <h1>{title}</h1>
+      <Heading>{title}</Heading>
 
       {Object.entries(examples).map(([description, Example], i) => (
         <Box key={i} mb="medium">
           {description && (
-            <h2>{description}</h2>
+            <Heading fontSize="medium">
+              {description}
+            </Heading>
           )}
 
           {isFunction(Example) ? <Example /> : Example}

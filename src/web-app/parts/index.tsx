@@ -1,8 +1,11 @@
 import * as React from 'react'
+import { Heading } from '~/web-platform'
 
 export { Toolbar } from './Toolbar'
 export { Markup } from './Markup'
 
 export const NotFound = (
-  <h1>Not Found</h1>
+  <Heading>
+    Not Found
+  </Heading>
 )

@@ -8,6 +8,8 @@ export { Textarea } from './Textarea'
 export { Icon } from './Icon'
 export { AttachFileButton } from './AttachFileButton'
 export { Box } from './Box'
+export { Heading } from './Heading'
+export { Text } from './Text'
 export {
   Overlay,
   OverlayRenderer,

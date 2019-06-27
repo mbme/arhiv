@@ -95,6 +95,10 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     position: 'relative',
   },
 
+  bold: {
+    fontWeight: 'bold',
+  },
+
   fromSm: val => ({
     [mediaFrom(theme.breakpoints.sm)]: val,
   }),

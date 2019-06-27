@@ -1,20 +1,10 @@
 import * as React from 'react'
 import {
-  theme,
-  stylish,
+  Heading,
 } from '~/web-platform'
 import {
   Markup,
 } from '../parts'
-
-export const $title = stylish({
-  textAlign: 'center',
-  letterSpacing: '1.4px',
-  fontWeight: 'bold',
-  fontSize: theme.fontSize.large,
-
-  marginBottom: theme.spacing.medium,
-})
 
 interface IProps {
   name: string
@@ -24,9 +14,12 @@ interface IProps {
 export function Note({ name, data }: IProps) {
   return (
     <>
-      <h1 className={$title.className}>
+      <Heading
+        letterSpacing="1.4px"
+        fontSize="large"
+      >
         {name}
-      </h1>
+      </Heading>
 
       <Markup value={data} />
     </>

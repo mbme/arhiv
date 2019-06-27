@@ -1,7 +1,10 @@
 import * as React from 'react'
 import { markupParser } from '~/markup-parser'
 import { INode } from '~/parser-combinator'
-import { stylish } from '~/web-platform'
+import {
+  stylish,
+  Heading,
+} from '~/web-platform'
 
 interface IProps {
   value: string
@@ -101,7 +104,9 @@ export function Markup({ value }: IProps) {
   if (!result.success) {
     return (
       <>
-        <h1>Failed to parse markup:</h1>
+        <Heading fontSize="medium">
+          Failed to parse markup:
+        </Heading>
         <pre>
           {JSON.stringify(result, null, 2)}
         </pre>

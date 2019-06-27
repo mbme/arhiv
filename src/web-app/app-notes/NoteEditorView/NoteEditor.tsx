@@ -7,12 +7,12 @@ import {
   Input,
   Textarea,
   AttachFileButton,
+  Box,
 } from '~/web-platform'
 import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
 import {
   Note as NoteRenderer,
-  $title,
 } from '../Note'
 import { DeleteNoteButton } from './DeleteNoteButton'
 
@@ -78,15 +78,17 @@ export function NoteEditor({ note }: IProps) {
     <>
       <Toolbar left={left} right={right} />
 
-      <div hidden={isPreview}>
+      <Box
+        hidden={isPreview}
+        mb="medium"
+      >
         <Input
-          $style={$title}
           name="name"
           value={name}
           onChange={setName}
           autoFocus
         />
-      </div>
+      </Box>
 
       <div hidden={isPreview}>
         <Textarea

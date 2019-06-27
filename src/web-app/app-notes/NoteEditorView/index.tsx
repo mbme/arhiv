@@ -3,6 +3,7 @@ import {
   useIsodb,
   Note,
 } from '~/isodb-web-client'
+import { Heading } from '~/web-platform'
 import {
   NotFound,
 } from '../../parts'
@@ -45,7 +46,9 @@ export function NoteEditorView({ id }: IProps) {
 
   if (!note.lock) {
     return (
-      <h1>Note is in a read-only state, please wait</h1>
+      <Heading>
+        Note is in a read-only state, please wait
+      </Heading>
     )
   }
 

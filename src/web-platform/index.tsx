@@ -10,10 +10,7 @@ import { Textarea, examples as textareaExamples } from './Textarea'
 import { Icon, examples as iconExamples } from './Icon'
 import { AttachFileButton } from './AttachFileButton'
 import { examples as themeExamples } from './style'
-import {
-  Box,
-  FlexRow,
-} from './Box'
+import { Box } from './Box'
 import {
   Overlay,
   OverlayRenderer,
@@ -26,6 +23,11 @@ import {
 export { Link } from '~/web-router'
 export { CleanLink } from './CleanLink'
 export { Image } from './Image'
+export {
+  Row,
+  Column,
+  Spacer,
+} from './Layout'
 
 export {
   Button,
@@ -41,7 +43,6 @@ export {
   ConfirmationDialog,
   AttachFileButton,
   Box,
-  FlexRow,
 }
 
 const renderExamples = (title: string, examples: { [description: string]: JSX.Element }) => (

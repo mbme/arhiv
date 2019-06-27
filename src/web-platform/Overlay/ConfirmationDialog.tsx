@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Button } from '../Button'
 import { Modal } from './Modal'
-import { Box, FlexRow } from '../Box'
+import { Box } from '../Box'
+import { Row } from '../Layout'
 
 interface IProps {
   children: React.ReactNode
@@ -17,7 +18,7 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
         {children}
       </Box>
 
-      <FlexRow justify="flex-end">
+      <Row alignX="right">
         <Button onClick={onCancel}>
           CANCEL
         </Button>
@@ -29,7 +30,7 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
         >
           {confirmation}
         </Button>
-      </FlexRow>
+      </Row>
     </Modal>
   )
 }

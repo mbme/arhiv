@@ -1,22 +1,9 @@
 import * as React from 'react'
 import {
-  theme,
   stylish,
+  Row,
+  Spacer,
 } from '~/web-platform'
-
-const $toolbar = stylish({
-  position: 'sticky',
-  top: 0,
-  backgroundColor: theme.color.bg,
-  padding: `${theme.spacing.fine} 0`,
-  height: '60px',
-  marginBottom: theme.spacing.medium,
-
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexWrap: 'nowrap',
-})
 
 const $container = stylish(
   props => ({
@@ -33,13 +20,23 @@ interface IProps {
 
 export function Toolbar({ left, right }: IProps) {
   return (
-    <div className={$toolbar.className}>
+    <Row
+      position="sticky"
+      top="0"
+      bgColor="bg"
+      height="60px"
+      py="fine"
+      mb="medium"
+    >
       <div className={$container.with({ left: true }).className}>
         {left}
       </div>
+
+      <Spacer />
+
       <div className={$container.with({ left: false }).className}>
         {right}
       </div>
-    </div>
+    </Row>
   )
 }

@@ -5,8 +5,9 @@ import {
 import { theme } from './theme'
 
 // tslint:disable-next-line:no-unsafe-any
-const getThemeProp = (prop: string) => (val: any) => (theme as Obj)[prop][val] || val
+const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as Obj)[prop][val] || val
 const getSpacing = getThemeProp('spacing')
+const getColor = getThemeProp('color')
 
 const mediaFrom = (minWidth: string) => `@media screen and (min-width: ${minWidth})`
 
@@ -81,6 +82,13 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
   }),
   zIndex: val => ({
     zIndex: getThemeProp('zIndex')(val),
+  }),
+
+  color: val => ({
+    color: getColor(val),
+  }),
+  bgColor: val => ({
+    backgroundColor: getColor(val),
   }),
 
   relative: {

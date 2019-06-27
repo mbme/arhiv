@@ -5,7 +5,7 @@ import {
   stylish,
   theme,
 } from './style'
-import { FlexRow } from './Box'
+import { Row } from './Layout'
 
 const icons = {
   'log-out': (
@@ -141,7 +141,7 @@ export function Icon(props: IFeatherIconProps) {
 
 export const examples = {
   '': (
-    <FlexRow>
+    <Row>
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
@@ -153,6 +153,6 @@ export const examples = {
           title={iconType}
         />
       ))}
-    </FlexRow>
+    </Row>
   ),
 }

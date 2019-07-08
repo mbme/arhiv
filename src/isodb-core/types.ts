@@ -1,8 +1,11 @@
-// Attachments
-export interface IAttachment {
+export interface IDocument {
   readonly _id: string
   readonly _rev?: number
 }
+
+// Attachments
+// tslint:disable-next-line:no-empty-interface
+export interface IAttachment extends IDocument { }
 
 export enum RecordType {
   Note = 'note',
@@ -10,10 +13,8 @@ export enum RecordType {
 }
 
 // Records
-export interface IRecord {
-  readonly _id: string
+export interface IRecord extends IDocument {
   readonly _type: RecordType
-  readonly _rev?: number
   _refs: string[]
   _attachmentRefs: string[]
   _deleted?: boolean
@@ -51,6 +52,8 @@ export interface IChangeset {
   attachments: IAttachment[]
 }
 
+export type CompactDocument<T extends IDocument> = T | string
+
 export interface IChangesetResult {
   success: boolean
 
@@ -67,12 +70,12 @@ export interface IChangesetResult {
   /**
    * record or record id
    */
-  records: Array<IRecord | string>
+  records: Array<CompactDocument<IRecord>>
 
   /**
    * attachment or attachment id
    */
-  attachments: Array<IAttachment | string>
+  attachments: Array<CompactDocument<IAttachment>>
 }
 
 interface IMergeConflict<T> {

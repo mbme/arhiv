@@ -3,6 +3,7 @@ import {
 } from '~/utils'
 import {
   IRecord,
+  RecordType,
 } from '~/isodb-core/types'
 import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
@@ -13,20 +14,21 @@ interface ILock {
   release(): void
 }
 
+export function createRecord<T extends RecordType>(id: string, type: T) {
+  const now = nowS()
+
+  return {
+    _id: id,
+    _type: type,
+    _createdTs: now,
+    _updatedTs: now,
+    _refs: [] as string[],
+    _attachmentRefs: [] as string[],
+  }
+}
+
 // Active Record
 export abstract class BaseRecord<T extends IRecord> {
-  public static create(id: string) {
-    const now = nowS()
-
-    return {
-      _id: id,
-      _createdTs: now,
-      _updatedTs: now,
-      _refs: [] as string[],
-      _attachmentRefs: [] as string[],
-    }
-  }
-
   protected _record: T
   private _attachments?: Attachment[]
   private _hasNewAttachments = false
@@ -40,7 +42,7 @@ export abstract class BaseRecord<T extends IRecord> {
     this._record = { ...record }
   }
 
-  protected updateRefs(_value: string) {
+  protected _updateRefs(_value: string) {
     // FIXME implement parsing
     this._record._refs = []
     this._record._attachmentRefs = []

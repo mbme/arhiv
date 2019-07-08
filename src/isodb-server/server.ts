@@ -8,6 +8,7 @@ import {
   StringBody,
 } from '~/http-server'
 import { IChangeset } from '~/isodb-core/types'
+import { IDict } from '~/utils'
 import {
   isValidAuth,
   extractTokenCookie,
@@ -74,8 +75,7 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
 
     const changeset = JSON.parse(changesetField.value) as IChangeset
 
-    // TODO validate hashes
-    const assets: { [hash: string]: string } = {}
+    const assets: IDict = {}
     for (const file of body.files) {
       assets[file.field] = file.file
     }

@@ -10,6 +10,9 @@ const LEVELS = {
 
 type LogLevel = keyof typeof LEVELS
 
+// tslint:disable-next-line:no-unsafe-any
+const isLogLevel = (lvl: any): lvl is LogLevel => Object.keys(LEVELS).includes(lvl)
+
 let minLogLevel: LogLevel = 'INFO'
 
 class Logger {
@@ -57,6 +60,14 @@ export function createLogger(namespace: string) {
 
 export function setLogLevel(level: LogLevel) {
   minLogLevel = level
+}
+
+export function setLogLevelStr(levelStr: string, fallbackLvl?: LogLevel) {
+  if (isLogLevel(levelStr)) {
+    setLogLevel(levelStr)
+  } else if (fallbackLvl) {
+    setLogLevel(fallbackLvl)
+  }
 }
 
 export default new Logger('')

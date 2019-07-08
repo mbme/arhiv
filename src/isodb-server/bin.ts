@@ -1,5 +1,8 @@
 import path from 'path'
-import { createLogger, setLogLevel } from '~/logger'
+import {
+  createLogger,
+  setLogLevelStr,
+} from '~/logger'
 import { getFakeNotes } from '~/randomizer/faker'
 import PrimaryDB from './primary'
 import PrimaryInMemStorage from './primary-in-mem-storage'
@@ -10,8 +13,9 @@ const isProduction = process.env.NODE_ENV === 'production'
 const STATIC_DIR = path.join(__dirname, '../web-app/static')
 const DIST_DIR = path.join(__dirname, '../../dist')
 
+setLogLevelStr(process.env.LOG || '')
+
 const log = createLogger('isodb-server')
-setLogLevel('WARN')
 
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')

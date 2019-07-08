@@ -1,10 +1,16 @@
 import http from 'http'
 import urlParser from 'url'
 import zlib from 'zlib'
-import log from '../logger'
-import { isString, isObject } from '../utils'
-import { gzip, pipePromise } from '../utils/node'
 import { Stream } from 'stream'
+import { createLogger } from '~/logger'
+import {
+  isString,
+  isObject,
+} from '~/utils'
+import {
+  gzip,
+  pipePromise,
+} from '~/utils/node'
 import {
   IContext,
   Next,
@@ -24,6 +30,8 @@ interface IRoute {
   test(context: IContext): boolean
   cb: RequestHandler
 }
+
+const log = createLogger('http-server')
 
 export default class Server {
   private _middlewares: Middleware[] = [bodyParserMiddleware]

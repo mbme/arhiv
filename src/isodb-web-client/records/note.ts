@@ -2,7 +2,10 @@ import {
   INote,
   RecordType,
 } from '~/isodb-core/types'
-import { BaseRecord } from './base-record'
+import {
+  BaseRecord,
+  createRecord,
+} from './base-record'
 
 export class Note extends BaseRecord<INote> {
   get name() {
@@ -19,13 +22,12 @@ export class Note extends BaseRecord<INote> {
 
   set data(value: string) {
     this._record.data = value
-    this.updateRefs(value)
+    this._updateRefs(value)
   }
 
   public static create(id: string): INote {
     return {
-      ...BaseRecord.create(id),
-      _type: RecordType.Note,
+      ...createRecord(id, RecordType.Note),
       name: '',
       data: '',
     }

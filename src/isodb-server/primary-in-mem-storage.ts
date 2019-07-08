@@ -47,6 +47,7 @@ export default class PrimaryInMemStorage implements IPrimaryStorage {
     this._attachments.push(attachment)
     this._files.set(attachment._id, attachmentPath)
   }
+
   updateAttachment(attachment: IAttachment) {
     const attachmentPath = this._files.get(attachment._id)
     this.removeAttachment(attachment._id)

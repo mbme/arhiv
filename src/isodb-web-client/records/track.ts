@@ -2,7 +2,10 @@ import {
   ITrack,
   RecordType,
 } from '~/isodb-core/types'
-import { BaseRecord } from './base-record'
+import {
+  BaseRecord,
+  createRecord,
+} from './base-record'
 
 export class Track extends BaseRecord<ITrack> {
   get title() {
@@ -23,8 +26,7 @@ export class Track extends BaseRecord<ITrack> {
 
   public static create(id: string): ITrack {
     return {
-      ...BaseRecord.create(id),
-      _type: RecordType.Track,
+      ...createRecord(id, RecordType.Track),
       title: '',
       artist: '',
     }

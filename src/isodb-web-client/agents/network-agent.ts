@@ -1,4 +1,5 @@
 import { createLogger } from '~/logger'
+import { IDict } from '~/utils'
 import {
   IRecord,
   IAttachment,
@@ -37,9 +38,12 @@ export class NetworkAgent {
     rev: number,
     records: IRecord[],
     attachments: IAttachment[],
-    files: { [hash: string]: Blob },
+    files: IDict<Blob>,
   ): Promise<IChangesetResult> {
     this._assertNetworkState()
+
+    // tslint:disable-next-line:max-line-length
+    log.info(`sending ${records.length} records, ${attachments.length} attachments (${Object.keys(files).length} BLOBs)`)
 
     const changeset: IChangeset = {
       baseRev: rev,

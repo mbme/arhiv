@@ -24,7 +24,7 @@ import {
 import AppNotes from './app-notes'
 import AppLibrary from './app-library'
 
-setLogLevel('WARN')
+setLogLevel('INFO')
 
 injectGlobalStyles(`
   ${globalStyles}

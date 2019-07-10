@@ -194,7 +194,7 @@ export class IsodbReplica {
     for (const id of localAttachmentIds) {
       // remove unused new local attachments
       if (!idsInUse.has(id)) {
-        logger.info(`Removing unused local attachment ${id}`)
+        logger.warn(`Removing unused local attachment ${id}`)
         this._storage.removeLocalAttachment(id)
       }
     }

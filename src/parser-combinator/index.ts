@@ -184,6 +184,8 @@ class Parser<T> {
   }
 }
 
+export type ParserResult<P> = P extends Parser<infer T> ? T : never
+
 export const stringifyFailure = (f: IFailure) => `Failed to parse ${f.label} at pos ${f.pos}: ${f.msg}`
 
 export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => new Parser((msg, pos) => {

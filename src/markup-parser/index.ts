@@ -5,6 +5,9 @@ import {
   bof,
   anyCharExcept,
   everythingUntil,
+  select,
+  INode,
+  ParserResult,
 } from '~/parser-combinator'
 import { trimLeft } from '~/utils'
 import { groupCharsIntoStrings } from './utils'
@@ -32,6 +35,7 @@ export const strikethrough = anyCharExcept('~\n').oneOrMore().between(expect('~'
 const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']')).map(value => value.join(''))
 export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
   .asNode('Link')
+type LinkType = ParserResult<typeof link>
 
 const inlineElements = bold.orElse(mono).orElse(strikethrough).orElse(link)
 
@@ -103,3 +107,5 @@ export const markupParser =
     .orElse(paragraph)
     .zeroOrMore()
     .asNode('Markup')
+
+export const selectLinks = (node: INode<any>): LinkType[] => select('Link', node)

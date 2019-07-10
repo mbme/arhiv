@@ -1,14 +1,19 @@
-import {
-  nowS,
-} from '~/utils'
+import { nowS } from '~/utils'
+import { createLogger } from '~/logger'
 import {
   IRecord,
   RecordType,
 } from '~/isodb-core/types'
+import {
+  markupParser,
+  selectLinks,
+} from '~/markup-parser'
+import { stringifyFailure } from '~/parser-combinator'
 import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
-import { generateRandomId } from '~/isodb-core/utils'
+
+const log = createLogger('record')
 
 interface ILock {
   release(): void
@@ -42,25 +47,38 @@ export abstract class BaseRecord<T extends IRecord> {
     this._record = { ...record }
   }
 
-  protected _updateRefs(_value: string) {
-    // FIXME implement parsing
-    this._record._refs = []
-    this._record._attachmentRefs = []
+  protected _updateRefs(value: string) {
+    const refs: string[] = []
+    const attachmentRefs: string[] = []
+
+    const result = markupParser.parseAll(value)
+    if (!result.success) {
+      throw new Error(`Failed to parse markup: ${stringifyFailure(result)}`)
+    }
+
+    for (const link of selectLinks(result.result)) {
+      const id = link.value[0]
+
+      if (this._replica.getAttachment(id)) {
+        attachmentRefs.push(id)
+        continue
+      }
+
+      if (this._replica.getRecord(id)) {
+        refs.push(id)
+        continue
+      }
+
+      log.warn(`record ${this.id} references unknown entity ${id}`)
+    }
+
+    this._record._refs = refs
+    this._record._attachmentRefs = attachmentRefs
     this._attachments = undefined
   }
 
-  private _getRandomAttachmentId() {
-    let id: string
-
-    do {
-      id = generateRandomId()
-    } while (this._replica.getAttachment(id)) // make sure generated id is free
-
-    return id
-  }
-
   createAttachment(file: File) {
-    const id = this._getRandomAttachmentId()
+    const id = this._replica.getRandomId()
 
     this._replica.saveAttachment({ _id: id }, file)
     this._hasNewAttachments = true

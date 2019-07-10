@@ -10,6 +10,7 @@ import {
   IChangesetResult,
   MergeFunction,
 } from '~/isodb-core/types'
+import { generateRandomId } from '~/isodb-core/utils'
 import { IReplicaStorage } from './replica-storage'
 
 const logger = createLogger('isodb-replica')
@@ -42,6 +43,16 @@ export class IsodbReplica {
 
   getAttachment(id: string): IAttachment | undefined {
     return this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
+  }
+
+  getRandomId() {
+    let id: string
+
+    do {
+      id = generateRandomId()
+    } while (this.getRecord(id) || this.getAttachment(id)) // make sure generated id is free
+
+    return id
   }
 
   /**

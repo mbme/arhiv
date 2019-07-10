@@ -9,9 +9,10 @@ import {
   IRecord,
   IChangesetResult,
   MergeFunction,
+  IChangeset,
 } from '~/isodb-core/types'
 import { generateRandomId } from '~/isodb-core/utils'
-import { IReplicaStorage } from './replica-storage'
+import { IReplicaStorage, LocalAttachments } from './replica-storage'
 
 const logger = createLogger('isodb-replica')
 
@@ -21,7 +22,7 @@ export interface IEvents {
 
 export class IsodbReplica {
   constructor(
-    public _storage: IReplicaStorage,
+    private _storage: IReplicaStorage,
     public events = new PubSub<IEvents>(),
   ) { }
 
@@ -89,6 +90,16 @@ export class IsodbReplica {
     this._notify()
   }
 
+  getChangeset(): [IChangeset, LocalAttachments] {
+    const changeset = {
+      baseRev: this.getRev(),
+      records: this._storage.getLocalRecords(),
+      attachments: this._storage.getLocalAttachments(),
+    }
+
+    return [changeset, this._storage.getLocalAttachmentsData()]
+  }
+
   async applyChangesetResult(changesetResult: IChangesetResult, merge: MergeFunction) {
     if (this.getRev() !== changesetResult.baseRev) {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
@@ -105,7 +116,7 @@ export class IsodbReplica {
       this._storage.clearLocalData()
       this._notify()
 
-      return
+      return false
     }
 
     const recordConflicts = []
@@ -177,6 +188,8 @@ export class IsodbReplica {
     this._storage.upgrade(changesetResult.currentRev, newRecords, newAttachments)
 
     this._notify()
+
+    return true
   }
 
   /**

@@ -1,7 +1,6 @@
 import { createLogger } from '~/logger'
-import {
-  IMergeConflicts,
-} from '~/isodb-core/types'
+import { IMergeConflicts } from '~/isodb-core/types'
+import { isEmptyChangeset } from '~/isodb-core/utils'
 import { IsodbReplica } from '../replica'
 import { LockAgent } from './lock-agent'
 import { NetworkAgent } from './network-agent'
@@ -66,16 +65,21 @@ export class SyncAgent {
       let tries = 0
       while (true) {
         log.debug(`sync: trial #${tries + 1}`)
-        const result = await this.networkAgent.syncChanges(
-          this.replica.getRev(),
-          this.replica._storage.getLocalRecords(),
-          this.replica._storage.getLocalAttachments(),
-          this.replica._storage.getLocalAttachmentsData(),
-        )
+        const [changeset, localAttachments] = this.replica.getChangeset()
 
-        await this.replica.applyChangesetResult(result, this._merge)
+        if (isEmptyChangeset(changeset)) {
+          log.info('sync: sending empty changeset')
+        } else {
+          // tslint:disable-next-line:max-line-length
+          log.info(`sync: sending ${changeset.records.length} records, ${changeset.attachments.length} attachments (${Object.keys(localAttachments).length} BLOBs)`)
+        }
 
-        if (result.success) {
+        const result = await this.networkAgent.syncChanges(changeset, localAttachments)
+        log.info(`sync: succes=${result.success}`)
+
+        const needSync = await this.replica.applyChangesetResult(result, this._merge)
+
+        if (!needSync) {
           log.debug('sync: ok')
 
           this._state = 'synced'

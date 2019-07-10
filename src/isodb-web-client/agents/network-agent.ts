@@ -1,12 +1,10 @@
 import { createLogger } from '~/logger'
-import { IDict } from '~/utils'
 import {
-  IRecord,
-  IAttachment,
   IChangesetResult,
   IChangeset,
 } from '~/isodb-core/types'
 import { WebClientEvents } from '../events'
+import { LocalAttachments } from '../replica/replica-storage'
 
 const log = createLogger('isodb-web-client:network-agent')
 
@@ -35,26 +33,15 @@ export class NetworkAgent {
   }
 
   async syncChanges(
-    rev: number,
-    records: IRecord[],
-    attachments: IAttachment[],
-    files: IDict<Blob>,
+    changeset: IChangeset,
+    localAttachments: LocalAttachments,
   ): Promise<IChangesetResult> {
     this._assertNetworkState()
 
-    // tslint:disable-next-line:max-line-length
-    log.info(`sending ${records.length} records, ${attachments.length} attachments (${Object.keys(files).length} BLOBs)`)
-
-    const changeset: IChangeset = {
-      baseRev: rev,
-      records,
-      attachments,
-    }
-
     const data = new FormData()
     data.append('changeset', JSON.stringify(changeset))
-    for (const [hash, blob] of Object.entries(files)) {
-      data.append(hash, blob)
+    for (const [id, blob] of Object.entries(localAttachments)) {
+      data.append(id, blob)
     }
 
     const response = await fetch('/api/changeset', {

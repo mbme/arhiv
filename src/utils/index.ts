@@ -143,3 +143,5 @@ export function classNames(...args: any[]) {
     return acc
   }, []).join(' ')
 }
+
+export const isEmptyObject = (x: object) => Object.keys(x).length === 0

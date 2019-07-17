@@ -7,7 +7,8 @@ import {
   MultipartBody,
   StringBody,
 } from '~/http-server'
-import { IChangeset } from '~/isodb-core/types'
+import { IChangeset } from '~/isodb/types'
+import { PrimaryDB } from '~/isodb/primary'
 import { IDict } from '~/utils'
 import {
   isValidAuth,
@@ -15,7 +16,6 @@ import {
   resolveAsset,
   createToken,
 } from './utils'
-import PrimaryDB from './primary'
 
 const log = createLogger('isodb-server')
 

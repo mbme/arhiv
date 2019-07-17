@@ -1,52 +1,68 @@
 import log from '../logger'
+import { Deferred } from './deferred'
 
-const scheduleTask = global.setImmediate || ((task) => setTimeout(task, 0))
+type Action<T> = () => T
+type Task<T> = [Deferred<T>, Action<T>]
 
-type OnClose = () => void
-type Task = () => Promise<any>
+export class Queue {
+  private _queue: Array<Task<any>> = []
+  private _taskId?: NodeJS.Immediate
+  private _deferredClose?: Deferred<void>
 
-export default function createQueue() {
-  let _taskId: NodeJS.Immediate | undefined
-  let _onClose: OnClose | undefined
-  const _queue: Task[] = []
+  private _processQueue = async () => {
+    while (this._queue.length) {
+      const [deferred, action] = this._queue.shift()!
 
-  async function processQueue() {
-    while (_queue.length) {
-      const action = _queue.shift()!
-      await action().catch((e) => log.error('queued action failed', e))
+      try {
+        const result = await Promise.resolve(action())
+        deferred.resolve(result)
+      } catch (e) {
+        log.error('queued action failed', e)
+
+        // tslint:disable-next-line:no-unsafe-any
+        deferred.reject(e)
+      }
     }
-    _taskId = undefined
-    if (_onClose) _onClose()
+
+    this._taskId = undefined
+
+    if (this._deferredClose) {
+      this._deferredClose.resolve()
+    }
   }
 
-  const scheduleQueueProcessing = () => {
-    if (!_taskId) {
-      _taskId = scheduleTask(processQueue)
+  private _scheduleQueueProcessing() {
+    if (!this._taskId) {
+      this._taskId = global.setImmediate(this._processQueue)
     }
   }
 
-  return {
-    push<T>(action: () => T): Promise<T> {
-      return new Promise((resolve, reject) => {
-        if (_onClose) throw new Error('queue has been closed')
+  isClosed() {
+    return !!this._deferredClose
+  }
 
-        // tslint:disable-next-line:no-async-without-await
-        _queue.push(async () => {
-          try {
-            resolve(action())
-          } catch (e) {
-            reject(e)
-          }
-        })
-        scheduleQueueProcessing()
-      })
-    },
+  private assertNotClosed() {
+    if (this.isClosed()) {
+      throw new Error('queue has been closed')
+    }
+  }
 
-    close() {
-      return new Promise<void>((resolve) => {
-        _onClose = resolve
-        scheduleQueueProcessing()
-      })
-    },
+  async push<T>(action: Action<T>): Promise<T> {
+    this.assertNotClosed()
+
+    const deferred = new Deferred<T>()
+
+    this._queue.push([deferred, action])
+    this._scheduleQueueProcessing()
+
+    return deferred.promise
+  }
+
+  async close() {
+    this.assertNotClosed()
+
+    this._deferredClose = new Deferred<void>()
+
+    return this._deferredClose.promise
   }
 }

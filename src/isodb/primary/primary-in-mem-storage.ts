@@ -4,7 +4,7 @@ import {
 } from '~/isodb/types'
 import { IPrimaryStorage } from './primary-storage'
 
-export default class PrimaryInMemStorage implements IPrimaryStorage {
+export class PrimaryInMemStorage implements IPrimaryStorage {
   _documents: IDocument[] = []
   _attachments: IAttachment[] = []
   _rev = 0

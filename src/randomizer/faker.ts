@@ -1,9 +1,14 @@
 import path from 'path'
-import { INote, IAttachment, RecordType } from '~/isodb-core/types'
-import { generateRandomId } from '~/isodb-core/utils'
+import {
+  IDocument,
+  IAttachment,
+  DocumentType,
+} from '~/isodb/types'
+import { generateRandomId } from '~/isodb/utils'
 import {
   createArray,
   nowS,
+  IDict,
 } from '~/utils'
 import { sha256File } from '~/utils/node'
 import {
@@ -18,10 +23,7 @@ import {
 } from './index'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
-// tslint:disable-next-line:interface-over-type-literal
-type Images = { [hash: string]: string }
-
-async function getFakeNote(generator: ITextGenerator, images: Images): Promise<INote> {
+async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IDocument> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()
@@ -52,8 +54,8 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
     _id: generateRandomId(),
     _refs: [],
     _attachmentRefs: Array.from(refs),
-    _rev: 0,
-    _type: RecordType.Note,
+    _rev: 1,
+    _type: DocumentType.Note,
     _createdTs: now,
     _updatedTs: now,
     name: name.substring(0, name.length - 1),
@@ -61,11 +63,11 @@ async function getFakeNote(generator: ITextGenerator, images: Images): Promise<I
   }
 }
 
-async function listImages(basePath: string): Promise<Images> {
+async function listImages(basePath: string): Promise<IDict> {
   const files = await listFiles(basePath)
   const images = files.filter((name) => name.match(/\.(jpg|jpeg)$/i))
 
-  const result: Images = {}
+  const result: IDict = {}
 
   await Promise.all(images.map(async (name) => {
     const filePath = path.join(basePath, name)
@@ -80,6 +82,9 @@ function createAttachments(ids: string[]) {
   return ids.map(id => {
     const attachment: IAttachment = {
       _id: id,
+      _rev: 1,
+      _type: '',
+      _size: 999,
     }
 
     return attachment
@@ -87,13 +92,13 @@ function createAttachments(ids: string[]) {
 }
 
 export async function getFakeNotes(count: number) {
-  const resourcesPath = path.join(__dirname, '../../resources')
+  const resourcesPath = path.join(process.env.BASE_DIR!, 'resources')
   const images = await listImages(resourcesPath)
   const text = await readText(path.join(resourcesPath, 'text.txt'))
   const generator = createTextGenerator(text)
 
   return {
-    records: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
+    documents: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
     attachments: createAttachments(Object.keys(images)),
     attachedFiles: images,
   }

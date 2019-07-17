@@ -7,6 +7,11 @@ export interface IDocument {
   readonly _deleted?: boolean
 }
 
+export enum DocumentType {
+  Note = 'note',
+  Track = 'track',
+}
+
 export interface IAttachment {
   readonly _id: string
   readonly _rev: number

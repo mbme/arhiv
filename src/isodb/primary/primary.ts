@@ -4,11 +4,12 @@ import {
   IChangesetResult,
   IChangeset,
 } from '~/isodb/types'
+import { isEmptyChangeset } from '~/isodb/utils'
 import { IPrimaryStorage } from './primary-storage'
 
 const log = createLogger('isodb-primary')
 
-export default class PrimaryDB {
+export class PrimaryDB {
   constructor(private _storage: IPrimaryStorage) { }
 
   getDocuments() {
@@ -48,7 +49,7 @@ export default class PrimaryDB {
     }
 
     // skip empty changesets
-    if (!changeset.documents.length && !changeset.attachments.length) {
+    if (isEmptyChangeset(changeset)) {
       log.debug('got empty changeset, skipping rev increase')
 
       return this._getChangesetResult(changeset.baseRev, true)

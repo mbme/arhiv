@@ -2,6 +2,8 @@ export interface IDocument {
   readonly _id: string
   readonly _rev: number
   readonly _type: string
+  readonly _createdTs: number
+  readonly _updatedTs: number
   readonly _refs: string[]
   readonly _attachmentRefs: string[]
   readonly _deleted?: boolean
@@ -15,6 +17,7 @@ export enum DocumentType {
 export interface IAttachment {
   readonly _id: string
   readonly _rev: number
+  readonly _createdTs: number
   readonly _type: string
   readonly _size: number
 }

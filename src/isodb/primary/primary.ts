@@ -1,4 +1,6 @@
 import { createLogger } from '~/logger'
+import { getMimeType } from '~/file-prober'
+import { getFileSize } from '~/utils/fs'
 import { IDict } from '~/utils'
 import {
   IChangesetResult,
@@ -40,7 +42,7 @@ export class PrimaryDB {
     return this._storage.getAttachmentPath(id)
   }
 
-  applyChangeset(changeset: IChangeset, attachedFiles: IDict) {
+  async applyChangeset(changeset: IChangeset, attachedFiles: IDict) {
     // ensure client had latest revision
     if (this._storage.getRev() !== changeset.baseRev) {
       log.debug(`can't apply changeset: expected rev ${this._storage.getRev()}, got ${changeset.baseRev}`)
@@ -66,6 +68,7 @@ export class PrimaryDB {
       })
     }
 
+    // TODO parallel this
     for (const changedAttachment of changeset.attachments) {
       const existingAttachment = this.getAttachment(changedAttachment._id)
       const attachedFile = attachedFiles[changedAttachment._id]
@@ -85,9 +88,19 @@ export class PrimaryDB {
           _size: existingAttachment._size,
         })
       } else {
+        const [
+          _type,
+          _size,
+        ] = await Promise.all([
+          await getMimeType(attachedFile),
+          await getFileSize(attachedFile),
+        ])
+
         this._storage.addAttachment({
           ...changedAttachment,
           _rev: newRev,
+          _type,
+          _size,
         }, attachedFile)
       }
     }

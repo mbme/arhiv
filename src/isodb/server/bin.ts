@@ -29,11 +29,13 @@ export default async function run(port: string, password: string, rootDir: strin
       attachments,
       attachedFiles,
     } = await getFakeNotes(30)
-    db.applyChangeset({
+
+    await db.applyChangeset({
       baseRev: 0,
       documents,
       attachments,
     }, attachedFiles)
+
     log.info(`Generated ${documents.length} fake notes`)
   }
 

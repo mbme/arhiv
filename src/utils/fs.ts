@@ -69,3 +69,5 @@ export const readJSON = async <T>(name: string) => JSON.parse(await readText(nam
 
 export const writeText = (name: string, data: string) => fs.promises.writeFile(name, data, 'utf8')
 export const writeJSON = (name: string, data: object) => writeText(name, JSON.stringify(data, undefined, 2))
+
+export const getFileSize = (filePath: string) => fs.promises.stat(filePath).then(stats => stats.size)

@@ -7,7 +7,7 @@ import { getFakeNotes } from '~/randomizer/faker'
 import {
   PrimaryDB,
   PrimaryInMemStorage,
-} from '~/isodb/primary'
+} from '../primary'
 import createServer from './server'
 
 const isProduction = process.env.NODE_ENV === 'production'

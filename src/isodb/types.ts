@@ -1,3 +1,5 @@
+import { Without } from '~/utils'
+
 export interface IDocument {
   readonly _id: string
   readonly _rev: number
@@ -9,11 +11,6 @@ export interface IDocument {
   readonly _deleted?: boolean
 }
 
-export enum DocumentType {
-  Note = 'note',
-  Track = 'track',
-}
-
 export interface IAttachment {
   readonly _id: string
   readonly _rev: number
@@ -21,6 +18,8 @@ export interface IAttachment {
   readonly _type: string
   readonly _size: number
 }
+
+export type NewAttachment = Without<IAttachment, '_type' | '_size'>
 
 export interface IChangeset {
   /**
@@ -36,7 +35,7 @@ export interface IChangeset {
   /**
    * new or updated attachments
    */
-  readonly attachments: IAttachment[]
+  readonly attachments: NewAttachment[]
 }
 
 export interface IChangesetResult {

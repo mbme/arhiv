@@ -81,6 +81,8 @@ export class PrimaryDB {
         this._storage.updateAttachment({
           ...changedAttachment,
           _rev: newRev,
+          _type: existingAttachment._type,
+          _size: existingAttachment._size,
         })
       } else {
         this._storage.addAttachment({

@@ -1,5 +1,6 @@
 import fs from 'fs'
 import { createLogger } from '~/logger'
+import { IDict } from '~/utils'
 import { Queue } from '~/utils/queue'
 import { getMimeType } from '~/file-prober'
 import {
@@ -7,9 +8,8 @@ import {
   MultipartBody,
   StringBody,
 } from '~/http-server'
-import { IChangeset } from '~/isodb/types'
-import { PrimaryDB } from '~/isodb/primary'
-import { IDict } from '~/utils'
+import { IChangeset } from '../types'
+import { PrimaryDB } from '../primary'
 import {
   isValidAuth,
   extractTokenCookie,

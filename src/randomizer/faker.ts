@@ -1,14 +1,17 @@
 import path from 'path'
+import { NewAttachment } from '~/isodb/types'
 import {
-  IDocument,
-  IAttachment,
+  generateRandomId,
+  createDocument,
+} from '~/isodb/utils'
+import {
   DocumentType,
-} from '~/isodb/types'
-import { generateRandomId } from '~/isodb/utils'
+  INote,
+} from '~/arhiv/types'
 import {
   createArray,
-  nowS,
   IDict,
+  nowS,
 } from '~/utils'
 import { sha256File } from '~/utils/node'
 import {
@@ -23,7 +26,7 @@ import {
 } from './index'
 import createTextGenerator, { ITextGenerator } from './text-generator'
 
-async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IDocument> {
+async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<INote> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()
@@ -48,16 +51,9 @@ async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<ID
     },
   ).join('\n\n')
 
-  const now = nowS()
-
   return {
-    _id: generateRandomId(),
-    _refs: [],
+    ...createDocument(generateRandomId(), DocumentType.Note),
     _attachmentRefs: Array.from(refs),
-    _rev: 1,
-    _type: DocumentType.Note,
-    _createdTs: now,
-    _updatedTs: now,
     name: name.substring(0, name.length - 1),
     data,
   }
@@ -78,17 +74,8 @@ async function listImages(basePath: string): Promise<IDict> {
   return result
 }
 
-function createAttachments(ids: string[]) {
-  return ids.map(id => {
-    const attachment: IAttachment = {
-      _id: id,
-      _rev: 1,
-      _type: '',
-      _size: 999,
-    }
-
-    return attachment
-  })
+function createAttachments(ids: string[]): NewAttachment[] {
+  return ids.map(_id => ({ _id, _rev: 0, _createdTs: nowS() }))
 }
 
 export async function getFakeNotes(count: number) {

@@ -1,34 +1,35 @@
 import { IDict } from '~/utils'
 import {
-  IRecord,
+  IDocument,
   IAttachment,
-} from '~/isodb-core/types'
+  NewAttachment,
+} from '../types'
 
 export type LocalAttachments = IDict<Blob>
 
 export interface IReplicaStorage {
   getRev(): number
 
-  getRecords(): IRecord[]
-  getLocalRecords(): IRecord[]
+  getDocuments(): IDocument[]
+  getLocalDocuments(): IDocument[]
 
   getAttachments(): IAttachment[]
   getLocalAttachments(): IAttachment[]
 
-  getRecord(id: string): IRecord | undefined
-  getLocalRecord(id: string): IRecord | undefined
+  getDocument(id: string): IDocument | undefined
+  getLocalDocument(id: string): IDocument | undefined
 
   getAttachment(id: string): IAttachment | undefined
   getLocalAttachment(id: string): IAttachment | undefined
 
-  addLocalRecord(record: IRecord): void
-  addLocalAttachment(attachment: IAttachment, blob?: File): void
+  addLocalDocument(document: IDocument): void
+  addLocalAttachment(attachment: NewAttachment, blob?: File): void
 
-  removeLocalRecord(id: string): void
+  removeLocalDocument(id: string): void
   removeLocalAttachment(id: string): void
 
   getAttachmentUrl(id: string): string | undefined
   getLocalAttachmentsData(): LocalAttachments
-  upgrade(rev: number, records: IRecord[], attachments: IAttachment[]): void
+  upgrade(rev: number, documents: IDocument[], attachments: IAttachment[]): void
   clearLocalData(): void
 }

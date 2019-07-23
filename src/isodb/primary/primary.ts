@@ -42,7 +42,7 @@ export class PrimaryDB {
     return this._storage.getAttachmentPath(id)
   }
 
-  async applyChangeset(changeset: IChangeset, attachedFiles: IDict) {
+  async applyChangeset(changeset: IChangeset, attachedFiles: IDict): Promise<IChangesetResult> {
     // ensure client had latest revision
     if (this._storage.getRev() !== changeset.baseRev) {
       log.debug(`can't apply changeset: expected rev ${this._storage.getRev()}, got ${changeset.baseRev}`)

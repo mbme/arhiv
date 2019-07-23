@@ -1,29 +1,29 @@
 import { map2object } from '~/utils'
 import {
-  IRecord,
+  IDocument,
   IAttachment,
-} from '~/isodb-core/types'
+} from '../types'
 import { IReplicaStorage } from './replica-storage'
 
 export class ReplicaInMemStorage implements IReplicaStorage {
-  _records: IRecord[] = []
-  _attachments: IAttachment[] = []
-  _rev = 0
+  private _documents: IDocument[] = []
+  private _attachments: IAttachment[] = []
+  private _rev = 0
 
-  _localRecords = new Map<string, IRecord>()
-  _localAttachments = new Map<string, IAttachment>()
-  _localFiles = new Map<string, Blob>()
+  private _localDocuments = new Map<string, IDocument>()
+  private _localAttachments = new Map<string, IAttachment>()
+  private _localFiles = new Map<string, Blob>()
 
   getRev() {
     return this._rev
   }
 
-  getRecords() {
-    return this._records.slice(0)
+  getDocuments() {
+    return this._documents.slice(0)
   }
 
-  getLocalRecords() {
-    return Array.from(this._localRecords.values())
+  getLocalDocuments() {
+    return Array.from(this._localDocuments.values())
   }
 
   getAttachments() {
@@ -34,12 +34,12 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     return Array.from(this._localAttachments.values())
   }
 
-  getRecord(id: string) {
-    return this._records.find(item => item._id === id)
+  getDocument(id: string) {
+    return this._documents.find(item => item._id === id)
   }
 
-  getLocalRecord(id: string) {
-    return this._localRecords.get(id)
+  getLocalDocument(id: string) {
+    return this._localDocuments.get(id)
   }
 
   getAttachment(id: string) {
@@ -50,11 +50,8 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     return this._localAttachments.get(id)
   }
 
-  /**
-   * add or update existing local record
-   */
-  addLocalRecord(record: IRecord) {
-    this._localRecords.set(record._id, record)
+  addLocalDocument(document: IDocument) {
+    this._localDocuments.set(document._id, document)
   }
 
   /**
@@ -67,8 +64,8 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     }
   }
 
-  removeLocalRecord(id: string) {
-    this._localRecords.delete(id)
+  removeLocalDocument(id: string) {
+    this._localDocuments.delete(id)
   }
 
   removeLocalAttachment(id: string) {
@@ -88,14 +85,14 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     return map2object(this._localFiles)
   }
 
-  upgrade(rev: number, records: IRecord[], attachments: IAttachment[]) {
+  upgrade(rev: number, documents: IDocument[], attachments: IAttachment[]) {
     this._rev = rev
-    this._records = records
+    this._documents = documents
     this._attachments = attachments
   }
 
   clearLocalData() {
-    this._localRecords.clear()
+    this._localDocuments.clear()
     this._localAttachments.clear()
     this._localFiles.clear()
   }

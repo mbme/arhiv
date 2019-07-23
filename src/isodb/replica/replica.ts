@@ -6,13 +6,16 @@ import {
 import { createLogger } from '~/logger'
 import {
   IAttachment,
-  IRecord,
+  IDocument,
   IChangesetResult,
   MergeFunction,
   IChangeset,
-} from '~/isodb-core/types'
-import { generateRandomId } from '~/isodb-core/utils'
-import { IReplicaStorage, LocalAttachments } from './replica-storage'
+} from '../types'
+import { generateRandomId } from '../utils'
+import {
+  IReplicaStorage,
+  LocalAttachments,
+} from './replica-storage'
 
 const logger = createLogger('isodb-replica')
 
@@ -38,8 +41,8 @@ export class IsodbReplica {
     return this._storage.getAttachmentUrl(id)
   }
 
-  getRecord(id: string): IRecord | undefined {
-    return this._storage.getLocalRecord(id) || this._storage.getRecord(id)
+  getDocument(id: string): IDocument | undefined {
+    return this._storage.getLocalDocument(id) || this._storage.getDocument(id)
   }
 
   getAttachment(id: string): IAttachment | undefined {
@@ -51,25 +54,22 @@ export class IsodbReplica {
 
     do {
       id = generateRandomId()
-    } while (this.getRecord(id) || this.getAttachment(id)) // make sure generated id is free
+    } while (this.getDocument(id) || this.getAttachment(id)) // make sure generated id is free
 
     return id
   }
 
-  /**
-   * @returns all records, including local
-   */
-  getRecords(): IRecord[] {
-    const localRecords = this._storage.getLocalRecords()
-    const localIds = new Set(localRecords.map(item => item._id))
+  getDocuments(): IDocument[] {
+    const localDocuments = this._storage.getLocalDocuments()
+    const localIds = new Set(localDocuments.map(item => item._id))
 
-    const records = this._storage.getRecords().filter(item => !localIds.has(item._id))
+    const documents = this._storage.getDocuments().filter(item => !localIds.has(item._id))
 
     // TODO sort
     return [
-      ...records,
-      ...localRecords,
-    ].filter(record => !record._deleted) // FIXME what to do with deleted records?
+      ...documents,
+      ...localDocuments,
+    ].filter(document => !document._deleted) // FIXME what to do with deleted documents?
   }
 
   saveAttachment(attachment: IAttachment, blob?: File) {
@@ -82,8 +82,8 @@ export class IsodbReplica {
     this._notify()
   }
 
-  saveRecord(record: IRecord) {
-    this._storage.addLocalRecord(record)
+  saveDocument(document: IDocument) {
+    this._storage.addLocalDocument(document)
 
     this.compact()
 
@@ -93,7 +93,7 @@ export class IsodbReplica {
   getChangeset(): [IChangeset, LocalAttachments] {
     const changeset = {
       baseRev: this.getRev(),
-      records: this._storage.getLocalRecords(),
+      documents: this._storage.getLocalDocuments(),
       attachments: this._storage.getLocalAttachments(),
     }
 
@@ -105,33 +105,33 @@ export class IsodbReplica {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }
 
-    const currentRecords = array2object(this._storage.getRecords(), item => item._id)
-    const newRecords = changesetResult.records.map(item => isString(item) ? currentRecords[item] : item)
+    const currentDocuments = array2object(this._storage.getDocuments(), item => item._id)
+    const newDocuments = changesetResult.documents.map(item => isString(item) ? currentDocuments[item] : item)
 
     const currentAttachments = array2object(this._storage.getAttachments(), item => item._id)
     const newAttachments = changesetResult.attachments.map(item => isString(item) ? currentAttachments[item] : item)
 
     if (changesetResult.success) {
-      this._storage.upgrade(changesetResult.currentRev, newRecords, newAttachments)
+      this._storage.upgrade(changesetResult.currentRev, newDocuments, newAttachments)
       this._storage.clearLocalData()
       this._notify()
 
       return false
     }
 
-    const recordConflicts = []
-    // for each local record
-    for (const localRecord of this._storage.getLocalRecords()) {
-      const existingRecord = currentRecords[localRecord._id]
-      const newRecord = newRecords.find(item => item._id === localRecord._id)!
+    const documentConflicts = []
+    // for each local document
+    for (const localDocument of this._storage.getLocalDocuments()) {
+      const existingDocument = currentDocuments[localDocument._id]
+      const newDocument = newDocuments.find(item => item._id === localDocument._id)!
 
-      // if is existing record & revision changed
+      // if is existing document & revision changed
       //   mark as a conflict
-      if (existingRecord._rev !== newRecord._rev) {
-        recordConflicts.push({
-          base: existingRecord,
-          updated: newRecord,
-          local: localRecord,
+      if (existingDocument._rev !== newDocument._rev) {
+        documentConflicts.push({
+          base: existingDocument,
+          updated: newDocument,
+          local: localDocument,
         })
       }
     }
@@ -152,11 +152,11 @@ export class IsodbReplica {
     }
 
     // resolve conflicts if needed
-    if (recordConflicts.length || attachmentConflicts.length) {
-      const resolvedConflicts = await merge({ records: recordConflicts, attachments: attachmentConflicts })
+    if (documentConflicts.length || attachmentConflicts.length) {
+      const resolvedConflicts = await merge({ documents: documentConflicts, attachments: attachmentConflicts })
 
-      for (const updatedRecord of resolvedConflicts.records) {
-        this._storage.addLocalRecord(updatedRecord)
+      for (const updatedDocument of resolvedConflicts.documents) {
+        this._storage.addLocalDocument(updatedDocument)
       }
 
       for (const updatedAttachment of resolvedConflicts.attachments) {
@@ -164,28 +164,28 @@ export class IsodbReplica {
       }
     }
 
-    // for each local record
-    //   if references deleted record
-    //     restore deleted record & all deleted records referenced by it
-    const idsToCheck = this._storage.getLocalRecords().flatMap(item => item._refs)
+    // for each local document
+    //   if references deleted document
+    //     restore deleted document & all deleted documents referenced by it
+    const idsToCheck = this._storage.getLocalDocuments().flatMap(item => item._refs)
     const idsChecked = new Set()
     while (idsToCheck.length) {
       const id = idsToCheck.shift()!
 
       if (idsChecked.has(id)) continue
 
-      const existingRecord = currentRecords[id]
-      const newRecord = newRecords.find(item => item._id === id)
-      if (existingRecord && !newRecord) {
-        logger.info(`Restoring record ${id}`)
-        this._storage.addLocalRecord(existingRecord) // restore record
-        idsToCheck.push(...existingRecord._refs)
+      const existingDocument = currentDocuments[id]
+      const newDocument = newDocuments.find(item => item._id === id)
+      if (existingDocument && !newDocument) {
+        logger.info(`Restoring document ${id}`)
+        this._storage.addLocalDocument(existingDocument) // restore document
+        idsToCheck.push(...existingDocument._refs)
       }
 
       idsChecked.add(id)
     }
 
-    this._storage.upgrade(changesetResult.currentRev, newRecords, newAttachments)
+    this._storage.upgrade(changesetResult.currentRev, newDocuments, newAttachments)
 
     this._notify()
 
@@ -197,8 +197,8 @@ export class IsodbReplica {
    */
   compact() {
     const idsInUse = new Set()
-    for (const record of this._storage.getRecords()) {
-      for (const id of record._attachmentRefs) {
+    for (const document of this._storage.getDocuments()) {
+      for (const id of document._attachmentRefs) {
         idsInUse.add(id)
       }
     }

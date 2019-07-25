@@ -8,7 +8,6 @@ import {
   IAttachment,
   IDocument,
   IChangesetResult,
-  MergeFunction,
   IChangeset,
 } from '../types'
 import { generateRandomId } from '../utils'
@@ -100,7 +99,7 @@ export class IsodbReplica {
     return [changeset, this._storage.getLocalAttachmentsData()]
   }
 
-  async applyChangesetResult(changesetResult: IChangesetResult, merge: MergeFunction) {
+  async applyChangesetResult(changesetResult: IChangesetResult) {
     if (this.getRev() !== changesetResult.baseRev) {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }

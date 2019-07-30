@@ -1,23 +1,53 @@
-import { IDocument, IChangesetResult } from "../types";
-import { IReplicaStorage } from "./replica-storage";
+import { nowS } from '~/utils'
+import { IDocument } from '../types'
 
-type ConflictType = 'both-updated'
-  | 'local-updated-remote-deleted'
-  | 'local-deleted-remote-updated'
-  | 'both-deleted'
-  | 'local-ref-deleted-attachment'
-  | 'local-ref-deleted-document'
-  | 'remote-ref-deleted-document'
+class DocumentConflict<T extends IDocument> {
+  final?: T
 
-interface IConflict<T extends IDocument> {
-  conflictType: ConflictType
-  base: T
-  updated: T
-  local: T
-  resolved?: T
+  constructor(
+    public base: T,
+    public remote: T,
+    public local: T,
+    private _onResolved: () => void,
+  ) { }
+
+  isResolved() {
+    return !!this.final
+  }
+
+  resolve(final: T) {
+    this.final = {
+      ...final,
+      _rev: this.remote._rev,
+      _updatedTs: nowS(),
+    }
+    this._onResolved()
+  }
+
+  useLocal() {
+    this.resolve(this.local)
+  }
+
+  useRemote() {
+    this.resolve(this.remote)
+  }
 }
 
-interface IChangesetMergeConflict<T extends IDocument> {
-  changesetResult: IChangesetResult
-  conflicts: IConflict<T>[]
+export class MergeConflicts<T extends IDocument> {
+  conflicts: Array<DocumentConflict<T>> = []
+
+  constructor(private onResolved: (documents: T[]) => void) { }
+
+  addConflict(base: T, remote: T, local: T) {
+    this.conflicts.push(new DocumentConflict(base, remote, local, this._onResolved))
+  }
+
+  private _onResolved = () => {
+    const pendingConflicts = this.conflicts.filter(conflict => !conflict.isResolved())
+    if (pendingConflicts.length) {
+      return
+    }
+
+    this.onResolved(this.conflicts.map(conflict => conflict.final!))
+  }
 }

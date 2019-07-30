@@ -6,7 +6,6 @@ export interface IDocument {
   readonly _type: string
   readonly _createdTs: number
   readonly _updatedTs: number
-  readonly _refs: string[]
   readonly _attachmentRefs: string[]
   readonly _deleted?: boolean
 }
@@ -38,7 +37,7 @@ export interface IChangeset {
   readonly attachments: NewAttachment[]
 }
 
-export interface IChangesetResult {
+export interface IChangesetResult<T extends IDocument> {
   /**
    * if changeset was successfully applied
    */
@@ -57,7 +56,7 @@ export interface IChangesetResult {
   /**
    * documents with _rev > baseRev
    */
-  readonly documents: IDocument[]
+  readonly documents: T[]
 
   /**
    * attachments with _rev > baseRev

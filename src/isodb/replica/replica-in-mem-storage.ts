@@ -5,12 +5,12 @@ import {
 } from '../types'
 import { IReplicaStorage } from './replica-storage'
 
-export class ReplicaInMemStorage implements IReplicaStorage {
-  private _documents: IDocument[] = []
+export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage<T> {
+  private _documents: T[] = []
   private _attachments: IAttachment[] = []
   private _rev = 0
 
-  private _localDocuments = new Map<string, IDocument>()
+  private _localDocuments = new Map<string, T>()
   private _localAttachments = new Map<string, IAttachment>()
   private _localFiles = new Map<string, Blob>()
 
@@ -50,7 +50,7 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     return this._localAttachments.get(id)
   }
 
-  addLocalDocument(document: IDocument) {
+  addLocalDocument(document: T) {
     this._localDocuments.set(document._id, document)
   }
 
@@ -85,7 +85,7 @@ export class ReplicaInMemStorage implements IReplicaStorage {
     return map2object(this._localFiles)
   }
 
-  upgrade(rev: number, documents: IDocument[], attachments: IAttachment[]) {
+  upgrade(rev: number, documents: T[], attachments: IAttachment[]) {
     this._rev = rev
     this._documents = documents
     this._attachments = attachments

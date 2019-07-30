@@ -7,22 +7,22 @@ import {
 
 export type LocalAttachments = IDict<Blob>
 
-export interface IReplicaStorage {
+export interface IReplicaStorage<T extends IDocument> {
   getRev(): number
 
-  getDocuments(): IDocument[]
-  getLocalDocuments(): IDocument[]
+  getDocuments(): T[]
+  getLocalDocuments(): T[]
 
   getAttachments(): IAttachment[]
   getLocalAttachments(): IAttachment[]
 
-  getDocument(id: string): IDocument | undefined
-  getLocalDocument(id: string): IDocument | undefined
+  getDocument(id: string): T | undefined
+  getLocalDocument(id: string): T | undefined
 
   getAttachment(id: string): IAttachment | undefined
   getLocalAttachment(id: string): IAttachment | undefined
 
-  addLocalDocument(document: IDocument): void
+  addLocalDocument(document: T): void
   addLocalAttachment(attachment: NewAttachment, blob?: File): void
 
   removeLocalDocument(id: string): void
@@ -30,6 +30,6 @@ export interface IReplicaStorage {
 
   getAttachmentUrl(id: string): string | undefined
   getLocalAttachmentsData(): LocalAttachments
-  upgrade(rev: number, documents: IDocument[], attachments: IAttachment[]): void
+  upgrade(rev: number, documents: T[], attachments: IAttachment[]): void
   clearLocalData(): void
 }

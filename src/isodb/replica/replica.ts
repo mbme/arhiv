@@ -1,6 +1,4 @@
 import {
-  isString,
-  array2object,
   PubSub,
 } from '~/utils'
 import { createLogger } from '~/logger'
@@ -15,22 +13,23 @@ import {
   IReplicaStorage,
   LocalAttachments,
 } from './replica-storage'
+import { MergeConflicts } from './merge-conflict'
 
 const logger = createLogger('isodb-replica')
 
 export interface IEvents {
   'db-update': undefined
+  'merge-conflicts': undefined
+  'merge-conflicts-resolved': undefined
 }
 
-export class IsodbReplica {
+export class IsodbReplica<T extends IDocument> {
+  mergeConflicts?: MergeConflicts<T>
+
   constructor(
-    private _storage: IReplicaStorage,
+    private _storage: IReplicaStorage<T>,
     public events = new PubSub<IEvents>(),
   ) { }
-
-  private _notify() {
-    this.events.emit('db-update', undefined)
-  }
 
   getRev() {
     return this._storage.getRev()
@@ -40,7 +39,7 @@ export class IsodbReplica {
     return this._storage.getAttachmentUrl(id)
   }
 
-  getDocument(id: string): IDocument | undefined {
+  getDocument(id: string): T | undefined {
     return this._storage.getLocalDocument(id) || this._storage.getDocument(id)
   }
 
@@ -58,7 +57,7 @@ export class IsodbReplica {
     return id
   }
 
-  getDocuments(): IDocument[] {
+  getDocuments(): T[] {
     const localDocuments = this._storage.getLocalDocuments()
     const localIds = new Set(localDocuments.map(item => item._id))
 
@@ -71,25 +70,35 @@ export class IsodbReplica {
     ].filter(document => !document._deleted) // FIXME what to do with deleted documents?
   }
 
-  saveAttachment(attachment: IAttachment, blob?: File) {
-    if (!this.getAttachment(attachment._id) && !blob) {
-      throw new Error(`new attachment ${attachment._id}: blob missing`)
+  private _assertNoMergeConflicts() {
+    if (this.mergeConflicts) {
+      throw new Error('there is a pending merge conflict')
+    }
+  }
+
+  saveAttachment(attachment: IAttachment, blob: File) {
+    this._assertNoMergeConflicts()
+
+    if (this.getAttachment(attachment._id)) {
+      throw new Error(`attachment with id ${attachment._id} already exists`)
     }
 
     this._storage.addLocalAttachment(attachment, blob)
-
-    this._notify()
+    this.events.emit('db-update', undefined)
   }
 
-  saveDocument(document: IDocument) {
-    this._storage.addLocalDocument(document)
+  saveDocument(document: T) {
+    this._assertNoMergeConflicts()
 
+    this._storage.addLocalDocument(document)
     this.compact()
 
-    this._notify()
+    this.events.emit('db-update', undefined)
   }
 
   getChangeset(): [IChangeset, LocalAttachments] {
+    this._assertNoMergeConflicts()
+
     const changeset = {
       baseRev: this.getRev(),
       documents: this._storage.getLocalDocuments(),
@@ -99,102 +108,66 @@ export class IsodbReplica {
     return [changeset, this._storage.getLocalAttachmentsData()]
   }
 
-  async applyChangesetResult(changesetResult: IChangesetResult) {
+  async applyChangesetResult(changesetResult: IChangesetResult<T>) {
+    this._assertNoMergeConflicts()
+
     if (this.getRev() !== changesetResult.baseRev) {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }
 
-    const currentDocuments = array2object(this._storage.getDocuments(), item => item._id)
-    const newDocuments = changesetResult.documents.map(item => isString(item) ? currentDocuments[item] : item)
-
-    const currentAttachments = array2object(this._storage.getAttachments(), item => item._id)
-    const newAttachments = changesetResult.attachments.map(item => isString(item) ? currentAttachments[item] : item)
-
+    // TODO sync/locks
+    // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
-      this._storage.upgrade(changesetResult.currentRev, newDocuments, newAttachments)
       this._storage.clearLocalData()
-      this._notify()
 
-      return false
+      this._storage.upgrade(
+        changesetResult.currentRev,
+        changesetResult.documents,
+        changesetResult.attachments,
+      )
+
+      this.events.emit('db-update', undefined)
+
+      return
     }
 
-    const documentConflicts = []
-    // for each local document
+    this.mergeConflicts = new MergeConflicts((documents) => {
+      // save resolved versions of the documents
+      for (const document of documents) {
+        this._storage.addLocalDocument(document)
+      }
+
+      this._storage.upgrade(
+        changesetResult.currentRev,
+        changesetResult.documents,
+        changesetResult.attachments,
+      )
+
+      this.mergeConflicts = undefined
+
+      this.events.emit('db-update', undefined)
+      this.events.emit('merge-conflicts-resolved', undefined)
+    })
+
     for (const localDocument of this._storage.getLocalDocuments()) {
-      const existingDocument = currentDocuments[localDocument._id]
-      const newDocument = newDocuments.find(item => item._id === localDocument._id)!
+      const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
 
-      // if is existing document & revision changed
-      //   mark as a conflict
-      if (existingDocument._rev !== newDocument._rev) {
-        documentConflicts.push({
-          base: existingDocument,
-          updated: newDocument,
-          local: localDocument,
-        })
-      }
-    }
-    const attachmentConflicts = [] // for each local attachment
-    for (const localAttachment of this._storage.getLocalAttachments()) {
-      const existingAttachment = currentAttachments[localAttachment._id]
-      const newAttachment = newAttachments.find(item => item._id === localAttachment._id)!
-
-      // if is existing attachment & revision changed
-      //   mark as a conflict
-      if (existingAttachment._rev !== newAttachment._rev) {
-        attachmentConflicts.push({
-          base: existingAttachment,
-          updated: newAttachment,
-          local: localAttachment,
-        })
+      if (remoteDocument) {
+        this.mergeConflicts.addConflict(
+          this._storage.getDocument(localDocument._id)!,
+          remoteDocument,
+          localDocument,
+        )
       }
     }
 
-    // resolve conflicts if needed
-    if (documentConflicts.length || attachmentConflicts.length) {
-      const resolvedConflicts = await merge({ documents: documentConflicts, attachments: attachmentConflicts })
-
-      for (const updatedDocument of resolvedConflicts.documents) {
-        this._storage.addLocalDocument(updatedDocument)
-      }
-
-      for (const updatedAttachment of resolvedConflicts.attachments) {
-        this._storage.addLocalAttachment(updatedAttachment)
-      }
-    }
-
-    // for each local document
-    //   if references deleted document
-    //     restore deleted document & all deleted documents referenced by it
-    const idsToCheck = this._storage.getLocalDocuments().flatMap(item => item._refs)
-    const idsChecked = new Set()
-    while (idsToCheck.length) {
-      const id = idsToCheck.shift()!
-
-      if (idsChecked.has(id)) continue
-
-      const existingDocument = currentDocuments[id]
-      const newDocument = newDocuments.find(item => item._id === id)
-      if (existingDocument && !newDocument) {
-        logger.info(`Restoring document ${id}`)
-        this._storage.addLocalDocument(existingDocument) // restore document
-        idsToCheck.push(...existingDocument._refs)
-      }
-
-      idsChecked.add(id)
-    }
-
-    this._storage.upgrade(changesetResult.currentRev, newDocuments, newAttachments)
-
-    this._notify()
-
-    return true
+    this.events.emit('merge-conflicts', undefined)
   }
 
   /**
    * Remove unused local attachments
    */
-  compact() {
+  private compact() {
     const idsInUse = new Set()
     for (const document of this._storage.getDocuments()) {
       for (const id of document._attachmentRefs) {

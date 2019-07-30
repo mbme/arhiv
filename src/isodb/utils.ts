@@ -18,7 +18,6 @@ export function createDocument<T extends string>(id: string, type: T) {
     _type: type,
     _createdTs: now,
     _updatedTs: now,
-    _refs: [] as string[],
     _attachmentRefs: [] as string[],
   }
 }

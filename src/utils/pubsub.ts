@@ -1,16 +1,22 @@
-type Handler<T, K extends keyof T> = (params: T[K]) => void
+import { TypeOfProperty } from './types'
 
-export class PubSub<T> {
-  private readonly subs = new Map()
+interface IEvent {
+  name: string
+}
 
-  on<K extends keyof T>(name: K, handler: Handler<T, K>) {
+type Handler<T = any> = (event: T) => void
+
+export class PubSub<T extends IEvent> {
+  private readonly subs = new Map<string, Set<Handler>>()
+
+  on<K extends T>(name: TypeOfProperty<K, 'name'>, handler: Handler<K>) {
     const eventSubs = this._getEventSubs(name)
     eventSubs.add(handler)
 
     this.subs.set(name, eventSubs)
   }
 
-  off<K extends keyof T>(name: K, handler: Handler<T, K>) {
+  off<K extends T>(name: TypeOfProperty<K, 'name'>, handler: Handler<K>) {
     const eventSubs = this._getEventSubs(name)
     eventSubs.delete(handler)
 
@@ -19,11 +25,13 @@ export class PubSub<T> {
     }
   }
 
-  emit<K extends keyof T>(name: K, params: T[K]) {
-    this._getEventSubs(name).forEach((handler: Handler<T, K>) => handler(params))
+  emit(event: T) {
+    for (const handler of this._getEventSubs(event.name)) {
+      handler(event)
+    }
   }
 
-  private _getEventSubs(name: string): Set<any> {
-    return this.subs.get(name) as Set<any> || new Set()
+  private _getEventSubs(name: string): Set<Handler> {
+    return this.subs.get(name) || new Set()
   }
 }

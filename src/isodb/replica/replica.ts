@@ -18,18 +18,14 @@ import { MergeConflicts } from './merge-conflict'
 
 const logger = createLogger('isodb-replica')
 
-export interface IEvents {
-  'db-update': undefined
-  'merge-conflicts': undefined
-  'merge-conflicts-resolved': undefined
-}
+export type Events = { name: 'db-update' } | { name: 'merge-conflicts' } | { name: 'merge-conflicts-resolved' }
 
 export class IsodbReplica<T extends IDocument> {
   mergeConflicts?: MergeConflicts<T>
 
   constructor(
     private _storage: IReplicaStorage<T>,
-    public events = new PubSub<IEvents>(),
+    public events = new PubSub<Events>(),
   ) { }
 
   getRev() {
@@ -95,7 +91,7 @@ export class IsodbReplica<T extends IDocument> {
     // only after saving document which references it
     logger.debug(`saved new attachment with id ${id}`)
 
-    this.events.emit('db-update', undefined)
+    this.events.emit({ name: 'db-update' })
   }
 
   saveDocument(document: T) {
@@ -104,7 +100,7 @@ export class IsodbReplica<T extends IDocument> {
     this._storage.addLocalDocument(document)
     logger.debug(`saved document with id ${document._id}`)
 
-    this.events.emit('db-update', undefined)
+    this.events.emit({ name: 'db-update' })
   }
 
   getChangeset(): [IChangeset, LocalAttachments] {
@@ -137,7 +133,7 @@ export class IsodbReplica<T extends IDocument> {
         changesetResult.attachments,
       )
 
-      this.events.emit('db-update', undefined)
+      this.events.emit({ name: 'db-update' })
 
       return
     }
@@ -156,8 +152,8 @@ export class IsodbReplica<T extends IDocument> {
 
       this.mergeConflicts = undefined
 
-      this.events.emit('db-update', undefined)
-      this.events.emit('merge-conflicts-resolved', undefined)
+      this.events.emit({ name: 'db-update' })
+      this.events.emit({ name: 'merge-conflicts-resolved' })
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
@@ -172,6 +168,6 @@ export class IsodbReplica<T extends IDocument> {
       }
     }
 
-    this.events.emit('merge-conflicts', undefined)
+    this.events.emit({ name: 'merge-conflicts' })
   }
 }

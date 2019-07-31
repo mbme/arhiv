@@ -9,16 +9,15 @@ export interface ILocation {
   params: IParams
 }
 
-export interface IEvents {
-  'location-changed': ILocation
-}
+// tslint:disable-next-line:interface-over-type-literal
+export type Events = { name: 'location-change', location: ILocation }
 
 export class WebRouter {
   location?: ILocation
 
-  constructor(public events = new PubSub<IEvents>()) { }
+  constructor(public events = new PubSub<Events>()) { }
 
-  _propagateCurrentLocation = () => {
+  private _propagateCurrentLocation = () => {
     const location = new URL(document.location.toString())
     const params: { [key: string]: string } = {}
 
@@ -28,7 +27,10 @@ export class WebRouter {
       path: location.pathname,
       params,
     }
-    this.events.emit('location-changed', this.location)
+    this.events.emit({
+      name: 'location-change',
+      location: this.location,
+    })
   }
 
   getUrl(location: ILocation) {

@@ -1,5 +1,6 @@
 import {
   PubSub,
+  nowS,
 } from '~/utils'
 import { createLogger } from '~/logger'
 import {
@@ -57,17 +58,22 @@ export class IsodbReplica<T extends IDocument> {
     return id
   }
 
-  getDocuments(): T[] {
+  getDocuments(includeDeleted = false): T[] {
     const localDocuments = this._storage.getLocalDocuments()
     const localIds = new Set(localDocuments.map(item => item._id))
 
     const documents = this._storage.getDocuments().filter(item => !localIds.has(item._id))
 
-    // TODO sort
-    return [
+    const result = [
       ...documents,
       ...localDocuments,
-    ].filter(document => !document._deleted) // FIXME what to do with deleted documents?
+    ]
+
+    if (includeDeleted) {
+      return result
+    }
+
+    return result.filter(document => !document._deleted)
   }
 
   private _assertNoMergeConflicts() {
@@ -76,14 +82,19 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-  saveAttachment(attachment: IAttachment, blob: File) {
+  saveAttachment(blob: File) {
     this._assertNoMergeConflicts()
 
-    if (this.getAttachment(attachment._id)) {
-      throw new Error(`attachment with id ${attachment._id} already exists`)
-    }
+    const id = this.getRandomId()
+    this._storage.addLocalAttachment({
+      _id: id,
+      _rev: this.getRev(),
+      _createdTs: nowS(),
+    }, blob)
+    // FIXME addLocalAttachment should save attachment to the long-term storage
+    // only after saving document which references it
+    logger.debug(`saved new attachment with id ${id}`)
 
-    this._storage.addLocalAttachment(attachment, blob)
     this.events.emit('db-update', undefined)
   }
 
@@ -91,7 +102,7 @@ export class IsodbReplica<T extends IDocument> {
     this._assertNoMergeConflicts()
 
     this._storage.addLocalDocument(document)
-    this.compact()
+    logger.debug(`saved document with id ${document._id}`)
 
     this.events.emit('db-update', undefined)
   }
@@ -162,26 +173,5 @@ export class IsodbReplica<T extends IDocument> {
     }
 
     this.events.emit('merge-conflicts', undefined)
-  }
-
-  /**
-   * Remove unused local attachments
-   */
-  private compact() {
-    const idsInUse = new Set()
-    for (const document of this._storage.getDocuments()) {
-      for (const id of document._attachmentRefs) {
-        idsInUse.add(id)
-      }
-    }
-    const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
-
-    for (const id of localAttachmentIds) {
-      // remove unused new local attachments
-      if (!idsInUse.has(id)) {
-        logger.warn(`Removing unused local attachment ${id}`)
-        this._storage.removeLocalAttachment(id)
-      }
-    }
   }
 }

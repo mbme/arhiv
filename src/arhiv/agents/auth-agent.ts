@@ -2,7 +2,7 @@ import { createLogger } from '~/logger'
 import { NetworkAgent } from './network-agent'
 import { WebClientEvents } from '../events'
 
-const log = createLogger('isodb-web-client:auth-agent')
+const log = createLogger('arhiv:auth-agent')
 
 type State = 'unauthorized' | 'authorized'
 

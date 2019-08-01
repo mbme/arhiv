@@ -145,3 +145,12 @@ export function classNames(...args: any[]) {
 }
 
 export const isEmptyObject = (x: object) => Object.keys(x).length === 0
+
+export async function consumeAsyncIterable<T>(iterable: AsyncIterableIterator<T>): Promise<T[]> {
+  const result: T[] = []
+  for await (const item of iterable) {
+    result.push(item)
+  }
+
+  return result
+}

@@ -1,22 +1,47 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
+import {
+  merge,
+  consumeAsyncIterable,
+} from './index'
 
-// Recursively synchronously list files in a dir (except skip dirs)
-export function walkSync(dir: string, skipDir = ['.git', 'node_modules']) {
-  const fileList: string[] = []
+interface IGetFilesOpts {
+  skipDir?: string[]
+  recursive?: boolean
+  fileNames?: boolean
+}
+const GET_FILES_OPTS = {
+  skipDir: ['.git', 'node_modules'],
+  recursive: true,
+  fileNames: false,
+}
 
-  for (const file of fs.readdirSync(dir)) {
-    const filePath = path.join(dir, file)
+// list files except skip dirs
+export async function* getFiles(
+  rootPath: string,
+  options: IGetFilesOpts = GET_FILES_OPTS,
+): AsyncIterableIterator<string> {
+  const processedOpts = merge(GET_FILES_OPTS, options)
 
-    if (fs.statSync(filePath).isDirectory()) {
-      if (!skipDir.includes(file)) fileList.push(...walkSync(filePath))
+  for (const fileName of await fs.promises.readdir(rootPath)) {
+    const filePath = path.resolve(rootPath, fileName)
+
+    if (await isDirectory(filePath)) {
+      if (!processedOpts.recursive) {
+        continue
+      }
+
+      // traverse subdir only if it shouldn't be skipped
+      if (processedOpts.skipDir!.includes(fileName)) {
+        continue
+      }
+
+      yield* getFiles(filePath, options)
     } else {
-      fileList.push(filePath)
+      yield processedOpts.fileNames ? fileName : filePath
     }
   }
-
-  return fileList
 }
 
 export function rmrfSync(dir: string) {
@@ -35,11 +60,12 @@ export function rmrfSync(dir: string) {
 
 export const isFile = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isFile())
 export const isDirectory = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isDirectory())
-export async function listFiles(filePath: string) {
-  const dirContent = await fs.promises.readdir(filePath)
-  const fileCheckResults = await Promise.all(dirContent.map((item) => isFile(path.join(filePath, item))))
 
-  return dirContent.filter((_, i) => fileCheckResults[i])
+export async function listFiles(dir: string) {
+  return consumeAsyncIterable(getFiles(dir, {
+    recursive: false,
+    fileNames: true,
+  }))
 }
 
 export const createTempDir = () => fs.promises.mkdtemp(path.join(os.tmpdir(), 'v-'))

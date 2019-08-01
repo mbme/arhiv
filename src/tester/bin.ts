@@ -1,5 +1,6 @@
 import path from 'path'
-import { walkSync } from '~/utils/fs'
+import { consumeAsyncIterable } from '~/utils'
+import { getFiles } from '~/utils/fs'
 import log, { setLogLevel } from '~/logger'
 import {
   getTestPlan,
@@ -14,7 +15,8 @@ export default async function run(...args: string[]) {
   const updateSnapshots = args.includes('-u')
 
   const basePath = path.join(process.env.BASE_DIR!, 'src')
-  const testFiles = walkSync(basePath)
+
+  const testFiles = (await consumeAsyncIterable(getFiles(basePath)))
     .filter((relPath) => (
       relPath.endsWith('.test.ts')
       && !relPath.includes('FLYCHECK')

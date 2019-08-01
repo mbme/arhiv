@@ -6,7 +6,9 @@ export async function resolveAsset(dirs: string[], name: string) {
   for (const dir of dirs) {
     const files = await listFiles(dir)
 
-    if (files.includes(name)) return path.join(dir, name)
+    if (files.includes(name)) {
+      return path.join(dir, name)
+    }
   }
 
   return undefined

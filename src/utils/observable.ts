@@ -1,28 +1,14 @@
-import { removeMut } from './index'
+interface IObserver<T> {
+  next(value: T): void
+  error(error: Error): void
+  complete(): void
+  closed: boolean
+}
 
-type Sub<T> = (value: T) => void
+interface ICancellable {
+  cancel(): void
+}
 
-export default class Observable<T> {
-  _subs: Array<Sub<T>> = []
-
-  constructor(public _value: T) { }
-
-  get value() {
-    return this._value
-  }
-
-  set value(newValue: T) {
-    this._value = newValue
-    this._subs.forEach(sub => sub(newValue))
-  }
-
-  on(sub: Sub<T>) {
-    this._subs.push(sub)
-
-    return () => this.off(sub)
-  }
-
-  off(sub: Sub<T>) {
-    removeMut(this._subs, sub)
-  }
+class Observable<T> {
+  constructor(subscribe: (observer: IObserver<T>) => ICancellable) { }
 }

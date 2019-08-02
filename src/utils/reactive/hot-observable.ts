@@ -1,8 +1,8 @@
-import { removeMut } from './index'
+import { removeMut } from '../index'
 
-type NextCb<T> = (value: T) => void
-type ErrorCb = (e: Error) => void
-type CompleteCb = () => void
+export type NextCb<T> = (value: T) => void
+export type ErrorCb = (e: Error) => void
+export type CompleteCb = () => void
 
 type DestroyCb = () => void
 type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
@@ -13,13 +13,16 @@ interface IObserver<T> {
   complete?: CompleteCb
 }
 
-export class ReactiveValue<T> {
+// push-based "hot" observable
+export class HotObservable<T> {
   private _observers: Array<IObserver<T>> = []
   private _complete = false
   private _destroyCb?: DestroyCb
 
-  constructor(init: InitCb<T>) {
-    this._destroyCb = init(this.next, this.error, this.complete)
+  constructor(init?: InitCb<T>) {
+    if (init) {
+      this._destroyCb = init(this.next, this.error, this.complete)
+    }
   }
 
   private assertNotComplete() {
@@ -86,15 +89,15 @@ export class ReactiveValue<T> {
     }
   }
 
-  map<K>(map: (value: T) => K): ReactiveValue<K> {
-    return new ReactiveValue((next, error, complete) => {
-      this.subscribe(
+  map<K>(map: (value: T) => K): HotObservable<K> {
+    return new HotObservable((next, error, complete) => {
+      const unsubscribe = this.subscribe(
         value => next(map(value)),
         error,
         complete,
       )
 
-      return this._destroyCb
+      return unsubscribe
     })
   }
 }

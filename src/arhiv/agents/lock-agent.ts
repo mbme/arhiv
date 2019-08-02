@@ -1,37 +1,30 @@
 import { createLogger } from '~/logger'
-import { WebClientEvents } from '../events'
+import { ReactiveValue } from '~/utils/reactive'
 
-const log = createLogger('isodb-lock-agent')
+const log = createLogger('lock-agent')
 
-interface IFree {
-  state: 'free'
-}
-
-interface IDBLocked {
-  state: 'db-locked'
-}
-
-interface IRecordsLocked {
-  state: 'records-locked'
-  records: Set<string>
-}
-
-type State = IFree | IDBLocked | IRecordsLocked
+type DocumentLocks = readonly string[]
+type State = 'free' | 'db-locked' | DocumentLocks
 
 export class LockAgent {
-  state: State = { state: 'free' }
+  state = new ReactiveValue<State>('free')
 
-  constructor(public events: WebClientEvents) { }
-
-  private _notify() {
-    const dbLocked = this.state.state === 'db-locked'
-    const recordsLocked = this.state.state === 'records-locked' ? this.state.records : new Set<string>()
-    this.events.emit('isodb-lock', [dbLocked, recordsLocked])
-    log.info(`state -> ${this.state.state}${recordsLocked.size ? ' ' + Array.from(recordsLocked).join(', ') : ''}`)
+  constructor() {
+    this.state.subscribe(
+      currentState => {
+        if (currentState === 'free') {
+          log.info('state -> free')
+        } else if (currentState === 'db-locked') {
+          log.info('state -> db-locked')
+        } else {
+          log.info(`state -> documents locked: ${currentState.join(', ')}`)
+        }
+      },
+    )
   }
 
   isFree() {
-    return this.state.state === 'free'
+    return this.state.currentValue === 'free'
   }
 
   lockDB() {
@@ -39,75 +32,61 @@ export class LockAgent {
       throw new Error("Can't lock db: not free")
     }
 
-    this.state = {
-      state: 'db-locked',
-    }
-
-    this._notify()
+    this.state.next('db-locked')
   }
 
   unlockDB() {
-    if (this.state.state !== 'db-locked') {
+    if (this.state.currentValue !== 'db-locked') {
       throw new Error("Can't unlock db: not locked")
     }
 
-    this.state = {
-      state: 'free',
-    }
-
-    this._notify()
+    this.state.next('free')
   }
 
-  isRecordLocked(id: string) {
-    if (this.state.state === 'db-locked') {
+  isDocumentLocked(id: string) {
+    if (this.state.currentValue === 'db-locked') {
       return true
     }
 
-    if (this.state.state === 'records-locked' && this.state.records.has(id)) {
-      return true
+    if (this.state.currentValue === 'free') {
+      return false
     }
 
-    return false
+    return this.state.currentValue.includes(id)
   }
 
-  lockRecord(id: string) {
-    if (this.state.state === 'db-locked') {
-      throw new Error(`Can't lock record ${id}: db locked`)
+  lockDocument(id: string) {
+    if (this.state.currentValue === 'db-locked') {
+      throw new Error(`Can't lock document ${id}: db locked`)
     }
 
-    if (this.state.state === 'free') {
-      this.state = {
-        state: 'records-locked',
-        records: new Set([id]),
-      }
-
-      this._notify()
+    if (this.state.currentValue === 'free') {
+      this.state.next([id])
 
       return
     }
 
-    if (this.state.records.has(id)) {
-      throw new Error(`Can't lock record ${id}: already locked`)
+    if (this.state.currentValue.includes(id)) {
+      throw new Error(`Can't lock document ${id}: already locked`)
     }
 
-    this.state.records.add(id)
-
-    this._notify()
+    this.state.next([...this.state.currentValue, id])
   }
 
-  unlockRecord(id: string) {
-    if (this.state.state !== 'records-locked' || !this.state.records.has(id)) {
-      throw new Error(`Can't unlock record ${id}: not locked`)
+  unlockDocument(id: string) {
+    if (this.state.currentValue === 'free'
+      || this.state.currentValue === 'db-locked'
+      || !this.state.currentValue.includes(id)
+    ) {
+      throw new Error(`Can't unlock document ${id}: not locked`)
     }
 
-    this.state.records.delete(id)
+    const locks = this.state.currentValue.filter(lock => lock !== id)
 
-    if (!this.state.records.size) {
-      this.state = {
-        state: 'free',
-      }
+    if (locks.length) {
+      this.state.next(locks)
+    } else {
+      this.state.next('free')
     }
-
-    this._notify()
   }
 }

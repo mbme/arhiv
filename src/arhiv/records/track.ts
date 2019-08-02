@@ -1,10 +1,10 @@
+import { createDocument } from '~/isodb/utils'
 import {
   ITrack,
-  RecordType,
-} from '~/isodb-core/types'
+  DocumentType,
+} from '../types'
 import {
   BaseRecord,
-  createRecord,
 } from './base-record'
 
 export class Track extends BaseRecord<ITrack> {
@@ -26,7 +26,7 @@ export class Track extends BaseRecord<ITrack> {
 
   public static create(id: string): ITrack {
     return {
-      ...createRecord(id, RecordType.Track),
+      ...createDocument(id, DocumentType.Track),
       title: '',
       artist: '',
     }
@@ -34,6 +34,6 @@ export class Track extends BaseRecord<ITrack> {
 
   public static is(x: any): x is ITrack {
     // tslint:disable-next-line:no-unsafe-any
-    return x && x._type === RecordType.Track
+    return x && x._type === DocumentType.Track
   }
 }

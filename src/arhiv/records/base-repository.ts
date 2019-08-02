@@ -1,9 +1,9 @@
-import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
+import { ArhivReplica } from '../types'
 
 export abstract class BaseRepository {
   constructor(
-    protected _replica: IsodbReplica,
+    protected _replica: ArhivReplica,
     protected _lockAgent: LockAgent,
   ) { }
 }

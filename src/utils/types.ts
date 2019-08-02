@@ -12,3 +12,8 @@ export interface IDict<T = string> {
 }
 
 export type Obj = IDict<any>
+
+// make all properties mutable
+export type Mutable<T> = {
+  -readonly [P in keyof T]: T[P];
+}

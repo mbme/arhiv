@@ -1,4 +1,4 @@
-import { INote } from '~/isodb-core/types'
+import { INote } from '../types'
 import { BaseRepository } from './base-repository'
 import { Note } from './note'
 
@@ -12,13 +12,13 @@ export class NotesRepository extends BaseRepository {
   }
 
   getNotes(): Note[] {
-    return this._replica.getRecords()
+    return this._replica.getDocuments()
       .filter(Note.is)
       .map(this._wrap)
   }
 
   getNote(id: string): Note | undefined {
-    const record = this._replica.getRecord(id)
+    const record = this._replica.getDocument(id)
     if (Note.is(record)) {
       return this._wrap(record)
     }

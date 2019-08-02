@@ -1,4 +1,4 @@
-import { ITrack } from '~/isodb-core/types'
+import { ITrack } from '../types'
 import { BaseRepository } from './base-repository'
 import { Track } from './track'
 
@@ -12,13 +12,13 @@ export class TracksRepository extends BaseRepository {
   }
 
   getTracks(): Track[] {
-    return this._replica.getRecords()
+    return this._replica.getDocuments()
       .filter(Track.is)
       .map(this._wrap)
   }
 
   getTrack(id: string): Track | undefined {
-    const record = this._replica.getRecord(id)
+    const record = this._replica.getDocument(id)
     if (Track.is(record)) {
       return this._wrap(record)
     }

@@ -1,17 +1,15 @@
-import { nowS } from '~/utils'
 import { createLogger } from '~/logger'
-import {
-  IRecord,
-  RecordType,
-} from '~/isodb-core/types'
 import {
   markupParser,
   selectLinks,
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
-import { IsodbReplica } from '../replica'
 import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
+import {
+  ArhivReplica,
+  Record,
+} from '../types';
 
 const log = createLogger('record')
 
@@ -19,28 +17,15 @@ interface ILock {
   release(): void
 }
 
-export function createRecord<T extends RecordType>(id: string, type: T) {
-  const now = nowS()
-
-  return {
-    _id: id,
-    _type: type,
-    _createdTs: now,
-    _updatedTs: now,
-    _refs: [] as string[],
-    _attachmentRefs: [] as string[],
-  }
-}
-
 // Active Record
-export abstract class BaseRecord<T extends IRecord> {
+export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
   private _hasNewAttachments = false
   public lock?: ILock
 
   constructor(
-    protected _replica: IsodbReplica,
+    protected _replica: ArhivReplica,
     protected _lockAgent: LockAgent,
     record: T,
   ) {
@@ -48,7 +33,6 @@ export abstract class BaseRecord<T extends IRecord> {
   }
 
   protected _updateRefs(value: string) {
-    const refs: string[] = []
     const attachmentRefs: string[] = []
 
     const result = markupParser.parseAll(value)
@@ -64,38 +48,27 @@ export abstract class BaseRecord<T extends IRecord> {
         continue
       }
 
-      if (this._replica.getRecord(id)) {
-        refs.push(id)
-        continue
-      }
-
       log.warn(`record ${this.id} references unknown entity ${id}`)
     }
 
-    this._record._refs = refs
     this._record._attachmentRefs = attachmentRefs
     this._attachments = undefined
   }
 
-  createAttachment(file: File) {
-    const id = this._replica.getRandomId()
-
-    this._replica.saveAttachment({ _id: id }, file)
+  createAttachment(file: File): string {
+    const id = this._replica.saveAttachment(file)
     this._hasNewAttachments = true
 
     return id
   }
 
   save() {
-    this._replica.saveRecord({
-      ...this._record,
-      _updatedTs: nowS(),
-    })
+    this._replica.saveDocument(this._record)
     this._hasNewAttachments = false
   }
 
   isNew() {
-    return !this._replica.getRecord(this.id)
+    return !this._replica.getDocument(this.id)
   }
 
   isLocked() {
@@ -129,10 +102,6 @@ export abstract class BaseRecord<T extends IRecord> {
     return this._record._rev
   }
 
-  get refs(): readonly string[] {
-    return this._record._refs
-  }
-
   get attachments(): Attachment[] {
     this._attachments = this._attachments || this._record._attachmentRefs.map(id => {
       const attachment = this._replica.getAttachment(id)
@@ -146,7 +115,7 @@ export abstract class BaseRecord<T extends IRecord> {
     return this._attachments
   }
 
-  get deleted() {
+  get deleted(): boolean {
     return this._record._deleted || false
   }
 

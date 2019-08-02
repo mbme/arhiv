@@ -1,13 +1,13 @@
 import { Without } from '~/utils'
 
 export interface IDocument {
-  readonly _id: string
-  readonly _rev: number
-  readonly _type: string
-  readonly _createdTs: number
-  readonly _updatedTs: number
-  readonly _attachmentRefs: string[]
-  readonly _deleted?: boolean
+  _id: string
+  _rev: number
+  _type: string
+  _createdTs: number
+  _updatedTs: number
+  _attachmentRefs: string[]
+  _deleted?: boolean
 }
 
 export interface IAttachment {

@@ -92,12 +92,17 @@ export class IsodbReplica<T extends IDocument> {
     logger.debug(`saved new attachment with id ${id}`)
 
     this.events.emit({ name: 'db-update' })
+
+    return id
   }
 
   saveDocument(document: T) {
     this._assertNoMergeConflicts()
 
-    this._storage.addLocalDocument(document)
+    this._storage.addLocalDocument({
+      ...document,
+      _updatedTs: nowS(),
+    })
     logger.debug(`saved document with id ${document._id}`)
 
     this.events.emit({ name: 'db-update' })

@@ -1,10 +1,10 @@
+import { createDocument } from '~/isodb/utils'
 import {
   INote,
-  RecordType,
-} from '~/isodb-core/types'
+  DocumentType,
+} from '../types'
 import {
   BaseRecord,
-  createRecord,
 } from './base-record'
 
 export class Note extends BaseRecord<INote> {
@@ -27,7 +27,7 @@ export class Note extends BaseRecord<INote> {
 
   public static create(id: string): INote {
     return {
-      ...createRecord(id, RecordType.Note),
+      ...createDocument(id, DocumentType.Note),
       name: '',
       data: '',
     }
@@ -35,6 +35,6 @@ export class Note extends BaseRecord<INote> {
 
   public static is(x: any): x is INote {
     // tslint:disable-next-line:no-unsafe-any
-    return x && x._type === RecordType.Note
+    return x && x._type === DocumentType.Note
   }
 }

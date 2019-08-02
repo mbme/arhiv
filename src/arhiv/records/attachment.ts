@@ -1,11 +1,9 @@
-import {
-  IAttachment,
-} from '~/isodb-core/types'
-import { IsodbReplica } from '../replica'
+import { IAttachment } from '~/isodb/types'
+import { ArhivReplica } from '../types'
 
 export class Attachment {
   constructor(
-    private _replica: IsodbReplica,
+    private _replica: ArhivReplica,
     private _attachment: IAttachment,
   ) { }
 
@@ -15,9 +13,5 @@ export class Attachment {
 
   get id() {
     return this._attachment._id
-  }
-
-  save() {
-    this._replica.saveAttachment(this._attachment)
   }
 }

@@ -1,7 +1,7 @@
 import { createLogger } from '~/logger'
 import { ReactiveValue } from '~/utils/reactive'
 
-const log = createLogger('lock-agent')
+const log = createLogger('arhiv:lock-agent')
 
 type DocumentLocks = readonly string[]
 type State = 'free' | 'db-locked' | DocumentLocks
@@ -88,5 +88,9 @@ export class LockAgent {
     } else {
       this.state.next('free')
     }
+  }
+
+  stop() {
+    this.state.destroy()
   }
 }

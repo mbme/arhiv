@@ -1,19 +1,41 @@
 import { createLogger } from '~/logger'
+import { ReactiveValue } from '~/utils/reactive'
 import {
   IChangesetResult,
   IChangeset,
-} from '~/isodb-core/types'
-import { WebClientEvents } from '../events'
-import { LocalAttachments } from '../replica/replica-storage'
+  IDocument,
+} from '~/isodb/types'
+import { LocalAttachments } from '~/isodb/replica'
 
-const log = createLogger('isodb-web-client:network-agent')
+const log = createLogger('arhiv:network-agent')
 
-type State = 'online' | 'offline'
+type NetworkState = 'online' | 'offline'
 
 export class NetworkAgent {
-  state: State = 'online'
+  networkState: ReactiveValue<NetworkState>
+  isAuthorized = new ReactiveValue(false)
 
-  constructor(public events: WebClientEvents) { }
+  constructor() {
+    this.networkState = new ReactiveValue<NetworkState>('online', (next) => {
+      const onNetworkStateChange = () => {
+        const newState = window.navigator.onLine ? 'online' : 'offline'
+        next(newState)
+        log.info(`network gone ${newState}`)
+      }
+
+      window.addEventListener('online', onNetworkStateChange)
+      window.addEventListener('offline', onNetworkStateChange)
+
+      return () => {
+        window.removeEventListener('online', onNetworkStateChange)
+        window.removeEventListener('offline', onNetworkStateChange)
+      }
+    })
+
+    this.isAuthorized.subscribe((isAuthorized) => {
+      log.info(`authrorized: ${isAuthorized}`)
+    })
+  }
 
   async authorize(password: string) {
     this._assertNetworkState()
@@ -24,18 +46,21 @@ export class NetworkAgent {
     })
 
     if (response.ok) {
-      return true
+      this.isAuthorized.next(true)
+    } else {
+      this._onNetworkError(response.status)
     }
-
-    this._onNetworkError(response.status)
-
-    return false
   }
 
-  async syncChanges(
+  deauthorize() {
+    document.cookie = 'token=0; path=/'
+    this.isAuthorized.next(false)
+  }
+
+  async syncChanges<T extends IDocument>(
     changeset: IChangeset,
     localAttachments: LocalAttachments,
-  ): Promise<IChangesetResult> {
+  ): Promise<IChangesetResult<T>> {
     this._assertNetworkState()
 
     const data = new FormData()
@@ -58,36 +83,27 @@ export class NetworkAgent {
     return response.json()
   }
 
-  _assertNetworkState() {
-    if (this.state === 'offline') {
+  private _assertNetworkState() {
+    if (this.networkState.currentValue === 'offline') {
       throw new Error('Network is offline')
     }
   }
 
-  _onNetworkError(status: number) {
-    this.events.emit('network-error', status)
+  private _onNetworkError(status: number) {
     log.warn(`network error, http status code ${status}`)
-  }
 
-  _onNetworkConnectionChange = () => {
-    this.state = window.navigator.onLine ? 'online' : 'offline'
-    this.events.emit('network-online', this.state === 'online')
-    log.info(`network gone ${this.state}`)
+    if (status === 403) {
+      this.isAuthorized.next(false)
+    }
   }
 
   isOnline() {
-    return this.state === 'online'
-  }
-
-  start() {
-    window.addEventListener('online', this._onNetworkConnectionChange)
-    window.addEventListener('offline', this._onNetworkConnectionChange)
-    log.debug('started')
+    return this.networkState.currentValue === 'online'
   }
 
   stop() {
-    window.removeEventListener('online', this._onNetworkConnectionChange)
-    window.removeEventListener('offline', this._onNetworkConnectionChange)
+    this.networkState.destroy()
+    this.isAuthorized.destroy()
     log.debug('stopped')
   }
 }

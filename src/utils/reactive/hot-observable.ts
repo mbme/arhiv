@@ -5,7 +5,7 @@ export type ErrorCb = (e: Error) => void
 export type CompleteCb = () => void
 
 type DestroyCb = () => void
-type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
+export type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
 
 interface IObserver<T> {
   next: NextCb<T>

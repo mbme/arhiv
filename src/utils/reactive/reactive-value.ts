@@ -3,14 +3,21 @@ import {
   NextCb,
   ErrorCb,
   CompleteCb,
+  InitCb,
 } from './hot-observable'
 
 export class ReactiveValue<T> extends HotObservable<T> {
   private _value: T
 
-  constructor(initialValue: T) {
-    super()
+  constructor(initialValue: T, init?: InitCb<T>) {
+    super(init)
     this._value = initialValue
+  }
+
+  next = (value: T) => {
+    if (value !== this._value) {
+      super.next(value)
+    }
   }
 
   get currentValue() {

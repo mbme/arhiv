@@ -15,6 +15,7 @@ import {
   LocalAttachments,
 } from './replica-storage'
 import { MergeConflicts } from './merge-conflict'
+import { LockManager } from './lock-manager'
 
 const logger = createLogger('isodb-replica')
 
@@ -22,6 +23,7 @@ export type Events = { name: 'db-update' } | { name: 'merge-conflicts' } | { nam
 
 export class IsodbReplica<T extends IDocument> {
   mergeConflicts?: MergeConflicts<T>
+  locks = new LockManager()
 
   constructor(
     private _storage: IReplicaStorage<T>,
@@ -174,5 +176,10 @@ export class IsodbReplica<T extends IDocument> {
     }
 
     this.events.emit({ name: 'merge-conflicts' })
+  }
+
+  stop() {
+    this.locks.stop()
+    // TODO stop storage?
   }
 }

@@ -4,7 +4,6 @@ import {
   selectLinks,
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
-import { LockAgent } from '../agents'
 import { Attachment } from './attachment'
 import {
   ArhivReplica,
@@ -26,7 +25,6 @@ export abstract class BaseRecord<T extends Record> {
 
   constructor(
     protected _replica: ArhivReplica,
-    protected _lockAgent: LockAgent,
     record: T,
   ) {
     this._record = { ...record }
@@ -72,14 +70,15 @@ export abstract class BaseRecord<T extends Record> {
   }
 
   isLocked() {
-    return this._lockAgent.isRecordLocked(this.id)
+    return this._replica.locks.isDocumentLocked(this.id)
   }
 
   acquireLock() {
-    this._lockAgent.lockRecord(this.id)
+    this._replica.locks.lockDocument(this.id)
+
     this.lock = {
       release: () => {
-        this._lockAgent.unlockRecord(this.id)
+        this._replica.locks.unlockDocument(this.id)
         this.lock = undefined
 
         // remove unused new attachments if record wasn't saved

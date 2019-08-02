@@ -1,12 +1,12 @@
 import { createLogger } from '~/logger'
 import { ReactiveValue } from '~/utils/reactive'
 
-const log = createLogger('arhiv:lock-agent')
+const log = createLogger('arhiv:lock-manager')
 
 type DocumentLocks = readonly string[]
 type State = 'free' | 'db-locked' | DocumentLocks
 
-export class LockAgent {
+export class LockManager {
   state = new ReactiveValue<State>('free')
 
   constructor() {

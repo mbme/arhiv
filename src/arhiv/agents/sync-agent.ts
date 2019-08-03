@@ -2,7 +2,6 @@ import { createLogger } from '~/logger'
 import { IMergeConflicts } from '~/isodb-core/types'
 import { isEmptyChangeset } from '~/isodb-core/utils'
 import { IsodbReplica } from '../replica'
-import { LockAgent } from './lock-agent'
 import { NetworkAgent } from './network-agent'
 import { AuthAgent } from './auth-agent'
 
@@ -19,7 +18,6 @@ export class SyncAgent {
 
   constructor(
     private replica: IsodbReplica,
-    private lockAgent: LockAgent,
     private networkAgent: NetworkAgent,
     private authAgent: AuthAgent,
   ) { }
@@ -39,12 +37,6 @@ export class SyncAgent {
   }
 
   private _sync = async () => {
-    if (!this.lockAgent.isFree()) {
-      log.debug('Skipping sync: lock is not free')
-
-      return false
-    }
-
     if (!this.networkAgent.isOnline()) {
       log.debug('Skipping sync: network is offline')
 
@@ -57,6 +49,7 @@ export class SyncAgent {
       return false
     }
 
+    await this.replica.sync(this.networkAgent.syncChanges)
     try {
       this._state = 'sync'
 

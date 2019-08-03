@@ -8,7 +8,7 @@ import { Attachment } from './attachment'
 import {
   ArhivReplica,
   Record,
-} from '../types';
+} from '../types'
 
 const log = createLogger('record')
 
@@ -20,7 +20,6 @@ interface ILock {
 export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
-  private _hasNewAttachments = false
   public lock?: ILock
 
   constructor(
@@ -54,15 +53,11 @@ export abstract class BaseRecord<T extends Record> {
   }
 
   createAttachment(file: File): string {
-    const id = this._replica.saveAttachment(file)
-    this._hasNewAttachments = true
-
-    return id
+    return this._replica.saveAttachment(file)
   }
 
   save() {
     this._replica.saveDocument(this._record)
-    this._hasNewAttachments = false
   }
 
   isNew() {
@@ -80,11 +75,6 @@ export abstract class BaseRecord<T extends Record> {
       release: () => {
         this._replica.locks.unlockDocument(this.id)
         this.lock = undefined
-
-        // remove unused new attachments if record wasn't saved
-        if (this._hasNewAttachments) {
-          this._replica.compact()
-        }
       },
     }
   }

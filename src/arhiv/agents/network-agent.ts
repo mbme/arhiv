@@ -57,10 +57,10 @@ export class NetworkAgent {
     this.isAuthorized.next(false)
   }
 
-  async syncChanges<T extends IDocument>(
+  syncChanges = async <T extends IDocument>(
     changeset: IChangeset,
     localAttachments: LocalAttachments,
-  ): Promise<IChangesetResult<T>> {
+  ): Promise<IChangesetResult<T>> => {
     this._assertNetworkState()
 
     const data = new FormData()

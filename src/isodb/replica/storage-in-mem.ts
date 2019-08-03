@@ -3,7 +3,7 @@ import {
   IDocument,
   IAttachment,
 } from '../types'
-import { IReplicaStorage } from './replica-storage'
+import { IReplicaStorage } from './storage'
 
 export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage<T> {
   private _documents: T[] = []

@@ -3,7 +3,7 @@ import { BaseRepository } from './base-repository'
 import { Track } from './track'
 
 export class TracksRepository extends BaseRepository {
-  private _wrap = (track: ITrack) => new Track(this._replica, this._lockAgent, track)
+  private _wrap = (track: ITrack) => new Track(this._replica, track)
 
   createTrack() {
     const id = this._replica.getRandomId()

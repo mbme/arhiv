@@ -9,13 +9,11 @@ import {
   IChangesetResult,
   IChangeset,
 } from '../types'
-import { generateRandomId } from '../utils'
 import {
   IReplicaStorage,
   LocalAttachments,
-} from './replica-storage'
+} from './storage'
 import { MergeConflicts } from './merge-conflict'
-import { LockManager } from './lock-manager'
 
 const logger = createLogger('isodb-replica')
 
@@ -23,11 +21,10 @@ export type Events = { name: 'db-update' } | { name: 'merge-conflicts' } | { nam
 
 export class IsodbReplica<T extends IDocument> {
   mergeConflicts?: MergeConflicts<T>
-  locks = new LockManager()
 
   constructor(
     private _storage: IReplicaStorage<T>,
-    public events = new PubSub<Events>(),
+    private _events: PubSub<Events>,
   ) { }
 
   getRev() {
@@ -44,16 +41,6 @@ export class IsodbReplica<T extends IDocument> {
 
   getAttachment(id: string): IAttachment | undefined {
     return this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
-  }
-
-  getRandomId() {
-    let id: string
-
-    do {
-      id = generateRandomId()
-    } while (this.getDocument(id) || this.getAttachment(id)) // make sure generated id is free
-
-    return id
   }
 
   getDocuments(includeDeleted = false): T[] {
@@ -80,22 +67,17 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-  saveAttachment(blob: File) {
+  saveAttachment(id: string, blob: File) {
     this._assertNoMergeConflicts()
 
-    const id = this.getRandomId()
     this._storage.addLocalAttachment({
       _id: id,
       _rev: this.getRev(),
       _createdTs: nowS(),
     }, blob)
-    // FIXME addLocalAttachment should save attachment to the long-term storage
-    // only after saving document which references it
     logger.debug(`saved new attachment with id ${id}`)
 
-    this.events.emit({ name: 'db-update' })
-
-    return id
+    this._events.emit({ name: 'db-update' })
   }
 
   saveDocument(document: T) {
@@ -107,7 +89,7 @@ export class IsodbReplica<T extends IDocument> {
     })
     logger.debug(`saved document with id ${document._id}`)
 
-    this.events.emit({ name: 'db-update' })
+    this._events.emit({ name: 'db-update' })
   }
 
   getChangeset(): [IChangeset, LocalAttachments] {
@@ -140,7 +122,7 @@ export class IsodbReplica<T extends IDocument> {
         changesetResult.attachments,
       )
 
-      this.events.emit({ name: 'db-update' })
+      this._events.emit({ name: 'db-update' })
 
       return
     }
@@ -159,8 +141,8 @@ export class IsodbReplica<T extends IDocument> {
 
       this.mergeConflicts = undefined
 
-      this.events.emit({ name: 'db-update' })
-      this.events.emit({ name: 'merge-conflicts-resolved' })
+      this._events.emit({ name: 'db-update' })
+      this._events.emit({ name: 'merge-conflicts-resolved' })
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
@@ -175,11 +157,22 @@ export class IsodbReplica<T extends IDocument> {
       }
     }
 
-    this.events.emit({ name: 'merge-conflicts' })
+    this._events.emit({ name: 'merge-conflicts' })
   }
 
-  stop() {
-    this.locks.stop()
-    // TODO stop storage?
+  /**
+   * Remove unused local attachments
+   */
+  compact() {
+    const idsInUse = new Set(this._storage.getDocuments().flatMap(document => document._attachmentRefs))
+    const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
+
+    for (const id of localAttachmentIds) {
+      // remove unused new local attachments
+      if (!idsInUse.has(id)) {
+        logger.warn(`Removing unused local attachment ${id}`)
+        this._storage.removeLocalAttachment(id)
+      }
+    }
   }
 }

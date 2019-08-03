@@ -3,7 +3,7 @@ import { BaseRepository } from './base-repository'
 import { Note } from './note'
 
 export class NotesRepository extends BaseRepository {
-  private _wrap = (note: INote) => new Note(this._replica, this._lockAgent, note)
+  private _wrap = (note: INote) => new Note(this._replica, note)
 
   createNote() {
     const id = this._replica.getRandomId()

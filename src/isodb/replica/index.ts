@@ -1,6 +1,6 @@
-export { IsodbReplica, Events } from './replica'
 export {
   IReplicaStorage,
   LocalAttachments,
-} from './replica-storage'
-export { ReplicaInMemStorage } from './replica-in-mem-storage'
+} from './storage'
+export { ReplicaInMemStorage } from './storage-in-mem'
+export { ReplicaManager } from './replica-manager'

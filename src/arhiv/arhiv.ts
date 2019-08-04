@@ -1,0 +1,48 @@
+import {
+  ReplicaInMemStorage,
+  ReplicaManager,
+} from '~/isodb/replica'
+import { NetworkManager } from './network-manager'
+import { ArhivReplica } from './types'
+import {
+  NotesRepository,
+  TracksRepository,
+} from './records'
+
+export class Arhiv {
+  net = new NetworkManager()
+  private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
+  private _syncIntervalId: number | undefined
+
+  notes = new NotesRepository(this._replica)
+  tracks = new TracksRepository(this._replica)
+
+  constructor() {
+    this.net.isAuthorized.subscribe((isAuthorized) => {
+      if (isAuthorized) {
+        this.syncNow()
+      }
+    })
+    this._replica.events.on('merge-conflicts-resolved', this.syncNow)
+  }
+
+  private _sync = () => {
+    // tslint:disable-next-line:no-floating-promises
+    this._replica.sync(this.net.syncChanges)
+  }
+
+  syncNow = () => {
+    this._sync()
+
+    // schedule sync once per minute
+    clearInterval(this._syncIntervalId)
+    this._syncIntervalId = window.setInterval(this._sync, 60 * 1000)
+  }
+
+  stop() {
+    clearInterval(this._syncIntervalId)
+
+    this._replica.stop()
+    this.net.stop()
+  }
+}

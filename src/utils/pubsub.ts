@@ -7,13 +7,13 @@ interface IEvent {
 type Handler<T = any> = (event: T) => void
 
 export class PubSub<T extends IEvent> {
-  private readonly subs = new Map<string, Set<Handler>>()
+  private _subs = new Map<string, Set<Handler>>()
 
   on<K extends T>(name: TypeOfProperty<K, 'name'>, handler: Handler<K>) {
     const eventSubs = this._getEventSubs(name)
     eventSubs.add(handler)
 
-    this.subs.set(name, eventSubs)
+    this._subs.set(name, eventSubs)
   }
 
   off<K extends T>(name: TypeOfProperty<K, 'name'>, handler: Handler<K>) {
@@ -21,7 +21,7 @@ export class PubSub<T extends IEvent> {
     eventSubs.delete(handler)
 
     if (!eventSubs.size) {
-      this.subs.delete(name)
+      this._subs.delete(name)
     }
   }
 
@@ -32,6 +32,10 @@ export class PubSub<T extends IEvent> {
   }
 
   private _getEventSubs(name: string): Set<Handler> {
-    return this.subs.get(name) || new Set()
+    return this._subs.get(name) || new Set()
+  }
+
+  destroy() {
+    this._subs.clear()
   }
 }

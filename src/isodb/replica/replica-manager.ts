@@ -30,38 +30,36 @@ type ChangesetExchange<T extends IDocument> = (
 ) => Promise<IChangesetResult<T>>
 
 export class ReplicaManager<T extends IDocument> {
+  events = new PubSub<Events>()
   locks = new LockManager()
   private _replica: IsodbReplica<T>
 
   $syncState: ReactiveValue<SyncState>
   $updateTime: ReactiveValue<number>
 
-  constructor(
-    storage: IReplicaStorage<T>,
-    events = new PubSub<Events>(),
-  ) {
-    this._replica = new IsodbReplica(storage, events)
+  constructor(storage: IReplicaStorage<T>) {
+    this._replica = new IsodbReplica(storage, this.events)
 
     this.$syncState = new ReactiveValue<SyncState>('not-synced', (next) => {
       const onMergeConflicts = () => next('merge-conflicts')
       const onMergeConflictsResolved = () => next('not-synced')
 
-      events.on('merge-conflicts', onMergeConflicts)
-      events.on('merge-conflicts-resolved', onMergeConflictsResolved)
+      this.events.on('merge-conflicts', onMergeConflicts)
+      this.events.on('merge-conflicts-resolved', onMergeConflictsResolved)
 
       return () => {
-        events.off('merge-conflicts', onMergeConflicts)
-        events.off('merge-conflicts-resolved', onMergeConflictsResolved)
+        this.events.off('merge-conflicts', onMergeConflicts)
+        this.events.off('merge-conflicts-resolved', onMergeConflictsResolved)
       }
     })
 
     this.$updateTime = new ReactiveValue(0, (next) => {
       const onUpdate = () => next(Date.now())
 
-      events.on('db-update', onUpdate)
+      this.events.on('db-update', onUpdate)
 
       return () => {
-        events.off('db-update', onUpdate)
+        this.events.off('db-update', onUpdate)
       }
     })
   }
@@ -156,7 +154,7 @@ export class ReplicaManager<T extends IDocument> {
 
   stop() {
     this.locks.stop()
-
+    this.events.destroy()
     this.$syncState.destroy()
     this.$updateTime.destroy()
     // TODO stop storage?

@@ -7,11 +7,11 @@ import {
 } from '~/isodb/types'
 import { LocalAttachments } from '~/isodb/replica'
 
-const log = createLogger('arhiv:network-agent')
+const log = createLogger('arhiv:network-manager')
 
 type NetworkState = 'online' | 'offline'
 
-export class NetworkAgent {
+export class NetworkManager {
   networkState: ReactiveValue<NetworkState>
   isAuthorized = new ReactiveValue(false)
 
@@ -38,7 +38,7 @@ export class NetworkAgent {
   }
 
   async authorize(password: string) {
-    this._assertNetworkState()
+    this._assertIsOnline()
 
     const response = await fetch('/api/auth', {
       method: 'post',
@@ -61,7 +61,8 @@ export class NetworkAgent {
     changeset: IChangeset,
     localAttachments: LocalAttachments,
   ): Promise<IChangesetResult<T>> => {
-    this._assertNetworkState()
+    this._assertIsOnline()
+    this._assertAuthorized()
 
     const data = new FormData()
     data.append('changeset', JSON.stringify(changeset))
@@ -83,9 +84,15 @@ export class NetworkAgent {
     return response.json()
   }
 
-  private _assertNetworkState() {
+  private _assertIsOnline() {
     if (this.networkState.currentValue === 'offline') {
       throw new Error('Network is offline')
+    }
+  }
+
+  private _assertAuthorized() {
+    if (!this.isAuthorized.currentValue) {
+      throw new Error('Not authorized')
     }
   }
 

@@ -4,6 +4,7 @@ import {
   selectLinks,
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
+import { ILock } from '~/isodb/replica'
 import { Attachment } from './attachment'
 import {
   ArhivReplica,
@@ -11,10 +12,6 @@ import {
 } from '../types'
 
 const log = createLogger('record')
-
-interface ILock {
-  release(): void
-}
 
 // Active Record
 export abstract class BaseRecord<T extends Record> {
@@ -68,15 +65,8 @@ export abstract class BaseRecord<T extends Record> {
     return this._replica.locks.isDocumentLocked(this.id)
   }
 
-  acquireLock() {
-    this._replica.locks.lockDocument(this.id)
-
-    this.lock = {
-      release: () => {
-        this._replica.locks.unlockDocument(this.id)
-        this.lock = undefined
-      },
-    }
+  async acquireLock() {
+    this.lock = await this._replica.locks.lockDocument(this.id)
   }
 
   get id() {

@@ -4,6 +4,7 @@ import {
   ErrorCb,
   CompleteCb,
   InitCb,
+  UnsubscribeCb,
 } from './hot-observable'
 
 export class ReactiveValue<T> extends HotObservable<T> {
@@ -24,7 +25,7 @@ export class ReactiveValue<T> extends HotObservable<T> {
     return this._value
   }
 
-  subscribe(next: NextCb<T>, error?: ErrorCb, complete?: CompleteCb): () => void {
+  subscribe(next: NextCb<T>, error?: ErrorCb, complete?: CompleteCb): UnsubscribeCb {
     const unsubscribe = super.subscribe(next, error, complete)
 
     next(this._value)

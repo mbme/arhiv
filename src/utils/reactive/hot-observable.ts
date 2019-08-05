@@ -7,6 +7,8 @@ export type CompleteCb = () => void
 type DestroyCb = () => void
 export type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
 
+export type UnsubscribeCb = () => void
+
 interface IObserver<T> {
   next: NextCb<T>
   error?: ErrorCb
@@ -71,7 +73,7 @@ export class HotObservable<T> {
     this._complete = true
   }
 
-  subscribe(next: NextCb<T>, error?: ErrorCb, complete?: CompleteCb): () => void {
+  subscribe(next: NextCb<T>, error?: ErrorCb, complete?: CompleteCb): UnsubscribeCb {
     this.assertNotComplete()
 
     const observer = {

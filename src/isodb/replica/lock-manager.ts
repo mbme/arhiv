@@ -6,6 +6,10 @@ const log = createLogger('arhiv:lock-manager')
 type DocumentLocks = readonly string[]
 type State = 'free' | 'db-locked' | DocumentLocks
 
+export interface ILock {
+  release(): void
+}
+
 export class LockManager {
   state = new ReactiveValue<State>('free')
 
@@ -27,7 +31,7 @@ export class LockManager {
     return this.state.currentValue === 'free'
   }
 
-  lockDB() {
+  lockDB() { // FIXME same as document lock
     if (!this.isFree()) {
       throw new Error("Can't lock db: not free")
     }
@@ -55,39 +59,50 @@ export class LockManager {
     return this.state.currentValue.includes(id)
   }
 
-  lockDocument(id: string) {
-    if (this.state.currentValue === 'db-locked') {
-      throw new Error(`Can't lock document ${id}: db locked`)
-    }
+  private _acquireLock(id: string) {
+    return {
+      release: () => {
+        if (this.state.currentValue === 'free'
+          || this.state.currentValue === 'db-locked'
+          || !this.state.currentValue.includes(id)
+        ) {
+          throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
+        }
 
+        const locks = this.state.currentValue.filter(lock => lock !== id)
+
+        if (locks.length) {
+          this.state.next(locks)
+        } else {
+          this.state.next('free')
+        }
+      },
+    }
+  }
+
+  lockDocument(id: string): Promise<ILock> {
     if (this.state.currentValue === 'free') {
       this.state.next([id])
 
-      return
+      return Promise.resolve(this._acquireLock(id))
     }
 
-    if (this.state.currentValue.includes(id)) {
-      throw new Error(`Can't lock document ${id}: already locked`)
-    }
+    return new Promise((resolve, reject) => {
+      const unsubscribe = this.state.subscribe(
+        () => {
+          if (this.isDocumentLocked(id)) {
+            return
+          }
 
-    this.state.next([...this.state.currentValue, id])
-  }
+          unsubscribe()
 
-  unlockDocument(id: string) {
-    if (this.state.currentValue === 'free'
-      || this.state.currentValue === 'db-locked'
-      || !this.state.currentValue.includes(id)
-    ) {
-      throw new Error(`Can't unlock document ${id}: not locked`)
-    }
-
-    const locks = this.state.currentValue.filter(lock => lock !== id)
-
-    if (locks.length) {
-      this.state.next(locks)
-    } else {
-      this.state.next('free')
-    }
+          this.state.next([...this.state.currentValue, id])
+          resolve(this._acquireLock(id))
+        },
+        reject,
+        reject,
+      )
+    })
   }
 
   stop() {

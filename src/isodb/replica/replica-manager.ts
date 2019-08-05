@@ -62,6 +62,13 @@ export class ReplicaManager<T extends IDocument> {
         this.events.off('db-update', onUpdate)
       }
     })
+
+    // run compaction if db isn't locked
+    this.locks.state.subscribe((lockState) => {
+      if (lockState === 'free') {
+        this._replica.compact()
+      }
+    })
   }
 
   getRandomId() {
@@ -104,6 +111,12 @@ export class ReplicaManager<T extends IDocument> {
   async sync(exchange: ChangesetExchange<T>): Promise<boolean> {
     if (!this.locks.isFree()) {
       log.debug('Skipping sync: lock is not free')
+
+      return false
+    }
+
+    if (this._replica.mergeConflicts) {
+      log.debug('Skipping sync: pending merge conflicts')
 
       return false
     }

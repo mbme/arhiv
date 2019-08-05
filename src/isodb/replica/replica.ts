@@ -167,12 +167,19 @@ export class IsodbReplica<T extends IDocument> {
     const idsInUse = new Set(this._storage.getDocuments().flatMap(document => document._attachmentRefs))
     const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
 
+    let updated = false
+
     for (const id of localAttachmentIds) {
       // remove unused new local attachments
       if (!idsInUse.has(id)) {
         logger.warn(`Removing unused local attachment ${id}`)
         this._storage.removeLocalAttachment(id)
+        updated = true
       }
+    }
+
+    if (updated) {
+      this._events.emit({ name: 'db-update' })
     }
   }
 }

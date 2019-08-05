@@ -3,9 +3,9 @@ import * as ReactDOM from 'react-dom'
 
 import { setLogLevel } from '~/logger'
 import {
-  IsodbWebClient,
-  IsodbContext,
-} from '~/isodb-web-client'
+  Arhiv,
+  ArhivContext,
+} from '~/arhiv'
 import {
   injectGlobalStyles,
   globalStyles,
@@ -36,8 +36,7 @@ injectGlobalStyles(`
   }
 `)
 
-const client = new IsodbWebClient()
-client.start()
+const arhiv = new Arhiv()
 
 const apps: IApp[] = [
   AppNotes,
@@ -50,9 +49,9 @@ function renderView(location: ILocation) {
       <View
         location={location}
         apps={apps}
-        client={client}
+        arhiv={arhiv}
       />
-      <AuthManager client={client} />
+      <AuthManager arhiv={arhiv} />
     </OverlayRenderer>
   )
 }
@@ -61,9 +60,9 @@ const rootEl = document.getElementById('root')!
 
 ReactDOM.render(
   <React.StrictMode>
-    <IsodbContext.Provider value={client}>
+    <ArhivContext.Provider value={arhiv}>
       <Router renderView={renderView} />
-    </IsodbContext.Provider>
+    </ArhivContext.Provider>
   </React.StrictMode>,
   rootEl,
   () => {

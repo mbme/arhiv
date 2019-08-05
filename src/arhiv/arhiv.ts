@@ -14,11 +14,13 @@ export class Arhiv {
   private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
   private _syncIntervalId: number | undefined
 
+  $updateTime = this._replica.$updateTime
+
   notes = new NotesRepository(this._replica)
   tracks = new TracksRepository(this._replica)
 
   constructor() {
-    this.net.isAuthorized.subscribe((isAuthorized) => {
+    this.net.$authorized.subscribe((isAuthorized) => {
       if (isAuthorized) {
         this.syncNow()
       }

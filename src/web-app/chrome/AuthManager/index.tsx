@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { IsodbWebClient } from '~/isodb-web-client'
+import { Arhiv } from '~/arhiv'
 import { AuthOverlay } from './AuthOverlay'
 
 interface IProps {
-  client: IsodbWebClient
+  arhiv: Arhiv
 }
 
 interface IState {
@@ -12,22 +12,28 @@ interface IState {
 
 export class AuthManager extends React.PureComponent<IProps, IState> {
   state: IState = {
-    authorized: this.props.client.isAuthorized(),
+    authorized: this.props.arhiv.net.$authorized.currentValue,
   }
 
-  onAuthorized = (authorized: boolean) => {
-    this.setState({ authorized })
-  }
+  _unsubscribe?: () => void
 
   componentDidMount() {
-    this.props.client.events.on('authorized', this.onAuthorized)
+    const {
+      arhiv,
+    } = this.props
+
+    this._unsubscribe = arhiv.net.$authorized.subscribe((authorized) => {
+      this.setState({ authorized })
+    })
   }
 
   componentWillUnmount() {
-    this.props.client.events.off('authorized', this.onAuthorized)
+    if (this._unsubscribe) {
+      this._unsubscribe()
+    }
   }
 
-  tryPassword = (password: string) => this.props.client.authorize(password)
+  tryPassword = (password: string) => this.props.arhiv.net.authorize(password)
 
   render() {
     const {

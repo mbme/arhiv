@@ -12,11 +12,11 @@ const log = createLogger('arhiv:network-manager')
 type NetworkState = 'online' | 'offline'
 
 export class NetworkManager {
-  networkState: ReactiveValue<NetworkState>
-  isAuthorized = new ReactiveValue(false)
+  $networkState: ReactiveValue<NetworkState>
+  $authorized = new ReactiveValue(false)
 
   constructor() {
-    this.networkState = new ReactiveValue<NetworkState>('online', (next) => {
+    this.$networkState = new ReactiveValue<NetworkState>('online', (next) => {
       const onNetworkStateChange = () => {
         const newState = window.navigator.onLine ? 'online' : 'offline'
         next(newState)
@@ -32,7 +32,7 @@ export class NetworkManager {
       }
     })
 
-    this.isAuthorized.subscribe((isAuthorized) => {
+    this.$authorized.subscribe((isAuthorized) => {
       log.info(`authrorized: ${isAuthorized}`)
     })
   }
@@ -46,7 +46,7 @@ export class NetworkManager {
     })
 
     if (response.ok) {
-      this.isAuthorized.next(true)
+      this.$authorized.next(true)
     } else {
       this._onNetworkError(response.status)
     }
@@ -54,7 +54,7 @@ export class NetworkManager {
 
   deauthorize() {
     document.cookie = 'token=0; path=/'
-    this.isAuthorized.next(false)
+    this.$authorized.next(false)
   }
 
   syncChanges = async <T extends IDocument>(
@@ -85,13 +85,13 @@ export class NetworkManager {
   }
 
   private _assertIsOnline() {
-    if (this.networkState.currentValue === 'offline') {
+    if (this.$networkState.currentValue === 'offline') {
       throw new Error('Network is offline')
     }
   }
 
   private _assertAuthorized() {
-    if (!this.isAuthorized.currentValue) {
+    if (!this.$authorized.currentValue) {
       throw new Error('Not authorized')
     }
   }
@@ -100,17 +100,17 @@ export class NetworkManager {
     log.warn(`network error, http status code ${status}`)
 
     if (status === 403) {
-      this.isAuthorized.next(false)
+      this.$authorized.next(false)
     }
   }
 
   isOnline() {
-    return this.networkState.currentValue === 'online'
+    return this.$networkState.currentValue === 'online'
   }
 
   stop() {
-    this.networkState.destroy()
-    this.isAuthorized.destroy()
+    this.$networkState.destroy()
+    this.$authorized.destroy()
     log.debug('stopped')
   }
 }

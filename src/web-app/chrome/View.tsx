@@ -10,7 +10,7 @@ import {
   Icon,
   stylish,
 } from '~/web-platform'
-import { IsodbWebClient } from '~/isodb-web-client'
+import { Arhiv } from '~/arhiv'
 import { NotFound } from '../parts'
 
 const maxWidth = '35rem'
@@ -108,7 +108,7 @@ export interface IApp {
 interface IProps {
   apps: IApp[]
   location: ILocation
-  client: IsodbWebClient
+  arhiv: Arhiv
 }
 
 interface IState {
@@ -135,7 +135,7 @@ export class View extends React.PureComponent<IProps, IState> {
   }
 
   logout = () => {
-    this.props.client.deauthorize()
+    this.props.arhiv.net.deauthorize()
   }
 
   toggleNav = () => {

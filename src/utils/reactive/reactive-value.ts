@@ -1,10 +1,12 @@
 import {
-  HotObservable,
   NextCb,
   ErrorCb,
   CompleteCb,
-  InitCb,
   UnsubscribeCb,
+} from './types'
+import {
+  HotObservable,
+  InitCb,
 } from './hot-observable'
 
 export class ReactiveValue<T> extends HotObservable<T> {

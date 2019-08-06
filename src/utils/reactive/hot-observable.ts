@@ -1,22 +1,18 @@
 import { removeMut } from '../index'
+import {
+  IObservable,
+  IObserver,
+  NextCb,
+  ErrorCb,
+  CompleteCb,
+  UnsubscribeCb,
+} from './types'
 
-export type NextCb<T> = (value: T) => void
-export type ErrorCb = (e: Error) => void
-export type CompleteCb = () => void
-
-type DestroyCb = () => void
+export type DestroyCb = () => void
 export type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
 
-export type UnsubscribeCb = () => void
-
-interface IObserver<T> {
-  next: NextCb<T>
-  error?: ErrorCb
-  complete?: CompleteCb
-}
-
 // push-based "hot" observable
-export class HotObservable<T> {
+export class HotObservable<T> implements IObservable<T> {
   private _observers: Array<IObserver<T>> = []
   private _complete = false
   private _destroyCb?: DestroyCb
@@ -27,7 +23,7 @@ export class HotObservable<T> {
     }
   }
 
-  private assertNotComplete() {
+  private _assertNotComplete() {
     if (this._complete) {
       throw new Error('already complete')
     }
@@ -41,7 +37,7 @@ export class HotObservable<T> {
   }
 
   next = (value: T) => {
-    this.assertNotComplete()
+    this._assertNotComplete()
 
     for (const observer of this._observers) {
       observer.next(value)
@@ -49,7 +45,7 @@ export class HotObservable<T> {
   }
 
   error = (e: Error) => {
-    this.assertNotComplete()
+    this._assertNotComplete()
 
     for (const observer of this._observers) {
       if (observer.error) {
@@ -74,7 +70,7 @@ export class HotObservable<T> {
   }
 
   subscribe(next: NextCb<T>, error?: ErrorCb, complete?: CompleteCb): UnsubscribeCb {
-    this.assertNotComplete()
+    this._assertNotComplete()
 
     const observer = {
       next,

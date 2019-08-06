@@ -109,8 +109,8 @@ export class NetworkManager {
   }
 
   stop() {
-    this.$networkState.destroy()
-    this.$authorized.destroy()
+    this.$networkState.complete()
+    this.$authorized.complete()
     log.debug('stopped')
   }
 }

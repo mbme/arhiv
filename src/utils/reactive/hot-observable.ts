@@ -1,39 +1,30 @@
-import { removeMut } from '../index'
 import {
-  IObservable,
+  removeMut,
+  noop,
+} from '../index'
+import {
+  IHotObservable,
   IObserver,
   NextCb,
   ErrorCb,
   CompleteCb,
   UnsubscribeCb,
+  DestroyCb,
+  InitCb,
 } from './types'
 
-export type DestroyCb = () => void
-export type InitCb<T> = (next: NextCb<T>, error: ErrorCb, complete: CompleteCb) => DestroyCb | undefined
-
-// push-based "hot" observable
-export class HotObservable<T> implements IObservable<T> {
+// push-based "hot" lazy observable
+export class HotObservable<T> implements IHotObservable<T> {
   private _observers: Array<IObserver<T>> = []
   private _complete = false
-  private _destroyCb?: DestroyCb
+  private _destroyCb: DestroyCb = noop
 
-  constructor(init?: InitCb<T>) {
-    if (init) {
-      this._destroyCb = init(this.next, this.error, this.complete)
-    }
-  }
+  constructor(private _init?: InitCb<T>) { }
 
   private _assertNotComplete() {
     if (this._complete) {
       throw new Error('already complete')
     }
-  }
-
-  destroy() {
-    if (this._destroyCb) {
-      this._destroyCb()
-    }
-    this.complete()
   }
 
   next = (value: T) => {
@@ -59,6 +50,8 @@ export class HotObservable<T> implements IObservable<T> {
       return
     }
 
+    this._destroyCb()
+
     for (const observer of this._observers) {
       if (observer.complete) {
         observer.complete()
@@ -79,11 +72,21 @@ export class HotObservable<T> implements IObservable<T> {
     }
     this._observers.push(observer)
 
+    // init datasource on first subscriber
+    if (this._observers.length === 1 && this._init) {
+      this._destroyCb = this._init(this.next, this.error, this.complete)
+    }
+
     return () => {
       if (complete) {
         complete()
       }
       removeMut(this._observers, observer)
+
+      // destroy datasource if no more subscribers
+      if (this._observers.length === 0) {
+        this._destroyCb()
+      }
     }
   }
 

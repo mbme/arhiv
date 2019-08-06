@@ -81,6 +81,6 @@ export class WebRouter {
 
   stop() {
     window.removeEventListener('popstate', this._propagateCurrentLocation)
-    this.$location.destroy()
+    this.$location.complete()
   }
 }

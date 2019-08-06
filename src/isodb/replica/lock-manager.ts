@@ -106,6 +106,6 @@ export class LockManager {
   }
 
   stop() {
-    this.$state.destroy()
+    this.$state.complete()
   }
 }

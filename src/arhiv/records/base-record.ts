@@ -25,7 +25,6 @@ export abstract class BaseRecord<T extends Record> {
   constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
 
-    // FIXME unsubscribe
     this.$locked = _replica.locks.$state.map((state) => {
       if (state === 'free') {
         return false
@@ -72,10 +71,6 @@ export abstract class BaseRecord<T extends Record> {
 
   isNew() {
     return !this._replica.getDocument(this.id)
-  }
-
-  isLocked() {
-    return this._replica.locks.isDocumentLocked(this.id)
   }
 
   async acquireLock() {

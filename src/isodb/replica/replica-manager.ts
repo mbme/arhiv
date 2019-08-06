@@ -168,8 +168,8 @@ export class ReplicaManager<T extends IDocument> {
   stop() {
     this.locks.stop()
     this.events.destroy()
-    this.$syncState.destroy()
-    this.$updateTime.destroy()
+    this.$syncState.complete()
+    this.$updateTime.complete()
     // TODO stop storage?
   }
 }

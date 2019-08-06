@@ -64,7 +64,7 @@ export class ReplicaManager<T extends IDocument> {
     })
 
     // run compaction if db isn't locked
-    this.locks.state.subscribe((lockState) => {
+    this.locks.$state.subscribe((lockState) => {
       if (lockState === 'free') {
         this._replica.compact()
       }

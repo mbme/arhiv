@@ -4,7 +4,6 @@ import {
   fuzzySearch,
 } from '~/utils'
 import { useRouter } from '~/web-router'
-import { useIsodb } from '~/isodb-web-client'
 import {
   theme,
   stylish,
@@ -14,6 +13,7 @@ import {
   Link,
   Box,
 } from '~/web-platform'
+import { useArhiv } from '~/arhiv'
 import { Toolbar } from '../parts'
 
 const $item = stylish({
@@ -34,9 +34,9 @@ interface IProps {
 
 export function NotesListView({ filter }: IProps) {
   const router = useRouter()
-  const client = useIsodb()
+  const arhiv = useArhiv()
 
-  const items = client.notes
+  const items = arhiv.notes
     .getNotes()
     .filter(note => fuzzySearch(filter, note.name))
     .map(note => (

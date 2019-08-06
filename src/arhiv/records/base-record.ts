@@ -5,6 +5,7 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ILock } from '~/isodb/replica'
+import { ReactiveValue } from '~/utils/reactive'
 import { Attachment } from './attachment'
 import {
   ArhivReplica,
@@ -17,13 +18,25 @@ const log = createLogger('record')
 export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
-  public lock?: ILock
 
-  constructor(
-    protected _replica: ArhivReplica,
-    record: T,
-  ) {
+  lock?: ILock
+  $locked: ReactiveValue<boolean>
+
+  constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
+
+    // FIXME unsubscribe
+    this.$locked = _replica.locks.$state.map((state) => {
+      if (state === 'free') {
+        return false
+      }
+
+      if (state === 'db-locked') {
+        return true
+      }
+
+      return state.includes(record._id)
+    })
   }
 
   protected _updateRefs(value: string) {

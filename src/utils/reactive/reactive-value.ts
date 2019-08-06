@@ -32,4 +32,16 @@ export class ReactiveValue<T> extends HotObservable<T> {
 
     return unsubscribe
   }
+
+  map<K>(map: (value: T) => K): ReactiveValue<K> {
+    return new ReactiveValue(map(this._value), (next, error, complete) => {
+      const unsubscribe = this.subscribe(
+        value => next(map(value)),
+        error,
+        complete,
+      )
+
+      return unsubscribe
+    })
+  }
 }

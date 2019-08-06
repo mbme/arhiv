@@ -38,19 +38,20 @@ export class Router extends React.PureComponent<IProps, IState> {
   }
 
   _router = new WebRouter()
-  _updateLocation = (location: ILocation) => {
-    this.setState({
-      view: this.props.renderView(location),
+
+  componentDidMount() {
+    const {
+      renderView,
+    } = this.props
+
+    this._router.$location.subscribe((location) => {
+      this.setState({
+        view: renderView(location),
+      })
     })
   }
 
-  componentDidMount() {
-    this._router.events.on('location-changed', this._updateLocation)
-    this._router.start()
-  }
-
   componentWillUnmount() {
-    this._router.events.off('location-changed', this._updateLocation)
     this._router.stop()
   }
 

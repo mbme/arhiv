@@ -1,4 +1,4 @@
-import { PubSub } from '~/utils'
+import { ReactiveValue } from '~/utils/reactive'
 
 export interface IParams {
   [key: string]: string | undefined
@@ -9,28 +9,27 @@ export interface ILocation {
   params: IParams
 }
 
-// tslint:disable-next-line:interface-over-type-literal
-export type Events = { name: 'location-change', location: ILocation }
-
 export class WebRouter {
-  location?: ILocation
+  $location = new ReactiveValue<ILocation>(this._getCurrentLocation())
 
-  constructor(public events = new PubSub<Events>()) { }
+  constructor() {
+    window.addEventListener('popstate', this._propagateCurrentLocation)
+  }
 
-  private _propagateCurrentLocation = () => {
+  private _getCurrentLocation(): ILocation {
     const location = new URL(document.location.toString())
     const params: { [key: string]: string } = {}
 
     location.searchParams.forEach((value, key) => params[key] = value)
 
-    this.location = {
+    return {
       path: location.pathname,
       params,
     }
-    this.events.emit({
-      name: 'location-change',
-      location: this.location,
-    })
+  }
+
+  private _propagateCurrentLocation = () => {
+    this.$location.next(this._getCurrentLocation())
   }
 
   getUrl(location: ILocation) {
@@ -63,12 +62,15 @@ export class WebRouter {
   }
 
   replaceParam(param: string, value?: string) {
-    if (!this.location) throw new Error('not started yet')
+    const {
+      path,
+      params,
+    } = this.$location.currentValue
 
     const newLocation: ILocation = {
-      path: this.location.path,
+      path,
       params: {
-        ...this.location.params,
+        ...params,
         [param]: value,
       },
     }
@@ -77,12 +79,8 @@ export class WebRouter {
     this._propagateCurrentLocation()
   }
 
-  start() {
-    window.addEventListener('popstate', this._propagateCurrentLocation)
-    this._propagateCurrentLocation()
-  }
-
   stop() {
     window.removeEventListener('popstate', this._propagateCurrentLocation)
+    this.$location.destroy()
   }
 }

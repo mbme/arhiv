@@ -20,7 +20,7 @@ export interface IAttachment {
 
 export type NewAttachment = Without<IAttachment, '_type' | '_size'>
 
-export interface IChangeset {
+export interface IChangeset<T extends IDocument> {
   /**
    * replica storage revision
    */
@@ -29,7 +29,7 @@ export interface IChangeset {
   /**
    * new or updated documents
    */
-  readonly documents: IDocument[]
+  readonly documents: T[]
 
   /**
    * new or updated attachments

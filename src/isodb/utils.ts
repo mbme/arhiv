@@ -1,13 +1,15 @@
 import { randomId } from '~/randomizer'
 import { nowS } from '~/utils'
-import { IChangeset } from './types'
+import { IChangeset, IDocument } from './types'
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
 const ID_LENGTH = 15
 
 export const generateRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 
-export const isEmptyChangeset = (changeset: IChangeset) => !changeset.documents.length && !changeset.attachments.length
+export function isEmptyChangeset<T extends IDocument>(changeset: IChangeset<T>) {
+  return !changeset.documents.length && !changeset.attachments.length
+}
 
 export function createDocument<T extends string>(id: string, type: T) {
   const now = nowS()

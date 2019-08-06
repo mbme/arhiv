@@ -4,8 +4,8 @@ import {
 } from '~/isodb/types'
 import { IPrimaryStorage } from './primary-storage'
 
-export class PrimaryInMemStorage implements IPrimaryStorage {
-  _documents: IDocument[] = []
+export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {
+  _documents: T[] = []
   _attachments: IAttachment[] = []
   _rev = 0
   _files = new Map<string, string>()
@@ -38,7 +38,7 @@ export class PrimaryInMemStorage implements IPrimaryStorage {
     return this._files.get(id)
   }
 
-  putDocument(document: IDocument) {
+  putDocument(document: T) {
     this.removeDocument(document._id)
     this._documents.push(document)
   }

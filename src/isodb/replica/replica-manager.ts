@@ -25,7 +25,7 @@ const log = createLogger('isodb:replica-manager')
 type SyncState = 'sync' | 'merge-conflicts' | 'synced' | 'not-synced'
 
 type ChangesetExchange<T extends IDocument> = (
-  changeset: IChangeset,
+  changeset: IChangeset<T>,
   blobs: LocalAttachments,
 ) => Promise<IChangesetResult<T>>
 

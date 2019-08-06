@@ -5,14 +5,15 @@ import { IDict } from '~/utils'
 import {
   IChangesetResult,
   IChangeset,
+  IDocument,
 } from '~/isodb/types'
 import { isEmptyChangeset } from '~/isodb/utils'
 import { IPrimaryStorage } from './primary-storage'
 
 const log = createLogger('isodb-primary')
 
-export class PrimaryDB {
-  constructor(private _storage: IPrimaryStorage) { }
+export class PrimaryDB<T extends IDocument> {
+  constructor(private _storage: IPrimaryStorage<T>) { }
 
   getDocuments() {
     return this._storage.getDocuments()
@@ -42,7 +43,7 @@ export class PrimaryDB {
     return this._storage.getAttachmentPath(id)
   }
 
-  async applyChangeset(changeset: IChangeset, attachedFiles: IDict): Promise<IChangesetResult> {
+  async applyChangeset(changeset: IChangeset<T>, attachedFiles: IDict): Promise<IChangesetResult<T>> {
     // ensure client had latest revision
     if (this._storage.getRev() !== changeset.baseRev) {
       log.debug(`can't apply changeset: expected rev ${this._storage.getRev()}, got ${changeset.baseRev}`)
@@ -113,7 +114,7 @@ export class PrimaryDB {
   /**
    * @param rev minimum revision to include
    */
-  private _getChangesetResult(rev: number, success: boolean): IChangesetResult {
+  private _getChangesetResult(rev: number, success: boolean): IChangesetResult<T> {
     const currentRev = this.getRev()
     if (rev > currentRev) {
       throw new Error(`Got request for the future rev ${rev}, current rev is ${currentRev}`)

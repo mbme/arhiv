@@ -3,18 +3,18 @@ import {
   IAttachment,
 } from '~/isodb/types'
 
-export interface IPrimaryStorage {
+export interface IPrimaryStorage<T extends IDocument> {
   getRev(): number
   setRev(rev: number): void
 
-  getDocuments(): IDocument[]
+  getDocuments(): T[]
   getAttachments(): IAttachment[]
 
-  getDocument(id: string): IDocument | undefined
+  getDocument(id: string): T | undefined
   getAttachment(id: string): IAttachment | undefined
   getAttachmentPath(id: string): string | undefined
 
-  putDocument(document: IDocument): void
+  putDocument(document: T): void
   removeDocument(id: string): void
 
   addAttachment(attachment: IAttachment, attachmentPath: string): void

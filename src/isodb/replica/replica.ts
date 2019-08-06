@@ -92,7 +92,7 @@ export class IsodbReplica<T extends IDocument> {
     this._events.emit({ name: 'db-update' })
   }
 
-  getChangeset(): [IChangeset, LocalAttachments] {
+  getChangeset(): [IChangeset<T>, LocalAttachments] {
     this._assertNoMergeConflicts()
 
     const changeset = {

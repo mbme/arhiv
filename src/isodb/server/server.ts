@@ -8,7 +8,7 @@ import {
   MultipartBody,
   StringBody,
 } from '~/http-server'
-import { IChangeset } from '../types'
+import { IChangeset, IDocument } from '../types'
 import { PrimaryDB } from '../primary'
 import {
   isValidAuth,
@@ -19,7 +19,7 @@ import {
 
 const log = createLogger('isodb-server')
 
-export default function createServer(db: PrimaryDB, password = '', staticDirs: string[]) {
+export default function createServer(db: PrimaryDB<IDocument>, password = '', staticDirs: string[]) {
   const queue = new Queue()
   const server = new Server()
 
@@ -73,7 +73,7 @@ export default function createServer(db: PrimaryDB, password = '', staticDirs: s
       return
     }
 
-    const changeset = JSON.parse(changesetField.value) as IChangeset
+    const changeset = JSON.parse(changesetField.value) as IChangeset<IDocument>
 
     const assets: IDict = {}
     for (const file of body.files) {

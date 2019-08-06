@@ -58,7 +58,7 @@ export class NetworkManager {
   }
 
   syncChanges = async <T extends IDocument>(
-    changeset: IChangeset,
+    changeset: IChangeset<T>,
     localAttachments: LocalAttachments,
   ): Promise<IChangesetResult<T>> => {
     this._assertIsOnline()

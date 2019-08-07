@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useArhiv } from '~/arhiv'
+import { useReactiveValue } from '~/utils/reactive'
 import {
   Icon,
   CleanLink,
@@ -8,7 +10,6 @@ import {
   NotFound,
 } from '../parts'
 import { Note } from './Note'
-import { useArhiv } from '~/arhiv';
 
 interface IProps {
   id: string
@@ -21,8 +22,10 @@ export function NoteView({ id }: IProps) {
     return NotFound
   }
 
-  // FIXME isLocked
-  const right = note.isLocked() || (
+  // FIXME fix this
+  const locked = useReactiveValue(note.$locked)
+
+  const right = locked || (
     <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
       <Icon type="edit-2" />
     </CleanLink>

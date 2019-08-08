@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useRouter } from '~/web-router'
-import { Note } from '~/isodb-web-client'
+import { Note as ArhivNote } from '~/arhiv'
 import {
   Icon,
   Button,
@@ -17,7 +17,7 @@ import {
 import { DeleteNoteButton } from './DeleteNoteButton'
 
 interface IProps {
-  note: Note,
+  note: ArhivNote,
 }
 
 export function NoteEditor({ note }: IProps) {

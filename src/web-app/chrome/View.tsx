@@ -102,7 +102,9 @@ const $view = stylish({
 export interface IApp {
   name: string,
   rootRoute: string,
-  routes: { [route: string]: (params: IParams) => React.ReactNode },
+  routes: {
+    [route: string]: (params: IParams, arhiv: Arhiv) => React.ReactNode,
+  },
 }
 
 interface IProps {
@@ -182,6 +184,7 @@ export class View extends React.PureComponent<IProps, IState> {
   render() {
     const {
       location,
+      arhiv,
     } = this.props
 
     const {
@@ -189,7 +192,7 @@ export class View extends React.PureComponent<IProps, IState> {
       isNavVisible,
     } = this.state
 
-    const view = currentApp ? currentApp.routes[location.path](location.params) : null
+    const view = currentApp ? currentApp.routes[location.path](location.params, arhiv) : null
     const navbar = this.renderNavbar()
 
     return (

@@ -1,28 +1,18 @@
 import * as React from 'react'
-import { useArhiv } from '~/arhiv'
+import { Note as ArhivNote } from '~/arhiv'
 import { useReactiveValue } from '~/utils/reactive'
 import {
   Icon,
   CleanLink,
 } from '~/web-platform'
-import {
-  Toolbar,
-  NotFound,
-} from '../parts'
+import { Toolbar } from '../parts'
 import { Note } from './Note'
 
 interface IProps {
-  id: string
+  note: ArhivNote
 }
 
-export function NoteView({ id }: IProps) {
-  const arhiv = useArhiv()
-  const note = arhiv.notes.getNote(id)
-  if (!note) {
-    return NotFound
-  }
-
-  // FIXME fix this
+export function NoteView({ note }: IProps) {
   const locked = useReactiveValue(note.$locked)
 
   const right = locked || (

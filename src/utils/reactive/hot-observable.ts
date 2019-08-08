@@ -12,12 +12,14 @@ import {
   DestroyCb,
   InitCb,
 } from './types'
+import { Counter } from '../counter'
 
 // push-based "hot" lazy observable
 export class HotObservable<T> implements IHotObservable<T> {
   private _observers: Array<IObserver<T>> = []
   private _complete = false
   private _destroyCb: DestroyCb = noop
+  private _nextCounter = new Counter()
 
   constructor(private _init?: InitCb<T>) { }
 
@@ -29,9 +31,16 @@ export class HotObservable<T> implements IHotObservable<T> {
 
   next = (value: T) => {
     this._assertNotComplete()
+    const callId = this._nextCounter.incAndGet()
 
     for (const observer of this._observers) {
       observer.next(value)
+
+      // stop iterating if next() was called again
+      // so that subscribers wouldn't receive an outdated value
+      if (this._nextCounter.value !== callId) {
+        return
+      }
     }
   }
 

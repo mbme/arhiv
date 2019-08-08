@@ -1,9 +1,9 @@
 export class Counter {
-  _value = 0
+  value = 0
 
   incAndGet() {
-    this._value += 1
+    this.value += 1
 
-    return this._value
+    return this.value
   }
 }

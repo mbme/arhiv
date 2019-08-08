@@ -1,34 +1,46 @@
 import { createLogger } from '~/logger'
-import { ReactiveValue } from '~/utils/reactive'
+import {
+  ReactiveValue,
+  FiniteStateMachine,
+} from '~/utils/reactive'
 
 const log = createLogger('arhiv:lock-manager')
 
-type DocumentLocks = readonly string[]
-type State = 'free' | 'db-locked' | DocumentLocks
+type State = { type: 'free' }
+  | { type: 'db-locked' }
+  | { type: 'documents-locked', locks: readonly string[] }
 
-export interface ILock {
-  release(): void
-}
+type LockState = { state: 'initial' }
+  | { state: 'pending', cancel(): void }
+  | { state: 'acquired', release(): void }
+  | { state: 'canceled' }
+  | { state: 'released' }
+
+type LockEvent = 'acquiring' | 'canceled' | 'acquired' | 'released'
 
 export class LockManager {
-  $state = new ReactiveValue<State>('free')
+  $state = new ReactiveValue<State>({ type: 'free' })
 
   constructor() {
-    this.$state.subscribe(
-      currentState => {
-        if (currentState === 'free') {
-          log.info('state -> free')
-        } else if (currentState === 'db-locked') {
-          log.info('state -> db-locked')
-        } else {
-          log.info(`state -> documents locked: ${currentState.join(', ')}`)
-        }
-      },
-    )
+    this.$state.subscribe(currentState => {
+      if (currentState.type === 'free') {
+        log.info('state -> free')
+
+        return
+      }
+
+      if (currentState.type === 'db-locked') {
+        log.info('state -> db-locked')
+
+        return
+      }
+
+      log.info(`state -> documents locked: ${currentState.locks.join(', ')}`)
+    })
   }
 
   isFree() {
-    return this.$state.currentValue === 'free'
+    return this.$state.currentValue.type === 'free'
   }
 
   lockDB() { // FIXME same as document lock
@@ -36,73 +48,126 @@ export class LockManager {
       throw new Error("Can't lock db: not free")
     }
 
-    this.$state.next('db-locked')
+    this.$state.next({ type: 'db-locked' })
   }
 
   unlockDB() {
-    if (this.$state.currentValue !== 'db-locked') {
+    if (this.$state.currentValue.type !== 'db-locked') {
       throw new Error("Can't unlock db: not locked")
     }
 
-    this.$state.next('free')
+    this.$state.next({ type: 'free' })
   }
 
-  isDocumentLocked(id: string) {
-    if (this.$state.currentValue === 'db-locked') {
-      return true
-    }
+  $isDocumentLocked(id: string) {
+    return this.$state.map((state) => {
+      if (state.type === 'free') {
+        return false
+      }
 
-    if (this.$state.currentValue === 'free') {
-      return false
-    }
+      if (state.type === 'db-locked') {
+        return true
+      }
 
-    return this.$state.currentValue.includes(id)
+      return state.locks.includes(id)
+    })
   }
 
-  private _acquireLock(id: string) {
-    return {
-      release: () => {
-        if (this.$state.currentValue === 'free'
-          || this.$state.currentValue === 'db-locked'
-          || !this.$state.currentValue.includes(id)
-        ) {
-          throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
-        }
+  private _addDocumentLock = (id: string) => {
+    const {
+      currentValue,
+    } = this.$state
 
-        const locks = this.$state.currentValue.filter(lock => lock !== id)
+    if (currentValue.type === 'free') {
+      this.$state.next({ type: 'documents-locked', locks: [id] })
 
-        if (locks.length) {
-          this.$state.next(locks)
-        } else {
-          this.$state.next('free')
-        }
-      },
+      return
+    }
+
+    if (currentValue.type === 'db-locked') {
+      throw new Error(`[unreachable] can't lock document ${id}: db locked`)
+    }
+
+    if (currentValue.locks.includes(id)) {
+      throw new Error(`[unreachable] can't lock document ${id}: already locked`)
+    }
+
+    this.$state.next({ type: 'documents-locked', locks: [...currentValue.locks, id] })
+  }
+
+  private _removeDocumentLock = (id: string) => {
+    if (this.$state.currentValue.type === 'free'
+      || this.$state.currentValue.type === 'db-locked'
+      || !this.$state.currentValue.locks.includes(id)
+    ) {
+      throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
+    }
+
+    const locks = this.$state.currentValue.locks.filter(lock => lock !== id)
+
+    if (locks.length) {
+      this.$state.next({ type: 'documents-locked', locks })
+    } else {
+      this.$state.next({ type: 'free' })
     }
   }
 
-  lockDocument(id: string): Promise<ILock> {
-    if (this.$state.currentValue === 'free') {
-      this.$state.next([id])
+  lockDocument(id: string) {
+    const stm = new FiniteStateMachine<LockState, LockEvent>(
+      { state: 'initial' },
+      (currentState, event) => {
+        switch (event) {
+          case 'acquiring': {
+            const unsubscribe = this.$isDocumentLocked(id).subscribe((isLocked) => {
+              if (!isLocked) {
+                unsubscribe()
 
-      return Promise.resolve(this._acquireLock(id))
-    }
+                this._addDocumentLock(id)
+                stm.dispatchEvent('acquired')
+              }
+            })
 
-    return new Promise((resolve, reject) => {
-      const unsubscribe = this.$state.subscribe(
-        () => {
-          if (this.isDocumentLocked(id)) {
-            return
+            return {
+              state: 'pending',
+              cancel: () => {
+                unsubscribe()
+                stm.dispatchEvent('canceled')
+              },
+            }
           }
 
-          unsubscribe()
+          case 'acquired': {
+            return {
+              state: 'acquired',
+              release: () => {
+                this._removeDocumentLock(id)
+                stm.dispatchEvent('released')
+              },
+            }
+          }
 
-          this.$state.next([...this.$state.currentValue, id])
-          resolve(this._acquireLock(id))
-        },
-        reject,
-        reject,
-      )
-    })
+          case 'canceled': {
+            return {
+              state: 'canceled',
+            }
+          }
+
+          case 'released': {
+            return {
+              state: 'released',
+            }
+          }
+
+          default: {
+            return currentState
+          }
+        }
+      },
+    )
+
+    stm.dispatchEvent('acquiring')
+
+    return stm.$state
   }
 
   stop() {

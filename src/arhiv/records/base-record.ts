@@ -4,7 +4,6 @@ import {
   selectLinks,
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
-import { ILock } from '~/isodb/replica'
 import { ReactiveValue } from '~/utils/reactive'
 import { Attachment } from './attachment'
 import {
@@ -25,17 +24,7 @@ export abstract class BaseRecord<T extends Record> {
   constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
 
-    this.$locked = _replica.locks.$state.map((state) => {
-      if (state === 'free') {
-        return false
-      }
-
-      if (state === 'db-locked') {
-        return true
-      }
-
-      return state.includes(record._id)
-    })
+    this.$locked = _replica.locks.$isDocumentLocked(record._id)
   }
 
   protected _updateRefs(value: string) {

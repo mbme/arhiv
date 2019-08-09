@@ -5,6 +5,7 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ReactiveValue } from '~/utils/reactive'
+import { LockState } from '~/isodb/replica'
 import { Attachment } from './attachment'
 import {
   ArhivReplica,
@@ -18,13 +19,14 @@ export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
 
-  lock?: ILock
+  $lock: ReactiveValue<LockState>
   $locked: ReactiveValue<boolean>
 
   constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
 
     this.$locked = _replica.locks.$isDocumentLocked(record._id)
+    this.$lock = _replica.locks.$lockDocument(record._id)
   }
 
   protected _updateRefs(value: string) {
@@ -60,10 +62,6 @@ export abstract class BaseRecord<T extends Record> {
 
   isNew() {
     return !this._replica.getDocument(this.id)
-  }
-
-  async acquireLock() {
-    this.lock = await this._replica.locks.lockDocument(this.id)
   }
 
   get id() {

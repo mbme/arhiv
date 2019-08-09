@@ -10,11 +10,9 @@ type State = { type: 'free' }
   | { type: 'db-locked' }
   | { type: 'documents-locked', locks: readonly string[] }
 
-type LockState = { state: 'initial' }
+export type LockState = { state: 'initial', acquire(): void }
   | { state: 'pending', cancel(): void }
   | { state: 'acquired', release(): void }
-  | { state: 'canceled' }
-  | { state: 'released' }
 
 type LockEvent = 'acquiring' | 'canceled' | 'acquired' | 'released'
 
@@ -112,9 +110,14 @@ export class LockManager {
     }
   }
 
-  lockDocument(id: string) {
+  $lockDocument(id: string) {
     const stm = new FiniteStateMachine<LockState, LockEvent>(
-      { state: 'initial' },
+      {
+        state: 'initial',
+        acquire: () => {
+          stm.dispatchEvent('acquiring')
+        },
+      },
       (currentState, event) => {
         switch (event) {
           case 'acquiring': {
@@ -146,15 +149,13 @@ export class LockManager {
             }
           }
 
-          case 'canceled': {
-            return {
-              state: 'canceled',
-            }
-          }
-
+          case 'canceled':
           case 'released': {
             return {
-              state: 'released',
+              state: 'initial',
+              acquire: () => {
+                stm.dispatchEvent('acquiring')
+              },
             }
           }
 

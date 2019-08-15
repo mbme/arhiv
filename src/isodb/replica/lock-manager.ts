@@ -110,9 +110,9 @@ export class LockManager {
     }
   }
 
-  $lockDocument(id: string) {
+  $lockDocument(id: string) { // FIXME rename this method
     const stm = new FiniteStateMachine<LockState, LockEvent>(
-      {
+      { // FIXME avoid duplicate initial state
         state: 'initial',
         acquire: () => {
           stm.dispatchEvent('acquiring')

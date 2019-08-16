@@ -3,48 +3,31 @@ import { Note as ArhivNote } from '~/arhiv'
 import { Heading } from '~/web-platform'
 
 import { NoteEditor } from './NoteEditor'
-import { LockState } from '~/isodb/replica'
 
 interface IProps {
   note: ArhivNote
 }
 
 interface IState {
-  lock?: LockState
+  hasLock: boolean
 }
 
 export class NoteEditorView extends React.PureComponent<IProps, IState> {
   state: IState = {
-    lock: undefined,
+    hasLock: false,
   }
 
   private _unsubscribe?: () => void
 
   componentDidMount() {
-    this._unsubscribe = this.props.note.$lock.subscribe((lock) => {
-      if (lock.state === 'initial') {
-        lock.acquire()
-      }
-
-      this.setState({ lock })
+    this._unsubscribe = this.props.note.$lock().subscribe((hasLock) => {
+      this.setState({ hasLock })
     })
   }
 
   componentWillUnmount() {
-    const {
-      lock,
-    } = this.state
-
     if (this._unsubscribe) {
       this._unsubscribe()
-    }
-
-    if (lock && lock.state === 'pending') {
-      lock.cancel()
-    }
-
-    if (lock && lock.state === 'acquired') {
-      lock.release()
     }
   }
 
@@ -54,10 +37,10 @@ export class NoteEditorView extends React.PureComponent<IProps, IState> {
     } = this.props
 
     const {
-      lock,
+      hasLock,
     } = this.state
 
-    if (!lock || lock.state !== 'acquired') {
+    if (!hasLock) {
       return (
         <Heading>
           Note is in a read-only state, please wait

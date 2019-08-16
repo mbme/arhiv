@@ -1,20 +1,11 @@
 import { createLogger } from '~/logger'
-import {
-  ReactiveValue,
-  FiniteStateMachine,
-} from '~/utils/reactive'
+import { ReactiveValue } from '~/utils/reactive'
 
 const log = createLogger('arhiv:lock-manager')
 
 type State = { type: 'free' }
   | { type: 'db-locked' }
   | { type: 'documents-locked', locks: readonly string[] }
-
-export type LockState = { state: 'initial', acquire(): void }
-  | { state: 'pending', cancel(): void }
-  | { state: 'acquired', release(): void }
-
-type LockEvent = 'acquiring' | 'canceled' | 'acquired' | 'released'
 
 export class LockManager {
   $state = new ReactiveValue<State>({ type: 'free' })
@@ -37,12 +28,8 @@ export class LockManager {
     })
   }
 
-  isFree() {
-    return this.$state.currentValue.type === 'free'
-  }
-
   lockDB() { // FIXME same as document lock
-    if (!this.isFree()) {
+    if (this.$state.currentValue.type !== 'free') {
       throw new Error("Can't lock db: not free")
     }
 
@@ -71,7 +58,7 @@ export class LockManager {
     })
   }
 
-  private _addDocumentLock = (id: string) => {
+  addDocumentLock(id: string) {
     const {
       currentValue,
     } = this.$state
@@ -93,7 +80,7 @@ export class LockManager {
     this.$state.next({ type: 'documents-locked', locks: [...currentValue.locks, id] })
   }
 
-  private _removeDocumentLock = (id: string) => {
+  removeDocumentLock(id: string) {
     if (this.$state.currentValue.type === 'free'
       || this.$state.currentValue.type === 'db-locked'
       || !this.$state.currentValue.locks.includes(id)
@@ -108,67 +95,6 @@ export class LockManager {
     } else {
       this.$state.next({ type: 'free' })
     }
-  }
-
-  $lockDocument(id: string) { // FIXME rename this method
-    const stm = new FiniteStateMachine<LockState, LockEvent>(
-      { // FIXME avoid duplicate initial state
-        state: 'initial',
-        acquire: () => {
-          stm.dispatchEvent('acquiring')
-        },
-      },
-      (currentState, event) => {
-        switch (event) {
-          case 'acquiring': {
-            const unsubscribe = this.$isDocumentLocked(id).subscribe((isLocked) => {
-              if (!isLocked) {
-                unsubscribe()
-
-                this._addDocumentLock(id)
-                stm.dispatchEvent('acquired')
-              }
-            })
-
-            return {
-              state: 'pending',
-              cancel: () => {
-                unsubscribe()
-                stm.dispatchEvent('canceled')
-              },
-            }
-          }
-
-          case 'acquired': {
-            return {
-              state: 'acquired',
-              release: () => {
-                this._removeDocumentLock(id)
-                stm.dispatchEvent('released')
-              },
-            }
-          }
-
-          case 'canceled':
-          case 'released': {
-            return {
-              state: 'initial',
-              acquire: () => {
-                stm.dispatchEvent('acquiring')
-              },
-            }
-          }
-
-          default: {
-            return currentState
-          }
-        }
-      },
-    )
-
-    stm.dispatchEvent('acquiring')
-
-    return stm.$state
   }
 
   stop() {

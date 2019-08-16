@@ -5,7 +5,6 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ReactiveValue } from '~/utils/reactive'
-import { LockState } from '~/isodb/replica'
 import { Attachment } from './attachment'
 import {
   ArhivReplica,
@@ -19,14 +18,10 @@ export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
 
-  $lock: ReactiveValue<LockState>
-  $locked: ReactiveValue<boolean>
+  $locked = this._replica.locks.$isDocumentLocked(this._record._id)
 
   constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
-
-    this.$locked = _replica.locks.$isDocumentLocked(record._id)
-    this.$lock = _replica.locks.$lockDocument(record._id)
   }
 
   protected _updateRefs(value: string) {
@@ -62,6 +57,29 @@ export abstract class BaseRecord<T extends Record> {
 
   isNew() {
     return !this._replica.getDocument(this.id)
+  }
+
+  $lock() {
+    return new ReactiveValue(false, (next, error, complete) => {
+      let destroy: () => void | undefined
+
+      const unsubscribe = this._replica.locks.$isDocumentLocked(this.id).subscribe(
+        (isLocked) => {
+          if (isLocked) {
+            next(false)
+          } else {
+            unsubscribe()
+            this._replica.locks.addDocumentLock(this.id)
+            destroy = () => this._replica.locks.removeDocumentLock(this.id)
+            next(true)
+          }
+        },
+        error,
+        complete,
+      )
+
+      return () => (destroy || unsubscribe)()
+    })
   }
 
   get id() {

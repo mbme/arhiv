@@ -3,22 +3,33 @@ import { ReactiveValue } from './reactive-value'
 
 const log = createLogger('state-machine')
 
-export class FiniteStateMachine<States, Events extends string> {
+type FSM<States extends string, Events extends string> = {
+  [key in States]: {
+    [event in Events]?: States
+  }
+}
+
+export class FiniteStateMachine<States extends string, Events extends string> {
   $state: ReactiveValue<States>
 
   constructor(
     initialState: States,
-    private _transition: (currentState: States, events: Events) => States,
+    private _fsm: FSM<States, Events>,
   ) {
-    this.$state = new ReactiveValue(initialState)
+    this.$state = new ReactiveValue<States>(initialState)
   }
 
   dispatchEvent(event: Events) {
     const currentState = this.$state.currentValue
-    this.$state.next(this._transition(currentState, event))
 
-    if (this.$state.currentValue === currentState) {
-      log.debug(`ignored event ${event}, current state: ${currentState}`)
+    const newState: States | undefined = this._fsm[currentState][event]
+
+    if (!newState) {
+      log.warn(`ignoring unexpected event ${event} in state ${currentState}`)
+
+      return
     }
+
+    this.$state.next(newState)
   }
 }

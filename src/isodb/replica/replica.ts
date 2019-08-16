@@ -1,8 +1,6 @@
-import {
-  PubSub,
-  nowS,
-} from '~/utils'
+import { nowS } from '~/utils'
 import { createLogger } from '~/logger'
+import { ReactiveValue } from '~/utils/reactive'
 import {
   IAttachment,
   IDocument,
@@ -17,15 +15,12 @@ import { MergeConflicts } from './merge-conflict'
 
 const logger = createLogger('isodb-replica')
 
-export type Events = { name: 'db-update' } | { name: 'merge-conflicts' } | { name: 'merge-conflicts-resolved' }
-
 export class IsodbReplica<T extends IDocument> {
   mergeConflicts?: MergeConflicts<T>
+  $updateTime = new ReactiveValue(0)
+  $hasMergeConflicts = new ReactiveValue(false)
 
-  constructor(
-    private _storage: IReplicaStorage<T>,
-    private _events: PubSub<Events>,
-  ) { }
+  constructor(private _storage: IReplicaStorage<T>) { }
 
   getRev() {
     return this._storage.getRev()
@@ -67,6 +62,10 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
+  private _onUpdate() {
+    this.$updateTime.next(nowS())
+  }
+
   saveAttachment(id: string, blob: File) {
     this._assertNoMergeConflicts()
 
@@ -77,7 +76,7 @@ export class IsodbReplica<T extends IDocument> {
     }, blob)
     logger.debug(`saved new attachment with id ${id}`)
 
-    this._events.emit({ name: 'db-update' })
+    this._onUpdate()
   }
 
   saveDocument(document: T) {
@@ -89,7 +88,7 @@ export class IsodbReplica<T extends IDocument> {
     })
     logger.debug(`saved document with id ${document._id}`)
 
-    this._events.emit({ name: 'db-update' })
+    this._onUpdate()
   }
 
   getChangeset(): [IChangeset<T>, LocalAttachments] {
@@ -122,7 +121,7 @@ export class IsodbReplica<T extends IDocument> {
         changesetResult.attachments,
       )
 
-      this._events.emit({ name: 'db-update' })
+      this._onUpdate()
 
       return
     }
@@ -141,8 +140,8 @@ export class IsodbReplica<T extends IDocument> {
 
       this.mergeConflicts = undefined
 
-      this._events.emit({ name: 'db-update' })
-      this._events.emit({ name: 'merge-conflicts-resolved' })
+      this._onUpdate()
+      this.$hasMergeConflicts.next(false)
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
@@ -157,7 +156,7 @@ export class IsodbReplica<T extends IDocument> {
       }
     }
 
-    this._events.emit({ name: 'merge-conflicts' })
+    this.$hasMergeConflicts.next(true)
   }
 
   /**
@@ -179,7 +178,11 @@ export class IsodbReplica<T extends IDocument> {
     }
 
     if (updated) {
-      this._events.emit({ name: 'db-update' })
+      this._onUpdate()
     }
+  }
+
+  stop() {
+    this.$updateTime.complete()
   }
 }

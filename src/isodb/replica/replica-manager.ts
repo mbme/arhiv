@@ -1,11 +1,7 @@
 import { createLogger } from '~/logger'
-import { PubSub } from '~/utils'
 import { ReactiveValue } from '~/utils/reactive'
 import { LockManager } from './lock-manager'
-import {
-  IsodbReplica,
-  Events,
-} from './replica'
+import { IsodbReplica } from './replica'
 import {
   IDocument,
   IChangeset,
@@ -22,7 +18,7 @@ import {
 
 const log = createLogger('isodb:replica-manager')
 
-type SyncState = 'sync' | 'merge-conflicts' | 'synced' | 'not-synced'
+type SyncState = 'sync' | 'merge-conflicts' | 'merge-conflicts-resolved' | 'synced' | 'not-synced'
 
 type ChangesetExchange<T extends IDocument> = (
   changeset: IChangeset<T>,
@@ -30,7 +26,6 @@ type ChangesetExchange<T extends IDocument> = (
 ) => Promise<IChangesetResult<T>>
 
 export class ReplicaManager<T extends IDocument> {
-  events = new PubSub<Events>()
   locks = new LockManager()
   private _replica: IsodbReplica<T>
 
@@ -38,28 +33,16 @@ export class ReplicaManager<T extends IDocument> {
   $updateTime: ReactiveValue<number>
 
   constructor(storage: IReplicaStorage<T>) {
-    this._replica = new IsodbReplica(storage, this.events)
+    this._replica = new IsodbReplica(storage)
+    this.$updateTime = this._replica.$updateTime
 
-    this.$syncState = new ReactiveValue<SyncState>('not-synced', (next) => {
-      const onMergeConflicts = () => next('merge-conflicts')
-      const onMergeConflictsResolved = () => next('not-synced')
+    this.$syncState = new ReactiveValue<SyncState>('not-synced')
 
-      this.events.on('merge-conflicts', onMergeConflicts)
-      this.events.on('merge-conflicts-resolved', onMergeConflictsResolved)
-
-      return () => {
-        this.events.off('merge-conflicts', onMergeConflicts)
-        this.events.off('merge-conflicts-resolved', onMergeConflictsResolved)
-      }
-    })
-
-    this.$updateTime = new ReactiveValue(0, (next) => {
-      const onUpdate = () => next(Date.now())
-
-      this.events.on('db-update', onUpdate)
-
-      return () => {
-        this.events.off('db-update', onUpdate)
+    this._replica.$hasMergeConflicts.subscribe((hasMergeConflicts) => {
+      if (hasMergeConflicts) {
+        this.$syncState.next('merge-conflicts')
+      } else if (this.$syncState.currentValue === 'merge-conflicts') {
+        this.$syncState.next('merge-conflicts-resolved')
       }
     })
 
@@ -167,9 +150,8 @@ export class ReplicaManager<T extends IDocument> {
 
   stop() {
     this.locks.stop()
-    this.events.destroy()
     this.$syncState.complete()
-    this.$updateTime.complete()
+    this._replica.stop()
     // TODO stop storage?
   }
 }

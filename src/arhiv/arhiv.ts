@@ -25,7 +25,12 @@ export class Arhiv {
         this.syncNow()
       }
     })
-    this._replica.events.on('merge-conflicts-resolved', this.syncNow)
+
+    this._replica.$syncState.subscribe((syncState) => {
+      if (syncState === 'merge-conflicts-resolved') {
+        this.syncNow()
+      }
+    })
   }
 
   private _sync = () => {

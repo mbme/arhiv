@@ -28,6 +28,10 @@ export class LockManager {
     })
   }
 
+  isFree() {
+    return this.$state.currentValue.type === 'free'
+  }
+
   lockDB() { // FIXME same as document lock
     if (this.$state.currentValue.type !== 'free') {
       throw new Error("Can't lock db: not free")

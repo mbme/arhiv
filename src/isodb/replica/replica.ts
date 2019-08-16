@@ -16,9 +16,8 @@ import { MergeConflicts } from './merge-conflict'
 const logger = createLogger('isodb-replica')
 
 export class IsodbReplica<T extends IDocument> {
-  mergeConflicts?: MergeConflicts<T>
   $updateTime = new ReactiveValue(0)
-  $hasMergeConflicts = new ReactiveValue(false)
+  $mergeConflicts = new ReactiveValue<MergeConflicts<T> | undefined>(undefined)
 
   constructor(private _storage: IReplicaStorage<T>) { }
 
@@ -56,8 +55,12 @@ export class IsodbReplica<T extends IDocument> {
     return result.filter(document => !document._deleted)
   }
 
+  hasMergeConflicts() {
+    return !!this.$mergeConflicts.currentValue
+  }
+
   private _assertNoMergeConflicts() {
-    if (this.mergeConflicts) {
+    if (this.hasMergeConflicts()) {
       throw new Error('there is a pending merge conflict')
     }
   }
@@ -126,7 +129,7 @@ export class IsodbReplica<T extends IDocument> {
       return
     }
 
-    this.mergeConflicts = new MergeConflicts((documents) => {
+    const mergeConflicts = new MergeConflicts<T>((documents) => {
       // save resolved versions of the documents
       for (const document of documents) {
         this._storage.addLocalDocument(document)
@@ -138,17 +141,16 @@ export class IsodbReplica<T extends IDocument> {
         changesetResult.attachments,
       )
 
-      this.mergeConflicts = undefined
+      this.$mergeConflicts.next(undefined)
 
       this._onUpdate()
-      this.$hasMergeConflicts.next(false)
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
       const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
 
       if (remoteDocument) {
-        this.mergeConflicts.addConflict(
+        mergeConflicts.addConflict(
           this._storage.getDocument(localDocument._id)!,
           remoteDocument,
           localDocument,
@@ -156,7 +158,7 @@ export class IsodbReplica<T extends IDocument> {
       }
     }
 
-    this.$hasMergeConflicts.next(true)
+    this.$mergeConflicts.next(mergeConflicts)
   }
 
   /**

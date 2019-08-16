@@ -38,8 +38,8 @@ export class ReplicaManager<T extends IDocument> {
 
     this.$syncState = new ReactiveValue<SyncState>('not-synced')
 
-    this._replica.$hasMergeConflicts.subscribe((hasMergeConflicts) => {
-      if (hasMergeConflicts) {
+    this._replica.$mergeConflicts.subscribe((mergeConflicts) => {
+      if (mergeConflicts) {
         this.$syncState.next('merge-conflicts')
       } else if (this.$syncState.currentValue === 'merge-conflicts') {
         this.$syncState.next('merge-conflicts-resolved')
@@ -98,7 +98,7 @@ export class ReplicaManager<T extends IDocument> {
       return false
     }
 
-    if (this._replica.mergeConflicts) {
+    if (this._replica.hasMergeConflicts()) {
       log.debug('Skipping sync: pending merge conflicts')
 
       return false
@@ -125,7 +125,7 @@ export class ReplicaManager<T extends IDocument> {
 
       await this._replica.applyChangesetResult(result)
 
-      if (this._replica.mergeConflicts) {
+      if (this._replica.hasMergeConflicts()) {
         log.debug('sync: merge conflicts')
 
         return false

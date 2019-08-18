@@ -1,2 +1,3 @@
-export { IApp, View } from './View'
 export { AuthManager } from './AuthManager'
+export { Chrome } from './Chrome'
+export { IApp } from './IApp'

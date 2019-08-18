@@ -1,3 +1,4 @@
+import { isString } from '~/utils'
 import { ReactiveValue } from '~/utils/reactive'
 
 export interface IParams {
@@ -7,6 +8,22 @@ export interface IParams {
 export interface ILocation {
   path: string
   params: IParams
+}
+
+export type SimpleLocation = { path: string, params?: IParams } | string
+
+function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
+  if (isString(simpleLocation)) {
+    return {
+      path: simpleLocation,
+      params: {},
+    }
+  }
+
+  return {
+    path: simpleLocation.path,
+    params: simpleLocation.params || {},
+  }
 }
 
 export class WebRouter {
@@ -32,7 +49,9 @@ export class WebRouter {
     this.$location.next(this._getCurrentLocation())
   }
 
-  getUrl(location: ILocation) {
+  getUrl(simpleLocation: SimpleLocation) {
+    const location = simpleLocation2Location(simpleLocation)
+
     const queryParams = new URLSearchParams()
     for (const [key, value] of Object.entries(location.params)) {
       if (value !== undefined) {
@@ -51,12 +70,12 @@ export class WebRouter {
     return `${url}?${paramsStr}`
   }
 
-  push(location: ILocation) {
+  push(location: SimpleLocation) {
     window.history.pushState(undefined, '', this.getUrl(location))
     this._propagateCurrentLocation()
   }
 
-  replace(location: ILocation) {
+  replace(location: SimpleLocation) {
     window.history.replaceState(undefined, '', this.getUrl(location))
     this._propagateCurrentLocation()
   }

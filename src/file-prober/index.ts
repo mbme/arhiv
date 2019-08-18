@@ -35,4 +35,4 @@ const MIME: { [key: string]: string } = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
 }
-export const getMimeType = async (filePath: string) => MIME[path.extname(filePath)] || exec(`file -b -i ${filePath}`)
+export const getMimeType = async (filePath: string) => MIME[path.extname(filePath)] || exec(`file -b -i "${filePath}"`)

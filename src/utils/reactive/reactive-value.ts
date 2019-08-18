@@ -17,8 +17,9 @@ export class ReactiveValue<T> extends HotObservable<T> {
     this._value = initialValue
   }
 
-  next = (value: T) => {
+  next(value: T) {
     if (value !== this._value) {
+      this._value = value
       super.next(value)
     }
   }

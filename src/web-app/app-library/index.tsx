@@ -1,8 +1,9 @@
 import * as React from 'react'
 
 import { Library } from '~/web-platform/Library'
+import { IApp } from '../chrome'
 
-export default {
+export const LibraryApp: IApp = {
   name: 'Component Library',
   rootRoute: '/library',
   routes: {

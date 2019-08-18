@@ -1,11 +1,9 @@
 import * as React from 'react'
-import {
-  Location,
-  useRouter,
-} from './Router'
+import { SimpleLocation } from './web-router'
+import { useRouter } from './Router'
 
 interface IProps {
-  to: Location
+  to: SimpleLocation
   newTab?: boolean
   className?: string
   children: React.ReactNode
@@ -26,6 +24,7 @@ export function Link({ to, newTab, className, children }: IProps) {
       href={url}
       onClick={onClick}
       target={newTab ? '_blank' : undefined}
+      rel={newTab ? 'noopener' : undefined}
       className={className}
     >
       {children}

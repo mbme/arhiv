@@ -12,19 +12,19 @@ import {
   OverlayRenderer,
 } from '~/web-platform'
 import {
-  Router,
-  ILocation,
+  RouterContext,
+  WebRouter,
 } from '~/web-router'
 
 import {
   IApp,
-  View,
+  Chrome,
   AuthManager,
 } from './chrome'
-import AppNotes from './app-notes'
-import AppLibrary from './app-library'
+import { NotesApp } from './app-notes'
+import { LibraryApp } from './app-library'
 
-setLogLevel('INFO')
+setLogLevel('DEBUG')
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -37,31 +37,27 @@ injectGlobalStyles(`
 `)
 
 const arhiv = new Arhiv()
+const router = new WebRouter()
 
 const apps: IApp[] = [
-  AppNotes,
-  AppLibrary,
+  NotesApp,
+  LibraryApp,
 ]
-
-function renderView(location: ILocation) {
-  return (
-    <OverlayRenderer>
-      <View
-        location={location}
-        apps={apps}
-        arhiv={arhiv}
-      />
-      <AuthManager arhiv={arhiv} />
-    </OverlayRenderer>
-  )
-}
 
 const rootEl = document.getElementById('root')!
 
 ReactDOM.render(
   <React.StrictMode>
     <ArhivContext.Provider value={arhiv}>
-      <Router renderView={renderView} />
+      <RouterContext.Provider value={router}>
+        <OverlayRenderer>
+          <Chrome
+            apps={apps}
+            onLogout={() => arhiv.net.deauthorize()}
+          />
+          <AuthManager arhiv={arhiv} />
+        </OverlayRenderer>
+      </RouterContext.Provider>
     </ArhivContext.Provider>
   </React.StrictMode>,
   rootEl,

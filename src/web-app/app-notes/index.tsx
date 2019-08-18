@@ -1,17 +1,14 @@
 import * as React from 'react'
-import {
-  Redirect,
-  IParams,
-} from '~/web-router'
-import { Arhiv } from '~/arhiv'
+import { Redirect } from '~/web-router'
 
 import { NotFound } from '../parts'
+import { IApp } from '../chrome'
 
 import { NotesListView } from './NotesListView'
-import { NoteView } from './NoteView'
-import { NoteEditorView } from './NoteEditorView'
+import { NoteViewContainer } from './NoteView'
+import { NoteEditorViewContainer } from './NoteEditorView'
 
-export default {
+export const NotesApp: IApp = {
   name: 'Notes',
   rootRoute: '/notes',
   routes: {
@@ -19,36 +16,22 @@ export default {
       <Redirect to={{ path: '/notes' }} />
     ),
 
-    '/notes': ({ filter }: IParams) => (
+    '/notes': ({ filter }) => (
       <NotesListView filter={filter || ''} />
     ),
 
-    '/note': ({ id }: IParams, arhiv: Arhiv) => {
+    '/note': ({ id }) => {
       if (!id) {
         return NotFound
       }
 
-      // FIXME this wouldn't update
-      const note = arhiv.notes.getNote(id)
-      if (!note) {
-        return NotFound
-      }
-
       return (
-        <NoteView note={note} />
+        <NoteViewContainer id={id} />
       )
     },
 
-    '/note-editor': ({ id }: IParams, arhiv: Arhiv) => {
-      const note = id ? arhiv.notes.getNote(id) : arhiv.notes.createNote()
-
-      if (!note) {
-        return NotFound
-      }
-
-      return (
-        <NoteEditorView key={id} note={note} />
-      )
-    },
+    '/note-editor': ({ id }) => (
+      <NoteEditorViewContainer id={id} />
+    ),
   },
 }

@@ -29,7 +29,7 @@ export class HotObservable<T> implements IHotObservable<T> {
     }
   }
 
-  next = (value: T) => {
+  next(value: T) {
     this._assertNotComplete()
     const callId = this._nextCounter.incAndGet()
 
@@ -44,7 +44,7 @@ export class HotObservable<T> implements IHotObservable<T> {
     }
   }
 
-  error = (e: Error) => {
+  error(e: Error) {
     this._assertNotComplete()
 
     for (const observer of this._observers) {
@@ -54,7 +54,7 @@ export class HotObservable<T> implements IHotObservable<T> {
     }
   }
 
-  complete = () => {
+  complete() {
     if (this._complete) {
       return
     }
@@ -83,7 +83,11 @@ export class HotObservable<T> implements IHotObservable<T> {
 
     // init datasource on first subscriber
     if (this._observers.length === 1 && this._init) {
-      this._destroyCb = this._init(this.next, this.error, this.complete)
+      this._destroyCb = this._init(
+        this.next.bind(this),
+        this.error.bind(this),
+        this.complete.bind(this),
+      )
     }
 
     return () => {

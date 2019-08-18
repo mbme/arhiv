@@ -1,11 +1,9 @@
 import * as React from 'react'
-import {
-  Location,
-  useRouter,
-} from './Router'
+import { SimpleLocation } from './web-router'
+import { useRouter } from './Router'
 
 interface IProps {
-  to: Location
+  to: SimpleLocation
 }
 
 export function Redirect({ to }: IProps) {

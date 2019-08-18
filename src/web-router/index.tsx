@@ -1,18 +1,14 @@
 export {
   WebRouter,
+  SimpleLocation,
   ILocation,
   IParams,
 } from './web-router'
 
 export {
-  Router,
   useRouter,
+  RouterContext,
 } from './Router'
 
-export {
-  Redirect,
-} from './Redirect'
-
-export {
-  Link,
-} from './Link'
+export { Redirect } from './Redirect'
+export { Link } from './Link'

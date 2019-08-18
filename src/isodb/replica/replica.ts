@@ -158,7 +158,11 @@ export class IsodbReplica<T extends IDocument> {
       }
     }
 
-    this.$mergeConflicts.next(mergeConflicts)
+    if (mergeConflicts.conflicts.length) {
+      this.$mergeConflicts.next(mergeConflicts)
+    }
+
+    // FIXME merge documents without conflicts
   }
 
   /**

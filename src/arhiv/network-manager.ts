@@ -13,7 +13,7 @@ type NetworkState = 'online' | 'offline'
 
 export class NetworkManager {
   $networkState: ReactiveValue<NetworkState>
-  $authorized = new ReactiveValue(false)
+  $authorized = new ReactiveValue(true)
 
   constructor() {
     this.$networkState = new ReactiveValue<NetworkState>('online', (next) => {

@@ -1,7 +1,7 @@
 import { createLogger } from '~/logger'
 import { ReactiveValue } from '~/utils/reactive'
 
-const log = createLogger('arhiv:lock-manager')
+const log = createLogger('isodb:lock-manager')
 
 type State = { type: 'free' }
   | { type: 'db-locked' }
@@ -32,7 +32,7 @@ export class LockManager {
     return this.$state.currentValue.type === 'free'
   }
 
-  lockDB() { // FIXME same as document lock
+  lockDB() {
     if (this.$state.currentValue.type !== 'free') {
       throw new Error("Can't lock db: not free")
     }

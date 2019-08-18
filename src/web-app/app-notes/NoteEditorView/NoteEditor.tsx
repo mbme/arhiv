@@ -32,7 +32,7 @@ export function NoteEditor({ note }: IProps) {
   const deleteNote = () => {
     note.deleted = true
     note.save()
-    router.pushTo('/notes')
+    router.push('/notes')
   }
   const attachFiles = (files: File[]) => {
     const links = files.map(file => createLink(note.createAttachment(file), file.name))

@@ -15,14 +15,14 @@ const $input = stylish(
     border: '0 none',
     backgroundColor: 'inherit',
 
-    padding: theme.spacing.small,
+    px: theme.spacing.medium,
+    py: theme.spacing.small,
   },
 
   props => (
     props.light
       ? {
-        paddingTop: theme.spacing.fine,
-        paddingBottom: theme.spacing.fine,
+        py: theme.spacing.fine,
         backgroundColor: 'inherit',
         borderBottom: theme.border,
       }

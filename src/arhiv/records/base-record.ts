@@ -17,6 +17,7 @@ const log = createLogger('record')
 export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
+
   $locked: ReactiveValue<boolean>
 
   constructor(protected _replica: ArhivReplica, record: T) {

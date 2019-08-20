@@ -91,9 +91,6 @@ export class HotObservable<T> implements IHotObservable<T> {
     }
 
     return () => {
-      if (complete) {
-        complete()
-      }
       removeMut(this._observers, observer)
 
       // destroy datasource if no more subscribers

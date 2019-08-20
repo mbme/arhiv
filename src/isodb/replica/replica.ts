@@ -97,13 +97,7 @@ export class IsodbReplica<T extends IDocument> {
   getChangeset(): [IChangeset<T>, LocalAttachments] {
     this._assertNoMergeConflicts()
 
-    const changeset = {
-      baseRev: this.getRev(),
-      documents: this._storage.getLocalDocuments(),
-      attachments: this._storage.getLocalAttachments(),
-    }
-
-    return [changeset, this._storage.getLocalAttachmentsData()]
+    return this._storage.getChangeset()
   }
 
   async applyChangesetResult(changesetResult: IChangesetResult<T>) {
@@ -113,17 +107,11 @@ export class IsodbReplica<T extends IDocument> {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }
 
-    // TODO sync/locks
     // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
       this._storage.clearLocalData()
 
-      this._storage.upgrade(
-        changesetResult.currentRev,
-        changesetResult.documents,
-        changesetResult.attachments,
-      )
-
+      this._storage.upgrade(changesetResult)
       this._onUpdate()
 
       return
@@ -135,34 +123,32 @@ export class IsodbReplica<T extends IDocument> {
         this._storage.addLocalDocument(document)
       }
 
-      this._storage.upgrade(
-        changesetResult.currentRev,
-        changesetResult.documents,
-        changesetResult.attachments,
-      )
+      this._storage.upgrade(changesetResult)
+      this._onUpdate()
 
       this.$mergeConflicts.next(undefined)
-
-      this._onUpdate()
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
       const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
-
-      if (remoteDocument) {
-        mergeConflicts.addConflict(
-          this._storage.getDocument(localDocument._id)!,
-          remoteDocument,
-          localDocument,
-        )
+      if (!remoteDocument) {
+        continue
       }
+
+      const baseDocument = this._storage.getDocument(localDocument._id)
+      if (!baseDocument) {
+        throw new Error(`Can't find base document for local document ${localDocument._id}`)
+      }
+
+      mergeConflicts.addConflict(baseDocument, remoteDocument, localDocument)
     }
 
     if (mergeConflicts.conflicts.length) {
       this.$mergeConflicts.next(mergeConflicts)
+    } else {
+      this._storage.upgrade(changesetResult)
+      this._onUpdate()
     }
-
-    // FIXME merge documents without conflicts
   }
 
   /**

@@ -2,8 +2,13 @@ import { map2object } from '~/utils'
 import {
   IDocument,
   IAttachment,
+  IChangesetResult,
+  IChangeset,
 } from '../types'
-import { IReplicaStorage } from './storage'
+import {
+  IReplicaStorage,
+  LocalAttachments,
+} from './storage'
 
 export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage<T> {
   private _documents: T[] = []
@@ -81,14 +86,20 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     return `attachment-url(${id})`
   }
 
-  getLocalAttachmentsData() {
-    return map2object(this._localFiles)
+  getChangeset(): [IChangeset<T>, LocalAttachments] {
+    const changeset = {
+      baseRev: this._rev,
+      documents: this.getLocalDocuments(),
+      attachments: this.getLocalAttachments(),
+    }
+
+    return [changeset, map2object(this._localFiles)]
   }
 
-  upgrade(rev: number, documents: T[], attachments: IAttachment[]) {
-    this._rev = rev
-    this._documents = documents
-    this._attachments = attachments
+  upgrade(changesetResult: IChangesetResult<T>) {
+    this._rev = changesetResult.currentRev
+    this._documents = changesetResult.documents
+    this._attachments = changesetResult.attachments
   }
 
   clearLocalData() {

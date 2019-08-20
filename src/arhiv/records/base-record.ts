@@ -17,11 +17,11 @@ const log = createLogger('record')
 export abstract class BaseRecord<T extends Record> {
   protected _record: T
   private _attachments?: Attachment[]
-
-  $locked = this._replica.locks.$isDocumentLocked(this._record._id)
+  $locked: ReactiveValue<boolean>
 
   constructor(protected _replica: ArhivReplica, record: T) {
     this._record = { ...record }
+    this.$locked = this._replica.locks.$isDocumentLocked(this._record._id)
   }
 
   protected _updateRefs(value: string) {

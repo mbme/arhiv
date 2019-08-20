@@ -3,6 +3,8 @@ import {
   IDocument,
   IAttachment,
   NewAttachment,
+  IChangesetResult,
+  IChangeset,
 } from '../types'
 
 export type LocalAttachments = IDict<Blob>
@@ -21,6 +23,7 @@ export interface IReplicaStorage<T extends IDocument> {
 
   getAttachment(id: string): IAttachment | undefined
   getLocalAttachment(id: string): IAttachment | undefined
+  getAttachmentUrl(id: string): string | undefined
 
   addLocalDocument(document: T): void
   addLocalAttachment(attachment: NewAttachment, blob?: File): void
@@ -28,8 +31,7 @@ export interface IReplicaStorage<T extends IDocument> {
   removeLocalDocument(id: string): void
   removeLocalAttachment(id: string): void
 
-  getAttachmentUrl(id: string): string | undefined
-  getLocalAttachmentsData(): LocalAttachments
-  upgrade(rev: number, documents: T[], attachments: IAttachment[]): void
+  getChangeset(): [IChangeset<T>, LocalAttachments]
+  upgrade(changesetResult: IChangesetResult<T>): void
   clearLocalData(): void
 }

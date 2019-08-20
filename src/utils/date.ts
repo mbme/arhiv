@@ -13,7 +13,7 @@ export function formatDate(date: Date) {
 }
 
 export function formatTs(ts: number) {
-  const date = new Date(ts)
+  const date = new Date(ts * 1000)
 
   return [
     date.getFullYear(),

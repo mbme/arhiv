@@ -44,18 +44,25 @@ export class PrimaryDB<T extends IDocument> {
   }
 
   async applyChangeset(changeset: IChangeset<T>, attachedFiles: IDict): Promise<IChangesetResult<T>> {
-    // ensure client had latest revision
-    if (this._storage.getRev() !== changeset.baseRev) {
-      log.debug(`can't apply changeset: expected rev ${this._storage.getRev()}, got ${changeset.baseRev}`)
+    const baseRev = this._storage.getRev()
 
-      return this._getChangesetResult(changeset.baseRev, false)
+    // this should never happen
+    if (changeset.baseRev > baseRev) {
+      throw new Error(`got replica revision ${changeset.baseRev} bigger than primary revision ${baseRev}`)
     }
 
-    // skip empty changesets
+    // on empty changeset just send latest changes to the replica
     if (isEmptyChangeset(changeset)) {
       log.debug('got empty changeset, skipping rev increase')
 
       return this._getChangesetResult(changeset.baseRev, true)
+    }
+
+    // ensure client had latest revision
+    if (baseRev < changeset.baseRev) {
+      log.debug(`can't apply changeset: expected rev ${this._storage.getRev()}, got ${changeset.baseRev}`)
+
+      return this._getChangesetResult(changeset.baseRev, false)
     }
 
     log.debug(`got ${changeset.documents.length} documents and ${changeset.attachments.length} attachments`)

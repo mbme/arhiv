@@ -121,7 +121,9 @@ export class ReplicaManager<T extends IDocument> {
       }
 
       const result = await exchange(changeset, localAttachments)
-      log.info(`sync: succes=${result.success}`)
+
+      // tslint:disable-next-line:max-line-length
+      log.info(`sync: success: ${result.success}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
 
       await this._replica.applyChangesetResult(result)
 

@@ -13,7 +13,7 @@ import {
 } from './storage'
 import { MergeConflicts } from './merge-conflict'
 
-const logger = createLogger('isodb-replica')
+const log = createLogger('isodb-replica')
 
 export class IsodbReplica<T extends IDocument> {
   $updateTime = new ReactiveValue(0)
@@ -77,7 +77,7 @@ export class IsodbReplica<T extends IDocument> {
       _rev: this.getRev(),
       _createdTs: nowS(),
     }, blob)
-    logger.debug(`saved new attachment with id ${id}`)
+    log.debug(`saved new attachment with id ${id}`)
 
     this._onUpdate()
   }
@@ -89,7 +89,7 @@ export class IsodbReplica<T extends IDocument> {
       ...document,
       _updatedTs: nowS(),
     })
-    logger.debug(`saved document with id ${document._id}`)
+    log.debug(`saved document with id ${document._id}`)
 
     this._onUpdate()
   }
@@ -103,6 +103,7 @@ export class IsodbReplica<T extends IDocument> {
   async applyChangesetResult(changesetResult: IChangesetResult<T>) {
     this._assertNoMergeConflicts()
 
+    // this should never happen
     if (this.getRev() !== changesetResult.baseRev) {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
     }
@@ -163,7 +164,7 @@ export class IsodbReplica<T extends IDocument> {
     for (const id of localAttachmentIds) {
       // remove unused new local attachments
       if (!idsInUse.has(id)) {
-        logger.warn(`Removing unused local attachment ${id}`)
+        log.warn(`Removing unused local attachment ${id}`)
         this._storage.removeLocalAttachment(id)
         updated = true
       }

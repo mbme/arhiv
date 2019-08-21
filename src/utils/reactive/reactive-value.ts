@@ -19,10 +19,11 @@ export class ReactiveValue<T> extends HotObservable<T> {
   }
 
   next(value: T) {
+    clearTimeout(this._initSubscriptionTimeoutId)
+
     if (value !== this._value) {
       this._value = value
       super.next(value)
-      clearTimeout(this._initSubscriptionTimeoutId)
     }
   }
 

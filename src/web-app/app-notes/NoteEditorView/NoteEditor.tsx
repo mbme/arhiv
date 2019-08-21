@@ -8,6 +8,7 @@ import {
   Textarea,
   AttachFileButton,
   Box,
+  Spacer,
 } from '~/web-platform'
 import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
@@ -40,21 +41,12 @@ export function NoteEditor({ note }: IProps) {
     textAreaRef.current!.focus()
   }
   const onPreview = () => setPreview(!isPreview)
-  const left = (
-    <>
-      {note.isNew() || <DeleteNoteButton onConfirmed={deleteNote} />}
-      <AttachFileButton onSelected={attachFiles} />
-
-      <Icon
-        title="Preview"
-        type={isPreview ? 'eye-off' : 'eye'}
-        onClick={onPreview}
-      />
-    </>
-  )
-
   const isValid = name && name !== note.name || data !== note.data
-  const onCancel = () => router.push(note.isNew() ? { path: '/notes' } : { path: '/note', params: { id: note.id } })
+  const onCancel = () => router.push(
+    note.isNew()
+      ? { path: '/notes' }
+      : { path: '/note', params: { id: note.id } },
+  )
   const onSave = () => {
     note.name = name
     note.data = data
@@ -62,21 +54,28 @@ export function NoteEditor({ note }: IProps) {
     router.push({ path: '/note', params: { id: note.id } })
   }
 
-  const right = (
-    <>
-      <Button onClick={onCancel}>
-        Cancel
-      </Button>
-
-      <Button primary onClick={onSave} disabled={!isValid}>
-        Save
-      </Button>
-    </>
-  )
-
   return (
     <>
-      <Toolbar left={left} right={right} />
+      <Toolbar>
+        {note.isNew() || <DeleteNoteButton onConfirmed={deleteNote} />}
+        <AttachFileButton onSelected={attachFiles} />
+
+        <Icon
+          title="Preview"
+          type={isPreview ? 'eye-off' : 'eye'}
+          onClick={onPreview}
+        />
+
+        <Spacer />
+
+        <Button onClick={onCancel}>
+          Cancel
+        </Button>
+
+        <Button primary onClick={onSave} disabled={!isValid}>
+          Save
+        </Button>
+      </Toolbar>
 
       <Box
         hidden={isPreview}

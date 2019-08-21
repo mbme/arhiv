@@ -2,23 +2,22 @@ import * as React from 'react'
 import {
   stylish,
   Row,
-  Spacer,
+  theme,
 } from '~/web-platform'
 
-const $container = stylish(
-  props => ({
-    '& > *': {
-      [props.left ? 'marginRight' : 'marginLeft']: '1rem',
-    },
-  }),
-)
+const $container = stylish({
+  mx: `-${theme.spacing.fine}`, // compensate children margin
+
+  '& > *': {
+    mx: 'fine',
+  },
+})
 
 interface IProps {
-  left?: React.ReactNode
-  right?: React.ReactNode
+  children: React.ReactNode
 }
 
-export function Toolbar({ left, right }: IProps) {
+export function Toolbar({ children }: IProps) {
   return (
     <Row
       position="sticky"
@@ -27,16 +26,9 @@ export function Toolbar({ left, right }: IProps) {
       height="60px"
       py="fine"
       mb="medium"
+      $style={$container}
     >
-      <div className={$container.with({ left: true }).className}>
-        {left}
-      </div>
-
-      <Spacer />
-
-      <div className={$container.with({ left: false }).className}>
-        {right}
-      </div>
+      {children}
     </Row>
   )
 }

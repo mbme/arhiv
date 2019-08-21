@@ -7,6 +7,7 @@ import { useReactiveValue } from '~/utils/reactive'
 import {
   Icon,
   CleanLink,
+  Spacer,
 } from '~/web-platform'
 import {
   Toolbar,
@@ -21,15 +22,17 @@ interface IProps {
 function NoteView({ note }: IProps) {
   const locked = useReactiveValue(note.$locked)
 
-  const right = locked || (
-    <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
-      <Icon type="edit-2" />
-    </CleanLink>
-  )
-
   return (
     <>
-      <Toolbar right={right} />
+      <Toolbar>
+        <Spacer />
+
+        {locked || (
+          <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
+            <Icon type="edit-2" />
+          </CleanLink>
+        )}
+      </Toolbar>
 
       <Note name={note.name} data={note.data} />
     </>

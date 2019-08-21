@@ -5,26 +5,26 @@ import {
 } from '~/utils'
 import { useRouter } from '~/web-router'
 import {
-  theme,
   stylish,
   Button,
   FilterInput,
   CleanLink,
   Link,
   Box,
+  Spacer,
 } from '~/web-platform'
 import { useArhiv } from '~/arhiv'
 import { Toolbar } from '../parts'
 
 const $item = stylish({
-  marginBottom: theme.spacing.medium,
+  mb: 'medium',
   display: 'flex',
   alignItems: 'baseline',
   cursor: 'pointer',
 })
 
 const $counter = stylish({
-  marginLeft: theme.spacing.small,
+  ml: 'small',
   whiteSpace: 'nowrap',
 })
 
@@ -53,25 +53,23 @@ export function NotesListView({ filter }: IProps) {
       </CleanLink>
     ))
 
-  const left = (
-    <FilterInput
-      placeholder="Filter notes"
-      filter={filter}
-      onChange={newFilter => router.replaceParam('filter', newFilter)}
-    />
-  )
-
-  const right = (
-    <Link to={{ path: '/note-editor' }}>
-      <Button primary>
-        Add
-      </Button>
-    </Link>
-  )
-
   return (
     <>
-      <Toolbar left={left} right={right} />
+      <Toolbar>
+        <FilterInput
+          placeholder="Filter notes"
+          filter={filter}
+          onChange={newFilter => router.replaceParam('filter', newFilter)}
+        />
+
+        <Spacer />
+
+        <Link to={{ path: '/note-editor' }}>
+          <Button primary>
+            Add
+          </Button>
+        </Link>
+      </Toolbar>
 
       <small className={$counter.className}>
         {items.length} items

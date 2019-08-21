@@ -98,8 +98,8 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
 
   upgrade(changesetResult: IChangesetResult<T>) {
     this._rev = changesetResult.currentRev
-    this._documents = changesetResult.documents
-    this._attachments = changesetResult.attachments
+    this._documents.push(...changesetResult.documents)
+    this._attachments.push(...changesetResult.attachments)
   }
 
   clearLocalData() {

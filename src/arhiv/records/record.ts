@@ -14,7 +14,7 @@ import {
 const log = createLogger('record')
 
 // Active Record
-export abstract class BaseRecord<T extends Record> {
+export class ArhivRecord<T extends Record> {
   private _attachments?: Attachment[]
 
   $locked: ReactiveValue<boolean>
@@ -52,8 +52,11 @@ export abstract class BaseRecord<T extends Record> {
     return this._replica.saveAttachment(file)
   }
 
-  save() {
-    this._replica.saveDocument(this._record)
+  save(patch: Partial<T>) {
+    this._replica.saveDocument({
+      ...this.record,
+      ...patch,
+    })
   }
 
   isNew() {
@@ -95,16 +98,12 @@ export abstract class BaseRecord<T extends Record> {
     this._attachments = this._attachments || this._record._attachmentRefs.map(id => {
       const attachment = this._replica.getAttachment(id)
       if (!attachment) {
-        throw new Error(`record ${this._record._id} references unknown attachment ${id}`)
+        throw new Error(`record ${this.record._id} references unknown attachment ${id}`)
       }
 
       return new Attachment(this._replica, attachment)
     })
 
     return this._attachments
-  }
-
-  patch(patch: Partial<T>) {
-    return new this()
   }
 }

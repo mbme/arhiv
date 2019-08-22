@@ -1,28 +1,28 @@
-import { INote } from '../types'
+import { createDocument } from '~/isodb/utils'
+import {
+  INote,
+  ArhivReplica,
+  DocumentType,
+} from '../types'
 import { BaseRepository } from './base-repository'
-import { Note } from './note'
 
-export class NotesRepository extends BaseRepository {
-  private _wrap = (note: INote) => new Note(this._replica, note)
+function isNote(x: any): x is INote {
+  // tslint:disable-next-line:no-unsafe-any
+  return x && x._type === DocumentType.Note
+}
+
+export class NotesRepository extends BaseRepository<INote> {
+  constructor(replica: ArhivReplica) {
+    super(replica, isNote)
+  }
 
   createNote() {
     const id = this._replica.getRandomId()
 
-    return this._wrap(Note.create(id))
-  }
-
-  getNotes(): Note[] {
-    return this._replica.getDocuments()
-      .filter(Note.is)
-      .map(this._wrap)
-  }
-
-  getNote(id: string): Note | undefined {
-    const record = this._replica.getDocument(id)
-    if (Note.is(record)) {
-      return this._wrap(record)
-    }
-
-    return undefined
+    return this._wrap({
+      ...createDocument(id, DocumentType.Note),
+      name: '',
+      data: '',
+    })
   }
 }

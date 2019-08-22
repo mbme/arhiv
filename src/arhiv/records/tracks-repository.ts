@@ -1,28 +1,28 @@
-import { ITrack } from '../types'
+import { createDocument } from '~/isodb/utils'
+import {
+  ITrack,
+  DocumentType,
+  ArhivReplica,
+} from '../types'
 import { BaseRepository } from './base-repository'
-import { Track } from './track'
 
-export class TracksRepository extends BaseRepository {
-  private _wrap = (track: ITrack) => new Track(this._replica, track)
+function isTrack(x: any): x is ITrack {
+  // tslint:disable-next-line:no-unsafe-any
+  return x && x._type === DocumentType.Track
+}
+
+export class TracksRepository extends BaseRepository<ITrack> {
+  constructor(replica: ArhivReplica) {
+    super(replica, isTrack)
+  }
 
   createTrack() {
     const id = this._replica.getRandomId()
 
-    return this._wrap(Track.create(id))
-  }
-
-  getTracks(): Track[] {
-    return this._replica.getDocuments()
-      .filter(Track.is)
-      .map(this._wrap)
-  }
-
-  getTrack(id: string): Track | undefined {
-    const record = this._replica.getDocument(id)
-    if (Track.is(record)) {
-      return this._wrap(record)
-    }
-
-    return undefined
+    return this._wrap({
+      ...createDocument(id, DocumentType.Track),
+      title: '',
+      artist: '',
+    })
   }
 }

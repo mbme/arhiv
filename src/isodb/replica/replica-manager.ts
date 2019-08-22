@@ -6,6 +6,7 @@ import {
   IDocument,
   IChangeset,
   IChangesetResult,
+  IAttachment,
 } from '../types'
 import {
   IReplicaStorage,
@@ -29,14 +30,10 @@ export class ReplicaManager<T extends IDocument> {
   locks = new LockManager()
   private _replica: IsodbReplica<T>
 
-  $syncState: ReactiveValue<SyncState>
-  $updateTime: ReactiveValue<number>
+  $syncState = new ReactiveValue<SyncState>('not-synced')
 
   constructor(storage: IReplicaStorage<T>) {
     this._replica = new IsodbReplica(storage)
-    this.$updateTime = this._replica.$updateTime
-
-    this.$syncState = new ReactiveValue<SyncState>('not-synced')
 
     this._replica.$mergeConflicts.subscribe((mergeConflicts) => {
       if (mergeConflicts) {
@@ -59,17 +56,19 @@ export class ReplicaManager<T extends IDocument> {
 
     do {
       id = generateRandomId()
-    } while (this.getDocument(id) || this.getAttachment(id)) // make sure generated id is free
+    } while (
+      this._replica.getDocument(id)
+      || this._replica.getAttachment(id)) // make sure generated id is free
 
     return id
   }
 
-  getAttachment(id: string) {
-    return this._replica.getAttachment(id)
+  getAttachment(id: string): ReactiveValue<IAttachment | undefined> {
+    return this._replica.$updateTime.map(() => this._replica.getAttachment(id))
   }
 
-  getAttachmentUrl(id: string) {
-    return this._replica.getAttachmentUrl(id)
+  getAttachmentUrl(id: string): ReactiveValue<string | undefined> {
+    return this._replica.$updateTime.map(() => this._replica.getAttachmentUrl(id))
   }
 
   saveAttachment(file: File) {
@@ -79,12 +78,12 @@ export class ReplicaManager<T extends IDocument> {
     return id
   }
 
-  getDocuments() {
-    return this._replica.getDocuments()
+  getDocuments(): ReactiveValue<T[]> {
+    return this._replica.$updateTime.map(() => this._replica.getDocuments())
   }
 
-  getDocument(id: string) {
-    return this._replica.getDocument(id)
+  getDocument(id: string): ReactiveValue<T | undefined> {
+    return this._replica.$updateTime.map(() => this._replica.getDocument(id))
   }
 
   saveDocument(document: T) {

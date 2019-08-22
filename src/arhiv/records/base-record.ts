@@ -39,10 +39,9 @@ export abstract class BaseRecord<T extends Record> {
 
       if (this._replica.getAttachment(id)) {
         attachmentRefs.push(id)
-        continue
+      } else {
+        log.warn(`record ${this.id} references unknown entity ${id}`)
       }
-
-      log.warn(`record ${this.id} references unknown entity ${id}`)
     }
 
     this._record._attachmentRefs = attachmentRefs

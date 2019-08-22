@@ -1,13 +1,13 @@
 import { Without } from '~/utils'
 
 export interface IDocument {
-  _id: string
-  _rev: number
-  _type: string
-  _createdTs: number
-  _updatedTs: number
-  _attachmentRefs: string[]
-  _deleted?: boolean
+  readonly _id: string
+  readonly _rev: number
+  readonly _type: string
+  readonly _createdTs: number
+  readonly _updatedTs: number
+  readonly _attachmentRefs: readonly string[]
+  readonly _deleted?: boolean
 }
 
 export interface IAttachment {
@@ -29,12 +29,12 @@ export interface IChangeset<T extends IDocument> {
   /**
    * new or updated documents
    */
-  readonly documents: T[]
+  readonly documents: readonly T[]
 
   /**
    * new or updated attachments
    */
-  readonly attachments: NewAttachment[]
+  readonly attachments: readonly NewAttachment[]
 }
 
 export interface IChangesetResult<T extends IDocument> {
@@ -56,10 +56,10 @@ export interface IChangesetResult<T extends IDocument> {
   /**
    * documents with _rev > baseRev
    */
-  readonly documents: T[]
+  readonly documents: readonly T[]
 
   /**
    * attachments with _rev > baseRev
    */
-  attachments: IAttachment[]
+  attachments: readonly IAttachment[]
 }

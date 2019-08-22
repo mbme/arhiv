@@ -15,14 +15,15 @@ const log = createLogger('record')
 
 // Active Record
 export abstract class BaseRecord<T extends Record> {
-  protected _record: T
   private _attachments?: Attachment[]
 
   $locked: ReactiveValue<boolean>
 
-  constructor(protected _replica: ArhivReplica, record: T) {
-    this._record = { ...record }
-    this.$locked = this._replica.locks.$isDocumentLocked(this._record._id)
+  constructor(
+    protected _replica: ArhivReplica,
+    public record: T,
+  ) {
+    this.$locked = this._replica.locks.$isDocumentLocked(record._id)
   }
 
   protected _updateRefs(value: string) {
@@ -84,15 +85,11 @@ export abstract class BaseRecord<T extends Record> {
   }
 
   get id() {
-    return this._record._id
+    return this.record._id
   }
 
   get type() {
-    return this._record._type
-  }
-
-  get rev() {
-    return this._record._rev
+    return this.record._type
   }
 
   get attachments(): Attachment[] {
@@ -108,19 +105,7 @@ export abstract class BaseRecord<T extends Record> {
     return this._attachments
   }
 
-  get deleted(): boolean {
-    return this._record._deleted || false
-  }
-
-  set deleted(value: boolean) {
-    this._record._deleted = value
-  }
-
-  get createdTs() {
-    return this._record._createdTs
-  }
-
-  get updatedTs() {
-    return this._record._updatedTs
+  patch(patch: Partial<T>) {
+    return new this()
   }
 }

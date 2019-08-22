@@ -8,14 +8,14 @@ export enum DocumentType {
 
 export interface INote extends IDocument {
   readonly _type: DocumentType.Note
-  name: string
-  data: string
+  readonly name: string
+  readonly data: string
 }
 
 export interface ITrack extends IDocument {
   readonly _type: DocumentType.Track
-  artist: string
-  title: string
+  readonly artist: string
+  readonly title: string
 }
 
 export type Record = INote | ITrack

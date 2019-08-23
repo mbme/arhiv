@@ -5,7 +5,7 @@ interface IProps {
   onSelected(files: File[]): void
 }
 
-export class AttachFileButton extends React.PureComponent<IProps> {
+export class AttachFilesButton extends React.PureComponent<IProps> {
   formRef = React.createRef<HTMLFormElement>()
   inputRef = React.createRef<HTMLInputElement>()
 

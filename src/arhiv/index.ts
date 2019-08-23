@@ -7,3 +7,5 @@ export {
   NoteDocument,
   TrackDocument,
 } from './repositories'
+
+export { Attachment } from './entities'

@@ -6,12 +6,13 @@ import {
   Button,
   Input,
   Textarea,
-  AttachFileButton,
   Box,
   Spacer,
 } from '~/web-platform'
-import { createLink } from '~/markup-parser/utils'
-import { Toolbar } from '../../parts'
+import {
+  Toolbar,
+  AddAttachmentsButton,
+} from '../../parts'
 import { Note } from '../Note'
 import { DeleteNoteButton } from './DeleteNoteButton'
 
@@ -33,8 +34,7 @@ export function NoteEditor({ note }: IProps) {
     note.save()
     router.push('/notes')
   }
-  const attachFiles = (files: File[]) => {
-    const links = files.map(file => createLink(note.createAttachment(file), file.name))
+  const onAttachments = (links: string[]) => {
     textAreaRef.current!.insert(links.join(' '))
     textAreaRef.current!.focus()
   }
@@ -56,7 +56,7 @@ export function NoteEditor({ note }: IProps) {
     <>
       <Toolbar>
         {note.isNew() || <DeleteNoteButton onConfirmed={deleteNote} />}
-        <AttachFileButton onSelected={attachFiles} />
+        <AddAttachmentsButton onAttachments={onAttachments} />
 
         <Icon
           title="Preview"

@@ -4,14 +4,17 @@ import {
   ArhivReplica,
   DocumentType,
 } from '../types'
-import { BaseRepository } from './base-repository'
+import { DocumentsRepository } from './documents'
+import { Document } from '../entities/document'
 
 function isNote(x: any): x is INote {
   // tslint:disable-next-line:no-unsafe-any
   return x && x._type === DocumentType.Note
 }
 
-export class NotesRepository extends BaseRepository<INote> {
+export type NoteDocument = Document<INote>
+
+export class NotesRepository extends DocumentsRepository<INote> {
   constructor(replica: ArhivReplica) {
     super(replica, isNote)
   }

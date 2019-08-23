@@ -3,6 +3,7 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
+import { useReactiveValue } from '~/utils/reactive'
 import { useRouter } from '~/web-router'
 import {
   stylish,
@@ -36,9 +37,10 @@ export function NotesListView({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
-  const items = arhiv.notes
-    .getNotes()
-    .filter(note => fuzzySearch(filter, note.name))
+  const notes = useReactiveValue(arhiv.notes.getDocuments())
+
+  const items = notes
+    .filter(note => fuzzySearch(filter, note.record.name))
     .map(note => (
       <CleanLink
         key={note.id}
@@ -46,10 +48,10 @@ export function NotesListView({ filter }: IProps) {
         $style={$item}
       >
         <Box as="small" mr="small">
-          {formatTs(note.updatedTs)}
+          {formatTs(note.record._updatedTs)}
         </Box>
 
-        {note.name}
+        {note.record.name}
       </CleanLink>
     ))
 

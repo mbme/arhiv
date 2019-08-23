@@ -4,14 +4,17 @@ import {
   DocumentType,
   ArhivReplica,
 } from '../types'
-import { BaseRepository } from './base-repository'
+import { DocumentsRepository } from './documents'
+import { Document } from '../entities/document'
 
 function isTrack(x: any): x is ITrack {
   // tslint:disable-next-line:no-unsafe-any
   return x && x._type === DocumentType.Track
 }
 
-export class TracksRepository extends BaseRepository<ITrack> {
+export type TrackDocument = Document<ITrack>
+
+export class TracksRepository extends DocumentsRepository<ITrack> {
   constructor(replica: ArhivReplica) {
     super(replica, isTrack)
   }

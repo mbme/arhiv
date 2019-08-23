@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useRouter } from '~/web-router'
-import { Note as ArhivNote } from '~/arhiv'
+import { NoteDocument } from '~/arhiv'
 import {
   Icon,
   Button,
@@ -12,21 +12,19 @@ import {
 } from '~/web-platform'
 import { createLink } from '~/markup-parser/utils'
 import { Toolbar } from '../../parts'
-import {
-  Note as NoteRenderer,
-} from '../Note'
+import { Note } from '../Note'
 import { DeleteNoteButton } from './DeleteNoteButton'
 
 interface IProps {
-  note: ArhivNote,
+  note: NoteDocument,
 }
 
 export function NoteEditor({ note }: IProps) {
   const router = useRouter()
 
   const [isPreview, setPreview] = React.useState(false)
-  const [name, setName] = React.useState(note.name)
-  const [data, setData] = React.useState(note.data)
+  const [name, setName] = React.useState(note.record.name)
+  const [data, setData] = React.useState(note.record.data)
 
   const textAreaRef = React.useRef<Textarea>(null)
 
@@ -41,7 +39,7 @@ export function NoteEditor({ note }: IProps) {
     textAreaRef.current!.focus()
   }
   const onPreview = () => setPreview(!isPreview)
-  const isValid = name && name !== note.name || data !== note.data
+  const isValid = name && name !== note.record.name || data !== note.record.data
   const onCancel = () => router.push(
     note.isNew()
       ? { path: '/notes' }
@@ -98,7 +96,7 @@ export function NoteEditor({ note }: IProps) {
         />
       </div>
 
-      {isPreview && <NoteRenderer name={name} data={data} />}
+      {isPreview && <Note name={name} data={data} />}
     </>
   )
 }

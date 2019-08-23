@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   useArhiv,
-  Note as ArhivNote,
+  NoteDocument,
 } from '~/arhiv'
 import { useReactiveValue } from '~/utils/reactive'
 import {
@@ -16,7 +16,7 @@ import {
 import { Note } from './Note'
 
 interface IProps {
-  note: ArhivNote
+  note: NoteDocument
 }
 
 function NoteView({ note }: IProps) {
@@ -34,14 +34,17 @@ function NoteView({ note }: IProps) {
         )}
       </Toolbar>
 
-      <Note name={note.name} data={note.data} />
+      <Note
+        name={note.record.name}
+        data={note.record.data}
+      />
     </>
   )
 }
 
 export function NoteViewContainer({ id }: { id: string }) {
   const arhiv = useArhiv()
-  const note = arhiv.notes.getNote(id)
+  const note = useReactiveValue(arhiv.notes.getDocument(id))
 
   if (!note) {
     return NotFound

@@ -8,7 +8,7 @@ import {
   NotesRepository,
   TracksRepository,
   AttachmentsRepository,
-} from './records'
+} from './repositories'
 
 export class Arhiv {
   net = new NetworkManager()

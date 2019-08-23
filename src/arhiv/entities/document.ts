@@ -12,10 +12,10 @@ import {
   Record,
 } from '../types'
 
-const log = createLogger('record')
+const log = createLogger('document')
 
 // Active Record
-export class ArhivRecord<T extends Record> {
+export class Document<T extends Record> {
   $locked: ReactiveValue<boolean>
 
   constructor(
@@ -39,7 +39,7 @@ export class ArhivRecord<T extends Record> {
       if (this._replica.getAttachment(id).currentValue) {
         attachmentRefs.push(id)
       } else {
-        log.warn(`record ${this.id} references unknown entity ${id}`)
+        log.warn(`document ${this.id} references unknown entity ${id}`)
       }
     }
 

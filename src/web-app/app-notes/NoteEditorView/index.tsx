@@ -1,8 +1,7 @@
 import * as React from 'react'
-import { noop } from '~/utils'
 import {
   useArhiv,
-  Note as ArhivNote,
+  NoteDocument,
 } from '~/arhiv'
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
@@ -13,17 +12,21 @@ interface IProps {
 }
 
 export function NoteEditorViewContainer({ id }: IProps) {
-  const arhiv = useArhiv(id ? true : false)
+  const arhiv = useArhiv()
 
-  const [note, setNote] = React.useState<ArhivNote | undefined | null>(null)
+  const [note, setNote] = React.useState<NoteDocument | undefined | null>(null)
   const [hasLock, setHasLock] = React.useState(false)
 
   // get or create the note
   React.useEffect(() => {
-    if (!note) {
-      setNote(id ? arhiv.notes.getNote(id) : arhiv.notes.createNote())
+    if (id) {
+      return arhiv.notes.getDocument(id).subscribe(setNote)
     }
-  })
+
+    setNote(arhiv.notes.createNote())
+
+    return undefined
+  }, [id])
 
   // acquire note lock
   React.useEffect(() => {
@@ -31,7 +34,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
       return note.$lock().subscribe(setHasLock)
     }
 
-    return noop
+    return undefined
   }, [note])
 
   // null means no data yet, while undefined signals than we can't find the note

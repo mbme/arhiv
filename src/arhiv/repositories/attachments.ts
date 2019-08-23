@@ -1,6 +1,6 @@
 import { ReactiveValue } from '~/utils/reactive'
 import { ArhivReplica } from '../types'
-import { Attachment } from './attachment'
+import { Attachment } from '../entities/attachment'
 
 export class AttachmentsRepository {
   constructor(protected _replica: ArhivReplica) { }

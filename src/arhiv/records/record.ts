@@ -5,6 +5,8 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ReactiveValue } from '~/utils/reactive'
+import { Without } from '~/utils';
+import { IDocument } from '~/isodb/types'
 import {
   ArhivReplica,
   Record,
@@ -44,7 +46,7 @@ export class ArhivRecord<T extends Record> {
     return attachmentRefs
   }
 
-  save(patch: Partial<T>) { // FIXME fix type
+  save(patch: Partial<Without<T, keyof IDocument>>) { // FIXME fix type
 
     this._replica.saveDocument({
       ...this.record,

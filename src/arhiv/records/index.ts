@@ -1,4 +1,5 @@
 export * from './record'
 export * from './attachment'
+export * from './attachments-repository'
 export * from './notes-repository'
 export * from './tracks-repository'

@@ -7,6 +7,7 @@ import { ArhivReplica } from './types'
 import {
   NotesRepository,
   TracksRepository,
+  AttachmentsRepository,
 } from './records'
 
 export class Arhiv {
@@ -14,6 +15,7 @@ export class Arhiv {
   private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
   private _syncIntervalId: number | undefined
 
+  attachments = new AttachmentsRepository(this._replica)
   notes = new NotesRepository(this._replica)
   tracks = new TracksRepository(this._replica)
 

@@ -5,7 +5,6 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ReactiveValue } from '~/utils/reactive'
-import { Attachment } from './attachment'
 import {
   ArhivReplica,
   Record,
@@ -15,8 +14,6 @@ const log = createLogger('record')
 
 // Active Record
 export class ArhivRecord<T extends Record> {
-  private _attachments?: Attachment[]
-
   $locked: ReactiveValue<boolean>
 
   constructor(
@@ -26,7 +23,7 @@ export class ArhivRecord<T extends Record> {
     this.$locked = this._replica.locks.$isDocumentLocked(record._id)
   }
 
-  protected _updateRefs(value: string) {
+  private _extractRefs(value: string) {
     const attachmentRefs: string[] = []
 
     const result = markupParser.parseAll(value)
@@ -37,22 +34,18 @@ export class ArhivRecord<T extends Record> {
     for (const link of selectLinks(result.result)) {
       const id = link.value[0]
 
-      if (this._replica.getAttachment(id)) {
+      if (this._replica.getAttachment(id).currentValue) {
         attachmentRefs.push(id)
       } else {
         log.warn(`record ${this.id} references unknown entity ${id}`)
       }
     }
 
-    this._record._attachmentRefs = attachmentRefs
-    this._attachments = undefined
+    return attachmentRefs
   }
 
-  createAttachment(file: File): string {
-    return this._replica.saveAttachment(file)
-  }
+  save(patch: Partial<T>) { // FIXME fix type
 
-  save(patch: Partial<T>) {
     this._replica.saveDocument({
       ...this.record,
       ...patch,
@@ -88,22 +81,5 @@ export class ArhivRecord<T extends Record> {
 
   get id() {
     return this.record._id
-  }
-
-  get type() {
-    return this.record._type
-  }
-
-  get attachments(): Attachment[] {
-    this._attachments = this._attachments || this._record._attachmentRefs.map(id => {
-      const attachment = this._replica.getAttachment(id)
-      if (!attachment) {
-        throw new Error(`record ${this.record._id} references unknown attachment ${id}`)
-      }
-
-      return new Attachment(this._replica, attachment)
-    })
-
-    return this._attachments
   }
 }

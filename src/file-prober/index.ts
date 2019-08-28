@@ -1,6 +1,7 @@
 /* tslint:disable:no-unsafe-any */
 import path from 'path'
-import { exec } from '../utils/node'
+import { IDict } from '~/utils'
+import { exec } from '~/utils/node'
 
 // TODO images, video
 
@@ -28,11 +29,15 @@ export default async function probeMetadata(filePath: string) {
   return {}
 }
 
-const MIME: { [key: string]: string } = {
+const MIME: IDict = {
   '.css': 'text/css',
   '.html': 'text/html',
   '.json': 'application/json',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
 }
-export const getMimeType = async (filePath: string) => MIME[path.extname(filePath)] || exec(`file -b -i "${filePath}"`)
+export const getMimeType = async (filePath: string) => {
+  const mimeType = MIME[path.extname(filePath)]
+
+  return mimeType ? mimeType : exec(`file -b -i "${filePath}"`)
+}

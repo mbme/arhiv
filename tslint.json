@@ -32,6 +32,7 @@
     "no-implicit-dependencies": [true, ["~"]],
     "prefer-function-over-method": false,
     "strict-boolean-expressions": false,
+    "strict-string-expressions": false,
     "no-parameter-properties": false,
     "newline-per-chained-call": false,
     "no-non-null-assertion": false,
@@ -44,6 +45,7 @@
     "no-object-literal-type-assertion": [true, { "allow-arguments": true }],
     "object-literal-key-quotes": false,
     "no-void-expression": [true, "ignore-arrow-function-shorthand"],
+    "invalid-void": false,
     "strict-comparisons": [true, { "allow-object-equal-comparison": true }],
     "align": {
       "options": ["parameters", "statements", "members"]

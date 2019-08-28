@@ -5,7 +5,7 @@ import {
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
 import { ReactiveValue } from '~/utils/reactive'
-import { Without } from '~/utils';
+import { Without } from '~/utils'
 import { IDocument } from '~/isodb/types'
 import {
   ArhivReplica,
@@ -46,11 +46,22 @@ export class Document<T extends Record> {
     return attachmentRefs
   }
 
-  save(patch: Partial<Without<T, keyof IDocument>>) { // FIXME fix type
+  patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) { // FIXME fix type
+    const attachmentRefs = refSource === undefined
+      ? this.record._attachmentRefs
+      : this._extractRefs(refSource)
 
     this._replica.saveDocument({
       ...this.record,
       ...patch,
+      _attachmentRefs: attachmentRefs,
+    })
+  }
+
+  delete() {
+    this._replica.saveDocument({ // FIXME cleanup fields
+      ...this.record,
+      _deleted: true,
     })
   }
 
@@ -60,7 +71,7 @@ export class Document<T extends Record> {
 
   $lock() {
     return new ReactiveValue(false, (next, error, complete) => {
-      let destroy: () => void | undefined
+      let destroy: () => void
 
       const unsubscribe = this._replica.locks.$isDocumentLocked(this.id).subscribe(
         (isLocked) => {

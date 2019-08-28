@@ -30,8 +30,7 @@ export function NoteEditor({ note }: IProps) {
   const textAreaRef = React.useRef<Textarea>(null)
 
   const deleteNote = () => {
-    note.deleted = true
-    note.save()
+    note.delete()
     router.push('/notes')
   }
   const onAttachments = (links: string[]) => {
@@ -46,9 +45,7 @@ export function NoteEditor({ note }: IProps) {
       : { path: '/note', params: { id: note.id } },
   )
   const onSave = () => {
-    note.name = name
-    note.data = data
-    note.save()
+    note.patch({ name, data }, data)
     router.push({ path: '/note', params: { id: note.id } })
   }
 

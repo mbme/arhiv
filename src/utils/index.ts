@@ -5,6 +5,7 @@ export * from './date'
 export * from './string'
 export { Counter } from './counter'
 export { PubSub } from './pubsub'
+export { FiniteStateMachine } from './finite-state-machine'
 
 export const getType = (x: any) => Object.prototype.toString.call(x).slice(8, -1)
 

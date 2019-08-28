@@ -48,7 +48,7 @@ export class ReactiveValue<T> {
     }
   }
 
-  error(e: Error) {
+  error = (e: Error) => {
     this._assertNotComplete()
 
     for (const observer of this._observers) {
@@ -58,7 +58,7 @@ export class ReactiveValue<T> {
     }
   }
 
-  complete() {
+  complete = () => {
     if (this._complete) {
       return
     }
@@ -73,18 +73,13 @@ export class ReactiveValue<T> {
     this._complete = true
   }
 
-  subscribe(onNext?: NextCb<T>, onError?: ErrorCb, onComplete?: CompleteCb): UnsubscribeCb {
+  subscribe(observer: IObserver<T>): UnsubscribeCb {
     this._assertNotComplete()
 
-    const observer = {
-      next: onNext,
-      error: onError,
-      complete: onComplete,
-    }
     this._observers.push(observer)
 
-    if (onNext) {
-      onNext(this._value)
+    if (observer.next) {
+      observer.next(this._value)
     }
 
     return () => removeMut(this._observers, observer)
@@ -93,11 +88,11 @@ export class ReactiveValue<T> {
   map<K>(map: (value: T) => K): ReactiveValue<K> {
     const mappedValue = new ReactiveValue<K>(map(this._value))
 
-    this.subscribe(
-      value => mappedValue.next(map(value)),
-      error => mappedValue.error(error),
-      () => mappedValue.complete(),
-    )
+    this.subscribe({
+      next: value => mappedValue.next(map(value)),
+      error: mappedValue.error,
+      complete: mappedValue.complete,
+    })
 
     return mappedValue
   }
@@ -105,15 +100,15 @@ export class ReactiveValue<T> {
   filter(test: (value: T) => boolean) {
     const mappedValue = new ReactiveValue<T>(this._value)
 
-    this.subscribe(
-      value => {
+    this.subscribe({
+      next: value => {
         if (test(value)) {
           mappedValue.next(value)
         }
       },
-      error => mappedValue.error(error),
-      () => mappedValue.complete(),
-    )
+      error: mappedValue.error,
+      complete: mappedValue.complete,
+    })
 
     return mappedValue
   }

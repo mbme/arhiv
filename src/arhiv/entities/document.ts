@@ -70,26 +70,23 @@ export class Document<T extends Record> {
   }
 
   $lock() {
-    return new ReactiveValue(false, (next, error, complete) => {
-      let destroy: () => void
+    const $locked = new ReactiveValue(false)
 
-      const unsubscribe = this._replica.locks.$isDocumentLocked(this.id).subscribe(
-        (isLocked) => {
-          if (isLocked) {
-            next(false)
-          } else {
-            unsubscribe()
-            this._replica.locks.addDocumentLock(this.id)
-            destroy = () => this._replica.locks.removeDocumentLock(this.id)
-            next(true)
-          }
-        },
-        error,
-        complete,
-      )
+    const unsubscribe = this._replica.locks.$isDocumentLocked(this.id).subscribe(
+      (isLocked) => {
+        if (isLocked) {
+          $locked.next(false)
+        } else {
+          unsubscribe()
+          this._replica.locks.addDocumentLock(this.id)
+          $locked.subscribe(undefined, undefined, () => this._replica.locks.removeDocumentLock(this.id))
+          $locked.next(true)
+        }
+      },
+    )
+    $locked.subscribe(undefined, undefined, unsubscribe)
 
-      return () => (destroy || unsubscribe)()
-    })
+    return $locked
   }
 
   get id() {

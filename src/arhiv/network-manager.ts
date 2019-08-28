@@ -12,24 +12,22 @@ const log = createLogger('arhiv:network-manager')
 type NetworkState = 'online' | 'offline'
 
 export class NetworkManager {
-  $networkState: ReactiveValue<NetworkState>
+  $networkState = new ReactiveValue<NetworkState>('online')
   $authorized = new ReactiveValue(true)
 
   constructor() {
-    this.$networkState = new ReactiveValue<NetworkState>('online', (next) => {
-      const onNetworkStateChange = () => {
-        const newState = window.navigator.onLine ? 'online' : 'offline'
-        next(newState)
-        log.info(`network gone ${newState}`)
-      }
+    const onNetworkStateChange = () => {
+      const newState = window.navigator.onLine ? 'online' : 'offline'
+      this.$networkState.next(newState)
+      log.info(`network gone ${newState}`)
+    }
 
-      window.addEventListener('online', onNetworkStateChange)
-      window.addEventListener('offline', onNetworkStateChange)
+    window.addEventListener('online', onNetworkStateChange)
+    window.addEventListener('offline', onNetworkStateChange)
 
-      return () => {
-        window.removeEventListener('online', onNetworkStateChange)
-        window.removeEventListener('offline', onNetworkStateChange)
-      }
+    this.$networkState.subscribe(undefined, undefined, () => {
+      window.removeEventListener('online', onNetworkStateChange)
+      window.removeEventListener('offline', onNetworkStateChange)
     })
 
     this.$authorized.subscribe((isAuthorized) => {

@@ -5,7 +5,7 @@ import {
   regex,
   eof,
   everythingUntil,
-} from './index'
+} from './matchers'
 
 test('map', (assert) => {
   const mapper = expect('test').map(() => ({ kind: 'dummy' }))

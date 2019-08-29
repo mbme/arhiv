@@ -25,6 +25,7 @@ html {
   font-family: ${theme.fontFamily.base};
   font-size: var(--font-size);
   line-height: var(--line-height);
+  font-variant-numeric: tabular-nums;
   height: 100%;
   width: 100%;
 }

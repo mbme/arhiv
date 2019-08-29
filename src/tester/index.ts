@@ -1,5 +1,3 @@
-// tslint:disable-next-line:match-default-export-name
-import assert from 'assert'
 import fs from 'fs'
 import {
   readJSON,
@@ -9,16 +7,12 @@ import {
   uniq,
   log,
 } from '../utils'
+import {
+  Asserts,
+  IAsserts,
+} from './asserts'
 
 type Callback = () => void | Promise<void>
-interface IAsserts {
-  equal(actual: any, expected: any): void
-  deepEqual(actual: any, expected: any): void
-  true(actual: any): void
-  false(actual: any): void
-  matchSnapshot(actual: any): void
-  throws(block: () => void, error?: any): void
-}
 type TestFn = (asserts: IAsserts) => void | Promise<void>
 interface ITest {
   name: string
@@ -49,73 +43,20 @@ export const before = (cb: Callback) => { _beforeCb = cb }
 export const after = (cb: Callback) => { _afterCb = cb }
 
 async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots: boolean): Promise<[any[], boolean]> {
-  let okAsserts = 0
-  let snapshotPos = 0
-  const snapshots: any[] = []
-
   try {
-    await Promise.resolve(fn({
-      equal(actual: any, expected: any) {
-        if (actual === expected) {
-          okAsserts += 1
-        } else {
-          assert.fail(
-            `not ok
-            expected:
-              ${expected}
-            actual:
-              ${actual}
-          `)
-        }
-      },
+    const asserts = new Asserts(oldSnapshots, updateSnapshots)
 
-      deepEqual(actual: any, expected: any) {
-        assert.deepStrictEqual(actual, expected)
-        okAsserts += 1
-      },
+    await Promise.resolve(fn(asserts))
 
-      true(actual: any) {
-        assert.strictEqual(actual, true)
-        okAsserts += 1
-      },
+    const stats = asserts.getStats()
 
-      false(actual: any) {
-        assert.strictEqual(actual, false)
-        okAsserts += 1
-      },
+    log.simple(
+      `  ${name}: ${stats.asserts} ok`,
+      stats.snapshots.length ? `/ ${stats.snapshots.length} snapshots` : '',
+      stats.updatedSnapshots ? `  updated ${stats.updatedSnapshots} snapshots` : '',
+    )
 
-      matchSnapshot(actual: any) {
-        if (snapshotPos < oldSnapshots.length) {
-          try {
-            assert.strictEqual(
-              JSON.stringify(actual, undefined, 2),
-              JSON.stringify(oldSnapshots[snapshotPos], undefined, 2),
-            )
-          } catch (e) {
-            if (!updateSnapshots) throw e
-            log.simple(`  ${name}: updating snapshot`)
-          }
-        }
-
-        snapshots.push(actual)
-        snapshotPos += 1
-        okAsserts += 1
-      },
-
-      throws(block: () => void, error?: any) {
-        try {
-          block()
-          assert.fail('Expected to throw')
-        } catch (e) {
-          if (error) assert.strictEqual(e, error)
-          okAsserts += 1
-        }
-      },
-    }))
-
-    log.simple(`  ${name}: ${okAsserts} ok`, snapshotPos ? `/ ${snapshotPos} snapshots` : '')
-
-    return [snapshots, true]
+    return [stats.snapshots, true]
   } catch (e) {
     log.simple(`\n  ${name}: failed\n`, e, '\n')
 

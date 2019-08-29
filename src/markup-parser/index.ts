@@ -6,28 +6,52 @@ import {
   anyCharExcept,
   everythingUntil,
   select,
-  INode,
   ParserResult,
 } from '~/parser-combinator'
-import { trimLeft } from '~/utils'
+import {
+  trimLeft,
+  isArray,
+} from '~/utils'
 import { groupCharsIntoStrings } from './utils'
+
+interface INode<T extends string> {
+  type: T
+}
+
+// asNode(type: string): Parser<INode<T>> {
+//   return this.map(value => ({ type, value })).withLabel(type)
+// }
+
+const select = (type: string, node: INode<any>): Array<INode<any>> => {
+  if (node.type === type) {
+    return [node]
+  }
+
+  if (isArray(node.value)) {
+    const children = node.value as Array<INode<any>>
+
+    return children.flatMap(value => select(type, value))
+  }
+
+  return []
+}
 
 const newline = expect('\n')
 
 // FIXME handle escaped chars like \*
 
 // some *bold* text
-export const bold = anyCharExcept('*\n').oneOrMore().between(expect('*'), expect('*'))
+export const bold = anyCharExcept('*\n').oneOrMore().inside(expect('*'))
   .map(value => value.join(''))
   .asNode('Bold')
 
 // some `monospace` text
-export const mono = anyCharExcept('`\n').oneOrMore().between(expect('`'), expect('`'))
+export const mono = anyCharExcept('`\n').oneOrMore().inside(expect('`'))
   .map(value => value.join(''))
   .asNode('Mono')
 
 // some ~striketrough~ text
-export const strikethrough = anyCharExcept('~\n').oneOrMore().between(expect('~'), expect('~'))
+export const strikethrough = anyCharExcept('~\n').oneOrMore().inside(expect('~'))
   .map(value => value.join(''))
   .asNode('Strikethrough')
 

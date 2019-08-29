@@ -6,6 +6,8 @@ import {
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { NoteEditor } from './NoteEditor'
+import { useReactiveValueMemo } from '~/utils/react'
+import { ReactiveValue } from '~/utils'
 
 interface IProps {
   id?: string
@@ -14,32 +16,32 @@ interface IProps {
 export function NoteEditorViewContainer({ id }: IProps) {
   const arhiv = useArhiv()
 
-  const [note, setNote] = React.useState<NoteDocument | undefined | null>(null)
-  const [hasLock, setHasLock] = React.useState(false)
-
   // get or create the note
-  React.useEffect(() => {
+  const note = useReactiveValueMemo(() => {
     if (id) {
-      return arhiv.notes.getDocument(id).subscribe(setNote)
+      return arhiv.notes.getDocument(id)
     }
 
-    setNote(arhiv.notes.createNote())
-
-    return undefined
+    return new ReactiveValue<NoteDocument | undefined>(arhiv.notes.createNote())
   }, [id])
 
   // acquire note lock
+  const [hasLock, setHasLock] = React.useState(false)
   React.useEffect(() => {
-    if (note) {
-      return note.$lock().subscribe(setHasLock)
+    if (!note) {
+      return undefined
     }
 
-    return undefined
+    const lock = note.lock()
+    lock.$state.subscribe({
+      next: state => setHasLock(state === 'acquired'),
+    })
+
+    return lock.release
   }, [note])
 
-  // null means no data yet, while undefined signals than we can't find the note
   if (!note) {
-    return note === undefined ? NotFound : null
+    return NotFound
   }
 
   if (!hasLock) {

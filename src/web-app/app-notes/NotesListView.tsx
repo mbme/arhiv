@@ -3,7 +3,7 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
-import { useReactiveValue } from '~/utils/reactive'
+import { useReactiveValue } from '~/utils/react'
 import { useRouter } from '~/web-router'
 import {
   stylish,

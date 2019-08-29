@@ -1,4 +1,4 @@
-import log from '../logger'
+import { log } from './logger'
 import { Deferred } from './deferred'
 
 type Action<T> = () => T

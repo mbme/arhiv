@@ -2,7 +2,7 @@ import {
   isFunction,
   merge,
 } from '~/utils'
-import { createLogger } from '~/logger'
+import { createLogger } from '~/utils'
 import { StylishRenderer } from './StylishRenderer'
 import {
   IStyleObject,

@@ -1,11 +1,14 @@
-import { createLogger } from '~/logger'
+import { createLogger } from '~/utils'
 import {
   markupParser,
   selectLinks,
 } from '~/markup-parser'
 import { stringifyFailure } from '~/parser-combinator'
-import { ReactiveValue } from '~/utils/reactive'
-import { Without } from '~/utils'
+import {
+  Without,
+  ReactiveValue,
+  Callback,
+} from '~/utils'
 import { IDocument } from '~/isodb/types'
 import {
   ArhivReplica,
@@ -14,15 +17,21 @@ import {
 
 const log = createLogger('document')
 
+type LockState = 'pending' | 'acquired' | 'released'
+interface ILock {
+  $state: ReactiveValue<LockState>
+  release: Callback
+}
+
 // Active Record
 export class Document<T extends Record> {
-  $locked: ReactiveValue<boolean>
-
   constructor(
     protected _replica: ArhivReplica,
     public record: T,
-  ) {
-    this.$locked = this._replica.locks.$isDocumentLocked(record._id)
+  ) { }
+
+  get id() {
+    return this.record._id
   }
 
   private _extractRefs(value: string) {
@@ -69,27 +78,34 @@ export class Document<T extends Record> {
     return !this._replica.getDocument(this.id)
   }
 
-  $lock() {
-    const $locked = new ReactiveValue(false)
-
-    const unsubscribe = this._replica.locks.$isDocumentLocked(this.id).subscribe(
-      (isLocked) => {
-        if (isLocked) {
-          $locked.next(false)
-        } else {
-          unsubscribe()
-          this._replica.locks.addDocumentLock(this.id)
-          $locked.subscribe(undefined, undefined, () => this._replica.locks.removeDocumentLock(this.id))
-          $locked.next(true)
-        }
-      },
-    )
-    $locked.subscribe(undefined, undefined, unsubscribe)
-
-    return $locked
+  $isLocked() {
+    return this._replica.locks.$isDocumentLocked(this.id)
   }
 
-  get id() {
-    return this.record._id
+  lock(): ILock {
+    const $state = new ReactiveValue<LockState>('pending')
+
+    const unsub = this.$isLocked()
+      .filter(isLocked => !isLocked)
+      .take(1)
+      .subscribe({
+        next: () => {
+          this._replica.locks.addDocumentLock(this.id)
+          $state.next('acquired')
+        },
+      })
+
+    return {
+      $state,
+
+      release: () => {
+        unsub()
+
+        if ($state.currentValue === 'acquired') {
+          this._replica.locks.removeDocumentLock(this.id)
+          $state.next('released')
+        }
+      },
+    }
   }
 }

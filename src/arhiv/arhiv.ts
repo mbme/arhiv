@@ -20,16 +20,20 @@ export class Arhiv {
   tracks = new TracksRepository(this._replica)
 
   constructor() {
-    this.net.$authorized.subscribe((isAuthorized) => {
-      if (isAuthorized) {
-        this.syncNow()
-      }
+    this.net.$authorized.subscribe({
+      next: (isAuthorized) => {
+        if (isAuthorized) {
+          this.syncNow()
+        }
+      },
     })
 
-    this._replica.$syncState.subscribe((syncState) => {
-      if (syncState === 'merge-conflicts-resolved') {
-        this.syncNow()
-      }
+    this._replica.$syncState.subscribe({
+      next: (syncState) => {
+        if (syncState === 'merge-conflicts-resolved') {
+          this.syncNow()
+        }
+      },
     })
   }
 

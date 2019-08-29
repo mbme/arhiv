@@ -1,5 +1,5 @@
 /* tslint:disable:no-console */
-import { formatDate } from '~/utils'
+import { formatDate } from './date'
 
 const LEVELS = {
   DEBUG: 0,
@@ -70,4 +70,4 @@ export function setLogLevelStr(levelStr: string, fallbackLvl?: LogLevel) {
   }
 }
 
-export default new Logger('')
+export const log = new Logger('')

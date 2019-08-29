@@ -1,8 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import log from '../logger'
-import { sha256 } from '../utils/node'
-import { createTempDir, rmrfSync } from './fs'
+import { log } from './logger'
+import { sha256 } from './node'
+import {
+  createTempDir,
+  rmrfSync,
+} from './fs'
 
 type OperationType = 'ADD' | 'UPDATE' | 'REMOVE'
 type FileData = string | Buffer

@@ -1,4 +1,4 @@
-import { createLogger } from '~/logger'
+import { createLogger } from './logger'
 import { ReactiveValue } from './reactive-value'
 
 const log = createLogger('state-machine')

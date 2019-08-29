@@ -1,9 +1,14 @@
 // tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
 import fs from 'fs'
-import { readJSON, writeJSON } from '../utils/fs'
-import log from '../logger'
-import { uniq } from '../utils'
+import {
+  readJSON,
+  writeJSON,
+} from '../utils/fs'
+import {
+  uniq,
+  log,
+} from '../utils'
 
 type Callback = () => void | Promise<void>
 interface IAsserts {

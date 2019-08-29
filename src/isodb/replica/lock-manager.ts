@@ -1,5 +1,5 @@
-import { createLogger } from '~/logger'
-import { ReactiveValue } from '~/utils/reactive'
+import { createLogger } from '~/utils'
+import { ReactiveValue } from '~/utils'
 
 const log = createLogger('isodb:lock-manager')
 
@@ -9,9 +9,7 @@ type State = { type: 'free' }
 
 export class LockManager {
   $state = new ReactiveValue<State>({ type: 'free' })
-
-  constructor() {
-    this.$state.subscribe(currentState => {
+    .tap(currentState => {
       if (currentState.type === 'free') {
         log.info('state -> free')
 
@@ -26,7 +24,6 @@ export class LockManager {
 
       log.info(`state -> documents locked: ${currentState.locks.join(', ')}`)
     })
-  }
 
   isFree() {
     return this.$state.currentValue.type === 'free'

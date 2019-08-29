@@ -1,4 +1,4 @@
-import { createLogger } from '~/logger'
+import { createLogger } from '~/utils'
 import { getMimeType } from '~/file-prober'
 import { getFileSize } from '~/utils/fs'
 import { IDict } from '~/utils'

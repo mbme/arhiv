@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
-import { setLogLevel } from '~/logger'
+import { setLogLevel } from '~/utils'
 import {
   Arhiv,
   ArhivContext,

@@ -69,3 +69,15 @@ export function hashCode(str: string): number {
 
 const upperCasePattern = /[A-Z]/g
 export const camelCase2kebabCase = (prop: string) => prop.replace(upperCasePattern, match => `-${match.toLowerCase()}`)
+
+export const capitalize = (str: string) => str[0].toUpperCase() + str.substring(1)
+
+export function isSubSequence(str: string, i: number, seq: string) {
+  for (let pos = 0; pos < seq.length; pos += 1) {
+    if (str[i + pos] !== seq[pos]) return false
+  }
+
+  return true
+}
+
+export const isSha256 = (str: string) => /^[a-f0-9]{64}$/i.test(str)

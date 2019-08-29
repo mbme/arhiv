@@ -1,8 +1,9 @@
 import { Counter } from './counter'
-import { removeMut, noop } from './index'
 import { Callback } from './types'
+import { noop } from './misc'
+import { removeMut } from './array'
 
-type InitCb<T> = (observer: IObserver<T>) => (Callback | void)
+type InitCb<T> = (observer: IHotObservable<T>) => (Callback | void)
 type NextCb<T> = (value: T) => void
 type ErrorCb = (e: Error) => void
 type CompleteCb = () => void
@@ -115,6 +116,46 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
         error: observer.error,
         complete: observer.complete,
       }),
+    )
+  }
+
+  filter(test: (value: T) => boolean) {
+    return new ReactiveValue<T>(
+      this._value,
+      (observer) => this.subscribe({
+        next: value => {
+          if (test(value)) {
+            observer.next(value)
+          }
+        },
+        error: observer.error,
+        complete: observer.complete,
+      }),
+    )
+  }
+
+  take(count: number) {
+    if (count < 1) {
+      throw new Error(`"count" must be greater than 0, got ${count}`)
+    }
+
+    return new ReactiveValue<T>(
+      this._value,
+      (observer) => {
+        let counter = 0
+
+        return this.subscribe({
+          next: value => {
+            observer.next(value)
+            counter += 1
+            if (counter === count) {
+              observer.complete()
+            }
+          },
+          error: observer.error,
+          complete: observer.complete,
+        })
+      },
     )
   }
 

@@ -2,7 +2,7 @@ import path from 'path'
 import {
   createLogger,
   setLogLevelStr,
-} from '~/logger'
+} from '~/utils'
 import { getFakeNotes } from '~/randomizer/faker'
 import {
   PrimaryDB,

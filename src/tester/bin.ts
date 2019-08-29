@@ -1,7 +1,10 @@
 import path from 'path'
-import { consumeAsyncIterable } from '~/utils'
+import {
+  consumeAsyncIterable,
+  log,
+  setLogLevel,
+} from '~/utils'
 import { getFiles } from '~/utils/fs'
-import log, { setLogLevel } from '~/logger'
 import {
   getTestPlan,
   initTestPlan,

@@ -1,5 +1,5 @@
-import { createLogger } from '~/logger'
-import { ReactiveValue } from '~/utils/reactive'
+import { createLogger } from '~/utils'
+import { ReactiveValue } from '~/utils'
 import {
   IChangesetResult,
   IChangeset,
@@ -8,7 +8,6 @@ import {
 import { LocalAttachments } from '~/isodb/replica'
 
 const log = createLogger('arhiv:network-manager')
-
 
 function $monitorNetworkState() {
   type NetworkState = 'online' | 'offline'
@@ -36,7 +35,7 @@ export class NetworkManager {
     isAuthorized => log.info(`authorized: ${isAuthorized}`),
   )
 
-  async authorize(password: string) {
+  authorize = async (password: string) => {
     this._assertIsOnline()
 
     const response = await fetch('/api/auth', {
@@ -51,7 +50,7 @@ export class NetworkManager {
     }
   }
 
-  deauthorize() {
+  deauthorize = () => {
     document.cookie = 'token=0; path=/'
     this.$authorized.next(false)
   }

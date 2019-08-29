@@ -1,5 +1,5 @@
-import { createLogger } from '~/logger'
-import { ReactiveValue } from '~/utils/reactive'
+import { createLogger } from '~/utils'
+import { ReactiveValue } from '~/utils'
 import { LockManager } from './lock-manager'
 import { IsodbReplica } from './replica'
 import {
@@ -31,23 +31,28 @@ export class ReplicaManager<T extends IDocument> {
   private _replica: IsodbReplica<T>
 
   $syncState = new ReactiveValue<SyncState>('not-synced')
+    .tap(state => log.info(`sync state -> ${state}`))
 
   constructor(storage: IReplicaStorage<T>) {
     this._replica = new IsodbReplica(storage)
 
-    this._replica.$mergeConflicts.subscribe((mergeConflicts) => {
-      if (mergeConflicts) {
-        this.$syncState.next('merge-conflicts')
-      } else if (this.$syncState.currentValue === 'merge-conflicts') {
-        this.$syncState.next('merge-conflicts-resolved')
-      }
+    this._replica.$mergeConflicts.subscribe({
+      next: (mergeConflicts) => {
+        if (mergeConflicts) {
+          this.$syncState.next('merge-conflicts')
+        } else if (this.$syncState.currentValue === 'merge-conflicts') {
+          this.$syncState.next('merge-conflicts-resolved')
+        }
+      },
     })
 
     // run compaction if db isn't locked
-    this.locks.$state.subscribe((lockState) => {
-      if (lockState.type === 'free') {
-        this._replica.compact()
-      }
+    this.locks.$state.subscribe({
+      next: (lockState) => {
+        if (lockState.type === 'free') {
+          this._replica.compact()
+        }
+      },
     })
   }
 

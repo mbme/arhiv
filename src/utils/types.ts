@@ -18,4 +18,5 @@ export type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
 }
 
-export type Callback = () => void
+export type Procedure = () => void
+export type AsyncProcedure = () => Promise<void>

@@ -34,14 +34,15 @@ export default async function run(...args: string[]) {
 
     const only = testPlan.tests.find((test) => test.only)
     if (only) {
-      if (updateSnapshots) throw new Error("Can't update the 'only' snapshot")
+      if (updateSnapshots) {
+        throw new Error("Can't update the 'only' snapshot")
+      }
 
       testPlans.length = 0
       testPlans.push({ file: testFile, ...testPlan, tests: [only] })
-      break
+    } else {
+      testPlans.push({ file: testFile, ...testPlan })
     }
-
-    testPlans.push({ file: testFile, ...testPlan })
   }
 
   let failures = 0

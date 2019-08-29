@@ -1,9 +1,9 @@
 import { Counter } from './counter'
-import { Callback } from './types'
+import { Procedure } from './types'
 import { noop } from './misc'
 import { removeMut } from './array'
 
-type InitCb<T> = (observer: IHotObservable<T>) => (Callback | void)
+type InitCb<T> = (observer: IHotObservable<T>) => (Procedure | void)
 type NextCb<T> = (value: T) => void
 type ErrorCb = (e: Error) => void
 type CompleteCb = () => void

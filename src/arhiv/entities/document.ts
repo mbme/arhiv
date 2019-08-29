@@ -7,7 +7,7 @@ import { stringifyFailure } from '~/parser-combinator'
 import {
   Without,
   ReactiveValue,
-  Callback,
+  Procedure,
 } from '~/utils'
 import { IDocument } from '~/isodb/types'
 import {
@@ -20,7 +20,7 @@ const log = createLogger('document')
 type LockState = 'pending' | 'acquired' | 'released'
 interface ILock {
   $state: ReactiveValue<LockState>
-  release: Callback
+  release: Procedure
 }
 
 // Active Record

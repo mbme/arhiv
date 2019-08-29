@@ -1,37 +1,42 @@
 // tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
 
-export interface IAsserts {
-  equal(actual: any, expected: any): void
-  deepEqual(actual: any, expected: any): void
-  true(actual: any): void
-  false(actual: any): void
-  matchSnapshot(actual: any): void
-  throws(block: () => void, error?: any): void
+interface IState {
+  oldSnapshots: any[]
+  updateSnapshots: boolean
+
+  successfulAsserts: number
+  snapshots: any[]
+  snapshotPos: number
+  updatedSnapshots: number
 }
 
-export class Asserts implements IAsserts {
-  private _asserts = 0
-  private _snapshots: any[] = []
-  private _snapshotPos = 0
-  private _updatedSnapshots = 0
+export class Asserts {
+  state?: IState
 
-  constructor(
-    private _oldSnapshots: any[],
-    private _updateSnapshots: boolean,
-  ) { }
+  init(oldSnapshots: any[], updateSnapshots: boolean) {
+    this.state = {
+      oldSnapshots,
+      updateSnapshots,
 
-  getStats() {
-    return {
-      asserts: this._asserts,
-      snapshots: this._snapshots,
-      updatedSnapshots: this._updatedSnapshots,
+      successfulAsserts: 0,
+      snapshots: [],
+      snapshotPos: 0,
+      updatedSnapshots: 0,
     }
   }
 
+  reset() {
+    this.state = undefined
+  }
+
   equal(actual: any, expected: any) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
     if (actual === expected) {
-      this._asserts += 1
+      this.state.successfulAsserts += 1
     } else {
       assert.fail(
         `not ok
@@ -44,45 +49,69 @@ export class Asserts implements IAsserts {
   }
 
   deepEqual(actual: any, expected: any) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
     assert.deepStrictEqual(actual, expected)
-    this._asserts += 1
+    this.state.successfulAsserts += 1
   }
 
   true(actual: any) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
     assert.strictEqual(actual, true)
-    this._asserts += 1
+    this.state.successfulAsserts += 1
   }
 
   false(actual: any) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
     assert.strictEqual(actual, false)
-    this._asserts += 1
+    this.state.successfulAsserts += 1
   }
 
   matchSnapshot(actual: any) {
-    if (this._snapshotPos < this._oldSnapshots.length) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
+    if (this.state.snapshotPos < this.state.oldSnapshots.length) {
       try {
         assert.strictEqual(
           JSON.stringify(actual, undefined, 2),
-          JSON.stringify(this._oldSnapshots[this._snapshotPos], undefined, 2),
+          JSON.stringify(this.state.oldSnapshots[this.state.snapshotPos], undefined, 2),
         )
       } catch (e) {
-        if (!this._updateSnapshots) throw e
-        this._updatedSnapshots += 1
+        if (!this.state.updateSnapshots) {
+          throw e
+        }
+        this.state.updatedSnapshots += 1
       }
     }
 
-    this._snapshots.push(actual)
-    this._snapshotPos += 1
-    this._asserts += 1
+    this.state.snapshots.push(actual)
+    this.state.snapshotPos += 1
+    this.state.successfulAsserts += 1
   }
 
   throws(block: () => void, error?: any) {
+    if (!this.state) {
+      throw new Error('asserts not ready')
+    }
+
     try {
       block()
       assert.fail('Expected to throw')
     } catch (e) {
-      if (error) assert.strictEqual(e, error)
-      this._asserts += 1
+      if (error) {
+        assert.strictEqual(e, error)
+      }
+      this.state.successfulAsserts += 1
     }
   }
 }

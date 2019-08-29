@@ -6,17 +6,16 @@ import {
 import {
   uniq,
   log,
+  AsyncProcedure,
+  Procedure,
 } from '../utils'
-import {
-  Asserts,
-  IAsserts,
-} from './asserts'
+import { Asserts } from './asserts'
 
-type Callback = () => void | Promise<void>
-type TestFn = (asserts: IAsserts) => void | Promise<void>
+type Callback = Procedure | AsyncProcedure
+
 interface ITest {
   name: string
-  fn: TestFn
+  fn: Callback
   only: boolean
 }
 
@@ -38,25 +37,32 @@ export function getTestPlan() {
   }
 }
 
-export const test = (name: string, fn: TestFn, only = false) => _tests.push({ name, fn, only })
+export const test = (name: string, fn: Callback, only = false) => _tests.push({ name, fn, only })
 export const before = (cb: Callback) => { _beforeCb = cb }
 export const after = (cb: Callback) => { _afterCb = cb }
 
+export const asserts = new Asserts()
 async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots: boolean): Promise<[any[], boolean]> {
   try {
-    const asserts = new Asserts(oldSnapshots, updateSnapshots)
+    asserts.init(oldSnapshots, updateSnapshots)
 
-    await Promise.resolve(fn(asserts))
+    await Promise.resolve(fn())
 
-    const stats = asserts.getStats()
+    const {
+      snapshots,
+      updatedSnapshots,
+      successfulAsserts,
+    } = asserts.state!
 
     log.simple(
-      `  ${name}: ${stats.asserts} ok`,
-      stats.snapshots.length ? `/ ${stats.snapshots.length} snapshots` : '',
-      stats.updatedSnapshots ? `  updated ${stats.updatedSnapshots} snapshots` : '',
+      `  ${name}: ${successfulAsserts} ok`,
+      snapshots.length ? `/ ${snapshots.length} snapshots` : '',
+      updatedSnapshots ? `  updated ${updatedSnapshots} snapshots` : '',
     )
 
-    return [stats.snapshots, true]
+    asserts.reset()
+
+    return [snapshots, true]
   } catch (e) {
     log.simple(`\n  ${name}: failed\n`, e, '\n')
 

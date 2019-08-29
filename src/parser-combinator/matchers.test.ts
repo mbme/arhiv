@@ -1,4 +1,7 @@
-import { test } from '~/tester'
+import {
+  test,
+  asserts,
+} from '~/tester'
 import {
   expect,
   satisfy,
@@ -6,134 +9,146 @@ import {
   eof,
   everythingUntil,
 } from './matchers'
+import {
+  isSuccess,
+  Result,
+  isFailure,
+} from './parser'
 
-test('map', (assert) => {
+const assertSuccess = <T>(r: Result<T>) => {
+  asserts.true(isSuccess(r))
+}
+const assertFailure = <T>(r: Result<T>) => {
+  asserts.true(isFailure(r))
+}
+
+test('map', () => {
   const mapper = expect('test').map(() => ({ kind: 'dummy' }))
-  assert.false(mapper.apply('te', 0).success)
+  assertFailure(mapper.apply('te', 0))
 
   const result = mapper.apply('test', 0)
-  assert.true(result.success)
+  assertSuccess(result)
 
-  if (result.success) {
-    assert.true(result.result.kind === 'dummy')
+  if (isSuccess(result)) {
+    asserts.true(result.result.kind === 'dummy')
   }
 })
 
-test('andThen', (assert) => {
+test('andThen', () => {
   const parser = expect('x1').andThen(expect('x2'))
 
-  assert.false(parser.apply('0x1x23', 0).success)
-  assert.true(parser.apply('0x1x23', 1).success)
+  assertFailure(parser.apply('0x1x23', 0))
+  assertSuccess(parser.apply('0x1x23', 1))
 })
 
-test('orElse', (assert) => {
+test('orElse', () => {
   const parser = expect('y').orElse(expect('x1'))
 
-  assert.false(parser.apply('0x1y', 0).success)
-  assert.true(parser.apply('0x1y', 1).success)
-  assert.true(parser.apply('0x1y', 3).success)
+  assertFailure(parser.apply('0x1y', 0))
+  assertSuccess(parser.apply('0x1y', 1))
+  assertSuccess(parser.apply('0x1y', 3))
 })
 
-test('andThen and orElse', (assert) => {
+test('andThen and orElse', () => {
   const parser = expect('x1').andThen(
     expect('2').orElse(expect('3')),
   )
-  assert.false(parser.apply('x11', 0).success)
-  assert.true(parser.apply('x12', 0).success)
-  assert.true(parser.apply('x13', 0).success)
+  assertFailure(parser.apply('x11', 0))
+  assertSuccess(parser.apply('x12', 0))
+  assertSuccess(parser.apply('x13', 0))
 })
 
-test('oneOrMore', (assert) => {
+test('oneOrMore', () => {
   const parser = expect('x1').oneOrMore()
 
-  assert.false(parser.apply('x2', 0).success)
-  assert.true(parser.apply('x1', 0).success)
+  assertFailure(parser.apply('x2', 0))
+  assertSuccess(parser.apply('x1', 0))
 
   const result = parser.apply('x1x1x12', 0)
-  assert.true(result.success)
-  if (result.success) {
-    assert.equal(result.result.length, 3)
+  assertSuccess(result)
+  if (isSuccess(result)) {
+    asserts.equal(result.result.length, 3)
   }
 })
 
-test('zeroOrMore', (assert) => {
+test('zeroOrMore', () => {
   const parser = expect('x1').zeroOrMore()
 
-  assert.true(parser.apply('x2', 0).success)
-  assert.true(parser.apply('x1', 0).success)
+  assertSuccess(parser.apply('x2', 0))
+  assertSuccess(parser.apply('x1', 0))
 })
 
-test('optional', (assert) => {
+test('optional', () => {
   const parser = expect('x1').optional()
 
   {
     const result = parser.apply('x2', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result, undefined)
+    assertSuccess(result)
+    if (isSuccess(result)) {
+      asserts.equal(result.result, undefined)
     }
   }
   {
     const result = parser.apply('x1', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result, 'x1')
+    assertSuccess(result)
+    if (isSuccess(result)) {
+      asserts.equal(result.result, 'x1')
     }
   }
 })
 
-test('everythingUntil', (assert) => {
+test('everythingUntil', () => {
   const parser = everythingUntil(expect('x1'))
 
   {
     const result = parser.apply('testx1', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result, 'test')
+    assertSuccess(result)
+    if (isSuccess(result)) {
+      asserts.equal(result.result, 'test')
     }
   }
 
-  assert.false(parser.apply('x2', 0).success)
+  assertFailure(parser.apply('x2', 0))
 })
 
-test('between', (assert) => {
+test('between', () => {
   const parser = expect('test').between(expect('x1'), expect('x1'))
 
   {
     const result = parser.apply('x1testx1', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result, 'test')
+    assertSuccess(result)
+    if (isSuccess(result)) {
+      asserts.equal(result.result, 'test')
     }
   }
 
-  assert.false(parser.apply('x1test', 0).success)
-  assert.false(parser.apply('x1testx2', 0).success)
+  assertFailure(parser.apply('x1test', 0))
+  assertFailure(parser.apply('x1testx2', 0))
 })
 
-test('withLabel', (assert) => {
+test('withLabel', () => {
   const parser = expect('test').withLabel('WORKS')
 
   const result = parser.apply('te', 0)
-  assert.false(result.success)
-  if (!result.success) {
-    assert.true(result.label.includes('WORKS'))
+  assertFailure(result)
+  if (isFailure(result)) {
+    asserts.true(result.label.includes('WORKS'))
   }
 })
 
-test('parseAll', (assert) => {
+test('parseAll', () => {
   const parser = expect('x1')
 
-  assert.true(parser.parseAll('x1').success)
-  assert.false(parser.parseAll('x1 ').success)
+  assertSuccess(parser.parseAll('x1'))
+  assertFailure(parser.parseAll('x1 '))
 })
 
-test('eof', (assert) => {
-  assert.true(eof.apply('test', 4).success)
-  assert.false(eof.apply('test', 3).success)
+test('eof', () => {
+  assertSuccess(eof.apply('test', 4))
+  assertFailure(eof.apply('test', 3))
 })
 
-test('satisfy', (assert) => {
+test('satisfy', () => {
   const matcher = satisfy((x, pos) => {
     if (/#test/.test(x.substring(pos))) {
       return [true, '#test']
@@ -142,26 +157,26 @@ test('satisfy', (assert) => {
     return [false, 'No match']
   })
 
-  assert.true(matcher.apply('#test', 0).success)
-  assert.false(matcher.apply('#htest', 0).success)
+  assertSuccess(matcher.apply('#test', 0))
+  assertFailure(matcher.apply('#htest', 0))
 })
 
-test('expect', (assert) => {
+test('expect', () => {
   const parser = expect('test')
-  assert.true(parser.apply('test', 0).success)
-  assert.false(parser.apply('te', 0).success)
-  assert.false(parser.apply('test', 3).success)
-  assert.false(parser.apply('not ok', 0).success)
+  assertSuccess(parser.apply('test', 0))
+  assertFailure(parser.apply('te', 0))
+  assertFailure(parser.apply('test', 3))
+  assertFailure(parser.apply('not ok', 0))
 })
 
-test('regex', (assert) => {
-  assert.true(regex(/^test/).apply('test', 0).success)
+test('regex', () => {
+  assertSuccess(regex(/^test/).apply('test', 0))
 
   const result = regex(/^0*1+/).apply('001', 0)
-  assert.true(result.success)
-  if (result.success) {
-    assert.equal(result.result, '001')
+  assertSuccess(result)
+  if (isSuccess(result)) {
+    asserts.equal(result.result, '001')
   }
 
-  assert.false(regex(/^test/).apply('not test', 0).success)
+  assertFailure(regex(/^test/).apply('not test', 0))
 })

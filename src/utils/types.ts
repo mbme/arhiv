@@ -17,3 +17,5 @@ export type Obj = IDict<any>
 export type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
 }
+
+export type Callback = () => void

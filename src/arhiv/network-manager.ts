@@ -9,31 +9,32 @@ import { LocalAttachments } from '~/isodb/replica'
 
 const log = createLogger('arhiv:network-manager')
 
-type NetworkState = 'online' | 'offline'
+
+function $monitorNetworkState() {
+  type NetworkState = 'online' | 'offline'
+
+  const readNetworkState = () => window.navigator.onLine ? 'online' : 'offline'
+
+  return new ReactiveValue<NetworkState>(readNetworkState(), (observer) => {
+    const sendNetworkState = () => observer.next(readNetworkState())
+
+    window.addEventListener('online', sendNetworkState)
+    window.addEventListener('offline', sendNetworkState)
+
+    return () => {
+      window.removeEventListener('online', sendNetworkState)
+      window.removeEventListener('offline', sendNetworkState)
+    }
+  })
+}
 
 export class NetworkManager {
-  $networkState = new ReactiveValue<NetworkState>('online')
-  $authorized = new ReactiveValue(true)
-
-  constructor() {
-    const onNetworkStateChange = () => {
-      const newState = window.navigator.onLine ? 'online' : 'offline'
-      this.$networkState.next(newState)
-      log.info(`network gone ${newState}`)
-    }
-
-    window.addEventListener('online', onNetworkStateChange)
-    window.addEventListener('offline', onNetworkStateChange)
-
-    this.$networkState.subscribe(undefined, undefined, () => {
-      window.removeEventListener('online', onNetworkStateChange)
-      window.removeEventListener('offline', onNetworkStateChange)
-    })
-
-    this.$authorized.subscribe((isAuthorized) => {
-      log.info(`authrorized: ${isAuthorized}`)
-    })
-  }
+  $networkState = $monitorNetworkState().tap(
+    value => log.info(`network gone ${value}`),
+  )
+  $authorized = new ReactiveValue(true).tap(
+    isAuthorized => log.info(`authorized: ${isAuthorized}`),
+  )
 
   async authorize(password: string) {
     this._assertIsOnline()

@@ -1,6 +1,9 @@
-import { test } from '../tester'
+import {
+  test,
+  asserts,
+} from '../tester'
 import { getWords } from './text-generator'
 
-test('getWords', (assert) => {
-  assert.deepEqual(getWords('Split it, not; dr. go!'), ['split', 'it', ',', 'not', ';', 'dr.', 'go', '!'])
+test('getWords', () => {
+  asserts.deepEqual(getWords('Split it, not; dr. go!'), ['split', 'it', ',', 'not', ';', 'dr.', 'go', '!'])
 })

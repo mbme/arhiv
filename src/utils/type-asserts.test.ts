@@ -1,18 +1,21 @@
-import { test } from '~/tester'
+import {
+  test,
+  asserts,
+} from '~/tester'
 import {
   isFunction,
   isObject,
 } from './type-asserts'
 
-test('isObject', (assert) => {
-  assert.equal(isObject(undefined), false)
-  assert.equal(isObject({}), true)
+test('isObject', () => {
+  asserts.false(isObject(undefined))
+  asserts.true(isObject({}))
 })
 
-test('isFunction', (assert) => {
-  assert.equal(isFunction(() => true), true)
-  assert.equal(isFunction(async () => true), true)
+test('isFunction', () => {
+  asserts.true(isFunction(() => true))
+  asserts.true(isFunction(async () => true))
   // tslint:disable-next-line:no-empty
-  assert.equal(isFunction(function testIsFunction() { }), true)
-  assert.equal(isFunction(async function testIsFunction() { return true }), true)
+  asserts.true(isFunction(function testIsFunction() { }))
+  asserts.true(isFunction(async function testIsFunction() { return true }))
 })

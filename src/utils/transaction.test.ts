@@ -1,6 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { after, before, test } from '~/tester'
+import {
+  after,
+  before,
+  test,
+  asserts,
+} from '~/tester'
 import createFsTransaction from './transaction'
 import { createTempDir, readText, rmrfSync, writeText } from './fs'
 
@@ -19,25 +24,25 @@ const getRandomFilePath = () => {
   return path.join(tmpDir!, counter.toString())
 }
 
-test('fails when applying multiple operations to the same file', (assert) => {
+test('fails when applying multiple operations to the same file', () => {
   const t = createFsTransaction()
   const file = getRandomFilePath()
   t.addFile(file, '')
 
-  assert.throws(() => t.updateFile(file, ''))
+  asserts.throws(() => t.updateFile(file, ''))
 })
 
-test('adding file', async (assert) => {
+test('adding file', async () => {
   const t = createFsTransaction()
   const file = getRandomFilePath()
 
   t.addFile(file, '')
   await t.commit()
 
-  assert.true(fs.existsSync(file))
+  asserts.true(fs.existsSync(file))
 })
 
-test('updating file', async (assert) => {
+test('updating file', async () => {
   const t = createFsTransaction()
   const file = getRandomFilePath()
 
@@ -46,10 +51,10 @@ test('updating file', async (assert) => {
   t.updateFile(file, '2')
   await t.commit()
 
-  assert.equal(await readText(file), '2')
+  asserts.equal(await readText(file), '2')
 })
 
-test('removing file', async (assert) => {
+test('removing file', async () => {
   const t = createFsTransaction()
   const file = getRandomFilePath()
 
@@ -58,10 +63,10 @@ test('removing file', async (assert) => {
   t.removeFile(file)
   await t.commit()
 
-  assert.true(!fs.existsSync(file))
+  asserts.true(!fs.existsSync(file))
 })
 
-test('few operations per transaction', async (assert) => {
+test('few operations per transaction', async () => {
   const t = createFsTransaction()
   const file1 = getRandomFilePath()
   const file2 = getRandomFilePath()
@@ -72,11 +77,11 @@ test('few operations per transaction', async (assert) => {
   t.updateFile(file2, '2')
   await t.commit()
 
-  assert.true(fs.existsSync(file1))
-  assert.equal(await readText(file2), '2')
+  asserts.true(fs.existsSync(file1))
+  asserts.equal(await readText(file2), '2')
 })
 
-test('rollback', async (assert) => {
+test('rollback', async () => {
   const t = createFsTransaction()
   const file1 = getRandomFilePath()
   const file2 = getRandomFilePath()
@@ -92,7 +97,7 @@ test('rollback', async (assert) => {
 
   const isErr = await t.commit().catch((e) => !!e)
 
-  assert.true(isErr)
-  assert.equal(await readText(file1), '1')
-  assert.equal(await readText(file2), '1')
+  asserts.true(isErr)
+  asserts.equal(await readText(file1), '1')
+  asserts.equal(await readText(file2), '1')
 })

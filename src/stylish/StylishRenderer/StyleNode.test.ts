@@ -1,21 +1,24 @@
-import { test } from '~/tester'
+import {
+  test,
+  asserts,
+} from '~/tester'
 import {
   StyleNode,
   hash2class,
 } from './StyleNode'
 
-test('it works', (assert) => {
+test('it works', () => {
   const style = new StyleNode({
     fontSize: 1,
   })
 
-  assert.equal(
+  asserts.equal(
     style.intoCss()[0],
     `${hash2class(style.hash)} { font-size: 1 }`,
   )
 })
 
-test('it generates consistent hashes', (assert) => {
+test('it generates consistent hashes', () => {
   const obj = {
     fontSize: 1,
     '@media': {
@@ -32,10 +35,10 @@ test('it generates consistent hashes', (assert) => {
   const style1 = new StyleNode(obj)
   const style2 = new StyleNode(obj)
 
-  assert.equal(style1.hash, style2.hash)
+  asserts.equal(style1.hash, style2.hash)
 })
 
-test('it supports with nested selectors', (assert) => {
+test('it supports with nested selectors', () => {
   const style = new StyleNode({
     fontSize: 1,
     '.test &:hover, &': {
@@ -43,10 +46,10 @@ test('it supports with nested selectors', (assert) => {
     },
   })
 
-  assert.matchSnapshot(style.intoCss())
+  asserts.matchSnapshot(style.intoCss())
 })
 
-test('it supports media query', (assert) => {
+test('it supports media query', () => {
   const style = new StyleNode({
     fontSize: 1,
     '@media screen and (min-width: 800px)': {
@@ -57,10 +60,10 @@ test('it supports media query', (assert) => {
     },
   })
 
-  assert.matchSnapshot(style.intoCss())
+  asserts.matchSnapshot(style.intoCss())
 })
 
-test('it renders @keyframes', (assert) => {
+test('it renders @keyframes', () => {
   const style = new StyleNode({
     from: {
       width: '300%',
@@ -72,5 +75,5 @@ test('it renders @keyframes', (assert) => {
     },
   })
 
-  assert.matchSnapshot(style.asKeyframes())
+  asserts.matchSnapshot(style.asKeyframes())
 })

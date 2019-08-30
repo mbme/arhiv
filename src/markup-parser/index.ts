@@ -187,6 +187,7 @@ export const markupParser =
     .zeroOrMore()
     .map((value): INodeMarkup => ({ type: 'Markup', children: value }), 'Markup')
 
+// TODO use classes for Nodes instead of interfaces, + method to iterate children
 // TODO generator for the markupParser
 
 // const select = (type: string, node: INode<any>): Array<INode<any>> => {

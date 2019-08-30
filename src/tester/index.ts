@@ -55,7 +55,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
     } = asserts.state!
 
     log.simple(
-      `  ${name}: ${successfulAsserts} ok`,
+      `  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${name}`,
       snapshots.length ? `/ ${snapshots.length} snapshots` : '',
       updatedSnapshots ? `  updated ${updatedSnapshots} snapshots` : '',
     )

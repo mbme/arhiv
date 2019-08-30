@@ -1,3 +1,5 @@
+import { identity } from '~/utils'
+
 export class Success<T> {
   constructor(
     public result: T,
@@ -118,28 +120,25 @@ export class Parser<T> {
     })
   }
 
-  // transform result
-  map<K>(fn: (value: T) => K): Parser<K> {
+  // transform result, optionally set failure label
+  map<K>(fn: (value: T) => K, label?: string): Parser<K> {
     return new Parser((msg, pos) => {
       const result = this.apply(msg, pos)
-      if (isFailure(result)) {
-        return result
+      if (isSuccess(result)) {
+        return new Success(fn(result.result), result.nextPos)
       }
 
-      return new Success(fn(result.result), result.nextPos)
+      if (label) {
+        return new Failure(result.msg, result.pos, `${label}>${result.label}`)
+      }
+
+      return result
     })
   }
 
   // set failure label
   withLabel(label: string): Parser<T> {
-    return new Parser((msg, pos) => {
-      const result = this.apply(msg, pos)
-      if (isSuccess(result)) {
-        return result
-      }
-
-      return new Failure(result.msg, result.pos, `${label}>${result.label}`)
-    })
+    return this.map(identity, label)
   }
 
   // a+

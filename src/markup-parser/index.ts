@@ -5,35 +5,46 @@ import {
   bof,
   anyCharExcept,
   everythingUntil,
-  select,
   ParserResult,
 } from '~/parser-combinator'
 import {
   trimLeft,
-  isArray,
 } from '~/utils'
-import { groupCharsIntoStrings } from './utils'
 
 interface INode<T extends string> {
   type: T
 }
 
-// asNode(type: string): Parser<INode<T>> {
-//   return this.map(value => ({ type, value })).withLabel(type)
-// }
+interface INodeString extends INode<'String'> {
+  value: string
+}
+function isCharNode(node: INode<any>): node is INodeChar {
+  return node.type === 'Char'
+}
 
-const select = (type: string, node: INode<any>): Array<INode<any>> => {
-  if (node.type === type) {
-    return [node]
+const groupCharsIntoStrings = <T extends INode<string>>(nodes: Array<INodeChar | T>) => { // group chars into strings
+  const values: Array<INodeString | T> = []
+
+  let str = ''
+  for (const node of nodes) {
+    if (isCharNode(node)) {
+      str += node.value
+      continue
+    }
+
+    if (str.length) {
+      values.push({ type: 'String', value: str })
+      str = ''
+    }
+
+    values.push(node)
   }
 
-  if (isArray(node.value)) {
-    const children = node.value as Array<INode<any>>
-
-    return children.flatMap(value => select(type, value))
+  if (str.length) {
+    values.push({ type: 'String', value: str })
   }
 
-  return []
+  return values
 }
 
 const newline = expect('\n')
@@ -41,37 +52,64 @@ const newline = expect('\n')
 // FIXME handle escaped chars like \*
 
 // some *bold* text
+interface INodeBold extends INode<'Bold'> {
+  value: string
+}
 export const bold = anyCharExcept('*\n').oneOrMore().inside(expect('*'))
-  .map(value => value.join(''))
-  .asNode('Bold')
+  .map((value): INodeBold => ({ type: 'Bold', value: value.join('') }), 'Bold')
 
 // some `monospace` text
+interface INodeMono extends INode<'Mono'> {
+  value: string
+}
 export const mono = anyCharExcept('`\n').oneOrMore().inside(expect('`'))
-  .map(value => value.join(''))
-  .asNode('Mono')
+  .map((value): INodeMono => ({ type: 'Mono', value: value.join('') }), 'Mono')
 
 // some ~striketrough~ text
+interface INodeStrikethrough extends INode<'Striketrough'> {
+  value: string
+}
 export const strikethrough = anyCharExcept('~\n').oneOrMore().inside(expect('~'))
-  .map(value => value.join(''))
-  .asNode('Strikethrough')
+  .map((value): INodeStrikethrough => ({ type: 'Striketrough', value: value.join('') }), 'Strikethrough')
 
 // [[link][with optional description]]
-const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']')).map(value => value.join(''))
+interface INodeLink extends INode<'Link'> {
+  link: string
+  description: string
+}
+const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']'))
+  .map(value => value.join(''))
 export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
-  .asNode('Link')
+  .map((value): INodeLink => ({
+    type: 'Link',
+    link: value[0],
+    description: value[1] || '',
+  }), 'Link')
 type LinkType = ParserResult<typeof link>
 
 const inlineElements = bold.orElse(mono).orElse(strikethrough).orElse(link)
+type InlineElementsType = ParserResult<typeof inlineElements>
 
 // # Header lvl 1 or ## Header lvl 2
+interface INodeHeader extends INode<'Header'> {
+  value: string
+  level: 1 | 2
+}
 export const header = bof.orElse(newline).andThen(regex(/^#{1,2} .*/))
-  .map(value => {
+  .map((value): INodeHeader => {
     const headerStr = value[1]
     const level = headerStr.startsWith('## ') ? 2 : 1
 
-    return [level, trimLeft(headerStr, '# ')] as [number, string]
-  })
-  .asNode('Header')
+    return {
+      type: 'Header',
+      value: trimLeft(headerStr, '# '),
+      level,
+    }
+  }, 'Header')
+
+interface INodeChar extends INode<'Char'> {
+  value: string
+}
 
 // * unordered list
 const listChar = satisfy((msg, pos) => {
@@ -84,27 +122,37 @@ const listChar = satisfy((msg, pos) => {
   }
 
   return [true, msg[pos]]
-}).asNode('Char')
+}).map((value): INodeChar => ({ type: 'Char', value }), 'Char')
 
+interface INodeListItem extends INode<'ListItem'> {
+  children: Array<InlineElementsType | INodeString>
+}
 const unorderedListItem =
   inlineElements.orElse(listChar)
     .oneOrMore()
     .map(groupCharsIntoStrings)
+    .map((value): INodeListItem => ({ type: 'ListItem', children: value }), 'ListItem')
 
+interface INodeUnorderedList extends INode<'UnorderedList'> {
+  listItems: INodeListItem[]
+}
 export const unorderedList = bof.orElse(newline)
   .andThen(expect('* '))
-  .andThen(unorderedListItem)
-  .map(value => value[1]).asNode('ListItem')
+  .dropAndThen(unorderedListItem)
   .oneOrMore()
-  .asNode('UnorderedList')
+  .map((value): INodeUnorderedList => ({ type: 'UnorderedList', listItems: value }), 'UnorderedList')
 
 // ```js
 // codeBlock()
 // ```
+interface INodeCodeBlock extends INode<'CodeBlock'> {
+  lang: string
+  code: string
+}
 export const codeBlock = bof.orElse(newline).andThen(expect('```'))
-  .andThen(everythingUntil(newline)).map(value => value[1]) // lang
-  .andThen(everythingUntil(expect('\n```')))
-  .asNode('CodeBlock')
+  .dropAndThen(everythingUntil(newline)) // lang
+  .andThen(everythingUntil(expect('\n```'))) // code
+  .map((value): INodeCodeBlock => ({ type: 'CodeBlock', lang: value[0], code: value[1] }), 'CodeBlock')
 
 const paragraphChar = satisfy((msg, pos) => {
   if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
@@ -112,8 +160,11 @@ const paragraphChar = satisfy((msg, pos) => {
   }
 
   return [true, msg[pos]]
-}).asNode('Char')
+}).map((value): INodeChar => ({ type: 'Char', value }), 'Char')
 
+interface INodeParagraph extends INode<'Paragraph'> {
+  children: Array<INodeHeader | INodeUnorderedList | INodeCodeBlock | InlineElementsType | INodeString>
+}
 export const paragraph = header
   .orElse(unorderedList)
   .orElse(codeBlock)
@@ -121,15 +172,36 @@ export const paragraph = header
   .orElse(paragraphChar)
   .oneOrMore()
   .map(groupCharsIntoStrings)
-  .asNode('Paragraph')
+  .map((value): INodeParagraph => ({ type: 'Paragraph', children: value }), 'Paragraph')
 
+interface INodeNewlines extends INode<'Newlines'> { }
 export const newlines = regex(/^\n{2,}/)
-  .asNode('Newlines')
+  .map((): INodeNewlines => ({ type: 'Newlines' }), 'Newlines')
 
+interface INodeMarkup extends INode<'Markup'> {
+  children: Array<INodeNewlines | INodeParagraph>
+}
 export const markupParser =
   newlines
     .orElse(paragraph)
     .zeroOrMore()
-    .asNode('Markup')
+    .map((value): INodeMarkup => ({ type: 'Markup', children: value }), 'Markup')
+
+// TODO generator for the markupParser
+
+// const select = (type: string, node: INode<any>): Array<INode<any>> => {
+//   if (node.type === type) {
+//     return [node]
+//   }
+
+//   if (isArray(node.value)) {
+//     const children = node.value as Array<INode<any>>
+
+//     return children.flatMap(value => select(type, value))
+//   }
+
+//   return []
+// }
+
 
 export const selectLinks = (node: INode<any>): LinkType[] => select('Link', node)

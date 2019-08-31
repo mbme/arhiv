@@ -5,35 +5,114 @@ import {
   bof,
   anyCharExcept,
   everythingUntil,
-  ParserResult,
 } from '~/parser-combinator'
 import {
   trimLeft,
 } from '~/utils'
 
-interface INode<T extends string> {
-  type: T
+abstract class Node {
+  getChildren<N extends Node>(): N[] {
+    return []
+  }
 }
 
-interface INodeString extends INode<'String'> {
-  value: string
-}
-function isCharNode(node: INode<any>): node is INodeChar {
-  return node.type === 'Char'
+class NodeChar extends Node {
+  constructor(public value: string) {
+    super()
+  }
 }
 
-const groupCharsIntoStrings = <T extends INode<string>>(nodes: Array<INodeChar | T>) => { // group chars into strings
-  const values: Array<INodeString | T> = []
+class NodeString extends Node {
+  constructor(public value: string) {
+    super()
+  }
+}
+
+class NodeBold extends Node {
+  constructor(public value: string) {
+    super()
+  }
+}
+
+class NodeMono extends Node {
+  constructor(public value: string) {
+    super()
+  }
+}
+
+class NodeStrikethrough extends Node {
+  constructor(public value: string) {
+    super()
+  }
+}
+
+class NodeLink extends Node {
+  constructor(
+    public link: string,
+    public description: string,
+  ) {
+    super()
+  }
+}
+
+type InlineNodes = NodeBold | NodeMono | NodeStrikethrough | NodeLink | NodeString
+
+class NodeListItem extends Node {
+  constructor(public children: InlineNodes[]) {
+    super()
+  }
+}
+
+class NodeUnorderedList extends Node {
+  constructor(public children: NodeListItem[]) {
+    super()
+  }
+}
+
+class NodeHeader extends Node {
+  constructor(
+    public value: string,
+    public level: 1 | 2,
+  ) {
+    super()
+  }
+}
+
+class NodeCodeBlock extends Node {
+  constructor(
+    public lang: string,
+    public value: string,
+  ) {
+    super()
+  }
+}
+
+class NodeParagraph extends Node {
+  constructor(public children: Array<NodeHeader | NodeUnorderedList | NodeCodeBlock | InlineNodes>) {
+    super()
+  }
+}
+
+class NodeNewlines extends Node { }
+
+class NodeMarkup extends Node {
+  constructor(public children: Array<NodeNewlines | NodeParagraph>) {
+    super()
+  }
+}
+
+const groupCharsIntoStrings = <N extends Node>(nodes: Array<NodeChar | N>) => { // group chars into strings
+  const values: Array<NodeString | N> = []
 
   let str = ''
   for (const node of nodes) {
-    if (isCharNode(node)) {
+    if (node instanceof NodeChar) {
       str += node.value
       continue
     }
 
     if (str.length) {
-      values.push({ type: 'String', value: str })
+      values.push(new NodeString(str))
       str = ''
     }
 
@@ -41,7 +120,7 @@ const groupCharsIntoStrings = <T extends INode<string>>(nodes: Array<INodeChar |
   }
 
   if (str.length) {
-    values.push({ type: 'String', value: str })
+    values.push(new NodeString(str))
   }
 
   return values
@@ -52,64 +131,32 @@ const newline = expect('\n')
 // FIXME handle escaped chars like \*
 
 // some *bold* text
-interface INodeBold extends INode<'Bold'> {
-  value: string
-}
 export const bold = anyCharExcept('*\n').oneOrMore().inside(expect('*'))
-  .map((value): INodeBold => ({ type: 'Bold', value: value.join('') }), 'Bold')
+  .map(value => new NodeBold(value.join('')), 'Bold')
 
 // some `monospace` text
-interface INodeMono extends INode<'Mono'> {
-  value: string
-}
 export const mono = anyCharExcept('`\n').oneOrMore().inside(expect('`'))
-  .map((value): INodeMono => ({ type: 'Mono', value: value.join('') }), 'Mono')
+  .map(value => new NodeMono(value.join('')), 'Mono')
 
 // some ~striketrough~ text
-interface INodeStrikethrough extends INode<'Striketrough'> {
-  value: string
-}
 export const strikethrough = anyCharExcept('~\n').oneOrMore().inside(expect('~'))
-  .map((value): INodeStrikethrough => ({ type: 'Striketrough', value: value.join('') }), 'Strikethrough')
+  .map(value => new NodeStrikethrough(value.join('')), 'Strikethrough')
 
 // [[link][with optional description]]
-interface INodeLink extends INode<'Link'> {
-  link: string
-  description: string
-}
 const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']'))
   .map(value => value.join(''))
 export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
-  .map((value): INodeLink => ({
-    type: 'Link',
-    link: value[0],
-    description: value[1] || '',
-  }), 'Link')
-type LinkType = ParserResult<typeof link>
+  .map(value => new NodeLink(value[0], value[1] || ''), 'Link')
 
 const inlineElements = bold.orElse(mono).orElse(strikethrough).orElse(link)
-type InlineElementsType = ParserResult<typeof inlineElements>
 
 // # Header lvl 1 or ## Header lvl 2
-interface INodeHeader extends INode<'Header'> {
-  value: string
-  level: 1 | 2
-}
-export const header = bof.orElse(newline).andThen(regex(/^#{1,2} .*/))
-  .map((value): INodeHeader => {
-    const headerStr = value[1]
-    const level = headerStr.startsWith('## ') ? 2 : 1
+export const header = bof.orElse(newline).dropAndThen(regex(/^#{1,2} .*/))
+  .map((value) => {
+    const level = value.startsWith('## ') ? 2 : 1
 
-    return {
-      type: 'Header',
-      value: trimLeft(headerStr, '# '),
-      level,
-    }
+    return new NodeHeader(trimLeft(value, '# '), level)
   }, 'Header')
-
-interface INodeChar extends INode<'Char'> {
-  value: string
-}
 
 // * unordered list
 const listChar = satisfy((msg, pos) => {
@@ -122,37 +169,28 @@ const listChar = satisfy((msg, pos) => {
   }
 
   return [true, msg[pos]]
-}).map((value): INodeChar => ({ type: 'Char', value }), 'Char')
+})
+  .map(value => new NodeChar(value), 'Char')
 
-interface INodeListItem extends INode<'ListItem'> {
-  children: Array<InlineElementsType | INodeString>
-}
 const unorderedListItem =
   inlineElements.orElse(listChar)
     .oneOrMore()
     .map(groupCharsIntoStrings)
-    .map((value): INodeListItem => ({ type: 'ListItem', children: value }), 'ListItem')
+    .map(value => new NodeListItem(value), 'ListItem')
 
-interface INodeUnorderedList extends INode<'UnorderedList'> {
-  listItems: INodeListItem[]
-}
 export const unorderedList = bof.orElse(newline)
   .andThen(expect('* '))
   .dropAndThen(unorderedListItem)
   .oneOrMore()
-  .map((value): INodeUnorderedList => ({ type: 'UnorderedList', listItems: value }), 'UnorderedList')
+  .map(value => new NodeUnorderedList(value), 'UnorderedList')
 
 // ```js
 // codeBlock()
 // ```
-interface INodeCodeBlock extends INode<'CodeBlock'> {
-  lang: string
-  code: string
-}
 export const codeBlock = bof.orElse(newline).andThen(expect('```'))
   .dropAndThen(everythingUntil(newline)) // lang
   .andThen(everythingUntil(expect('\n```'))) // code
-  .map((value): INodeCodeBlock => ({ type: 'CodeBlock', lang: value[0], code: value[1] }), 'CodeBlock')
+  .map(value => new NodeCodeBlock(value[0], value[1]), 'CodeBlock')
 
 const paragraphChar = satisfy((msg, pos) => {
   if (msg[pos] === '\n' && msg[pos + 1] === '\n') {
@@ -160,11 +198,9 @@ const paragraphChar = satisfy((msg, pos) => {
   }
 
   return [true, msg[pos]]
-}).map((value): INodeChar => ({ type: 'Char', value }), 'Char')
+})
+  .map(value => new NodeChar(value), 'Char')
 
-interface INodeParagraph extends INode<'Paragraph'> {
-  children: Array<INodeHeader | INodeUnorderedList | INodeCodeBlock | InlineElementsType | INodeString>
-}
 export const paragraph = header
   .orElse(unorderedList)
   .orElse(codeBlock)
@@ -172,20 +208,16 @@ export const paragraph = header
   .orElse(paragraphChar)
   .oneOrMore()
   .map(groupCharsIntoStrings)
-  .map((value): INodeParagraph => ({ type: 'Paragraph', children: value }), 'Paragraph')
+  .map(value => new NodeParagraph(value), 'Paragraph')
 
-interface INodeNewlines extends INode<'Newlines'> { }
 export const newlines = regex(/^\n{2,}/)
-  .map((): INodeNewlines => ({ type: 'Newlines' }), 'Newlines')
+  .map(() => new NodeNewlines(), 'Newlines')
 
-interface INodeMarkup extends INode<'Markup'> {
-  children: Array<INodeNewlines | INodeParagraph>
-}
 export const markupParser =
   newlines
     .orElse(paragraph)
     .zeroOrMore()
-    .map((value): INodeMarkup => ({ type: 'Markup', children: value }), 'Markup')
+    .map(value => new NodeMarkup(value), 'Markup')
 
 // TODO use classes for Nodes instead of interfaces, + method to iterate children
 // TODO generator for the markupParser
@@ -204,5 +236,4 @@ export const markupParser =
 //   return []
 // }
 
-
-export const selectLinks = (node: INode<any>): LinkType[] => select('Link', node)
+// export const selectLinks = (node: INode<any>): LinkType[] => select('Link', node)

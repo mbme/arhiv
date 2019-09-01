@@ -9,122 +9,21 @@ import {
 import {
   trimLeft,
 } from '~/utils'
-
-abstract class Node {
-  getChildren<N extends Node>(): N[] {
-    return []
-  }
-}
-
-class NodeChar extends Node {
-  constructor(public value: string) {
-    super()
-  }
-}
-
-class NodeString extends Node {
-  constructor(public value: string) {
-    super()
-  }
-}
-
-class NodeBold extends Node {
-  constructor(public value: string) {
-    super()
-  }
-}
-
-class NodeMono extends Node {
-  constructor(public value: string) {
-    super()
-  }
-}
-
-class NodeStrikethrough extends Node {
-  constructor(public value: string) {
-    super()
-  }
-}
-
-class NodeLink extends Node {
-  constructor(
-    public link: string,
-    public description: string,
-  ) {
-    super()
-  }
-}
-
-type InlineNodes = NodeBold | NodeMono | NodeStrikethrough | NodeLink | NodeString
-
-class NodeListItem extends Node {
-  constructor(public children: InlineNodes[]) {
-    super()
-  }
-}
-
-class NodeUnorderedList extends Node {
-  constructor(public children: NodeListItem[]) {
-    super()
-  }
-}
-
-class NodeHeader extends Node {
-  constructor(
-    public value: string,
-    public level: 1 | 2,
-  ) {
-    super()
-  }
-}
-
-class NodeCodeBlock extends Node {
-  constructor(
-    public lang: string,
-    public value: string,
-  ) {
-    super()
-  }
-}
-
-class NodeParagraph extends Node {
-  constructor(public children: Array<NodeHeader | NodeUnorderedList | NodeCodeBlock | InlineNodes>) {
-    super()
-  }
-}
-
-class NodeNewlines extends Node { }
-
-class NodeMarkup extends Node {
-  constructor(public children: Array<NodeNewlines | NodeParagraph>) {
-    super()
-  }
-}
-
-const groupCharsIntoStrings = <N extends Node>(nodes: Array<NodeChar | N>) => { // group chars into strings
-  const values: Array<NodeString | N> = []
-
-  let str = ''
-  for (const node of nodes) {
-    if (node instanceof NodeChar) {
-      str += node.value
-      continue
-    }
-
-    if (str.length) {
-      values.push(new NodeString(str))
-      str = ''
-    }
-
-    values.push(node)
-  }
-
-  if (str.length) {
-    values.push(new NodeString(str))
-  }
-
-  return values
-}
+import {
+  NodeBold,
+  NodeMono,
+  NodeStrikethrough,
+  NodeChar,
+  NodeLink,
+  NodeHeader,
+  NodeListItem,
+  NodeUnorderedList,
+  NodeCodeBlock,
+  NodeParagraph,
+  NodeNewlines,
+  NodeMarkup,
+} from './nodes'
+import { groupCharsIntoStrings } from './utils'
 
 const newline = expect('\n')
 
@@ -221,19 +120,3 @@ export const markupParser =
 
 // TODO use classes for Nodes instead of interfaces, + method to iterate children
 // TODO generator for the markupParser
-
-// const select = (type: string, node: INode<any>): Array<INode<any>> => {
-//   if (node.type === type) {
-//     return [node]
-//   }
-
-//   if (isArray(node.value)) {
-//     const children = node.value as Array<INode<any>>
-
-//     return children.flatMap(value => select(type, value))
-//   }
-
-//   return []
-// }
-
-// export const selectLinks = (node: INode<any>): LinkType[] => select('Link', node)

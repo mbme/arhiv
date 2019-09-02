@@ -1,4 +1,11 @@
-import { test } from '~/tester'
+import {
+  test,
+  asserts,
+} from '~/tester'
+import {
+  assertSuccess,
+  assertFailure,
+} from '~/parser-combinator/test-utils'
 import {
   newlines,
   paragraph,
@@ -10,127 +17,120 @@ import {
   unorderedList,
   codeBlock,
 } from './index'
+import {
+  NodeString,
+  NodeBold,
+} from './nodes'
 
-test('inline', (assert) => {
-  {
-    const result = mono.parseAll('`test`')
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result.type, 'Mono')
-      assert.equal(result.result.value, 'test')
-    }
+test('inline', () => {
+  assertSuccess(mono.parseAll('`test`'), (result) => {
+    asserts.equal(result.value, 'test')
+  })
 
-    assert.false(mono.parseAll('`te\nst`').success)
-  }
+  assertFailure(mono.parseAll('`te\nst`'))
 
-  {
-    const result = bold.apply('*test**', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result.value, 'test')
-    }
-  }
+  assertSuccess(bold.apply('*test**', 0), (result) => {
+    asserts.equal(result.value, 'test')
+  })
 
-  assert.true(bold.parseAll('*test*').success)
-  assert.true(strikethrough.parseAll('~test~').success)
+  assertSuccess(bold.parseAll('*test*'))
+  assertSuccess(strikethrough.parseAll('~test~'))
 })
 
-test('header', (assert) => {
-  {
-    const result = header.parseAll('# header')
-    assert.true(result.success)
-    if (result.success) {
-      const { type, value: [level, str] } = result.result
-      assert.equal(type, 'Header')
-      assert.equal(level, 1)
-      assert.equal(str, 'header')
-    }
-  }
+test('header', () => {
+  assertSuccess(header.parseAll('# header'), ({ level, value }) => {
+    asserts.equal(level, 1)
+    asserts.equal(value, 'header')
+  })
 
-  {
-    const result = header.apply('test\n## header\ntest', 4)
-    assert.true(result.success)
-    if (result.success) {
-      const { value: [level, str] } = result.result
-      assert.equal(level, 2)
-      assert.equal(str, 'header')
-    }
-  }
+  assertSuccess(header.apply('test\n## header\ntest', 4), ({ level, value }) => {
+    asserts.equal(level, 2)
+    asserts.equal(value, 'header')
+  })
 })
 
-test('unordered list', (assert) => {
-  {
-    const result = unorderedList.parseAll('* test')
-    assert.true(result.success)
-    if (result.success) {
-      const items = result.result.value
+test('unordered list', () => {
+  assertSuccess(unorderedList.parseAll('* test'), (result) => {
+    asserts.equal(result.children.length, 1)
 
-      assert.equal(items.length, 1)
-      assert.equal(items[0].value[0].value, 'test')
+    const item = result.children[0].children[0]
+    asserts.true(item instanceof NodeString)
+    if (item instanceof NodeString) {
+      asserts.equal(item.value, 'test')
     }
-  }
+  })
 
-  {
-    const result = unorderedList.parseAll('* test\ntest\n* ok *go*')
-    assert.true(result.success)
-    if (result.success) {
-      const items = result.result.value
-      assert.equal(items.length, 2)
-      assert.equal(items[0].value[0].value, 'test\ntest')
+  assertSuccess(unorderedList.parseAll('* test\ntest\n* ok *go*'), (result) => {
+    asserts.equal(result.children.length, 2)
 
-      assert.equal(items[1].value[0].value, 'ok ')
-      assert.equal(items[1].value[1].type, 'Bold')
-      assert.equal(items[1].value[1].value, 'go')
+    {
+      const item = result.children[0].children[0]
+      asserts.true(item instanceof NodeString)
+      if (item instanceof NodeString) {
+        asserts.equal(item.value, 'test\ntest')
+      }
     }
-  }
+
+    {
+      const item = result.children[1].children[0]
+      asserts.true(item instanceof NodeString)
+      if (item instanceof NodeString) {
+        asserts.equal(item.value, 'ok ')
+      }
+    }
+
+    {
+      const item = result.children[1].children[1]
+      asserts.true(item instanceof NodeBold)
+      if (item instanceof NodeBold) {
+        asserts.equal(item.value, 'go')
+      }
+    }
+  })
 })
 
-test('link', (assert) => {
-  {
-    const result = link.parseAll('[[url][description]]')
-    assert.true(result.success)
-    if (result.success) {
-      const [url, description] = result.result.value
-      assert.equal(url, 'url')
-      assert.equal(description, 'description')
-    }
-  }
+test('link', () => {
+  assertSuccess(link.parseAll('[[url][description]]'), (result) => {
+    asserts.equal(result.link, 'url')
+    asserts.equal(result.description, 'description')
+  })
 
-  {
-    const result = link.parseAll('[[url]]')
-    assert.true(result.success)
-    if (result.success) {
-      const [url, description] = result.result.value
-      assert.equal(url, 'url')
-      assert.equal(description, undefined)
-    }
-  }
+  assertSuccess(link.parseAll('[[url]]'), (result) => {
+    asserts.equal(result.link, 'url')
+    asserts.equal(result.description, '')
+  })
 })
 
-test('newlines', (assert) => {
-  assert.true(newlines.parseAll('\n\n\n').success)
-  assert.false(newlines.parseAll('\n ').success)
+test('newlines', () => {
+  assertSuccess(newlines.parseAll('\n\n\n'))
+  assertFailure(newlines.parseAll('\n '))
 })
 
-test('paragraph', (assert) => {
-  assert.true(paragraph.parseAll('test').success)
+test('paragraph', () => {
+  assertSuccess(paragraph.parseAll('test'))
 
-  {
-    const result = paragraph.apply('te\ns*t*\n\n', 0)
-    assert.true(result.success)
-    if (result.success) {
-      assert.equal(result.result.value[0].value, 'te\ns')
-      assert.equal(result.result.value[1].value, 't')
+  assertSuccess(paragraph.apply('te\ns*t*\n\n', 0), (result) => {
+    {
+      const item = result.children[0]
+      asserts.true(item instanceof NodeString)
+      if (item instanceof NodeString) {
+        asserts.equal(item.value, 'te\ns')
+      }
     }
-  }
+
+    {
+      const item = result.children[1]
+      asserts.true(item instanceof NodeBold)
+      if (item instanceof NodeBold) {
+        asserts.equal(item.value, 't')
+      }
+    }
+  })
 })
 
-test('code block', (assert) => {
-  const result = codeBlock.apply('```js\ntest\n```', 0)
-  assert.true(result.success)
-  if (result.success) {
-    const [lang, code] = result.result.value
-    assert.equal(lang, 'js')
-    assert.equal(code, 'test')
-  }
+test('code block', () => {
+  assertSuccess(codeBlock.apply('```js\ntest\n```', 0), ({ lang, value }) => {
+    asserts.equal(lang, 'js')
+    asserts.equal(value, 'test')
+  })
 })

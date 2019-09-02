@@ -10,28 +10,20 @@ import {
   everythingUntil,
 } from './matchers'
 import {
-  isSuccess,
-  Result,
   isFailure,
 } from './parser'
-
-const assertSuccess = <T>(r: Result<T>) => {
-  asserts.true(isSuccess(r))
-}
-const assertFailure = <T>(r: Result<T>) => {
-  asserts.true(isFailure(r))
-}
+import {
+  assertFailure,
+  assertSuccess,
+} from './test-utils'
 
 test('map', () => {
   const mapper = expect('test').map(() => ({ kind: 'dummy' }))
   assertFailure(mapper.apply('te', 0))
 
-  const result = mapper.apply('test', 0)
-  assertSuccess(result)
-
-  if (isSuccess(result)) {
-    asserts.true(result.result.kind === 'dummy')
-  }
+  assertSuccess(mapper.apply('test', 0), (result) => {
+    asserts.true(result.kind === 'dummy')
+  })
 })
 
 test('andThen', () => {
@@ -64,11 +56,9 @@ test('oneOrMore', () => {
   assertFailure(parser.apply('x2', 0))
   assertSuccess(parser.apply('x1', 0))
 
-  const result = parser.apply('x1x1x12', 0)
-  assertSuccess(result)
-  if (isSuccess(result)) {
-    asserts.equal(result.result.length, 3)
-  }
+  assertSuccess(parser.apply('x1x1x12', 0), (result) => {
+    asserts.equal(result.length, 3)
+  })
 })
 
 test('zeroOrMore', () => {
@@ -81,32 +71,21 @@ test('zeroOrMore', () => {
 test('optional', () => {
   const parser = expect('x1').optional()
 
-  {
-    const result = parser.apply('x2', 0)
-    assertSuccess(result)
-    if (isSuccess(result)) {
-      asserts.equal(result.result, undefined)
-    }
-  }
-  {
-    const result = parser.apply('x1', 0)
-    assertSuccess(result)
-    if (isSuccess(result)) {
-      asserts.equal(result.result, 'x1')
-    }
-  }
+  assertSuccess(parser.apply('x2', 0), (result) => {
+    asserts.equal(result, undefined)
+  })
+
+  assertSuccess(parser.apply('x1', 0), (result) => {
+    asserts.equal(result, 'x1')
+  })
 })
 
 test('everythingUntil', () => {
   const parser = everythingUntil(expect('x1'))
 
-  {
-    const result = parser.apply('testx1', 0)
-    assertSuccess(result)
-    if (isSuccess(result)) {
-      asserts.equal(result.result, 'test')
-    }
-  }
+  assertSuccess(parser.apply('testx1', 0), (result) => {
+    asserts.equal(result, 'test')
+  })
 
   assertFailure(parser.apply('x2', 0))
 })
@@ -114,13 +93,9 @@ test('everythingUntil', () => {
 test('between', () => {
   const parser = expect('test').between(expect('x1'), expect('x1'))
 
-  {
-    const result = parser.apply('x1testx1', 0)
-    assertSuccess(result)
-    if (isSuccess(result)) {
-      asserts.equal(result.result, 'test')
-    }
-  }
+  assertSuccess(parser.apply('x1testx1', 0), (result) => {
+    asserts.equal(result, 'test')
+  })
 
   assertFailure(parser.apply('x1test', 0))
   assertFailure(parser.apply('x1testx2', 0))
@@ -172,11 +147,9 @@ test('expect', () => {
 test('regex', () => {
   assertSuccess(regex(/^test/).apply('test', 0))
 
-  const result = regex(/^0*1+/).apply('001', 0)
-  assertSuccess(result)
-  if (isSuccess(result)) {
-    asserts.equal(result.result, '001')
-  }
+  assertSuccess(regex(/^0*1+/).apply('001', 0), (result) => {
+    asserts.equal(result, '001')
+  })
 
   assertFailure(regex(/^test/).apply('not test', 0))
 })

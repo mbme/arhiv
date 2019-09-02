@@ -44,6 +44,7 @@ export const strikethrough = anyCharExcept('~\n').oneOrMore().inside(expect('~')
 // [[link][with optional description]]
 const linkPart = anyCharExcept(']\n').oneOrMore().between(expect('['), expect(']'))
   .map(value => value.join(''))
+
 export const link = linkPart.andThen(linkPart.optional()).between(expect('['), expect(']'))
   .map(value => new NodeLink(value[0], value[1] || ''), 'Link')
 

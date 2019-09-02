@@ -1,6 +1,15 @@
 import {
   Parser,
+  isSuccess,
+  isFailure,
+  Result,
 } from './parser'
+
+export {
+  isSuccess,
+  isFailure,
+  Result,
+}
 
 export * from './matchers'
 

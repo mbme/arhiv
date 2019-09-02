@@ -38,6 +38,11 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
   constructor(private _value: T, init?: InitCb<T>) {
     if (init) {
       this._destroy = init(this) || noop
+
+      // make sure we call destroy function if observable was completed during init
+      if (this._complete) {
+        this._destroy()
+      }
     }
   }
 
@@ -83,9 +88,7 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
   }
 
   complete = () => {
-    if (this._complete) {
-      return
-    }
+    this._assertNotComplete()
 
     for (const observer of this._subscribers) {
       if (observer.complete) {
@@ -99,8 +102,6 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
   }
 
   subscribe(subscriber: ISubscriber<T>): UnsubscribeCb {
-    this._assertNotComplete()
-
     this._subscribers.push(subscriber)
 
     if (subscriber.next) {
@@ -136,9 +137,9 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
     )
   }
 
-  take(count: number) {
-    if (count < 1) {
-      throw new Error(`"count" must be greater than 0, got ${count}`)
+  take(quantity: number) {
+    if (quantity < 1) {
+      throw new Error(`"quantity" must be greater than 0, got ${quantity}`)
     }
 
     return new ReactiveValue<T>(
@@ -150,7 +151,8 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
           next: value => {
             observer.next(value)
             counter += 1
-            if (counter === count) {
+
+            if (counter === quantity) {
               observer.complete()
             }
           },

@@ -100,6 +100,7 @@ export class Document<T extends Record> {
         if (state$.currentValue === 'acquired') {
           this._replica.locks.removeDocumentLock(this.id)
           state$.next('released')
+          state$.complete()
         }
       },
     }

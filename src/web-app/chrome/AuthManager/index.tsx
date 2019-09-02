@@ -8,7 +8,7 @@ interface IProps {
 }
 
 export function AuthManager({ arhiv }: IProps) {
-  const authorized = useReactiveValue(arhiv.net.$authorized)
+  const authorized = useReactiveValue(() => arhiv.net.$authorized)
 
   if (authorized) {
     return null

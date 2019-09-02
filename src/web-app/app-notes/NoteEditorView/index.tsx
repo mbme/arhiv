@@ -6,7 +6,7 @@ import {
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { NoteEditor } from './NoteEditor'
-import { useReactiveValueMemo } from '~/utils/react'
+import { useReactiveValue } from '~/utils/react'
 import { ReactiveValue } from '~/utils'
 
 interface IProps {
@@ -17,7 +17,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
   const arhiv = useArhiv()
 
   // get or create the note
-  const note = useReactiveValueMemo(() => {
+  const note = useReactiveValue(() => {
     if (id) {
       return arhiv.notes.getDocument$(id)
     }

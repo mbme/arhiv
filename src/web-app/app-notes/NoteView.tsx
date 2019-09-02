@@ -3,7 +3,7 @@ import {
   useArhiv,
   NoteDocument,
 } from '~/arhiv'
-import { useReactiveValue, useReactiveValueMemo } from '~/utils/react'
+import { useReactiveValue } from '~/utils/react'
 import {
   Icon,
   CleanLink,
@@ -20,7 +20,7 @@ interface IProps {
 }
 
 function NoteView({ note }: IProps) {
-  const locked = useReactiveValueMemo(() => note.isLocked$(), [note])
+  const locked = useReactiveValue(() => note.isLocked$(), [note])
 
   return (
     <>
@@ -44,7 +44,7 @@ function NoteView({ note }: IProps) {
 
 export function NoteViewContainer({ id }: { id: string }) {
   const arhiv = useArhiv()
-  const note = useReactiveValue(arhiv.notes.getDocument$(id))
+  const note = useReactiveValue(() => arhiv.notes.getDocument$(id), [id])
 
   if (!note) {
     return NotFound

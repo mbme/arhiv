@@ -53,7 +53,9 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
 
   next = (value: T) => {
     this._assertNotComplete()
+
     const callId = this._nextCounter.incAndGet()
+    this._value = value
 
     for (const observer of this._subscribers) {
       if (!observer.next) {

@@ -86,7 +86,7 @@ function getCurrentApp(apps: IApp[], location: ILocation) {
 
 export function Chrome({ apps, onLogout }: IProps) {
   const router = useRouter()
-  const location = useReactiveValue(router.$location)
+  const location = useReactiveValue(() => router.$location)
   const [isNavVisible, setIsNavVisible] = React.useState(false)
 
   const app = getCurrentApp(apps, location)

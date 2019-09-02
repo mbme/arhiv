@@ -37,7 +37,7 @@ export function NotesListView({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
-  const notes = useReactiveValue(arhiv.notes.getDocuments$())
+  const notes = useReactiveValue(() => arhiv.notes.getDocuments$())
 
   const items = notes
     .filter(note => fuzzySearch(filter, note.record.name))

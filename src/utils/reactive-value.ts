@@ -162,10 +162,16 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
   }
 
   tap(cb: (value: T) => void) {
-    return this.map((value) => {
-      cb(value)
-
-      return value
-    })
+    return new ReactiveValue<T>(
+      this._value,
+      (observer) => this.subscribe({
+        next: (value) => {
+          cb(value)
+          observer.next(value)
+        },
+        error: observer.error,
+        complete: observer.complete,
+      }),
+    )
   }
 }

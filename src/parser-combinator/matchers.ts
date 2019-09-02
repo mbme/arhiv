@@ -74,7 +74,6 @@ export const anyCharExcept = (chars: string) => satisfy((msg, pos) => {
   return [true, msg[pos]]
 }, `anyCharExcept(${chars})`)
 
-// FIXME refactor with satisfy
 export const everythingUntil = <T>(parser: Parser<T>): Parser<string> => new Parser((msg, pos) => {
   let currentPos = pos
   let result

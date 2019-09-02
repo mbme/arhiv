@@ -18,7 +18,7 @@ const log = createLogger('document')
 
 type LockState = 'pending' | 'acquired' | 'released'
 interface ILock {
-  $state: ReactiveValue<LockState>
+  state$: ReactiveValue<LockState>
   release: Procedure
 }
 
@@ -41,7 +41,7 @@ export class Document<T extends Record> {
     for (const link of selectLinks(markup)) {
       const id = link.link
 
-      if (this._replica.getAttachment(id).currentValue) {
+      if (this._replica.getAttachment(id)) {
         attachmentRefs.push(id)
       } else {
         log.warn(`document ${this.id} references unknown entity ${id}`)
@@ -51,7 +51,7 @@ export class Document<T extends Record> {
     return attachmentRefs
   }
 
-  patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) { // FIXME fix type
+  patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) {
     const attachmentRefs = refSource === undefined
       ? this.record._attachmentRefs
       : this._extractRefs(refSource)
@@ -74,32 +74,32 @@ export class Document<T extends Record> {
     return !this._replica.getDocument(this.id)
   }
 
-  $isLocked() {
-    return this._replica.locks.$isDocumentLocked(this.id)
+  isLocked$() {
+    return this._replica.locks.isDocumentLocked$(this.id)
   }
 
   lock(): ILock {
-    const $state = new ReactiveValue<LockState>('pending')
+    const state$ = new ReactiveValue<LockState>('pending')
 
-    const unsub = this.$isLocked()
+    const unsub = this.isLocked$()
       .filter(isLocked => !isLocked)
       .take(1)
       .subscribe({
         next: () => {
           this._replica.locks.addDocumentLock(this.id)
-          $state.next('acquired')
+          state$.next('acquired')
         },
       })
 
     return {
-      $state,
+      state$,
 
       release: () => {
         unsub()
 
-        if ($state.currentValue === 'acquired') {
+        if (state$.currentValue === 'acquired') {
           this._replica.locks.removeDocumentLock(this.id)
-          $state.next('released')
+          state$.next('released')
         }
       },
     }

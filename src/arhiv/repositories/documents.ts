@@ -15,13 +15,13 @@ export abstract class DocumentsRepository<T extends Record> {
 
   protected _wrap = (document: T) => new Document(this._replica, document)
 
-  getDocuments(): ReactiveValue<Array<Document<T>>> {
-    return this._replica.getDocuments()
+  getDocuments$(): ReactiveValue<Array<Document<T>>> {
+    return this._replica.getDocuments$()
       .map(documents => documents.filter(this._isDocumentOfType).map(this._wrap))
   }
 
-  getDocument(id: string): ReactiveValue<Document<T> | undefined> {
-    return this._replica.getDocument(id).map((document) => {
+  getDocument$(id: string): ReactiveValue<Document<T> | undefined> {
+    return this._replica.getDocument$(id).map((document) => {
       if (this._isDocumentOfType(document)) {
         return this._wrap(document)
       }

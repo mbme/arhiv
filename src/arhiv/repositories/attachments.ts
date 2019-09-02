@@ -1,4 +1,3 @@
-import { ReactiveValue } from '~/utils'
 import { ArhivReplica } from '../types'
 import { Attachment } from '../entities/attachment'
 
@@ -9,13 +8,12 @@ export class AttachmentsRepository {
     return this._replica.saveAttachment(file)
   }
 
-  getAttachment(id: string): ReactiveValue<Attachment | undefined> {
-    return this._replica.getAttachment(id).map((attachment) => {
-      if (attachment) {
-        return new Attachment(this._replica, attachment)
-      }
-
+  getAttachment(id: string): Attachment | undefined {
+    const attachment = this._replica.getAttachment(id)
+    if (!attachment) {
       return undefined
-    })
+    }
+
+    return new Attachment(this._replica, attachment)
   }
 }

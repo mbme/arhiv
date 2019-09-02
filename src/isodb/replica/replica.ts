@@ -18,8 +18,8 @@ import { MergeConflicts } from './merge-conflict'
 const log = createLogger('isodb-replica')
 
 export class IsodbReplica<T extends IDocument> {
-  $updateTime = new ReactiveValue(0)
-  $mergeConflicts = new ReactiveValue<MergeConflicts<T> | undefined>(undefined)
+  updateTime$ = new ReactiveValue(0)
+  mergeConflicts$ = new ReactiveValue<MergeConflicts<T> | undefined>(undefined)
 
   constructor(private _storage: IReplicaStorage<T>) { }
 
@@ -58,7 +58,7 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   hasMergeConflicts() {
-    return !!this.$mergeConflicts.currentValue
+    return !!this.mergeConflicts$.currentValue
   }
 
   private _assertNoMergeConflicts() {
@@ -68,7 +68,7 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   private _onUpdate() {
-    this.$updateTime.next(nowS())
+    this.updateTime$.next(nowS())
   }
 
   saveAttachment(id: string, blob: File) {
@@ -129,7 +129,7 @@ export class IsodbReplica<T extends IDocument> {
       this._storage.upgrade(changesetResult)
       this._onUpdate()
 
-      this.$mergeConflicts.next(undefined)
+      this.mergeConflicts$.next(undefined)
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
@@ -147,7 +147,7 @@ export class IsodbReplica<T extends IDocument> {
     }
 
     if (mergeConflicts.conflicts.length) {
-      this.$mergeConflicts.next(mergeConflicts)
+      this.mergeConflicts$.next(mergeConflicts)
     } else {
       this._storage.upgrade(changesetResult)
       this._onUpdate()
@@ -178,6 +178,6 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   stop() {
-    this.$updateTime.complete()
+    this.updateTime$.complete()
   }
 }

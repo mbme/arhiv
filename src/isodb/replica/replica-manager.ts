@@ -38,7 +38,7 @@ export class ReplicaManager<T extends IDocument> {
   constructor(storage: IReplicaStorage<T>) {
     this._replica = new IsodbReplica(storage)
 
-    this._replica.$mergeConflicts.subscribe({
+    this._replica.mergeConflicts$.subscribe({
       next: (mergeConflicts) => {
         if (mergeConflicts) {
           this.$syncState.next('merge-conflicts')
@@ -49,7 +49,7 @@ export class ReplicaManager<T extends IDocument> {
     })
 
     // run compaction if db isn't locked
-    this.locks.$state.subscribe({
+    this.locks.state$.subscribe({
       next: (lockState) => {
         if (lockState.type === 'free') {
           this._replica.compact()
@@ -70,12 +70,12 @@ export class ReplicaManager<T extends IDocument> {
     return id
   }
 
-  getAttachment(id: string): ReactiveValue<IAttachment | undefined> {
-    return this._replica.$updateTime.map(() => this._replica.getAttachment(id))
+  getAttachment(id: string): IAttachment | undefined {
+    return this._replica.getAttachment(id)
   }
 
-  getAttachmentUrl(id: string): ReactiveValue<string | undefined> {
-    return this._replica.$updateTime.map(() => this._replica.getAttachmentUrl(id))
+  getAttachmentUrl(id: string): string | undefined {
+    return this._replica.getAttachmentUrl(id)
   }
 
   saveAttachment(file: File) {
@@ -85,12 +85,16 @@ export class ReplicaManager<T extends IDocument> {
     return id
   }
 
-  getDocuments(): ReactiveValue<T[]> {
-    return this._replica.$updateTime.map(() => this._replica.getDocuments())
+  getDocuments$(): ReactiveValue<T[]> {
+    return this._replica.updateTime$.map(() => this._replica.getDocuments())
   }
 
-  getDocument(id: string): ReactiveValue<T | undefined> {
-    return this._replica.$updateTime.map(() => this._replica.getDocument(id))
+  getDocument$(id: string): ReactiveValue<T | undefined> {
+    return this._replica.updateTime$.map(() => this._replica.getDocument(id))
+  }
+
+  getDocument(id: string): T | undefined {
+    return this._replica.getDocument(id)
   }
 
   saveDocument(document: T) {

@@ -20,7 +20,7 @@ interface IProps {
 }
 
 function NoteView({ note }: IProps) {
-  const locked = useReactiveValueMemo(() => note.$isLocked(), [note])
+  const locked = useReactiveValueMemo(() => note.isLocked$(), [note])
 
   return (
     <>
@@ -44,7 +44,7 @@ function NoteView({ note }: IProps) {
 
 export function NoteViewContainer({ id }: { id: string }) {
   const arhiv = useArhiv()
-  const note = useReactiveValue(arhiv.notes.getDocument(id))
+  const note = useReactiveValue(arhiv.notes.getDocument$(id))
 
   if (!note) {
     return NotFound

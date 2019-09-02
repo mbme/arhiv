@@ -19,7 +19,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
   // get or create the note
   const note = useReactiveValueMemo(() => {
     if (id) {
-      return arhiv.notes.getDocument(id)
+      return arhiv.notes.getDocument$(id)
     }
 
     return new ReactiveValue<NoteDocument | undefined>(arhiv.notes.createNote())
@@ -33,7 +33,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
     }
 
     const lock = note.lock()
-    lock.$state.subscribe({
+    lock.state$.subscribe({
       next: state => setHasLock(state === 'acquired'),
     })
 

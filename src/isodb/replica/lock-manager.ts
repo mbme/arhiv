@@ -10,7 +10,7 @@ type State = { type: 'free' }
   | { type: 'documents-locked', locks: readonly string[] }
 
 export class LockManager {
-  $state = new ReactiveValue<State>({ type: 'free' })
+  state$ = new ReactiveValue<State>({ type: 'free' })
     .tap(currentState => {
       if (currentState.type === 'free') {
         log.info('state -> free')
@@ -28,27 +28,27 @@ export class LockManager {
     })
 
   isFree() {
-    return this.$state.currentValue.type === 'free'
+    return this.state$.currentValue.type === 'free'
   }
 
   lockDB() {
-    if (this.$state.currentValue.type !== 'free') {
+    if (this.state$.currentValue.type !== 'free') {
       throw new Error("Can't lock db: not free")
     }
 
-    this.$state.next({ type: 'db-locked' })
+    this.state$.next({ type: 'db-locked' })
   }
 
   unlockDB() {
-    if (this.$state.currentValue.type !== 'db-locked') {
+    if (this.state$.currentValue.type !== 'db-locked') {
       throw new Error("Can't unlock db: not locked")
     }
 
-    this.$state.next({ type: 'free' })
+    this.state$.next({ type: 'free' })
   }
 
-  $isDocumentLocked(id: string) {
-    return this.$state.map((state) => {
+  isDocumentLocked$(id: string) {
+    return this.state$.map((state) => {
       if (state.type === 'free') {
         return false
       }
@@ -64,10 +64,10 @@ export class LockManager {
   addDocumentLock(id: string) {
     const {
       currentValue,
-    } = this.$state
+    } = this.state$
 
     if (currentValue.type === 'free') {
-      this.$state.next({ type: 'documents-locked', locks: [id] })
+      this.state$.next({ type: 'documents-locked', locks: [id] })
 
       return
     }
@@ -80,27 +80,27 @@ export class LockManager {
       throw new Error(`[unreachable] can't lock document ${id}: already locked`)
     }
 
-    this.$state.next({ type: 'documents-locked', locks: [...currentValue.locks, id] })
+    this.state$.next({ type: 'documents-locked', locks: [...currentValue.locks, id] })
   }
 
   removeDocumentLock(id: string) {
-    if (this.$state.currentValue.type === 'free'
-      || this.$state.currentValue.type === 'db-locked'
-      || !this.$state.currentValue.locks.includes(id)
+    if (this.state$.currentValue.type === 'free'
+      || this.state$.currentValue.type === 'db-locked'
+      || !this.state$.currentValue.locks.includes(id)
     ) {
       throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
     }
 
-    const locks = this.$state.currentValue.locks.filter(lock => lock !== id)
+    const locks = this.state$.currentValue.locks.filter(lock => lock !== id)
 
     if (locks.length) {
-      this.$state.next({ type: 'documents-locked', locks })
+      this.state$.next({ type: 'documents-locked', locks })
     } else {
-      this.$state.next({ type: 'free' })
+      this.state$.next({ type: 'free' })
     }
   }
 
   stop() {
-    this.$state.complete()
+    this.state$.complete()
   }
 }

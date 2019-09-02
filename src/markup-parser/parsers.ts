@@ -26,8 +26,7 @@ import {
 
 import { groupCharsIntoStrings } from './utils'
 
-// FIXME handle escaped chars like \*
-// TODO generator for the markupParser
+// TODO handle escaped chars like \*
 
 const newline = expect('\n')
 

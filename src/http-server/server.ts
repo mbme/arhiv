@@ -2,8 +2,8 @@ import http from 'http'
 import urlParser from 'url'
 import zlib from 'zlib'
 import { Stream } from 'stream'
-import { createLogger } from '~/utils'
 import {
+  createLogger,
   isString,
   isObject,
 } from '~/utils'

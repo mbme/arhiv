@@ -1,10 +1,13 @@
 import * as React from 'react'
-import { markupParser } from '~/markup-parser'
-import { INode } from '~/parser-combinator'
 import {
   stylish,
   Heading,
 } from '~/web-platform'
+import {
+  markupParser,
+  isFailure,
+  nodes,
+} from '~/markup-parser'
 
 interface IProps {
   value: string
@@ -15,100 +18,95 @@ const $article = stylish({
   textAlign: 'justify',
 })
 
-function renderNode(node: INode<any>): React.ReactNode {
-  switch (node.type) {
-    case 'Markup': {
-      const children = (node.value as Array<INode<any>>).map(renderNode)
+function renderNode(node: nodes.Node): React.ReactNode {
+  if (node instanceof nodes.NodeMarkup) {
+    const children = node.children.map(renderNode)
 
-      return React.createElement('article', { className: $article.className }, ...children)
-    }
-
-    case 'Paragraph': {
-      const children = (node.value as Array<INode<any>>).map(renderNode)
-
-      return React.createElement('p', {}, ...children)
-    }
-
-    case 'Header': {
-      const [level, str] = node.value as [number, string]
-
-      return React.createElement(`h${level}`, {}, str)
-    }
-
-    case 'UnorderedList': {
-      const children = (node.value as Array<INode<any>>)
-        .map(child => (
-          <li>
-            {renderNode(child)}
-          </li>
-        ))
-
-      return React.createElement('ul', {}, ...children)
-    }
-
-    case 'CodeBlock': {
-      const [lang, codeStr] = node.value as [string, string]
-
-      return (
-        <pre data-lang={lang}>
-          {codeStr}
-        </pre>
-      )
-    }
-
-    case 'Link': {
-      const [link, description] = node.value as [string, string]
-
-      return (
-        <a href={link}>
-          {description}
-        </a>
-      )
-    }
-
-    case 'Mono':
-      return (
-        <code>
-          {node.value as string}
-        </code>
-      )
-
-    case 'Bold':
-      return (
-        <strong>
-          {node.value as string}
-        </strong>
-      )
-
-    case 'Striketrough':
-      return (
-        <s>
-          {node.value as string}
-        </s>
-      )
-
-    case 'Newlines':
-      return null
-
-    case 'String':
-      return node.value as string
-
-    default:
-      throw new Error(`Unexpected node "${node.type}"`)
+    return React.createElement('article', { className: $article.className }, ...children)
   }
+
+  if (node instanceof nodes.NodeParagraph) {
+    const children = node.children.map(renderNode)
+
+    return React.createElement('p', {}, ...children)
+  }
+
+  if (node instanceof nodes.NodeHeader) {
+    return React.createElement(`h${node.level}`, {}, node.value)
+  }
+
+  if (node instanceof nodes.NodeUnorderedList) {
+    const children = node.children.map(child => (
+      <li>
+        {renderNode(child)}
+      </li>
+    ))
+
+    return React.createElement('ul', {}, ...children)
+  }
+
+  if (node instanceof nodes.NodeCodeBlock) {
+    return (
+      <pre data-lang={node.lang}>
+        {node.value}
+      </pre>
+    )
+  }
+
+  if (node instanceof nodes.NodeLink) {
+    return (
+      <a href={node.link}>
+        {node.description}
+      </a>
+    )
+  }
+
+  if (node instanceof nodes.NodeMono) {
+    return (
+      <code>
+        {node.value}
+      </code>
+    )
+  }
+
+  if (node instanceof nodes.NodeBold) {
+    return (
+      <strong>
+        {node.value}
+      </strong>
+    )
+  }
+
+  if (node instanceof nodes.NodeStrikethrough) {
+    return (
+      <s>
+        {node.value}
+      </s>
+    )
+  }
+
+  if (node instanceof nodes.NodeNewlines) {
+    return null
+  }
+
+  if (node instanceof nodes.NodeString) {
+    return node.value
+  }
+
+  throw new Error(`Unexpected node "${node.constructor.name}"`)
 }
 
 export function Markup({ value }: IProps) {
   const result = markupParser.parseAll(value)
 
-  if (!result.success) {
+  if (isFailure(result)) {
     return (
       <>
         <Heading fontSize="medium">
           Failed to parse markup:
         </Heading>
         <pre>
-          {JSON.stringify(result, null, 2)}
+          {result.toString()}
         </pre>
       </>
     )

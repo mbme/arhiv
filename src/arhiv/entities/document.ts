@@ -1,14 +1,13 @@
-import { createLogger } from '~/utils'
 import {
-  markupParser,
-  selectLinks,
-} from '~/markup-parser'
-import { stringifyFailure } from '~/parser-combinator'
-import {
+  createLogger,
   Without,
   ReactiveValue,
   Procedure,
 } from '~/utils'
+import {
+  selectLinks,
+  parseMarkup,
+} from '~/markup-parser'
 import { IDocument } from '~/isodb/types'
 import {
   ArhivReplica,
@@ -37,13 +36,10 @@ export class Document<T extends Record> {
   private _extractRefs(value: string) {
     const attachmentRefs: string[] = []
 
-    const result = markupParser.parseAll(value)
-    if (!result.success) {
-      throw new Error(`Failed to parse markup: ${stringifyFailure(result)}`)
-    }
+    const markup = parseMarkup(value)
 
-    for (const link of selectLinks(result.result)) {
-      const id = link.value[0]
+    for (const link of selectLinks(markup)) {
+      const id = link.link
 
       if (this._replica.getAttachment(id).currentValue) {
         attachmentRefs.push(id)

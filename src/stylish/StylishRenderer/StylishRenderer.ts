@@ -1,5 +1,7 @@
-import { Obj } from '~/utils'
-import { createLogger } from '~/utils'
+import {
+  createLogger,
+  Obj,
+} from '~/utils'
 import {
   StyleNode,
   hash2className,

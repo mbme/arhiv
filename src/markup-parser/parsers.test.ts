@@ -16,7 +16,7 @@ import {
   link,
   unorderedList,
   codeBlock,
-} from './index'
+} from './parsers'
 import {
   NodeString,
   NodeBold,

@@ -1,6 +1,8 @@
 import fs from 'fs'
-import { createLogger } from '~/utils'
-import { IDict } from '~/utils'
+import {
+  createLogger,
+  IDict,
+} from '~/utils'
 import { Queue } from '~/utils/queue'
 import { getMimeType } from '~/file-prober'
 import {

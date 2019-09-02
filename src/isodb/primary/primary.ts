@@ -1,7 +1,9 @@
-import { createLogger } from '~/utils'
+import {
+  createLogger,
+  IDict,
+} from '~/utils'
 import { getMimeType } from '~/file-prober'
 import { getFileSize } from '~/utils/fs'
-import { IDict } from '~/utils'
 import {
   IChangesetResult,
   IChangeset,

@@ -15,32 +15,45 @@ const isLogLevel = (lvl: any): lvl is LogLevel => Object.keys(LEVELS).includes(l
 
 let minLogLevel: LogLevel = 'INFO'
 
+const MAX_NAMESPACE_SIZE = 20
 class Logger {
   constructor(public namespace: string) { }
 
-  private _log(level: LogLevel, msg: string, ...params: any[]) {
-    if (LEVELS[level] < LEVELS[minLogLevel]) return
+  private _getNamespace() {
+    if (this.namespace.length > MAX_NAMESPACE_SIZE) {
+      return '~' + this.namespace.substring(this.namespace.length - MAX_NAMESPACE_SIZE + 1)
+    }
 
-    const args = [
-      `${formatDate(new Date())} ${this.namespace ? `[${this.namespace}]` : ''} ${level.padEnd(5)} ${msg}`,
-      ...params,
-    ]
+    return this.namespace.padStart(MAX_NAMESPACE_SIZE)
+  }
+
+  private _log(level: LogLevel, msg: string, ...params: any[]) {
+    if (LEVELS[level] < LEVELS[minLogLevel]) {
+      return
+    }
+
+    const logMessage = `${formatDate(new Date())} [${this._getNamespace()}] ${level.padEnd(5)} ${msg}`
 
     switch (level) {
-      case 'DEBUG':
-        console.debug(...args)
+      case 'DEBUG': {
+        console.debug(logMessage, ...params)
         break
-      case 'INFO':
-        console.info(...args)
+      }
+      case 'INFO': {
+        console.info(logMessage, ...params)
         break
-      case 'WARN':
-        console.warn(...args)
+      }
+      case 'WARN': {
+        console.warn(logMessage, ...params)
         break
-      case 'ERROR':
-        console.error(...args)
+      }
+      case 'ERROR': {
+        console.error(logMessage, ...params)
         break
-      default:
+      }
+      default: {
         throw new Error(`Wrong level ${level}`)
+      }
     }
   }
 
@@ -65,9 +78,17 @@ export function setLogLevel(level: LogLevel) {
 export function setLogLevelStr(levelStr: string, fallbackLvl?: LogLevel) {
   if (isLogLevel(levelStr)) {
     setLogLevel(levelStr)
-  } else if (fallbackLvl) {
-    setLogLevel(fallbackLvl)
+
+    return
   }
+
+  if (fallbackLvl) {
+    setLogLevel(fallbackLvl)
+
+    return
+  }
+
+  // no raw level or fallback level provided, so just ignore the call
 }
 
 export const log = new Logger('')

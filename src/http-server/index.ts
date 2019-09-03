@@ -1,2 +1,2 @@
-export { default as Server } from './server'
+export { HTTPServer } from './http-server'
 export { MultipartBody, StringBody, JSONBody } from './types'

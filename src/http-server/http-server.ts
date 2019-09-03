@@ -2,10 +2,12 @@ import http from 'http'
 import urlParser from 'url'
 import zlib from 'zlib'
 import { Stream } from 'stream'
+import { Socket } from 'net'
 import {
   createLogger,
   isString,
   isObject,
+  promiseTimeout,
 } from '~/utils'
 import {
   gzip,
@@ -20,7 +22,7 @@ import {
   IRequest,
   IResponse,
 } from './types'
-import bodyParserMiddleware from './body-parser-middleware'
+import { bodyParserMiddleware } from './body-parser-middleware'
 
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
 type RequestHandler = (context: IContext) => Promise<void> | void
@@ -33,9 +35,12 @@ interface IRoute {
 
 const log = createLogger('http-server')
 
-export default class Server {
+const MAX_SECONDS_TO_WAIT_UNTIL_DESTROY = 10
+
+export class HTTPServer {
   private _middlewares: Middleware[] = [bodyParserMiddleware]
   private _routes: IRoute[] = []
+  private _stopped = false
 
   use(cb: Middleware) {
     this._middlewares.push(cb)
@@ -71,6 +76,15 @@ export default class Server {
   }
 
   private _requestHandler = async (httpReq: http.IncomingMessage, httpRes: http.ServerResponse) => {
+    if (this._stopped) {
+      log.debug('got a connection while stopping server, ignoring it')
+
+      httpRes.statusCode = 503
+      httpRes.end()
+
+      return
+    }
+
     const hrstart = process.hrtime()
 
     const isGzipSupported = /\bgzip\b/.test((httpReq.headers as IHeaders)['accept-encoding'])
@@ -129,8 +143,13 @@ export default class Server {
   }
 
   private _server = http.createServer(this._requestHandler)
+  private _sockets = new Set<Socket>()
 
   start(port: number) {
+    if (this._stopped) {
+      throw new Error('server has been already stopped')
+    }
+
     // router middleware
     this._middlewares.push(async (context) => {
       const route = this._routes.find((item) => item.test(context))
@@ -142,10 +161,47 @@ export default class Server {
       }
     })
 
+    // track open sockets
+    this._server.on('connection', (socket) => {
+      this._sockets.add(socket)
+
+      socket.once('close', () => {
+        this._sockets.delete(socket)
+      })
+    })
+
     return new Promise<void>((resolve) => this._server.listen(port, resolve))
   }
 
-  stop() {
-    return new Promise<Error | undefined>((resolve) => this._server.close(resolve))
+  private async _stopSockets() {
+    let counter = 0
+
+    while (this._sockets.size) {
+      if (counter === MAX_SECONDS_TO_WAIT_UNTIL_DESTROY) {
+        log.warn(`Destroying ${this._sockets.size} sockets after ${MAX_SECONDS_TO_WAIT_UNTIL_DESTROY} seconds`)
+
+        for (const socket of this._sockets) {
+          socket.destroy()
+        }
+
+        return
+      }
+
+      await promiseTimeout(1000)
+      counter += 1
+    }
+  }
+
+  async stop() {
+    if (this._stopped) {
+      return
+    }
+
+    this._stopped = true
+
+    await Promise.all([
+      new Promise<Error | undefined>((resolve) => this._server.close(resolve)),
+      this._stopSockets(),
+    ])
   }
 }

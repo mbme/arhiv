@@ -38,7 +38,7 @@ function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage)
   })
 }
 
-export default async function bodyParserMiddleware({ req, httpReq }: IContext, next: Next) {
+export async function bodyParserMiddleware({ req, httpReq }: IContext, next: Next) {
   if (![HttpMethod.POST, HttpMethod.PUT].includes(req.method)) return next()
 
   const contentType = req.headers['content-type'] || ''

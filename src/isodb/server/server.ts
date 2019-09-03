@@ -6,7 +6,7 @@ import {
 import { Queue } from '~/utils/queue'
 import { getMimeType } from '~/file-prober'
 import {
-  Server,
+  HTTPServer,
   MultipartBody,
   StringBody,
 } from '~/http-server'
@@ -23,7 +23,7 @@ const log = createLogger('isodb-server')
 
 export default function createServer(db: PrimaryDB<IDocument>, password = '', staticDirs: string[]) {
   const queue = new Queue()
-  const server = new Server()
+  const server = new HTTPServer()
 
   server.use(async function authMiddleware(context, next) {
     const { req, res } = context

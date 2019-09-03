@@ -44,10 +44,9 @@ export default async function run(port: string, password: string, rootDir: strin
   await server.start(parseInt(port, 10))
   log.info(`listening on http://localhost:${port}`)
 
-  async function close() {
-    // tslint:disable-next-line:no-console
-    console.log()
-    log.debug('stopping...')
+  async function close(signal: NodeJS.Signals) {
+    log.simple()
+    log.info(`Got signal ${signal}, stopping`)
     try {
       await server.stop()
       process.exit(0)

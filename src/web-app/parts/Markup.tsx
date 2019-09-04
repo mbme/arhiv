@@ -18,15 +18,15 @@ const $article = stylish({
   textAlign: 'justify',
 })
 
-function renderNode(node: nodes.Node): React.ReactNode {
+function NodeRenderer({ node }: { node: nodes.Node }) {
   if (node instanceof nodes.NodeMarkup) {
-    const children = node.children.map(renderNode)
+    const children = node.children.map(child => <NodeRenderer node={child} />)
 
     return React.createElement('article', { className: $article.className }, ...children)
   }
 
   if (node instanceof nodes.NodeParagraph) {
-    const children = node.children.map(renderNode)
+    const children = node.children.map(child => <NodeRenderer node={child} />)
 
     return React.createElement('p', {}, ...children)
   }
@@ -38,7 +38,7 @@ function renderNode(node: nodes.Node): React.ReactNode {
   if (node instanceof nodes.NodeUnorderedList) {
     const children = node.children.map(child => (
       <li>
-        {renderNode(child)}
+        <NodeRenderer node={child} />
       </li>
     ))
 
@@ -90,7 +90,12 @@ function renderNode(node: nodes.Node): React.ReactNode {
   }
 
   if (node instanceof nodes.NodeString) {
-    return node.value
+    // need to wrap into a Fragment due to https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20544
+    return (
+      <>
+        {node.value}
+      </>
+    )
   }
 
   throw new Error(`Unexpected node "${node.constructor.name}"`)
@@ -113,8 +118,6 @@ export function Markup({ value }: IProps) {
   }
 
   return (
-    <>
-      {renderNode(result.result)}
-    </>
+    <NodeRenderer node={result.result} />
   )
 }

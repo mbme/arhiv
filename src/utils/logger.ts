@@ -10,21 +10,21 @@ const LEVELS = {
 
 type LogLevel = keyof typeof LEVELS
 
-// tslint:disable-next-line:no-unsafe-any
-const isLogLevel = (lvl: any): lvl is LogLevel => Object.keys(LEVELS).includes(lvl)
+const isLogLevel = (lvl: string): lvl is LogLevel => Object.keys(LEVELS).includes(lvl)
 
 let minLogLevel: LogLevel = 'INFO'
 
 const MAX_NAMESPACE_SIZE = 20
+
 class Logger {
-  constructor(public namespace: string) { }
+  constructor(private _namespace: string) { }
 
   private _getNamespace() {
-    if (this.namespace.length > MAX_NAMESPACE_SIZE) {
-      return '~' + this.namespace.substring(this.namespace.length - MAX_NAMESPACE_SIZE + 1)
+    if (this._namespace.length > MAX_NAMESPACE_SIZE) {
+      return '~' + this._namespace.substring(this._namespace.length - MAX_NAMESPACE_SIZE + 1)
     }
 
-    return this.namespace.padStart(MAX_NAMESPACE_SIZE)
+    return this._namespace.padStart(MAX_NAMESPACE_SIZE)
   }
 
   private _log(level: LogLevel, msg: string, ...params: any[]) {
@@ -90,5 +90,3 @@ export function setLogLevelStr(levelStr: string, fallbackLvl?: LogLevel) {
 
   // no raw level or fallback level provided, so just ignore the call
 }
-
-export const log = new Logger('')

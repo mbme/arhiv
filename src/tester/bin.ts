@@ -1,8 +1,8 @@
 import path from 'path'
 import {
   consumeAsyncIterable,
-  log,
   setLogLevel,
+  createLogger,
 } from '~/utils'
 import { getFiles } from '~/utils/fs'
 import {
@@ -12,6 +12,7 @@ import {
 } from './index'
 
 setLogLevel('ERROR')
+const log = createLogger('tester')
 
 export default async function run(...args: string[]) {
   const filter = args.filter((arg) => !arg.startsWith('-'))[0] || ''

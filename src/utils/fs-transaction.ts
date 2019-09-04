@@ -1,11 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import { log } from './logger'
+import { createLogger } from './logger'
 import { sha256 } from './node'
 import {
   createTempDir,
   rmrfSync,
 } from './fs'
+
+const log = createLogger('fs-tx')
 
 type OperationType = 'ADD' | 'UPDATE' | 'REMOVE'
 type FileData = string | Buffer
@@ -92,7 +94,7 @@ const OPERATIONS = {
   },
 }
 
-export default function createFsTransaction() {
+export function createFsTransaction() {
   const _operations: IOperation[] = []
   let _opCounter = 0
 

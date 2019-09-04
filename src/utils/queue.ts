@@ -1,5 +1,7 @@
-import { log } from './logger'
+import { createLogger } from './logger'
 import { Deferred } from './deferred'
+
+const log = createLogger('queue')
 
 type Action<T> = () => T
 type Task<T> = [Deferred<T>, Action<T>]

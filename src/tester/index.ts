@@ -2,14 +2,16 @@ import fs from 'fs'
 import {
   readJSON,
   writeJSON,
-} from '../utils/fs'
+} from '~/utils/fs'
 import {
   uniq,
-  log,
   AsyncProcedure,
   Procedure,
-} from '../utils'
+  createLogger,
+} from '~/utils'
 import { Asserts } from './asserts'
+
+const log = createLogger('tester')
 
 type Callback = Procedure | AsyncProcedure
 

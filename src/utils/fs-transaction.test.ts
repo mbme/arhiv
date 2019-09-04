@@ -6,8 +6,13 @@ import {
   test,
   asserts,
 } from '~/tester'
-import createFsTransaction from './transaction'
-import { createTempDir, readText, rmrfSync, writeText } from './fs'
+import { createFsTransaction } from './fs-transaction'
+import {
+  createTempDir,
+  readText,
+  rmrfSync,
+  writeText,
+} from './fs'
 
 let tmpDir: string | undefined
 let counter = 0

@@ -2,6 +2,7 @@ import * as React from 'react'
 import {
   stylish,
   Heading,
+  Image,
 } from '~/web-platform'
 import {
   markupParser,
@@ -19,13 +20,18 @@ const $article = stylish({
   textAlign: 'justify',
 })
 
-function Link({ link, description }: { link: string, description: string }) {
+const $image = stylish({
+  mt: 'medium',
+  mb: 'large',
+})
+
+function Reference({ link, description }: { link: string, description: string }) {
   const arhiv = useArhiv()
 
   const attachment = arhiv.attachments.getAttachment(link)
   if (!attachment) {
     return (
-      <a href={link}>
+      <a href={link} target="_blank" rel="noopener">
         {description || link}
       </a>
     )
@@ -33,7 +39,8 @@ function Link({ link, description }: { link: string, description: string }) {
 
   if (attachment.attachment._mimeType.startsWith('image/')) {
     return (
-      <img
+      <Image
+        $style={$image}
         src={attachment.url}
         alt={description || link}
       />
@@ -84,7 +91,7 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
 
   if (node instanceof nodes.NodeLink) {
     return (
-      <Link
+      <Reference
         link={node.link}
         description={node.description}
       />

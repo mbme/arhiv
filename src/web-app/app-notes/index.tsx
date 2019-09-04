@@ -5,7 +5,7 @@ import { NotFound } from '../parts'
 import { IApp } from '../chrome'
 
 import { NotesListView } from './NotesListView'
-import { NoteViewContainer } from './NoteView'
+import { NoteView } from './NoteView'
 import { NoteEditorViewContainer } from './NoteEditorView'
 
 export const NotesApp: IApp = {
@@ -26,7 +26,7 @@ export const NotesApp: IApp = {
       }
 
       return (
-        <NoteViewContainer id={id} />
+        <NoteView id={id} />
       )
     },
 

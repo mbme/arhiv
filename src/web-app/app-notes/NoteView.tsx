@@ -1,8 +1,5 @@
 import * as React from 'react'
-import {
-  useArhiv,
-  NoteDocument,
-} from '~/arhiv'
+import { useArhiv } from '~/arhiv'
 import { useReactiveValue } from '~/utils/react'
 import {
   Icon,
@@ -16,33 +13,10 @@ import {
 import { Note } from './Note'
 
 interface IProps {
-  note: NoteDocument
+  id: string
 }
 
-function NoteView({ note }: IProps) {
-  const locked = useReactiveValue(() => note.isLocked$(), [note])
-
-  return (
-    <>
-      <Toolbar>
-        <Spacer />
-
-        {locked || (
-          <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
-            <Icon type="edit-2" />
-          </CleanLink>
-        )}
-      </Toolbar>
-
-      <Note
-        name={note.record.name}
-        data={note.record.data}
-      />
-    </>
-  )
-}
-
-export function NoteViewContainer({ id }: { id: string }) {
+export function NoteView({ id }: IProps) {
   const arhiv = useArhiv()
   const note = useReactiveValue(() => arhiv.notes.getDocument$(id), [id])
 
@@ -51,6 +25,19 @@ export function NoteViewContainer({ id }: { id: string }) {
   }
 
   return (
-    <NoteView note={note} />
+    <>
+      <Toolbar>
+        <Spacer />
+
+        <CleanLink to={{ path: '/note-editor', params: { id: note.id } }}>
+          <Icon type="edit-2" />
+        </CleanLink>
+      </Toolbar>
+
+      <Note
+        name={note.record.name}
+        data={note.record.data}
+      />
+    </>
   )
 }

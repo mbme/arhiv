@@ -17,7 +17,7 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
 
   private _localDocuments = new Map<string, T>()
   private _localAttachments = new Map<string, IAttachment>()
-  private _localFiles = new Map<string, Blob>()
+  private _localFiles = new Map<string, File>()
 
   getRev() {
     return this._rev
@@ -59,9 +59,9 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     this._localDocuments.set(document._id, document)
   }
 
-  addLocalAttachment(attachment: IAttachment, blob: File) {
+  addLocalAttachment(attachment: IAttachment, file: File) {
     this._localAttachments.set(attachment._id, attachment)
-    this._localFiles.set(attachment._id, blob)
+    this._localFiles.set(attachment._id, file)
   }
 
   removeLocalDocument(id: string) {
@@ -75,10 +75,10 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
 
   getAttachmentUrl(id: string) {
     if (this._localFiles.has(id)) {
-      return `local-attachment-url(${id})`
+      return `local-attachment-url(${id})` // FIXME local attachment urls
     }
 
-    return `attachment-url(${id})`
+    return `/api/file?fileId=${id}`
   }
 
   getChangeset(): [IChangeset<T>, LocalAttachments] {

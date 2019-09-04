@@ -4,7 +4,7 @@ import { ArhivReplica } from '../types'
 export class Attachment {
   constructor(
     private _replica: ArhivReplica,
-    private _attachment: IAttachment,
+    public attachment: IAttachment,
   ) { }
 
   get url() {
@@ -17,6 +17,6 @@ export class Attachment {
   }
 
   get id() {
-    return this._attachment._id
+    return this.attachment._id
   }
 }

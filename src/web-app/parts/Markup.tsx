@@ -8,7 +8,7 @@ import {
   isFailure,
   nodes,
 } from '~/markup-parser'
-import { useArhiv, Arhiv } from '~/arhiv'
+import { useArhiv } from '~/arhiv'
 
 interface IProps {
   value: string
@@ -19,30 +19,43 @@ const $article = stylish({
   textAlign: 'justify',
 })
 
-interface INodeRendererProps {
-  node: nodes.Node
-  arhiv: Arhiv
+function Link({ link, description }: { link: string, description: string }) {
+  const arhiv = useArhiv()
+
+  const attachment = arhiv.attachments.getAttachment(link)
+  if (!attachment) {
+    return (
+      <a href={link}>
+        {description || link}
+      </a>
+    )
+  }
+
+  if (attachment.attachment._mimeType.startsWith('image/')) {
+    return (
+      <img
+        src={attachment.url}
+        alt={description || link}
+      />
+    )
+  }
+
+  return (
+    <a href={attachment.url} target="_blank" rel="noopener">
+      {description || link}
+    </a>
+  )
 }
 
-function NodeRenderer({ node, arhiv }: INodeRendererProps) {
+function NodeRenderer({ node }: { node: nodes.Node }) {
   if (node instanceof nodes.NodeMarkup) {
-    const children = node.children.map(child => (
-      <NodeRenderer
-        node={child}
-        arhiv={arhiv}
-      />
-    ))
+    const children = node.children.map(child => <NodeRenderer node={child} />)
 
     return React.createElement('article', { className: $article.className }, ...children)
   }
 
   if (node instanceof nodes.NodeParagraph) {
-    const children = node.children.map(child => (
-      <NodeRenderer
-        node={child}
-        arhiv={arhiv}
-      />
-    ))
+    const children = node.children.map(child => <NodeRenderer node={child} />)
 
     return React.createElement('p', {}, ...children)
   }
@@ -54,10 +67,7 @@ function NodeRenderer({ node, arhiv }: INodeRendererProps) {
   if (node instanceof nodes.NodeUnorderedList) {
     const children = node.children.map(child => (
       <li>
-        <NodeRenderer
-          node={child}
-          arhiv={arhiv}
-        />
+        <NodeRenderer node={child} />
       </li>
     ))
 
@@ -73,11 +83,11 @@ function NodeRenderer({ node, arhiv }: INodeRendererProps) {
   }
 
   if (node instanceof nodes.NodeLink) {
-    console.error('HERE');
     return (
-      <a href={node.link}>
-        {node.description || node.link}
-      </a>
+      <Link
+        link={node.link}
+        description={node.description}
+      />
     )
   }
 
@@ -122,7 +132,6 @@ function NodeRenderer({ node, arhiv }: INodeRendererProps) {
 }
 
 export function Markup({ value }: IProps) {
-  const arhiv = useArhiv()
   const result = markupParser.parseAll(value)
 
   if (isFailure(result)) {
@@ -139,9 +148,6 @@ export function Markup({ value }: IProps) {
   }
 
   return (
-    <NodeRenderer
-      node={result.result}
-      arhiv={arhiv}
-    />
+    <NodeRenderer node={result.result} />
   )
 }

@@ -3,10 +3,12 @@ import {
   generateRandomId,
   createDocument,
 } from '~/isodb/utils'
+import { IAttachment } from '~/isodb/types'
 import {
   DocumentType,
   INote,
 } from '~/arhiv/types'
+import { getMimeType } from '~/file-prober'
 import {
   createArray,
   IDict,
@@ -22,11 +24,9 @@ import { createLink } from '~/markup-parser/utils'
 import {
   randomInt,
   shuffle,
-  randomArrValue,
-} from './index'
+  pickRandomItem,
+} from '~/utils/random'
 import createTextGenerator, { ITextGenerator } from './text-generator'
-import { IAttachment } from '~/isodb/types'
-import { getMimeType } from '~/file-prober'
 
 async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<INote> {
   const name = generator.sentence(1, 8)
@@ -42,7 +42,7 @@ async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IN
       )
 
       if (Math.random() < 0.34) {
-        const hash = randomArrValue(Object.keys(images))
+        const hash = pickRandomItem(Object.keys(images))
         refs.add(hash)
 
         const link = createLink(hash, path.basename(images[hash]))

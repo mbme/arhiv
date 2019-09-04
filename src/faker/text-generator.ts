@@ -1,5 +1,5 @@
-import { capitalize } from '../utils'
-import { randomArrValue } from './index'
+import { capitalize } from '~/utils'
+import { pickRandomItem } from '~/utils/random'
 
 // TODO handle few separators in a row https://github.com/Tessmore/sbd
 const SKIP_WORDS = ['dr.', 'mr.', 'mrs.']
@@ -237,7 +237,7 @@ export default function createTextGenerator(corpus: string) {
     word() {
       const words = Object.keys(stats.words)
 
-      return randomArrValue(words)
+      return pickRandomItem(words)
     },
   }
 }

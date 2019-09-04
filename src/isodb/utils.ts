@@ -1,5 +1,5 @@
-import { randomId } from '~/randomizer'
 import { nowS } from '~/utils'
+import { randomId } from '~/utils/random'
 import { IChangeset, IDocument } from './types'
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'

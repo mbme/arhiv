@@ -1,7 +1,7 @@
 import {
   test,
   asserts,
-} from '../tester'
+} from '~/tester'
 import { getWords } from './text-generator'
 
 test('getWords', () => {

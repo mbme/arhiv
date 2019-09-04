@@ -3,7 +3,7 @@ import {
   createLogger,
   setLogLevelStr,
 } from '~/utils'
-import { getFakeNotes } from '~/randomizer/faker'
+import { getFakeNotes } from '~/faker/faker'
 import {
   PrimaryDB,
   PrimaryInMemStorage,

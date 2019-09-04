@@ -8,6 +8,7 @@ import {
   isFailure,
   nodes,
 } from '~/markup-parser'
+import { useArhiv, Arhiv } from '~/arhiv'
 
 interface IProps {
   value: string
@@ -18,15 +19,30 @@ const $article = stylish({
   textAlign: 'justify',
 })
 
-function NodeRenderer({ node }: { node: nodes.Node }) {
+interface INodeRendererProps {
+  node: nodes.Node
+  arhiv: Arhiv
+}
+
+function NodeRenderer({ node, arhiv }: INodeRendererProps) {
   if (node instanceof nodes.NodeMarkup) {
-    const children = node.children.map(child => <NodeRenderer node={child} />)
+    const children = node.children.map(child => (
+      <NodeRenderer
+        node={child}
+        arhiv={arhiv}
+      />
+    ))
 
     return React.createElement('article', { className: $article.className }, ...children)
   }
 
   if (node instanceof nodes.NodeParagraph) {
-    const children = node.children.map(child => <NodeRenderer node={child} />)
+    const children = node.children.map(child => (
+      <NodeRenderer
+        node={child}
+        arhiv={arhiv}
+      />
+    ))
 
     return React.createElement('p', {}, ...children)
   }
@@ -38,7 +54,10 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
   if (node instanceof nodes.NodeUnorderedList) {
     const children = node.children.map(child => (
       <li>
-        <NodeRenderer node={child} />
+        <NodeRenderer
+          node={child}
+          arhiv={arhiv}
+        />
       </li>
     ))
 
@@ -54,9 +73,10 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
   }
 
   if (node instanceof nodes.NodeLink) {
+    console.error('HERE');
     return (
       <a href={node.link}>
-        {node.description}
+        {node.description || node.link}
       </a>
     )
   }
@@ -102,6 +122,7 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
 }
 
 export function Markup({ value }: IProps) {
+  const arhiv = useArhiv()
   const result = markupParser.parseAll(value)
 
   if (isFailure(result)) {
@@ -118,6 +139,9 @@ export function Markup({ value }: IProps) {
   }
 
   return (
-    <NodeRenderer node={result.result} />
+    <NodeRenderer
+      node={result.result}
+      arhiv={arhiv}
+    />
   )
 }

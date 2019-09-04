@@ -1,5 +1,4 @@
 import path from 'path'
-import { NewAttachment } from '~/isodb/types'
 import {
   generateRandomId,
   createDocument,
@@ -17,6 +16,7 @@ import { sha256File } from '~/utils/node'
 import {
   readText,
   listFiles,
+  getFileSize,
 } from '~/utils/fs'
 import { createLink } from '~/markup-parser/utils'
 import {
@@ -25,6 +25,8 @@ import {
   randomArrValue,
 } from './index'
 import createTextGenerator, { ITextGenerator } from './text-generator'
+import { IAttachment } from '~/isodb/types'
+import { getMimeType } from '~/file-prober'
 
 async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<INote> {
   const name = generator.sentence(1, 8)
@@ -74,8 +76,24 @@ async function listImages(basePath: string): Promise<IDict> {
   return result
 }
 
-function createAttachments(ids: string[]): NewAttachment[] {
-  return ids.map(_id => ({ _id, _rev: 0, _createdTs: nowS() }))
+async function createAttachments(images: IDict): Promise<IAttachment[]> {
+  return Promise.all(Object.entries(images).map(async ([_id, imagePath]) => {
+    const [
+      _mimeType,
+      _size,
+    ] = await Promise.all([
+      getMimeType(imagePath),
+      getFileSize(imagePath),
+    ])
+
+    return {
+      _id,
+      _rev: 0,
+      _createdTs: nowS(),
+      _mimeType,
+      _size,
+    }
+  }))
 }
 
 export async function getFakeNotes(count: number) {
@@ -86,7 +104,7 @@ export async function getFakeNotes(count: number) {
 
   return {
     documents: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
-    attachments: createAttachments(Object.keys(images)),
+    attachments: await createAttachments(images),
     attachedFiles: images,
   }
 }

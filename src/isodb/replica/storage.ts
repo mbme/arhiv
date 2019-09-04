@@ -2,7 +2,6 @@ import { IDict } from '~/utils'
 import {
   IDocument,
   IAttachment,
-  NewAttachment,
   IChangesetResult,
   IChangeset,
 } from '../types'
@@ -26,7 +25,7 @@ export interface IReplicaStorage<T extends IDocument> {
   getAttachmentUrl(id: string): string | undefined
 
   addLocalDocument(document: T): void
-  addLocalAttachment(attachment: NewAttachment, blob?: File): void
+  addLocalAttachment(attachment: IAttachment, blob: File): void
 
   removeLocalDocument(id: string): void
   removeLocalAttachment(id: string): void

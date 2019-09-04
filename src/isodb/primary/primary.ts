@@ -79,40 +79,31 @@ export class PrimaryDB<T extends IDocument> {
     }
 
     // TODO parallel this
-    for (const changedAttachment of changeset.attachments) {
-      const existingAttachment = this.getAttachment(changedAttachment._id)
-      const attachedFile = attachedFiles[changedAttachment._id]
-
-      if (!existingAttachment && !attachedFile) {
-        throw new Error(`File is missing for the new attachment ${changedAttachment._id}`)
-      }
-      if (existingAttachment && attachedFile) {
-        throw new Error(`Can't update file for the attachment ${changedAttachment._id}`)
+    for (const newAttachment of changeset.attachments) {
+      if (this.getAttachment(newAttachment._id)) {
+        throw new Error(`Attachment ${newAttachment._id} already exists`)
       }
 
-      if (existingAttachment) {
-        this._storage.updateAttachment({
-          ...changedAttachment,
-          _rev: newRev,
-          _type: existingAttachment._type,
-          _size: existingAttachment._size,
-        })
-      } else {
-        const [
-          _type,
-          _size,
-        ] = await Promise.all([
-          await getMimeType(attachedFile),
-          await getFileSize(attachedFile),
-        ])
+      const attachedFile = attachedFiles[newAttachment._id]
 
-        this._storage.addAttachment({
-          ...changedAttachment,
-          _rev: newRev,
-          _type,
-          _size,
-        }, attachedFile)
+      if (!attachedFile) {
+        throw new Error(`File is missing for the new attachment ${newAttachment._id}`)
       }
+
+      const [
+        _mimeType,
+        _size,
+      ] = await Promise.all([
+        getMimeType(attachedFile),
+        getFileSize(attachedFile),
+      ])
+
+      this._storage.addAttachment({
+        ...newAttachment,
+        _rev: newRev,
+        _mimeType,
+        _size,
+      }, attachedFile)
     }
 
     this._storage.setRev(newRev)

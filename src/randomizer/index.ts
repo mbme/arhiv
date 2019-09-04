@@ -19,7 +19,7 @@ export function randomInt(min: number, max: number) {
   return min + (sample % range)
 }
 
-export function shuffle<T>(array: T[]) {
+export function shuffle<T>(array: T[]) { // FIXME this
   const result = array.slice(0)
 
   for (let i = 0; i < array.length; i += 1) {

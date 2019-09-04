@@ -78,6 +78,8 @@ export class IsodbReplica<T extends IDocument> {
       _id: id,
       _rev: this.getRev(),
       _createdTs: nowS(),
+      _mimeType: blob.type,
+      _size: blob.size,
     }, blob)
     log.debug(`saved new attachment with id ${id}`)
 

@@ -59,14 +59,9 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     this._localDocuments.set(document._id, document)
   }
 
-  /**
-   * add or update existing local attachment
-   */
-  addLocalAttachment(attachment: IAttachment, blob?: File) {
+  addLocalAttachment(attachment: IAttachment, blob: File) {
     this._localAttachments.set(attachment._id, attachment)
-    if (blob) {
-      this._localFiles.set(attachment._id, blob)
-    }
+    this._localFiles.set(attachment._id, blob)
   }
 
   removeLocalDocument(id: string) {

@@ -1,5 +1,3 @@
-import { Without } from '~/utils'
-
 export interface IDocument {
   readonly _id: string
   readonly _rev: number
@@ -14,11 +12,9 @@ export interface IAttachment {
   readonly _id: string
   readonly _rev: number
   readonly _createdTs: number
-  readonly _type: string
+  readonly _mimeType: string
   readonly _size: number
 }
-
-export type NewAttachment = Without<IAttachment, '_type' | '_size'>
 
 export interface IChangeset<T extends IDocument> {
   /**
@@ -34,7 +30,7 @@ export interface IChangeset<T extends IDocument> {
   /**
    * new or updated attachments
    */
-  readonly attachments: readonly NewAttachment[]
+  readonly attachments: readonly IAttachment[]
 }
 
 export interface IChangesetResult<T extends IDocument> {

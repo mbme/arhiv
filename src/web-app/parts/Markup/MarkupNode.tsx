@@ -1,68 +1,30 @@
 import * as React from 'react'
 import {
   stylish,
-  Heading,
-  Image,
 } from '~/web-platform'
 import {
-  markupParser,
-  isFailure,
   nodes,
 } from '~/markup-parser'
-import { useArhiv } from '~/arhiv'
-
-interface IProps {
-  value: string
-}
+import { MarkupLink } from './MarkupLink'
 
 const $article = stylish({
   hyphens: 'auto',
   textAlign: 'justify',
 })
 
-const $image = stylish({
-  mt: 'medium',
-  mb: 'large',
-})
-
-function Reference({ link, description }: { link: string, description: string }) {
-  const arhiv = useArhiv()
-
-  const attachment = arhiv.attachments.getAttachment(link)
-  if (!attachment) {
-    return (
-      <a href={link} target="_blank" rel="noopener">
-        {description || link}
-      </a>
-    )
-  }
-
-  if (attachment.attachment._mimeType.startsWith('image/')) {
-    return (
-      <Image
-        $style={$image}
-        src={attachment.url}
-        alt={description || link}
-      />
-    )
-  }
-
-  return (
-    <a href={attachment.url} target="_blank" rel="noopener">
-      {description || link}
-    </a>
-  )
+interface IProps {
+  node: nodes.Node
 }
 
-function NodeRenderer({ node }: { node: nodes.Node }) {
+export function MarkupNode({ node }: IProps) {
   if (node instanceof nodes.NodeMarkup) {
-    const children = node.children.map(child => <NodeRenderer node={child} />)
+    const children = node.children.map(child => <MarkupNode node={child} />)
 
     return React.createElement('article', { className: $article.className }, ...children)
   }
 
   if (node instanceof nodes.NodeParagraph) {
-    const children = node.children.map(child => <NodeRenderer node={child} />)
+    const children = node.children.map(child => <MarkupNode node={child} />)
 
     return React.createElement('p', {}, ...children)
   }
@@ -74,7 +36,7 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
   if (node instanceof nodes.NodeUnorderedList) {
     const children = node.children.map(child => (
       <li>
-        <NodeRenderer node={child} />
+        <MarkupNode node={child} />
       </li>
     ))
 
@@ -91,7 +53,7 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
 
   if (node instanceof nodes.NodeLink) {
     return (
-      <Reference
+      <MarkupLink
         link={node.link}
         description={node.description}
       />
@@ -136,25 +98,4 @@ function NodeRenderer({ node }: { node: nodes.Node }) {
   }
 
   throw new Error(`Unexpected node "${node.constructor.name}"`)
-}
-
-export function Markup({ value }: IProps) {
-  const result = markupParser.parseAll(value)
-
-  if (isFailure(result)) {
-    return (
-      <>
-        <Heading fontSize="medium">
-          Failed to parse markup:
-        </Heading>
-        <pre>
-          {result.toString()}
-        </pre>
-      </>
-    )
-  }
-
-  return (
-    <NodeRenderer node={result.result} />
-  )
 }

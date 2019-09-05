@@ -18,7 +18,7 @@ export function AddAttachmentsButton({ onAttachments }: IProps) {
         throw new Error(`Can't find new attachment ${id} (file ${file.name})`)
       }
 
-      return createLink(attachment.url, file.name)
+      return createLink(attachment.id, file.name)
     })
 
     onAttachments(links)

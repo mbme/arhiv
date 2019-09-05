@@ -1,6 +1,6 @@
 export {
   IReplicaStorage,
   LocalAttachments,
-} from './storage'
-export { ReplicaInMemStorage } from './storage-in-mem'
+} from './replica-storage'
+export { ReplicaInMemStorage } from './replica-in-mem-storage'
 export { ReplicaManager } from './replica-manager'

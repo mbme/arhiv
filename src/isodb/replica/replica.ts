@@ -12,7 +12,7 @@ import {
 import {
   IReplicaStorage,
   LocalAttachments,
-} from './storage'
+} from './replica-storage'
 import { MergeConflicts } from './merge-conflict'
 
 const log = createLogger('isodb-replica')
@@ -27,8 +27,8 @@ export class IsodbReplica<T extends IDocument> {
     return this._storage.getRev()
   }
 
-  getAttachmentUrl(id: string) {
-    return this._storage.getAttachmentUrl(id)
+  getLocalAttachmentData(id: string) {
+    return this._storage.getLocalAttachmentData(id)
   }
 
   getDocument(id: string): T | undefined {

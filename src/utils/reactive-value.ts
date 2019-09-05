@@ -5,7 +5,7 @@ import { removeMut } from './array'
 
 type InitCb<T> = (observer: IHotObservable<T>) => (Procedure | void)
 type NextCb<T> = (value: T) => void
-type ErrorCb = (e: Error) => void
+type ErrorCb = (e: any) => void
 type CompleteCb = () => void
 type UnsubscribeCb = () => void
 
@@ -36,13 +36,20 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
   private _destroy = noop
 
   constructor(private _value: T, init?: InitCb<T>) {
-    if (init) {
+    if (!init) {
+      return
+    }
+
+    try {
       this._destroy = init(this) || noop
 
       // make sure we call destroy function if observable was completed during init
       if (this._complete) {
         this._destroy()
       }
+    } catch (e) {
+      // tslint:disable-next-line:no-unsafe-any
+      this.error(e)
     }
   }
 
@@ -85,6 +92,10 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
         observer.error(e)
       }
     }
+    this._subscribers.length = 0
+
+    this._destroy()
+    this._complete = true
   }
 
   complete = () => {
@@ -124,7 +135,7 @@ export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
 
   filter(test: (value: T) => boolean) {
     return new ReactiveValue<T>(
-      this._value,
+      this._value, // FIXME this is wrong cause initial value doesn't pass the test
       (observer) => this.subscribe({
         next: value => {
           if (test(value)) {

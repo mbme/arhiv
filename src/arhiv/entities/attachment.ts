@@ -1,5 +1,6 @@
 import { IAttachment } from '~/isodb/types'
 import { ArhivReplica } from '../types'
+import { ReactiveValue } from '~/utils'
 
 export class Attachment {
   constructor(
@@ -7,13 +8,27 @@ export class Attachment {
     public attachment: IAttachment,
   ) { }
 
-  get url() {
-    const url = this._replica.getAttachmentUrl(this.id)
-    if (!url) {
-      throw new Error(`can't get url for the attachment ${this.id}`)
-    }
+  getUrl$() {
+    return new ReactiveValue<string | undefined>(undefined, (observer) => {
+      let url = ''
+      const unsub = this._replica.getAttachmentData$(this.id)
+        .filter(blob => !!blob)
+        .take(1) // FIXME how this could possibly work with hot observables?
+        .subscribe({
+          next(blob) {
+            console.error('AND HERE', blob);
+            url = URL.createObjectURL(blob)
+            observer.next(url)
+          },
+        })
 
-    return url
+      return () => {
+        unsub()
+        if (url) {
+          URL.revokeObjectURL(url)
+        }
+      }
+    })
   }
 
   get id() {

@@ -22,7 +22,7 @@ export interface IReplicaStorage<T extends IDocument> {
 
   getAttachment(id: string): IAttachment | undefined
   getLocalAttachment(id: string): IAttachment | undefined
-  getAttachmentUrl(id: string): string | undefined
+  getLocalAttachmentData(id: string): Blob | undefined
 
   addLocalDocument(document: T): void
   addLocalAttachment(attachment: IAttachment, blob: File): void

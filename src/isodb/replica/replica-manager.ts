@@ -13,7 +13,7 @@ import {
 import {
   IReplicaStorage,
   LocalAttachments,
-} from './storage'
+} from './replica-storage'
 import {
   isEmptyChangeset,
   generateRandomId,
@@ -74,8 +74,43 @@ export class ReplicaManager<T extends IDocument> {
     return this._replica.getAttachment(id)
   }
 
-  getAttachmentUrl(id: string): string | undefined {
-    return this._replica.getAttachmentUrl(id)
+  getAttachmentData$(id: string): ReactiveValue<Blob | undefined> {
+    return new ReactiveValue<Blob | undefined>(undefined, (observer) => {
+      if (!this.getAttachment(id)) {
+        throw new Error(`attachment ${id} doesn't exist`)
+      }
+
+      const data = this._replica.getLocalAttachmentData(id)
+
+      if (data) {
+        observer.next(data)
+        observer.complete()
+
+        return undefined
+      }
+
+      const controller = new AbortController()
+
+      fetch(`/api/file?fileId=${id}`, {
+        cache: 'force-cache',
+        signal: controller.signal,
+      }).then((response) => {
+        if (!response.ok) {
+          throw response
+        }
+
+        return response.blob()
+      }).then(
+        blob => observer.next(blob),
+      ).catch((e) => {
+        log.error(`Failed to fetch attachment ${id}`, e)
+        observer.error(e)
+      })
+
+      return () => {
+        controller.abort()
+      }
+    })
   }
 
   saveAttachment(file: File) {

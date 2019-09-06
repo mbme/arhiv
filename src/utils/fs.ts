@@ -44,6 +44,7 @@ export async function* getFiles(
   }
 }
 
+// TODO use "recursive" option of rmsync instead
 export function rmrfSync(dir: string) {
   for (const file of fs.readdirSync(dir)) {
     const filePath = path.join(dir, file)

@@ -1,9 +1,9 @@
 import {
   createLogger,
   Without,
-  ReactiveValue,
   Procedure,
 } from '~/utils'
+import { ReactiveValue } from '~/utils/reactive'
 import {
   selectLinks,
   parseMarkup,

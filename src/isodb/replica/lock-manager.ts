@@ -1,7 +1,9 @@
 import {
   createLogger,
-  ReactiveValue,
 } from '~/utils'
+import {
+  ReactiveValue,
+} from '~/utils/reactive'
 
 const log = createLogger('isodb:lock-manager')
 

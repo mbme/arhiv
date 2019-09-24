@@ -1,7 +1,9 @@
 import {
   createLogger,
-  ReactiveValue,
 } from '~/utils'
+import {
+  ReactiveValue,
+} from '~/utils/reactive'
 import { LockManager } from './lock-manager'
 import { IsodbReplica } from './replica'
 import {
@@ -116,6 +118,7 @@ export class ReplicaManager<T extends IDocument> {
   saveAttachment(file: File) {
     const id = this.getRandomId()
     this._replica.saveAttachment(id, file)
+    log.info(`Created new attachment ${id} for the file "${file.name}"`)
 
     return id
   }

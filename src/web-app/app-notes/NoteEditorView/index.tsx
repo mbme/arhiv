@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { ReactiveValue } from '~/utils/reactive'
+import { useReactiveValue } from '~/utils/react'
 import {
   useArhiv,
   NoteDocument,
@@ -6,8 +8,6 @@ import {
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { NoteEditor } from './NoteEditor'
-import { useReactiveValue } from '~/utils/react'
-import { ReactiveValue } from '~/utils'
 
 interface IProps {
   id?: string

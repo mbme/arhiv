@@ -20,7 +20,7 @@ export class Arhiv {
   tracks = new TracksRepository(this._replica)
 
   constructor() {
-    this.net.$authorized.subscribe({
+    this.net.authorized$.subscribe({
       next: (isAuthorized) => {
         if (isAuthorized) {
           this.syncNow()

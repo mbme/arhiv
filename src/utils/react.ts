@@ -1,5 +1,7 @@
 import * as React from 'react'
-import { ReactiveValue } from './reactive-value'
+import {
+  ReactiveValue,
+} from './reactive'
 
 export function useReactiveValue<T>(getValue: () => ReactiveValue<T>, deps: any[] = []) {
   const $value = React.useMemo(getValue, deps)

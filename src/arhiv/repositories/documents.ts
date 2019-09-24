@@ -1,4 +1,4 @@
-import { ReactiveValue } from '~/utils'
+import { ReactiveValue } from '~/utils/reactive'
 import {
   ArhivReplica,
   Record,

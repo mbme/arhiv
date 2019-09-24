@@ -1,5 +1,5 @@
 import { createLogger } from './logger'
-import { ReactiveValue } from './reactive-value'
+import { ReactiveValue } from './reactive'
 
 const log = createLogger('state-machine')
 

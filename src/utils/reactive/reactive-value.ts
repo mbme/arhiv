@@ -1,35 +1,15 @@
-import { Counter } from './counter'
-import { Procedure } from './types'
-import { noop } from './misc'
-import { removeMut } from './array'
+import { Counter } from '../counter'
+import { noop } from '../misc'
+import { removeMut } from '../array'
+import {
+  IObservable,
+  IObserver,
+  ISubscriber,
+  InitCb,
+  UnsubscribeCb,
+} from './types'
 
-type InitCb<T> = (observer: IHotObservable<T>) => (Procedure | void)
-type NextCb<T> = (value: T) => void
-type ErrorCb = (e: any) => void
-type CompleteCb = () => void
-type UnsubscribeCb = () => void
-
-interface ISubscriber<T> {
-  next?: NextCb<T>
-  error?: ErrorCb
-  complete?: CompleteCb
-}
-
-interface IObserver<T> extends ISubscriber<T> {
-  next: NextCb<T>
-}
-
-interface IObservable<T> {
-  subscribe(subscriber: ISubscriber<T>): UnsubscribeCb
-}
-
-interface IHotObservable<T> extends IObservable<T> {
-  next: NextCb<T>
-  error: ErrorCb
-  complete: CompleteCb
-}
-
-export class ReactiveValue<T> implements IHotObservable<T>, IObserver<T> {
+export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
   private _subscribers: Array<ISubscriber<T>> = []
   private _complete = false
   private _nextCounter = new Counter()

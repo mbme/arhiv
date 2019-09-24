@@ -1,8 +1,8 @@
 import {
   createLogger,
   nowS,
-  ReactiveValue,
 } from '~/utils'
+import { ReactiveValue } from '~/utils/reactive'
 import {
   IAttachment,
   IDocument,

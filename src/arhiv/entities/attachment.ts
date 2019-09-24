@@ -1,6 +1,6 @@
 import { IAttachment } from '~/isodb/types'
+import { ReactiveValue } from '~/utils/reactive'
 import { ArhivReplica } from '../types'
-import { ReactiveValue } from '~/utils'
 
 export class Attachment {
   constructor(
@@ -13,10 +13,9 @@ export class Attachment {
       let url = ''
       const unsub = this._replica.getAttachmentData$(this.id)
         .filter(blob => !!blob)
-        .take(1) // FIXME how this could possibly work with hot observables?
+        .take(1)
         .subscribe({
           next(blob) {
-            console.error('AND HERE', blob);
             url = URL.createObjectURL(blob)
             observer.next(url)
           },

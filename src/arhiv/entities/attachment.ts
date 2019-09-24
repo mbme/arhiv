@@ -1,5 +1,5 @@
 import { IAttachment } from '~/isodb/types'
-import { ReactiveValue } from '~/utils/reactive'
+import { ReactiveValue } from '~/utils/reactive-value'
 import { ArhivReplica } from '../types'
 
 export class Attachment {
@@ -12,10 +12,12 @@ export class Attachment {
     return new ReactiveValue<string | undefined>(undefined, (observer) => {
       let url = ''
       const unsub = this._replica.getAttachmentData$(this.id)
-        .filter(blob => !!blob)
-        .take(1)
         .subscribe({
           next(blob) {
+            if (url || !blob) {
+              return
+            }
+
             url = URL.createObjectURL(blob)
             observer.next(url)
           },

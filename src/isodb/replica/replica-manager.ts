@@ -3,7 +3,7 @@ import {
 } from '~/utils'
 import {
   ReactiveValue,
-} from '~/utils/reactive'
+} from '~/utils/reactive-value'
 import { LockManager } from './lock-manager'
 import { IsodbReplica } from './replica'
 import {
@@ -50,14 +50,8 @@ export class ReplicaManager<T extends IDocument> {
       },
     })
 
-    // run compaction if db isn't locked
-    this.locks.state$.subscribe({
-      next: (lockState) => {
-        if (lockState.type === 'free') {
-          this._replica.compact()
-        }
-      },
-    })
+    // run compaction on startup
+    this._replica.compact()
   }
 
   getRandomId() {

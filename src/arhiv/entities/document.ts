@@ -3,7 +3,7 @@ import {
   Without,
   Procedure,
 } from '~/utils'
-import { ReactiveValue } from '~/utils/reactive'
+import { ReactiveValue } from '~/utils/reactive-value'
 import {
   selectLinks,
   parseMarkup,
@@ -82,10 +82,12 @@ export class Document<T extends Record> {
     const state$ = new ReactiveValue<LockState>('pending')
 
     const unsub = this.isLocked$()
-      .filter(isLocked => !isLocked)
-      .take(1)
       .subscribe({
-        next: () => {
+        next: (isLocked) => {
+          if (isLocked || state$.currentValue !== 'pending') {
+            return
+          }
+
           this._replica.locks.addDocumentLock(this.id)
           state$.next('acquired')
         },

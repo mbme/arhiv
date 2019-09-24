@@ -1,5 +1,5 @@
 import { isString } from '~/utils'
-import { ReactiveValue } from '~/utils/reactive'
+import { ReactiveValue } from '~/utils/reactive-value'
 
 export interface IParams {
   [key: string]: string | undefined

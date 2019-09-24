@@ -1,13 +1,30 @@
-import { Counter } from '../counter'
-import { noop } from '../misc'
-import { removeMut } from '../array'
-import {
-  IObservable,
-  IObserver,
-  ISubscriber,
-  InitCb,
-  UnsubscribeCb,
-} from './types'
+import { Counter } from './counter'
+import { noop } from './misc'
+import { removeMut } from './array'
+import { Procedure } from './types'
+
+type InitCb<T> = (observer: IObservable<T>) => (Procedure | void)
+type NextCb<T> = (value: T) => void
+type ErrorCb = (e: any) => void
+type CompleteCb = () => void
+type UnsubscribeCb = () => void
+
+interface ISubscriber<T> {
+  next?: NextCb<T>
+  error?: ErrorCb
+  complete?: CompleteCb
+}
+
+interface IObserver<T> extends ISubscriber<T> {
+  next: NextCb<T>
+}
+
+interface IObservable<T> {
+  subscribe(subscriber: ISubscriber<T>): UnsubscribeCb
+  next: NextCb<T>
+  error: ErrorCb
+  complete: CompleteCb
+}
 
 export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
   private _subscribers: Array<ISubscriber<T>> = []
@@ -113,58 +130,11 @@ export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
     )
   }
 
-  filter(test: (value: T) => boolean) {
-    return new ReactiveValue<T>(
-      this._value, // FIXME this is wrong cause initial value doesn't pass the test
-      (observer) => this.subscribe({
-        next: value => {
-          if (test(value)) {
-            observer.next(value)
-          }
-        },
-        error: observer.error,
-        complete: observer.complete,
-      }),
-    )
-  }
-
-  take(quantity: number) {
-    if (quantity < 1) {
-      throw new Error(`"quantity" must be greater than 0, got ${quantity}`)
-    }
-
-    return new ReactiveValue<T>(
-      this._value,
-      (observer) => {
-        let counter = 0
-
-        return this.subscribe({
-          next: value => {
-            observer.next(value)
-            counter += 1
-
-            if (counter === quantity) {
-              observer.complete()
-            }
-          },
-          error: observer.error,
-          complete: observer.complete,
-        })
-      },
-    )
-  }
-
   tap(cb: (value: T) => void) {
-    return new ReactiveValue<T>(
-      this._value,
-      (observer) => this.subscribe({
-        next: (value) => {
-          cb(value)
-          observer.next(value)
-        },
-        error: observer.error,
-        complete: observer.complete,
-      }),
-    )
+    this.subscribe({
+      next: cb,
+    })
+
+    return this
   }
 }

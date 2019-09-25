@@ -43,14 +43,14 @@ export class Queue {
     return !!this._deferredClose
   }
 
-  private assertNotClosed() {
+  private _assertNotClosed() {
     if (this.isClosed()) {
       throw new Error('queue has been closed')
     }
   }
 
   async push<T>(action: Action<T>): Promise<T> {
-    this.assertNotClosed()
+    this._assertNotClosed()
 
     const deferred = new Deferred<T>()
 
@@ -61,7 +61,7 @@ export class Queue {
   }
 
   async close() {
-    this.assertNotClosed()
+    this._assertNotClosed()
 
     this._deferredClose = new Deferred<void>()
 

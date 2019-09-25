@@ -6,17 +6,13 @@ import { Procedure } from './types'
 type InitCb<T> = (observer: IObservable<T>) => (Procedure | void)
 type NextCb<T> = (value: T) => void
 type ErrorCb = (e: any) => void
-type CompleteCb = () => void
-type UnsubscribeCb = () => void
+type CompleteCb = Procedure
+type UnsubscribeCb = Procedure
 
 interface ISubscriber<T> {
   next?: NextCb<T>
   error?: ErrorCb
   complete?: CompleteCb
-}
-
-interface IObserver<T> extends ISubscriber<T> {
-  next: NextCb<T>
 }
 
 interface IObservable<T> {
@@ -26,10 +22,10 @@ interface IObservable<T> {
   complete: CompleteCb
 }
 
-export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
+export class ReactiveValue<T> implements IObservable<T> {
   private _subscribers: Array<ISubscriber<T>> = []
   private _complete = false
-  private _nextCounter = new Counter()
+  private _valueCounter = new Counter()
   private _destroy = noop
 
   constructor(private _value: T, init?: InitCb<T>) {
@@ -63,9 +59,9 @@ export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
   next = (value: T) => {
     this._assertNotComplete()
 
-    const callId = this._nextCounter.incAndGet()
     this._value = value
 
+    const callId = this._valueCounter.incAndGet()
     for (const observer of this._subscribers) {
       if (!observer.next) {
         continue
@@ -75,7 +71,7 @@ export class ReactiveValue<T> implements IObservable<T>, IObserver<T> {
 
       // stop iterating if next() was called again
       // so that subscribers wouldn't receive an outdated value
-      if (this._nextCounter.value !== callId) {
+      if (this._valueCounter.value !== callId) {
         return
       }
     }

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { noop } from '~/utils'
 import { ReactiveValue } from '~/utils/reactive-value'
 import { useReactiveValue } from '~/utils/react'
 import {
@@ -26,16 +27,19 @@ export function NoteEditorViewContainer({ id }: IProps) {
   }, [id])
 
   // acquire note lock
-  const hasLock = useReactiveValue(() => {
+  const [hasLock, setHasLock] = React.useState(false)
+  React.useEffect(() => {
     if (!note) {
-      return new ReactiveValue(false)
+      return noop
     }
 
-    console.error('acquire lock');
     const lock$ = note.acquireLock$()
-    /* debugger */
-    return lock$
-  }, [note, note ? note.id : undefined], !!note)
+    lock$.subscribe({
+      next: setHasLock,
+    })
+
+    return lock$.complete
+  }, [note])
 
   if (!note) {
     return NotFound

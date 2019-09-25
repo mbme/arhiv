@@ -32,3 +32,17 @@ export function removeMut<T>(arr: T[], value: T) {
 }
 
 export const findById = <T>(arr: Array<{ id: T }>, id: T) => arr.find((item) => item.id === id)
+
+export function isEqualArray(a: any[], b: any[]) {
+  if (a.length !== b.length) {
+    return false
+  }
+
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) {
+      return false
+    }
+  }
+
+  return true
+}

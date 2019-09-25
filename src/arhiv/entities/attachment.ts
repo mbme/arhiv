@@ -1,5 +1,4 @@
 import { IAttachment } from '~/isodb/types'
-import { ReactiveValue } from '~/utils/reactive-value'
 import { ArhivReplica } from '../types'
 
 export class Attachment {
@@ -9,27 +8,31 @@ export class Attachment {
   ) { }
 
   getUrl$() {
-    return new ReactiveValue<string | undefined>(undefined, (observer) => {
-      let url = ''
-      const unsub = this._replica.getAttachmentData$(this.id)
-        .subscribe({
-          next(blob) {
-            if (url || !blob) {
-              return
-            }
+    let url = ''
 
-            url = URL.createObjectURL(blob)
-            observer.next(url)
-          },
-        })
+    const url$ = this._replica.getAttachmentData$(this.id).map((blob) => {
+      if (url) {
+        return url
+      }
 
-      return () => {
-        unsub()
+      if (!blob) {
+        return undefined
+      }
+
+      url = URL.createObjectURL(blob)
+
+      return url
+    })
+
+    url$.subscribe({
+      complete: () => {
         if (url) {
           URL.revokeObjectURL(url)
         }
-      }
+      },
     })
+
+    return url$
   }
 
   get id() {

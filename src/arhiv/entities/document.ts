@@ -1,9 +1,7 @@
 import {
   createLogger,
   Without,
-  Procedure,
 } from '~/utils'
-import { ReactiveValue } from '~/utils/reactive-value'
 import {
   selectLinks,
   parseMarkup,
@@ -15,12 +13,6 @@ import {
 } from '../types'
 
 const log = createLogger('document')
-
-type LockState = 'pending' | 'acquired' | 'released'
-interface ILock {
-  state$: ReactiveValue<LockState>
-  release: Procedure
-}
 
 // Active Record
 export class Document<T extends Record> {
@@ -78,33 +70,32 @@ export class Document<T extends Record> {
     return this._replica.locks.isDocumentLocked$(this.id)
   }
 
-  lock(): ILock {
-    const state$ = new ReactiveValue<LockState>('pending')
+  acquireLock$() {
+    let hasLock = false
 
-    const unsub = this.isLocked$()
-      .subscribe({
-        next: (isLocked) => {
-          if (isLocked || state$.currentValue !== 'pending') {
-            return
-          }
+    const lock$ = this.isLocked$().map((isLocked) => {
+      if (hasLock) {
+        return true
+      }
 
-          this._replica.locks.addDocumentLock(this.id)
-          state$.next('acquired')
-        },
-      })
+      if (isLocked) {
+        return false
+      }
 
-    return {
-      state$,
+      this._replica.locks.addDocumentLock(this.id)
+      hasLock = true
 
-      release: () => {
-        unsub()
+      return true
+    })
 
-        if (state$.currentValue === 'acquired') {
+    lock$.subscribe({
+      complete: () => {
+        if (hasLock) {
           this._replica.locks.removeDocumentLock(this.id)
-          state$.next('released')
-          state$.complete()
         }
       },
-    }
+    })
+
+    return lock$
   }
 }

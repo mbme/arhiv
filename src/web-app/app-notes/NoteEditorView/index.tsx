@@ -8,6 +8,7 @@ import {
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { NoteEditor } from './NoteEditor'
+import { noop } from '~/utils'
 
 interface IProps {
   id?: string
@@ -25,19 +26,20 @@ export function NoteEditorViewContainer({ id }: IProps) {
     return new ReactiveValue<NoteDocument | undefined>(arhiv.notes.createNote())
   }, [id])
 
-  // acquire note lock
   const [hasLock, setHasLock] = React.useState(false)
+
   React.useEffect(() => {
     if (!note) {
-      return undefined
+      return noop
     }
 
-    const lock = note.lock()
-    lock.state$.subscribe({
-      next: state => setHasLock(state === 'acquired'),
-    })
+    const lock$ = note.acquireLock$()
 
-    return lock.release
+    lock$.subscribe({ next: setHasLock })
+
+    return () => {
+      lock$.complete()
+    }
   }, [note])
 
   if (!note) {

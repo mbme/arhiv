@@ -20,7 +20,7 @@ interface IProps {
 }
 
 export function MarkupAttachment({ attachment, link, description }: IProps) {
-  const blobUrl = useReactiveValue(() => attachment.getUrl$(), [attachment])
+  const blobUrl = useReactiveValue(() => attachment.getUrl$(), [attachment]) // FIXME fix this
 
   if (!blobUrl) {
     return null

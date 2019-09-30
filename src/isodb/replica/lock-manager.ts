@@ -2,8 +2,9 @@ import {
   createLogger,
 } from '~/utils'
 import {
-  ReactiveValue,
-} from '~/utils/reactive-value'
+  Cell,
+  Observable,
+} from '~/utils/reactive'
 
 const log = createLogger('isodb:lock-manager')
 
@@ -12,8 +13,10 @@ type State = { type: 'free' }
   | { type: 'documents-locked', locks: readonly string[] }
 
 export class LockManager {
-  state$ = new ReactiveValue<State>({ type: 'free' })
-    .tap(currentState => {
+  private _state = new Cell<State>({ type: 'free' })
+
+  private _unsub = this._state.value$.subscribe({
+    next(currentState) {
       if (currentState.type === 'free') {
         log.info('state -> free')
 
@@ -27,30 +30,11 @@ export class LockManager {
       }
 
       log.info(`state -> documents locked: ${currentState.locks.join(', ')}`)
-    })
-
-  isFree() {
-    return this.state$.currentValue.type === 'free'
-  }
-
-  lockDB() {
-    if (this.state$.currentValue.type !== 'free') {
-      throw new Error("Can't lock db: not free")
-    }
-
-    this.state$.next({ type: 'db-locked' })
-  }
-
-  unlockDB() {
-    if (this.state$.currentValue.type !== 'db-locked') {
-      throw new Error("Can't unlock db: not locked")
-    }
-
-    this.state$.next({ type: 'free' })
-  }
+    },
+  })
 
   isDocumentLocked$(id: string) {
-    return this.state$.map((state) => {
+    return this._state.value$.map((state) => {
       if (state.type === 'free') {
         return false
       }
@@ -63,46 +47,89 @@ export class LockManager {
     })
   }
 
-  addDocumentLock(id: string) {
-    const {
-      currentValue,
-    } = this.state$
+  private _lockDocument(id: string) {
+    const state = this._state.value
 
-    if (currentValue.type === 'free') {
-      this.state$.next({ type: 'documents-locked', locks: [id] })
+    if (state.type === 'db-locked') {
+      throw new Error(`[unreachable] can't lock document ${id}: db locked`)
+    }
+
+    if (state.type === 'free') {
+      this._state.value = { type: 'documents-locked', locks: [id] }
 
       return
     }
 
-    if (currentValue.type === 'db-locked') {
-      throw new Error(`[unreachable] can't lock document ${id}: db locked`)
-    }
-
-    if (currentValue.locks.includes(id)) {
+    if (state.locks.includes(id)) {
       throw new Error(`[unreachable] can't lock document ${id}: already locked`)
     }
-
-    this.state$.next({ type: 'documents-locked', locks: [...currentValue.locks, id] })
+    this._state.value = { type: 'documents-locked', locks: [...state.locks, id] }
   }
 
-  removeDocumentLock(id: string) {
-    if (this.state$.currentValue.type === 'free'
-      || this.state$.currentValue.type === 'db-locked'
-      || !this.state$.currentValue.locks.includes(id)
+  private _unlockDocument(id: string) {
+    const state = this._state.value
+
+    if (state.type === 'free'
+      || state.type === 'db-locked'
+      || !state.locks.includes(id)
     ) {
       throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
     }
 
-    const locks = this.state$.currentValue.locks.filter(lock => lock !== id)
+    const locks = state.locks.filter(lock => lock !== id)
 
-    if (locks.length) {
-      this.state$.next({ type: 'documents-locked', locks })
-    } else {
-      this.state$.next({ type: 'free' })
+    this._state.value = locks.length
+      ? { type: 'documents-locked', locks }
+      : { type: 'free' }
+  }
+
+  acquireDocumentLock$(id: string) {
+    return this.isDocumentLocked$(id)
+      .filter(isLocked => !isLocked)
+      .take(1)
+      .switchMap(() => new Observable<void>(() => {
+        this._lockDocument(id)
+
+        return () => this._unlockDocument(id)
+      }))
+  }
+
+  private _lockDB() {
+    if (this._state.value.type !== 'free') {
+      throw new Error("Can't lock db: not free")
     }
+
+    this._state.value = { type: 'db-locked' }
+  }
+
+  private _unlockDB() {
+    if (this._state.value.type !== 'db-locked') {
+      throw new Error("Can't unlock db: not locked")
+    }
+
+    this._state.value = { type: 'free' }
+  }
+
+  readonly isDBLocked$ = this._state.value$.map((state) => {
+    if (state.type === 'db-locked') {
+      return true
+    }
+
+    return false
+  })
+
+  acquireDBLock$() {
+    return this.isDBLocked$
+      .filter(isLocked => !isLocked)
+      .take(1)
+      .switchMap(() => new Observable<void>(() => {
+        this._lockDB()
+
+        return () => this._unlockDB()
+      }))
   }
 
   stop() {
-    this.state$.complete()
+    this._unsub()
   }
 }

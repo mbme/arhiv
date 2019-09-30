@@ -14,7 +14,7 @@ export class Cell<T> {
     return this._value
   }
 
-  next = (value: T) => {
+  set value(value: T) {
     this._value = value
 
     const callId = this._valueCounter.incAndGet()
@@ -29,11 +29,15 @@ export class Cell<T> {
     }
   }
 
-  value$ = new Observable<T>((observer) => {
+  readonly value$ = new Observable<T>((observer) => {
     this._subscribers.push(observer.next)
 
     observer.next(this._value)
 
     return () => removeMut(this._subscribers, observer.next)
   })
+
+  next = (value: T) => {
+    this.value = value
+  }
 }

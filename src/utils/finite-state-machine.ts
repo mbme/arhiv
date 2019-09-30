@@ -1,5 +1,5 @@
 import { createLogger } from './logger'
-import { ReactiveValue } from './reactive-value'
+import { Cell } from './reactive'
 
 const log = createLogger('state-machine')
 
@@ -10,17 +10,17 @@ type FSM<States extends string, Events extends string> = {
 }
 
 export class FiniteStateMachine<States extends string, Events extends string> {
-  $state: ReactiveValue<States>
+  state$: Cell<States>
 
   constructor(
     initialState: States,
     private _fsm: FSM<States, Events>,
   ) {
-    this.$state = new ReactiveValue<States>(initialState)
+    this.state$ = new Cell<States>(initialState)
   }
 
   dispatchEvent(event: Events) {
-    const currentState = this.$state.currentValue
+    const currentState = this.state$.value
 
     const newState: States | undefined = this._fsm[currentState][event]
 
@@ -30,6 +30,6 @@ export class FiniteStateMachine<States extends string, Events extends string> {
       return
     }
 
-    this.$state.next(newState)
+    this.state$.value = newState
   }
 }

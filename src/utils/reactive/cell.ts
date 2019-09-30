@@ -36,8 +36,4 @@ export class Cell<T> {
 
     return () => removeMut(this._subscribers, observer.next)
   })
-
-  next = (value: T) => {
-    this.value = value
-  }
 }

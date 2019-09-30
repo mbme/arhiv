@@ -1,9 +1,7 @@
 import {
   createLogger,
+  Callbacks,
 } from '~/utils'
-import {
-  ReactiveValue,
-} from '~/utils/reactive-value'
 import {
   IChangesetResult,
   IChangeset,
@@ -12,34 +10,49 @@ import {
 import {
   LocalAttachments,
 } from '~/isodb/replica'
+import {
+  Cell,
+} from '~/utils/reactive'
 
 const log = createLogger('arhiv:network-manager')
 
-function monitorNetworkState$() {
-  type NetworkState = 'online' | 'offline'
+type NetworkState = 'online' | 'offline'
+const readNetworkState = () => window.navigator.onLine ? 'online' : 'offline'
 
-  const readNetworkState = () => window.navigator.onLine ? 'online' : 'offline'
+export class NetworkManager {
+  networkState$: Cell<NetworkState>
 
-  return new ReactiveValue<NetworkState>(readNetworkState(), (observer) => {
-    const sendNetworkState = () => observer.next(readNetworkState())
+  authorized$ = new Cell<boolean>(true)
+
+  private _callbacks = new Callbacks()
+
+  constructor() {
+    this.networkState$ = new Cell(readNetworkState())
+
+    const sendNetworkState = () => {
+      this.networkState$.value = readNetworkState()
+    }
 
     window.addEventListener('online', sendNetworkState)
     window.addEventListener('offline', sendNetworkState)
 
-    return () => {
+    this._callbacks.add(() => {
       window.removeEventListener('online', sendNetworkState)
       window.removeEventListener('offline', sendNetworkState)
-    }
-  })
-}
+    })
 
-export class NetworkManager {
-  networkState$ = monitorNetworkState$().tap(
-    value => log.info(`network gone ${value}`),
-  )
-  authorized$ = new ReactiveValue(true).tap(
-    isAuthorized => log.info(`authorized: ${isAuthorized}`),
-  )
+    this._callbacks.add(
+      this.networkState$.value$.subscribe({
+        next: value => log.info(`network gone ${value}`),
+      }),
+    )
+
+    this._callbacks.add(
+      this.authorized$.value$.subscribe({
+        next: isAuthorized => log.info(`authorized: ${isAuthorized}`),
+      }),
+    )
+  }
 
   authorize = async (password: string) => {
     this._assertIsOnline()
@@ -50,7 +63,7 @@ export class NetworkManager {
     })
 
     if (response.ok) {
-      this.authorized$.next(true)
+      this.authorized$.value = true
     } else {
       this._onNetworkError(response.status)
     }
@@ -58,7 +71,7 @@ export class NetworkManager {
 
   deauthorize = () => {
     document.cookie = 'token=0; path=/'
-    this.authorized$.next(false)
+    this.authorized$.value = false
   }
 
   syncChanges = async <T extends IDocument>(
@@ -89,13 +102,13 @@ export class NetworkManager {
   }
 
   private _assertIsOnline() {
-    if (this.networkState$.currentValue === 'offline') {
+    if (this.networkState$.value === 'offline') {
       throw new Error('Network is offline')
     }
   }
 
   private _assertAuthorized() {
-    if (!this.authorized$.currentValue) {
+    if (!this.authorized$.value) {
       throw new Error('Not authorized')
     }
   }
@@ -104,17 +117,16 @@ export class NetworkManager {
     log.warn(`network error, http status code ${status}`)
 
     if (status === 403) {
-      this.authorized$.next(false)
+      this.authorized$.value = false
     }
   }
 
   isOnline() {
-    return this.networkState$.currentValue === 'online'
+    return this.networkState$.value === 'online'
   }
 
   stop() {
-    this.networkState$.complete()
-    this.authorized$.complete()
+    this._callbacks.runAll()
     log.debug('stopped')
   }
 }

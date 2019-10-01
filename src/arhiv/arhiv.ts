@@ -2,6 +2,7 @@ import {
   ReplicaInMemStorage,
   ReplicaManager,
 } from '~/isodb/replica'
+import { LockManager } from './lock-manager'
 import { NetworkManager } from './network-manager'
 import { ArhivReplica } from './types'
 import {
@@ -12,6 +13,8 @@ import {
 
 export class Arhiv {
   net = new NetworkManager()
+
+  private _locks = new LockManager()
   private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
   private _syncIntervalId: number | undefined
 
@@ -28,7 +31,7 @@ export class Arhiv {
       },
     })
 
-    this._replica.$syncState.subscribe({
+    this._replica.syncState$.subscribe({
       next: (syncState) => {
         if (syncState === 'merge-conflicts-resolved') {
           this.syncNow()
@@ -55,5 +58,6 @@ export class Arhiv {
 
     this._replica.stop()
     this.net.stop()
+    this._locks.stop()
   }
 }

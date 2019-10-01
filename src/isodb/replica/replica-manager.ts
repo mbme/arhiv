@@ -1,10 +1,11 @@
 import {
   createLogger,
+  Callbacks,
 } from '~/utils'
 import {
-  ReactiveValue,
-} from '~/utils/reactive-value'
-import { LockManager } from './lock-manager'
+  Cell,
+  Observable,
+} from '~/utils/reactive'
 import { IsodbReplica } from './replica'
 import {
   IDocument,
@@ -31,24 +32,27 @@ type ChangesetExchange<T extends IDocument> = (
 ) => Promise<IChangesetResult<T>>
 
 export class ReplicaManager<T extends IDocument> {
-  locks = new LockManager()
-  private _replica: IsodbReplica<T>
+  readonly syncState$ = new Cell<SyncState>('not-synced')
 
-  $syncState = new ReactiveValue<SyncState>('not-synced')
-    .tap(state => log.info(`sync state -> ${state}`))
+  private _replica: IsodbReplica<T>
+  private _callbacks = new Callbacks()
 
   constructor(storage: IReplicaStorage<T>) {
     this._replica = new IsodbReplica(storage)
 
-    this._replica.mergeConflicts$.subscribe({
-      next: (mergeConflicts) => {
-        if (mergeConflicts) {
-          this.$syncState.next('merge-conflicts')
-        } else if (this.$syncState.currentValue === 'merge-conflicts') {
-          this.$syncState.next('merge-conflicts-resolved')
-        }
-      },
-    })
+    this._callbacks.add(
+      this.syncState$.value$.subscribe({
+        next: state => log.info(`sync state -> ${state}`),
+      }),
+    )
+
+    this._callbacks.add(
+      this._replica.mergeConflicts$.value$.subscribe({
+        next: (mergeConflicts) => {
+          this.syncState$.value = mergeConflicts ? 'merge-conflicts' : 'merge-conflicts-resolved'
+        },
+      }),
+    )
 
     // run compaction on startup
     this._replica.compact()
@@ -70,8 +74,8 @@ export class ReplicaManager<T extends IDocument> {
     return this._replica.getAttachment(id)
   }
 
-  getAttachmentData$(id: string): ReactiveValue<Blob | undefined> {
-    return new ReactiveValue<Blob | undefined>(undefined, (observer) => {
+  getAttachmentData$(id: string): Observable<Blob> {
+    return new Observable<Blob>((observer) => {
       if (!this.getAttachment(id)) {
         throw new Error(`attachment ${id} doesn't exist`)
       }
@@ -97,7 +101,7 @@ export class ReplicaManager<T extends IDocument> {
 
         return response.blob()
       }).then(
-        blob => observer.next(blob),
+        observer.next,
       ).catch((e) => {
         log.error(`Failed to fetch attachment ${id}`, e)
         observer.error(e)
@@ -109,7 +113,7 @@ export class ReplicaManager<T extends IDocument> {
     })
   }
 
-  saveAttachment(file: File) {
+  saveAttachment(file: File): string {
     const id = this.getRandomId()
     this._replica.saveAttachment(id, file)
     log.info(`Created new attachment ${id} for the file "${file.name}"`)
@@ -117,12 +121,12 @@ export class ReplicaManager<T extends IDocument> {
     return id
   }
 
-  getDocuments$(): ReactiveValue<T[]> {
-    return this._replica.updateTime$.map(() => this._replica.getDocuments())
+  getDocuments$(): Observable<T[]> {
+    return this._replica.updateTime$.value$.map(() => this._replica.getDocuments())
   }
 
-  getDocument$(id: string): ReactiveValue<T | undefined> {
-    return this._replica.updateTime$.map(() => this._replica.getDocument(id))
+  getDocument$(id: string): Observable<T | undefined> {
+    return this._replica.updateTime$.value$.map(() => this._replica.getDocument(id))
   }
 
   getDocument(id: string): T | undefined {
@@ -133,13 +137,7 @@ export class ReplicaManager<T extends IDocument> {
     this._replica.saveDocument(document)
   }
 
-  async sync(exchange: ChangesetExchange<T>): Promise<boolean> {
-    if (!this.locks.isFree()) {
-      log.debug('Skipping sync: lock is not free')
-
-      return false
-    }
-
+  async sync(exchange: ChangesetExchange<T>) {
     if (this._replica.hasMergeConflicts()) {
       log.debug('Skipping sync: pending merge conflicts')
 
@@ -149,9 +147,7 @@ export class ReplicaManager<T extends IDocument> {
     try {
       log.debug('sync: starting')
 
-      this.$syncState.next('sync')
-
-      this.locks.lockDB()
+      this.syncState$.value = 'sync'
 
       const [changeset, localAttachments] = this._replica.getChangeset()
 
@@ -177,25 +173,21 @@ export class ReplicaManager<T extends IDocument> {
 
       log.debug('sync: ok')
 
-      this.$syncState.next('synced')
+      this.syncState$.value = 'synced'
 
       return true
 
     } catch (e) {
       log.error('Failed to sync', e)
 
-      this.$syncState.next('not-synced')
+      this.syncState$.value = 'not-synced'
 
       return false
-    } finally {
-      this.locks.unlockDB()
     }
   }
 
   stop() {
-    this.locks.stop()
-    this.$syncState.complete()
-    this._replica.stop()
+    this._callbacks.runAll()
     // TODO stop storage?
   }
 }

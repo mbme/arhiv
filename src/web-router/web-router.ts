@@ -1,5 +1,5 @@
 import { isString } from '~/utils'
-import { ReactiveValue } from '~/utils/reactive-value'
+import { Cell } from '~/utils/reactive'
 
 export interface IParams {
   [key: string]: string | undefined
@@ -27,7 +27,7 @@ function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
 }
 
 export class WebRouter {
-  $location = new ReactiveValue<ILocation>(this._getCurrentLocation())
+  location$ = new Cell<ILocation>(this._getCurrentLocation())
 
   constructor() {
     window.addEventListener('popstate', this._propagateCurrentLocation)
@@ -46,7 +46,7 @@ export class WebRouter {
   }
 
   private _propagateCurrentLocation = () => {
-    this.$location.next(this._getCurrentLocation())
+    this.location$.value = this._getCurrentLocation()
   }
 
   getUrl(simpleLocation: SimpleLocation) {
@@ -84,7 +84,7 @@ export class WebRouter {
     const {
       path,
       params,
-    } = this.$location.currentValue
+    } = this.location$.value
 
     const newLocation: ILocation = {
       path,
@@ -100,6 +100,5 @@ export class WebRouter {
 
   stop() {
     window.removeEventListener('popstate', this._propagateCurrentLocation)
-    this.$location.complete()
   }
 }

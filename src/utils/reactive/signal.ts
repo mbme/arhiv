@@ -4,35 +4,26 @@ import { Observable } from './observable'
 
 type NextCb<T> = (value: T) => void
 
-export class Cell<T> {
+export class Signal<T> {
   private _subscribers: Array<NextCb<T>> = []
-  private _valueCounter = new Counter()
+  private _counter = new Counter()
 
-  constructor(private _value: T) { }
+  next(signal: T) {
+    const callId = this._counter.incAndGet()
 
-  get value() {
-    return this._value
-  }
-
-  set value(value: T) {
-    this._value = value
-
-    const callId = this._valueCounter.incAndGet()
     for (const subscriber of this._subscribers) {
-      subscriber(value)
+      subscriber(signal)
 
       // stop iterating if next() was called again
       // so that subscribers wouldn't receive an outdated value
-      if (this._valueCounter.value !== callId) {
+      if (this._counter.value !== callId) {
         return
       }
     }
   }
 
-  readonly value$ = new Observable<T>((observer) => {
+  readonly signal$ = new Observable<T>((observer) => {
     this._subscribers.push(observer.next)
-
-    observer.next(this._value)
 
     return () => removeMut(this._subscribers, observer.next)
   })

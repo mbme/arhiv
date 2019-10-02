@@ -1,3 +1,9 @@
+import { Callbacks } from '~/utils'
+import {
+  Signal,
+  createInterval$,
+  merge$,
+} from '~/utils/reactive'
 import {
   ReplicaInMemStorage,
   ReplicaManager,
@@ -12,52 +18,44 @@ import {
 } from './repositories'
 
 export class Arhiv {
-  net = new NetworkManager()
+  readonly net = new NetworkManager()
 
   private _locks = new LockManager()
   private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
-  private _syncIntervalId: number | undefined
+  private _callbacks = new Callbacks()
+  private _syncSignal = new Signal()
 
-  attachments = new AttachmentsRepository(this._replica)
-  notes = new NotesRepository(this._replica, this._locks)
-  tracks = new TracksRepository(this._replica, this._locks)
+  readonly attachments = new AttachmentsRepository(this._replica)
+  readonly notes = new NotesRepository(this._replica, this._locks)
+  readonly tracks = new TracksRepository(this._replica, this._locks)
 
   constructor() {
-    this.net.authorized$.subscribe({
-      next: (isAuthorized) => {
-        if (isAuthorized) {
-          this.syncNow()
-        }
-      },
-    })
+    const syncCondtion$ = merge$<any>(
+      createInterval$(60 * 1000),
+      this.net.authorized$.value$.filter(isAuthorized => isAuthorized),
+      this._replica.syncState$.value$.filter(syncState => syncState === 'merge-conflicts-resolved'),
+      this._syncSignal.signal$,
+    )
 
-    this._replica.syncState$.subscribe({
-      next: (syncState) => {
-        if (syncState === 'merge-conflicts-resolved') {
-          this.syncNow()
-        }
-      },
-    })
-  }
-
-  private _sync = () => {
-    // tslint:disable-next-line:no-floating-promises
-    this._replica.sync(this.net.syncChanges)
+    this._callbacks.add(
+      () => this._locks.stop(),
+      () => this._replica.stop(),
+      () => this.net.stop(),
+      syncCondtion$.subscribe({
+        next: () => {
+          // tslint:disable-next-line:no-floating-promises
+          // FIXME acquire db lock
+          this._replica.sync(this.net.syncChanges)
+        },
+      }),
+    )
   }
 
   syncNow = () => {
-    this._sync()
-
-    // schedule sync once per minute
-    clearInterval(this._syncIntervalId)
-    this._syncIntervalId = window.setInterval(this._sync, 60 * 1000)
+    this._syncSignal.next()
   }
 
   stop() {
-    clearInterval(this._syncIntervalId)
-
-    this._replica.stop()
-    this.net.stop()
-    this._locks.stop()
+    this._callbacks.runAll()
   }
 }

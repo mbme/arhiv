@@ -3,8 +3,8 @@ import { Procedure } from './types'
 export class Callbacks {
   private _callbacks: Procedure[] = []
 
-  add(cb: Procedure) {
-    this._callbacks.push(cb)
+  add(...cb: Procedure[]) {
+    this._callbacks.push(...cb)
   }
 
   runAll() {

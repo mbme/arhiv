@@ -6,6 +6,7 @@ import {
 } from '../types'
 import { DocumentsRepository } from './documents'
 import { Document } from '../entities/document'
+import { LockManager } from '../lock-manager'
 
 function isNote(x: any): x is INote {
   // tslint:disable-next-line:no-unsafe-any
@@ -15,8 +16,8 @@ function isNote(x: any): x is INote {
 export type NoteDocument = Document<INote>
 
 export class NotesRepository extends DocumentsRepository<INote> {
-  constructor(replica: ArhivReplica) {
-    super(replica, isNote)
+  constructor(replica: ArhivReplica, locks: LockManager) {
+    super(replica, locks, isNote)
   }
 
   createNote() {

@@ -6,6 +6,7 @@ import {
 } from '../types'
 import { DocumentsRepository } from './documents'
 import { Document } from '../entities/document'
+import { LockManager } from '../lock-manager'
 
 function isTrack(x: any): x is ITrack {
   // tslint:disable-next-line:no-unsafe-any
@@ -15,8 +16,8 @@ function isTrack(x: any): x is ITrack {
 export type TrackDocument = Document<ITrack>
 
 export class TracksRepository extends DocumentsRepository<ITrack> {
-  constructor(replica: ArhivReplica) {
-    super(replica, isTrack)
+  constructor(replica: ArhivReplica, locks: LockManager) {
+    super(replica, locks, isTrack)
   }
 
   createTrack() {

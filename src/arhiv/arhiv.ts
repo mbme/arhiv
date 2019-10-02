@@ -19,8 +19,8 @@ export class Arhiv {
   private _syncIntervalId: number | undefined
 
   attachments = new AttachmentsRepository(this._replica)
-  notes = new NotesRepository(this._replica)
-  tracks = new TracksRepository(this._replica)
+  notes = new NotesRepository(this._replica, this._locks)
+  tracks = new TracksRepository(this._replica, this._locks)
 
   constructor() {
     this.net.authorized$.subscribe({

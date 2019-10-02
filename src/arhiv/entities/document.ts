@@ -11,13 +11,15 @@ import {
   ArhivReplica,
   Record,
 } from '../types'
+import { LockManager } from '../lock-manager'
 
 const log = createLogger('document')
 
 // Active Record
 export class Document<T extends Record> {
   constructor(
-    protected _replica: ArhivReplica,
+    private _replica: ArhivReplica,
+    private _locks: LockManager,
     public record: T,
   ) { }
 
@@ -67,35 +69,10 @@ export class Document<T extends Record> {
   }
 
   isLocked$() {
-    return this._replica.locks.isDocumentLocked$(this.id)
+    return this._locks.isDocumentLocked$(this.id)
   }
 
   acquireLock$() {
-    let hasLock = false
-
-    const lock$ = this.isLocked$().map((isLocked) => {
-      if (hasLock) {
-        return true
-      }
-
-      if (isLocked) {
-        return false
-      }
-
-      this._replica.locks.addDocumentLock(this.id)
-      hasLock = true
-
-      return true
-    })
-
-    lock$.subscribe({
-      complete: () => {
-        if (hasLock) {
-          this._replica.locks.removeDocumentLock(this.id)
-        }
-      },
-    })
-
-    return lock$
+    return this._locks.acquireDocumentLock$(this.id)
   }
 }

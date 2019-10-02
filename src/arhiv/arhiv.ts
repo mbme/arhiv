@@ -1,7 +1,7 @@
 import { Callbacks } from '~/utils'
 import {
   Signal,
-  createInterval$,
+  interval$,
   merge$,
 } from '~/utils/reactive'
 import {
@@ -31,7 +31,7 @@ export class Arhiv {
 
   constructor() {
     const syncCondtion$ = merge$<any>(
-      createInterval$(60 * 1000),
+      interval$(60 * 1000),
       this.net.authorized$.value$.filter(isAuthorized => isAuthorized),
       this._replica.syncState$.value$.filter(syncState => syncState === 'merge-conflicts-resolved'),
       this._syncSignal.signal$,

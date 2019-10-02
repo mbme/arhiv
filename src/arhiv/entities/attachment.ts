@@ -1,3 +1,4 @@
+import { blobUrl$ } from '~/utils/reactive'
 import { IAttachment } from '~/isodb/types'
 import { ArhivReplica } from '../types'
 
@@ -8,31 +9,10 @@ export class Attachment {
   ) { }
 
   getUrl$() {
-    let url = ''
-
-    const url$ = this._replica.getAttachmentData$(this.id).map((blob) => {
-      if (url) {
-        return url
-      }
-
-      if (!blob) {
-        return undefined
-      }
-
-      url = URL.createObjectURL(blob)
-
-      return url
-    })
-
-    url$.subscribe({
-      complete: () => {
-        if (url) {
-          URL.revokeObjectURL(url)
-        }
-      },
-    })
-
-    return url$
+    return this._replica.getAttachmentData$(this.id)
+      .filter(blob => !!blob)
+      .take(1)
+      .switchMap(blobUrl$)
   }
 
   get id() {

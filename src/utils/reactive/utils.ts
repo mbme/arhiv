@@ -1,7 +1,7 @@
 import { Observable } from './observable'
 import { Callbacks } from '../component-lifecycle'
 
-export function createInterval$(interval: number) {
+export function interval$(interval: number) {
   return new Observable<undefined>((observer) => {
     const intervalId = setInterval(observer.next, interval)
 
@@ -18,5 +18,14 @@ export function merge$<T>(...observables: Array<Observable<T>>) {
     }
 
     return () => callbacks.runAll()
+  })
+}
+
+export function blobUrl$(blob: Blob) {
+  return new Observable<string>((observer) => {
+    const url = URL.createObjectURL(blob)
+    observer.next(url)
+
+    return () => URL.revokeObjectURL(url)
   })
 }

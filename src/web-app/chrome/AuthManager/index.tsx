@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useReactiveValue } from '~/utils/react'
+import { useObservable } from '~/utils/react'
 import { Arhiv } from '~/arhiv'
 import { AuthOverlay } from './AuthOverlay'
 
@@ -8,7 +8,7 @@ interface IProps {
 }
 
 export function AuthManager({ arhiv }: IProps) {
-  const authorized = useReactiveValue(() => arhiv.net.authorized$)
+  const authorized = useObservable(() => arhiv.net.authorized$.value$)
 
   if (authorized) {
     return null

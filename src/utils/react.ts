@@ -1,14 +1,30 @@
 import * as React from 'react'
-import {
-  ReactiveValue,
-} from './reactive-value'
+import { noop } from './misc'
+import { createLogger } from './logger'
+import { Observable } from './reactive'
 
-export function useReactiveValue<T>(getValue: () => ReactiveValue<T>, deps: any[] = []) {
-  const $value = React.useMemo(getValue, deps)
+const log = createLogger('react-utils')
 
-  const [value, setValue] = React.useState($value.currentValue)
+export function useObservable<T>(getObservable$: () => Observable<T>, deps: any[] = []) {
+  const [observable$, setObservable] = React.useState<Observable<T> | undefined>(undefined)
+  const [value, setValue] = React.useState<T | undefined>(undefined)
 
-  React.useEffect(() => $value.subscribe({ next: setValue }), [$value])
+  React.useEffect(() => {
+    setObservable(getObservable$())
+  }, deps)
+
+  React.useEffect(() => {
+    if (!observable$) {
+      return noop
+    }
+
+    return observable$.subscribe({
+      next: setValue,
+      error(e) {
+        log.warn('Got and error from observable', e)
+      },
+    })
+  }, [observable$])
 
   return value
 }

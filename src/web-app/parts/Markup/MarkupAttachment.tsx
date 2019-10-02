@@ -6,6 +6,7 @@ import {
 import {
   Attachment,
 } from '~/arhiv'
+import { useObservable } from '~/utils/react'
 
 const $image = stylish({
   mt: 'medium',
@@ -19,16 +20,7 @@ interface IProps {
 }
 
 export function MarkupAttachment({ attachment, link, description }: IProps) {
-  const [blobUrl, setBlobUrl] = React.useState<string | undefined>(undefined)
-  React.useEffect(() => {
-    const url$ = attachment.getUrl$()
-
-    url$.subscribe({
-      next: setBlobUrl,
-    })
-
-    return url$.complete
-  }, [attachment.id])
+  const blobUrl = useObservable(() => attachment.getUrl$(), [attachment])
 
   if (!blobUrl) {
     return null

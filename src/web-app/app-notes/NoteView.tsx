@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useArhiv } from '~/arhiv'
-import { useReactiveValue } from '~/utils/react'
+import { useObservable } from '~/utils/react'
 import {
   Icon,
   CleanLink,
@@ -18,7 +18,7 @@ interface IProps {
 
 export function NoteView({ id }: IProps) {
   const arhiv = useArhiv()
-  const note = useReactiveValue(() => arhiv.notes.getDocument$(id), [id])
+  const note = useObservable(() => arhiv.notes.getDocument$(id), [id])
 
   if (!note) {
     return NotFound

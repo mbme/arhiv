@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useReactiveValue } from '~/utils/react'
+import { useObservable } from '~/utils/react'
 import {
   useRouter,
   ILocation,
@@ -86,8 +86,12 @@ function getCurrentApp(apps: IApp[], location: ILocation) {
 
 export function Chrome({ apps, onLogout }: IProps) {
   const router = useRouter()
-  const location = useReactiveValue(() => router.location$)
+  const location = useObservable(() => router.location$.value$)
   const [isNavVisible, setIsNavVisible] = React.useState(false)
+
+  if (!location) {
+    return null
+  }
 
   const app = getCurrentApp(apps, location)
   if (!app) {

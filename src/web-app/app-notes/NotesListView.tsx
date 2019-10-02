@@ -3,7 +3,7 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
-import { useReactiveValue } from '~/utils/react'
+import { useObservable } from '~/utils/react'
 import { useRouter } from '~/web-router'
 import {
   stylish,
@@ -37,9 +37,9 @@ export function NotesListView({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
-  const notes = useReactiveValue(() => arhiv.notes.getDocuments$())
+  const notes = useObservable(() => arhiv.notes.getDocuments$())
 
-  const items = notes
+  const items = (notes || [])
     .filter(note => fuzzySearch(filter, note.record.name))
     .map(note => (
       <CleanLink

@@ -1,7 +1,5 @@
 import * as React from 'react'
 import { noop } from '~/utils'
-import { ReactiveValue } from '~/utils/reactive-value'
-import { useReactiveValue } from '~/utils/react'
 import {
   useArhiv,
   NoteDocument,
@@ -17,14 +15,18 @@ interface IProps {
 export function NoteEditorViewContainer({ id }: IProps) {
   const arhiv = useArhiv()
 
+  const [note, setNote] = React.useState<NoteDocument | undefined>(undefined)
+
   // get or create the note
-  const note = useReactiveValue(() => {
+  React.useEffect(() => {
     if (id) {
-      return arhiv.notes.getDocument$(id)
+      return arhiv.notes.getDocument$(id).subscribe({ next: setNote })
     }
 
-    return new ReactiveValue<NoteDocument | undefined>(arhiv.notes.createNote())
-  }, [id])
+    setNote(arhiv.notes.createNote())
+
+    return noop
+  }, [])
 
   // acquire note lock
   const [hasLock, setHasLock] = React.useState(false)
@@ -33,12 +35,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
       return noop
     }
 
-    const lock$ = note.acquireLock$()
-    lock$.subscribe({
-      next: setHasLock,
-    })
-
-    return lock$.complete
+    return note.acquireLock$().subscribe({ next: () => setHasLock(true) })
   }, [note])
 
   if (!note) {

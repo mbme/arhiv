@@ -43,8 +43,8 @@ export class Arhiv {
       () => this.net.stop(),
       syncCondtion$.subscribe({
         next: () => {
-          // tslint:disable-next-line:no-floating-promises
           // FIXME acquire db lock
+          // tslint:disable-next-line:no-floating-promises
           this._replica.sync(this.net.syncChanges)
         },
       }),

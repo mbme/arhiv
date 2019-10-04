@@ -1,5 +1,8 @@
 import { Procedure } from '../types'
 import { noop } from '../misc'
+import { createLogger } from '../logger'
+
+const log = createLogger('observable')
 
 type NextCb<T> = (value: T) => void
 type ErrorCb = (e: any) => void
@@ -29,7 +32,7 @@ export class Observable<T> {
     try {
       return this._init(observer) || noop
     } catch (e) {
-      console.error(e)
+      log.debug('error on init:', e)
       observer.error(e)
 
       return noop

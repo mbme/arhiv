@@ -1,6 +1,7 @@
 import { Procedure } from '../types'
 import { noop } from '../misc'
 import { createLogger } from '../logger'
+import { removeAtMut } from '../array'
 
 const log = createLogger('observable')
 
@@ -113,5 +114,27 @@ export class Observable<T> {
 
       return unsub
     })
+  }
+
+  buffer(size: number): Observable<T[]> {
+    if (size < 1) {
+      throw new Error('size must be greater than 0')
+    }
+
+    const buffer: T[] = []
+
+    return new Observable<T[]>((observer) => this.subscribe({
+      next: (value) => {
+        buffer.push(value)
+
+        if (buffer.length > size) {
+          removeAtMut(buffer, 0)
+        }
+
+        observer.next([...buffer])
+      },
+      error: observer.error,
+      complete: observer.complete,
+    }))
   }
 }

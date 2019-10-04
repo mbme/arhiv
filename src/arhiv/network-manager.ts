@@ -16,21 +16,20 @@ import {
 
 const log = createLogger('arhiv:network-manager')
 
-type NetworkState = 'online' | 'offline'
-const readNetworkState = () => window.navigator.onLine ? 'online' : 'offline'
+const readNetworkState = () => window.navigator.onLine
 
 export class NetworkManager {
-  networkState$: Cell<NetworkState>
+  isOnline$: Cell<boolean>
 
   authorized$ = new Cell<boolean>(true)
 
   private _callbacks = new Callbacks()
 
   constructor() {
-    this.networkState$ = new Cell(readNetworkState())
+    this.isOnline$ = new Cell(readNetworkState())
 
     const sendNetworkState = () => {
-      this.networkState$.value = readNetworkState()
+      this.isOnline$.value = readNetworkState()
     }
 
     window.addEventListener('online', sendNetworkState)
@@ -42,7 +41,7 @@ export class NetworkManager {
     })
 
     this._callbacks.add(
-      this.networkState$.value$.subscribe({
+      this.isOnline$.value$.subscribe({
         next: value => log.info(`network gone ${value}`),
       }),
     )
@@ -102,7 +101,7 @@ export class NetworkManager {
   }
 
   private _assertIsOnline() {
-    if (this.networkState$.value === 'offline') {
+    if (!this.isOnline$.value) {
       throw new Error('Network is offline')
     }
   }
@@ -122,7 +121,11 @@ export class NetworkManager {
   }
 
   isOnline() {
-    return this.networkState$.value === 'online'
+    return this.isOnline$.value
+  }
+
+  isAuthorized() {
+    return this.authorized$.value
   }
 
   stop() {

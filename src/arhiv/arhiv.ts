@@ -1,8 +1,12 @@
-import { Callbacks } from '~/utils'
+import {
+  Callbacks,
+  createLogger,
+} from '~/utils'
 import {
   Signal,
   interval$,
   merge$,
+  promise$,
 } from '~/utils/reactive'
 import {
   ReplicaInMemStorage,
@@ -17,6 +21,8 @@ import {
   AttachmentsRepository,
 } from './repositories'
 
+const log = createLogger('arhiv')
+
 export class Arhiv {
   readonly net = new NetworkManager()
 
@@ -25,27 +31,37 @@ export class Arhiv {
   private _callbacks = new Callbacks()
   private _syncSignal = new Signal()
 
+  readonly syncState$ = this._replica.syncState$
+
   readonly attachments = new AttachmentsRepository(this._replica)
   readonly notes = new NotesRepository(this._replica, this._locks)
   readonly tracks = new TracksRepository(this._replica, this._locks)
 
   constructor() {
+    const mergeConflictsResolved$ = this._replica.syncState$.value$
+      .buffer(2)
+      .filter(syncStates => syncStates.length === 2 && syncStates[0].type === 'merge-conflicts')
+    const gotAuthorized$ = this.net.authorized$.value$.filter(isAuthorized => isAuthorized)
+    const gotOnline$ = this.net.isOnline$.value$.filter(isOnline => isOnline)
+
     const syncCondtion$ = merge$<any>(
       interval$(60 * 1000),
-      this.net.authorized$.value$.filter(isAuthorized => isAuthorized),
-      this._replica.syncState$.value$.filter(syncState => syncState === 'merge-conflicts-resolved'),
+      gotAuthorized$,
+      gotOnline$,
+      mergeConflictsResolved$,
       this._syncSignal.signal$,
     )
+      .filter(() => this.net.isOnline() && this.net.isAuthorized() && this._replica.isReadyToSync())
+      .switchMap(() => this._locks.acquireDBLock$())
+      .switchMap(() => promise$(this._replica.sync(this.net.syncChanges)))
 
     this._callbacks.add(
       () => this._locks.stop(),
       () => this._replica.stop(),
       () => this.net.stop(),
       syncCondtion$.subscribe({
-        next: () => {
-          // FIXME acquire db lock
-          // tslint:disable-next-line:no-floating-promises
-          this._replica.sync(this.net.syncChanges)
+        next: (success) => {
+          log.info('synced -> ', success)
         },
       }),
     )

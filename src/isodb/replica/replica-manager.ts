@@ -17,6 +17,7 @@ import {
   IReplicaStorage,
   LocalAttachments,
 } from './replica-storage'
+import { MergeConflicts } from './merge-conflict'
 import {
   isEmptyChangeset,
   generateRandomId,
@@ -24,7 +25,9 @@ import {
 
 const log = createLogger('isodb:replica-manager')
 
-type SyncState = 'sync' | 'merge-conflicts' | 'merge-conflicts-resolved' | 'synced' | 'not-synced'
+type SyncState<T extends IDocument> = { type: 'initial' }
+  | { type: 'sync' }
+  | { type: 'merge-conflicts', conflicts: MergeConflicts<T> }
 
 type ChangesetExchange<T extends IDocument> = (
   changeset: IChangeset<T>,
@@ -32,7 +35,7 @@ type ChangesetExchange<T extends IDocument> = (
 ) => Promise<IChangesetResult<T>>
 
 export class ReplicaManager<T extends IDocument> {
-  readonly syncState$ = new Cell<SyncState>('not-synced')
+  readonly syncState$ = new Cell<SyncState<T>>({ type: 'initial' })
 
   private _replica: IsodbReplica<T>
   private _callbacks = new Callbacks()
@@ -44,12 +47,12 @@ export class ReplicaManager<T extends IDocument> {
       this.syncState$.value$.subscribe({
         next: state => log.info(`sync state -> ${state}`),
       }),
-    )
 
-    this._callbacks.add(
       this._replica.mergeConflicts$.value$.subscribe({
         next: (mergeConflicts) => {
-          this.syncState$.value = mergeConflicts ? 'merge-conflicts' : 'merge-conflicts-resolved'
+          this.syncState$.value = mergeConflicts
+            ? { type: 'merge-conflicts', conflicts: mergeConflicts }
+            : { type: 'initial' }
         },
       }),
     )
@@ -138,16 +141,14 @@ export class ReplicaManager<T extends IDocument> {
   }
 
   async sync(exchange: ChangesetExchange<T>) {
-    if (this._replica.hasMergeConflicts()) {
-      log.debug('Skipping sync: pending merge conflicts')
-
-      return false
+    if (!this.isReadyToSync()) {
+      throw new Error('not ready to sync')
     }
 
     try {
       log.debug('sync: starting')
 
-      this.syncState$.value = 'sync'
+      this.syncState$.value = { type: 'sync' }
 
       const [changeset, localAttachments] = this._replica.getChangeset()
 
@@ -173,17 +174,21 @@ export class ReplicaManager<T extends IDocument> {
 
       log.debug('sync: ok')
 
-      this.syncState$.value = 'synced'
+      this.syncState$.value = { type: 'initial' }
 
       return true
 
     } catch (e) {
       log.error('Failed to sync', e)
 
-      this.syncState$.value = 'not-synced'
+      this.syncState$.value = { type: 'initial' }
 
       return false
     }
+  }
+
+  isReadyToSync() {
+    return this.syncState$.value.type === 'initial'
   }
 
   stop() {

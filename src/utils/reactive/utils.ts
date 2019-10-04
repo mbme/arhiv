@@ -29,3 +29,15 @@ export function blobUrl$(blob: Blob) {
     return () => URL.revokeObjectURL(url)
   })
 }
+
+export function promise$<T>(promise: Promise<T>): Observable<T> {
+  return new Observable<T>((observer) => {
+    promise.then(
+      (value) => {
+        observer.next(value)
+        observer.complete()
+      },
+      observer.error,
+    )
+  })
+}

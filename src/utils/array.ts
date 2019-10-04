@@ -24,6 +24,13 @@ export function uniq<T>(arr: T[], getKey: (item: T) => string) {
 
 export function removeMut<T>(arr: T[], value: T) {
   const pos = arr.indexOf(value)
+
+  removeAtMut(arr, pos)
+
+  return arr
+}
+
+export function removeAtMut<T>(arr: T[], pos: number) {
   if (pos > -1) {
     arr.splice(pos, 1)
   }

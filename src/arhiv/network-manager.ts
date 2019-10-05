@@ -19,15 +19,12 @@ const log = createLogger('arhiv:network-manager')
 const readNetworkState = () => window.navigator.onLine
 
 export class NetworkManager {
-  isOnline$: Cell<boolean>
-
-  authorized$ = new Cell<boolean>(true)
+  readonly isOnline$ = new Cell<boolean>(readNetworkState())
+  readonly authorized$ = new Cell<boolean>(true)
 
   private _callbacks = new Callbacks()
 
   constructor() {
-    this.isOnline$ = new Cell(readNetworkState())
-
     const sendNetworkState = () => {
       this.isOnline$.value = readNetworkState()
     }
@@ -35,25 +32,21 @@ export class NetworkManager {
     window.addEventListener('online', sendNetworkState)
     window.addEventListener('offline', sendNetworkState)
 
-    this._callbacks.add(() => {
-      window.removeEventListener('online', sendNetworkState)
-      window.removeEventListener('offline', sendNetworkState)
-    })
-
     this._callbacks.add(
+      () => {
+        window.removeEventListener('online', sendNetworkState)
+        window.removeEventListener('offline', sendNetworkState)
+      },
       this.isOnline$.value$.subscribe({
-        next: value => log.info(`network gone ${value}`),
+        next: value => log.info(`network is ${value ? 'online' : 'offline'}`),
       }),
-    )
-
-    this._callbacks.add(
       this.authorized$.value$.subscribe({
         next: isAuthorized => log.info(`authorized: ${isAuthorized}`),
       }),
     )
   }
 
-  authorize = async (password: string) => {
+  readonly authorize = async (password: string) => {
     this._assertIsOnline()
 
     const response = await fetch('/api/auth', {
@@ -68,12 +61,12 @@ export class NetworkManager {
     }
   }
 
-  deauthorize = () => {
+  readonly deauthorize = () => {
     document.cookie = 'token=0; path=/'
     this.authorized$.value = false
   }
 
-  syncChanges = async <T extends IDocument>(
+  readonly syncChanges = async <T extends IDocument>(
     changeset: IChangeset<T>,
     localAttachments: LocalAttachments,
   ): Promise<IChangesetResult<T>> => {

@@ -2,13 +2,14 @@ import { Procedure } from '../types'
 import { noop } from '../misc'
 import { createLogger } from '../logger'
 import { removeAtMut } from '../array'
+import { Callbacks } from '../component-lifecycle'
 
 const log = createLogger('observable')
 
+type InitCb<T> = (observer: IObserver<T>) => (Procedure | void)
 type NextCb<T> = (value: T) => void
 type ErrorCb = (e: any) => void
 type CompleteCb = Procedure
-type UnsubscribeCb = Procedure
 
 interface IObserver<T> {
   next: NextCb<T>
@@ -16,28 +17,75 @@ interface IObserver<T> {
   complete: CompleteCb
 }
 
-type InitCb<T> = (observer: IObserver<T>) => (Procedure | void)
+interface ISubscription {
+  (): void
+
+  callbacks: Callbacks
+}
+
+function createSubscription(): ISubscription {
+  const callbacks = new Callbacks()
+
+  const subscription: ISubscription = () => callbacks.runAll()
+  subscription.callbacks = callbacks
+
+  return subscription
+}
+
+class Subscriber<T> implements IObserver<T> {
+  private _complete = false
+
+  constructor(
+    private _rawSubscriber: Partial<IObserver<T>>,
+    private _subscription: ISubscription,
+  ) {
+    this._subscription.callbacks.add(() => this._complete = true)
+  }
+
+  private _assertNotCompleted() {
+    if (this._complete) {
+      throw new Error('observable is already complete')
+    }
+  }
+
+  readonly next = (value: T) => {
+    this._assertNotCompleted()
+
+    this._rawSubscriber.next?.(value)
+  }
+
+  readonly error = (e: any) => {
+    this._assertNotCompleted()
+
+    this._rawSubscriber.error?.(e)
+    this._subscription.callbacks.runAll()
+  }
+
+  readonly complete = () => {
+    this._assertNotCompleted()
+
+    this._rawSubscriber.complete?.()
+    this._subscription.callbacks.runAll()
+  }
+}
 
 export class Observable<T> {
   constructor(
     private _init: InitCb<T>,
   ) { }
 
-  subscribe(subscriber: Partial<IObserver<T>>): UnsubscribeCb {
-    const observer = {
-      next: subscriber.next || noop,
-      error: subscriber.error || noop,
-      complete: subscriber.complete || noop,
-    }
+  subscribe(rawSubscriber: Partial<IObserver<T>>): Procedure {
+    const subscription = createSubscription()
+    const subscriber = new Subscriber(rawSubscriber, subscription)
 
     try {
-      return this._init(observer) || noop
+      subscription.callbacks.add(this._init(subscriber) || noop)
     } catch (e) {
       log.debug('error on init:', e)
-      observer.error(e)
-
-      return noop
+      subscriber.error(e)
     }
+
+    return subscription
   }
 
   map<K>(map: (value: T) => K): Observable<K> {
@@ -73,9 +121,7 @@ export class Observable<T> {
 
     return new Observable<K>((observer) => this.subscribe({
       next: (value) => {
-        if (unsub) {
-          unsub()
-        }
+        unsub?.()
 
         unsub = map(value).subscribe({
           next: (mappedValue) => observer.next(mappedValue),
@@ -97,23 +143,18 @@ export class Observable<T> {
 
     let counter = 0
 
-    return new Observable<T>((observer) => {
-      const unsub = this.subscribe({
-        next: (value) => {
-          observer.next(value)
-          counter += 1
+    return new Observable<T>((observer) => this.subscribe({
+      next: (value) => {
+        observer.next(value)
+        counter += 1
 
-          if (counter === limit) {
-            observer.complete()
-            unsub()
-          }
-        },
-        error: observer.error,
-        complete: observer.complete,
-      })
-
-      return unsub
-    })
+        if (counter === limit) {
+          observer.complete()
+        }
+      },
+      error: observer.error,
+      complete: observer.complete,
+    }))
   }
 
   buffer(size: number): Observable<T[]> {
@@ -132,6 +173,26 @@ export class Observable<T> {
         }
 
         observer.next([...buffer])
+      },
+      error: observer.error,
+      complete: observer.complete,
+    }))
+  }
+
+  skip(count: number): Observable<T> {
+    if (count < 1) {
+      throw new Error('count must be greater than 0')
+    }
+
+    let skipped = 0
+
+    return new Observable<T>((observer) => this.subscribe({
+      next: (value) => {
+        if (skipped === count) {
+          observer.next(value)
+        } else {
+          skipped += 1
+        }
       },
       error: observer.error,
       complete: observer.complete,

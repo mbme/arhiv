@@ -48,7 +48,7 @@ export class ReplicaManager<T extends IDocument> {
         next: state => log.info(`sync state -> ${state.type}`),
       }),
 
-      this._replica.mergeConflicts$.value$.subscribe({
+      this._replica.mergeConflicts$.value$.skip(1).subscribe({
         next: (mergeConflicts) => {
           this.syncState$.value = mergeConflicts
             ? { type: 'merge-conflicts', conflicts: mergeConflicts }

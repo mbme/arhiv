@@ -62,12 +62,16 @@ export class Arhiv {
       syncCondtion$.subscribe({
         next: (success) => {
           log.info('synced -> ', success)
+
+          if (!success) {
+            this.syncNow()
+          }
         },
       }),
     )
   }
 
-  syncNow = () => {
+  readonly syncNow = () => {
     this._syncSignal.next()
   }
 

@@ -45,7 +45,7 @@ export class ReplicaManager<T extends IDocument> {
 
     this._callbacks.add(
       this.syncState$.value$.subscribe({
-        next: state => log.info(`sync state -> ${state}`),
+        next: state => log.info(`sync state -> ${state.type}`),
       }),
 
       this._replica.mergeConflicts$.value$.subscribe({

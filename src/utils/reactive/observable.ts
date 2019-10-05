@@ -125,13 +125,11 @@ export class Observable<T> {
   }
 
   switchMap<K>(map: (value: T) => Observable<K>): Observable<K> {
-    let unsub: Procedure | undefined
+    let unsub: Procedure = noop
 
     return new Observable<K>((observer) => this.subscribe({
       next: (value) => {
-        if (unsub) {
-          unsub()
-        }
+        unsub()
 
         unsub = map(value).subscribe({
           next: (mappedValue) => observer.next(mappedValue),
@@ -139,10 +137,6 @@ export class Observable<T> {
         })
 
         return () => {
-          if (!unsub) {
-            throw new Error('unreachable: unsub is missing')
-          }
-
           unsub()
         }
       },

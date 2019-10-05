@@ -122,8 +122,9 @@ export class LockManager {
     return this.isDBLocked$
       .filter(isLocked => !isLocked)
       .take(1)
-      .switchMap(() => new Observable<void>(() => {
+      .switchMap(() => new Observable<void>((observer) => {
         this._lockDB()
+        observer.next()
 
         return () => this._unlockDB()
       }))

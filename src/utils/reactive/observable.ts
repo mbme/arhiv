@@ -126,10 +126,15 @@ export class Observable<T> {
         unsub = map(value).subscribe({
           next: (mappedValue) => observer.next(mappedValue),
           error: observer.error,
-          complete: observer.complete,
         })
 
-        return unsub
+        return () => {
+          if (!unsub) {
+            throw new Error('unreachable: unsub is missing')
+          }
+
+          unsub()
+        }
       },
       error: observer.error,
       complete: observer.complete,

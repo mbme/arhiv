@@ -32,12 +32,24 @@ export function blobUrl$(blob: Blob) {
 
 export function promise$<T>(promise: Promise<T>): Observable<T> {
   return new Observable<T>((observer) => {
+    let completed = false
+
     promise.then(
       (value) => {
-        observer.next(value)
-        observer.complete()
+        if (!completed) {
+          observer.next(value)
+          observer.complete()
+        }
       },
-      observer.error,
+      (err) => {
+        if (!completed) {
+          observer.error(err)
+        }
+      },
     )
+
+    return () => {
+      completed = true
+    }
   })
 }

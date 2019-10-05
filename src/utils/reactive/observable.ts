@@ -51,20 +51,28 @@ class Subscriber<T> implements IObserver<T> {
   readonly next = (value: T) => {
     this._assertNotCompleted()
 
-    this._rawSubscriber.next?.(value)
+    if (this._rawSubscriber.next) {
+      this._rawSubscriber.next(value)
+    }
   }
 
   readonly error = (e: any) => {
     this._assertNotCompleted()
 
-    this._rawSubscriber.error?.(e)
+    if (this._rawSubscriber.error) {
+      this._rawSubscriber.error(e)
+    }
+
     this._subscription.callbacks.runAll()
   }
 
   readonly complete = () => {
     this._assertNotCompleted()
 
-    this._rawSubscriber.complete?.()
+    if (this._rawSubscriber.complete) {
+      this._rawSubscriber.complete()
+    }
+
     this._subscription.callbacks.runAll()
   }
 }
@@ -121,7 +129,9 @@ export class Observable<T> {
 
     return new Observable<K>((observer) => this.subscribe({
       next: (value) => {
-        unsub?.()
+        if (unsub) {
+          unsub()
+        }
 
         unsub = map(value).subscribe({
           next: (mappedValue) => observer.next(mappedValue),

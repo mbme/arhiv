@@ -8,8 +8,8 @@ import {
   IChangesetResult,
   IChangeset,
   IDocument,
-} from '~/isodb/types'
-import { isEmptyChangeset } from '~/isodb/utils'
+} from '../types'
+import { isEmptyChangeset } from '../utils'
 import { IPrimaryStorage } from './primary-storage'
 
 const log = createLogger('isodb-primary')

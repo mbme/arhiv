@@ -1,13 +1,4 @@
 import path from 'path'
-import {
-  generateRandomId,
-  createDocument,
-} from '~/isodb/utils'
-import { IAttachment } from '~/isodb/types'
-import {
-  DocumentType,
-  INote,
-} from '~/arhiv/types'
 import { getMimeType } from '~/file-prober'
 import {
   createArray,
@@ -26,7 +17,16 @@ import {
   shuffle,
   pickRandomItem,
 } from '~/utils/random'
-import createTextGenerator, { ITextGenerator } from './text-generator'
+import createTextGenerator, { ITextGenerator } from '~/utils/random/text-generator'
+import {
+  generateRandomId,
+  createDocument,
+} from '../isodb/utils'
+import { IAttachment } from '../isodb/types'
+import {
+  DocumentType,
+  INote,
+} from '../types'
 
 async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<INote> {
   const name = generator.sentence(1, 8)

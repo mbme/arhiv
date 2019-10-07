@@ -1,5 +1,5 @@
 import { blobUrl$ } from '~/utils/reactive'
-import { IAttachment } from '~/isodb/types'
+import { IAttachment } from '../isodb/types'
 import { ArhivReplica } from '../types'
 
 export class Attachment {

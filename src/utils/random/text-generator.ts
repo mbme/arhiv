@@ -1,5 +1,5 @@
 import { capitalize } from '~/utils'
-import { pickRandomItem } from '~/utils/random'
+import { pickRandomItem } from './index'
 
 // TODO handle few separators in a row https://github.com/Tessmore/sbd
 const SKIP_WORDS = ['dr.', 'mr.', 'mrs.']

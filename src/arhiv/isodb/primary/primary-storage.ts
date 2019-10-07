@@ -1,7 +1,7 @@
 import {
   IDocument,
   IAttachment,
-} from '~/isodb/types'
+} from '../types'
 
 export interface IPrimaryStorage<T extends IDocument> {
   getRev(): number

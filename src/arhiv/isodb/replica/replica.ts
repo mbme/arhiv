@@ -264,7 +264,6 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-
   /**
    * Remove unused local attachments
    */

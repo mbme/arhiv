@@ -1,4 +1,4 @@
-import { createDocument } from '~/isodb/utils'
+import { createDocument } from '../isodb/utils'
 import {
   ITrack,
   DocumentType,

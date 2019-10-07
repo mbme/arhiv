@@ -3,16 +3,16 @@ import {
   Callbacks,
 } from '~/utils'
 import {
+  Cell,
+} from '~/utils/reactive'
+import {
   IChangesetResult,
   IChangeset,
   IDocument,
-} from '~/isodb/types'
+} from './isodb/types'
 import {
   LocalAttachments,
-} from '~/isodb/replica'
-import {
-  Cell,
-} from '~/utils/reactive'
+} from './isodb/replica'
 
 const log = createLogger('arhiv:network-manager')
 

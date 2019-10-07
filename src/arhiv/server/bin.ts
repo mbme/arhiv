@@ -3,12 +3,12 @@ import {
   createLogger,
   setLogLevelStr,
 } from '~/utils'
-import { getFakeNotes } from '~/faker/faker'
+import { getFakeNotes } from './faker'
 import {
   PrimaryDB,
   PrimaryInMemStorage,
-} from '../primary'
-import createServer from './server'
+} from '../isodb/primary'
+import createServer from '../isodb/server/server'
 
 const isProduction = process.env.NODE_ENV === 'production'
 

@@ -6,7 +6,7 @@ import {
   selectLinks,
   parseMarkup,
 } from '~/markup-parser'
-import { IDocument } from '~/isodb/types'
+import { IDocument } from '../isodb/types'
 import {
   ArhivReplica,
   Record,

@@ -8,7 +8,7 @@ mkdir -p tsdist/web-app
 touch tsdist/web-app/index.js
 
 # server
-NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/isodb/server/bin 8080 pass /tmp/db --gen-data &
+NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/arhiv/server/bin 8080 pass /tmp/db --gen-data &
 
 # web app typescript into javascript
 ./node_modules/.bin/tsc \

@@ -10,8 +10,8 @@ import {
 } from '~/utils/reactive'
 import {
   ReplicaInMemStorage,
-  ReplicaManager,
-} from '~/isodb/replica'
+  IsodbReplica,
+} from './isodb/replica'
 import { LockManager } from './lock-manager'
 import { NetworkManager } from './network-manager'
 import { ArhivReplica } from './types'
@@ -27,7 +27,7 @@ export class Arhiv {
   readonly net = new NetworkManager()
 
   private _locks = new LockManager()
-  private _replica: ArhivReplica = new ReplicaManager(new ReplicaInMemStorage())
+  private _replica: ArhivReplica = new IsodbReplica(new ReplicaInMemStorage())
   private _callbacks = new Callbacks()
   private _syncSignal = new Signal()
 

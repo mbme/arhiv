@@ -1,7 +1,7 @@
 import {
   IDocument,
   IAttachment,
-} from '~/isodb/types'
+} from '../types'
 import { IPrimaryStorage } from './primary-storage'
 
 export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {

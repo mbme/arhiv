@@ -1,5 +1,5 @@
-import { IDocument } from '~/isodb/types'
-import { ReplicaManager } from '~/isodb/replica'
+import { IDocument } from './isodb/types'
+import { IsodbReplica } from './isodb/replica'
 
 export enum DocumentType {
   Note = 'note',
@@ -19,4 +19,4 @@ export interface ITrack extends IDocument {
 }
 
 export type Record = INote | ITrack
-export type ArhivReplica = ReplicaManager<Record>
+export type ArhivReplica = IsodbReplica<Record>

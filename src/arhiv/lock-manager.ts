@@ -125,8 +125,12 @@ export class LockManager {
       .switchMap(() => new Observable<void>((observer) => {
         this._lockDB()
         observer.next()
+        console.error('LOCK');
 
-        return () => this._unlockDB()
+        return () => {
+          console.error('UNLOCK');
+          this._unlockDB()
+        }
       }))
   }
 

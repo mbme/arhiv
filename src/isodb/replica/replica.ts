@@ -1,44 +1,99 @@
 import {
   createLogger,
   nowS,
+  Callbacks,
 } from '~/utils'
-import { Cell } from '~/utils/reactive'
+import {
+  Cell,
+  Observable,
+} from '~/utils/reactive'
 import {
   IAttachment,
   IDocument,
   IChangesetResult,
-  IChangeset,
 } from '../types'
 import {
   IReplicaStorage,
-  LocalAttachments,
-} from './replica-storage'
+  ChangesetExchange,
+} from './types'
 import { MergeConflicts } from './merge-conflict'
+import {
+  generateRandomId,
+  isEmptyChangeset,
+  fetchAttachment$,
+} from '../utils'
 
 const log = createLogger('isodb-replica')
 
+type SyncState<T extends IDocument> =
+  { type: 'initial' }
+  | { type: 'sync' }
+  | { type: 'merge-conflicts', conflicts: MergeConflicts<T> }
+
 export class IsodbReplica<T extends IDocument> {
+  readonly syncState$ = new Cell<SyncState<T>>({ type: 'initial' })
   readonly updateTime$ = new Cell(0)
-  readonly mergeConflicts$ = new Cell<MergeConflicts<T> | undefined>(undefined)
+
+  private _callbacks = new Callbacks()
 
   constructor(
     private _storage: IReplicaStorage<T>,
-  ) { }
+  ) {
+    this._callbacks.add(
+      this.syncState$.value$.subscribe({
+        next: state => log.info(`sync state -> ${state.type}`),
+      }),
+    )
+
+    // run compaction on startup
+    this._compact()
+  }
 
   getRev() {
     return this._storage.getRev()
   }
 
-  getLocalAttachmentData(id: string) {
-    return this._storage.getLocalAttachmentData(id)
+  getRandomId() {
+    let id: string
+
+    do {
+      id = generateRandomId()
+    } while (
+      this.getDocument(id)
+      || this.getAttachment(id)) // make sure generated id is free
+
+    return id
   }
 
   getDocument(id: string): T | undefined {
     return this._storage.getLocalDocument(id) || this._storage.getDocument(id)
   }
 
+  getDocument$(id: string): Observable<T | undefined> {
+    return this.updateTime$.value$.map(() => this.getDocument(id))
+  }
+
   getAttachment(id: string): IAttachment | undefined {
     return this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
+  }
+
+  getAttachmentData$(id: string): Observable<Blob> {
+    return new Observable<Blob>((observer) => {
+      if (!this.getAttachment(id)) {
+        throw new Error(`attachment ${id} doesn't exist`)
+      }
+
+      const data = this._storage.getLocalAttachmentData(id)
+
+      if (data) {
+        observer.next(data)
+        observer.complete()
+
+        return undefined
+      }
+
+      return fetchAttachment$(id).subscribe(observer)
+    })
   }
 
   getDocuments(includeDeleted = false): T[] {
@@ -59,33 +114,27 @@ export class IsodbReplica<T extends IDocument> {
     return result.filter(document => !document._deleted)
   }
 
-  hasMergeConflicts() {
-    return !!this.mergeConflicts$.value
+  getDocuments$(): Observable<T[]> {
+    return this.updateTime$.value$.map(() => this.getDocuments())
   }
 
-  private _assertNoMergeConflicts() {
-    if (this.hasMergeConflicts()) {
-      throw new Error('there is a pending merge conflict')
-    }
-  }
-
-  private _onUpdate() {
-    this.updateTime$.value = nowS()
-  }
-
-  saveAttachment(id: string, blob: File) {
+  saveAttachment(file: File): string {
     this._assertNoMergeConflicts()
+
+    const id = this.getRandomId()
 
     this._storage.addLocalAttachment({
       _id: id,
       _rev: this.getRev(),
       _createdTs: nowS(),
-      _mimeType: blob.type,
-      _size: blob.size,
-    }, blob)
-    log.debug(`saved new attachment with id ${id}`)
+      _mimeType: file.type,
+      _size: file.size,
+    }, file)
+    log.info(`Created new attachment ${id} for the file "${file.name}"`)
 
     this._onUpdate()
+
+    return id
   }
 
   saveDocument(document: T) {
@@ -100,15 +149,72 @@ export class IsodbReplica<T extends IDocument> {
     this._onUpdate()
   }
 
-  getChangeset(): [IChangeset<T>, LocalAttachments] {
-    this._assertNoMergeConflicts()
-
-    return this._storage.getChangeset()
+  isReadyToSync() {
+    return this.syncState$.value.type === 'initial'
   }
 
-  async applyChangesetResult(changesetResult: IChangesetResult<T>) {
-    this._assertNoMergeConflicts()
+  async sync(exchange: ChangesetExchange<T>) {
+    if (!this.isReadyToSync()) {
+      throw new Error('not ready to sync')
+    }
 
+    try {
+      log.debug('sync: starting')
+
+      this.syncState$.value = { type: 'sync' }
+
+      const [changeset, localAttachments] = this._storage.getChangeset()
+
+      if (isEmptyChangeset(changeset)) {
+        log.info('sync: sending empty changeset')
+      } else {
+        // tslint:disable-next-line:max-line-length
+        log.info(`sync: sending ${changeset.documents.length} documents, ${changeset.attachments.length} attachments, (${Object.keys(localAttachments).length} BLOBs)`)
+      }
+
+      const result = await exchange(changeset, localAttachments)
+
+      // tslint:disable-next-line:max-line-length
+      log.info(`sync: success: ${result.success}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
+
+      await this._applyChangesetResult(result)
+
+      if (this._hasMergeConflicts()) {
+        log.debug('sync: merge conflicts')
+
+        return false
+      }
+
+      log.debug('sync: ok')
+
+      this.syncState$.value = { type: 'initial' }
+
+      return true
+
+    } catch (e) {
+      log.error('Failed to sync', e)
+
+      this.syncState$.value = { type: 'initial' }
+
+      return false
+    }
+  }
+
+  private _hasMergeConflicts() {
+    return this.syncState$.value.type === 'merge-conflicts'
+  }
+
+  private _assertNoMergeConflicts() {
+    if (this._hasMergeConflicts()) {
+      throw new Error('there is a pending merge conflict')
+    }
+  }
+
+  private _onUpdate() {
+    this.updateTime$.value = nowS()
+  }
+
+  private async _applyChangesetResult(changesetResult: IChangesetResult<T>) {
     // this should never happen
     if (this.getRev() !== changesetResult.baseRev) {
       throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this.getRev()}`)
@@ -133,7 +239,7 @@ export class IsodbReplica<T extends IDocument> {
       this._storage.upgrade(changesetResult)
       this._onUpdate()
 
-      this.mergeConflicts$.value = undefined
+      this.syncState$.value = { type: 'initial' }
     })
 
     for (const localDocument of this._storage.getLocalDocuments()) {
@@ -151,17 +257,18 @@ export class IsodbReplica<T extends IDocument> {
     }
 
     if (mergeConflicts.conflicts.length) {
-      this.mergeConflicts$.value = mergeConflicts
+      this.syncState$.value = { type: 'merge-conflicts', conflicts: mergeConflicts }
     } else {
       this._storage.upgrade(changesetResult)
       this._onUpdate()
     }
   }
 
+
   /**
    * Remove unused local attachments
    */
-  compact() {
+  private _compact() {
     const idsInUse = new Set(this._storage.getDocuments().flatMap(document => document._attachmentRefs))
     const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
 
@@ -179,5 +286,10 @@ export class IsodbReplica<T extends IDocument> {
     if (updated) {
       this._onUpdate()
     }
+  }
+
+  stop() {
+    this._callbacks.runAll()
+    // TODO stop storage?
   }
 }

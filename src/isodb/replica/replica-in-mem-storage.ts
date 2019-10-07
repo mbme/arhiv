@@ -8,7 +8,7 @@ import {
 import {
   IReplicaStorage,
   LocalAttachments,
-} from './replica-storage'
+} from './types'
 
 export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage<T> {
   private _documents: T[] = []

@@ -8,6 +8,11 @@ import {
 
 export type LocalAttachments = IDict<Blob>
 
+export type ChangesetExchange<T extends IDocument> = (
+  changeset: IChangeset<T>,
+  blobs: LocalAttachments,
+) => Promise<IChangesetResult<T>>
+
 export interface IReplicaStorage<T extends IDocument> {
   getRev(): number
 

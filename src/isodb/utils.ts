@@ -1,6 +1,10 @@
 import { nowS } from '~/utils'
 import { randomId } from '~/utils/random'
-import { IChangeset, IDocument } from './types'
+import { Observable } from '~/utils/reactive'
+import {
+  IChangeset,
+  IDocument,
+} from './types'
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
 const ID_LENGTH = 15
@@ -22,4 +26,28 @@ export function createDocument<T extends string>(id: string, type: T) {
     _updatedTs: now,
     _attachmentRefs: [] as string[],
   }
+}
+
+export function fetchAttachment$(id: string) {
+  return new Observable<Blob>((observer) => {
+    const controller = new AbortController()
+
+    fetch(`/api/file?fileId=${id}`, {
+      cache: 'force-cache',
+      signal: controller.signal,
+    }).then((response) => {
+      if (!response.ok) {
+        throw response
+      }
+
+      return response.blob()
+    }).then(
+      observer.next,
+      observer.error,
+    )
+
+    return () => {
+      controller.abort()
+    }
+  })
 }

@@ -94,6 +94,6 @@ export class Arhiv {
   }
 
   stop() {
-    this._callbacks.runAll()
+    this._callbacks.runAll(true)
   }
 }

@@ -288,7 +288,7 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   stop() {
-    this._callbacks.runAll()
+    this._callbacks.runAll(true)
     // TODO stop storage?
   }
 }

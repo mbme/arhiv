@@ -7,9 +7,17 @@ export class Callbacks {
     this._callbacks.push(...cb)
   }
 
-  runAll() {
+  runAll(clear = false) {
     for (const callback of this._callbacks) {
       callback()
     }
+
+    if (clear) {
+      this.clear()
+    }
+  }
+
+  clear() {
+    this._callbacks = []
   }
 }

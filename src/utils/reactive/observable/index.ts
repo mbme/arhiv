@@ -1,96 +1,39 @@
-import { Procedure } from '../types'
-import { noop } from '../misc'
-import { createLogger } from '../logger'
-import { removeAtMut } from '../array'
-import { Callbacks } from '../component-lifecycle'
+import { createLogger } from '~/utils/logger'
+import { Procedure } from '~/utils/types'
+import { noop } from '~/utils/misc'
+import { removeAtMut } from '~/utils/array'
+import {
+  InitCb,
+  IObserver,
+} from './types'
+import { createSubscription } from './subscription'
+import { Observer } from './observer'
 
 const log = createLogger('observable')
-
-type InitCb<T> = (observer: IObserver<T>) => (Procedure | void)
-type NextCb<T> = (value: T) => void
-type ErrorCb = (e: any) => void
-type CompleteCb = Procedure
-
-interface IObserver<T> {
-  next: NextCb<T>
-  error: ErrorCb
-  complete: CompleteCb
-}
-
-interface ISubscription {
-  (): void
-
-  callbacks: Callbacks
-}
-
-function createSubscription(): ISubscription {
-  const callbacks = new Callbacks()
-
-  const subscription: ISubscription = () => callbacks.runAll()
-  subscription.callbacks = callbacks
-
-  return subscription
-}
-
-class Subscriber<T> implements IObserver<T> {
-  private _complete = false
-
-  constructor(
-    private _rawSubscriber: Partial<IObserver<T>>,
-    private _subscription: ISubscription,
-  ) {
-    this._subscription.callbacks.add(() => this._complete = true)
-  }
-
-  private _assertNotCompleted() {
-    if (this._complete) {
-      throw new Error('observable is already complete')
-    }
-  }
-
-  readonly next = (value: T) => {
-    this._assertNotCompleted()
-
-    if (this._rawSubscriber.next) {
-      this._rawSubscriber.next(value)
-    }
-  }
-
-  readonly error = (e: any) => {
-    this._assertNotCompleted()
-
-    if (this._rawSubscriber.error) {
-      this._rawSubscriber.error(e)
-    }
-
-    this._subscription.callbacks.runAll()
-  }
-
-  readonly complete = () => {
-    this._assertNotCompleted()
-
-    if (this._rawSubscriber.complete) {
-      this._rawSubscriber.complete()
-    }
-
-    this._subscription.callbacks.runAll()
-  }
-}
 
 export class Observable<T> {
   constructor(
     private _init: InitCb<T>,
   ) { }
 
-  subscribe(rawSubscriber: Partial<IObserver<T>>): Procedure {
+  subscribe(rawObserver: Partial<IObserver<T>>): Procedure {
     const subscription = createSubscription()
-    const subscriber = new Subscriber(rawSubscriber, subscription)
+    const observer = new Observer(rawObserver, subscription)
 
+    let destroyCb: Procedure | undefined
     try {
-      subscription.callbacks.add(this._init(subscriber) || noop)
+      destroyCb = this._init(observer) || undefined
     } catch (e) {
       log.debug('error on init:', e)
-      subscriber.error(e)
+      observer.error(e)
+    }
+
+    if (destroyCb) {
+      if (observer.isComplete()) {
+        destroyCb()
+      } else {
+        subscription.callbacks.add(destroyCb)
+      }
     }
 
     return subscription

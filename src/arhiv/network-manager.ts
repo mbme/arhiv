@@ -122,7 +122,7 @@ export class NetworkManager {
   }
 
   stop() {
-    this._callbacks.runAll()
+    this._callbacks.runAll(true)
     log.debug('stopped')
   }
 }

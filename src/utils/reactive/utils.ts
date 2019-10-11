@@ -1,5 +1,5 @@
 import { Observable } from './observable'
-import { Callbacks } from '../component-lifecycle'
+import { Callbacks } from '../callbacks'
 
 export function interval$(interval: number) {
   return new Observable<undefined>((observer) => {
@@ -17,7 +17,7 @@ export function merge$<T>(...observables: Array<Observable<T>>) {
       callbacks.add(observable.subscribe(observer))
     }
 
-    return () => callbacks.runAll()
+    return () => callbacks.runAll(true)
   })
 }
 

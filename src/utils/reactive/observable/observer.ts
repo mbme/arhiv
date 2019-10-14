@@ -44,7 +44,9 @@ export class Observer<T> implements IObserver<T> {
   }
 
   readonly complete = () => {
-    this._assertNotCompleted()
+    if (this._complete) {
+      return
+    }
 
     if (this._rawObserver.complete) {
       this._rawObserver.complete()

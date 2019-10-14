@@ -42,7 +42,7 @@ export class Arhiv {
     const mergeConflictsResolved$ = this._replica.syncState$.value$
       .buffer(2)
       .filter(syncStates => syncStates.length === 2 && syncStates[0].type === 'merge-conflicts')
-    const gotAuthorized$ = this.net.authorized$.value$.filter(isAuthorized => isAuthorized).tap(isAuthorized => console.error('sig', isAuthorized))
+    const gotAuthorized$ = this.net.authorized$.value$.filter(isAuthorized => isAuthorized)
     const gotOnline$ = this.net.isOnline$.value$.filter(isOnline => isOnline)
 
     const syncCondtion$ = merge$<any>(
@@ -52,15 +52,11 @@ export class Arhiv {
       mergeConflictsResolved$,
       this._syncSignal.signal$,
     )
-      .tap(() => console.error('step 1: sync condition'))
       .filter(() => this.net.isOnline() && this.net.isAuthorized() && this._replica.isReadyToSync())
-      .tap(() => console.error('step 2: sync requirements'))
       .switchMap(
         () => new Observable<boolean>((observer) => {
           this._locks.acquireDBLock$()
-            .tap(() => console.error('step 3: got db lock'))
             .switchMap(() => promise$(this._replica.sync(this.net.syncChanges)))
-            .tap(() => console.error('step 4: got response'))
             .take(1)
             .subscribe({
               next: observer.next,

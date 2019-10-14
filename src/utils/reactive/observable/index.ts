@@ -70,23 +70,35 @@ export class Observable<T> {
   switchMap<K>(map: (value: T) => Observable<K>): Observable<K> {
     let unsub: Procedure = noop
 
+    let innerComplete = true
+    let outerComplete = false
+
     return new Observable<K>((observer) => {
       const unsubThis = this.subscribe({
         next: (value) => {
           unsub()
 
+          innerComplete = false
+
           unsub = map(value).subscribe({
             next: (mappedValue) => observer.next(mappedValue),
             error: observer.error,
+            complete: () => {
+              innerComplete = true
+
+              if (outerComplete) {
+                observer.complete()
+              }
+            },
           })
         },
-        error: (err) => {
-          unsub()
-          observer.error(err)
-        },
+        error: observer.error,
         complete: () => {
-          unsub()
-          observer.complete()
+          outerComplete = true
+
+          if (innerComplete) {
+            observer.complete()
+          }
         },
       })
 

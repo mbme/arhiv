@@ -110,28 +110,48 @@ test('filter', async () => {
 })
 
 test('switchMap', async () => {
-  let destCounter = 0
+  {
+    let destCounter = 0
 
-  const o$ = new Observable<number>((observer) => {
-    observer.next(1)
+    const o$ = new Observable<number>((observer) => {
+      observer.next(1)
 
-    setTimeout(() => observer.next(2), 100)
-    setTimeout(() => observer.complete(), 200)
+      setTimeout(() => observer.next(2), 100)
+      setTimeout(() => observer.complete(), 200)
 
-    return () => destCounter += 1
-  }).switchMap(() => new Observable((observer) => {
-    observer.next(5)
+      return () => destCounter += 1
+    }).switchMap(() => new Observable((observer) => {
+      observer.next(5)
 
-    const timeout = setTimeout(() => observer.next(1), 150)
+      const timeout = setTimeout(() => observer.next(1), 150)
 
-    return () => {
-      clearTimeout(timeout)
-      destCounter += 1
-    }
-  }))
+      return () => {
+        clearTimeout(timeout)
+        destCounter += 1
+      }
+    }))
 
-  await assertObservable(o$, [5, 5, complete])
-  asserts.equal(destCounter, 3)
+    await assertObservable(o$, [5, 5, complete])
+    asserts.equal(destCounter, 3)
+  }
+
+  { // switchMap must wait for inner observable to complete
+    const o$ = new Observable<number>((observer) => {
+      observer.next(1)
+      observer.complete()
+    }).switchMap(() => new Observable<number>((observer) => {
+      const timeout = setTimeout(() => {
+        observer.next(2)
+        observer.complete()
+      }, 150)
+
+      return () => {
+        clearTimeout(timeout)
+      }
+    }))
+
+    await assertObservable(o$, [2, complete])
+  }
 })
 
 test('take', async () => {

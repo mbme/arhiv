@@ -14,7 +14,11 @@ const log = createLogger('observable')
 export class Observable<T> {
   constructor(
     private _init: InitCb<T>,
-  ) { }
+  ) {
+    if (_init.length !== 1) {
+      throw new Error('init must accept 1 argument')
+    }
+  }
 
   subscribe(rawObserver: Partial<IObserver<T>>): Procedure {
     const subscription = createSubscription()

@@ -87,8 +87,9 @@ export class LockManager {
     return this.isDocumentLocked$(id)
       .filter(isLocked => !isLocked)
       .take(1)
-      .switchMap(() => new Observable<void>(() => {
+      .switchMap(() => new Observable<void>((observer) => {
         this._lockDocument(id)
+        observer.next()
 
         return () => this._unlockDocument(id)
       }))

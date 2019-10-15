@@ -18,18 +18,18 @@ export class LockManager {
   private _unsub = this._state.value$.subscribe({
     next(currentState) {
       if (currentState.type === 'free') {
-        log.info('state -> free')
+        log.info('lock state -> free')
 
         return
       }
 
       if (currentState.type === 'db-locked') {
-        log.info('state -> db-locked')
+        log.info('lock state -> db-locked')
 
         return
       }
 
-      log.info(`state -> documents locked: ${currentState.locks.join(', ')}`)
+      log.info(`lock state -> documents locked: ${currentState.locks.join(', ')}`)
     },
   })
 
@@ -85,7 +85,7 @@ export class LockManager {
 
   acquireDocumentLock$(id: string) {
     return this.isDocumentLocked$(id)
-      .filter(isLocked => !isLocked)
+      .filter((isLocked): isLocked is false => !isLocked)
       .take(1)
       .switchMap(() => new Observable<void>((observer) => {
         this._lockDocument(id)
@@ -119,9 +119,13 @@ export class LockManager {
     return false
   })
 
+  isDBLockable() {
+    return this._state.value.type === 'free'
+  }
+
   acquireDBLock$() {
     return this.isDBLocked$
-      .filter(isLocked => !isLocked)
+      .filter((isLocked): isLocked is false => !isLocked)
       .take(1)
       .switchMap(() => new Observable<void>((observer) => {
         this._lockDB()

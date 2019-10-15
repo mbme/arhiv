@@ -20,7 +20,7 @@ export class Document<T extends Record> {
   constructor(
     private _replica: ArhivReplica,
     private _locks: LockManager,
-    public record: T,
+    public readonly record: T,
   ) { }
 
   get id() {

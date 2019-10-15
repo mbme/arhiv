@@ -69,8 +69,10 @@ export class IsodbReplica<T extends IDocument> {
     return this._storage.getLocalDocument(id) || this._storage.getDocument(id)
   }
 
-  getDocument$(id: string): Observable<T | undefined> {
-    return this.updateTime$.value$.map(() => this.getDocument(id))
+  getDocument$(id: string): Observable<T> {
+    return this.updateTime$.value$
+      .map(() => this.getDocument(id))
+      .filter(document => !!document) as Observable<T>
   }
 
   getAttachment(id: string): IAttachment | undefined {

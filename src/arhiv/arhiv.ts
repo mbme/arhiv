@@ -52,7 +52,10 @@ export class Arhiv {
       mergeConflictsResolved$,
       this._syncSignal.signal$,
     )
-      .filter(() => this.net.isOnline() && this.net.isAuthorized() && this._replica.isReadyToSync())
+      .filter(() => this.net.isOnline()
+        && this.net.isAuthorized()
+        && this._locks.isDBLockable()
+        && this._replica.isReadyToSync())
       .switchMap(
         () => new Observable<boolean>((observer) => {
           this._locks.acquireDBLock$()
@@ -76,10 +79,6 @@ export class Arhiv {
       syncCondtion$.subscribe({
         next: (success) => {
           log.info('synced -> ', success)
-
-          if (!success) {
-            this.syncNow()
-          }
         },
       }),
     )

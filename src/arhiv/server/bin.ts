@@ -3,6 +3,10 @@ import {
   createLogger,
   setLogLevelStr,
 } from '~/utils'
+import {
+  createTempDir,
+  rmrfSync,
+} from '~/utils/fs'
 import { getFakeNotes } from './faker'
 import {
   PrimaryDB,
@@ -22,12 +26,13 @@ const log = createLogger('isodb-server')
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')
 
-  const db = new PrimaryDB(new PrimaryInMemStorage())
+  const db = new PrimaryDB(new PrimaryInMemStorage(await createTempDir()))
   if (!isProduction && args.includes('--gen-data')) {
     const {
       documents,
       attachments,
       attachedFiles,
+      tempDir,
     } = await getFakeNotes(30)
 
     await db.applyChangeset({
@@ -35,6 +40,8 @@ export default async function run(port: string, password: string, rootDir: strin
       documents,
       attachments,
     }, attachedFiles)
+
+    rmrfSync(tempDir)
 
     log.info(`Generated ${documents.length} fake notes`)
   }

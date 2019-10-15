@@ -1,3 +1,4 @@
+import { moveFile } from '~/utils/fs'
 import {
   IDocument,
   IAttachment,
@@ -5,10 +6,14 @@ import {
 import { IPrimaryStorage } from './primary-storage'
 
 export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {
-  _documents: T[] = []
-  _attachments: IAttachment[] = []
-  _rev = 0
-  _files = new Map<string, string>()
+  private _documents: T[] = []
+  private _attachments: IAttachment[] = []
+  private _rev = 0
+  private _files = new Map<string, string>()
+
+  constructor(
+    private _tempDir: string,
+  ) { }
 
   getRev() {
     return this._rev
@@ -50,17 +55,10 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     }
   }
 
-  addAttachment(attachment: IAttachment, attachmentPath: string) {
+  async addAttachment(attachment: IAttachment, attachmentPath: string) {
     this._attachments.push(attachment)
-    this._files.set(attachment._id, attachmentPath)
-  }
-
-  updateAttachment(attachment: IAttachment) {
-    const attachmentPath = this._files.get(attachment._id)
-    this.removeAttachment(attachment._id)
-    if (attachmentPath) {
-      this.addAttachment(attachment, attachmentPath)
-    }
+    const newFile = await moveFile(attachmentPath, this._tempDir)
+    this._files.set(attachment._id, newFile)
   }
 
   removeAttachment(id: string) {

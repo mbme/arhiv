@@ -1,4 +1,5 @@
 import path from 'path'
+import fs from 'fs'
 import { getMimeType } from '~/file-prober'
 import {
   createArray,
@@ -10,6 +11,7 @@ import {
   readText,
   listFiles,
   getFileSize,
+  createTempDir,
 } from '~/utils/fs'
 import { createLink } from '~/markup-parser/utils'
 import {
@@ -61,7 +63,7 @@ async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IN
   }
 }
 
-async function listImages(basePath: string): Promise<IDict> {
+async function prepareImages(basePath: string, tempDir: string): Promise<IDict> {
   const files = await listFiles(basePath)
   const images = files.filter((name) => name.match(/\.(jpg|jpeg)$/i))
 
@@ -70,7 +72,12 @@ async function listImages(basePath: string): Promise<IDict> {
   await Promise.all(images.map(async (name) => {
     const filePath = path.join(basePath, name)
     const hash = await sha256File(filePath)
-    result[hash] = filePath
+
+    const newPath = path.join(tempDir, name)
+
+    await fs.promises.copyFile(filePath, newPath)
+
+    result[hash] = newPath
   }))
 
   return result
@@ -98,7 +105,9 @@ async function createAttachments(images: IDict): Promise<IAttachment[]> {
 
 export async function getFakeNotes(count: number) {
   const resourcesPath = path.join(process.env.BASE_DIR!, 'resources')
-  const images = await listImages(resourcesPath)
+  const tempDir = await createTempDir()
+  const images = await prepareImages(resourcesPath, tempDir)
+
   const text = await readText(path.join(resourcesPath, 'text.txt'))
   const generator = createTextGenerator(text)
 
@@ -106,5 +115,6 @@ export async function getFakeNotes(count: number) {
     documents: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
     attachments: await createAttachments(images),
     attachedFiles: images,
+    tempDir,
   }
 }

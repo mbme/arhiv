@@ -98,3 +98,11 @@ export const writeText = (name: string, data: string) => fs.promises.writeFile(n
 export const writeJSON = (name: string, data: object) => writeText(name, JSON.stringify(data, undefined, 2))
 
 export const getFileSize = (filePath: string) => fs.promises.stat(filePath).then(stats => stats.size)
+
+export async function moveFile(file: string, dir: string): Promise<string> {
+  const newFile = path.join(dir, path.basename(file))
+
+  await fs.promises.rename(file, newFile)
+
+  return newFile
+}

@@ -10,7 +10,6 @@ export class Attachment {
 
   getUrl$() {
     return this._replica.getAttachmentData$(this.id)
-      .filter(blob => !!blob)
       .take(1)
       .switchMap(blobUrl$)
   }

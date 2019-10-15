@@ -17,7 +17,6 @@ export interface IPrimaryStorage<T extends IDocument> {
   putDocument(document: T): void
   removeDocument(id: string): void
 
-  addAttachment(attachment: IAttachment, attachmentPath: string): void
-  updateAttachment(attachment: IAttachment): void
+  addAttachment(attachment: IAttachment, attachmentPath: string): Promise<void>
   removeAttachment(id: string): void
 }

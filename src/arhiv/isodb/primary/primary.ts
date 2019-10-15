@@ -98,7 +98,7 @@ export class PrimaryDB<T extends IDocument> {
         getFileSize(attachedFile),
       ])
 
-      this._storage.addAttachment({
+      await this._storage.addAttachment({
         ...newAttachment,
         _rev: newRev,
         _mimeType,

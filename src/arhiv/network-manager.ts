@@ -20,7 +20,7 @@ const readNetworkState = () => window.navigator.onLine
 
 export class NetworkManager {
   readonly isOnline$ = new Cell<boolean>(readNetworkState())
-  readonly authorized$ = new Cell<boolean>(true)
+  readonly isAuthorized$ = new Cell<boolean>(true)
 
   private _callbacks = new Callbacks()
 
@@ -40,13 +40,13 @@ export class NetworkManager {
       this.isOnline$.value$.subscribe({
         next: value => log.info(`network is ${value ? 'online' : 'offline'}`),
       }),
-      this.authorized$.value$.subscribe({
+      this.isAuthorized$.value$.subscribe({
         next: isAuthorized => log.info(`authorized: ${isAuthorized}`),
       }),
     )
   }
 
-  readonly authorize = async (password: string) => {
+  async authorize(password: string) {
     this._assertIsOnline()
 
     const response = await fetch('/api/auth', {
@@ -55,15 +55,15 @@ export class NetworkManager {
     })
 
     if (response.ok) {
-      this.authorized$.value = true
+      this.isAuthorized$.value = true
     } else {
       this._onNetworkError(response.status)
     }
   }
 
-  readonly deauthorize = () => {
+  deauthorize() {
     document.cookie = 'token=0; path=/'
-    this.authorized$.value = false
+    this.isAuthorized$.value = false
   }
 
   readonly syncChanges = async <T extends IDocument>(
@@ -100,7 +100,7 @@ export class NetworkManager {
   }
 
   private _assertAuthorized() {
-    if (!this.authorized$.value) {
+    if (!this.isAuthorized$.value) {
       throw new Error('Not authorized')
     }
   }
@@ -109,7 +109,7 @@ export class NetworkManager {
     log.warn(`network error, http status code ${status}`)
 
     if (status === 403) {
-      this.authorized$.value = false
+      this.isAuthorized$.value = false
     }
   }
 
@@ -118,7 +118,7 @@ export class NetworkManager {
   }
 
   isAuthorized() {
-    return this.authorized$.value
+    return this.isAuthorized$.value
   }
 
   stop() {

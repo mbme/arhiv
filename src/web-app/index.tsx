@@ -53,7 +53,7 @@ ReactDOM.render(
         <OverlayRenderer>
           <Chrome
             apps={apps}
-            onLogout={() => arhiv.net.deauthorize()}
+            onLogout={() => arhiv.deauthorize()}
           />
           <AuthManager arhiv={arhiv} />
         </OverlayRenderer>

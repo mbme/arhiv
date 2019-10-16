@@ -8,13 +8,13 @@ interface IProps {
 }
 
 export function AuthManager({ arhiv }: IProps) {
-  const authorized = useObservable(() => arhiv.net.authorized$.value$)
+  const authorized = useObservable(() => arhiv.isAuthorized$.value$)
 
   if (authorized) {
     return null
   }
 
   return (
-    <AuthOverlay submit={arhiv.net.authorize} />
+    <AuthOverlay submit={password => arhiv.authorize(password)} />
   )
 }

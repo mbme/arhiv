@@ -2,6 +2,7 @@ import {
   createLogger,
   nowS,
   Callbacks,
+  Procedure,
 } from '~/utils'
 import {
   Cell,
@@ -38,10 +39,11 @@ export class IsodbReplica<T extends IDocument> {
 
   constructor(
     private _storage: IReplicaStorage<T>,
+    private _onLocalUpdate: Procedure,
   ) {
     this._callbacks.add(
       this.syncState$.value$.subscribe({
-        next: state => log.info(`sync state -> ${state.type}`),
+        next: state => log.debug(`sync state -> ${state.type}`),
       }),
     )
 
@@ -149,6 +151,7 @@ export class IsodbReplica<T extends IDocument> {
     log.debug(`saved document with id ${document._id}`)
 
     this._onUpdate()
+    this._onLocalUpdate()
   }
 
   isReadyToSync() {
@@ -224,9 +227,8 @@ export class IsodbReplica<T extends IDocument> {
 
     // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
-      this._storage.clearLocalData()
-
       this._storage.upgrade(changesetResult)
+      this._storage.clearLocalData()
       this._onUpdate()
 
       return

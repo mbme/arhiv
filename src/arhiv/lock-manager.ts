@@ -1,5 +1,6 @@
 import {
   createLogger,
+  Callbacks,
 } from '~/utils'
 import {
   Cell,
@@ -14,24 +15,29 @@ type State = { type: 'free' }
 
 export class LockManager {
   private _state = new Cell<State>({ type: 'free' })
+  private _callbacks = new Callbacks()
 
-  private _unsub = this._state.value$.subscribe({
-    next(currentState) {
-      if (currentState.type === 'free') {
-        log.info('lock state -> free')
+  constructor() {
+    this._callbacks.add(
+      this._state.value$.subscribe({
+        next(currentState) {
+          if (currentState.type === 'free') {
+            log.debug('lock state -> free')
 
-        return
-      }
+            return
+          }
 
-      if (currentState.type === 'db-locked') {
-        log.info('lock state -> db-locked')
+          if (currentState.type === 'db-locked') {
+            log.debug('lock state -> db-locked')
 
-        return
-      }
+            return
+          }
 
-      log.info(`lock state -> documents locked: ${currentState.locks.join(', ')}`)
-    },
-  })
+          log.debug(`lock state -> documents locked: ${currentState.locks.join(', ')}`)
+        },
+      }),
+    )
+  }
 
   isDocumentLocked$(id: string) {
     return this._state.value$.map((state) => {
@@ -111,21 +117,19 @@ export class LockManager {
     this._state.value = { type: 'free' }
   }
 
-  readonly isDBLocked$ = this._state.value$.map((state) => {
-    if (state.type === 'db-locked') {
-      return true
-    }
-
-    return false
-  })
-
-  isDBLockable() {
-    return this._state.value.type === 'free'
+  isDBLocked() {
+    return this._state.value.type === 'db-locked'
   }
 
   acquireDBLock$() {
-    return this.isDBLocked$
-      .filter((isLocked): isLocked is false => !isLocked)
+    return this._state.value$.map((state) => {
+      if (state.type === 'free') {
+        return true
+      }
+
+      return false
+    })
+      .filter(isFree => isFree)
       .take(1)
       .switchMap(() => new Observable<void>((observer) => {
         this._lockDB()
@@ -138,6 +142,6 @@ export class LockManager {
   }
 
   stop() {
-    this._unsub()
+    this._callbacks.runAll(true)
   }
 }

@@ -89,7 +89,13 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
 
   upgrade(changesetResult: IChangesetResult<T>) {
     this._rev = changesetResult.currentRev
+
+    const updatedDocumentsIds = changesetResult.documents.map(document => document._id)
+    this._documents = this._documents.filter(document => !updatedDocumentsIds.includes(document._id))
     this._documents.push(...changesetResult.documents)
+
+    const updatedAttachmentsIds = changesetResult.attachments.map(attachment => attachment._id)
+    this._attachments = this._attachments.filter(attachment => !updatedAttachmentsIds.includes(attachment._id))
     this._attachments.push(...changesetResult.attachments)
   }
 

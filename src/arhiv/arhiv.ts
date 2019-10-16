@@ -1,6 +1,6 @@
 import {
-  Callbacks,
   createLogger,
+  Callbacks,
 } from '~/utils'
 import {
   Signal,
@@ -27,10 +27,13 @@ const log = createLogger('arhiv')
 export class Arhiv {
   readonly net = new NetworkManager()
 
-  private _locks = new LockManager()
-  private _replica: ArhivReplica = new IsodbReplica(new ReplicaInMemStorage())
   private _callbacks = new Callbacks()
   private _syncSignal = new Signal()
+  private _locks = new LockManager()
+  private _replica: ArhivReplica = new IsodbReplica(
+    new ReplicaInMemStorage(),
+    () => this.syncNow(),
+  )
 
   readonly syncState$ = this._replica.syncState$
 
@@ -54,7 +57,7 @@ export class Arhiv {
     )
       .filter(() => this.net.isOnline()
         && this.net.isAuthorized()
-        && this._locks.isDBLockable()
+        && !this._locks.isDBLocked()
         && this._replica.isReadyToSync())
       .switchMap(
         () => new Observable<boolean>((observer) => {

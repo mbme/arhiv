@@ -11,7 +11,7 @@ import {
   ArhivReplica,
   Record,
 } from '../types'
-import { LockManager } from '../lock-manager'
+import { LockManager } from '../managers'
 
 const log = createLogger('document')
 

@@ -9,10 +9,10 @@ import {
   IChangesetResult,
   IChangeset,
   IDocument,
-} from './isodb/types'
+} from '../isodb/types'
 import {
   LocalAttachments,
-} from './isodb/replica'
+} from '../isodb/replica'
 
 const log = createLogger('arhiv:network-manager')
 

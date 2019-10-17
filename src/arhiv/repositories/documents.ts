@@ -4,7 +4,7 @@ import {
   Record,
 } from '../types'
 import { Document } from '../entities/document'
-import { LockManager } from '../lock-manager'
+import { LockManager } from '../managers'
 
 type IsDocumentOfType<T extends Record> = (x: any) => x is T
 

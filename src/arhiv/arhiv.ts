@@ -5,9 +5,11 @@ import {
   ReplicaInMemStorage,
   IsodbReplica,
 } from './isodb/replica'
-import { LockManager } from './lock-manager'
-import { NetworkManager } from './network-manager'
-import { SyncManager } from './sync-manager'
+import {
+  LockManager,
+  NetworkManager,
+  SyncManager,
+} from './managers'
 import { ArhivReplica } from './types'
 import {
   NotesRepository,

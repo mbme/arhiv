@@ -9,7 +9,7 @@ import {
   Signal,
   promise$,
 } from '~/utils/reactive'
-import { ArhivReplica } from './types'
+import { ArhivReplica } from '../types'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'
 

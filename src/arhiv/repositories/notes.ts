@@ -6,7 +6,7 @@ import {
 } from '../types'
 import { DocumentsRepository } from './documents'
 import { Document } from '../entities/document'
-import { LockManager } from '../lock-manager'
+import { LockManager } from '../managers'
 
 function isNote(x: any): x is INote {
   // tslint:disable-next-line:no-unsafe-any

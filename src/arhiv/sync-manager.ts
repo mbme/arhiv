@@ -21,17 +21,17 @@ export class SyncManager {
   private _callbacks = new Callbacks()
 
   constructor(
-    replica: ArhivReplica,
-    net: NetworkManager,
-    locks: LockManager,
+    private _replica: ArhivReplica,
+    private _net: NetworkManager,
+    private _locks: LockManager,
   ) {
-    const mergeConflictsResolved$ = replica.syncState$.value$
+    const mergeConflictsResolved$ = _replica.syncState$.value$
       .buffer(2)
       .filter(syncStates => syncStates.length === 2 && syncStates[0].type === 'merge-conflicts')
 
-    const gotAuthorized$ = net.isAuthorized$.value$.filter(isAuthorized => isAuthorized)
+    const gotAuthorized$ = _net.isAuthorized$.value$.filter(isAuthorized => isAuthorized)
 
-    const gotOnline$ = net.isOnline$.value$.filter(isOnline => isOnline)
+    const gotOnline$ = _net.isOnline$.value$.filter(isOnline => isOnline)
 
     const syncCondtion$ = merge$<any>(
       interval$(60 * 1000),
@@ -40,25 +40,8 @@ export class SyncManager {
       mergeConflictsResolved$,
       this.syncSignal.signal$,
     )
-      .filter(() => net.isOnline()
-        && net.isAuthorized()
-        && !locks.isDBLocked()
-        && replica.isReadyToSync())
-      .switchMap(
-        () => new Observable<boolean>((observer) => {
-          locks.acquireDBLock$()
-            .switchMap(() => promise$(replica.sync(net.syncChanges)))
-            .take(1)
-            .subscribe({
-              next: observer.next,
-              error: (err) => {
-                log.error('sync failed', err)
-                observer.next(false)
-              },
-              complete: observer.complete,
-            })
-        }),
-      )
+      .filter(() => this._isReadyToSync())
+      .switchMap(() => this._startSync$())
 
     this._callbacks.add(
       syncCondtion$.subscribe({
@@ -67,6 +50,29 @@ export class SyncManager {
         },
       }),
     )
+  }
+
+  private _isReadyToSync() {
+    return this._net.isOnline()
+      && this._net.isAuthorized()
+      && !this._locks.isDBLocked()
+      && this._replica.isReadyToSync()
+  }
+
+  private _startSync$() {
+    return new Observable<boolean>((observer) => {
+      this._locks.acquireDBLock$()
+        .switchMap(() => promise$(this._replica.sync(this._net.syncChanges)))
+        .take(1)
+        .subscribe({
+          next: observer.next,
+          error: (err) => {
+            log.error('sync failed', err)
+            observer.next(false)
+          },
+          complete: observer.complete,
+        })
+    })
   }
 
   stop() {

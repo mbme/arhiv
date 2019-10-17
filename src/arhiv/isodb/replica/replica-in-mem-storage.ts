@@ -1,13 +1,10 @@
-import { map2object } from '~/utils'
 import {
   IDocument,
   IAttachment,
   IChangesetResult,
-  IChangeset,
 } from '../types'
 import {
   IReplicaStorage,
-  LocalAttachments,
 } from './types'
 
 export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage<T> {
@@ -77,16 +74,6 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     return this._localFiles.get(id)
   }
 
-  getChangeset(): [IChangeset<T>, LocalAttachments] {
-    const changeset = {
-      baseRev: this._rev,
-      documents: this.getLocalDocuments(),
-      attachments: this.getLocalAttachments(),
-    }
-
-    return [changeset, map2object(this._localFiles)]
-  }
-
   upgrade(changesetResult: IChangesetResult<T>) {
     this._rev = changesetResult.currentRev
 
@@ -97,11 +84,5 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     const updatedAttachmentsIds = changesetResult.attachments.map(attachment => attachment._id)
     this._attachments = this._attachments.filter(attachment => !updatedAttachmentsIds.includes(attachment._id))
     this._attachments.push(...changesetResult.attachments)
-  }
-
-  clearLocalData() {
-    this._localDocuments.clear()
-    this._localAttachments.clear()
-    this._localFiles.clear()
   }
 }

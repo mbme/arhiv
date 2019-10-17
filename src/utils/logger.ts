@@ -73,6 +73,7 @@ export function createLogger(namespace: string) {
 
 export function setLogLevel(level: LogLevel) {
   minLogLevel = level
+  console.log(`log level: ${minLogLevel}`)
 }
 
 export function setLogLevelStr(levelStr: string, fallbackLvl?: LogLevel) {

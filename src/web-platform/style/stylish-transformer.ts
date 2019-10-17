@@ -99,6 +99,10 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     fontWeight: 'bold',
   },
 
+  hidden: val => ({
+    display: val ? 'none' : undefined,
+  }),
+
   fromSm: val => ({
     [mediaFrom(theme.breakpoints.sm)]: val,
   }),

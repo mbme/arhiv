@@ -12,10 +12,12 @@ import {
   IAttachment,
   IDocument,
   IChangesetResult,
+  IChangeset,
 } from '../types'
 import {
   IReplicaStorage,
   ChangesetExchange,
+  LocalAttachments,
 } from './types'
 import { MergeConflicts } from './merge-conflict'
 import {
@@ -168,7 +170,7 @@ export class IsodbReplica<T extends IDocument> {
 
       this.syncState$.value = { type: 'sync' }
 
-      const [changeset, localAttachments] = this._storage.getChangeset()
+      const [changeset, localAttachments] = this._getChangeset()
 
       if (isEmptyChangeset(changeset)) {
         log.info('sync: sending empty changeset')
@@ -228,7 +230,7 @@ export class IsodbReplica<T extends IDocument> {
     // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
       this._storage.upgrade(changesetResult)
-      this._storage.clearLocalData()
+      this._clearLocalData()
       this._onUpdate()
 
       return
@@ -268,27 +270,61 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
+  private _getUnusedLocalAttachmentsIds() {
+    const idsInUse = this.getDocuments().flatMap(document => document._attachmentRefs)
+    const localAttachmentIds = this._storage.getLocalAttachments().map(item => item._id)
+
+    return localAttachmentIds.filter(id => !idsInUse.includes(id))
+  }
+
+  private _getChangeset(): [IChangeset<T>, LocalAttachments] {
+    const unusedIds = this._getUnusedLocalAttachmentsIds()
+
+    const changeset: IChangeset<T> = {
+      baseRev: this._storage.getRev(),
+      documents: this._storage.getLocalDocuments(),
+      attachments: this._storage.getLocalAttachments().filter(attachment => !unusedIds.includes(attachment._id)),
+    }
+
+    const localAttachmentsData: LocalAttachments = {}
+    for (const attachment of changeset.attachments) {
+      const data = this._storage.getLocalAttachmentData(attachment._id)
+      if (data) {
+        localAttachmentsData[attachment._id] = data
+      }
+    }
+
+    return [changeset, localAttachmentsData]
+  }
+
+  private _clearLocalData() {
+    for (const localDocument of this._storage.getLocalDocuments()) {
+      this._storage.removeLocalDocument(localDocument._id)
+    }
+
+    const unusedIds = this._getUnusedLocalAttachmentsIds()
+    for (const localAttachment of this._storage.getLocalAttachments()) {
+      if (!unusedIds.includes(localAttachment._id)) {
+        this._storage.removeLocalAttachment(localAttachment._id)
+      }
+    }
+  }
+
   /**
    * Remove unused local attachments
    */
   private _compact() {
-    const idsInUse = new Set(this._storage.getDocuments().flatMap(document => document._attachmentRefs))
-    const localAttachmentIds = new Set(this._storage.getLocalAttachments().map(item => item._id))
-
-    let updated = false
-
-    for (const id of localAttachmentIds) {
-      // remove unused new local attachments
-      if (!idsInUse.has(id)) {
-        log.warn(`Removing unused local attachment ${id}`)
-        this._storage.removeLocalAttachment(id)
-        updated = true
-      }
+    const unusedIds = this._getUnusedLocalAttachmentsIds()
+    if (!unusedIds.length) {
+      return
     }
 
-    if (updated) {
-      this._onUpdate()
+    for (const id of unusedIds) {
+      this._storage.removeLocalAttachment(id)
+      log.warn(`Removing unused local attachment ${id}`)
     }
+
+    this._onUpdate()
   }
 
   stop() {

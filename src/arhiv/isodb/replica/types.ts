@@ -35,7 +35,5 @@ export interface IReplicaStorage<T extends IDocument> {
   removeLocalDocument(id: string): void
   removeLocalAttachment(id: string): void
 
-  getChangeset(): [IChangeset<T>, LocalAttachments]
   upgrade(changesetResult: IChangesetResult<T>): void
-  clearLocalData(): void
 }

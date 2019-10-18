@@ -1,7 +1,10 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
-import { setLogLevel } from '~/utils'
+import {
+  setLogLevel,
+  debugLayoutSnippet,
+} from '~/utils'
 import {
   Arhiv,
   ArhivContext,
@@ -24,7 +27,9 @@ import {
 import { NotesApp } from './app-notes'
 import { LibraryApp } from './app-library'
 
-setLogLevel('DEBUG')
+const isDev = true
+
+setLogLevel(isDev ? 'DEBUG' : 'WARN')
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -35,11 +40,7 @@ injectGlobalStyles(`
     visibility: hidden;
   }
 
-  /* helps to debug layout https://dev.to/gajus/my-favorite-css-hack-32g3 */
-  html.debug * {
-    background: rgba(255, 0, 0, .1);
-    box-shadow: 0 0 0 1px red;
-  }
+  ${isDev ? debugLayoutSnippet : ''}
 `)
 
 const arhiv = new Arhiv()

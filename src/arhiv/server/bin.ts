@@ -26,7 +26,9 @@ const log = createLogger('isodb-server')
 export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
   if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')
 
-  const db = new PrimaryDB(new PrimaryInMemStorage(await createTempDir()))
+  const storageTempDir = await createTempDir()
+  const db = new PrimaryDB(new PrimaryInMemStorage(storageTempDir))
+
   if (!isProduction && args.includes('--gen-data')) {
     const {
       documents,
@@ -56,6 +58,7 @@ export default async function run(port: string, password: string, rootDir: strin
     log.info(`Got signal ${signal}, stopping`)
     try {
       await server.stop()
+      rmrfSync(storageTempDir)
       process.exit(0)
     } catch (e) {
       log.error('failed to stop', e)

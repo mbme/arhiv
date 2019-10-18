@@ -93,7 +93,7 @@ export default function createServer(db: PrimaryDB<IDocument>, password = '', st
       return
     }
 
-    const filePath = await queue.push(() => db.getAttachmentPath(fileId))
+    const filePath = await queue.push(() => db.getAttachmentDataPath(fileId))
 
     if (filePath) {
       res.headers['Content-Disposition'] = `inline; filename=${fileId}`

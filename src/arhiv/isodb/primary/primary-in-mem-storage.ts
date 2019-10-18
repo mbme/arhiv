@@ -4,6 +4,7 @@ import {
   IAttachment,
 } from '../types'
 import { IPrimaryStorage } from './primary-storage'
+import { removeAtMut } from '~/utils'
 
 export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {
   private _documents: T[] = []
@@ -39,7 +40,7 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     return this._attachments.find(item => item._id === id)
   }
 
-  getAttachmentPath(id: string) {
+  getAttachmentDataPath(id: string) {
     return this._files.get(id)
   }
 
@@ -50,9 +51,7 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
 
   removeDocument(id: string) {
     const pos = this._documents.findIndex((item) => item._id === id)
-    if (pos > -1) {
-      this._documents.splice(pos, 1)
-    }
+    removeAtMut(this._documents, pos)
   }
 
   async addAttachment(attachment: IAttachment, attachmentPath: string) {
@@ -61,11 +60,21 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     this._files.set(attachment._id, newFile)
   }
 
-  removeAttachment(id: string) {
-    const pos = this._attachments.findIndex((item) => item._id === id)
-    if (pos > -1) {
-      this._attachments.splice(pos, 1)
-      this._files.delete(id)
+  updateAttachment(attachment: IAttachment) {
+    const pos = this._attachments.findIndex((item) => item._id === attachment._id)
+
+    if (pos === -1) {
+      throw new Error(`Can't update attachment ${attachment._id}: not found`)
     }
+    removeAtMut(this._attachments, pos)
+
+    this._attachments.push(attachment)
+  }
+
+  removeAttachmentData(id: string) {
+    if (!this.getAttachment(id)) {
+      throw new Error(`Can't remove attachment data ${id}: not found`)
+    }
+    this._files.delete(id)
   }
 }

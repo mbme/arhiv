@@ -14,6 +14,7 @@ export interface IAttachment {
   readonly _createdTs: number
   readonly _mimeType: string
   readonly _size: number
+  readonly _deleted?: boolean
 }
 
 export interface IChangeset<T extends IDocument> {

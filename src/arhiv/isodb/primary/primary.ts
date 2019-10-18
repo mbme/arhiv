@@ -41,8 +41,8 @@ export class PrimaryDB<T extends IDocument> {
    * @param id attachment id
    * @returns path to attachment
    */
-  getAttachmentPath(id: string) {
-    return this._storage.getAttachmentPath(id)
+  getAttachmentDataPath(id: string) {
+    return this._storage.getAttachmentDataPath(id)
   }
 
   async applyChangeset(changeset: IChangeset<T>, attachedFiles: IDict): Promise<IChangesetResult<T>> {
@@ -129,4 +129,34 @@ export class PrimaryDB<T extends IDocument> {
     }
   }
 
+  private _getUnusedAttachments() {
+    const idsInUse = this._storage.getDocuments().flatMap(document => document._attachmentRefs)
+
+    return this._storage.getAttachments()
+      .filter(attachment => !attachment._deleted && !idsInUse.includes(attachment._id))
+  }
+
+  /**
+   * Remove unused attachments
+   */
+  compact() {
+    const unusedAttachments = this._getUnusedAttachments()
+    if (!unusedAttachments.length) {
+      return
+    }
+
+    const newRev = this.getRev() + 1
+
+    for (const attachment of unusedAttachments) {
+      this._storage.updateAttachment({
+        ...attachment,
+        _rev: newRev,
+      })
+      this._storage.removeAttachmentData(attachment._id)
+
+      log.warn(`Removing unused attachment's data ${attachment._id}`)
+    }
+
+    this._storage.setRev(newRev)
+  }
 }

@@ -12,11 +12,12 @@ export interface IPrimaryStorage<T extends IDocument> {
 
   getDocument(id: string): T | undefined
   getAttachment(id: string): IAttachment | undefined
-  getAttachmentPath(id: string): string | undefined
+  getAttachmentDataPath(id: string): string | undefined
 
   putDocument(document: T): void
   removeDocument(id: string): void
 
   addAttachment(attachment: IAttachment, attachmentPath: string): Promise<void>
-  removeAttachment(id: string): void
+  updateAttachment(attachment: IAttachment): void
+  removeAttachmentData(id: string): void
 }

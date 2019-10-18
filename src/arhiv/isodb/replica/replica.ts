@@ -272,9 +272,9 @@ export class IsodbReplica<T extends IDocument> {
 
   private _getUnusedLocalAttachmentsIds() {
     const idsInUse = this.getDocuments().flatMap(document => document._attachmentRefs)
-    const localAttachmentIds = this._storage.getLocalAttachments().map(item => item._id)
+    const localAttachmentsIds = this._storage.getLocalAttachments().map(item => item._id)
 
-    return localAttachmentIds.filter(id => !idsInUse.includes(id))
+    return localAttachmentsIds.filter(id => !idsInUse.includes(id))
   }
 
   private _getChangeset(): [IChangeset<T>, LocalAttachments] {

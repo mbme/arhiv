@@ -20,7 +20,7 @@ interface IProps {
 }
 
 export function MarkupAttachment({ attachment, link, description }: IProps) {
-  const blobUrl = useObservable(() => attachment.getUrl$(), [attachment])
+  const [blobUrl] = useObservable(() => attachment.getUrl$(), [attachment])
 
   if (!blobUrl) {
     return null

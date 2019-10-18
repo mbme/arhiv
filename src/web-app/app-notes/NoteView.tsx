@@ -5,6 +5,7 @@ import {
   Icon,
   CleanLink,
   Spacer,
+  ProgressLocker,
 } from '~/web-platform'
 import {
   Toolbar,
@@ -18,7 +19,13 @@ interface IProps {
 
 export function NoteView({ id }: IProps) {
   const arhiv = useArhiv()
-  const note = useObservable(() => arhiv.notes.getDocument$(id), [id])
+  const [note, isReady] = useObservable(() => arhiv.notes.getDocument$(id), [id])
+
+  if (!isReady) {
+    return (
+      <ProgressLocker />
+    )
+  }
 
   if (!note) {
     return NotFound

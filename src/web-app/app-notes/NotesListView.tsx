@@ -13,6 +13,7 @@ import {
   Link,
   Box,
   Spacer,
+  ProgressLocker,
 } from '~/web-platform'
 import { useArhiv } from '~/arhiv'
 import { Toolbar } from '../parts'
@@ -37,7 +38,13 @@ export function NotesListView({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
-  const notes = useObservable(() => arhiv.notes.getDocuments$())
+  const [notes, isReady] = useObservable(() => arhiv.notes.getDocuments$())
+
+  if (!isReady) {
+    return (
+      <ProgressLocker />
+    )
+  }
 
   const items = (notes || [])
     .filter(note => fuzzySearch(filter, note.record.name))

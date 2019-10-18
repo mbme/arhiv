@@ -8,9 +8,9 @@ interface IProps {
 }
 
 export function AuthManager({ arhiv }: IProps) {
-  const authorized = useObservable(() => arhiv.isAuthorized$.value$)
+  const [authorized, isReady] = useObservable(() => arhiv.isAuthorized$.value$)
 
-  if (authorized) {
+  if (authorized || !isReady) {
     return null
   }
 

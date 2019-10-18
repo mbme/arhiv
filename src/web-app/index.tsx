@@ -34,6 +34,12 @@ injectGlobalStyles(`
     height: 100vh;
     visibility: hidden;
   }
+
+  /* helps to debug layout https://dev.to/gajus/my-favorite-css-hack-32g3 */
+  html.debug * {
+    background: rgba(255, 0, 0, .1);
+    box-shadow: 0 0 0 1px red;
+  }
 `)
 
 const arhiv = new Arhiv()

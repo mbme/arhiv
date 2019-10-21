@@ -1,13 +1,16 @@
+import {
+  removeAtMut,
+  getLastEl,
+} from '~/utils'
 import { moveFile } from '~/utils/fs'
 import {
   IDocument,
   IAttachment,
 } from '../types'
 import { IPrimaryStorage } from './primary-storage'
-import { removeAtMut } from '~/utils'
 
 export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {
-  private _documents: T[] = []
+  private _documents: Map<string, T[]> = new Map()
   private _attachments: IAttachment[] = []
   private _rev = 0
   private _files = new Map<string, string>()
@@ -25,15 +28,43 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
   }
 
   getDocuments() {
-    return this._documents.slice(0)
+    return Array.from(this._documents.values()).map(getLastEl)
+  }
+
+  getDocument(id: string) {
+    const revisions = this._documents.get(id)
+    if (!revisions) {
+      return undefined
+    }
+
+    return getLastEl(revisions)
+  }
+
+  getDocumentHistory(id: string) {
+    const revisions = this._documents.get(id)
+
+    if (!revisions) {
+      return undefined
+    }
+
+    return [...revisions]
+  }
+
+  putDocument(document: T) {
+    const revisions = this._documents.get(document._id) || []
+    revisions.push(document)
+
+    this._documents.set(document._id, revisions)
   }
 
   getAttachments() {
     return this._attachments.slice(0)
   }
 
-  getDocument(id: string) {
-    return this._documents.find(item => item._id === id)
+  async addAttachment(attachment: IAttachment, attachmentPath: string) {
+    this._attachments.push(attachment)
+    const newFile = await moveFile(attachmentPath, this._tempDir)
+    this._files.set(attachment._id, newFile)
   }
 
   getAttachment(id: string) {
@@ -42,22 +73,6 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
 
   getAttachmentDataPath(id: string) {
     return this._files.get(id)
-  }
-
-  putDocument(document: T) {
-    this.removeDocument(document._id)
-    this._documents.push(document)
-  }
-
-  removeDocument(id: string) {
-    const pos = this._documents.findIndex((item) => item._id === id)
-    removeAtMut(this._documents, pos)
-  }
-
-  async addAttachment(attachment: IAttachment, attachmentPath: string) {
-    this._attachments.push(attachment)
-    const newFile = await moveFile(attachmentPath, this._tempDir)
-    this._files.set(attachment._id, newFile)
   }
 
   updateAttachment(attachment: IAttachment) {

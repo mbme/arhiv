@@ -33,6 +33,10 @@ export class PrimaryDB<T extends IDocument> {
     return this._storage.getDocument(id)
   }
 
+  getDocumentHistory(id: string) {
+    return this._storage.getDocumentHistory(id)
+  }
+
   getAttachment(id: string) {
     return this._storage.getAttachment(id)
   }

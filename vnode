@@ -17,8 +17,6 @@ require('ts-node').register({
   },
 });
 
-
-process.env.__BROWSER__ = false
 process.env.BASE_DIR = __dirname
 
 const path = require('path');

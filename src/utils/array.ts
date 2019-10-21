@@ -53,3 +53,11 @@ export function isEqualArray(a: any[], b: any[]) {
 
   return true
 }
+
+export function getLastEl<T>(arr: T[]): T {
+  if (!arr.length) {
+    throw new Error('array must have values')
+  }
+
+  return arr[arr.length - 1]
+}

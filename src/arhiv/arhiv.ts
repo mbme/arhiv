@@ -10,12 +10,52 @@ import {
   NetworkManager,
   SyncManager,
 } from './managers'
-import { ArhivReplica } from './types'
 import {
-  NotesRepository,
-  TracksRepository,
+  ArhivReplica,
+  DocumentType,
+  INote,
+  ITrack,
+} from './types'
+import {
+  DocumentsRepository,
   AttachmentsRepository,
-} from './repositories'
+  IDocumentType,
+  Document,
+} from './entities'
+import {
+  createDocument,
+} from './isodb/utils'
+
+const NoteType: IDocumentType<INote> = {
+  is(x: any): x is INote {
+    // tslint:disable-next-line:no-unsafe-any
+    return x && x._type === DocumentType.Note
+  },
+  create(id: string): INote {
+    return ({
+      ...createDocument(id, DocumentType.Note),
+      name: '',
+      data: '',
+    })
+  },
+}
+export type NoteDocument = Document<INote>
+
+const TrackType: IDocumentType<ITrack> = {
+  is(x: any): x is ITrack {
+    // tslint:disable-next-line:no-unsafe-any
+    return x && x._type === DocumentType.Track
+  },
+
+  create(id: string): ITrack {
+    return ({
+      ...createDocument(id, DocumentType.Track),
+      title: '',
+      artist: '',
+    })
+  },
+}
+export type TrackDocument = Document<ITrack>
 
 export class Arhiv {
   private _callbacks = new Callbacks()
@@ -32,8 +72,8 @@ export class Arhiv {
   readonly isAuthorized$ = this._net.isAuthorized$
 
   readonly attachments = new AttachmentsRepository(this._replica)
-  readonly notes = new NotesRepository(this._replica, this._locks)
-  readonly tracks = new TracksRepository(this._replica, this._locks)
+  readonly notes = new DocumentsRepository(this._replica, this._locks, NoteType)
+  readonly tracks = new DocumentsRepository(this._replica, this._locks, TrackType)
 
   constructor() {
     this._callbacks.add(

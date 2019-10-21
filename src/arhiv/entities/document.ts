@@ -58,7 +58,7 @@ export class Document<T extends Record> {
   }
 
   delete() {
-    this._replica.saveDocument({ // FIXME cleanup fields
+    this._replica.saveDocument({
       ...this.record,
       _deleted: true,
     })

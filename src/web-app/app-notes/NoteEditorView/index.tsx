@@ -23,7 +23,7 @@ export function NoteEditorViewContainer({ id }: IProps) {
       return arhiv.notes.getDocument$(id).subscribe({ next: setNote })
     }
 
-    setNote(arhiv.notes.createNote())
+    setNote(arhiv.notes.create())
 
     return noop
   }, [])

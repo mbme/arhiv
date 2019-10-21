@@ -5,16 +5,16 @@ import replace from 'rollup-plugin-replace'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-const tsPathResolver = {
+export const tsPathResolver = (rootDir) => ({
   resolveId(importee) {
     if (importee.startsWith('~/')) {
-      return this.resolveId(path.resolve(__dirname, 'tsdist', importee.substring(2)));
+      return this.resolveId(path.resolve(rootDir, importee.substring(2)));
     }
 
     return null;
   }
 
-}
+})
 
 export default {
   input: 'tsdist/web-app/index',
@@ -28,13 +28,13 @@ export default {
   treeshake: isProduction,
 
   plugins: [
-    tsPathResolver,
+    tsPathResolver(path.resolve(__dirname, 'tsdist')),
 
     nodeResolve(),
 
     replace({
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
-      '__BROWSER__': true,
+      'process.env.__BROWSER__': true,
     }),
 
     commonjs(),

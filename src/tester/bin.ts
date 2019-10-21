@@ -5,6 +5,7 @@ import {
   createLogger,
 } from '~/utils'
 import { getFiles } from '~/utils/fs'
+import { createRunnable } from '~/utils/runnable'
 import {
   getTestPlan,
   initTestPlan,
@@ -14,7 +15,7 @@ import {
 setLogLevel('ERROR')
 const log = createLogger('tester')
 
-export default async function run(...args: string[]) {
+createRunnable(async (...args: string[]) => {
   const filter = args.filter((arg) => !arg.startsWith('-'))[0] || ''
   const updateSnapshots = args.includes('-u')
 
@@ -69,4 +70,4 @@ export default async function run(...args: string[]) {
   }
 
   log.simple(failures ? `Failures: ${failures}` : 'Success!', '\n')
-}
+})

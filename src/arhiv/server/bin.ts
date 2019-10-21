@@ -7,6 +7,7 @@ import {
   createTempDir,
   rmrfSync,
 } from '~/utils/fs'
+import { createRunnable } from '~/utils/runnable'
 import { getFakeNotes } from './faker'
 import {
   PrimaryDB,
@@ -23,8 +24,10 @@ setLogLevelStr(process.env.LOG || '')
 
 const log = createLogger('isodb-server')
 
-export default async function run(port: string, password: string, rootDir: string, ...args: string[]) {
-  if (!port || !password || !rootDir) throw new Error('port, password & rootDir are required')
+createRunnable(async (port: string, password: string, rootDir: string, ...args: string[]) => {
+  if (!port || !password || !rootDir) {
+    throw new Error('port, password & rootDir are required')
+  }
 
   const storageTempDir = await createTempDir()
   const db = new PrimaryDB(new PrimaryInMemStorage(storageTempDir))
@@ -68,4 +71,4 @@ export default async function run(port: string, password: string, rootDir: strin
 
   process.on('SIGINT', close)
   process.on('SIGTERM', close)
-}
+})

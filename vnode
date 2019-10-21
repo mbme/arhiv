@@ -18,15 +18,9 @@ require('ts-node').register({
 });
 
 
-global.__BROWSER__ = false
-
+process.env.__BROWSER__ = false
 process.env.BASE_DIR = __dirname
 
 const path = require('path');
 
-const { default: run } = require(path.join(process.cwd(), process.argv[2]));
-
-Promise.resolve(run(...process.argv.slice(3))).catch((e) => {
-  console.error('process failed', e);
-  process.exit(2);
-});
+require(path.join(process.cwd(), process.argv[2]));

@@ -22,6 +22,6 @@ NODE_NO_WARNINGS=1 LOG=DEBUG ./vnode src/arhiv/server/bin 8080 pass /tmp/db --ge
 # --traceResolution \
 
 # web app bundle
-./node_modules/.bin/rollup -c --watch &
+./node_modules/.bin/rollup -c web-app.rollup.config.js --watch &
 
 wait

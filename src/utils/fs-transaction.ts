@@ -28,6 +28,7 @@ const OPERATIONS = {
       filePath,
 
       async apply() {
+        // FIXME this doesn't take pending operations into account
         if (fs.existsSync(filePath)) {
           throw new Error(`Can't ADD ${filePath}: already exists`)
         }

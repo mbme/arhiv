@@ -12,6 +12,7 @@ import {
   writeJSON,
   removeFile,
 } from '~/utils/fs'
+import { createFsTransaction } from '~/utils/fs-transaction';
 import {
   IDocument,
   IAttachment,
@@ -23,6 +24,8 @@ import {
 } from './primary-storage'
 
 class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryStorageMutations<T> {
+  private _transaction = createFsTransaction()
+
   constructor(
     private _rev: number,
     private _documentsDir: string,

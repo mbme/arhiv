@@ -9,12 +9,14 @@ import {
 interface IGetFilesOpts {
   skipDir?: string[]
   recursive?: boolean
-  fileNames?: boolean
+  fileNames?: boolean // list file names or full paths
+  dirs?: boolean // if should list dirs instead of files
 }
 const GET_FILES_OPTS = {
   skipDir: ['.git', 'node_modules'],
   recursive: true,
   fileNames: false,
+  dirs: false,
 }
 
 // list files except skip dirs
@@ -27,20 +29,23 @@ export async function* getFiles(
   for (const fileName of await fs.promises.readdir(rootPath)) {
     const filePath = path.resolve(rootPath, fileName)
 
-    if (await isDirectory(filePath)) {
-      if (!processedOpts.recursive) {
-        continue
-      }
+    const isDir = await isDirectory(filePath)
 
-      // traverse subdir only if it shouldn't be skipped
-      if (processedOpts.skipDir!.includes(fileName)) {
-        continue
-      }
-
-      yield* getFiles(filePath, options)
-    } else {
+    if (processedOpts.dirs === isDir) {
       yield processedOpts.fileNames ? fileName : filePath
+      continue
     }
+
+    if (!processedOpts.recursive) {
+      continue
+    }
+
+    // traverse subdir only if it shouldn't be skipped
+    if (processedOpts.skipDir!.includes(fileName)) {
+      continue
+    }
+
+    yield* getFiles(filePath, options)
   }
 }
 
@@ -62,10 +67,20 @@ export function rmrfSync(dir: string) {
 export const isFile = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isFile())
 export const isDirectory = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isDirectory())
 
-export async function listFiles(dir: string) {
+export async function listFiles(dir: string, opts: IGetFilesOpts = {}) {
   return consumeAsyncIterable(getFiles(dir, {
     recursive: false,
     fileNames: true,
+    ...opts,
+  }))
+}
+
+export async function listDirs(dir: string, opts: IGetFilesOpts = {}) {
+  return consumeAsyncIterable(getFiles(dir, {
+    recursive: false,
+    fileNames: true,
+    ...opts,
+    dirs: true,
   }))
 }
 
@@ -87,22 +102,44 @@ export async function withTempFiles(files: string[], cb: (tempFiles: string[]) =
 
     await Promise.resolve(cb(paths))
   } finally { // do cleanup in any case
-    if (dir) rmrfSync(dir)
+    if (dir) {
+      rmrfSync(dir)
+    }
   }
 }
 
-export const readText = (name: string) => fs.promises.readFile(name, 'utf8')
-export const readJSON = async <T>(name: string) => JSON.parse(await readText(name)) as T
+export const readText = (filePath: string) => fs.promises.readFile(filePath, 'utf8')
+export const readJSON = async <T>(filePath: string) => JSON.parse(await readText(filePath)) as T
 
-export const writeText = (name: string, data: string) => fs.promises.writeFile(name, data, 'utf8')
-export const writeJSON = (name: string, data: object) => writeText(name, JSON.stringify(data, undefined, 2))
+export const writeText = (filePath: string, data: string) => fs.promises.writeFile(filePath, data, 'utf8')
+export const writeJSON = (filePath: string, data: object) => writeText(filePath, JSON.stringify(data, undefined, 2))
 
 export const getFileSize = (filePath: string) => fs.promises.stat(filePath).then(stats => stats.size)
 
-export async function moveFile(file: string, dir: string): Promise<string> {
-  const newFile = path.join(dir, path.basename(file))
+export async function moveFileIntoDir(filePath: string, dir: string): Promise<string> {
+  const newFile = path.join(dir, path.basename(filePath))
 
-  await fs.promises.rename(file, newFile)
+  await fs.promises.rename(filePath, newFile)
 
   return newFile
+}
+
+export async function moveFile(filePath: string, newFilePath: string) {
+  await fs.promises.rename(filePath, newFilePath)
+}
+
+export function removeFile(filePath: string) {
+  return fs.promises.unlink(filePath)
+}
+
+export async function fileExists(filePath: string) {
+  return new Promise((resolve) => {
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      resolve(!!err)
+    })
+  })
+}
+
+export async function mkdir(filePath: string, recursive = false) {
+  return fs.promises.mkdir(filePath, { recursive })
 }

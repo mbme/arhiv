@@ -5,10 +5,10 @@ import {
 
 export interface IPrimaryStorageMutations<T extends IDocument> {
   setRev(newRev: number): void
-  putDocument(document: T): void
+  putDocument(document: T): Promise<void>
   addAttachment(attachment: IAttachment, attachmentPath: string): Promise<void>
-  updateAttachment(attachment: IAttachment): void
-  removeAttachmentData(id: string): void
+  updateAttachment(attachment: IAttachment): Promise<void>
+  removeAttachmentData(id: string): Promise<void>
 }
 
 export type StorageUpdater<T extends IDocument> = (mutations: IPrimaryStorageMutations<T>) => (void | Promise<void>)
@@ -16,13 +16,13 @@ export type StorageUpdater<T extends IDocument> = (mutations: IPrimaryStorageMut
 export interface IPrimaryStorage<T extends IDocument> {
   getRev(): number
 
-  getDocuments(): T[]
-  getDocument(id: string): T | undefined
-  getDocumentHistory(id: string): T[] | undefined
+  getDocuments(): Promise<T[]>
+  getDocument(id: string): Promise<T | undefined>
+  getDocumentHistory(id: string): Promise<T[] | undefined>
 
-  getAttachments(): IAttachment[]
-  getAttachment(id: string): IAttachment | undefined
-  getAttachmentDataPath(id: string): string | undefined
+  getAttachments(): Promise<IAttachment[]>
+  getAttachment(id: string): Promise<IAttachment | undefined>
+  getAttachmentDataPath(id: string): Promise<string | undefined>
 
   updateStorage(update: StorageUpdater<T>): Promise<void>
 }

@@ -28,7 +28,9 @@ const OPERATIONS = {
       filePath,
 
       async apply() {
-        if (fs.existsSync(filePath)) throw new Error(`Can't ADD ${filePath}: already exists`)
+        if (fs.existsSync(filePath)) {
+          throw new Error(`Can't ADD ${filePath}: already exists`)
+        }
 
         await fs.promises.writeFile(filePath, data)
         _madeChanges = true
@@ -51,7 +53,9 @@ const OPERATIONS = {
       filePath,
 
       async apply(tmpDir: string) {
-        if (!fs.existsSync(filePath)) throw new Error(`Can't UPDATE ${filePath}: doesn't exist`)
+        if (!fs.existsSync(filePath)) {
+          throw new Error(`Can't UPDATE ${filePath}: doesn't exist`)
+        }
 
         _tmpFile = path.join(tmpDir, sha256(filePath))
         await fs.promises.rename(filePath, _tmpFile)
@@ -156,7 +160,9 @@ export function createFsTransaction() {
         await _rollback()
         throw err
       } finally {
-        if (tmpDir) rmrfSync(tmpDir)
+        if (tmpDir) {
+          rmrfSync(tmpDir)
+        }
       }
     },
   }

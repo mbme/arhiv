@@ -11,7 +11,7 @@ export interface IPrimaryStorageMutations<T extends IDocument> {
   removeAttachmentData(id: string): Promise<void>
 }
 
-export type StorageUpdater<T extends IDocument> = (mutations: IPrimaryStorageMutations<T>) => (void | Promise<void>)
+export type StorageUpdater<T extends IDocument> = (mutations: IPrimaryStorageMutations<T>) => Promise<void>
 
 export interface IPrimaryStorage<T extends IDocument> {
   getRev(): number

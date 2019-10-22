@@ -11,7 +11,7 @@ import { createRunnable } from '~/utils/runnable'
 import { getFakeNotes } from './faker'
 import {
   PrimaryDB,
-  PrimaryInMemStorage,
+  PrimaryFSStorage,
 } from '../isodb/primary'
 import createServer from '../isodb/server/server'
 
@@ -30,7 +30,8 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   }
 
   const storageTempDir = await createTempDir()
-  const db = new PrimaryDB(new PrimaryInMemStorage(storageTempDir))
+  const storage = await PrimaryFSStorage.create(storageTempDir)
+  const db = new PrimaryDB(storage)
 
   if (!isProduction && args.includes('--gen-data')) {
     const {

@@ -77,7 +77,7 @@ export class PrimaryDB<T extends IDocument> {
       const newRev = baseRev + 1
 
       for (const changedDocument of changeset.documents) {
-        mutations.putDocument({
+        await mutations.putDocument({
           ...changedDocument,
           _rev: newRev,
         })
@@ -85,7 +85,7 @@ export class PrimaryDB<T extends IDocument> {
 
       // update metadata and save new attachments
       await Promise.all(changeset.attachments.map(async (newAttachment) => {
-        if (this.getAttachment(newAttachment._id)) {
+        if (await this.getAttachment(newAttachment._id)) {
           throw new Error(`Attachment ${newAttachment._id} already exists`)
         }
 
@@ -120,7 +120,7 @@ export class PrimaryDB<T extends IDocument> {
   /**
    * @param rev minimum revision to include
    */
-  private _getChangesetResult(rev: number, success: boolean): IChangesetResult<T> {
+  private async _getChangesetResult(rev: number, success: boolean): Promise<IChangesetResult<T>> {
     const currentRev = this.getRev()
     if (rev > currentRev) {
       throw new Error(`Got request for the future rev ${rev}, current rev is ${currentRev}`)
@@ -130,15 +130,15 @@ export class PrimaryDB<T extends IDocument> {
       success,
       baseRev: rev,
       currentRev,
-      documents: this._storage.getDocuments().filter(document => document._rev > rev),
-      attachments: this._storage.getAttachments().filter(attachment => attachment._rev > rev),
+      documents: (await this._storage.getDocuments()).filter(document => document._rev > rev),
+      attachments: (await this._storage.getAttachments()).filter(attachment => attachment._rev > rev),
     }
   }
 
-  private _getUnusedAttachments() {
-    const idsInUse = this._storage.getDocuments().flatMap(document => document._attachmentRefs)
+  private async _getUnusedAttachments() {
+    const idsInUse = (await this._storage.getDocuments()).flatMap(document => document._attachmentRefs)
 
-    return this._storage.getAttachments()
+    return (await this._storage.getAttachments())
       .filter(attachment => !attachment._deleted && !idsInUse.includes(attachment._id))
   }
 
@@ -146,20 +146,20 @@ export class PrimaryDB<T extends IDocument> {
    * Remove unused attachments
    */
   async compact() {
-    const unusedAttachments = this._getUnusedAttachments()
+    const unusedAttachments = await this._getUnusedAttachments()
     if (!unusedAttachments.length) {
       return
     }
 
-    await this._storage.updateStorage((mutations) => {
+    await this._storage.updateStorage(async (mutations) => {
       const newRev = this.getRev() + 1
 
       for (const attachment of unusedAttachments) {
-        mutations.updateAttachment({
+        await mutations.updateAttachment({
           ...attachment,
           _rev: newRev,
         })
-        mutations.removeAttachmentData(attachment._id)
+        await mutations.removeAttachmentData(attachment._id)
 
         log.warn(`Removing unused attachment's data ${attachment._id}`)
       }

@@ -73,44 +73,46 @@ export class PrimaryDB<T extends IDocument> {
 
     log.debug(`got ${changeset.documents.length} documents and ${changeset.attachments.length} attachments`)
 
-    const newRev = changeset.baseRev + 1
+    await this._storage.updateStorage(async (mutations) => {
+      const newRev = baseRev + 1
 
-    for (const changedDocument of changeset.documents) {
-      this._storage.putDocument({
-        ...changedDocument,
-        _rev: newRev,
-      })
-    }
-
-    // update metadata and save new attachments
-    await Promise.all(changeset.attachments.map(async (newAttachment) => {
-      if (this.getAttachment(newAttachment._id)) {
-        throw new Error(`Attachment ${newAttachment._id} already exists`)
+      for (const changedDocument of changeset.documents) {
+        mutations.putDocument({
+          ...changedDocument,
+          _rev: newRev,
+        })
       }
 
-      const attachedFile = attachedFiles[newAttachment._id]
+      // update metadata and save new attachments
+      await Promise.all(changeset.attachments.map(async (newAttachment) => {
+        if (this.getAttachment(newAttachment._id)) {
+          throw new Error(`Attachment ${newAttachment._id} already exists`)
+        }
 
-      if (!attachedFile) {
-        throw new Error(`File is missing for the new attachment ${newAttachment._id}`)
-      }
+        const attachedFile = attachedFiles[newAttachment._id]
 
-      const [
-        _mimeType,
-        _size,
-      ] = await Promise.all([
-        getMimeType(attachedFile),
-        getFileSize(attachedFile),
-      ])
+        if (!attachedFile) {
+          throw new Error(`File is missing for the new attachment ${newAttachment._id}`)
+        }
 
-      await this._storage.addAttachment({
-        ...newAttachment,
-        _rev: newRev,
-        _mimeType,
-        _size,
-      }, attachedFile)
-    }))
+        const [
+          _mimeType,
+          _size,
+        ] = await Promise.all([
+          getMimeType(attachedFile),
+          getFileSize(attachedFile),
+        ])
 
-    this._storage.setRev(newRev)
+        await mutations.addAttachment({
+          ...newAttachment,
+          _rev: newRev,
+          _mimeType,
+          _size,
+        }, attachedFile)
+      }))
+
+      mutations.setRev(newRev)
+    })
 
     return this._getChangesetResult(changeset.baseRev, true)
   }
@@ -143,24 +145,26 @@ export class PrimaryDB<T extends IDocument> {
   /**
    * Remove unused attachments
    */
-  compact() {
+  async compact() {
     const unusedAttachments = this._getUnusedAttachments()
     if (!unusedAttachments.length) {
       return
     }
 
-    const newRev = this.getRev() + 1
+    await this._storage.updateStorage((mutations) => {
+      const newRev = this.getRev() + 1
 
-    for (const attachment of unusedAttachments) {
-      this._storage.updateAttachment({
-        ...attachment,
-        _rev: newRev,
-      })
-      this._storage.removeAttachmentData(attachment._id)
+      for (const attachment of unusedAttachments) {
+        mutations.updateAttachment({
+          ...attachment,
+          _rev: newRev,
+        })
+        mutations.removeAttachmentData(attachment._id)
 
-      log.warn(`Removing unused attachment's data ${attachment._id}`)
-    }
+        log.warn(`Removing unused attachment's data ${attachment._id}`)
+      }
 
-    this._storage.setRev(newRev)
+      mutations.setRev(newRev)
+    })
   }
 }

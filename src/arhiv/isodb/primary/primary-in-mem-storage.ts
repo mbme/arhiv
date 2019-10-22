@@ -7,7 +7,10 @@ import {
   IDocument,
   IAttachment,
 } from '../types'
-import { IPrimaryStorage } from './primary-storage'
+import {
+  IPrimaryStorage,
+  StorageUpdater,
+} from './primary-storage'
 
 export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage<T> {
   private _documents: Map<string, T[]> = new Map()
@@ -21,10 +24,6 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
 
   getRev() {
     return this._rev
-  }
-
-  setRev(rev: number) {
-    this._rev = rev
   }
 
   getDocuments() {
@@ -50,21 +49,8 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     return [...revisions]
   }
 
-  putDocument(document: T) {
-    const revisions = this._documents.get(document._id) || []
-    revisions.push(document)
-
-    this._documents.set(document._id, revisions)
-  }
-
   getAttachments() {
     return this._attachments.slice(0)
-  }
-
-  async addAttachment(attachment: IAttachment, attachmentPath: string) {
-    this._attachments.push(attachment)
-    const newFile = await moveFile(attachmentPath, this._tempDir)
-    this._files.set(attachment._id, newFile)
   }
 
   getAttachment(id: string) {
@@ -75,7 +61,24 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     return this._files.get(id)
   }
 
-  updateAttachment(attachment: IAttachment) {
+  private _setRev = (rev: number) => {
+    this._rev = rev
+  }
+
+  private _putDocument = (document: T) => {
+    const revisions = this._documents.get(document._id) || []
+    revisions.push(document)
+
+    this._documents.set(document._id, revisions)
+  }
+
+  private _addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
+    this._attachments.push(attachment)
+    const newFile = await moveFile(attachmentPath, this._tempDir)
+    this._files.set(attachment._id, newFile)
+  }
+
+  private _updateAttachment = (attachment: IAttachment) => {
     const pos = this._attachments.findIndex((item) => item._id === attachment._id)
 
     if (pos === -1) {
@@ -86,10 +89,20 @@ export class PrimaryInMemStorage<T extends IDocument> implements IPrimaryStorage
     this._attachments.push(attachment)
   }
 
-  removeAttachmentData(id: string) {
+  private _removeAttachmentData = (id: string) => {
     if (!this.getAttachment(id)) {
       throw new Error(`Can't remove attachment data ${id}: not found`)
     }
     this._files.delete(id)
+  }
+
+  async updateStorage(update: StorageUpdater<T>) {
+    return update({
+      setRev: this._setRev,
+      putDocument: this._putDocument,
+      addAttachment: this._addAttachment,
+      updateAttachment: this._updateAttachment,
+      removeAttachmentData: this._removeAttachmentData,
+    })
   }
 }

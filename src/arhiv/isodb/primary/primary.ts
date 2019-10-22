@@ -82,8 +82,8 @@ export class PrimaryDB<T extends IDocument> {
       })
     }
 
-    // TODO parallel this
-    for (const newAttachment of changeset.attachments) {
+    // update metadata and save new attachments
+    await Promise.all(changeset.attachments.map(async (newAttachment) => {
       if (this.getAttachment(newAttachment._id)) {
         throw new Error(`Attachment ${newAttachment._id} already exists`)
       }
@@ -108,7 +108,7 @@ export class PrimaryDB<T extends IDocument> {
         _mimeType,
         _size,
       }, attachedFile)
-    }
+    }))
 
     this._storage.setRev(newRev)
 

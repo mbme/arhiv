@@ -86,6 +86,17 @@ test('few operations per transaction', async () => {
   asserts.equal(await readText(file2), '2')
 })
 
+test('operations on the same file in transaction', async () => {
+  const t = createFsTransaction()
+  const file1 = getRandomFilePath()
+
+  t.addFile(file1, '1')
+  t.removeFile(file1)
+  await t.commit()
+
+  asserts.false(fs.existsSync(file1))
+})
+
 test('rollback', async () => {
   const t = createFsTransaction()
   const file1 = getRandomFilePath()

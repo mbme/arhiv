@@ -133,7 +133,7 @@ export function removeFile(filePath: string) {
 }
 
 export async function fileExists(filePath: string) {
-  return new Promise((resolve) => {
+  return new Promise<boolean>((resolve) => {
     fs.access(filePath, fs.constants.F_OK, (err) => {
       resolve(!!err)
     })

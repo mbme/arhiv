@@ -72,7 +72,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
       const document = await this.getDocument(dir)
 
       if (!document) {
-        throw new Error("unreachable: expected document doesn't exist")
+        throw new Error(`unreachable: expected document ${dir} doesn't exist`)
       }
 
       return document
@@ -101,14 +101,14 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
   }
 
   async getAttachments() {
-    const dirs = await listDirs(this._documentsDir)
+    const dirs = await listDirs(this._attachmentsDir)
 
     // FIXME check if looks like a document dir, check files etc
     return Promise.all(dirs.map(async (dir) => {
       const attachment = await this.getAttachment(dir)
 
       if (!attachment) {
-        throw new Error("unreachable: expected attachment doesn't exist")
+        throw new Error(`unreachable: expected attachment ${dir} doesn't exist`)
       }
 
       return attachment

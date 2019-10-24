@@ -21,7 +21,18 @@ export class FSTransaction {
 
   private constructor(
     private _tmpDir: string,
-  ) { }
+  ) {
+    const cleanup = async () => {
+      try {
+        await fs.promises.rmdir(_tmpDir)
+        log.debug(`Removed temp dir ${_tmpDir}`)
+      } catch (e) {
+        log.warn(`failed to remove temp dir ${_tmpDir}: `, e)
+      }
+    }
+    this._cleanupCallbacks.add(cleanup)
+    this._revertCallbacks.add(cleanup)
+  }
 
   static async create() {
     const tmpDir = await createTempDir()
@@ -52,7 +63,7 @@ export class FSTransaction {
     this._assertNotCompleted()
     this._completed = true
 
-    await this._cleanupCallbacks.runAll(true)
+    await this._cleanupCallbacks.runAll(true, true)
     this._revertCallbacks.clear()
   }
 

@@ -7,7 +7,10 @@ import {
   createTempDir,
   rmrfSync,
 } from '~/utils/fs'
-import { createRunnable } from '~/utils/runnable'
+import {
+  createRunnable,
+  onTermination,
+} from '~/utils/runnable'
 import { getFakeNotes } from './faker'
 import {
   PrimaryDB,
@@ -30,6 +33,9 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   }
 
   const storageTempDir = await createTempDir()
+  log.debug(`using temp dir ${storageTempDir}`)
+  onTermination(() => rmrfSync(storageTempDir))
+
   const storage = await PrimaryFSStorage.create(storageTempDir)
   const db = new PrimaryDB(storage)
 
@@ -45,9 +51,7 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
       baseRev: 0,
       documents,
       attachments,
-    }, attachedFiles)
-
-    rmrfSync(tempDir)
+    }, attachedFiles).finally(() => rmrfSync(tempDir))
 
     log.info(`Generated ${documents.length} fake notes`)
   }
@@ -57,19 +61,15 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   await server.start(parseInt(port, 10))
   log.info(`listening on http://localhost:${port}`)
 
-  async function close(signal: NodeJS.Signals) {
+  onTermination(async (signal) => {
     log.simple()
     log.info(`Got signal ${signal}, stopping`)
     try {
       await server.stop()
-      rmrfSync(storageTempDir)
       process.exit(0)
     } catch (e) {
       log.error('failed to stop', e)
       process.exit(1)
     }
-  }
-
-  process.on('SIGINT', close)
-  process.on('SIGTERM', close)
+  })
 })

@@ -8,3 +8,8 @@ export function createRunnable(run: (...args: string[]) => Promise<void> | void)
     process.exit(2)
   })
 }
+
+export function onTermination(cb: (signal: NodeJS.Signals) => void) {
+  process.on('SIGINT', cb)
+  process.on('SIGTERM', cb)
+}

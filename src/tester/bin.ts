@@ -12,7 +12,7 @@ import {
   runTests,
 } from './index'
 
-setLogLevel('ERROR')
+setLogLevel('MUTED')
 const log = createLogger('tester')
 
 createRunnable(async (...args: string[]) => {

@@ -1,170 +1,155 @@
 import fs from 'fs'
 import path from 'path'
-import { createLogger } from './logger'
-import { sha256 } from './node'
 import {
   createTempDir,
-  rmrfSync,
+  fileExists,
+  removeFile,
 } from './fs'
+import { AsyncCallbacks } from './callbacks'
+import { createLogger } from './logger'
+import { Counter } from './counter'
 
 const log = createLogger('fs-tx')
 
-type OperationType = 'ADD' | 'UPDATE' | 'REMOVE'
 type FileData = string | Buffer
 
-interface IOperation {
-  type: OperationType
-  filePath: string
-  apply(tmpDir: string): Promise<void>
-  rollback(): Promise<void>
-}
+export class FSTransaction {
+  private _revertCallbacks = new AsyncCallbacks()
+  private _cleanupCallbacks = new AsyncCallbacks()
+  private _tmpFileCounter = new Counter()
+  private _completed = false
 
-const OPERATIONS = {
-  ADD(filePath: string, data: FileData): IOperation {
-    let _madeChanges = false
+  private constructor(
+    private _tmpDir: string,
+  ) { }
 
-    return {
-      type: 'ADD',
-      filePath,
+  static async create() {
+    const tmpDir = await createTempDir()
+    log.debug('Temp dir: ', tmpDir)
 
-      async apply() {
-        // FIXME this doesn't take pending operations into account
-        if (fs.existsSync(filePath)) {
-          throw new Error(`Can't ADD ${filePath}: already exists`)
-        }
+    return new FSTransaction(tmpDir)
+  }
 
-        await fs.promises.writeFile(filePath, data)
-        _madeChanges = true
-      },
-
-      async rollback() {
-        if (_madeChanges) {
-          await fs.promises.unlink(filePath)
-        }
-      },
-    }
-  },
-
-  UPDATE(filePath: string, data: FileData): IOperation {
-    let _tmpFile: string | undefined
-    let _madeChanges = false
-
-    return {
-      type: 'UPDATE',
-      filePath,
-
-      async apply(tmpDir: string) {
-        if (!fs.existsSync(filePath)) {
-          throw new Error(`Can't UPDATE ${filePath}: doesn't exist`)
-        }
-
-        _tmpFile = path.join(tmpDir, sha256(filePath))
-        await fs.promises.rename(filePath, _tmpFile)
-        _madeChanges = true
-
-        return fs.promises.writeFile(filePath, data)
-      },
-
-      async rollback() {
-        if (_madeChanges) {
-          await fs.promises.rename(_tmpFile!, filePath)
-        }
-      },
-    }
-  },
-
-  REMOVE(filePath: string): IOperation {
-    let _tmpFile: string | undefined
-    let _madeChanges = false
-
-    return {
-      type: 'REMOVE',
-      filePath,
-
-      async apply(tmpDir: string) {
-        if (!fs.existsSync(filePath)) throw new Error(`Can't REMOVE ${filePath}: doesn't exist`)
-
-        _tmpFile = path.join(tmpDir, sha256(filePath))
-
-        await fs.promises.rename(filePath, _tmpFile)
-        _madeChanges = true
-      },
-
-      async rollback() {
-        if (_madeChanges) {
-          await fs.promises.rename(_tmpFile!, filePath)
-        }
-      },
-    }
-  },
-}
-
-export function createFsTransaction() {
-  const _operations: IOperation[] = []
-  let _opCounter = 0
-
-  function _assertUniqFile(filePath: string) {
-    if (_operations.find((item) => item.filePath === filePath)) {
-      throw new Error(`Operation with ${filePath} has already been scheduled`)
+  private _assertNotCompleted() {
+    if (this._completed) {
+      throw new Error('already completed')
     }
   }
 
-  async function _rollback() {
-    log.warn(`Starting rollback of ${_opCounter} operations`)
+  async revert() {
+    this._assertNotCompleted()
+    this._completed = true
 
-    for (let i = 0; i < _opCounter; i += 1) {
-      const operation = _operations[i]
-
-      try {
-        await operation.rollback()
-      } catch (err) {
-        if (err) {
-          log.warn(`Rollback of ${operation.type} ${operation.filePath} failed:`, err)
-        } else {
-          log.warn(`Rollback of ${operation.type} ${operation.filePath} succeded`)
-        }
-      }
-    }
-
-    log.warn('Finished rollback')
+    await this._revertCallbacks.runAll(true, true)
+    this._cleanupCallbacks.clear()
   }
 
-  return {
-    addFile(filePath: string, data: FileData) {
-      _assertUniqFile(filePath)
-      _operations.push(OPERATIONS.ADD(filePath, data))
-    },
+  async complete() {
+    this._assertNotCompleted()
+    this._completed = true
 
-    updateFile(filePath: string, data: FileData) {
-      _assertUniqFile(filePath)
-      _operations.push(OPERATIONS.UPDATE(filePath, data))
-    },
+    await this._cleanupCallbacks.runAll(true)
+    this._revertCallbacks.clear()
+  }
 
-    removeFile(filePath: string) {
-      _assertUniqFile(filePath)
-      _operations.push(OPERATIONS.REMOVE(filePath))
-    },
+  async createFile(filePath: string, data: FileData) {
+    this._assertNotCompleted()
 
-    async commit() {
-      log.debug(`Commiting ${_operations.length} operations`)
-
-      let tmpDir
-      try {
-        tmpDir = await createTempDir()
-        log.debug('Temp dir: ', tmpDir)
-
-        for (const operation of _operations) {
-          _opCounter += 1
-          await operation.apply(tmpDir)
-        }
-      } catch (err) {
-        await _rollback()
-        throw err
-      } finally {
-        if (tmpDir) {
-          rmrfSync(tmpDir)
-        }
+    try {
+      if (await fileExists(filePath)) {
+        throw new Error('file already exists')
       }
-    },
+
+      await fs.promises.writeFile(filePath, data)
+
+      this._revertCallbacks.add(async () => {
+        try {
+          await removeFile(filePath)
+          log.warn(`Reverted creating file ${filePath}`)
+        } catch (e) {
+          log.error(`Failed to undo creating file ${filePath}: `, e)
+        }
+      })
+
+    } catch (e) {
+      log.error(`Failed to create file ${filePath}: `, e)
+      await this.revert()
+
+      throw e
+    }
+  }
+
+  async updateFile(filePath: string, data: FileData) {
+    this._assertNotCompleted()
+
+    try {
+      if (!await fileExists(filePath)) {
+        throw new Error("file doesn't exist")
+      }
+
+      const _tmpFile = path.join(this._tmpDir, this._tmpFileCounter.incAndGet().toString())
+
+      await fs.promises.rename(filePath, _tmpFile)
+
+      this._cleanupCallbacks.add(async () => {
+        try {
+          await removeFile(_tmpFile)
+        } catch (e) {
+          log.warn(`Failed to remove backup file ${_tmpFile} after updating file ${filePath}: `, e)
+        }
+      })
+
+      this._revertCallbacks.add(async () => {
+        try {
+          await fs.promises.rename(_tmpFile, filePath)
+          log.warn(`Reverted updating file ${filePath}`)
+        } catch (e) {
+          log.error(`Failed to undo updating file ${filePath}: `, e)
+        }
+      })
+
+      await fs.promises.writeFile(filePath, data)
+    } catch (e) {
+      log.error(`Failed to update file ${filePath}: `, e)
+      await this.revert()
+
+      throw e
+    }
+  }
+
+  async deleteFile(filePath: string) {
+    this._assertNotCompleted()
+
+    try {
+      if (!await fileExists(filePath)) {
+        throw new Error("file doesn't exist")
+      }
+
+      const _tmpFile = path.join(this._tmpDir, this._tmpFileCounter.incAndGet().toString())
+
+      await fs.promises.rename(filePath, _tmpFile)
+
+      this._cleanupCallbacks.add(async () => {
+        try {
+          await removeFile(_tmpFile)
+        } catch (e) {
+          log.warn(`Failed to remove backup file ${_tmpFile} after deleting file ${filePath}: `, e)
+        }
+      })
+
+      this._revertCallbacks.add(async () => {
+        try {
+          await fs.promises.rename(_tmpFile, filePath)
+          log.warn(`Reverted deleting file ${filePath}`)
+        } catch (e) {
+          log.error(`Failed to undo deleting file ${filePath}: `, e)
+        }
+      })
+    } catch (e) {
+      log.error(`Failed to delete file ${filePath}: `, e)
+      await this.revert()
+
+      throw e
+    }
   }
 }

@@ -36,6 +36,10 @@ export class FSTransaction {
     }
   }
 
+  isCompleted() {
+    return this._completed
+  }
+
   async revert() {
     this._assertNotCompleted()
     this._completed = true
@@ -117,6 +121,35 @@ export class FSTransaction {
     }
   }
 
+  async moveFile(filePath: string, newFilePath: string) {
+    this._assertNotCompleted()
+
+    try {
+      if (!await fileExists(filePath)) {
+        throw new Error("source file doesn't exist")
+      }
+      if (await fileExists(newFilePath)) {
+        throw new Error('result file already exists')
+      }
+
+      await fs.promises.rename(filePath, newFilePath)
+
+      this._revertCallbacks.add(async () => {
+        try {
+          await fs.promises.rename(newFilePath, filePath)
+          log.warn(`Reverted moving file ${filePath} into ${newFilePath}`)
+        } catch (e) {
+          log.error(`Failed to undo moving file ${filePath} into ${newFilePath}: `, e)
+        }
+      })
+    } catch (e) {
+      log.error(`Failed to move file ${filePath} into ${newFilePath}: `, e)
+      await this.revert()
+
+      throw e
+    }
+  }
+
   async deleteFile(filePath: string) {
     this._assertNotCompleted()
 
@@ -147,6 +180,33 @@ export class FSTransaction {
       })
     } catch (e) {
       log.error(`Failed to delete file ${filePath}: `, e)
+      await this.revert()
+
+      throw e
+    }
+  }
+
+  async createDir(filePath: string) {
+    this._assertNotCompleted()
+
+    try {
+      if (await fileExists(filePath)) {
+        throw new Error('already exists')
+      }
+
+      await fs.promises.mkdir(filePath)
+
+      this._revertCallbacks.add(async () => {
+        try {
+          await fs.promises.rmdir(filePath)
+          log.warn(`Reverted creating directory ${filePath}`)
+        } catch (e) {
+          log.error(`Failed to undo creating directory ${filePath}: `, e)
+        }
+      })
+
+    } catch (e) {
+      log.error(`Failed to create directory ${filePath}: `, e)
       await this.revert()
 
       throw e

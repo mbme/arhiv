@@ -12,6 +12,7 @@ import {
   readText,
   rmrfSync,
   writeText,
+  isDirectory,
 } from './fs'
 
 let tmpDir: string | undefined
@@ -39,6 +40,16 @@ test('creating file', async () => {
   asserts.true(fs.existsSync(file))
 })
 
+test('revert creating file', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+
+  await t.createFile(file, '')
+  await t.revert()
+
+  asserts.false(fs.existsSync(file))
+})
+
 test('updating file', async () => {
   const t = await FSTransaction.create()
   const file = getRandomFilePath()
@@ -51,6 +62,46 @@ test('updating file', async () => {
   asserts.equal(await readText(file), '2')
 })
 
+test('revert updating file', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+
+  await writeText(file, '1')
+
+  await t.updateFile(file, '2')
+  await t.revert()
+
+  asserts.equal(await readText(file), '1')
+})
+
+test('moving file', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+  const newFile = getRandomFilePath()
+
+  await writeText(file, '1')
+
+  await t.moveFile(file, newFile)
+  await t.complete()
+
+  asserts.false(fs.existsSync(file))
+  asserts.equal(await readText(newFile), '1')
+})
+
+test('revert moving file', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+  const newFile = getRandomFilePath()
+
+  await writeText(file, '1')
+
+  await t.moveFile(file, newFile)
+  await t.revert()
+
+  asserts.false(fs.existsSync(newFile))
+  asserts.equal(await readText(file), '1')
+})
+
 test('deleting file', async () => {
   const t = await FSTransaction.create()
   const file = getRandomFilePath()
@@ -60,7 +111,40 @@ test('deleting file', async () => {
   await t.deleteFile(file)
   await t.complete()
 
-  asserts.true(!fs.existsSync(file))
+  asserts.false(fs.existsSync(file))
+})
+
+test('revert deleting file', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+
+  await writeText(file, '1')
+
+  await t.deleteFile(file)
+  await t.revert()
+
+  asserts.equal(await readText(file), '1')
+})
+
+test('creating directory', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+
+  await t.createDir(file)
+  await t.complete()
+
+  asserts.true(fs.existsSync(file))
+  asserts.true(await isDirectory(file))
+})
+
+test('revert creating directory', async () => {
+  const t = await FSTransaction.create()
+  const file = getRandomFilePath()
+
+  await t.createDir(file)
+  await t.revert()
+
+  asserts.false(fs.existsSync(file))
 })
 
 test('few operations per transaction', async () => {

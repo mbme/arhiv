@@ -1,14 +1,13 @@
 import path from 'path'
 import {
-  moveFile,
+  prettyPrintJSON,
+} from '~/utils'
+import {
   fileExists,
-  mkdir,
-  writeJSON,
-  removeFile,
 } from '~/utils/fs'
 import {
   FSTransaction,
-} from '~/utils/fs-transaction';
+} from '~/utils/fs-transaction'
 import {
   IDocument,
   IAttachment,
@@ -34,7 +33,7 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
   putDocument = async (document: T) => {
     const documentDir = path.join(this._documentsDir, document._id)
     if (!await fileExists(documentDir)) {
-      await mkdir(documentDir)
+      await this._tx.createDir(documentDir)
     }
 
     const filePath = path.join(documentDir, document._rev.toString())
@@ -42,7 +41,7 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
       throw new Error(`document ${document._id} of rev ${document._rev} already exists`)
     }
 
-    await writeJSON(filePath, document)
+    await this._tx.createFile(filePath, prettyPrintJSON(document))
   }
 
   addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
@@ -51,13 +50,13 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
       throw new Error(`attachment ${attachment._id} already exists`)
     }
 
-    await mkdir(attachmentDir)
+    await this._tx.createDir(attachmentDir)
 
     const metadataPath = path.join(attachmentDir, 'metadata')
-    await writeJSON(metadataPath, attachment)
+    await this._tx.createFile(metadataPath, prettyPrintJSON(attachment))
 
     const dataPath = path.join(attachmentDir, 'data')
-    await moveFile(attachmentPath, dataPath)
+    await this._tx.moveFile(attachmentPath, dataPath)
   }
 
   updateAttachment = async (attachment: IAttachment) => {
@@ -66,11 +65,11 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
       throw new Error(`attachment ${attachment._id} doesn't exist`)
     }
 
-    await writeJSON(dataPath, attachment)
+    await this._tx.updateFile(dataPath, prettyPrintJSON(attachment))
   }
 
   removeAttachmentData = async (id: string) => {
     const dataPath = path.join(this._attachmentsDir, id, 'data')
-    await removeFile(dataPath)
+    await this._tx.deleteFile(dataPath)
   }
 }

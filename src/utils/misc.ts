@@ -15,3 +15,5 @@ export async function consumeAsyncIterable<T>(iterable: AsyncIterableIterator<T>
 
   return result
 }
+
+export const prettyPrintJSON = (data: any) => JSON.stringify(data, undefined, 2)

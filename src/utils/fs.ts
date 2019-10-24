@@ -5,6 +5,7 @@ import {
   merge,
   consumeAsyncIterable,
 } from './index'
+import { prettyPrintJSON } from './misc'
 
 interface IGetFilesOpts {
   skipDir?: string[]
@@ -112,7 +113,7 @@ export const readText = (filePath: string) => fs.promises.readFile(filePath, 'ut
 export const readJSON = async <T>(filePath: string) => JSON.parse(await readText(filePath)) as T
 
 export const writeText = (filePath: string, data: string) => fs.promises.writeFile(filePath, data, 'utf8')
-export const writeJSON = (filePath: string, data: object) => writeText(filePath, JSON.stringify(data, undefined, 2))
+export const writeJSON = (filePath: string, data: object) => writeText(filePath, prettyPrintJSON(data))
 
 export const getFileSize = (filePath: string) => fs.promises.stat(filePath).then(stats => stats.size)
 

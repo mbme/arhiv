@@ -144,9 +144,18 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
       tx,
     )
 
-    await update(mutations)
+    try {
+      await update(mutations)
 
-    await tx.complete()
-    this._rev = mutations.getRev()
+      await tx.complete()
+
+      this._rev = mutations.getRev()
+    } catch (e) {
+      if (!tx.isCompleted()) {
+        await tx.revert()
+      }
+
+      throw e
+    }
   }
 }

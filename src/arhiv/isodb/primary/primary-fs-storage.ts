@@ -3,16 +3,15 @@ import {
   getLastEl,
 } from '~/utils'
 import {
-  moveFile,
   listDirs,
   listFiles,
   readJSON,
   fileExists,
   mkdir,
-  writeJSON,
-  removeFile,
 } from '~/utils/fs'
-import { createFsTransaction } from '~/utils/fs-transaction';
+import {
+  FSTransaction,
+} from '~/utils/fs-transaction'
 import {
   IDocument,
   IAttachment,
@@ -20,67 +19,10 @@ import {
 import {
   IPrimaryStorage,
   StorageUpdater,
-  IPrimaryStorageMutations,
 } from './primary-storage'
-
-class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryStorageMutations<T> {
-  private _transaction = createFsTransaction()
-
-  constructor(
-    private _rev: number,
-    private _documentsDir: string,
-    private _attachmentsDir: string,
-  ) { }
-
-  setRev = (rev: number) => {
-    this._rev = rev
-  }
-
-  getRev = () => this._rev
-
-  putDocument = async (document: T) => {
-    const documentDir = path.join(this._documentsDir, document._id)
-    if (!await fileExists(documentDir)) {
-      await mkdir(documentDir)
-    }
-
-    const filePath = path.join(documentDir, document._rev.toString())
-    if (await fileExists(filePath)) {
-      throw new Error(`document ${document._id} of rev ${document._rev} already exists`)
-    }
-
-    await writeJSON(filePath, document)
-  }
-
-  addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
-    const attachmentDir = path.join(this._attachmentsDir, attachment._id)
-    if (await fileExists(attachmentDir)) {
-      throw new Error(`attachment ${attachment._id} already exists`)
-    }
-
-    await mkdir(attachmentDir)
-
-    const metadataPath = path.join(attachmentDir, 'metadata')
-    await writeJSON(metadataPath, attachment)
-
-    const dataPath = path.join(attachmentDir, 'data')
-    await moveFile(attachmentPath, dataPath)
-  }
-
-  updateAttachment = async (attachment: IAttachment) => {
-    const dataPath = path.join(this._attachmentsDir, attachment._id, 'metadata')
-    if (!await fileExists(dataPath)) {
-      throw new Error(`attachment ${attachment._id} doesn't exist`)
-    }
-
-    await writeJSON(dataPath, attachment)
-  }
-
-  removeAttachmentData = async (id: string) => {
-    const dataPath = path.join(this._attachmentsDir, id, 'data')
-    await removeFile(dataPath)
-  }
-}
+import {
+  PrimaryFSStorageMutations,
+} from './primary-fs-storage-mutations'
 
 export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T> {
   private _rev = 0
@@ -108,6 +50,14 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
       await this.getAttachments()
     ).reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
     this._rev = Math.max(maxDocumentRev, maxAttachmentRev)
+  }
+
+  static async create(rootDir: string) {
+    const storage = new PrimaryFSStorage(rootDir)
+
+    await storage.init()
+
+    return storage
   }
 
   getRev() {
@@ -186,18 +136,17 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
   }
 
   async updateStorage(update: StorageUpdater<T>) {
-    const mutations = new PrimaryFSStorageMutations(this._rev, this._documentsDir, this._attachmentsDir)
+    const tx = await FSTransaction.create()
+    const mutations = new PrimaryFSStorageMutations(
+      this._rev,
+      this._documentsDir,
+      this._attachmentsDir,
+      tx,
+    )
 
     await update(mutations)
 
+    await tx.complete()
     this._rev = mutations.getRev()
-  }
-
-  static async create(rootDir: string) {
-    const storage = new PrimaryFSStorage(rootDir)
-
-    await storage.init()
-
-    return storage
   }
 }

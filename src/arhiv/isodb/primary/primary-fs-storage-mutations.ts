@@ -4,10 +4,8 @@ import {
 } from '~/utils'
 import {
   fileExists,
-} from '~/utils/fs'
-import {
   FSTransaction,
-} from '~/utils/fs-transaction'
+} from '~/utils/fs'
 import {
   IDocument,
   IAttachment,

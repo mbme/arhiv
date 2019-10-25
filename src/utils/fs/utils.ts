@@ -3,9 +3,11 @@ import os from 'os'
 import path from 'path'
 import {
   merge,
+} from '../object'
+import {
+  prettyPrintJSON,
   consumeAsyncIterable,
-} from './index'
-import { prettyPrintJSON } from './misc'
+} from '../misc'
 
 interface IGetFilesOpts {
   skipDir?: string[]

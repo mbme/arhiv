@@ -8,10 +8,9 @@ import {
   readJSON,
   fileExists,
   mkdir,
-} from '~/utils/fs'
-import {
   FSTransaction,
-} from '~/utils/fs-transaction'
+  LockFile,
+} from '~/utils/fs'
 import {
   IDocument,
   IAttachment,
@@ -29,26 +28,34 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
 
   private _documentsDir: string
   private _attachmentsDir: string
+  private _lock: LockFile
 
   private constructor(rootDir: string) {
     this._documentsDir = path.join(rootDir, 'documents')
     this._attachmentsDir = path.join(rootDir, 'attachments')
-    // TODO validate documents, check if dirs exist, create if needed
-    // check if file name === document id
+    this._lock = new LockFile(path.join(rootDir, 'lock'))
+    // TODO validate documents
+    // check if dir name === document id
   }
 
   private async init() {
     await Promise.all([
+      this._lock.create(),
       mkdir(this._documentsDir),
       mkdir(this._attachmentsDir),
     ])
 
-    const maxDocumentRev = (
-      await this.getDocuments()
-    ).reduce((acc, document) => Math.max(acc, document._rev), 0)
-    const maxAttachmentRev = (
-      await this.getAttachments()
-    ).reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
+    const [
+      documents,
+      attachments,
+    ] = await Promise.all([
+      this.getDocuments(),
+      this.getAttachments(),
+    ])
+
+    const maxDocumentRev = documents.reduce((acc, document) => Math.max(acc, document._rev), 0)
+    const maxAttachmentRev = attachments.reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
+
     this._rev = Math.max(maxDocumentRev, maxAttachmentRev)
   }
 
@@ -58,6 +65,10 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
     await storage.init()
 
     return storage
+  }
+
+  async stop() {
+    await this._lock.destroy()
   }
 
   getRev() {
@@ -151,9 +162,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
 
       this._rev = mutations.getRev()
     } catch (e) {
-      if (!tx.isCompleted()) {
-        await tx.revert()
-      }
+      await tx.revert()
 
       throw e
     }

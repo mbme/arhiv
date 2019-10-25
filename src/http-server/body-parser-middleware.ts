@@ -3,9 +3,17 @@ import fs from 'fs'
 import http from 'http'
 // tslint:disable-next-line:match-default-export-name
 import Busboy from 'busboy'
-import { rmrfSync, createTempDir } from '../utils/fs'
-import { ILazy, lazy } from '../utils/lazy'
-import { readStreamAsString } from '../utils/node'
+import {
+  rmrfSync,
+  createTempDir,
+} from '../utils/fs'
+import {
+  ILazy,
+  lazy,
+} from '../utils/lazy'
+import {
+  readStreamAsString,
+} from '../utils/node'
 import {
   MultipartBody,
   JSONBody,

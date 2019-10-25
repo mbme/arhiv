@@ -1,13 +1,13 @@
 import fs from 'fs'
 import path from 'path'
+import { createLogger } from '../logger'
+import { AsyncCallbacks } from '../callbacks'
+import { Counter } from '../counter'
 import {
   createTempDir,
   fileExists,
   removeFile,
-} from './fs'
-import { AsyncCallbacks } from './callbacks'
-import { createLogger } from './logger'
-import { Counter } from './counter'
+} from './utils'
 
 const log = createLogger('fs-tx')
 
@@ -47,10 +47,6 @@ export class FSTransaction {
     }
   }
 
-  isCompleted() {
-    return this._completed
-  }
-
   async revert() {
     this._assertNotCompleted()
     this._completed = true
@@ -88,7 +84,6 @@ export class FSTransaction {
 
     } catch (e) {
       log.error(`Failed to create file ${filePath}: `, e)
-      await this.revert()
 
       throw e
     }
@@ -126,7 +121,6 @@ export class FSTransaction {
       await fs.promises.writeFile(filePath, data)
     } catch (e) {
       log.error(`Failed to update file ${filePath}: `, e)
-      await this.revert()
 
       throw e
     }
@@ -155,7 +149,6 @@ export class FSTransaction {
       })
     } catch (e) {
       log.error(`Failed to move file ${filePath} into ${newFilePath}: `, e)
-      await this.revert()
 
       throw e
     }
@@ -191,7 +184,6 @@ export class FSTransaction {
       })
     } catch (e) {
       log.error(`Failed to delete file ${filePath}: `, e)
-      await this.revert()
 
       throw e
     }
@@ -218,7 +210,6 @@ export class FSTransaction {
 
     } catch (e) {
       log.error(`Failed to create directory ${filePath}: `, e)
-      await this.revert()
 
       throw e
     }

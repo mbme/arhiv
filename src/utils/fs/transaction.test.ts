@@ -6,14 +6,14 @@ import {
   test,
   asserts,
 } from '~/tester'
-import { FSTransaction } from './fs-transaction'
+import { FSTransaction } from './transaction'
 import {
   createTempDir,
   readText,
   rmrfSync,
   writeText,
   isDirectory,
-} from './fs'
+} from './utils'
 
 let tmpDir: string | undefined
 let counter = 0
@@ -171,23 +171,4 @@ test('operations on the same file in transaction', async () => {
   await t.complete()
 
   asserts.false(fs.existsSync(file1))
-})
-
-test('rollback on error', async () => {
-  const t = await FSTransaction.create()
-  const file1 = getRandomFilePath()
-  const file2 = getRandomFilePath()
-  const file3 = getRandomFilePath()
-
-  await writeText(file1, '1')
-  await writeText(file2, '1')
-  await writeText(file3, '1')
-
-  await t.updateFile(file1, '2')
-  await t.deleteFile(file2)
-  const isErr = await t.createFile(file3, '').catch(e => !!e)
-
-  asserts.true(isErr)
-  asserts.equal(await readText(file1), '1')
-  asserts.equal(await readText(file2), '1')
 })

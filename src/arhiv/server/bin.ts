@@ -37,6 +37,8 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   onTermination(() => rmrfSync(storageTempDir))
 
   const storage = await PrimaryFSStorage.create(storageTempDir)
+  onTermination(() => storage.stop())
+
   const db = new PrimaryDB(storage)
 
   if (!isProduction && args.includes('--gen-data')) {

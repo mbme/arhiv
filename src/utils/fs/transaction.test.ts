@@ -31,7 +31,7 @@ const getRandomFilePath = () => {
 }
 
 test('creating file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await t.createFile(file, '')
@@ -41,7 +41,7 @@ test('creating file', async () => {
 })
 
 test('revert creating file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await t.createFile(file, '')
@@ -51,7 +51,7 @@ test('revert creating file', async () => {
 })
 
 test('updating file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await writeText(file, '1')
@@ -63,7 +63,7 @@ test('updating file', async () => {
 })
 
 test('revert updating file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await writeText(file, '1')
@@ -75,7 +75,7 @@ test('revert updating file', async () => {
 })
 
 test('moving file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
   const newFile = getRandomFilePath()
 
@@ -89,7 +89,7 @@ test('moving file', async () => {
 })
 
 test('revert moving file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
   const newFile = getRandomFilePath()
 
@@ -103,7 +103,7 @@ test('revert moving file', async () => {
 })
 
 test('deleting file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await writeText(file, '1')
@@ -115,7 +115,7 @@ test('deleting file', async () => {
 })
 
 test('revert deleting file', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await writeText(file, '1')
@@ -127,7 +127,7 @@ test('revert deleting file', async () => {
 })
 
 test('creating directory', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await t.createDir(file)
@@ -138,7 +138,7 @@ test('creating directory', async () => {
 })
 
 test('revert creating directory', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file = getRandomFilePath()
 
   await t.createDir(file)
@@ -148,7 +148,7 @@ test('revert creating directory', async () => {
 })
 
 test('few operations per transaction', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file1 = getRandomFilePath()
   const file2 = getRandomFilePath()
 
@@ -163,7 +163,7 @@ test('few operations per transaction', async () => {
 })
 
 test('operations on the same file in transaction', async () => {
-  const t = await FSTransaction.create()
+  const t = new FSTransaction()
   const file1 = getRandomFilePath()
 
   await t.createFile(file1, '1')

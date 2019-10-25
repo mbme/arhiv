@@ -147,7 +147,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
   }
 
   async updateStorage(update: StorageUpdater<T>) {
-    const tx = await FSTransaction.create()
+    const tx = new FSTransaction()
     const mutations = new PrimaryFSStorageMutations(
       this._rev,
       this._documentsDir,

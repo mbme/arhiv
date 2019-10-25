@@ -3,6 +3,7 @@ import path from 'path'
 import { createLogger } from '../logger'
 import { AsyncCallbacks } from '../callbacks'
 import { Counter } from '../counter'
+import { lazy } from '../lazy'
 import {
   createTempDir,
   fileExists,
@@ -19,26 +20,27 @@ export class FSTransaction {
   private _tmpFileCounter = new Counter()
   private _completed = false
 
-  private constructor(
-    private _tmpDir: string,
-  ) {
-    const cleanup = async () => {
-      try {
-        await fs.promises.rmdir(_tmpDir)
-        log.debug(`Removed temp dir ${_tmpDir}`)
-      } catch (e) {
-        log.warn(`failed to remove temp dir ${_tmpDir}: `, e)
-      }
-    }
-    this._cleanupCallbacks.add(cleanup)
-    this._revertCallbacks.add(cleanup)
-  }
-
-  static async create() {
+  private _tmpDir = lazy(async () => {
     const tmpDir = await createTempDir()
     log.debug('Temp dir: ', tmpDir)
 
-    return new FSTransaction(tmpDir)
+    const cleanup = async () => {
+      try {
+        await fs.promises.rmdir(tmpDir)
+        log.debug(`Removed temp dir ${tmpDir}`)
+      } catch (e) {
+        log.warn(`failed to remove temp dir ${tmpDir}: `, e)
+      }
+    }
+
+    this._cleanupCallbacks.add(cleanup)
+    this._revertCallbacks.add(cleanup)
+
+    return tmpDir
+  })
+
+  private async _getTempFile() {
+    return path.join(await this._tmpDir.value, this._tmpFileCounter.incAndGet().toString())
   }
 
   private _assertNotCompleted() {
@@ -97,21 +99,21 @@ export class FSTransaction {
         throw new Error("file doesn't exist")
       }
 
-      const _tmpFile = path.join(this._tmpDir, this._tmpFileCounter.incAndGet().toString())
+      const tmpFile = await this._getTempFile()
 
-      await fs.promises.rename(filePath, _tmpFile)
+      await fs.promises.rename(filePath, tmpFile)
 
       this._cleanupCallbacks.add(async () => {
         try {
-          await removeFile(_tmpFile)
+          await removeFile(tmpFile)
         } catch (e) {
-          log.warn(`Failed to remove backup file ${_tmpFile} after updating file ${filePath}: `, e)
+          log.warn(`Failed to remove backup file ${tmpFile} after updating file ${filePath}: `, e)
         }
       })
 
       this._revertCallbacks.add(async () => {
         try {
-          await fs.promises.rename(_tmpFile, filePath)
+          await fs.promises.rename(tmpFile, filePath)
           log.warn(`Reverted updating file ${filePath}`)
         } catch (e) {
           log.error(`Failed to undo updating file ${filePath}: `, e)
@@ -162,21 +164,21 @@ export class FSTransaction {
         throw new Error("file doesn't exist")
       }
 
-      const _tmpFile = path.join(this._tmpDir, this._tmpFileCounter.incAndGet().toString())
+      const tmpFile = await this._getTempFile()
 
-      await fs.promises.rename(filePath, _tmpFile)
+      await fs.promises.rename(filePath, tmpFile)
 
       this._cleanupCallbacks.add(async () => {
         try {
-          await removeFile(_tmpFile)
+          await removeFile(tmpFile)
         } catch (e) {
-          log.warn(`Failed to remove backup file ${_tmpFile} after deleting file ${filePath}: `, e)
+          log.warn(`Failed to remove backup file ${tmpFile} after deleting file ${filePath}: `, e)
         }
       })
 
       this._revertCallbacks.add(async () => {
         try {
-          await fs.promises.rename(_tmpFile, filePath)
+          await fs.promises.rename(tmpFile, filePath)
           log.warn(`Reverted deleting file ${filePath}`)
         } catch (e) {
           log.error(`Failed to undo deleting file ${filePath}: `, e)

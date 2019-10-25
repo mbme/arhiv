@@ -1,15 +1,17 @@
 import path from 'path'
 import {
   getLastEl,
+  createLogger,
 } from '~/utils'
 import {
   listDirs,
   listFiles,
   readJSON,
   fileExists,
-  mkdir,
   FSTransaction,
   LockFile,
+  dirExists,
+  ensureDirExists,
 } from '~/utils/fs'
 import {
   IDocument,
@@ -22,6 +24,8 @@ import {
 import {
   PrimaryFSStorageMutations,
 } from './primary-fs-storage-mutations'
+
+const log = createLogger('isodb-primary')
 
 export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T> {
   private _rev = 0
@@ -38,11 +42,14 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
     // check if dir name === document id
   }
 
+  private acquireLock() {
+    return this._lock.create()
+  }
+
   private async init() {
     await Promise.all([
-      this._lock.create(),
-      mkdir(this._documentsDir),
-      mkdir(this._attachmentsDir),
+      ensureDirExists(this._documentsDir),
+      ensureDirExists(this._attachmentsDir),
     ])
 
     const [
@@ -59,12 +66,25 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
     this._rev = Math.max(maxDocumentRev, maxAttachmentRev)
   }
 
-  static async create(rootDir: string) {
+  static async create(rootDirRaw: string) {
+    const rootDir = path.resolve(rootDirRaw)
+    log.info(`arhiv root: ${rootDir}`)
+
+    if (!await dirExists(rootDir)) {
+      throw new Error(`${rootDir} doesn't exist`)
+    }
+
     const storage = new PrimaryFSStorage(rootDir)
+    await storage.acquireLock()
 
-    await storage.init()
+    try {
+      await storage.init()
 
-    return storage
+      return storage
+    } catch (e) {
+      await storage.stop()
+      throw e
+    }
   }
 
   async stop() {
@@ -93,7 +113,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
   async getDocument(id: string) {
     const documentDir = path.join(this._documentsDir, id)
 
-    if (!await fileExists(documentDir)) {
+    if (!await dirExists(documentDir)) {
       return undefined
     }
 

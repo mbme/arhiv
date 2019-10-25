@@ -119,28 +119,76 @@ export const writeJSON = (filePath: string, data: object) => writeText(filePath,
 
 export const getFileSize = (filePath: string) => fs.promises.stat(filePath).then(stats => stats.size)
 
-export async function moveFileIntoDir(filePath: string, dir: string): Promise<string> {
-  const newFile = path.join(dir, path.basename(filePath))
-
-  await fs.promises.rename(filePath, newFile)
-
-  return newFile
+// moving files (renaming file) across different file systems doesn't work
+// so we need to 1) copy file into new destination 2) remove old file
+async function moveFileAcrossDevices(filePath: string, newFilePath: string) {
+  await fs.promises.copyFile(filePath, newFilePath)
+  await removeFile(filePath)
 }
 
 export async function moveFile(filePath: string, newFilePath: string) {
-  await fs.promises.rename(filePath, newFilePath)
+  try {
+    await fs.promises.rename(filePath, newFilePath)
+  } catch (e) {
+    // tslint:disable-next-line:no-unsafe-any
+    if (e.code === 'EXDEV') {
+      await moveFileAcrossDevices(filePath, newFilePath)
+    } else {
+      throw e
+    }
+  }
+}
+
+export async function moveFileIntoDir(filePath: string, dir: string): Promise<string> {
+  const newFile = path.join(dir, path.basename(filePath))
+
+  await moveFile(filePath, newFile)
+
+  return newFile
 }
 
 export function removeFile(filePath: string) {
   return fs.promises.unlink(filePath)
 }
 
-export async function fileExists(filePath: string) {
-  return new Promise<boolean>((resolve) => {
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-      resolve(!err)
-    })
+export async function fileExists(filePath: string, assert = true) {
+  const exists = await new Promise<boolean>((resolve) => {
+    fs.access(filePath, fs.constants.F_OK, (err) => resolve(!err))
   })
+
+  if (!exists) {
+    return false
+  }
+
+  const _isFile = await isFile(filePath)
+  if (assert && !_isFile) {
+    throw new Error(`${filePath} exists but isn't a file`)
+  }
+
+  return _isFile
+}
+
+export async function dirExists(filePath: string, assert = true) {
+  const exists = await new Promise<boolean>((resolve) => {
+    fs.access(filePath, fs.constants.F_OK, (err) => resolve(!err))
+  })
+
+  if (!exists) {
+    return false
+  }
+
+  const isDir = await isDirectory(filePath)
+  if (assert && !isDir) {
+    throw new Error(`${filePath} exists but isn't a directory`)
+  }
+
+  return isDir
+}
+
+export async function ensureDirExists(dir: string) {
+  if (!await dirExists(dir)) {
+    await mkdir(dir)
+  }
 }
 
 export async function mkdir(filePath: string, recursive = false) {

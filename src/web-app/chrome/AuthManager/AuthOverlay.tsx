@@ -34,15 +34,18 @@ export function AuthOverlay({ submit }: IProps) {
         />
       </Box>
 
-      <Input
-        $style={{ width: '300px' }}
-        name="password"
-        type="password"
-        autoFocus
-        value={password}
-        onChange={setPassword}
-        onKeyDown={onKeyDown}
-      />
+      <form onSubmit={e => e.preventDefault()}>
+        <Input
+          $style={{ width: '300px' }}
+          name="password"
+          type="password"
+          autoComplete="off"
+          autoFocus
+          value={password}
+          onChange={setPassword}
+          onKeyDown={onKeyDown}
+        />
+      </form>
     </Column>
   )
 }

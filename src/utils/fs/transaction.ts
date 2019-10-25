@@ -8,6 +8,8 @@ import {
   createTempDir,
   fileExists,
   removeFile,
+  dirExists,
+  moveFile,
 } from './utils'
 
 const log = createLogger('fs-tx')
@@ -101,7 +103,7 @@ export class FSTransaction {
 
       const tmpFile = await this._getTempFile()
 
-      await fs.promises.rename(filePath, tmpFile)
+      await moveFile(filePath, tmpFile)
 
       this._cleanupCallbacks.add(async () => {
         try {
@@ -113,7 +115,7 @@ export class FSTransaction {
 
       this._revertCallbacks.add(async () => {
         try {
-          await fs.promises.rename(tmpFile, filePath)
+          await moveFile(tmpFile, filePath)
           log.warn(`Reverted updating file ${filePath}`)
         } catch (e) {
           log.error(`Failed to undo updating file ${filePath}: `, e)
@@ -139,11 +141,11 @@ export class FSTransaction {
         throw new Error('result file already exists')
       }
 
-      await fs.promises.rename(filePath, newFilePath)
+      await moveFile(filePath, newFilePath)
 
       this._revertCallbacks.add(async () => {
         try {
-          await fs.promises.rename(newFilePath, filePath)
+          await moveFile(newFilePath, filePath)
           log.warn(`Reverted moving file ${filePath} into ${newFilePath}`)
         } catch (e) {
           log.error(`Failed to undo moving file ${filePath} into ${newFilePath}: `, e)
@@ -166,7 +168,7 @@ export class FSTransaction {
 
       const tmpFile = await this._getTempFile()
 
-      await fs.promises.rename(filePath, tmpFile)
+      await moveFile(filePath, tmpFile)
 
       this._cleanupCallbacks.add(async () => {
         try {
@@ -178,7 +180,7 @@ export class FSTransaction {
 
       this._revertCallbacks.add(async () => {
         try {
-          await fs.promises.rename(tmpFile, filePath)
+          await moveFile(tmpFile, filePath)
           log.warn(`Reverted deleting file ${filePath}`)
         } catch (e) {
           log.error(`Failed to undo deleting file ${filePath}: `, e)
@@ -195,7 +197,7 @@ export class FSTransaction {
     this._assertNotCompleted()
 
     try {
-      if (await fileExists(filePath)) {
+      if (await dirExists(filePath)) {
         throw new Error('already exists')
       }
 

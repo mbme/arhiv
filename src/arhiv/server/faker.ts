@@ -6,7 +6,6 @@ import {
   IDict,
   nowS,
 } from '~/utils'
-import { sha256File } from '~/utils/node'
 import {
   readText,
   listFiles,
@@ -44,10 +43,10 @@ async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IN
       )
 
       if (Math.random() < 0.34) {
-        const hash = pickRandomItem(Object.keys(images))
-        refs.add(hash)
+        const imageId = pickRandomItem(Object.keys(images))
+        refs.add(imageId)
 
-        const link = createLink(hash, path.basename(images[hash]))
+        const link = createLink(imageId, path.basename(images[imageId]))
         sentences.push(` ${link} `)
       }
 
@@ -71,13 +70,13 @@ async function prepareImages(basePath: string, tempDir: string): Promise<IDict> 
 
   await Promise.all(images.map(async (name) => {
     const filePath = path.join(basePath, name)
-    const hash = await sha256File(filePath)
+    const imageId = generateRandomId()
 
     const newPath = path.join(tempDir, name)
 
     await fs.promises.copyFile(filePath, newPath)
 
-    result[hash] = newPath
+    result[imageId] = newPath
   }))
 
   return result

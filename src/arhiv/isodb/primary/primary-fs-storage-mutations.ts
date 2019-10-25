@@ -5,6 +5,7 @@ import {
 import {
   fileExists,
   FSTransaction,
+  dirExists,
 } from '~/utils/fs'
 import {
   IDocument,
@@ -30,7 +31,7 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
 
   putDocument = async (document: T) => {
     const documentDir = path.join(this._documentsDir, document._id)
-    if (!await fileExists(documentDir)) {
+    if (!await dirExists(documentDir)) {
       await this._tx.createDir(documentDir)
     }
 
@@ -44,7 +45,7 @@ export class PrimaryFSStorageMutations<T extends IDocument> implements IPrimaryS
 
   addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
     const attachmentDir = path.join(this._attachmentsDir, attachment._id)
-    if (await fileExists(attachmentDir)) {
+    if (await dirExists(attachmentDir)) {
       throw new Error(`attachment ${attachment._id} already exists`)
     }
 

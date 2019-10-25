@@ -56,6 +56,7 @@ type NativeProps =
   | 'onBlur'
   | 'defaultValue'
   | 'placeholder'
+  | 'autoComplete'
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   $style?: $Style
@@ -115,6 +116,7 @@ export class Input extends React.PureComponent<IProps> {
       name,
       value,
       defaultValue,
+      autoComplete,
       placeholder,
       onBlur,
       $style,
@@ -129,6 +131,7 @@ export class Input extends React.PureComponent<IProps> {
           name={name}
           value={value}
           defaultValue={defaultValue}
+          autoComplete={autoComplete}
           placeholder={placeholder}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}

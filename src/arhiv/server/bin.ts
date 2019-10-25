@@ -4,7 +4,6 @@ import {
   setLogLevelStr,
 } from '~/utils'
 import {
-  createTempDir,
   rmrfSync,
 } from '~/utils/fs'
 import {
@@ -32,11 +31,7 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
     throw new Error('port, password & rootDir are required')
   }
 
-  const storageTempDir = await createTempDir()
-  log.debug(`using temp dir ${storageTempDir}`)
-  onTermination(() => rmrfSync(storageTempDir))
-
-  const storage = await PrimaryFSStorage.create(storageTempDir)
+  const storage = await PrimaryFSStorage.create(rootDir)
   onTermination(() => storage.stop())
 
   const db = new PrimaryDB(storage)
@@ -63,9 +58,8 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   await server.start(parseInt(port, 10))
   log.info(`listening on http://localhost:${port}`)
 
-  onTermination(async (signal) => {
-    log.simple()
-    log.info(`Got signal ${signal}, stopping`)
+  onTermination(async () => {
+    log.info(`stopping...`)
     try {
       await server.stop()
       process.exit(0)

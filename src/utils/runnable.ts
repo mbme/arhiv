@@ -1,22 +1,32 @@
-// tslint:disable:no-console
 import { Procedure } from './types'
+import { createLogger } from './logger'
+
+const log = createLogger('runnable')
 
 export function createRunnable(run: (...args: string[]) => Promise<void> | void) {
   const args = process.argv.slice(3)
 
   Promise.resolve(run(...args)).catch((e) => {
-    console.error('runnable: process failed', e)
+    log.error('runnable: process failed', e)
 
     process.exit(2)
   })
 
-  process.on('SIGINT', () => console.error('runnable: got SIGINT'))
-  process.on('SIGTERM', () => console.error('runnable: got SIGTERM'))
-  process.on('exit', (code: number) => console.error(`runnable: got exit code=${code}`))
+  process.on('SIGINT', () => log.debug('got SIGINT'))
+  process.on('SIGTERM', () => log.debug('got SIGTERM'))
+  process.on('exit', (code: number) => log.debug(`got exit code=${code}`))
 }
 
 export function onTermination(cb: Procedure) {
-  process.on('SIGINT', cb)
-  process.on('SIGTERM', cb)
-  process.on('exit', cb)
+  let terminated = false
+  const handler = () => {
+    if (!terminated) {
+      terminated = true
+      cb()
+    }
+  }
+
+  process.on('SIGINT', handler)
+  process.on('SIGTERM', handler)
+  process.on('exit', handler)
 }

@@ -9,31 +9,29 @@ import {
 
 const log = createLogger('isodb:lock-manager')
 
-type State = { type: 'free' }
-  | { type: 'db-locked' }
-  | { type: 'documents-locked', locks: readonly string[] }
+type State = 'db-locked' | readonly string[]
 
 export class LockManager {
-  private _state = new Cell<State>({ type: 'free' })
+  private _state = new Cell<State>([])
   private _callbacks = new Callbacks()
 
   constructor() {
     this._callbacks.add(
       this._state.value$.subscribe({
         next(currentState) {
-          if (currentState.type === 'free') {
-            log.debug('lock state -> free')
-
-            return
-          }
-
-          if (currentState.type === 'db-locked') {
+          if (currentState === 'db-locked') {
             log.debug('lock state -> db-locked')
 
             return
           }
 
-          log.debug(`lock state -> documents locked: ${currentState.locks.join(', ')}`)
+          if (currentState.length === 0) {
+            log.debug('lock state -> free')
+
+            return
+          }
+
+          log.debug(`lock state -> documents locked: ${currentState.join(', ')}`)
         },
       }),
     )
@@ -41,52 +39,40 @@ export class LockManager {
 
   isDocumentLocked$(id: string) {
     return this._state.value$.map((state) => {
-      if (state.type === 'free') {
-        return false
-      }
-
-      if (state.type === 'db-locked') {
+      if (state === 'db-locked') {
         return true
       }
 
-      return state.locks.includes(id)
+      return state.includes(id)
     })
   }
 
   private _lockDocument(id: string) {
     const state = this._state.value
 
-    if (state.type === 'db-locked') {
+    if (state === 'db-locked') {
       throw new Error(`[unreachable] can't lock document ${id}: db locked`)
     }
 
-    if (state.type === 'free') {
-      this._state.value = { type: 'documents-locked', locks: [id] }
-
-      return
-    }
-
-    if (state.locks.includes(id)) {
+    if (state.includes(id)) {
       throw new Error(`[unreachable] can't lock document ${id}: already locked`)
     }
-    this._state.value = { type: 'documents-locked', locks: [...state.locks, id] }
+
+    this._state.value = [...state, id]
   }
 
   private _unlockDocument(id: string) {
     const state = this._state.value
 
-    if (state.type === 'free'
-      || state.type === 'db-locked'
-      || !state.locks.includes(id)
-    ) {
+    if (state === 'db-locked') {
+      throw new Error(`[unreachable] can't unlock document ${id}: db locked`)
+    }
+
+    if (!state.includes(id)) {
       throw new Error(`[unreachable] can't unlock document ${id}: not locked`)
     }
 
-    const locks = state.locks.filter(lock => lock !== id)
-
-    this._state.value = locks.length
-      ? { type: 'documents-locked', locks }
-      : { type: 'free' }
+    this._state.value = state.filter(lock => lock !== id)
   }
 
   acquireDocumentLock$(id: string) {
@@ -102,32 +88,36 @@ export class LockManager {
   }
 
   private _lockDB() {
-    if (this._state.value.type !== 'free') {
-      throw new Error("Can't lock db: not free")
+    if (this._state.value === 'db-locked') {
+      throw new Error("Can't lock db: its already locked")
     }
 
-    this._state.value = { type: 'db-locked' }
+    if (this._state.value.length) {
+      throw new Error("Can't lock db: some documents are locked")
+    }
+
+    this._state.value = 'db-locked'
   }
 
   private _unlockDB() {
-    if (this._state.value.type !== 'db-locked') {
+    if (this._state.value !== 'db-locked') {
       throw new Error("Can't unlock db: not locked")
     }
 
-    this._state.value = { type: 'free' }
+    this._state.value = []
   }
 
   isDBLocked() {
-    return this._state.value.type === 'db-locked'
+    return this._state.value === 'db-locked'
   }
 
   acquireDBLock$() {
     return this._state.value$.map((state) => {
-      if (state.type === 'free') {
-        return true
+      if (state === 'db-locked') {
+        return false
       }
 
-      return false
+      return state.length === 0
     })
       .filter(isFree => isFree)
       .take(1)

@@ -16,18 +16,18 @@ export type ChangesetExchange<T extends IDocument> = (
 export interface IReplicaStorage<T extends IDocument> {
   getRev(): number
 
-  getDocuments(): T[]
-  getLocalDocuments(): T[]
+  getDocuments(): Promise<T[]>
+  getLocalDocuments(): Promise<T[]>
 
-  getAttachments(): IAttachment[]
-  getLocalAttachments(): IAttachment[]
+  getAttachments(): Promise<IAttachment[]>
+  getLocalAttachments(): Promise<IAttachment[]>
 
-  getDocument(id: string): T | undefined
-  getLocalDocument(id: string): T | undefined
+  getDocument(id: string): Promise<T | undefined>
+  getLocalDocument(id: string): Promise<T | undefined>
 
-  getAttachment(id: string): IAttachment | undefined
-  getLocalAttachment(id: string): IAttachment | undefined
-  getLocalAttachmentData(id: string): Blob | undefined
+  getAttachment(id: string): Promise<IAttachment | undefined>
+  getLocalAttachment(id: string): Promise<IAttachment | undefined>
+  getLocalAttachmentData(id: string): Promise<Blob | undefined>
 
   addLocalDocument(document: T): void
   addLocalAttachment(attachment: IAttachment, blob: File): void
@@ -35,5 +35,5 @@ export interface IReplicaStorage<T extends IDocument> {
   removeLocalDocument(id: string): void
   removeLocalAttachment(id: string): void
 
-  upgrade(changesetResult: IChangesetResult<T>): void
+  upgrade(changesetResult: IChangesetResult<T>): Promise<void>
 }

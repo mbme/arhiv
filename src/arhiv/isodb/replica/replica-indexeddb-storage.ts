@@ -1,6 +1,5 @@
 import {
-  openDB,
-  request2promise,
+  IDB,
 } from '~/indexeddb'
 import {
   IDocument,
@@ -10,6 +9,19 @@ import {
 import {
   IReplicaStorage,
 } from './types'
+
+interface IBlob {
+  _id: string
+  data: Blob
+}
+
+type Store<T extends IDocument> = {
+  'documents': T,
+  'documents-local': T,
+  'attachments': IAttachment,
+  'attachments-local': IAttachment,
+  'attachments-data': IBlob,
+}
 
 export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaStorage<T> {
   private _documents: T[] = []
@@ -21,27 +33,27 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   private _localFiles = new Map<string, Blob>()
 
   private constructor(
-    private _idb: IDBDatabase,
+    private _idb: IDB<Store<T>>,
   ) { }
 
   private async _init() {
-    const maxDocumentRev = this.getDocuments()
+    const maxDocumentRev = (await this.getDocuments())
       .reduce((acc, document) => Math.max(acc, document._rev), 0)
-    const maxAttachemntRev = this.getAttachments()
+    const maxAttachemntRev = (await this.getAttachments())
       .reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
 
     // db rev is max document or attachment rev
     this._rev = Math.max(maxDocumentRev, maxAttachemntRev)
   }
 
-  public static async open() {
-    const db = await openDB('arhiv-replica', 1, (oldVersion, db) => {
+  public static async open<T extends IDocument>() {
+    const db = await IDB.open<Store<T>>('arhiv-replica', 1, (oldVersion, db) => {
       if (oldVersion < 1) { // create db
-        db.createObjectStore('documents', { keyPath: '_id' })
-        db.createObjectStore('documents-local', { keyPath: '_id' })
-        db.createObjectStore('attachments', { keyPath: '_id' })
-        db.createObjectStore('attachments-local', { keyPath: '_id' })
-        db.createObjectStore('attachments-data', { keyPath: '_id' })
+        db.createObjectStore('documents', '_id')
+        db.createObjectStore('documents-local', '_id')
+        db.createObjectStore('attachments', '_id')
+        db.createObjectStore('attachments-local', '_id')
+        db.createObjectStore('attachments-data', '_id')
       }
     })
 
@@ -56,19 +68,19 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   getDocuments() {
-    return request2promise<T[]>(this._idb.transaction('documents').objectStore('documents').getAll())
+    return this._idb.getAll('documents')
   }
 
   getLocalDocuments() {
-    return request2promise<T[]>(this._idb.transaction('documents-local').objectStore('documents-local').getAll())
+    return this._idb.getAll('documents-local')
   }
 
   getAttachments() {
-    return this._attachments.slice(0)
+    return this._idb.getAll('attachments')
   }
 
   getLocalAttachments() {
-    return Array.from(this._localAttachments.values())
+    return this._idb.getAll('attachments-local')
   }
 
   getDocument(id: string) {

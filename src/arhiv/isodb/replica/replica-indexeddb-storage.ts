@@ -1,5 +1,5 @@
 import {
-  IDB,
+  PIDB,
 } from '~/indexeddb'
 import {
   IDocument,
@@ -24,16 +24,10 @@ type Store<T extends IDocument> = {
 }
 
 export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaStorage<T> {
-  private _documents: T[] = []
-  private _attachments: IAttachment[] = []
   private _rev = 0
 
-  private _localDocuments = new Map<string, T>()
-  private _localAttachments = new Map<string, IAttachment>()
-  private _localFiles = new Map<string, Blob>()
-
   private constructor(
-    private _idb: IDB<Store<T>>,
+    private _idb: PIDB<Store<T>>,
   ) { }
 
   private async _init() {
@@ -47,7 +41,7 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   public static async open<T extends IDocument>() {
-    const db = await IDB.open<Store<T>>('arhiv-replica', 1, (oldVersion, db) => {
+    const db = await PIDB.open<Store<T>>('arhiv-replica', 1, (oldVersion, db) => {
       if (oldVersion < 1) { // create db
         db.createObjectStore('documents', '_id')
         db.createObjectStore('documents-local', '_id')
@@ -84,28 +78,32 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   getDocument(id: string) {
-    return this._documents.find(item => item._id === id)
+    return this._idb.get('documents', id)
   }
 
   getLocalDocument(id: string) {
-    return this._localDocuments.get(id)
+    return this._idb.get('documents-local', id)
   }
 
   getAttachment(id: string) {
-    return this._attachments.find(item => item._id === id)
+    return this._idb.get('attachments', id)
   }
 
   getLocalAttachment(id: string) {
-    return this._localAttachments.get(id)
+    return this._idb.get('attachments-local', id)
   }
 
   addLocalDocument(document: T) {
-    this._localDocuments.set(document._id, document)
+    return this._idb.put('documents-local', document)
   }
 
-  addLocalAttachment(attachment: IAttachment, file: File) {
-    this._localAttachments.set(attachment._id, attachment)
-    this._localFiles.set(attachment._id, file)
+  async addLocalAttachment(attachment: IAttachment, file: File) {
+    const tx = this._idb.transactionRW('attachments-local', 'attachments-data')
+
+    await Promise.all([
+      tx.store('attachments-local').put(attachment),
+      tx.store('attachments-data').put({ _id: attachment._id, data: file }),
+    ])
   }
 
   removeLocalDocument(id: string) {
@@ -117,8 +115,10 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
     this._localFiles.delete(id)
   }
 
-  getLocalAttachmentData(id: string) {
-    return this._localFiles.get(id)
+  async getLocalAttachmentData(id: string) {
+    const result = await this._idb.get('attachments-data', id)
+
+    return result?.data
   }
 
   upgrade(changesetResult: IChangesetResult<T>) {

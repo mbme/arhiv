@@ -9,13 +9,10 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 //   [StoreNames]: StoredObjectType,
 // }
 
-// type UpgradeDB = (oldVersion: number, db: IDBDatabase) => void
 type UpgradeDB<S extends object> = (oldVersion: number, db: PIDB<S>) => void
 
 export class PIDB<S extends object> {
-  private constructor(
-    private _db: IDBDatabase,
-  ) { }
+  private constructor(private _db: IDBDatabase) { }
 
   static async open<S extends object>(name: string, version: number, upgrade: UpgradeDB<S>): Promise<PIDB<S>> {
     if (!Number.isInteger(version)) {
@@ -32,7 +29,7 @@ export class PIDB<S extends object> {
     return new PIDB(db)
   }
 
-  createObjectStore<StoreName extends keyof S, StoreTypeProps extends keyof S[StoreName]>(store: StoreName, keyPath: StoreTypeProps) {
+  createObjectStore<StoreName extends keyof S>(store: StoreName, keyPath: keyof S[StoreName]) {
     this._db.createObjectStore(store, { keyPath })
   }
 
@@ -55,12 +52,14 @@ export class PIDB<S extends object> {
   put<StoreName extends keyof S>(store: StoreName, value: S[StoreName]) {
     return this.transactionRW(store).store(store).put(value)
   }
+
+  delete<StoreName extends keyof S>(store: StoreName, key: string) {
+    return this.transactionRW(store).store(store).delete(key)
+  }
 }
 
 class PIDBTransaction<S extends object, StoreName extends keyof S> {
-  constructor(
-    private _tx: IDBTransaction,
-  ) { }
+  constructor(private _tx: IDBTransaction) { }
 
   store<T extends StoreName, TType = S[T]>(name: T) {
     return new PIDBStore<TType>(this._tx.objectStore(name))
@@ -68,9 +67,7 @@ class PIDBTransaction<S extends object, StoreName extends keyof S> {
 }
 
 class PIDBStore<T> {
-  constructor(
-    private _store: IDBObjectStore,
-  ) { }
+  constructor(private _store: IDBObjectStore) { }
 
   getAll(): Promise<T[]> {
     return request2promise(this._store.getAll())
@@ -82,5 +79,13 @@ class PIDBStore<T> {
 
   async put(value: T): Promise<void> {
     await request2promise(this._store.put(value))
+  }
+
+  async putAll(values: readonly T[]): Promise<void> {
+    await Promise.all(values.map(value => this.put(value)))
+  }
+
+  async delete(key: string): Promise<void> {
+    await request2promise(this._store.delete(key))
   }
 }

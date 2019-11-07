@@ -107,12 +107,16 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   removeLocalDocument(id: string) {
-    this._localDocuments.delete(id)
+    return this._idb.delete('documents-local', id)
   }
 
-  removeLocalAttachment(id: string) {
-    this._localAttachments.delete(id)
-    this._localFiles.delete(id)
+  async removeLocalAttachment(id: string) {
+    const tx = this._idb.transactionRW('attachments-local', 'attachments-data')
+
+    await Promise.all([
+      tx.store('attachments-local').delete(id),
+      tx.store('attachments-data').delete(id),
+    ])
   }
 
   async getLocalAttachmentData(id: string) {
@@ -121,15 +125,14 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
     return result?.data
   }
 
-  upgrade(changesetResult: IChangesetResult<T>) {
+  async upgrade(changesetResult: IChangesetResult<T>) {
     this._rev = changesetResult.currentRev
 
-    const updatedDocumentsIds = changesetResult.documents.map(document => document._id)
-    this._documents = this._documents.filter(document => !updatedDocumentsIds.includes(document._id))
-    this._documents.push(...changesetResult.documents)
+    const tx = this._idb.transactionRW('documents', 'attachments')
 
-    const updatedAttachmentsIds = changesetResult.attachments.map(attachment => attachment._id)
-    this._attachments = this._attachments.filter(attachment => !updatedAttachmentsIds.includes(attachment._id))
-    this._attachments.push(...changesetResult.attachments)
+    await Promise.all([
+      tx.store('documents').putAll(changesetResult.documents),
+      tx.store('attachments').putAll(changesetResult.attachments),
+    ])
   }
 }

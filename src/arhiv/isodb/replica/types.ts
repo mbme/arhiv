@@ -29,11 +29,11 @@ export interface IReplicaStorage<T extends IDocument> {
   getLocalAttachment(id: string): Promise<IAttachment | undefined>
   getLocalAttachmentData(id: string): Promise<Blob | undefined>
 
-  addLocalDocument(document: T): void
-  addLocalAttachment(attachment: IAttachment, blob: File): void
+  addLocalDocument(document: T): Promise<void>
+  addLocalAttachment(attachment: IAttachment, blob: File): Promise<void>
 
-  removeLocalDocument(id: string): void
-  removeLocalAttachment(id: string): void
+  removeLocalDocument(id: string): Promise<void>
+  removeLocalAttachment(id: string): Promise<void>
 
   upgrade(changesetResult: IChangesetResult<T>): Promise<void>
 }

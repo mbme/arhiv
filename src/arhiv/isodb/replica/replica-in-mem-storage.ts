@@ -20,61 +20,69 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     return this._rev
   }
 
-  getDocuments() {
+  async getDocuments() {
     return this._documents.slice(0)
   }
 
-  getLocalDocuments() {
+  async getLocalDocuments() {
     return Array.from(this._localDocuments.values())
   }
 
-  getAttachments() {
+  async getAttachments() {
     return this._attachments.slice(0)
   }
 
-  getLocalAttachments() {
+  async getLocalAttachments() {
     return Array.from(this._localAttachments.values())
   }
 
-  getDocument(id: string) {
+  async getDocument(id: string) {
     return this._documents.find(item => item._id === id)
   }
 
-  getLocalDocument(id: string) {
+  async getLocalDocument(id: string) {
     return this._localDocuments.get(id)
   }
 
-  getAttachment(id: string) {
+  async getAttachment(id: string) {
     return this._attachments.find(item => item._id === id)
   }
 
-  getLocalAttachment(id: string) {
+  async getLocalAttachment(id: string) {
     return this._localAttachments.get(id)
   }
 
-  addLocalDocument(document: T) {
+  async addLocalDocument(document: T) {
     this._localDocuments.set(document._id, document)
+
+    return
   }
 
-  addLocalAttachment(attachment: IAttachment, file: File) {
+  async addLocalAttachment(attachment: IAttachment, file: File) {
     this._localAttachments.set(attachment._id, attachment)
     this._localFiles.set(attachment._id, file)
+
+    return
   }
 
-  removeLocalDocument(id: string) {
+  async removeLocalDocument(id: string) {
     this._localDocuments.delete(id)
+
+    return
   }
 
-  removeLocalAttachment(id: string) {
+  async removeLocalAttachment(id: string) {
     this._localAttachments.delete(id)
     this._localFiles.delete(id)
+
+    return
   }
 
-  getLocalAttachmentData(id: string) {
+  async getLocalAttachmentData(id: string) {
     return this._localFiles.get(id)
   }
 
-  upgrade(changesetResult: IChangesetResult<T>) {
+  async upgrade(changesetResult: IChangesetResult<T>) {
     this._rev = changesetResult.currentRev
 
     const updatedDocumentsIds = changesetResult.documents.map(document => document._id)
@@ -84,5 +92,7 @@ export class ReplicaInMemStorage<T extends IDocument> implements IReplicaStorage
     const updatedAttachmentsIds = changesetResult.attachments.map(attachment => attachment._id)
     this._attachments = this._attachments.filter(attachment => !updatedAttachmentsIds.includes(attachment._id))
     this._attachments.push(...changesetResult.attachments)
+
+    return
   }
 }

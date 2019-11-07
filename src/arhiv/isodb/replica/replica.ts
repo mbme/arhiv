@@ -62,15 +62,19 @@ export class IsodbReplica<T extends IDocument> {
 
     do {
       id = generateRandomId()
-    } while (
-      this.getDocument(id)
-      || this.getAttachment(id)) // make sure generated id is free
+    } while (this.getDocument(id) || this.getAttachment(id)) // make sure generated id is free
 
     return id
   }
 
-  getDocument(id: string): T | undefined {
-    return this._storage.getLocalDocument(id) || this._storage.getDocument(id)
+  async getDocument(id: string): Promise<T | undefined> {
+    const localDocument = await this._storage.getLocalDocument(id)
+
+    if (localDocument) {
+      return localDocument
+    }
+
+    return this._storage.getDocument(id)
   }
 
   getDocument$(id: string): Observable<T> {
@@ -79,8 +83,14 @@ export class IsodbReplica<T extends IDocument> {
       .filter(document => !!document) as Observable<T>
   }
 
-  getAttachment(id: string): IAttachment | undefined {
-    return this._storage.getLocalAttachment(id) || this._storage.getAttachment(id)
+  async getAttachment(id: string): Promise<IAttachment | undefined> {
+    const localAttachment = await this._storage.getLocalAttachment(id)
+
+    if (localAttachment) {
+      return localAttachment
+    }
+
+    return this._storage.getAttachment(id)
   }
 
   getAttachmentData$(id: string): Observable<Blob> {
@@ -102,11 +112,11 @@ export class IsodbReplica<T extends IDocument> {
     })
   }
 
-  getDocuments(includeDeleted = false): T[] {
-    const localDocuments = this._storage.getLocalDocuments()
+  async getDocuments(includeDeleted = false): Promise<Array<T>> {
+    const localDocuments = await this._storage.getLocalDocuments()
     const localIds = new Set(localDocuments.map(item => item._id))
 
-    const documents = this._storage.getDocuments().filter(item => !localIds.has(item._id))
+    const documents = (await this._storage.getDocuments()).filter(item => !localIds.has(item._id))
 
     const result = [
       ...documents,
@@ -170,7 +180,7 @@ export class IsodbReplica<T extends IDocument> {
 
       this.syncState$.value = { type: 'sync' }
 
-      const [changeset, localAttachments] = this._getChangeset()
+      const [changeset, localAttachments] = await this._getChangeset()
 
       if (isEmptyChangeset(changeset)) {
         log.info('sync: sending empty changeset')
@@ -248,13 +258,13 @@ export class IsodbReplica<T extends IDocument> {
       this.syncState$.value = { type: 'initial' }
     })
 
-    for (const localDocument of this._storage.getLocalDocuments()) {
+    for (const localDocument of await this._storage.getLocalDocuments()) {
       const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
       if (!remoteDocument) {
         continue
       }
 
-      const baseDocument = this._storage.getDocument(localDocument._id)
+      const baseDocument = await this._storage.getDocument(localDocument._id)
       if (!baseDocument) {
         throw new Error(`Can't find base document for local document ${localDocument._id}`)
       }
@@ -270,25 +280,25 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-  private _getUnusedLocalAttachmentsIds() {
-    const idsInUse = this.getDocuments().flatMap(document => document._attachmentRefs)
-    const localAttachmentsIds = this._storage.getLocalAttachments().map(item => item._id)
+  private async _getUnusedLocalAttachmentsIds() {
+    const idsInUse = (await this.getDocuments()).flatMap(document => document._attachmentRefs)
+    const localAttachmentsIds = (await this._storage.getLocalAttachments()).map(item => item._id)
 
     return localAttachmentsIds.filter(id => !idsInUse.includes(id))
   }
 
-  private _getChangeset(): [IChangeset<T>, LocalAttachments] {
-    const unusedIds = this._getUnusedLocalAttachmentsIds()
+  private async _getChangeset(): Promise<[IChangeset<T>, LocalAttachments]> {
+    const unusedIds = await this._getUnusedLocalAttachmentsIds()
 
     const changeset: IChangeset<T> = {
       baseRev: this._storage.getRev(),
-      documents: this._storage.getLocalDocuments(),
-      attachments: this._storage.getLocalAttachments().filter(attachment => !unusedIds.includes(attachment._id)),
+      documents: await this._storage.getLocalDocuments(),
+      attachments: (await this._storage.getLocalAttachments()).filter(attachment => !unusedIds.includes(attachment._id)),
     }
 
     const localAttachmentsData: LocalAttachments = {}
     for (const attachment of changeset.attachments) {
-      const data = this._storage.getLocalAttachmentData(attachment._id)
+      const data = await this._storage.getLocalAttachmentData(attachment._id)
       if (data) {
         localAttachmentsData[attachment._id] = data
       }
@@ -297,13 +307,13 @@ export class IsodbReplica<T extends IDocument> {
     return [changeset, localAttachmentsData]
   }
 
-  private _clearLocalData() {
-    for (const localDocument of this._storage.getLocalDocuments()) {
+  private async _clearLocalData() {
+    for (const localDocument of await this._storage.getLocalDocuments()) {
       this._storage.removeLocalDocument(localDocument._id)
     }
 
-    const unusedIds = this._getUnusedLocalAttachmentsIds()
-    for (const localAttachment of this._storage.getLocalAttachments()) {
+    const unusedIds = await this._getUnusedLocalAttachmentsIds()
+    for (const localAttachment of await this._storage.getLocalAttachments()) {
       if (!unusedIds.includes(localAttachment._id)) {
         this._storage.removeLocalAttachment(localAttachment._id)
       }
@@ -313,14 +323,14 @@ export class IsodbReplica<T extends IDocument> {
   /**
    * Remove unused local attachments
    */
-  private _compact() {
-    const unusedIds = this._getUnusedLocalAttachmentsIds()
+  private async _compact() {
+    const unusedIds = await this._getUnusedLocalAttachmentsIds()
     if (!unusedIds.length) {
       return
     }
 
     for (const id of unusedIds) {
-      this._storage.removeLocalAttachment(id)
+      await this._storage.removeLocalAttachment(id)
       log.warn(`Removing unused local attachment ${id}`)
     }
 

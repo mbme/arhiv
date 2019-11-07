@@ -1,3 +1,7 @@
+import { createLogger } from '~/utils'
+
+const log = createLogger('indexeddb')
+
 function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -22,6 +26,10 @@ export class PIDB<S extends object> {
     const request = indexedDB.open(name, version)
     request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
       upgrade(e.oldVersion, new PIDB(request.result))
+    }
+
+    request.onblocked = () => {
+      log.warn('We need to update the db schema. Please close all other tabs with this db!')
     }
 
     const db = await request2promise(request)

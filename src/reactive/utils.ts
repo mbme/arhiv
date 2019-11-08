@@ -1,5 +1,5 @@
+import { Callbacks } from '~/utils/callbacks'
 import { Observable } from './observable'
-import { Callbacks } from '../callbacks'
 
 export function interval$(interval: number) {
   return new Observable<undefined>((observer) => {

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useArhiv } from '~/arhiv'
-import { useObservable } from '~/utils/react'
+import { useObservable } from '~/reactive/react'
 import {
   Icon,
   CleanLink,

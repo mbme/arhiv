@@ -8,7 +8,7 @@ import {
   interval$,
   Signal,
   promise$,
-} from '~/utils/reactive'
+} from '~/reactive'
 import { ArhivReplica } from '../types'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'

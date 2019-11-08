@@ -1,7 +1,9 @@
 import * as React from 'react'
-import { noop } from './misc'
-import { createLogger } from './logger'
-import { Observable } from './reactive'
+import {
+  noop,
+  createLogger,
+} from '~/utils'
+import { Observable } from './observable'
 
 const log = createLogger('react-utils')
 

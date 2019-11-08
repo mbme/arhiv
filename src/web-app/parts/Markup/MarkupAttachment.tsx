@@ -6,7 +6,7 @@ import {
 import {
   Attachment,
 } from '~/arhiv'
-import { useObservable } from '~/utils/react'
+import { useObservable } from '~/reactive/react'
 
 const $image = stylish({
   mt: 'medium',

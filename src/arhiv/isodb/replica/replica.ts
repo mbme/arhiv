@@ -7,7 +7,7 @@ import {
 import {
   Cell,
   Observable,
-} from '~/utils/reactive'
+} from '~/reactive'
 import {
   IAttachment,
   IDocument,

@@ -1,6 +1,6 @@
 import { nowS } from '~/utils'
 import { randomId } from '~/utils/random'
-import { Observable, promise$ } from '~/utils/reactive'
+import { Observable, promise$ } from '~/reactive'
 import {
   IChangeset,
   IDocument,

@@ -5,7 +5,7 @@ import {
 import {
   Cell,
   Observable,
-} from '~/utils/reactive'
+} from '~/reactive'
 
 const log = createLogger('isodb:lock-manager')
 

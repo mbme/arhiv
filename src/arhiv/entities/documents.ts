@@ -1,4 +1,4 @@
-import { Observable } from '~/utils/reactive'
+import { Observable } from '~/reactive'
 import {
   ArhivReplica,
   Record,

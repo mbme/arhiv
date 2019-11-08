@@ -7,6 +7,7 @@ import {
 import {
   Cell,
   Observable,
+  promise$,
 } from '~/reactive'
 import {
   IAttachment,
@@ -79,7 +80,7 @@ export class IsodbReplica<T extends IDocument> {
 
   getDocument$(id: string): Observable<T> {
     return this.updateTime$.value$
-      .map(() => this.getDocument(id))
+      .switchMap(() => promise$(this.getDocument(id)))
       .filter(document => !!document) as Observable<T>
   }
 
@@ -131,7 +132,7 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   getDocuments$(): Observable<T[]> {
-    return this.updateTime$.value$.map(() => this.getDocuments())
+    return this.updateTime$.value$.switchMap(() => promise$(this.getDocuments()))
   }
 
   saveAttachment(file: File): string {

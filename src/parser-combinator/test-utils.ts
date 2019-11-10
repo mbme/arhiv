@@ -1,5 +1,5 @@
 import {
-  asserts,
+  assert,
 } from '~/tester'
 import {
   Result,
@@ -8,7 +8,7 @@ import {
 } from './parser'
 
 export const assertSuccess = <T>(r: Result<T>, cb?: (result: T) => void) => {
-  asserts.true(isSuccess(r))
+  assert.true(isSuccess(r))
 
   if (cb && isSuccess(r)) {
     cb(r.result)
@@ -16,5 +16,5 @@ export const assertSuccess = <T>(r: Result<T>, cb?: (result: T) => void) => {
 }
 
 export const assertFailure = <T>(r: Result<T>) => {
-  asserts.true(isFailure(r))
+  assert.true(isFailure(r))
 }

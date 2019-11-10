@@ -1,6 +1,6 @@
 import {
   test,
-  asserts,
+  assert,
 } from '~/tester'
 import {
   trimLeft,
@@ -8,14 +8,14 @@ import {
 } from './string'
 
 test('trimLeft', () => {
-  asserts.equal(trimLeft(' *test', ' *'), 'test')
-  asserts.equal(trimLeft(' *', ' *'), '')
-  asserts.equal(trimLeft('test'), 'test')
-  asserts.equal(trimLeft(' test '), 'test ')
+  assert.equal(trimLeft(' *test', ' *'), 'test')
+  assert.equal(trimLeft(' *', ' *'), '')
+  assert.equal(trimLeft('test'), 'test')
+  assert.equal(trimLeft(' test '), 'test ')
 })
 
 test('camelCase2kebabCase', () => {
-  asserts.equal(camelCase2kebabCase('font'), 'font')
-  asserts.equal(camelCase2kebabCase('fontSize'), 'font-size')
-  asserts.equal(camelCase2kebabCase('fontSizeLong'), 'font-size-long')
+  assert.equal(camelCase2kebabCase('font'), 'font')
+  assert.equal(camelCase2kebabCase('fontSize'), 'font-size')
+  assert.equal(camelCase2kebabCase('fontSizeLong'), 'font-size-long')
 })

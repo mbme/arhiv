@@ -20,3 +20,5 @@ export type Mutable<T> = {
 
 export type Procedure = () => void
 export type AsyncProcedure = () => Promise<void>
+
+export type Constructor<T> = new (...args: any[]) => T

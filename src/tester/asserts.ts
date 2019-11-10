@@ -1,5 +1,6 @@
 // tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
+import { Constructor } from '~/utils'
 
 interface IState {
   oldSnapshots: any[]
@@ -12,10 +13,10 @@ interface IState {
 }
 
 export class Asserts {
-  state?: IState
+  _state?: IState
 
   init(oldSnapshots: any[], updateSnapshots: boolean) {
-    this.state = {
+    this._state = {
       oldSnapshots,
       updateSnapshots,
 
@@ -27,16 +28,16 @@ export class Asserts {
   }
 
   reset() {
-    this.state = undefined
+    this._state = undefined
   }
 
   equal(actual: any, expected: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
     if (actual === expected) {
-      this.state.successfulAsserts += 1
+      this._state.successfulAsserts += 1
     } else {
       assert.fail(
         `not ok
@@ -49,58 +50,58 @@ export class Asserts {
   }
 
   deepEqual(actual: any, expected: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
     assert.deepStrictEqual(actual, expected)
-    this.state.successfulAsserts += 1
+    this._state.successfulAsserts += 1
   }
 
   true(actual: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
     assert.strictEqual(actual, true)
-    this.state.successfulAsserts += 1
+    this._state.successfulAsserts += 1
   }
 
   false(actual: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
     assert.strictEqual(actual, false)
-    this.state.successfulAsserts += 1
+    this._state.successfulAsserts += 1
   }
 
   matchSnapshot(actual: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
-    if (this.state.snapshotPos < this.state.oldSnapshots.length) {
+    if (this._state.snapshotPos < this._state.oldSnapshots.length) {
       try {
         assert.strictEqual(
           JSON.stringify(actual, undefined, 2),
-          JSON.stringify(this.state.oldSnapshots[this.state.snapshotPos], undefined, 2),
+          JSON.stringify(this._state.oldSnapshots[this._state.snapshotPos], undefined, 2),
         )
       } catch (e) {
-        if (!this.state.updateSnapshots) {
+        if (!this._state.updateSnapshots) {
           throw e
         }
-        this.state.updatedSnapshots += 1
+        this._state.updatedSnapshots += 1
       }
     }
 
-    this.state.snapshots.push(actual)
-    this.state.snapshotPos += 1
-    this.state.successfulAsserts += 1
+    this._state.snapshots.push(actual)
+    this._state.snapshotPos += 1
+    this._state.successfulAsserts += 1
   }
 
   throws(block: () => void, error?: any) {
-    if (!this.state) {
+    if (!this._state) {
       throw new Error('asserts not ready')
     }
 
@@ -111,7 +112,20 @@ export class Asserts {
       if (error) {
         assert.strictEqual(e, error)
       }
-      this.state.successfulAsserts += 1
+      this._state.successfulAsserts += 1
+    }
+  }
+
+  // FIXME this doesn't work due to https://github.com/microsoft/TypeScript/issues/35004
+  instanceOf<T>(value: unknown, classConstructor: Constructor<T>): asserts value is T {
+    if (!this._state) {
+      throw new Error('asserts not ready')
+    }
+
+    if (value instanceof classConstructor) {
+      this._state.successfulAsserts += 1
+    } else {
+      assert.fail(`Expected to be instance of ${classConstructor}`)
     }
   }
 }

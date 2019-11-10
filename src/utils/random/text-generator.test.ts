@@ -1,9 +1,9 @@
 import {
   test,
-  asserts,
+  assert,
 } from '~/tester'
 import { getWords } from './text-generator'
 
 test('getWords', () => {
-  asserts.deepEqual(getWords('Split it, not; dr. go!'), ['split', 'it', ',', 'not', ';', 'dr.', 'go', '!'])
+  assert.deepEqual(getWords('Split it, not; dr. go!'), ['split', 'it', ',', 'not', ';', 'dr.', 'go', '!'])
 })

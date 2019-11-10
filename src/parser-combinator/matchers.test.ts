@@ -1,6 +1,6 @@
 import {
   test,
-  asserts,
+  assert,
 } from '~/tester'
 import {
   expect,
@@ -22,7 +22,7 @@ test('map', () => {
   assertFailure(mapper.apply('te', 0))
 
   assertSuccess(mapper.apply('test', 0), (result) => {
-    asserts.true(result.kind === 'dummy')
+    assert.true(result.kind === 'dummy')
   })
 })
 
@@ -57,7 +57,7 @@ test('oneOrMore', () => {
   assertSuccess(parser.apply('x1', 0))
 
   assertSuccess(parser.apply('x1x1x12', 0), (result) => {
-    asserts.equal(result.length, 3)
+    assert.equal(result.length, 3)
   })
 })
 
@@ -72,11 +72,11 @@ test('optional', () => {
   const parser = expect('x1').optional()
 
   assertSuccess(parser.apply('x2', 0), (result) => {
-    asserts.equal(result, undefined)
+    assert.equal(result, undefined)
   })
 
   assertSuccess(parser.apply('x1', 0), (result) => {
-    asserts.equal(result, 'x1')
+    assert.equal(result, 'x1')
   })
 })
 
@@ -84,7 +84,7 @@ test('everythingUntil', () => {
   const parser = everythingUntil(expect('x1'))
 
   assertSuccess(parser.apply('testx1', 0), (result) => {
-    asserts.equal(result, 'test')
+    assert.equal(result, 'test')
   })
 
   assertFailure(parser.apply('x2', 0))
@@ -94,7 +94,7 @@ test('between', () => {
   const parser = expect('test').between(expect('x1'), expect('x1'))
 
   assertSuccess(parser.apply('x1testx1', 0), (result) => {
-    asserts.equal(result, 'test')
+    assert.equal(result, 'test')
   })
 
   assertFailure(parser.apply('x1test', 0))
@@ -107,7 +107,7 @@ test('withLabel', () => {
   const result = parser.apply('te', 0)
   assertFailure(result)
   if (isFailure(result)) {
-    asserts.true(result.label.includes('WORKS'))
+    assert.true(result.label.includes('WORKS'))
   }
 })
 
@@ -148,7 +148,7 @@ test('regex', () => {
   assertSuccess(regex(/^test/).apply('test', 0))
 
   assertSuccess(regex(/^0*1+/).apply('001', 0), (result) => {
-    asserts.equal(result, '001')
+    assert.equal(result, '001')
   })
 
   assertFailure(regex(/^test/).apply('not test', 0))

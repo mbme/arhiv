@@ -1,6 +1,6 @@
 import {
   test,
-  asserts,
+  assert,
 } from '~/tester'
 import {
   isFunction,
@@ -8,14 +8,14 @@ import {
 } from './type-asserts'
 
 test('isObject', () => {
-  asserts.false(isObject(undefined))
-  asserts.true(isObject({}))
+  assert.false(isObject(undefined))
+  assert.true(isObject({}))
 })
 
 test('isFunction', () => {
-  asserts.true(isFunction(() => true))
-  asserts.true(isFunction(async () => true))
+  assert.true(isFunction(() => true))
+  assert.true(isFunction(async () => true))
   // tslint:disable-next-line:no-empty
-  asserts.true(isFunction(function testIsFunction() { }))
-  asserts.true(isFunction(async function testIsFunction() { return true }))
+  assert.true(isFunction(function testIsFunction() { }))
+  assert.true(isFunction(async function testIsFunction() { return true }))
 })

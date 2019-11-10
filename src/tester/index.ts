@@ -43,10 +43,10 @@ export const test = (name: string, fn: Callback, only = false) => _tests.push({ 
 export const before = (cb: Callback) => { _beforeCb = cb }
 export const after = (cb: Callback) => { _afterCb = cb }
 
-export const asserts = new Asserts()
+export const assert = new Asserts()
 async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots: boolean): Promise<[any[], boolean]> {
   try {
-    asserts.init(oldSnapshots, updateSnapshots)
+    assert.init(oldSnapshots, updateSnapshots)
 
     await Promise.resolve(fn())
 
@@ -54,7 +54,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
       snapshots,
       updatedSnapshots,
       successfulAsserts,
-    } = asserts.state!
+    } = assert._state!
 
     log.simple(
       `  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${name}`,
@@ -62,7 +62,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
       updatedSnapshots ? `  updated ${updatedSnapshots} snapshots` : '',
     )
 
-    asserts.reset()
+    assert.reset()
 
     return [snapshots, true]
   } catch (e) {

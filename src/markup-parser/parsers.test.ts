@@ -1,12 +1,12 @@
 import {
   test,
   assert,
+  assertInstanceOf,
 } from '~/tester'
 import {
   assertSuccess,
   assertFailure,
 } from '~/parser-combinator/test-utils'
-import { Constructor } from '~/utils'
 import {
   newlines,
   paragraph,
@@ -50,10 +50,6 @@ test('header', () => {
   })
 })
 
-function assertNode<T>(value: unknown, classType: Constructor<T>): asserts value is T {
-  assert.true(value instanceof classType)
-}
-
 test('unordered list', () => {
   assertSuccess(unorderedList.parseAll('* test'), (result) => {
     assert.equal(result.children.length, 1)
@@ -70,7 +66,7 @@ test('unordered list', () => {
 
     {
       const item = result.children[0].children[0]
-      assertNode(item, NodeString)
+      assertInstanceOf(item, NodeString)
       assert.equal(item.value, 'test\ntest')
     }
 

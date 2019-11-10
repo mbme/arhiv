@@ -8,6 +8,7 @@ import {
   AsyncProcedure,
   Procedure,
   createLogger,
+  Constructor,
 } from '~/utils'
 import { Asserts } from './asserts'
 
@@ -46,7 +47,7 @@ export const after = (cb: Callback) => { _afterCb = cb }
 export const assert = new Asserts()
 async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots: boolean): Promise<[any[], boolean]> {
   try {
-    assert.init(oldSnapshots, updateSnapshots)
+    assert._init(oldSnapshots, updateSnapshots)
 
     await Promise.resolve(fn())
 
@@ -62,7 +63,7 @@ async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots
       updatedSnapshots ? `  updated ${updatedSnapshots} snapshots` : '',
     )
 
-    assert.reset()
+    assert._reset()
 
     return [snapshots, true]
   } catch (e) {
@@ -101,4 +102,8 @@ export async function runTests(file: string, tests: ITest[], updateSnapshots: bo
   }
 
   return failures
+}
+
+export function assertInstanceOf<T>(value: unknown, classType: Constructor<T>): asserts value is T {
+  assert.true(value instanceof classType, `Expected value to be instance of ${classType}`)
 }

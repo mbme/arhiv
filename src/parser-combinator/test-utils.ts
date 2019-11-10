@@ -5,16 +5,14 @@ import {
   Result,
   isSuccess,
   isFailure,
+  Success,
+  Failure,
 } from './parser'
 
-export const assertSuccess = <T>(r: Result<T>, cb?: (result: T) => void) => {
-  assert.true(isSuccess(r))
-
-  if (cb && isSuccess(r)) {
-    cb(r.result)
-  }
+export function assertSuccess<T>(r: Result<T>): asserts r is Success<T> {
+  assert.true(isSuccess(r), 'Expected value to be Success')
 }
 
-export const assertFailure = <T>(r: Result<T>) => {
-  assert.true(isFailure(r))
+export function assertFailure(r: Result<any>): asserts r is Failure {
+  assert.true(isFailure(r), 'Expected value to be Failure')
 }

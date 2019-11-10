@@ -1,6 +1,5 @@
 // tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
-import { Constructor } from '~/utils'
 
 interface IState {
   oldSnapshots: any[]
@@ -15,7 +14,7 @@ interface IState {
 export class Asserts {
   _state?: IState
 
-  init(oldSnapshots: any[], updateSnapshots: boolean) {
+  _init(oldSnapshots: any[], updateSnapshots: boolean) {
     this._state = {
       oldSnapshots,
       updateSnapshots,
@@ -27,7 +26,7 @@ export class Asserts {
     }
   }
 
-  reset() {
+  _reset() {
     this._state = undefined
   }
 
@@ -58,12 +57,12 @@ export class Asserts {
     this._state.successfulAsserts += 1
   }
 
-  true(actual: any) {
+  true(actual: any, msg?: string) {
     if (!this._state) {
       throw new Error('asserts not ready')
     }
 
-    assert.strictEqual(actual, true)
+    assert.strictEqual(actual, true, msg)
     this._state.successfulAsserts += 1
   }
 
@@ -113,19 +112,6 @@ export class Asserts {
         assert.strictEqual(e, error)
       }
       this._state.successfulAsserts += 1
-    }
-  }
-
-  // FIXME this doesn't work due to https://github.com/microsoft/TypeScript/issues/35004
-  instanceOf<T>(value: unknown, classConstructor: Constructor<T>): asserts value is T {
-    if (!this._state) {
-      throw new Error('asserts not ready')
-    }
-
-    if (value instanceof classConstructor) {
-      this._state.successfulAsserts += 1
-    } else {
-      assert.fail(`Expected to be instance of ${classConstructor}`)
     }
   }
 }

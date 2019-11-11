@@ -21,7 +21,7 @@ import {
   ChangesetExchange,
   LocalAttachments,
 } from './types'
-import { MergeConflicts } from './merge-conflict'
+import { MergeConflicts, DocumentConflict } from './merge-conflict'
 import {
   generateRandomId,
   isEmptyChangeset,
@@ -244,18 +244,7 @@ export class IsodbReplica<T extends IDocument> {
       return
     }
 
-    const mergeConflicts = new MergeConflicts<T>(async (documents) => {
-      // save resolved versions of the documents
-      for (const document of documents) {
-        await this._storage.addLocalDocument(document)
-      }
-
-      await this._storage.upgrade(changesetResult)
-      this._onUpdate()
-
-      this.syncState$.value = { type: 'initial' }
-    })
-
+    const conflicts: Array<DocumentConflict<T>> = []
     for (const localDocument of await this._storage.getLocalDocuments()) {
       const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
       if (!remoteDocument) {
@@ -267,11 +256,23 @@ export class IsodbReplica<T extends IDocument> {
         throw new Error(`Can't find base document for local document ${localDocument._id}`)
       }
 
-      mergeConflicts.addConflict(baseDocument, remoteDocument, localDocument)
+      conflicts.push(new DocumentConflict(baseDocument, remoteDocument, localDocument))
     }
 
-    if (mergeConflicts.conflicts.length) {
+    if (conflicts.length) {
+      const mergeConflicts = new MergeConflicts(conflicts)
       this.syncState$.value = { type: 'merge-conflicts', conflicts: mergeConflicts }
+
+      const resolvedDocuments = await mergeConflicts.promise
+      // save resolved versions of the documents
+      for (const document of resolvedDocuments) {
+        await this._storage.addLocalDocument(document)
+      }
+
+      await this._storage.upgrade(changesetResult)
+      this._onUpdate()
+
+      this.syncState$.value = { type: 'initial' }
     } else {
       await this._storage.upgrade(changesetResult)
       this._onUpdate()

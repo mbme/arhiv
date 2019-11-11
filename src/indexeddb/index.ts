@@ -15,7 +15,7 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 
 type UpgradeDB<S extends object> = (oldVersion: number, db: PIDB<S>) => void
 
-export class PIDB<S extends object> {
+export class PIDB<ObjectStores extends object> {
   private constructor(private _db: IDBDatabase) { }
 
   static async open<S extends object>(name: string, version: number, upgrade: UpgradeDB<S>): Promise<PIDB<S>> {
@@ -37,31 +37,31 @@ export class PIDB<S extends object> {
     return new PIDB(db)
   }
 
-  createObjectStore<StoreName extends keyof S>(store: StoreName, keyPath: keyof S[StoreName]) {
+  createObjectStore<StoreName extends keyof ObjectStores>(store: StoreName, keyPath: keyof ObjectStores[StoreName]) {
     this._db.createObjectStore(store, { keyPath })
   }
 
-  transaction<StoreName extends keyof S>(...stores: StoreName[]) {
-    return new PIDBTransaction<S, StoreName>(this._db.transaction(stores, 'readonly'))
+  transaction<StoreName extends keyof ObjectStores>(...stores: StoreName[]) {
+    return new PIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readonly'))
   }
 
-  transactionRW<StoreName extends keyof S>(...stores: StoreName[]) {
-    return new PIDBTransaction<S, StoreName>(this._db.transaction(stores, 'readwrite'))
+  transactionRW<StoreName extends keyof ObjectStores>(...stores: StoreName[]) {
+    return new PIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readwrite'))
   }
 
-  getAll<StoreName extends keyof S>(store: StoreName) {
+  getAll<StoreName extends keyof ObjectStores>(store: StoreName) {
     return this.transaction(store).store(store).getAll()
   }
 
-  get<StoreName extends keyof S>(store: StoreName, key: string) {
+  get<StoreName extends keyof ObjectStores>(store: StoreName, key: string) {
     return this.transaction(store).store(store).get(key)
   }
 
-  put<StoreName extends keyof S>(store: StoreName, value: S[StoreName]) {
+  put<StoreName extends keyof ObjectStores>(store: StoreName, value: ObjectStores[StoreName]) {
     return this.transactionRW(store).store(store).put(value)
   }
 
-  delete<StoreName extends keyof S>(store: StoreName, key: string) {
+  delete<StoreName extends keyof ObjectStores>(store: StoreName, key: string) {
     return this.transactionRW(store).store(store).delete(key)
   }
 }

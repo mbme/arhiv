@@ -1,55 +1,63 @@
-import { nowS } from '~/utils'
+import {
+  nowS,
+  Deferred,
+} from '~/utils'
 import { IDocument } from '../types'
 
-class DocumentConflict<T extends IDocument> {
-  final?: T
+export class DocumentConflict<T extends IDocument> {
+  private _deffered = new Deferred<T>()
+  private _final?: T
 
   constructor(
     public readonly base: T,
     public readonly remote: T,
     public readonly local: T,
-    private _onResolved: () => void,
   ) { }
 
+  get promise() {
+    return this._deffered.promise
+  }
+
+  private _assertNotResolved() {
+    if (this._final) {
+      throw new Error('Conflict has already been resolved')
+    }
+  }
+
   isResolved() {
-    return !!this.final
+    return !!this._final
   }
 
   resolve(final: T) {
-    this.final = {
+    this._assertNotResolved()
+
+    this._final = {
       ...final,
       _rev: this.remote._rev,
       _updatedTs: nowS(),
     }
-    this._onResolved()
+    this._deffered.resolve(this._final)
   }
 
   useLocal() {
+    this._assertNotResolved()
+
     this.resolve(this.local)
   }
 
   useRemote() {
+    this._assertNotResolved()
+
     this.resolve(this.remote)
   }
 }
 
 export class MergeConflicts<T extends IDocument> {
-  readonly conflicts: Array<DocumentConflict<T>> = []
+  public readonly promise: Promise<T[]>
 
   constructor(
-    private _onConflictsResolved: (documents: readonly T[]) => void,
-  ) { }
-
-  addConflict(base: T, remote: T, local: T) {
-    this.conflicts.push(new DocumentConflict(base, remote, local, this._onResolved))
-  }
-
-  private _onResolved = () => {
-    const pendingConflicts = this.conflicts.filter(conflict => !conflict.isResolved())
-    if (pendingConflicts.length) {
-      return
-    }
-
-    this._onConflictsResolved(this.conflicts.map(conflict => conflict.final!))
+    public readonly conflicts: Array<DocumentConflict<T>>,
+  ) {
+    this.promise = Promise.all(conflicts.map(conflict => conflict.promise))
   }
 }

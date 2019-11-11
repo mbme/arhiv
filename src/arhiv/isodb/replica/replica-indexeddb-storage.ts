@@ -15,19 +15,19 @@ interface IBlob {
   data: Blob
 }
 
-type Store<T extends IDocument> = {
-  'documents': T,
-  'documents-local': T,
-  'attachments': IAttachment,
-  'attachments-local': IAttachment,
-  'attachments-data': IBlob,
+interface IObjectStores<T extends IDocument> {
+  'documents': T
+  'documents-local': T
+  'attachments': IAttachment
+  'attachments-local': IAttachment
+  'attachments-data': IBlob
 }
 
 export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaStorage<T> {
   private _rev = 0
 
   private constructor(
-    private _idb: PIDB<Store<T>>,
+    private _idb: PIDB<IObjectStores<T>>,
   ) { }
 
   private async _init() {
@@ -41,7 +41,7 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   public static async open<T extends IDocument>() {
-    const db = await PIDB.open<Store<T>>('arhiv-replica', 1, (oldVersion, db) => {
+    const db = await PIDB.open<IObjectStores<T>>('arhiv-replica', 1, (oldVersion, db) => {
       if (oldVersion < 1) { // create db
         db.createObjectStore('documents', '_id')
         db.createObjectStore('documents-local', '_id')

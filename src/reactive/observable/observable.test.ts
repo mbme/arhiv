@@ -13,13 +13,16 @@ async function assertObservable<T>(o$: Observable<T>, expected: Array<T | typeof
   await new Promise((resolve) => {
     o$.subscribe({
       next(value) {
+        console.error('step 3', value);
         actual.push(value)
       },
       error() {
+        console.error('step 4');
         actual.push(error)
         resolve()
       },
       complete() {
+        console.error('step 5');
         actual.push(complete)
         resolve()
       },
@@ -126,12 +129,15 @@ test('switchMap', async () => {
       const timeout = setTimeout(() => observer.next(1), 150)
 
       return () => {
+        console.error('DESTROY');
         clearTimeout(timeout)
         destCounter += 1
       }
     }))
 
+    console.error('AND HERE0');
     await assertObservable(o$, [5, 5, complete])
+    console.error('AND HERE01');
     assert.equal(destCounter, 3)
   }
 
@@ -152,7 +158,7 @@ test('switchMap', async () => {
 
     await assertObservable(o$, [2, complete])
   }
-})
+}, true)
 
 test('take', async () => {
   const o$ = new Observable<number>((observer) => {

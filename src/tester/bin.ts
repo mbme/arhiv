@@ -12,7 +12,7 @@ import {
   runTests,
 } from './index'
 
-setLogLevel('MUTED')
+setLogLevel('DEBUG')
 const log = createLogger('tester')
 
 createRunnable(async (...args: string[]) => {
@@ -56,11 +56,18 @@ createRunnable(async (...args: string[]) => {
       await Promise.resolve(testPlan.before())
     }
 
-    failures += await runTests(
-      testPlan.file,
-      testPlan.tests,
-      updateSnapshots,
-    )
+    console.error('before');
+    try {
+      failures += await runTests(
+        testPlan.file,
+        testPlan.tests,
+        updateSnapshots,
+      )
+    } catch (e) {
+      console.error(e);
+    }
+
+    console.error('after');
 
     if (testPlan.after) {
       await Promise.resolve(testPlan.after())

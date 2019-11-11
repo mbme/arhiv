@@ -2,6 +2,7 @@ import fs from 'fs'
 import {
   readJSON,
   writeJSON,
+  removeFile,
 } from '~/utils/fs'
 import {
   uniq,
@@ -98,7 +99,7 @@ export async function runTests(file: string, tests: ITest[], updateSnapshots: bo
   if (Object.values(newSnapshots).length) {
     await writeJSON(snapshotsFile, newSnapshots)
   } else if (snapshotsFileExists) {
-    await fs.promises.unlink(snapshotsFile)
+    await removeFile(snapshotsFile)
   }
 
   return failures

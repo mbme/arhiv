@@ -43,7 +43,6 @@ injectGlobalStyles(`
   ${isDev ? debugLayoutSnippet : ''}
 `)
 
-const arhiv = new Arhiv()
 const router = new WebRouter()
 
 const apps: IApp[] = [
@@ -51,24 +50,28 @@ const apps: IApp[] = [
   LibraryApp,
 ]
 
-const rootEl = document.getElementById('root')!
+async function runApp(rootEl: HTMLElement) {
+  const arhiv = await Arhiv.create()
 
-ReactDOM.render(
-  <React.StrictMode>
-    <ArhivContext.Provider value={arhiv}>
-      <RouterContext.Provider value={router}>
-        <OverlayRenderer>
-          <Chrome
-            apps={apps}
-            onLogout={() => arhiv.deauthorize()}
-          />
-          <AuthManager arhiv={arhiv} />
-        </OverlayRenderer>
-      </RouterContext.Provider>
-    </ArhivContext.Provider>
-  </React.StrictMode>,
-  rootEl,
-  () => {
-    rootEl.style.visibility = 'visible'
-  },
-)
+  ReactDOM.render(
+    <React.StrictMode>
+      <ArhivContext.Provider value={arhiv}>
+        <RouterContext.Provider value={router}>
+          <OverlayRenderer>
+            <Chrome
+              apps={apps}
+              onLogout={() => arhiv.deauthorize()}
+            />
+            <AuthManager arhiv={arhiv} />
+          </OverlayRenderer>
+        </RouterContext.Provider>
+      </ArhivContext.Provider>
+    </React.StrictMode>,
+    rootEl,
+    () => {
+      rootEl.style.visibility = 'visible'
+    },
+  )
+}
+
+runApp(document.getElementById('root')!)

@@ -75,15 +75,24 @@ export class Arhiv {
   readonly notes = new DocumentsRepository(this._replica, this._locks, NoteType)
   readonly tracks = new DocumentsRepository(this._replica, this._locks, TrackType)
 
-  constructor() {
-    this._replica.compact()
-
+  private constructor() {
     this._callbacks.add(
       () => this._sync.stop(),
       () => this._locks.stop(),
       () => this._replica.stop(),
       () => this._net.stop(),
     )
+  }
+
+  private async _start() {
+    await this._replica.compact()
+  }
+
+  static async create() {
+    const arhiv = new Arhiv()
+    await arhiv._start()
+
+    return arhiv
   }
 
   syncNow() {

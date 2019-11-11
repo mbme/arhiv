@@ -244,13 +244,13 @@ export class IsodbReplica<T extends IDocument> {
       return
     }
 
-    const mergeConflicts = new MergeConflicts<T>((documents) => {
+    const mergeConflicts = new MergeConflicts<T>(async (documents) => {
       // save resolved versions of the documents
       for (const document of documents) {
-        this._storage.addLocalDocument(document)
+        await this._storage.addLocalDocument(document)
       }
 
-      this._storage.upgrade(changesetResult)
+      await this._storage.upgrade(changesetResult)
       this._onUpdate()
 
       this.syncState$.value = { type: 'initial' }

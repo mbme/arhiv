@@ -5,9 +5,9 @@ class DocumentConflict<T extends IDocument> {
   final?: T
 
   constructor(
-    public base: T,
-    public remote: T,
-    public local: T,
+    public readonly base: T,
+    public readonly remote: T,
+    public readonly local: T,
     private _onResolved: () => void,
   ) { }
 
@@ -34,9 +34,11 @@ class DocumentConflict<T extends IDocument> {
 }
 
 export class MergeConflicts<T extends IDocument> {
-  conflicts: Array<DocumentConflict<T>> = []
+  readonly conflicts: Array<DocumentConflict<T>> = []
 
-  constructor(private onResolved: (documents: T[]) => void) { }
+  constructor(
+    private _onConflictsResolved: (documents: readonly T[]) => void,
+  ) { }
 
   addConflict(base: T, remote: T, local: T) {
     this.conflicts.push(new DocumentConflict(base, remote, local, this._onResolved))
@@ -48,6 +50,6 @@ export class MergeConflicts<T extends IDocument> {
       return
     }
 
-    this.onResolved(this.conflicts.map(conflict => conflict.final!))
+    this._onConflictsResolved(this.conflicts.map(conflict => conflict.final!))
   }
 }

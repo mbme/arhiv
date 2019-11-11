@@ -29,6 +29,6 @@ export function Markup({ value }: IProps) {
   }
 
   return (
-    <MarkupNode node={result.result} />
+    <MarkupNode node={result.value} />
   )
 }

@@ -24,80 +24,91 @@ import {
 } from './nodes'
 
 test('inline', () => {
-  assertSuccess(mono.parseAll('`test`'), (result) => {
-    assert.equal(result.value, 'test')
-  })
+  {
+    const result = mono.parseAll('`test`')
+    assertSuccess(result)
+    assert.equal(result.value.value, 'test')
+  }
 
   assertFailure(mono.parseAll('`te\nst`'))
 
-  assertSuccess(bold.apply('*test**', 0), (result) => {
-    assert.equal(result.value, 'test')
-  })
+  {
+    const result = bold.apply('*test**', 0)
+    assertSuccess(result)
+    assert.equal(result.value.value, 'test')
+  }
 
   assertSuccess(bold.parseAll('*test*'))
   assertSuccess(strikethrough.parseAll('~test~'))
 })
 
 test('header', () => {
-  assertSuccess(header.parseAll('# header'), ({ level, value }) => {
-    assert.equal(level, 1)
-    assert.equal(value, 'header')
-  })
+  {
+    const result = header.parseAll('# header')
+    assertSuccess(result)
+    assert.equal(result.value.level, 1)
+    assert.equal(result.value.value, 'header')
+  }
 
-  assertSuccess(header.apply('test\n## header\ntest', 4), ({ level, value }) => {
-    assert.equal(level, 2)
-    assert.equal(value, 'header')
-  })
+  {
+    const result = header.apply('test\n## header\ntest', 4)
+    assertSuccess(result)
+    assert.equal(result.value.level, 2)
+    assert.equal(result.value.value, 'header')
+  }
 })
 
 test('unordered list', () => {
-  assertSuccess(unorderedList.parseAll('* test'), (result) => {
-    assert.equal(result.children.length, 1)
+  {
+    const result = unorderedList.parseAll('* test')
+    assertSuccess(result)
 
-    const item = result.children[0].children[0]
-    assert.true(item instanceof NodeString)
-    if (item instanceof NodeString) {
-      assert.equal(item.value, 'test')
-    }
-  })
+    assert.equal(result.value.children.length, 1)
 
-  assertSuccess(unorderedList.parseAll('* test\ntest\n* ok *go*'), (result) => {
-    assert.equal(result.children.length, 2)
+    const item = result.value.children[0].children[0]
+    assertInstanceOf(item, NodeString)
+    assert.equal(item.value, 'test')
+  }
+
+  {
+    const result = unorderedList.parseAll('* test\ntest\n* ok *go*')
+    assertSuccess(result)
+    assert.equal(result.value.children.length, 2)
 
     {
-      const item = result.children[0].children[0]
+      const item = result.value.children[0].children[0]
       assertInstanceOf(item, NodeString)
       assert.equal(item.value, 'test\ntest')
     }
 
     {
-      const item = result.children[1].children[0]
-      assert.true(item instanceof NodeString)
-      if (item instanceof NodeString) {
-        assert.equal(item.value, 'ok ')
-      }
+      const item = result.value.children[1].children[0]
+      assertInstanceOf(item, NodeString)
+      assert.equal(item.value, 'ok ')
     }
 
     {
-      const item = result.children[1].children[1]
-      assert.true(item instanceof NodeBold)
-      if (item instanceof NodeBold) {
-        assert.equal(item.value, 'go')
-      }
+      const item = result.value.children[1].children[1]
+      assertInstanceOf(item, NodeBold)
+      assert.equal(item.value, 'go')
     }
-  })
+  }
 })
 
 test('link', () => {
-  assertSuccess(link.parseAll('[[url][description]]'), (result) => {
-    assert.equal(result.link, 'url')
-    assert.equal(result.description, 'description')
-  })
+  {
+    const result = link.parseAll('[[url][description]]')
+    assertSuccess(result)
+    assert.equal(result.value.link, 'url')
+    assert.equal(result.value.description, 'description')
+  }
 
-  assertSuccess(link.parseAll('[[url]]'), (result) => {
-    assert.equal(result.link, 'url')
-    assert.equal(result.description, '')
-  })
+  {
+    const result = link.parseAll('[[url]]')
+    assertSuccess(result)
+    assert.equal(result.value.link, 'url')
+    assert.equal(result.value.description, '')
+  }
 })
 
 test('newlines', () => {
@@ -108,28 +119,27 @@ test('newlines', () => {
 test('paragraph', () => {
   assertSuccess(paragraph.parseAll('test'))
 
-  assertSuccess(paragraph.apply('te\ns*t*\n\n', 0), (result) => {
+  {
+    const result = paragraph.apply('te\ns*t*\n\n', 0)
+    assertSuccess(result)
+
     {
-      const item = result.children[0]
-      assert.true(item instanceof NodeString)
-      if (item instanceof NodeString) {
-        assert.equal(item.value, 'te\ns')
-      }
+      const item = result.value.children[0]
+      assertInstanceOf(item, NodeString)
+      assert.equal(item.value, 'te\ns')
     }
 
     {
-      const item = result.children[1]
-      assert.true(item instanceof NodeBold)
-      if (item instanceof NodeBold) {
-        assert.equal(item.value, 't')
-      }
+      const item = result.value.children[1]
+      assertInstanceOf(item, NodeBold)
+      assert.equal(item.value, 't')
     }
-  })
+  }
 })
 
 test('code block', () => {
-  assertSuccess(codeBlock.apply('```js\ntest\n```', 0), ({ lang, value }) => {
-    assert.equal(lang, 'js')
-    assert.equal(value, 'test')
-  })
+  const result = codeBlock.apply('```js\ntest\n```', 0)
+  assertSuccess(result)
+  assert.equal(result.value.lang, 'js')
+  assert.equal(result.value.value, 'test')
 })

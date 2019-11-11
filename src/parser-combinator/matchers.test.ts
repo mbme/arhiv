@@ -21,7 +21,7 @@ test('map', () => {
   {
     const result = mapper.apply('test', 0)
     assertSuccess(result)
-    assert.true(result.result.kind === 'dummy')
+    assert.true(result.value.kind === 'dummy')
   }
 })
 
@@ -58,7 +58,7 @@ test('oneOrMore', () => {
   {
     const result = parser.apply('x1x1x12', 0)
     assertSuccess(result)
-    assert.equal(result.result.length, 3)
+    assert.equal(result.value.length, 3)
   }
 })
 
@@ -75,13 +75,13 @@ test('optional', () => {
   {
     const result = parser.apply('x2', 0)
     assertSuccess(result)
-    assert.equal(result.result, undefined)
+    assert.equal(result.value, undefined)
   }
 
   {
     const result = parser.apply('x1', 0)
     assertSuccess(result)
-    assert.equal(result.result, 'x1')
+    assert.equal(result.value, 'x1')
   }
 })
 
@@ -91,7 +91,7 @@ test('everythingUntil', () => {
   {
     const result = parser.apply('testx1', 0)
     assertSuccess(result)
-    assert.equal(result.result, 'test')
+    assert.equal(result.value, 'test')
   }
 
   assertFailure(parser.apply('x2', 0))
@@ -103,7 +103,7 @@ test('between', () => {
   {
     const result = parser.apply('x1testx1', 0)
     assertSuccess(result)
-    assert.equal(result.result, 'test')
+    assert.equal(result.value, 'test')
   }
 
   assertFailure(parser.apply('x1test', 0))
@@ -159,7 +159,7 @@ test('regex', () => {
   {
     const result = regex(/^0*1+/).apply('001', 0)
     assertSuccess(result)
-    assert.equal(result.result, '001')
+    assert.equal(result.value, '001')
   }
 
   assertFailure(regex(/^test/).apply('not test', 0))

@@ -2,7 +2,7 @@ import { identity } from '~/utils'
 
 export class Success<T> {
   constructor(
-    public result: T,
+    public value: T,
     public nextPos: number,
   ) { }
 
@@ -61,7 +61,7 @@ export class Parser<T> {
         return result2
       }
 
-      return new Success([result1.result, result2.result], result2.nextPos)
+      return new Success([result1.value, result2.value], result2.nextPos)
     })
   }
 
@@ -78,7 +78,7 @@ export class Parser<T> {
         return result2
       }
 
-      return new Success(result2.result, result2.nextPos)
+      return new Success(result2.value, result2.nextPos)
     })
   }
 
@@ -95,7 +95,7 @@ export class Parser<T> {
         return result2
       }
 
-      return new Success(result1.result, result2.nextPos)
+      return new Success(result1.value, result2.nextPos)
     })
   }
 
@@ -125,7 +125,7 @@ export class Parser<T> {
     return new Parser((msg, pos) => {
       const result = this.apply(msg, pos)
       if (isSuccess(result)) {
-        return new Success(fn(result.result), result.nextPos)
+        return new Success(fn(result.value), result.nextPos)
       }
 
       if (label) {
@@ -153,7 +153,7 @@ export class Parser<T> {
       }
 
       do {
-        values.push(latestResult.result)
+        values.push(latestResult.value)
 
         currentPos = latestResult.nextPos
         latestResult = this.apply(msg, currentPos)
@@ -172,7 +172,7 @@ export class Parser<T> {
       let latestResult = this.apply(msg, currentPos)
 
       while (isSuccess(latestResult)) {
-        values.push(latestResult.result)
+        values.push(latestResult.value)
 
         currentPos = latestResult.nextPos
         latestResult = this.apply(msg, currentPos)
@@ -187,7 +187,7 @@ export class Parser<T> {
     return new Parser<T | undefined>((msg, pos) => {
       const result = this.apply(msg, pos)
       if (isSuccess(result)) {
-        return new Success(result.result, result.nextPos)
+        return new Success(result.value, result.nextPos)
       }
 
       return new Success(undefined, pos)

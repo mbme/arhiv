@@ -24,5 +24,5 @@ export function parseMarkup(source: string): nodes.NodeMarkup {
     throw new Error(`Failed to parse markup: ${result.toString()}`)
   }
 
-  return result.result
+  return result.value
 }

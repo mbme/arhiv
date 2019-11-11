@@ -76,6 +76,8 @@ export class Arhiv {
   readonly tracks = new DocumentsRepository(this._replica, this._locks, TrackType)
 
   constructor() {
+    this._replica.compact()
+
     this._callbacks.add(
       () => this._sync.stop(),
       () => this._locks.stop(),

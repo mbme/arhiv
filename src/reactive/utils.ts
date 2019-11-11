@@ -53,3 +53,10 @@ export function promise$<T>(promise: Promise<T>): Observable<T> {
     }
   })
 }
+
+export function of$<T>(value: T): Observable<T> {
+  return new Observable<T>((observer) => {
+    observer.next(value)
+    observer.complete()
+  })
+}

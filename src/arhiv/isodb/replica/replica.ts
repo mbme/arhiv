@@ -8,6 +8,7 @@ import {
   Cell,
   Observable,
   promise$,
+  of$,
 } from '~/reactive'
 import {
   IAttachment,
@@ -49,21 +50,18 @@ export class IsodbReplica<T extends IDocument> {
         next: state => log.debug(`sync state -> ${state.type}`),
       }),
     )
-
-    // run compaction on startup
-    this._compact()
   }
 
   getRev() {
     return this._storage.getRev()
   }
 
-  getRandomId() {
+  async getRandomId() {
     let id: string
 
     do {
       id = generateRandomId()
-    } while (this.getDocument(id) || this.getAttachment(id)) // make sure generated id is free
+    } while (await this.getDocument(id) || await this.getAttachment(id)) // make sure generated id is free
 
     return id
   }
@@ -95,25 +93,24 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   getAttachmentData$(id: string): Observable<Blob> {
-    return new Observable<Blob>((observer) => {
-      if (!this.getAttachment(id)) {
-        throw new Error(`attachment ${id} doesn't exist`)
-      }
+    return promise$(
+      this.getAttachment(id).then((attachment) => {
+        if (!attachment) {
+          throw new Error(`attachment ${id} doesn't exist`)
+        }
 
-      const data = this._storage.getLocalAttachmentData(id)
-
+        return this._storage.getLocalAttachmentData(id)
+      }),
+    ).switchMap((data) => {
       if (data) {
-        observer.next(data)
-        observer.complete()
-
-        return undefined
+        return of$(data)
       }
 
-      return fetchAttachment$(id).subscribe(observer)
+      return fetchAttachment$(id)
     })
   }
 
-  async getDocuments(includeDeleted = false): Promise<Array<T>> {
+  async getDocuments(includeDeleted = false): Promise<T[]> {
     const localDocuments = await this._storage.getLocalDocuments()
     const localIds = new Set(localDocuments.map(item => item._id))
 
@@ -135,12 +132,12 @@ export class IsodbReplica<T extends IDocument> {
     return this.updateTime$.value$.switchMap(() => promise$(this.getDocuments()))
   }
 
-  saveAttachment(file: File): string {
+  async saveAttachment(file: File): Promise<string> {
     this._assertNoMergeConflicts()
 
-    const id = this.getRandomId()
+    const id = await this.getRandomId()
 
-    this._storage.addLocalAttachment({
+    await this._storage.addLocalAttachment({
       _id: id,
       _rev: this.getRev(),
       _createdTs: nowS(),
@@ -154,10 +151,10 @@ export class IsodbReplica<T extends IDocument> {
     return id
   }
 
-  saveDocument(document: T) {
+  async saveDocument(document: T) {
     this._assertNoMergeConflicts()
 
-    this._storage.addLocalDocument({
+    await this._storage.addLocalDocument({
       ...document,
       _updatedTs: nowS(),
     })
@@ -240,8 +237,8 @@ export class IsodbReplica<T extends IDocument> {
 
     // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
-      this._storage.upgrade(changesetResult)
-      this._clearLocalData()
+      await this._storage.upgrade(changesetResult)
+      await this._clearLocalData()
       this._onUpdate()
 
       return
@@ -276,7 +273,7 @@ export class IsodbReplica<T extends IDocument> {
     if (mergeConflicts.conflicts.length) {
       this.syncState$.value = { type: 'merge-conflicts', conflicts: mergeConflicts }
     } else {
-      this._storage.upgrade(changesetResult)
+      await this._storage.upgrade(changesetResult)
       this._onUpdate()
     }
   }
@@ -294,7 +291,8 @@ export class IsodbReplica<T extends IDocument> {
     const changeset: IChangeset<T> = {
       baseRev: this._storage.getRev(),
       documents: await this._storage.getLocalDocuments(),
-      attachments: (await this._storage.getLocalAttachments()).filter(attachment => !unusedIds.includes(attachment._id)),
+      attachments: (await this._storage.getLocalAttachments())
+        .filter(attachment => !unusedIds.includes(attachment._id)),
     }
 
     const localAttachmentsData: LocalAttachments = {}
@@ -310,13 +308,13 @@ export class IsodbReplica<T extends IDocument> {
 
   private async _clearLocalData() {
     for (const localDocument of await this._storage.getLocalDocuments()) {
-      this._storage.removeLocalDocument(localDocument._id)
+      await this._storage.removeLocalDocument(localDocument._id)
     }
 
     const unusedIds = await this._getUnusedLocalAttachmentsIds()
     for (const localAttachment of await this._storage.getLocalAttachments()) {
       if (!unusedIds.includes(localAttachment._id)) {
-        this._storage.removeLocalAttachment(localAttachment._id)
+        await this._storage.removeLocalAttachment(localAttachment._id)
       }
     }
   }
@@ -324,7 +322,7 @@ export class IsodbReplica<T extends IDocument> {
   /**
    * Remove unused local attachments
    */
-  private async _compact() {
+  async compact() {
     const unusedIds = await this._getUnusedLocalAttachmentsIds()
     if (!unusedIds.length) {
       return

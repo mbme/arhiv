@@ -1,9 +1,9 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-
 import {
   setLogLevel,
   debugLayoutSnippet,
+  createLogger,
 } from '~/utils'
 import {
   Arhiv,
@@ -18,7 +18,6 @@ import {
   RouterContext,
   WebRouter,
 } from '~/web-router'
-
 import {
   IApp,
   Chrome,
@@ -30,6 +29,7 @@ import { LibraryApp } from './app-library'
 const isDev = true
 
 setLogLevel(isDev ? 'DEBUG' : 'WARN')
+const log = createLogger('web-app')
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -43,35 +43,39 @@ injectGlobalStyles(`
   ${isDev ? debugLayoutSnippet : ''}
 `)
 
-const router = new WebRouter()
-
-const apps: IApp[] = [
-  NotesApp,
-  LibraryApp,
-]
-
-async function runApp(rootEl: HTMLElement) {
-  const arhiv = await Arhiv.create()
-
-  ReactDOM.render(
-    <React.StrictMode>
-      <ArhivContext.Provider value={arhiv}>
-        <RouterContext.Provider value={router}>
-          <OverlayRenderer>
-            <Chrome
-              apps={apps}
-              onLogout={() => arhiv.deauthorize()}
-            />
-            <AuthManager arhiv={arhiv} />
-          </OverlayRenderer>
-        </RouterContext.Provider>
-      </ArhivContext.Provider>
-    </React.StrictMode>,
-    rootEl,
-    () => {
-      rootEl.style.visibility = 'visible'
-    },
-  )
+const rootEl = document.getElementById('root')
+if (!rootEl) {
+  throw new Error("Can't find #root element")
 }
 
-runApp(document.getElementById('root')!)
+Arhiv.create().then(
+  (arhiv) => {
+    const apps: IApp[] = [
+      NotesApp,
+      LibraryApp,
+    ]
+
+    ReactDOM.render(
+      <React.StrictMode>
+        <ArhivContext.Provider value={arhiv}>
+          <RouterContext.Provider value={new WebRouter()}>
+            <OverlayRenderer>
+              <Chrome
+                apps={apps}
+                onLogout={() => arhiv.deauthorize()}
+              />
+              <AuthManager />
+            </OverlayRenderer>
+          </RouterContext.Provider>
+        </ArhivContext.Provider>
+      </React.StrictMode>,
+      rootEl,
+      () => {
+        rootEl.style.visibility = 'visible'
+      },
+    )
+  },
+  (err) => {
+    log.error('Failed to initialize arhiv', err)
+  },
+)

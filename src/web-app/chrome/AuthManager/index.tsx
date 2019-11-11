@@ -1,13 +1,10 @@
 import * as React from 'react'
+import { useArhiv } from '~/arhiv'
 import { useObservable } from '~/reactive/react'
-import { Arhiv } from '~/arhiv'
 import { AuthOverlay } from './AuthOverlay'
 
-interface IProps {
-  arhiv: Arhiv
-}
-
-export function AuthManager({ arhiv }: IProps) {
+export function AuthManager() {
+  const arhiv = useArhiv()
   const [authorized, isReady] = useObservable(() => arhiv.isAuthorized$.value$)
 
   if (authorized || !isReady) {

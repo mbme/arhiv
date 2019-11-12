@@ -46,6 +46,7 @@ export const before = (cb: Callback) => { _beforeCb = cb }
 export const after = (cb: Callback) => { _afterCb = cb }
 
 export const assert = new Asserts()
+
 async function runTest({ name, fn }: ITest, oldSnapshots: any[], updateSnapshots: boolean): Promise<[any[], boolean]> {
   try {
     assert._init(oldSnapshots, updateSnapshots)
@@ -103,8 +104,4 @@ export async function runTests(file: string, tests: ITest[], updateSnapshots: bo
   }
 
   return failures
-}
-
-export function assertInstanceOf<T>(value: unknown, classType: Constructor<T>): asserts value is T {
-  assert.true(value instanceof classType, `Expected value to be instance of ${classType}`)
 }

@@ -12,7 +12,7 @@ import {
   runTests,
 } from './index'
 
-setLogLevel('DEBUG')
+setLogLevel('ERROR')
 const log = createLogger('tester')
 
 createRunnable(async (...args: string[]) => {
@@ -42,6 +42,7 @@ createRunnable(async (...args: string[]) => {
 
       testPlans.length = 0
       testPlans.push({ file: testFile, ...testPlan, tests: [only] })
+      log.simple(`${testFile} suppressed ${testPlan.tests.length - 1} tests`)
     } else {
       testPlans.push({ file: testFile, ...testPlan })
     }
@@ -56,18 +57,17 @@ createRunnable(async (...args: string[]) => {
       await Promise.resolve(testPlan.before())
     }
 
-    console.error('before');
-    try {
-      failures += await runTests(
-        testPlan.file,
-        testPlan.tests,
-        updateSnapshots,
-      )
-    } catch (e) {
-      console.error(e);
-    }
+    const testTimeout = setTimeout(() => {
+      throw new Error('Test is taking too much time, probably due to some race condition.')
+    }, 10000)
 
-    console.error('after');
+    failures += await runTests(
+      testPlan.file,
+      testPlan.tests,
+      updateSnapshots,
+    )
+
+    clearTimeout(testTimeout)
 
     if (testPlan.after) {
       await Promise.resolve(testPlan.after())

@@ -1,5 +1,5 @@
 import {
-  assert,
+  assertTrue,
 } from '~/tester'
 import {
   Result,
@@ -10,9 +10,9 @@ import {
 } from './parser'
 
 export function assertSuccess<T>(r: Result<T>): asserts r is Success<T> {
-  assert.true(isSuccess(r), 'Expected value to be Success')
+  assertTrue(isSuccess(r), 'Expected value to be Success')
 }
 
 export function assertFailure(r: Result<any>): asserts r is Failure {
-  assert.true(isFailure(r), 'Expected value to be Failure')
+  assertTrue(isFailure(r), 'Expected value to be Failure')
 }

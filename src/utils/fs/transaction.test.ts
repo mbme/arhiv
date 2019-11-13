@@ -4,7 +4,9 @@ import {
   after,
   before,
   test,
-  assert,
+  assertEqual,
+  assertTrue,
+  assertFalse,
 } from '~/tester'
 import { FSTransaction } from './transaction'
 import {
@@ -37,7 +39,7 @@ test('creating file', async () => {
   await t.createFile(file, '')
   await t.complete()
 
-  assert.true(fs.existsSync(file))
+  assertTrue(fs.existsSync(file))
 })
 
 test('revert creating file', async () => {
@@ -47,7 +49,7 @@ test('revert creating file', async () => {
   await t.createFile(file, '')
   await t.revert()
 
-  assert.false(fs.existsSync(file))
+  assertFalse(fs.existsSync(file))
 })
 
 test('updating file', async () => {
@@ -59,7 +61,7 @@ test('updating file', async () => {
   await t.updateFile(file, '2')
   await t.complete()
 
-  assert.equal(await readText(file), '2')
+  assertEqual(await readText(file), '2')
 })
 
 test('revert updating file', async () => {
@@ -71,7 +73,7 @@ test('revert updating file', async () => {
   await t.updateFile(file, '2')
   await t.revert()
 
-  assert.equal(await readText(file), '1')
+  assertEqual(await readText(file), '1')
 })
 
 test('moving file', async () => {
@@ -84,8 +86,8 @@ test('moving file', async () => {
   await t.moveFile(file, newFile)
   await t.complete()
 
-  assert.false(fs.existsSync(file))
-  assert.equal(await readText(newFile), '1')
+  assertFalse(fs.existsSync(file))
+  assertEqual(await readText(newFile), '1')
 })
 
 test('revert moving file', async () => {
@@ -98,8 +100,8 @@ test('revert moving file', async () => {
   await t.moveFile(file, newFile)
   await t.revert()
 
-  assert.false(fs.existsSync(newFile))
-  assert.equal(await readText(file), '1')
+  assertFalse(fs.existsSync(newFile))
+  assertEqual(await readText(file), '1')
 })
 
 test('deleting file', async () => {
@@ -111,7 +113,7 @@ test('deleting file', async () => {
   await t.deleteFile(file)
   await t.complete()
 
-  assert.false(fs.existsSync(file))
+  assertFalse(fs.existsSync(file))
 })
 
 test('revert deleting file', async () => {
@@ -123,7 +125,7 @@ test('revert deleting file', async () => {
   await t.deleteFile(file)
   await t.revert()
 
-  assert.equal(await readText(file), '1')
+  assertEqual(await readText(file), '1')
 })
 
 test('creating directory', async () => {
@@ -133,8 +135,8 @@ test('creating directory', async () => {
   await t.createDir(file)
   await t.complete()
 
-  assert.true(fs.existsSync(file))
-  assert.true(await isDirectory(file))
+  assertTrue(fs.existsSync(file))
+  assertTrue(await isDirectory(file))
 })
 
 test('revert creating directory', async () => {
@@ -144,7 +146,7 @@ test('revert creating directory', async () => {
   await t.createDir(file)
   await t.revert()
 
-  assert.false(fs.existsSync(file))
+  assertFalse(fs.existsSync(file))
 })
 
 test('few operations per transaction', async () => {
@@ -158,8 +160,8 @@ test('few operations per transaction', async () => {
   await t.updateFile(file2, '2')
   await t.complete()
 
-  assert.true(fs.existsSync(file1))
-  assert.equal(await readText(file2), '2')
+  assertTrue(fs.existsSync(file1))
+  assertEqual(await readText(file2), '2')
 })
 
 test('operations on the same file in transaction', async () => {
@@ -170,5 +172,5 @@ test('operations on the same file in transaction', async () => {
   await t.deleteFile(file1)
   await t.complete()
 
-  assert.false(fs.existsSync(file1))
+  assertFalse(fs.existsSync(file1))
 })

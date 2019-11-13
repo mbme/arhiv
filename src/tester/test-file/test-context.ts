@@ -2,11 +2,11 @@ import {
   Procedure,
   AsyncProcedure,
 } from '~/utils'
-import { Snapshot } from '../types'
+import { TestFileSnapshots } from '../assert/types'
 
 type Callback = Procedure | AsyncProcedure
 
-interface ITest {
+export interface ITest {
   name: string
   fn: Callback
   only: boolean
@@ -18,15 +18,20 @@ export class TestContext {
   readonly tests: ITest[] = []
 
   successfulAsserts = 0
-  readonly snapshots: Snapshot[] = []
+  readonly snapshots: TestFileSnapshots[] = []
   snapshotPos = 0
   updatedSnapshots = 0
+
+  constructor(
+    public readonly basePath: string,
+    public readonly testFile: string,
+  ) { }
 }
 
 let currentContext: TestContext | undefined
 
-export function initializeTestContext() {
-  currentContext = new TestContext()
+export function initializeTestContext(basePath: string, testFile: string) {
+  currentContext = new TestContext(basePath, testFile)
 }
 
 export function getTestContext(): TestContext {
@@ -35,4 +40,16 @@ export function getTestContext(): TestContext {
   }
 
   return currentContext
+}
+
+export function test(name: string, fn: Callback, only = false) {
+  getTestContext().tests.push({ name, fn, only })
+}
+
+export function before(cb: Callback) {
+  getTestContext().beforeCb = cb
+}
+
+export function after(cb: Callback) {
+  getTestContext().afterCb = cb
 }

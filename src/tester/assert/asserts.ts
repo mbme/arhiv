@@ -1,13 +1,13 @@
 // tslint:disable-next-line:match-default-export-name
 import assert from 'assert'
-import { Snapshot } from '../types'
+import { Snapshot } from './types'
 import { getAssertContext } from './assert-context'
 import {
   prettyPrintJSON,
   Constructor,
 } from '~/utils'
 
-export function equal(actual: any, expected: any) {
+export function assertEqual(actual: any, expected: any) {
   const context = getAssertContext()
 
   if (actual === expected) {
@@ -23,7 +23,7 @@ export function equal(actual: any, expected: any) {
   }
 }
 
-export function deepEqual(actual: any, expected: any) {
+export function assertDeepEqual(actual: any, expected: any) {
   const context = getAssertContext()
 
   assert.deepStrictEqual(actual, expected)
@@ -44,7 +44,7 @@ export function assertFalse(actual: any) {
   context.successfulAsserts += 1
 }
 
-export function matchSnapshot(actual: Snapshot) {
+export function assertMatchSnapshot(actual: Snapshot) {
   const context = getAssertContext()
 
   if (context.snapshotPos < context.oldSnapshots.length) {
@@ -66,7 +66,7 @@ export function matchSnapshot(actual: Snapshot) {
   context.successfulAsserts += 1
 }
 
-export function throws(block: () => void, error?: any) {
+export function assertThrows(block: () => void, error?: any) {
   const context = getAssertContext()
 
   try {

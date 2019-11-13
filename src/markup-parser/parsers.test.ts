@@ -1,6 +1,6 @@
 import {
   test,
-  assert,
+  assertEqual,
   assertInstanceOf,
 } from '~/tester'
 import {
@@ -27,7 +27,7 @@ test('inline', () => {
   {
     const result = mono.parseAll('`test`')
     assertSuccess(result)
-    assert.equal(result.value.value, 'test')
+    assertEqual(result.value.value, 'test')
   }
 
   assertFailure(mono.parseAll('`te\nst`'))
@@ -35,7 +35,7 @@ test('inline', () => {
   {
     const result = bold.apply('*test**', 0)
     assertSuccess(result)
-    assert.equal(result.value.value, 'test')
+    assertEqual(result.value.value, 'test')
   }
 
   assertSuccess(bold.parseAll('*test*'))
@@ -46,15 +46,15 @@ test('header', () => {
   {
     const result = header.parseAll('# header')
     assertSuccess(result)
-    assert.equal(result.value.level, 1)
-    assert.equal(result.value.value, 'header')
+    assertEqual(result.value.level, 1)
+    assertEqual(result.value.value, 'header')
   }
 
   {
     const result = header.apply('test\n## header\ntest', 4)
     assertSuccess(result)
-    assert.equal(result.value.level, 2)
-    assert.equal(result.value.value, 'header')
+    assertEqual(result.value.level, 2)
+    assertEqual(result.value.value, 'header')
   }
 })
 
@@ -63,34 +63,34 @@ test('unordered list', () => {
     const result = unorderedList.parseAll('* test')
     assertSuccess(result)
 
-    assert.equal(result.value.children.length, 1)
+    assertEqual(result.value.children.length, 1)
 
     const item = result.value.children[0].children[0]
     assertInstanceOf(item, NodeString)
-    assert.equal(item.value, 'test')
+    assertEqual(item.value, 'test')
   }
 
   {
     const result = unorderedList.parseAll('* test\ntest\n* ok *go*')
     assertSuccess(result)
-    assert.equal(result.value.children.length, 2)
+    assertEqual(result.value.children.length, 2)
 
     {
       const item = result.value.children[0].children[0]
       assertInstanceOf(item, NodeString)
-      assert.equal(item.value, 'test\ntest')
+      assertEqual(item.value, 'test\ntest')
     }
 
     {
       const item = result.value.children[1].children[0]
       assertInstanceOf(item, NodeString)
-      assert.equal(item.value, 'ok ')
+      assertEqual(item.value, 'ok ')
     }
 
     {
       const item = result.value.children[1].children[1]
       assertInstanceOf(item, NodeBold)
-      assert.equal(item.value, 'go')
+      assertEqual(item.value, 'go')
     }
   }
 })
@@ -99,15 +99,15 @@ test('link', () => {
   {
     const result = link.parseAll('[[url][description]]')
     assertSuccess(result)
-    assert.equal(result.value.link, 'url')
-    assert.equal(result.value.description, 'description')
+    assertEqual(result.value.link, 'url')
+    assertEqual(result.value.description, 'description')
   }
 
   {
     const result = link.parseAll('[[url]]')
     assertSuccess(result)
-    assert.equal(result.value.link, 'url')
-    assert.equal(result.value.description, '')
+    assertEqual(result.value.link, 'url')
+    assertEqual(result.value.description, '')
   }
 })
 
@@ -126,13 +126,13 @@ test('paragraph', () => {
     {
       const item = result.value.children[0]
       assertInstanceOf(item, NodeString)
-      assert.equal(item.value, 'te\ns')
+      assertEqual(item.value, 'te\ns')
     }
 
     {
       const item = result.value.children[1]
       assertInstanceOf(item, NodeBold)
-      assert.equal(item.value, 't')
+      assertEqual(item.value, 't')
     }
   }
 })
@@ -140,6 +140,6 @@ test('paragraph', () => {
 test('code block', () => {
   const result = codeBlock.apply('```js\ntest\n```', 0)
   assertSuccess(result)
-  assert.equal(result.value.lang, 'js')
-  assert.equal(result.value.value, 'test')
+  assertEqual(result.value.lang, 'js')
+  assertEqual(result.value.value, 'test')
 })

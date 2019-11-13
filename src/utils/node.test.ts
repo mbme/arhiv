@@ -1,6 +1,6 @@
 import {
   test,
-  assert,
+  assertEqual,
 } from '~/tester'
 import {
   aesEncrypt,
@@ -10,5 +10,6 @@ import {
 test('Encrypt/decrypt', () => {
   const text = 'Some great text: with a colon'
   const password = 'Giant password'
-  assert.equal(aesDecrypt(aesEncrypt(text, password), password), text)
+
+  assertEqual(aesDecrypt(aesEncrypt(text, password), password), text)
 })

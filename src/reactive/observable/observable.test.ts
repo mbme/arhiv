@@ -1,6 +1,8 @@
 import {
   test,
-  assert,
+  assertEqual,
+  assertDeepEqual,
+  assertTrue,
 } from '~/tester'
 import { Observable } from './index'
 
@@ -26,7 +28,7 @@ async function assertObservable<T>(o$: Observable<T>, expected: Array<T | typeof
     })
   })
 
-  assert.deepEqual(actual, expected)
+  assertDeepEqual(actual, expected)
 }
 
 test('observable completes', async () => {
@@ -62,7 +64,7 @@ test('destroy callback is executed', async () => {
     })
 
     await assertObservable(o$, [1, complete])
-    assert.true(destroyed)
+    assertTrue(destroyed)
   }
 
   { // error
@@ -75,7 +77,7 @@ test('destroy callback is executed', async () => {
     })
 
     await assertObservable(o$, [1, error])
-    assert.true(destroyed)
+    assertTrue(destroyed)
   }
 })
 
@@ -96,7 +98,7 @@ test('tap', async () => {
   }).tap(x => tap = x)
 
   await assertObservable(o$, [1, complete])
-  assert.equal(tap, 1)
+  assertEqual(tap, 1)
 })
 
 test('filter', async () => {
@@ -136,7 +138,7 @@ test('switchMap', async () => {
 
     await assertObservable(o$, [5, 5, 1, complete])
 
-    assert.equal(destCounter, 3)
+    assertEqual(destCounter, 3)
   }
 
   { // switchMap must wait for inner observable to complete

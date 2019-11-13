@@ -1,4 +1,4 @@
-import { Snapshot } from '../types'
+import { Snapshot } from './types'
 
 export class AssertContext {
   successfulAsserts = 0

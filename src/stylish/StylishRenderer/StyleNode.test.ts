@@ -1,6 +1,7 @@
 import {
   test,
-  assert,
+  assertEqual,
+  assertMatchSnapshot,
 } from '~/tester'
 import {
   StyleNode,
@@ -12,7 +13,7 @@ test('it works', () => {
     fontSize: 1,
   })
 
-  assert.equal(
+  assertEqual(
     style.intoCss()[0],
     `${hash2class(style.hash)} { font-size: 1 }`,
   )
@@ -35,7 +36,7 @@ test('it generates consistent hashes', () => {
   const style1 = new StyleNode(obj)
   const style2 = new StyleNode(obj)
 
-  assert.equal(style1.hash, style2.hash)
+  assertEqual(style1.hash, style2.hash)
 })
 
 test('it supports with nested selectors', () => {
@@ -46,7 +47,7 @@ test('it supports with nested selectors', () => {
     },
   })
 
-  assert.matchSnapshot(style.intoCss())
+  assertMatchSnapshot(style.intoCss())
 })
 
 test('it supports media query', () => {
@@ -60,7 +61,7 @@ test('it supports media query', () => {
     },
   })
 
-  assert.matchSnapshot(style.intoCss())
+  assertMatchSnapshot(style.intoCss())
 })
 
 test('it renders @keyframes', () => {
@@ -75,5 +76,5 @@ test('it renders @keyframes', () => {
     },
   })
 
-  assert.matchSnapshot(style.asKeyframes())
+  assertMatchSnapshot(style.asKeyframes())
 })

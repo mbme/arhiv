@@ -21,13 +21,14 @@ export class Document<T extends Record> {
     private _replica: ArhivReplica,
     private _locks: LockManager,
     public readonly record: T,
+    private _isNew: boolean,
   ) { }
 
   get id() {
     return this.record._id
   }
 
-  private _extractRefs(value: string) {
+  private async _extractRefs(value: string) {
     const attachmentRefs: string[] = []
 
     const markup = parseMarkup(value)
@@ -35,7 +36,7 @@ export class Document<T extends Record> {
     for (const link of selectLinks(markup)) {
       const id = link.link
 
-      if (this._replica.getAttachment(id)) {
+      if (await this._replica.getAttachment(id)) {
         attachmentRefs.push(id)
       } else {
         log.warn(`document ${this.id} references unknown entity ${id}`)
@@ -45,27 +46,28 @@ export class Document<T extends Record> {
     return attachmentRefs
   }
 
-  patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) {
+  async patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) {
     const attachmentRefs = refSource === undefined
       ? this.record._attachmentRefs
       : this._extractRefs(refSource)
 
-    this._replica.saveDocument({
+    await this._replica.saveDocument({
       ...this.record,
       ...patch,
       _attachmentRefs: attachmentRefs,
     })
+    this._isNew = false
   }
 
-  delete() {
-    this._replica.saveDocument({
+  async delete() {
+    await this._replica.saveDocument({
       ...this.record,
       _deleted: true,
     })
   }
 
   isNew() {
-    return !this._replica.getDocument(this.id)
+    return this._isNew
   }
 
   isLocked$() {

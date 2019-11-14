@@ -17,16 +17,19 @@ import {
   IChangeset,
 } from '../types'
 import {
-  IReplicaStorage,
   ChangesetExchange,
   LocalAttachments,
 } from './types'
-import { MergeConflicts, DocumentConflict } from './merge-conflict'
+import {
+  MergeConflicts,
+  DocumentConflict,
+} from './merge-conflict'
 import {
   generateRandomId,
   isEmptyChangeset,
   fetchAttachment$,
 } from '../utils'
+import { ReplicaIndexedDBStorage } from './replica-indexeddb-storage'
 
 const log = createLogger('isodb-replica')
 
@@ -42,7 +45,7 @@ export class IsodbReplica<T extends IDocument> {
   private _callbacks = new Callbacks()
 
   constructor(
-    private _storage: IReplicaStorage<T>,
+    private _storage: ReplicaIndexedDBStorage<T>,
     private _onLocalUpdate: Procedure,
   ) {
     this._callbacks.add(

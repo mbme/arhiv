@@ -1,7 +1,3 @@
-import { createLogger } from '~/utils'
-
-const log = createLogger('indexeddb')
-
 function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -13,28 +9,36 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 //   [StoreNames]: StoredObjectType,
 // }
 
-type UpgradeDB<S extends object> = (oldVersion: number, db: PIDB<S>) => void
-
 export class PIDB<ObjectStores extends object> {
-  private constructor(private _db: IDBDatabase) { }
+  private constructor(
+    private _db: IDBDatabase,
+    public readonly oldVersion: number,
+    public readonly version: number,
+  ) { }
 
-  static async open<S extends object>(name: string, version: number, upgrade: UpgradeDB<S>): Promise<PIDB<S>> {
+  static async open<S extends object>(name: string, version: number): Promise<PIDB<S>> {
     if (!Number.isInteger(version)) {
       throw new Error('version must be an integer')
     }
 
+    let oldVersion = version
     const request = indexedDB.open(name, version)
+
     request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
-      upgrade(e.oldVersion, new PIDB(request.result))
+      oldVersion = e.oldVersion
     }
 
     request.onblocked = () => {
-      log.warn('We need to update the db schema. Please close all other tabs with this db!')
+      throw new Error('We need to update the db schema. Please close all other tabs with this db!')
     }
 
     const db = await request2promise(request)
 
-    return new PIDB(db)
+    return new PIDB(db, oldVersion, version)
+  }
+
+  isUpgradeNeeded() {
+    return this.oldVersion !== this.version
   }
 
   createObjectStore<StoreName extends keyof ObjectStores>(store: StoreName, keyPath: keyof ObjectStores[StoreName]) {

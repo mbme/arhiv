@@ -6,9 +6,6 @@ import {
   IAttachment,
   IChangesetResult,
 } from '../types'
-import {
-  IReplicaStorage,
-} from './types'
 
 interface IBlob {
   _id: string
@@ -23,7 +20,7 @@ interface IObjectStores<T extends IDocument> {
   'attachments-data': IBlob
 }
 
-export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaStorage<T> {
+export class ReplicaIndexedDBStorage<T extends IDocument> {
   private _rev = 0
 
   private constructor(
@@ -41,15 +38,23 @@ export class ReplicaIndexedDBStorage<T extends IDocument> implements IReplicaSto
   }
 
   public static async open<T extends IDocument>() {
-    const db = await PIDB.open<IObjectStores<T>>('arhiv-replica', 1, (oldVersion, db) => {
-      if (oldVersion < 1) { // create db
+    const currentVersion = 1
+    const db = await PIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion)
+
+    if (db.isUpgradeNeeded()) {
+      // just to make sure we don't forget about this updater after db version increase
+      if (currentVersion !== 1) {
+        throw new Error('unsupported version')
+      }
+
+      if (db.oldVersion < 1) { // create db
         db.createObjectStore('documents', '_id')
         db.createObjectStore('documents-local', '_id')
         db.createObjectStore('attachments', '_id')
         db.createObjectStore('attachments-local', '_id')
         db.createObjectStore('attachments-data', '_id')
       }
-    })
+    }
 
     const replica = new ReplicaIndexedDBStorage(db)
     await replica._init()

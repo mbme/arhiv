@@ -18,12 +18,12 @@ export class DocumentsRepository<T extends Record> {
     private _documentType: IDocumentType<T>,
   ) { }
 
-  private _wrap = (document: T) => new Document<T>(this._replica, this._locks, document)
+  private _wrap = (document: T, isNew = false) => new Document<T>(this._replica, this._locks, document, isNew)
 
-  create(): Document<T> {
-    const id = this._replica.getRandomId()
+  async create(): Promise<Document<T>> {
+    const id = await this._replica.getRandomId()
 
-    return this._wrap(this._documentType.create(id))
+    return this._wrap(this._documentType.create(id), true)
   }
 
   getDocuments$(): Observable<Array<Document<T>>> {

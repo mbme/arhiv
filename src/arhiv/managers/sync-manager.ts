@@ -33,10 +33,14 @@ export class SyncManager {
 
     const gotOnline$ = _net.isOnline$.value$.filter(isOnline => isOnline)
 
+    const gotLocalUpdate$ = _replica.updateTime$.value$
+      .filter(([, isLocal]) => isLocal)
+
     const syncCondtion$ = merge$<any>(
       interval$(60 * 1000),
       gotAuthorized$,
       gotOnline$,
+      gotLocalUpdate$,
       mergeConflictsResolved$,
       this.syncSignal.signal$,
     )

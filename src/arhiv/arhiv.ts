@@ -2,7 +2,7 @@ import {
   Callbacks,
 } from '~/utils'
 import {
-  ReplicaInMemStorage,
+  ReplicaIndexedDBStorage,
   IsodbReplica,
 } from './isodb/replica'
 import {
@@ -12,6 +12,7 @@ import {
 } from './managers'
 import {
   ArhivReplica,
+  Record,
   DocumentType,
   INote,
   ITrack,
@@ -62,10 +63,7 @@ export class Arhiv {
 
   private _net = new NetworkManager()
   private _locks = new LockManager()
-  private _replica: ArhivReplica = new IsodbReplica(
-    new ReplicaInMemStorage(),
-    () => this.syncNow(),
-  )
+  private _replica: ArhivReplica = new IsodbReplica(this._db)
   private _sync = new SyncManager(this._replica, this._net, this._locks)
 
   readonly syncState$ = this._replica.syncState$
@@ -75,7 +73,7 @@ export class Arhiv {
   readonly notes = new DocumentsRepository(this._replica, this._locks, NoteType)
   readonly tracks = new DocumentsRepository(this._replica, this._locks, TrackType)
 
-  private constructor() {
+  private constructor(private _db: ReplicaIndexedDBStorage<Record>) {
     this._callbacks.add(
       () => this._sync.stop(),
       () => this._locks.stop(),
@@ -89,7 +87,9 @@ export class Arhiv {
   }
 
   static async create() {
-    const arhiv = new Arhiv()
+    const db = await ReplicaIndexedDBStorage.open<Record>()
+
+    const arhiv = new Arhiv(db)
     await arhiv._start()
 
     return arhiv

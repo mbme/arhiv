@@ -2,7 +2,6 @@ import {
   createLogger,
   nowS,
   Callbacks,
-  Procedure,
 } from '~/utils'
 import {
   Cell,
@@ -38,15 +37,16 @@ type SyncState<T extends IDocument> =
   | { type: 'sync' }
   | { type: 'merge-conflicts', conflicts: MergeConflicts<T> }
 
+type UpdateInfo = [number, boolean]
+
 export class IsodbReplica<T extends IDocument> {
   readonly syncState$ = new Cell<SyncState<T>>({ type: 'initial' })
-  readonly updateTime$ = new Cell(0)
+  readonly updateTime$ = new Cell<UpdateInfo>([0, false])
 
   private _callbacks = new Callbacks()
 
   constructor(
     private _storage: ReplicaIndexedDBStorage<T>,
-    private _onLocalUpdate: Procedure,
   ) {
     this._callbacks.add(
       this.syncState$.value$.subscribe({
@@ -163,8 +163,7 @@ export class IsodbReplica<T extends IDocument> {
     })
     log.debug(`saved document with id ${document._id}`)
 
-    this._onUpdate()
-    this._onLocalUpdate()
+    this._onUpdate(true)
   }
 
   isReadyToSync() {
@@ -228,8 +227,8 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-  private _onUpdate() {
-    this.updateTime$.value = nowS()
+  private _onUpdate(isLocal: boolean = false) {
+    this.updateTime$.value = [nowS(), isLocal]
   }
 
   private async _applyChangesetResult(changesetResult: IChangesetResult<T>) {

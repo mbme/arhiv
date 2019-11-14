@@ -102,8 +102,8 @@ async function createAttachments(images: IDict): Promise<IAttachment[]> {
   }))
 }
 
-export async function getFakeNotes(count: number) {
-  const resourcesPath = path.join(process.env.BASE_DIR!, 'resources')
+export async function getFakeNotes(appDir: string, count: number) {
+  const resourcesPath = path.join(appDir, 'resources')
   const tempDir = await createTempDir()
   const images = await prepareImages(resourcesPath, tempDir)
 

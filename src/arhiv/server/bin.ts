@@ -19,9 +19,6 @@ import createServer from '../isodb/server/server'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-const STATIC_DIR = path.join(process.env.BASE_DIR!, 'src/web-app/static')
-const DIST_DIR = path.join(process.env.BASE_DIR!, 'dist')
-
 setLogLevelStr(process.env.LOG || '')
 
 const log = createLogger('isodb-server')
@@ -30,6 +27,8 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
   if (!port || !password || !rootDir) {
     throw new Error('port, password & rootDir are required')
   }
+
+  const appDir = process.env.BASE_DIR!
 
   const storage = await PrimaryFSStorage.create(rootDir)
   onTermination(() => storage.stop())
@@ -42,7 +41,7 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
       attachments,
       attachedFiles,
       tempDir,
-    } = await getFakeNotes(30)
+    } = await getFakeNotes(appDir, 30)
 
     await db.applyChangeset({
       baseRev: 0,
@@ -53,7 +52,10 @@ createRunnable(async (port: string, password: string, rootDir: string, ...args: 
     log.info(`Generated ${documents.length} fake notes`)
   }
 
-  const server = createServer(db, password, [STATIC_DIR, DIST_DIR])
+  const server = createServer(db, password, [
+    path.join(appDir, 'src/web-app/static'),
+    path.join(appDir, 'dist'),
+  ])
 
   await server.start(parseInt(port, 10))
   log.info(`listening on http://localhost:${port}`)

@@ -3,6 +3,7 @@ import {
   consumeAsyncIterable,
   setLogLevel,
   createLogger,
+  termColors,
 } from '~/utils'
 import { getFiles } from '~/utils/fs'
 import { createRunnable } from '~/utils/runnable'
@@ -50,13 +51,15 @@ createRunnable(async (...args: string[]) => {
   }
 
   if (filesFailed) {
-    log.simple(`Test files failed: ${filesFailed}`)
+    log.simple(termColors.fg.red(`Test files failed: ${filesFailed}`))
   }
 
-  log.simple(`Tests failed: ${testsFailed}`)
+  if (testsFailed) {
+    log.simple(termColors.fg.red(`Tests failed: ${testsFailed}`))
+  }
 
   if (!filesFailed && !testsFailed) {
-    log.simple('Great Success!')
+    log.simple(termColors.fg.green('Great Success!'))
   }
 
   log.simple('')

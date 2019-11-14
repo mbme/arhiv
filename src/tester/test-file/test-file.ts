@@ -2,6 +2,7 @@ import path from 'path'
 import {
   createLogger,
   uniq,
+  termColors,
 } from '~/utils'
 import {
   fileExists,
@@ -94,7 +95,11 @@ export class TestFile {
 
       return [snapshots, true]
     } catch (e) {
-      log.simple(`\n  ${test.name}: failed\n`, e, '\n')
+      log.simple('')
+      log.simple(termColors.fg.red(`  ${test.name}: failed`))
+      log.simple('')
+      log.simple(e)
+      log.simple('')
 
       return [oldSnapshots, false]
     }
@@ -102,7 +107,15 @@ export class TestFile {
 
   async run(): Promise<number> {
     const tests = this._getTestsToRun()
-    log.simple(`${this.fileName} [${tests.length}/${this._testContext.tests.length}]`)
+
+    const totalTestsCount = this._testContext.tests.length
+
+    if (tests.length === totalTestsCount) {
+      log.simple(`${termColors.fg.blue(this.fileName)}`)
+    } else {
+      const mutedCount = totalTestsCount - tests.length
+      log.simple(`${termColors.fg.blue(this.fileName)}   ${mutedCount} tests are muted`)
+    }
 
     const testTimeout = setTimeout(() => {
       throw new Error('Test is taking too much time, probably due to some race condition.')

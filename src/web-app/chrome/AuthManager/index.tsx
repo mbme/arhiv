@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useArhiv } from '~/arhiv'
-import { useObservable } from '~/reactive/react'
+import { useObservable } from '~/web-platform'
 import { AuthOverlay } from './AuthOverlay'
 
 export function AuthManager() {

@@ -2,11 +2,11 @@ import * as React from 'react'
 import {
   stylish,
   Image,
+  useObservable,
 } from '~/web-platform'
 import {
   Attachment,
 } from '~/arhiv'
-import { useObservable } from '~/reactive/react'
 
 const $image = stylish({
   mt: 'medium',

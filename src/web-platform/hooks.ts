@@ -1,11 +1,8 @@
 import * as React from 'react'
 import {
   noop,
-  createLogger,
 } from '~/utils'
-import { Observable } from './observable'
-
-const log = createLogger('react-utils')
+import { Observable, promise$ } from '~/reactive'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,
@@ -37,11 +34,42 @@ export function useObservable<T>(
         setValue(newValue)
         setIsReady(true)
       },
+
       error(e) {
-        log.warn('Got and error from observable', e)
+        throw new Error(`Got an error from observable: ${e}`)
       },
     })
   }, [observable$])
+
+  return [value, isReady]
+}
+
+export function usePromise<T>(getPromise: () => Promise<T>, deps: any[] = []): [T | undefined, boolean] {
+  const [promise, setPromise] = React.useState<Promise<T> | undefined>(undefined)
+  const [value, setValue] = React.useState<T | undefined>(undefined)
+  const [isReady, setIsReady] = React.useState<boolean>(false)
+
+  React.useEffect(() => {
+    setPromise(getPromise())
+    setIsReady(false)
+  }, deps)
+
+  React.useEffect(() => {
+    if (!promise) {
+      return noop
+    }
+
+    return promise$(promise).subscribe({
+      next(newValue) {
+        setValue(newValue)
+        setIsReady(true)
+      },
+
+      error(e) {
+        throw new Error(`Got an error from promise: ${e}`)
+      },
+    })
+  }, [promise])
 
   return [value, isReady]
 }

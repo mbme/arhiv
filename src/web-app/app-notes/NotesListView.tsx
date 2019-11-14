@@ -3,9 +3,9 @@ import {
   formatTs,
   fuzzySearch,
 } from '~/utils'
-import { useObservable } from '~/reactive/react'
 import { useRouter } from '~/web-router'
 import {
+  useObservable,
   stylish,
   Button,
   FilterInput,

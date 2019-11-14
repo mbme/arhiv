@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { useArhiv } from '~/arhiv'
-import { useObservable } from '~/reactive/react'
 import {
   Icon,
   CleanLink,
   Spacer,
   ProgressLocker,
+  useObservable,
 } from '~/web-platform'
 import {
   Toolbar,

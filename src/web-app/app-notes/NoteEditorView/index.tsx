@@ -7,6 +7,7 @@ import {
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { NoteEditor } from './NoteEditor'
+import { promise$ } from '~/reactive'
 
 interface IProps {
   id?: string
@@ -19,13 +20,9 @@ export function NoteEditorViewContainer({ id }: IProps) {
 
   // get or create the note
   React.useEffect(() => {
-    if (id) {
-      return arhiv.notes.getDocument$(id).subscribe({ next: setNote })
-    }
+    const note$ = id ? arhiv.notes.getDocument$(id) : promise$(arhiv.notes.create())
 
-    setNote(arhiv.notes.create())
-
-    return noop
+    return note$.subscribe({ next: setNote })
   }, [])
 
   // acquire note lock

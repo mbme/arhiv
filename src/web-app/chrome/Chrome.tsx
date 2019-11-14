@@ -1,10 +1,10 @@
 import * as React from 'react'
-import { useObservable } from '~/reactive/react'
 import {
   useRouter,
   ILocation,
 } from '~/web-router'
 import {
+  useObservable,
   theme,
   Overlay,
   Icon,

@@ -51,15 +51,15 @@ createRunnable(async (...args: string[]) => {
   }
 
   if (filesFailed) {
-    log.simple(termColors.fg.red(`Test files failed: ${filesFailed}`))
+    log.simple(termColors.red(`Test files failed: ${filesFailed}`))
   }
 
   if (testsFailed) {
-    log.simple(termColors.fg.red(`Tests failed: ${testsFailed}`))
+    log.simple(termColors.red(`Tests failed: ${testsFailed}`))
   }
 
   if (!filesFailed && !testsFailed) {
-    log.simple(termColors.fg.green('Great Success!'))
+    log.simple(termColors.green('Great Success!'))
   }
 
   log.simple('')

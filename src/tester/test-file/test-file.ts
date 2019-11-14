@@ -96,7 +96,7 @@ export class TestFile {
       return [snapshots, true]
     } catch (e) {
       log.simple('')
-      log.simple(termColors.fg.red(`  ${test.name}: failed`))
+      log.simple(termColors.red(`  ${test.name}: failed`))
       log.simple('')
       log.simple(e)
       log.simple('')
@@ -111,10 +111,10 @@ export class TestFile {
     const totalTestsCount = this._testContext.tests.length
 
     if (tests.length === totalTestsCount) {
-      log.simple(`${termColors.fg.blue(this.fileName)}`)
+      log.simple(`${termColors.blue(this.fileName)}`)
     } else {
       const mutedCount = totalTestsCount - tests.length
-      log.simple(`${termColors.fg.blue(this.fileName)}   ${mutedCount} tests are muted`)
+      log.simple(`${termColors.blue(this.fileName)}   ${mutedCount} tests are muted`)
     }
 
     const testTimeout = setTimeout(() => {

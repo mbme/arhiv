@@ -1,6 +1,6 @@
 import {
-  PIDB,
-} from '~/indexeddb'
+  TIDB,
+} from '~/web-tidb'
 import {
   IDocument,
   IAttachment,
@@ -24,7 +24,7 @@ export class ReplicaIndexedDBStorage<T extends IDocument> {
   private _rev = 0
 
   private constructor(
-    private _idb: PIDB<IObjectStores<T>>,
+    private _idb: TIDB<IObjectStores<T>>,
   ) { }
 
   private async _init() {
@@ -39,7 +39,7 @@ export class ReplicaIndexedDBStorage<T extends IDocument> {
 
   public static async open<T extends IDocument>() {
     const currentVersion = 1
-    const db = await PIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion)
+    const db = await TIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion)
 
     if (db.isUpgradeNeeded()) {
       // just to make sure we don't forget about this updater after db version increase

@@ -9,14 +9,14 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 //   [StoreNames]: StoredObjectType,
 // }
 
-export class PIDB<ObjectStores extends object> {
+export class TIDB<ObjectStores extends object> {
   private constructor(
     private _db: IDBDatabase,
     public readonly oldVersion: number,
     public readonly version: number,
   ) { }
 
-  static async open<S extends object>(name: string, version: number): Promise<PIDB<S>> {
+  static async open<S extends object>(name: string, version: number): Promise<TIDB<S>> {
     if (!Number.isInteger(version)) {
       throw new Error('version must be an integer')
     }
@@ -34,7 +34,7 @@ export class PIDB<ObjectStores extends object> {
 
     const db = await request2promise(request)
 
-    return new PIDB(db, oldVersion, version)
+    return new TIDB(db, oldVersion, version)
   }
 
   isUpgradeNeeded() {
@@ -46,11 +46,11 @@ export class PIDB<ObjectStores extends object> {
   }
 
   transaction<StoreName extends keyof ObjectStores>(...stores: StoreName[]) {
-    return new PIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readonly'))
+    return new TIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readonly'))
   }
 
   transactionRW<StoreName extends keyof ObjectStores>(...stores: StoreName[]) {
-    return new PIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readwrite'))
+    return new TIDBTransaction<ObjectStores, StoreName>(this._db.transaction(stores, 'readwrite'))
   }
 
   getAll<StoreName extends keyof ObjectStores>(store: StoreName) {
@@ -70,15 +70,15 @@ export class PIDB<ObjectStores extends object> {
   }
 }
 
-class PIDBTransaction<S extends object, StoreName extends keyof S> {
+class TIDBTransaction<S extends object, StoreName extends keyof S> {
   constructor(private _tx: IDBTransaction) { }
 
   store<T extends StoreName, TType = S[T]>(name: T) {
-    return new PIDBStore<TType>(this._tx.objectStore(name))
+    return new TIDBStore<TType>(this._tx.objectStore(name))
   }
 }
 
-class PIDBStore<T> {
+class TIDBStore<T> {
   constructor(private _store: IDBObjectStore) { }
 
   getAll(): Promise<T[]> {

@@ -4,7 +4,7 @@ import { createLogger } from './logger'
 const log = createLogger('runnable')
 
 export function createRunnable(run: (...args: string[]) => Promise<void> | void) {
-  const args = process.argv.slice(3)
+  const args = process.argv.slice(2)
 
   Promise.resolve(run(...args)).catch((e) => {
     log.error('runnable: process failed', e)

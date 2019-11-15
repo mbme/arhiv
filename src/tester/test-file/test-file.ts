@@ -160,7 +160,7 @@ export class TestFile {
   static async load(basePath: string, testFile: string, updateSnapshots: boolean) {
     initializeTestContext(basePath, testFile)
 
-    require(testFile) // collect tests from the file into test context
+    await import(testFile) // collect tests from the file into test context
 
     return new TestFile(getTestContext(), updateSnapshots)
   }

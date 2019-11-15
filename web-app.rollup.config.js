@@ -16,11 +16,13 @@ export const tsPathResolver = (rootDir) => ({
 
 })
 
+const BASE_DIR = process.env.BASE_DIR
+
 export default {
-  input: 'tsdist/web-app/index',
+  input: `${BASE_DIR}/web-app/index`,
 
   output: {
-    file: 'dist/bundle.js',
+    file: `${BASE_DIR}/bundle.js`,
     format: 'iife',
     name: 'WebApp',
   },
@@ -28,7 +30,7 @@ export default {
   treeshake: isProduction,
 
   plugins: [
-    tsPathResolver(path.resolve(__dirname, 'tsdist')),
+    tsPathResolver(BASE_DIR),
 
     nodeResolve(),
 
@@ -42,7 +44,7 @@ export default {
 
   watch: {
     clearScreen: false,
-    include: 'tsdist/**',
+    include: `${BASE_DIR}/**`,
     exclude: ['node_modules/**'],
   },
 }

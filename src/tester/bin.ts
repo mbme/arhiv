@@ -16,19 +16,20 @@ createRunnable(async (...args: string[]) => {
   const filter = args.filter((arg) => !arg.startsWith('-'))[0] || ''
   const updateSnapshots = args.includes('-u')
 
-  const basePath = path.join(process.env.BASE_DIR!, 'src')
+  const basePath = path.join(process.cwd(), process.env.BASE_DIR!)
 
   const files = (await consumeAsyncIterable(getFiles(basePath)))
-    .filter((relPath) => (
-      relPath.endsWith('.test.ts')
-      && !relPath.includes('FLYCHECK')
-      && relPath.includes(filter)
-    ))
+    .filter((relPath) => relPath.endsWith('.test.js'))
+  log.simple(`collected ${files.length} test files`)
 
   const tests: TestFile[] = []
   let filesFailed = 0
 
-  await Promise.all(files.map(async (file) => {
+  for (const file of files) {
+    if (!file.includes(filter)) {
+      continue
+    }
+
     try {
       const testFile = await TestFile.load(basePath, file, updateSnapshots)
       tests.push(testFile)
@@ -36,7 +37,7 @@ createRunnable(async (...args: string[]) => {
       log.simple(`Failed to load test file ${file}: ${e}`)
       filesFailed += 1
     }
-  }))
+  }
   log.simple(`${tests.length} matching test files`)
   log.simple('')
 

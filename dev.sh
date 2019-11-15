@@ -1,24 +1,22 @@
 #! /usr/bin/env bash
 
+./dev-server.sh &
+
+export BASE_DIR=tsdist/web-app-src
+
 # cleanup
-rm -rf ./tsdist ./dist
+rm -rf $BASE_DIR
 
 # create empty file to make rollup --watch work
-mkdir -p tsdist/web-app
-touch tsdist/web-app/index.js
-
-# ensure local arhiv dir exists
-mkdir -p temp-arhiv-root
-
-# server
-LOG=DEBUG ./vnode src/arhiv/server/bin 8080 pass ./temp-arhiv-root --gen-data &
+mkdir -p $BASE_DIR/web-app
+touch $BASE_DIR/web-app/index.js
 
 # web app typescript into javascript
 ./node_modules/.bin/tsc \
   -p src/web-app/tsconfig.json \
   --noEmitOnError \
   --module commonjs \
-  --outDir ./tsdist \
+  --outDir $BASE_DIR \
   --watch --preserveWatchOutput &
 
 # --diagnostics --listEmittedFiles --listFiles \

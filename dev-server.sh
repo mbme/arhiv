@@ -6,7 +6,7 @@ export BASE_DIR=tsdist/arhiv-server-src
 rm -rf $BASE_DIR
 
 # ensure local arhiv dir exists
-mkdir -p temp-arhiv-root
+mkdir -p tsdist/temp-arhiv-root
 
 # compile server
 ./node_modules/.bin/tsc \
@@ -15,4 +15,4 @@ mkdir -p temp-arhiv-root
   --outDir $BASE_DIR
 
 # run server
-LOG=DEBUG ./node.sh $BASE_DIR/arhiv/server/bin 8080 pass ./temp-arhiv-root --gen-data
+LOG=DEBUG ./node.sh $BASE_DIR/arhiv/server/bin 8080 pass ./tsdist/temp-arhiv-root --gen-data

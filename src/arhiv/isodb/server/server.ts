@@ -25,6 +25,8 @@ export default function createServer(db: PrimaryDB<IDocument>, password = '', st
   const queue = new Queue()
   const server = new HTTPServer()
 
+  log.debug('static dirs: ', staticDirs.join(', '))
+
   server.use(async function authMiddleware(context, next) {
     const { req, res } = context
 

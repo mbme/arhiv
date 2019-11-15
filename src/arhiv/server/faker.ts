@@ -102,12 +102,11 @@ async function createAttachments(images: IDict): Promise<IAttachment[]> {
   }))
 }
 
-export async function getFakeNotes(appDir: string, count: number) {
-  const resourcesPath = path.join(appDir, 'resources')
+export async function getFakeNotes(resourcesDir: string, count: number) {
   const tempDir = await createTempDir()
-  const images = await prepareImages(resourcesPath, tempDir)
+  const images = await prepareImages(resourcesDir, tempDir)
 
-  const text = await readText(path.join(resourcesPath, 'text.txt'))
+  const text = await readText(path.join(resourcesDir, 'text.txt'))
   const generator = createTextGenerator(text)
 
   return {

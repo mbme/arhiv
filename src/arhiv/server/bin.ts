@@ -23,38 +23,45 @@ setLogLevelStr(process.env.LOG || '')
 
 const log = createLogger('isodb-server')
 
-createRunnable(async (port: string, password: string, rootDir: string, ...args: string[]) => {
-  if (!port || !password || !rootDir) {
-    throw new Error('port, password & rootDir are required')
+createRunnable(async (port: string, password: string, storageDir: string, ...args: string[]) => {
+  if (!port || !password || !storageDir) {
+    throw new Error('port, password & storageDir are required')
   }
 
-  const appDir = process.env.BASE_DIR!
+  const rootDir = process.cwd()
 
-  const storage = await PrimaryFSStorage.create(rootDir)
+  const storage = await PrimaryFSStorage.create(storageDir)
   onTermination(() => storage.stop())
 
   const db = new PrimaryDB(storage)
 
   if (!isProduction && args.includes('--gen-data')) {
-    const {
-      documents,
-      attachments,
-      attachedFiles,
-      tempDir,
-    } = await getFakeNotes(appDir, 30)
+    try {
+      const resourcesDir = path.join(rootDir, 'resources')
 
-    await db.applyChangeset({
-      baseRev: 0,
-      documents,
-      attachments,
-    }, attachedFiles).finally(() => rmrfSync(tempDir))
+      const {
+        documents,
+        attachments,
+        attachedFiles,
+        tempDir,
+      } = await getFakeNotes(resourcesDir, 30)
 
-    log.info(`Generated ${documents.length} fake notes`)
+      await db.applyChangeset({
+        baseRev: 0,
+        documents,
+        attachments,
+      }, attachedFiles).finally(() => rmrfSync(tempDir))
+
+      log.info(`Generated ${documents.length} fake notes`)
+    } catch (e) {
+      log.error('Failed to generate fake notes', e)
+      process.exit(1)
+    }
   }
 
   const server = createServer(db, password, [
-    path.join(appDir, 'src/web-app/static'),
-    path.join(appDir, 'dist'),
+    path.join(rootDir, 'src/web-app/static'),
+    path.join(rootDir, 'tsdist/web-app-src'),
   ])
 
   await server.start(parseInt(port, 10))

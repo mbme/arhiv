@@ -13,4 +13,4 @@ rm -rf $BASE_DIR
 
 
 # run tests
-./node.sh $BASE_DIR/tester/bin
+./build/node.sh $BASE_DIR/tester/bin $@

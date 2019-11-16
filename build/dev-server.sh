@@ -15,4 +15,4 @@ mkdir -p tsdist/temp-arhiv-root
   --outDir $BASE_DIR
 
 # run server
-LOG=DEBUG ./node.sh $BASE_DIR/arhiv/server/bin 8080 pass ./tsdist/temp-arhiv-root --gen-data
+LOG=DEBUG ./build/node.sh $BASE_DIR/arhiv/server/bin 8080 pass ./tsdist/temp-arhiv-root --gen-data

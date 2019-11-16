@@ -6,6 +6,8 @@
   "description": "like v, but typed!",
   "type": "module",
   "scripts": {
+    "dev": "./build/dev.sh",
+    "test": "./build/test.sh",
     "lint": "tslint --project tsconfig.json --config tslint.json 'src/**/*.ts*'",
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"

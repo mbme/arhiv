@@ -20,6 +20,6 @@ touch $BASE_DIR/web-app/index.js
 # --traceResolution \
 
 # web app bundle
-./node_modules/.bin/rollup -c web-app.rollup.config.js --watch &
+./node_modules/.bin/rollup -c ./build/web-app.rollup.config.js --watch &
 
 wait

@@ -28,7 +28,7 @@ import {
   isEmptyChangeset,
   fetchAttachment$,
 } from '../utils'
-import { ReplicaIndexedDBStorage } from './replica-indexeddb-storage'
+import { TIDBStorage } from './tidb-storage'
 
 const log = createLogger('isodb-replica')
 
@@ -46,7 +46,7 @@ export class IsodbReplica<T extends IDocument> {
   private _callbacks = new Callbacks()
 
   constructor(
-    private _storage: ReplicaIndexedDBStorage<T>,
+    private _storage: TIDBStorage<T>,
   ) {
     this._callbacks.add(
       this.syncState$.value$.subscribe({
@@ -70,12 +70,6 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   async getDocument(id: string): Promise<T | undefined> {
-    const localDocument = await this._storage.getLocalDocument(id)
-
-    if (localDocument) {
-      return localDocument
-    }
-
     return this._storage.getDocument(id)
   }
 
@@ -86,12 +80,6 @@ export class IsodbReplica<T extends IDocument> {
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {
-    const localAttachment = await this._storage.getLocalAttachment(id)
-
-    if (localAttachment) {
-      return localAttachment
-    }
-
     return this._storage.getAttachment(id)
   }
 

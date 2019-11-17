@@ -38,7 +38,8 @@ export class ReplicaIndexedDBStorage<T extends IDocument> {
   }
 
   public static async open<T extends IDocument>() {
-    const currentVersion = 1
+    const currentVersion = 1 // FIXME use version from the server
+
     // tslint:disable-next-line:no-shadowed-variable
     const db = await TIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion, (oldVersion, db) => {
       // just to make sure we don't forget about this updater after db version increase
@@ -81,11 +82,11 @@ export class ReplicaIndexedDBStorage<T extends IDocument> {
     return this._idb.getAll('attachments-local')
   }
 
-  getDocument(id: string) {
+  getDocument1(id: string, withLocal) {
     return this._idb.get('documents', id)
   }
 
-  getLocalDocument(id: string) {
+  getLocalDocument1(id: string) {
     return this._idb.get('documents-local', id)
   }
 

@@ -39,22 +39,21 @@ export class ReplicaIndexedDBStorage<T extends IDocument> {
 
   public static async open<T extends IDocument>() {
     const currentVersion = 1
-    const db = await TIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion)
-
-    if (db.isUpgradeNeeded()) {
+    // tslint:disable-next-line:no-shadowed-variable
+    const db = await TIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion, (oldVersion, db) => {
       // just to make sure we don't forget about this updater after db version increase
       if (currentVersion !== 1) {
         throw new Error('unsupported version')
       }
 
-      if (db.oldVersion < 1) { // create db
+      if (oldVersion < 1) { // create db
         db.createObjectStore('documents', '_id')
         db.createObjectStore('documents-local', '_id')
         db.createObjectStore('attachments', '_id')
         db.createObjectStore('attachments-local', '_id')
         db.createObjectStore('attachments-data', '_id')
       }
-    }
+    })
 
     const replica = new ReplicaIndexedDBStorage(db)
     await replica._init()

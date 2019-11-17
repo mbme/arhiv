@@ -49,7 +49,7 @@ export class Document<T extends Record> {
   async patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) {
     const attachmentRefs = refSource === undefined
       ? this.record._attachmentRefs
-      : this._extractRefs(refSource)
+      : await this._extractRefs(refSource)
 
     await this._replica.saveDocument({
       ...this.record,

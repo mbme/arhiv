@@ -12,20 +12,22 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 export class TIDB<ObjectStores extends object> {
   private constructor(
     private _db: IDBDatabase,
-    public readonly oldVersion: number,
     public readonly version: number,
   ) { }
 
-  static async open<S extends object>(name: string, version: number): Promise<TIDB<S>> {
+  static async open<ObjectStores extends object>(
+    name: string,
+    version: number,
+    upgrade: (oldVersion: number, db: TIDB<ObjectStores>) => void,
+  ): Promise<TIDB<ObjectStores>> {
     if (!Number.isInteger(version)) {
       throw new Error('version must be an integer')
     }
 
-    let oldVersion = version
     const request = indexedDB.open(name, version)
 
     request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
-      oldVersion = e.oldVersion
+      upgrade(e.oldVersion, new TIDB(request.result, version))
     }
 
     request.onblocked = () => {
@@ -34,11 +36,7 @@ export class TIDB<ObjectStores extends object> {
 
     const db = await request2promise(request)
 
-    return new TIDB(db, oldVersion, version)
-  }
-
-  isUpgradeNeeded() {
-    return this.oldVersion !== this.version
+    return new TIDB(db, version)
   }
 
   createObjectStore<StoreName extends keyof ObjectStores>(store: StoreName, keyPath: keyof ObjectStores[StoreName]) {
@@ -61,19 +59,19 @@ export class TIDB<ObjectStores extends object> {
     return this.transaction(store).store(store).get(key)
   }
 
-  put<StoreName extends keyof ObjectStores>(store: StoreName, value: ObjectStores[StoreName]) {
-    return this.transactionRW(store).store(store).put(value)
+  async put<StoreName extends keyof ObjectStores>(store: StoreName, value: ObjectStores[StoreName]) {
+    await this.transactionRW(store).store(store).put(value)
   }
 
-  delete<StoreName extends keyof ObjectStores>(store: StoreName, key: string) {
-    return this.transactionRW(store).store(store).delete(key)
+  async delete<StoreName extends keyof ObjectStores>(store: StoreName, key: string) {
+    await this.transactionRW(store).store(store).delete(key)
   }
 }
 
-class TIDBTransaction<S extends object, StoreName extends keyof S> {
+class TIDBTransaction<ObjectStores extends object, StoreName extends keyof ObjectStores> {
   constructor(private _tx: IDBTransaction) { }
 
-  store<T extends StoreName, TType = S[T]>(name: T) {
+  store<T extends StoreName, TType = ObjectStores[T]>(name: T) {
     return new TIDBStore<TType>(this._tx.objectStore(name))
   }
 }

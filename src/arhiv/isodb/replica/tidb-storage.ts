@@ -41,6 +41,10 @@ export class TIDBStorage<T extends IDocument> {
     return tx.store('documents').get(id)
   }
 
+  addLocalDocument(document: T) {
+    return this._idb.put('documents-local', document)
+  }
+
   async getAttachment(id: string): Promise<IAttachment | undefined> {
     const tx = this._idb.transaction('attachments', 'attachments-local')
 
@@ -50,5 +54,34 @@ export class TIDBStorage<T extends IDocument> {
     }
 
     return tx.store('attachments').get(id)
+  }
+
+  async getLocalAttachmentData(id: string) {
+    const result = await this._idb.get('attachments-data', id)
+
+    return result?.data
+  }
+
+  async addLocalAttachment(attachment: IAttachment, file: File) {
+    const tx = this._idb.transactionRW('attachments-local', 'attachments-data')
+
+    await Promise.all([
+      tx.store('attachments-local').put(attachment),
+      tx.store('attachments-data').put({ _id: attachment._id, data: file }),
+    ])
+  }
+
+  async getDocuments() {
+    const tx = this._idb.transaction('documents', 'documents-local')
+
+    const localDocuments = await tx.store('documents-local').getAll()
+    const localIds = new Set(localDocuments.map(document => document._id))
+
+    const documents = await tx.store('documents').getAll()
+
+    return [
+      ...localDocuments,
+      ...documents.filter(document => !localIds.has(document._id)),
+    ].filter(document => !document._deleted)
   }
 }

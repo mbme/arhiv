@@ -101,22 +101,8 @@ export class IsodbReplica<T extends IDocument> {
     })
   }
 
-  async getDocuments(includeDeleted = false): Promise<T[]> {
-    const localDocuments = await this._storage.getLocalDocuments()
-    const localIds = new Set(localDocuments.map(item => item._id))
-
-    const documents = (await this._storage.getDocuments()).filter(item => !localIds.has(item._id))
-
-    const result = [
-      ...documents,
-      ...localDocuments,
-    ]
-
-    if (includeDeleted) {
-      return result
-    }
-
-    return result.filter(document => !document._deleted)
+  async getDocuments(): Promise<T[]> {
+    return this._storage.getDocuments()
   }
 
   getDocuments$(): Observable<T[]> {

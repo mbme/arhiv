@@ -5,7 +5,9 @@ import {
   IDocument,
   IAttachment,
   IChangesetResult,
+  IChangeset,
 } from '../types'
+import { LocalAttachments } from './types'
 
 interface IBlob {
   _id: string
@@ -71,7 +73,7 @@ export class TIDBStorage<T extends IDocument> {
     ])
   }
 
-  async getDocuments() {
+  async getDocuments(withDeleted = false) {
     const tx = this._idb.transaction('documents', 'documents-local')
 
     const localDocuments = await tx.store('documents-local').getAll()
@@ -79,9 +81,56 @@ export class TIDBStorage<T extends IDocument> {
 
     const documents = await tx.store('documents').getAll()
 
-    return [
+    const result = [
       ...localDocuments,
       ...documents.filter(document => !localIds.has(document._id)),
-    ].filter(document => !document._deleted)
+    ]
+
+    if (withDeleted) {
+      return result
+    }
+
+    return result.filter(document => !document._deleted)
+  }
+
+  async getChangeset(): Promise<[IChangeset<T>, LocalAttachments]> {
+    const tx = this._idb.transaction('documents-local', 'attachments-local', 'attachments-data')
+
+    const [
+      unusedIds,
+      localDocuments,
+      localAttachments,
+    ] = await Promise.all([
+      this._getUnusedLocalAttachmentsIds(),
+      tx.store('documents-local').getAll(),
+      tx.store('attachments-local').getAll(),
+    ]);
+
+    const changeset: IChangeset<T> = {
+      baseRev: this.getRev(),
+      documents: localDocuments,
+      attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment._id)),
+    }
+
+    const attachmentsData = await Promise.all(changeset.attachments.map(attachment => tx.store('attachments-data').get(attachment._id)))
+
+    const localAttachmentsData: LocalAttachments = {}
+    for (const data of attachmentsData) {
+      if (data) {
+        localAttachmentsData[data._id] = data.data
+      }
+    }
+
+    return [changeset, localAttachmentsData]
+  }
+
+  private async _getUnusedLocalAttachmentsIds() {
+    const documents = await this.getDocuments(true)
+    const idsInUse = documents.flatMap(document => document._attachmentRefs)
+
+    const localAttachments = await this._idb.getAll('attachments-local')
+    const localAttachmentsIds = localAttachments.map(item => item._id)
+
+    return localAttachmentsIds.filter(id => !idsInUse.includes(id))
   }
 }

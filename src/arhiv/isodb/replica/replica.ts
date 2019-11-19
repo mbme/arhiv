@@ -13,11 +13,9 @@ import {
   IAttachment,
   IDocument,
   IChangesetResult,
-  IChangeset,
 } from '../types'
 import {
   ChangesetExchange,
-  LocalAttachments,
 } from './types'
 import {
   MergeConflicts,
@@ -154,7 +152,7 @@ export class IsodbReplica<T extends IDocument> {
 
       this.syncState$.value = { type: 'sync' }
 
-      const [changeset, localAttachments] = await this._getChangeset()
+      const [changeset, localAttachments] = await this._storage.getChangeset()
 
       if (isEmptyChangeset(changeset)) {
         log.info('sync: sending empty changeset')
@@ -253,34 +251,6 @@ export class IsodbReplica<T extends IDocument> {
       await this._storage.upgrade(changesetResult)
       this._onUpdate()
     }
-  }
-
-  private async _getUnusedLocalAttachmentsIds() {
-    const idsInUse = (await this.getDocuments()).flatMap(document => document._attachmentRefs)
-    const localAttachmentsIds = (await this._storage.getLocalAttachments()).map(item => item._id)
-
-    return localAttachmentsIds.filter(id => !idsInUse.includes(id))
-  }
-
-  private async _getChangeset(): Promise<[IChangeset<T>, LocalAttachments]> {
-    const unusedIds = await this._getUnusedLocalAttachmentsIds()
-
-    const changeset: IChangeset<T> = {
-      baseRev: this._storage.getRev(),
-      documents: await this._storage.getLocalDocuments(),
-      attachments: (await this._storage.getLocalAttachments())
-        .filter(attachment => !unusedIds.includes(attachment._id)),
-    }
-
-    const localAttachmentsData: LocalAttachments = {}
-    for (const attachment of changeset.attachments) {
-      const data = await this._storage.getLocalAttachmentData(attachment._id)
-      if (data) {
-        localAttachmentsData[attachment._id] = data
-      }
-    }
-
-    return [changeset, localAttachmentsData]
   }
 
   private async _clearLocalData() {

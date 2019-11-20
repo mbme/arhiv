@@ -83,6 +83,12 @@ class TIDBStore<T> {
     return request2promise(this._store.getAll())
   }
 
+  async getAllKeys(): Promise<string[]> {
+    const keys = await request2promise(this._store.getAllKeys())
+
+    return keys.map(item => item.toString())
+  }
+
   get(key: string): Promise<T | undefined> {
     return request2promise(this._store.get(key))
   }
@@ -97,5 +103,9 @@ class TIDBStore<T> {
 
   async delete(key: string): Promise<void> {
     await request2promise(this._store.delete(key))
+  }
+
+  async clear(): Promise<void> {
+    await request2promise(this._store.clear())
   }
 }

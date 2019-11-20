@@ -43,8 +43,8 @@ export class TIDBStorage<T extends IDocument> {
     return tx.store('documents').get(id)
   }
 
-  addLocalDocument(document: T) {
-    return this._idb.put('documents-local', document)
+  async addLocalDocument(document: T) {
+    await this._idb.put('documents-local', document)
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {
@@ -104,7 +104,7 @@ export class TIDBStorage<T extends IDocument> {
       this._getUnusedLocalAttachmentsIds(),
       tx.store('documents-local').getAll(),
       tx.store('attachments-local').getAll(),
-    ]);
+    ])
 
     const changeset: IChangeset<T> = {
       baseRev: this.getRev(),
@@ -112,7 +112,9 @@ export class TIDBStorage<T extends IDocument> {
       attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment._id)),
     }
 
-    const attachmentsData = await Promise.all(changeset.attachments.map(attachment => tx.store('attachments-data').get(attachment._id)))
+    const attachmentsData = await Promise.all(
+      changeset.attachments.map(attachment => tx.store('attachments-data').get(attachment._id)),
+    )
 
     const localAttachmentsData: LocalAttachments = {}
     for (const data of attachmentsData) {
@@ -124,13 +126,69 @@ export class TIDBStorage<T extends IDocument> {
     return [changeset, localAttachmentsData]
   }
 
+  async upgrade(changesetResult: IChangesetResult<T>, clearLocalData = false) {
+    this._rev = changesetResult.currentRev
+
+    const tx = this._idb.transactionRW(
+      'documents',
+      'attachments',
+      'documents-local',
+      'attachments-local',
+      'attachments-data',
+    )
+
+    await Promise.all([
+      tx.store('documents').putAll(changesetResult.documents),
+      tx.store('attachments').putAll(changesetResult.attachments),
+    ])
+
+    if (clearLocalData) {
+      const [
+        unusedIds,
+        localAttachmentIds,
+      ] = await Promise.all([
+        this._getUnusedLocalAttachmentsIds(),
+        tx.store('attachments-local').getAllKeys(),
+      ])
+
+      const idsToRemove = localAttachmentIds.filter(id => !unusedIds.includes(id))
+
+      await Promise.all([
+        idsToRemove.map(id => tx.store('attachments-local').delete(id)),
+        idsToRemove.map(id => tx.store('attachments-data').delete(id)),
+        tx.store('documents-local').clear(),
+      ])
+    }
+  }
+
+  async compact(): Promise<string[]> {
+    const unusedIds = await this._getUnusedLocalAttachmentsIds()
+    if (!unusedIds.length) {
+      return unusedIds
+    }
+
+    const tx = this._idb.transactionRW('attachments-local', 'attachments-data')
+
+    await Promise.all(unusedIds.map((id) => [
+      tx.store('attachments-local').delete(id),
+      tx.store('attachments-data').delete(id),
+    ]).flat())
+
+    return unusedIds
+  }
+
   private async _getUnusedLocalAttachmentsIds() {
-    const documents = await this.getDocuments(true)
+    const tx = this._idb.transaction('documents-local', 'attachments-local')
+    const [
+      documents,
+      attachmentIds,
+    ] = await Promise.all([
+      tx.store('documents-local').getAll(),
+      tx.store('attachments-local').getAllKeys(),
+    ])
+
     const idsInUse = documents.flatMap(document => document._attachmentRefs)
 
-    const localAttachments = await this._idb.getAll('attachments-local')
-    const localAttachmentsIds = localAttachments.map(item => item._id)
-
-    return localAttachmentsIds.filter(id => !idsInUse.includes(id))
+    return attachmentIds.filter(id => !idsInUse.includes(id))
   }
 }

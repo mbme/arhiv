@@ -211,8 +211,7 @@ export class IsodbReplica<T extends IDocument> {
 
     // "success" means there should be no merge conflicts, so just update the data
     if (changesetResult.success) {
-      await this._storage.upgrade(changesetResult)
-      await this._clearLocalData()
+      await this._storage.upgrade(changesetResult, true)
       this._onUpdate()
 
       return
@@ -253,34 +252,16 @@ export class IsodbReplica<T extends IDocument> {
     }
   }
 
-  private async _clearLocalData() {
-    for (const localDocument of await this._storage.getLocalDocuments()) {
-      await this._storage.removeLocalDocument(localDocument._id)
-    }
-
-    const unusedIds = await this._getUnusedLocalAttachmentsIds()
-    for (const localAttachment of await this._storage.getLocalAttachments()) {
-      if (!unusedIds.includes(localAttachment._id)) {
-        await this._storage.removeLocalAttachment(localAttachment._id)
-      }
-    }
-  }
-
   /**
    * Remove unused local attachments
    */
   async compact() {
-    const unusedIds = await this._getUnusedLocalAttachmentsIds()
-    if (!unusedIds.length) {
-      return
-    }
+    const unusedIds = await this._storage.compact()
 
-    for (const id of unusedIds) {
-      await this._storage.removeLocalAttachment(id)
-      log.warn(`Removing unused local attachment ${id}`)
+    if (unusedIds.length) {
+      log.warn(`Removed ${unusedIds.length} unused local attachments`)
+      this._onUpdate()
     }
-
-    this._onUpdate()
   }
 
   stop() {

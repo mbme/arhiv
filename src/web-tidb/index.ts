@@ -63,6 +63,10 @@ export class TIDB<ObjectStores extends object> {
     await this.transactionRW(store).store(store).put(value)
   }
 
+  async putAll<StoreName extends keyof ObjectStores>(store: StoreName, values: Array<ObjectStores[StoreName]>) {
+    await this.transactionRW(store).store(store).putAll(values)
+  }
+
   async delete<StoreName extends keyof ObjectStores>(store: StoreName, key: string) {
     await this.transactionRW(store).store(store).delete(key)
   }

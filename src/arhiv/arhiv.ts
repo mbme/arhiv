@@ -2,7 +2,7 @@ import {
   Callbacks,
 } from '~/utils'
 import {
-  ReplicaIndexedDBStorage,
+  TIDBStorage,
   IsodbReplica,
 } from './isodb/replica'
 import {
@@ -73,7 +73,7 @@ export class Arhiv {
   readonly notes = new DocumentsRepository(this._replica, this._locks, NoteType)
   readonly tracks = new DocumentsRepository(this._replica, this._locks, TrackType)
 
-  private constructor(private _db: ReplicaIndexedDBStorage<Record>) {
+  private constructor(private _db: TIDBStorage<Record>) {
     this._callbacks.add(
       () => this._sync.stop(),
       () => this._locks.stop(),
@@ -87,7 +87,7 @@ export class Arhiv {
   }
 
   static async create() {
-    const db = await ReplicaIndexedDBStorage.open<Record>()
+    const db = await TIDBStorage.open<Record>()
 
     const arhiv = new Arhiv(db)
     await arhiv._start()

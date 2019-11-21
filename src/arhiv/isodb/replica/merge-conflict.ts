@@ -57,7 +57,12 @@ export class MergeConflicts<T extends IDocument> {
 
   constructor(
     public readonly conflicts: Array<DocumentConflict<T>>,
+    onResolved: (documents: T[]) => Promise<void>,
   ) {
-    this.promise = Promise.all(conflicts.map(conflict => conflict.promise))
+    this.promise = Promise.all(conflicts.map(conflict => conflict.promise)).then(async (documents) => {
+      await onResolved(documents)
+
+      return documents
+    })
   }
 }

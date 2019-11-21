@@ -1,6 +1,6 @@
 import { getRandomBytes } from './platform.js'
 
-const readUInt32 = (bytes: Uint8Array) => new DataView(bytes.buffer).getUint32(0)
+const readUInt32 = (bytes: Uint8Array): number => new DataView(bytes.buffer).getUint32(0)
 
 const MAX_RANGE = 2 ** 32
 // [min, max], max > min
@@ -17,9 +17,9 @@ export function randomInt(min: number, max: number): number {
 
   const maxSample = Math.floor(MAX_RANGE / range) * range
 
-  let sample
+  let sample: number
   do {
-    sample = readUInt32(getRandomBytes(4))
+    sample = readUInt32(getRandomBytes(4) as Uint8Array)
   } while (sample > maxSample)
 
   return min + (sample % range)

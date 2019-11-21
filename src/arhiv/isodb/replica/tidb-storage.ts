@@ -8,6 +8,7 @@ import {
   IChangeset,
 } from '../types'
 import { LocalAttachments } from './types'
+import { DocumentConflict, MergeConflicts } from './merge-conflict'
 
 interface IBlob {
   _id: string
@@ -27,6 +28,47 @@ export class TIDBStorage<T extends IDocument> {
   private constructor(
     private _idb: TIDB<IObjectStores<T>>,
   ) { }
+
+  private async _init() {
+    const [
+      documents,
+      attachments,
+    ] = await Promise.all([
+      this.getDocuments(true),
+      this.getAttachments(true),
+    ])
+
+    const maxDocumentRev = documents.reduce((acc, document) => Math.max(acc, document._rev), 0)
+    const maxAttachemntRev = attachments.reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
+
+    // db rev is max document or attachment rev
+    this._rev = Math.max(maxDocumentRev, maxAttachemntRev)
+  }
+
+  public static async open<T extends IDocument>() {
+    const currentVersion = 1 // FIXME use version from the server
+
+    // tslint:disable-next-line:no-shadowed-variable
+    const db = await TIDB.open<IObjectStores<T>>('arhiv-replica', currentVersion, (oldVersion, db) => {
+      // just to make sure we don't forget about this updater after db version increase
+      if (currentVersion !== 1) {
+        throw new Error('unsupported version')
+      }
+
+      if (oldVersion < 1) { // create db
+        db.createObjectStore('documents', '_id')
+        db.createObjectStore('documents-local', '_id')
+        db.createObjectStore('attachments', '_id')
+        db.createObjectStore('attachments-local', '_id')
+        db.createObjectStore('attachments-data', '_id')
+      }
+    })
+
+    const storage = new TIDBStorage(db)
+    await storage._init()
+
+    return storage
+  }
 
   getRev() {
     return this._rev
@@ -76,10 +118,14 @@ export class TIDBStorage<T extends IDocument> {
   async getDocuments(withDeleted = false) {
     const tx = this._idb.transaction('documents', 'documents-local')
 
-    const localDocuments = await tx.store('documents-local').getAll()
+    const [
+      localDocuments,
+      documents,
+    ] = await Promise.all([
+      tx.store('documents-local').getAll(),
+      tx.store('documents').getAll(),
+    ])
     const localIds = new Set(localDocuments.map(document => document._id))
-
-    const documents = await tx.store('documents').getAll()
 
     const result = [
       ...localDocuments,
@@ -91,6 +137,30 @@ export class TIDBStorage<T extends IDocument> {
     }
 
     return result.filter(document => !document._deleted)
+  }
+
+  async getAttachments(withDeleted = false) {
+    const tx = this._idb.transaction('attachments', 'attachments-local')
+
+    const [
+      localAttachments,
+      attachments,
+    ] = await Promise.all([
+      tx.store('attachments-local').getAll(),
+      tx.store('attachments').getAll(),
+    ])
+    const localIds = new Set(localAttachments.map(attachment => attachment._id))
+
+    const result = [
+      ...localAttachments,
+      ...attachments.filter(attachment => !localIds.has(attachment._id)),
+    ]
+
+    if (withDeleted) {
+      return result
+    }
+
+    return result.filter(attachment => !attachment._deleted)
   }
 
   async getChangeset(): Promise<[IChangeset<T>, LocalAttachments]> {
@@ -126,7 +196,30 @@ export class TIDBStorage<T extends IDocument> {
     return [changeset, localAttachmentsData]
   }
 
-  async upgrade(changesetResult: IChangesetResult<T>, clearLocalData = false) {
+  async applyChangesetResult(changesetResult: IChangesetResult<T>): Promise<MergeConflicts<T> | undefined> {
+    // this should never happen
+    if (this._rev !== changesetResult.baseRev) {
+      throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this._rev}`)
+    }
+
+    // "success" means there should be no merge conflicts, so just update the data
+    if (changesetResult.success) {
+      await this._upgrade(changesetResult, true)
+
+      return undefined
+    }
+
+    const conflicts = await this._getConflicts(changesetResult)
+    if (!conflicts) {
+      await this._upgrade(changesetResult)
+
+      return undefined
+    }
+
+    return conflicts
+  }
+
+  private async _upgrade(changesetResult: IChangesetResult<T>, clearLocalData = false) {
     this._rev = changesetResult.currentRev
 
     const tx = this._idb.transactionRW(
@@ -159,6 +252,36 @@ export class TIDBStorage<T extends IDocument> {
         tx.store('documents-local').clear(),
       ])
     }
+  }
+
+  private async _getConflicts(changesetResult: IChangesetResult<T>): Promise<MergeConflicts<T> | undefined> {
+    const tx = this._idb.transaction('documents', 'documents-local')
+
+    const localDocuments = await tx.store('documents-local').getAll()
+
+    const conflicts: Array<DocumentConflict<T>> = []
+    for (const localDocument of localDocuments) {
+      const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
+      if (!remoteDocument) {
+        continue
+      }
+
+      const baseDocument = await tx.store('documents').get(localDocument._id)
+      if (!baseDocument) {
+        throw new Error(`Can't find base document for local document ${localDocument._id}`)
+      }
+
+      conflicts.push(new DocumentConflict(baseDocument, remoteDocument, localDocument))
+    }
+
+    if (conflicts.length) {
+      return new MergeConflicts(
+        conflicts,
+        (resolvedDocuments) => this._idb.putAll('documents-local', resolvedDocuments),
+      )
+    }
+
+    return undefined
   }
 
   async compact(): Promise<string[]> {

@@ -1,5 +1,7 @@
 import {
   TIDB,
+  applyForPersistentStorage,
+  TIDBTransaction,
 } from '~/web-tidb'
 import {
   IDocument,
@@ -8,7 +10,13 @@ import {
   IChangeset,
 } from '../types'
 import { LocalAttachments } from './types'
-import { DocumentConflict, MergeConflicts } from './merge-conflict'
+import {
+  DocumentConflict,
+  MergeConflicts,
+} from './merge-conflict'
+import { createLogger } from '~/utils'
+
+const log = createLogger('isodb-replica')
 
 interface IBlob {
   _id: string
@@ -63,6 +71,10 @@ export class TIDBStorage<T extends IDocument> {
         db.createObjectStore('attachments-data', '_id')
       }
     })
+    const persistent = await applyForPersistentStorage()
+    if (!persistent) {
+      log.warn('Failed to apply for persistent storage')
+    }
 
     const storage = new TIDBStorage(db)
     await storage._init()
@@ -171,7 +183,7 @@ export class TIDBStorage<T extends IDocument> {
       localDocuments,
       localAttachments,
     ] = await Promise.all([
-      this._getUnusedLocalAttachmentsIds(),
+      this._getUnusedLocalAttachmentsIds(tx),
       tx.store('documents-local').getAll(),
       tx.store('attachments-local').getAll(),
     ])
@@ -236,20 +248,20 @@ export class TIDBStorage<T extends IDocument> {
     ])
 
     if (clearLocalData) {
+      await tx.store('documents-local').clear()
+
       const [
         unusedIds,
         localAttachmentIds,
       ] = await Promise.all([
-        this._getUnusedLocalAttachmentsIds(),
+        this._getUnusedLocalAttachmentsIds(tx),
         tx.store('attachments-local').getAllKeys(),
       ])
 
       const idsToRemove = localAttachmentIds.filter(id => !unusedIds.includes(id))
-
       await Promise.all([
-        idsToRemove.map(id => tx.store('attachments-local').delete(id)),
-        idsToRemove.map(id => tx.store('attachments-data').delete(id)),
-        tx.store('documents-local').clear(),
+        ...idsToRemove.map(id => tx.store('attachments-local').delete(id)),
+        ...idsToRemove.map(id => tx.store('attachments-data').delete(id)),
       ])
     }
   }
@@ -285,23 +297,24 @@ export class TIDBStorage<T extends IDocument> {
   }
 
   async compact(): Promise<string[]> {
-    const unusedIds = await this._getUnusedLocalAttachmentsIds()
+    const tx = this._idb.transactionRW('documents-local', 'attachments-local', 'attachments-data')
+
+    const unusedIds = await this._getUnusedLocalAttachmentsIds(tx)
     if (!unusedIds.length) {
       return unusedIds
     }
-
-    const tx = this._idb.transactionRW('attachments-local', 'attachments-data')
 
     await Promise.all(unusedIds.map((id) => [
       tx.store('attachments-local').delete(id),
       tx.store('attachments-data').delete(id),
     ]).flat())
 
+    log.warn(`Removed ${unusedIds.length} unused local attachments`)
+
     return unusedIds
   }
 
-  private async _getUnusedLocalAttachmentsIds() {
-    const tx = this._idb.transaction('documents-local', 'attachments-local')
+  private async _getUnusedLocalAttachmentsIds(tx: TIDBTransaction<IObjectStores<T>, 'documents-local' | 'attachments-local'>) {
     const [
       documents,
       attachmentIds,

@@ -206,7 +206,6 @@ export class IsodbReplica<T extends IDocument> {
     const unusedIds = await this._storage.compact()
 
     if (unusedIds.length) {
-      log.warn(`Removed ${unusedIds.length} unused local attachments`)
       this._onUpdate()
     }
   }

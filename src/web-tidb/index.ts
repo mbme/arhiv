@@ -5,6 +5,14 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   })
 }
 
+export async function applyForPersistentStorage(): Promise<boolean> {
+  if (!navigator.storage?.persist) {
+    return false
+  }
+
+  return navigator.storage.persist()
+}
+
 // type DB<StoreNames extends string, StoredObjectType> = {
 //   [StoreNames]: StoredObjectType,
 // }
@@ -72,7 +80,7 @@ export class TIDB<ObjectStores extends object> {
   }
 }
 
-class TIDBTransaction<ObjectStores extends object, StoreName extends keyof ObjectStores> {
+export class TIDBTransaction<ObjectStores extends object, StoreName extends keyof ObjectStores> {
   constructor(private _tx: IDBTransaction) { }
 
   store<T extends StoreName, TType = ObjectStores[T]>(name: T) {

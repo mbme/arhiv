@@ -1,15 +1,15 @@
 import { blobUrl$ } from '~/reactive'
-import { IAttachment } from '../isodb/types'
-import { ArhivReplica } from '../types'
+import { IAttachment } from '../../types'
+import { ArhivDB } from '../db'
 
 export class Attachment {
   constructor(
-    private _replica: ArhivReplica,
+    private _db: ArhivDB,
     public attachment: IAttachment,
   ) { }
 
   getUrl$() {
-    return this._replica.getAttachmentData$(this.id)
+    return this._db.getAttachmentData$(this.id)
       .take(1)
       .switchMap(blobUrl$)
   }

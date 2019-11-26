@@ -8,14 +8,14 @@ import {
   IChangesetResult,
   IChangeset,
   IDocument,
-} from '../types'
-import { isEmptyChangeset } from '../utils'
-import { IPrimaryStorage } from './primary-storage'
+} from '../../types'
+import { isEmptyChangeset } from '../../utils'
+import { FSStorage } from './fs-storage'
 
-const log = createLogger('isodb-primary')
+const log = createLogger('arhiv-db')
 
-export class PrimaryDB<T extends IDocument> {
-  constructor(private _storage: IPrimaryStorage<T>) { }
+export class ArhivDB<T extends IDocument> {
+  constructor(private _storage: FSStorage<T>) { }
 
   getDocuments() {
     return this._storage.getDocuments()
@@ -54,7 +54,7 @@ export class PrimaryDB<T extends IDocument> {
 
     // this should never happen
     if (changeset.baseRev > baseRev) {
-      throw new Error(`got replica revision ${changeset.baseRev} bigger than primary revision ${baseRev}`)
+      throw new Error(`got replica revision ${changeset.baseRev} bigger than server revision ${baseRev}`)
     }
 
     // on empty changeset just send latest changes to the replica

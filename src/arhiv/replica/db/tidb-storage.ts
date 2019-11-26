@@ -1,3 +1,4 @@
+import { createLogger } from '~/utils'
 import {
   TIDB,
   applyForPersistentStorage,
@@ -8,15 +9,14 @@ import {
   IAttachment,
   IChangesetResult,
   IChangeset,
-} from '../types'
-import { LocalAttachments } from './types'
+} from '../../types'
+import { LocalAttachments } from '../types'
 import {
   DocumentConflict,
   MergeConflicts,
 } from './merge-conflict'
-import { createLogger } from '~/utils'
 
-const log = createLogger('isodb-replica')
+const log = createLogger('arhiv-db')
 
 interface IBlob {
   _id: string

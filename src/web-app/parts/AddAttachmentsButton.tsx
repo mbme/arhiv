@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useArhiv } from '~/arhiv'
+import { useArhiv } from '~/arhiv/replica'
 import { AttachFilesButton } from '~/web-platform'
 import { createLink } from '~/markup-parser/utils'
 

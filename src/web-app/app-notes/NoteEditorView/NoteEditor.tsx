@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useRouter } from '~/web-router'
-import { NoteDocument } from '~/arhiv'
+import { NoteDocument } from '~/arhiv/replica'
 import {
   Icon,
   Button,

@@ -2,7 +2,7 @@ import {
   nowS,
   Deferred,
 } from '~/utils'
-import { IDocument } from '../types'
+import { IDocument } from '../../types'
 
 export class DocumentConflict<T extends IDocument> {
   private _deffered = new Deferred<T>()

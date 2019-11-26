@@ -1,9 +1,7 @@
 import { Observable } from '~/reactive'
-import {
-  ArhivReplica,
-  Record,
-} from '../types'
-import { Document } from '../entities/document'
+import { ArhivDB } from '../db'
+import { Record } from '../../types'
+import { Document } from './document'
 import { LockManager } from '../managers'
 
 export interface IDocumentType<T extends Record> {
@@ -13,21 +11,21 @@ export interface IDocumentType<T extends Record> {
 
 export class DocumentsRepository<T extends Record> {
   constructor(
-    private _replica: ArhivReplica,
+    private _db: ArhivDB,
     private _locks: LockManager,
     private _documentType: IDocumentType<T>,
   ) { }
 
-  private _wrap = (document: T, isNew = false) => new Document<T>(this._replica, this._locks, document, isNew)
+  private _wrap = (document: T, isNew = false) => new Document<T>(this._db, this._locks, document, isNew)
 
   async create(): Promise<Document<T>> {
-    const id = await this._replica.getRandomId()
+    const id = await this._db.getRandomId()
 
     return this._wrap(this._documentType.create(id), true)
   }
 
   getDocuments$(): Observable<Array<Document<T>>> {
-    return this._replica.getDocuments$()
+    return this._db.getDocuments$()
       .map(documents => {
         const result: Array<Document<T>> = []
         for (const document of documents) {
@@ -41,7 +39,7 @@ export class DocumentsRepository<T extends Record> {
   }
 
   getDocument$(id: string): Observable<Document<T>> {
-    return this._replica.getDocument$(id).map((document) => {
+    return this._db.getDocument$(id).map((document) => {
       if (this._documentType.is(document)) {
         return this._wrap(document)
       }

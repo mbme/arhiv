@@ -9,7 +9,7 @@ import {
   Signal,
   promise$,
 } from '~/reactive'
-import { ArhivReplica } from '../types'
+import { ArhivDB } from '../db'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'
 
@@ -21,11 +21,11 @@ export class SyncManager {
   private _callbacks = new Callbacks()
 
   constructor(
-    private _replica: ArhivReplica,
+    private _db: ArhivDB,
     private _net: NetworkManager,
     private _locks: LockManager,
   ) {
-    const mergeConflictsResolved$ = _replica.syncState$.value$
+    const mergeConflictsResolved$ = _db.syncState$.value$
       .buffer(2)
       .filter(syncStates => syncStates.length === 2 && syncStates[0].type === 'merge-conflicts')
 
@@ -33,7 +33,7 @@ export class SyncManager {
 
     const gotOnline$ = _net.isOnline$.value$.filter(isOnline => isOnline)
 
-    const gotLocalUpdate$ = _replica.updateTime$.value$
+    const gotLocalUpdate$ = _db.updateTime$.value$
       .filter(([, isLocal]) => isLocal)
 
     const syncCondtion$ = merge$<any>(
@@ -60,13 +60,13 @@ export class SyncManager {
     return this._net.isOnline()
       && this._net.isAuthorized()
       && !this._locks.isDBLocked()
-      && this._replica.isReadyToSync()
+      && this._db.isReadyToSync()
   }
 
   private _startSync$() {
     return new Observable<boolean>((observer) => {
       this._locks.acquireDBLock$()
-        .switchMap(() => promise$(this._replica.sync(this._net.syncChanges)))
+        .switchMap(() => promise$(this._db.sync(this._net.syncChanges)))
         .take(1)
         .subscribe({
           next: observer.next,

@@ -6,7 +6,7 @@ import {
 } from '~/web-platform'
 import {
   Attachment,
-} from '~/arhiv'
+} from '~/arhiv/replica'
 
 const $image = stylish({
   mt: 'medium',

@@ -6,11 +6,13 @@ import {
   selectLinks,
   parseMarkup,
 } from '~/markup-parser'
-import { IDocument } from '../isodb/types'
 import {
-  ArhivReplica,
+  IDocument,
   Record,
-} from '../types'
+} from '../../types'
+import {
+  ArhivDB,
+} from '../db'
 import { LockManager } from '../managers'
 
 const log = createLogger('document')
@@ -18,7 +20,7 @@ const log = createLogger('document')
 // Active Record
 export class Document<T extends Record> {
   constructor(
-    private _replica: ArhivReplica,
+    private _db: ArhivDB,
     private _locks: LockManager,
     public readonly record: T,
     private _isNew: boolean,
@@ -36,7 +38,7 @@ export class Document<T extends Record> {
     for (const link of selectLinks(markup)) {
       const id = link.link
 
-      if (await this._replica.getAttachment(id)) {
+      if (await this._db.getAttachment(id)) {
         attachmentRefs.push(id)
       } else {
         log.warn(`document ${this.id} references unknown entity ${id}`)
@@ -51,7 +53,7 @@ export class Document<T extends Record> {
       ? this.record._attachmentRefs
       : await this._extractRefs(refSource)
 
-    await this._replica.saveDocument({
+    await this._db.saveDocument({
       ...this.record,
       ...patch,
       _attachmentRefs: attachmentRefs,
@@ -60,7 +62,7 @@ export class Document<T extends Record> {
   }
 
   async delete() {
-    await this._replica.saveDocument({
+    await this._db.saveDocument({
       ...this.record,
       _deleted: true,
     })

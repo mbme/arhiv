@@ -1,6 +1,5 @@
 import { nowS } from '~/utils'
 import { randomId } from '~/utils/random'
-import { Observable, promise$ } from '~/reactive'
 import {
   IChangeset,
   IDocument,
@@ -26,28 +25,4 @@ export function createDocument<T extends string>(id: string, type: T) {
     _updatedTs: now,
     _attachmentRefs: [] as string[],
   }
-}
-
-export function fetchAttachment$(id: string) {
-  return new Observable<Blob>((observer) => {
-    const controller = new AbortController()
-
-    const promise = fetch(`/api/file?fileId=${id}`, {
-      cache: 'force-cache',
-      signal: controller.signal,
-    }).then((response) => {
-      if (!response.ok) {
-        throw response
-      }
-
-      return response.blob()
-    })
-
-    const unsub = promise$(promise).subscribe(observer)
-
-    return () => {
-      unsub()
-      controller.abort()
-    }
-  })
 }

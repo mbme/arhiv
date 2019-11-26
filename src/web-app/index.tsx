@@ -6,9 +6,9 @@ import {
   createLogger,
 } from '~/utils'
 import {
-  Arhiv,
+  ArhivReplica,
   ArhivContext,
-} from '~/arhiv'
+} from '~/arhiv/replica'
 import {
   injectGlobalStyles,
   globalStyles,
@@ -48,7 +48,7 @@ if (!rootEl) {
   throw new Error("Can't find #root element")
 }
 
-Arhiv.create().then(
+ArhivReplica.create().then(
   (arhiv) => {
     const apps: IApp[] = [
       NotesApp,

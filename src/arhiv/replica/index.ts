@@ -1,8 +1,8 @@
 export {
-  Arhiv,
+  ArhivReplica,
   NoteDocument,
   TrackDocument,
-} from './arhiv'
+} from './replica'
 export {
   ArhivContext,
   useArhiv,

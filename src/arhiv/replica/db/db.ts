@@ -12,21 +12,50 @@ import {
 import {
   IAttachment,
   IDocument,
-} from '../types'
-import {
-  ChangesetExchange,
-} from './types'
-import {
-  MergeConflicts,
-} from './merge-conflict'
+  IChangesetResult,
+  IChangeset,
+  Record,
+} from '../../types'
 import {
   generateRandomId,
   isEmptyChangeset,
-  fetchAttachment$,
-} from '../utils'
+} from '../../utils'
+import { LocalAttachments } from '../types'
+import {
+  MergeConflicts,
+} from './merge-conflict'
 import { TIDBStorage } from './tidb-storage'
 
-const log = createLogger('isodb-replica')
+const log = createLogger('arhiv-db')
+
+type ChangesetExchange<T extends IDocument> = (
+  changeset: IChangeset<T>,
+  blobs: LocalAttachments,
+) => Promise<IChangesetResult<T>>
+
+function fetchAttachment$(id: string) {
+  return new Observable<Blob>((observer) => {
+    const controller = new AbortController()
+
+    const promise = fetch(`/api/file?fileId=${id}`, {
+      cache: 'force-cache',
+      signal: controller.signal,
+    }).then((response) => {
+      if (!response.ok) {
+        throw response
+      }
+
+      return response.blob()
+    })
+
+    const unsub = promise$(promise).subscribe(observer)
+
+    return () => {
+      unsub()
+      controller.abort()
+    }
+  })
+}
 
 type SyncState<T extends IDocument> =
   { type: 'initial' }
@@ -35,7 +64,7 @@ type SyncState<T extends IDocument> =
 
 type UpdateInfo = [number, boolean]
 
-export class IsodbReplica<T extends IDocument> {
+export class ArhivDB<T extends IDocument = Record> {
   readonly syncState$ = new Cell<SyncState<T>>({ type: 'initial' })
   readonly updateTime$ = new Cell<UpdateInfo>([0, false])
 

@@ -3,11 +3,11 @@ import { noop } from '~/utils'
 import {
   useArhiv,
   NoteDocument,
-} from '~/arhiv'
+} from '~/arhiv/replica'
 import { Heading } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
-import { NoteEditor } from './NoteEditor'
 import { promise$ } from '~/reactive'
+import { NoteEditor } from './NoteEditor'
 
 interface IProps {
   id?: string

@@ -10,8 +10,11 @@ import {
   MultipartBody,
   StringBody,
 } from '~/http-server'
-import { IChangeset, IDocument } from '../types'
-import { PrimaryDB } from '../primary'
+import {
+  IChangeset,
+  IDocument,
+} from '../types'
+import { ArhivDB } from './db'
 import {
   isValidAuth,
   extractTokenCookie,
@@ -19,9 +22,9 @@ import {
   createToken,
 } from './utils'
 
-const log = createLogger('isodb-server')
+const log = createLogger('arhiv-server')
 
-export default function createServer(db: PrimaryDB<IDocument>, password = '', staticDirs: string[]) {
+export default function createServer(db: ArhivDB<IDocument>, password = '', staticDirs: string[]) {
   const queue = new Queue()
   const server = new HTTPServer()
 

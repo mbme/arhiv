@@ -2,6 +2,7 @@ import path from 'path'
 import {
   getLastEl,
   createLogger,
+  prettyPrintJSON,
 } from '~/utils'
 import {
   listDirs,
@@ -16,18 +17,13 @@ import {
 import {
   IDocument,
   IAttachment,
-} from '../types'
-import {
-  IPrimaryStorage,
-  StorageUpdater,
-} from './primary-storage'
-import {
-  PrimaryFSStorageMutations,
-} from './primary-fs-storage-mutations'
+} from '../../types'
 
-const log = createLogger('isodb-primary')
+type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>) => Promise<void>
 
-export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T> {
+const log = createLogger('fs-storage')
+
+export class FSStorage<T extends IDocument> {
   private _rev = 0
 
   private _documentsDir: string
@@ -74,7 +70,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
       throw new Error(`${rootDir} doesn't exist`)
     }
 
-    const storage = new PrimaryFSStorage(rootDir)
+    const storage = new FSStorage(rootDir)
     await storage.acquireLock()
 
     try {
@@ -168,7 +164,7 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
 
   async updateStorage(update: StorageUpdater<T>) {
     const tx = new FSTransaction()
-    const mutations = new PrimaryFSStorageMutations(
+    const mutations = new FSStorageMutations(
       this._rev,
       this._documentsDir,
       this._attachmentsDir,
@@ -186,5 +182,63 @@ export class PrimaryFSStorage<T extends IDocument> implements IPrimaryStorage<T>
 
       throw e
     }
+  }
+}
+
+class FSStorageMutations<T extends IDocument> {
+  constructor(
+    private _rev: number,
+    private _documentsDir: string,
+    private _attachmentsDir: string,
+    private _tx: FSTransaction,
+  ) { }
+
+  setRev = (rev: number) => {
+    this._rev = rev
+  }
+
+  getRev = () => this._rev
+
+  putDocument = async (document: T) => {
+    const documentDir = path.join(this._documentsDir, document._id)
+    if (!await dirExists(documentDir)) {
+      await this._tx.createDir(documentDir)
+    }
+
+    const filePath = path.join(documentDir, document._rev.toString())
+    if (await fileExists(filePath)) {
+      throw new Error(`document ${document._id} of rev ${document._rev} already exists`)
+    }
+
+    await this._tx.createFile(filePath, prettyPrintJSON(document))
+  }
+
+  addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
+    const attachmentDir = path.join(this._attachmentsDir, attachment._id)
+    if (await dirExists(attachmentDir)) {
+      throw new Error(`attachment ${attachment._id} already exists`)
+    }
+
+    await this._tx.createDir(attachmentDir)
+
+    const metadataPath = path.join(attachmentDir, 'metadata')
+    await this._tx.createFile(metadataPath, prettyPrintJSON(attachment))
+
+    const dataPath = path.join(attachmentDir, 'data')
+    await this._tx.moveFile(attachmentPath, dataPath)
+  }
+
+  updateAttachment = async (attachment: IAttachment) => {
+    const dataPath = path.join(this._attachmentsDir, attachment._id, 'metadata')
+    if (!await fileExists(dataPath)) {
+      throw new Error(`attachment ${attachment._id} doesn't exist`)
+    }
+
+    await this._tx.updateFile(dataPath, prettyPrintJSON(attachment))
+  }
+
+  removeAttachmentData = async (id: string) => {
+    const dataPath = path.join(this._attachmentsDir, id, 'data')
+    await this._tx.deleteFile(dataPath)
   }
 }

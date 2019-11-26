@@ -22,10 +22,10 @@ import createTextGenerator, { ITextGenerator } from '~/utils/random/text-generat
 import {
   generateRandomId,
   createDocument,
-} from '../isodb/utils'
-import { IAttachment } from '../isodb/types'
+} from '../utils'
 import {
   DocumentType,
+  IAttachment,
   INote,
 } from '../types'
 

@@ -7,7 +7,7 @@ import {
   Observable,
 } from '~/reactive'
 
-const log = createLogger('isodb:lock-manager')
+const log = createLogger('lock-manager')
 
 type State = 'db-locked' | readonly string[]
 

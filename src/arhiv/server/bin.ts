@@ -12,16 +12,16 @@ import {
 } from '~/utils/runnable'
 import { getFakeNotes } from './faker'
 import {
-  PrimaryDB,
-  PrimaryFSStorage,
-} from '../isodb/primary'
-import createServer from '../isodb/server/server'
+  ArhivDB,
+  FSStorage,
+} from './db'
+import createServer from './server'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
 setLogLevelStr(process.env.LOG || '')
 
-const log = createLogger('isodb-server')
+const log = createLogger('arhiv-server')
 
 createRunnable(async (port: string, password: string, storageDir: string, ...args: string[]) => {
   if (!port || !password || !storageDir) {
@@ -30,10 +30,10 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
 
   const rootDir = process.cwd()
 
-  const storage = await PrimaryFSStorage.create(storageDir)
+  const storage = await FSStorage.create(storageDir)
   onTermination(() => storage.stop())
 
-  const db = new PrimaryDB(storage)
+  const db = new ArhivDB(storage)
 
   if (!isProduction && args.includes('--gen-data')) {
     try {

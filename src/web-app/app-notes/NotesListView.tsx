@@ -15,7 +15,7 @@ import {
   Spacer,
   ProgressLocker,
 } from '~/web-platform'
-import { useArhiv } from '~/arhiv'
+import { useArhiv } from '~/arhiv/replica'
 import { Toolbar } from '../parts'
 
 const $item = stylish({

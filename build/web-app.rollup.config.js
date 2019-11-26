@@ -59,7 +59,7 @@ export default {
 
   watch: {
     clearScreen: false,
-    include: `${BASE_DIR}/web-app/**`,
+    include: `${BASE_DIR}/**`,
     exclude: ['node_modules/**'],
   },
 }

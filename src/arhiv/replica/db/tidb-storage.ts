@@ -1,4 +1,4 @@
-import { createLogger } from '~/utils'
+import { createLogger } from '~/logger'
 import {
   TIDB,
   applyForPersistentStorage,

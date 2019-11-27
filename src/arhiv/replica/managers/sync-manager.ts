@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   Callbacks,
 } from '~/utils'
 import {
@@ -13,7 +13,7 @@ import { ArhivDB } from '../db'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'
 
-const log = createLogger('arhiv:sync-manager')
+const log = createLogger('arhiv:sync-manager', 'magenta')
 
 export class SyncManager {
   readonly syncSignal = new Signal()

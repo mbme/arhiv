@@ -1,8 +1,9 @@
 import path from 'path'
 import {
   createLogger,
-  setLogLevelStr,
-} from '~/utils'
+  loggerConfig,
+  parseLogLevel,
+} from '~/logger'
 import {
   rmrfSync,
 } from '~/utils/fs'
@@ -19,7 +20,7 @@ import createServer from './server'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-setLogLevelStr(process.env.LOG || '')
+loggerConfig.minLogLevel = parseLogLevel(process.env.LOG || '')
 
 const log = createLogger('arhiv-server')
 

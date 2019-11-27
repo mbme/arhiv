@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { createLogger } from '../logger'
+import { createLogger } from '~/logger'
 import { AsyncCallbacks } from '../callbacks'
 import { Counter } from '../counter'
 import { lazy } from '../lazy'

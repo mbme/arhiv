@@ -1,6 +1,6 @@
+/* tslint:disable:no-console */
 import path from 'path'
 import {
-  createLogger,
   uniq,
   termColors,
 } from '~/utils'
@@ -24,8 +24,6 @@ import {
   initializeAssertContext,
   getAssertContext,
 } from '../assert/assert-context'
-
-const log = createLogger('tester')
 
 export class TestFile {
   readonly fileName: string
@@ -87,7 +85,7 @@ export class TestFile {
         successfulAsserts,
       } = getAssertContext()
 
-      log.simple(
+      console.log(
         `  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${test.name}`,
         snapshots.length ? `/ ${snapshots.length} snapshots` : '',
         updatedSnapshots ? `  updated ${updatedSnapshots} snapshots` : '',
@@ -95,11 +93,11 @@ export class TestFile {
 
       return [snapshots, true]
     } catch (e) {
-      log.simple('')
-      log.simple(termColors.red(`  ${test.name}: failed`))
-      log.simple('')
-      log.simple(e)
-      log.simple('')
+      console.log('')
+      console.log(termColors.red(`  ${test.name}: failed`))
+      console.log('')
+      console.log(e)
+      console.log('')
 
       return [oldSnapshots, false]
     }
@@ -111,10 +109,10 @@ export class TestFile {
     const totalTestsCount = this._testContext.tests.length
 
     if (tests.length === totalTestsCount) {
-      log.simple(`${termColors.blue(this.fileName)}`)
+      console.log(`${termColors.blue(this.fileName)}`)
     } else {
       const mutedCount = totalTestsCount - tests.length
-      log.simple(`${termColors.blue(this.fileName)}   ${mutedCount} tests are muted`)
+      console.log(`${termColors.blue(this.fileName)}   ${mutedCount} tests are muted`)
     }
 
     const testTimeout = setTimeout(() => {
@@ -152,7 +150,7 @@ export class TestFile {
 
     clearTimeout(testTimeout)
 
-    log.simple('')
+    console.log('')
 
     return failures
   }

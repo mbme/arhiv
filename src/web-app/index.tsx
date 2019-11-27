@@ -1,9 +1,11 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import {
-  setLogLevel,
-  debugLayoutSnippet,
+  loggerConfig,
   createLogger,
+} from '~/logger'
+import {
+  debugLayoutSnippet,
 } from '~/utils'
 import {
   ArhivReplica,
@@ -28,7 +30,9 @@ import { LibraryApp } from './app-library'
 
 const isDev = true
 
-setLogLevel(isDev ? 'DEBUG' : 'WARN')
+loggerConfig.minLogLevel = isDev ? 'DEBUG' : 'WARN'
+loggerConfig.includeDateTime = false
+
 const log = createLogger('web-app')
 
 injectGlobalStyles(`

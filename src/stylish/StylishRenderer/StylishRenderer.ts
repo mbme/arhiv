@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   Obj,
 } from '~/utils'
 import {

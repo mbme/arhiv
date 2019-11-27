@@ -1,4 +1,4 @@
-import { createLogger } from '~/utils/logger'
+import { createLogger } from '~/logger'
 import { Procedure } from '~/utils/types'
 import { noop } from '~/utils/misc'
 import { removeAtMut } from '~/utils/array'

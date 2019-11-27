@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   nowS,
   Callbacks,
 } from '~/utils'

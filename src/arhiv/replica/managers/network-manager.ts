@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   Callbacks,
 } from '~/utils'
 import {
@@ -14,7 +14,7 @@ import {
   LocalAttachments,
 } from '../types'
 
-const log = createLogger('arhiv:network-manager')
+const log = createLogger('arhiv:network-manager', 'greenBright')
 
 const readNetworkState = () => window.navigator.onLine
 

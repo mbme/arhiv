@@ -1,7 +1,7 @@
 import path from 'path'
+import { createLogger } from '~/logger'
 import {
   getLastEl,
-  createLogger,
   prettyPrintJSON,
 } from '~/utils'
 import {

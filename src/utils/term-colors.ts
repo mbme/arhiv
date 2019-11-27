@@ -4,29 +4,28 @@ function code2string(code: number) {
   return `\x1b[${code}m`
 }
 
-const reset = code2string(0)
+// const globalReset = code2string(0)
 
-type ColorCode = (text: string, withReset?: boolean) => string
+export type ColorCode = (text: string) => string
 
-function createColorCode(code0: number, code1: number): ColorCode {
-  return (text: string, withReset = true) => [
-    code2string(code0),
+function createColorCode(code: number, resetCode: number): ColorCode {
+  return (text: string) => [
+    code2string(code),
     text,
-    code2string(code1),
-    withReset ? reset : '',
+    code2string(resetCode),
   ].join('')
 }
 
 export const termColors = {
   // text colors
-  blue: createColorCode(34, 89),
-  yellow: createColorCode(33, 89),
-  red: createColorCode(31, 89),
-  cyan: createColorCode(36, 89),
-  green: createColorCode(32, 89),
-  magenta: createColorCode(35, 89),
-  white: createColorCode(37, 89),
-  gray: createColorCode(30, 89),
+  blue: createColorCode(34, 39),
+  yellow: createColorCode(33, 39),
+  red: createColorCode(31, 39),
+  cyan: createColorCode(36, 39),
+  green: createColorCode(32, 39),
+  magenta: createColorCode(35, 39),
+  white: createColorCode(37, 39),
+  gray: createColorCode(30, 39),
   redBright: createColorCode(91, 39),
   greenBright: createColorCode(92, 39),
   yellowBright: createColorCode(93, 39),
@@ -61,5 +60,6 @@ export const termColors = {
   inverse: createColorCode(7, 27),
   hidden: createColorCode(8, 28),
   strikethrough: createColorCode(9, 29),
-  reset,
 }
+
+export type TermColor = keyof typeof termColors

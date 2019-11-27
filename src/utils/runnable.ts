@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import { Procedure } from './types'
-import { createLogger } from './logger'
 
 const log = createLogger('runnable')
 

@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   isFunction,
   merge,
 } from '~/utils'

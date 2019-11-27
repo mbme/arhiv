@@ -1,5 +1,5 @@
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   IDict,
 } from '~/utils'
 import { getMimeType } from '~/file-prober'

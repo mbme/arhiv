@@ -3,8 +3,8 @@ import urlParser from 'url'
 import zlib from 'zlib'
 import { Stream } from 'stream'
 import { Socket } from 'net'
+import { createLogger } from '~/logger'
 import {
-  createLogger,
   isString,
   isObject,
   promiseTimeout,

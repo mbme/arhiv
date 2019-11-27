@@ -1,4 +1,4 @@
-import { createLogger } from './logger'
+import { createLogger } from '~/logger'
 import { Deferred } from './deferred'
 
 const log = createLogger('queue')

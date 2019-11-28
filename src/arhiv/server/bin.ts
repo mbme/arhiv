@@ -21,6 +21,7 @@ import createServer from './server'
 const isProduction = process.env.NODE_ENV === 'production'
 
 loggerConfig.minLogLevel = parseLogLevel(process.env.LOG || '')
+loggerConfig.includeDateTime = true
 
 const log = createLogger('arhiv-server')
 

@@ -1,0 +1,86 @@
+/// <reference lib="WebWorker" />
+
+import {
+  createLogger,
+  loggerConfig,
+} from '~/logger'
+
+loggerConfig.minLogLevel = 'DEBUG'
+const log = createLogger('serviceWorker', 'gray')
+
+type Scope = ServiceWorkerGlobalScope & typeof globalThis
+const scope = self as any as Scope
+
+const staticAssets = [
+  './index.html',
+  './favicon-16x16.png',
+  './logo.svg',
+  './serviceWorker.js',
+  './bundle.js',
+]
+
+const CACHE_KEY = 'static-cache'
+const openCache = () => caches.open(CACHE_KEY)
+
+const cacheStaticAssets = async () => {
+  const cache = await openCache()
+  await cache.addAll(staticAssets)
+}
+
+const cleanupCaches = async () => {
+  const cacheKeys = await caches.keys()
+
+  await Promise.all(cacheKeys.map(async cacheKey => {
+    if (cacheKey !== CACHE_KEY) {
+      await caches.delete(cacheKey)
+    }
+  }))
+}
+
+async function networkFirst(req: Request): Promise<Response> {
+  log.debug('fetching ', req.url)
+
+  if (req.url.includes('/api/')) {
+    return fetch(req)
+  }
+
+  const cache = await openCache()
+  const [
+    cachedResponse,
+    html5Fallback,
+  ] = await Promise.all([
+    cache.match(req),
+    cache.match('./index.html'),
+  ])
+
+  if (!html5Fallback) {
+    throw new Error("html5 fallback isn't cached")
+  }
+
+  try {
+    const res = await fetch(req)
+    await cache.put(req, res.clone())
+
+    return res
+  } catch (error) {
+    log.warn('Failed to fetch cached resource', error)
+
+    return cachedResponse || html5Fallback
+  }
+}
+
+scope.addEventListener('install', (e) => {
+  e.waitUntil(cacheStaticAssets())
+})
+
+scope.addEventListener('activate', (e) => {
+  e.waitUntil(cleanupCaches())
+})
+
+scope.addEventListener('fetch', (e) => {
+  if (!e.request.url.startsWith('http')) { // ignore chrome-extension:// requests
+    return
+  }
+
+  e.respondWith(networkFirst(e.request))
+})

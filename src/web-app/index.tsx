@@ -31,7 +31,6 @@ import { LibraryApp } from './app-library'
 const isDev = true
 
 loggerConfig.minLogLevel = isDev ? 'DEBUG' : 'WARN'
-loggerConfig.includeDateTime = false
 
 const log = createLogger('web-app')
 

@@ -8,6 +8,7 @@ rm -rf $BASE_DIR
 # create empty file to make rollup --watch work
 mkdir -p $BASE_DIR/web-app
 touch $BASE_DIR/web-app/index.js
+touch $BASE_DIR/web-app/serviceWorker.js
 
 # web app typescript into javascript
 ./node_modules/.bin/tsc \

@@ -20,46 +20,64 @@ const tsPathResolver = (rootDir) => ({
 
 const BASE_DIR = process.env.BASE_DIR
 
-export default {
-  input: `${BASE_DIR}/web-app/index`,
+const plugins = [
+  tsPathResolver(BASE_DIR),
 
-  output: {
-    file: `${BASE_DIR}/bundle.js`,
-    format: 'iife',
-    name: 'WebApp',
-    globals: {
-      'crypto': 'crypto', // use window.crypto in browser
+  nodeResolve({
+    preferBuiltins: false,
+  }),
+
+  replace({
+    'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+    'process.env.__BROWSER__': true,
+  }),
+
+  commonjs({
+    include: 'node_modules/**',
+
+    namedExports: {
+      'react': Object.keys(React),
+      'react-dom': Object.keys(ReactDOM)
+    },
+  }),
+]
+
+export default [
+  {
+    input: `${BASE_DIR}/web-app/index`,
+
+    output: {
+      file: `${BASE_DIR}/bundle.js`,
+      format: 'iife',
+      name: 'WebApp',
+      globals: {
+        'crypto': 'crypto', // use window.crypto in browser
+      },
+    },
+    external: ['crypto'],
+
+    treeshake: isProduction,
+
+    plugins,
+
+    watch: {
+      clearScreen: false,
+      include: `${BASE_DIR}/**`,
+      exclude: ['node_modules/**'],
     },
   },
-  external: ['crypto'],
 
-  treeshake: isProduction,
+  {
+    input: `${BASE_DIR}/web-app/serviceWorker`,
 
-  plugins: [
-    tsPathResolver(BASE_DIR),
+    output: {
+      file: `${BASE_DIR}/serviceWorker.js`,
+      format: 'iife',
+      name: 'WebAppServiceWorker',
+    },
 
-    nodeResolve({
-      preferBuiltins: false,
-    }),
+    treeshake: isProduction,
 
-    replace({
-      'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
-      'process.env.__BROWSER__': true,
-    }),
-
-    commonjs({
-      include: 'node_modules/**',
-
-      namedExports: {
-        'react': Object.keys(React),
-        'react-dom': Object.keys(ReactDOM)
-      },
-    }),
-  ],
-
-  watch: {
-    clearScreen: false,
-    include: `${BASE_DIR}/**`,
-    exclude: ['node_modules/**'],
-  },
-}
+    plugins,
+  }
+]

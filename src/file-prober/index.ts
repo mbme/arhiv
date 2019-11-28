@@ -30,6 +30,7 @@ export default async function probeMetadata(filePath: string) {
 }
 
 const MIME: IDict = {
+  '.js': 'application/javascript',
   '.css': 'text/css',
   '.html': 'text/html',
   '.json': 'application/json',

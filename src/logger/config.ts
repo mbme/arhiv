@@ -10,6 +10,6 @@ export interface IConfig {
 
 export const config: IConfig = {
   minLogLevel: 'INFO',
-  includeDateTime: true,
+  includeDateTime: false,
   namespaceSize: 20,
 }

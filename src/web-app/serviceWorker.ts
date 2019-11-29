@@ -41,7 +41,14 @@ async function networkFirst(req: Request): Promise<Response> {
   log.debug('fetching ', req.url)
 
   if (req.url.includes('/api/')) {
-    return fetch(req)
+    return fetch(req).catch((e) => {
+      log.warn(`failed to fetch ${req.url}: ${e}`)
+
+      return new Response(null, {
+        'status': 503,
+        'statusText': 'Service Unavailable',
+      })
+    })
   }
 
   const cache = await openCache()
@@ -53,7 +60,7 @@ async function networkFirst(req: Request): Promise<Response> {
     cache.match('./index.html'),
   ])
 
-  if (!html5Fallback) {
+  if (!html5Fallback) { // unreachable
     throw new Error("html5 fallback isn't cached")
   }
 

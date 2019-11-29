@@ -210,7 +210,7 @@ export class ArhivDB<T extends IDocument = Record> {
       return true
 
     } catch (e) {
-      log.error('Failed to sync', e)
+      log.warn('Failed to sync', e)
 
       this.syncState$.value = { type: 'initial' }
 

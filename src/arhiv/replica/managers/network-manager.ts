@@ -57,7 +57,7 @@ export class NetworkManager {
     if (response.ok) {
       this.isAuthorized$.value = true
     } else {
-      this._onNetworkError(response.status)
+      this._onServerError(response.status)
     }
   }
 
@@ -83,10 +83,12 @@ export class NetworkManager {
       method: 'post',
       credentials: 'include',
       body: data,
+    }).catch((err) => {
+      throw new Error(`Network error: ${err}`)
     })
 
     if (!response.ok) {
-      this._onNetworkError(response.status)
+      this._onServerError(response.status)
       throw new Error(`Server responded with code ${response.status}`)
     }
 
@@ -105,8 +107,8 @@ export class NetworkManager {
     }
   }
 
-  private _onNetworkError(status: number) {
-    log.warn(`network error, http status code ${status}`)
+  private _onServerError(status: number) {
+    log.warn(`server error, http status code ${status}`)
 
     if (status === 403) {
       this.isAuthorized$.value = false

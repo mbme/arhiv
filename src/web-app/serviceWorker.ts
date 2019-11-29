@@ -66,6 +66,10 @@ async function networkFirst(req: Request): Promise<Response> {
 
   try {
     const res = await fetch(req)
+    if (!res.ok) {
+      throw new Error(`server responded with status code ${res.status}`)
+    }
+
     await cache.put(req, res.clone())
 
     return res

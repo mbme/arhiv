@@ -8,7 +8,7 @@ export type OptionalProps<T, TOptional extends keyof T> = Without<T, TOptional> 
 export type TypeOfProperty<T, P extends keyof T> = T[P]
 
 export interface IDict<T = string> {
-  [key: string]: T
+  [key: string]: T | undefined
 }
 
 export type Obj = IDict<any>

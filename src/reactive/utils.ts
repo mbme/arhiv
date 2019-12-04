@@ -13,8 +13,18 @@ export function merge$<T>(...observables: Array<Observable<T>>) {
   return new Observable<T>((observer) => {
     const callbacks = new Callbacks()
 
+    let completeCount = 0
     for (const observable of observables) {
-      callbacks.add(observable.subscribe(observer))
+      callbacks.add(observable.subscribe({
+        next: observer.next,
+        error: observer.error,
+        complete() {
+          completeCount += 1
+          if (completeCount === observables.length) {
+            observer.complete()
+          }
+        },
+      }))
     }
 
     return () => callbacks.runAll(true)
@@ -58,5 +68,34 @@ export function of$<T>(value: T): Observable<T> {
   return new Observable<T>((observer) => {
     observer.next(value)
     observer.complete()
+  })
+}
+
+export function zip$<T>(...observables: Array<Observable<T>>) {
+  return new Observable<ReadonlyArray<T | undefined>>((observer) => {
+    const callbacks = new Callbacks()
+
+    const state = new Array<T | undefined>(observables.length)
+    let completeCount = 0
+
+    for (let i = 0; i < observables.length; i += 1) {
+      const observable = observables[i]
+
+      callbacks.add(observable.subscribe({
+        next(value) {
+          state[i] = value
+          observer.next(state)
+        },
+        error: observer.error,
+        complete() {
+          completeCount += 1
+          if (completeCount === observables.length) {
+            observer.complete()
+          }
+        },
+      }))
+    }
+
+    return () => callbacks.runAll(true)
   })
 }

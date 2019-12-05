@@ -215,7 +215,7 @@ export interface ITextGenerator {
   word(): string,
   sentence(minWords?: number, maxWords?: number, maxTries?: number): string,
 }
-export default function createTextGenerator(corpus: string) {
+export function createTextGenerator(corpus: string) {
   const stats = calculateTextStats(corpus)
 
   return {

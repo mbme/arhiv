@@ -18,7 +18,10 @@ import {
   shuffle,
   pickRandomItem,
 } from '~/utils/random'
-import createTextGenerator, { ITextGenerator } from '~/utils/random/text-generator'
+import {
+  ITextGenerator,
+  createTextGenerator,
+} from '~/utils/random/text-generator'
 import {
   generateRandomId,
   createDocument,

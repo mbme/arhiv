@@ -31,18 +31,22 @@ export class SyncManager {
 
     const gotAuthorized$ = _net.isAuthorized$.value$.filter(isAuthorized => isAuthorized)
 
-    const gotOnline$ = _net.isOnline$.value$.filter(isOnline => isOnline)
-
     const gotLocalUpdate$ = _db.updateTime$.value$
       .filter(([, isLocal]) => isLocal)
 
     const syncCondtion$ = merge$<any>(
-      interval$(60 * 1000),
-      gotAuthorized$,
-      gotOnline$,
-      gotLocalUpdate$,
-      mergeConflictsResolved$,
-      this.syncSignal.signal$,
+      // only leader should schedule sync
+      _locks.acquireLeaderLock$().switchMap(() => merge$<any>(
+        interval$(60 * 1000).tap(() => log.debug('interval trigger')),
+
+        // got online
+        _net.isOnline$.value$.filter(isOnline => isOnline)
+          .tap(() => log.debug('network online trigger')),
+      )),
+      gotAuthorized$.tap(() => log.debug('auth trigger')),
+      gotLocalUpdate$.tap(() => log.debug('local update trigger')),
+      mergeConflictsResolved$.tap(() => log.debug('merge conflict resolved trigger')),
+      this.syncSignal.signal$.tap(() => log.debug('signal trigger')),
     )
       .filter(() => this._isReadyToSync())
       .switchMap(() => this._startSync$())
@@ -64,8 +68,8 @@ export class SyncManager {
   }
 
   private _startSync$() {
-    return new Observable<boolean>((observer) => {
-      this._locks.acquireDBLock$()
+    return new Observable<boolean>(
+      (observer) => this._locks.acquireDBLock$()
         .switchMap(() => promise$(this._db.sync(this._net.syncChanges)))
         .take(1)
         .subscribe({
@@ -75,8 +79,8 @@ export class SyncManager {
             observer.next(false)
           },
           complete: observer.complete,
-        })
-    })
+        }),
+    )
   }
 
   stop() {

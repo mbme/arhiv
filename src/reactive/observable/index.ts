@@ -24,20 +24,17 @@ export class Observable<T> {
     const subscription = createSubscription()
     const observer = new Observer(rawObserver, subscription)
 
-    let destroyCb: Procedure | undefined
     try {
-      destroyCb = this._init(observer) || undefined
-    } catch (e) {
-      log.debug('error on init:', e)
-      observer.error(e)
-    }
+      const destroyCb = this._init(observer)
 
-    if (destroyCb) {
       if (observer.isComplete()) {
         destroyCb()
       } else {
         subscription.callbacks.add(destroyCb)
       }
+    } catch (e) {
+      log.debug('error on init:', e)
+      observer.error(e)
     }
 
     return subscription

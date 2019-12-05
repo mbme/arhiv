@@ -49,8 +49,8 @@ export class WebLocks {
     return JSON.parse(valueStr) as Dict
   }
 
-  private _write() {
-    localStorage.setItem(this._lockPropName, JSON.stringify(this.state.value))
+  private _write(value: Dict) {
+    localStorage.setItem(this._lockPropName, JSON.stringify(value))
   }
 
   private _lock(lockName: string) {
@@ -64,7 +64,7 @@ export class WebLocks {
       [lockName]: this._tabId,
     }
 
-    this._write()
+    this._write(this.state.value)
   }
 
   private _releaseLock(lockName: string) {
@@ -84,7 +84,7 @@ export class WebLocks {
     delete newState[lockName]
     this.state.value = newState
 
-    this._write()
+    this._write(this.state.value)
   }
 
   private _onStorageUpdate = (e: StorageEvent) => {
@@ -95,6 +95,8 @@ export class WebLocks {
   }
 
   private _onBeforeUnload = () => {
+    this.destroy() // unsubscribe from global events
+
     const newState = {
       ...this.state.value,
     }
@@ -106,13 +108,14 @@ export class WebLocks {
         hadActiveLocks = true
         // tslint:disable-next-line:no-dynamic-delete
         delete newState[lockName]
-        log.warn(`tab ${tabId} had remaining lock "${lockName}"`)
+        log.info(`tab ${tabId} had remaining lock "${lockName}"`)
       }
     }
 
     if (hadActiveLocks) {
-      this.state.value = newState
-      this._write()
+      // write new value into the storage but do not update local state
+      // to not to trigger redundant client updates
+      this._write(newState)
     }
   }
 

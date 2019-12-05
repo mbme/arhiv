@@ -2,6 +2,9 @@ import {
   Callbacks,
 } from '~/utils'
 import {
+  getTabId,
+} from '~/web-utils'
+import {
   TIDBStorage,
   ArhivDB,
 } from './db'
@@ -60,8 +63,10 @@ export type TrackDocument = Document<ITrack>
 export class ArhivReplica {
   private _callbacks = new Callbacks()
 
+  readonly tabId = getTabId('-v-tab-id').toString()
+
   private _net = new NetworkManager()
-  private _locks = new LockManager()
+  private _locks = new LockManager(this.tabId)
   private _db = new ArhivDB(this._storage)
   private _sync = new SyncManager(this._db, this._net, this._locks)
 

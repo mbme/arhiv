@@ -8,7 +8,6 @@ import {
 } from '~/reactive'
 import {
   WebLocks,
-  getTabId,
 } from '~/web-utils'
 
 const log = createLogger('lock-manager')
@@ -30,30 +29,38 @@ function getDocumentLocks(locks: Dict): Dict {
 }
 
 export class LockManager {
-  private _locks = new WebLocks(getTabId('-v-tab-id').toString(), '-v-locks')
+  private _locks = new WebLocks(this._tabId, '-v-locks')
 
   private _callbacks = new Callbacks()
 
-  constructor() {
+  constructor(private _tabId: string) {
     this._callbacks.add(
       this._locks.state.value$.subscribe({
-        next(currentState) {
+        next: (currentState) => {
           const dbLockOwner = currentState[DB_LOCK_PROP]
           const leaderLockOwner = currentState[LEADER_LOCK_PROP]
 
           const logParts = [
-            leaderLockOwner ? `leader: ${leaderLockOwner}` : 'no leader',
-            dbLockOwner ? `db locked by ${dbLockOwner}` : '',
+            leaderLockOwner ? `leader: ${this._intoReadableId(leaderLockOwner)}` : 'no leader',
           ]
 
+          if (dbLockOwner) {
+            logParts.push(`db locked by ${this._intoReadableId(dbLockOwner)}`)
+          }
+
           for (const [lockId, tabId] of Object.entries(getDocumentLocks(currentState))) {
-            logParts.push(`document ${lockId} locked by ${tabId}`)
+            logParts.push(`document ${lockId} locked by ${this._intoReadableId(tabId)}`)
           }
 
           log.debug('lock state ->', logParts.join(', '))
         },
       }),
+      () => this._locks.destroy(),
     )
+  }
+
+  private _intoReadableId(id: string) {
+    return id === this._tabId ? 'current tab' : id
   }
 
   isDocumentLocked$(id: string): Observable<boolean> {
@@ -82,6 +89,14 @@ export class LockManager {
       .filter(isFree => isFree)
       .take(1)
       .switchMap(() => this._locks.acquireLock$(DB_LOCK_PROP))
+  }
+
+  acquireLeaderLock$() {
+    return this._locks.state.value$
+      .map(state => !state[LEADER_LOCK_PROP])
+      .filter(isFree => isFree)
+      .take(1)
+      .switchMap(() => this._locks.acquireLock$(LEADER_LOCK_PROP))
   }
 
   stop() {

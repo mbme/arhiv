@@ -5,7 +5,7 @@ import {
   loggerConfig,
 } from '~/logger'
 
-loggerConfig.minLogLevel = 'DEBUG'
+loggerConfig.minLogLevel = 'INFO'
 const log = createLogger('serviceWorker', 'gray')
 
 type Scope = ServiceWorkerGlobalScope & typeof globalThis
@@ -81,7 +81,9 @@ async function networkFirst(req: Request): Promise<Response> {
 }
 
 scope.addEventListener('install', (e) => {
-  e.waitUntil(cacheStaticAssets())
+  const freshnessPromise = scope.skipWaiting() // make sure we use new serviceWorker immediately
+
+  e.waitUntil(freshnessPromise.then(cacheStaticAssets))
 })
 
 scope.addEventListener('activate', (e) => {

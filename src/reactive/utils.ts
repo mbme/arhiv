@@ -1,3 +1,4 @@
+import { noop } from '~/utils'
 import { Callbacks } from '~/utils/callbacks'
 import { Observable } from './observable'
 
@@ -68,6 +69,8 @@ export function of$<T>(value: T): Observable<T> {
   return new Observable<T>((observer) => {
     observer.next(value)
     observer.complete()
+
+    return noop
   })
 }
 

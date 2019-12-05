@@ -1,7 +1,7 @@
 import { Procedure } from '~/utils/types'
 import { Callbacks } from '~/utils/callbacks'
 
-export type InitCb<T> = (observer: IObserver<T>) => (Procedure | void)
+export type InitCb<T> = (observer: IObserver<T>) => Procedure
 export type NextCb<T> = (value: T) => void
 export type ErrorCb = (e: any) => void
 export type CompleteCb = Procedure

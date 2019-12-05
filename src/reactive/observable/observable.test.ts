@@ -1,3 +1,4 @@
+import { noop } from '~/utils'
 import {
   test,
   assertEqual,
@@ -36,6 +37,8 @@ test('observable completes', async () => {
     const o$ = new Observable<number>((observer) => {
       observer.next(1)
       observer.complete()
+
+      return noop
     })
 
     await assertObservable(o$, [1, complete])
@@ -45,6 +48,8 @@ test('observable completes', async () => {
     const o$ = new Observable<number>((observer) => {
       observer.next(1)
       observer.error('test')
+
+      return noop
     })
 
     await assertObservable(o$, [1, error])
@@ -85,6 +90,8 @@ test('map', async () => {
   const o$ = new Observable<number>((observer) => {
     observer.next(1)
     observer.complete()
+
+    return noop
   }).map(x => x + 1)
 
   await assertObservable(o$, [2, complete])
@@ -95,6 +102,8 @@ test('tap', async () => {
   const o$ = new Observable<number>((observer) => {
     observer.next(1)
     observer.complete()
+
+    return noop
   }).tap(x => tap = x)
 
   await assertObservable(o$, [1, complete])
@@ -106,6 +115,8 @@ test('filter', async () => {
     observer.next(1)
     observer.next(2)
     observer.complete()
+
+    return noop
   }).filter(x => x === 1)
 
   await assertObservable(o$, [1, complete])
@@ -145,6 +156,8 @@ test('switchMap', async () => {
     const o$ = new Observable<number>((observer) => {
       observer.next(1)
       observer.complete()
+
+      return noop
     }).switchMap(() => new Observable<number>((observer) => {
       const timeout = setTimeout(() => {
         observer.next(2)
@@ -166,6 +179,8 @@ test('take', async () => {
     observer.next(2)
     observer.next(3)
     observer.complete()
+
+    return noop
   }).take(2)
 
   await assertObservable(o$, [1, 2, complete])
@@ -177,6 +192,8 @@ test('buffer', async () => {
     observer.next(2)
     observer.next(3)
     observer.complete()
+
+    return noop
   }).buffer(2)
 
   await assertObservable(o$, [[1], [1, 2], [2, 3], complete])
@@ -188,6 +205,8 @@ test('skip', async () => {
     observer.next(2)
     observer.next(3)
     observer.complete()
+
+    return noop
   }).skip(2)
 
   await assertObservable(o$, [3, complete])

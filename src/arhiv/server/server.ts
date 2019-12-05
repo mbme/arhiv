@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { createLogger } from '~/logger'
 import {
-  IDict,
+  Dict,
 } from '~/utils'
 import { Queue } from '~/utils/queue'
 import { getMimeType } from '~/file-prober'
@@ -82,7 +82,7 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
 
     const changeset = JSON.parse(changesetField.value) as IChangeset<IDocument>
 
-    const assets: IDict = {}
+    const assets: Dict = {}
     for (const file of body.files) {
       assets[file.field] = file.file
     }

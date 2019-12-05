@@ -3,7 +3,7 @@ import fs from 'fs'
 import { getMimeType } from '~/file-prober'
 import {
   createArray,
-  IDict,
+  Dict,
   nowS,
 } from '~/utils'
 import {
@@ -32,7 +32,7 @@ import {
   INote,
 } from '../types'
 
-async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<INote> {
+async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<INote> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()
@@ -65,11 +65,11 @@ async function getFakeNote(generator: ITextGenerator, images: IDict): Promise<IN
   }
 }
 
-async function prepareImages(basePath: string, tempDir: string): Promise<IDict> {
+async function prepareImages(basePath: string, tempDir: string): Promise<Dict> {
   const files = await listFiles(basePath)
   const images = files.filter((name) => name.match(/\.(jpg|jpeg)$/i))
 
-  const result: IDict = {}
+  const result: Dict = {}
 
   await Promise.all(images.map(async (name) => {
     const filePath = path.join(basePath, name)
@@ -85,7 +85,7 @@ async function prepareImages(basePath: string, tempDir: string): Promise<IDict> 
   return result
 }
 
-async function createAttachments(images: IDict): Promise<IAttachment[]> {
+async function createAttachments(images: Dict): Promise<IAttachment[]> {
   return Promise.all(Object.entries(images).map(async ([_id, imagePath]) => {
     const [
       _mimeType,

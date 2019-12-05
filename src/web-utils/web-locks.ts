@@ -5,19 +5,19 @@ import {
   Cell,
   Observable,
 } from '~/reactive'
-import { IDict } from '~/utils'
+import { Dict } from '~/utils'
 
 const log = createLogger('web-locks')
 
 export class WebLocks {
   // [lock name]: tab id
-  public readonly state: Cell<IDict>
+  public readonly state: Cell<Dict>
 
   constructor(
     private _tabId: string,
     private _lockPropName: string,
   ) {
-    this.state = new Cell<IDict>(this._read())
+    this.state = new Cell<Dict>(this._read())
     log.info(`tab id: ${_tabId}, lock property: "${_lockPropName}", ${Object.keys(this.state.value).length} active locks`)
 
     window.addEventListener('storage', this._onStorageUpdate)
@@ -40,13 +40,13 @@ export class WebLocks {
       }))
   }
 
-  private _read(): IDict {
+  private _read(): Dict {
     const valueStr = localStorage.getItem(this._lockPropName)
     if (!valueStr) {
       return {}
     }
 
-    return JSON.parse(valueStr) as IDict
+    return JSON.parse(valueStr) as Dict
   }
 
   private _write() {
@@ -77,10 +77,12 @@ export class WebLocks {
       throw new Error(`[unreachable] can't release lock "${lockName}": locked by a different tab`)
     }
 
-    this.state.value = {
+    const newState = {
       ...state,
-      [lockName]: undefined,
     }
+    // tslint:disable-next-line:no-dynamic-delete
+    delete newState[lockName]
+    this.state.value = newState
 
     this._write()
   }
@@ -102,7 +104,8 @@ export class WebLocks {
     for (const [lockName, tabId] of Object.entries(newState)) {
       if (tabId === this._tabId) {
         hadActiveLocks = true
-        newState[lockName] = undefined
+        // tslint:disable-next-line:no-dynamic-delete
+        delete newState[lockName]
         log.warn(`tab ${tabId} had remaining lock "${lockName}"`)
       }
     }

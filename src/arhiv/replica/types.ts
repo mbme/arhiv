@@ -1,3 +1,3 @@
-import { IDict } from '~/utils'
+import { Dict } from '~/utils'
 
-export type LocalAttachments = IDict<Blob>
+export type LocalAttachments = Dict<Blob>

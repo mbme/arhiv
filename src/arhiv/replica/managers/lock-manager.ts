@@ -1,7 +1,7 @@
 import { createLogger } from '~/logger'
 import {
   Callbacks,
-  IDict,
+  Dict,
 } from '~/utils'
 import {
   Observable,
@@ -16,7 +16,7 @@ const log = createLogger('lock-manager')
 const DB_LOCK_PROP = 'db-locked'
 const LEADER_LOCK_PROP = 'leader-lock'
 
-function getDocumentLocks(locks: IDict): IDict {
+function getDocumentLocks(locks: Dict): Dict {
   const result = {
     ...locks,
   }

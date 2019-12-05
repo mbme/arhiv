@@ -7,11 +7,9 @@ export type OptionalProps<T, TOptional extends keyof T> = Without<T, TOptional> 
 // Get type of object/class property
 export type TypeOfProperty<T, P extends keyof T> = T[P]
 
-export interface IDict<T = string> {
-  [key: string]: T | undefined
-}
+export type Dict<T = string> = Record<string, T>
 
-export type Obj = IDict<any>
+export type Obj = Dict<any>
 
 // make all properties mutable
 export type Mutable<T> = {

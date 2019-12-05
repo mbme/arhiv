@@ -1,4 +1,4 @@
-import { IDict } from '~/utils'
+import { Dict } from '~/utils'
 
 export type Snapshot = object | string | number | boolean | null
-export type TestFileSnapshots = IDict<Snapshot[]>
+export type TestFileSnapshots = Dict<Snapshot[]>

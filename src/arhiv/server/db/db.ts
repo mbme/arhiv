@@ -1,6 +1,6 @@
 import { createLogger } from '~/logger'
 import {
-  IDict,
+  Dict,
 } from '~/utils'
 import { getMimeType } from '~/file-prober'
 import { getFileSize } from '~/utils/fs'
@@ -49,7 +49,7 @@ export class ArhivDB<T extends IDocument> {
     return this._storage.getAttachmentDataPath(id)
   }
 
-  async applyChangeset(changeset: IChangeset<T>, attachedFiles: IDict): Promise<IChangesetResult<T>> {
+  async applyChangeset(changeset: IChangeset<T>, attachedFiles: Dict): Promise<IChangesetResult<T>> {
     const baseRev = this._storage.getRev()
 
     // this should never happen

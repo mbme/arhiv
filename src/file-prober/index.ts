@@ -1,6 +1,6 @@
 /* tslint:disable:no-unsafe-any */
 import path from 'path'
-import { IDict } from '~/utils'
+import { Dict } from '~/utils'
 import { exec } from '~/utils/node'
 
 // TODO images, video
@@ -29,7 +29,7 @@ export default async function probeMetadata(filePath: string) {
   return {}
 }
 
-const MIME: IDict = {
+const MIME: Dict = {
   '.js': 'application/javascript',
   '.css': 'text/css',
   '.html': 'text/html',

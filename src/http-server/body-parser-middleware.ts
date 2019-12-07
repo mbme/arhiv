@@ -20,7 +20,6 @@ import {
   StringBody,
   IContext,
   Next,
-  HttpMethod,
 } from './types'
 
 // Extract action & assets from multipart/form-data POST request
@@ -47,7 +46,9 @@ function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage)
 }
 
 export async function bodyParserMiddleware({ req, httpReq }: IContext, next: Next) {
-  if (![HttpMethod.POST, HttpMethod.PUT].includes(req.method)) return next()
+  if (!['POST', 'PUT'].includes(req.method)) {
+    return next()
+  }
 
   const contentType = req.headers['content-type'] || ''
   if (contentType.startsWith('multipart/form-data')) {

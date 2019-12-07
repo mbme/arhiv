@@ -5,10 +5,10 @@ import { Stream } from 'stream'
 import { Socket } from 'net'
 import { createLogger } from '~/logger'
 import {
-  isString,
   isObject,
   promiseTimeout,
 } from '~/utils'
+import { PathMatcher } from '~/utils/path-matcher'
 import {
   gzip,
   pipePromise,
@@ -16,21 +16,20 @@ import {
 import {
   IContext,
   Next,
-  HttpMethod,
   parseHttpMethod,
   IHeaders,
   IRequest,
   IResponse,
+  HttpMethod,
 } from './types'
 import { bodyParserMiddleware } from './body-parser-middleware'
 
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
-type RequestHandler = (context: IContext) => Promise<void> | void
-type PathTest = ((path: string) => boolean) | string
+type RequestHandler<P extends object> = (context: IContext, params: P) => Promise<void> | void
 
-interface IRoute {
-  test(context: IContext): boolean
-  cb: RequestHandler
+interface IRoute<P extends object> {
+  test(context: IContext): P | undefined
+  cb: RequestHandler<P>
 }
 
 const log = createLogger('http-server')
@@ -39,37 +38,40 @@ const MAX_SECONDS_TO_WAIT_UNTIL_DESTROY = 10
 
 export class HTTPServer {
   private _middlewares: Middleware[] = [bodyParserMiddleware]
-  private _routes: IRoute[] = []
+  private _routes: Array<IRoute<any>> = []
   private _stopped = false
 
   use(cb: Middleware) {
     this._middlewares.push(cb)
   }
 
-  addRoute(method: HttpMethod, pathTest: PathTest, cb: RequestHandler) {
+  addRoute<P extends object>(method: HttpMethod, pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
     this._routes.push({
-      test({ req }: IContext) {
-        if (req.method !== method.toString()) return false
-        if (isString(pathTest)) return req.url.pathname === pathTest
+      test({ req }: IContext): P | undefined {
+        if (req.method.toUpperCase() !== method) {
+          return undefined
+        }
 
-        return pathTest(req.url.pathname!)
+        return pathMatcher.match(req.url.pathname || '')
       },
       cb,
     })
   }
 
-  get(pathTest: PathTest, cb: RequestHandler) {
-    this.addRoute(HttpMethod.GET, pathTest, cb)
+  get<P extends object>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
+    this.addRoute('GET', pathMatcher, cb)
   }
 
-  post(pathTest: PathTest, cb: RequestHandler) {
-    this.addRoute(HttpMethod.POST, pathTest, cb)
+  post<P extends object>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
+    this.addRoute('POST', pathMatcher, cb)
   }
 
   private async _runMiddlewares(context: IContext, pos: number) {
     const middleware = this._middlewares[pos]
 
-    if (!middleware) return // no more middlewares, stop evaluation
+    if (!middleware) {  // no more middlewares, stop evaluation
+      return
+    }
 
     const next = () => this._runMiddlewares(context, pos + 1)
     await Promise.resolve(middleware(context, next))
@@ -91,7 +93,7 @@ export class HTTPServer {
 
     const req: IRequest = {
       url: urlParser.parse(httpReq.url!, true),
-      method: parseHttpMethod(httpReq.method!)!,
+      method: parseHttpMethod(httpReq.method),
       headers: httpReq.headers as IHeaders,
     }
 
@@ -152,13 +154,15 @@ export class HTTPServer {
 
     // router middleware
     this._middlewares.push(async (context) => {
-      const route = this._routes.find((item) => item.test(context))
+      for (const route of this._routes) {
+        const params = route.test(context)
 
-      if (route) {
-        await Promise.resolve(route.cb(context))
-      } else {
-        context.res.statusCode = 404
+        if (params) {
+          return Promise.resolve(route.cb(context, params))
+        }
       }
+
+      context.res.statusCode = 404
     })
 
     // track open sockets

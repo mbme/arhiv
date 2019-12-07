@@ -21,6 +21,7 @@ import {
   resolveAsset,
   createToken,
 } from './utils'
+import { PathMatcher } from '~/utils/path-matcher'
 
 const log = createLogger('arhiv-server')
 
@@ -47,7 +48,8 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
     await next()
   })
 
-  server.post('/api/auth', async ({ req, res }) => {
+  // POST /api/auth
+  server.post(PathMatcher.create().string('api').string('auth'), async ({ req, res }) => {
     const body = req.body!
     if (!(body instanceof StringBody)) {
       res.statusCode = 415
@@ -64,7 +66,8 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
     res.headers['set-cookie'] = createToken(password)
   })
 
-  server.post('/api/changeset', async ({ res, req }) => {
+  // POST /api/changeset
+  server.post(PathMatcher.create().string('api').string('changeset'), async ({ res, req }) => {
     const body = req.body!
     if (!(body instanceof MultipartBody)) {
       res.statusCode = 415
@@ -90,14 +93,8 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
     res.body = await queue.push(() => db.applyChangeset(changeset, assets))
   })
 
-  server.get('/api/file', async ({ req, res }) => {
-    const fileId = req.url.query.fileId as string
-    if (!fileId) {
-      res.statusCode = 400
-
-      return
-    }
-
+  // GET /api/file/:fileId
+  server.get(PathMatcher.create().string('api').string('file').param('fileId'), async ({ res }, { fileId }) => {
     const filePath = await queue.push(() => db.getAttachmentDataPath(fileId))
 
     if (filePath) {
@@ -110,15 +107,15 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
     }
   })
 
+  // GET /api/*
+  server.get(PathMatcher.create().string('api').everything(), ({ res }) => {
+    res.statusCode = 400
+  })
+
   // Handle assets + html5 history fallback
-  server.get(() => true, async ({ req, res }) => {
-    if (req.url.pathname!.startsWith('/api')) {
-      res.statusCode = 404
-
-      return
-    }
-
-    const fileName = req.url.path!.substring(1) // skip leading /
+  // GET /*
+  server.get(PathMatcher.create().everything(), async ({ res }, { everything }) => {
+    const fileName = everything.join('/')
     const filePath = await resolveAsset(staticDirs, fileName || 'index.html')
       || await resolveAsset(staticDirs, 'index.html') // html5 history fallback
 

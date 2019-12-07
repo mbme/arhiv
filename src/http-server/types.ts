@@ -2,37 +2,34 @@ import http from 'http'
 import urlParser from 'url'
 import { Stream } from 'stream'
 
-export enum HttpMethod {
-  OPTIONS = 'OPTIONS',
-  HEAD = 'HEAD',
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  DELETE = 'DELETE',
-  PATCH = 'PATCH',
+const HTTP_METHOD = {
+  OPTIONS: 'OPTIONS',
+  HEAD: 'HEAD',
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  PATCH: 'PATCH',
 }
-export const parseHttpMethod = (s: string) => {
-  switch (s.toUpperCase()) {
-    case HttpMethod.OPTIONS.toString():
-      return HttpMethod.OPTIONS
-    case HttpMethod.HEAD.toString():
-      return HttpMethod.HEAD
-    case HttpMethod.GET.toString():
-      return HttpMethod.GET
-    case HttpMethod.POST.toString():
-      return HttpMethod.POST
-    case HttpMethod.PUT.toString():
-      return HttpMethod.PUT
-    case HttpMethod.DELETE.toString():
-      return HttpMethod.DELETE
-    case HttpMethod.PATCH.toString():
-      return HttpMethod.PATCH
-    default:
-      return undefined
+export type HttpMethod = keyof typeof HTTP_METHOD
+
+export function parseHttpMethod(s?: string): HttpMethod {
+  if (!s) {
+    throw new Error('http method is missing')
   }
+
+  const normalizedS = s.toUpperCase()
+
+  if (!(HTTP_METHOD as any)[normalizedS]) {
+    throw new Error(`got unexpected http method ${s}`)
+  }
+
+  return normalizedS as HttpMethod
 }
 
-export interface IHeaders { [name: string]: string }
+export interface IHeaders {
+  [name: string]: string
+}
 
 export interface IRequest {
   url: urlParser.UrlWithParsedQuery,
@@ -65,7 +62,10 @@ interface IMultipartFile {
 }
 
 export class MultipartBody {
-  constructor(public fields: IMultipartField[] = [], public files: IMultipartFile[] = []) { }
+  constructor(
+    public readonly fields: IMultipartField[] = [],
+    public readonly files: IMultipartFile[] = [],
+  ) { }
 
   getField(field: string) {
     return this.fields.find(item => item.field === field)

@@ -93,8 +93,7 @@ export class TestFile {
 
       return [snapshots, true]
     } catch (e) {
-      console.log('')
-      console.log(termColors.red(`  ${test.name}: failed`))
+      console.log(termColors.red(` failed: ${test.name}`))
       console.log('')
       console.log(e)
       console.log('')

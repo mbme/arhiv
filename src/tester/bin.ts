@@ -19,6 +19,8 @@ createRunnable(async (...args: string[]) => {
 
   const files = (await consumeAsyncIterable(getFiles(basePath)))
     .filter((relPath) => relPath.endsWith('.test.js'))
+    .filter((relPath) => !relPath.includes('FLYCHECK'))
+
   console.log(`collected ${files.length} test files`)
 
   const tests: TestFile[] = []

@@ -5,6 +5,8 @@ import {
 import {
   trimLeft,
   camelCase2kebabCase,
+  trimLeading,
+  trimTrailing,
 } from './string'
 
 test('trimLeft', () => {
@@ -18,4 +20,16 @@ test('camelCase2kebabCase', () => {
   assertEqual(camelCase2kebabCase('font'), 'font')
   assertEqual(camelCase2kebabCase('fontSize'), 'font-size')
   assertEqual(camelCase2kebabCase('fontSizeLong'), 'font-size-long')
+})
+
+test('trimLeading', () => {
+  assertEqual(trimLeading('test', '/'), 'test')
+  assertEqual(trimLeading('/test', '/'), 'test')
+  assertEqual(trimLeading('//test', '/'), '/test')
+})
+
+test('trimTrailing', () => {
+  assertEqual(trimTrailing('test', '/'), 'test')
+  assertEqual(trimTrailing('test/', '/'), 'test')
+  assertEqual(trimTrailing('test//', '/'), 'test/')
 })

@@ -4,55 +4,62 @@ import {
   assertFalse,
 } from '~/tester'
 
-import { PathMatcher } from './path-matcher'
+import {
+  pathMatcher as pm,
+} from './path-matcher'
 
 test('matches strings', () => {
-  const result = PathMatcher.create().string('test').string('param').match('/test/param')
+  const result = pm`/test/param`.match('/test/param')
   assertDeepEqual(result, {})
 })
 
 test("doesn't match bad strings", () => {
   {
-    const result = PathMatcher.create().string('test').string('param').match('/test')
+    const result = pm`/test/param`.match('/test')
     assertFalse(!!result)
   }
 
   {
-    const result = PathMatcher.create().string('test').string('param').match('/test/param1')
+    const result = pm`/test/param`.match('/test/param1')
     assertFalse(!!result)
   }
 })
 
 test('matches strings and params', () => {
   {
-    const result = PathMatcher.create().param('test').string('param').match('/123/param')
+    const result = pm`/${'test'}/param`.match('/123/param')
     assertDeepEqual(result, { test: '123' })
   }
 
   {
-    const result = PathMatcher.create().string('test').param('param').match('/test/param')
+    const result = pm`/test/${'param'}`.match('/test/param')
     assertDeepEqual(result, { param: 'param' })
+  }
+
+  {
+    const result = pm`/test/${'param'}/234`.match('/test//234')
+    assertDeepEqual(result, { param: '' })
   }
 })
 
 test('matches everything', () => {
   {
-    const result = PathMatcher.create().param('test').everything().match('/123/param')
-    assertDeepEqual(result, { test: '123', everything: ['param'] })
+    const result = pm`/${'test'}/${'*'}`.match('/123/param')
+    assertDeepEqual(result, { test: '123', '*': 'param' })
   }
 
   {
-    const result = PathMatcher.create().everything().match('/test/param')
-    assertDeepEqual(result, { everything: ['test', 'param'] })
+    const result = pm`/${'*'}`.match('/test/param')
+    assertDeepEqual(result, { '*': 'test/param' })
   }
 
   {
-    const result = PathMatcher.create().string('test').everything().match('/test/')
-    assertDeepEqual(result, { everything: [''] })
+    const result = pm`/test/${'*'}`.match('/test/')
+    assertDeepEqual(result, { '*': '' })
   }
 
   {
-    const result = PathMatcher.create().everything().match('/')
-    assertDeepEqual(result, { everything: [''] })
+    const result = pm`/${'*'}`.match('/')
+    assertDeepEqual(result, { '*': '' })
   }
 })

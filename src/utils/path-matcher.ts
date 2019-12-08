@@ -1,66 +1,29 @@
 import { Dict } from './types'
+import { trimLeading, trimTrailing } from './string'
 
 interface IStaticSegment {
   type: 'static'
   value: string
 }
 
-interface INamedSegment {
+interface INamedSegment<N extends string> {
   type: 'named'
-  name: string
+  name: N
 }
 
 interface IEverythingSegment {
   type: 'everything'
 }
 
-type Segment = IStaticSegment | INamedSegment | IEverythingSegment
-
-function splitPath(path: string): string[] {
-  if (path.startsWith('/')) {
-    return splitPath(path.substring(1))
-  }
-
-  return path.split('/')
-}
+type Segment<N extends string> = IStaticSegment | INamedSegment<N> | IEverythingSegment
 
 export class PathMatcher<C extends object> {
-  private constructor(
-    private _segments: Segment[] = [],
+  constructor(
+    private _segments: Array<Segment<keyof C>> = [],
   ) { }
 
-  static create() {
-    return new PathMatcher<{}>([])
-  }
-
-  param<T extends string>(name: T) {
-    const segment: INamedSegment = {
-      type: 'named',
-      name,
-    }
-
-    return new PathMatcher<C & { [key in T]: string }>([...this._segments, segment])
-  }
-
-  string(value: string) {
-    const segment: IStaticSegment = {
-      type: 'static',
-      value,
-    }
-
-    return new PathMatcher<C>([...this._segments, segment])
-  }
-
-  everything() {
-    const segment: IEverythingSegment = {
-      type: 'everything',
-    }
-
-    return new PathMatcher<C & { everything: string[] }>([...this._segments, segment])
-  }
-
   match(pathRaw: string): C | undefined {
-    const path = splitPath(pathRaw)
+    const path = trimLeading(pathRaw, '/').split('/')
 
     if (path.length < this._segments.length) {
       return undefined
@@ -87,11 +50,74 @@ export class PathMatcher<C extends object> {
       }
 
       if (segment.type === 'everything') {
-        result.everything = path.slice(i)
+        result['*'] = path.slice(i).join('/')
         break
       }
     }
 
     return result as C
   }
+}
+
+function staticSegment(value: string): IStaticSegment {
+  return {
+    type: 'static',
+    value,
+  }
+}
+
+export function pathMatcher<N extends string>(rawLiterals: TemplateStringsArray, ...namedSegments: N[]) {
+  const literals = [...rawLiterals]
+  if (!literals[literals.length - 1]) {
+    literals.pop()
+  }
+
+  if (namedSegments.length > literals.length) {
+    throw new Error('all named segments must be separated by /')
+  }
+
+  const segments: Array<Segment<N>> = []
+  for (let i = 0; i < literals.length; i += 1) {
+    const literal = literals[i]
+
+    const isTrailingSegment = i === namedSegments.length
+
+    if (!literal.startsWith('/')) {
+      throw new Error('path segment must start with /')
+    }
+
+    // only trailing literal (which goes after last namedSegment) might not end with /
+    if (!literal.endsWith('/') && !isTrailingSegment) {
+      throw new Error("path segment must end with / if it's not a trailing segment")
+    }
+
+    if (literal !== '/') {
+      const literalSegments = trimLeading(trimTrailing(literal, '/'), '/').split('/')
+      segments.push(...literalSegments.map(staticSegment))
+    }
+
+    const namedSegment = namedSegments[i]
+    if (namedSegment === undefined) {
+      continue
+    }
+
+    if (namedSegment === '*') {
+      // make sure "everything" is a last segment
+      const isLastSegment = (i === namedSegments.length - 1) && (i === literals.length - 1)
+      if (!isLastSegment) {
+        throw new Error('everything segment must be a last segment')
+      }
+
+      segments.push({
+        type: 'everything',
+      })
+    } else {
+      segments.push({
+        type: 'named',
+        name: namedSegment,
+      })
+    }
+  }
+
+  return new PathMatcher<{ [key in N]: string }>(segments)
 }

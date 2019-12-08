@@ -37,7 +37,7 @@ function fetchAttachment$(id: string) {
   return new Observable<Blob>((observer) => {
     const controller = new AbortController()
 
-    const promise = fetch(`/api/file?fileId=${id}`, {
+    const promise = fetch(`/api/file/${id}`, {
       cache: 'force-cache',
       signal: controller.signal,
     }).then((response) => {

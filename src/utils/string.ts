@@ -33,7 +33,9 @@ export function reverse(str: string) {
 }
 
 export function trimLeft(str: string, chars = ' ') {
-  if (!chars) throw new Error('chars must not be empty ')
+  if (!chars) {
+    throw new Error('chars must not be empty ')
+  }
 
   for (let i = 0; i < str.length; i += 1) {
     if (!chars.includes(str[i])) {
@@ -50,6 +52,30 @@ export function trimRight(str: string, chars = ' ') {
 
 export function trim(str: string, chars = ' ') {
   return trimRight(trimLeft(str, chars), chars)
+}
+
+export function trimLeading(str: string, substr: string) {
+  if (!substr) {
+    throw new Error('substr must not be empty ')
+  }
+
+  if (str.startsWith(substr)) {
+    return str.substring(substr.length)
+  }
+
+  return str
+}
+
+export function trimTrailing(str: string, substr: string) {
+  if (!substr) {
+    throw new Error('substr must not be empty ')
+  }
+
+  if (str.endsWith(substr)) {
+    return str.substring(0, str.length - substr.length)
+  }
+
+  return str
 }
 
 // http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/

@@ -4,6 +4,9 @@ import {
   Dict,
 } from '~/utils'
 import { Queue } from '~/utils/queue'
+import {
+  pathMatcher as pm,
+} from '~/utils/path-matcher'
 import { getMimeType } from '~/file-prober'
 import {
   HTTPServer,
@@ -21,7 +24,6 @@ import {
   resolveAsset,
   createToken,
 } from './utils'
-import { PathMatcher } from '~/utils/path-matcher'
 
 const log = createLogger('arhiv-server')
 
@@ -49,7 +51,7 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
   })
 
   // POST /api/auth
-  server.post(PathMatcher.create().string('api').string('auth'), async ({ req, res }) => {
+  server.post(pm`/api/auth`, async ({ req, res }) => {
     const body = req.body!
     if (!(body instanceof StringBody)) {
       res.statusCode = 415
@@ -67,7 +69,7 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
   })
 
   // POST /api/changeset
-  server.post(PathMatcher.create().string('api').string('changeset'), async ({ res, req }) => {
+  server.post(pm`/api/changeset`, async ({ res, req }) => {
     const body = req.body!
     if (!(body instanceof MultipartBody)) {
       res.statusCode = 415
@@ -94,7 +96,7 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
   })
 
   // GET /api/file/:fileId
-  server.get(PathMatcher.create().string('api').string('file').param('fileId'), async ({ res }, { fileId }) => {
+  server.get(pm`/api/file/${'fileId'}`, async ({ res }, { fileId }) => {
     const filePath = await queue.push(() => db.getAttachmentDataPath(fileId))
 
     if (filePath) {
@@ -108,14 +110,13 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
   })
 
   // GET /api/*
-  server.get(PathMatcher.create().string('api').everything(), ({ res }) => {
+  server.get(pm`/api/${'*'}`, ({ res }) => {
     res.statusCode = 400
   })
 
   // Handle assets + html5 history fallback
   // GET /*
-  server.get(PathMatcher.create().everything(), async ({ res }, { everything }) => {
-    const fileName = everything.join('/')
+  server.get(pm`/${'*'}`, async ({ res }, { '*': fileName }) => {
     const filePath = await resolveAsset(staticDirs, fileName || 'index.html')
       || await resolveAsset(staticDirs, 'index.html') // html5 history fallback
 

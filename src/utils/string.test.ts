@@ -5,8 +5,8 @@ import {
 import {
   trimLeft,
   camelCase2kebabCase,
-  trimLeading,
-  trimTrailing,
+  trimPrefix,
+  trimSuffix,
 } from './string'
 
 test('trimLeft', () => {
@@ -22,14 +22,16 @@ test('camelCase2kebabCase', () => {
   assertEqual(camelCase2kebabCase('fontSizeLong'), 'font-size-long')
 })
 
-test('trimLeading', () => {
-  assertEqual(trimLeading('test', '/'), 'test')
-  assertEqual(trimLeading('/test', '/'), 'test')
-  assertEqual(trimLeading('//test', '/'), '/test')
+test('trimPrefix', () => {
+  assertEqual(trimPrefix('test', '/'), 'test')
+  assertEqual(trimPrefix('/test', '/'), 'test')
+  assertEqual(trimPrefix('//test', '/'), '/test')
+  assertEqual(trimPrefix('/test', '/te'), 'st')
 })
 
-test('trimTrailing', () => {
-  assertEqual(trimTrailing('test', '/'), 'test')
-  assertEqual(trimTrailing('test/', '/'), 'test')
-  assertEqual(trimTrailing('test//', '/'), 'test/')
+test('trimSuffix', () => {
+  assertEqual(trimSuffix('test', '/'), 'test')
+  assertEqual(trimSuffix('test/', '/'), 'test')
+  assertEqual(trimSuffix('test//', '/'), 'test/')
+  assertEqual(trimSuffix('test/', 'st/'), 'te')
 })

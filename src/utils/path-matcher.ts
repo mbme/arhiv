@@ -1,5 +1,8 @@
 import { Dict } from './types'
-import { trimLeading, trimTrailing } from './string'
+import {
+  trimPrefix,
+  trimSuffix,
+} from './string'
 
 interface IStaticSegment {
   type: 'static'
@@ -23,7 +26,7 @@ export class PathMatcher<C extends object> {
   ) { }
 
   match(pathRaw: string): C | undefined {
-    const path = trimLeading(pathRaw, '/').split('/')
+    const path = trimPrefix(pathRaw, '/').split('/')
 
     if (path.length < this._segments.length) {
       return undefined
@@ -92,7 +95,7 @@ export function pathMatcher<N extends string>(rawLiterals: TemplateStringsArray,
     }
 
     if (literal !== '/') {
-      const literalSegments = trimLeading(trimTrailing(literal, '/'), '/').split('/')
+      const literalSegments = trimPrefix(trimSuffix(literal, '/'), '/').split('/')
       segments.push(...literalSegments.map(staticSegment))
     }
 

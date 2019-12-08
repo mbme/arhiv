@@ -54,25 +54,25 @@ export function trim(str: string, chars = ' ') {
   return trimRight(trimLeft(str, chars), chars)
 }
 
-export function trimLeading(str: string, substr: string) {
-  if (!substr) {
-    throw new Error('substr must not be empty ')
+export function trimPrefix(str: string, prefix: string) {
+  if (!prefix) {
+    throw new Error('prefix must not be empty ')
   }
 
-  if (str.startsWith(substr)) {
-    return str.substring(substr.length)
+  if (str.startsWith(prefix)) {
+    return str.substring(prefix.length)
   }
 
   return str
 }
 
-export function trimTrailing(str: string, substr: string) {
-  if (!substr) {
-    throw new Error('substr must not be empty ')
+export function trimSuffix(str: string, suffix: string) {
+  if (!suffix) {
+    throw new Error('suffix must not be empty ')
   }
 
-  if (str.endsWith(substr)) {
-    return str.substring(0, str.length - substr.length)
+  if (str.endsWith(suffix)) {
+    return str.substring(0, str.length - suffix.length)
   }
 
   return str

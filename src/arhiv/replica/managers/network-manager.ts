@@ -6,7 +6,7 @@ import {
   Cell,
 } from '~/reactive'
 import {
-  IChangesetResult,
+  IChangesetResponse,
   IChangeset,
   IDocument,
 } from '../../types'
@@ -69,7 +69,7 @@ export class NetworkManager {
   readonly syncChanges = async <T extends IDocument>(
     changeset: IChangeset<T>,
     localAttachments: LocalAttachments,
-  ): Promise<IChangesetResult<T>> => {
+  ): Promise<IChangesetResponse<T>> => {
     this._assertIsOnline()
     this._assertAuthorized()
 

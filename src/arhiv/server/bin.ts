@@ -32,7 +32,7 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
 
   const rootDir = process.cwd()
 
-  const storage = await FSStorage.create(storageDir)
+  const storage = await FSStorage.open(storageDir, args.includes('--init'))
   onTermination(() => storage.stop())
 
   const db = new ArhivDB(storage)
@@ -49,6 +49,7 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
       } = await getFakeNotes(resourcesDir, 30)
 
       await db.applyChangeset({
+        schemaVersion: storage.getSchemaVersion(),
         baseRev: 0,
         documents,
         attachments,

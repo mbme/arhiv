@@ -12,7 +12,9 @@ import {
   FSTransaction,
   LockFile,
   dirExists,
-  ensureDirExists,
+  assertDirExists,
+  mkdir,
+  writeJSON,
 } from '~/utils/fs'
 import {
   IDocument,
@@ -23,30 +25,45 @@ type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>) =>
 
 const log = createLogger('fs-storage')
 
+interface IMetadata {
+  schemaVersion: number
+}
+
 export class FSStorage<T extends IDocument> {
+  public static readonly SCHEMA_VERSION = 1
+
   private _rev = 0
+  private _schemaVersion = 0
 
   private _documentsDir: string
   private _attachmentsDir: string
+  private _metadataFile: string
   private _lock: LockFile
 
-  private constructor(rootDir: string) {
-    this._documentsDir = path.join(rootDir, 'documents')
-    this._attachmentsDir = path.join(rootDir, 'attachments')
-    this._lock = new LockFile(path.join(rootDir, 'lock'))
+  private constructor(private _rootDir: string) {
+    this._documentsDir = path.join(_rootDir, 'documents')
+    this._attachmentsDir = path.join(_rootDir, 'attachments')
+    this._metadataFile = path.join(_rootDir, 'metadata.json')
+    this._lock = new LockFile(path.join(_rootDir, 'lock'))
     // TODO validate documents
     // check if dir name === document id
   }
 
-  private acquireLock() {
-    return this._lock.create()
-  }
-
-  private async init() {
+  private async _init() {
     await Promise.all([
-      ensureDirExists(this._documentsDir),
-      ensureDirExists(this._attachmentsDir),
+      assertDirExists(this._rootDir),
+      assertDirExists(this._documentsDir),
+      assertDirExists(this._attachmentsDir),
     ])
+
+    const metadata = await readJSON<IMetadata>(this._metadataFile)
+    log.debug(`app schema version: ${FSStorage.SCHEMA_VERSION}`)
+    log.debug(`data schema version: ${metadata.schemaVersion}`)
+
+    if (metadata.schemaVersion !== FSStorage.SCHEMA_VERSION) {
+      throw new Error(`app schema version is ${FSStorage.SCHEMA_VERSION}, data version is ${metadata.schemaVersion}`)
+    }
+    this._schemaVersion = metadata.schemaVersion
 
     const [
       documents,
@@ -62,19 +79,34 @@ export class FSStorage<T extends IDocument> {
     this._rev = Math.max(maxDocumentRev, maxAttachmentRev)
   }
 
-  static async create(rootDirRaw: string) {
+  private async _create() {
+    await mkdir(this._rootDir)
+    log.debug(`created dir ${this._rootDir}`)
+
+    await mkdir(this._documentsDir)
+    log.debug(`created dir ${this._documentsDir}`)
+
+    await mkdir(this._attachmentsDir)
+    log.debug(`created dir ${this._attachmentsDir}`)
+
+    await writeJSON(this._metadataFile, { schemaVersion: 1 })
+    log.debug(`wrote metadata file ${this._metadataFile}`)
+  }
+
+  static async open(rootDirRaw: string, create: boolean) {
     const rootDir = path.resolve(rootDirRaw)
     log.info(`arhiv root: ${rootDir}`)
 
-    if (!await dirExists(rootDir)) {
-      throw new Error(`${rootDir} doesn't exist`)
+    const storage = new FSStorage(rootDir)
+    if (!dirExists(rootDir) && create) {
+      log.info("arhiv doesn't exist, initializing dir structure")
+      await storage._create()
     }
 
-    const storage = new FSStorage(rootDir)
-    await storage.acquireLock()
+    await storage._lock.create()
 
     try {
-      await storage.init()
+      await storage._init()
 
       return storage
     } catch (e) {
@@ -89,6 +121,10 @@ export class FSStorage<T extends IDocument> {
 
   getRev() {
     return this._rev
+  }
+
+  getSchemaVersion() {
+    return this._schemaVersion
   }
 
   async getDocuments() {
@@ -109,7 +145,7 @@ export class FSStorage<T extends IDocument> {
   async getDocument(id: string) {
     const documentDir = path.join(this._documentsDir, id)
 
-    if (!await dirExists(documentDir)) {
+    if (!await dirExists(documentDir, true)) {
       return undefined
     }
 
@@ -201,7 +237,7 @@ class FSStorageMutations<T extends IDocument> {
 
   putDocument = async (document: T) => {
     const documentDir = path.join(this._documentsDir, document._id)
-    if (!await dirExists(documentDir)) {
+    if (!await dirExists(documentDir, true)) {
       await this._tx.createDir(documentDir)
     }
 
@@ -215,7 +251,7 @@ class FSStorageMutations<T extends IDocument> {
 
   addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
     const attachmentDir = path.join(this._attachmentsDir, attachment._id)
-    if (await dirExists(attachmentDir)) {
+    if (await dirExists(attachmentDir, true)) {
       throw new Error(`attachment ${attachment._id} already exists`)
     }
 

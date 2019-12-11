@@ -7,7 +7,7 @@ import {
 import {
   IDocument,
   IAttachment,
-  IChangesetResult,
+  IChangesetResponse,
   IChangeset,
 } from '../../types'
 import { LocalAttachments } from '../types'
@@ -31,6 +31,8 @@ interface IObjectStores<T extends IDocument> {
   'attachments-data': IBlob
 }
 export class TIDBStorage<T extends IDocument> {
+  public static readonly SCHEMA_VERSION = 1
+
   private _rev = 0
 
   private constructor(
@@ -189,6 +191,7 @@ export class TIDBStorage<T extends IDocument> {
     ])
 
     const changeset: IChangeset<T> = {
+      schemaVersion: TIDBStorage.SCHEMA_VERSION,
       baseRev: this.getRev(),
       documents: localDocuments,
       attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment._id)),
@@ -208,22 +211,22 @@ export class TIDBStorage<T extends IDocument> {
     return [changeset, localAttachmentsData]
   }
 
-  async applyChangesetResult(changesetResult: IChangesetResult<T>): Promise<MergeConflicts<T> | undefined> {
+  async applyChangesetResponse(changesetResponse: IChangesetResponse<T>): Promise<MergeConflicts<T> | undefined> {
     // this should never happen
-    if (this._rev !== changesetResult.baseRev) {
-      throw new Error(`Got rev ${changesetResult.baseRev} instead of ${this._rev}`)
+    if (this._rev !== changesetResponse.baseRev) {
+      throw new Error(`Got rev ${changesetResponse.baseRev} instead of ${this._rev}`)
     }
 
-    // "success" means there should be no merge conflicts, so just update the data
-    if (changesetResult.success) {
-      await this._upgrade(changesetResult, true)
+    // "accepted" means there should be no merge conflicts, so just update the data
+    if (changesetResponse.status === 'accepted') {
+      await this._upgrade(changesetResponse, true)
 
       return undefined
     }
 
-    const conflicts = await this._getConflicts(changesetResult)
+    const conflicts = await this._getConflicts(changesetResponse)
     if (!conflicts) {
-      await this._upgrade(changesetResult)
+      await this._upgrade(changesetResponse)
 
       return undefined
     }
@@ -231,7 +234,7 @@ export class TIDBStorage<T extends IDocument> {
     return conflicts
   }
 
-  private async _upgrade(changesetResult: IChangesetResult<T>, clearLocalData = false) {
+  private async _upgrade(changesetResult: IChangesetResponse<T>, clearLocalData = false) {
     this._rev = changesetResult.currentRev
 
     const tx = this._idb.transactionRW(
@@ -266,7 +269,7 @@ export class TIDBStorage<T extends IDocument> {
     }
   }
 
-  private async _getConflicts(changesetResult: IChangesetResult<T>): Promise<MergeConflicts<T> | undefined> {
+  private async _getConflicts(changesetResult: IChangesetResponse<T>): Promise<MergeConflicts<T> | undefined> {
     const tx = this._idb.transaction('documents', 'documents-local')
 
     const localDocuments = await tx.store('documents-local').getAll()

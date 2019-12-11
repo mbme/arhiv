@@ -12,7 +12,7 @@ import {
 import {
   IAttachment,
   IDocument,
-  IChangesetResult,
+  IChangesetResponse,
   IChangeset,
   Record,
 } from '../../types'
@@ -31,7 +31,7 @@ const log = createLogger('arhiv-db')
 type ChangesetExchange<T extends IDocument> = (
   changeset: IChangeset<T>,
   blobs: LocalAttachments,
-) => Promise<IChangesetResult<T>>
+) => Promise<IChangesetResponse<T>>
 
 function fetchAttachment$(id: string) {
   return new Observable<Blob>((observer) => {
@@ -191,9 +191,9 @@ export class ArhivDB<T extends IDocument = Record> {
       const result = await exchange(changeset, localAttachments)
 
       // tslint:disable-next-line:max-line-length
-      log.info(`sync: success: ${result.success}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
+      log.info(`sync: ${result.status}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
 
-      const conflicts = await this._storage.applyChangesetResult(result)
+      const conflicts = await this._storage.applyChangesetResponse(result)
       if (conflicts) {
         log.debug('sync: merge conflicts')
 

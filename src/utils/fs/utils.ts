@@ -185,12 +185,12 @@ export async function dirExists(filePath: string, assert = true) {
   return isDir
 }
 
-export async function ensureDirExists(dir: string) {
-  if (!await dirExists(dir)) {
-    await mkdir(dir)
-  }
-}
-
 export async function mkdir(filePath: string, recursive = false) {
   return fs.promises.mkdir(filePath, { recursive })
+}
+
+export async function assertDirExists(dir: string) {
+  if (!await dirExists(dir, true)) {
+    throw new Error(`Directory ${dir} doesn't exist`)
+  }
 }

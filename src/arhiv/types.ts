@@ -24,6 +24,11 @@ export interface IChangeset<T extends IDocument> {
   readonly baseRev: number
 
   /**
+   * replica schema version
+   */
+  readonly schemaVersion: number
+
+  /**
    * new or updated documents
    */
   readonly documents: readonly T[]
@@ -34,11 +39,15 @@ export interface IChangeset<T extends IDocument> {
   readonly attachments: readonly IAttachment[]
 }
 
-export interface IChangesetResult<T extends IDocument> {
+export type ChangesetResponseStatus = 'accepted' | 'outdated'
+
+export interface IChangesetResponse<T extends IDocument> {
+  readonly status: ChangesetResponseStatus
+
   /**
-   * if changeset was successfully applied
+   * replica schema version
    */
-  readonly success: boolean
+  readonly schemaVersion: number
 
   /**
    * replica storage revision

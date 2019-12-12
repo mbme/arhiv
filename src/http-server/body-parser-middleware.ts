@@ -4,16 +4,19 @@ import http from 'http'
 // tslint:disable-next-line:match-default-export-name
 import Busboy from 'busboy'
 import {
+  Counter,
+} from '~/utils'
+import {
   rmrfSync,
   createTempDir,
-} from '../utils/fs'
+} from '~/utils/fs'
 import {
   ILazy,
   lazy,
-} from '../utils/lazy'
+} from '~/utils/lazy'
 import {
   readStreamAsString,
-} from '../utils/node'
+} from '~/utils/node'
 import {
   MultipartBody,
   JSONBody,
@@ -45,6 +48,24 @@ function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage)
   })
 }
 
+function readFormData1(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage, boundary: string): Promise<MultipartBody> {
+  const body = new MultipartBody()
+  const counter = new Counter()
+
+  req.on('data', (chunk: Buffer) => {
+    const pos = chunk.indexOf(`--${boundary}`)
+  })
+
+  // find first --boundary in stream
+
+  // read headers (Content-Disposition, Content-Type) till 2 newlines
+  // parse headers
+  // read body till newline --boundary
+
+  // closing --boundary--
+
+}
+
 export async function bodyParserMiddleware({ req, httpReq }: IContext, next: Next) {
   if (!['POST', 'PUT'].includes(req.method)) {
     return next()
@@ -52,13 +73,21 @@ export async function bodyParserMiddleware({ req, httpReq }: IContext, next: Nex
 
   const contentType = req.headers['content-type'] || ''
   if (contentType.startsWith('multipart/form-data')) {
+    const boundary = contentType.match('boundary=(.*)')?.[1]
+    if (!boundary) {
+      throw new Error(`multipart: boundary is missing: "${contentType}"`)
+    }
+    // TODO assert encoding
+
     const tmpDir = lazy(createTempDir)
     try {
-      req.body = await readFormData(tmpDir, httpReq)
+      req.body = await readFormData1(tmpDir, httpReq, boundary)
 
       await next()
     } finally {
-      if (tmpDir.initialized) rmrfSync(await tmpDir.value)
+      if (tmpDir.initialized) {
+        rmrfSync(await tmpDir.value)
+      }
     }
 
     return

@@ -73,9 +73,9 @@ export class MultipartBody {
 }
 // tslint:disable-next-line:max-classes-per-file
 export class JSONBody {
-  constructor(public value: object) { }
+  constructor(public readonly value: object) { }
 }
 // tslint:disable-next-line:max-classes-per-file
 export class StringBody {
-  constructor(public value: string) { }
+  constructor(public readonly value: string) { }
 }

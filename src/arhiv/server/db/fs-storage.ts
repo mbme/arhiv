@@ -21,19 +21,22 @@ import {
   IAttachment,
 } from '../../types'
 
-type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>) => Promise<void>
+type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>, newRev: number) => Promise<void>
 
 const log = createLogger('fs-storage')
 
 interface IMetadata {
   schemaVersion: number
+  revision: number
 }
 
 export class FSStorage<T extends IDocument> {
   public static readonly SCHEMA_VERSION = 1
 
-  private _rev = 0
-  private _schemaVersion = 0
+  private _metadata: IMetadata = {
+    schemaVersion: FSStorage.SCHEMA_VERSION,
+    revision: 0,
+  }
 
   private _documentsDir: string
   private _attachmentsDir: string
@@ -56,27 +59,13 @@ export class FSStorage<T extends IDocument> {
       assertDirExists(this._attachmentsDir),
     ])
 
-    const metadata = await readJSON<IMetadata>(this._metadataFile)
+    this._metadata = await readJSON<IMetadata>(this._metadataFile)
     log.debug(`app schema version: ${FSStorage.SCHEMA_VERSION}`)
-    log.debug(`data schema version: ${metadata.schemaVersion}`)
+    log.debug(`data schema version: ${this._metadata.schemaVersion}`)
 
-    if (metadata.schemaVersion !== FSStorage.SCHEMA_VERSION) {
-      throw new Error(`app schema version is ${FSStorage.SCHEMA_VERSION}, data version is ${metadata.schemaVersion}`)
+    if (this._metadata.schemaVersion !== FSStorage.SCHEMA_VERSION) {
+      throw new Error(`app schema version is ${FSStorage.SCHEMA_VERSION}, data version is ${this._metadata.schemaVersion}`)
     }
-    this._schemaVersion = metadata.schemaVersion
-
-    const [
-      documents,
-      attachments,
-    ] = await Promise.all([
-      this.getDocuments(),
-      this.getAttachments(),
-    ])
-
-    const maxDocumentRev = documents.reduce((acc, document) => Math.max(acc, document._rev), 0)
-    const maxAttachmentRev = attachments.reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
-
-    this._rev = Math.max(maxDocumentRev, maxAttachmentRev)
   }
 
   private async _create() {
@@ -89,10 +78,9 @@ export class FSStorage<T extends IDocument> {
     await mkdir(this._attachmentsDir)
     log.debug(`created dir ${this._attachmentsDir}`)
 
-    await writeJSON(this._metadataFile, { schemaVersion: 1 })
+    this._writeMetadata()
     log.debug(`wrote metadata file ${this._metadataFile}`)
   }
-
   static async open(rootDirRaw: string, create: boolean) {
     const rootDir = path.resolve(rootDirRaw)
     log.info(`arhiv root: ${rootDir}`)
@@ -120,11 +108,11 @@ export class FSStorage<T extends IDocument> {
   }
 
   getRev() {
-    return this._rev
+    return this._metadata.revision
   }
 
   getSchemaVersion() {
-    return this._schemaVersion
+    return this._metadata.schemaVersion
   }
 
   async getDocuments() {
@@ -201,39 +189,39 @@ export class FSStorage<T extends IDocument> {
   async updateStorage(update: StorageUpdater<T>) {
     const tx = new FSTransaction()
     const mutations = new FSStorageMutations(
-      this._rev,
       this._documentsDir,
       this._attachmentsDir,
       tx,
     )
 
     try {
-      await update(mutations)
+      const newRev = this.getRev() + 1
+      await update(mutations, newRev)
 
       await tx.complete()
 
-      this._rev = mutations.getRev()
+      this._metadata.revision = newRev
+      await this._writeMetadata().catch((e) => {
+        log.error('Failed to write metadata during storage update', e)
+      })
     } catch (e) {
       await tx.revert()
 
       throw e
     }
   }
+
+  async _writeMetadata() {
+    await writeJSON(this._metadataFile, this._metadata)
+  }
 }
 
 class FSStorageMutations<T extends IDocument> {
   constructor(
-    private _rev: number,
     private _documentsDir: string,
     private _attachmentsDir: string,
     private _tx: FSTransaction,
   ) { }
-
-  setRev = (rev: number) => {
-    this._rev = rev
-  }
-
-  getRev = () => this._rev
 
   putDocument = async (document: T) => {
     const documentDir = path.join(this._documentsDir, document._id)

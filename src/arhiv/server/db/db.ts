@@ -83,9 +83,7 @@ export class ArhivDB<T extends IDocument> {
 
     log.debug(`got ${changeset.documents.length} documents and ${changeset.attachments.length} attachments`)
 
-    await this._storage.updateStorage(async (mutations) => {
-      const newRev = serverRev + 1
-
+    await this._storage.updateStorage(async (mutations, newRev) => {
       for (const changedDocument of changeset.documents) {
         await mutations.putDocument({
           ...changedDocument,
@@ -120,8 +118,6 @@ export class ArhivDB<T extends IDocument> {
           _size,
         }, attachedFile)
       }))
-
-      mutations.setRev(newRev)
     })
 
     return this._getChangesetResponse(changeset.baseRev, 'accepted')
@@ -162,9 +158,7 @@ export class ArhivDB<T extends IDocument> {
       return
     }
 
-    await this._storage.updateStorage(async (mutations) => {
-      const newRev = this.getRev() + 1
-
+    await this._storage.updateStorage(async (mutations, newRev) => {
       for (const attachment of unusedAttachments) {
         await mutations.updateAttachment({
           ...attachment,
@@ -174,8 +168,6 @@ export class ArhivDB<T extends IDocument> {
 
         log.warn(`Removing unused attachment's data ${attachment._id}`)
       }
-
-      mutations.setRev(newRev)
     })
   }
 }

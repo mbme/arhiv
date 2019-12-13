@@ -48,12 +48,139 @@ function readFormData(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage)
   })
 }
 
-function readFormData1(tmpDir: ILazy<Promise<string>>, req: http.IncomingMessage, boundary: string): Promise<MultipartBody> {
+type MultipartParserState = {
+  type: 'before'
+} | {
+  type: 'headers'
+  content: Buffer[]
+} | {
+  type: 'body-field'
+  name: string
+  content: Buffer[]
+} | {
+  type: 'body-file',
+  name: string
+  file: string
+  writeStream: fs.WriteStream,
+}
+
+function readFormData1(tmpDir: string, req: http.IncomingMessage, boundaryStr: string): Promise<MultipartBody> {
   const body = new MultipartBody()
   const counter = new Counter()
+  const boundary = Buffer.from(`--${boundaryStr}\n`, 'utf-8')
+  const lastBoundary = Buffer.from(`--${boundaryStr}--`, 'utf-8')
+  const headersBoundary = Buffer.from('\n\n', 'utf-8')
 
-  req.on('data', (chunk: Buffer) => {
-    const pos = chunk.indexOf(`--${boundary}`)
+  let state: MultipartParserState = {
+    type: 'before'
+  }
+
+  let prevChunk = Buffer.alloc(0)
+
+  req.on('data', (newChunk: Buffer) => {
+    const chunk = Buffer.concat([prevChunk, newChunk])
+    //  FIXME what if newChunk contains ALL THE DATA, i.e. headers and body
+    switch (state.type) {
+      case 'before': {
+        const pos = chunk.indexOf(boundary)
+
+        if (pos === -1) {
+          prevChunk = newChunk;
+        } else {
+          // drop all teh data before the first boundary and the boundary itself
+          prevChunk = chunk.subarray(pos + boundary.byteLength + 1)
+          state = {
+            type: 'headers',
+            content: [],
+          }
+        }
+
+        break;
+      }
+
+      case 'headers': {
+        const pos = chunk.indexOf(headersBoundary)
+
+        if (pos === -1) {
+          state.content.push(prevChunk)
+          prevChunk = newChunk;
+        } else {
+          state.content.push(chunk.subarray(0, pos))
+          prevChunk = chunk.subarray(pos + headersBoundary.byteLength + 1)
+
+          const headers = Buffer.concat(state.content).toString('utf-8').split('\n')
+          const contentDispositionHeader = headers.find(header => header.toLowerCase().startsWith('content-disposition:'))
+          if (!contentDispositionHeader) {
+            // FIXME close streams property
+            throw new Error('multipart body: Content-Disposition header is missing')
+          }
+
+          const fieldName = contentDispositionHeader.match(/name="(.*)"/) // FIXME check this regexp
+          if (!fieldName) {
+            throw new Error("multipart body: Content-Disposition header doesn't include name")
+          }
+
+          const isFile = contentDispositionHeader.includes('filename')
+          if (isFile) {
+            const file = path.join(tmpDir, counter.incAndGet.toString())
+            state = {
+              type: 'body-file',
+              name: fieldName[1],
+              file,
+              writeStream: fs.createWriteStream(file)
+            }
+          } else {
+            state = {
+              type: 'body-field',
+              name: fieldName[1],
+              content: [],
+            }
+          }
+        }
+
+        break;
+      }
+
+      case 'body-field': {
+        const pos = chunk.indexOf(boundary)
+        if (pos === -1) {
+          state.content.push(prevChunk)
+          prevChunk = newChunk;
+        } else {
+          state.content.push(chunk.subarray(0, pos))
+          prevChunk = chunk.subarray(pos + boundary.byteLength + 1)
+          body.fields.push({ field: state.name, value: Buffer.concat(state.content).toString('utf-8') })
+          state = {
+            type: 'headers',
+            content: [],
+          }
+        }
+
+        break;
+      }
+
+      case 'body-file': {
+        const pos = chunk.indexOf(boundary)
+        if (pos === -1) {
+          state.writeStream.write(prevChunk) // TODO check if written
+          prevChunk = newChunk;
+        } else {
+          state.writeStream.write(chunk.subarray(0, pos)) // TODO check if written
+          state.writeStream.end()
+          prevChunk = chunk.subarray(pos + boundary.byteLength + 1)
+          body.files.push({
+            field: state.name,
+            file: state.file,
+          })
+          state = {
+            type: 'headers',
+            content: [],
+          }
+        }
+
+        break;
+      }
+    }
   })
 
   // find first --boundary in stream

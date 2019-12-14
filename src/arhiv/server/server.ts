@@ -7,6 +7,7 @@ import { Queue } from '~/utils/queue'
 import {
   pathMatcher as pm,
 } from '~/utils/path-matcher'
+import { createTempDir, rmrfSync } from '~/utils/fs'
 import { getMimeType } from '~/file-prober'
 import {
   HTTPServer,
@@ -27,9 +28,12 @@ import {
 
 const log = createLogger('arhiv-server')
 
-export default function createServer(db: ArhivDB<IDocument>, password = '', staticDirs: string[]) {
+export async function createServer(db: ArhivDB<IDocument>, password = '', staticDirs: string[]) {
   const queue = new Queue()
-  const server = new HTTPServer()
+
+  const tmpDir = await createTempDir()
+  log.debug(`temp dir for files: ${tmpDir}`)
+  const server = new HTTPServer(tmpDir)
 
   log.debug('static dirs: ', staticDirs.join(', '))
 
@@ -134,6 +138,8 @@ export default function createServer(db: ArhivDB<IDocument>, password = '', stat
     },
 
     stop() {
+      rmrfSync(tmpDir)
+
       return Promise.all([server.stop(), queue.close()])
     },
   }

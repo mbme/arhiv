@@ -16,7 +16,7 @@ import {
   ArhivDB,
   FSStorage,
 } from './db'
-import createServer from './server'
+import { createServer } from './server'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -62,7 +62,7 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
     }
   }
 
-  const server = createServer(db, password, [
+  const server = await createServer(db, password, [
     path.join(rootDir, 'src/web-app/static'),
     path.join(rootDir, 'tsdist/web-app-src'),
   ])

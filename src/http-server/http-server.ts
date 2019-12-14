@@ -22,7 +22,7 @@ import {
   IResponse,
   HttpMethod,
 } from './types'
-import { bodyParserMiddleware } from './body-parser-middleware'
+import { createBodyParserMiddleware } from './body-parser-middleware'
 
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
 type RequestHandler<P extends object> = (context: IContext, params: P) => Promise<void> | void
@@ -37,9 +37,13 @@ const log = createLogger('http-server')
 const MAX_SECONDS_TO_WAIT_UNTIL_DESTROY = 10
 
 export class HTTPServer {
-  private _middlewares: Middleware[] = [bodyParserMiddleware]
+  private _middlewares: Middleware[] = []
   private _routes: Array<IRoute<any>> = []
   private _stopped = false
+
+  constructor(tmpDir: string) {
+    this._middlewares.push(createBodyParserMiddleware(tmpDir))
+  }
 
   use(cb: Middleware) {
     this._middlewares.push(cb)

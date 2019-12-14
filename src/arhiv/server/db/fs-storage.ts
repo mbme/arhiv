@@ -78,7 +78,7 @@ export class FSStorage<T extends IDocument> {
     await mkdir(this._attachmentsDir)
     log.debug(`created dir ${this._attachmentsDir}`)
 
-    this._writeMetadata()
+    await this._writeMetadata()
     log.debug(`wrote metadata file ${this._metadataFile}`)
   }
   static async open(rootDirRaw: string, create: boolean) {
@@ -86,7 +86,7 @@ export class FSStorage<T extends IDocument> {
     log.info(`arhiv root: ${rootDir}`)
 
     const storage = new FSStorage(rootDir)
-    if (!dirExists(rootDir) && create) {
+    if (!await dirExists(rootDir) && create) {
       log.info("arhiv doesn't exist, initializing dir structure")
       await storage._create()
     }

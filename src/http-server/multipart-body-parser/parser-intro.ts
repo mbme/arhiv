@@ -6,20 +6,10 @@ export class ParserIntro {
   ) {
   }
 
-  processChunk(nextChunk: Buffer): boolean {
-    const chunk = Buffer.concat([this._state.prevChunk, nextChunk])
-
-    const pos = chunk.indexOf(this._state.boundary)
-
-    if (pos === -1) {
-      this._state.prevChunk = nextChunk
-
-      return false
-    }
-
+  processChunk(): boolean {
     // drop all teh data before the first boundary and the boundary itself
-    this._state.prevChunk = chunk.subarray(pos + this._state.boundary.byteLength + 1)
+    const [foundBoundary] = this._state.consumeTillBoundary()
 
-    return true
+    return foundBoundary
   }
 }

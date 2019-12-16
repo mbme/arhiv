@@ -1,19 +1,10 @@
 import http from 'http'
+import { createLogger } from '~/logger'
 import { Deferred } from '~/utils'
-
 import { MultipartBody } from '../types'
+import { MultipartParser } from './parser'
 
-import { ParserState } from './parser-state'
-
-import { ParserIntro } from './parser-intro'
-import { ParserHeaders } from './parser-headers'
-import { ParserFieldBody } from './parser-field-body'
-import { ParserFileBody } from './parser-file-body'
-
-type Parser = ParserIntro
-  | ParserHeaders
-  | ParserFieldBody
-  | ParserFileBody
+const log = createLogger('multipart-parser')
 
 export function parseMultipartBody(
   tmpDir: string,
@@ -21,67 +12,15 @@ export function parseMultipartBody(
   boundary: string,
 ): Promise<MultipartBody> {
   const deferred = new Deferred<MultipartBody>()
-  const body = new MultipartBody()
+  const p = new MultipartParser(boundary, tmpDir)
 
-  const state = new ParserState(boundary, tmpDir)
-  let parser: Parser = new ParserIntro(state)
-
-  function handleChunk(nextChunk: Buffer) {
-    // FIXME make sure chunk.byteLength is bigger than boundary.byteLength
-    // FIXME what if newChunk contains ALL THE DATA, i.e. headers and body
-    // FIXME when to stop
-    const complete = parser.processChunk(nextChunk)
-
-    if (!complete) {
+  req.on('data', (chunk: Buffer) => {
+    if (p.isComplete()) {
+      log.warn(`got data ${chunk.byteLength} after final boundary, ignoring`)
       return
     }
 
-    if (parser instanceof ParserIntro) {
-      parser = new ParserHeaders(state)
-
-      return
-    }
-
-    if (parser instanceof ParserHeaders) {
-      const {
-        fieldName,
-        isFile,
-      } = parser.parseHeaders()
-
-      parser = isFile
-        ? new ParserFileBody(state, fieldName)
-        : new ParserFieldBody(state, fieldName)
-
-      return
-    }
-
-    if (parser instanceof ParserFieldBody) {
-      body.fields.push({
-        field: parser.name,
-        value: parser.getValue(),
-      })
-
-      parser = new ParserHeaders(state)
-
-      return
-    }
-
-    if (parser instanceof ParserFileBody) {
-      body.files.push({
-        field: parser.name,
-        file: parser.file,
-      })
-
-      parser = new ParserHeaders(state)
-
-      return
-    }
-
-    throw new Error('unreachable: got unexpected parser')
-  }
-
-  req.on('data', (nextChunk: Buffer) => {
-    handleChunk(nextChunk)
+    p.processChunk(chunk)
   })
 
   req.on('error', (e) => {
@@ -89,8 +28,11 @@ export function parseMultipartBody(
   })
 
   req.on('end', () => {
-    // FIXME process remaining data & check if there was no redundant data
-    deferred.resolve(body)
+    if (p.isComplete()) {
+      deferred.resolve(p.getResult())
+    } else {
+      deferred.reject(new Error("multipart request didn't contain final boundary"))
+    }
   })
 
   return deferred.promise

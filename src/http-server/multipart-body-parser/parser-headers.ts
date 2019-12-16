@@ -13,22 +13,12 @@ export class ParserHeaders {
   ) {
   }
 
-  processChunk(nextChunk: Buffer): boolean {
-    const chunk = Buffer.concat([this._state.prevChunk, nextChunk])
+  processChunk(): boolean {
+    const [foundBoundary, data] = this._state.consumeTill(headersBoundary)
 
-    const pos = chunk.indexOf(headersBoundary)
+    this._chunks.push(data)
 
-    if (pos === -1) {
-      this._chunks.push(this._state.prevChunk)
-      this._state.prevChunk = nextChunk
-
-      return false
-    }
-
-    this._chunks.push(chunk.subarray(0, pos))
-    this._state.prevChunk = chunk.subarray(pos + headersBoundary.byteLength + 1)
-
-    return true
+    return foundBoundary
   }
 
   parseHeaders() {

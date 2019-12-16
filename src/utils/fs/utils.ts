@@ -147,7 +147,11 @@ export async function moveFileIntoDir(filePath: string, dir: string): Promise<st
   return newFile
 }
 
-export function removeFile(filePath: string) {
+export async function removeFile(filePath: string, ignoreMissing = false) {
+  if (ignoreMissing && !await fileExists(filePath)) {
+    return
+  }
+
   return fs.promises.unlink(filePath)
 }
 

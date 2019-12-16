@@ -107,3 +107,7 @@ export function isSubSequence(str: string, i: number, seq: string) {
 }
 
 export const isSha256 = (str: string) => /^[a-f0-9]{64}$/i.test(str)
+
+export function parseInt10(str: string) {
+  return parseInt(str, 10)
+}

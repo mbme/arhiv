@@ -3,6 +3,7 @@ import { createLogger } from '~/logger'
 import {
   getLastEl,
   prettyPrintJSON,
+  parseInt10,
 } from '~/utils'
 import {
   listDirs,
@@ -137,7 +138,7 @@ export class FSStorage<T extends IDocument> {
       return undefined
     }
 
-    const lastRev = getLastEl((await listFiles(documentDir)).map(parseInt).sort())
+    const lastRev = getLastEl((await listFiles(documentDir)).map(parseInt10).sort())
 
     // FIXME check if looks like a document dir, check files etc
 
@@ -146,7 +147,7 @@ export class FSStorage<T extends IDocument> {
 
   async getDocumentHistory(id: string) {
     const documentDir = path.join(this._documentsDir, id)
-    const revisions = (await listFiles(documentDir)).map(parseInt).sort()
+    const revisions = (await listFiles(documentDir)).map(parseInt10).sort()
 
     return Promise.all(revisions.map(revision => readJSON<T>(path.join(documentDir, revision.toString()))))
   }

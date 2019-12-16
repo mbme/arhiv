@@ -4,6 +4,7 @@ import {
   loggerConfig,
   parseLogLevel,
 } from '~/logger'
+import { parseInt10 } from '~/utils'
 import {
   rmrfSync,
 } from '~/utils/fs'
@@ -67,7 +68,7 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
     path.join(rootDir, 'tsdist/web-app-src'),
   ])
 
-  await server.start(parseInt(port, 10))
+  await server.start(parseInt10(port))
   log.info(`listening on http://localhost:${port}`)
 
   onTermination(async () => {

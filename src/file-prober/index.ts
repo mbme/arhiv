@@ -1,6 +1,6 @@
 /* tslint:disable:no-unsafe-any */
 import path from 'path'
-import { Dict } from '~/utils'
+import { Dict, parseInt10 } from '~/utils'
 import { exec } from '~/utils/node'
 
 // TODO images, video
@@ -17,7 +17,7 @@ async function probeMediaFileMeta(filePath: string) {
   if (!format || !SUPPORTED_MEDIA_FORMATS.includes(format.format_name)) return undefined
 
   return {
-    bitRate: parseInt(format.bit_rate, 10),
+    bitRate: parseInt10(format.bit_rate),
     duration: parseFloat(format.duration),
   }
 }

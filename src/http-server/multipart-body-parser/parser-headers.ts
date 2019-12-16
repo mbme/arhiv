@@ -1,7 +1,10 @@
 import { ParserState } from './parser-state'
-import { stringifyChunks } from './utils'
+import {
+  stringifyChunks,
+  CRLF,
+} from './utils'
 
-const headersBoundary = Buffer.from('\n\n', 'utf-8')
+const headersBoundary = Buffer.from(`${CRLF}${CRLF}`, 'utf-8')
 
 const nameRegexp = /name="([^""]*)"/
 
@@ -22,7 +25,7 @@ export class ParserHeaders {
   }
 
   parseHeaders() {
-    const headers = stringifyChunks(this._chunks).split('\n')
+    const headers = stringifyChunks(this._chunks).split(CRLF)
 
     const contentDispositionHeader = headers.find(header => header.toLowerCase().startsWith('content-disposition:'))
     if (!contentDispositionHeader) {

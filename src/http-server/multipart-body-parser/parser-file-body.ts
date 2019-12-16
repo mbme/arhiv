@@ -17,9 +17,7 @@ export class ParserFileBody {
   processChunk(): boolean {
     const [foundBoundary, data] = this._state.consumeTillBoundary()
 
-    if (!this._ws.write(data)) {
-      throw new Error('body-file parser failed to write chunk into the stream')
-    }
+    this._ws.write(data)
 
     if (foundBoundary) {
       this._ws.end()

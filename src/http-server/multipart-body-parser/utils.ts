@@ -1,3 +1,5 @@
+export const CRLF = '\r\n' // https://tools.ietf.org/html/rfc7230#section-3
+
 export function stringifyChunks(chunks: Buffer[]) {
   return Buffer.concat(chunks).toString('utf-8')
 }

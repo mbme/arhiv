@@ -1,14 +1,20 @@
 import path from 'path'
 import { Counter } from '~/utils'
-import { isSubarrayAt } from './utils'
+import {
+  isSubarrayAt,
+  CRLF,
+} from './utils'
 
-const newline = Buffer.from('\n', 'utf-8')
+const newline = Buffer.from(CRLF, 'utf-8')
 const closingDashes = Buffer.from('--', 'utf-8')
 
 export class ParserState {
   public readonly boundary: Buffer
 
-  public chunk = Buffer.alloc(0)
+  // use newline as initial data cause first boundary may go without first newline
+  // so now we can always match boundary as \r\n--boundary\r\n
+  public chunk = newline
+
   public complete = false
 
   private _counter = new Counter()
@@ -18,7 +24,7 @@ export class ParserState {
     boundary: string,
     private _tmpDir: string,
   ) {
-    this.boundary = Buffer.from(`\n--${boundary}`, 'utf-8')
+    this.boundary = Buffer.from(`${CRLF}--${boundary}`, 'utf-8')
     this._safeMargin = this.boundary.byteLength + newline.byteLength
   }
 

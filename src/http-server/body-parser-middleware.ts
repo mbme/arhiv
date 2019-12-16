@@ -29,7 +29,7 @@ export function createBodyParserMiddleware(tmpDir: string) {
 
         await next()
       } finally {
-        await Promise.all(body?.files.map(item => removeFile(item.file)) || [])
+        await Promise.all(body?.files.map(item => removeFile(item.file, true)) || [])
       }
 
       return

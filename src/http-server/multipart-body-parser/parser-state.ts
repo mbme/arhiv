@@ -18,7 +18,7 @@ export class ParserState {
     boundary: string,
     private _tmpDir: string,
   ) {
-    this.boundary = Buffer.from(`--${boundary}`, 'utf-8')
+    this.boundary = Buffer.from(`\n--${boundary}`, 'utf-8')
     this._safeMargin = this.boundary.byteLength + newline.byteLength
   }
 
@@ -31,7 +31,7 @@ export class ParserState {
   }
 
   genTempFile() {
-    return path.join(this._tmpDir, this._counter.incAndGet.toString())
+    return path.join(this._tmpDir, this._counter.incAndGet().toString())
   }
 
   private _detectBoundary(chunk: Buffer): [number, boolean] {
@@ -71,7 +71,7 @@ export class ParserState {
 
     const chunkToProceed = this.chunk.subarray(0, pos)
     const boundaryLength = this.boundary.byteLength + (isFinal ? closingDashes.byteLength : newline.byteLength)
-    this.chunk = this.chunk.subarray(pos + boundaryLength + 1)
+    this.chunk = this.chunk.subarray(pos + boundaryLength)
 
     return [true, chunkToProceed]
   }
@@ -88,7 +88,7 @@ export class ParserState {
     }
 
     const chunkToProceed = this.chunk.subarray(0, pos)
-    this.chunk = this.chunk.subarray(pos + boundary.byteLength + 1)
+    this.chunk = this.chunk.subarray(pos + boundary.byteLength)
 
     return [true, chunkToProceed]
   }

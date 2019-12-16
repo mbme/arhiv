@@ -11,3 +11,8 @@ export function isSubarrayAt(array: Buffer, pos: number, subarray: Buffer) {
 
   return result === 0
 }
+
+const boundaryRegexp = /boundary=(.*)/
+export function extractBoundary(contentTypeHeader: string): string {
+  return contentTypeHeader.match(boundaryRegexp)?.[1] || ''
+}

@@ -15,10 +15,11 @@ type Parser = ParserIntro
 export class MultipartParser {
   private _body = new MultipartBody()
   private _state: ParserState
-  private _parser: Parser = new ParserIntro(this._state)
+  private _parser: Parser
 
   constructor(boundary: string, tmpDir: string) {
     this._state = new ParserState(boundary, tmpDir)
+    this._parser = new ParserIntro(this._state)
   }
 
   isComplete(): boolean {

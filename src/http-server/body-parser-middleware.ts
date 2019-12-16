@@ -21,15 +21,9 @@ export function createBodyParserMiddleware(tmpDir: string) {
 
     const contentType = req.headers['content-type'] || ''
     if (contentType.startsWith('multipart/form-data')) {
-      const boundary = contentType.match('boundary=(.*)')?.[1]
-      if (!boundary) {
-        throw new Error(`multipart: boundary is missing: "${contentType}"`)
-      }
-      // TODO assert encoding
-
       let body: MultipartBody | undefined
       try {
-        body = await parseMultipartBody(tmpDir, httpReq, boundary)
+        body = await parseMultipartBody(httpReq, tmpDir)
 
         req.body = body
 

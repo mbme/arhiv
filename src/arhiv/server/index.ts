@@ -18,7 +18,7 @@ import {
   IChangeset,
   IDocument,
 } from '../types'
-import { ArhivDB } from './db'
+import { ArhivDB } from '../primary/db'
 import {
   isValidAuth,
   extractTokenCookie,
@@ -28,7 +28,12 @@ import {
 
 const log = createLogger('arhiv-server')
 
-export async function createServer(db: ArhivDB<IDocument>, password = '', staticDirs: string[]) {
+export interface IArhivServerConfig {
+  readonly port: number
+  readonly password: string
+}
+
+export async function createServer(db: ArhivDB<IDocument>, config: IArhivServerConfig, staticDirs: string[]) {
   const queue = new Queue()
 
   const tmpDir = await createTempDir()
@@ -42,7 +47,7 @@ export async function createServer(db: ArhivDB<IDocument>, password = '', static
 
     res.headers['Referrer-Policy'] = 'no-referrer'
 
-    const isAuthorized = isValidAuth(extractTokenCookie(req.headers.cookie || ''), password)
+    const isAuthorized = isValidAuth(extractTokenCookie(req.headers.cookie || ''), config.password)
     if (!isAuthorized
       && req.url.pathname!.startsWith('/api')
       && req.url.pathname !== '/api/auth') {
@@ -63,13 +68,13 @@ export async function createServer(db: ArhivDB<IDocument>, password = '', static
       return
     }
 
-    if (body.value !== password) {
+    if (body.value !== config.password) {
       res.statusCode = 401
 
       return
     }
 
-    res.headers['set-cookie'] = createToken(password)
+    res.headers['set-cookie'] = createToken(config.password)
   })
 
   // POST /api/changeset
@@ -133,11 +138,12 @@ export async function createServer(db: ArhivDB<IDocument>, password = '', static
   })
 
   return {
-    start(port: number) {
-      return server.start(port)
+    async start() {
+      await server.start(config.port)
+      log.info(`listening on http://localhost:${config.port}`)
     },
 
-    stop() {
+    async stop() {
       rmrfSync(tmpDir)
 
       return Promise.all([server.stop(), queue.close()])

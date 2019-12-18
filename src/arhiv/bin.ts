@@ -4,7 +4,6 @@ import {
   loggerConfig,
   parseLogLevel,
 } from '~/logger'
-import { parseInt10 } from '~/utils'
 import {
   rmrfSync,
 } from '~/utils/fs'
@@ -12,28 +11,27 @@ import {
   createRunnable,
   onTermination,
 } from '~/utils/runnable'
-import { getFakeNotes } from './faker'
+import { getFakeNotes } from './tools/faker'
 import {
   ArhivDB,
   FSStorage,
-} from './db'
+} from './primary'
 import { createServer } from './server'
+import { readConfig } from './tools/config'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
 loggerConfig.minLogLevel = parseLogLevel(process.env.LOG || '')
 loggerConfig.includeDateTime = true
 
-const log = createLogger('arhiv-server')
+const log = createLogger('arhiv')
 
-createRunnable(async (port: string, password: string, storageDir: string, ...args: string[]) => {
-  if (!port || !password || !storageDir) {
-    throw new Error('port, password & storageDir are required')
-  }
-
+createRunnable(async (...args: string[]) => {
   const rootDir = process.cwd()
 
-  const storage = await FSStorage.open(storageDir, args.includes('--init'))
+  const config = await readConfig()
+
+  const storage = await FSStorage.open(config.storageDir, args.includes('--init'))
   onTermination(() => storage.stop())
 
   const db = new ArhivDB(storage)
@@ -63,13 +61,12 @@ createRunnable(async (port: string, password: string, storageDir: string, ...arg
     }
   }
 
-  const server = await createServer(db, password, [
+  const server = await createServer(db, config.server, [
     path.join(rootDir, 'src/web-app/static'),
     path.join(rootDir, 'tsdist/web-app-src'),
   ])
 
-  await server.start(parseInt10(port))
-  log.info(`listening on http://localhost:${port}`)
+  await server.start()
 
   onTermination(async () => {
     log.info(`stopping...`)

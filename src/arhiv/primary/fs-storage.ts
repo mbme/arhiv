@@ -20,7 +20,7 @@ import {
 import {
   IDocument,
   IAttachment,
-} from '../../types'
+} from '../types'
 
 type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>, newRev: number) => Promise<void>
 

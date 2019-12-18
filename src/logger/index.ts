@@ -5,7 +5,10 @@ import {
   LEVELS,
 } from './types'
 
+export { ILoggerConfig } from './types'
+
 export { config as loggerConfig } from './config'
+
 
 export function createLogger(namespace: string, namespaceColor?: TermColor) {
   return new Logger(namespace, namespaceColor)

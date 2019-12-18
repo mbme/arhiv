@@ -1,14 +1,8 @@
 import {
-  LogLevel,
+  ILoggerConfig,
 } from './types'
 
-export interface IConfig {
-  minLogLevel: LogLevel
-  includeDateTime: boolean
-  namespaceSize: number
-}
-
-export const config: IConfig = {
+export const config: ILoggerConfig = {
   minLogLevel: 'INFO',
   includeDateTime: false,
   namespaceSize: 20,

@@ -9,8 +9,8 @@ import {
   IChangeset,
   IDocument,
   ChangesetResponseStatus,
-} from '../../types'
-import { isEmptyChangeset } from '../../utils'
+} from '../types'
+import { isEmptyChangeset } from '../utils'
 import { FSStorage } from './fs-storage'
 
 const log = createLogger('arhiv-db')

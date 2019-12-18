@@ -10,7 +10,10 @@ import {
   rmrfSync,
   readText,
 } from '~/utils/fs'
-import { extractBoundary, CRLF } from './utils'
+import {
+  extractBoundary,
+  CRLF,
+} from './utils'
 import { MultipartParser } from './parser'
 
 let tmpDir: string | undefined
@@ -22,10 +25,9 @@ after(() => {
 })
 
 test('extract boundary from Content-Type header', () => {
-  assertEqual(
-    extractBoundary('Content-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150'),
-    '---------------------------735323031399963166993862150',
-  )
+  const header = 'Content-Type: multipart/form-data; boundary=---------------------------735323031399963166993862150'
+
+  assertEqual(extractBoundary(header), '---------------------------735323031399963166993862150')
 })
 
 test('multipart-parser on fake data', async () => {

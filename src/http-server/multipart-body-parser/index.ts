@@ -13,7 +13,6 @@ export function parseMultipartBody(req: http.IncomingMessage, tmpDir: string): P
     if (!boundary) {
       throw new Error(`multipart: boundary is missing: "${contentType}"`)
     }
-    // TODO assert encoding
 
     const parser = new MultipartParser(boundary, tmpDir)
 

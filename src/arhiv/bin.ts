@@ -1,8 +1,6 @@
 import path from 'path'
 import {
   createLogger,
-  loggerConfig,
-  parseLogLevel,
 } from '~/logger'
 import {
   rmrfSync,
@@ -18,11 +16,9 @@ import {
 } from './primary'
 import { createServer } from './server'
 import { readConfig } from './tools/config'
+import { patchLoggerConfig } from '~/logger/config'
 
 const isProduction = process.env.NODE_ENV === 'production'
-
-loggerConfig.minLogLevel = parseLogLevel(process.env.LOG || '')
-loggerConfig.includeDateTime = true
 
 const log = createLogger('arhiv')
 
@@ -30,6 +26,7 @@ createRunnable(async (...args: string[]) => {
   const rootDir = process.cwd()
 
   const config = await readConfig()
+  patchLoggerConfig(config.log)
 
   const storage = await FSStorage.open(config.storageDir, args.includes('--init'))
   onTermination(() => storage.stop())

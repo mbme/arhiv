@@ -20,6 +20,7 @@ export function parseMultipartBody(req: http.IncomingMessage, tmpDir: string): P
     req.on('data', (chunk: Buffer) => {
       if (parser.isComplete()) {
         log.warn(`got data ${chunk.byteLength} after final boundary, ignoring`)
+
         return
       }
 

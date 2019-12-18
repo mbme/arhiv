@@ -5,7 +5,7 @@ export { ILoggerConfig } from './types'
 
 export {
   config as loggerConfig,
-  patchLoggerConfig,
+  configureLogger,
 } from './config'
 
 export function createLogger(namespace: string, namespaceColor?: TermColor) {

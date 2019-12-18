@@ -8,7 +8,7 @@ export const config: ILoggerConfig = {
   namespaceSize: 20,
 }
 
-export function patchLoggerConfig(patch: Partial<ILoggerConfig>) {
+export function configureLogger(patch: Partial<ILoggerConfig>) {
   for (const [key, value] of Object.entries(patch)) {
     (config as any)[key] = value
   }

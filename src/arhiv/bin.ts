@@ -16,7 +16,7 @@ import {
 } from './primary'
 import { createServer } from './server'
 import { readConfig } from './tools/config'
-import { patchLoggerConfig } from '~/logger/config'
+import { configureLogger } from '~/logger/config'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -26,7 +26,7 @@ createRunnable(async (...args: string[]) => {
   const rootDir = process.cwd()
 
   const config = await readConfig()
-  patchLoggerConfig(config.log)
+  configureLogger(config.log)
 
   const storage = await FSStorage.open(config.storageDir, args.includes('--init'))
   onTermination(() => storage.stop())

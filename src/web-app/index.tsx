@@ -1,8 +1,8 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import {
-  loggerConfig,
   createLogger,
+  configureLogger,
 } from '~/logger'
 import {
   debugLayoutSnippet,
@@ -30,7 +30,9 @@ import { LibraryApp } from './app-library'
 
 const isDev = true
 
-loggerConfig.minLogLevel = isDev ? 'DEBUG' : 'WARN'
+configureLogger({
+  minLogLevel: isDev ? 'DEBUG' : 'WARN',
+})
 
 const log = createLogger('web-app')
 

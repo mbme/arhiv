@@ -4,14 +4,24 @@ import {
   consumeAsyncIterable,
   termColors,
 } from '~/utils'
-import { loggerConfig } from '~/logger'
-import { getFiles } from '~/utils/fs'
-import { createRunnable } from '~/utils/runnable'
-import { TestFile } from './test-file/test-file'
+import {
+  configureLogger,
+} from '~/logger'
+import {
+  getFiles,
+} from '~/utils/fs'
+import {
+  createRunnable,
+} from '~/utils/runnable'
+import {
+  TestFile,
+} from './test-file/test-file'
 
-loggerConfig.minLogLevel = 'ERROR' // suppress log messages
+configureLogger({
+  minLogLevel: 'ERROR', // suppress log messages
+})
 
-createRunnable(async (...args: string[]) => {
+createRunnable(async (args: string[]) => {
   const filter = args.filter((arg) => !arg.startsWith('-'))[0] || ''
   const updateSnapshots = args.includes('-u')
 

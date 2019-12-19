@@ -2,10 +2,13 @@
 
 import {
   createLogger,
-  loggerConfig,
+  configureLogger,
 } from '~/logger'
 
-loggerConfig.minLogLevel = 'INFO'
+configureLogger({
+  minLogLevel: 'INFO',
+})
+
 const log = createLogger('serviceWorker', 'gray')
 
 type Scope = ServiceWorkerGlobalScope & typeof globalThis

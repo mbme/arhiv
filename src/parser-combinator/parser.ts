@@ -20,6 +20,7 @@ export class Failure {
   }
 }
 
+// FIXME use general result
 export type Result<T> = Success<T> | Failure
 
 export function isSuccess<T>(result: Result<T>): result is Success<T> {

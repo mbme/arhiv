@@ -7,7 +7,6 @@ import {
 } from '~/utils/fs'
 import {
   createRunnable,
-  onTermination,
 } from '~/utils/runnable'
 import { getFakeNotes } from './tools/faker'
 import {
@@ -22,14 +21,14 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 const log = createLogger('arhiv')
 
-createRunnable(async (...args: string[]) => {
+createRunnable(async (args, onExit) => {
   const rootDir = process.cwd()
 
   const config = await readConfig()
   configureLogger(config.log)
 
   const storage = await FSStorage.open(config.storageDir, args.includes('--init'))
-  onTermination(() => storage.stop())
+  onExit(() => storage.stop())
 
   const db = new ArhivDB(storage)
 
@@ -65,7 +64,7 @@ createRunnable(async (...args: string[]) => {
 
   await server.start()
 
-  onTermination(async () => {
+  onExit(async () => {
     log.info(`stopping...`)
     try {
       await server.stop()

@@ -4,7 +4,6 @@ import { Logger } from './logger'
 export { ILoggerConfig } from './types'
 
 export {
-  config as loggerConfig,
   configureLogger,
 } from './config'
 

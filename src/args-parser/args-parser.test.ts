@@ -6,7 +6,7 @@ import {
 import { ArgsParser } from './args-parser'
 
 test('allows to specify commands', () => {
-  const x = ArgsParser.create().command({})
+  const x = ArgsParser.command({})
 
   // test if fails when no command provided
 })

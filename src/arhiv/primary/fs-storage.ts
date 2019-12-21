@@ -139,6 +139,9 @@ export class FSStorage<T extends IDocument> {
     }
 
     const lastRev = getLastEl((await listFiles(documentDir)).map(parseInt10).sort())
+    if (!lastRev) {
+      throw new Error(`unreachable: document ${id} has no revisions`)
+    }
 
     // FIXME check if looks like a document dir, check files etc
 

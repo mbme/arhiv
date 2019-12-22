@@ -1,3 +1,4 @@
+import path from 'path'
 import {
   Procedure,
   AsyncProcedure,
@@ -23,15 +24,19 @@ export class TestContext {
   updatedSnapshots = 0
 
   constructor(
-    public readonly basePath: string,
+    public readonly testName: string,
     public readonly testFile: string,
+    public readonly snapshotFile: string,
   ) { }
 }
 
 let currentContext: TestContext | undefined
 
-export function initializeTestContext(basePath: string, testFile: string) {
-  currentContext = new TestContext(basePath, testFile)
+export function initializeTestContext(basePath: string, srcPath: string, testFile: string) {
+  const relPath = path.relative(basePath, testFile)
+  const snapshotFile = `${path.join(srcPath, relPath)}.snap.json`
+
+  currentContext = new TestContext(relPath, testFile, snapshotFile)
 }
 
 export function getTestContext(): TestContext {

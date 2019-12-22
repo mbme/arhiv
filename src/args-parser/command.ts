@@ -5,7 +5,7 @@ import {
 } from '~/utils'
 import { IOption } from './types'
 
-const optionNameRegex = /$[a-z0-9-]+^/g
+const optionNameRegex = /^[a-zA-Z0-9-]+$/
 
 export class Command<C extends string, CO extends object> {
   constructor(
@@ -21,6 +21,10 @@ export class Command<C extends string, CO extends object> {
   private _addOption<O extends string, V>(option: IOption<O>) {
     if (!optionNameRegex.test(option.name)) {
       throw new Error(`option ${option.name} doesn't match ${optionNameRegex}`)
+    }
+
+    if (!option.positional && !option.name.startsWith('-')) {
+      throw new Error(`option ${option.name} should start with -`)
     }
 
     if (option.positional && option.name.startsWith('-')) {
@@ -50,7 +54,7 @@ export class Command<C extends string, CO extends object> {
     return this._addOption<O, string[]>({ name, description, positional: 'array' })
   }
 
-  parseOptions(args: string[]): CO {
+  parseOptions(args: string[]): Partial<CO> {
     const result: Dict<any> = {}
 
     const optionsToCheck = [...this._options]
@@ -66,7 +70,7 @@ export class Command<C extends string, CO extends object> {
 
         removeMut(optionsToCheck, option)
 
-        result[arg] = arg === option.name ? '' : arg.substring(option.name.length + 1)
+        result[option.name] = arg === option.name ? '' : arg.substring(option.name.length + 1)
       } else { // positional
         const option = optionsToCheck.find(item => item.positional)
         if (!option) {
@@ -75,10 +79,51 @@ export class Command<C extends string, CO extends object> {
 
         removeMut(optionsToCheck, option)
 
-        result[option.name] = option.positional === 'one' ? arg : args.slice(i)
+        if (option.positional === 'one') {
+          result[option.name] = arg
+        } else {
+          result[option.name] = args.slice(i)
+          break
+        }
       }
     }
 
-    return result
+    return result as Partial<CO>
   }
+
+  getHelp(appName: string) {
+    const hasOptions = this._options.filter(option => !option.positional).length > 0
+
+    const positionalStr = this._options.filter(option => option.positional)
+      .map(option => `<${option.name}${option.positional === 'one' ? '' : '...'}>`)
+      .join(' ')
+
+    const optionsStr = this._options
+      .map(option => {
+        let result = '        '
+
+        if (option.positional === 'one') {
+          result += `<${option.name}>`
+        } else if (option.positional === 'array') {
+          result += `<${option.name}...>`
+        } else {
+          result += option.name
+        }
+
+        if (option.description) {
+          result += ` - ${option.description}`
+        }
+
+        return result
+      })
+      .join('\n')
+
+    return `
+      # ${this.description}
+      ${appName} ${this.name} ${hasOptions ? '[options]' : ''} ${positionalStr}\n${optionsStr}`
+  }
+}
+
+export function command(name: string, description: string) {
+  return new Command(name, description, [])
 }

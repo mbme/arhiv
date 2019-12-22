@@ -26,6 +26,7 @@ createRunnable(async (args: string[]) => {
   const updateSnapshots = args.includes('-u')
 
   const basePath = path.join(process.cwd(), process.env.BASE_DIR!)
+  const srcPath = path.join(process.cwd(), process.env.SRC_DIR!)
 
   const files = (await consumeAsyncIterable(getFiles(basePath)))
     .filter((relPath) => relPath.endsWith('.test.js'))
@@ -42,7 +43,7 @@ createRunnable(async (args: string[]) => {
     }
 
     try {
-      const testFile = await TestFile.load(basePath, file, updateSnapshots)
+      const testFile = await TestFile.load(basePath, srcPath, file, updateSnapshots)
       tests.push(testFile)
     } catch (e) {
       console.log(`Failed to load test file ${file}: ${e}`)

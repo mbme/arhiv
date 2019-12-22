@@ -1,5 +1,4 @@
 /* tslint:disable:no-console */
-import path from 'path'
 import {
   uniq,
   termColors,
@@ -27,14 +26,12 @@ import {
 
 export class TestFile {
   readonly fileName: string
-  private _snapshotFile: string
 
   private constructor(
     private _testContext: TestContext,
     private _updateSnapshots: boolean,
   ) {
-    this.fileName = path.relative(_testContext.basePath, _testContext.testFile)
-    this._snapshotFile = `${_testContext.testFile}.snap.json`
+    this.fileName = _testContext.testName
 
     // make sure we don't use updateSnapshots option while running only selected tests
     if (_testContext.tests.find(test => test.only) && _updateSnapshots) {
@@ -58,18 +55,18 @@ export class TestFile {
   }
 
   private async _readSnapshots(): Promise<TestFileSnapshots> {
-    if (!await fileExists(this._snapshotFile)) {
+    if (!await fileExists(this._testContext.snapshotFile)) {
       return {}
     }
 
-    return readJSON(this._snapshotFile)
+    return readJSON(this._testContext.snapshotFile)
   }
 
   private async _writeSnapshots(snapshots: TestFileSnapshots) {
     if (Object.values(snapshots).length) {
-      await writeJSON(this._snapshotFile, snapshots)
-    } else if (await fileExists(this._snapshotFile)) {
-      await removeFile(this._snapshotFile)
+      await writeJSON(this._testContext.snapshotFile, snapshots)
+    } else if (await fileExists(this._testContext.snapshotFile)) {
+      await removeFile(this._testContext.snapshotFile)
     }
   }
 
@@ -93,6 +90,10 @@ export class TestFile {
 
       return [snapshots, true]
     } catch (e) {
+      const {
+        successfulAsserts,
+      } = getAssertContext()
+      console.log(`  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${test.name}`)
       console.log(termColors.red(` failed: ${test.name}`))
       console.log('')
       console.log(e)
@@ -154,8 +155,8 @@ export class TestFile {
     return failures
   }
 
-  static async load(basePath: string, testFile: string, updateSnapshots: boolean) {
-    initializeTestContext(basePath, testFile)
+  static async load(basePath: string, srcPath: string, testFile: string, updateSnapshots: boolean) {
+    initializeTestContext(basePath, srcPath, testFile)
 
     await import(testFile) // collect tests from the file into test context
 

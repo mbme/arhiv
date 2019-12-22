@@ -1,0 +1,5 @@
+{
+  "generates help": [
+    "testApp usage:\n      \n      # test command\n      testApp test  <port>\n        <port> - port to listen on\n\n      # a different command\n      testApp other  <args...>\n        <args...> - a lot of arguments\n\n      # default command\n      testApp  [options] \n        -no\n    "
+  ]
+}

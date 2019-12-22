@@ -1,31 +1,35 @@
 import { Command } from './command'
 import { NeedHelpError } from './types'
 
-// global options
-// if there is at least 1 command, command becomes required
-// command options
-// positionalOne
-// positionalRest
-
 class ArgsParserBuilder<CT extends object, C extends keyof CT> {
   private constructor(
     private _help: boolean,
     private _commmands: Array<Command<C, any>>,
   ) { }
 
-  static create(help = true) {
+  static create(help: boolean) {
     return new ArgsParserBuilder(help, [])
   }
 
-  command<C1 extends string, CO1 extends object>(command: Command<C1, CO1>) {
+  withHelp(help: boolean) {
+    return new ArgsParserBuilder<CT, C>(help, this._commmands)
+  }
+
+  addCommand<C1 extends string, CO1 extends object>(command: Command<C1, CO1>) {
     return new ArgsParserBuilder<CT & { [key in C1]: CO1 }, C | C1>(
       this._help,
       [...this._commmands, command],
     )
   }
 
-  getHelp(): string {
-    return `` // FIXME
+  getHelp(appName: string): string {
+    const commands = this._commmands
+      .map(command => command.getHelp(appName))
+      .join('\n')
+
+    return `${appName} usage:
+      ${commands}
+    `
   }
 
   private _findCommand(commandName: string): Command<C, any> | undefined {
@@ -42,7 +46,7 @@ class ArgsParserBuilder<CT extends object, C extends keyof CT> {
     return undefined
   }
 
-  parse(args: string[]): [C, CT[C]] {
+  parse(args: string[]): [C, Partial<CT[C]>] {
     if (!this._commmands.length) {
       throw new Error('no command has been configured')
     }
@@ -57,10 +61,10 @@ class ArgsParserBuilder<CT extends object, C extends keyof CT> {
       throw new Error(`got unexpected command "${commandName}" and no empty command has been specified`)
     }
 
-    const options = command.parseOptions(args.slice())
+    const options = command.parseOptions(args.slice(command.name ? 1 : 0))
 
     return [command.name, options]
   }
 }
 
-export const ArgsParser = ArgsParserBuilder.create()
+export const ArgsParser = ArgsParserBuilder.create(true)

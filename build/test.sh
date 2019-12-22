@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
 export BASE_DIR=tsdist/tester-src
+export SRC_DIR=src
 
 # cleanup
 rm -rf $BASE_DIR

@@ -1,0 +1,17 @@
+{
+  "it supports with nested selectors": [
+    [
+      ".s-613978509 { font-size: 1 }",
+      ".test .s-613978509:hover, .s-613978509 { font-size: 2 }"
+    ]
+  ],
+  "it supports media query": [
+    [
+      ".s-28071606 { font-size: 1 }",
+      "@media screen and (min-width: 800px) { .s-28071606 { font-size: 2 }\n.s-28071606:hover { margin: 0 } }"
+    ]
+  ],
+  "it renders @keyframes": [
+    "@keyframes sa-1559177345 { from { width: 300%; margin-left: 0 }\nto { margin-left: 100px; width: 100% } }"
+  ]
+}

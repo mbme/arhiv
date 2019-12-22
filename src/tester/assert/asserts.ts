@@ -66,15 +66,15 @@ export function assertMatchSnapshot(actual: Snapshot) {
   context.successfulAsserts += 1
 }
 
-export function assertThrows(block: () => void, error?: any) {
+export function assertThrows(block: () => void, ErrorClass?: any) {
   const context = getAssertContext()
 
   try {
     block()
     assert.fail('Expected to throw')
   } catch (e) {
-    if (error) {
-      assert.strictEqual(e, error)
+    if (ErrorClass) {
+      assertTrue(e instanceof ErrorClass, `Expected error to be instance of ${ErrorClass}`)
     }
 
     context.successfulAsserts += 1

@@ -1,6 +1,6 @@
 import path from 'path';
 import nodeResolve from '@rollup/plugin-node-resolve '
-import commonjs from 'rollup-plugin-commonjs'
+import commonjs from '@rollup/plugin-commonjs'
 import replace from '@rollup/plugin-replace'
 import React from 'react'
 import ReactDOM from 'react-dom'

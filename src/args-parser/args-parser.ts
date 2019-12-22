@@ -1,5 +1,6 @@
 import { Command } from './command'
-import { NeedHelpError } from './types'
+
+export class NeedHelpError extends Error { }
 
 class ArgsParserBuilder<CT extends object, C extends keyof CT> {
   private constructor(

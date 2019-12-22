@@ -93,7 +93,9 @@ export class TestFile {
       const {
         successfulAsserts,
       } = getAssertContext()
-      console.log(`  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${test.name}`)
+      if (successfulAsserts) {
+        console.log(`  ${successfulAsserts.toString().padStart(2, ' ')} ok: ${test.name}`)
+      }
       console.log(termColors.red(` failed: ${test.name}`))
       console.log('')
       console.log(e)

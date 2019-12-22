@@ -3,22 +3,29 @@ import {
   removeMut,
   getLastEl,
 } from '~/utils'
-import { IOption } from './types'
 
 const optionNameRegex = /^[a-zA-Z0-9-]+$/
+
+interface IOption<O extends string, V> {
+  name: O
+  description: string
+  positional?: 'one' | 'array'
+  mandatory: boolean
+  defaultValue?: V
+}
 
 export class Command<C extends string, CO extends object> {
   constructor(
     public readonly name: C,
     public readonly description: string,
-    private _options: Array<IOption<keyof CO>>,
+    private _options: Array<IOption<keyof CO, any>>,
   ) {
     if (name.startsWith('-')) {
       throw new Error('command must not start with -')
     }
   }
 
-  private _addOption<O extends string, V>(option: IOption<O>) {
+  private _addOption<O extends string, V>(option: IOption<O, V>) {
     if (!optionNameRegex.test(option.name)) {
       throw new Error(`option ${option.name} doesn't match ${optionNameRegex}`)
     }
@@ -42,16 +49,39 @@ export class Command<C extends string, CO extends object> {
     )
   }
 
-  option<O extends string>(name: O, description: string) {
-    return this._addOption<O, string>({ name, description })
+  option<O extends string>(name: O, description: string, defaultValue?: string) {
+    return this._addOption<O, string>({
+      name,
+      description,
+      mandatory: false,
+      defaultValue,
+    })
   }
 
-  positional<O extends string>(name: O, description: string) {
-    return this._addOption<O, string>({ name, description, positional: 'one' })
+  mandatoryOption<O extends string>(name: O, description: string) {
+    return this._addOption<O, string>({
+      name,
+      description,
+      mandatory: true,
+    })
   }
 
-  positionalArray<O extends string>(name: O, description: string) {
-    return this._addOption<O, string[]>({ name, description, positional: 'array' })
+  positional<O extends string>(name: O, description: string, mandatory = false) {
+    return this._addOption<O, string>({
+      name,
+      description,
+      positional: 'one',
+      mandatory,
+    })
+  }
+
+  positionalArray<O extends string>(name: O, description: string, mandatory = false) {
+    return this._addOption<O, string[]>({
+      name,
+      description,
+      positional: 'array',
+      mandatory,
+    })
   }
 
   parseOptions(args: string[]): Partial<CO> {
@@ -88,6 +118,22 @@ export class Command<C extends string, CO extends object> {
       }
     }
 
+    // save options which has default values
+    for (const option of optionsToCheck) {
+      if (option.defaultValue !== undefined) {
+        result[option.name] = option.defaultValue
+      }
+    }
+
+    // make sure there are no mandatory options missing
+    const mandatoryOptions = optionsToCheck
+      .filter(option => option.mandatory)
+      .map(option => option.name)
+
+    if (mandatoryOptions.length) {
+      throw new Error(`Mandatory options are missing: ${mandatoryOptions.join(', ')}`)
+    }
+
     return result as Partial<CO>
   }
 
@@ -106,12 +152,18 @@ export class Command<C extends string, CO extends object> {
           result += `<${option.name}>`
         } else if (option.positional === 'array') {
           result += `<${option.name}...>`
+        } else if (option.defaultValue) {
+          result += `${option.name}=${option.defaultValue}`
         } else {
           result += option.name
         }
 
         if (option.description) {
           result += ` - ${option.description}`
+        }
+
+        if (option.mandatory) {
+          result += ', mandatory'
         }
 
         return result

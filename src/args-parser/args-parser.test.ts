@@ -4,10 +4,11 @@ import {
   assertDeepEqual,
   assertMatchSnapshot,
 } from '~/tester'
-// import { ArgsParser } from './args-parser'
 import { command } from './command'
-import { ArgsParser } from './args-parser'
-import { NeedHelpError } from './types'
+import {
+  ArgsParser,
+  NeedHelpError,
+} from './args-parser'
 
 test('commands support options', () => {
   assertThrows(() => {
@@ -82,14 +83,34 @@ test('supports --help', () => {
 })
 
 test('mandatory options', () => {
-  // fails on options without value
+  const p = ArgsParser
+    .addCommand(command('test', '')
+      .mandatoryOption('--test', '')
+      .option('-t', ''))
+
+  assertThrows(() => {
+    p.parse(['test', '-t'])
+  })
+
+  assertDeepEqual(p.parse(['test', '--test']), ['test', { '--test': '' }])
+})
+
+test('options support default values', () => {
+  const p = ArgsParser
+    .addCommand(command('test', '').option('--port', '', '8080'))
+
+  assertDeepEqual(p.parse(['test']), ['test', { '--port': '8080' }])
 })
 
 test('generates help', () => {
   const p = ArgsParser
-    .addCommand(command('test', 'test command').positional('port', 'port to listen on'))
+    .addCommand(
+      command('test', 'test command')
+        .positional('port', 'port to listen on')
+        .mandatoryOption('--option', 'very important option'),
+    )
     .addCommand(command('other', 'a different command').positionalArray('args', 'a lot of arguments'))
-    .addCommand(command('', 'default command').option('-no', ''))
+    .addCommand(command('', 'default command').option('-no', '', 'test'))
 
   assertMatchSnapshot(p.getHelp('testApp'))
 })

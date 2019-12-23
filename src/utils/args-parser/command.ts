@@ -5,6 +5,7 @@ import {
 } from '~/utils'
 
 const optionNameRegex = /^[a-zA-Z0-9-]+$/
+const commandNameRegex = /^[a-zA-Z0-9]+$/
 
 interface IOption<O extends string, V> {
   name: O
@@ -20,8 +21,8 @@ export class Command<C extends string, CO extends object> {
     public readonly description: string,
     private _options: Array<IOption<keyof CO, any>>,
   ) {
-    if (name.startsWith('-')) {
-      throw new Error('command must not start with -')
+    if (!commandNameRegex.test(name)) {
+      throw new Error(`command ${name} doesn't match ${commandNameRegex}`)
     }
   }
 
@@ -50,7 +51,7 @@ export class Command<C extends string, CO extends object> {
   }
 
   option<O extends string>(name: O, description: string, defaultValue?: string) {
-    return this._addOption<O, string>({
+    return this._addOption<O, string | undefined>({
       name,
       description,
       mandatory: false,
@@ -66,25 +67,43 @@ export class Command<C extends string, CO extends object> {
     })
   }
 
-  positional<O extends string>(name: O, description: string, mandatory = false) {
+  positional<O extends string>(name: O, description: string) {
+    return this._addOption<O, string | undefined>({
+      name,
+      description,
+      positional: 'one',
+      mandatory: false,
+    })
+  }
+
+  mandatoryPositional<O extends string>(name: O, description: string) {
     return this._addOption<O, string>({
       name,
       description,
       positional: 'one',
-      mandatory,
+      mandatory: true,
     })
   }
 
-  positionalArray<O extends string>(name: O, description: string, mandatory = false) {
+  positionalArray<O extends string>(name: O, description: string) {
     return this._addOption<O, string[]>({
       name,
       description,
       positional: 'array',
-      mandatory,
+      mandatory: false,
     })
   }
 
-  parseOptions(args: string[]): Partial<CO> {
+  mandatoryPositionalArray<O extends string>(name: O, description: string) {
+    return this._addOption<O, string[]>({
+      name,
+      description,
+      positional: 'array',
+      mandatory: true,
+    })
+  }
+
+  parseOptions(args: string[]): CO {
     const result: Dict<any> = {}
 
     const optionsToCheck = [...this._options]
@@ -134,7 +153,7 @@ export class Command<C extends string, CO extends object> {
       throw new Error(`Mandatory options are missing: ${mandatoryOptions.join(', ')}`)
     }
 
-    return result as Partial<CO>
+    return result as CO
   }
 
   getHelp(appName: string) {

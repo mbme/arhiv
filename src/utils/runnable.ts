@@ -1,22 +1,51 @@
 import { createLogger } from '~/logger'
 import {
   Procedure,
-  AsyncProcedure,
 } from './types'
 import { Callbacks } from './callbacks'
+import {
+  ArgsParserBuilder,
+  NeedHelpError,
+} from './args-parser'
 
 const log = createLogger('runnable')
 
-type Runnable = (args: string[], onExit: (cb: Procedure | AsyncProcedure) => void) => Promise<void> | void
+class AppBuilder {
+  addCommand(command: Command, cb: () => void) {
 
-export function createRunnable(run: Runnable) {
-  const args = process.argv.slice(2)
+  }
+
+  create() {
+
+  }
+}
+
+export function createRunnable<CT extends object, C extends keyof CT>(
+  appName: string,
+  argsParser: ArgsParserBuilder<CT, C>,
+  run: (command: C, options: CT[C], onExit: (cb: Procedure) => void) => void,
+) {
+  const argsArr = process.argv.slice(2)
+
+  let args: [C, CT[C]]
+  try {
+    args = argsParser.parse(argsArr)
+  } catch (e) {
+    if (e instanceof NeedHelpError) {
+      // tslint:disable-next-line:no-console
+      console.log(argsParser.getHelp(appName))
+      process.exit(0)
+    } else {
+      log.error(`Failed to parse args "${argsArr}":`, e)
+      process.exit(3)
+    }
+  }
 
   const callbacks = new Callbacks()
 
-  const onExit = (cb: Procedure | AsyncProcedure) => callbacks.add(cb)
+  const onExit = (cb: Procedure) => callbacks.add(cb)
 
-  Promise.resolve(run(args, onExit)).catch((e) => {
+  Promise.resolve(run(args[0], args[1], onExit)).catch((e) => {
     log.error('runnable: process failed', e)
 
     process.exit(2)

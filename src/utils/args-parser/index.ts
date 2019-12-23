@@ -4,4 +4,7 @@ export {
   ArgsParserBuilder,
 } from './args-parser'
 
-export { command } from './command'
+export {
+  command,
+  Command,
+} from './command'

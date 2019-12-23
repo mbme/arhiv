@@ -1,13 +1,9 @@
 import path from 'path'
 import {
   createLogger,
+  configureLogger,
 } from '~/logger'
-import {
-  rmrfSync,
-} from '~/utils/fs'
-import {
-  createRunnable,
-} from '~/utils/runnable'
+import { rmrfSync } from '~/utils/fs'
 import { getFakeNotes } from './tools/faker'
 import {
   ArhivDB,
@@ -15,16 +11,15 @@ import {
 } from './primary'
 import { createServer } from './server'
 import { readConfig } from './tools/config'
-import { configureLogger } from '~/logger/config'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
 const log = createLogger('arhiv')
 
 createRunnable(async (args, onExit) => {
-  const rootDir = process.cwd()
+  const rootDir = process.cwd() // FIXME use file location instead
 
-  const config = await readConfig()
+  const config = await readConfig() // FIXME config should be located in the repository
   configureLogger(config.log)
 
   const storage = await FSStorage.open(config.storageDir, args.includes('--init'))

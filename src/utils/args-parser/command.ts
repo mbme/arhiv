@@ -1,8 +1,10 @@
 import {
-  Dict,
-  removeMut,
   getLastEl,
-} from '~/utils'
+  removeMut,
+} from '../array'
+import {
+  Dict,
+} from '../types'
 
 const optionNameRegex = /^[a-zA-Z0-9-]+$/
 const commandNameRegex = /^[a-zA-Z0-9]+$/

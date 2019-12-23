@@ -2,7 +2,7 @@ import { Command } from './command'
 
 export class NeedHelpError extends Error { }
 
-export class ArgsParserBuilder<Commands extends object, C extends keyof Commands> {
+export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
   private constructor(
     private _help: boolean,
     private _commmands: Array<Command<C, any>>,
@@ -13,11 +13,11 @@ export class ArgsParserBuilder<Commands extends object, C extends keyof Commands
   }
 
   withHelp(help: boolean) {
-    return new ArgsParserBuilder<Commands, C>(help, this._commmands)
+    return new ArgsParserBuilder<CT, C>(help, this._commmands)
   }
 
   addCommand<C1 extends string, CO1 extends object>(command: Command<C1, CO1>) {
-    return new ArgsParserBuilder<Commands & { [key in C1]: CO1 }, C | C1>(
+    return new ArgsParserBuilder<CT & { [key in C1]: CO1 }, C | C1>(
       this._help,
       [...this._commmands, command],
     )
@@ -47,7 +47,7 @@ export class ArgsParserBuilder<Commands extends object, C extends keyof Commands
     return undefined
   }
 
-  parse(args: string[]): [C, Commands[C]] {
+  parse(args: string[]): [C, CT[C]] {
     if (!this._commmands.length) {
       throw new Error('no command has been configured')
     }

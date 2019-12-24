@@ -14,13 +14,11 @@ export { command } from './args-parser'
 
 const log = createLogger('app')
 
-type Runnable = (options: any, onExit: (cb: Procedure) => void) => void
+type Runnable<O extends object> = (options: O, onExit: (cb: Procedure) => void) => void
 
 export class App {
   private _argsParser: ArgsParserBuilder<any, any>
-
-  private _commands: Dict<Runnable> = {}
-
+  private _runnables: Dict<Runnable<any>> = {}
   private _callbacks = new Callbacks()
 
   private constructor(
@@ -34,9 +32,9 @@ export class App {
     return new App(appName, help)
   }
 
-  addCommand<CO1 extends object>(command: Command<string, CO1>, cb: (o: CO1) => void) {
+  addCommand<O extends object>(command: Command<string, O>, cb: Runnable<O>) {
     this._argsParser = this._argsParser.addCommand(command)
-    this._commands[command.name] = cb
+    this._runnables[command.name] = cb
 
     return this
   }
@@ -60,7 +58,7 @@ export class App {
 
     const onExit = (cb: Procedure) => this._callbacks.add(cb)
 
-    const run = this._commands[args[0]]
+    const run = this._runnables[args[0]]
 
     Promise.resolve(run(args[1], onExit)).catch((e) => {
       log.error('runnable: process failed', e)

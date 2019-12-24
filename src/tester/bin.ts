@@ -11,12 +11,12 @@ import {
   getFiles,
 } from '~/utils/fs'
 import {
-  TestFile,
-} from './test-file/test-file'
-import {
   App,
   command,
 } from '~/utils/app'
+import {
+  TestFile,
+} from './test-file/test-file'
 
 configureLogger({
   minLogLevel: 'ERROR', // suppress log messages

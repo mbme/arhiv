@@ -3,7 +3,12 @@ import {
   createLogger,
   configureLogger,
 } from '~/logger'
+import { parseInt10 } from '~/utils'
 import { rmrfSync } from '~/utils/fs'
+import {
+  App,
+  command,
+} from '~/utils/app'
 import { getFakeNotes } from './tools/faker'
 import {
   ArhivDB,
@@ -12,61 +17,87 @@ import {
 import { createServer } from './server'
 import { readConfig } from './tools/config'
 
-const isProduction = process.env.NODE_ENV === 'production'
-
 const log = createLogger('arhiv')
 
-createRunnable(async (args, onExit) => {
-  const rootDir = process.cwd() // FIXME use file location instead
+App.create('arhiv')
+  .addCommand(
+    command('serve', 'Run arhiv server'),
+    async (_, onExit) => {
+      const rootDir = process.cwd() // FIXME use file location instead
 
-  const config = await readConfig() // FIXME config should be located in the repository
-  configureLogger(config.log)
+      const config = await readConfig() // FIXME config should be located in the repository
+      configureLogger(config.log)
 
-  const storage = await FSStorage.open(config.storageDir, args.includes('--init'))
-  onExit(() => storage.stop())
+      const storage = await FSStorage.open(config.storageDir)
+      onExit(() => storage.stop())
 
-  const db = new ArhivDB(storage)
+      const db = new ArhivDB(storage)
 
-  if (!isProduction && args.includes('--gen-data')) {
-    try {
-      const resourcesDir = path.join(rootDir, 'resources')
+      const server = await createServer(db, config.server, [
+        path.join(rootDir, 'src/web-app/static'),
+        path.join(rootDir, 'tsdist/web-app-src'),
+      ])
 
-      const {
-        documents,
-        attachments,
-        attachedFiles,
-        tempDir,
-      } = await getFakeNotes(resourcesDir, 30)
+      await server.start()
 
-      await db.applyChangeset({
-        schemaVersion: storage.getSchemaVersion(),
-        baseRev: 0,
-        documents,
-        attachments,
-      }, attachedFiles).finally(() => rmrfSync(tempDir))
+      onExit(async () => {
+        log.info(`stopping...`)
+        try {
+          await server.stop()
+          process.exit(0)
+        } catch (e) {
+          log.error('failed to stop', e)
+          process.exit(1)
+        }
+      })
+    },
+  )
+  .addCommand(
+    command('init', 'Initialize arhiv data directory'),
+    async () => {
+      const config = await readConfig() // FIXME config should be located in the repository
+      configureLogger(config.log)
 
-      log.info(`Generated ${documents.length} fake notes`)
-    } catch (e) {
-      log.error('Failed to generate fake notes', e)
-      process.exit(1)
-    }
-  }
+      const storage = await FSStorage.open(config.storageDir, true)
+      await storage.stop()
+    },
+  )
+  .addCommand(
+    command('gen-data', 'Generate fake documents')
+      .option('--count', 'Number of documents to generate', '30'),
+    async (options, onExit) => {
+      const rootDir = process.cwd() // FIXME use file location instead
 
-  const server = await createServer(db, config.server, [
-    path.join(rootDir, 'src/web-app/static'),
-    path.join(rootDir, 'tsdist/web-app-src'),
-  ])
+      const config = await readConfig() // FIXME config should be located in the repository
+      configureLogger(config.log)
 
-  await server.start()
+      const storage = await FSStorage.open(config.storageDir)
+      onExit(() => storage.stop())
 
-  onExit(async () => {
-    log.info(`stopping...`)
-    try {
-      await server.stop()
-      process.exit(0)
-    } catch (e) {
-      log.error('failed to stop', e)
-      process.exit(1)
-    }
-  })
-})
+      const db = new ArhivDB(storage)
+
+      try {
+        const resourcesDir = path.join(rootDir, 'resources')
+
+        const {
+          documents,
+          attachments,
+          attachedFiles,
+          tempDir,
+        } = await getFakeNotes(resourcesDir, parseInt10(options['--count']))
+
+        await db.applyChangeset({
+          schemaVersion: storage.getSchemaVersion(),
+          baseRev: 0,
+          documents,
+          attachments,
+        }, attachedFiles).finally(() => rmrfSync(tempDir))
+
+        log.info(`Generated ${documents.length} fake notes`)
+      } catch (e) {
+        log.error('Failed to generate fake notes', e)
+        process.exit(1)
+      }
+    },
+  )
+  .run()

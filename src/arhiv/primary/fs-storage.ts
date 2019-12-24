@@ -82,7 +82,8 @@ export class FSStorage<T extends IDocument> {
     await this._writeMetadata()
     log.debug(`wrote metadata file ${this._metadataFile}`)
   }
-  static async open(rootDirRaw: string, create: boolean) {
+
+  static async open(rootDirRaw: string, create = false) {
     const rootDir = path.resolve(rootDirRaw)
     log.info(`arhiv root: ${rootDir}`)
 

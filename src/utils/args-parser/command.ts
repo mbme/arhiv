@@ -23,7 +23,7 @@ export class Command<C extends string, CO extends object> {
     public readonly description: string,
     private _options: Array<IOption<keyof CO, any>>,
   ) {
-    if (!commandNameRegex.test(name)) {
+    if (name && !commandNameRegex.test(name)) {
       throw new Error(`command ${name} doesn't match ${commandNameRegex}`)
     }
   }
@@ -52,12 +52,12 @@ export class Command<C extends string, CO extends object> {
     )
   }
 
-  option<O extends string>(name: O, description: string, defaultValue?: string) {
-    return this._addOption<O, string | undefined>({
+  option<O extends string, T extends string | undefined>(name: O, description: string, defaultValue?: T) {
+    return this._addOption<O, T extends string ? string : string | undefined>({
       name,
       description,
       mandatory: false,
-      defaultValue,
+      defaultValue: defaultValue as any,
     })
   }
 

@@ -84,7 +84,7 @@ test('supports --help', () => {
 test('mandatory options', () => {
   const p = ArgsParserBuilder.create()
     .addCommand(command('test', '')
-      .mandatoryOption('--test', '')
+      .option('--test', '', undefined, true)
       .option('-t', ''))
 
   assertThrows(() => {
@@ -106,7 +106,7 @@ test('generates help', () => {
     .addCommand(
       command('test', 'test command')
         .positional('port', 'port to listen on')
-        .mandatoryOption('--option', 'very important option'),
+        .option('--option', 'very important option', undefined, true),
     )
     .addCommand(command('other', 'a different command').positionalArray('args', 'a lot of arguments'))
     .addCommand(command('', 'default command').option('-no', '', 'test'))

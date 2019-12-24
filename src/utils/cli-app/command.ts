@@ -82,56 +82,35 @@ export class Command<C extends string, CO extends object> {
     )
   }
 
-  option<O extends string, T extends string | undefined>(name: O, description: string, defaultValue?: T) {
-    return this._addOption<O, T extends string ? string : string | undefined>({
+  option<O extends string, T extends string | undefined, M extends boolean>(
+    name: O,
+    description: string,
+    defaultValue?: T,
+    mandatory?: M,
+  ) {
+    return this._addOption<O, T extends string ? string : M extends true ? string : string | undefined>({
       name,
       description,
-      mandatory: false,
+      mandatory: mandatory || false,
       defaultValue: defaultValue as any,
     })
   }
 
-  mandatoryOption<O extends string>(name: O, description: string) {
-    return this._addOption<O, string>({
-      name,
-      description,
-      mandatory: true,
-    })
-  }
-
-  positional<O extends string>(name: O, description: string) {
-    return this._addOption<O, string | undefined>({
+  positional<O extends string, M extends boolean>(name: O, description: string, mandatory?: M) {
+    return this._addOption<O, M extends true ? string : string | undefined>({
       name,
       description,
       positional: 'one',
-      mandatory: false,
+      mandatory: mandatory || false,
     })
   }
 
-  mandatoryPositional<O extends string>(name: O, description: string) {
-    return this._addOption<O, string>({
-      name,
-      description,
-      positional: 'one',
-      mandatory: true,
-    })
-  }
-
-  positionalArray<O extends string>(name: O, description: string) {
+  positionalArray<O extends string>(name: O, description: string, mandatory = false) {
     return this._addOption<O, string[]>({
       name,
       description,
       positional: 'array',
-      mandatory: false,
-    })
-  }
-
-  mandatoryPositionalArray<O extends string>(name: O, description: string) {
-    return this._addOption<O, string[]>({
-      name,
-      description,
-      positional: 'array',
-      mandatory: true,
+      mandatory,
     })
   }
 

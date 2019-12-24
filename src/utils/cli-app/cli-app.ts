@@ -1,22 +1,20 @@
 import { createLogger } from '~/logger'
 import {
-  ArgsParserBuilder,
-  Command,
-  NeedHelpError,
-} from './args-parser'
-import {
   Dict,
   Procedure,
-} from './types'
-import { Callbacks } from './callbacks'
+} from '../types'
+import { Callbacks } from '../callbacks'
+import {
+  ArgsParserBuilder,
+  NeedHelpError,
+} from './args-parser'
+import { Command } from './command'
 
-export { command } from './args-parser'
-
-const log = createLogger('app')
+const log = createLogger('cli-app')
 
 type Runnable<O extends object> = (options: O, onExit: (cb: Procedure) => void) => void
 
-export class App {
+export class CliApp {
   private _argsParser: ArgsParserBuilder<any, any>
   private _runnables: Dict<Runnable<any>> = {}
   private _callbacks = new Callbacks()
@@ -29,7 +27,7 @@ export class App {
   }
 
   static create(appName: string, help = true) {
-    return new App(appName, help)
+    return new CliApp(appName, help)
   }
 
   addCommand<O extends object>(command: Command<string, O>, cb: Runnable<O>) {

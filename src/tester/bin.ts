@@ -11,9 +11,9 @@ import {
   getFiles,
 } from '~/utils/fs'
 import {
-  App,
+  CliApp,
   command,
-} from '~/utils/app'
+} from '~/utils/cli-app'
 import {
   TestFile,
 } from './test-file/test-file'
@@ -22,7 +22,7 @@ configureLogger({
   minLogLevel: 'ERROR', // suppress log messages
 })
 
-App.create('tester')
+CliApp.create('tester')
   .addCommand(
     command('', '')
       .option('-u', 'update changed snapshots')

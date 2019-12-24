@@ -6,9 +6,9 @@ import {
 import { parseInt10 } from '~/utils'
 import { rmrfSync } from '~/utils/fs'
 import {
-  App,
+  CliApp,
   command,
-} from '~/utils/app'
+} from '~/utils/cli-app'
 import { getFakeNotes } from './tools/faker'
 import {
   ArhivDB,
@@ -19,7 +19,7 @@ import { readConfig } from './tools/config'
 
 const log = createLogger('arhiv')
 
-App.create('arhiv')
+CliApp.create('arhiv')
   .addCommand(
     command('serve', 'Run arhiv server'),
     async (_, onExit) => {

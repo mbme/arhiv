@@ -8,12 +8,8 @@ export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
     private _commmands: Array<Command<C, any>>,
   ) { }
 
-  static create(help: boolean) {
+  static create(help = true) {
     return new ArgsParserBuilder(help, [])
-  }
-
-  withHelp(help: boolean) {
-    return new ArgsParserBuilder<CT, C>(help, this._commmands)
   }
 
   addCommand<C1 extends string, CO1 extends object>(command: Command<C1, CO1>) {
@@ -67,5 +63,3 @@ export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
     return [command.name, options]
   }
 }
-
-export const ArgsParser = ArgsParserBuilder.create(true)

@@ -6,8 +6,8 @@ import {
 } from '~/tester'
 import { command } from './command'
 import {
-  ArgsParser,
   NeedHelpError,
+  ArgsParserBuilder,
 } from './args-parser'
 
 test('commands support options', () => {
@@ -50,7 +50,7 @@ test('commands support options', () => {
 })
 
 test('supports commands', () => {
-  const p = ArgsParser
+  const p = ArgsParserBuilder.create()
     .addCommand(command('test', '').positional('ok', ''))
     .addCommand(command('other', ''))
     .addCommand(command('', '').positional('no', ''))
@@ -61,7 +61,7 @@ test('supports commands', () => {
   assertDeepEqual(p.parse(['no']), ['', { 'no': 'no' }])
 
   assertThrows(() => {
-    ArgsParser
+    ArgsParserBuilder.create()
       .addCommand(command('test', ''))
       .parse(['other'])
   })
@@ -69,21 +69,20 @@ test('supports commands', () => {
 
 test('supports --help', () => {
   assertThrows(() => {
-    ArgsParser
+    ArgsParserBuilder.create()
       .addCommand(command('other', ''))
       .parse(['--help'])
   }, NeedHelpError)
 
   assertThrows(() => {
-    ArgsParser
-      .withHelp(false)
+    ArgsParserBuilder.create(false)
       .addCommand(command('other', ''))
       .parse(['--help'])
   }, Error)
 })
 
 test('mandatory options', () => {
-  const p = ArgsParser
+  const p = ArgsParserBuilder.create()
     .addCommand(command('test', '')
       .mandatoryOption('--test', '')
       .option('-t', ''))
@@ -96,14 +95,14 @@ test('mandatory options', () => {
 })
 
 test('options support default values', () => {
-  const p = ArgsParser
+  const p = ArgsParserBuilder.create()
     .addCommand(command('test', '').option('--port', '', '8080'))
 
   assertDeepEqual(p.parse(['test']), ['test', { '--port': '8080' }])
 })
 
 test('generates help', () => {
-  const p = ArgsParser
+  const p = ArgsParserBuilder.create()
     .addCommand(
       command('test', 'test command')
         .positional('port', 'port to listen on')

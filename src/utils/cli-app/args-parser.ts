@@ -20,13 +20,12 @@ export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
   }
 
   getHelp(appName: string): string {
-    const commands = this._commmands
+    const help = this._commmands
       .map(command => command.getHelp(appName))
-      .join('\n')
 
-    return `${appName} usage:
-      ${commands}
-    `
+    help.unshift(`${appName} usage:`)
+
+    return help.join('\n\n')
   }
 
   private _findCommand(commandName: string): Command<C, any> | undefined {

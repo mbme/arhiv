@@ -24,7 +24,7 @@ configureLogger({
 
 CliApp.create('tester')
   .addCommand(
-    command('', '')
+    command('', 'Run all tests')
       .option('-u', 'update changed snapshots')
       .positional('filter', 'filter to apply to test files'),
     async (options) => {

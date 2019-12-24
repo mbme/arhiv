@@ -17,6 +17,36 @@ interface IOption<O extends string, V> {
   defaultValue?: V
 }
 
+function option2string(option: IOption<any, any>) {
+  if (option.positional === 'one') {
+    return `<${option.name}>`
+  }
+
+  if (option.positional === 'array') {
+    return `<${option.name}...>`
+  }
+
+  if (option.defaultValue) {
+    return `${option.name}=${option.defaultValue}`
+  }
+
+  return option.name
+}
+
+function getOptionHelp(option: IOption<any, any>) {
+  let result = '    ' + option2string(option)
+
+  if (option.description) {
+    result += ` - ${option.description}`
+  }
+
+  if (option.mandatory) {
+    result += ', mandatory'
+  }
+
+  return result
+}
+
 export class Command<C extends string, CO extends object> {
   constructor(
     public readonly name: C,
@@ -159,41 +189,36 @@ export class Command<C extends string, CO extends object> {
   }
 
   getHelp(appName: string) {
-    const hasOptions = this._options.filter(option => !option.positional).length > 0
+    const options = this._options
+      .filter(option => !option.positional)
+      .map(getOptionHelp)
 
-    const positionalStr = this._options.filter(option => option.positional)
-      .map(option => `<${option.name}${option.positional === 'one' ? '' : '...'}>`)
+    const positionalOptions = this._options
+      .filter(option => option.positional)
+      .map(getOptionHelp)
+
+    const positionalStr = this._options
+      .filter(option => option.positional)
+      .map(option2string)
       .join(' ')
 
-    const optionsStr = this._options
-      .map(option => {
-        let result = '        '
+    const help = []
+    if (this.description) {
+      help.push(`  # ${this.description}`)
+    }
 
-        if (option.positional === 'one') {
-          result += `<${option.name}>`
-        } else if (option.positional === 'array') {
-          result += `<${option.name}...>`
-        } else if (option.defaultValue) {
-          result += `${option.name}=${option.defaultValue}`
-        } else {
-          result += option.name
-        }
+    help.push([
+      ' ',
+      appName,
+      this.name,
+      options.length ? '[options]' : '',
+      positionalStr,
+    ].filter(item => item).join(' '))
 
-        if (option.description) {
-          result += ` - ${option.description}`
-        }
+    help.push(...positionalOptions)
+    help.push(...options)
 
-        if (option.mandatory) {
-          result += ', mandatory'
-        }
-
-        return result
-      })
-      .join('\n')
-
-    return `
-      # ${this.description}
-      ${appName} ${this.name} ${hasOptions ? '[options]' : ''} ${positionalStr}\n${optionsStr}`
+    return help.join('\n')
   }
 }
 

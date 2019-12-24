@@ -1,4 +1,4 @@
-import { createLogger } from '~/logger'
+/* tslint:disable:no-console */
 import {
   Dict,
   Procedure,
@@ -10,8 +10,6 @@ import {
 } from './args-parser'
 import { Command } from './command'
 
-const log = createLogger('cli-app')
-
 type Runnable<O extends object> = (options: O, onExit: (cb: Procedure) => void) => void
 
 export class CliApp {
@@ -21,9 +19,9 @@ export class CliApp {
 
   private constructor(
     private _appName: string,
-    help: boolean,
+    private _help: boolean,
   ) {
-    this._argsParser = ArgsParserBuilder.create(help)
+    this._argsParser = ArgsParserBuilder.create(_help)
   }
 
   static create(appName: string, help = true) {
@@ -45,11 +43,15 @@ export class CliApp {
       args = this._argsParser.parse(argsArr)
     } catch (e) {
       if (e instanceof NeedHelpError) {
-        // tslint:disable-next-line:no-console
         console.log(this._argsParser.getHelp(this._appName))
+        console.log('')
         process.exit(0)
       } else {
-        log.error(`Failed to parse args "${argsArr}":`, e)
+        console.error(`Failed to parse args "${argsArr}": ${e}`)
+        if (this._help) {
+          console.error('Too see usage use --help')
+        }
+        console.error('')
         process.exit(3)
       }
     }
@@ -59,23 +61,23 @@ export class CliApp {
     const run = this._runnables[args[0]]
 
     Promise.resolve(run(args[1], onExit)).catch((e) => {
-      log.error('runnable: process failed', e)
+      console.error('process failed', e)
 
       process.exit(2)
     })
 
     process.on('SIGINT', () => {
-      log.debug('got SIGINT')
+      console.debug('got SIGINT')
       this._callbacks.runAll(true)
     })
 
     process.on('SIGTERM', () => {
-      log.debug('got SIGTERM')
+      console.debug('got SIGTERM')
       this._callbacks.runAll(true)
     })
 
     process.on('exit', (code: number) => {
-      log.debug(`got exit code=${code}`)
+      console.debug(`got exit code=${code}`)
       this._callbacks.runAll(true)
     })
   }

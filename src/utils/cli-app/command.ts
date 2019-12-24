@@ -6,8 +6,7 @@ import {
   Dict,
 } from '../types'
 
-const optionNameRegex = /^[a-zA-Z0-9-]+$/
-const commandNameRegex = /^[a-zA-Z0-9]+$/
+const nameRegex = /^[a-zA-Z0-9-]+$/
 
 interface IOption<O extends string, V> {
   name: O
@@ -53,14 +52,18 @@ export class Command<C extends string, CO extends object> {
     public readonly description: string,
     private _options: Array<IOption<keyof CO, any>>,
   ) {
-    if (name && !commandNameRegex.test(name)) {
-      throw new Error(`command ${name} doesn't match ${commandNameRegex}`)
+    if (name && !nameRegex.test(name)) {
+      throw new Error(`command ${name} doesn't match ${nameRegex}`)
+    }
+
+    if (name.startsWith('-')) {
+      throw new Error(`command ${name} shouldn't start with -`)
     }
   }
 
   private _addOption<O extends string, V>(option: IOption<O, V>) {
-    if (!optionNameRegex.test(option.name)) {
-      throw new Error(`option ${option.name} doesn't match ${optionNameRegex}`)
+    if (!nameRegex.test(option.name)) {
+      throw new Error(`option ${option.name} doesn't match ${nameRegex}`)
     }
 
     if (!option.positional && !option.name.startsWith('-')) {

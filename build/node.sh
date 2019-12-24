@@ -2,6 +2,6 @@
 
 NODE_NO_WARNINGS=1 node \
                 --experimental-modules \
-                --experimental-loader ./loader.js \
+                --experimental-loader ./build/loader.js \
                 --es-module-specifier-resolution=node \
                 $@

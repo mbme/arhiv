@@ -49,7 +49,7 @@ CliApp.create('arhiv')
     async (_, onExit) => {
       const rootDir = process.cwd()
 
-      const config = await readConfig() // FIXME config should be located in the repository
+      const config = await readConfig()
       configureLogger(config.log)
 
       const storage = await FSStorage.open(config.storageDir)
@@ -59,7 +59,7 @@ CliApp.create('arhiv')
 
       const server = await createServer(db, config.server, [
         path.join(rootDir, 'src/web-app/static'),
-        path.join(rootDir, 'tsdist/web-app-src'),
+        path.join(rootDir, 'tsdist/web-app-static'),
       ])
 
       await server.start()

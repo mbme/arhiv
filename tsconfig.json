@@ -2,6 +2,7 @@
   "compilerOptions": {
     "incremental": true,
     "baseUrl": "./src",
+    "outDir": "./tsdist/src",
     "paths": {
       "~/*": ["./*"]
     },

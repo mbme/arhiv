@@ -15,13 +15,13 @@ const tsPathResolver = (rootDir) => ({
 
     return null;
   }
-
 })
 
-const BASE_DIR = process.env.BASE_DIR
+const baseDir = path.join(process.cwd(), 'tsdist/src')
+const webAppStatic = path.join(process.cwd(), 'tsdist/web-app-static')
 
 const plugins = [
-  tsPathResolver(BASE_DIR),
+  tsPathResolver(baseDir),
 
   nodeResolve({
     preferBuiltins: false,
@@ -44,10 +44,10 @@ const plugins = [
 
 export default [
   {
-    input: `${BASE_DIR}/web-app/index`,
+    input: `${baseDir}/web-app/index`,
 
     output: {
-      file: `${BASE_DIR}/bundle.js`,
+      file: `${webAppStatic}/bundle.js`,
       format: 'iife',
       name: 'WebApp',
       globals: {
@@ -62,16 +62,16 @@ export default [
 
     watch: {
       clearScreen: false,
-      include: `${BASE_DIR}/**`,
+      include: `${baseDir}/**`,
       exclude: ['node_modules/**'],
     },
   },
 
   {
-    input: `${BASE_DIR}/web-app/serviceWorker`,
+    input: `${baseDir}/web-app/serviceWorker`,
 
     output: {
-      file: `${BASE_DIR}/serviceWorker.js`,
+      file: `${webAppStatic}/serviceWorker.js`,
       format: 'iife',
       name: 'WebAppServiceWorker',
     },

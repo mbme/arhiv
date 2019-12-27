@@ -1,13 +1,9 @@
 #! /usr/bin/env bash
 
-export BASE_DIR=tsdist/arhiv-src
-
-# cleanup
-#rm -rf $BASE_DIR
+set -e
 
 ./node_modules/.bin/tsc \
   -p ./tsconfig.json \
-  --noEmitOnError \
-  --outDir $BASE_DIR
+  --noEmitOnError
 
-./build/node.sh $BASE_DIR/arhiv/bin $@
+./build/node.sh tsdist/src/arhiv/bin $@

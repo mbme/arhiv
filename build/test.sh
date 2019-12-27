@@ -1,16 +1,11 @@
 #! /usr/bin/env bash
 
-export BASE_DIR=tsdist/tester-src
-
-# cleanup
-rm -rf $BASE_DIR
+set -e
 
 # compile app
 ./node_modules/.bin/tsc \
   -p ./tsconfig.json \
-  --noEmitOnError \
-  --outDir $BASE_DIR
-
+  --noEmitOnError
 
 # run tests
-./build/node.sh $BASE_DIR/tester/bin $@
+./build/node.sh tsdist/src/tester/bin $@

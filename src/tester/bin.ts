@@ -30,7 +30,7 @@ CliApp.create('tester')
     async (options) => {
       const updateSnapshots = options['-u'] !== undefined
 
-      const basePath = path.join(process.cwd(), process.env.BASE_DIR!)
+      const basePath = path.join(process.cwd(), 'tsdist/src')
       const srcPath = path.join(process.cwd(), 'src')
 
       const files = (await consumeAsyncIterable(getFiles(basePath)))

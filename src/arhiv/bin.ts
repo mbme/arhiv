@@ -2,9 +2,14 @@ import path from 'path'
 import {
   createLogger,
   configureLogger,
+  ILoggerConfig,
 } from '~/logger'
 import { parseInt10 } from '~/utils'
-import { rmrfSync } from '~/utils/fs'
+import {
+  rmrfSync,
+  readJSON,
+  fileExists,
+} from '~/utils/fs'
 import {
   CliApp,
   command,
@@ -14,16 +19,35 @@ import {
   ArhivDB,
   FSStorage,
 } from './primary'
-import { createServer } from './server'
-import { readConfig } from './tools/config'
+import {
+  createServer,
+  IArhivServerConfig,
+} from './server'
 
 const log = createLogger('arhiv')
+
+interface IArhivConfig {
+  readonly server: IArhivServerConfig
+  readonly log: ILoggerConfig
+  readonly storageDir: string
+}
+
+async function readConfig(): Promise<IArhivConfig> {
+  const configPath = path.join(process.cwd(), 'arhiv.json')
+  log.debug(`reading config from ${configPath}`)
+
+  if (!await fileExists(configPath, true)) {
+    throw new Error(`arhiv config file ${configPath} is missing`)
+  }
+
+  return readJSON<IArhivConfig>(configPath)
+}
 
 CliApp.create('arhiv')
   .addCommand(
     command('serve', 'Run arhiv server'),
     async (_, onExit) => {
-      const rootDir = process.cwd() // FIXME use file location instead
+      const rootDir = process.cwd()
 
       const config = await readConfig() // FIXME config should be located in the repository
       configureLogger(config.log)
@@ -55,7 +79,7 @@ CliApp.create('arhiv')
   .addCommand(
     command('init', 'Initialize arhiv data directory'),
     async () => {
-      const config = await readConfig() // FIXME config should be located in the repository
+      const config = await readConfig()
       configureLogger(config.log)
 
       const storage = await FSStorage.open(config.storageDir, true)
@@ -66,9 +90,9 @@ CliApp.create('arhiv')
     command('gen-data', 'Generate fake documents')
       .option('--count', 'Number of documents to generate', '30'),
     async (options, onExit) => {
-      const rootDir = process.cwd() // FIXME use file location instead
+      const rootDir = process.cwd()
 
-      const config = await readConfig() // FIXME config should be located in the repository
+      const config = await readConfig()
       configureLogger(config.log)
 
       const storage = await FSStorage.open(config.storageDir)

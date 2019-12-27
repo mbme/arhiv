@@ -31,7 +31,7 @@ CliApp.create('tester')
       const updateSnapshots = options['-u'] !== undefined
 
       const basePath = path.join(process.cwd(), process.env.BASE_DIR!)
-      const srcPath = path.join(process.cwd(), process.env.SRC_DIR!)
+      const srcPath = path.join(process.cwd(), 'src')
 
       const files = (await consumeAsyncIterable(getFiles(basePath)))
         .filter((relPath) => relPath.endsWith('.test.js'))

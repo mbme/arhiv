@@ -89,7 +89,7 @@ export class FSStorage<T extends IDocument> {
 
     const storage = new FSStorage(rootDir)
     if (!await dirExists(rootDir) && create) {
-      log.info("arhiv doesn't exist, initializing dir structure")
+      log.info('initializing dir structure')
       await storage._create()
     }
 

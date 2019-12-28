@@ -33,7 +33,7 @@ interface IArhivConfig {
 }
 
 async function readConfig(): Promise<IArhivConfig> {
-  const configPath = path.join(process.cwd(), 'arhiv.json')
+  const configPath = path.join(process.cwd(), 'arhiv-config.json')
   log.debug(`reading config from ${configPath}`)
 
   if (!await fileExists(configPath, true)) {

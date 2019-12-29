@@ -14,51 +14,9 @@ import {
   SyncManager,
 } from './managers'
 import {
-  Record,
-  DocumentType,
-  INote,
-  ITrack,
-} from '../types'
-import {
-  createDocument,
-} from '../utils'
-import {
   DocumentsRepository,
   AttachmentsRepository,
-  IDocumentType,
-  Document,
 } from './entities'
-
-const NoteType: IDocumentType<INote> = {
-  is(x: any): x is INote {
-    // tslint:disable-next-line:no-unsafe-any
-    return x && x._type === DocumentType.Note
-  },
-  create(id: string): INote {
-    return ({
-      ...createDocument(id, 'note'),
-      name: '',
-      data: '',
-    })
-  },
-}
-export type NoteDocument = Document<INote>
-
-const TrackType: IDocumentType<ITrack> = {
-  is(x: any): x is ITrack {
-    // tslint:disable-next-line:no-unsafe-any
-    return x && x._type === DocumentType.Track
-  },
-
-  create(id: string): ITrack {
-    return ({
-      ...createDocument(id, DocumentType.Track),
-      title: '',
-      artist: '',
-    })
-  },
-}
-export type TrackDocument = Document<ITrack>
 
 export class ArhivReplica {
   private _callbacks = new Callbacks()
@@ -74,10 +32,9 @@ export class ArhivReplica {
   readonly isAuthorized$ = this._net.isAuthorized$
 
   readonly attachments = new AttachmentsRepository(this._db)
-  readonly notes = new DocumentsRepository(this._db, this._locks, NoteType)
-  readonly tracks = new DocumentsRepository(this._db, this._locks, TrackType)
+  readonly documents = new DocumentsRepository(this._db, this._locks)
 
-  private constructor(private _storage: TIDBStorage<Record>) {
+  private constructor(private _storage: TIDBStorage) {
     this._callbacks.add(
       () => this._sync.stop(),
       () => this._locks.stop(),
@@ -91,7 +48,7 @@ export class ArhivReplica {
   }
 
   static async create() {
-    const db = await TIDBStorage.open<Record>()
+    const db = await TIDBStorage.open()
 
     const arhiv = new ArhivReplica(db)
     await arhiv._start()

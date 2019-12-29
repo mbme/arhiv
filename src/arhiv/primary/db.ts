@@ -7,7 +7,6 @@ import { getFileSize } from '~/utils/fs'
 import {
   IChangesetResponse,
   IChangeset,
-  IDocument,
   ChangesetResponseStatus,
 } from '../types'
 import { isEmptyChangeset } from '../utils'
@@ -15,8 +14,8 @@ import { FSStorage } from './fs-storage'
 
 const log = createLogger('arhiv-db')
 
-export class ArhivDB<T extends IDocument> {
-  constructor(private _storage: FSStorage<T>) { }
+export class ArhivDB {
+  constructor(private _storage: FSStorage) { }
 
   getDocuments() {
     return this._storage.getDocuments()
@@ -54,7 +53,7 @@ export class ArhivDB<T extends IDocument> {
     return this._storage.getAttachmentDataPath(id)
   }
 
-  async applyChangeset(changeset: IChangeset<T>, attachedFiles: Dict): Promise<IChangesetResponse<T>> {
+  async applyChangeset(changeset: IChangeset, attachedFiles: Dict): Promise<IChangesetResponse> {
     const serverRev = this._storage.getRev()
 
     // this should never happen
@@ -126,7 +125,7 @@ export class ArhivDB<T extends IDocument> {
   /**
    * @param rev minimum revision to include
    */
-  private async _getChangesetResponse(rev: number, status: ChangesetResponseStatus): Promise<IChangesetResponse<T>> {
+  private async _getChangesetResponse(rev: number, status: ChangesetResponseStatus): Promise<IChangesetResponse> {
     const currentRev = this.getRev()
     if (rev > currentRev) {
       throw new Error(`Got request for the future rev ${rev}, current rev is ${currentRev}`)

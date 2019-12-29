@@ -17,12 +17,11 @@ import {
   writeJSON,
 } from '~/utils/fs'
 import {
-  IDocument,
-  IAttachment,
+  IAttachment, ArhivDocument,
 } from '../types'
 import { FSStorageMutations } from './fs-storage-mutations'
 
-type StorageUpdater<T extends IDocument> = (mutations: FSStorageMutations<T>, newRev: number) => Promise<void>
+type StorageUpdater = (mutations: FSStorageMutations, newRev: number) => Promise<void>
 
 const log = createLogger('fs-storage')
 
@@ -31,7 +30,7 @@ interface IMetadata {
   revision: number
 }
 
-export class FSStorage<T extends IDocument> {
+export class FSStorage {
   public static readonly SCHEMA_VERSION = 1
 
   private _metadata: IMetadata = {
@@ -146,14 +145,14 @@ export class FSStorage<T extends IDocument> {
 
     // FIXME check if looks like a document dir, check files etc
 
-    return readJSON<T>(path.join(documentDir, lastRev.toString()))
+    return readJSON<ArhivDocument>(path.join(documentDir, lastRev.toString()))
   }
 
   async getDocumentHistory(id: string) {
     const documentDir = path.join(this._documentsDir, id)
     const revisions = (await listFiles(documentDir)).map(parseInt10).sort()
 
-    return Promise.all(revisions.map(revision => readJSON<T>(path.join(documentDir, revision.toString()))))
+    return Promise.all(revisions.map(revision => readJSON<ArhivDocument>(path.join(documentDir, revision.toString()))))
   }
 
   async getAttachments() {
@@ -191,7 +190,7 @@ export class FSStorage<T extends IDocument> {
     return attachmentDataPath
   }
 
-  async updateStorage(update: StorageUpdater<T>) {
+  async updateStorage(update: StorageUpdater) {
     const tx = new FSTransaction()
     const mutations = new FSStorageMutations(
       this._documentsDir,

@@ -11,10 +11,9 @@ import {
 } from '~/reactive'
 import {
   IAttachment,
-  IDocument,
   IChangesetResponse,
   IChangeset,
-  Record,
+  ArhivDocument,
 } from '../../types'
 import {
   generateRandomId,
@@ -28,10 +27,7 @@ import { TIDBStorage } from './tidb-storage'
 
 const log = createLogger('arhiv-db')
 
-type ChangesetExchange<T extends IDocument> = (
-  changeset: IChangeset<T>,
-  blobs: LocalAttachments,
-) => Promise<IChangesetResponse<T>>
+type ChangesetExchange = (changeset: IChangeset, blobs: LocalAttachments) => Promise<IChangesetResponse>
 
 function fetchAttachment$(id: string) {
   return new Observable<Blob>((observer) => {
@@ -57,21 +53,21 @@ function fetchAttachment$(id: string) {
   })
 }
 
-type SyncState<T extends IDocument> =
+type SyncState =
   { type: 'initial' }
   | { type: 'sync' }
-  | { type: 'merge-conflicts', conflicts: MergeConflicts<T> }
+  | { type: 'merge-conflicts', conflicts: MergeConflicts }
 
 type UpdateInfo = [number, boolean]
 
 export class ReplicaDB {
-  readonly syncState$ = new Cell<SyncState<Record>>({ type: 'initial' })
+  readonly syncState$ = new Cell<SyncState>({ type: 'initial' })
   readonly updateTime$ = new Cell<UpdateInfo>([0, false])
 
   private _callbacks = new Callbacks()
 
   constructor(
-    private _storage: TIDBStorage<Record>,
+    private _storage: TIDBStorage,
   ) {
     this._callbacks.add(
       this.syncState$.value$.subscribe({
@@ -94,14 +90,14 @@ export class ReplicaDB {
     return id
   }
 
-  async getDocument(id: string): Promise<Record | undefined> {
+  async getDocument(id: string): Promise<ArhivDocument | undefined> {
     return this._storage.getDocument(id)
   }
 
-  getDocument$(id: string): Observable<Record> {
+  getDocument$(id: string): Observable<ArhivDocument> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
-      .filter(document => !!document) as Observable<Record>
+      .filter(document => !!document) as Observable<ArhivDocument>
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {
@@ -126,11 +122,11 @@ export class ReplicaDB {
     })
   }
 
-  async getDocuments(): Promise<Record[]> {
+  async getDocuments(): Promise<ArhivDocument[]> {
     return this._storage.getDocuments()
   }
 
-  getDocuments$(): Observable<Record[]> {
+  getDocuments$(): Observable<ArhivDocument[]> {
     return this.updateTime$.value$.switchMap(() => promise$(this.getDocuments()))
   }
 
@@ -153,7 +149,7 @@ export class ReplicaDB {
     return id
   }
 
-  async saveDocument(document: Record) {
+  async saveDocument(document: ArhivDocument) {
     this._assertNoMergeConflicts()
 
     await this._storage.addLocalDocument({
@@ -169,7 +165,7 @@ export class ReplicaDB {
     return this.syncState$.value.type === 'initial'
   }
 
-  async sync(exchange: ChangesetExchange<Record>) {
+  async sync(exchange: ChangesetExchange) {
     if (!this.isReadyToSync()) {
       throw new Error('not ready to sync')
     }

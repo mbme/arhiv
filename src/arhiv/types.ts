@@ -62,7 +62,7 @@ export interface IChangeset {
 
 export type ChangesetResponseStatus = 'accepted' | 'outdated'
 
-export interface IChangesetResponse<T extends IDocument> {
+export interface IChangesetResponse {
   readonly status: ChangesetResponseStatus
 
   /**
@@ -83,7 +83,7 @@ export interface IChangesetResponse<T extends IDocument> {
   /**
    * documents with _rev > baseRev
    */
-  readonly documents: readonly T[]
+  readonly documents: readonly ArhivDocument[]
 
   /**
    * attachments with _rev > baseRev

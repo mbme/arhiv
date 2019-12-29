@@ -8,18 +8,18 @@ import {
   dirExists,
 } from '~/utils/fs'
 import {
-  IDocument,
   IAttachment,
+  ArhivDocument,
 } from '../types'
 
-export class FSStorageMutations<T extends IDocument> {
+export class FSStorageMutations {
   constructor(
     private _documentsDir: string,
     private _attachmentsDir: string,
     private _tx: FSTransaction,
   ) { }
 
-  putDocument = async (document: T) => {
+  putDocument = async (document: ArhivDocument) => {
     const documentDir = path.join(this._documentsDir, document._id)
     if (!await dirExists(documentDir, true)) {
       await this._tx.createDir(documentDir)

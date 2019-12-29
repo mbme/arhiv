@@ -16,7 +16,6 @@ import {
 } from '~/http-server'
 import {
   IChangeset,
-  IDocument,
 } from '../types'
 import { ArhivDB } from '../primary/db'
 import {
@@ -33,7 +32,7 @@ export interface IArhivServerConfig {
   readonly password: string
 }
 
-export async function createServer(db: ArhivDB<IDocument>, config: IArhivServerConfig, staticDirs: string[]) {
+export async function createServer(db: ArhivDB, config: IArhivServerConfig, staticDirs: string[]) {
   const queue = new Queue()
 
   const tmpDir = await createTempDir()
@@ -94,7 +93,7 @@ export async function createServer(db: ArhivDB<IDocument>, config: IArhivServerC
       return
     }
 
-    const changeset = JSON.parse(changesetField.value) as IChangeset<IDocument>
+    const changeset = JSON.parse(changesetField.value) as IChangeset
 
     const assets: Dict = {}
     for (const file of body.files) {

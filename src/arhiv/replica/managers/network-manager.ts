@@ -8,7 +8,6 @@ import {
 import {
   IChangesetResponse,
   IChangeset,
-  IDocument,
 } from '../../types'
 import {
   LocalAttachments,
@@ -66,10 +65,10 @@ export class NetworkManager {
     this.isAuthorized$.value = false
   }
 
-  readonly syncChanges = async <T extends IDocument>(
-    changeset: IChangeset<T>,
+  readonly syncChanges = async (
+    changeset: IChangeset,
     localAttachments: LocalAttachments,
-  ): Promise<IChangesetResponse<T>> => {
+  ): Promise<IChangesetResponse> => {
     this._assertIsOnline()
     this._assertAuthorized()
 

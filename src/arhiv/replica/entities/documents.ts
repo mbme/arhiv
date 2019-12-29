@@ -4,9 +4,11 @@ import {
   ArhivDocumentType,
   ArhivDocument,
 } from '../../types'
+import {
+  createDocument,
+} from '../../utils'
 import { Document } from './document'
 import { LockManager } from '../managers'
-import { createDocument } from '~/arhiv/utils'
 
 export class DocumentsRepository {
   constructor(
@@ -25,12 +27,12 @@ export class DocumentsRepository {
     return this._wrap(document, true)
   }
 
-  getDocuments$(): Observable<Array<Document<ArhivDocument>>> {
+  getDocuments$(): Observable<Document[]> {
     return this._db.getDocuments$()
       .map(documents => documents.map(document => this._wrap(document)))
   }
 
-  getDocument$(id: string): Observable<Document<ArhivDocument>> {
+  getDocument$(id: string): Observable<Document> {
     return this._db.getDocument$(id).map((document) => this._wrap(document))
   }
 }

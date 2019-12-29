@@ -6,4 +6,4 @@ export {
   useArhiv,
 } from './useArhiv'
 
-export { Attachment } from './entities'
+export { AttachmentManager } from './entities'

@@ -5,7 +5,7 @@ import {
   useObservable,
 } from '~/web-platform'
 import {
-  Attachment,
+  AttachmentManager,
 } from '~/arhiv/replica'
 
 const $image = stylish({
@@ -14,7 +14,7 @@ const $image = stylish({
 })
 
 interface IProps {
-  attachment: Attachment
+  attachment: AttachmentManager
   link: string
   description: string
 }

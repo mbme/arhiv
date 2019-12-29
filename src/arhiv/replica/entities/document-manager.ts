@@ -19,7 +19,7 @@ import { LockManager } from '../managers'
 const log = createLogger('document')
 
 // Active Record
-export class Document<T extends ArhivDocument = ArhivDocument> {
+export class DocumentManager<T extends ArhivDocument = ArhivDocument> {
   constructor(
     private _db: ReplicaDB,
     private _locks: LockManager,

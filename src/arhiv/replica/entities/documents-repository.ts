@@ -7,7 +7,7 @@ import {
 import {
   createDocument,
 } from '../../utils'
-import { Document } from './document'
+import { DocumentManager } from './document-manager'
 import { LockManager } from '../managers'
 
 export class DocumentsRepository {
@@ -17,7 +17,7 @@ export class DocumentsRepository {
   ) { }
 
   private _wrap<T extends ArhivDocument>(document: T, isNew = false) {
-    return new Document<T>(this._db, this._locks, document, isNew)
+    return new DocumentManager<T>(this._db, this._locks, document, isNew)
   }
 
   async create<T extends ArhivDocumentType>(type: T) {
@@ -27,12 +27,12 @@ export class DocumentsRepository {
     return this._wrap(document, true)
   }
 
-  getDocuments$(): Observable<Document[]> {
+  getDocuments$(): Observable<DocumentManager[]> {
     return this._db.getDocuments$()
       .map(documents => documents.map(document => this._wrap(document)))
   }
 
-  getDocument$(id: string): Observable<Document> {
+  getDocument$(id: string): Observable<DocumentManager> {
     return this._db.getDocument$(id).map((document) => this._wrap(document))
   }
 }

@@ -1,5 +1,5 @@
-export * from './document'
-export * from './documents'
+export * from './document-manager'
+export * from './documents-repository'
 
-export * from './attachment'
-export * from './attachments'
+export * from './attachment-manager'
+export * from './attachments-repository'

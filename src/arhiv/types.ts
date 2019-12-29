@@ -17,7 +17,28 @@ export interface IAttachment {
   readonly _deleted?: boolean
 }
 
-export interface IChangeset<T extends IDocument> {
+export class MarkupString {
+  constructor(
+    public readonly value: string,
+  ) { }
+}
+
+export interface INote extends IDocument {
+  readonly _type: 'note'
+  readonly name: string
+  readonly data: MarkupString
+}
+
+export interface ITrack extends IDocument {
+  readonly _type: 'track'
+  readonly artist: string
+  readonly title: string
+}
+
+export type ArhivDocument = INote | ITrack
+export type ArhivDocumentType = ArhivDocument['_type']
+
+export interface IChangeset {
   /**
    * replica storage revision
    */
@@ -31,7 +52,7 @@ export interface IChangeset<T extends IDocument> {
   /**
    * new or updated documents
    */
-  readonly documents: readonly T[]
+  readonly documents: readonly ArhivDocument[]
 
   /**
    * new or updated attachments
@@ -69,22 +90,3 @@ export interface IChangesetResponse<T extends IDocument> {
    */
   attachments: readonly IAttachment[]
 }
-
-export enum DocumentType {
-  Note = 'note',
-  Track = 'track',
-}
-
-export interface INote extends IDocument {
-  readonly _type: DocumentType.Note
-  readonly name: string
-  readonly data: string
-}
-
-export interface ITrack extends IDocument {
-  readonly _type: DocumentType.Track
-  readonly artist: string
-  readonly title: string
-}
-
-export type Record = INote | ITrack

@@ -1,5 +1,4 @@
-// tslint:disable-next-line:match-default-export-name
-import assert from 'assert'
+import { strict as assert } from 'assert' // https://nodejs.org/api/assert.html#assert_strict_mode
 import { Snapshot } from './types'
 import { getAssertContext } from './assert-context'
 import {

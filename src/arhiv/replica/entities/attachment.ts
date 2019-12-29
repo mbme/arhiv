@@ -1,10 +1,10 @@
 import { blobUrl$ } from '~/reactive'
 import { IAttachment } from '../../types'
-import { ArhivDB } from '../db'
+import { ReplicaDB } from '../db'
 
 export class Attachment {
   constructor(
-    private _db: ArhivDB,
+    private _db: ReplicaDB,
     public attachment: IAttachment,
   ) { }
 

@@ -1,8 +1,8 @@
-import { ArhivDB } from '../db'
+import { ReplicaDB } from '../db'
 import { Attachment } from './attachment'
 
 export class AttachmentsRepository {
-  constructor(protected _db: ArhivDB) { }
+  constructor(protected _db: ReplicaDB) { }
 
   createAttachment(file: File): Promise<string> {
     return this._db.saveAttachment(file)

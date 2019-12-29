@@ -64,14 +64,14 @@ type SyncState<T extends IDocument> =
 
 type UpdateInfo = [number, boolean]
 
-export class ArhivDB<T extends IDocument = Record> {
-  readonly syncState$ = new Cell<SyncState<T>>({ type: 'initial' })
+export class ReplicaDB {
+  readonly syncState$ = new Cell<SyncState<Record>>({ type: 'initial' })
   readonly updateTime$ = new Cell<UpdateInfo>([0, false])
 
   private _callbacks = new Callbacks()
 
   constructor(
-    private _storage: TIDBStorage<T>,
+    private _storage: TIDBStorage<Record>,
   ) {
     this._callbacks.add(
       this.syncState$.value$.subscribe({
@@ -94,14 +94,14 @@ export class ArhivDB<T extends IDocument = Record> {
     return id
   }
 
-  async getDocument(id: string): Promise<T | undefined> {
+  async getDocument(id: string): Promise<Record | undefined> {
     return this._storage.getDocument(id)
   }
 
-  getDocument$(id: string): Observable<T> {
+  getDocument$(id: string): Observable<Record> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
-      .filter(document => !!document) as Observable<T>
+      .filter(document => !!document) as Observable<Record>
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {
@@ -126,11 +126,11 @@ export class ArhivDB<T extends IDocument = Record> {
     })
   }
 
-  async getDocuments(): Promise<T[]> {
+  async getDocuments(): Promise<Record[]> {
     return this._storage.getDocuments()
   }
 
-  getDocuments$(): Observable<T[]> {
+  getDocuments$(): Observable<Record[]> {
     return this.updateTime$.value$.switchMap(() => promise$(this.getDocuments()))
   }
 
@@ -153,7 +153,7 @@ export class ArhivDB<T extends IDocument = Record> {
     return id
   }
 
-  async saveDocument(document: T) {
+  async saveDocument(document: Record) {
     this._assertNoMergeConflicts()
 
     await this._storage.addLocalDocument({
@@ -169,7 +169,7 @@ export class ArhivDB<T extends IDocument = Record> {
     return this.syncState$.value.type === 'initial'
   }
 
-  async sync(exchange: ChangesetExchange<T>) {
+  async sync(exchange: ChangesetExchange<Record>) {
     if (!this.isReadyToSync()) {
       throw new Error('not ready to sync')
     }

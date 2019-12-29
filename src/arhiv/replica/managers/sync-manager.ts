@@ -9,7 +9,7 @@ import {
   Signal,
   promise$,
 } from '~/reactive'
-import { ArhivDB } from '../db'
+import { ReplicaDB } from '../db'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'
 
@@ -21,7 +21,7 @@ export class SyncManager {
   private _callbacks = new Callbacks()
 
   constructor(
-    private _db: ArhivDB,
+    private _db: ReplicaDB,
     private _net: NetworkManager,
     private _locks: LockManager,
   ) {

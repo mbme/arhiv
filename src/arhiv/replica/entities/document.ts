@@ -7,20 +7,21 @@ import {
   parseMarkup,
 } from '~/markup-parser'
 import {
+  MarkupString,
+  ArhivDocument,
   IDocument,
-  Record,
 } from '../../types'
 import {
-  ArhivDB,
+  ReplicaDB,
 } from '../db'
 import { LockManager } from '../managers'
 
 const log = createLogger('document')
 
 // Active Record
-export class Document<T extends Record> {
+export class Document<T extends ArhivDocument = ArhivDocument> {
   constructor(
-    private _db: ArhivDB,
+    private _db: ReplicaDB,
     private _locks: LockManager,
     public readonly record: T,
     private _isNew: boolean,
@@ -48,10 +49,14 @@ export class Document<T extends Record> {
     return attachmentRefs
   }
 
-  async patch(patch: Partial<Without<T, keyof IDocument>>, refSource?: string) {
-    const attachmentRefs = refSource === undefined
-      ? this.record._attachmentRefs
-      : await this._extractRefs(refSource)
+  async patch(patch: Partial<Without<T, keyof IDocument>>) {
+    const refSources = Object.values(patch)
+      .filter(value => value instanceof MarkupString)
+      .map(value => (value as MarkupString).value)
+
+    const attachmentRefs = refSources.length
+      ? await this._extractRefs(refSources.join(''))
+      : this.record._attachmentRefs
 
     await this._db.saveDocument({
       ...this.record,

@@ -27,9 +27,9 @@ import {
   createDocument,
 } from '../utils'
 import {
-  DocumentType,
   IAttachment,
   INote,
+  MarkupString,
 } from '../types'
 
 async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<INote> {
@@ -58,10 +58,10 @@ async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<INo
   ).join('\n\n')
 
   return {
-    ...createDocument(generateRandomId(), DocumentType.Note),
+    ...createDocument(generateRandomId(), 'note'),
     _attachmentRefs: Array.from(refs),
     name: name.substring(0, name.length - 1),
-    data,
+    data: new MarkupString(data),
   }
 }
 

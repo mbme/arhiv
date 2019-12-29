@@ -6,7 +6,7 @@ import {
 } from '~/web-utils'
 import {
   TIDBStorage,
-  ArhivDB,
+  ReplicaDB,
 } from './db'
 import {
   LockManager,
@@ -36,7 +36,7 @@ const NoteType: IDocumentType<INote> = {
   },
   create(id: string): INote {
     return ({
-      ...createDocument(id, DocumentType.Note),
+      ...createDocument(id, 'note'),
       name: '',
       data: '',
     })
@@ -67,7 +67,7 @@ export class ArhivReplica {
 
   private _net = new NetworkManager()
   private _locks = new LockManager(this.tabId)
-  private _db = new ArhivDB(this._storage)
+  private _db = new ReplicaDB(this._storage)
   private _sync = new SyncManager(this._db, this._net, this._locks)
 
   readonly syncState$ = this._db.syncState$

@@ -45,7 +45,7 @@ export function DocumentsList({ filter }: IProps) {
     ))
 
   return (
-    <div>
+    <Box width="300px">
       <Toolbar>
         <FilterInput
           placeholder="Filter notes"
@@ -67,6 +67,6 @@ export function DocumentsList({ filter }: IProps) {
       </small>
 
       {items}
-    </div>
+    </Box>
   )
 }

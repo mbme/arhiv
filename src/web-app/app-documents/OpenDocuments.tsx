@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { OpenDocument } from './OpenDocument'
 
 interface IProps {
   ids: string[],
@@ -6,8 +7,8 @@ interface IProps {
 
 export function OpenDocuments({ ids }: IProps) {
   return (
-    <div>
-      {ids}
-    </div>
+    <>
+      {ids.map(id => (<OpenDocument key={id} id={id} />))}
+    </>
   )
 }

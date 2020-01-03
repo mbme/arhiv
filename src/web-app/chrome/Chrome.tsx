@@ -74,10 +74,8 @@ interface IProps {
 
 function getCurrentApp(apps: IApp[], location: ILocation) {
   for (const app of apps) {
-    for (const path of Object.keys(app.routes)) {
-      if (path === location.path) {
-        return app
-      }
+    if (app.route === location.path) {
+      return app
     }
   }
 
@@ -98,7 +96,7 @@ export function Chrome({ apps, onLogout }: IProps) {
     return NotFound
   }
 
-  const view = app.routes[location.path](location.params)
+  const view = app.render(location.params)
 
   const navbar = (
     <NavBar

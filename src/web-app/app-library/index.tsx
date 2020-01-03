@@ -5,8 +5,6 @@ import { IApp } from '../chrome'
 
 export const LibraryApp: IApp = {
   name: 'Component Library',
-  rootRoute: '/library',
-  routes: {
-    '/library': () => <Library />,
-  },
+  route: '/library',
+  render: () => <Library />,
 }

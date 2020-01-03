@@ -50,7 +50,7 @@ export function NavBar({ apps, currentApp, onClick, onLogout }: IProps) {
   const links = apps.map(app => (
     <Link
       key={app.name}
-      to={{ path: app.rootRoute }}
+      to={{ path: app.route }}
       className={$navlink.with({ isSelected: app === currentApp }).className}
     >
       {app.name}

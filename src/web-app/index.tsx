@@ -5,9 +5,6 @@ import {
   configureLogger,
 } from '~/logger'
 import {
-  debugLayoutSnippet,
-} from '~/utils'
-import {
   ArhivReplica,
   ArhivContext,
 } from '~/arhiv/replica'
@@ -25,7 +22,7 @@ import {
   Chrome,
   AuthManager,
 } from './chrome'
-import { NotesApp } from './app-notes'
+import { DocumentsApp } from './app-documents'
 import { LibraryApp } from './app-library'
 
 const isDev = true
@@ -44,8 +41,6 @@ injectGlobalStyles(`
     height: 100vh;
     visibility: hidden;
   }
-
-  ${isDev ? debugLayoutSnippet : ''}
 `)
 
 const rootEl = document.getElementById('root')
@@ -56,7 +51,7 @@ if (!rootEl) {
 ArhivReplica.create().then(
   (arhiv) => {
     const apps: IApp[] = [
-      NotesApp,
+      DocumentsApp,
       LibraryApp,
     ]
 

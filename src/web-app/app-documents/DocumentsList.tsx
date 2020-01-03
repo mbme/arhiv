@@ -7,15 +7,14 @@ import { useRouter } from '~/web-router'
 import { useArhiv } from '~/arhiv/replica'
 import {
   useObservable,
-  stylish,
   Button,
   FilterInput,
-  CleanLink,
   Link,
   Box,
   Spacer,
   ProgressLocker,
 } from '~/web-platform'
+import { Toolbar } from '../parts'
 
 interface IProps {
   filter: string,
@@ -38,7 +37,7 @@ export function DocumentsList({ filter }: IProps) {
     .map(document => (
       <Box key={document.id}>
         <Box as="small" mr="small">
-          {formatTs(note.record._updatedTs)}
+          {formatTs(document.record._updatedTs)}
         </Box>
 
         {document.record._type} {document.id}
@@ -47,6 +46,27 @@ export function DocumentsList({ filter }: IProps) {
 
   return (
     <div>
+      <Toolbar>
+        <FilterInput
+          placeholder="Filter notes"
+          filter={filter}
+          onChange={newFilter => router.replaceParam('filter', newFilter)}
+        />
+
+        <Spacer />
+
+        <Link to={{ path: '/note-editor' }}>
+          <Button primary>
+            Add
+          </Button>
+        </Link>
+      </Toolbar>
+
+      <small>
+        {items.length} items
+      </small>
+
+      {items}
     </div>
   )
 }

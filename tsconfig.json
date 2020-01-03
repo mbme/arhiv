@@ -36,6 +36,7 @@
   "exclude": [
     "node_modules",
     "tsdist",
-    "*/**/FLYCHECK_XXY_*"
+    "*/**/FLYCHECK_XXY_*",
+    "./src/web-app/app-notes"
   ]
 }

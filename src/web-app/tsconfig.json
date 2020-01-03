@@ -7,7 +7,8 @@
   "exclude": [
     "node_modules",
     "*/**/*.test.ts",
-    "*/**/flycheck_*"
+    "*/**/flycheck_*",
+    "./app-notes"
   ],
   "compilerOptions": {
     "types": ["react", "react-dom"]

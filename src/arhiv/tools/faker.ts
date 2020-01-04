@@ -4,7 +4,7 @@ import { getMimeType } from '~/file-prober'
 import {
   createArray,
   Dict,
-  nowS,
+  dateNow,
 } from '~/utils'
 import {
   readText,
@@ -98,7 +98,7 @@ async function createAttachments(images: Dict): Promise<IAttachment[]> {
     return {
       _id,
       _rev: 0,
-      _createdTs: nowS(),
+      _createdAt: dateNow(),
       _mimeType,
       _size,
     }

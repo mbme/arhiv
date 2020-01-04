@@ -1,4 +1,4 @@
-import { nowS } from '~/utils'
+import { dateNow } from '~/utils'
 import { randomId } from '~/utils/random'
 import {
   IChangeset,
@@ -24,14 +24,14 @@ export function createDocument<T extends ArhivDocumentType>(id: string, type: T)
   : never
 
 export function createDocument(id: string, type: ArhivDocumentType): ArhivDocument {
-  const now = nowS()
+  const now = dateNow()
 
   if (type === 'note') {
     return {
       _id: id,
       _rev: 0,
-      _createdTs: now,
-      _updatedTs: now,
+      _createdAt: now,
+      _updatedAt: now,
       _attachmentRefs: [] as string[],
       _type: 'note',
       name: '',
@@ -43,8 +43,8 @@ export function createDocument(id: string, type: ArhivDocumentType): ArhivDocume
     return {
       _id: id,
       _rev: 0,
-      _createdTs: now,
-      _updatedTs: now,
+      _createdAt: now,
+      _updatedAt: now,
       _attachmentRefs: [] as string[],
       _type: 'track',
       title: '',

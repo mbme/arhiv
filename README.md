@@ -37,7 +37,7 @@ yarn cloc
 /${id}.mb # record
 /files/${id} # file
 ```
-Record is a json file: `{ type: string, fields: {}, updatedTs: number }`
+Record is a json file: `{ type: string, fields: {}, updatedAt: number }`
 
 ### Syntax
 based on org-mode and markdown

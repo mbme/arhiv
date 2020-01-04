@@ -1,6 +1,7 @@
 import { createLogger } from '~/logger'
 import {
   nowS,
+  dateNow,
   Callbacks,
 } from '~/utils'
 import {
@@ -138,7 +139,7 @@ export class ReplicaDB {
     await this._storage.addLocalAttachment({
       _id: id,
       _rev: this.getRev(),
-      _createdTs: nowS(),
+      _createdAt: dateNow(),
       _mimeType: file.type,
       _size: file.size,
     }, file)
@@ -154,7 +155,7 @@ export class ReplicaDB {
 
     await this._storage.addLocalDocument({
       ...document,
-      _updatedTs: nowS(),
+      _updatedAt: dateNow(),
     })
     log.debug(`saved document with id ${document._id}`)
 

@@ -55,7 +55,7 @@ export function NotesListView({ filter }: IProps) {
         $style={$item}
       >
         <Box as="small" mr="small">
-          {formatTs(note.record._updatedTs)}
+          {formatTs(note.record._updatedAt)}
         </Box>
 
         {note.record.name}

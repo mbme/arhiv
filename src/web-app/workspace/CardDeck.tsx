@@ -1,6 +1,5 @@
 import * as React from 'react'
 import {
-  formatTs,
   fuzzySearch,
 } from '~/utils'
 import { useRouter } from '~/web-router'
@@ -37,7 +36,7 @@ export function CardDeck({ filter }: IProps) {
     .map(document => (
       <Box key={document.id}>
         <Box as="small" mr="small">
-          {formatTs(document.record._updatedTs)}
+          {document.record._updatedAt}
         </Box>
 
         {document.record._type} {document.id}

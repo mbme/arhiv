@@ -1,9 +1,11 @@
+import { ISO8601DateString } from '~/utils'
+
 export interface IDocument {
   readonly _id: string
   readonly _rev: number
   readonly _type: string
-  readonly _createdTs: number
-  readonly _updatedTs: number
+  readonly _createdAt: ISO8601DateString
+  readonly _updatedAt: ISO8601DateString
   readonly _attachmentRefs: readonly string[]
   readonly _deleted?: boolean
 }
@@ -11,7 +13,7 @@ export interface IDocument {
 export interface IAttachment {
   readonly _id: string
   readonly _rev: number
-  readonly _createdTs: number
+  readonly _createdAt: ISO8601DateString
   readonly _mimeType: string
   readonly _size: number
   readonly _deleted?: boolean

@@ -1,6 +1,6 @@
 import {
-  nowS,
   Deferred,
+  dateNow,
 } from '~/utils'
 import {
   ArhivDocument,
@@ -36,7 +36,7 @@ export class DocumentConflict {
     this._final = {
       ...final,
       _rev: this.remote._rev,
-      _updatedTs: nowS(),
+      _updatedAt: dateNow(),
     }
     this._deffered.resolve(this._final)
   }

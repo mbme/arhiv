@@ -1,7 +1,6 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import {
-  createLogger,
   configureLogger,
 } from '~/logger'
 import {
@@ -18,20 +17,15 @@ import {
   WebRouter,
 } from '~/web-router'
 import {
-  IApp,
-  Chrome,
   AuthManager,
 } from './chrome'
-import { DocumentsApp } from './app-documents'
-import { LibraryApp } from './app-library'
+import { App } from './App'
 
 const isDev = true
 
 configureLogger({
   minLogLevel: isDev ? 'DEBUG' : 'WARN',
 })
-
-const log = createLogger('web-app')
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -48,34 +42,22 @@ if (!rootEl) {
   throw new Error("Can't find #root element")
 }
 
-ArhivReplica.create().then(
-  (arhiv) => {
-    const apps: IApp[] = [
-      DocumentsApp,
-      LibraryApp,
-    ]
+ArhivReplica.create().then((arhiv) => {
+  ReactDOM.render(
+    <React.StrictMode>
+      <ArhivContext.Provider value={arhiv}>
+        <RouterContext.Provider value={new WebRouter()}>
+          <OverlayRenderer>
+            <App />
 
-    ReactDOM.render(
-      <React.StrictMode>
-        <ArhivContext.Provider value={arhiv}>
-          <RouterContext.Provider value={new WebRouter()}>
-            <OverlayRenderer>
-              <Chrome
-                apps={apps}
-                onLogout={() => arhiv.deauthorize()}
-              />
-              <AuthManager />
-            </OverlayRenderer>
-          </RouterContext.Provider>
-        </ArhivContext.Provider>
-      </React.StrictMode>,
-      rootEl,
-      () => {
-        rootEl.style.visibility = 'visible'
-      },
-    )
-  },
-  (err) => {
-    log.error('Failed to initialize arhiv', err)
-  },
-)
+            <AuthManager />
+          </OverlayRenderer>
+        </RouterContext.Provider>
+      </ArhivContext.Provider>
+    </React.StrictMode>,
+    rootEl,
+    () => {
+      rootEl.style.visibility = 'visible'
+    },
+  )
+})

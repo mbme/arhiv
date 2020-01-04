@@ -55,7 +55,7 @@ export interface IChangeset {
   readonly documents: readonly ArhivDocument[]
 
   /**
-   * new or updated attachments
+   * new attachments
    */
   readonly attachments: readonly IAttachment[]
 }

@@ -20,7 +20,7 @@ interface IProps {
   filter: string,
 }
 
-export function DocumentsList({ filter }: IProps) {
+export function CardDeck({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
@@ -45,7 +45,11 @@ export function DocumentsList({ filter }: IProps) {
     ))
 
   return (
-    <Box width="300px">
+    <Box
+      width="360px"
+      overflowY="scroll"
+      p="small"
+    >
       <Toolbar>
         <FilterInput
           placeholder="Filter notes"

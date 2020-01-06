@@ -172,4 +172,25 @@ export class Observable<T> {
       complete: observer.complete,
     }))
   }
+
+  timeout(dueMs: number) {
+    if (dueMs < 0) {
+      throw new Error('dueMs must be greater than 0')
+    }
+
+    return new Observable<T>((observer) => {
+      const timeoutId = setTimeout(() => {
+        observer.error(new Error(`observable timed out due to not getting initial value for ${dueMs}ms`))
+      }, dueMs)
+
+      return this.subscribe({
+        next(value) {
+          clearTimeout(timeoutId)
+          observer.next(value)
+        },
+        error: observer.error,
+        complete: observer.complete,
+      })
+    })
+  }
 }

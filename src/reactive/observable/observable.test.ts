@@ -211,3 +211,34 @@ test('skip', async () => {
 
   await assertObservable(o$, [3, complete])
 })
+
+test('timeout', async () => {
+  {
+    const o$ = new Observable<number>((observer) => {
+      const timeoutId = setTimeout(() => {
+        observer.next(1)
+        observer.complete()
+      }, 100)
+
+      return () => clearTimeout(timeoutId)
+    }).timeout(10)
+
+    await assertObservable(o$, [error])
+  }
+
+  {
+    const o$ = new Observable<number>((observer) => {
+      setTimeout(() => {
+        observer.next(1)
+      }, 50)
+
+      setTimeout(() => {
+        observer.complete()
+      }, 200)
+
+      return noop
+    }).timeout(120)
+
+    await assertObservable(o$, [1, complete])
+  }
+})

@@ -2,9 +2,36 @@ import * as React from 'react'
 import {
   noop,
 } from '~/utils'
-import { Observable, promise$ } from '~/reactive'
+import {
+  Observable,
+  promise$,
+} from '~/reactive'
 
 export function useObservable<T>(
+  getObservable$: () => Observable<T>,
+  deps: any[] = [],
+): [T | undefined, any] {
+  const [value, setValue] = React.useState<T | undefined>(undefined)
+  const [error, setError] = React.useState<any>(undefined)
+
+  React.useEffect(() => {
+    const o$ = getObservable$()
+
+    return o$.subscribe({
+      next(newValue) {
+        setValue(newValue)
+      },
+
+      error(e) {
+        setError(e)
+      },
+    })
+  }, deps)
+
+  return [value, error]
+}
+
+export function useObservableOld<T>(
   getObservable$: () => Observable<T>,
   deps: any[] = [],
   timeoutMs: number = 3000,

@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   Box,
 } from '~/web-platform'
-import { CardDeck } from './CardDeck'
+import { DeckOfCards } from './DeckOfCards'
 import { OpenCards } from './OpenCards'
 
 interface IProps {
@@ -17,7 +17,7 @@ export function WorkspaceView({ ids, filter }: IProps) {
       gridTemplateColumns="auto 1fr"
       height="100%"
     >
-      <CardDeck filter={filter} />
+      <DeckOfCards filter={filter} />
 
       <OpenCards ids={ids} />
     </Box>

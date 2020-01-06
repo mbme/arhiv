@@ -19,7 +19,7 @@ interface IProps {
   filter: string,
 }
 
-export function CardDeck({ filter }: IProps) {
+export function DeckOfCards({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 

@@ -24,9 +24,7 @@ export function formatTs(ts: number) {
 
 export const nowS = () => Date.now() / 1000
 
-export class ISO8601DateString {
-  constructor(public readonly value: string) { }
-}
+export class ISO8601DateString extends String { }
 
 export function dateNow(): ISO8601DateString {
   return new ISO8601DateString(new Date().toISOString())

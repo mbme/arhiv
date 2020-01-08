@@ -1,16 +1,11 @@
 import { createLogger } from '~/logger'
 import {
-  Without,
-} from '~/utils'
-import {
   selectLinks,
   parseMarkup,
 } from '~/markup-parser'
 import {
-  MarkupString,
-  ArhivDocument,
   IDocument,
-} from '../../types'
+} from '../../schema'
 import {
   ReplicaDB,
 } from '../db'
@@ -19,16 +14,16 @@ import { LockManager } from '../managers'
 const log = createLogger('document')
 
 // Active Record
-export class DocumentManager<T extends ArhivDocument = ArhivDocument> {
+export abstract class DocumentManager<P extends object> {
   constructor(
     private _db: ReplicaDB,
     private _locks: LockManager,
-    public readonly record: T,
+    public readonly document: IDocument,
     private _isNew: boolean,
   ) { }
 
   get id() {
-    return this.record._id
+    return this.document.id
   }
 
   private async _extractRefs(value: string) {
@@ -49,17 +44,19 @@ export class DocumentManager<T extends ArhivDocument = ArhivDocument> {
     return attachmentRefs
   }
 
-  async patch(patch: Partial<Without<T, keyof IDocument>>) {
+  async patch(patch: Partial<P>) {
     const refSources = Object.values(patch)
       .filter(value => value instanceof MarkupString)
-      .map(value => (value as MarkupString).value)
+
+    // FIXME extract doc refs
+    const attachmentRefs = new Set((await Promise.all(this._getMarkupStrings().map(this._extractRefs))).flat())
 
     const attachmentRefs = refSources.length
       ? await this._extractRefs(refSources.join(''))
-      : this.record._attachmentRefs
+      : this.document.attachmentRefs
 
     await this._db.saveDocument({
-      ...this.record,
+      ...this.document,
       ...patch,
       _attachmentRefs: attachmentRefs,
     })
@@ -68,7 +65,7 @@ export class DocumentManager<T extends ArhivDocument = ArhivDocument> {
 
   async delete() {
     await this._db.saveDocument({
-      ...this.record,
+      ...this.document,
       _deleted: true,
     })
   }

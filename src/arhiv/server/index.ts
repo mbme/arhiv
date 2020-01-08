@@ -1,14 +1,23 @@
 import fs from 'fs'
-import { createLogger } from '~/logger'
+import {
+  createLogger,
+} from '~/logger'
 import {
   Dict,
 } from '~/utils'
-import { Queue } from '~/utils/queue'
+import {
+  Queue,
+} from '~/utils/queue'
 import {
   pathMatcher as pm,
 } from '~/utils/path-matcher'
-import { createTempDir, rmrfSync } from '~/utils/fs'
-import { getMimeType } from '~/file-prober'
+import {
+  createTempDir,
+  rmrfSync,
+} from '~/utils/fs'
+import {
+  getMimeType,
+} from '~/file-prober'
 import {
   HTTPServer,
   MultipartBody,
@@ -16,8 +25,10 @@ import {
 } from '~/http-server'
 import {
   IChangeset,
-} from '../types'
-import { ArhivDB } from '../primary/db'
+} from '../schema'
+import {
+  ArhivDB,
+} from '../primary/db'
 import {
   isValidAuth,
   extractTokenCookie,

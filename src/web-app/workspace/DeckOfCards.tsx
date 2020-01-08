@@ -36,10 +36,10 @@ export function DeckOfCards({ filter }: IProps) {
     .map(document => (
       <Box key={document.id}>
         <Box as="small" mr="small">
-          {document.record._updatedAt}
+          {document.document._updatedAt}
         </Box>
 
-        {document.record._type} {document.id}
+        {document.document._type} {document.id}
       </Box>
     ))
 

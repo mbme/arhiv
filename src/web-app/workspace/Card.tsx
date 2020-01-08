@@ -38,7 +38,7 @@ export function Card({ id }: IProps) {
       wordBreak="break-word"
       background="yellow"
     >
-      {prettyPrintJSON(document.record)}
+      {prettyPrintJSON(document.document)}
     </Box>
   )
 }

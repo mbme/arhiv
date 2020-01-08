@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useRouter } from '~/web-router'
 import { useArhiv } from '~/arhiv/replica'
 import {
   useObservable,
@@ -10,15 +9,12 @@ import {
   Spacer,
   ProgressLocker,
 } from '~/web-platform'
-import { Toolbar } from '../parts'
 import { formatDate } from '~/utils'
+import { useWorkspaceManager } from './useWorkspaceManager'
+import { Toolbar } from '../parts'
 
-interface IProps {
-  filter: string,
-}
-
-export function DeckOfCards({ filter }: IProps) {
-  const router = useRouter()
+export function DeckOfCards() {
+  const ws = useWorkspaceManager()
   const arhiv = useArhiv()
 
   const [documents] = useObservable(() => arhiv.documents.getDocuments$())
@@ -30,9 +26,14 @@ export function DeckOfCards({ filter }: IProps) {
   }
 
   const items = documents
-    .filter(document => document.matches(filter))
+    .filter(document => document.matches(ws.filter))
     .map(document => (
-      <Box key={document.id}>
+      <Box
+        key={document.id}
+        onClick={() => ws.openId(document.id)}
+        mb="medium"
+        cursor="pointer"
+      >
         <Box as="small" mr="small">
           {formatDate(document.updatedAt)}
         </Box>
@@ -54,8 +55,8 @@ export function DeckOfCards({ filter }: IProps) {
       <Toolbar>
         <FilterInput
           placeholder="Filter notes"
-          filter={filter}
-          onChange={newFilter => router.replaceParam('filter', newFilter)}
+          filter={ws.filter}
+          onChange={newFilter => ws.updateFilter(newFilter)}
         />
 
         <Spacer />

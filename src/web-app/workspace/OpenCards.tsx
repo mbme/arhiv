@@ -1,12 +1,11 @@
 import * as React from 'react'
 import { Card } from './Card'
 import { Box } from '~/web-platform'
+import { useWorkspaceManager } from './useWorkspaceManager'
 
-interface IProps {
-  ids: string[],
-}
+export function OpenCards() {
+  const ws = useWorkspaceManager()
 
-export function OpenCards({ ids }: IProps) {
   return (
     <Box
       display="flex"
@@ -15,7 +14,7 @@ export function OpenCards({ ids }: IProps) {
       py="medium"
       overflowX="scroll"
     >
-      {ids.map(id => (
+      {ws.openIds.map(id => (
         <Box
           key={id}
           flex="0 0 auto"

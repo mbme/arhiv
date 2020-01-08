@@ -11,14 +11,6 @@ import { AuthOverlay } from './chrome/AuthOverlay'
 import { NotFound } from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'
 
-function parseIds(ids: string): string[] {
-  if (!ids.length) {
-    return []
-  }
-
-  return ids.split('-')
-}
-
 export function App() {
   const router = useRouter()
   const arhiv = useArhiv()
@@ -38,16 +30,8 @@ export function App() {
 
   switch (location.path) {
     case '/': {
-      const {
-        ids,
-        filter,
-      } = location.params
-
       return (
-        <WorkspaceView
-          ids={parseIds(ids || '')}
-          filter={filter || ''}
-        />
+        <WorkspaceView />
       )
     }
 

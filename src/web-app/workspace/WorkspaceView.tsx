@@ -5,21 +5,16 @@ import {
 import { DeckOfCards } from './DeckOfCards'
 import { OpenCards } from './OpenCards'
 
-interface IProps {
-  ids: string[],
-  filter: string,
-}
-
-export function WorkspaceView({ ids, filter }: IProps) {
+export function WorkspaceView() {
   return (
     <Box
       display="grid"
       gridTemplateColumns="auto 1fr"
       height="100%"
     >
-      <DeckOfCards filter={filter} />
+      <DeckOfCards />
 
-      <OpenCards ids={ids} />
+      <OpenCards />
     </Box>
   )
 }

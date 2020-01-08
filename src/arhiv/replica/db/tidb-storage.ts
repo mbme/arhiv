@@ -5,12 +5,14 @@ import {
   TIDBTransaction,
 } from '~/web-tidb'
 import {
+  LocalAttachments,
+} from '../types'
+import {
+  IDocument,
   IAttachment,
-  IChangesetResponse,
   IChangeset,
-  ArhivDocument,
-} from '../../types'
-import { LocalAttachments } from '../types'
+  IChangesetResponse,
+} from '~/arhiv/schema'
 import {
   DocumentConflict,
   MergeConflicts,
@@ -19,13 +21,13 @@ import {
 const log = createLogger('arhiv-db')
 
 interface IBlob {
-  _id: string
+  id: string
   data: Blob
 }
 
 interface IObjectStores {
-  'documents': ArhivDocument
-  'documents-local': ArhivDocument
+  'documents': IDocument
+  'documents-local': IDocument
   'attachments': IAttachment
   'attachments-local': IAttachment
   'attachments-data': IBlob
@@ -49,8 +51,8 @@ export class TIDBStorage {
       this.getAttachments(true),
     ])
 
-    const maxDocumentRev = documents.reduce((acc, document) => Math.max(acc, document._rev), 0)
-    const maxAttachemntRev = attachments.reduce((acc, attachment) => Math.max(acc, attachment._rev), 0)
+    const maxDocumentRev = documents.reduce((acc, document) => Math.max(acc, document.rev), 0)
+    const maxAttachemntRev = attachments.reduce((acc, attachment) => Math.max(acc, attachment.rev), 0)
 
     // db rev is max document or attachment rev
     this._rev = Math.max(maxDocumentRev, maxAttachemntRev)
@@ -67,11 +69,11 @@ export class TIDBStorage {
       }
 
       if (oldVersion < 1) { // create db
-        db.createObjectStore('documents', '_id')
-        db.createObjectStore('documents-local', '_id')
-        db.createObjectStore('attachments', '_id')
-        db.createObjectStore('attachments-local', '_id')
-        db.createObjectStore('attachments-data', '_id')
+        db.createObjectStore('documents', 'id')
+        db.createObjectStore('documents-local', 'id')
+        db.createObjectStore('attachments', 'id')
+        db.createObjectStore('attachments-local', 'id')
+        db.createObjectStore('attachments-data', 'id')
       }
     })
     const persistent = await applyForPersistentStorage()
@@ -89,7 +91,7 @@ export class TIDBStorage {
     return this._rev
   }
 
-  async getDocument(id: string): Promise<ArhivDocument | undefined> {
+  async getDocument(id: string): Promise<IDocument | undefined> {
     const tx = this._idb.transaction('documents', 'documents-local')
 
     const localDocument = await tx.store('documents-local').get(id)
@@ -100,7 +102,7 @@ export class TIDBStorage {
     return tx.store('documents').get(id)
   }
 
-  async addLocalDocument(document: ArhivDocument) {
+  async addLocalDocument(document: IDocument) {
     await this._idb.put('documents-local', document)
   }
 
@@ -126,7 +128,7 @@ export class TIDBStorage {
 
     await Promise.all([
       tx.store('attachments-local').put(attachment),
-      tx.store('attachments-data').put({ _id: attachment._id, data: file }),
+      tx.store('attachments-data').put({ id: attachment.id, data: file }),
     ])
   }
 
@@ -140,18 +142,18 @@ export class TIDBStorage {
       tx.store('documents-local').getAll(),
       tx.store('documents').getAll(),
     ])
-    const localIds = new Set(localDocuments.map(document => document._id))
+    const localIds = new Set(localDocuments.map(document => document.id))
 
     const result = [
       ...localDocuments,
-      ...documents.filter(document => !localIds.has(document._id)),
+      ...documents.filter(document => !localIds.has(document.id)),
     ]
 
     if (withDeleted) {
       return result
     }
 
-    return result.filter(document => !document._deleted)
+    return result.filter(document => !document.deleted)
   }
 
   async getAttachments(withDeleted = false) {
@@ -164,18 +166,18 @@ export class TIDBStorage {
       tx.store('attachments-local').getAll(),
       tx.store('attachments').getAll(),
     ])
-    const localIds = new Set(localAttachments.map(attachment => attachment._id))
+    const localIds = new Set(localAttachments.map(attachment => attachment.id))
 
     const result = [
       ...localAttachments,
-      ...attachments.filter(attachment => !localIds.has(attachment._id)),
+      ...attachments.filter(attachment => !localIds.has(attachment.id)),
     ]
 
     if (withDeleted) {
       return result
     }
 
-    return result.filter(attachment => !attachment._deleted)
+    return result.filter(attachment => !attachment.deleted)
   }
 
   async getChangeset(): Promise<[IChangeset, LocalAttachments]> {
@@ -195,17 +197,17 @@ export class TIDBStorage {
       schemaVersion: TIDBStorage.SCHEMA_VERSION,
       baseRev: this.getRev(),
       documents: localDocuments,
-      attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment._id)),
+      attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment.id)),
     }
 
     const attachmentsData = await Promise.all(
-      changeset.attachments.map(attachment => tx.store('attachments-data').get(attachment._id)),
+      changeset.attachments.map(attachment => tx.store('attachments-data').get(attachment.id)),
     )
 
     const localAttachmentsData: LocalAttachments = {}
     for (const data of attachmentsData) {
       if (data) {
-        localAttachmentsData[data._id] = data.data
+        localAttachmentsData[data.id] = data.data
       }
     }
 
@@ -277,14 +279,14 @@ export class TIDBStorage {
 
     const conflicts: DocumentConflict[] = []
     for (const localDocument of localDocuments) {
-      const remoteDocument = changesetResult.documents.find(document => document._id === localDocument._id)
+      const remoteDocument = changesetResult.documents.find(document => document.id === localDocument.id)
       if (!remoteDocument) {
         continue
       }
 
-      const baseDocument = await tx.store('documents').get(localDocument._id)
+      const baseDocument = await tx.store('documents').get(localDocument.id)
       if (!baseDocument) {
-        throw new Error(`Can't find base document for local document ${localDocument._id}`)
+        throw new Error(`Can't find base document for local document ${localDocument.id}`)
       }
 
       conflicts.push(new DocumentConflict(baseDocument, remoteDocument, localDocument))
@@ -329,7 +331,7 @@ export class TIDBStorage {
       tx.store('attachments-local').getAllKeys(),
     ])
 
-    const idsInUse = documents.flatMap(document => document._attachmentRefs)
+    const idsInUse = documents.flatMap(document => document.attachmentRefs)
 
     return attachmentIds.filter(id => !idsInUse.includes(id))
   }

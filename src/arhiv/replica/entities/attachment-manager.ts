@@ -1,5 +1,5 @@
 import { blobUrl$ } from '~/reactive'
-import { IAttachment } from '../../types'
+import { IAttachment } from '~/arhiv/schema'
 import { ReplicaDB } from '../db'
 
 export class AttachmentManager {
@@ -15,6 +15,6 @@ export class AttachmentManager {
   }
 
   get id() {
-    return this.attachment._id
+    return this.attachment.id
   }
 }

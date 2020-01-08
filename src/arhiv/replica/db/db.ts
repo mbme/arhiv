@@ -11,12 +11,6 @@ import {
   of$,
 } from '~/reactive'
 import {
-  IAttachment,
-  IChangesetResponse,
-  IChangeset,
-  ArhivDocument,
-} from '../../types'
-import {
   generateRandomId,
   isEmptyChangeset,
 } from '../../utils'
@@ -25,6 +19,12 @@ import {
   MergeConflicts,
 } from './merge-conflict'
 import { TIDBStorage } from './tidb-storage'
+import {
+  IChangeset,
+  IChangesetResponse,
+  IDocument,
+  IAttachment,
+} from '~/arhiv/schema'
 
 const log = createLogger('arhiv-db')
 
@@ -91,14 +91,14 @@ export class ReplicaDB {
     return id
   }
 
-  async getDocument(id: string): Promise<ArhivDocument | undefined> {
+  async getDocument(id: string): Promise<IDocument | undefined> {
     return this._storage.getDocument(id)
   }
 
-  getDocument$(id: string): Observable<ArhivDocument> {
+  getDocument$(id: string): Observable<IDocument> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
-      .filter(document => !!document) as Observable<ArhivDocument>
+      .filter(document => !!document) as Observable<IDocument>
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {
@@ -123,11 +123,11 @@ export class ReplicaDB {
     })
   }
 
-  async getDocuments(): Promise<ArhivDocument[]> {
+  async getDocuments(): Promise<IDocument[]> {
     return this._storage.getDocuments()
   }
 
-  getDocuments$(): Observable<ArhivDocument[]> {
+  getDocuments$(): Observable<IDocument[]> {
     return this.updateTime$.value$.switchMap(() => promise$(this.getDocuments()))
   }
 
@@ -137,11 +137,12 @@ export class ReplicaDB {
     const id = await this.getRandomId()
 
     await this._storage.addLocalAttachment({
-      _id: id,
-      _rev: this.getRev(),
-      _createdAt: dateNow(),
-      _mimeType: file.type,
-      _size: file.size,
+      id,
+      rev: this.getRev(),
+      createdAt: dateNow(),
+      mimeType: file.type,
+      size: file.size,
+      deleted: false,
     }, file)
     log.info(`Created new attachment ${id} for the file "${file.name}"`)
 
@@ -150,14 +151,14 @@ export class ReplicaDB {
     return id
   }
 
-  async saveDocument(document: ArhivDocument) {
+  async saveDocument(document: IDocument) {
     this._assertNoMergeConflicts()
 
     await this._storage.addLocalDocument({
       ...document,
-      _updatedAt: dateNow(),
+      updatedAt: dateNow(),
     })
-    log.debug(`saved document with id ${document._id}`)
+    log.debug(`saved document with id ${document.id}`)
 
     this._onUpdate(true)
   }

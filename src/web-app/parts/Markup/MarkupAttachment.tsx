@@ -26,7 +26,7 @@ export function MarkupAttachment({ attachment, link, description }: IProps) {
     return null
   }
 
-  if (attachment.attachment._mimeType.startsWith('image/')) {
+  if (attachment.attachment.mimeType.startsWith('image/')) {
     return (
       <Image
         $style={$image}

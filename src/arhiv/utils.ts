@@ -4,6 +4,7 @@ import {
   ID_ALPHABET,
   ID_LENGTH,
   IChangeset,
+  IDocument,
 } from './schema'
 
 export const generateRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
@@ -12,39 +13,18 @@ export function isEmptyChangeset(changeset: IChangeset) {
   return !changeset.documents.length && !changeset.attachments.length
 }
 
-export function createDocument<T extends ArhivDocumentType>(id: string, type: T)
-  : T extends 'note' ? INote
-  : T extends 'track' ? ITrack
-  : never
-
-export function createDocument(id: string, type: ArhivDocumentType): ArhivDocument {
+export function createDocument<T extends string, P extends object>(id: string, type: T, props: P): IDocument<T, P> {
   const now = dateNow()
 
-  if (type === 'note') {
-    return {
-      _id: id,
-      _rev: 0,
-      _createdAt: now,
-      _updatedAt: now,
-      _attachmentRefs: [] as string[],
-      _type: 'note',
-      name: '',
-      data: new MarkupString(''),
-    }
+  return {
+    id,
+    type,
+    rev: 0,
+    createdAt: now,
+    updatedAt: now,
+    refs: [] as string[],
+    attachmentRefs: [] as string[],
+    deleted: false,
+    props,
   }
-
-  if (type === 'track') {
-    return {
-      _id: id,
-      _rev: 0,
-      _createdAt: now,
-      _updatedAt: now,
-      _attachmentRefs: [] as string[],
-      _type: 'track',
-      title: '',
-      artist: '',
-    }
-  }
-
-  throw new Error(`unexpected document type: ${type}`)
 }

@@ -12,7 +12,9 @@ import {
   getFileSize,
   createTempDir,
 } from '~/utils/fs'
-import { createLink } from '~/markup-parser/utils'
+import {
+  createLink,
+} from '~/markup-parser/utils'
 import {
   randomInt,
   shuffle,
@@ -26,13 +28,10 @@ import {
   generateRandomId,
   createDocument,
 } from '../utils'
-import {
-  IAttachment,
-  INote,
-  MarkupString,
-} from '../types'
+import { IDocument, IAttachment } from '../schema'
+import { INoteProps } from '../replica/entities/note-manager'
 
-async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<INote> {
+async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<IDocument<'note', INoteProps>> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()
@@ -58,10 +57,11 @@ async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<INo
   ).join('\n\n')
 
   return {
-    ...createDocument(generateRandomId(), 'note'),
-    _attachmentRefs: Array.from(refs),
-    name: name.substring(0, name.length - 1),
-    data: new MarkupString(data),
+    ...createDocument(generateRandomId(), 'note', {
+      name: name.substring(0, name.length - 1),
+      data,
+    }),
+    attachmentRefs: Array.from(refs),
   }
 }
 
@@ -86,21 +86,22 @@ async function prepareImages(basePath: string, tempDir: string): Promise<Dict> {
 }
 
 async function createAttachments(images: Dict): Promise<IAttachment[]> {
-  return Promise.all(Object.entries(images).map(async ([_id, imagePath]) => {
+  return Promise.all(Object.entries(images).map(async ([id, imagePath]) => {
     const [
-      _mimeType,
-      _size,
+      mimeType,
+      size,
     ] = await Promise.all([
       getMimeType(imagePath),
       getFileSize(imagePath),
     ])
 
     return {
-      _id,
-      _rev: 0,
-      _createdAt: dateNow(),
-      _mimeType,
-      _size,
+      id,
+      rev: 0,
+      createdAt: dateNow(),
+      mimeType,
+      size,
+      deleted: false,
     }
   }))
 }

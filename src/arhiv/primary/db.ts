@@ -4,13 +4,13 @@ import {
 } from '~/utils'
 import { getMimeType } from '~/file-prober'
 import { getFileSize } from '~/utils/fs'
-import {
-  IChangesetResponse,
-  IChangeset,
-  ChangesetResponseStatus,
-} from '../types'
 import { isEmptyChangeset } from '../utils'
 import { FSStorage } from './fs-storage'
+import {
+  IChangeset,
+  IChangesetResponse,
+  ChangesetResponseStatus,
+} from '../schema'
 
 const log = createLogger('arhiv-db')
 
@@ -86,25 +86,25 @@ export class ArhivDB {
       for (const changedDocument of changeset.documents) {
         await mutations.putDocument({
           ...changedDocument,
-          _rev: newRev,
+          rev: newRev,
         })
       }
 
       // update metadata and save new attachments
       await Promise.all(changeset.attachments.map(async (newAttachment) => {
-        if (await this.getAttachment(newAttachment._id)) {
-          throw new Error(`Attachment ${newAttachment._id} already exists`)
+        if (await this.getAttachment(newAttachment.id)) {
+          throw new Error(`Attachment ${newAttachment.id} already exists`)
         }
 
-        const attachedFile = attachedFiles[newAttachment._id]
+        const attachedFile = attachedFiles[newAttachment.id]
 
         if (!attachedFile) {
-          throw new Error(`File is missing for the new attachment ${newAttachment._id}`)
+          throw new Error(`File is missing for the new attachment ${newAttachment.id}`)
         }
 
         const [
-          _mimeType,
-          _size,
+          mimeType,
+          size,
         ] = await Promise.all([
           getMimeType(attachedFile),
           getFileSize(attachedFile),
@@ -112,9 +112,9 @@ export class ArhivDB {
 
         await mutations.addAttachment({
           ...newAttachment,
-          _rev: newRev,
-          _mimeType,
-          _size,
+          rev: newRev,
+          mimeType,
+          size,
         }, attachedFile)
       }))
     })
@@ -136,16 +136,16 @@ export class ArhivDB {
       baseRev: rev,
       schemaVersion: this.getSchemaVersion(),
       currentRev,
-      documents: (await this._storage.getDocuments()).filter(document => document._rev > rev),
-      attachments: (await this._storage.getAttachments()).filter(attachment => attachment._rev > rev),
+      documents: (await this._storage.getDocuments()).filter(document => document.rev > rev),
+      attachments: (await this._storage.getAttachments()).filter(attachment => attachment.rev > rev),
     }
   }
 
   private async _getUnusedAttachments() {
-    const idsInUse = (await this._storage.getDocuments()).flatMap(document => document._attachmentRefs)
+    const idsInUse = (await this._storage.getDocuments()).flatMap(document => document.attachmentRefs)
 
     return (await this._storage.getAttachments())
-      .filter(attachment => !attachment._deleted && !idsInUse.includes(attachment._id))
+      .filter(attachment => !attachment.deleted && !idsInUse.includes(attachment.id))
   }
 
   /**
@@ -161,11 +161,11 @@ export class ArhivDB {
       for (const attachment of unusedAttachments) {
         await mutations.updateAttachment({
           ...attachment,
-          _rev: newRev,
+          rev: newRev,
         })
-        await mutations.removeAttachmentData(attachment._id)
+        await mutations.removeAttachmentData(attachment.id)
 
-        log.warn(`Removing unused attachment's data ${attachment._id}`)
+        log.warn(`Removing unused attachment's data ${attachment.id}`)
       }
     })
   }

@@ -8,9 +8,9 @@ import {
   dirExists,
 } from '~/utils/fs'
 import {
+  IDocument,
   IAttachment,
-  ArhivDocument,
-} from '../types'
+} from '../schema'
 
 export class FSStorageMutations {
   constructor(
@@ -19,24 +19,24 @@ export class FSStorageMutations {
     private _tx: FSTransaction,
   ) { }
 
-  putDocument = async (document: ArhivDocument) => {
-    const documentDir = path.join(this._documentsDir, document._id)
+  putDocument = async (document: IDocument) => {
+    const documentDir = path.join(this._documentsDir, document.id)
     if (!await dirExists(documentDir, true)) {
       await this._tx.createDir(documentDir)
     }
 
-    const filePath = path.join(documentDir, document._rev.toString())
+    const filePath = path.join(documentDir, document.rev.toString())
     if (await fileExists(filePath)) {
-      throw new Error(`document ${document._id} of rev ${document._rev} already exists`)
+      throw new Error(`document ${document.id} of rev ${document.rev} already exists`)
     }
 
     await this._tx.createFile(filePath, prettyPrintJSON(document))
   }
 
   addAttachment = async (attachment: IAttachment, attachmentPath: string) => {
-    const attachmentDir = path.join(this._attachmentsDir, attachment._id)
+    const attachmentDir = path.join(this._attachmentsDir, attachment.id)
     if (await dirExists(attachmentDir, true)) {
-      throw new Error(`attachment ${attachment._id} already exists`)
+      throw new Error(`attachment ${attachment.id} already exists`)
     }
 
     await this._tx.createDir(attachmentDir)
@@ -49,9 +49,9 @@ export class FSStorageMutations {
   }
 
   updateAttachment = async (attachment: IAttachment) => {
-    const dataPath = path.join(this._attachmentsDir, attachment._id, 'metadata')
+    const dataPath = path.join(this._attachmentsDir, attachment.id, 'metadata')
     if (!await fileExists(dataPath)) {
-      throw new Error(`attachment ${attachment._id} doesn't exist`)
+      throw new Error(`attachment ${attachment.id} doesn't exist`)
     }
 
     await this._tx.updateFile(dataPath, prettyPrintJSON(attachment))

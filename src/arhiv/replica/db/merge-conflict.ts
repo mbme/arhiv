@@ -2,18 +2,16 @@ import {
   Deferred,
   dateNow,
 } from '~/utils'
-import {
-  ArhivDocument,
-} from '../../types'
+import { IDocument } from '~/arhiv/schema'
 
 export class DocumentConflict {
-  private _deffered = new Deferred<ArhivDocument>()
-  private _final?: ArhivDocument
+  private _deffered = new Deferred<IDocument>()
+  private _final?: IDocument
 
   constructor(
-    public readonly base: ArhivDocument,
-    public readonly remote: ArhivDocument,
-    public readonly local: ArhivDocument,
+    public readonly base: IDocument,
+    public readonly remote: IDocument,
+    public readonly local: IDocument,
   ) { }
 
   get promise() {
@@ -30,13 +28,13 @@ export class DocumentConflict {
     return !!this._final
   }
 
-  resolve(final: ArhivDocument) {
+  resolve(final: IDocument) {
     this._assertNotResolved()
 
     this._final = {
       ...final,
-      _rev: this.remote._rev,
-      _updatedAt: dateNow(),
+      rev: this.remote.rev,
+      updatedAt: dateNow(),
     }
     this._deffered.resolve(this._final)
   }
@@ -55,11 +53,11 @@ export class DocumentConflict {
 }
 
 export class MergeConflicts {
-  public readonly promise: Promise<ArhivDocument[]>
+  public readonly promise: Promise<IDocument[]>
 
   constructor(
     public readonly conflicts: DocumentConflict[],
-    onResolved: (documents: ArhivDocument[]) => Promise<void>,
+    onResolved: (documents: IDocument[]) => Promise<void>,
   ) {
     this.promise = Promise.all(conflicts.map(conflict => conflict.promise)).then(async (documents) => {
       await onResolved(documents)

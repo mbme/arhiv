@@ -16,10 +16,11 @@ import {
   mkdir,
   writeJSON,
 } from '~/utils/fs'
-import {
-  IAttachment, ArhivDocument,
-} from '../types'
 import { FSStorageMutations } from './fs-storage-mutations'
+import {
+  IDocument,
+  IAttachment,
+} from '../schema'
 
 type StorageUpdater = (mutations: FSStorageMutations, newRev: number) => Promise<void>
 
@@ -145,14 +146,14 @@ export class FSStorage {
 
     // FIXME check if looks like a document dir, check files etc
 
-    return readJSON<ArhivDocument>(path.join(documentDir, lastRev.toString()))
+    return readJSON<IDocument>(path.join(documentDir, lastRev.toString()))
   }
 
   async getDocumentHistory(id: string) {
     const documentDir = path.join(this._documentsDir, id)
     const revisions = (await listFiles(documentDir)).map(parseInt10).sort()
 
-    return Promise.all(revisions.map(revision => readJSON<ArhivDocument>(path.join(documentDir, revision.toString()))))
+    return Promise.all(revisions.map(revision => readJSON<IDocument>(path.join(documentDir, revision.toString()))))
   }
 
   async getAttachments() {

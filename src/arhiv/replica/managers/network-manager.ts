@@ -6,9 +6,9 @@ import {
   Cell,
 } from '~/reactive'
 import {
-  IChangesetResponse,
   IChangeset,
-} from '../../types'
+  IChangesetResponse,
+} from '~/arhiv/schema'
 import {
   LocalAttachments,
 } from '../types'

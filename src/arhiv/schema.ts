@@ -12,10 +12,10 @@ export interface IAttachment {
   readonly deleted: boolean
 }
 
-export interface IDocument<P extends object = {}> {
+export interface IDocument<T extends string = string, P extends object = {}> {
   readonly id: string
   readonly rev: number
-  readonly type: string
+  readonly type: T
   readonly createdAt: string
   readonly updatedAt: string
   readonly refs: readonly string[]

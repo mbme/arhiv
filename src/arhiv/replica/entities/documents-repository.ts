@@ -1,14 +1,15 @@
 import { Observable } from '~/reactive'
+import { IDocument } from '~/arhiv/schema'
 import { ReplicaDB } from '../db'
-import {
-  ArhivDocumentType,
-  ArhivDocument,
-} from '../../types'
-import {
-  createDocument,
-} from '../../utils'
-import { DocumentManager } from './document-manager'
 import { LockManager } from '../managers'
+import { NoteManager } from './note-manager'
+
+const RegisteredDocumentManagers = {
+  'note': NoteManager,
+}
+type TDocumentTypes = keyof typeof RegisteredDocumentManagers
+type TDocumentManagers = InstanceType<typeof RegisteredDocumentManagers[TDocumentTypes]>
+type TDocumentManager<T extends TDocumentTypes> = InstanceType<typeof RegisteredDocumentManagers[T]>
 
 export class DocumentsRepository {
   constructor(
@@ -16,23 +17,29 @@ export class DocumentsRepository {
     private _locks: LockManager,
   ) { }
 
-  private _wrap<T extends ArhivDocument>(document: T, isNew = false) {
-    return new DocumentManager<T>(this._db, this._locks, document, isNew)
+  private _wrap(document: IDocument): TDocumentManagers {
+    const Manager = (RegisteredDocumentManagers as any)[document.type]
+    if (!Manager) {
+      throw new Error('test')
+    }
+
+    return new Manager(this._db, this._locks, document)
   }
 
-  async create<T extends ArhivDocumentType>(type: T) {
+  async create<T extends TDocumentTypes>(type: T): Promise<TDocumentManager<T>> {
     const id = await this._db.getRandomId()
-    const document = createDocument(id, type)
 
-    return this._wrap(document, true)
+    const Manager = RegisteredDocumentManagers[type] as any
+
+    return new Manager(this._db, this._locks, id)
   }
 
-  getDocuments$(): Observable<DocumentManager[]> {
+  getDocuments$(): Observable<TDocumentManagers[]> {
     return this._db.getDocuments$()
       .map(documents => documents.map(document => this._wrap(document)))
   }
 
-  getDocument$(id: string): Observable<DocumentManager> {
+  getDocument$(id: string): Observable<TDocumentManagers> {
     return this._db.getDocument$(id).map((document) => this._wrap(document))
   }
 }

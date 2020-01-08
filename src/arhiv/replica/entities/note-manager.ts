@@ -1,4 +1,7 @@
-import { isString } from '~/utils'
+import {
+  isString,
+  fuzzySearch,
+} from '~/utils'
 import { IDocument } from '~/arhiv/schema'
 import { createDocument } from '~/arhiv/utils'
 import { DocumentManager } from './document-manager'
@@ -30,5 +33,13 @@ export class NoteManager extends DocumentManager<'note', INoteProps> {
 
   protected _isMarkupField(field: string) {
     return field === 'data'
+  }
+
+  matches(query: string) {
+    return fuzzySearch(query, this.document.props.name)
+  }
+
+  getTitle() {
+    return this.document.props.name
   }
 }

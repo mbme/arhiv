@@ -17,16 +17,16 @@ interface IProps {
 // Card
 export function Card({ id }: IProps) {
   const arhiv = useArhiv()
-  const [document, isReady] = useObservable(() => arhiv.documents.getDocument$(id), [id])
+  const [document, error] = useObservable(() => arhiv.documents.getDocument$(id), [id])
 
-  if (!isReady) {
-    return (
-      <ProgressLocker />
-    )
+  if (error) {
+    return NotFound
   }
 
   if (!document) {
-    return NotFound
+    return (
+      <ProgressLocker />
+    )
   }
 
   return (

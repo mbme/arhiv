@@ -16,9 +16,6 @@ import {
   RouterContext,
   WebRouter,
 } from '~/web-router'
-import {
-  AuthManager,
-} from './chrome'
 import { App } from './App'
 
 const isDev = true
@@ -49,8 +46,6 @@ ArhivReplica.create().then((arhiv) => {
         <RouterContext.Provider value={new WebRouter()}>
           <OverlayRenderer>
             <App />
-
-            <AuthManager />
           </OverlayRenderer>
         </RouterContext.Provider>
       </ArhivContext.Provider>

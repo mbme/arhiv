@@ -98,7 +98,13 @@ export class ReplicaDB {
   getDocument$(id: string): Observable<IDocument> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
-      .filter(document => !!document) as Observable<IDocument>
+      .map((document) => {
+        if (!document) {
+          throw new Error(`can't find document ${id}`)
+        }
+
+        return document
+      })
   }
 
   async getAttachment(id: string): Promise<IAttachment | undefined> {

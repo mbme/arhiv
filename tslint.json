@@ -4,12 +4,6 @@
     "tslint-react-hooks"
   ],
   "defaultSeverity": "error",
-  "linterOptions": {
-    "exclude": [
-      "node_modules",
-      "src/old-web-app/**/*.ts*"
-    ]
-  },
   "rules": {
     "member-access": false,
     "ordered-imports": false,

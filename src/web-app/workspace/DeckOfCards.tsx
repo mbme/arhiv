@@ -1,7 +1,4 @@
 import * as React from 'react'
-import {
-  fuzzySearch,
-} from '~/utils'
 import { useRouter } from '~/web-router'
 import { useArhiv } from '~/arhiv/replica'
 import {
@@ -14,6 +11,7 @@ import {
   ProgressLocker,
 } from '~/web-platform'
 import { Toolbar } from '../parts'
+import { formatDate } from '~/utils'
 
 interface IProps {
   filter: string,
@@ -23,23 +21,27 @@ export function DeckOfCards({ filter }: IProps) {
   const router = useRouter()
   const arhiv = useArhiv()
 
-  const [documents, isReady] = useObservable(() => arhiv.documents.getDocuments$())
+  const [documents] = useObservable(() => arhiv.documents.getDocuments$())
 
-  if (!isReady) {
+  if (!documents) {
     return (
       <ProgressLocker />
     )
   }
 
-  const items = (documents || [])
-    .filter(document => fuzzySearch(filter, document.id))
+  const items = documents
+    .filter(document => document.matches(filter))
     .map(document => (
       <Box key={document.id}>
         <Box as="small" mr="small">
-          {document.document.updatedAt}
+          {formatDate(document.updatedAt)}
         </Box>
 
-        {document.document.type} {document.id}
+        <Box>
+          {document.id}
+        </Box>
+
+        [{document.type}] {document.getTitle()}
       </Box>
     ))
 

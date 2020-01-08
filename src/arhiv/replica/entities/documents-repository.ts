@@ -20,7 +20,7 @@ export class DocumentsRepository {
   private _wrap(document: IDocument): TDocumentManagers {
     const Manager = (RegisteredDocumentManagers as any)[document.type]
     if (!Manager) {
-      throw new Error('test')
+      throw new Error(`Got unexpected document type ${document.type}`)
     }
 
     return new Manager(this._db, this._locks, document)

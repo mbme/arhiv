@@ -22,8 +22,20 @@ export abstract class DocumentManager<T extends string, P extends object> {
     private _isNew: boolean,
   ) { }
 
-  get id() {
+  get type(): T {
+    return this.document.type
+  }
+
+  get id(): string {
     return this.document.id
+  }
+
+  get createdAt(): Date {
+    return new Date(this.document.createdAt)
+  }
+
+  get updatedAt(): Date {
+    return new Date(this.document.updatedAt)
   }
 
   private async _extractRefs(value: string): Promise<string[]> {
@@ -82,4 +94,8 @@ export abstract class DocumentManager<T extends string, P extends object> {
   acquireLock$() {
     return this._locks.acquireDocumentLock$(this.id)
   }
+
+  abstract matches(query: string): boolean
+
+  abstract getTitle(): string
 }

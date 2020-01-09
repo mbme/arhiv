@@ -1,11 +1,12 @@
 import { dateNow } from '~/utils'
 import { randomId } from '~/utils/random'
 import {
-  ID_ALPHABET,
-  ID_LENGTH,
   IChangeset,
   IDocument,
-} from './schema'
+} from './types'
+
+const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+const ID_LENGTH = 15
 
 export const generateRandomId = () => randomId(ID_ALPHABET, ID_LENGTH)
 

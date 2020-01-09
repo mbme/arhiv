@@ -10,7 +10,7 @@ import {
 import {
   IDocument,
   IAttachment,
-} from '../schema'
+} from '../types'
 
 export class FSStorageMutations {
   constructor(

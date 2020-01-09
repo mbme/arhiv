@@ -31,6 +31,7 @@ export function Card({ id }: IProps) {
 
   return (
     <Box
+      as="article"
       height="100%"
       width="360px"
       overflow="auto"
@@ -38,7 +39,7 @@ export function Card({ id }: IProps) {
       wordBreak="break-word"
       background="yellow"
     >
-      {prettyPrintJSON(document.document)}
+      {prettyPrintJSON(document.props)}
     </Box>
   )
 }

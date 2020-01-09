@@ -25,7 +25,7 @@ import {
 } from '~/http-server'
 import {
   IChangeset,
-} from '../schema'
+} from '../types'
 import {
   ArhivDB,
 } from '../primary/db'

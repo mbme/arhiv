@@ -10,7 +10,7 @@ import {
   IChangeset,
   IChangesetResponse,
   ChangesetResponseStatus,
-} from '../schema'
+} from '../types'
 
 const log = createLogger('arhiv-db')
 

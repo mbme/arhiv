@@ -12,7 +12,7 @@ import {
   IAttachment,
   IChangeset,
   IChangesetResponse,
-} from '~/arhiv/schema'
+} from '~/arhiv/types'
 import {
   DocumentConflict,
   MergeConflicts,

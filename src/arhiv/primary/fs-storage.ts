@@ -20,7 +20,7 @@ import { FSStorageMutations } from './fs-storage-mutations'
 import {
   IDocument,
   IAttachment,
-} from '../schema'
+} from '../types'
 
 type StorageUpdater = (mutations: FSStorageMutations, newRev: number) => Promise<void>
 

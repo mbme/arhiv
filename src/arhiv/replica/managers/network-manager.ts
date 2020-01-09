@@ -8,7 +8,7 @@ import {
 import {
   IChangeset,
   IChangesetResponse,
-} from '~/arhiv/schema'
+} from '~/arhiv/types'
 import {
   LocalAttachments,
 } from '../types'

@@ -2,7 +2,7 @@ import {
   Deferred,
   dateNow,
 } from '~/utils'
-import { IDocument } from '~/arhiv/schema'
+import { IDocument } from '~/arhiv/types'
 
 export class DocumentConflict {
   private _deffered = new Deferred<IDocument>()

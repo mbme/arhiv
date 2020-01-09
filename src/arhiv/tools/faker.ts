@@ -28,10 +28,12 @@ import {
   generateRandomId,
   createDocument,
 } from '../utils'
-import { IDocument, IAttachment } from '../schema'
-import { INoteProps } from '../replica/entities/note-manager'
+import {
+  IDocument,
+  IAttachment,
+} from '../types'
 
-async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<IDocument<'note', INoteProps>> {
+async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<IDocument<'note'>> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()

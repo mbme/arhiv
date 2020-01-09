@@ -24,7 +24,7 @@ import {
   IChangesetResponse,
   IDocument,
   IAttachment,
-} from '~/arhiv/schema'
+} from '~/arhiv/types'
 
 const log = createLogger('arhiv-db')
 

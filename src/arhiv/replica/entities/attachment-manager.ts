@@ -1,5 +1,5 @@
 import { blobUrl$ } from '~/reactive'
-import { IAttachment } from '~/arhiv/schema'
+import { IAttachment } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 
 export class AttachmentManager {

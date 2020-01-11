@@ -5,7 +5,7 @@ import {
 } from '~/utils'
 import {
   Observable,
-} from '~/reactive'
+} from '~/turbo'
 import {
   WebLocks,
 } from '~/web-utils'

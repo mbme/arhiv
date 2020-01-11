@@ -5,7 +5,7 @@ import {
 import {
   Observable,
   promise$,
-} from '~/reactive'
+} from '~/turbo'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,

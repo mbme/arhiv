@@ -4,7 +4,7 @@ import {
 import {
   Cell,
   Observable,
-} from '~/reactive'
+} from '~/turbo'
 import { Dict } from '~/utils'
 
 const log = createLogger('web-locks')

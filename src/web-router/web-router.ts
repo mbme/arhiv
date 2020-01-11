@@ -1,5 +1,5 @@
 import { isString } from '~/utils'
-import { Cell } from '~/reactive'
+import { Cell } from '~/turbo'
 
 export interface IParams {
   [key: string]: string | undefined

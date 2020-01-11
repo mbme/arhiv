@@ -1,4 +1,4 @@
-import { blobUrl$ } from '~/reactive'
+import { blobUrl$ } from '~/turbo'
 import { IAttachment } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 

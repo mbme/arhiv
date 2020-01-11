@@ -1,4 +1,4 @@
-import { Observable } from '~/reactive'
+import { Observable } from '~/turbo'
 import { IDocument } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 import { Document } from './document'

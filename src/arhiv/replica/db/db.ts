@@ -11,7 +11,7 @@ import {
   Observable,
   promise$,
   of$,
-} from '~/reactive'
+} from '~/turbo'
 import {
   generateRandomId,
   isEmptyChangeset,

@@ -8,7 +8,7 @@ import {
   interval$,
   Signal,
   promise$,
-} from '~/reactive'
+} from '~/turbo'
 import { ReplicaDB } from '../db'
 import { NetworkManager } from './network-manager'
 import { LockManager } from './lock-manager'

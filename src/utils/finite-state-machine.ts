@@ -1,4 +1,4 @@
-import { Cell } from '~/reactive'
+import { Cell } from '~/turbo'
 import { createLogger } from '~/logger'
 
 const log = createLogger('state-machine')

@@ -13,9 +13,6 @@ import {
   createTempDir,
 } from '~/utils/fs'
 import {
-  createLink,
-} from '~/markup-parser/utils'
-import {
   randomInt,
   shuffle,
   pickRandomItem,
@@ -24,6 +21,9 @@ import {
   ITextGenerator,
   createTextGenerator,
 } from '~/utils/random/text-generator'
+import {
+  createLink,
+} from '../markup-parser'
 import {
   generateRandomId,
   createDocument,

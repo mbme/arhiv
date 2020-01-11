@@ -2,9 +2,7 @@ import * as React from 'react'
 import {
   stylish,
 } from '~/web-platform'
-import {
-  nodes,
-} from '~/markup-parser'
+import { nodes } from '~/arhiv/markup-parser'
 import { MarkupLink } from './MarkupLink'
 
 const $article = stylish({

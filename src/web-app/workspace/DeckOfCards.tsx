@@ -8,8 +8,8 @@ import {
   theme,
   Label,
 } from '~/web-platform'
+import { useArhiv } from '~/arhiv/useArhiv'
 import { useWorkspaceManager } from './useWorkspaceManager'
-import { useArhiv } from '../useArhiv'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 

@@ -7,11 +7,11 @@ import {
 } from '~/web-platform'
 import { prettyPrintJSON } from '~/utils'
 import { DocumentNote } from '~/arhiv/replica'
+import { useArhiv } from '~/arhiv/useArhiv'
 import {
   NotFound,
   Markup,
 } from '../parts'
-import { useArhiv } from '../useArhiv'
 import { CardFrame } from './CardFrame'
 
 interface IProps {

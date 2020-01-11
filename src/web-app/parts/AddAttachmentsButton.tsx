@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { AttachFilesButton } from '~/web-platform'
-import { createLink } from '~/markup-parser/utils'
-import { useArhiv } from '../useArhiv'
+import { createLink } from '~/arhiv/markup-parser'
+import { useArhiv } from '~/arhiv/useArhiv'
 
 interface IProps {
   onAttachments(links: string[]): void

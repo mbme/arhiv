@@ -1,11 +1,8 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import {
-  configureLogger,
-} from '~/logger'
-import {
-  ArhivReplica,
-} from '~/arhiv/replica'
+import { configureLogger } from '~/logger'
+import { ArhivReplica } from '~/arhiv/replica'
+import { ArhivContext } from '~/arhiv/useArhiv'
 import {
   injectGlobalStyles,
   globalStyles,
@@ -15,7 +12,6 @@ import {
   RouterContext,
   WebRouter,
 } from '~/web-router'
-import { ArhivContext } from './useArhiv'
 import { App } from './App'
 
 const isDev = true

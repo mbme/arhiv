@@ -4,11 +4,11 @@ import {
   fuzzySearch,
 } from '~/utils'
 import { Observable } from '~/reactive'
-import {
-  selectLinks,
-  parseMarkup,
-} from '~/markup-parser'
 import { IDocument } from '~/arhiv/types'
+import {
+  parseMarkup,
+  selectLinks,
+} from '~/arhiv/markup-parser'
 import { ReplicaDB } from '../db'
 
 const log = createLogger('document')

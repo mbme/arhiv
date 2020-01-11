@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { usePromise } from '~/web-platform'
-import { useArhiv } from '../../useArhiv'
+import { useArhiv } from '~/arhiv/useArhiv'
 import { MarkupAttachment } from './MarkupAttachment'
 
 interface IProps {

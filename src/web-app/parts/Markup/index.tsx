@@ -5,7 +5,7 @@ import {
 import {
   markupParser,
   isFailure,
-} from '~/markup-parser'
+} from '~/arhiv/markup-parser'
 import { MarkupNode } from './MarkupNode'
 
 interface IProps {

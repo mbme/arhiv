@@ -7,7 +7,7 @@ import {
   Box,
 } from '~/web-platform'
 import { Library } from '~/web-platform/Library'
-import { useArhiv } from './useArhiv'
+import { useArhiv } from '~/arhiv/useArhiv'
 import {
   NotFound,
   Chrome,

@@ -67,7 +67,7 @@ export const regex = (re: RegExp) => satisfy((msg, pos) => {
 }, `regex(${re})`)
 
 export const anyChar = satisfy((msg, pos) => {
-  if (msg[pos] === undefined) {
+  if (pos >= msg.length) {
     return [false, 'no match: eof']
   }
 

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArhivReplica } from './replica'
+import { ArhivReplica } from '~/arhiv/replica'
 
 export const ArhivContext = React.createContext<ArhivReplica>(null as any)
 

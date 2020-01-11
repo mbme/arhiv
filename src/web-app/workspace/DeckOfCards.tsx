@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useArhiv } from '~/arhiv/replica'
 import {
   useObservable,
   Button,
@@ -12,6 +11,7 @@ import {
 import { formatDate } from '~/utils'
 import { useWorkspaceManager } from './useWorkspaceManager'
 import { Toolbar } from '../parts'
+import { useArhiv } from '../useArhiv'
 
 export function DeckOfCards() {
   const ws = useWorkspaceManager()

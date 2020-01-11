@@ -25,6 +25,4 @@ export type Result<T, E = Error> = { ok: true, value: T } | { ok: false, error: 
 
 export type ArrayElement<E> = E extends ReadonlyArray<infer T> ? T : never
 
-export type ClassType<T> = {
-  new(...args: any[]): T
-}
+export type ClassType<T> = new (...args: any[]) => T

@@ -1,5 +1,5 @@
 import { ReplicaDB } from '../db'
-import { AttachmentManager } from './attachment-manager'
+import { Attachment } from './attachment'
 
 export class AttachmentsRepository {
   constructor(protected _db: ReplicaDB) { }
@@ -8,12 +8,12 @@ export class AttachmentsRepository {
     return this._db.saveAttachment(file)
   }
 
-  async getAttachment(id: string): Promise<AttachmentManager | undefined> {
+  async getAttachment(id: string): Promise<Attachment | undefined> {
     const attachment = await this._db.getAttachment(id)
     if (!attachment) {
       return undefined
     }
 
-    return new AttachmentManager(this._db, attachment)
+    return new Attachment(this._db, attachment)
   }
 }

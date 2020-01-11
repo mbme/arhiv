@@ -1,5 +1,6 @@
-export * from './document-manager'
+export * from './document'
+export * from './document-note'
 export * from './documents-repository'
 
-export * from './attachment-manager'
+export * from './attachment'
 export * from './attachments-repository'

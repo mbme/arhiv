@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useArhiv } from '~/arhiv/replica'
 import {
   useRouter,
 } from '~/web-router'
@@ -7,6 +6,7 @@ import {
   useObservable,
 } from '~/web-platform'
 import { Library } from '~/web-platform/Library'
+import { useArhiv } from './useArhiv'
 import { AuthOverlay } from './chrome/AuthOverlay'
 import { NotFound } from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'

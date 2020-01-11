@@ -2,7 +2,7 @@ import { blobUrl$ } from '~/reactive'
 import { IAttachment } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 
-export class AttachmentManager {
+export class Attachment {
   constructor(
     private _db: ReplicaDB,
     public attachment: IAttachment,

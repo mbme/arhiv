@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useArhiv } from '~/arhiv/replica'
 import {
   Box,
   ProgressLocker,
@@ -9,6 +8,7 @@ import { prettyPrintJSON } from '~/utils'
 import {
   NotFound,
 } from '../parts'
+import { useArhiv } from '../useArhiv'
 
 interface IProps {
   id: string

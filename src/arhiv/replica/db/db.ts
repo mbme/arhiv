@@ -95,15 +95,16 @@ export class ReplicaDB {
     return this._storage.getDocument(id)
   }
 
-  getDocument$(id: string): Observable<IDocument> {
+  getDocument$<A extends boolean>(id: string, assert: A)
+    : Observable<A extends true ? IDocument : IDocument | undefined> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
       .map((document) => {
-        if (!document) {
+        if (assert && !document) {
           throw new Error(`can't find document ${id}`)
         }
 
-        return document
+        return document as any
       })
   }
 

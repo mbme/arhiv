@@ -5,7 +5,6 @@ import {
 } from '~/logger'
 import {
   ArhivReplica,
-  ArhivContext,
 } from '~/arhiv/replica'
 import {
   injectGlobalStyles,
@@ -16,6 +15,7 @@ import {
   RouterContext,
   WebRouter,
 } from '~/web-router'
+import { ArhivContext } from './useArhiv'
 import { App } from './App'
 
 const isDev = true

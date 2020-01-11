@@ -1,29 +1,44 @@
 import { Observable } from '~/reactive'
-import { createDocument } from '~/arhiv/utils'
+import { IDocument } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
-import { DocumentManager } from './document-manager'
-import { LockManager } from '../managers'
+import { Document } from './document'
+import { DocumentNote } from './document-note'
+
+interface IDocumentClass<P extends Document> {
+  type: string
+  new(db: ReplicaDB, document: IDocument<string, any>): P
+  create(db: ReplicaDB): Promise<P>
+}
+
+const DOCUMENT_CLASSES: Array<IDocumentClass<any>> = [
+  DocumentNote,
+]
 
 export class DocumentsRepository {
   constructor(
     private _db: ReplicaDB,
-    private _locks: LockManager,
   ) { }
 
-  async create<T extends string, P extends object>(type: T, initialProps: P): Promise<DocumentManager<T, P>> {
-    const id = await this._db.getRandomId()
-
-    const document = createDocument(id, type, initialProps)
-
-    return new DocumentManager(this._db, this._locks, document, true)
+  async create<P extends Document>(DocumentType: IDocumentClass<P>) {
+    return DocumentType.create(this._db)
   }
 
-  getDocuments$(): Observable<DocumentManager[]> {
+  private _wrap = (document: IDocument): Document => {
+    for (const DocumentClass of DOCUMENT_CLASSES) {
+      if (DocumentClass.type === document.type) {
+        return new DocumentClass(this._db, document)
+      }
+    }
+
+    throw new Error(`Got unknown document type ${document.type}`)
+  }
+
+  getDocuments$(): Observable<Document[]> {
     return this._db.getDocuments$()
-      .map(documents => documents.map(document => new DocumentManager(this._db, this._locks, document)))
+      .map(documents => documents.map(this._wrap))
   }
 
-  getDocument$(id: string): Observable<DocumentManager> {
-    return this._db.getDocument$(id).map(document => new DocumentManager(this._db, this._locks, document))
+  getDocument$(id: string): Observable<Document> {
+    return this._db.getDocument$(id, true).map(this._wrap)
   }
 }

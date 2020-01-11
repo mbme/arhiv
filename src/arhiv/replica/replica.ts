@@ -43,15 +43,11 @@ export class ArhivReplica {
     )
   }
 
-  private async _start() {
-    await this._db.compact()
-  }
-
   static async create() {
     const db = await TIDBStorage.open()
 
     const arhiv = new ArhivReplica(db)
-    await arhiv._start()
+    await db.compact()
 
     return arhiv
   }

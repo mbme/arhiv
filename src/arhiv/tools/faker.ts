@@ -4,8 +4,8 @@ import { getMimeType } from '~/file-prober'
 import {
   createArray,
   Dict,
-  dateNow,
 } from '~/utils'
+import { dateNow } from '~/chrono'
 import {
   readText,
   listFiles,

@@ -66,6 +66,14 @@ export const regex = (re: RegExp) => satisfy((msg, pos) => {
   return [true, result[0]]
 }, `regex(${re})`)
 
+export const anyChar = satisfy((msg, pos) => {
+  if (msg[pos] === undefined) {
+    return [false, 'no match: eof']
+  }
+
+  return [true, msg[pos]]
+}, 'anyChar')
+
 export const anyCharExcept = (chars: string) => satisfy((msg, pos) => {
   if (chars.includes(msg[pos])) {
     return [false, 'Matched forbidden char']

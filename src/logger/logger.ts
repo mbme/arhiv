@@ -1,5 +1,5 @@
 /* tslint:disable:no-console */
-import { formatDate } from '~/utils/date'
+import { ChronoFormatter } from '~/chrono'
 import {
   TermColor,
   termColors,
@@ -10,6 +10,8 @@ import {
   LEVELS,
 } from './types'
 import { config } from './config'
+
+const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm:ss,SSS')
 
 export class Logger {
   private _namespaceColor?: ColorCode
@@ -37,7 +39,7 @@ export class Logger {
 
   private _getDate() {
     if (config.includeDateTime) {
-      return formatDate(new Date())
+      return dateFormat.format(new Date())
     }
 
     return ''

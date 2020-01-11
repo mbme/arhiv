@@ -33,6 +33,7 @@ export class DocumentsRepository {
     throw new Error(`Got unknown document type ${document.type}`)
   }
 
+  // FIXME this should accept IQuery with filter, limit etc
   getDocuments$(): Observable<Document[]> {
     return this._db.getDocuments$()
       .map(documents => documents.map(this._wrap))

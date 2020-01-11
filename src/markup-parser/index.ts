@@ -17,6 +17,7 @@ export {
   nodes,
 }
 
+// FIXME move this into arhiv
 export function parseMarkup(source: string): nodes.NodeMarkup {
   const result = markupParser.parseAll(source)
 

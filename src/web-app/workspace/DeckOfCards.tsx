@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { ChronoFormatter } from '~/chrono'
 import {
   useObservable,
   FilterInput,
@@ -7,9 +8,10 @@ import {
   theme,
   Label,
 } from '~/web-platform'
-import { formatDate } from '~/utils'
 import { useWorkspaceManager } from './useWorkspaceManager'
 import { useArhiv } from '../useArhiv'
+
+const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 export function DeckOfCards() {
   const ws = useWorkspaceManager()
@@ -47,7 +49,7 @@ export function DeckOfCards() {
           as="small"
           display="block"
         >
-          {formatDate(document.updatedAt)}
+          {dateFormat.format(document.updatedAt)}
         </Box>
       </Box>
     ))

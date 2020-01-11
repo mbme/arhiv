@@ -1,9 +1,11 @@
 import { createLogger } from '~/logger'
 import {
-  nowS,
-  dateNow,
   Callbacks,
 } from '~/utils'
+import {
+  nowS,
+  dateNow,
+} from '~/chrono'
 import {
   Cell,
   Observable,

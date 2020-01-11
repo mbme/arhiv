@@ -1,7 +1,6 @@
 export * from './array'
 export * from './counter'
 export * from './css'
-export * from './date'
 export * from './deferred'
 export * from './lazy'
 export * from './misc'

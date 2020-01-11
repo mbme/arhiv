@@ -1,7 +1,7 @@
 import {
   Deferred,
-  dateNow,
 } from '~/utils'
+import { dateNow } from '~/chrono'
 import { IDocument } from '~/arhiv/types'
 
 export class DocumentConflict {

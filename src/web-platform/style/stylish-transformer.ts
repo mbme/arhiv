@@ -99,6 +99,10 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     fontWeight: 'bold',
   },
 
+  uppercase: {
+    textTransform: 'uppercase',
+  },
+
   hidden: val => ({
     display: val ? 'none' : undefined,
   }),

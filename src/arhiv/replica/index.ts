@@ -20,6 +20,7 @@ import {
 
 export {
   Attachment,
+  Document,
   DocumentNote,
 } from './entities'
 

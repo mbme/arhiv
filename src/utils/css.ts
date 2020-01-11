@@ -19,7 +19,7 @@ export function classNames(...args: any[]) {
 
 // helps to debug layout https://dev.to/gajus/my-favorite-css-hack-32g3
 export const debugLayoutSnippet = `
-  html.debug * {
+  html * {
     background: rgba(255, 0, 0, .1);
     box-shadow: 0 0 0 1px red;
   }

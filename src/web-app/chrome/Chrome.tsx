@@ -1,134 +1,62 @@
 import * as React from 'react'
 import {
-  useRouter,
-  ILocation,
-} from '~/web-router'
-import {
-  useObservable,
-  theme,
-  Overlay,
-  Icon,
   stylish,
+  Box,
+  Link,
+  theme,
 } from '~/web-platform'
-import { NotFound } from '../parts'
-import { IApp } from './IApp'
-import { NavBar } from './NavBar'
-
-const maxWidth = '35rem'
-const $container = stylish({
-  display: 'grid',
-  gridTemplateAreas: '"content"',
-
-  fromMd: {
-    gridTemplateColumns: `minmax(180px, 30%) ${maxWidth} auto`,
-    gridTemplateAreas: '"sidemenu content whitespace"',
-  },
-})
-
-const $navbarContainer = stylish({
-  gridArea: 'sidemenu',
-  position: 'sticky',
-  top: '0',
-
-  display: 'none',
-
-  fromMd: {
-    display: 'block',
-  },
-})
-
-const $menuIcon = stylish({
-  position: 'fixed',
-
-  top: theme.spacing.fine,
-  left: theme.spacing.small,
-
-  fromMd: {
-    display: 'none',
-  },
-})
-
-const $view = stylish({
-  gridArea: 'content',
-  justifySelf: 'center',
-  padding: `0 ${theme.spacing.small}`,
-  width: '100%',
-  maxWidth,
-
-  display: 'flex',
-  flexDirection: 'column',
-
-  fromSm: {
-    padding: `0 ${theme.spacing.medium}`,
-  },
-
-  fromMd: {
-    padding: `0 ${theme.spacing.large}`,
-  },
-})
 
 interface IProps {
-  apps: IApp[]
-  onLogout(): void
+  selected: 'workspace' | 'library'
+  children: React.ReactNode
 }
 
-function getCurrentApp(apps: IApp[], location: ILocation) {
-  for (const app of apps) {
-    if (app.route === location.path) {
-      return app
-    }
-  }
+const $navlink = stylish(
+  {
+    display: 'inline-block',
+    mx: 'large',
+  },
+  props => props.isSelected && {
+    color: 'primary',
+  },
+)
 
-  return null
-}
-
-export function Chrome({ apps, onLogout }: IProps) {
-  const router = useRouter()
-  const [location] = useObservable(() => router.location$.value$)
-  const [isNavVisible, setIsNavVisible] = React.useState(false)
-
-  if (!location) {
-    return null
-  }
-
-  const app = getCurrentApp(apps, location)
-  if (!app) {
-    return NotFound
-  }
-
-  const view = app.render(location.params)
-
-  const navbar = (
-    <NavBar
-      apps={apps}
-      currentApp={app}
-      onClick={() => setIsNavVisible(false)}
-      onLogout={onLogout}
-    />
-  )
-
+export function Chrome({ selected, children }: IProps) {
   return (
-    <div className={$container.className}>
-      {!isNavVisible && (
-        <Icon
-          type="menu"
-          $style={$menuIcon}
-          onClick={() => setIsNavVisible(!isNavVisible)}
-        />
-      )}
-      <div className={$navbarContainer.className}>
-        {navbar}
-      </div>
+    <Box
+      height="100%"
+      pt="50px" // for header
+      position="relative"
+    >
+      <Box
+        as="nav"
+        boxShadow={theme.boxShadow}
+        py="small"
+        position="absolute"
+        top="0"
+        width="100%"
+      >
+        <Link
+          to={{ path: '/' }}
+          className={$navlink.with({ isSelected: selected === 'workspace' }).className}
+        >
+          Workspace
+        </Link>
 
-      {isNavVisible && (
-        <Overlay>
-          {navbar}
-        </Overlay>
-      )}
+        <Link
+          to={{ path: '/library' }}
+          className={$navlink.with({ isSelected: selected === 'library' }).className}
+        >
+          Library
+        </Link>
+      </Box>
 
-      <div className={$view.className}>
-        {view}
-      </div>
-    </div>
+      <Box
+        height="100%"
+        overflow="auto"
+      >
+        {children}
+      </Box>
+    </Box>
   )
 }

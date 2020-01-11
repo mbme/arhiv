@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Card } from './Card'
 import { Box } from '~/web-platform'
+import { Card } from './Card'
 import { useWorkspaceManager } from './useWorkspaceManager'
 
 export function OpenCards() {
@@ -9,16 +9,16 @@ export function OpenCards() {
   return (
     <Box
       display="flex"
-      justifyContent="flex-start"
-      alignItems="stretch"
-      py="medium"
-      overflowX="scroll"
+      flexDirection="column"
+      p="medium"
+      height="100%"
+      overflowY="scroll"
     >
       {ws.openIds.map(id => (
         <Box
           key={id}
           flex="0 0 auto"
-          mx="medium"
+          mb="large"
         >
           <Card id={id} />
         </Box>

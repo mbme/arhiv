@@ -11,11 +11,7 @@ interface IProps {
 export function MarkupLink({ link, description }: IProps) {
   const arhiv = useArhiv()
 
-  const [attachment, isReady] = usePromise(() => arhiv.attachments.getAttachment(link), [link])
-
-  if (!isReady) {
-    return null
-  }
+  const [attachment] = usePromise(() => arhiv.attachments.getAttachment(link), [link])
 
   if (!attachment) {
     return (

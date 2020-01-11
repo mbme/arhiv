@@ -3,12 +3,16 @@ import {
   Box,
   ProgressLocker,
   useObservable,
+  Heading,
 } from '~/web-platform'
 import { prettyPrintJSON } from '~/utils'
+import { DocumentNote } from '~/arhiv/replica'
 import {
   NotFound,
+  Markup,
 } from '../parts'
 import { useArhiv } from '../useArhiv'
+import { CardFrame } from './CardFrame'
 
 interface IProps {
   id: string
@@ -29,17 +33,29 @@ export function Card({ id }: IProps) {
     )
   }
 
+  if (document instanceof DocumentNote) {
+    return (
+      <CardFrame document={document}>
+        <Heading
+          letterSpacing="1.4px"
+          fontSize="large"
+        >
+          {document.name}
+        </Heading>
+
+        <Markup value={document.data} />
+      </CardFrame>
+    )
+  }
+
   return (
-    <Box
-      as="article"
-      height="100%"
-      width="360px"
-      overflow="auto"
-      fontFamily="monospace"
-      wordBreak="break-word"
-      background="yellow"
-    >
-      {prettyPrintJSON(document.props)}
-    </Box>
+    <CardFrame document={document}>
+      <Box
+        fontFamily="mono"
+        wordBreak="break-word"
+      >
+        {prettyPrintJSON(document.props)}
+      </Box>
+    </CardFrame>
   )
 }

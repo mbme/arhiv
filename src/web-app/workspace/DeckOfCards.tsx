@@ -1,16 +1,13 @@
 import * as React from 'react'
 import {
   useObservable,
-  Button,
   FilterInput,
-  Link,
   Box,
-  Spacer,
   ProgressLocker,
+  theme,
 } from '~/web-platform'
 import { formatDate } from '~/utils'
 import { useWorkspaceManager } from './useWorkspaceManager'
-import { Toolbar } from '../parts'
 import { useArhiv } from '../useArhiv'
 
 export function DeckOfCards() {
@@ -32,45 +29,58 @@ export function DeckOfCards() {
         key={document.id}
         onClick={() => ws.openId(document.id)}
         mb="medium"
+        ml="small"
         cursor="pointer"
+        borderRight="5px solid white"
+        borderRightColor={ws.openIds.includes(document.id) ? theme.color.highlight : undefined}
       >
-        <Box as="small" mr="small">
+        <Box
+          as="code"
+          display="block"
+          fontSize="fine"
+        >
+          {document.type}
+        </Box>
+
+        {document.getTitle()}
+
+        <Box
+          as="small"
+          display="block"
+        >
           {formatDate(document.updatedAt)}
         </Box>
-
-        <Box>
-          {document.id}
-        </Box>
-
-        [{document.type}] {document.getTitle()}
       </Box>
     ))
 
   return (
     <Box
       width="360px"
+      height="100%"
       overflowY="scroll"
-      p="small"
     >
-      <Toolbar>
+      <Box
+        position="sticky"
+        top="0"
+        background={theme.color.bg}
+        py="fine"
+      >
         <FilterInput
           placeholder="Filter notes"
           filter={ws.filter}
           onChange={newFilter => ws.updateFilter(newFilter)}
+          alwaysExpanded
         />
+      </Box>
 
-        <Spacer />
-
-        <Link to={{ path: '/note-editor' }}>
-          <Button primary>
-            Add
-          </Button>
-        </Link>
-      </Toolbar>
-
-      <small>
+      <Box
+        as="small"
+        pl="medium"
+        mb="medium"
+        display="block"
+      >
         {items.length} items
-      </small>
+      </Box>
 
       {items}
     </Box>

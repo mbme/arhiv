@@ -36,4 +36,12 @@ export class DocumentNote extends Document<INoteProps> {
   getTitle() {
     return this.props.name
   }
+
+  get name() {
+    return this.props.name
+  }
+
+  get data() {
+    return this.props.data
+  }
 }

@@ -28,7 +28,6 @@ injectGlobalStyles(`
   ${globalStyles}
 
   #root {
-    overflow-y: scroll;
     height: 100vh;
     visibility: hidden;
   }

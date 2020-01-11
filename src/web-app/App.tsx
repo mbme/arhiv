@@ -4,10 +4,12 @@ import {
 } from '~/web-router'
 import {
   useObservable,
+  Box,
 } from '~/web-platform'
 import { Library } from '~/web-platform/Library'
 import { useArhiv } from './useArhiv'
 import { AuthOverlay } from './chrome/AuthOverlay'
+import { Chrome } from './chrome/Chrome'
 import { NotFound } from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'
 
@@ -31,13 +33,23 @@ export function App() {
   switch (location.path) {
     case '/': {
       return (
-        <WorkspaceView />
+        <Chrome selected="workspace">
+          <WorkspaceView />
+        </Chrome>
       )
     }
 
     case '/library': {
       return (
-        <Library />
+        <Chrome selected="library">
+          <Box
+            display="inline-block"
+            maxWidth="50rem"
+            p="large"
+          >
+            <Library />
+          </Box>
+        </Chrome>
       )
     }
 

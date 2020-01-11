@@ -5,6 +5,7 @@ import { Icon } from './Icon'
 interface IProps {
   placeholder: string
   filter: string
+  alwaysExpanded?: boolean
   onChange(value?: string): void
 }
 
@@ -14,21 +15,31 @@ interface IState {
 
 export class FilterInput extends React.PureComponent<IProps, IState> {
   state = {
-    expanded: false,
+    expanded: this.props.alwaysExpanded || false,
   }
 
   updateTimoutId?: number
 
-  expand = () => this.setState({ expanded: true })
+  expand = () => {
+    this.setState({ expanded: true })
+  }
 
-  collapse = () => this.setState({ expanded: false })
+  collapse = () => {
+    this.setState({
+      expanded: this.props.alwaysExpanded || false,
+    })
+  }
 
   onBlur = () => {
-    if (!this.props.filter) this.collapse()
+    if (!this.props.filter) {
+      this.collapse()
+    }
   }
 
   onChange = (filter: string) => {
-    if (filter.trim() === this.props.filter) return
+    if (filter.trim() === this.props.filter) {
+      return
+    }
 
     window.clearTimeout(this.updateTimoutId)
     this.updateTimoutId = window.setTimeout(

@@ -88,9 +88,13 @@ export class FSStorage {
     log.info(`arhiv root: ${rootDir}`)
 
     const storage = new FSStorage(rootDir)
-    if (!await dirExists(rootDir) && create) {
-      log.info('initializing dir structure')
-      await storage._create()
+    if (!await dirExists(rootDir, true)) {
+      if (create) {
+        log.info('initializing dir structure')
+        await storage._create()
+      } else {
+        throw new Error(`Arhiv root dir ${rootDir} doesn't exist`)
+      }
     }
 
     await storage._lock.create()

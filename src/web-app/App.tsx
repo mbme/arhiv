@@ -8,9 +8,11 @@ import {
 } from '~/web-platform'
 import { Library } from '~/web-platform/Library'
 import { useArhiv } from './useArhiv'
-import { AuthOverlay } from './chrome/AuthOverlay'
-import { Chrome } from './chrome/Chrome'
-import { NotFound } from './parts'
+import {
+  NotFound,
+  Chrome,
+  AuthOverlay,
+} from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'
 
 export function App() {
@@ -33,9 +35,7 @@ export function App() {
   switch (location.path) {
     case '/': {
       return (
-        <Chrome selected="workspace">
-          <WorkspaceView />
-        </Chrome>
+        <WorkspaceView />
       )
     }
 
@@ -45,7 +45,7 @@ export function App() {
           <Box
             display="inline-block"
             maxWidth="50rem"
-            p="large"
+            p="medium"
           >
             <Library />
           </Box>

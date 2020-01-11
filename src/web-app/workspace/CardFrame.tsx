@@ -4,6 +4,7 @@ import {
   Row,
   theme,
   Icon,
+  Label,
 } from '~/web-platform'
 import { Document } from '~/arhiv/replica'
 import { useWorkspaceManager } from './useWorkspaceManager'
@@ -27,15 +28,9 @@ export function CardFrame({ children, document }: IProps) {
         px="medium"
         pt="small"
       >
-        <Box
-          uppercase
-          color="secondary"
-          letterSpacing="1.2px"
-          fontWeight="500"
-          fontSize="small"
-        >
+        <Label>
           {document.type}
-        </Box>
+        </Label>
 
         <Box
           position="relative"

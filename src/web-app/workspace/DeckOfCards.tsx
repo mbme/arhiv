@@ -5,6 +5,7 @@ import {
   Box,
   ProgressLocker,
   theme,
+  Label,
 } from '~/web-platform'
 import { formatDate } from '~/utils'
 import { useWorkspaceManager } from './useWorkspaceManager'
@@ -34,13 +35,11 @@ export function DeckOfCards() {
         borderRight="5px solid white"
         borderRightColor={ws.openIds.includes(document.id) ? theme.color.highlight : undefined}
       >
-        <Box
-          as="code"
-          display="block"
+        <Label
           fontSize="fine"
         >
           {document.type}
-        </Box>
+        </Label>
 
         {document.getTitle()}
 
@@ -58,6 +57,7 @@ export function DeckOfCards() {
       width="360px"
       height="100%"
       overflowY="scroll"
+      ml="medium"
     >
       <Box
         position="sticky"

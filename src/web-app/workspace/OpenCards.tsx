@@ -1,5 +1,8 @@
 import * as React from 'react'
-import { Box } from '~/web-platform'
+import {
+  Box,
+  Column,
+} from '~/web-platform'
 import { Card } from './Card'
 import { useWorkspaceManager } from './useWorkspaceManager'
 
@@ -7,9 +10,8 @@ export function OpenCards() {
   const ws = useWorkspaceManager()
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
+    <Column
+      alignX="left"
       p="medium"
       height="100%"
       overflowY="scroll"
@@ -23,6 +25,6 @@ export function OpenCards() {
           <Card id={id} />
         </Box>
       ))}
-    </Box>
+    </Column>
   )
 }

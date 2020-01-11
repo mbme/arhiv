@@ -31,6 +31,7 @@ export function useObservable<T>(
   return [value, error]
 }
 
+// FIXME remove this
 export function useObservableOld<T>(
   getObservable$: () => Observable<T>,
   deps: any[] = [],

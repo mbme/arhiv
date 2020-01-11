@@ -10,6 +10,7 @@ export { Icon } from './Icon'
 export { AttachFilesButton } from './AttachFilesButton'
 export { Box } from './Box'
 export { Heading } from './Heading'
+export { Label } from './Label'
 export {
   Overlay,
   OverlayRenderer,

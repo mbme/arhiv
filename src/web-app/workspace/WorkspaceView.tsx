@@ -4,17 +4,20 @@ import {
 } from '~/web-platform'
 import { DeckOfCards } from './DeckOfCards'
 import { OpenCards } from './OpenCards'
+import { Chrome } from '../parts'
 
 export function WorkspaceView() {
   return (
-    <Box
-      display="grid"
-      gridTemplateColumns="auto 1fr"
-      height="100%"
-    >
-      <DeckOfCards />
+    <Chrome selected="workspace">
+      <Box
+        display="grid"
+        gridTemplateColumns="auto 1fr"
+        height="100%"
+      >
+        <DeckOfCards />
 
-      <OpenCards />
-    </Box>
+        <OpenCards />
+      </Box>
+    </Chrome>
   )
 }

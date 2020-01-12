@@ -28,12 +28,20 @@ export abstract class Document<P extends object = Dict<any>> {
     return this._document.id
   }
 
+  get rev(): number {
+    return this._document.rev
+  }
+
   get createdAt(): Date {
     return new Date(this._document.createdAt)
   }
 
   get updatedAt(): Date {
     return new Date(this._document.updatedAt)
+  }
+
+  get deleted(): boolean {
+    return this._document.deleted
   }
 
   get props(): Readonly<P> {

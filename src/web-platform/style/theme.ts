@@ -15,7 +15,6 @@ export const theme = {
     text: '#333333',
     heading: '#000000',
     link: '#FDAF3C',
-    highlight: 'yellow',
     bg: '#ffffff',
     bgDarker: '#f5f5f5',
     bgOverlay: 'rgba(255,255,255, .65)',

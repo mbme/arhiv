@@ -1,19 +1,15 @@
 import * as React from 'react'
-import { ChronoFormatter } from '~/chrono'
 import {
   useObservable,
   FilterInput,
   Box,
   ProgressLocker,
-  theme,
-  Label,
 } from '~/web-platform'
 import { useArhiv } from '~/arhiv/useArhiv'
-import { useWorkspaceManager } from './useWorkspaceManager'
+import { useWorkspaceManager } from '../useWorkspaceManager'
+import { CatalogEntry } from './Entry'
 
-const dateFormat = new ChronoFormatter('YYYY/MM/DD')
-
-export function DeckOfCards() {
+export function Catalog() {
   const ws = useWorkspaceManager()
   const arhiv = useArhiv()
 
@@ -28,43 +24,24 @@ export function DeckOfCards() {
   const items = documents
     .filter(document => document.matches(ws.filter))
     .map(document => (
-      <Box
+      <CatalogEntry
         key={document.id}
-        onClick={() => ws.openId(document.id)}
-        mb="medium"
-        ml="small"
-        cursor="pointer"
-        borderRight="5px solid white"
-        borderRightColor={ws.openIds.includes(document.id) ? theme.color.highlight : undefined}
-      >
-        <Label
-          fontSize="fine"
-        >
-          {document.type}
-        </Label>
-
-        {document.getTitle()}
-
-        <Box
-          as="small"
-          display="block"
-        >
-          {dateFormat.format(document.updatedAt)}
-        </Box>
-      </Box>
+        document={document}
+      />
     ))
 
   return (
     <Box
+      as="aside"
       width="360px"
       height="100%"
       overflowY="scroll"
-      ml="medium"
+      bgColor="bgDarker"
     >
       <Box
         position="sticky"
         top="0"
-        background={theme.color.bg}
+        bgColor="bg"
         py="fine"
       >
         <FilterInput

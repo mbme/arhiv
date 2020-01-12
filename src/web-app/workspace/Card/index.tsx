@@ -11,7 +11,7 @@ import { useArhiv } from '~/arhiv/useArhiv'
 import {
   NotFound,
   Markup,
-} from '../parts'
+} from '../../parts'
 import { CardFrame } from './CardFrame'
 
 interface IProps {

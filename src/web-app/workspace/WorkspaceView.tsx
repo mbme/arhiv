@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   Box,
 } from '~/web-platform'
-import { DeckOfCards } from './DeckOfCards'
+import { Catalog } from './Catalog'
 import { OpenCards } from './OpenCards'
 import { Chrome } from '../parts'
 
@@ -14,7 +14,7 @@ export function WorkspaceView() {
         gridTemplateColumns="auto 1fr"
         height="100%"
       >
-        <DeckOfCards />
+        <Catalog />
 
         <OpenCards />
       </Box>

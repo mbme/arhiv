@@ -13,7 +13,7 @@ export function Catalog() {
   const ws = useWorkspaceManager()
   const arhiv = useArhiv()
 
-  const [documents] = useObservable(() => arhiv.documents.getDocuments$())
+  const [documents] = useObservable(() => arhiv.documents.getDocuments$({ filter: ws.filter }), [ws.filter])
 
   if (!documents) {
     return (
@@ -22,7 +22,6 @@ export function Catalog() {
   }
 
   const items = documents
-    .filter(document => document.matches(ws.filter))
     .map(document => (
       <CatalogEntry
         key={document.id}

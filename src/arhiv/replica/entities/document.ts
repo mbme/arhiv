@@ -1,8 +1,5 @@
 import { createLogger } from '~/logger'
-import {
-  Dict,
-  fuzzySearch,
-} from '~/utils'
+import { Dict } from '~/utils'
 import { Observable } from '~/turbo'
 import { IDocument } from '~/arhiv/types'
 import {
@@ -88,10 +85,6 @@ export abstract class Document<P extends object = Dict<any>> {
 
   async save() {
     await this._db.saveDocument(this._document)
-  }
-
-  matches(filter: string) {
-    return fuzzySearch(filter, this.getTitle())
   }
 
   abstract getTitle(): string

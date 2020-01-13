@@ -1,8 +1,13 @@
+import { fuzzySearch } from '~/utils'
 import { Observable } from '~/turbo'
 import { IDocument } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 import { Document } from './document'
 import { DocumentNote } from './document-note'
+
+interface IQuery {
+  filter?: string
+}
 
 interface IDocumentClass<P extends Document> {
   type: string
@@ -33,10 +38,13 @@ export class DocumentsRepository {
     throw new Error(`Got unknown document type ${document.type}`)
   }
 
-  // FIXME this should accept IQuery with filter, limit etc
-  getDocuments$(): Observable<Document[]> {
+  getDocuments$(query: IQuery): Observable<Document[]> {
     return this._db.getDocuments$()
-      .map(documents => documents.map(this._wrap))
+      .map(documents => (
+        documents
+          .map(this._wrap)
+          .filter(document => fuzzySearch(query.filter || '', document.getTitle()))
+      ))
   }
 
   getDocument$(id: string): Observable<Document> {

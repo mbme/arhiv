@@ -31,6 +31,10 @@ const $tab = stylish(
     // to hide part of container's border
     position: 'relative',
     top: '2px',
+    mx: '2px',
+    '&:first-child': {
+      ml: '0',
+    },
   },
 )
 

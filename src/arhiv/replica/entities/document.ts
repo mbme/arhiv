@@ -1,6 +1,6 @@
 import { createLogger } from '~/logger'
 import { Dict } from '~/utils'
-import { Observable } from '~/turbo'
+import { Observable } from '~/reactive'
 import { IDocument } from '~/arhiv/types'
 import {
   parseMarkup,

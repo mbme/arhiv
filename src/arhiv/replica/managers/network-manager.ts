@@ -4,7 +4,7 @@ import {
 } from '~/utils'
 import {
   Cell,
-} from '~/turbo'
+} from '~/reactive'
 import {
   IChangeset,
   IChangesetResponse,

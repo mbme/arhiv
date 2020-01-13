@@ -1,5 +1,5 @@
 import { fuzzySearch } from '~/utils'
-import { Observable } from '~/turbo'
+import { Observable } from '~/reactive'
 import { IDocument } from '~/arhiv/types'
 import { ReplicaDB } from '../db'
 import { Document } from './document'

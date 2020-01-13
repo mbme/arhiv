@@ -1,8 +1,5 @@
 import * as React from 'react'
 import {
-  noop,
-} from '~/utils'
-import {
   Observable,
   promise$,
 } from '~/reactive'
@@ -31,34 +28,28 @@ export function useObservable<T>(
   return [value, error]
 }
 
-export function usePromise<T>(getPromise: () => Promise<T>, deps: any[] = []): [T | undefined, boolean] {
-  const [promise, setPromise] = React.useState<Promise<T> | undefined>(undefined)
+export function usePromise<T>(
+  getPromise: () => Promise<T>,
+  deps: any[] = [],
+): [T | undefined, boolean] {
   const [value, setValue] = React.useState<T | undefined>(undefined)
-  const [isReady, setIsReady] = React.useState<boolean>(false)
+  const [error, setError] = React.useState<any>(undefined)
 
   React.useEffect(() => {
-    setPromise(getPromise())
-    setIsReady(false)
-  }, deps)
-
-  React.useEffect(() => {
-    if (!promise) {
-      return noop
-    }
+    const promise = getPromise()
 
     return promise$(promise).subscribe({
       next(newValue) {
         setValue(newValue)
-        setIsReady(true)
       },
 
       error(e) {
-        throw new Error(`Got an error from promise: ${e}`)
+        setError(e)
       },
     })
-  }, [promise])
+  }, deps)
 
-  return [value, isReady]
+  return [value, error]
 }
 
 export function useBoolean(initialValue = false) {

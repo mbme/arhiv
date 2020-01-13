@@ -5,6 +5,8 @@ import {
   theme,
 } from './style'
 
+type ButtonVariant = 'primary' | 'secondary' | 'link'
+
 const $button = stylish(
   {
     padding: `${theme.spacing.fine} ${theme.spacing.medium}`,
@@ -25,7 +27,7 @@ const $button = stylish(
     backgroundColor: theme.color.bgDarker,
   },
 
-  props => !props.disabled && props.primary && {
+  props => !props.disabled && props.variant === 'primary' && {
     backgroundColor: theme.color.primary,
     color: theme.color.light,
     boxShadow: theme.boxShadow,
@@ -34,19 +36,25 @@ const $button = stylish(
     },
   },
 
-  props => !props.disabled && !props.primary && {
+  props => !props.disabled && props.variant === 'secondary' && {
     color: theme.color.text,
     backgroundColor: theme.color.bg,
     '&:hover': {
       backgroundColor: theme.color.bgDarker,
     },
   },
+
+  props => !props.disabled && props.variant === 'link' && {
+    border: '0 none',
+    background: 'transparent',
+    color: theme.color.link,
+  },
 )
 
 interface IProps {
   onClick?(): void
   disabled?: boolean
-  primary?: boolean
+  variant?: ButtonVariant
   children: React.ReactNode
   $style?: $Style
 }
@@ -69,4 +77,7 @@ export function Button(props: IProps) {
       {children}
     </button>
   )
+}
+Button.defaultProps = {
+  variant: 'secondary',
 }

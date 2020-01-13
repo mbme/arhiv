@@ -24,7 +24,7 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
         </Button>
 
         <Button
-          primary
+          variant="primary"
           onClick={onConfirmed}
           $style={{ ml: 'medium' }}
         >

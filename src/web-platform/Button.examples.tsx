@@ -3,10 +3,10 @@ import { Button } from './Button'
 
 export const examples = {
   'Primary': (
-    <Button primary>Primary Button</Button>
+    <Button variant="primary">Primary Button</Button>
   ),
   'Primary disabled': (
-    <Button primary disabled>Primary Button</Button>
+    <Button variant="primary" disabled>Primary Button</Button>
   ),
 
   'Secondary': (
@@ -14,5 +14,12 @@ export const examples = {
   ),
   'Secondary disabled': (
     <Button disabled>Button</Button>
+  ),
+
+  'Link': (
+    <Button variant="link">Button</Button>
+  ),
+  'Link disabled': (
+    <Button variant="link" disabled>Button</Button>
   ),
 }

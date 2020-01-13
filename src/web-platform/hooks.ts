@@ -60,3 +60,15 @@ export function usePromise<T>(getPromise: () => Promise<T>, deps: any[] = []): [
 
   return [value, isReady]
 }
+
+export function useBoolean(initialValue = false) {
+  const [value, setValue] = React.useState<boolean>(initialValue)
+
+  return {
+    value,
+    toggle() {
+      setValue(!value)
+    },
+    set: setValue,
+  }
+}

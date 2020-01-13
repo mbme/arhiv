@@ -1,18 +1,13 @@
 import * as React from 'react'
 import {
-  Box,
   ProgressLocker,
   useObservable,
-  Heading,
 } from '~/web-platform'
-import { prettyPrintJSON } from '~/utils'
 import { DocumentNote } from '~/arhiv/replica'
 import { useArhiv } from '~/arhiv/useArhiv'
-import {
-  NotFound,
-  Markup,
-} from '../../parts'
-import { CardFrame } from './CardFrame'
+import { NotFound } from '../../parts'
+import { NoteCard } from './NoteCard'
+import { DocumentCard } from './DocumentCard'
 
 interface IProps {
   id: string
@@ -35,27 +30,11 @@ export function Card({ id }: IProps) {
 
   if (document instanceof DocumentNote) {
     return (
-      <CardFrame document={document}>
-        <Heading
-          letterSpacing="1.4px"
-          fontSize="large"
-        >
-          {document.name}
-        </Heading>
-
-        <Markup value={document.data} />
-      </CardFrame>
+      <NoteCard document={document} />
     )
   }
 
   return (
-    <CardFrame document={document}>
-      <Box
-        fontFamily="mono"
-        wordBreak="break-word"
-      >
-        {prettyPrintJSON(document.props)}
-      </Box>
-    </CardFrame>
+    <DocumentCard document={document} />
   )
 }

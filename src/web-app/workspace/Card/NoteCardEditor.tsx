@@ -46,26 +46,7 @@ export function NoteCardEditor({ document, onDone }: IProps) {
   }
 
   const buttons = (
-    <Row>
-      <DeleteDocumentButton
-        onConfirmed={onDelete}
-      />
-
-      <Button
-        variant="link"
-        onClick={onDone}
-      >
-        Cancel
-      </Button>
-
-      <Button
-        variant="primary"
-        onClick={onSave}
-        disabled={!isValid}
-      >
-        Save
-      </Button>
-    </Row>
+    <DeleteDocumentButton onConfirmed={onDelete} />
   )
 
   const tabs = {
@@ -80,16 +61,40 @@ export function NoteCardEditor({ document, onDone }: IProps) {
 
         <Spacer height="medium" />
 
-        <AddAttachmentsButton
-          onAttachments={onAttachments}
-        />
-
         <Textarea
           name="data"
           value={data}
           onChange={setData}
           ref={textAreaRef}
         />
+
+        <Spacer height="medium" />
+
+        <Row
+          alignX="space-between"
+          mb="small"
+        >
+          <AddAttachmentsButton onAttachments={onAttachments} />
+
+          <Row>
+            <Button
+              variant="link"
+              onClick={onDone}
+            >
+              Cancel
+            </Button>
+
+            <Spacer widht="medium" />
+
+            <Button
+              variant="primary"
+              onClick={onSave}
+              disabled={!isValid}
+            >
+              Save
+            </Button>
+          </Row>
+        </Row>
       </>
     ),
     preview: () => <Note name={name} data={data} />,

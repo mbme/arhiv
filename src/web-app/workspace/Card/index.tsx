@@ -28,6 +28,12 @@ export function Card({ id }: IProps) {
     )
   }
 
+  if (document.deleted) {
+    return (
+      <DocumentCard document={document} />
+    )
+  }
+
   if (document instanceof DocumentNote) {
     return (
       <NoteCard document={document} />

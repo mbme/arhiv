@@ -70,7 +70,9 @@ export class Input extends React.PureComponent<IProps> {
   ref = React.createRef<HTMLInputElement>()
 
   componentDidMount() {
-    if (this.props.autoFocus) this.focus()
+    if (this.props.autoFocus) {
+      this.focus()
+    }
   }
 
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +84,9 @@ export class Input extends React.PureComponent<IProps> {
       onKeyDown,
     } = this.props
 
-    if (e.key === 'Escape') this.blur()
+    if (e.key === 'Escape') {
+      this.blur()
+    }
 
     if (onKeyDown) {
       onKeyDown(e)
@@ -90,7 +94,9 @@ export class Input extends React.PureComponent<IProps> {
   }
 
   focus = () => {
-    if (!this.ref.current) return
+    if (!this.ref.current) {
+      return
+    }
 
     this.ref.current.focus()
     const length = this.ref.current.value.length
@@ -98,7 +104,9 @@ export class Input extends React.PureComponent<IProps> {
   }
 
   blur = () => {
-    if (!this.ref.current) return
+    if (!this.ref.current) {
+      return
+    }
 
     this.ref.current.blur()
   }

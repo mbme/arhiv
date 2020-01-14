@@ -7,6 +7,7 @@ import { DocumentNote } from './document-note'
 
 interface IQuery {
   filter?: string
+  includeDeleted?: boolean
 }
 
 interface IDocumentClass<P extends Document> {
@@ -43,7 +44,13 @@ export class DocumentsRepository {
       .map(documents => (
         documents
           .map(this._wrap)
-          .filter(document => fuzzySearch(query.filter || '', document.getTitle()))
+          .filter(document => {
+            if (!query.includeDeleted && document.deleted) {
+              return false
+            }
+
+            return fuzzySearch(query.filter || '', document.getTitle())
+          })
       ))
   }
 

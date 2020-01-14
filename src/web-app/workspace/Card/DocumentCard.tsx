@@ -1,6 +1,8 @@
 import * as React from 'react'
 import {
   Box,
+  Label,
+  Row,
 } from '~/web-platform'
 import { prettyPrintJSON } from '~/utils'
 import { Document } from '~/arhiv/replica'
@@ -15,18 +17,28 @@ interface IProps {
 export function DocumentCard({ document }: IProps) {
   return (
     <Frame
-      tabs={['document', 'metadata']}
+      tabs={[document.type, 'metadata']}
       buttons={<CloseIcon documentId={document.id} />}
     >
       {(activeTabId) => {
-        if (activeTabId === 'document') {
+        if (activeTabId === document.type) {
           return (
-            <Box
-              fontFamily="mono"
-              wordBreak="break-word"
-            >
-              {prettyPrintJSON(document.props)}
-            </Box>
+            <>
+              <Row alignX="right">
+                <Label color="danger">
+                  deleted
+                </Label>
+              </Row>
+
+              <Box
+                fontFamily="mono"
+                wordBreak="break-word"
+                pb="medium"
+                whiteSpace="pre-wrap"
+              >
+                {prettyPrintJSON(document.props)}
+              </Box>
+            </>
           )
         }
 

@@ -27,8 +27,7 @@ export function DeleteNoteButton({ onConfirmed }: IProps) {
         >
           Are you sure you want to <b>delete this note?</b>
         </ConfirmationDialog>
-      )
-      }
+      )}
     </>
   )
 }

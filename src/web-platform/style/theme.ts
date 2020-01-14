@@ -18,6 +18,7 @@ export const theme = {
     bg: '#ffffff',
     bgDarker: '#f5f5f5',
     bgOverlay: 'rgba(255,255,255, .65)',
+    danger: 'red',
   },
   fontFamily: {
     base: [

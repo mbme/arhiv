@@ -74,6 +74,13 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     right: getSpacing(val),
   }),
 
+  width: val => ({
+    width: getSpacing(val),
+  }),
+  height: val => ({
+    height: getSpacing(val),
+  }),
+
   fontSize: val => ({
     fontSize: getThemeProp('fontSize')(val),
   }),

@@ -6,14 +6,17 @@ import {
 } from '~/web-platform'
 import { TabBar } from './TabBar'
 
-interface IProps {
-  tabs: string[]
-  buttons: React.ReactNode
-  children(tabId: string): React.ReactNode
+interface ITabs {
+  [key: string]: () => React.ReactNode
 }
 
-export function Frame({ children, tabs, buttons }: IProps) {
-  const [activeTabId, setTabId] = React.useState(tabs[0])
+interface IProps {
+  tabs: ITabs
+  buttons: React.ReactNode
+}
+
+export function Frame({ tabs, buttons }: IProps) {
+  const [activeTabId, setTabId] = React.useState(Object.keys(tabs)[0])
 
   return (
     <Box
@@ -23,7 +26,7 @@ export function Frame({ children, tabs, buttons }: IProps) {
       <Row alignX="space-between">
         <TabBar
           activeTabId={activeTabId}
-          tabs={tabs}
+          tabs={Object.keys(tabs)}
           onClick={setTabId}
         />
 
@@ -35,7 +38,7 @@ export function Frame({ children, tabs, buttons }: IProps) {
         pt="medium"
         border={theme.border}
       >
-        {children(activeTabId)}
+        {tabs[activeTabId]()}
       </Box>
     </Box>
   )

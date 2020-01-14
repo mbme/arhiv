@@ -10,7 +10,8 @@ import {
 import { DocumentNote } from '~/arhiv/replica'
 import { Frame } from './Frame'
 import { Note } from './Note'
-import { AddAttachmentsButton } from '~/web-app/parts'
+import { AddAttachmentsButton } from './AddAttachmentButton'
+import { DeleteDocumentButton } from './DeleteDocumentButton'
 
 interface IProps {
   document: DocumentNote
@@ -39,7 +40,6 @@ export function NoteCardEditor({ document, onDone }: IProps) {
   }
 
   const onDelete = async () => {
-    // FIXME modal, move to frame
     document.delete()
     await document.save()
     onDone()
@@ -47,20 +47,17 @@ export function NoteCardEditor({ document, onDone }: IProps) {
 
   const buttons = (
     <Row>
-      <AddAttachmentsButton onAttachments={onAttachments} />
+      <DeleteDocumentButton
+        onConfirmed={onDelete}
+      />
 
-      <Button
-        variant="link"
-        onClick={onDelete}
-      >
-        Delete
-      </Button>
       <Button
         variant="link"
         onClick={onDone}
       >
         Cancel
       </Button>
+
       <Button
         variant="primary"
         onClick={onSave}
@@ -71,42 +68,37 @@ export function NoteCardEditor({ document, onDone }: IProps) {
     </Row>
   )
 
+  const tabs = {
+    editor: () => (
+      <>
+        <Input
+          name="name"
+          value={name}
+          onChange={setName}
+          autoFocus
+        />
+
+        <Spacer height="medium" />
+
+        <AddAttachmentsButton
+          onAttachments={onAttachments}
+        />
+
+        <Textarea
+          name="data"
+          value={data}
+          onChange={setData}
+          ref={textAreaRef}
+        />
+      </>
+    ),
+    preview: () => <Note name={name} data={data} />,
+  }
+
   return (
     <Frame
-      tabs={['editor', 'preview']}
+      tabs={tabs}
       buttons={buttons}
-    >
-      {(activeTabId) => {
-        if (activeTabId === 'editor') {
-          return (
-            <>
-              <Input
-                name="name"
-                value={name}
-                onChange={setName}
-                autoFocus
-              />
-
-              <Spacer height="medium" />
-
-              <Textarea
-                name="data"
-                value={data}
-                onChange={setData}
-                ref={textAreaRef}
-              />
-            </>
-          )
-        }
-
-        if (activeTabId === 'preview') {
-          return (
-            <Note name={name} data={data} />
-          )
-        }
-
-        return null
-      }}
-    </Frame>
+    />
   )
 }

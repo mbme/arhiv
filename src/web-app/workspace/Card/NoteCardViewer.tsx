@@ -26,26 +26,15 @@ export function NoteCardViewer({ document, onEdit }: IProps) {
     </Row>
   )
 
+  const tabs = {
+    [document.type]: () => <Note name={document.name} data={document.data} />,
+    'metadata': () => <Metadata document={document} />,
+  }
+
   return (
     <Frame
-      tabs={[document.type, 'metadata']}
+      tabs={tabs}
       buttons={buttons}
-    >
-      {(activeTabId) => {
-        if (activeTabId === document.type) {
-          return (
-            <Note name={document.name} data={document.data} />
-          )
-        }
-
-        if (activeTabId === 'metadata') {
-          return (
-            <Metadata document={document} />
-          )
-        }
-
-        return null
-      }}
-    </Frame>
+    />
   )
 }

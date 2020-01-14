@@ -8,13 +8,13 @@ interface IProps {
   onConfirmed(): void
 }
 
-export function DeleteNoteButton({ onConfirmed }: IProps) {
+export function DeleteDocumentButton({ onConfirmed }: IProps) {
   const [isModalVisible, showModal] = React.useState(false)
 
   return (
     <>
       <Icon
-        title="Delete note"
+        title="Delete document"
         type="trash-2"
         onClick={() => showModal(true)}
       />
@@ -25,7 +25,7 @@ export function DeleteNoteButton({ onConfirmed }: IProps) {
           onConfirmed={onConfirmed}
           onCancel={() => showModal(false)}
         >
-          Are you sure you want to <b>delete this note?</b>
+          Are you sure you want to <b>delete this document?</b>
         </ConfirmationDialog>
       )}
     </>

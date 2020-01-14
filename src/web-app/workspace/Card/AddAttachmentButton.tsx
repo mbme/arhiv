@@ -1,5 +1,8 @@
 import * as React from 'react'
-import { AttachFilesButton } from '~/web-platform'
+import {
+  FilePicker,
+  Icon,
+} from '~/web-platform'
 import { createLink } from '~/arhiv/markup-parser'
 import { useArhiv } from '~/arhiv/useArhiv'
 
@@ -9,6 +12,7 @@ interface IProps {
 
 export function AddAttachmentsButton({ onAttachments }: IProps) {
   const arhiv = useArhiv()
+  const filePickerRef = React.useRef<FilePicker>(null)
 
   const onSelected = async (files: File[]) => {
     const links = files.map(async (file) => {
@@ -25,7 +29,22 @@ export function AddAttachmentsButton({ onAttachments }: IProps) {
     onAttachments(await Promise.all(links))
   }
 
+  const openFilePicker = () => {
+    filePickerRef.current!.open()
+  }
+
   return (
-    <AttachFilesButton onSelected={onSelected} />
+    <>
+      <Icon
+        title="Attach files"
+        type="paperclip"
+        onClick={openFilePicker}
+      />
+
+      <FilePicker
+        ref={filePickerRef}
+        onSelected={onSelected}
+      />
+    </>
   )
 }

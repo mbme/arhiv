@@ -15,41 +15,32 @@ interface IProps {
 }
 
 export function DocumentCard({ document }: IProps) {
+  const tabs = {
+    [document.type]: () => (
+      <>
+        <Row alignX="right">
+          <Label color="danger">
+            deleted
+                </Label>
+        </Row>
+
+        <Box
+          fontFamily="mono"
+          wordBreak="break-word"
+          pb="medium"
+          whiteSpace="pre-wrap"
+        >
+          {prettyPrintJSON(document.props)}
+        </Box>
+      </>
+    ),
+    'metadata': () => <Metadata document={document} />,
+  }
+
   return (
     <Frame
-      tabs={[document.type, 'metadata']}
+      tabs={tabs}
       buttons={<CloseIcon documentId={document.id} />}
-    >
-      {(activeTabId) => {
-        if (activeTabId === document.type) {
-          return (
-            <>
-              <Row alignX="right">
-                <Label color="danger">
-                  deleted
-                </Label>
-              </Row>
-
-              <Box
-                fontFamily="mono"
-                wordBreak="break-word"
-                pb="medium"
-                whiteSpace="pre-wrap"
-              >
-                {prettyPrintJSON(document.props)}
-              </Box>
-            </>
-          )
-        }
-
-        if (activeTabId === 'metadata') {
-          return (
-            <Metadata document={document} />
-          )
-        }
-
-        return null
-      }}
-    </Frame>
+    />
   )
 }

@@ -1,10 +1,8 @@
-// tslint:disable:react-hooks-nesting
-
 import * as React from 'react'
 import { Textarea } from './Textarea'
 
 export const examples = {
-  '': () => {
+  '': function TextareaExample() {
     const [value, setValue] = React.useState('')
 
     return (

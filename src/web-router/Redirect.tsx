@@ -8,9 +8,10 @@ interface IProps {
 
 export function Redirect({ to }: IProps) {
   const router = useRouter()
+
   React.useEffect(() => {
     router.push(to)
-  }, [])
+  }, [router, to])
 
   return null
 }

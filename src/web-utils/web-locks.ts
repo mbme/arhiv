@@ -18,7 +18,9 @@ export class WebLocks {
     private _lockPropName: string,
   ) {
     this.state = new Cell<Dict>(this._read())
-    log.info(`tab id: ${_tabId}, lock property: "${_lockPropName}", ${Object.keys(this.state.value).length} active locks`)
+
+    const activeLocksCount = Object.keys(this.state.value).length
+    log.info(`tab id: ${_tabId}, lock property: "${_lockPropName}", ${activeLocksCount} active locks`)
 
     window.addEventListener('storage', this._onStorageUpdate)
     window.addEventListener('beforeunload', this._onBeforeUnload)

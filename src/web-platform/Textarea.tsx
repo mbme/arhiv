@@ -28,14 +28,11 @@ interface IProps {
 }
 
 export class Textarea extends React.PureComponent<IProps> {
-  ref = React.createRef<HTMLTextAreaElement>()
-  selectionStart = 0
-  selectionEnd = 0
+  private _ref = React.createRef<HTMLTextAreaElement>()
 
-  updateHeight = () => {
-    this.ref.current!.style.height = 'auto'
-    this.ref.current!.style.height = `${this.ref.current!.scrollHeight}px`
-  }
+  private _selectionStart = 0
+
+  private _selectionEnd = 0
 
   componentDidMount() {
     this.updateHeight()
@@ -50,26 +47,31 @@ export class Textarea extends React.PureComponent<IProps> {
     window.removeEventListener('resize', this.updateHeight)
   }
 
+  updateHeight = () => {
+    this._ref.current!.style.height = 'auto'
+    this._ref.current!.style.height = `${this._ref.current!.scrollHeight}px`
+  }
+
   onBlur = () => {
-    this.selectionStart = this.ref.current!.selectionStart
-    this.selectionEnd = this.ref.current!.selectionEnd
+    this._selectionStart = this._ref.current!.selectionStart
+    this._selectionEnd = this._ref.current!.selectionEnd
   }
 
   insert(str: string) {
     const { value, onChange } = this.props
 
-    this.ref.current!.value = `${value.substring(0, this.selectionStart)}${str}${value.substring(this.selectionEnd)}`
+    this._ref.current!.value = `${value.substring(0, this._selectionStart)}${str}${value.substring(this._selectionEnd)}`
 
-    this.selectionStart += str.length
-    this.selectionEnd = this.selectionStart
+    this._selectionStart += str.length
+    this._selectionEnd = this._selectionStart
 
-    this.ref.current!.setSelectionRange(this.selectionStart, this.selectionEnd)
+    this._ref.current!.setSelectionRange(this._selectionStart, this._selectionEnd)
 
-    onChange(this.ref.current!.value)
+    onChange(this._ref.current!.value)
   }
 
   focus() {
-    this.ref.current!.focus()
+    this._ref.current!.focus()
   }
 
   render() {
@@ -84,7 +86,7 @@ export class Textarea extends React.PureComponent<IProps> {
     return (
       <textarea
         className={$textarea.and($style).className}
-        ref={this.ref}
+        ref={this._ref}
         name={name}
         value={value}
         placeholder={placeholder}

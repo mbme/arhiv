@@ -37,7 +37,9 @@ export class WebRouter {
     const location = new URL(document.location.toString())
     const params: { [key: string]: string } = {}
 
-    location.searchParams.forEach((value, key) => params[key] = value)
+    location.searchParams.forEach((value, key) => {
+      params[key] = value
+    })
 
     return {
       path: location.pathname,

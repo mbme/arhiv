@@ -37,7 +37,7 @@ export function MarkupAttachment({ attachment, link, description }: IProps) {
   }
 
   return (
-    <a href={blobUrl} target="_blank" rel="noopener">
+    <a href={blobUrl} target="_blank" rel="noopener noreferrer">
       {description || link}
     </a>
   )

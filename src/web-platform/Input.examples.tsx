@@ -1,10 +1,8 @@
-// tslint:disable:react-hooks-nesting
-
 import * as React from 'react'
 import { Input } from './Input'
 
 export const examples = {
-  'Light input': () => {
+  'Light input': function LightInputExample() {
     const [value, setValue] = React.useState('')
 
     return (
@@ -18,7 +16,7 @@ export const examples = {
     )
   },
 
-  'Light input with clear': () => {
+  'Light input with clear': function LightInputWithClearExample() {
     const [value, setValue] = React.useState('')
 
     return (
@@ -33,7 +31,7 @@ export const examples = {
     )
   },
 
-  'Input': () => {
+  'Input': function InputExample() {
     const [value, setValue] = React.useState('')
 
     return (
@@ -46,7 +44,7 @@ export const examples = {
     )
   },
 
-  'Input with clear': () => {
+  'Input with clear': function InputWithClearExample() {
     const [value, setValue] = React.useState('')
 
     return (

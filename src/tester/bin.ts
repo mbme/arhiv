@@ -1,4 +1,4 @@
-/* tslint:disable:no-console */
+/* eslint-disable no-console */
 import path from 'path'
 import {
   consumeAsyncIterable,
@@ -34,8 +34,8 @@ CliApp.create('tester')
       const srcPath = path.join(process.cwd(), 'src')
 
       const files = (await consumeAsyncIterable(getFiles(basePath)))
-        .filter((relPath) => relPath.endsWith('.test.js'))
-        .filter((relPath) => !relPath.includes('FLYCHECK'))
+        .filter(relPath => relPath.endsWith('.test.js'))
+        .filter(relPath => !relPath.includes('FLYCHECK'))
 
       console.log(`collected ${files.length} test files`)
 

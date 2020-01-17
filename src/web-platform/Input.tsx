@@ -70,13 +70,21 @@ export class Input extends React.PureComponent<IProps> {
   ref = React.createRef<HTMLInputElement>()
 
   componentDidMount() {
-    if (this.props.autoFocus) {
+    const {
+      autoFocus,
+    } = this.props
+
+    if (autoFocus) {
       this.focus()
     }
   }
 
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(e.target.value)
+    const {
+      onChange,
+    } = this.props
+
+    onChange(e.target.value)
   }
 
   onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -99,7 +107,7 @@ export class Input extends React.PureComponent<IProps> {
     }
 
     this.ref.current.focus()
-    const length = this.ref.current.value.length
+    const { length } = this.ref.current.value
     this.ref.current.setSelectionRange(length, length) // put cursor at the end of the input
   }
 
@@ -112,8 +120,13 @@ export class Input extends React.PureComponent<IProps> {
   }
 
   onClickClear = () => {
-    this.props.onChange('')
-    this.props.onClear!()
+    const {
+      onChange,
+      onClear,
+    } = this.props
+
+    onChange('')
+    onClear!()
   }
 
   render() {
@@ -143,6 +156,7 @@ export class Input extends React.PureComponent<IProps> {
           placeholder={placeholder}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={autoFocus}
           onBlur={onBlur}
         />

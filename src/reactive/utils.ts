@@ -10,7 +10,7 @@ export function interval$(interval: number) {
   })
 }
 
-export function merge$<T>(...observables: Array<Observable<T>>) {
+export function merge$<T>(...observables: Observable<T>[]) {
   return new Observable<T>((observer) => {
     const callbacks = new Callbacks()
 
@@ -74,7 +74,7 @@ export function of$<T>(value: T): Observable<T> {
   })
 }
 
-export function zip$<T>(...observables: Array<Observable<T>>) {
+export function zip$<T>(...observables: Observable<T>[]) {
   return new Observable<ReadonlyArray<T | undefined>>((observer) => {
     const callbacks = new Callbacks()
 

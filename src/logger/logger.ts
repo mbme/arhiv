@@ -1,4 +1,4 @@
-/* tslint:disable:no-console */
+/* eslint-disable no-console */
 import { ChronoFormatter } from '~/chrono'
 import {
   TermColor,
@@ -12,6 +12,13 @@ import {
 import { config } from './config'
 
 const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm:ss,SSS')
+function getDate() {
+  if (config.includeDateTime) {
+    return dateFormat.format(new Date())
+  }
+
+  return ''
+}
 
 export class Logger {
   private _namespaceColor?: ColorCode
@@ -37,21 +44,13 @@ export class Logger {
     return `[${content}]`
   }
 
-  private _getDate() {
-    if (config.includeDateTime) {
-      return dateFormat.format(new Date())
-    }
-
-    return ''
-  }
-
   private _log(level: LogLevel, msg: string, ...params: any[]) {
     if (LEVELS[level] < LEVELS[config.minLogLevel]) {
       return
     }
 
     const logMessage = [
-      this._getDate(),
+      getDate(),
       this._getNamespace(),
       level.padEnd(5),
       msg,
@@ -81,7 +80,10 @@ export class Logger {
   }
 
   debug = this._log.bind(this, 'DEBUG')
+
   info = this._log.bind(this, 'INFO')
+
   warn = this._log.bind(this, 'WARN')
+
   error = this._log.bind(this, 'ERROR')
 }

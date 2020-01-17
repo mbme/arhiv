@@ -21,7 +21,7 @@ export function DocumentCard({ document }: IProps) {
         <Row alignX="right">
           <Label color="danger">
             deleted
-                </Label>
+          </Label>
         </Row>
 
         <Box

@@ -24,7 +24,7 @@ export const bof: Parser<string> = new Parser((_msg, pos) => {
 })
 
 type Predicate = (msg: string, pos: number) => [boolean, string]
-export const satisfy = (predicate: Predicate, label = 'unknown'): Parser<string> =>
+export const satisfy = (predicate: Predicate, label = 'unknown'): Parser<string> => (
   new Parser((msg, pos) => {
     if (pos === msg.length) {
       return new Failure('No more input', pos, `satisfy>${label}`)
@@ -39,6 +39,7 @@ export const satisfy = (predicate: Predicate, label = 'unknown'): Parser<string>
 
     return new Success(result[1], nextPos)
   })
+)
 
 export const expect = (s: string) => satisfy((msg, pos) => {
   const match = msg.substring(pos, pos + s.length)
@@ -55,7 +56,7 @@ export const expect = (s: string) => satisfy((msg, pos) => {
 
 export const regex = (re: RegExp) => satisfy((msg, pos) => {
   if (re.toString()[1] !== '^') {
-    throw new Error(`regex parsers must contain '^' start assertion.`)
+    throw new Error("regex parsers must start with '^' assertion.")
   }
 
   const result = re.exec(msg.substring(pos))

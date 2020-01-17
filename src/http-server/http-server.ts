@@ -38,7 +38,9 @@ const MAX_SECONDS_TO_WAIT_UNTIL_DESTROY = 10
 
 export class HTTPServer {
   private _middlewares: Middleware[] = []
-  private _routes: Array<IRoute<any>> = []
+
+  private _routes: IRoute<any>[] = []
+
   private _stopped = false
 
   constructor(tmpDir: string) {
@@ -73,7 +75,7 @@ export class HTTPServer {
   private async _runMiddlewares(context: IContext, pos: number) {
     const middleware = this._middlewares[pos]
 
-    if (!middleware) {  // no more middlewares, stop evaluation
+    if (!middleware) { // no more middlewares, stop evaluation
       return
     }
 
@@ -149,6 +151,7 @@ export class HTTPServer {
   }
 
   private _server = http.createServer(this._requestHandler)
+
   private _sockets = new Set<Socket>()
 
   start(port: number) {
@@ -178,7 +181,7 @@ export class HTTPServer {
       })
     })
 
-    return new Promise<void>((resolve) => this._server.listen(port, resolve))
+    return new Promise<void>(resolve => this._server.listen(port, resolve))
   }
 
   private async _stopSockets() {
@@ -208,7 +211,7 @@ export class HTTPServer {
     this._stopped = true
 
     await Promise.all([
-      new Promise<Error | undefined>((resolve) => this._server.close(resolve)),
+      new Promise<Error | undefined>(resolve => this._server.close(resolve)),
       this._stopSockets(),
     ])
   }

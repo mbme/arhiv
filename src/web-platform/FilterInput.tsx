@@ -25,27 +25,40 @@ export class FilterInput extends React.PureComponent<IProps, IState> {
   }
 
   collapse = () => {
+    const {
+      alwaysExpanded,
+    } = this.props
+
     this.setState({
-      expanded: this.props.alwaysExpanded || false,
+      expanded: alwaysExpanded || false,
     })
   }
 
   onBlur = () => {
-    if (!this.props.filter) {
+    const {
+      filter,
+    } = this.props
+
+    if (!filter) {
       this.collapse()
     }
   }
 
-  onChange = (filter: string) => {
-    if (filter.trim() === this.props.filter) {
+  onChange = (newFilter: string) => {
+    const {
+      filter,
+      onChange,
+    } = this.props
+
+    if (newFilter.trim() === filter) {
       return
     }
 
     window.clearTimeout(this.updateTimoutId)
     this.updateTimoutId = window.setTimeout(
-      this.props.onChange,
+      onChange,
       60,
-      filter.trim().length ? filter : undefined,
+      newFilter.trim().length ? newFilter : undefined,
     )
   }
 

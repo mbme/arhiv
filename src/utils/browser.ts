@@ -9,8 +9,9 @@ export function readFile(file: Blob) {
   })
 }
 
-export const bytesToHexString = (buffer: ArrayBuffer) =>
-  Array.from(new Uint8Array(buffer)).map((b) => ('00' + b.toString(16)).slice(-2)).join('')
+export const bytesToHexString = (buffer: ArrayBuffer) => (
+  Array.from(new Uint8Array(buffer)).map(b => ('00' + b.toString(16)).slice(-2)).join('')
+)
 
 export const sha256 = (buffer: ArrayBuffer) => crypto.subtle.digest('SHA-256', buffer).then(bytesToHexString)
 

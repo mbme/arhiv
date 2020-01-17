@@ -23,7 +23,7 @@ export function useObservable<T>(
         setError(e)
       },
     })
-  }, deps)
+  }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 
   return [value, error]
 }
@@ -47,7 +47,7 @@ export function usePromise<T>(
         setError(e)
       },
     })
-  }, deps)
+  }, deps) // eslint-disable-line react-hooks/exhaustive-deps
 
   return [value, error]
 }

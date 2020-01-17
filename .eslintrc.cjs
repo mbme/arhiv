@@ -43,15 +43,17 @@ module.exports = {
         "consistent": true,
       },
     ],
-    "quote-props": [
-      "error",
-      "consistent-as-needed",
-    ],
+    "quote-props": "off",
     "no-continue": "off",
 
     // imports
     "import/prefer-default-export": "off",
     "import/no-default-export": "error",
+
+    // react
+    "react/jsx-props-no-spreading": "off",
+    "react/state-in-constructor": "off",
+    "react/sort-comp": "off",
 
     // typescript-eslint
     "@typescript-eslint/adjacent-overload-signatures": "error",

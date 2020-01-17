@@ -96,6 +96,7 @@ export class StylishStyle {
   }
 
   private _className?: string
+
   get className() {
     this._className = this._className || this._generateClassName()
 

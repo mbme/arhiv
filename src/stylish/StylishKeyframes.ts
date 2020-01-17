@@ -17,6 +17,7 @@ export class StylishKeyframes {
   }
 
   private _animationName?: string
+
   get animationName() {
     this._animationName = this._animationName || this._generateAnimationName()
 

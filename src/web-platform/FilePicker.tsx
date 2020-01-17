@@ -6,6 +6,7 @@ interface IProps {
 
 export class FilePicker extends React.PureComponent<IProps> {
   private _formRef = React.createRef<HTMLFormElement>()
+
   private _inputRef = React.createRef<HTMLInputElement>()
 
   open = () => this._inputRef.current!.click()

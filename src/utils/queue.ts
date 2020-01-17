@@ -7,8 +7,10 @@ type Action<T> = () => T
 type Task<T> = [Deferred<T>, Action<T>]
 
 export class Queue {
-  private _queue: Array<Task<any>> = []
+  private _queue: Task<any>[] = []
+
   private _taskId?: NodeJS.Immediate
+
   private _deferredClose?: Deferred<void>
 
   private _processQueue = async () => {

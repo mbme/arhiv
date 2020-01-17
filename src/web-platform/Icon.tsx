@@ -1,4 +1,3 @@
-// tslint:disable:max-line-length
 import * as React from 'react'
 import {
   $Style,
@@ -134,6 +133,6 @@ export function Icon(props: IFeatherIconProps) {
     >
       {title && <title>{title}</title>}
       {icons[type]}
-    </svg >
+    </svg>
   )
 }

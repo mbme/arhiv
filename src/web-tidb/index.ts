@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -47,7 +49,10 @@ export class TIDB<ObjectStores extends object> {
     return new TIDB(db, version)
   }
 
-  createObjectStore<StoreName extends keyof ObjectStores>(store: StoreName, keyPath: keyof ObjectStores[StoreName]) {
+  createObjectStore<StoreName extends keyof ObjectStores>(
+    store: StoreName,
+    keyPath: keyof ObjectStores[StoreName],
+  ) {
     this._db.createObjectStore(store, { keyPath })
   }
 
@@ -67,11 +72,17 @@ export class TIDB<ObjectStores extends object> {
     return this.transaction(store).store(store).get(key)
   }
 
-  async put<StoreName extends keyof ObjectStores>(store: StoreName, value: ObjectStores[StoreName]) {
+  async put<StoreName extends keyof ObjectStores>(
+    store: StoreName,
+    value: ObjectStores[StoreName],
+  ) {
     await this.transactionRW(store).store(store).put(value)
   }
 
-  async putAll<StoreName extends keyof ObjectStores>(store: StoreName, values: Array<ObjectStores[StoreName]>) {
+  async putAll<StoreName extends keyof ObjectStores>(
+    store: StoreName,
+    values: ObjectStores[StoreName][],
+  ) {
     await this.transactionRW(store).store(store).putAll(values)
   }
 

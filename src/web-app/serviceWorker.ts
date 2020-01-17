@@ -33,7 +33,7 @@ const cacheStaticAssets = async () => {
 const cleanupCaches = async () => {
   const cacheKeys = await caches.keys()
 
-  await Promise.all(cacheKeys.map(async cacheKey => {
+  await Promise.all(cacheKeys.map(async (cacheKey) => {
     if (cacheKey !== CACHE_KEY) {
       await caches.delete(cacheKey)
     }

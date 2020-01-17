@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import http from 'http'
 import urlParser from 'url'
 import { Stream } from 'stream'

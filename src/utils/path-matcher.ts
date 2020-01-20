@@ -22,7 +22,7 @@ type Segment<N extends string> = IStaticSegment | INamedSegment<N> | IEverything
 
 export class PathMatcher<C extends object> {
   constructor(
-    private _segments: Array<Segment<keyof C>> = [],
+    private _segments: Segment<keyof C>[] = [],
   ) { }
 
   match(pathRaw: string): C | undefined {
@@ -69,7 +69,10 @@ function staticSegment(value: string): IStaticSegment {
   }
 }
 
-export function pathMatcher<N extends string>(rawLiterals: TemplateStringsArray, ...namedSegments: N[]) {
+export function pathMatcher<N extends string>(
+  rawLiterals: TemplateStringsArray,
+  ...namedSegments: N[]
+) {
   const literals = [...rawLiterals]
   if (!literals[literals.length - 1]) {
     literals.pop()
@@ -79,7 +82,7 @@ export function pathMatcher<N extends string>(rawLiterals: TemplateStringsArray,
     throw new Error('all named segments must be separated by /')
   }
 
-  const segments: Array<Segment<N>> = []
+  const segments: Segment<N>[] = []
   for (let i = 0; i < literals.length; i += 1) {
     const literal = literals[i]
 

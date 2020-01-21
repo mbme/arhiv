@@ -44,7 +44,7 @@ export class DocumentsRepository {
       .map(documents => (
         documents
           .map(this._wrap)
-          .filter(document => {
+          .filter((document) => {
             if (!query.includeDeleted && document.deleted) {
               return false
             }

@@ -10,7 +10,7 @@
     "dev-server": "./build/arhiv.sh serve",
     "dev-web-app": "./build/dev-web-app.sh",
     "test": "./build/test.sh",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx",
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "cloc": "cloc --vcs=git --exclude-ext=json,md,test.js -v *"
   },

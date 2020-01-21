@@ -70,7 +70,7 @@ export async function createServer(db: ArhivDB, config: IArhivServerConfig, stat
   })
 
   // POST /api/auth
-  server.post(pm`/api/auth`, async ({ req, res }) => {
+  server.post(pm`/api/auth`, ({ req, res }) => {
     const body = req.body!
     if (!(body instanceof StringBody)) {
       res.statusCode = 415
@@ -98,7 +98,7 @@ export async function createServer(db: ArhivDB, config: IArhivServerConfig, stat
 
     const changesetField = body.getField('changeset')
     if (!changesetField) {
-      log.error(`changeset field is mandatory`)
+      log.error('changeset field is mandatory')
       res.statusCode = 400
 
       return

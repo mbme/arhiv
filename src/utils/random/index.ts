@@ -1,4 +1,4 @@
-import { getRandomBytes } from './platform.js'
+import { getRandomBytes } from './platform'
 
 const readUInt32 = (bytes: Uint8Array): number => new DataView(bytes.buffer).getUint32(0)
 

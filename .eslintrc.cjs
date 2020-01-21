@@ -60,6 +60,7 @@ module.exports = {
     ],
     "class-methods-use-this": "off",
     "prefer-destructuring": "off",
+    "prefer-arrow-callback": "off",
 
     // imports
     "import/prefer-default-export": "off",

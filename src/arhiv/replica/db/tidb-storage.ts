@@ -61,6 +61,7 @@ export class TIDBStorage {
   public static async open() {
     const currentVersion = 1 // FIXME use version from the server
 
+    // eslint-disable-next-line no-shadow
     const db = await TIDB.open<IObjectStores>('arhiv-replica', currentVersion, (oldVersion, db) => {
       // just to make sure we don't forget about this updater after db version increase
       if (currentVersion !== 1) {

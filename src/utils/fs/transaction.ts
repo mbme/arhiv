@@ -85,7 +85,6 @@ export class FSTransaction {
           log.error(`Failed to undo creating file ${filePath}: `, e)
         }
       })
-
     } catch (e) {
       log.error(`Failed to create file ${filePath}: `, e)
 
@@ -211,7 +210,6 @@ export class FSTransaction {
           log.error(`Failed to undo creating directory ${filePath}: `, e)
         }
       })
-
     } catch (e) {
       log.error(`Failed to create directory ${filePath}: `, e)
 

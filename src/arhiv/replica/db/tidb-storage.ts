@@ -61,7 +61,6 @@ export class TIDBStorage {
   public static async open() {
     const currentVersion = 1 // FIXME use version from the server
 
-    // tslint:disable-next-line:no-shadowed-variable
     const db = await TIDB.open<IObjectStores>('arhiv-replica', currentVersion, (oldVersion, db) => {
       // just to make sure we don't forget about this updater after db version increase
       if (currentVersion !== 1) {
@@ -295,7 +294,7 @@ export class TIDBStorage {
     if (conflicts.length) {
       return new MergeConflicts(
         conflicts,
-        (resolvedDocuments) => this._idb.putAll('documents-local', resolvedDocuments),
+        resolvedDocuments => this._idb.putAll('documents-local', resolvedDocuments),
       )
     }
 
@@ -310,7 +309,7 @@ export class TIDBStorage {
       return unusedIds
     }
 
-    await Promise.all(unusedIds.map((id) => [
+    await Promise.all(unusedIds.map(id => [
       tx.store('attachments-local').delete(id),
       tx.store('attachments-data').delete(id),
     ]).flat())

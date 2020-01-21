@@ -67,8 +67,8 @@ export function rmrfSync(dir: string) {
   fs.rmdirSync(dir)
 }
 
-export const isFile = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isFile())
-export const isDirectory = (filePath: string) => fs.promises.lstat(filePath).then((stats) => stats.isDirectory())
+export const isFile = (filePath: string) => fs.promises.lstat(filePath).then(stats => stats.isFile())
+export const isDirectory = (filePath: string) => fs.promises.lstat(filePath).then(stats => stats.isDirectory())
 
 export async function listFiles(dir: string, opts: IGetFilesOpts = {}) {
   return consumeAsyncIterable(getFiles(dir, {
@@ -109,6 +109,8 @@ export async function withTempFiles(files: string[], cb: (tempFiles: string[]) =
       rmrfSync(dir)
     }
   }
+
+  return undefined
 }
 
 export const readText = (filePath: string) => fs.promises.readFile(filePath, 'utf8')
@@ -130,7 +132,6 @@ export async function moveFile(filePath: string, newFilePath: string) {
   try {
     await fs.promises.rename(filePath, newFilePath)
   } catch (e) {
-    // tslint:disable-next-line:no-unsafe-any
     if (e.code === 'EXDEV') {
       await moveFileAcrossDevices(filePath, newFilePath)
     } else {
@@ -149,7 +150,7 @@ export async function moveFileIntoDir(filePath: string, dir: string): Promise<st
 
 export async function removeFile(filePath: string, ignoreMissing = false) {
   if (ignoreMissing && !await fileExists(filePath)) {
-    return
+    return undefined
   }
 
   return fs.promises.unlink(filePath)
@@ -157,7 +158,7 @@ export async function removeFile(filePath: string, ignoreMissing = false) {
 
 export async function fileExists(filePath: string, assert = true) {
   const exists = await new Promise<boolean>((resolve) => {
-    fs.access(filePath, fs.constants.F_OK, (err) => resolve(!err))
+    fs.access(filePath, fs.constants.F_OK, err => resolve(!err))
   })
 
   if (!exists) {
@@ -174,7 +175,7 @@ export async function fileExists(filePath: string, assert = true) {
 
 export async function dirExists(filePath: string, assert = true) {
   const exists = await new Promise<boolean>((resolve) => {
-    fs.access(filePath, fs.constants.F_OK, (err) => resolve(!err))
+    fs.access(filePath, fs.constants.F_OK, err => resolve(!err))
   })
 
   if (!exists) {

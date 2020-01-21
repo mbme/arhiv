@@ -77,7 +77,7 @@ export function getWords(sentence: string) {
     words.push(word)
   }
 
-  return words.map((w) => w.toLowerCase())
+  return words.map(w => w.toLowerCase())
 }
 
 interface IWordStats {

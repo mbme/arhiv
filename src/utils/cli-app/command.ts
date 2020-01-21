@@ -91,7 +91,6 @@ export class Command<C extends string, CO extends object> {
     defaultValue?: T,
     mandatory?: M,
   ) {
-    // eslint-disable-next-line max-len
     return this._addOption<O, T extends string ? string : M extends true ? string : string | undefined>({
       name,
       description,

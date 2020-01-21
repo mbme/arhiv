@@ -65,7 +65,6 @@ export class ParserState {
 
     if (pos === -1) {
       const safeMarginPos = this.chunk.byteLength - this._safeMargin
-      // tslint:disable-next-line:no-shadowed-variable
       const chunkToProceed = this.chunk.subarray(0, safeMarginPos)
       this.chunk = this.chunk.subarray(safeMarginPos)
 
@@ -88,7 +87,6 @@ export class ParserState {
 
     if (pos === -1) {
       const safeMarginPos = this.chunk.byteLength - boundary.byteLength
-      // tslint:disable-next-line:no-shadowed-variable
       const chunkToProceed = this.chunk.subarray(0, safeMarginPos)
       this.chunk = this.chunk.subarray(safeMarginPos)
 

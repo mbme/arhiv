@@ -1,4 +1,3 @@
-/* tslint:disable:no-unsafe-any */
 import path from 'path'
 import { Dict, parseInt10 } from '~/utils'
 import { exec } from '~/utils/node'

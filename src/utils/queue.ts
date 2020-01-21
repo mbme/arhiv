@@ -18,7 +18,6 @@ export class Queue {
       const [deferred, action] = this._queue.shift()!
 
       try {
-        // eslint-disable-next-line no-await-in-loop
         const result = await Promise.resolve(action())
         deferred.resolve(result)
       } catch (e) {

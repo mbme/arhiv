@@ -53,6 +53,13 @@ module.exports = {
     "prefer-template": "off",
     "max-classes-per-file": "off",
     "spaced-comment": ["error", "always", { "markers": ["/"] }],
+    "no-await-in-loop": "off",
+    "max-len": [
+      "error",
+      120
+    ],
+    "class-method-use-this": "off",
+    "prefer-destructuring": "off",
 
     // imports
     "import/prefer-default-export": "off",
@@ -62,10 +69,12 @@ module.exports = {
     "react/jsx-props-no-spreading": "off",
     "react/state-in-constructor": "off",
     "react/sort-comp": "off",
+    "react/jsx-one-expression-per-line": "off",
+    "react/prop-types": "off",
 
     // typescript-eslint
     "@typescript-eslint/adjacent-overload-signatures": "error",
-    "@typescript-eslint/array-type": "error",
+    "@typescript-eslint/array-type": "off",
     "@typescript-eslint/await-thenable": "error",
     "@typescript-eslint/ban-ts-ignore": "error",
     "@typescript-eslint/ban-types": "error",

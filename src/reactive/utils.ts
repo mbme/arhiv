@@ -75,7 +75,6 @@ export function of$<T>(value: T): Observable<T> {
 }
 
 export function zip$<T>(...observables: Observable<T>[]) {
-  // eslint-disable-next-line @typescript-eslint/array-type
   return new Observable<ReadonlyArray<T | undefined>>((observer) => {
     const callbacks = new Callbacks()
 

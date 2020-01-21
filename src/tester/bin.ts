@@ -48,7 +48,6 @@ CliApp.create('tester')
         }
 
         try {
-          // eslint-disable-next-line no-await-in-loop
           const testFile = await TestFile.load(basePath, srcPath, file, updateSnapshots)
           tests.push(testFile)
         } catch (e) {
@@ -62,7 +61,6 @@ CliApp.create('tester')
       let testsFailed = 0
       for (const test of tests) {
         try {
-          // eslint-disable-next-line no-await-in-loop
           testsFailed += await test.run()
         } catch (e) {
           console.log(`Failed to run test file ${test.fileName}: ${e}`)

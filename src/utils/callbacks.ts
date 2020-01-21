@@ -36,7 +36,6 @@ export class AsyncCallbacks {
     const items = reverseOrder ? [...this._callbacks].reverse() : this._callbacks
 
     for (const callback of items) {
-      // eslint-disable-next-line no-await-in-loop
       await callback()
     }
 

@@ -13,7 +13,10 @@ export function Catalog() {
   const ws = useWorkspaceManager()
   const arhiv = useArhiv()
 
-  const [documents] = useObservable(() => arhiv.documents.getDocuments$({ filter: ws.filter }), [ws.filter])
+  const [documents] = useObservable(
+    () => arhiv.documents.getDocuments$({ filter: ws.filter }),
+    [ws.filter],
+  )
 
   if (!documents) {
     return (

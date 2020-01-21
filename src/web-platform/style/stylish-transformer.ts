@@ -4,7 +4,6 @@ import {
 } from '~/utils'
 import { theme } from './theme'
 
-// tslint:disable-next-line:no-unsafe-any
 const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as Obj)[prop][val] || val
 const getSpacing = getThemeProp('spacing')
 const getColor = getThemeProp('color')

@@ -82,7 +82,6 @@ export class WebLocks {
     const newState = {
       ...state,
     }
-    // tslint:disable-next-line:no-dynamic-delete
     delete newState[lockName]
     this.state.value = newState
 
@@ -108,7 +107,6 @@ export class WebLocks {
     for (const [lockName, tabId] of Object.entries(newState)) {
       if (tabId === this._tabId) {
         hadActiveLocks = true
-        // tslint:disable-next-line:no-dynamic-delete
         delete newState[lockName]
         log.info(`tab ${tabId} had remaining lock "${lockName}"`)
       }

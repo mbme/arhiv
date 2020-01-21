@@ -20,9 +20,7 @@ function getDocumentLocks(locks: Dict): Dict {
     ...locks,
   }
 
-  // tslint:disable-next-line:no-dynamic-delete
   delete result[DB_LOCK_PROP]
-  // tslint:disable-next-line:no-dynamic-delete
   delete result[LEADER_LOCK_PROP]
 
   return result

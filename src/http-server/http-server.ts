@@ -206,7 +206,6 @@ export class HTTPServer {
         return
       }
 
-      // eslint-disable-next-line no-await-in-loop
       await promiseTimeout(1000)
       counter += 1
     }

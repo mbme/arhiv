@@ -23,7 +23,6 @@ export function array2object<T>(array: T[], getKey: (value: T) => string) {
   return result
 }
 
-// eslint-disable-next-line @typescript-eslint/array-type
 export function entries2object<V>(entries: Array<[string, V]>): { [key: string]: V } {
   const result: { [key: string]: V } = {}
   for (const [key, value] of entries) {

@@ -38,7 +38,6 @@ export function removeAtMut<T>(arr: T[], pos: number) {
   return arr
 }
 
-// eslint-disable-next-line @typescript-eslint/array-type
 export const findById = <T>(arr: Array<{ id: T }>, id: T) => arr.find(item => item.id === id)
 
 export function isEqualArray(a: any[], b: any[]) {

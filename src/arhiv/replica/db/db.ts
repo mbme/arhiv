@@ -30,7 +30,10 @@ import {
 
 const log = createLogger('arhiv-db')
 
-type ChangesetExchange = (changeset: IChangeset, blobs: LocalAttachments) => Promise<IChangesetResponse>
+type ChangesetExchange = (
+  changeset: IChangeset,
+  blobs: LocalAttachments,
+) => Promise<IChangesetResponse>
 
 function fetchAttachment$(id: string) {
   return new Observable<Blob>((observer) => {
@@ -88,7 +91,9 @@ export class ReplicaDB {
 
     do {
       id = generateRandomId()
-    } while (await this.getDocument(id) || await this.getAttachment(id)) // make sure generated id is free
+    } while ( // make sure generated id is free
+      await this.getDocument(id) || await this.getAttachment(id)
+    )
 
     return id
   }
@@ -97,8 +102,10 @@ export class ReplicaDB {
     return this._storage.getDocument(id)
   }
 
-  getDocument$<A extends boolean>(id: string, assert: A)
-    : Observable<A extends true ? IDocument : IDocument | undefined> {
+  getDocument$<A extends boolean>(
+    id: string,
+    assert: A,
+  ): Observable<A extends true ? IDocument : IDocument | undefined> {
     return this.updateTime$.value$
       .switchMap(() => promise$(this.getDocument(id)))
       .map((document) => {
@@ -191,13 +198,11 @@ export class ReplicaDB {
       if (isEmptyChangeset(changeset)) {
         log.info('sync: sending empty changeset')
       } else {
-        // tslint:disable-next-line:max-line-length
         log.info(`sync: sending ${changeset.documents.length} documents, ${changeset.attachments.length} attachments, (${Object.keys(localAttachments).length} BLOBs)`)
       }
 
       const result = await exchange(changeset, localAttachments)
 
-      // tslint:disable-next-line:max-line-length
       log.info(`sync: ${result.status}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
 
       const conflicts = await this._storage.applyChangesetResponse(result)
@@ -215,7 +220,6 @@ export class ReplicaDB {
       this.syncState$.value = { type: 'initial' }
 
       return true
-
     } catch (e) {
       log.warn('Failed to sync', e)
 
@@ -231,7 +235,7 @@ export class ReplicaDB {
     }
   }
 
-  private _onUpdate(isLocal: boolean = false) {
+  private _onUpdate(isLocal = false) {
     this.updateTime$.value = [nowS(), isLocal]
   }
 

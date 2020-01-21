@@ -41,7 +41,7 @@ export class Observable<T> {
   }
 
   map<K>(map: (value: T) => K): Observable<K> {
-    return new Observable<K>((observer) => this.subscribe({
+    return new Observable<K>(observer => this.subscribe({
       next: value => observer.next(map(value)),
       error: observer.error,
       complete: observer.complete,
@@ -57,7 +57,7 @@ export class Observable<T> {
   }
 
   filter(filter: (value: T) => boolean) {
-    return new Observable<T>((observer) => this.subscribe({
+    return new Observable<T>(observer => this.subscribe({
       next: (value) => {
         if (filter(value)) {
           observer.next(value)
@@ -82,7 +82,7 @@ export class Observable<T> {
           innerComplete = false
 
           unsub = map(value).subscribe({
-            next: (mappedValue) => observer.next(mappedValue),
+            next: mappedValue => observer.next(mappedValue),
             error: observer.error,
             complete: () => {
               innerComplete = true
@@ -117,7 +117,7 @@ export class Observable<T> {
 
     let counter = 0
 
-    return new Observable<T>((observer) => this.subscribe({
+    return new Observable<T>(observer => this.subscribe({
       next: (value) => {
         observer.next(value)
         counter += 1
@@ -138,7 +138,7 @@ export class Observable<T> {
 
     const buffer: T[] = []
 
-    return new Observable<T[]>((observer) => this.subscribe({
+    return new Observable<T[]>(observer => this.subscribe({
       next: (value) => {
         buffer.push(value)
 
@@ -160,7 +160,7 @@ export class Observable<T> {
 
     let skipped = 0
 
-    return new Observable<T>((observer) => this.subscribe({
+    return new Observable<T>(observer => this.subscribe({
       next: (value) => {
         if (skipped === count) {
           observer.next(value)

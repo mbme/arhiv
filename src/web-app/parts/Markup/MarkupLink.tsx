@@ -15,7 +15,7 @@ export function MarkupLink({ link, description }: IProps) {
 
   if (!attachment) {
     return (
-      <a href={link} target="_blank" rel="noopener">
+      <a href={link} target="_blank" rel="noopener noreferrer">
         {description || link}
       </a>
     )

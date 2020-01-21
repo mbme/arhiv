@@ -6,8 +6,6 @@ export const isArray = <T>(x: any): x is T[] => getType(x) === 'Array'
 
 export const isString = (x: any): x is string => getType(x) === 'String'
 
-// tslint:disable-next-line:ban-types
 export const isFunction = (x: any): x is Function => ['Function', 'AsyncFunction'].includes(getType(x))
 
-// tslint:disable-next-line:ban-types
 export const isAsyncFunction = (x: any): x is Function => getType(x) === 'AsyncFunction'

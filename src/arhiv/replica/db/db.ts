@@ -198,11 +198,13 @@ export class ReplicaDB {
       if (isEmptyChangeset(changeset)) {
         log.info('sync: sending empty changeset')
       } else {
+        // eslint-disable-next-line max-len
         log.info(`sync: sending ${changeset.documents.length} documents, ${changeset.attachments.length} attachments, (${Object.keys(localAttachments).length} BLOBs)`)
       }
 
       const result = await exchange(changeset, localAttachments)
 
+      // eslint-disable-next-line max-len
       log.info(`sync: ${result.status}, got ${result.documents.length} documents and ${result.attachments.length} attachments`)
 
       const conflicts = await this._storage.applyChangesetResponse(result)

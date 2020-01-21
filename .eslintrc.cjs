@@ -58,7 +58,7 @@ module.exports = {
       "error",
       120
     ],
-    "class-method-use-this": "off",
+    "class-methods-use-this": "off",
     "prefer-destructuring": "off",
 
     // imports

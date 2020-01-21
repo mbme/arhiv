@@ -65,6 +65,7 @@ export class FSStorage {
     log.debug(`data schema version: ${this._metadata.schemaVersion}`)
 
     if (this._metadata.schemaVersion !== FSStorage.SCHEMA_VERSION) {
+      // eslint-disable-next-line max-len
       throw new Error(`app schema version is ${FSStorage.SCHEMA_VERSION}, data version is ${this._metadata.schemaVersion}`)
     }
   }

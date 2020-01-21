@@ -73,11 +73,12 @@ const listChar = satisfy((msg, pos) => {
 })
   .map(value => new NodeChar(value), 'Char')
 
-const unorderedListItem =
+const unorderedListItem = (
   inlineElements.orElse(listChar)
     .oneOrMore()
     .map(groupCharsIntoStrings)
     .map(value => new NodeListItem(value), 'ListItem')
+)
 
 export const unorderedList = bof.orElse(newline)
   .andThen(expect('* '))
@@ -114,8 +115,9 @@ export const paragraph = header
 export const newlines = regex(/^\n{2,}/)
   .map(() => new NodeNewlines(), 'Newlines')
 
-export const markupParser =
+export const markupParser = (
   newlines
     .orElse(paragraph)
     .zeroOrMore()
     .map(value => new NodeMarkup(value), 'Markup')
+)

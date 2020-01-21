@@ -27,7 +27,9 @@ export function createToken(password: string) {
 export function extractTokenCookie(cookies: string) {
   const [tokenCookie] = cookies.split(';').filter(c => c.startsWith('token='))
 
-  if (!tokenCookie) return ''
+  if (!tokenCookie) {
+    return ''
+  }
 
   return decodeURIComponent(tokenCookie.substring(6))
 }

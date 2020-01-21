@@ -7,10 +7,7 @@ import { ParserHeaders } from './parser-headers'
 import { ParserFieldBody } from './parser-field-body'
 import { ParserFileBody } from './parser-file-body'
 
-type Parser = ParserIntro
-  | ParserHeaders
-  | ParserFieldBody
-  | ParserFileBody
+type Parser = ParserIntro | ParserHeaders | ParserFieldBody | ParserFileBody
 
 export class MultipartParser {
   private _body = new MultipartBody()

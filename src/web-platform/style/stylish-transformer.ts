@@ -126,7 +126,7 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
 
 function mergeInto(target: Obj, source: Obj) {
   for (const [key, value] of Object.entries(source)) {
-    target[key] = value
+    target[key] = value // eslint-disable-line no-param-reassign
   }
 }
 

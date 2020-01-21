@@ -63,6 +63,7 @@ export class ArhivDB {
 
     const schemaVersion = this.getSchemaVersion()
     if (changeset.schemaVersion !== schemaVersion) {
+      // eslint-disable-next-line max-len
       throw new Error(`replica schema version ${changeset.schemaVersion} is different than server schema version ${schemaVersion}`)
     }
 

@@ -5,7 +5,8 @@ import {
   NodeLink,
 } from './nodes'
 
-export const groupCharsIntoStrings = <N extends Node>(nodes: Array<NodeChar | N>) => { // group chars into strings
+// group chars into strings
+export function groupCharsIntoStrings<N extends Node>(nodes: Array<NodeChar | N>) {
   const values: Array<NodeString | N> = []
 
   let str = ''
@@ -50,4 +51,6 @@ export function selectLinks(root: Node): NodeLink[] {
   return links
 }
 
-export const createLink = (url: string, text: string = '') => text ? `[[${url}][${text}]]` : `[[${url}]]`
+export const createLink = (url: string, text = '') => (
+  text ? `[[${url}][${text}]]` : `[[${url}]]`
+)

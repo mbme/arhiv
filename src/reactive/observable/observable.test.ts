@@ -78,7 +78,9 @@ test('destroy callback is executed', async () => {
       observer.next(1)
       observer.error('test')
 
-      return () => destroyed = true
+      return () => {
+        destroyed = true
+      }
     })
 
     await assertObservable(o$, [1, error])
@@ -104,7 +106,9 @@ test('tap', async () => {
     observer.complete()
 
     return noop
-  }).tap(x => tap = x)
+  }).tap((x) => {
+    tap = x
+  })
 
   await assertObservable(o$, [1, complete])
   assertEqual(tap, 1)
@@ -132,7 +136,9 @@ test('switchMap', async () => {
       setTimeout(() => observer.next(2), 100)
       setTimeout(() => observer.complete(), 200)
 
-      return () => destCounter += 1
+      return () => {
+        destCounter += 1
+      }
     }).switchMap(() => new Observable((observer) => {
       observer.next(5)
 

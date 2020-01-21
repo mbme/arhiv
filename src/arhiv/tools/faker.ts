@@ -33,7 +33,7 @@ import {
   IAttachment,
 } from '../types'
 
-async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<IDocument<'note'>> {
+function getFakeNote(generator: ITextGenerator, images: Dict): IDocument<'note'> {
   const name = generator.sentence(1, 8)
 
   const refs = new Set<string>()
@@ -69,7 +69,7 @@ async function getFakeNote(generator: ITextGenerator, images: Dict): Promise<IDo
 
 async function prepareImages(basePath: string, tempDir: string): Promise<Dict> {
   const files = await listFiles(basePath)
-  const images = files.filter((name) => name.match(/\.(jpg|jpeg)$/i))
+  const images = files.filter(name => name.match(/\.(jpg|jpeg)$/i))
 
   const result: Dict = {}
 
@@ -116,7 +116,7 @@ export async function getFakeNotes(resourcesDir: string, count: number) {
   const generator = createTextGenerator(text)
 
   return {
-    documents: await Promise.all(createArray(count, () => getFakeNote(generator, images))),
+    documents: createArray(count, () => getFakeNote(generator, images)),
     attachments: await createAttachments(images),
     attachedFiles: images,
     tempDir,

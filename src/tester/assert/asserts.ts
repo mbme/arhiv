@@ -18,7 +18,8 @@ export function assertEqual(actual: any, expected: any) {
       ${expected}
       actual:
       ${actual}
-    `)
+      `,
+    )
   }
 }
 

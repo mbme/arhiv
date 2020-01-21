@@ -69,7 +69,7 @@ export class SyncManager {
 
   private _startSync$() {
     return new Observable<boolean>(
-      (observer) => this._locks.acquireDBLock$()
+      observer => this._locks.acquireDBLock$()
         .switchMap(() => promise$(this._db.sync(this._net.syncChanges)))
         .take(1)
         .subscribe({

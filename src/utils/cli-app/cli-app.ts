@@ -1,7 +1,8 @@
-/* tslint:disable:no-console */
+/* eslint-disable no-console */
 import {
   Dict,
   Procedure,
+  AsyncProcedure,
 } from '../types'
 import { Callbacks } from '../callbacks'
 import {
@@ -10,7 +11,8 @@ import {
 } from './args-parser'
 import { Command } from './command'
 
-type Runnable<O extends object> = (options: O, onExit: (cb: Procedure) => void) => void
+type OnExit = (cb: Procedure | AsyncProcedure) => void
+type Runnable<O extends object> = (options: O, onExit: OnExit) => void | Promise<void>
 
 export class CliApp {
   private _argsParser: ArgsParserBuilder<any, any>

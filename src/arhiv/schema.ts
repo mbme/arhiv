@@ -1,4 +1,4 @@
-export default {
+export const schema = {
   1: {
     types: {
       note: {

@@ -5,7 +5,7 @@ import { Observable } from './observable'
 type NextCb<T> = (value: T) => void
 
 export class Signal<T = void> {
-  private _subscribers: Array<NextCb<T>> = []
+  private _subscribers: NextCb<T>[] = []
   private _counter = new Counter()
 
   next(signal: T) {

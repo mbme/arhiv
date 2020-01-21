@@ -3,23 +3,37 @@
  * @see https://github.com/bevacqua/fuzzysearch
  */
 export function fuzzySearch(needle: string, haystack: string, ignoreCase = true): boolean {
-  if (ignoreCase) return fuzzySearch(needle.toLowerCase(), haystack.toLowerCase(), false)
+  if (ignoreCase) {
+    return fuzzySearch(needle.toLowerCase(), haystack.toLowerCase(), false)
+  }
 
   const nlen = needle.length
 
   // if needle is empty then it matches everything
-  if (!nlen) return true
+  if (!nlen) {
+    return true
+  }
 
   const hlen = haystack.length
-  if (nlen > hlen) return false
+  if (nlen > hlen) {
+    return false
+  }
 
-  if (nlen === hlen) return needle === haystack
+  if (nlen === hlen) {
+    return needle === haystack
+  }
 
+  // eslint-disable-next-line no-labels
   outer: for (let i = 0, j = 0; i < nlen; i += 1) {
     const nch = needle.charCodeAt(i)
     while (j < hlen) {
-      // tslint:disable-next-line:increment-decrement
-      if (haystack.charCodeAt(j++) === nch) continue outer
+      const char = haystack.charCodeAt(j)
+
+      j += 1
+
+      if (char === nch) {
+        continue outer // eslint-disable-line no-labels
+      }
     }
 
     return false
@@ -83,10 +97,10 @@ export function hashCode(str: string): number {
   let hash = 0
 
   for (let i = 0; i < str.length; i += 1) {
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     hash = ((hash << 5) - hash) + str.charCodeAt(i)
 
-    // tslint:disable-next-line:no-bitwise
+    // eslint-disable-next-line no-bitwise
     hash |= 0 // Convert to 32bit integer
   }
 
@@ -100,7 +114,9 @@ export const capitalize = (str: string) => str[0].toUpperCase() + str.substring(
 
 export function isSubSequence(str: string, i: number, seq: string) {
   for (let pos = 0; pos < seq.length; pos += 1) {
-    if (str[i + pos] !== seq[pos]) return false
+    if (str[i + pos] !== seq[pos]) {
+      return false
+    }
   }
 
   return true

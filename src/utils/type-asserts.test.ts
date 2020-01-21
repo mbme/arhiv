@@ -15,8 +15,10 @@ test('isObject', () => {
 
 test('isFunction', () => {
   assertTrue(isFunction(() => true))
+  // eslint-disable-next-line @typescript-eslint/require-await
   assertTrue(isFunction(async () => true))
-  // tslint:disable-next-line:no-empty
+  // eslint-disable-next-line prefer-arrow-callback
   assertTrue(isFunction(function testIsFunction() { }))
+  // eslint-disable-next-line @typescript-eslint/require-await, prefer-arrow-callback
   assertTrue(isFunction(async function testIsFunction() { return true }))
 })

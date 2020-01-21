@@ -9,12 +9,16 @@ const SUPPORTED_MEDIA_FORMATS = ['mp3']
 
 async function probeMediaFileMeta(filePath: string) {
   const { format } = JSON.parse(await exec(`ffprobe -v quiet -of json -show_format -i ${filePath}`).catch((e) => {
-    if (e.code !== 1) throw e
+    if (e.code !== 1) {
+      throw e
+    }
 
     return e.stdout
   }))
 
-  if (!format || !SUPPORTED_MEDIA_FORMATS.includes(format.format_name)) return undefined
+  if (!format || !SUPPORTED_MEDIA_FORMATS.includes(format.format_name)) {
+    return undefined
+  }
 
   return {
     bitRate: parseInt10(format.bit_rate),
@@ -22,9 +26,11 @@ async function probeMediaFileMeta(filePath: string) {
   }
 }
 
-export default async function probeMetadata(filePath: string) {
+export async function probeMetadata(filePath: string) {
   const mediaMeta = await probeMediaFileMeta(filePath)
-  if (mediaMeta) return mediaMeta
+  if (mediaMeta) {
+    return mediaMeta
+  }
 
   return {}
 }
@@ -40,5 +46,5 @@ const MIME: Dict = {
 export const getMimeType = async (filePath: string) => {
   const mimeType = MIME[path.extname(filePath)]
 
-  return mimeType ? mimeType : exec(`file -b -i "${filePath}"`)
+  return mimeType || exec(`file -b -i "${filePath}"`)
 }

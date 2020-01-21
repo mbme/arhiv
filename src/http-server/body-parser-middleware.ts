@@ -32,7 +32,7 @@ export function createBodyParserMiddleware(tmpDir: string) {
         await Promise.all(body?.files.map(item => removeFile(item.file, true)) || [])
       }
 
-      return
+      return Promise.resolve()
     }
 
     if (contentType.startsWith('application/json')) {

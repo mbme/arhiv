@@ -24,7 +24,10 @@ export function injectGlobalStyles(styles: string) {
   el.textContent = styles
 }
 
-export function applyTransformer(style: IStyleObject, transformer?: StyleTransformer): IStyleObject {
+export function applyTransformer(
+  style: IStyleObject,
+  transformer?: StyleTransformer,
+): IStyleObject {
   if (!transformer) {
     return style
   }

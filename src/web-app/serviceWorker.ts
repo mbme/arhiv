@@ -12,7 +12,7 @@ configureLogger({
 const log = createLogger('serviceWorker', 'gray')
 
 type Scope = ServiceWorkerGlobalScope & typeof globalThis
-const scope = self as any as Scope
+const scope = self as any as Scope // eslint-disable-line no-restricted-globals
 
 const staticAssets = [
   './index.html',

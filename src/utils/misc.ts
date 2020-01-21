@@ -1,8 +1,9 @@
 export async function promiseTimeout(timeout: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, timeout))
+  return new Promise((resolve) => {
+    setTimeout(resolve, timeout)
+  })
 }
 
-// tslint:disable-next-line:no-empty
 export const noop = () => { }
 
 export const identity = <T>(x: T) => x

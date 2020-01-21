@@ -135,7 +135,7 @@ test('eof', () => {
 
 test('satisfy', () => {
   const matcher = satisfy((x, pos) => {
-    if (/#test/.test(x.substring(pos))) {
+    if (x.substring(pos).includes('#test')) {
       return [true, '#test']
     }
 

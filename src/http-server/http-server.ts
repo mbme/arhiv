@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import http from 'http'
 import urlParser from 'url'
 import zlib from 'zlib'
@@ -51,7 +52,11 @@ export class HTTPServer {
     this._middlewares.push(cb)
   }
 
-  addRoute<P extends object>(method: HttpMethod, pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
+  addRoute<P extends object>(
+    method: HttpMethod,
+    pathMatcher: PathMatcher<P>,
+    cb: RequestHandler<P>,
+  ) {
     this._routes.push({
       test({ req }: IContext): P | undefined {
         if (req.method.toUpperCase() !== method) {
@@ -150,6 +155,7 @@ export class HTTPServer {
     )
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   private _server = http.createServer(this._requestHandler)
 
   private _sockets = new Set<Socket>()
@@ -170,6 +176,8 @@ export class HTTPServer {
       }
 
       context.res.statusCode = 404
+
+      return undefined
     })
 
     // track open sockets
@@ -198,6 +206,7 @@ export class HTTPServer {
         return
       }
 
+      // eslint-disable-next-line no-await-in-loop
       await promiseTimeout(1000)
       counter += 1
     }

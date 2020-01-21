@@ -9,7 +9,9 @@ export function classNames(...args: any[]) {
       acc.push(val)
     } else if (isObject(val)) {
       Object.entries(val).forEach(([key, assertion]) => {
-        if (assertion) acc.push(key)
+        if (assertion) {
+          acc.push(key)
+        }
       })
     }
 

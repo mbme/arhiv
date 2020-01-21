@@ -19,7 +19,7 @@ export function merge$<T>(...observables: Observable<T>[]) {
       callbacks.add(observable.subscribe({
         next: observer.next,
         error: observer.error,
-        complete() {
+        complete() { // eslint-disable-line no-loop-func
           completeCount += 1
           if (completeCount === observables.length) {
             observer.complete()
@@ -75,6 +75,7 @@ export function of$<T>(value: T): Observable<T> {
 }
 
 export function zip$<T>(...observables: Observable<T>[]) {
+  // eslint-disable-next-line @typescript-eslint/array-type
   return new Observable<ReadonlyArray<T | undefined>>((observer) => {
     const callbacks = new Callbacks()
 
@@ -90,7 +91,7 @@ export function zip$<T>(...observables: Observable<T>[]) {
           observer.next(state)
         },
         error: observer.error,
-        complete() {
+        complete() { // eslint-disable-line no-loop-func
           completeCount += 1
           if (completeCount === observables.length) {
             observer.complete()

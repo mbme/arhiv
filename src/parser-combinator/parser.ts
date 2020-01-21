@@ -5,7 +5,6 @@ export class Success<T> {
     public value: T,
     public nextPos: number,
   ) { }
-
 }
 
 export class Failure {

@@ -45,6 +45,14 @@ module.exports = {
     ],
     "quote-props": "off",
     "no-continue": "off",
+    "curly": [
+      "error",
+      "all",
+    ],
+    "lines-between-class-members": "off",
+    "prefer-template": "off",
+    "max-classes-per-file": "off",
+    "spaced-comment": ["error", "always", { "markers": ["/"] }],
 
     // imports
     "import/prefer-default-export": "off",

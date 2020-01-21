@@ -65,7 +65,7 @@ CliApp.create('arhiv')
       await server.start()
 
       onExit(async () => {
-        log.info(`stopping...`)
+        log.info('stopping...')
         try {
           await server.stop()
           process.exit(0)

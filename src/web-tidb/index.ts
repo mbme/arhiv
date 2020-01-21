@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -8,11 +6,11 @@ function request2promise<R>(request: IDBRequest<R>): Promise<R> {
 }
 
 export async function applyForPersistentStorage(): Promise<boolean> {
-  if (!navigator.storage?.persist) {
-    return false
+  if (navigator.storage?.persist) {
+    return navigator.storage.persist()
   }
 
-  return navigator.storage.persist()
+  return false
 }
 
 // type DB<StoreNames extends string, StoredObjectType> = {

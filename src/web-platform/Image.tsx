@@ -18,6 +18,7 @@ interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 export function Image({ width, height, $style, ...props }: IProps) {
   return (
     <img
+      alt=""
       {...props}
       className={$image.with({ width, height }).and($style).className}
     />

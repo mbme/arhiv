@@ -2,7 +2,9 @@
 export type Without<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 // Make props enumerated in TOptional optional
-export type OptionalProps<T, TOptional extends keyof T> = Without<T, TOptional> & Partial<Pick<T, TOptional>>
+export type OptionalProps<T, TOptional extends keyof T> = (
+  Without<T, TOptional> & Partial<Pick<T, TOptional>>
+)
 
 // Get type of object/class property
 export type TypeOfProperty<T, P extends keyof T> = T[P]
@@ -23,6 +25,7 @@ export type Constructor<T> = new (...args: any[]) => T
 
 export type Result<T, E = Error> = { ok: true, value: T } | { ok: false, error: E }
 
+// eslint-disable-next-line @typescript-eslint/array-type
 export type ArrayElement<E> = E extends ReadonlyArray<infer T> ? T : never
 
 export type ClassType<T> = new (...args: any[]) => T

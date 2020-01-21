@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import http from 'http'
 import urlParser from 'url'
 import { Stream } from 'stream'
@@ -72,11 +71,11 @@ export class MultipartBody {
     return this.fields.find(item => item.field === field)
   }
 }
-// tslint:disable-next-line:max-classes-per-file
+
 export class JSONBody {
   constructor(public readonly value: object) { }
 }
-// tslint:disable-next-line:max-classes-per-file
+
 export class StringBody {
   constructor(public readonly value: string) { }
 }

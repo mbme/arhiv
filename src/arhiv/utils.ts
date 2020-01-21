@@ -14,7 +14,11 @@ export function isEmptyChangeset(changeset: IChangeset) {
   return !changeset.documents.length && !changeset.attachments.length
 }
 
-export function createDocument<T extends string, P extends object>(id: string, type: T, props: P): IDocument<T, P> {
+export function createDocument<T extends string, P extends object>(
+  id: string,
+  type: T,
+  props: P,
+): IDocument<T, P> {
   const now = dateNow()
 
   return {

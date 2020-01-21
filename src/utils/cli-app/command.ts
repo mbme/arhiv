@@ -16,7 +16,7 @@ interface IOption<O extends string, V> {
   defaultValue?: V
 }
 
-function option2string(option: IOption<any, any>) {
+function option2string(option: IOption<any, any>): string {
   if (option.positional === 'one') {
     return `<${option.name}>`
   }
@@ -50,7 +50,7 @@ export class Command<C extends string, CO extends object> {
   constructor(
     public readonly name: C,
     public readonly description: string,
-    private _options: Array<IOption<keyof CO, any>>,
+    private _options: IOption<keyof CO, any>[],
   ) {
     if (name && !nameRegex.test(name)) {
       throw new Error(`command ${name} doesn't match ${nameRegex}`)
@@ -91,6 +91,7 @@ export class Command<C extends string, CO extends object> {
     defaultValue?: T,
     mandatory?: M,
   ) {
+    // eslint-disable-next-line max-len
     return this._addOption<O, T extends string ? string : M extends true ? string : string | undefined>({
       name,
       description,

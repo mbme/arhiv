@@ -5,8 +5,9 @@ import readline from 'readline'
 import { promisify } from 'util'
 import zlib from 'zlib'
 
-export const hash = (hashType: string) =>
+export const hash = (hashType: string) => (
   (value: string, buffer = false) => crypto.createHash(hashType).update(value).digest(buffer ? undefined as any : 'hex')
+)
 export const sha256 = hash('sha256')
 
 export function sha256File(filePath: string): Promise<string> {
@@ -55,24 +56,41 @@ export const gzip = promisify(zlib.gzip)
 export function ask(question: string): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 
-  return new Promise((resolve) => rl.question(question, (answer) => {
-    resolve(answer)
-    rl.close()
-  }))
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      resolve(answer)
+      rl.close()
+    })
+  })
 }
 
 export const execRaw = promisify(childProcess.exec)
-export const exec = (command: string): Promise<string> => execRaw(command).then(({ stdout }) => stdout.trim())
+
+export function exec(command: string): Promise<string> {
+  return execRaw(command).then(({ stdout }) => stdout.trim())
+}
+
+class SpawnError extends Error {
+  constructor(
+    public readonly code: number,
+    public readonly result: string,
+  ) {
+    super()
+  }
+}
 export function spawn(command: string, ...args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const process = childProcess.spawn(command, args)
+
     let result = ''
+
     process.stdout.on('data', (data) => {
       result += data
     })
+
     process.on('close', (code) => {
       if (code) {
-        reject({ code, result })
+        reject(new SpawnError(code, result))
       } else {
         resolve(result.trim())
       }

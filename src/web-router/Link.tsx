@@ -1,5 +1,8 @@
 import * as React from 'react'
-import { SimpleLocation } from './web-router'
+import {
+  SimpleLocation,
+  getUrl,
+} from './web-router'
 import { useRouter } from './Router'
 
 interface IProps {
@@ -12,7 +15,7 @@ interface IProps {
 export function Link({ to, newTab, className, children }: IProps) {
   const router = useRouter()
 
-  const url = router.getUrl(to)
+  const url = getUrl(to)
 
   const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     router.push(to)

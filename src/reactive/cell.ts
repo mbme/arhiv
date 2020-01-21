@@ -5,7 +5,7 @@ import { Observable } from './observable'
 type NextCb<T> = (value: T) => void
 
 export class Cell<T> {
-  private _subscribers: Array<NextCb<T>> = []
+  private _subscribers: NextCb<T>[] = []
   private _valueCounter = new Counter()
 
   constructor(private _value: T) { }

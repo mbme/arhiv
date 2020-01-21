@@ -50,4 +50,7 @@ ArhivReplica.create().then((arhiv) => {
       rootEl.style.visibility = 'visible'
     },
   )
+}).catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('Failed to initialize arhiv', err)
 })

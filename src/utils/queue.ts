@@ -18,12 +18,12 @@ export class Queue {
       const [deferred, action] = this._queue.shift()!
 
       try {
+        // eslint-disable-next-line no-await-in-loop
         const result = await Promise.resolve(action())
         deferred.resolve(result)
       } catch (e) {
         log.error('queued action failed', e)
 
-        // tslint:disable-next-line:no-unsafe-any
         deferred.reject(e)
       }
     }
@@ -37,6 +37,7 @@ export class Queue {
 
   private _scheduleQueueProcessing() {
     if (!this._taskId) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       this._taskId = global.setImmediate(this._processQueue)
     }
   }

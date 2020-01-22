@@ -78,11 +78,21 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
       }
     }
 
+    const keypressHandler = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Escape' && overlay.onClick) {
+        overlay.onClick()
+      }
+    }
+
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <div
         key={id}
         className={$container.and(overlay.$style).className}
         onClick={clickHandler}
+        onKeyPress={keypressHandler}
+        role="dialog"
+        aria-modal="true"
       >
         {overlay.children}
       </div>

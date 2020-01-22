@@ -52,6 +52,13 @@ export function TabBar({ tabs, activeTabId, onClick }: IProps) {
           key={tabId}
           className={$tab.with({ active: tabId === activeTabId }).className}
           onClick={() => onClick(tabId)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              onClick(tabId)
+            }
+          }}
+          role="tab"
+          tabIndex={0}
         >
           {tabId}
         </div>

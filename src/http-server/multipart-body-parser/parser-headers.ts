@@ -32,7 +32,7 @@ export class ParserHeaders {
       throw new Error('multipart body: Content-Disposition header is missing')
     }
 
-    const fieldName = contentDispositionHeader.match(nameRegexp)?.[1]
+    const fieldName = nameRegexp.exec(contentDispositionHeader)?.[1]
     if (!fieldName) {
       throw new Error("multipart body: Content-Disposition header doesn't include name")
     }

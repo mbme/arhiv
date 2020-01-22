@@ -69,7 +69,7 @@ function getFakeNote(generator: ITextGenerator, images: Dict): IDocument<'note'>
 
 async function prepareImages(basePath: string, tempDir: string): Promise<Dict> {
   const files = await listFiles(basePath)
-  const images = files.filter(name => name.match(/\.(jpg|jpeg)$/i))
+  const images = files.filter(name => /\.(jpg|jpeg)$/i.exec(name))
 
   const result: Dict = {}
 

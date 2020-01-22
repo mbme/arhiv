@@ -1,23 +1,46 @@
 import * as React from 'react'
 import {
   Box,
+  Button,
+  theme,
 } from '~/web-platform'
 import { Catalog } from './Catalog'
 import { OpenCards } from './OpenCards'
-import { Chrome } from '../parts'
 
 export function WorkspaceView() {
-  return (
-    <Chrome selected="workspace">
-      <Box
-        display="grid"
-        gridTemplateColumns="auto 1fr"
-        height="100%"
-      >
-        <Catalog />
+  const [showCatalog, setShowCatalog] = React.useState(false)
 
-        <OpenCards />
+  return (
+    <Box
+      height="100%"
+      pt="60px" // header
+    >
+      <Box
+        as="nav"
+        boxShadow={theme.boxShadow}
+        py="small"
+        position="fixed"
+        top="0"
+        width="100%"
+        bgColor="bgDarker"
+        zIndex="1"
+      >
+        <Button
+          variant="link"
+          onClick={() => setShowCatalog(false)}
+        >
+          Workspace
+        </Button>
+
+        <Button
+          variant="link"
+          onClick={() => setShowCatalog(true)}
+        >
+          Catalog
+        </Button>
       </Box>
-    </Chrome>
+
+      {showCatalog ? <Catalog /> : <OpenCards />}
+    </Box>
   )
 }

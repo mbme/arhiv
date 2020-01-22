@@ -21,7 +21,6 @@ export function Frame({ tabs, buttons }: IProps) {
   return (
     <Box
       as="section"
-      width="35rem"
     >
       <Row alignX="space-between">
         <TabBar

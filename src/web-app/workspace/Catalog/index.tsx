@@ -4,6 +4,7 @@ import {
   FilterInput,
   Box,
   ProgressLocker,
+  Column,
 } from '~/web-platform'
 import { useArhiv } from '~/arhiv/useArhiv'
 import { useWorkspaceManager } from '../useWorkspaceManager'
@@ -33,17 +34,8 @@ export function Catalog() {
     ))
 
   return (
-    <Box
-      as="aside"
-      width="360px"
-      height="100%"
-      overflowY="scroll"
-      bgColor="bgDarker"
-    >
+    <Column>
       <Box
-        position="sticky"
-        top="0"
-        bgColor="bg"
         py="fine"
       >
         <FilterInput
@@ -63,7 +55,14 @@ export function Catalog() {
         {items.length} items
       </Box>
 
-      {items}
-    </Box>
+      <Box
+        display="flex"
+        flexDirection="column"
+        width="500px"
+        maxWidth="100%"
+      >
+        {items}
+      </Box>
+    </Column>
   )
 }

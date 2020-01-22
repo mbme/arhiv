@@ -2,6 +2,7 @@ import path from 'path'
 import {
   Procedure,
   AsyncProcedure,
+  trimSuffix,
 } from '~/utils'
 import { TestFileSnapshots } from '../assert/types'
 
@@ -33,7 +34,7 @@ export class TestContext {
 let currentContext: TestContext | undefined
 
 export function initializeTestContext(basePath: string, srcPath: string, testFile: string) {
-  const relPath = path.relative(basePath, testFile)
+  const relPath = trimSuffix(path.relative(basePath, testFile), '.js')
   const snapshotFile = `${path.join(srcPath, relPath)}.snap.json`
 
   currentContext = new TestContext(relPath, testFile, snapshotFile)

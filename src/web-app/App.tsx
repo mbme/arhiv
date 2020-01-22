@@ -10,7 +10,6 @@ import { Library } from '~/web-platform/Library'
 import { useArhiv } from '~/arhiv/useArhiv'
 import {
   NotFound,
-  Chrome,
   AuthOverlay,
 } from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'
@@ -41,15 +40,13 @@ export function App() {
 
     case '/library': {
       return (
-        <Chrome selected="library">
-          <Box
-            display="inline-block"
-            maxWidth="50rem"
-            p="medium"
-          >
-            <Library />
-          </Box>
-        </Chrome>
+        <Box
+          maxWidth="50rem"
+          mx="auto"
+          p="medium"
+        >
+          <Library />
+        </Box>
       )
     }
 

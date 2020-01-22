@@ -11,16 +11,15 @@ export function OpenCards() {
 
   return (
     <Column
-      alignX="left"
-      p="medium"
-      height="100%"
-      overflowY="scroll"
+      alignX="center"
     >
       {ws.openIds.map(id => (
         <Box
           key={id}
           flex="0 0 auto"
           mb="large"
+          width="35rem"
+          maxWidth="100%"
         >
           <Card id={id} />
         </Box>

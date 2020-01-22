@@ -23,7 +23,7 @@ export function AuthOverlay({ submit }: IProps) {
   return (
     <Column
       as={Overlay}
-      bgColor="bg"
+      bgColor="bg0"
       pt="20vh"
     >
       <Box mb="medium">

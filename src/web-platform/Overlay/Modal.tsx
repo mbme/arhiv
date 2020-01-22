@@ -6,7 +6,7 @@ import {
 import { Overlay } from './Overlay'
 
 const $modal = stylish({
-  backgroundColor: theme.color.bg,
+  backgroundColor: theme.color.bg0,
   marginTop: '17vh',
   minWidth: '375px',
   padding: theme.spacing.medium,

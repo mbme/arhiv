@@ -24,7 +24,7 @@ const $button = stylish(
   props => props.disabled && {
     cursor: 'auto',
     color: theme.color.secondary,
-    backgroundColor: theme.color.bgDarker,
+    backgroundColor: theme.color.bg1,
   },
 
   props => !props.disabled && props.variant === 'primary' && {
@@ -38,9 +38,9 @@ const $button = stylish(
 
   props => !props.disabled && props.variant === 'secondary' && {
     color: theme.color.text,
-    backgroundColor: theme.color.bg,
+    backgroundColor: theme.color.bg0,
     '&:hover': {
-      backgroundColor: theme.color.bgDarker,
+      backgroundColor: theme.color.bg1,
     },
   },
 

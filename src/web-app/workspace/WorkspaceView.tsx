@@ -12,8 +12,9 @@ export function WorkspaceView() {
 
   return (
     <Box
-      height="100%"
+      minHeight="100%"
       pt="60px" // header
+      bgColor="bg2"
     >
       <Box
         as="nav"
@@ -22,7 +23,7 @@ export function WorkspaceView() {
         position="fixed"
         top="0"
         width="100%"
-        bgColor="bgDarker"
+        bgColor="bg1"
         zIndex="1"
       >
         <Button

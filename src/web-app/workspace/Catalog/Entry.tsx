@@ -24,7 +24,7 @@ export function CatalogEntry({ document }: IProps) {
       mb="small"
       p="small"
       cursor="pointer"
-      bgColor={isOpen ? theme.color.bg : undefined}
+      bgColor={isOpen ? theme.color.bg0 : undefined}
     >
       <Label
         fontSize="fine"

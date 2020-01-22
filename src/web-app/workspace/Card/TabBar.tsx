@@ -13,7 +13,7 @@ const $tab = stylish(
     textTransform: 'uppercase',
     fontSize: 'small',
     letterSpacing: '1.2px',
-    background: theme.color.bgDarker,
+    background: theme.color.bg1,
     cursor: 'pointer',
     userSelect: 'none',
     minWidth: '7rem',
@@ -22,7 +22,7 @@ const $tab = stylish(
     },
   },
   props => props.active && {
-    background: theme.color.bg,
+    background: theme.color.bg0,
     border: theme.border,
     borderBottom: '0 none',
     color: 'link',

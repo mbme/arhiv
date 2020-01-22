@@ -6,7 +6,7 @@ import {
 } from './style'
 
 const $textarea = stylish({
-  backgroundColor: theme.color.bg,
+  backgroundColor: theme.color.bg0,
   display: 'block',
   width: '100%',
   padding: theme.spacing.medium,

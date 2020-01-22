@@ -46,7 +46,7 @@ body {
   text-align: left; /* 3 */
   text-rendering: optimizeLegibility;
 
-  background-color: ${theme.color.bg}; /* 2 */
+  background-color: ${theme.color.bg0}; /* 2 */
   color: ${theme.color.text};
 
   height: 100%;

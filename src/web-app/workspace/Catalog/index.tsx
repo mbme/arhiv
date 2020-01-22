@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   useObservable,
-  FilterInput,
+  Input,
   Box,
   ProgressLocker,
   Column,
@@ -34,15 +34,24 @@ export function Catalog() {
     ))
 
   return (
-    <Column>
+    <Column
+      width="500px"
+      maxWidth="100%"
+      alignX="stretch"
+      mx="auto"
+    >
       <Box
         py="fine"
+        width="100%"
       >
-        <FilterInput
-          placeholder="Filter notes"
-          filter={ws.filter}
+        <Input
+          name="filter"
+          light
+          defaultValue={ws.filter}
+          placeholder="Filter documents"
           onChange={newFilter => ws.updateFilter(newFilter)}
-          alwaysExpanded
+          onClear={() => ws.updateFilter('')}
+          autoFocus
         />
       </Box>
 
@@ -55,14 +64,7 @@ export function Catalog() {
         {items.length} items
       </Box>
 
-      <Box
-        display="flex"
-        flexDirection="column"
-        width="500px"
-        maxWidth="100%"
-      >
-        {items}
-      </Box>
+      {items}
     </Column>
   )
 }

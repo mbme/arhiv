@@ -36,6 +36,7 @@ export function Frame({ tabs, buttons }: IProps) {
         px="medium"
         pt="medium"
         border={theme.border}
+        bgColor="bg0"
       >
         {tabs[activeTabId]()}
       </Box>

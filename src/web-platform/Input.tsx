@@ -27,7 +27,7 @@ const $input = stylish(
         borderBottom: theme.border,
       }
       : {
-        backgroundColor: theme.color.bg,
+        backgroundColor: theme.color.bg0,
         boxShadow: theme.boxShadow,
         border: theme.border,
       }

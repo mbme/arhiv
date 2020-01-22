@@ -1,22 +1,23 @@
 import * as React from 'react'
 import {
   useObservable,
-  Input,
-  Box,
   ProgressLocker,
   Column,
 } from '~/web-platform'
 import { useArhiv } from '~/arhiv/useArhiv'
-import { useWorkspaceManager } from '../useWorkspaceManager'
 import { CatalogEntry } from './Entry'
 
-export function Catalog() {
-  const ws = useWorkspaceManager()
+interface IProps {
+  filter: string
+  openIds: readonly string[]
+  openId(id: string): void
+}
+export function Catalog({ filter, openIds, openId }: IProps) {
   const arhiv = useArhiv()
 
   const [documents] = useObservable(
-    () => arhiv.documents.getDocuments$({ filter: ws.filter }),
-    [ws.filter],
+    () => arhiv.documents.getDocuments$({ filter }),
+    [filter],
   )
 
   if (!documents) {
@@ -30,6 +31,8 @@ export function Catalog() {
       <CatalogEntry
         key={document.id}
         document={document}
+        isOpen={openIds.includes(document.id)}
+        onClick={() => openId(document.id)}
       />
     ))
 
@@ -40,30 +43,6 @@ export function Catalog() {
       alignX="stretch"
       mx="auto"
     >
-      <Box
-        py="fine"
-        width="100%"
-      >
-        <Input
-          name="filter"
-          light
-          defaultValue={ws.filter}
-          placeholder="Filter documents"
-          onChange={newFilter => ws.updateFilter(newFilter)}
-          onClear={() => ws.updateFilter('')}
-          autoFocus
-        />
-      </Box>
-
-      <Box
-        as="small"
-        pl="medium"
-        mb="medium"
-        display="block"
-      >
-        {items.length} items
-      </Box>
-
       {items}
     </Column>
   )

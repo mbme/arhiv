@@ -1,7 +1,6 @@
 import * as React from 'react'
 import {
   stylish,
-  $Style,
   theme,
 } from './style'
 import { Icon } from './Icon'
@@ -59,7 +58,6 @@ type NativeProps =
   | 'autoComplete'
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
-  $style?: $Style
   onChange(value: string): void
   autoFocus?: boolean
   light?: boolean
@@ -140,13 +138,12 @@ export class Input extends React.PureComponent<IProps> {
       autoComplete,
       placeholder,
       onBlur,
-      $style,
     } = this.props
 
     return (
       <Box relative>
         <input
-          className={$input.and($style).with(this.props).className}
+          className={$input.with(this.props).className}
           ref={this.ref}
           type={type}
           name={name}
@@ -161,7 +158,7 @@ export class Input extends React.PureComponent<IProps> {
           onBlur={onBlur}
         />
 
-        {onClear && (
+        {onClear && value && (
           <Icon
             type="x"
             $style={$clearIcon}

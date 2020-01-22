@@ -6,21 +6,20 @@ import {
   theme,
   Label,
 } from '~/web-platform'
-import { useWorkspaceManager } from '../useWorkspaceManager'
+import { Procedure } from '~/utils'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 interface IProps {
   document: Document
+  isOpen: boolean
+  onClick: Procedure
 }
 
-export function CatalogEntry({ document }: IProps) {
-  const ws = useWorkspaceManager()
-  const isOpen = ws.openIds.includes(document.id)
-
+export function CatalogEntry({ document, isOpen, onClick }: IProps) {
   return (
     <Box
-      onClick={() => ws.openId(document.id)}
+      onClick={onClick}
       mb="small"
       p="small"
       cursor="pointer"

@@ -13,7 +13,6 @@ interface IProps {
   id: string
 }
 
-// Card
 export function Card({ id }: IProps) {
   const arhiv = useArhiv()
   const [document, error] = useObservable(() => arhiv.documents.getDocument$(id), [id])

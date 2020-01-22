@@ -1,47 +1,59 @@
 import * as React from 'react'
 import {
+  Column,
   Box,
-  Button,
-  theme,
 } from '~/web-platform'
 import { Catalog } from './Catalog'
 import { OpenCards } from './OpenCards'
+import { useWorkspaceURLManager } from './useWorkspaceURLManager'
+import { Header } from './Header'
 
 export function WorkspaceView() {
+  const ws = useWorkspaceURLManager()
   const [showCatalog, setShowCatalog] = React.useState(false)
+  const [newestId, setNewestId] = React.useState('')
 
   return (
-    <Box
-      minHeight="100%"
-      pt="60px" // header
+    <Column
+      alignX="stretch"
       bgColor="bg2"
+      height="100%"
     >
-      <Box
-        as="nav"
-        boxShadow={theme.boxShadow}
-        py="small"
-        position="fixed"
-        top="0"
-        width="100%"
-        bgColor="bg1"
-        zIndex="1"
-      >
-        <Button
-          variant="link"
-          onClick={() => setShowCatalog(false)}
-        >
-          Workspace
-        </Button>
+      <Header
+        showCatalog={showCatalog}
+        setShowCatalog={setShowCatalog}
+        filter={ws.filter}
+        updateFilter={filter => ws.updateFilter(filter)}
+      />
 
-        <Button
-          variant="link"
-          onClick={() => setShowCatalog(true)}
-        >
-          Catalog
-        </Button>
+      <Box
+        overflowY="scroll"
+        flexGrow="1"
+        hidden={!showCatalog}
+        pt="medium"
+      >
+        <Catalog
+          filter={ws.filter}
+          openIds={ws.openIds}
+          openId={(id) => {
+            ws.openId(id)
+            setShowCatalog(false)
+            setNewestId(id)
+          }}
+        />
       </Box>
 
-      {showCatalog ? <Catalog /> : <OpenCards />}
-    </Box>
+      <Box
+        overflowY="scroll"
+        flexGrow="1"
+        hidden={showCatalog}
+        pt="medium"
+      >
+        <OpenCards
+          openIds={ws.openIds}
+          newestId={newestId}
+        />
+      </Box>
+    </Column>
   )
 }

@@ -4,6 +4,7 @@ import {
   theme,
   stylish,
 } from '~/web-platform'
+import { clickOnEnter } from '~/web-platform/utils'
 
 const $tab = stylish(
   {
@@ -52,11 +53,7 @@ export function TabBar({ tabs, activeTabId, onClick }: IProps) {
           key={tabId}
           className={$tab.with({ active: tabId === activeTabId }).className}
           onClick={() => onClick(tabId)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              onClick(tabId)
-            }
-          }}
+          onKeyPress={clickOnEnter}
           role="tab"
           tabIndex={0}
         >

@@ -10,7 +10,7 @@ export const globalStyles = `
 
 @media screen and (min-width: 768px) {
   :root {
-    --font-size: 20px;
+    --font-size: 18px;
     --line-height: 1.35;
   }
 }

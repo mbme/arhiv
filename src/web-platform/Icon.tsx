@@ -5,6 +5,9 @@ import {
   stylish,
   theme,
 } from './style'
+import {
+  clickOnEnter,
+} from './utils'
 
 export const icons = {
   'log-out': (
@@ -131,6 +134,9 @@ export function Icon(props: IFeatherIconProps) {
       strokeLinejoin="round"
       className={$icon.and($style).with(props).className}
       onClick={onClick}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      onKeyPress={onClick ? clickOnEnter : undefined}
     >
       {title && <title>{title}</title>}
       {icons[type]}

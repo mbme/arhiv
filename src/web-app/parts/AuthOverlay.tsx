@@ -34,9 +34,8 @@ export function AuthOverlay({ submit }: IProps) {
         />
       </Box>
 
-      <form onSubmit={e => e.preventDefault()}>
+      <Box widht="300px">
         <Input
-          $style={{ width: '300px' }}
           name="password"
           type="password"
           autoComplete="off"
@@ -45,7 +44,7 @@ export function AuthOverlay({ submit }: IProps) {
           onChange={setPassword}
           onKeyDown={onKeyDown}
         />
-      </form>
+      </Box>
     </Column>
   )
 }

@@ -13,6 +13,7 @@ export interface IProps {
   children?: React.ReactNode
   $style?: $Style
   onClick?: Procedure
+  innerRef?: React.RefObject<any>
   [prop: string]: any
 }
 
@@ -22,6 +23,7 @@ export class Box extends React.PureComponent<IProps> {
       as: Component = 'div',
       onClick,
       children,
+      innerRef,
       $style,
       ...styleProps
     } = this.props
@@ -29,9 +31,25 @@ export class Box extends React.PureComponent<IProps> {
     const style = stylish(styleProps).and($style)
 
     if (isString(Component)) {
-      return React.createElement(Component, { className: style.className, onClick }, children)
+      return React.createElement(
+        Component,
+        {
+          className: style.className,
+          onClick,
+          ref: innerRef,
+        },
+        children,
+      )
     }
 
-    return React.createElement(Component, { $style: style, onClick }, children)
+    return React.createElement(
+      Component,
+      {
+        $style: style,
+        onClick,
+        ref: innerRef,
+      },
+      children,
+    )
   }
 }

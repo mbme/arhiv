@@ -8,7 +8,7 @@ function parseIds(ids: string): string[] {
   return ids.split('-')
 }
 
-export function useWorkspaceManager() {
+export function useWorkspaceURLManager() {
   const router = useRouter()
 
   const {
@@ -21,7 +21,7 @@ export function useWorkspaceManager() {
   return {
     filter,
     updateFilter(newFilter: string | undefined) {
-      router.replaceParam('filter', newFilter)
+      router.replaceParam('filter', newFilter || undefined)
     },
 
     openIds,
@@ -37,7 +37,7 @@ export function useWorkspaceManager() {
         return
       }
 
-      router.replaceParam('ids', openIds.filter(openId => openId !== id).join('-'))
+      router.replaceParam('ids', openIds.filter(openId => openId !== id).join('-') || undefined)
     },
   }
 }

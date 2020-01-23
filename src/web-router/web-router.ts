@@ -1,65 +1,13 @@
-import { isString } from '~/utils'
 import { Cell } from '~/reactive'
-
-export interface IParams {
-  [key: string]: string | undefined
-}
-
-export interface ILocation {
-  path: string
-  params: IParams
-}
-
-export type SimpleLocation = { path: string, params?: IParams } | string
-
-function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
-  if (isString(simpleLocation)) {
-    return {
-      path: simpleLocation,
-      params: {},
-    }
-  }
-
-  return {
-    path: simpleLocation.path,
-    params: simpleLocation.params || {},
-  }
-}
-
-function getCurrentLocation(): ILocation {
-  const location = new URL(document.location.toString())
-  const params: { [key: string]: string } = {}
-
-  location.searchParams.forEach((value, key) => {
-    params[key] = value
-  })
-
-  return {
-    path: location.pathname,
-    params,
-  }
-}
-
-export function getUrl(simpleLocation: SimpleLocation) {
-  const location = simpleLocation2Location(simpleLocation)
-
-  const queryParams = new URLSearchParams()
-  for (const [key, value] of Object.entries(location.params)) {
-    if (value !== undefined) {
-      queryParams.set(key, value)
-    }
-  }
-
-  const paramsStr = queryParams.toString()
-
-  const url = `${window.location.origin}${location.path}`
-
-  if (!paramsStr) {
-    return url
-  }
-
-  return `${url}?${paramsStr}`
-}
+import {
+  ILocation,
+  SimpleLocation,
+  QueryParamType,
+} from './types'
+import {
+  getCurrentLocation,
+  getUrl,
+} from './utils'
 
 export class WebRouter {
   location$ = new Cell<ILocation>(getCurrentLocation())
@@ -82,7 +30,7 @@ export class WebRouter {
     this._propagateCurrentLocation()
   }
 
-  replaceParam(param: string, value?: string) {
+  replaceParam(param: string, value: QueryParamType) {
     const {
       path,
       params,

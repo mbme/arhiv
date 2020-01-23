@@ -1,8 +1,10 @@
 import * as React from 'react'
 import {
   SimpleLocation,
+} from './types'
+import {
   getUrl,
-} from './web-router'
+} from './utils'
 import { useRouter } from './Router'
 
 interface IProps {

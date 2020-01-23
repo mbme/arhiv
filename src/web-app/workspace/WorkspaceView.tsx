@@ -10,7 +10,7 @@ import { Header } from './Header'
 
 export function WorkspaceView() {
   const ws = useWorkspaceURLManager()
-  const [showCatalog, setShowCatalog] = React.useState(false)
+  const [showCatalog, setShowCatalog] = React.useState(ws.openIds.length === 0)
   const [newestId, setNewestId] = React.useState('')
 
   return (

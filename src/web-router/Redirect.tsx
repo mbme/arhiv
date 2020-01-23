@@ -1,5 +1,7 @@
 import * as React from 'react'
-import { SimpleLocation } from './web-router'
+import {
+  SimpleLocation,
+} from './types'
 import { useRouter } from './Router'
 
 interface IProps {

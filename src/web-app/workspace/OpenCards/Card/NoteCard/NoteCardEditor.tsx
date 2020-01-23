@@ -84,7 +84,7 @@ export function NoteCardEditor({ document, onDone }: IProps) {
               Cancel
             </Button>
 
-            <Spacer widht="medium" />
+            <Spacer width="medium" />
 
             <Button
               variant="primary"

@@ -1,8 +1,17 @@
 export {
-  WebRouter,
   SimpleLocation,
   ILocation,
   IParams,
+  QueryParamType,
+} from './types'
+
+export {
+  paramAsArray,
+  paramAsString,
+} from './utils'
+
+export {
+  WebRouter,
 } from './web-router'
 
 export {

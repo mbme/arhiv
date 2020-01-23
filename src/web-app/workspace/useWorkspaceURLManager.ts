@@ -1,22 +1,14 @@
-import { useRouter } from '~/web-router'
-
-function parseIds(ids: string): string[] {
-  if (!ids.length) {
-    return []
-  }
-
-  return ids.split('-')
-}
+import {
+  useRouter,
+  paramAsArray,
+  paramAsString,
+} from '~/web-router'
 
 export function useWorkspaceURLManager() {
   const router = useRouter()
 
-  const {
-    filter = '',
-    ids: idsString = '',
-  } = router.location$.value.params
-
-  const openIds = parseIds(idsString)
+  const openIds = paramAsArray(router.location$.value.params.id)
+  const filter = paramAsString(router.location$.value.params.filter)
 
   return {
     filter,
@@ -30,14 +22,14 @@ export function useWorkspaceURLManager() {
         return
       }
 
-      router.replaceParam('ids', [...openIds, id].join('-'))
+      router.replaceParam('id', [...openIds, id])
     },
     closeId(id: string) {
       if (!openIds.includes(id)) {
         return
       }
 
-      router.replaceParam('ids', openIds.filter(openId => openId !== id).join('-') || undefined)
+      router.replaceParam('id', openIds.filter(openId => openId !== id))
     },
   }
 }

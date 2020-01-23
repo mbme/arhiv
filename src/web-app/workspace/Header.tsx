@@ -5,6 +5,7 @@ import {
   Input,
   Row,
   stylish,
+  Button,
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
 
@@ -72,6 +73,7 @@ export function Header(props: IProps) {
 
       <Box
         width="11rem"
+        mr="large"
       >
         <Input
           light
@@ -87,6 +89,10 @@ export function Header(props: IProps) {
           }}
         />
       </Box>
+
+      <Button variant="primary">
+        Add
+      </Button>
     </Row>
   )
 }

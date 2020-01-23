@@ -5,9 +5,9 @@ import {
   Row,
 } from '~/web-platform'
 import { DocumentNote } from '~/arhiv/replica'
-import { Frame } from './Frame'
-import { Metadata } from './Metadata'
-import { CloseIcon } from './CloseIcon'
+import { Frame } from '../Frame'
+import { Metadata } from '../Metadata'
+import { CloseIcon } from '../CloseIcon'
 import { Note } from './Note'
 
 interface IProps {

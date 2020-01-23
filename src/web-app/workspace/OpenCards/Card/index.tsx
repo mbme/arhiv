@@ -5,7 +5,7 @@ import {
 } from '~/web-platform'
 import { DocumentNote } from '~/arhiv/replica'
 import { useArhiv } from '~/arhiv/useArhiv'
-import { NotFound } from '../../parts'
+import { NotFound } from '../../../parts'
 import { NoteCard } from './NoteCard'
 import { DocumentCard } from './DocumentCard'
 

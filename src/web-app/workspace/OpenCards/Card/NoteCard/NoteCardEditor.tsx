@@ -8,10 +8,10 @@ import {
   Spacer,
 } from '~/web-platform'
 import { DocumentNote } from '~/arhiv/replica'
-import { Frame } from './Frame'
+import { Frame } from '../Frame'
+import { AddAttachmentsButton } from '../AddAttachmentButton'
+import { DeleteDocumentButton } from '../DeleteDocumentButton'
 import { Note } from './Note'
-import { AddAttachmentsButton } from './AddAttachmentButton'
-import { DeleteDocumentButton } from './DeleteDocumentButton'
 
 interface IProps {
   document: DocumentNote

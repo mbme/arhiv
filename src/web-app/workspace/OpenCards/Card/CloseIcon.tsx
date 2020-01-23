@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   Icon,
 } from '~/web-platform'
-import { useWorkspaceURLManager } from '../useWorkspaceURLManager'
+import { useWorkspaceURLManager } from '../../useWorkspaceURLManager'
 
 interface IProps {
   documentId: string

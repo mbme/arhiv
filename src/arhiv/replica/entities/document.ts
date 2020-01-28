@@ -10,10 +10,10 @@ import { ReplicaDB } from '../db'
 
 const log = createLogger('document')
 
-export abstract class Document<P extends object = Dict<any>> {
+export class Document<P extends object = Dict<any>> {
   constructor(
     private _db: ReplicaDB,
-    protected _document: IDocument<string, P>,
+    private _document: IDocument<string, P>,
   ) {
   }
 
@@ -49,7 +49,7 @@ export abstract class Document<P extends object = Dict<any>> {
     return this._db.getDocument$(this.id, false).map(document => document === undefined)
   }
 
-  protected async _updateRefs(...markupStrings: string[]): Promise<void> {
+  async updateRefs(...markupStrings: string[]): Promise<void> {
     const attachmentRefs = new Set<string>()
     const documentRefs = new Set<string>()
 
@@ -86,6 +86,4 @@ export abstract class Document<P extends object = Dict<any>> {
   async save() {
     await this._db.saveDocument(this._document)
   }
-
-  abstract getTitle(): string
 }

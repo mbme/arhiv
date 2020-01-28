@@ -1,42 +1,27 @@
-import { fuzzySearch } from '~/utils'
-import { Observable } from '~/reactive'
 import { IDocument } from '~/arhiv/types'
+import { createDocument } from '~/arhiv/utils'
+import { Observable } from '~/reactive'
 import { ReplicaDB } from '../db'
 import { Document } from './document'
-import { DocumentNote } from './document-note'
 
 interface IQuery {
-  filter?: string
+  filter?: (document: Document) => boolean
   includeDeleted?: boolean
 }
-
-interface IDocumentClass<P extends Document> {
-  type: string
-  new(db: ReplicaDB, document: IDocument<string, any>): P
-  create(db: ReplicaDB): Promise<P>
-}
-
-const DOCUMENT_CLASSES: Array<IDocumentClass<any>> = [
-  DocumentNote,
-]
 
 export class DocumentsRepository {
   constructor(
     private _db: ReplicaDB,
   ) { }
 
-  async create<P extends Document>(DocumentType: IDocumentClass<P>) {
-    return DocumentType.create(this._db)
-  }
+  private _wrap = (document: IDocument): Document => new Document(this._db, document)
 
-  private _wrap = (document: IDocument): Document => {
-    for (const DocumentClass of DOCUMENT_CLASSES) {
-      if (DocumentClass.type === document.type) {
-        return new DocumentClass(this._db, document)
-      }
-    }
+  async create<P extends object>(type: string, props: P) {
+    const id = await this._db.getRandomId()
 
-    throw new Error(`Got unknown document type ${document.type}`)
+    const document = createDocument(id, type, props)
+
+    return new Document(this._db, document)
   }
 
   getDocuments$(query: IQuery): Observable<Document[]> {
@@ -49,7 +34,11 @@ export class DocumentsRepository {
               return false
             }
 
-            return fuzzySearch(query.filter || '', document.getTitle())
+            if (!query.filter) {
+              return true
+            }
+
+            return query.filter(document)
           })
       ))
   }

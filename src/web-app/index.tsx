@@ -2,7 +2,6 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger } from '~/logger'
 import { ArhivReplica } from '~/arhiv/replica'
-import { ArhivContext } from '~/arhiv/useArhiv'
 import {
   injectGlobalStyles,
   globalStyles,
@@ -13,6 +12,7 @@ import {
   WebRouter,
 } from '~/web-router'
 import { App } from './App'
+import { ArhivContext } from './arhiv-context'
 
 const isDev = true
 

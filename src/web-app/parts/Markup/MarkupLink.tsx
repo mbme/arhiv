@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { usePromise } from '~/web-platform'
-import { useArhiv } from '~/arhiv/useArhiv'
+import { usePromise } from '~/web-utils'
+import { ArhivContext } from '~/web-app/arhiv-context'
 import { MarkupAttachment } from './MarkupAttachment'
 
 interface IProps {
@@ -9,7 +9,7 @@ interface IProps {
 }
 
 export function MarkupLink({ link, description }: IProps) {
-  const arhiv = useArhiv()
+  const arhiv = ArhivContext.use()
 
   const [attachment] = usePromise(() => arhiv.attachments.getAttachment(link), [link])
 

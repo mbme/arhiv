@@ -1,17 +1,14 @@
 import * as React from 'react'
-import {
-  FilePicker,
-  Icon,
-} from '~/web-platform'
 import { createLink } from '~/arhiv/markup-parser'
-import { useArhiv } from '~/arhiv/useArhiv'
+import { ArhivContext } from '~/web-app/arhiv-context'
+import { FilePicker, Icon } from '~/web-platform'
 
 interface IProps {
   onAttachments(links: string[]): void
 }
 
 export function AddAttachmentsButton({ onAttachments }: IProps) {
-  const arhiv = useArhiv()
+  const arhiv = ArhivContext.use()
   const filePickerRef = React.useRef<FilePicker>(null)
 
   const onSelected = async (files: File[]) => {

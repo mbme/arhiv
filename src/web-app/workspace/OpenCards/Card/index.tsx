@@ -1,20 +1,19 @@
 import * as React from 'react'
 import {
   ProgressLocker,
-  useObservable,
 } from '~/web-platform'
-import { DocumentNote } from '~/arhiv/replica'
-import { useArhiv } from '~/arhiv/useArhiv'
 import { NotFound } from '../../../parts'
 import { NoteCard } from './NoteCard'
 import { DocumentCard } from './DocumentCard'
+import { useObservable } from '~/web-utils'
+import { ArhivContext } from '~/web-app/arhiv-context'
 
 interface IProps {
   id: string
 }
 
 export function Card({ id }: IProps) {
-  const arhiv = useArhiv()
+  const arhiv = ArhivContext.use()
   const [document, error] = useObservable(() => arhiv.documents.getDocument$(id), [id])
 
   if (error) {

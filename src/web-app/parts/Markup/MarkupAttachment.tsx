@@ -1,12 +1,7 @@
 import * as React from 'react'
-import {
-  stylish,
-  Image,
-  useObservable,
-} from '~/web-platform'
-import {
-  Attachment,
-} from '~/arhiv/replica'
+import { Attachment } from '~/arhiv/replica'
+import { Image, stylish } from '~/web-platform'
+import { useObservable } from '~/web-utils'
 
 const $image = stylish({
   mt: 'medium',

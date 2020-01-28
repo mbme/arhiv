@@ -1,10 +1,7 @@
 import * as React from 'react'
-import {
-  useObservable,
-  ProgressLocker,
-  Column,
-} from '~/web-platform'
-import { useArhiv } from '~/arhiv/useArhiv'
+import { ArhivContext } from '~/web-app/arhiv-context'
+import { Column, ProgressLocker } from '~/web-platform'
+import { useObservable } from '~/web-utils'
 import { CatalogEntry } from './Entry'
 
 interface IProps {
@@ -13,7 +10,7 @@ interface IProps {
   openId(id: string): void
 }
 export function Catalog({ filter, openIds, openId }: IProps) {
-  const arhiv = useArhiv()
+  const arhiv = ArhivContext.use()
 
   const [documents] = useObservable(
     () => arhiv.documents.getDocuments$({ filter }),

@@ -3,20 +3,20 @@ import {
   useRouter,
 } from '~/web-router'
 import {
-  useObservable,
   Box,
 } from '~/web-platform'
+import { useObservable } from '~/web-utils'
 import { Library } from '~/web-platform/Library'
-import { useArhiv } from '~/arhiv/useArhiv'
 import {
   NotFound,
   AuthOverlay,
 } from './parts'
 import { WorkspaceView } from './workspace/WorkspaceView'
+import { ArhivContext } from './arhiv-context'
 
 export function App() {
   const router = useRouter()
-  const arhiv = useArhiv()
+  const arhiv = ArhivContext.use()
 
   const [location] = useObservable(() => router.location$.value$)
   const [authorized] = useObservable(() => arhiv.isAuthorized$.value$)

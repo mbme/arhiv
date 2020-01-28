@@ -7,7 +7,6 @@ import {
   Textarea,
   Spacer,
 } from '~/web-platform'
-import { DocumentNote } from '~/arhiv/replica'
 import { Frame } from '../Frame'
 import { AddAttachmentsButton } from '../AddAttachmentButton'
 import { DeleteDocumentButton } from '../DeleteDocumentButton'

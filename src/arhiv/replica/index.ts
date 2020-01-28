@@ -21,7 +21,6 @@ import {
 export {
   Attachment,
   Document,
-  DocumentNote,
 } from './entities'
 
 export class ArhivReplica {

@@ -1,9 +1,10 @@
 import * as React from 'react'
-import {
-  Box,
-} from '~/web-platform'
-import { Card } from './Card'
 import { noop } from '~/utils'
+import { Box, ProgressLocker } from '~/web-platform'
+import { NotFound } from '~/web-app/parts'
+import { useObservable } from '~/web-utils'
+import { ArhivContext } from '~/web-app/arhiv-context'
+import { renderCard } from '../document-types'
 
 interface IProps {
   id: string
@@ -12,6 +13,8 @@ interface IProps {
 
 export function CardContainer({ id, focused }: IProps) {
   const ref = React.useRef<HTMLDivElement | undefined>(undefined)
+  const arhiv = ArhivContext.use()
+  const [document, error] = useObservable(() => arhiv.documents.getDocument$(id), [id])
 
   React.useEffect(() => {
     if (!focused) {
@@ -28,6 +31,16 @@ export function CardContainer({ id, focused }: IProps) {
     return () => clearTimeout(timeoutId)
   }, [focused])
 
+  if (error) {
+    return NotFound
+  }
+
+  if (!document) {
+    return (
+      <ProgressLocker />
+    )
+  }
+
   return (
     <Box
       flex="0 0 auto"
@@ -36,7 +49,7 @@ export function CardContainer({ id, focused }: IProps) {
       maxWidth="100%"
       innerRef={ref}
     >
-      <Card id={id} />
+      {renderCard(document)}
     </Box>
   )
 }

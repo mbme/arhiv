@@ -4,11 +4,9 @@ import {
   Button,
   Row,
 } from '~/web-platform'
-import { DocumentNote } from '~/arhiv/replica'
-import { Frame } from '../Frame'
-import { Metadata } from '../Metadata'
-import { CloseIcon } from '../CloseIcon'
 import { Note } from './Note'
+import { CloseIcon, Metadata, Frame } from '../../Card'
+import { DocumentNote } from '../types'
 
 interface IProps {
   document: DocumentNote
@@ -27,7 +25,7 @@ export function NoteCardViewer({ document, onEdit }: IProps) {
   )
 
   const tabs = {
-    [document.type]: () => <Note name={document.name} data={document.data} />,
+    [document.type]: () => <Note name={document.props.name} data={document.props.data} />,
     'metadata': () => <Metadata document={document} />,
   }
 

@@ -7,7 +7,7 @@ interface IProps {
   onAttachments(links: string[]): void
 }
 
-export function AddAttachmentsButton({ onAttachments }: IProps) {
+export function AddAttachmentButton({ onAttachments }: IProps) {
   const arhiv = ArhivContext.use()
   const filePickerRef = React.useRef<FilePicker>(null)
 

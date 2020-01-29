@@ -5,7 +5,7 @@ import { ReplicaDB } from '../db'
 import { Document } from './document'
 
 interface IQuery {
-  filter?: (document: Document) => boolean
+  matches?: (document: Document) => boolean
   includeDeleted?: boolean
 }
 
@@ -34,11 +34,11 @@ export class DocumentsRepository {
               return false
             }
 
-            if (!query.filter) {
+            if (!query.matches) {
               return true
             }
 
-            return query.filter(document)
+            return query.matches(document)
           })
       ))
   }

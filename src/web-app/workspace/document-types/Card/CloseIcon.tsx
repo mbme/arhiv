@@ -1,7 +1,5 @@
 import * as React from 'react'
-import {
-  Icon,
-} from '~/web-platform'
+import { Icon } from '~/web-platform'
 import { useWorkspaceURLManager } from '../../useWorkspaceURLManager'
 
 interface IProps {

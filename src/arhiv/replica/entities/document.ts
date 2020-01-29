@@ -76,6 +76,16 @@ export class Document<P extends object = Dict<any>> {
     }
   }
 
+  patch(patch: Partial<P>) {
+    this._document = {
+      ...this._document,
+      props: {
+        ...this._document.props,
+        ...patch,
+      },
+    }
+  }
+
   delete() {
     this._document = {
       ...this._document,

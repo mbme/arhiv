@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { DocumentNote } from '~/arhiv/replica'
+import { DocumentNote } from '../types'
 import { NoteCardViewer } from './NoteCardViewer'
 import { NoteCardEditor } from './NoteCardEditor'
 

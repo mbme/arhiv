@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ArhivContext } from '~/web-app/arhiv-context'
 import { Column, ProgressLocker } from '~/web-platform'
 import { useObservable } from '~/web-utils'
+import { matches } from '../document-types'
 import { CatalogEntry } from './Entry'
 
 interface IProps {
@@ -13,7 +14,7 @@ export function Catalog({ filter, openIds, openId }: IProps) {
   const arhiv = ArhivContext.use()
 
   const [documents] = useObservable(
-    () => arhiv.documents.getDocuments$({ filter }),
+    () => arhiv.documents.getDocuments$({ matches: matches(filter) }),
     [filter],
   )
 

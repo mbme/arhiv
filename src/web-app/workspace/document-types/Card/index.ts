@@ -1,0 +1,6 @@
+export { AddAttachmentButton } from './AddAttachmentButton'
+export { DeleteDocumentButton } from './DeleteDocumentButton'
+export { CloseIcon } from './CloseIcon'
+export { Frame } from './Frame'
+export { Metadata } from './Metadata'
+export { TabBar } from './TabBar'

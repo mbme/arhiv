@@ -1,12 +1,9 @@
 import * as React from 'react'
 import { Document } from '~/arhiv/replica'
 import { ChronoFormatter } from '~/chrono'
-import {
-  Box,
-  theme,
-  Label,
-} from '~/web-platform'
 import { Procedure } from '~/utils'
+import { Box, Label, theme } from '~/web-platform'
+import { getTitle } from '../document-types'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
@@ -31,7 +28,7 @@ export function CatalogEntry({ document, isOpen, onClick }: IProps) {
         {document.type}
       </Label>
 
-      {document.getTitle()}
+      {getTitle(document)}
 
       <Box
         as="small"

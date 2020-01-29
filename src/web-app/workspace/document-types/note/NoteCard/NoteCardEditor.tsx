@@ -7,10 +7,9 @@ import {
   Textarea,
   Spacer,
 } from '~/web-platform'
-import { Frame } from '../Frame'
-import { AddAttachmentsButton } from '../AddAttachmentButton'
-import { DeleteDocumentButton } from '../DeleteDocumentButton'
 import { Note } from './Note'
+import { DeleteDocumentButton, AddAttachmentButton, Frame } from '../../Card'
+import { DocumentNote } from '../types'
 
 interface IProps {
   document: DocumentNote
@@ -18,11 +17,11 @@ interface IProps {
 }
 
 export function NoteCardEditor({ document, onDone }: IProps) {
-  const [name, setName] = React.useState(document.name)
-  const [data, setData] = React.useState(document.data)
+  const [name, setName] = React.useState(document.props.name)
+  const [data, setData] = React.useState(document.props.data)
 
   const isValid = name && (
-    name !== document.name || data !== document.data
+    name !== document.props.name || data !== document.props.data
   )
 
   const textAreaRef = React.useRef<Textarea>(null)
@@ -33,7 +32,8 @@ export function NoteCardEditor({ document, onDone }: IProps) {
   }
 
   const onSave = async () => {
-    await document.patch({ name, data })
+    document.patch({ name, data })
+    await document.updateRefs(data)
     await document.save()
     onDone()
   }
@@ -73,7 +73,7 @@ export function NoteCardEditor({ document, onDone }: IProps) {
           alignX="space-between"
           mb="small"
         >
-          <AddAttachmentsButton onAttachments={onAttachments} />
+          <AddAttachmentButton onAttachments={onAttachments} />
 
           <Row>
             <Button

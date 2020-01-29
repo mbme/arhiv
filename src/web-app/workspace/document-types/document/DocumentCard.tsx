@@ -1,14 +1,8 @@
 import * as React from 'react'
-import {
-  Box,
-  Label,
-  Row,
-} from '~/web-platform'
-import { prettyPrintJSON } from '~/utils'
 import { Document } from '~/arhiv/replica'
-import { Frame } from './Frame'
-import { Metadata } from './Metadata'
-import { CloseIcon } from './CloseIcon'
+import { prettyPrintJSON } from '~/utils'
+import { Box, Label, Row } from '~/web-platform'
+import { CloseIcon, Frame, Metadata } from '../Card'
 
 interface IProps {
   document: Document

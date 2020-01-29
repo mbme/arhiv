@@ -2,7 +2,7 @@ import { Cell } from '~/reactive'
 import {
   ILocation,
   SimpleLocation,
-  QueryParamType,
+  IQueryParam,
 } from './types'
 import {
   getCurrentLocation,
@@ -30,18 +30,14 @@ export class WebRouter {
     this._propagateCurrentLocation()
   }
 
-  replaceParam(param: string, value: QueryParamType) {
+  replaceParams(params: IQueryParam[]) {
     const {
       path,
-      params,
     } = this.location$.value
 
     const newLocation: ILocation = {
       path,
-      params: {
-        ...params,
-        [param]: value,
-      },
+      params,
     }
 
     window.history.replaceState(undefined, '', getUrl(newLocation))

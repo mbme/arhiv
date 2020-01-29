@@ -1,8 +1,7 @@
 export {
   SimpleLocation,
   ILocation,
-  IParams,
-  QueryParamType,
+  IQueryParam,
 } from './types'
 
 export {

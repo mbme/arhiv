@@ -1,12 +1,11 @@
-export type QueryParamType = string | readonly string[] | undefined
-
-export interface IParams {
-  [key: string]: QueryParamType
+export interface IQueryParam {
+  name: string
+  value: string | undefined
 }
 
 export interface ILocation {
   path: string
-  params: IParams
+  params: IQueryParam[]
 }
 
-export type SimpleLocation = { path: string, params?: IParams } | string
+export type SimpleLocation = { path: string, params?: IQueryParam[] } | string

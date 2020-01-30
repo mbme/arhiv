@@ -1,19 +1,22 @@
 import {
-  useRouter,
+  RouterContext,
   paramAsArray,
   paramAsString,
+  updateParam,
 } from '~/web-router'
 
 export function useWorkspaceURLManager() {
-  const router = useRouter()
+  const router = RouterContext.use()
 
-  const openIds = paramAsArray(router.location$.value.params.id)
-  const filter = paramAsString(router.location$.value.params.filter)
+  const { params } = router.location$.value
+
+  const openIds = paramAsArray(params, 'id')
+  const filter = paramAsString(params, 'filter')
 
   return {
     filter,
     updateFilter(newFilter: string | undefined) {
-      router.replaceParam('filter', newFilter || undefined)
+      router.replaceParams(updateParam(params, 'filter', newFilter || undefined))
     },
 
     openIds,
@@ -22,14 +25,14 @@ export function useWorkspaceURLManager() {
         return
       }
 
-      router.replaceParam('id', [...openIds, id])
+      router.replaceParams([...params, { name: 'id', value: id }])
     },
     closeId(id: string) {
       if (!openIds.includes(id)) {
         return
       }
 
-      router.replaceParam('id', openIds.filter(openId => openId !== id))
+      router.replaceParams(params.filter(param => param.name !== 'id' || param.value !== id))
     },
   }
 }

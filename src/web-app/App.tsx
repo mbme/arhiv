@@ -1,21 +1,14 @@
 import * as React from 'react'
-import {
-  useRouter,
-} from '~/web-router'
-import {
-  Box,
-} from '~/web-platform'
-import { useObservable } from '~/web-utils'
+import { Box } from '~/web-platform'
 import { Library } from '~/web-platform/Library'
-import {
-  NotFound,
-  AuthOverlay,
-} from './parts'
-import { WorkspaceView } from './workspace/WorkspaceView'
+import { RouterContext } from '~/web-router'
+import { useObservable } from '~/web-utils'
 import { ArhivContext } from './arhiv-context'
+import { AuthOverlay, NotFound } from './parts'
+import { WorkspaceView } from './workspace/WorkspaceView'
 
 export function App() {
-  const router = useRouter()
+  const router = RouterContext.use()
   const arhiv = ArhivContext.use()
 
   const [location] = useObservable(() => router.location$.value$)

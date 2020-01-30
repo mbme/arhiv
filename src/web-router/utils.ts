@@ -13,6 +13,12 @@ export function paramAsString(params: IQueryParam[], name: string): string {
   return params.find(param => param.name === name)?.value || ''
 }
 
+export function updateParam(params: IQueryParam[], name: string, value: string | undefined) {
+  return params.map(param => (
+    param.name === name ? { name, value } : param
+  ))
+}
+
 function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
   if (isString(simpleLocation)) {
     return {

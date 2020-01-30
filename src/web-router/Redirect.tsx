@@ -2,14 +2,14 @@ import * as React from 'react'
 import {
   SimpleLocation,
 } from './types'
-import { useRouter } from './Router'
+import { RouterContext } from './context'
 
 interface IProps {
   to: SimpleLocation
 }
 
 export function Redirect({ to }: IProps) {
-  const router = useRouter()
+  const router = RouterContext.use()
 
   React.useEffect(() => {
     router.push(to)

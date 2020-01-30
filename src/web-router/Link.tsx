@@ -5,7 +5,7 @@ import {
 import {
   getUrl,
 } from './utils'
-import { useRouter } from './Router'
+import { RouterContext } from './context'
 
 interface IProps {
   to: SimpleLocation
@@ -15,7 +15,7 @@ interface IProps {
 }
 
 export function Link({ to, newTab, className, children }: IProps) {
-  const router = useRouter()
+  const router = RouterContext.use()
 
   const url = getUrl(to)
 

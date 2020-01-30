@@ -3,18 +3,20 @@ import {
   Column,
 } from '~/web-platform'
 import { CardContainer } from './CardContainer'
+import { useWorkspaceURLManager } from '../useWorkspaceURLManager'
 
 interface IProps {
-  openIds: readonly string[]
   newestId: string | undefined
 }
 
-export function OpenCards({ openIds, newestId }: IProps) {
+export function OpenCards({ newestId }: IProps) {
+  const ws = useWorkspaceURLManager()
+
   return (
     <Column
       alignX="center"
     >
-      {openIds.map(id => (
+      {ws.openIds.map(id => (
         <CardContainer
           key={id}
           id={id}

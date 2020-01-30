@@ -50,7 +50,6 @@ export function WorkspaceView() {
         pt="medium"
       >
         <OpenCards
-          openIds={ws.openIds}
           newestId={newestId}
         />
       </Box>

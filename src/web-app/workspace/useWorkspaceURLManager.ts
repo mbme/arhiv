@@ -14,6 +14,8 @@ export function useWorkspaceURLManager() {
   const filter = paramAsString(params, 'filter')
 
   return {
+    params,
+
     filter,
     updateFilter(newFilter: string | undefined) {
       router.replaceParams(updateParam(params, 'filter', newFilter || undefined))

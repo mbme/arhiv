@@ -3,6 +3,7 @@ import { fuzzySearch } from '~/utils'
 import { IDocumentModule } from '../types'
 import { NoteCard } from './NoteCard'
 import { DocumentNote } from './types'
+import { ArhivReplica } from '~/arhiv/replica'
 
 export const NoteModule: IDocumentModule = {
   type: 'note',
@@ -19,5 +20,9 @@ export const NoteModule: IDocumentModule = {
     return (
       <NoteCard document={document} />
     )
+  },
+
+  create(arhiv: ArhivReplica) {
+    return arhiv.documents.create('note', { name: '', data: '' })
   },
 }

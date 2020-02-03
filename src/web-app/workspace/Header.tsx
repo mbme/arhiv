@@ -8,6 +8,9 @@ import {
   Button,
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
+import { ArhivContext } from '../arhiv-context'
+import { useWorkspaceURLManager } from './useWorkspaceURLManager'
+import { createDocument } from './document-types'
 
 const $menuItem = stylish(
   {
@@ -24,21 +27,25 @@ const $menuItem = stylish(
 interface IProps {
   showCatalog: boolean
   setShowCatalog(showCatalog: boolean): void
-  filter: string
-  updateFilter(filter: string | undefined): void
 }
 
 export function Header(props: IProps) {
   const {
     showCatalog,
     setShowCatalog,
-    filter,
-    updateFilter,
   } = props
 
+  const ws = useWorkspaceURLManager()
+  const arhiv = ArhivContext.use()
+
   function onChange(newFilter: string) {
-    updateFilter(newFilter)
+    ws.updateFilter(newFilter)
     setShowCatalog(newFilter.length > 0)
+  }
+
+  async function addNote() {
+    const document = await createDocument('note', arhiv)
+    ws.openId(document.id)
   }
 
   return (
@@ -79,7 +86,7 @@ export function Header(props: IProps) {
           light
           name="filter"
           placeholder="Filter documents"
-          value={filter}
+          value={ws.filter}
           onChange={onChange}
           onClear={() => onChange('')}
           onKeyDown={(e) => {
@@ -90,7 +97,7 @@ export function Header(props: IProps) {
         />
       </Box>
 
-      <Button variant="primary">
+      <Button variant="primary" onClick={addNote}>
         Add
       </Button>
     </Row>

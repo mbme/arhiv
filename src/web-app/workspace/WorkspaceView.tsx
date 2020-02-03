@@ -22,8 +22,6 @@ export function WorkspaceView() {
       <Header
         showCatalog={showCatalog}
         setShowCatalog={setShowCatalog}
-        filter={ws.filter}
-        updateFilter={filter => ws.updateFilter(filter)}
       />
 
       <Box

@@ -20,4 +20,8 @@ export const DocumentModule: IDocumentModule = {
       <DocumentCard document={document} />
     )
   },
+
+  create() {
+    return Promise.reject(new Error("Can't create abstract document"))
+  },
 }

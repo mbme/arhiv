@@ -14,9 +14,10 @@ import { DocumentNote } from '../types'
 interface IProps {
   document: DocumentNote
   onDone: Procedure
+  isNew: boolean
 }
 
-export function NoteCardEditor({ document, onDone }: IProps) {
+export function NoteCardEditor({ document, isNew, onDone }: IProps) {
   const [name, setName] = React.useState(document.props.name)
   const [data, setData] = React.useState(document.props.data)
 
@@ -45,7 +46,9 @@ export function NoteCardEditor({ document, onDone }: IProps) {
   }
 
   const buttons = (
-    <DeleteDocumentButton onConfirmed={onDelete} />
+    <>
+      {!isNew && <DeleteDocumentButton onConfirmed={onDelete} />}
+    </>
   )
 
   const tabs = {
@@ -90,7 +93,7 @@ export function NoteCardEditor({ document, onDone }: IProps) {
               onClick={onSave}
               disabled={!isValid}
             >
-              Save
+              {isNew ? 'Create' : 'Save'}
             </Button>
           </Row>
         </Row>

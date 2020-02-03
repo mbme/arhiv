@@ -21,6 +21,7 @@ export function NoteCard({ document }: IProps) {
       <NoteCardEditor
         document={document}
         onDone={() => setEditMode(false)}
+        isNew={isNew}
       />
     )
   }

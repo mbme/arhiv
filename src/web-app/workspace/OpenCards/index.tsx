@@ -8,14 +8,20 @@ import { useWorkspaceStore } from '../store'
 export function OpenCards() {
   const store = useWorkspaceStore()
   const items = store.state.items.map((item) => {
-    if (item._type !== 'document') {
-      return null
+    if (item._type === 'document') {
+      return (
+        <CardContainer
+          key={item.id}
+          item={item}
+          focused={store.state.focused === item}
+        />
+      )
     }
 
     return (
       <CardContainer
-        key={item.id}
-        id={item.id}
+        key={item.tempId}
+        item={item}
         focused={store.state.focused === item}
       />
     )

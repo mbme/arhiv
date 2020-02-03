@@ -4,17 +4,27 @@ import { Box, ProgressLocker } from '~/web-platform'
 import { NotFound } from '~/web-app/parts'
 import { useObservable } from '~/web-utils'
 import { ArhivContext } from '~/web-app/arhiv-context'
-import { renderCard } from '../document-types'
+import { renderCard, createDocument } from '../document-types'
+import { WorkspaceItem } from '../store'
+import { promise$ } from '~/reactive'
 
 interface IProps {
-  id: string
+  item: WorkspaceItem
   focused: boolean
 }
 
-export function CardContainer({ id, focused }: IProps) {
+export function CardContainer({ item, focused }: IProps) {
   const ref = React.useRef<HTMLDivElement | undefined>(undefined)
+
   const arhiv = ArhivContext.use()
-  const [document, error] = useObservable(() => arhiv.documents.getDocument$(id), [id])
+
+  const [document, error] = useObservable(() => {
+    if (item._type === 'document') {
+      return arhiv.documents.getDocument$(item.id)
+    }
+
+    return promise$(createDocument(item.type, arhiv))
+  }, [item])
 
   React.useEffect(() => {
     if (!focused) {

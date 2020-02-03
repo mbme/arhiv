@@ -11,7 +11,7 @@ interface INewDocumentItem {
   type: string
   tempId: number
 }
-type WorkspaceItem = IDocumentItem | INewDocumentItem
+export type WorkspaceItem = IDocumentItem | INewDocumentItem
 
 interface IState {
   filter: string

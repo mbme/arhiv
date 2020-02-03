@@ -5,13 +5,11 @@ import {
 } from '~/web-platform'
 import { Catalog } from './Catalog'
 import { OpenCards } from './OpenCards'
-import { useWorkspaceURLManager } from './useWorkspaceURLManager'
 import { Header } from './Header'
+import { useWorkspaceStore } from './store'
 
 export function WorkspaceView() {
-  const ws = useWorkspaceURLManager()
-  const [showCatalog, setShowCatalog] = React.useState(ws.openIds.length === 0)
-  const [newestId, setNewestId] = React.useState('')
+  const store = useWorkspaceStore()
 
   return (
     <Column
@@ -19,37 +17,24 @@ export function WorkspaceView() {
       bgColor="bg2"
       height="100%"
     >
-      <Header
-        showCatalog={showCatalog}
-        setShowCatalog={setShowCatalog}
-      />
+      <Header />
 
       <Box
         overflowY="scroll"
         flexGrow="1"
-        hidden={!showCatalog}
+        hidden={!store.state.showCatalog}
         pt="medium"
       >
-        <Catalog
-          filter={ws.filter}
-          openIds={ws.openIds}
-          openId={(id) => {
-            ws.openId(id)
-            setShowCatalog(false)
-            setNewestId(id)
-          }}
-        />
+        <Catalog />
       </Box>
 
       <Box
         overflowY="scroll"
         flexGrow="1"
-        hidden={showCatalog}
+        hidden={store.state.showCatalog}
         pt="medium"
       >
-        <OpenCards
-          newestId={newestId}
-        />
+        <OpenCards />
       </Box>
     </Column>
   )

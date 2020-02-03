@@ -8,9 +8,7 @@ import {
   Button,
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
-import { ArhivContext } from '../arhiv-context'
-import { useWorkspaceURLManager } from './useWorkspaceURLManager'
-import { createDocument } from './document-types'
+import { useWorkspaceStore } from './store'
 
 const $menuItem = stylish(
   {
@@ -24,28 +22,15 @@ const $menuItem = stylish(
   },
 )
 
-interface IProps {
-  showCatalog: boolean
-  setShowCatalog(showCatalog: boolean): void
-}
-
-export function Header(props: IProps) {
-  const {
-    showCatalog,
-    setShowCatalog,
-  } = props
-
-  const ws = useWorkspaceURLManager()
-  const arhiv = ArhivContext.use()
+export function Header() {
+  const store = useWorkspaceStore()
 
   function onChange(newFilter: string) {
-    ws.updateFilter(newFilter)
-    setShowCatalog(newFilter.length > 0)
+    store.updateFilter(newFilter)
   }
 
-  async function addNote() {
-    const document = await createDocument('note', arhiv)
-    ws.openId(document.id)
+  function addNote() {
+    store.createDocument('note')
   }
 
   return (
@@ -59,8 +44,8 @@ export function Header(props: IProps) {
       zIndex="1"
     >
       <div
-        onClick={() => setShowCatalog(false)}
-        className={$menuItem.with({ active: !showCatalog }).className}
+        onClick={() => store.showCatalog(false)}
+        className={$menuItem.with({ active: !store.state.showCatalog }).className}
         role="tab"
         tabIndex={0}
         onKeyPress={clickOnEnter}
@@ -69,8 +54,8 @@ export function Header(props: IProps) {
       </div>
 
       <div
-        onClick={() => setShowCatalog(true)}
-        className={$menuItem.with({ active: showCatalog }).className}
+        onClick={() => store.showCatalog(true)}
+        className={$menuItem.with({ active: store.state.showCatalog }).className}
         role="tab"
         tabIndex={0}
         onKeyPress={clickOnEnter}
@@ -86,7 +71,7 @@ export function Header(props: IProps) {
           light
           name="filter"
           placeholder="Filter documents"
-          value={ws.filter}
+          value={store.state.filter}
           onChange={onChange}
           onClear={() => onChange('')}
           onKeyDown={(e) => {

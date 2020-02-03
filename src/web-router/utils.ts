@@ -56,7 +56,7 @@ export function getUrl(simpleLocation: SimpleLocation) {
   const queryParams = new URLSearchParams()
   for (const param of location.params) {
     if (param.value !== undefined) {
-      queryParams.set(param.name, param.value)
+      queryParams.append(param.name, param.value)
     }
   }
 

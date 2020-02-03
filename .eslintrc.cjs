@@ -35,7 +35,6 @@ module.exports = {
     "no-restricted-syntax": [
       "error",
       "WithStatement",
-      "BinaryExpression[operator='in']",
     ],
     "object-curly-newline": [
       "error",

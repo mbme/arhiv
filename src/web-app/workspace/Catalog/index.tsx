@@ -4,18 +4,15 @@ import { Column, ProgressLocker } from '~/web-platform'
 import { useObservable } from '~/web-utils'
 import { matches } from '../document-types'
 import { CatalogEntry } from './Entry'
+import { useWorkspaceStore } from '../store'
 
-interface IProps {
-  filter: string
-  openIds: readonly string[]
-  openId(id: string): void
-}
-export function Catalog({ filter, openIds, openId }: IProps) {
+export function Catalog() {
   const arhiv = ArhivContext.use()
 
+  const store = useWorkspaceStore()
   const [documents] = useObservable(
-    () => arhiv.documents.getDocuments$({ matches: matches(filter) }),
-    [filter],
+    () => arhiv.documents.getDocuments$({ matches: matches(store.state.filter) }),
+    [store.state.filter],
   )
 
   if (!documents) {
@@ -29,8 +26,8 @@ export function Catalog({ filter, openIds, openId }: IProps) {
       <CatalogEntry
         key={document.id}
         document={document}
-        isOpen={openIds.includes(document.id)}
-        onClick={() => openId(document.id)}
+        isOpen={store.isDocumentOpen(document.id)}
+        onClick={() => store.openDocument(document.id)}
       />
     ))
 

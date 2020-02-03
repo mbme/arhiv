@@ -1,19 +1,19 @@
 import * as React from 'react'
 import { Icon } from '~/web-platform'
-import { useWorkspaceURLManager } from '../../useWorkspaceURLManager'
+import { useWorkspaceStore } from '../../store'
 
 interface IProps {
   documentId: string
 }
 
 export function CloseIcon({ documentId }: IProps) {
-  const ws = useWorkspaceURLManager()
+  const store = useWorkspaceStore()
 
   return (
     <Icon
       type="x"
       title="close"
-      onClick={() => ws.closeId(documentId)}
+      onClick={() => store.closeDocument(documentId)}
       $style={{ color: 'secondary' }}
     />
   )

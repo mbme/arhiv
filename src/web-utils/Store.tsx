@@ -14,6 +14,10 @@ export abstract class Store<State> {
     return this._cell.value$
   }
 
+  get state(): Readonly<State> {
+    return this._cell.value
+  }
+
   protected _setState(newState: State) {
     this._cell.value = newState
   }

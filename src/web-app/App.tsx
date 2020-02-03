@@ -5,7 +5,7 @@ import { RouterContext } from '~/web-router'
 import { useObservable } from '~/web-utils'
 import { ArhivContext } from './arhiv-context'
 import { AuthOverlay, NotFound } from './parts'
-import { WorkspaceView } from './workspace/WorkspaceView'
+import { WorkspaceViewContainer } from './workspace/WorkspaceViewContainer'
 
 export function App() {
   const router = RouterContext.use()
@@ -27,7 +27,7 @@ export function App() {
   switch (location.path) {
     case '/': {
       return (
-        <WorkspaceView />
+        <WorkspaceViewContainer />
       )
     }
 

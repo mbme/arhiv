@@ -3,26 +3,29 @@ import {
   Column,
 } from '~/web-platform'
 import { CardContainer } from './CardContainer'
-import { useWorkspaceURLManager } from '../useWorkspaceURLManager'
+import { useWorkspaceStore } from '../store'
 
-interface IProps {
-  newestId: string | undefined
-}
+export function OpenCards() {
+  const store = useWorkspaceStore()
+  const items = store.state.items.map((item) => {
+    if (item._type !== 'document') {
+      return null
+    }
 
-export function OpenCards({ newestId }: IProps) {
-  const ws = useWorkspaceURLManager()
+    return (
+      <CardContainer
+        key={item.id}
+        id={item.id}
+        focused={store.state.focused === item}
+      />
+    )
+  })
 
   return (
     <Column
       alignX="center"
     >
-      {ws.openIds.map(id => (
-        <CardContainer
-          key={id}
-          id={id}
-          focused={newestId === id}
-        />
-      ))}
+      {items}
     </Column>
   )
 }

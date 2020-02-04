@@ -1,15 +1,9 @@
 import * as React from 'react'
 import { Procedure } from '~/utils'
-import {
-  Button,
-  Row,
-  Input,
-  Textarea,
-  Spacer,
-} from '~/web-platform'
-import { Note } from './Note'
-import { DeleteDocumentButton, AddAttachmentButton, Frame } from '../../Card'
+import { Button, Input, Row, Spacer, Textarea } from '~/web-platform'
+import { AddAttachmentButton, DeleteDocumentButton, Frame } from '../../Card'
 import { DocumentNote } from '../types'
+import { Note } from './Note'
 
 interface IProps {
   document: DocumentNote

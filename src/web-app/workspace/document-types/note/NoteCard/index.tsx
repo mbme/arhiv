@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { DocumentNote } from '../types'
-import { NoteCardViewer } from './NoteCardViewer'
-import { NoteCardEditor } from './NoteCardEditor'
 import { useObservable } from '~/web-utils'
+import { DocumentNote } from '../types'
+import { NoteCardEditor } from './NoteCardEditor'
+import { NoteCardViewer } from './NoteCardViewer'
 
 interface IProps {
   document: DocumentNote

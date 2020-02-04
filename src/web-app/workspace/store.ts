@@ -1,27 +1,22 @@
 import * as React from 'react'
 import { Store, createContext } from '~/web-utils'
-import { Counter } from '~/utils'
-
-interface IDocumentItem {
-  _type: 'document'
-  id: string
-}
-interface INewDocumentItem {
-  _type: 'new-document'
-  type: string
-  tempId: number
-}
-export type WorkspaceItem = IDocumentItem | INewDocumentItem
+import { Counter, Dict, Procedure, replaceAtMut } from '~/utils'
+import { Document, ArhivReplica } from '~/arhiv/replica'
+import { createDocument } from './document-types'
 
 interface IState {
-  filter: string
-  items: WorkspaceItem[]
   showCatalog: boolean
-  focused?: WorkspaceItem
+  filter: string
+  items: Document[]
+  focused?: Document
 }
 
 export class WorkspaceStore extends Store<IState> {
-  constructor() {
+  private _listeners: Dict<Procedure> = {}
+
+  constructor(
+    private _arhiv: ArhivReplica,
+  ) {
     super({
       filter: '',
       items: [],
@@ -39,7 +34,7 @@ export class WorkspaceStore extends Store<IState> {
   }
 
   isDocumentOpen(id: string): boolean {
-    return !!this.state.items.find(item => item._type === 'document' && item.id === id)
+    return !!this._listeners[id]
   }
 
   openDocument(id: string) {
@@ -47,42 +42,56 @@ export class WorkspaceStore extends Store<IState> {
       return
     }
 
-    const newItem: IDocumentItem = {
-      _type: 'document',
-      id,
-    }
+    this._listeners[id] = this._arhiv.documents.getDocument$(id).subscribe({
+      next: (document) => {
+        const items = [...this.state.items]
+        const i = items.findIndex(item => item.id === id)
 
-    this._setState({
-      ...this.state,
-      showCatalog: false,
-      focused: newItem,
-      items: [newItem, ...this.state.items],
+        if (i === -1) {
+          items.unshift(document)
+
+          this._setState({
+            ...this.state,
+            showCatalog: false,
+            focused: document,
+            items,
+          })
+          return
+        }
+
+        replaceAtMut(items, i, document)
+
+        this._setState({
+          ...this.state,
+          items,
+        })
+      },
     })
   }
 
   closeDocument(id: string) {
-    if (!this.isDocumentOpen(id)) {
+    const unsub = this._listeners[id]
+    if (!unsub) {
       return
     }
 
+    unsub()
+    delete this._listeners[id]
+
     this._setState({
       ...this.state,
-      items: this.state.items.filter(item => item._type !== 'document' || item.id !== id),
+      items: this.state.items.filter(item => item.id !== id),
     })
   }
 
-  createDocument(type: string) {
-    const newItem: INewDocumentItem = {
-      _type: 'new-document',
-      type,
-      tempId: 1,
-    }
+  async createDocument(type: string) {
+    const document = await createDocument(type, this._arhiv)
 
     this._setState({
       ...this.state,
       showCatalog: false,
-      focused: newItem,
-      items: [newItem, ...this.state.items],
+      focused: document,
+      items: [document, ...this.state.items],
     })
   }
 

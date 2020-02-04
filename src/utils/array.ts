@@ -38,6 +38,14 @@ export function removeAtMut<T>(arr: T[], pos: number) {
   return arr
 }
 
+export function replaceAtMut<T>(arr: T[], pos: number, newItem: T) {
+  if (pos > -1) {
+    arr.splice(pos, 1, newItem)
+  }
+
+  return arr
+}
+
 export const findById = <T>(arr: Array<{ id: T }>, id: T) => arr.find(item => item.id === id)
 
 export function isEqualArray(a: any[], b: any[]) {

@@ -66,7 +66,7 @@ export class ArhivReplica {
   }
 
   acquireDocumentLock$(id: string) {
-    return this._locks.acquireDocumentLock$(id)
+    return this._locks.acquireDocumentLock$(id).map(() => true)
   }
 
   authorize(password: string) {

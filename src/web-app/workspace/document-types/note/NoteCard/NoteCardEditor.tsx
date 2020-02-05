@@ -7,11 +7,12 @@ import { Note } from './Note'
 
 interface IProps {
   document: DocumentNote
-  onDone: Procedure
-  isNew: boolean
+  onSave(name: string, data: string): void
+  onCancel: Procedure
+  onDelete?: Procedure
 }
 
-export function NoteCardEditor({ document, isNew, onDone }: IProps) {
+export function NoteCardEditor({ document, onSave, onCancel, onDelete }: IProps) {
   const [name, setName] = React.useState(document.props.name)
   const [data, setData] = React.useState(document.props.data)
 
@@ -26,22 +27,9 @@ export function NoteCardEditor({ document, isNew, onDone }: IProps) {
     textAreaRef.current!.focus()
   }
 
-  const onSave = async () => {
-    document.patch({ name, data })
-    await document.updateRefs(data)
-    await document.save()
-    onDone()
-  }
-
-  const onDelete = async () => {
-    document.delete()
-    await document.save()
-    onDone()
-  }
-
   const buttons = (
     <>
-      {!isNew && <DeleteDocumentButton onConfirmed={onDelete} />}
+      {onDelete && <DeleteDocumentButton onConfirmed={onDelete} />}
     </>
   )
 
@@ -75,7 +63,7 @@ export function NoteCardEditor({ document, isNew, onDone }: IProps) {
           <Row>
             <Button
               variant="link"
-              onClick={onDone}
+              onClick={onCancel}
             >
               Cancel
             </Button>
@@ -84,10 +72,10 @@ export function NoteCardEditor({ document, isNew, onDone }: IProps) {
 
             <Button
               variant="primary"
-              onClick={onSave}
+              onClick={() => onSave(name, data)}
               disabled={!isValid}
             >
-              {isNew ? 'Create' : 'Save'}
+              Save
             </Button>
           </Row>
         </Row>

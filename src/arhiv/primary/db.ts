@@ -29,10 +29,6 @@ export class ArhivDB {
     return this._storage.getRev()
   }
 
-  getSchemaVersion() {
-    return this._storage.getSchemaVersion()
-  }
-
   getDocument(id: string) {
     return this._storage.getDocument(id)
   }
@@ -59,12 +55,6 @@ export class ArhivDB {
     // this should never happen
     if (changeset.baseRev > serverRev) {
       throw new Error(`replica revision ${changeset.baseRev} is bigger than server revision ${serverRev}`)
-    }
-
-    const schemaVersion = this.getSchemaVersion()
-    if (changeset.schemaVersion !== schemaVersion) {
-      // eslint-disable-next-line max-len
-      throw new Error(`replica schema version ${changeset.schemaVersion} is different than server schema version ${schemaVersion}`)
     }
 
     // on empty changeset just send latest changes to the replica
@@ -135,7 +125,6 @@ export class ArhivDB {
     return {
       status,
       baseRev: rev,
-      schemaVersion: this.getSchemaVersion(),
       currentRev,
       documents: (await this._storage.getDocuments()).filter(document => document.rev > rev),
       attachments: (await this._storage.getAttachments()).filter(attachment => attachment.rev > rev),

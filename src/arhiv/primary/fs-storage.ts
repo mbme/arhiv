@@ -27,7 +27,6 @@ type StorageUpdater = (mutations: FSStorageMutations, newRev: number) => Promise
 const log = createLogger('fs-storage')
 
 interface IMetadata {
-  schemaVersion: number
   revision: number
 }
 
@@ -35,7 +34,6 @@ export class FSStorage {
   public static readonly SCHEMA_VERSION = 1
 
   private _metadata: IMetadata = {
-    schemaVersion: FSStorage.SCHEMA_VERSION,
     revision: 0,
   }
 
@@ -61,13 +59,6 @@ export class FSStorage {
     ])
 
     this._metadata = await readJSON<IMetadata>(this._metadataFile)
-    log.debug(`app schema version: ${FSStorage.SCHEMA_VERSION}`)
-    log.debug(`data schema version: ${this._metadata.schemaVersion}`)
-
-    if (this._metadata.schemaVersion !== FSStorage.SCHEMA_VERSION) {
-      // eslint-disable-next-line max-len
-      throw new Error(`app schema version is ${FSStorage.SCHEMA_VERSION}, data version is ${this._metadata.schemaVersion}`)
-    }
   }
 
   private async _create() {
@@ -116,10 +107,6 @@ export class FSStorage {
 
   getRev() {
     return this._metadata.revision
-  }
-
-  getSchemaVersion() {
-    return this._metadata.schemaVersion
   }
 
   async getDocuments() {

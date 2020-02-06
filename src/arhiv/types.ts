@@ -11,6 +11,7 @@ export interface IDocument<T extends string = string, P extends object = {}> {
   readonly id: string
   readonly rev: number
   readonly type: T
+  readonly schemaVersion: number
   readonly createdAt: string
   readonly updatedAt: string
   readonly refs: readonly string[]
@@ -24,11 +25,6 @@ export interface IChangeset {
    * replica storage revision
    */
   readonly baseRev: number
-
-  /**
-   * replica schema version
-   */
-  readonly schemaVersion: number
 
   /**
    * new or updated documents
@@ -45,11 +41,6 @@ export type ChangesetResponseStatus = 'accepted' | 'outdated'
 
 export interface IChangesetResponse {
   readonly status: ChangesetResponseStatus
-
-  /**
-   * replica schema version
-   */
-  readonly schemaVersion: number
 
   /**
    * replica storage revision

@@ -24,6 +24,7 @@ export function createDocument<T extends string, P extends object>(
   return {
     id,
     type,
+    schemaVersion: 1,
     rev: 0,
     createdAt: now,
     updatedAt: now,

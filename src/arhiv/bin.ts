@@ -111,7 +111,6 @@ CliApp.create('arhiv')
         } = await getFakeNotes(resourcesDir, parseInt10(options['--count']))
 
         await db.applyChangeset({
-          schemaVersion: storage.getSchemaVersion(),
           baseRev: 0,
           documents,
           attachments,

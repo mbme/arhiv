@@ -194,7 +194,6 @@ export class TIDBStorage {
     ])
 
     const changeset: IChangeset = {
-      schemaVersion: TIDBStorage.SCHEMA_VERSION,
       baseRev: this.getRev(),
       documents: localDocuments,
       attachments: localAttachments.filter(attachment => !unusedIds.includes(attachment.id)),

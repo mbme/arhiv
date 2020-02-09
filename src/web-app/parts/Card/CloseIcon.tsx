@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Icon } from '~/web-platform'
-import { useWorkspaceStore } from '../../store'
+import { useWorkspaceStore } from '~/web-app/workspace-store'
 
 interface IProps {
   documentId: string

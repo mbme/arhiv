@@ -2,16 +2,17 @@ import * as React from 'react'
 import { ArhivContext } from '~/web-app/arhiv-context'
 import { Column, ProgressLocker } from '~/web-platform'
 import { useObservable } from '~/web-utils'
-import { matches } from '../document-types'
 import { CatalogEntry } from './Entry'
-import { useWorkspaceStore } from '../store'
+import { useWorkspaceStore } from '../../workspace-store'
+import { getModule } from '../modules'
 
 export function Catalog() {
   const arhiv = ArhivContext.use()
-
   const store = useWorkspaceStore()
   const [documents] = useObservable(
-    () => arhiv.documents.getDocuments$({ matches: matches(store.state.filter) }),
+    () => arhiv.documents.getDocuments$({
+      matches: document => getModule(document.type).matches(document, store.state.filter),
+    }),
     [store.state.filter],
   )
 

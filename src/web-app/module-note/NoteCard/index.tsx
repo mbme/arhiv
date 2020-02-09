@@ -1,11 +1,11 @@
 import * as React from 'react'
+import { ArhivContext } from '~/web-app/arhiv-context'
+import { useWorkspaceStore } from '~/web-app/workspace-store'
+import { Heading } from '~/web-platform'
 import { useObservable } from '~/web-utils'
 import { DocumentNote } from '../types'
 import { NoteCardEditor } from './NoteCardEditor'
 import { NoteCardViewer } from './NoteCardViewer'
-import { useWorkspaceStore } from '~/web-app/workspace/store'
-import { Heading } from '~/web-platform'
-import { ArhivContext } from '~/web-app/arhiv-context'
 
 interface IProps {
   document: DocumentNote

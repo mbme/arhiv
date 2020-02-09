@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Document } from '~/arhiv/replica'
 import { noop } from '~/utils'
 import { Box, ProgressLocker } from '~/web-platform'
-import { renderCard } from '../document-types'
+import { getModule } from '../modules'
 
 interface IProps {
   document: Document
@@ -41,7 +41,7 @@ export function CardContainer({ document, focused }: IProps) {
       maxWidth="100%"
       innerRef={ref}
     >
-      {renderCard(document)}
+      {getModule(document.type).renderCard(document)}
     </Box>
   )
 }

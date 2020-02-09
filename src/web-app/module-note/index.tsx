@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { fuzzySearch } from '~/utils'
-import { IDocumentModule } from '../types'
 import { NoteCard } from './NoteCard'
 import { DocumentNote } from './types'
+import { IDocumentModule } from '../workspace/modules'
 
 export const NoteModule: IDocumentModule = {
   type: 'note',

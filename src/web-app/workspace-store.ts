@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Store, createContext } from '~/web-utils'
 import { Counter, Dict, Procedure, replaceAtMut } from '~/utils'
 import { Document, ArhivReplica } from '~/arhiv/replica'
-import { IDocumentModule } from './document-types/types'
+import { IDocumentModule } from './workspace/modules/types'
 
 interface IState {
   showCatalog: boolean

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Document } from '~/arhiv/replica'
 import { prettyPrintJSON } from '~/utils'
 import { Box, Label, Row } from '~/web-platform'
-import { CloseIcon, Frame, Metadata } from '../Card'
+import { CloseIcon, Metadata, Frame } from '~/web-app/parts/Card'
 
 interface IProps {
   document: Document

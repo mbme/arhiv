@@ -9,8 +9,8 @@ import {
   Spacer,
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
-import { useWorkspaceStore } from './store'
-import { NoteModule } from './document-types/note'
+import { useWorkspaceStore } from '../workspace-store'
+import { NoteModule } from '../module-note'
 
 const $menuItem = stylish(
   {

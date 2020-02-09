@@ -3,7 +3,7 @@ import {
   Column,
 } from '~/web-platform'
 import { CardContainer } from './CardContainer'
-import { useWorkspaceStore } from '../store'
+import { useWorkspaceStore } from '../../workspace-store'
 
 export function OpenCards() {
   const store = useWorkspaceStore()

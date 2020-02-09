@@ -6,7 +6,7 @@ import {
 import { Catalog } from './Catalog'
 import { OpenCards } from './OpenCards'
 import { Header } from './Header'
-import { useWorkspaceStore } from './store'
+import { useWorkspaceStore } from '../workspace-store'
 
 export function WorkspaceView() {
   const store = useWorkspaceStore()

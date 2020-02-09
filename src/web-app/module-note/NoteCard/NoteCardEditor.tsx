@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Procedure } from '~/utils'
 import { Button, Input, Row, Spacer, Textarea } from '~/web-platform'
-import { AddAttachmentButton, DeleteDocumentButton, Frame } from '../../Card'
+import { AddAttachmentButton, DeleteDocumentButton, Frame } from '../../parts/Card'
 import { Note } from './Note'
 
 interface IProps {

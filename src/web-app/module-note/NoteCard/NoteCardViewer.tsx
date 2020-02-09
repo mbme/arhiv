@@ -5,7 +5,7 @@ import {
   Row,
 } from '~/web-platform'
 import { Note } from './Note'
-import { CloseIcon, Metadata, Frame } from '../../Card'
+import { CloseIcon, Metadata, Frame } from '../../parts/Card'
 import { DocumentNote } from '../types'
 
 interface IProps {

@@ -3,7 +3,7 @@ import { Document } from '~/arhiv/replica'
 import { ChronoFormatter } from '~/chrono'
 import { Procedure } from '~/utils'
 import { Box, Label, theme } from '~/web-platform'
-import { getTitle } from '../document-types'
+import { getModule } from '../modules'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
@@ -28,7 +28,7 @@ export function CatalogEntry({ document, isOpen, onClick }: IProps) {
         {document.type}
       </Label>
 
-      {getTitle(document)}
+      {getModule(document.type).getTitle(document)}
 
       <Box
         as="small"

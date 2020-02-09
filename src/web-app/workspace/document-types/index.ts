@@ -1,4 +1,4 @@
-import { Document, ArhivReplica } from '~/arhiv/replica'
+import { Document } from '~/arhiv/replica'
 import { IDocumentModule } from './types'
 import { NoteModule } from './note'
 import { DocumentModule } from './document'
@@ -27,8 +27,4 @@ export function getTitle(document: Document) {
 
 export function renderCard(document: Document) {
   return findModule(document.type).renderCard(document)
-}
-
-export function createDocument(type: string, arhiv: ArhivReplica) {
-  return findModule(type).create(arhiv)
 }

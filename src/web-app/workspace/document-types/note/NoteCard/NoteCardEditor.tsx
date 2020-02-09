@@ -2,23 +2,29 @@ import * as React from 'react'
 import { Procedure } from '~/utils'
 import { Button, Input, Row, Spacer, Textarea } from '~/web-platform'
 import { AddAttachmentButton, DeleteDocumentButton, Frame } from '../../Card'
-import { DocumentNote } from '../types'
 import { Note } from './Note'
 
 interface IProps {
-  document: DocumentNote
+  name: string
+  data: string
   onSave(name: string, data: string): void
   onCancel: Procedure
   onDelete?: Procedure
 }
 
-export function NoteCardEditor({ document, onSave, onCancel, onDelete }: IProps) {
-  const [name, setName] = React.useState(document.props.name)
-  const [data, setData] = React.useState(document.props.data)
+export function NoteCardEditor(props: IProps) {
+  const {
+    name: originalName,
+    data: originalData,
+    onSave,
+    onCancel,
+    onDelete,
+  } = props
 
-  const isValid = name && (
-    name !== document.props.name || data !== document.props.data
-  )
+  const [name, setName] = React.useState(originalName)
+  const [data, setData] = React.useState(originalData)
+
+  const isValid = name && (name !== originalName || data !== originalData)
 
   const textAreaRef = React.useRef<Textarea>(null)
 

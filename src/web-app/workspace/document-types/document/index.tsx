@@ -6,6 +6,7 @@ import { DocumentCard } from './DocumentCard'
 
 export const DocumentModule: IDocumentModule = {
   type: '',
+  initialProps: {},
 
   getTitle(document: Document): string {
     return `${document.type} ${document.id}`
@@ -19,9 +20,5 @@ export const DocumentModule: IDocumentModule = {
     return (
       <DocumentCard document={document} />
     )
-  },
-
-  create() {
-    return Promise.reject(new Error("Can't create abstract document"))
   },
 }

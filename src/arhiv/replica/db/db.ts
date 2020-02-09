@@ -1,6 +1,7 @@
 import { createLogger } from '~/logger'
 import {
   Callbacks,
+  ErrorResult,
 } from '~/utils'
 import {
   nowS,
@@ -44,7 +45,7 @@ function fetchAttachment$(id: string) {
       signal: controller.signal,
     }).then((response) => {
       if (!response.ok) {
-        throw response
+        throw new ErrorResult(response)
       }
 
       return response.blob()

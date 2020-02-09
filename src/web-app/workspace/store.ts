@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Store, createContext } from '~/web-utils'
 import { Counter, Dict, Procedure, replaceAtMut } from '~/utils'
 import { Document, ArhivReplica } from '~/arhiv/replica'
-import { createDocument } from './document-types'
+import { IDocumentModule } from './document-types/types'
 
 interface IState {
   showCatalog: boolean
@@ -84,8 +84,8 @@ export class WorkspaceStore extends Store<IState> {
     })
   }
 
-  async createDocument(type: string) {
-    const document = await createDocument(type, this._arhiv)
+  async createDocument(module: IDocumentModule) {
+    const document = await this._arhiv.documents.create(module.type, module.initialProps)
 
     this._setState({
       ...this.state,

@@ -56,7 +56,8 @@ export function NoteCard({ document }: IProps) {
 
     return (
       <NoteCardEditor
-        document={document}
+        name={document.props.name}
+        data={document.props.data}
         onSave={onSave}
         onDelete={onDelete}
         onCancel={onCancel}

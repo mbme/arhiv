@@ -9,6 +9,7 @@ import {
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
 import { useWorkspaceStore } from './store'
+import { NoteModule } from './document-types/note'
 
 const $menuItem = stylish(
   {
@@ -30,7 +31,7 @@ export function Header() {
   }
 
   function addNote() {
-    store.createDocument('note')
+    return store.createDocument(NoteModule)
   }
 
   return (

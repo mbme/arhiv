@@ -29,8 +29,6 @@ export class SyncManager {
       .buffer(2)
       .filter(syncStates => syncStates.length === 2 && syncStates[0].type === 'merge-conflicts')
 
-    const gotAuthorized$ = _net.isAuthorized$.value$.filter(isAuthorized => isAuthorized)
-
     const gotLocalUpdate$ = _db.updateTime$.value$
       .filter(([, isLocal]) => isLocal)
 
@@ -43,7 +41,6 @@ export class SyncManager {
         _net.isOnline$.value$.filter(isOnline => isOnline)
           .tap(() => log.debug('network online trigger')),
       )),
-      gotAuthorized$.tap(() => log.debug('auth trigger')),
       gotLocalUpdate$.tap(() => log.debug('local update trigger')),
       mergeConflictsResolved$.tap(() => log.debug('merge conflict resolved trigger')),
       this.syncSignal.signal$.tap(() => log.debug('signal trigger')),
@@ -62,7 +59,6 @@ export class SyncManager {
 
   private _isReadyToSync() {
     return this._net.isOnline()
-      && this._net.isAuthorized()
       && !this._locks.isDBLocked()
       && this._db.isReadyToSync()
   }

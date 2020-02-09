@@ -6,6 +6,7 @@ import {
   Row,
   stylish,
   Button,
+  Spacer,
 } from '~/web-platform'
 import { clickOnEnter } from '~/web-platform/utils'
 import { useWorkspaceStore } from './store'
@@ -45,16 +46,6 @@ export function Header() {
       zIndex="1"
     >
       <div
-        onClick={() => store.showCatalog(false)}
-        className={$menuItem.with({ active: !store.state.showCatalog }).className}
-        role="tab"
-        tabIndex={0}
-        onKeyPress={clickOnEnter}
-      >
-        Workspace
-      </div>
-
-      <div
         onClick={() => store.showCatalog(true)}
         className={$menuItem.with({ active: store.state.showCatalog }).className}
         role="tab"
@@ -62,6 +53,21 @@ export function Header() {
         onKeyPress={clickOnEnter}
       >
         Catalog
+      </div>
+
+      <Spacer
+        flex="0"
+        width="medium"
+      />
+
+      <div
+        onClick={() => store.showCatalog(false)}
+        className={$menuItem.with({ active: !store.state.showCatalog }).className}
+        role="tab"
+        tabIndex={0}
+        onKeyPress={clickOnEnter}
+      >
+        Workspace
       </div>
 
       <Box

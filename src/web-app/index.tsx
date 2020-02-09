@@ -17,7 +17,7 @@ import { ArhivContext } from './arhiv-context'
 const isDev = true
 
 configureLogger({
-  minLogLevel: isDev ? 'DEBUG' : 'WARN',
+  minLogLevel: isDev ? 'INFO' : 'WARN',
 })
 
 injectGlobalStyles(`

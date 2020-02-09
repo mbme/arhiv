@@ -8,7 +8,7 @@ interface IState {
   showCatalog: boolean
   filter: string
   items: Document[]
-  focused?: Document
+  focusedId?: string
 }
 
 export class WorkspaceStore extends Store<IState> {
@@ -21,7 +21,7 @@ export class WorkspaceStore extends Store<IState> {
       filter: '',
       items: [],
       showCatalog: true,
-      focused: undefined,
+      focusedId: undefined,
     })
   }
 
@@ -37,12 +37,8 @@ export class WorkspaceStore extends Store<IState> {
     return !!this._listeners[id]
   }
 
-  openDocument(id: string) {
-    if (this.isDocumentOpen(id)) {
-      return
-    }
-
-    this._listeners[id] = this._arhiv.documents.getDocument$(id).subscribe({
+  private _watchDocument(id: string) {
+    const unsub = this._arhiv.documents.getDocument$(id).subscribe({
       next: (document) => {
         const items = [...this.state.items]
         const i = items.findIndex(item => item.id === id)
@@ -53,7 +49,7 @@ export class WorkspaceStore extends Store<IState> {
           this._setState({
             ...this.state,
             showCatalog: false,
-            focused: document,
+            focusedId: document.id,
             items,
           })
           return
@@ -67,6 +63,21 @@ export class WorkspaceStore extends Store<IState> {
         })
       },
     })
+
+    this._listeners[id] = unsub
+  }
+
+  openDocument(id: string) {
+    if (this.isDocumentOpen(id)) {
+      this._setState({ // just show the document
+        ...this.state,
+        showCatalog: false,
+        focusedId: id,
+      })
+      return
+    }
+
+    this._watchDocument(id)
   }
 
   closeDocument(id: string) {
@@ -78,19 +89,32 @@ export class WorkspaceStore extends Store<IState> {
     unsub()
     delete this._listeners[id]
 
+    const items = this.state.items.filter(item => item.id !== id)
     this._setState({
       ...this.state,
-      items: this.state.items.filter(item => item.id !== id),
+      items,
+      showCatalog: items.length ? this.state.showCatalog : true,
     })
   }
 
   async createDocument(module: IDocumentModule) {
     const document = await this._arhiv.documents.create(module.type, module.initialProps)
 
+    const unsub = document.isNew$()
+      .filter(isNew => !isNew)
+      .take(1)
+      .subscribe({
+        next: () => {
+          unsub()
+          this._watchDocument(document.id)
+        },
+      })
+    this._listeners[document.id] = unsub
+
     this._setState({
       ...this.state,
       showCatalog: false,
-      focused: document,
+      focusedId: document.id,
       items: [document, ...this.state.items],
     })
   }

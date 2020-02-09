@@ -1,46 +1,32 @@
 import fs from 'fs'
-import {
-  createLogger,
-} from '~/logger'
-import {
-  Dict,
-} from '~/utils'
-import {
-  Queue,
-} from '~/utils/queue'
-import {
-  pathMatcher as pm,
-} from '~/utils/path-matcher'
-import {
-  createTempDir,
-  rmrfSync,
-} from '~/utils/fs'
-import {
-  getMimeType,
-} from '~/file-prober'
-import {
-  HTTPServer,
-  MultipartBody,
-  StringBody,
-} from '~/http-server'
-import {
-  IChangeset,
-} from '../types'
-import {
-  ArhivDB,
-} from '../primary/db'
-import {
-  isValidAuth,
-  extractTokenCookie,
-  resolveAsset,
-  createToken,
-} from './utils'
+import path from 'path'
+import { getMimeType } from '~/file-prober'
+import { HTTPServer, MultipartBody } from '~/http-server'
+import { createLogger } from '~/logger'
+import { Dict } from '~/utils'
+import { createTempDir, listFiles, rmrfSync } from '~/utils/fs'
+import { pathMatcher as pm } from '~/utils/path-matcher'
+import { Queue } from '~/utils/queue'
+import { IChangeset } from '../types'
+import { ArhivDB } from './db'
 
 const log = createLogger('arhiv-server')
 
 export interface IArhivServerConfig {
   readonly port: number
   readonly password: string
+}
+
+async function resolveAsset(dirs: string[], name: string) {
+  for (const dir of dirs) {
+    const files = await listFiles(dir)
+
+    if (files.includes(name)) {
+      return path.join(dir, name)
+    }
+  }
+
+  return undefined
 }
 
 export async function createServer(db: ArhivDB, config: IArhivServerConfig, staticDirs: string[]) {
@@ -51,41 +37,6 @@ export async function createServer(db: ArhivDB, config: IArhivServerConfig, stat
   const server = new HTTPServer(tmpDir)
 
   log.debug('static dirs: ', staticDirs.join(', '))
-
-  server.use(async function authMiddleware(context, next) {
-    const { req, res } = context
-
-    res.headers['Referrer-Policy'] = 'no-referrer'
-
-    const isAuthorized = isValidAuth(extractTokenCookie(req.headers.cookie || ''), config.password)
-    if (!isAuthorized
-      && req.url.pathname!.startsWith('/api')
-      && req.url.pathname !== '/api/auth') {
-      res.statusCode = 403
-
-      return
-    }
-
-    await next()
-  })
-
-  // POST /api/auth
-  server.post(pm`/api/auth`, ({ req, res }) => {
-    const body = req.body!
-    if (!(body instanceof StringBody)) {
-      res.statusCode = 415
-
-      return
-    }
-
-    if (body.value !== config.password) {
-      res.statusCode = 401
-
-      return
-    }
-
-    res.headers['set-cookie'] = createToken(config.password)
-  })
 
   // POST /api/changeset
   server.post(pm`/api/changeset`, async ({ res, req }) => {

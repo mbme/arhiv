@@ -11,7 +11,7 @@ export function OpenCards() {
     <CardContainer
       key={document.id}
       document={document}
-      focused={store.state.focused === document}
+      focused={store.state.focusedId === document.id}
     />
   ))
 

@@ -18,11 +18,9 @@ import { getFakeNotes } from './tools/faker'
 import {
   ArhivDB,
   FSStorage,
-} from './primary'
-import {
   createServer,
   IArhivServerConfig,
-} from './server'
+} from './primary'
 
 const log = createLogger('arhiv')
 

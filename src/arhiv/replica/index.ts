@@ -34,7 +34,6 @@ export class ArhivReplica {
   private _sync = new SyncManager(this._db, this._net, this._locks)
 
   readonly syncState$ = this._db.syncState$
-  readonly isAuthorized$ = this._net.isAuthorized$
 
   readonly attachments = new AttachmentsRepository(this._db)
   readonly documents = new DocumentsRepository(this._db)
@@ -67,14 +66,6 @@ export class ArhivReplica {
 
   acquireDocumentLock$(id: string) {
     return this._locks.acquireDocumentLock$(id).map(() => true)
-  }
-
-  authorize(password: string) {
-    return this._net.authorize(password)
-  }
-
-  deauthorize() {
-    this._net.deauthorize()
   }
 
   stop() {

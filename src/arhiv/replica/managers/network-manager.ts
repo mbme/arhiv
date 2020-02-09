@@ -19,7 +19,6 @@ const readNetworkState = () => window.navigator.onLine
 
 export class NetworkManager {
   readonly isOnline$ = new Cell<boolean>(readNetworkState())
-  readonly isAuthorized$ = new Cell<boolean>(true)
 
   private _callbacks = new Callbacks()
 
@@ -39,30 +38,7 @@ export class NetworkManager {
       this.isOnline$.value$.subscribe({
         next: value => log.info(`network is ${value ? 'online' : 'offline'}`),
       }),
-      this.isAuthorized$.value$.subscribe({
-        next: isAuthorized => log.info(`authorized: ${isAuthorized}`),
-      }),
     )
-  }
-
-  async authorize(password: string) {
-    this._assertIsOnline()
-
-    const response = await fetch('/api/auth', {
-      method: 'post',
-      body: password,
-    })
-
-    if (response.ok) {
-      this.isAuthorized$.value = true
-    } else {
-      this._onServerError(response.status)
-    }
-  }
-
-  deauthorize() {
-    document.cookie = 'token=0; path=/'
-    this.isAuthorized$.value = false
   }
 
   readonly syncChanges = async (
@@ -70,7 +46,6 @@ export class NetworkManager {
     localAttachments: LocalAttachments,
   ): Promise<IChangesetResponse> => {
     this._assertIsOnline()
-    this._assertAuthorized()
 
     const data = new FormData()
     data.append('changeset', JSON.stringify(changeset))
@@ -87,7 +62,6 @@ export class NetworkManager {
     })
 
     if (!response.ok) {
-      this._onServerError(response.status)
       throw new Error(`Server responded with code ${response.status}`)
     }
 
@@ -100,26 +74,8 @@ export class NetworkManager {
     }
   }
 
-  private _assertAuthorized() {
-    if (!this.isAuthorized$.value) {
-      throw new Error('Not authorized')
-    }
-  }
-
-  private _onServerError(status: number) {
-    log.warn(`server error, http status code ${status}`)
-
-    if (status === 403) {
-      this.isAuthorized$.value = false
-    }
-  }
-
   isOnline() {
     return this.isOnline$.value
-  }
-
-  isAuthorized() {
-    return this.isAuthorized$.value
   }
 
   stop() {

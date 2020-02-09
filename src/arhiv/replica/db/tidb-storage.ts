@@ -301,22 +301,48 @@ export class TIDBStorage {
     return undefined
   }
 
-  async compact(): Promise<string[]> {
-    const tx = this._idb.transactionRW('documents-local', 'attachments-local', 'attachments-data')
+  async compact(): Promise<number> {
+    const tx = this._idb.transactionRW('documents', 'documents-local', 'attachments-local', 'attachments-data')
 
-    const unusedIds = await this._getUnusedLocalAttachmentsIds(tx)
-    if (!unusedIds.length) {
-      return unusedIds
+    let total = 0
+
+    // remove deleted local documents
+    const deletedLocalIds = await this._getDeletedLocalDocumentIds(tx)
+    total += deletedLocalIds.length
+    if (deletedLocalIds.length) {
+      await Promise.all(deletedLocalIds.map(id => tx.store('documents-local').delete(id)))
+      log.warn(`removed ${deletedLocalIds.length} deleted local documents`)
     }
 
-    await Promise.all(unusedIds.map(id => [
-      tx.store('attachments-local').delete(id),
-      tx.store('attachments-data').delete(id),
-    ]).flat())
+    // remove unused local attachments
+    const unusedIds = await this._getUnusedLocalAttachmentsIds(tx)
+    total += unusedIds.length
+    if (unusedIds.length) {
+      await Promise.all(unusedIds.map(id => [
+        tx.store('attachments-local').delete(id),
+        tx.store('attachments-data').delete(id),
+      ]).flat())
 
-    log.warn(`Removed ${unusedIds.length} unused local attachments`)
+      log.warn(`Removed ${unusedIds.length} unused local attachments`)
+    }
 
-    return unusedIds
+    return total
+  }
+
+  private async _getDeletedLocalDocumentIds(
+    tx: TIDBTransaction<IObjectStores, 'documents-local' | 'documents'>,
+  ) {
+    const [
+      localDocuments,
+      allIds,
+    ] = await Promise.all([
+      tx.store('documents-local').getAll(),
+      tx.store('documents').getAllKeys(),
+    ])
+
+    return localDocuments
+      .filter(document => document.deleted && !allIds.includes(document.id))
+      .map(document => document.id)
   }
 
   private async _getUnusedLocalAttachmentsIds(

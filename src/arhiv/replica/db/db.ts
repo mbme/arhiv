@@ -246,9 +246,9 @@ export class ReplicaDB {
    * Remove unused local attachments
    */
   async compact() {
-    const unusedIds = await this._storage.compact()
+    const deletedDocuments = await this._storage.compact()
 
-    if (unusedIds.length) {
+    if (deletedDocuments) {
       this._onUpdate()
     }
   }

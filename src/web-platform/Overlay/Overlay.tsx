@@ -85,7 +85,6 @@ export class OverlayRenderer extends React.PureComponent<IProps, IState> {
     }
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <div
         key={id}
         className={$container.and(overlay.$style).className}

@@ -9,10 +9,10 @@ import { useObservable } from '~/web-utils'
 import { ArhivContext } from './arhiv-context'
 import { NoteModule } from './module-note'
 import { NotFound } from './parts'
-import { useModule } from './workspace/modules'
+import { registerModule } from './workspace/modules'
 import { WorkspaceViewContainer } from './workspace/WorkspaceViewContainer'
 
-useModule(NoteModule)
+registerModule(NoteModule)
 
 configureLogger({ minLogLevel: 'INFO' })
 

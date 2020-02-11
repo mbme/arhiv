@@ -23,7 +23,6 @@ function Examples({ title, examples }: IProps) {
       <Heading>{title}</Heading>
 
       {Object.entries(examples).map(([description, Example], i) => (
-        // eslint-disable-next-line react/no-array-index-key
         <Box key={i} mb="medium">
           {description && (
             <Heading fontSize="medium">

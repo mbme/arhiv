@@ -5,12 +5,10 @@ module.exports = {
     "node": true
   },
   "extends": [
-    "airbnb-typescript",
-    "airbnb/hooks",
+    "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    "plugin:import/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -18,14 +16,11 @@ module.exports = {
     "sourceType": "module"
   },
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "react-hooks"
   ],
-  settings: {
-    'import/resolver': {
-      'typescript': {},
-    },
-  },
   rules: {
+    "@typescript-eslint/no-unused-vars": "off",
     "no-underscore-dangle": "off",
     "arrow-parens": [
       "error",
@@ -61,16 +56,8 @@ module.exports = {
     "prefer-destructuring": "off",
     "prefer-arrow-callback": "off",
 
-    // imports
-    "import/prefer-default-export": "off",
-    "import/no-default-export": "error",
-
-    // react
-    "react/jsx-props-no-spreading": "off",
-    "react/state-in-constructor": "off",
-    "react/sort-comp": "off",
-    "react/jsx-one-expression-per-line": "off",
-    "react/prop-types": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
 
     // typescript-eslint
     "@typescript-eslint/adjacent-overload-signatures": "error",
@@ -112,7 +99,7 @@ module.exports = {
       }
     ],
     "@typescript-eslint/member-ordering": "off",
-    "@typescript-eslint/no-empty-function": "error",
+    "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "error",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-extraneous-class": "error",

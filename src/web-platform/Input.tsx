@@ -153,7 +153,6 @@ export class Input extends React.PureComponent<IProps> {
           placeholder={placeholder}
           onChange={this.onChange}
           onKeyDown={this.onKeyDown}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={autoFocus}
           onBlur={onBlur}
         />

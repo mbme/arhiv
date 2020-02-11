@@ -20,64 +20,46 @@ const tsPathResolver = (rootDir) => ({
 const baseDir = path.join(process.cwd(), 'tsdist/src')
 const webAppStatic = path.join(process.cwd(), 'tsdist/web-app-static')
 
-const plugins = [
-  tsPathResolver(baseDir),
+export default {
+  input: `${baseDir}/web-app/index`,
 
-  nodeResolve({
-    preferBuiltins: false,
-  }),
-
-  replace({
-    'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
-    'process.env.__BROWSER__': true,
-  }),
-
-  commonjs({
-    include: 'node_modules/**',
-
-    namedExports: {
-      'react': Object.keys(React),
-      'react-dom': Object.keys(ReactDOM)
-    },
-  }),
-]
-
-export default [
-  {
-    input: `${baseDir}/web-app/index`,
-
-    output: {
-      file: `${webAppStatic}/bundle.js`,
-      format: 'iife',
-      name: 'WebApp',
-      globals: {
-        'crypto': 'crypto', // use window.crypto in browser
-      },
-    },
-    external: ['crypto'],
-
-    treeshake: isProduction,
-
-    plugins,
-
-    watch: {
-      clearScreen: false,
-      include: `${baseDir}/**`,
-      exclude: ['node_modules/**'],
+  output: {
+    file: `${webAppStatic}/bundle.js`,
+    format: 'iife',
+    name: 'WebApp',
+    globals: {
+      'crypto': 'crypto', // use window.crypto in browser
     },
   },
+  external: ['crypto'],
 
-  {
-    input: `${baseDir}/web-app/serviceWorker`,
+  treeshake: isProduction,
 
-    output: {
-      file: `${webAppStatic}/serviceWorker.js`,
-      format: 'iife',
-      name: 'WebAppServiceWorker',
-    },
+  plugins: [
+    tsPathResolver(baseDir),
 
-    treeshake: isProduction,
+    nodeResolve({
+      preferBuiltins: false,
+    }),
 
-    plugins,
-  }
-]
+    replace({
+      'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+      'process.env.__BROWSER__': true,
+    }),
+
+    commonjs({
+      include: 'node_modules/**',
+
+      namedExports: {
+        'react': Object.keys(React),
+        'react-dom': Object.keys(ReactDOM)
+      },
+    }),
+  ],
+
+  watch: {
+    clearScreen: false,
+    include: `${baseDir}/**`,
+    exclude: ['node_modules/**'],
+  },
+},

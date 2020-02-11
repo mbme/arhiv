@@ -5,7 +5,6 @@ set -e
 # create empty file to make rollup --watch work
 mkdir -p tsdist/src/web-app
 touch tsdist/src/web-app/index.js
-touch tsdist/src/web-app/serviceWorker.js
 
 # web app typescript into javascript
 ./node_modules/.bin/tsc \

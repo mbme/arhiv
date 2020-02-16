@@ -1,4 +1,5 @@
 [workspace]
 members = [
   "arhiv-replica",
+  "arhiv-desktop-gtk",
 ]

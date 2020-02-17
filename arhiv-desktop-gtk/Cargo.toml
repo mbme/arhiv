@@ -3,8 +3,9 @@ name = "arhiv-desktop-gtk"
 version = "0.1.0"
 edition = "2018"
 
-[dependencies]
-webkit2gtk = "0.9.0"
+[dependencies.webkit2gtk]
+version = "0.9.0"
+features = ["v2_16"]
 
 [dependencies.gtk]
 version = "0.8.0"

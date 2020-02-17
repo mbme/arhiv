@@ -1,3 +1,6 @@
+pub mod documents;
+pub mod storage;
+
 #[cfg(test)]
 mod tests {
     #[test]

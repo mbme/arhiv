@@ -1,51 +1,90 @@
 use crate::entities::*;
 use anyhow::*;
+use state::StorageState;
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
+
+mod state;
 
 pub struct Storage {
     root_path: String,
 }
 
-fn ensure_dir_exists(path: &str, create: bool) -> Result<()> {
+// fn ensure_dir_exists(path: &str, create: bool) -> Result<()> {
+//     match fs::metadata(path) {
+//         Ok(metadata) if !metadata.is_dir() => {
+//             return Err(anyhow!("path isn't a directory: {}", path));
+//         }
+
+//         Ok(_) => Ok(()),
+
+//         Err(_) if create => {
+//             fs::create_dir(path).context(format!("Failed to create directory {}", path))?;
+//             Ok(())
+//         }
+
+//         Err(_) => Err(anyhow!("path doesn't exist {}", path)),
+//     }
+// }
+
+fn ensure_exists(path: &str, dir: bool) -> Result<()> {
     match fs::metadata(path) {
-        Ok(metadata) if !metadata.is_dir() => {
-            return Err(anyhow!("Replica root isn't a directory: {}", path));
+        Ok(metadata) if dir && !metadata.is_dir() => {
+            return Err(anyhow!("path isn't a directory: {}", path));
+        }
+
+        Ok(metadata) if !dir && !metadata.is_file() => {
+            return Err(anyhow!("path isn't a file: {}", path));
         }
 
         Ok(_) => Ok(()),
 
-        Err(_) if create => {
-            fs::create_dir(path)
-                .context(format!("Failed to create replica root directory {}", path))?;
-            Ok(())
-        }
-
-        Err(_) => Err(anyhow!("Replica root doesn't exist {}", path)),
+        Err(_) => Err(anyhow!("path doesn't exist {}", path)),
     }
 }
 
 impl Storage {
     pub fn open(path: &str) -> Result<Storage> {
-        Storage::open_or_create(path, false)
-    }
-
-    pub fn open_or_create(path: &str, create: bool) -> Result<Storage> {
         let replica = Storage {
             root_path: path.to_owned(),
         };
 
-        ensure_dir_exists(&replica.root_path, create)?;
-        ensure_dir_exists(&replica.get_documents_directory(), create)?;
-        ensure_dir_exists(&replica.get_documents_local_directory(), create)?;
-        ensure_dir_exists(&replica.get_attachments_directory(), create)?;
-        ensure_dir_exists(&replica.get_attachments_local_directory(), create)?;
-        ensure_dir_exists(&replica.get_attachments_data_directory(), create)?;
+        replica.assert_dirs_and_state()?;
 
         // TODO lock file
 
         Ok(replica)
+    }
+
+    pub fn create(path: &str, primary_url: &str) -> Result<Storage> {
+        if Path::new(path).exists() {
+            return Err(anyhow!("path already exists: {}", path));
+        }
+
+        let replica = Storage {
+            root_path: path.to_owned(),
+        };
+
+        StorageState::new(primary_url).write(&replica.get_state_file())?;
+
+        Ok(replica)
+    }
+
+    fn assert_dirs_and_state(&self) -> Result<()> {
+        ensure_exists(&self.root_path, true)?;
+        ensure_exists(&self.get_state_file(), false)?;
+        ensure_exists(&self.get_documents_directory(), true)?;
+        ensure_exists(&self.get_documents_local_directory(), true)?;
+        ensure_exists(&self.get_attachments_directory(), true)?;
+        ensure_exists(&self.get_attachments_local_directory(), true)?;
+        ensure_exists(&self.get_attachments_data_directory(), true)?;
+
+        Ok(())
+    }
+
+    fn get_state_file(&self) -> String {
+        format!("{}/arhiv-state.json", self.root_path)
     }
 
     fn get_documents_directory(&self) -> String {
@@ -86,6 +125,16 @@ impl Storage {
 
     fn get_attachment_data_path(&self, id: &str) -> String {
         format!("{}/{}", self.get_attachments_data_directory(), id)
+    }
+}
+
+impl Storage {
+    fn get_state(&self) -> StorageState {
+        StorageState::read(&self.get_state_file()).expect("must be able to read replica state file")
+    }
+
+    pub fn get_rev(&self) -> Revision {
+        self.get_state().replica_rev
     }
 }
 
@@ -146,5 +195,15 @@ impl Storage {
 
     pub fn get_attachment_local(&self, id: &str) -> Option<Attachment> {
         self.get_item(&self.get_attachment_local_path(id))
+    }
+}
+
+impl Storage {
+    pub fn get_changeset(&self) -> Changeset {
+        Changeset {
+            replica_rev: self.get_rev(),
+            documents: self.get_documents_local(),
+            attachments: self.get_attachments_local(),
+        }
     }
 }

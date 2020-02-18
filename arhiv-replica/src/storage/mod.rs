@@ -1,6 +1,7 @@
 use crate::entities::*;
 use anyhow::*;
 use state::StorageState;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -129,7 +130,8 @@ impl Storage {
 }
 
 impl Storage {
-    fn get_state(&self) -> StorageState {
+    pub fn get_state(&self) -> StorageState {
+        // TODO lazy
         StorageState::read(&self.get_state_file()).expect("must be able to read replica state file")
     }
 
@@ -199,11 +201,22 @@ impl Storage {
 }
 
 impl Storage {
-    pub fn get_changeset(&self) -> Changeset {
-        Changeset {
+    pub fn get_changeset(&self) -> (Changeset, HashMap<String, String>) {
+        let changeset = Changeset {
             replica_rev: self.get_rev(),
             documents: self.get_documents_local(),
             attachments: self.get_attachments_local(),
+        };
+
+        let mut files = HashMap::new();
+
+        for attachment in changeset.attachments.iter() {
+            files.insert(
+                attachment.id.clone(),
+                self.get_attachment_local_path(&attachment.id),
+            );
         }
+
+        (changeset, files)
     }
 }

@@ -1,5 +1,7 @@
 use crate::entities::*;
 use crate::storage::Storage;
+use anyhow::*;
+use reqwest::blocking::{multipart, Client};
 
 pub struct Replica {
     storage: Storage,
@@ -34,5 +36,20 @@ impl Replica {
         self.storage.get_document(id)
     }
 
-    fn sync(&self) {}
+    fn sync(&self) -> Result<()> {
+        let (changeset, files) = self.storage.get_changeset();
+
+        let mut form = multipart::Form::new().text("changeset", changeset.serialize());
+
+        for (id, path) in files {
+            form = form.file(id, path)?;
+        }
+
+        let resp = Client::new()
+            .post(&self.storage.get_state().primary_url)
+            .multipart(form)
+            .send()?;
+
+        Ok(())
+    }
 }

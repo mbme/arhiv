@@ -1,5 +1,6 @@
-pub mod documents;
-pub mod storage;
+pub mod entities;
+pub mod replica;
+mod storage;
 
 #[cfg(test)]
 mod tests {

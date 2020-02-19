@@ -12,23 +12,6 @@ pub struct Storage {
     root_path: String,
 }
 
-// fn ensure_dir_exists(path: &str, create: bool) -> Result<()> {
-//     match fs::metadata(path) {
-//         Ok(metadata) if !metadata.is_dir() => {
-//             return Err(anyhow!("path isn't a directory: {}", path));
-//         }
-
-//         Ok(_) => Ok(()),
-
-//         Err(_) if create => {
-//             fs::create_dir(path).context(format!("Failed to create directory {}", path))?;
-//             Ok(())
-//         }
-
-//         Err(_) => Err(anyhow!("path doesn't exist {}", path)),
-//     }
-// }
-
 fn ensure_exists(path: &str, dir: bool) -> Result<()> {
     match fs::metadata(path) {
         Ok(metadata) if dir && !metadata.is_dir() => {
@@ -58,16 +41,33 @@ impl Storage {
         Ok(replica)
     }
 
-    pub fn create(path: &str, primary_url: &str) -> Result<Storage> {
-        if Path::new(path).exists() {
-            return Err(anyhow!("path already exists: {}", path));
+    pub fn create(path_str: &str, primary_url: &str) -> Result<Storage> {
+        let path = Path::new(path_str);
+
+        if !path.is_absolute() {
+            return Err(anyhow!("path must be absolute: {}", path_str));
+        }
+
+        if path.exists() {
+            return Err(anyhow!("path already exists: {}", path_str));
         }
 
         let replica = Storage {
-            root_path: path.to_owned(),
+            root_path: path_str.to_owned(),
         };
 
+        // create required dirs
+        fs::create_dir(&replica.root_path)?;
+        fs::create_dir(&replica.get_documents_directory())?;
+        fs::create_dir(&replica.get_documents_local_directory())?;
+        fs::create_dir(&replica.get_attachments_directory())?;
+        fs::create_dir(&replica.get_attachments_local_directory())?;
+        fs::create_dir(&replica.get_attachments_data_directory())?;
+
+        // create state file
         StorageState::new(primary_url).write(&replica.get_state_file())?;
+
+        println!("created arhiv replica in {}", path_str);
 
         Ok(replica)
     }

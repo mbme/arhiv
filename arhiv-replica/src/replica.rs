@@ -14,10 +14,10 @@ impl Replica {
         }
     }
 
-    pub fn create(path: &str, primary_url: &str) -> Replica {
-        Replica {
-            storage: Storage::create(path, primary_url).expect("must be able to create storage"),
-        }
+    pub fn create(path: &str, primary_url: &str) -> Result<Replica> {
+        Ok(Replica {
+            storage: Storage::create(path, primary_url)?,
+        })
     }
 
     pub fn get_documents(&self) -> Vec<Document> {

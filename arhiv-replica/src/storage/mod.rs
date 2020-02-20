@@ -41,7 +41,7 @@ impl Storage {
         Ok(replica)
     }
 
-    pub fn create(path_str: &str, primary_url: &str) -> Result<Storage> {
+    pub fn create(path_str: &str) -> Result<Storage> {
         let path = Path::new(path_str);
 
         if !path.is_absolute() {
@@ -65,7 +65,7 @@ impl Storage {
         fs::create_dir(&replica.get_attachments_data_directory())?;
 
         // create state file
-        StorageState::new(primary_url).write(&replica.get_state_file())?;
+        StorageState::new().write(&replica.get_state_file())?;
 
         println!("created arhiv replica in {}", path_str);
 

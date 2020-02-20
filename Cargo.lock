@@ -30,7 +30,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "path-absolutize",
  "reqwest",
  "serde",
  "serde_json",
@@ -859,25 +858,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "path-absolutize"
-version = "1.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "265d16267b3791ec932b0295e9b1dad29c5315ceb5edd4f48f3f0456ba01877f"
-dependencies = [
- "path-dedot",
- "slash-formatter",
-]
-
-[[package]]
-name = "path-dedot"
-version = "1.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ee3abc848250ca4ebc13a41b0833723e8fc79dc70c441129a133c2a557830f8"
-dependencies = [
- "lazy_static",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1138,12 +1118,6 @@ name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
-
-[[package]]
-name = "slash-formatter"
-version = "2.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1327594da1d7a67977043c723273c3f218380d4f624fdd8ef6acd2dffd0e22b7"
 
 [[package]]
 name = "smallvec"

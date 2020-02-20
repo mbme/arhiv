@@ -1,3 +1,4 @@
+use crate::config::ArhivConfig;
 use crate::entities::*;
 use crate::storage::Storage;
 use anyhow::*;
@@ -5,18 +6,23 @@ use reqwest::blocking::{multipart, Client};
 
 pub struct Replica {
     storage: Storage,
+    config: ArhivConfig,
 }
 
 impl Replica {
-    pub fn open(path: &str) -> Replica {
+    pub fn open(config: ArhivConfig) -> Replica {
+        let root_dir = &config.arhiv_root.clone();
         Replica {
-            storage: Storage::open(path).expect("storage must exist"),
+            config,
+            storage: Storage::open(root_dir).expect("storage must exist"),
         }
     }
 
-    pub fn create(path: &str, primary_url: &str) -> Result<Replica> {
+    pub fn create(config: ArhivConfig) -> Result<Replica> {
+        let root_dir = &config.arhiv_root.clone();
         Ok(Replica {
-            storage: Storage::create(path, primary_url)?,
+            config,
+            storage: Storage::create(root_dir)?,
         })
     }
 
@@ -46,7 +52,7 @@ impl Replica {
         }
 
         let resp = Client::new()
-            .post(&self.storage.get_state().primary_url)
+            .post(&self.config.primary_url)
             .multipart(form)
             .send()?;
 

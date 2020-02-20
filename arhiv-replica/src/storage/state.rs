@@ -7,7 +7,6 @@ use std::fs;
 #[serde(rename_all = "camelCase")]
 pub struct StorageState {
     pub replica_rev: Revision,
-    pub primary_url: String,
 }
 
 impl StorageState {
@@ -29,11 +28,8 @@ impl std::str::FromStr for StorageState {
 }
 
 impl StorageState {
-    pub fn new(primary_url: &str) -> StorageState {
-        StorageState {
-            replica_rev: 0,
-            primary_url: primary_url.to_owned(),
-        }
+    pub fn new() -> StorageState {
+        StorageState { replica_rev: 0 }
     }
 
     pub fn ensure_exists(path: &str) -> Result<()> {

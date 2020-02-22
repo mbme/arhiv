@@ -1,4 +1,5 @@
 use crate::entities::*;
+use crate::utils::ensure_exists;
 use anyhow::*;
 use state::StorageState;
 use std::collections::HashMap;
@@ -10,22 +11,6 @@ mod state;
 
 pub struct Storage {
     root_path: String,
-}
-
-fn ensure_exists(path: &str, dir: bool) -> Result<()> {
-    match fs::metadata(path) {
-        Ok(metadata) if dir && !metadata.is_dir() => {
-            return Err(anyhow!("path isn't a directory: {}", path));
-        }
-
-        Ok(metadata) if !dir && !metadata.is_file() => {
-            return Err(anyhow!("path isn't a file: {}", path));
-        }
-
-        Ok(_) => Ok(()),
-
-        Err(_) => Err(anyhow!("path doesn't exist {}", path)),
-    }
 }
 
 impl Storage {
@@ -235,11 +220,41 @@ impl Storage {
         Ok(())
     }
 
+    pub fn put_document_local(&self, document: &Document) -> Result<()> {
+        fs::write(
+            self.get_document_local_path(&document.id),
+            document.serialize(),
+        )?;
+
+        Ok(())
+    }
+
     fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
         fs::write(
             self.get_attachment_path(&attachment.id),
             attachment.serialize(),
         )?;
+
+        Ok(())
+    }
+
+    pub fn put_attachment_local(&self, attachment: &Attachment) -> Result<()> {
+        fs::write(
+            self.get_attachment_local_path(&attachment.id),
+            attachment.serialize(),
+        )?;
+
+        Ok(())
+    }
+
+    pub fn put_attachment_data(&self, id: &Id, src: &str, move_file: bool) -> Result<()> {
+        let dst = self.get_attachment_data_path(id);
+
+        if move_file {
+            fs::rename(src, dst)?;
+        } else {
+            fs::copy(src, dst)?;
+        }
 
         Ok(())
     }

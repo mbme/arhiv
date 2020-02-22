@@ -1,7 +1,9 @@
 use crate::config::ArhivConfig;
 use crate::entities::*;
 use crate::storage::Storage;
+use crate::utils::ensure_exists;
 use anyhow::*;
+use chrono::Utc;
 use reqwest::blocking::{multipart, Client};
 
 pub struct Replica {
@@ -40,6 +42,46 @@ impl Replica {
         self.storage.get_document_local(id)?;
 
         self.storage.get_document(id)
+    }
+
+    pub fn save_document(&self, mut document: Document) {
+        document.rev = 0;
+        document.updated_at = Utc::now();
+
+        self.storage
+            .put_document_local(&document)
+            .expect("must be able to save local document");
+    }
+
+    pub fn get_attachments(&self) -> Vec<Attachment> {
+        let mut attachments = self.storage.get_attachments_local();
+
+        attachments.append(&mut self.storage.get_attachments());
+
+        attachments.dedup_by_key(|attachment| attachment.id.clone());
+
+        attachments
+    }
+
+    pub fn get_attachment(&self, id: &Id) -> Option<Attachment> {
+        self.storage.get_attachment_local(id)?;
+
+        self.storage.get_attachment(id)
+    }
+
+    pub fn save_attachment(&self, file: &str, move_file: bool) -> Attachment {
+        ensure_exists(file, false).expect("new attachment file must exist");
+
+        let attachment = Attachment::new();
+
+        self.storage
+            .put_attachment_local(&attachment)
+            .expect("must be able to save local attachment");
+        self.storage
+            .put_attachment_data(&attachment.id, file, move_file)
+            .expect("must be able to save local attachment data");
+
+        attachment
     }
 
     pub fn sync(&self) -> Result<()> {

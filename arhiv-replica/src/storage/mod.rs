@@ -34,7 +34,13 @@ impl Storage {
             root_path: path.to_owned(),
         };
 
-        replica.assert_dirs_and_state()?;
+        ensure_exists(&replica.root_path, true)?;
+        ensure_exists(&replica.get_state_file(), false)?;
+        ensure_exists(&replica.get_documents_directory(), true)?;
+        ensure_exists(&replica.get_documents_local_directory(), true)?;
+        ensure_exists(&replica.get_attachments_directory(), true)?;
+        ensure_exists(&replica.get_attachments_local_directory(), true)?;
+        ensure_exists(&replica.get_attachments_data_directory(), true)?;
 
         // TODO lock file
 
@@ -72,18 +78,6 @@ impl Storage {
         Ok(replica)
     }
 
-    fn assert_dirs_and_state(&self) -> Result<()> {
-        ensure_exists(&self.root_path, true)?;
-        ensure_exists(&self.get_state_file(), false)?;
-        ensure_exists(&self.get_documents_directory(), true)?;
-        ensure_exists(&self.get_documents_local_directory(), true)?;
-        ensure_exists(&self.get_attachments_directory(), true)?;
-        ensure_exists(&self.get_attachments_local_directory(), true)?;
-        ensure_exists(&self.get_attachments_data_directory(), true)?;
-
-        Ok(())
-    }
-
     fn get_state_file(&self) -> String {
         format!("{}/arhiv-state.json", self.root_path)
     }
@@ -108,23 +102,23 @@ impl Storage {
         format!("{}/attachments-data", self.root_path)
     }
 
-    fn get_document_path(&self, id: &str) -> String {
+    fn get_document_path(&self, id: &Id) -> String {
         format!("{}/{}.json", self.get_documents_directory(), id)
     }
 
-    fn get_document_local_path(&self, id: &str) -> String {
+    fn get_document_local_path(&self, id: &Id) -> String {
         format!("{}/{}.json", self.get_documents_local_directory(), id)
     }
 
-    fn get_attachment_path(&self, id: &str) -> String {
+    fn get_attachment_path(&self, id: &Id) -> String {
         format!("{}/{}.json", self.get_attachments_directory(), id)
     }
 
-    fn get_attachment_local_path(&self, id: &str) -> String {
+    fn get_attachment_local_path(&self, id: &Id) -> String {
         format!("{}/{}.json", self.get_attachments_local_directory(), id)
     }
 
-    fn get_attachment_data_path(&self, id: &str) -> String {
+    fn get_attachment_data_path(&self, id: &Id) -> String {
         format!("{}/{}", self.get_attachments_data_directory(), id)
     }
 }
@@ -137,6 +131,21 @@ impl Storage {
 
     pub fn get_rev(&self) -> Revision {
         self.get_state().replica_rev
+    }
+
+    fn set_rev(&self, new_rev: Revision) {
+        let mut state = self.get_state();
+
+        assert_eq!(
+            new_rev > state.replica_rev,
+            true,
+            "new rev must be greater than current rev"
+        );
+        state.replica_rev = new_rev;
+
+        state
+            .write(&self.get_state_file())
+            .expect("must be able to write replica state file");
     }
 }
 
@@ -183,19 +192,19 @@ impl Storage {
         self.get_items(&self.get_attachments_local_directory())
     }
 
-    pub fn get_document(&self, id: &str) -> Option<Document> {
+    pub fn get_document(&self, id: &Id) -> Option<Document> {
         self.get_item(&self.get_document_path(id))
     }
 
-    pub fn get_document_local(&self, id: &str) -> Option<Document> {
+    pub fn get_document_local(&self, id: &Id) -> Option<Document> {
         self.get_item(&self.get_document_local_path(id))
     }
 
-    pub fn get_attachment(&self, id: &str) -> Option<Attachment> {
+    pub fn get_attachment(&self, id: &Id) -> Option<Attachment> {
         self.get_item(&self.get_attachment_path(id))
     }
 
-    pub fn get_attachment_local(&self, id: &str) -> Option<Attachment> {
+    pub fn get_attachment_local(&self, id: &Id) -> Option<Attachment> {
         self.get_item(&self.get_attachment_local_path(id))
     }
 }
@@ -218,5 +227,59 @@ impl Storage {
         }
 
         (changeset, files)
+    }
+
+    fn put_document(&self, document: &Document) -> Result<()> {
+        fs::write(self.get_document_path(&document.id), document.serialize())?;
+
+        Ok(())
+    }
+
+    fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
+        fs::write(
+            self.get_attachment_path(&attachment.id),
+            attachment.serialize(),
+        )?;
+
+        Ok(())
+    }
+
+    fn remove_local_document(&self, id: &Id) -> Result<()> {
+        fs::remove_file(self.get_document_local_path(id))?;
+
+        Ok(())
+    }
+
+    fn remove_local_attachment(&self, id: &Id) -> Result<()> {
+        fs::remove_file(self.get_attachment_local_path(id))?;
+
+        Ok(())
+    }
+
+    fn remove_attachment_data(&self, id: &Id) -> Result<()> {
+        fs::remove_file(self.get_attachment_data_path(id))?;
+
+        Ok(())
+    }
+
+    pub fn apply_changeset_response(&self, result: ChangesetResponse) -> Result<()> {
+        if result.replica_rev != self.get_rev() {
+            return Err(anyhow!("replica_rev isn't equal to current rev"));
+        }
+
+        for document in result.documents {
+            self.put_document(&document)?;
+            self.remove_local_document(&document.id)?;
+        }
+
+        for attachment in result.attachments {
+            self.put_attachment(&attachment)?;
+            self.remove_local_attachment(&attachment.id)?;
+            self.remove_attachment_data(&attachment.id)?;
+        }
+
+        self.set_rev(result.primary_rev);
+
+        Ok(())
     }
 }

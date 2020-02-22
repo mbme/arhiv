@@ -36,13 +36,13 @@ impl Replica {
         documents
     }
 
-    pub fn get_document(&self, id: &str) -> Option<Document> {
+    pub fn get_document(&self, id: &Id) -> Option<Document> {
         self.storage.get_document_local(id)?;
 
         self.storage.get_document(id)
     }
 
-    fn sync(&self) -> Result<()> {
+    pub fn sync(&self) -> Result<()> {
         let (changeset, files) = self.storage.get_changeset();
 
         let mut form = multipart::Form::new().text("changeset", changeset.serialize());
@@ -51,11 +51,13 @@ impl Replica {
             form = form.file(id, path)?;
         }
 
-        let resp = Client::new()
+        let resp: ChangesetResponse = Client::new()
             .post(&self.config.primary_url)
             .multipart(form)
-            .send()?;
+            .send()?
+            .text()?
+            .parse()?;
 
-        Ok(())
+        self.storage.apply_changeset_response(resp)
     }
 }

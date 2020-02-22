@@ -17,17 +17,13 @@ pub struct Document {
     schema_version: u8,
     created_at: Moment,
     updated_at: Moment,
-    refs: Vec<String>,
-    attachment_refs: Vec<String>,
+    refs: Vec<Id>,
+    attachment_refs: Vec<Id>,
     deleted: bool,
     props: HashMap<String, Value>,
 }
 
 impl Document {
-    pub fn parse(src: &str) -> Result<Document> {
-        serde_json::from_str(src).context("Failed to parse document json")
-    }
-
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
     }
@@ -37,7 +33,7 @@ impl std::str::FromStr for Document {
     type Err = anyhow::Error;
 
     fn from_str(data: &str) -> Result<Document> {
-        Document::parse(data)
+        serde_json::from_str(data).context("Failed to parse document json")
     }
 }
 
@@ -50,10 +46,6 @@ pub struct Attachment {
 }
 
 impl Attachment {
-    pub fn parse(src: &str) -> Result<Attachment> {
-        serde_json::from_str(src).context("Failed to parse attachment json")
-    }
-
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize attachment to json")
     }
@@ -63,7 +55,7 @@ impl std::str::FromStr for Attachment {
     type Err = anyhow::Error;
 
     fn from_str(data: &str) -> Result<Attachment> {
-        Attachment::parse(data)
+        serde_json::from_str(data).context("Failed to parse attachment json")
     }
 }
 
@@ -81,48 +73,26 @@ impl Changeset {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum ChangesetResponseStatus {
-    Accepted,
-    Outdated,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangesetResponse {
-    status: ChangesetResponseStatus,
-
     // replica storage revision
-    replica_rev: Revision,
+    pub replica_rev: Revision,
 
     // primary storage revision
-    primary_rev: Revision,
+    pub primary_rev: Revision,
 
     // documents with rev > replica_rev
-    documents: Vec<Document>,
+    pub documents: Vec<Document>,
 
     // attachments with rev > replica_rev
-    attachments: Vec<Attachment>,
+    pub attachments: Vec<Attachment>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl std::str::FromStr for ChangesetResponse {
+    type Err = anyhow::Error;
 
-    #[test]
-    fn it_can_serialize_changeset_response_status() {
-        assert_eq!(
-            serde_json::to_string(&ChangesetResponseStatus::Outdated).unwrap(),
-            r#""outdated""#
-        );
-    }
-
-    #[test]
-    fn it_can_parse_changeset_response_status() {
-        assert_eq!(
-            serde_json::from_str::<ChangesetResponseStatus>(r#""accepted""#).unwrap(),
-            ChangesetResponseStatus::Accepted
-        );
+    fn from_str(data: &str) -> Result<ChangesetResponse> {
+        serde_json::from_str(data).context("Failed to parse ChangesetResponse")
     }
 }

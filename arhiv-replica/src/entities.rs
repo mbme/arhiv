@@ -1,11 +1,11 @@
 use anyhow::*;
+use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
 pub type Revision = u32;
 pub type Id = String;
-pub type Moment = String;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -15,8 +15,8 @@ pub struct Document {
     #[serde(rename = "type")]
     document_type: String,
     schema_version: u8,
-    created_at: Moment,
-    updated_at: Moment,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
     refs: Vec<Id>,
     attachment_refs: Vec<Id>,
     deleted: bool,
@@ -42,7 +42,7 @@ impl std::str::FromStr for Document {
 pub struct Attachment {
     pub id: Id,
     rev: Revision,
-    created_at: Moment,
+    created_at: DateTime<Utc>,
 }
 
 impl Attachment {

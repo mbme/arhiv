@@ -3,6 +3,9 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use uuid::Uuid;
+
+pub const SCHEMA_VERSION: u8 = 1;
 
 pub type Revision = u32;
 pub type Id = String;
@@ -11,19 +14,36 @@ pub type Id = String;
 #[serde(rename_all = "camelCase")]
 pub struct Document {
     pub id: Id,
-    rev: Revision,
+    pub rev: Revision,
     #[serde(rename = "type")]
-    document_type: String,
-    schema_version: u8,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    refs: Vec<Id>,
-    attachment_refs: Vec<Id>,
-    deleted: bool,
-    props: HashMap<String, Value>,
+    pub document_type: String,
+    pub schema_version: u8,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub refs: Vec<Id>,
+    pub attachment_refs: Vec<Id>,
+    pub deleted: bool,
+    pub props: HashMap<String, Value>,
 }
 
 impl Document {
+    pub fn new(document_type: &str) -> Document {
+        let now = Utc::now();
+
+        Document {
+            id: gen_id(),
+            rev: 0,
+            document_type: document_type.to_string(),
+            schema_version: SCHEMA_VERSION,
+            created_at: now,
+            updated_at: now,
+            refs: vec![],
+            attachment_refs: vec![],
+            deleted: false,
+            props: HashMap::new(),
+        }
+    }
+
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
     }
@@ -41,11 +61,19 @@ impl std::str::FromStr for Document {
 #[serde(rename_all = "camelCase")]
 pub struct Attachment {
     pub id: Id,
-    rev: Revision,
-    created_at: DateTime<Utc>,
+    pub rev: Revision,
+    pub created_at: DateTime<Utc>,
 }
 
 impl Attachment {
+    pub fn new() -> Attachment {
+        Attachment {
+            id: gen_id(),
+            rev: 0,
+            created_at: Utc::now(),
+        }
+    }
+
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize attachment to json")
     }
@@ -95,4 +123,8 @@ impl std::str::FromStr for ChangesetResponse {
     fn from_str(data: &str) -> Result<ChangesetResponse> {
         serde_json::from_str(data).context("Failed to parse ChangesetResponse")
     }
+}
+
+fn gen_id() -> Id {
+    Uuid::new_v4().to_hyphenated().to_string()
 }

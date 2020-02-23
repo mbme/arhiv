@@ -1,10 +1,9 @@
-use arhiv_replica::config::ArhivConfig;
-use arhiv_replica::replica::Replica;
+use arhiv_replica::replica::{Replica, ReplicaConfig};
 use clap::{crate_version, App};
 use std::env;
 use std::fs;
 
-fn read_config() -> ArhivConfig {
+fn read_config() -> ReplicaConfig {
     let path = &format!(
         "{}/arhiv-config.json",
         env::var("CARGO_MANIFEST_DIR").expect("env var CARGO_MANIFEST_DIR must be set")

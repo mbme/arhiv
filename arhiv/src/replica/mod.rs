@@ -1,20 +1,21 @@
-use crate::config::ArhivConfig;
 use crate::entities::*;
 use crate::utils::ensure_exists;
 use anyhow::*;
 use chrono::Utc;
+pub use config::ReplicaConfig;
 use reqwest::blocking::{multipart, Client};
 use storage::Storage;
 
+mod config;
 mod storage;
 
 pub struct Replica {
     storage: Storage,
-    config: ArhivConfig,
+    config: ReplicaConfig,
 }
 
 impl Replica {
-    pub fn open(config: ArhivConfig) -> Replica {
+    pub fn open(config: ReplicaConfig) -> Replica {
         let root_dir = &config.arhiv_root.clone();
         Replica {
             config,
@@ -22,7 +23,7 @@ impl Replica {
         }
     }
 
-    pub fn create(config: ArhivConfig) -> Result<Replica> {
+    pub fn create(config: ReplicaConfig) -> Result<Replica> {
         let root_dir = &config.arhiv_root.clone();
         Ok(Replica {
             config,

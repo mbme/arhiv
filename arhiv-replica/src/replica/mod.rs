@@ -1,10 +1,12 @@
 use crate::config::ArhivConfig;
 use crate::entities::*;
-use crate::storage::Storage;
 use crate::utils::ensure_exists;
 use anyhow::*;
 use chrono::Utc;
 use reqwest::blocking::{multipart, Client};
+use storage::Storage;
+
+mod storage;
 
 pub struct Replica {
     storage: Storage,

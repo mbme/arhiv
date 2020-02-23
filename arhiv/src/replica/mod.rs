@@ -4,6 +4,7 @@ use anyhow::*;
 use chrono::Utc;
 pub use config::ReplicaConfig;
 use reqwest::blocking::{multipart, Client};
+use std::collections::HashMap;
 use storage::Storage;
 
 mod config;
@@ -32,18 +33,10 @@ impl Replica {
     }
 
     pub fn get_documents(&self) -> Vec<Document> {
-        let mut documents = self.storage.get_documents_local();
-
-        documents.append(&mut self.storage.get_documents());
-
-        documents.dedup_by_key(|document| document.id.clone());
-
-        documents
+        self.storage.get_documents()
     }
 
     pub fn get_document(&self, id: &Id) -> Option<Document> {
-        self.storage.get_document_local(id)?;
-
         self.storage.get_document(id)
     }
 
@@ -52,23 +45,15 @@ impl Replica {
         document.updated_at = Utc::now();
 
         self.storage
-            .put_document_local(&document)
+            .put_document(&document)
             .expect("must be able to save local document");
     }
 
     pub fn get_attachments(&self) -> Vec<Attachment> {
-        let mut attachments = self.storage.get_attachments_local();
-
-        attachments.append(&mut self.storage.get_attachments());
-
-        attachments.dedup_by_key(|attachment| attachment.id.clone());
-
-        attachments
+        self.storage.get_attachments()
     }
 
     pub fn get_attachment(&self, id: &Id) -> Option<Attachment> {
-        self.storage.get_attachment_local(id)?;
-
         self.storage.get_attachment(id)
     }
 
@@ -78,7 +63,7 @@ impl Replica {
         let attachment = Attachment::new();
 
         self.storage
-            .put_attachment_local(&attachment)
+            .put_attachment(&attachment)
             .expect("must be able to save local attachment");
         self.storage
             .put_attachment_data(&attachment.id, file, move_file)
@@ -87,8 +72,39 @@ impl Replica {
         attachment
     }
 
+    fn get_documents_local(&self) -> Vec<Document> {
+        self.storage
+            .get_documents()
+            .into_iter()
+            .filter(|item| item.rev > 0)
+            .collect()
+    }
+
+    fn get_attachments_local(&self) -> Vec<Attachment> {
+        self.storage
+            .get_attachments()
+            .into_iter()
+            .filter(|item| item.rev > 0)
+            .collect()
+    }
+
     pub fn sync(&self) -> Result<()> {
-        let (changeset, files) = self.storage.get_changeset();
+        let rev = self.storage.get_rev();
+
+        let changeset = Changeset {
+            replica_rev: rev,
+            documents: self.get_documents_local(),
+            attachments: self.get_attachments_local(),
+        };
+
+        let mut files = HashMap::new();
+
+        for attachment in changeset.attachments.iter() {
+            files.insert(
+                attachment.id.clone(),
+                self.storage.get_attachment_data_path(&attachment.id),
+            );
+        }
 
         let mut form = multipart::Form::new().text("changeset", changeset.serialize());
 
@@ -103,6 +119,21 @@ impl Replica {
             .text()?
             .parse()?;
 
-        self.storage.apply_changeset_response(resp)
+        if resp.replica_rev != rev {
+            return Err(anyhow!("replica_rev isn't equal to current rev"));
+        }
+
+        for document in resp.documents {
+            self.storage.put_document(&document)?;
+        }
+
+        for attachment in resp.attachments {
+            self.storage.put_attachment(&attachment)?;
+            self.storage.remove_attachment_data(&attachment.id)?;
+        }
+
+        self.storage.set_rev(resp.primary_rev);
+
+        Ok(())
     }
 }

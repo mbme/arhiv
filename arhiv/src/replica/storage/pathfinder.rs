@@ -5,10 +5,8 @@ pub struct PathFinder {
 }
 
 impl PathFinder {
-    pub fn new(root_path: &str) -> PathFinder {
-        PathFinder {
-            root_path: root_path.to_string(),
-        }
+    pub fn new(root_path: String) -> PathFinder {
+        PathFinder { root_path }
     }
 
     pub fn get_state_file(&self) -> String {

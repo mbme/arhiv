@@ -2,7 +2,7 @@ use crate::entities::*;
 use crate::utils::ensure_exists;
 use anyhow::*;
 use pathfinder::PathFinder;
-use state::StorageState;
+use state::{StateDTO, StorageState};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -12,13 +12,14 @@ mod state;
 
 pub struct Storage {
     pf: PathFinder,
+    state: StorageState,
 }
 
 impl Storage {
     pub fn open(path: &str) -> Result<Storage> {
-        let replica = Storage {
-            pf: PathFinder::new(path),
-        };
+        let pf = PathFinder::new(path.to_string());
+        let state = StorageState::new(pf.get_state_file());
+        let replica = Storage { pf, state };
 
         ensure_exists(&replica.pf.root_path, true)?;
         ensure_exists(&replica.pf.get_state_file(), false)?;
@@ -42,9 +43,9 @@ impl Storage {
             return Err(anyhow!("path already exists: {}", path_str));
         }
 
-        let replica = Storage {
-            pf: PathFinder::new(path_str),
-        };
+        let pf = PathFinder::new(path_str.to_string());
+        let state = StorageState::new(pf.get_state_file());
+        let replica = Storage { pf, state };
 
         // create required dirs
         fs::create_dir(&replica.pf.root_path)?;
@@ -53,7 +54,7 @@ impl Storage {
         fs::create_dir(&replica.pf.get_attachments_data_directory())?;
 
         // create state file
-        StorageState::new().write(&replica.pf.get_state_file())?;
+        replica.state.write(StateDTO { replica_rev: 0 })?;
 
         println!("created arhiv replica in {}", path_str);
 
@@ -62,28 +63,23 @@ impl Storage {
 }
 
 impl Storage {
-    pub fn get_state(&self) -> StorageState {
-        // TODO lazy
-        StorageState::read(&self.pf.get_state_file())
-            .expect("must be able to read replica state file")
-    }
-
     pub fn get_rev(&self) -> Revision {
-        self.get_state().replica_rev
+        self.state.read().unwrap().replica_rev
     }
 
     pub fn set_rev(&self, new_rev: Revision) {
-        let mut state = self.get_state();
+        let current_rev = self.get_rev();
 
         assert_eq!(
-            new_rev > state.replica_rev,
+            new_rev > current_rev,
             true,
             "new rev must be greater than current rev"
         );
-        state.replica_rev = new_rev;
 
-        state
-            .write(&self.pf.get_state_file())
+        self.state
+            .write(StateDTO {
+                replica_rev: new_rev,
+            })
             .expect("must be able to write replica state file");
     }
 

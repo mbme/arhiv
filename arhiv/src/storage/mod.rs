@@ -40,7 +40,7 @@ impl Storage {
         pf.create_dirs()?; // create required dirs
 
         let state = StorageState::new(root_path);
-        state.init()?; // create state file
+        state.write(StateDTO { rev: 0 })?;
 
         let replica = Storage { pf, state };
 

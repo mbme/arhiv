@@ -37,8 +37,4 @@ impl StorageState {
     pub fn asset_exists(&self) -> Result<()> {
         ensure_exists(&self.file_path, false)
     }
-
-    pub fn init(&self) -> Result<()> {
-        self.write(StateDTO { rev: 0 })
-    }
 }

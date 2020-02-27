@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use storage::Storage;
 
 mod config;
+mod state;
 mod storage;
 
 pub struct Replica {

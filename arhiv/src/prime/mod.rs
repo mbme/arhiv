@@ -3,6 +3,7 @@ use config::PrimeConfig;
 use storage::Storage;
 
 mod config;
+mod state;
 mod storage;
 
 pub struct Prime {

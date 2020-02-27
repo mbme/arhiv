@@ -34,7 +34,7 @@ impl StorageState {
         fs::write(&self.file_path, state_str).context("failed to save storage state")
     }
 
-    pub fn asset_exists(&self) -> Result<()> {
+    pub fn assert_exists(&self) -> Result<()> {
         ensure_exists(&self.file_path, false)
     }
 }

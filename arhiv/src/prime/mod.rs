@@ -1,6 +1,6 @@
 use crate::entities::*;
 use anyhow::*;
-use config::PrimeConfig;
+pub use config::PrimeConfig;
 use std::collections::HashMap;
 use storage::Storage;
 
@@ -63,6 +63,7 @@ impl Prime {
         let new_rev = rev + 1;
 
         for mut document in changeset.documents {
+            // FIXME merge documents
             document.rev = new_rev;
             self.storage.put_document(&document)?;
         }

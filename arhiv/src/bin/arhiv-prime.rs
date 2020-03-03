@@ -1,11 +1,11 @@
-use arhiv_replica::replica::{Replica, ReplicaConfig};
+use arhiv_replica::prime::{Prime, PrimeConfig};
 use clap::{crate_version, App};
 use std::env;
 use std::fs;
 
-fn read_config() -> ReplicaConfig {
+fn read_config() -> PrimeConfig {
     let path = &format!(
-        "{}/arhiv-config.json",
+        "{}/arhiv-prime.json",
         env::var("CARGO_MANIFEST_DIR").expect("env var CARGO_MANIFEST_DIR must be set")
     );
 
@@ -16,16 +16,16 @@ fn read_config() -> ReplicaConfig {
 }
 
 fn main() {
-    let mut app = App::new("arhiv-replica")
-        .subcommand(App::new("init").about("Initialize replica on local machine"))
-        .subcommand(App::new("sync").about("Trigger sync with primary server"))
+    let mut app = App::new("arhiv-prime")
+        .subcommand(App::new("init").about("Initialize prime server"))
+        .subcommand(App::new("server").about("Run prime server"))
         .version(crate_version!());
 
     let matches = app.clone().get_matches();
 
     match matches.subcommand() {
         ("init", Some(_)) => {
-            Replica::create(read_config()).expect("must be able to create replica");
+            Prime::create(read_config()).expect("must be able to create prime");
         }
         _ => app.print_help().unwrap(),
     }

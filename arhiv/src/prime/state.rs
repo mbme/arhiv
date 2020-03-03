@@ -2,12 +2,15 @@ use crate::entities::*;
 use crate::utils::ensure_exists;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct StateDTO {
     pub rev: Revision,
+    pub documents: HashMap<Id, Revision>,
+    pub attachments: HashMap<Id, Revision>,
 }
 
 pub struct StorageState {

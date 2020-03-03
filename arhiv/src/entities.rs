@@ -99,6 +99,10 @@ impl Changeset {
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize Changeset to json")
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty() && self.attachments.is_empty()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -18,7 +18,7 @@ fn read_config() -> PrimeConfig {
 fn main() {
     let mut app = App::new("arhiv-prime")
         .subcommand(App::new("init").about("Initialize prime server"))
-        .subcommand(App::new("server").about("Run prime server"))
+        .subcommand(App::new("start").about("Run prime server"))
         .version(crate_version!());
 
     let matches = app.clone().get_matches();
@@ -26,6 +26,10 @@ fn main() {
     match matches.subcommand() {
         ("init", Some(_)) => {
             Prime::create(read_config()).expect("must be able to create prime");
+        }
+        ("start", Some(_)) => {
+            let prime = Prime::open(read_config()).expect("must be able to open prime");
+            prime.start_server();
         }
         _ => app.print_help().unwrap(),
     }

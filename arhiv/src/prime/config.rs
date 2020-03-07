@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct PrimeConfig {
     pub arhiv_root: String,
-    pub port: u8,
+    pub port: u16,
 }
 
 impl std::str::FromStr for PrimeConfig {

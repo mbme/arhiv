@@ -5,6 +5,7 @@ use chrono::Utc;
 pub use config::ReplicaConfig;
 use reqwest::blocking::{multipart, Client};
 use std::collections::HashMap;
+use std::path::Path;
 use storage::Storage;
 
 mod config;
@@ -61,7 +62,13 @@ impl Replica {
     pub fn save_attachment(&self, file: &str, move_file: bool) -> Attachment {
         ensure_exists(file, false).expect("new attachment file must exist");
 
-        let attachment = Attachment::new();
+        let attachment = Attachment::new(
+            Path::new(file)
+                .file_name()
+                .expect("file must have name")
+                .to_str()
+                .unwrap(),
+        );
 
         self.storage
             .put_attachment(&attachment)

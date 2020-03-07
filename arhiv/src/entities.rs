@@ -63,14 +63,16 @@ pub struct Attachment {
     pub id: Id,
     pub rev: Revision,
     pub created_at: DateTime<Utc>,
+    pub filename: String,
 }
 
 impl Attachment {
-    pub fn new() -> Attachment {
+    pub fn new(filename: &str) -> Attachment {
         Attachment {
             id: gen_id(),
             rev: 0,
             created_at: Utc::now(),
+            filename: filename.to_owned(),
         }
     }
 

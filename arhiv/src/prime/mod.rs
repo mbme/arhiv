@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use storage::Storage;
 
 mod config;
+mod server;
 mod state;
 mod storage;
 
@@ -14,12 +15,13 @@ pub struct Prime {
 }
 
 impl Prime {
-    pub fn open(config: PrimeConfig) -> Prime {
+    pub fn open(config: PrimeConfig) -> Result<Prime> {
         let root_dir = &config.arhiv_root.clone();
-        Prime {
+
+        Ok(Prime {
             config,
-            storage: Storage::open(root_dir).expect("storage must exist"),
-        }
+            storage: Storage::open(root_dir)?,
+        })
     }
 
     pub fn create(config: PrimeConfig) -> Result<Prime> {

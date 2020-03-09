@@ -1,7 +1,6 @@
 use crate::entities::*;
 use anyhow::*;
 pub use config::PrimeConfig;
-use std::collections::HashMap;
 use storage::Storage;
 
 mod config;
@@ -44,11 +43,7 @@ impl Prime {
         }
     }
 
-    pub fn exchange(
-        &self,
-        changeset: Changeset,
-        files: HashMap<String, String>,
-    ) -> Result<ChangesetResponse> {
+    pub fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
         let rev = self.storage.get_rev();
         if changeset.replica_rev > rev {
             return Err(anyhow!(
@@ -72,10 +67,8 @@ impl Prime {
 
         for mut attachment in changeset.attachments {
             attachment.rev = new_rev;
-            if let Some(file_path) = files.get(&attachment.id) {
+            if self.storage.has_attachment_data(&attachment.id) {
                 self.storage.add_attachment(&attachment)?;
-                self.storage
-                    .add_attachment_data(&attachment.id, file_path, true)?;
             } else {
                 return Err(anyhow!("Got attachment {} without a file", attachment.id));
             }

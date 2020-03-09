@@ -3,8 +3,8 @@ use crate::utils::ensure_exists;
 use anyhow::*;
 use chrono::Utc;
 pub use config::ReplicaConfig;
-use reqwest::blocking::{multipart, Client};
-use std::collections::HashMap;
+use reqwest::blocking::Client;
+use std::fs::File;
 use std::path::Path;
 use storage::Storage;
 
@@ -105,24 +105,26 @@ impl Replica {
             attachments: self.get_attachments_local(),
         };
 
-        let mut files = HashMap::new();
-
         for attachment in changeset.attachments.iter() {
-            files.insert(
-                attachment.id.clone(),
-                self.storage.get_attachment_data_path(&attachment.id),
-            );
-        }
+            // FIXME async parallel upload
+            let file = File::open(self.storage.get_attachment_data_path(&attachment.id))?;
 
-        let mut form = multipart::Form::new().text("changeset", changeset.serialize());
+            let res = Client::new()
+                .post(&self.config.primary_url)
+                .body(file)
+                .send()?;
 
-        for (id, path) in files {
-            form = form.file(id, path)?;
+            if !res.status().is_success() {
+                return Err(anyhow!(
+                    "failed to upload attachment data {}",
+                    &attachment.id
+                ));
+            }
         }
 
         let resp: ChangesetResponse = Client::new()
             .post(&self.config.primary_url)
-            .multipart(form)
+            .json(&changeset)
             .send()?
             .text()?
             .parse()?;

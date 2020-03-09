@@ -70,7 +70,7 @@ impl Storage {
         format!("{}/{}.json", self.pf.get_attachments_directory(), id)
     }
 
-    fn get_attachment_data_path(&self, id: &Id) -> String {
+    pub fn get_attachment_data_path(&self, id: &Id) -> String {
         format!("{}/{}", self.pf.get_attachments_data_directory(), id)
     }
 }
@@ -142,6 +142,17 @@ impl Storage {
         Ok(())
     }
 
+    pub fn write_attachment_data(&self, id: &Id, bytes: &[u8]) -> Result<()> {
+        let dst = self.get_attachment_data_path(id);
+        if Path::new(&dst).exists() {
+            return Err(anyhow!("attachment data {} already exists", dst));
+        }
+
+        fs::write(dst, bytes)?;
+
+        Ok(())
+    }
+
     pub fn add_attachment_data(&self, id: &Id, src: &str, move_file: bool) -> Result<()> {
         let dst = self.get_attachment_data_path(id);
         if Path::new(&dst).exists() {
@@ -155,5 +166,10 @@ impl Storage {
         }
 
         Ok(())
+    }
+
+    pub fn has_attachment_data(&self, id: &Id) -> bool {
+        let dst = self.get_attachment_data_path(id);
+        Path::new(&dst).exists()
     }
 }

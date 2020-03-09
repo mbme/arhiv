@@ -16,6 +16,8 @@ fn read_config() -> ReplicaConfig {
 }
 
 fn main() {
+    env_logger::init();
+
     let mut app = App::new("arhiv-replica")
         .subcommand(App::new("init").about("Initialize replica on local machine"))
         .subcommand(App::new("sync").about("Trigger sync with primary server"))

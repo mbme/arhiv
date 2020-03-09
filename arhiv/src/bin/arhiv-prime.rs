@@ -16,6 +16,8 @@ fn read_config() -> PrimeConfig {
 }
 
 fn main() {
+    env_logger::init();
+
     let mut app = App::new("arhiv-prime")
         .subcommand(App::new("init").about("Initialize prime server"))
         .subcommand(App::new("start").about("Run prime server"))

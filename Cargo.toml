@@ -2,4 +2,5 @@
 members = [
   "arhiv",
   "arhiv-desktop-gtk",
+  "poshta",
 ]

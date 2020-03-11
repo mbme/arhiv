@@ -29,6 +29,7 @@ impl AppShell {
             window.add(&scrolled_window);
 
             window.show_all();
+
             let inspector = webview.get_inspector().unwrap();
             println!("attached: {}", inspector.is_attached());
             inspector.attach();
@@ -42,6 +43,7 @@ impl AppShell {
                     println!("execution result {:?}", result);
                 },
             );
+            webview.run_javascript(include_str!("./rpc.js"), None::<&gio::Cancellable>, |_| {});
 
             // window.connect_delete_event(|_, _| {
             //     gtk::main_quit();
@@ -57,18 +59,29 @@ impl AppShell {
     fn load_file(html_file: &Path) -> Result<WebView> {
         let webview = WebView::new();
         let html_content = fs::read_to_string(html_file)?;
+
         webview.load_html(
             &html_content,
-            Some(&format!("file://{}/", html_file.display())),
+            Some(&format!(
+                "file://{}/",
+                html_file.parent().unwrap().display()
+            )),
         );
 
         let ucm = webview.get_user_content_manager().unwrap();
         {
             let result = UserContentManagerExt::register_script_message_handler(&ucm, "test");
-            println!("registered {}", result);
+            assert_eq!(result, true);
         }
         UserContentManagerExt::connect_script_message_received(&ucm, |_, result| {
-            println!("got {:#?}", result);
+            println!(
+                "got {:#?}",
+                result
+                    .get_value()
+                    .unwrap()
+                    .to_string(&result.get_global_context().unwrap())
+                    .unwrap()
+            );
         });
 
         // webview.connect_run_file_chooser(|_webview, _fc| -> bool {

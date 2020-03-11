@@ -1,6 +1,7 @@
 [package]
-name = "arhiv-replica"
+name = "arhiv"
 version = "0.1.0"
+authors = ["mbme"]
 edition = "2018"
 
 [dependencies]

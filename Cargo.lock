@@ -25,16 +25,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7825f6833612eb2414095684fcf6c635becf3ce97fe48cf6421321e93bfbd53c"
 
 [[package]]
-name = "arhiv-desktop-gtk"
+name = "app-shell"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "env_logger",
  "gio",
  "gtk",
+ "log 0.4.8",
+ "serde",
+ "serde_json",
  "webkit2gtk",
 ]
 
 [[package]]
-name = "arhiv-replica"
+name = "arhiv"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -49,6 +54,13 @@ dependencies = [
  "tokio",
  "uuid",
  "warp",
+]
+
+[[package]]
+name = "arhiv-desktop-gtk"
+version = "0.1.0"
+dependencies = [
+ "app-shell",
 ]
 
 [[package]]

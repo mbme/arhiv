@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "app-shell",
   "arhiv",
   "arhiv-desktop-gtk",
   "poshta",

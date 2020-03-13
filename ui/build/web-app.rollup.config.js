@@ -62,4 +62,4 @@ export default {
     include: `${baseDir}/**`,
     exclude: ['node_modules/**'],
   },
-},
+}

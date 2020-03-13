@@ -18,7 +18,7 @@
     },
 
     _callResult(callId, result) {
-      pending_requests[callId](reslt);
+      pending_requests[callId](result);
 
       delete pending_requests[callId];
     },

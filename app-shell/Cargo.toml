@@ -17,7 +17,7 @@ features = ["v2_16"]
 
 [dependencies.gtk]
 version = "0.8"
-features = ["v3_16"]
+features = ["v3_16", "embed-lgpl-docs"]
 
 [dependencies.gio]
 version = ""

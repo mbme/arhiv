@@ -1,4 +1,4 @@
-import { capitalize } from '~/utils'
+import { capitalize } from '../string'
 import { pickRandomItem } from './index'
 
 // TODO handle few separators in a row https://github.com/Tessmore/sbd

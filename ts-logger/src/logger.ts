@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-import { ChronoFormatter } from '~/chrono'
+import { ChronoFormatter } from '@v/ts-chrono'
 import {
   TermColor,
   termColors,
   ColorCode,
-} from '~/utils/term-colors'
+} from '@v/ts-utils'
 import {
   LogLevel,
   LEVELS,

@@ -1,4 +1,4 @@
-import { TermColor } from '~/utils/term-colors'
+import { TermColor } from '@v/ts-utils'
 import { Logger } from './logger'
 
 export { ILoggerConfig } from './types'

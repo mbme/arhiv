@@ -1,10 +1,8 @@
 import {
   getLastEl,
   removeMut,
-} from '../array'
-import {
   Dict,
-} from '../types'
+} from '@v/ts-utils'
 
 const nameRegex = /^[a-zA-Z0-9-]+$/
 

@@ -3,8 +3,8 @@ import {
   Dict,
   Procedure,
   AsyncProcedure,
-} from '../types'
-import { Callbacks } from '../callbacks'
+  Callbacks,
+} from '@v/ts-utils'
 import {
   ArgsParserBuilder,
   NeedHelpError,

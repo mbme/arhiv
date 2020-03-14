@@ -4,10 +4,10 @@ import { removeMut } from './array'
 type CancellCb = Procedure
 
 export class Scheduler {
-  private _timeoutIds: number[] = []
+  private _timeoutIds: any[] = []
 
   schedule(task: Procedure, timeout: number): CancellCb {
-    const id = window.setTimeout(() => {
+    const id = setTimeout(() => {
       task()
       removeMut(this._timeoutIds, id)
     }, timeout)
@@ -15,14 +15,14 @@ export class Scheduler {
     this._timeoutIds.push(id)
 
     return () => {
-      window.clearTimeout(id)
+      clearTimeout(id)
       removeMut(this._timeoutIds, id)
     }
   }
 
   cancellAll() {
     for (const timeoutId of this._timeoutIds) {
-      window.clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
     }
 
     this._timeoutIds.length = 0

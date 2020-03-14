@@ -1,5 +1,3 @@
-import { identity } from '~/utils'
-
 export class Success<T> {
   constructor(
     public value: T,
@@ -138,7 +136,7 @@ export class Parser<T> {
 
   // set failure label
   withLabel(label: string): Parser<T> {
-    return this.map(identity, label)
+    return this.map(value => value, label)
   }
 
   // a+

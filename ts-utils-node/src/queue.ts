@@ -1,5 +1,5 @@
-import { createLogger } from '~/logger'
-import { Deferred } from './deferred'
+import { createLogger } from '@v/ts-logger'
+import { Deferred } from '@v/ts-utils'
 
 const log = createLogger('queue')
 

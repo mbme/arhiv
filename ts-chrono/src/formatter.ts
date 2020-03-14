@@ -3,8 +3,8 @@ import {
   anyChar,
   isFailure,
   ParserResult,
-} from '~/parser-combinator'
-import { isFunction } from '~/utils'
+} from '@v/ts-parser-combinator'
+import { isFunction } from '@v/ts-utils'
 
 const pad0 = (s: string, maxLength: number) => s.padStart(maxLength, '0')
 

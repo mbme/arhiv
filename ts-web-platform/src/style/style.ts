@@ -6,7 +6,7 @@ import {
   StylishStyle,
   StylishKeyframes,
   IStyleObject,
-} from '~/stylish'
+} from '@v/web-utils/src/stylish'
 import { stylishTransformer } from './stylish-transformer'
 
 export { injectGlobalStyles }

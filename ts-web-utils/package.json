@@ -1,0 +1,14 @@
+{
+  "name": "@v/web-utils",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "typescript web utils",
+  "main": "src/index.ts",
+  "dependencies": {
+    "react": "^16.13.0"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.23"
+  }
+}

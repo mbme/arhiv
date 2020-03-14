@@ -1,11 +1,11 @@
 import {
   createLogger,
-} from '~/logger'
+} from '@v/logger'
 import {
   Cell,
   Observable,
-} from '~/reactive'
-import { Dict } from '~/utils'
+} from '@v/reactive'
+import { Dict } from '@v/utils'
 
 const log = createLogger('web-locks')
 

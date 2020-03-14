@@ -1,7 +1,7 @@
-import { createLogger } from '~/logger'
+import { createLogger } from '@v/logger'
 import {
   Obj,
-} from '~/utils'
+} from '@v/utils'
 import {
   StyleNode,
   hash2className,

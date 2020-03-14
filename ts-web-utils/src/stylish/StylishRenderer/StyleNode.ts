@@ -3,7 +3,7 @@ import {
   isObject,
   hashCode,
   camelCase2kebabCase,
-} from '~/utils'
+} from '@v/utils'
 
 export const hash2className = (hash: string) => `s-${hash}`
 export const hash2class = (hash: string) => '.' + hash2className(hash)

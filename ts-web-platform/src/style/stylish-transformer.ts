@@ -1,7 +1,7 @@
 import {
   Obj,
   isFunction,
-} from '~/utils'
+} from '@v/utils'
 import { theme } from './theme'
 
 const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as Obj)[prop][val] || val

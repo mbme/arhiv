@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   Observable,
   promise$,
-} from '~/reactive'
+} from '@v/reactive'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,

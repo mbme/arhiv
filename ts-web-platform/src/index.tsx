@@ -17,7 +17,7 @@ export {
   ConfirmationDialog,
 } from './Overlay'
 
-export { Link } from '~/web-router'
+export { Link } from '@v/web-utils/src/router'
 export { CleanLink } from './CleanLink'
 export { Image } from './Image'
 export {

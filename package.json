@@ -7,7 +7,9 @@
     "ts-chrono",
     "ts-reactive",
     "ts-tester",
-    "ts-parser-combinator"
+    "ts-parser-combinator",
+    "ts-web-utils",
+    "ts-web-platform"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",

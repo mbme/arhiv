@@ -1,7 +1,7 @@
 import {
   Cell,
   Observable,
-} from '~/reactive'
+} from '@v/reactive'
 
 export abstract class Store<State> {
   private _cell: Cell<State>

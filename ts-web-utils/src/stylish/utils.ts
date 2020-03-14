@@ -1,6 +1,6 @@
 import {
   isObject,
-} from '~/utils'
+} from '@v/utils'
 import {
   IStyleObject,
   StyleTransformer,

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link } from '~/web-router'
+import { Link } from '@v/web-utils/src/router'
 import {
   stylish,
   $Style,

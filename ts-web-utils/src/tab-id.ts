@@ -1,4 +1,4 @@
-import { parseInt10 } from '~/utils'
+import { parseInt10 } from '@v/utils'
 
 export function getTabId(propName: string): number {
   const tabIdStr = sessionStorage.getItem(propName)

@@ -1,4 +1,4 @@
-import { Cell } from '~/reactive'
+import { Cell } from '@v/reactive'
 import {
   ILocation,
   SimpleLocation,

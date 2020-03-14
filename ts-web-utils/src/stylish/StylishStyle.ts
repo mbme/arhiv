@@ -1,8 +1,8 @@
-import { createLogger } from '~/logger'
+import { createLogger } from '@v/logger'
 import {
   isFunction,
   merge,
-} from '~/utils'
+} from '@v/utils'
 import { StylishRenderer } from './StylishRenderer'
 import {
   IStyleObject,

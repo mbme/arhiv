@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   isString,
   Procedure,
-} from '~/utils'
+} from '@v/utils'
 import {
   stylish,
   $Style,

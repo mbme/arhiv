@@ -1,0 +1,8 @@
+{
+  "name": "@v/web-platform",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "typescript UI components",
+  "main": "src/index.ts"
+}

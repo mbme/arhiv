@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { isFunction } from '~/utils'
+import { isFunction } from '@v/utils'
 
 import { Box } from './Box'
 import { Heading } from './Heading'

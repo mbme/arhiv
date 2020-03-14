@@ -2,7 +2,7 @@ import {
   test,
   assertEqual,
   assertMatchSnapshot,
-} from '~/tester'
+} from '@v/tester'
 import {
   StyleNode,
   hash2class,

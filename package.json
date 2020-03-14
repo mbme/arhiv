@@ -6,13 +6,21 @@
     "ts-logger",
     "ts-chrono",
     "ts-reactive",
+    "ts-tester",
     "ts-parser-combinator"
   ],
+  "scripts": {
+    "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx ts-*",
+    "test": "tester"
+  },
   "devDependencies": {
+    "@types/node": "^13.9.1",
     "@typescript-eslint/eslint-plugin": "^2.7.0",
     "@typescript-eslint/parser": "^2.16.0",
     "eslint": "^6.8.0",
     "eslint-plugin-react-hooks": "^2.3.0",
+    "ts-node": "^8.6.2",
     "typescript": "^3.6.3"
   }
 }

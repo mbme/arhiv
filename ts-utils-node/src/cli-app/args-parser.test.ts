@@ -3,7 +3,7 @@ import {
   assertThrows,
   assertDeepEqual,
   assertMatchSnapshot,
-} from '~/tester'
+} from '@v/tester'
 import { command } from './command'
 import {
   NeedHelpError,

@@ -1,6 +1,6 @@
 import {
   assertTrue,
-} from '~/tester'
+} from '@v/tester'
 import {
   Result,
   isSuccess,

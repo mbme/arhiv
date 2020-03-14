@@ -2,7 +2,7 @@ import {
   test,
   assertDeepEqual,
   assertFalse,
-} from '~/tester'
+} from '@v/tester'
 
 import {
   pathMatcher as pm,

@@ -2,7 +2,7 @@ import {
   test,
   assertEqual,
   assertTrue,
-} from '~/tester'
+} from '@v/tester'
 import {
   expect,
   satisfy,

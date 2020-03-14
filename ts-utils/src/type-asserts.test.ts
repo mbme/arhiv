@@ -2,7 +2,7 @@ import {
   test,
   assertTrue,
   assertFalse,
-} from '~/tester'
+} from '@v/tester'
 import {
   isFunction,
   isObject,

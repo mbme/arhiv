@@ -2,7 +2,7 @@ import {
   test,
   assertEqual,
   assertDeepEqual,
-} from '~/tester'
+} from '@v/tester'
 import {
   merge,
 } from './object'

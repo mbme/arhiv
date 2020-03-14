@@ -1,0 +1,11 @@
+{
+  "name": "@v/tester",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "typescript test runner",
+  "main": "src/index.ts",
+  "bin": {
+    "tester": "./bin/tester"
+  }
+}

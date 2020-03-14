@@ -1,7 +1,7 @@
 import {
   test,
   assertEqual,
-} from '~/tester'
+} from '@v/tester'
 import {
   aesEncrypt,
   aesDecrypt,

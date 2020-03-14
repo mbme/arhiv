@@ -7,7 +7,7 @@ import {
   assertEqual,
   assertTrue,
   assertFalse,
-} from '~/tester'
+} from '@v/tester'
 import { FSTransaction } from './transaction'
 import {
   createTempDir,

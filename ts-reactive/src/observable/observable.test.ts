@@ -1,10 +1,10 @@
-import { noop } from '~/utils'
+import { noop } from '@v/utils'
 import {
   test,
   assertEqual,
   assertDeepEqual,
   assertTrue,
-} from '~/tester'
+} from '@v/tester'
 import { Observable } from './index'
 
 const complete = Symbol('complete')

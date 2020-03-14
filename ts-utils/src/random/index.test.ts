@@ -1,7 +1,7 @@
 import {
   test,
   assertDeepEqual,
-} from '~/tester'
+} from '@v/tester'
 import { shuffle } from './index'
 
 test('shuffle', () => {

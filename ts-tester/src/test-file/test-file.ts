@@ -2,13 +2,13 @@
 import {
   uniq,
   termColors,
-} from '~/utils'
+} from '@v/utils'
 import {
   fileExists,
   readJSON,
   writeJSON,
   removeFile,
-} from '~/utils/fs'
+} from '@v/utils-node/src/fs'
 import {
   TestContext,
   initializeTestContext,
@@ -157,8 +157,8 @@ export class TestFile {
     return failures
   }
 
-  static async load(basePath: string, srcPath: string, testFile: string, updateSnapshots: boolean) {
-    initializeTestContext(basePath, srcPath, testFile)
+  static async load(srcPath: string, testFile: string, updateSnapshots: boolean) {
+    initializeTestContext(srcPath, testFile)
 
     await import(testFile) // collect tests from the file into test context
 

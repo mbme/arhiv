@@ -4,7 +4,7 @@ import { getAssertContext } from './assert-context'
 import {
   prettyPrintJSON,
   Constructor,
-} from '~/utils'
+} from '@v/utils'
 
 export function assertEqual(actual: any, expected: any) {
   const context = getAssertContext()

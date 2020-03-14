@@ -1,26 +1,36 @@
 /* eslint-disable no-console */
-import path from 'path'
 import {
   consumeAsyncIterable,
   termColors,
-} from '~/utils'
+} from '@v/utils'
 import {
   configureLogger,
-} from '~/logger'
+} from '@v/logger'
 import {
   getFiles,
-} from '~/utils/fs'
+} from '@v/utils-node/src/fs'
 import {
   CliApp,
   command,
-} from '~/utils/cli-app'
+} from '@v/utils-node/src/cli-app'
 import {
   TestFile,
 } from './test-file/test-file'
+import packageJson from '../../package.json'
 
 configureLogger({
   minLogLevel: 'ERROR', // suppress log messages
 })
+
+async function listFiles(srcPath: string): Promise<string[]> {
+  const options = {
+    skipDir: ['.git', 'node_modules', 'target'],
+  }
+
+  const wsDirs = packageJson.workspaces.map(wsDir => `${srcPath}/${wsDir}`)
+
+  return (await Promise.all(wsDirs.map(wsDir => consumeAsyncIterable(getFiles(wsDir, options))))).flat()
+}
 
 CliApp.create('tester')
   .addCommand(
@@ -30,11 +40,10 @@ CliApp.create('tester')
     async (options) => {
       const updateSnapshots = options['-u'] !== undefined
 
-      const basePath = path.join(process.cwd(), 'tsdist/src')
-      const srcPath = path.join(process.cwd(), 'src')
+      const srcPath = process.cwd()
 
-      const files = (await consumeAsyncIterable(getFiles(basePath)))
-        .filter(relPath => relPath.endsWith('.test.js'))
+      const files = (await listFiles(srcPath))
+        .filter(relPath => relPath.endsWith('.test.ts'))
         .filter(relPath => !relPath.includes('FLYCHECK'))
 
       console.log(`collected ${files.length} test files`)
@@ -48,7 +57,7 @@ CliApp.create('tester')
         }
 
         try {
-          const testFile = await TestFile.load(basePath, srcPath, file, updateSnapshots)
+          const testFile = await TestFile.load(srcPath, file, updateSnapshots)
           tests.push(testFile)
         } catch (e) {
           console.log(`Failed to load test file ${file}: ${e}`)

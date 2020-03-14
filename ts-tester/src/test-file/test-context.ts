@@ -3,7 +3,7 @@ import {
   Procedure,
   AsyncProcedure,
   trimSuffix,
-} from '~/utils'
+} from '@v/utils'
 import { TestFileSnapshots } from '../assert/types'
 
 type Callback = Procedure | AsyncProcedure
@@ -33,8 +33,8 @@ export class TestContext {
 
 let currentContext: TestContext | undefined
 
-export function initializeTestContext(basePath: string, srcPath: string, testFile: string) {
-  const relPath = trimSuffix(path.relative(basePath, testFile), '.js')
+export function initializeTestContext(srcPath: string, testFile: string) {
+  const relPath = trimSuffix(path.relative(srcPath, testFile), '.ts')
   const snapshotFile = `${path.join(srcPath, relPath)}.snap.json`
 
   currentContext = new TestContext(relPath, testFile, snapshotFile)

@@ -4,7 +4,7 @@ import {
   Procedure,
   AsyncProcedure,
   Callbacks,
-} from '@v/ts-utils'
+} from '@v/utils'
 import {
   ArgsParserBuilder,
   NeedHelpError,

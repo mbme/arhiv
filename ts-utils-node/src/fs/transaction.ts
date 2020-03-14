@@ -1,11 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { createLogger } from '@v/ts-logger'
+import { createLogger } from '@v/logger'
 import {
   AsyncCallbacks,
   Counter,
   lazy,
-} from '@v/ts-utils'
+} from '@v/utils'
 import {
   createTempDir,
   fileExists,

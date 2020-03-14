@@ -5,6 +5,7 @@
     "ts-utils-node",
     "ts-logger",
     "ts-chrono",
+    "ts-reactive",
     "ts-parser-combinator"
   ],
   "devDependencies": {

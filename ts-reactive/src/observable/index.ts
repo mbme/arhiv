@@ -1,7 +1,9 @@
-import { createLogger } from '~/logger'
-import { Procedure } from '~/utils/types'
-import { noop } from '~/utils/misc'
-import { removeAtMut } from '~/utils/array'
+import { createLogger } from '@v/logger'
+import {
+  Procedure,
+  noop,
+  removeAtMut,
+} from '@v/utils'
 import {
   InitCb,
   IObserver,

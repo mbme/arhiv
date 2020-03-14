@@ -1,5 +1,5 @@
-import { Cell } from '~/reactive'
-import { createLogger } from '~/logger'
+import { createLogger } from '@v/logger'
+import { Cell } from './cell'
 
 const log = createLogger('state-machine')
 

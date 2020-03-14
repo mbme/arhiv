@@ -1,5 +1,7 @@
-import { noop } from '~/utils'
-import { Callbacks } from '~/utils/callbacks'
+import {
+  noop,
+  Callbacks,
+} from '@v/utils'
 import { Observable } from './observable'
 
 export function interval$(interval: number) {

@@ -2,7 +2,7 @@ import {
   getLastEl,
   removeMut,
   Dict,
-} from '@v/ts-utils'
+} from '@v/utils'
 
 const nameRegex = /^[a-zA-Z0-9-]+$/
 

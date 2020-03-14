@@ -1,5 +1,5 @@
 {
-  "name": "@v/ts-logger",
+  "name": "@v/logger",
   "private": true,
   "license": "MIT",
   "version": "0.0.1",

@@ -1,9 +1,9 @@
 {
-  "name": "@v/parser-combinator",
+  "name": "@v/reactive",
   "private": true,
   "license": "MIT",
   "version": "0.0.1",
-  "description": "typescript parser combinator",
+  "description": "typescript reactive utils",
   "type": "module",
   "main": "src/index.ts",
   "exports": {

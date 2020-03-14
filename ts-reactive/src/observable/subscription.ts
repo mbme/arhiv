@@ -1,4 +1,4 @@
-import { Callbacks } from '~/utils/callbacks'
+import { Callbacks } from '@v/utils'
 import { ISubscription } from './types'
 
 export function createSubscription(): ISubscription {

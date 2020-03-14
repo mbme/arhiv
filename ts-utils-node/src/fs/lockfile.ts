@@ -1,4 +1,4 @@
-import { createLogger } from '@v/ts-logger'
+import { createLogger } from '@v/logger'
 import {
   writeText,
   removeFile,

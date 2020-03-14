@@ -5,7 +5,7 @@ import {
   merge,
   prettyPrintJSON,
   consumeAsyncIterable,
-} from '@v/ts-utils'
+} from '@v/utils'
 
 interface IGetFilesOpts {
   skipDir?: string[]

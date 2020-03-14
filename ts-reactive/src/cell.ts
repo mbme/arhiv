@@ -1,5 +1,7 @@
-import { Counter } from '~/utils/counter'
-import { removeMut } from '~/utils/array'
+import {
+  Counter,
+  removeMut,
+} from '@v/utils'
 import { Observable } from './observable'
 
 type NextCb<T> = (value: T) => void

@@ -1,4 +1,13 @@
-import { getRandomBytes } from './platform'
+function getRandomBytes(bytes: number): Uint8Array {
+  if (crypto.getRandomValues) {
+    // browser
+    return crypto.getRandomValues(new Uint8Array(bytes))
+  }
+
+  // Node.js
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('crypto').randomBytes(bytes)
+}
 
 const readUInt32 = (bytes: Uint8Array): number => new DataView(bytes.buffer).getUint32(0)
 
@@ -19,7 +28,7 @@ export function randomInt(min: number, max: number): number {
 
   let sample: number
   do {
-    sample = readUInt32(getRandomBytes(4) as Uint8Array)
+    sample = readUInt32(getRandomBytes(4))
   } while (sample > maxSample)
 
   return min + (sample % range)

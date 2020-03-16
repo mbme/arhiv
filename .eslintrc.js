@@ -19,7 +19,7 @@ module.exports = {
     "@typescript-eslint",
     "react-hooks"
   ],
-  rules: {
+  "rules": {
     "@typescript-eslint/no-unused-vars": "off",
     "no-underscore-dangle": "off",
     "arrow-parens": [

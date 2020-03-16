@@ -4,5 +4,6 @@
   "license": "MIT",
   "version": "0.0.1",
   "description": "typescript UI components",
-  "main": "src/index.ts"
+  "main": "src/index.tsx",
+  "sideEffects": false
 }

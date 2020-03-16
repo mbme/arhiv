@@ -9,11 +9,12 @@
     "ts-tester",
     "ts-parser-combinator",
     "ts-web-utils",
-    "ts-web-platform"
+    "ts-web-platform",
+    "poshta"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",
-    "lint": "eslint --ext .ts,.tsx,.js,.jsx ts-*",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx ts-* poshta",
     "test": "tester"
   },
   "devDependencies": {

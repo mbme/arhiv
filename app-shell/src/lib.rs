@@ -2,7 +2,7 @@ pub use crate::builder::AppShellBuilder;
 use crate::webview::build_webview;
 use gio::prelude::*;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ScrolledWindow};
+use gtk::{Application, ApplicationWindow};
 use std::path::Path;
 use std::rc::Rc;
 use webkit2gtk::{WebInspectorExt, WebViewExt};
@@ -20,22 +20,27 @@ impl AppShellBuilder {
             let html_file = Path::new(&html_file);
             let webview = build_webview(builder.clone(), &html_file);
 
-            let scrolled_window = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
-            scrolled_window.set_min_content_width(builder.default_size.1);
-            scrolled_window.add(webview.as_ref());
-
             let window = ApplicationWindow::new(app);
             window.set_title(&builder.title);
             window.set_default_size(builder.default_size.0, builder.default_size.1);
-            window.add(&scrolled_window);
+            window.add(webview.as_ref());
+
+            // reload on F5
+            {
+                let webview = webview.clone();
+                window.connect_key_press_event(move |_, key| {
+                    if key.get_keyval() == gdk::enums::key::F5 {
+                        webview.reload();
+                    }
+
+                    Inhibit(false)
+                });
+            }
 
             window.show_all();
 
             if builder.show_inspector {
                 let inspector = webview.get_inspector().unwrap();
-                println!("attached: {}", inspector.is_attached());
-                inspector.attach();
-                println!("attached: {}", inspector.is_attached());
                 inspector.show();
             }
         });

@@ -33,10 +33,7 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
 
     webview.load_html(
         &html_content,
-        Some(&format!(
-            "file://{}/",
-            html_file.parent().unwrap().display()
-        )),
+        Some(&format!("file://{}", html_file.display())),
     );
 
     if let Some(ref action_handler) = builder.action_handler {

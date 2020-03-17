@@ -1266,6 +1266,7 @@ name = "poshta"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "app-shell",
  "env_logger",
  "log 0.4.8",
  "reqwest",

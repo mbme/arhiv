@@ -1,24 +1,12 @@
-use serde_json::Value;
+use app_shell::AppShellBuilder;
 
-mod auth;
-
-const BASE_URL: &str = "https://www.googleapis.com/gmail/v1/users/me";
-
-#[tokio::main]
-async fn main() {
+fn main() {
     env_logger::init();
 
-    let token = auth::auth().await;
+    let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
-    log::info!("TOKEN {:?}", token);
-
-    let resp = reqwest::Client::new()
-        .get(&format!("{}/profile", BASE_URL))
-        .bearer_auth(token.as_str())
-        .send()
-        .await
-        .unwrap();
-
-    println!("{:#?}", resp);
-    println!("{:?}", resp.json::<Value>().await.unwrap());
+    AppShellBuilder::create("v.poshta".to_string())
+        .with_title("Poshta".to_string())
+        .show_inspector()
+        .load(path_str);
 }

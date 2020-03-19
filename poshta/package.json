@@ -6,7 +6,8 @@
   "description": "alternative gmail UI",
   "main": "ui/index.ts",
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "start": "webpack -w"
   },
   "dependencies": {
     "react": "^16.13.0",

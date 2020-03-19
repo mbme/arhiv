@@ -1,26 +1,26 @@
 (function setupRpc(channelName) {
-  let counter = 0;
-  const pending_requests = {};
+  let counter = 0
+  const pendingRequests = {}
 
   window.RPC = {
-    call(action, params) {
+    call(action, params = {}) {
       return new Promise((resolve) => {
-        let callId = counter += 1;
+        const callId = counter += 1
 
-        pending_requests[callId] = resolve;
+        pendingRequests[callId] = resolve
 
         window.webkit.messageHandlers[channelName].postMessage(JSON.stringify({
           callId,
           action,
-          params: JSON.stringify(params),
-        }));
-      });
+          params,
+        }))
+      })
     },
 
     _callResult(callId, result) {
-      pending_requests[callId](result);
+      pendingRequests[callId](result)
 
-      delete pending_requests[callId];
+      delete pendingRequests[callId]
     },
-  };
-})('test');
+  }
+})('app-shell')

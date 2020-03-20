@@ -50,23 +50,27 @@ export function getCurrentLocation(): ILocation {
   }
 }
 
-export function getUrl(simpleLocation: SimpleLocation) {
-  const location = simpleLocation2Location(simpleLocation)
-
+export function stringifyQueryParams(params: IQueryParam[]): string {
   const queryParams = new URLSearchParams()
-  for (const param of location.params) {
+  for (const param of params) {
     if (param.value !== undefined) {
       queryParams.append(param.name, param.value)
     }
   }
 
-  const paramsStr = queryParams.toString()
+  const result = queryParams.toString()
 
-  const url = `${window.location.origin}${location.path}`
-
-  if (!paramsStr) {
-    return url
+  if (result.length) {
+    return '?' + result
   }
 
-  return `${url}?${paramsStr}`
+  return result
+}
+
+export function getUrl(simpleLocation: SimpleLocation) {
+  const location = simpleLocation2Location(simpleLocation)
+
+  const paramsStr = stringifyQueryParams(location.params)
+
+  return `${window.location.origin}${location.path}${paramsStr}`
 }

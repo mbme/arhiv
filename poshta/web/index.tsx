@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
 import { Box, globalStyles, injectGlobalStyles } from '@v/web-platform'
+import { Gmail } from './gmail'
 
 configureLogger({ minLogLevel: 'INFO' })
 
@@ -35,23 +36,18 @@ ReactDOM.render(
   },
 )
 
-const BASE_URL = 'https://www.googleapis.com/gmail/v1/users/me'
-
+console.log(localStorage.getItem('test'))
+localStorage.setItem('test', 'ok')
 async function run() {
   const callResult: any = await window.RPC.call('get_token')
   const token = callResult.value
 
   log.info('Got auth token', token)
 
-  const response = await fetch(BASE_URL + '/profile', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  const gmail = new Gmail(token)
 
-  const result = await response.json()
-
-  console.error(result)
+  console.error(await gmail.getProfile())
+  console.error(await gmail.listMessages().loadNextPage())
 }
 
-run()
+run().catch(console.error)

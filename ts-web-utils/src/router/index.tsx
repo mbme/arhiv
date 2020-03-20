@@ -8,6 +8,7 @@ export {
   paramAsArray,
   paramAsString,
   updateParam,
+  stringifyQueryParams,
 } from './utils'
 
 export {

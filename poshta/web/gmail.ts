@@ -49,6 +49,7 @@ export class Gmail {
 
   private async _get(path: string, params: IQueryParam[] = []) {
     const response = await fetch(BASE_URL + path + stringifyQueryParams(params), {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${this._token}`,
       },
@@ -110,12 +111,56 @@ export class Gmail {
         total = result.resultSizeEstimate
         nextPageToken = result.nextPageToken
 
-        return Promise.all(result.messages.map(msgRef => this.getMessage(msgRef.id)))
+        return this.batchGetMessages(result.messages.map(ref => ref.id))
       },
     }
   }
 
   getMessage(id: string): Promise<IGmailMessage> {
     return this._get(`/messages/${id}`)
+  }
+
+  // https://developers.google.com/gmail/api/guides/batch#example
+  async batchGetMessages(ids: string[]): Promise<IGmailMessage[]> {
+    const boundary = 'batch-get-message'
+
+    const bodyItems = ids.map(id => [
+      `--${boundary}\n`,
+      'Content-Type: application/http\n',
+      '\n',
+      `GET /gmail/v1/users/me/messages/${id}\n`,
+      '\n',
+    ].join(''))
+
+    bodyItems.push(`--${boundary}--`)
+
+    const response = await fetch('https://www.googleapis.com/batch/gmail/v1', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this._token}`,
+        'Content-Type': `multipart/mixed; boundary="${boundary}"`,
+      },
+      body: bodyItems.join('\n'),
+    })
+
+    if (!response.ok) {
+      throw new Error(`batch get_messages failed: ${response.status}`)
+    }
+    const responseBoundary = response.headers.get('content-type')?.split('boundary=')[1]
+
+    if (!responseBoundary) {
+      throw new Error('batch get_messages failed: response boundary is missing')
+    }
+
+    const items = (await response.text()).split('--' + responseBoundary)
+    items.shift() // drop first empty chunk
+    items.pop() // drop last empty chunk
+
+    return items.map((chunk) => {
+      const i1 = chunk.indexOf('\r\n\r\n') // skip part headers
+      const i2 = chunk.indexOf('\r\n\r\n', i1 + 4) // skip response headers
+
+      return JSON.parse(chunk.substring(i2 + 4))
+    })
   }
 }

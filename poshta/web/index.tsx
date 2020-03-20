@@ -47,7 +47,7 @@ async function run() {
   const gmail = new Gmail(token)
 
   console.error(await gmail.getProfile())
-  console.error(await gmail.listMessages().loadNextPage())
+  console.error(await gmail.listMessages(undefined, 10).loadNextPage())
 }
 
 run().catch(console.error)

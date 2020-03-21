@@ -9,7 +9,7 @@ use std::path::Path;
 use std::rc::Rc;
 use webkit2gtk::{
     LoadEvent, SettingsExt, UserContentManagerExt, WebContext, WebView, WebViewExt,
-    WebsiteDataManager, WebsiteDataManagerExt,
+    WebsiteDataManager,
 };
 use webkit2gtk_sys::webkit_website_data_manager_new;
 
@@ -79,48 +79,41 @@ fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
     });
 }
 
-fn create_website_data_manager(data_dir: &Option<String>) -> WebsiteDataManager {
-    if let Some(ref path) = data_dir {
-        // https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebsiteDataManager.html#webkit-website-data-manager-new
-        unsafe {
-            from_glib_full(webkit_website_data_manager_new(
-                CString::new("base-cache-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("base-data-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("disk-cache-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("hsts-cache-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("indexeddb-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("local-storage-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("offline-application-cache-directory")
-                    .unwrap()
-                    .as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                CString::new("websql-directory").unwrap().as_ptr(),
-                CString::new(path.clone()).unwrap().as_ptr(),
-                std::ptr::null::<i8>(),
-            ))
-        }
-    } else {
-        WebsiteDataManager::new_ephemeral()
+// https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebsiteDataManager.html#webkit-website-data-manager-new
+fn create_website_data_manager(data_dir: &str) -> WebsiteDataManager {
+    unsafe {
+        from_glib_full(webkit_website_data_manager_new(
+            CString::new("base-cache-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("base-data-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("disk-cache-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("hsts-cache-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("indexeddb-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("local-storage-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("offline-application-cache-directory")
+                .unwrap()
+                .as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            CString::new("websql-directory").unwrap().as_ptr(),
+            CString::new(data_dir).unwrap().as_ptr(),
+            std::ptr::null::<i8>(),
+        ))
     }
 }
 
 pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebView> {
-    let data_manager = create_website_data_manager(&builder.data_dir);
-
-    if data_manager.is_ephemeral() {
-        log::info!("website data manager: ephemeral");
+    let data_manager = if let Some(ref path) = builder.data_dir {
+        log::info!("website data manager: {}", path);
+        create_website_data_manager(path)
     } else {
-        log::info!(
-            "website data manager: {}",
-            data_manager.get_local_storage_directory().unwrap()
-        );
-    }
+        log::info!("website data manager: ephemeral");
+        WebsiteDataManager::new_ephemeral()
+    };
 
     let web_context = WebContext::new_with_website_data_manager(&data_manager);
     let webview = Rc::new(WebView::new_with_context(&web_context));

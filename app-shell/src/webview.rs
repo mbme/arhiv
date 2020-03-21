@@ -30,6 +30,15 @@ impl std::str::FromStr for RpcMessage {
 }
 
 fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
+    // register script message handler before injecting script so that window.webkit is immediately available
+    let ucm = webview.get_user_content_manager().unwrap();
+    {
+        let result = ucm.register_script_message_handler("app-shell");
+        if !result {
+            return;
+        }
+    }
+
     webview.run_javascript(
         include_str!("./rpc.js"),
         None::<&gio::Cancellable>,
@@ -40,14 +49,6 @@ fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
             }
         },
     );
-
-    let ucm = webview.get_user_content_manager().unwrap();
-    {
-        let result = ucm.register_script_message_handler("app-shell");
-        if !result {
-            return;
-        }
-    }
 
     let action_handler = action_handler.clone();
     let webview = webview.clone();
@@ -142,7 +143,6 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
     );
 
     // TODO render NOT FOUND if file is missing
-    // TODO init callback: onRPCInitialized()
 
     webview
 }

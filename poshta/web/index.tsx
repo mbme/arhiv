@@ -50,4 +50,10 @@ async function run() {
   console.error(await gmail.listMessages(undefined, 10).loadNextPage())
 }
 
-run().catch(console.error)
+if (window.RPC) {
+  run().catch(console.error)
+} else {
+  window.onRPCReady = () => {
+    run().catch(console.error)
+  }
+}

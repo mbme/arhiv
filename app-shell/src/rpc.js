@@ -2,6 +2,11 @@
   let counter = 0
   const pendingRequests = {}
 
+  const channel = window.webkit && window.webkit.messageHandlers[channelName]
+  if (!channel) {
+    throw new Error(`setupRpc failed: message handler ${channelName} is missing`)
+  }
+
   window.RPC = {
     call(action, params = {}) {
       return new Promise((resolve) => {
@@ -9,7 +14,7 @@
 
         pendingRequests[callId] = resolve
 
-        window.webkit.messageHandlers[channelName].postMessage(JSON.stringify({
+        channel.postMessage(JSON.stringify({
           callId,
           action,
           params,
@@ -22,5 +27,9 @@
 
       delete pendingRequests[callId]
     },
+  }
+
+  if (window.onRPCReady) {
+    window.onRPCReady()
   }
 })('app-shell')

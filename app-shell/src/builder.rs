@@ -1,12 +1,14 @@
 use serde_json::Value;
 use std::rc::Rc;
 
+pub type ActionHandler = Rc<dyn Fn(String, Value) -> Value>;
+
 pub struct AppShellBuilder {
     pub(crate) app_id: String,
     pub(crate) title: String,
     pub(crate) default_size: (i32, i32),
     pub(crate) show_inspector: bool,
-    pub(crate) action_handler: Option<Rc<dyn Fn(String, Value) -> Value>>,
+    pub(crate) action_handler: Option<ActionHandler>,
 }
 
 impl AppShellBuilder {
@@ -37,7 +39,7 @@ impl AppShellBuilder {
         self
     }
 
-    pub fn with_rpc(mut self, action_handler: Rc<dyn Fn(String, Value) -> Value>) -> Self {
+    pub fn with_rpc(mut self, action_handler: ActionHandler) -> Self {
         self.action_handler = Some(action_handler);
         self
     }

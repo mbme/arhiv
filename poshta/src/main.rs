@@ -12,9 +12,7 @@ async fn main() {
 
     let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
-    let action_handler = Rc::new(move |action: String, params: Value| {
-        println!("Got action {} with params {:?}", action, params);
-
+    let action_handler = Rc::new(move |action: String, _params: Value| {
         if action == "get_token" {
             return value::to_value(token.clone()).unwrap();
         }

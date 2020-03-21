@@ -32,11 +32,13 @@ dependencies = [
  "env_logger",
  "gdk",
  "gio",
+ "glib",
  "gtk",
  "log 0.4.8",
  "serde",
  "serde_json",
  "webkit2gtk",
+ "webkit2gtk-sys",
 ]
 
 [[package]]

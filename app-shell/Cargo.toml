@@ -15,6 +15,10 @@ serde_json = "1.0"
 version = "0.9"
 features = ["v2_16"]
 
+[dependencies.webkit2gtk-sys]
+version = ""
+features = ["v2_16"]
+
 [dependencies.gtk]
 version = "0.8"
 features = ["v3_16", "embed-lgpl-docs"]
@@ -24,4 +28,7 @@ version = ""
 features = ["v2_44"]
 
 [dependencies.gdk]
+version = ""
+
+[dependencies.glib]
 version = ""

@@ -1,11 +1,17 @@
 use crate::builder::{ActionHandler, AppShellBuilder};
 use anyhow::*;
+use glib::translate::from_glib_full;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::ffi::CString;
 use std::fs;
 use std::path::Path;
 use std::rc::Rc;
-use webkit2gtk::{LoadEvent, SettingsExt, UserContentManagerExt, WebView, WebViewExt};
+use webkit2gtk::{
+    LoadEvent, SettingsExt, UserContentManagerExt, WebContext, WebView, WebViewExt,
+    WebsiteDataManager, WebsiteDataManagerExt,
+};
+use webkit2gtk_sys::webkit_website_data_manager_new;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -73,8 +79,51 @@ fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
     });
 }
 
+fn create_website_data_manager(data_dir: &Option<String>) -> WebsiteDataManager {
+    if let Some(ref path) = data_dir {
+        // https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebsiteDataManager.html#webkit-website-data-manager-new
+        unsafe {
+            from_glib_full(webkit_website_data_manager_new(
+                CString::new("base-cache-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("base-data-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("disk-cache-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("hsts-cache-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("indexeddb-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("local-storage-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("offline-application-cache-directory")
+                    .unwrap()
+                    .as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                CString::new("websql-directory").unwrap().as_ptr(),
+                CString::new(path.clone()).unwrap().as_ptr(),
+                std::ptr::null::<i8>(),
+            ))
+        }
+    } else {
+        WebsiteDataManager::new_ephemeral()
+    }
+}
+
 pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebView> {
-    let webview = Rc::new(WebView::new());
+    let data_manager = create_website_data_manager(&builder.data_dir);
+
+    if data_manager.is_ephemeral() {
+        log::info!("website data manager: ephemeral");
+    } else {
+        log::info!(
+            "website data manager: {}",
+            data_manager.get_local_storage_directory().unwrap()
+        );
+    }
+
+    let web_context = WebContext::new_with_website_data_manager(&data_manager);
+    let webview = Rc::new(WebView::new_with_context(&web_context));
 
     let settings = WebViewExt::get_settings(webview.as_ref()).unwrap();
     settings.set_enable_developer_extras(builder.show_inspector);
@@ -99,8 +148,8 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
         Some(&format!("file://{}", html_file.display())),
     );
 
-    // TODO temporary storage
     // TODO render NOT FOUND if file is missing
+    // TODO init callback: onRPCInitialized()
 
     webview
 }

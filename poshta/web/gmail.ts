@@ -14,16 +14,22 @@ interface IGmailMessageHeader {
 }
 
 interface IGmailMessagePayload {
-  body: object,
+  body: IGmailMessagePayloadBody,
   filename?: string,
   headers: IGmailMessageHeader[],
   mimeType: string,
   partId: string,
-  parts: object[],
+  parts?: IGmailMessagePayload[],
+}
+
+interface IGmailMessagePayloadBody {
+  attachmentId?: string,
+  data: string, // base64
+  size: number,
 }
 
 // https://developers.google.com/gmail/api/v1/reference/users/messages#resource
-interface IGmailMessage {
+export interface IGmailMessage {
   id: string,
   internalDate: number,
   labelIds: string[],

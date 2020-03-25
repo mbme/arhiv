@@ -3,8 +3,10 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
-import { Box, globalStyles, injectGlobalStyles } from '@v/web-platform'
+import { globalStyles, injectGlobalStyles } from '@v/web-platform'
 import { Gmail } from './gmail'
+import { PoshtaStore } from './poshta-store'
+import { App } from './App'
 
 configureLogger({ minLogLevel: 'INFO' })
 
@@ -19,25 +21,6 @@ injectGlobalStyles(`
   }
 `)
 
-const rootEl = document.getElementById('root')
-if (!rootEl) {
-  throw new Error("Can't find #root element")
-}
-
-ReactDOM.render(
-  <React.StrictMode>
-    <Box>
-      HELLO WORLD
-    </Box>
-  </React.StrictMode>,
-  rootEl,
-  () => {
-    rootEl.style.visibility = 'visible'
-  },
-)
-
-console.log(localStorage.getItem('test'))
-localStorage.setItem('test', 'ok')
 async function run() {
   const callResult: any = await window.RPC.call('get_token')
   const token = callResult.value
@@ -47,9 +30,27 @@ async function run() {
   const gmail = new Gmail(token)
 
   console.error(await gmail.getProfile())
-  console.error(await gmail.listMessages(undefined, 10).loadNextPage())
+
+  const store = new PoshtaStore(gmail)
+  store.loadData()
+
+  const rootEl = document.getElementById('root')
+  if (!rootEl) {
+    throw new Error("Can't find #root element")
+  }
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <App store={store} />
+    </React.StrictMode>,
+    rootEl,
+    () => {
+      rootEl.style.visibility = 'visible'
+    },
+  )
 }
 
+// FIXME fix reload
 if (window.RPC) {
   run().catch(console.error)
 } else {

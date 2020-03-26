@@ -25,11 +25,17 @@ impl AppShellBuilder {
             window.set_default_size(builder.default_size.0, builder.default_size.1);
             window.add(webview.as_ref());
 
-            // reload on F5
+            // reload on F5 and Ctrl-r
             {
                 let webview = webview.clone();
                 window.connect_key_press_event(move |_, key| {
                     if key.get_keyval() == gdk::enums::key::F5 {
+                        webview.reload();
+                    }
+
+                    if key.get_state() == gdk::ModifierType::CONTROL_MASK
+                        && key.get_keyval() == gdk::enums::key::r
+                    {
                         webview.reload();
                     }
 

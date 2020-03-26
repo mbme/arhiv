@@ -23,7 +23,14 @@
     },
 
     _callResult(callId, result) {
-      pendingRequests[callId](result)
+      const responseHandler = pendingRequests[callId]
+
+      if (!responseHandler) {
+        console.error(`RPC: got response for unknown call id ${callId}, ignoring`)
+        return
+      }
+
+      responseHandler(result)
 
       delete pendingRequests[callId]
     },

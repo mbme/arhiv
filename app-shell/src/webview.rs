@@ -32,12 +32,7 @@ impl std::str::FromStr for RpcMessage {
 fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
     // register script message handler before injecting script so that window.webkit is immediately available
     let ucm = webview.get_user_content_manager().unwrap();
-    {
-        let result = ucm.register_script_message_handler("app-shell");
-        if !result {
-            return;
-        }
-    }
+    ucm.register_script_message_handler("app-shell");
 
     webview.run_javascript(
         include_str!("./rpc.js"),

@@ -1,7 +1,5 @@
-import { keyframes } from './style'
-
 export const animations = {
-  pulse: keyframes({
+  pulse: {
     '0%': {
       opacity: 0.7,
     },
@@ -13,9 +11,9 @@ export const animations = {
     '100%': {
       opacity: 0.7,
     },
-  }),
+  },
 
-  spin: keyframes({
+  spin: {
     from: {
       transform: 'rotate(0deg)',
     },
@@ -23,5 +21,5 @@ export const animations = {
     to: {
       transform: 'rotate(359deg)',
     },
-  }),
+  },
 }

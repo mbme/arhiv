@@ -1,5 +1,6 @@
 import {
   isObject,
+  merge,
 } from '@v/utils'
 import {
   IStyleObject,
@@ -36,6 +37,22 @@ export function applyTransformer(
   for (const [prop, value] of Object.entries(result)) {
     if (isObject(value)) {
       result[prop] = applyTransformer(value, transformer)
+    }
+  }
+
+  return result
+}
+
+export function mergeStyles(styles: Array<IStyleObject | undefined>): IStyleObject {
+  const result: IStyleObject = {}
+
+  for (const style of styles) {
+    if (!style) {
+      continue
+    }
+
+    for (const [key, value] of Object.entries(style)) {
+      result[key] = merge(result[key], value)
     }
   }
 

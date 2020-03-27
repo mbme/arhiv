@@ -1,8 +1,10 @@
 /* eslint-disable max-len */
 import * as React from 'react'
 import {
-  $Style,
-  stylish,
+  IStyleObject,
+  useStyle,
+} from '@v/web-utils/src/stylish'
+import {
   theme,
 } from './style'
 import {
@@ -98,18 +100,18 @@ export const icons = {
 
 export type IconType = keyof typeof icons
 
-const $icon = stylish({
+const $icon = {
   display: 'inline-block',
   cursor: 'pointer',
   transition: 'color 0.17s ease',
   '&:hover': {
     color: theme.color.primary,
   },
-})
+}
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: $Style
+  $style?: IStyleObject
   title?: string
 }
 
@@ -122,6 +124,8 @@ export function Icon(props: IFeatherIconProps) {
     $style,
   } = props
 
+  const className = useStyle($icon, $style)
+
   return (
     <svg
       width="24"
@@ -132,7 +136,7 @@ export function Icon(props: IFeatherIconProps) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={$icon.and($style).with(props).className}
+      className={className}
       onClick={onClick}
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? 'button' : undefined}

@@ -18,23 +18,12 @@ export function App({ store }: IProps) {
     console.error(message)
     return (
       <Box key={message.id} mb="large">
-        {message.labelIds.join(',')}
-        <br/>
-        {message.snippet}
-        <br/>
         <hr />
-        {message.payload.headers.map(({name, value}) => <Box>{name}: {value}</Box>)}
-        <hr />
-        {message.payload.parts?.map((part) => {
-          const data = part.body.data
-
-          const value = Buffer.alloc(data.length, data, 'base64').toString()
-          return (
-            <Box key={part.partId}>
-              {value}
-            </Box>
-          )
-        })}
+        {message.labelIds.join(', ')}
+        <br/>
+        <h2 dangerouslySetInnerHTML={{ __html: message.snippet }} />
+        <br/>
+        {message.payload.headers.map(({name, value}) => <Box><b>{name}</b>: {value}</Box>)}
       </Box>
     )
   })

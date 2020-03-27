@@ -16,8 +16,7 @@ module.exports = {
     "sourceType": "module"
   },
   "plugins": [
-    "@typescript-eslint",
-    "react-hooks"
+    "@typescript-eslint"
   ],
   "rules": {
     "@typescript-eslint/no-unused-vars": "off",
@@ -55,9 +54,6 @@ module.exports = {
     "class-methods-use-this": "off",
     "prefer-destructuring": "off",
     "prefer-arrow-callback": "off",
-
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
 
     // typescript-eslint
     "@typescript-eslint/adjacent-overload-signatures": "error",

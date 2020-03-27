@@ -24,7 +24,7 @@ interface IGmailMessagePayload {
 
 interface IGmailMessagePayloadBody {
   attachmentId?: string,
-  data: string, // base64
+  data: string, // base64, to decode Buffer.alloc(data.length, data, 'base64').toString()
   size: number,
 }
 

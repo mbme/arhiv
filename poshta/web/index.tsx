@@ -50,7 +50,6 @@ async function run() {
   )
 }
 
-// FIXME fix reload
 if (window.RPC) {
   run().catch(console.error)
 } else {

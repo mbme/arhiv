@@ -7,7 +7,6 @@ export function createContext<T>(initialValue?: T) {
     Provider: Context.Provider,
 
     use(): T {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       const value = React.useContext(Context)
 
       if (!value) {

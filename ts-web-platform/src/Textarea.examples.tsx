@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Textarea } from './Textarea'
+import { Examples } from './Examples'
 
-export const examples = {
+const examples = {
   '': function TextareaExample() {
     const [value, setValue] = React.useState('')
 
@@ -14,4 +15,10 @@ export const examples = {
       />
     )
   },
+}
+
+export function TextareaExamples() {
+  return (
+    <Examples title="Textarea" examples={examples} />
+  )
 }

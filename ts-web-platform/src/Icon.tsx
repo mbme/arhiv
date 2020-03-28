@@ -2,8 +2,8 @@
 import * as React from 'react'
 import {
   IStyleObject,
-  useStyle,
-} from '@v/web-utils/src/stylish'
+  useStyles,
+} from '@v/web-utils'
 import {
   theme,
 } from './style'
@@ -124,7 +124,7 @@ export function Icon(props: IFeatherIconProps) {
     $style,
   } = props
 
-  const className = useStyle($icon, $style)
+  const className = useStyles($icon, $style)
 
   return (
     <svg

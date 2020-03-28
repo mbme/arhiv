@@ -1,6 +1,5 @@
 import * as React from 'react'
 import {
-  stylish,
   theme,
 } from './style'
 import { Icon } from './Icon'
@@ -39,13 +38,13 @@ const $input = stylish(
   ),
 )
 
-const $clearIcon = stylish({
+const $clearIcon = {
   position: 'absolute',
   right: theme.spacing.fine,
   top: '50%',
   transform: 'translateY(-50%)',
   color: theme.color.secondary,
-})
+}
 
 type NativeProps =
   'type'

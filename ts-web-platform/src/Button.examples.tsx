@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Button } from './Button'
+import { Examples } from './Examples'
 
-export const examples = {
+const examples = {
   'Primary': (
     <Button variant="primary">Primary Button</Button>
   ),
@@ -22,4 +23,10 @@ export const examples = {
   'Link disabled': (
     <Button variant="link" disabled>Button</Button>
   ),
+}
+
+export function ButtonExamples() {
+  return (
+    <Examples title="Buttons" examples={examples} />
+  )
 }

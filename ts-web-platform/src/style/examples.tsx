@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { theme } from './theme'
+import { Examples } from '../Examples'
 
-export const examples = {
+const examples = {
   'Colors': (
     <div>
       {Object.entries(theme.color).map(([name, value]) => (
@@ -20,4 +21,10 @@ export const examples = {
       ))}
     </div>
   ),
+}
+
+export function StyleExamples() {
+  return (
+    <Examples title="Theme" examples={examples} />
+  )
 }

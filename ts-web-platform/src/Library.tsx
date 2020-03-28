@@ -1,58 +1,29 @@
 import * as React from 'react'
-import { isFunction } from '@v/utils'
 
-import { Box } from './Box'
-import { Heading } from './Heading'
-
-import { examples as buttonExamples } from './Button.examples'
-import { examples as selectExamples } from './Select.examples'
-import { examples as inputExamples } from './Input.examples'
-import { examples as textareaExamples } from './Textarea.examples'
-import { examples as iconExamples } from './Icon.examples'
-import { examples as themeExamples } from './style'
-import { confirmationDialogExamples } from './Overlay'
-
-interface IProps {
-  title: string
-  examples: { [description: string]: JSX.Element | React.FC }
-}
-
-function Examples({ title, examples }: IProps) {
-  return (
-    <Box mb="xlarge">
-      <Heading>{title}</Heading>
-
-      {Object.entries(examples).map(([description, Example], i) => (
-        <Box key={i} mb="medium">
-          {description && (
-            <Heading fontSize="medium">
-              {description}
-            </Heading>
-          )}
-
-          {isFunction(Example) ? <Example /> : Example}
-        </Box>
-      ))}
-    </Box>
-  )
-}
+import { ButtonExamples } from './Button.examples'
+import { SelectExamples } from './Select.examples'
+import { InputExamples } from './Input.examples'
+import { TextareaExamples } from './Textarea.examples'
+import { IconExamples } from './Icon.examples'
+import { StyleExamples } from './style/examples'
+import { ConfirmationDialogExamples } from './Overlay/ConfirmationDialog.examples'
 
 export function Library() {
   return (
     <div>
-      <Examples title="Theme" examples={themeExamples} />
+      <StyleExamples />
 
-      <Examples title="Icons" examples={iconExamples} />
+      <IconExamples />
 
-      <Examples title="Buttons" examples={buttonExamples} />
+      <ButtonExamples />
 
-      <Examples title="Select" examples={selectExamples} />
+      <SelectExamples />
 
-      <Examples title="Input" examples={inputExamples} />
+      <InputExamples />
 
-      <Examples title="Textarea" examples={textareaExamples} />
+      <TextareaExamples />
 
-      <Examples title="Confirmation dialog" examples={confirmationDialogExamples} />
+      <ConfirmationDialogExamples />
     </div>
   )
 }

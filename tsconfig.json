@@ -16,6 +16,7 @@
 
     "skipLibCheck": true,
 
+    "downlevelIteration": true,
     "keyofStringsOnly": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

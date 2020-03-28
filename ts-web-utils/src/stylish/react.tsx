@@ -35,13 +35,15 @@ export function StylishProvider({ transformer, children }: IProps) {
   )
 }
 
-export function useStyle(...items: Array<IStyleObject | undefined>) {
+export function useStyles(...items: Array<IStyleObject | undefined | null | false | ''>) {
   const renderer = React.useContext(RendererContext)
   if (!renderer) {
     throw new Error("RendererContext isn't initialized yet")
   }
 
-  return React.useMemo(() => renderer.render(...items), items)
+  const args = items.filter(item => item) as IStyleObject[]
+
+  return React.useMemo(() => renderer.render(...args), args)
 }
 
 export function useKeyframes(item: IStyleObject) {

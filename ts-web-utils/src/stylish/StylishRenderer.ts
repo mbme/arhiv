@@ -33,7 +33,7 @@ export class StylishRenderer {
     this._sheet.insertRule(rule, this._sheet.cssRules.length)
   }
 
-  render(...styles: Array<IStyleObject | undefined>): string {
+  render(...styles: IStyleObject[]): string {
     const style = new StyleNode(applyTransformer(mergeStyles(styles), this._transformer))
     const className = hash2className(style.hash)
 

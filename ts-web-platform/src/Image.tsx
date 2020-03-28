@@ -1,26 +1,24 @@
 import * as React from 'react'
-import {
-  stylish,
-  $Style,
-} from './style'
-
-const $image = stylish(
-  props => props.width && { width: props.width as string },
-  props => props.height && { height: props.height as string },
-)
+import { IStyleObject, useStyles } from '@v/web-utils'
 
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
-  $style?: $Style
+  $style?: IStyleObject
 }
 
 export function Image({ width, height, $style, ...props }: IProps) {
+  const className = useStyles(
+    width && { width },
+    height && { height },
+    $style,
+  )
+
   return (
     <img
       alt=""
       {...props}
-      className={$image.with({ width, height }).and($style).className}
+      className={className}
     />
   )
 }

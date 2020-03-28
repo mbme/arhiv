@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { Row } from './Layout'
 import { Icon, icons, IconType } from './Icon'
+import { Examples } from './Examples'
 
-export const examples = {
+const examples = {
   '': (
     <Row>
       {Object.keys(icons).map(iconType => (
@@ -17,5 +18,11 @@ export const examples = {
         />
       ))}
     </Row>
-  ),
+  )
+}
+
+export function IconExamples() {
+  return (
+    <Examples title="Icons" examples={examples} />
+  )
 }

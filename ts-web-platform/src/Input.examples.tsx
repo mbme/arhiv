@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Input } from './Input'
+import { Examples } from './Examples'
 
-export const examples = {
+const examples = {
   'Light input': function LightInputExample() {
     const [value, setValue] = React.useState('')
 
@@ -57,4 +58,10 @@ export const examples = {
       />
     )
   },
+}
+
+export function InputExamples() {
+  return (
+    <Examples title="Input" examples={examples} />
+  )
 }

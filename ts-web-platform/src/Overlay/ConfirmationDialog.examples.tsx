@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Button } from '../Button'
 import { ConfirmationDialog } from './ConfirmationDialog'
+import { Examples } from '../Examples'
 
 const ConfirmationDialogExample = () => {
   const [showModal, setShowModal] = React.useState(false)
@@ -24,8 +25,14 @@ const ConfirmationDialogExample = () => {
   )
 }
 
-export const examples = {
+const examples = {
   '': (
     <ConfirmationDialogExample />
   ),
+}
+
+export function ConfirmationDialogExamples() {
+  return (
+    <Examples title="Confirmation dialog" examples={examples} />
+  )
 }

@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { noop } from '@v/utils'
 import { Select } from './Select'
+import { Examples } from './Examples'
 
-export const examples = {
+const examples = {
   '': (
     <Select
       name="select"
@@ -10,4 +11,10 @@ export const examples = {
       onChange={noop}
     />
   ),
+}
+
+export function SelectExamples() {
+  return (
+    <Examples title="Select" examples={examples} />
+  )
 }

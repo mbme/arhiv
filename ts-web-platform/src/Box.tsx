@@ -3,15 +3,12 @@ import {
   isString,
   Procedure,
 } from '@v/utils'
-import {
-  stylish,
-  $Style,
-} from './style'
+import { IStyleObject } from '@v/web-utils'
 
 export interface IProps {
   as?: React.ElementType
   children?: React.ReactNode
-  $style?: $Style
+  $style?: IStyleObject
   onClick?: Procedure
   innerRef?: React.RefObject<any>
   [prop: string]: any

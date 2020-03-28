@@ -1,12 +1,11 @@
 import * as React from 'react'
 import { Counter } from '@v/utils'
 import {
-  $Style,
-  stylish,
   theme,
 } from '../style'
+import { IStyleObject } from '@v/web-utils'
 
-const $container = stylish({
+const $container = {
   backgroundColor: theme.color.bgOverlay,
 
   position: 'fixed',
@@ -19,12 +18,12 @@ const $container = stylish({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'flex-start',
-})
+}
 
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  $style?: $Style
+  $style?: IStyleObject
 }
 
 interface IOverlayRenderer {

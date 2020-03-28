@@ -1,11 +1,10 @@
 import * as React from 'react'
 import {
-  stylish,
-  $Style,
   theme,
 } from './style'
+import { IStyleObject } from '@v/web-utils'
 
-const $textarea = stylish({
+const $textarea = {
   backgroundColor: theme.color.bg0,
   display: 'block',
   width: '100%',
@@ -17,14 +16,14 @@ const $textarea = stylish({
 
   border: theme.border,
   boxShadow: theme.boxShadow,
-})
+}
 
 interface IProps {
   name: string
   value: string
   onChange(value: string): void
   placeholder?: string
-  $style?: $Style
+  $style?: IStyleObject
 }
 
 export class Textarea extends React.PureComponent<IProps> {

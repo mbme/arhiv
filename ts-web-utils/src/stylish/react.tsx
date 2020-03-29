@@ -3,6 +3,7 @@ import { StylishRenderer } from './StylishRenderer'
 import {
   IStyleObject,
   StyleTransformer,
+  StyleArg,
 } from './types'
 import {
   createStyleElement,
@@ -35,7 +36,7 @@ export function StylishProvider({ transformer, children }: IProps) {
   )
 }
 
-export function useStyles(...items: Array<IStyleObject | undefined | null | false | ''>) {
+export function useStyles(...items: StyleArg[]) {
   const renderer = React.useContext(RendererContext)
   if (!renderer) {
     throw new Error("RendererContext isn't initialized yet")
@@ -43,7 +44,7 @@ export function useStyles(...items: Array<IStyleObject | undefined | null | fals
 
   const args = items.filter(item => item) as IStyleObject[]
 
-  return React.useMemo(() => renderer.render(...args), args)
+  return React.useMemo(() => renderer.render(args), args)
 }
 
 export function useKeyframes(item: IStyleObject) {
@@ -53,4 +54,24 @@ export function useKeyframes(item: IStyleObject) {
   }
 
   return React.useMemo(() => renderer.renderKeyframes(item), [item])
+}
+
+export function createStylishElement<E extends keyof HTMLElementTagNameMap>(element: E) {
+  interface IStylishProps extends React.HTMLProps<HTMLElementTagNameMap[E]> {
+    $styles: StyleArg[]
+    innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+    ref?: undefined
+  }
+
+  const StylishElement = ({ $styles, innerRef, ...props }: IStylishProps) => {
+    const className = useStyles(...$styles)
+
+    return React.createElement(element, {
+      ref: innerRef,
+      className,
+      ...props
+    })
+  }
+
+  return StylishElement
 }

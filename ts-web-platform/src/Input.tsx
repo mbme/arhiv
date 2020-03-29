@@ -1,11 +1,14 @@
 import * as React from 'react'
-import {
-  theme,
-} from './style'
+import { theme } from './style'
 import { Icon } from './Icon'
 import { Box } from './Box'
+import {
+  createStylishElement,
+} from '@v/web-utils'
 
-const $input = stylish(
+const StylishInput = createStylishElement('input')
+
+const getStyles = (props: IProps) => [
   {
     display: 'block',
     width: '100%',
@@ -17,26 +20,20 @@ const $input = stylish(
     py: theme.spacing.small,
   },
 
-  props => (
-    props.light
-      ? {
-        py: theme.spacing.fine,
-        backgroundColor: 'inherit',
-        borderBottom: theme.border,
-      }
-      : {
-        backgroundColor: theme.color.bg0,
-        boxShadow: theme.boxShadow,
-        border: theme.border,
-      }
-  ),
+  props.light ? {
+    py: theme.spacing.fine,
+    backgroundColor: 'inherit',
+    borderBottom: theme.border,
+  } : {
+    backgroundColor: theme.color.bg0,
+    boxShadow: theme.boxShadow,
+    border: theme.border,
+  },
 
-  props => (
-    props.onClear && {
-      paddingRight: theme.spacing.medium,
-    }
-  ),
-)
+  props.onClear && {
+    paddingRight: theme.spacing.medium,
+  },
+]
 
 const $clearIcon = {
   position: 'absolute',
@@ -141,9 +138,9 @@ export class Input extends React.PureComponent<IProps> {
 
     return (
       <Box relative>
-        <input
-          className={$input.with(this.props).className}
-          ref={this.ref}
+        <StylishInput
+          $styles={getStyles(this.props)}
+          innerRef={this.ref}
           type={type}
           name={name}
           value={value}

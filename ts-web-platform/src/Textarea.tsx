@@ -2,7 +2,12 @@ import * as React from 'react'
 import {
   theme,
 } from './style'
-import { IStyleObject } from '@v/web-utils'
+import {
+  IStyleObject,
+  createStylishElement,
+} from '@v/web-utils'
+
+const StylishTextArea = createStylishElement('textarea')
 
 const $textarea = {
   backgroundColor: theme.color.bg0,
@@ -56,6 +61,14 @@ export class Textarea extends React.PureComponent<IProps> {
     this._selectionEnd = this._ref.current!.selectionEnd
   }
 
+  onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const {
+      onChange,
+    } = this.props
+
+    onChange(e.target.value)
+  }
+
   insert(str: string) {
     const { value, onChange } = this.props
 
@@ -77,19 +90,18 @@ export class Textarea extends React.PureComponent<IProps> {
     const {
       name,
       value,
-      onChange,
       placeholder,
       $style,
     } = this.props
 
     return (
-      <textarea
-        className={$textarea.and($style).className}
-        ref={this._ref}
+      <StylishTextArea
+        $styles={[$textarea, $style]}
+        innerRef={this._ref}
         name={name}
         value={value}
         placeholder={placeholder}
-        onChange={e => onChange(e.target.value)}
+        onChange={this.onChange}
         onBlur={this.onBlur}
       />
     )

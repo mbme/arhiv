@@ -101,6 +101,10 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     position: 'relative',
   },
 
+  absolute: {
+    position: 'absolute',
+  },
+
   bold: {
     fontWeight: 'bold',
   },

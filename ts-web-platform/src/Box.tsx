@@ -1,52 +1,52 @@
 import * as React from 'react'
-import {
-  isString,
-  Procedure,
-} from '@v/utils'
-import { IStyleObject } from '@v/web-utils'
+import { useStyles, IStyleObject } from '@v/web-utils'
+import { theme } from './style'
 
-export interface IProps {
-  as?: React.ElementType
+type Tags = keyof HTMLElementTagNameMap
+type Spacing = keyof typeof theme.spacing | string
+
+interface IProps<E extends Tags> {
+  as?: E
   children?: React.ReactNode
-  $style?: IStyleObject
-  onClick?: Procedure
-  innerRef?: React.RefObject<any>
-  [prop: string]: any
+  onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
+  innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+
+  relative?: boolean
+  absolute?: boolean
+  hidden?: boolean
+
+  m?: Spacing
+  mx?: Spacing
+  my?: Spacing
+  mt?: Spacing
+  mb?: Spacing
+  ml?: Spacing
+  mr?: Spacing
+
+  p?: Spacing
+  px?: Spacing
+  py?: Spacing
+  pt?: Spacing
+  pb?: Spacing
+  pl?: Spacing
+  pr?: Spacing
+
+  width?: Spacing
+  height?: Spacing
+
+  top?: Spacing
+  left?: Spacing
+  bottom?: Spacing
+  right?: Spacing
+  zIndex?: keyof typeof theme.zIndex | number
 }
 
-export class Box extends React.PureComponent<IProps> {
-  render() {
-    const {
-      as: Component = 'div',
-      onClick,
-      children,
-      innerRef,
-      $style,
-      ...styleProps
-    } = this.props
+export function Box<E extends Tags = 'div'>({ as, children, onClick, innerRef, ...props }: IProps<E>) {
+  const className = useStyles(props as IStyleObject)
 
-    const style = stylish(styleProps).and($style)
-
-    if (isString(Component)) {
-      return React.createElement(
-        Component,
-        {
-          className: style.className,
-          onClick,
-          ref: innerRef,
-        },
-        children,
-      )
-    }
-
-    return React.createElement(
-      Component,
-      {
-        $style: style,
-        onClick,
-        ref: innerRef,
-      },
-      children,
-    )
-  }
+  return React.createElement(as || 'div', {
+    ref: innerRef,
+    onClick,
+    className,
+  }, children)
 }

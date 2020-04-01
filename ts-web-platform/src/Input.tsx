@@ -2,13 +2,9 @@ import * as React from 'react'
 import { theme } from './style'
 import { Icon } from './Icon'
 import { Box } from './Box'
-import {
-  createStylishElement,
-} from '@v/web-utils'
+import { StylishElement, mergeStyles } from '@v/web-utils'
 
-const StylishInput = createStylishElement('input')
-
-const getStyles = (props: IProps) => [
+const getStyles = (props: IProps) => mergeStyles([
   {
     display: 'block',
     width: '100%',
@@ -33,7 +29,7 @@ const getStyles = (props: IProps) => [
   props.onClear && {
     paddingRight: theme.spacing.medium,
   },
-]
+])
 
 const $clearIcon = {
   position: 'absolute',
@@ -138,8 +134,9 @@ export class Input extends React.PureComponent<IProps> {
 
     return (
       <Box relative>
-        <StylishInput
-          $styles={getStyles(this.props)}
+        <StylishElement
+          as="input"
+          $style={getStyles(this.props)}
           innerRef={this.ref}
           type={type}
           name={name}

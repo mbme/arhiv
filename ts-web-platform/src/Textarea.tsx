@@ -3,11 +3,10 @@ import {
   theme,
 } from './style'
 import {
-  createStylishElement,
+  StylishElement,
   StyleArg,
+  mergeStyles,
 } from '@v/web-utils'
-
-const StylishTextArea = createStylishElement('textarea')
 
 const $textarea = {
   backgroundColor: theme.color.bg0,
@@ -95,8 +94,9 @@ export class Textarea extends React.PureComponent<IProps> {
     } = this.props
 
     return (
-      <StylishTextArea
-        $styles={[$textarea, $style]}
+      <StylishElement
+        as="textarea"
+        $style={mergeStyles([$textarea, $style])}
         innerRef={this._ref}
         name={name}
         value={value}

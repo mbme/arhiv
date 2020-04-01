@@ -56,22 +56,21 @@ export function useKeyframes(item: IStyleObject) {
   return React.useMemo(() => renderer.renderKeyframes(item), [item])
 }
 
-export function createStylishElement<E extends keyof HTMLElementTagNameMap>(element: E) {
-  interface IStylishProps extends React.HTMLProps<HTMLElementTagNameMap[E]> {
-    $styles: StyleArg[]
-    innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
-    ref?: undefined
-  }
+// eslint-disable-next-line max-len
+interface IStylishProps<E extends keyof HTMLElementTagNameMap = 'div'> extends React.HTMLProps<HTMLElementTagNameMap[E]> {
+  as?: E
+  $style?: StyleArg
+  innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+  ref?: undefined
+}
 
-  const StylishElement = ({ $styles, innerRef, ...props }: IStylishProps) => {
-    const className = useStyles(...$styles)
+// eslint-disable-next-line max-len
+export function StylishElement<E extends keyof HTMLElementTagNameMap = 'div'>({ $style, as, innerRef, ...props }: IStylishProps<E>) {
+  const className = useStyles($style)
 
-    return React.createElement(element, {
-      ref: innerRef,
-      className,
-      ...props
-    })
-  }
-
-  return StylishElement
+  return React.createElement(as || 'div', {
+    ref: innerRef,
+    className,
+    ...props
+  })
 }

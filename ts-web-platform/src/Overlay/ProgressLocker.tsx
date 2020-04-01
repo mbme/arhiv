@@ -1,54 +1,43 @@
 import * as React from 'react'
+import { mergeStyles } from '@v/web-utils'
 import {
   animations,
 } from '../style'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 
-const $overlay = stylish(
-  {
-    cursor: 'progress',
-    alignItems: 'center',
-    opacity: 0,
-  },
-  props => props.visible && {
-    animation: `${animations.pulse} 3s infinite`,
-  },
-)
+export const ProgressLocker = React.memo(() => {
+  const [visible, setVisible] = React.useState(false)
 
-interface IState {
-  visible: boolean
-}
+  const $style = mergeStyles([
+    {
+      cursor: 'progress',
+      alignItems: 'center',
+      opacity: 0,
+    },
+    visible && {
+      animation: `${animations.pulse} 3s infinite`,
+    },
+  ])
 
-export class ProgressLocker extends React.PureComponent<{}, IState> {
-  state = {
-    visible: false,
-  }
-
-  timer?: number
-
-  componentDidMount() {
-    this.timer = window.setTimeout(() => {
-      this.setState({ visible: true })
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setVisible(true)
     }, 1000)
-  }
 
-  componentWillUnmount() {
-    clearTimeout(this.timer)
-  }
+    return () => clearTimeout(timer)
+  }, [])
 
-  render() {
-    return (
-      <Overlay $style={$overlay.with(this.state)}>
-        <Icon
-          type="loader"
-          $style={{
-            width: '24px',
-            height: '24px',
-            animation: `${animations.spin} 1.5s infinite`,
-          }}
-        />
-      </Overlay>
-    )
-  }
-}
+  return (
+    <Overlay $style={$style}>
+      <Icon
+        type="loader"
+        $style={{
+          width: '24px',
+          height: '24px',
+          animation: `${animations.spin} 1.5s infinite`,
+        }}
+      />
+    </Overlay>
+  )
+})

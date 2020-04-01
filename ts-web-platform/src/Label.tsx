@@ -1,12 +1,10 @@
 import * as React from 'react'
-import {
-  Box,
-  IProps as IBoxProps,
-} from './Box'
+import { Tags } from './types'
+import { Text, IProps as ITextProps } from './Text'
 
-export function Label(props: IBoxProps) {
+export function Label<E extends Tags>(props: ITextProps<E>) {
   return (
-    <Box
+    <Text
       uppercase
       color="secondary"
       letterSpacing="1.2px"

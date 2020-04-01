@@ -3,8 +3,9 @@ import {
   Box,
   IProps as IBoxProps,
 } from '../Box'
+import { Tags } from '../types'
 
-interface IProps extends IBoxProps {
+interface IProps<E extends Tags> extends IBoxProps<E> {
   alignX?: 'left' | 'center' | 'right' | 'space-between'
   alignY?: 'top' | 'center' | 'bottom'
 }
@@ -22,7 +23,7 @@ const alignY2Align = {
   bottom: 'flex-end',
 }
 
-export function Row({ alignX = 'center', alignY = 'center', ...props }: IProps) {
+export function Row<E extends Tags = 'div'>({ alignX = 'center', alignY = 'center', ...props }: IProps<E>) {
   return (
     <Box
       display="flex"

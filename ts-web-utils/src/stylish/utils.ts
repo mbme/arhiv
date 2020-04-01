@@ -5,6 +5,7 @@ import {
 import {
   IStyleObject,
   StyleTransformer,
+  StyleArg,
 } from './types'
 
 export function createStyleElement(prepend = false) {
@@ -43,7 +44,7 @@ export function applyTransformer(
   return result
 }
 
-export function mergeStyles(styles: Array<IStyleObject | undefined>): IStyleObject {
+export function mergeStyles(styles: Array<StyleArg>): IStyleObject {
   const result: IStyleObject = {}
 
   for (const style of styles) {

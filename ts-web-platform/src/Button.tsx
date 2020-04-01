@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
-  IStyleObject,
   useStyles,
+  StyleArg,
 } from '@v/web-utils'
 import {
   theme,
@@ -14,7 +14,7 @@ interface IProps {
   disabled?: boolean
   variant?: ButtonVariant
   children: React.ReactNode
-  $style?: IStyleObject
+  $style?: StyleArg
 }
 
 function getStyles(props: IProps) {

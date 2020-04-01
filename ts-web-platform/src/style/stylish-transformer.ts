@@ -93,6 +93,9 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
   color: val => ({
     color: getColor(val),
   }),
+  backgroundColor: val => ({
+    backgroundColor: getColor(val),
+  }),
   bgColor: val => ({
     backgroundColor: getColor(val),
   }),

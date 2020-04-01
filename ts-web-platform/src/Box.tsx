@@ -1,19 +1,25 @@
 import * as React from 'react'
-import { useStyles, IStyleObject } from '@v/web-utils'
+import { useStyles, IStyleObject, StyleArg } from '@v/web-utils'
 import { theme } from './style'
+import { Tags, Spacing } from './types'
 
-type Tags = keyof HTMLElementTagNameMap
-type Spacing = keyof typeof theme.spacing | string
-
-interface IProps<E extends Tags> {
+export interface IProps<E extends Tags> {
   as?: E
   children?: React.ReactNode
   onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
   innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
 
+  $style?: StyleArg
+
   relative?: boolean
   absolute?: boolean
   hidden?: boolean
+
+  display?: string
+  flex?: string
+  flexDirection?: string
+  alignItems?: string
+  justifyContent?: string
 
   m?: Spacing
   mx?: Spacing
@@ -34,6 +40,10 @@ interface IProps<E extends Tags> {
   width?: Spacing
   height?: Spacing
 
+  color?: keyof typeof theme.color | string
+  bgColor?: keyof typeof theme.color | string
+  backgroundColor?: keyof typeof theme.color | string
+
   top?: Spacing
   left?: Spacing
   bottom?: Spacing
@@ -41,8 +51,8 @@ interface IProps<E extends Tags> {
   zIndex?: keyof typeof theme.zIndex | number
 }
 
-export function Box<E extends Tags = 'div'>({ as, children, onClick, innerRef, ...props }: IProps<E>) {
-  const className = useStyles(props as IStyleObject)
+export function Box<E extends Tags = 'div'>({ as, children, onClick, innerRef, $style, ...props }: IProps<E>) {
+  const className = useStyles($style, props as IStyleObject)
 
   return React.createElement(as || 'div', {
     ref: innerRef,

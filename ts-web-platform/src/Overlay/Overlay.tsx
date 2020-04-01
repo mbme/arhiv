@@ -1,19 +1,20 @@
 import * as React from 'react'
 import { Counter } from '@v/utils'
 import {
-  theme,
-} from '../style'
-import { IStyleObject } from '@v/web-utils'
+  createContext,
+  useStyles,
+  StyleArg,
+} from '@v/web-utils'
 
 const $container = {
-  backgroundColor: theme.color.bgOverlay,
+  backgroundColor: 'bgOverlay',
 
   position: 'fixed',
   top: '0',
   right: '0',
   bottom: '0',
   left: '0',
-  zIndex: theme.zIndex.modal,
+  zIndex: 'modal',
 
   display: 'flex',
   justifyContent: 'center',
@@ -23,7 +24,7 @@ const $container = {
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  $style?: IStyleObject
+  $style?: StyleArg
 }
 
 interface IOverlayRenderer {
@@ -31,90 +32,40 @@ interface IOverlayRenderer {
   hide(id: number): void
 }
 
-const OverlayContext = React.createContext<IOverlayRenderer>(null as any)
+const OverlayContext = createContext<IOverlayRenderer>()
 
-interface IProps {
-  children: React.ReactNode,
-}
+function TopOverlay({ children, onClick, $style }: IOverlay) {
+  const className = useStyles($container, $style)
 
-interface IState {
-  overlays: ReadonlyArray<[number, IOverlay]>,
-}
-
-export class OverlayRenderer extends React.PureComponent<IProps, IState> {
-  state: IState = {
-    overlays: [],
-  }
-
-  renderer: IOverlayRenderer = {
-    show: (id, overlay) => {
-      this.setState(state => ({
-        overlays: [...state.overlays, [id, overlay]],
-      }))
-    },
-
-    hide: (id) => {
-      this.setState(state => ({
-        overlays: state.overlays.filter(item => item[0] !== id),
-      }))
-    },
-  }
-
-  getOverlay() {
-    const {
-      overlays,
-    } = this.state
-
-    if (!overlays.length) {
-      return null
+  const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onClick && e.target === e.currentTarget) {
+      onClick()
     }
-
-    const [id, overlay] = overlays[overlays.length - 1]
-
-    const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (overlay.onClick && e.target === e.currentTarget) {
-        overlay.onClick()
-      }
-    }
-
-    const keypressHandler = (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Escape' && overlay.onClick) {
-        overlay.onClick()
-      }
-    }
-
-    return (
-      <div
-        key={id}
-        className={$container.and(overlay.$style).className}
-        onClick={clickHandler}
-        onKeyPress={keypressHandler}
-        role="dialog"
-        aria-modal="true"
-      >
-        {overlay.children}
-      </div>
-    )
   }
 
-  render() {
-    const {
-      children,
-    } = this.props
-
-    return (
-      <OverlayContext.Provider value={this.renderer}>
-        {children}
-        {this.getOverlay()}
-      </OverlayContext.Provider>
-    )
+  const keypressHandler = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape' && onClick) {
+      onClick()
+    }
   }
+
+  return (
+    <div
+      className={className}
+      onClick={clickHandler}
+      onKeyPress={keypressHandler}
+      role="dialog"
+      aria-modal="true"
+    >
+      {children}
+    </div>
+  )
 }
 
 const idCounter = new Counter()
 
 export function Overlay(props: IOverlay) {
-  const renderer = React.useContext(OverlayContext)
+  const renderer = OverlayContext.use()
 
   React.useEffect(() => {
     const id = idCounter.incAndGet()
@@ -126,3 +77,31 @@ export function Overlay(props: IOverlay) {
 
   return null
 }
+
+interface IProps {
+  children: React.ReactNode,
+}
+
+export const OverlayRenderer = React.memo(({ children }: IProps) => {
+  const [overlays, setOverlays] = React.useState<ReadonlyArray<[number, IOverlay]>>([])
+
+  const renderer = React.useMemo<IOverlayRenderer>(() => ({
+    show(id, overlay) {
+      setOverlays(prevOverlays => [...prevOverlays, [id, overlay]])
+    },
+    hide(id) {
+      setOverlays(prevOverlays => prevOverlays.filter(item => item[0] !== id))
+    },
+  }), [])
+
+  const [id, topOverlay] = overlays[overlays.length - 1] || []
+
+  return (
+    <OverlayContext.Provider value={renderer}>
+      {children}
+      {topOverlay && (
+        <TopOverlay key={id} {...topOverlay} />
+      )}
+    </OverlayContext.Provider>
+  )
+})

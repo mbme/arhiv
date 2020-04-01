@@ -3,8 +3,8 @@ import {
   theme,
 } from './style'
 import {
-  IStyleObject,
   createStylishElement,
+  StyleArg,
 } from '@v/web-utils'
 
 const StylishTextArea = createStylishElement('textarea')
@@ -28,7 +28,7 @@ interface IProps {
   value: string
   onChange(value: string): void
   placeholder?: string
-  $style?: IStyleObject
+  $style?: StyleArg
 }
 
 export class Textarea extends React.PureComponent<IProps> {

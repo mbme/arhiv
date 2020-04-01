@@ -1,10 +1,10 @@
 import * as React from 'react'
-import { IStyleObject, useStyles } from '@v/web-utils'
+import { useStyles, StyleArg } from '@v/web-utils'
 
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
-  $style?: IStyleObject
+  $style?: StyleArg
 }
 
 export function Image({ width, height, $style, ...props }: IProps) {

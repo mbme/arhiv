@@ -4,7 +4,7 @@ import {
   IProps as IBoxProps,
 } from '../Box'
 
-export function Spacer(props: IBoxProps) {
+export function Spacer(props: IBoxProps<'div'>) {
   return (
     <Box
       flex="1"

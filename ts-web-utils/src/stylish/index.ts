@@ -1,6 +1,7 @@
 export {
   createStyleElement,
   injectGlobalStyles,
+  mergeStyles,
 } from './utils'
 export { StylishRenderer } from './StylishRenderer'
 export * from './types'

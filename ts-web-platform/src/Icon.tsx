@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 import * as React from 'react'
 import {
-  IStyleObject,
   useStyles,
+  StyleArg,
 } from '@v/web-utils'
 import {
   theme,
@@ -111,7 +111,7 @@ const $icon = {
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: IStyleObject
+  $style?: StyleArg
   title?: string
 }
 

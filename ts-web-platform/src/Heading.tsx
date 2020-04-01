@@ -1,12 +1,14 @@
 import * as React from 'react'
-import {
-  Box,
-  IProps as IBoxProps,
-} from './Box'
+import { Text, IProps as ITextProps } from './Text'
+import { theme } from './style'
 
-export function Heading(props: IBoxProps) {
+interface IProps extends ITextProps<'h1'> {
+  mb?: keyof typeof theme.spacing | string
+}
+
+export function Heading(props: IProps) {
   return (
-    <Box
+    <Text
       as="h1"
       color="heading"
       fontSize="xlarge"

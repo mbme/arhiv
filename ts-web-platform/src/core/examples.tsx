@@ -1,29 +1,25 @@
 import * as React from 'react'
 import { theme } from './theme'
-import { Examples } from '../Examples'
+import { Example } from '../Example'
 import { Box } from '../Box'
-
-const examples = {
-  'Colors': (
-    <div>
-      {Object.entries(theme.color).map(([name, value]) => (
-        <Box
-          key={name}
-          height="3rem"
-          backgroundColor={value}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          {name}
-        </Box>
-      ))}
-    </div>
-  ),
-}
 
 export function StyleExamples() {
   return (
-    <Examples title="Theme" examples={examples} />
+    <Example section title="Theme">
+      <Example title="Colors">
+        {Object.entries(theme.color).map(([name, value]) => (
+          <Box
+            key={name}
+            height="3rem"
+            backgroundColor={value}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            {name}
+          </Box>
+        ))}
+      </Example>
+    </Example>
   )
 }

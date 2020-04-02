@@ -1,4 +1,4 @@
-import { theme } from './core/theme'
+import { theme } from './theme'
 
 export const globalStyles = `
 /* based on reboot.css */

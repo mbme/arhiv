@@ -1,4 +1,4 @@
-export { globalStyles } from './global-styles'
+export { globalStyles } from './core/global-styles'
 
 export { Button } from './Button'
 export { Select } from './Select'

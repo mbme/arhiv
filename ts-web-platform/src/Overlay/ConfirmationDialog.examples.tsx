@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { Button } from '../Button'
 import { ConfirmationDialog } from './ConfirmationDialog'
-import { Examples } from '../Examples'
+import { Example } from '../Example'
 
-const ConfirmationDialogExample = () => {
+export function ConfirmationDialogExamples() {
   const [showModal, setShowModal] = React.useState(false)
 
   return (
-    <>
+    <Example section title="Confirmation dialog">
       <Button onClick={() => setShowModal(true)}>
         Show modal
       </Button>
@@ -21,18 +21,6 @@ const ConfirmationDialogExample = () => {
           Are you sure you want to <b>remove it?</b>
         </ConfirmationDialog>
       )}
-    </>
-  )
-}
-
-const examples = {
-  '': (
-    <ConfirmationDialogExample />
-  ),
-}
-
-export function ConfirmationDialogExamples() {
-  return (
-    <Examples title="Confirmation dialog" examples={examples} />
+    </Example>
   )
 }

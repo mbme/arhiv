@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { Input } from './Input'
-import { Examples } from './Examples'
+import { Example } from './Example'
 
-const examples = {
-  'Light input': function LightInputExample() {
-    const [value, setValue] = React.useState('')
+function LightInputExample() {
+  const [value, setValue] = React.useState('')
 
-    return (
+  return (
+    <Example title="Light input">
       <Input
         name="input1"
         placeholder="Input example (light)"
@@ -14,13 +14,15 @@ const examples = {
         light
         onChange={setValue}
       />
-    )
-  },
+    </Example>
+  )
+}
 
-  'Light input with clear': function LightInputWithClearExample() {
-    const [value, setValue] = React.useState('')
+function LightInputWithClearExample() {
+  const [value, setValue] = React.useState('')
 
-    return (
+  return (
+    <Example title="Light input with clear">
       <Input
         name="input11"
         placeholder="Input example (light) with clear"
@@ -29,26 +31,30 @@ const examples = {
         onChange={setValue}
         onClear={() => setValue('')}
       />
-    )
-  },
+    </Example>
+  )
+}
 
-  'Input': function InputExample() {
-    const [value, setValue] = React.useState('')
+function InputExample() {
+  const [value, setValue] = React.useState('')
 
-    return (
+  return (
+    <Example title="Input">
       <Input
         name="input2"
         placeholder="Input example"
         value={value}
         onChange={setValue}
       />
-    )
-  },
+    </Example>
+  )
+}
 
-  'Input with clear': function InputWithClearExample() {
-    const [value, setValue] = React.useState('')
+function InputWithClearExample() {
+  const [value, setValue] = React.useState('')
 
-    return (
+  return (
+    <Example title="Input with clear">
       <Input
         name="input21"
         placeholder="Input example with clear"
@@ -56,12 +62,20 @@ const examples = {
         onChange={setValue}
         onClear={() => setValue('')}
       />
-    )
-  },
+    </Example>
+  )
 }
 
 export function InputExamples() {
   return (
-    <Examples title="Input" examples={examples} />
+    <Example section title="Input">
+      <LightInputExample />
+
+      <LightInputWithClearExample />
+
+      <InputExample />
+
+      <InputWithClearExample />
+    </Example>
   )
 }

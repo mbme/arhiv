@@ -5,7 +5,7 @@ import { SelectExamples } from './Select.examples'
 import { InputExamples } from './Input.examples'
 import { TextareaExamples } from './Textarea.examples'
 import { IconExamples } from './Icon.examples'
-import { StyleExamples } from './style/examples'
+import { StyleExamples } from './core/examples'
 import { ConfirmationDialogExamples } from './Overlay/ConfirmationDialog.examples'
 
 export function Library() {

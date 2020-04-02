@@ -2,11 +2,13 @@ import * as React from 'react'
 import { Counter } from '@v/utils'
 import {
   createContext,
+} from '@v/web-utils'
+import {
   useStyles,
   StyleArg,
-} from '@v/web-utils'
+} from '../core'
 
-const $container = {
+const $container: StyleArg = {
   backgroundColor: 'bgOverlay',
 
   position: 'fixed',
@@ -24,7 +26,7 @@ const $container = {
 interface IOverlay {
   children: React.ReactNode
   onClick?(): void
-  $style?: StyleArg
+  $styles?: StyleArg[]
 }
 
 interface IOverlayRenderer {
@@ -34,8 +36,8 @@ interface IOverlayRenderer {
 
 const OverlayContext = createContext<IOverlayRenderer>()
 
-function TopOverlay({ children, onClick, $style }: IOverlay) {
-  const className = useStyles($container, $style)
+function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {
+  const className = useStyles($container, ...$styles)
 
   const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onClick && e.target === e.currentTarget) {

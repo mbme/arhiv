@@ -1,24 +1,26 @@
 import * as React from 'react'
-import { mergeStyles } from '@v/web-utils'
 import {
-  animations,
-} from '../style'
+  useAnimation,
+  StyleArg,
+} from '../core'
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 
 export const ProgressLocker = React.memo(() => {
   const [visible, setVisible] = React.useState(false)
 
-  const $style = mergeStyles([
+  const pulseAnimation = useAnimation('pulse')
+  const spinAnimation = useAnimation('spin')
+  const $styles: StyleArg[] = [
     {
       cursor: 'progress',
       alignItems: 'center',
       opacity: 0,
     },
     visible && {
-      animation: `${animations.pulse} 3s infinite`,
+      animation: `${pulseAnimation} 3s infinite`,
     },
-  ])
+  ]
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -29,14 +31,16 @@ export const ProgressLocker = React.memo(() => {
   }, [])
 
   return (
-    <Overlay $style={$style}>
+    <Overlay $styles={$styles}>
       <Icon
         type="loader"
-        $style={{
-          width: '24px',
-          height: '24px',
-          animation: `${animations.spin} 1.5s infinite`,
-        }}
+        $styles={[
+          {
+            width: '24px',
+            height: '24px',
+            animation: `${spinAnimation} 1.5s infinite`,
+          }
+        ]}
       />
     </Overlay>
   )

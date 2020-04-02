@@ -1,12 +1,5 @@
-import {
-  isObject,
-  merge,
-} from '@v/utils'
-import {
-  IStyleObject,
-  StyleTransformer,
-  StyleArg,
-} from './types'
+import { merge } from '@v/utils'
+import { IStyleObject } from './types'
 
 export function createStyleElement(prepend = false) {
   const el = document.createElement('style')
@@ -26,32 +19,10 @@ export function injectGlobalStyles(styles: string) {
   el.textContent = styles
 }
 
-export function applyTransformer(
-  style: IStyleObject,
-  transformer?: StyleTransformer,
-): IStyleObject {
-  if (!transformer) {
-    return style
-  }
-
-  const result = transformer(style)
-  for (const [prop, value] of Object.entries(result)) {
-    if (isObject(value)) {
-      result[prop] = applyTransformer(value, transformer)
-    }
-  }
-
-  return result
-}
-
-export function mergeStyles(styles: Array<StyleArg>): IStyleObject {
+export function mergeStyles(styles: IStyleObject[]): IStyleObject {
   const result: IStyleObject = {}
 
   for (const style of styles) {
-    if (!style) {
-      continue
-    }
-
     for (const [key, value] of Object.entries(style)) {
       result[key] = merge(result[key], value)
     }

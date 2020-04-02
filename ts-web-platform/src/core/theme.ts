@@ -6,8 +6,12 @@ export const theme = {
     large: '2rem',
     xlarge: '3rem',
   },
-  border: '1px solid rgba(0,0,0,.09)',
-  boxShadow: '0 2px 4px rgba(0,0,0,.2)',
+  border: {
+    default: '1px solid rgba(0,0,0,.09)',
+  },
+  boxShadow: {
+    default: '0 2px 4px rgba(0,0,0,.2)',
+  },
   color: {
     primary: '#FF553C',
     secondary: '#5E5A57',
@@ -44,5 +48,30 @@ export const theme = {
     sm: '768px',
     md: '1024px',
     lg: '1366px',
+  },
+  animations: {
+    pulse: {
+      '0%': {
+        opacity: 0.7,
+      },
+
+      '50%': {
+        opacity: 1,
+      },
+
+      '100%': {
+        opacity: 0.7,
+      },
+    },
+
+    spin: {
+      from: {
+        transform: 'rotate(0deg)',
+      },
+
+      to: {
+        transform: 'rotate(359deg)',
+      },
+    },
   },
 }

@@ -1,17 +1,17 @@
 import * as React from 'react'
 import {
-  theme,
-} from '../style'
+  useStyles,
+  StyleArg,
+} from '../core'
 import { Overlay } from './Overlay'
-import { useStyles } from '@v/web-utils'
 
-const $modal = {
-  backgroundColor: theme.color.bg0,
+const $modal: StyleArg = {
+  backgroundColor: 'bg0',
   marginTop: '17vh',
   minWidth: '375px',
-  padding: theme.spacing.medium,
-  border: theme.border,
-  boxShadow: theme.boxShadow,
+  padding: 'medium',
+  border: 'default',
+  boxShadow: 'default',
 }
 
 interface IProps {

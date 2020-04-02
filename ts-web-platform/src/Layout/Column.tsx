@@ -3,7 +3,7 @@ import {
   Box,
   IProps as IBoxProps,
 } from '../Box'
-import { Tags } from '../types'
+import { Tags } from '../core'
 
 const alignX2Align = {
   left: 'flex-start',

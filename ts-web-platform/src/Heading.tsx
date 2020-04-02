@@ -1,12 +1,10 @@
 import * as React from 'react'
 import { Text, IProps as ITextProps } from './Text'
-import { theme } from './style'
+import { StyleProps } from './core'
 
-interface IProps extends ITextProps<'h1'> {
-  mb?: keyof typeof theme.spacing | string
-}
+type Props = ITextProps<'h1'> & Pick<StyleProps, 'mb'>
 
-export function Heading(props: IProps) {
+export function Heading(props: Props) {
   return (
     <Text
       as="h1"

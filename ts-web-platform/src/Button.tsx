@@ -1,11 +1,8 @@
 import * as React from 'react'
 import {
-  useStyles,
   StyleArg,
-} from '@v/web-utils'
-import {
-  theme,
-} from './style'
+  useStyles,
+} from './core'
 
 type ButtonVariant = 'primary' | 'secondary' | 'link'
 
@@ -17,11 +14,12 @@ interface IProps {
   $style?: StyleArg
 }
 
-function getStyles(props: IProps) {
+function getStyles(props: IProps): StyleArg[] {
   return [
     {
-      padding: `${theme.spacing.fine} ${theme.spacing.medium}`,
-      border: theme.border,
+      py: 'fine',
+      px: 'medium',
+      border: 'default',
       borderRadius: '2px',
       cursor: 'pointer',
       userSelect: 'none',
@@ -34,31 +32,31 @@ function getStyles(props: IProps) {
 
     props.disabled && {
       cursor: 'auto',
-      color: theme.color.secondary,
-      backgroundColor: theme.color.bg1,
+      color: 'secondary',
+      backgroundColor: 'bg1',
     },
 
     !props.disabled && props.variant === 'primary' && {
-      backgroundColor: theme.color.primary,
-      color: theme.color.light,
-      boxShadow: theme.boxShadow,
+      backgroundColor: 'primary',
+      color: 'light',
+      boxShadow: 'default',
       '&:hover': {
         transform: 'scale(1.05)',
       },
     },
 
     !props.disabled && props.variant === 'secondary' && {
-      color: theme.color.text,
-      backgroundColor: theme.color.bg0,
+      color: 'text',
+      backgroundColor: 'bg0',
       '&:hover': {
-        backgroundColor: theme.color.bg1,
+        backgroundColor: 'bg1',
       },
     },
 
     !props.disabled && props.variant === 'link' && {
       border: '0 none',
       background: 'transparent',
-      color: theme.color.link,
+      color: 'link',
     },
   ]
 }

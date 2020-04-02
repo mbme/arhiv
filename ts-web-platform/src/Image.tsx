@@ -1,17 +1,20 @@
 import * as React from 'react'
-import { useStyles, StyleArg } from '@v/web-utils'
+import {
+  useStyles,
+  StyleArg,
+} from './core'
 
 interface IProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   width?: string
   height?: string
-  $style?: StyleArg
+  $styles?: StyleArg[]
 }
 
-export function Image({ width, height, $style, ...props }: IProps) {
+export function Image({ width, height, $styles = [], ...props }: IProps) {
   const className = useStyles(
     width && { width },
     height && { height },
-    $style,
+    ...$styles,
   )
 
   return (

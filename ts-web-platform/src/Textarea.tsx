@@ -1,25 +1,21 @@
 import * as React from 'react'
 import {
-  theme,
-} from './style'
-import {
-  StylishElement,
   StyleArg,
-  mergeStyles,
-} from '@v/web-utils'
+  StylishElement,
+} from './core'
 
-const $textarea = {
-  backgroundColor: theme.color.bg0,
+const $textarea: StyleArg = {
+  backgroundColor: 'bg0',
   display: 'block',
   width: '100%',
-  padding: theme.spacing.medium,
+  p: 'medium',
 
   resize: 'none',
   minHeight: '19rem',
   overflowY: 'hidden',
 
-  border: theme.border,
-  boxShadow: theme.boxShadow,
+  border: 'default',
+  boxShadow: 'default',
 }
 
 interface IProps {
@@ -27,7 +23,7 @@ interface IProps {
   value: string
   onChange(value: string): void
   placeholder?: string
-  $style?: StyleArg
+  $styles?: StyleArg[]
 }
 
 export class Textarea extends React.PureComponent<IProps> {
@@ -90,13 +86,13 @@ export class Textarea extends React.PureComponent<IProps> {
       name,
       value,
       placeholder,
-      $style,
+      $styles = [],
     } = this.props
 
     return (
       <StylishElement
         as="textarea"
-        $style={mergeStyles([$textarea, $style])}
+        $styles={[$textarea, ...$styles]}
         innerRef={this._ref}
         name={name}
         value={value}

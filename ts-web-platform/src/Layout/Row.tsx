@@ -3,7 +3,7 @@ import {
   Box,
   IProps as IBoxProps,
 } from '../Box'
-import { Tags } from '../types'
+import { Tags } from '../core'
 
 interface IProps<E extends Tags> extends IBoxProps<E> {
   alignX?: 'left' | 'center' | 'right' | 'space-between'

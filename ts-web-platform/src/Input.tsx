@@ -1,10 +1,12 @@
 import * as React from 'react'
-import { theme } from './style'
 import { Icon } from './Icon'
 import { Box } from './Box'
-import { StylishElement, mergeStyles } from '@v/web-utils'
+import {
+  StyleArg,
+  StylishElement,
+} from './core'
 
-const getStyles = (props: IProps) => mergeStyles([
+const getStyles = (props: IProps): StyleArg[] => [
   {
     display: 'block',
     width: '100%',
@@ -12,31 +14,31 @@ const getStyles = (props: IProps) => mergeStyles([
     border: '0 none',
     backgroundColor: 'inherit',
 
-    px: theme.spacing.medium,
-    py: theme.spacing.small,
+    px: 'medium',
+    py: 'small',
   },
 
   props.light ? {
-    py: theme.spacing.fine,
+    py: 'fine',
     backgroundColor: 'inherit',
-    borderBottom: theme.border,
+    borderBottom: 'default',
   } : {
-    backgroundColor: theme.color.bg0,
-    boxShadow: theme.boxShadow,
-    border: theme.border,
+    backgroundColor: 'bg0',
+    boxShadow: 'default',
+    border: 'default',
   },
 
   props.onClear && {
-    paddingRight: theme.spacing.medium,
+    paddingRight: 'medium',
   },
-])
+]
 
-const $clearIcon = {
+const $clearIcon: StyleArg = {
   position: 'absolute',
-  right: theme.spacing.fine,
+  right: 'fine',
   top: '50%',
   transform: 'translateY(-50%)',
-  color: theme.color.secondary,
+  color: 'secondary',
 }
 
 type NativeProps =
@@ -136,7 +138,7 @@ export class Input extends React.PureComponent<IProps> {
       <Box relative>
         <StylishElement
           as="input"
-          $style={getStyles(this.props)}
+          $styles={getStyles(this.props)}
           innerRef={this.ref}
           type={type}
           name={name}
@@ -153,7 +155,7 @@ export class Input extends React.PureComponent<IProps> {
         {onClear && value && (
           <Icon
             type="x"
-            $style={$clearIcon}
+            $styles={[$clearIcon]}
             onClick={this.onClickClear}
           />
         )}

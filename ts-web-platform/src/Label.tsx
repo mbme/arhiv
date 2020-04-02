@@ -1,6 +1,8 @@
 import * as React from 'react'
-import { Tags } from './types'
 import { Text, IProps as ITextProps } from './Text'
+import {
+  Tags,
+} from './core'
 
 export function Label<E extends Tags>(props: ITextProps<E>) {
   return (
@@ -8,7 +10,7 @@ export function Label<E extends Tags>(props: ITextProps<E>) {
       uppercase
       color="secondary"
       letterSpacing="1.2px"
-      fontWeight="500"
+      fontWeight={500}
       fontSize="small"
       {...props}
     />

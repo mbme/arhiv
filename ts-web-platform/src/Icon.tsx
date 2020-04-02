@@ -3,10 +3,7 @@ import * as React from 'react'
 import {
   useStyles,
   StyleArg,
-} from '@v/web-utils'
-import {
-  theme,
-} from './style'
+} from './core'
 import {
   clickOnEnter,
 } from './utils'
@@ -100,18 +97,18 @@ export const icons = {
 
 export type IconType = keyof typeof icons
 
-const $icon = {
+const $icon: StyleArg = {
   display: 'inline-block',
   cursor: 'pointer',
   transition: 'color 0.17s ease',
   '&:hover': {
-    color: theme.color.primary,
+    color: 'primary',
   },
 }
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
-  $style?: StyleArg
+  $styles?: StyleArg[]
   title?: string
 }
 
@@ -121,10 +118,10 @@ export function Icon(props: IFeatherIconProps) {
     type,
     title,
     onClick,
-    $style,
+    $styles = [],
   } = props
 
-  const className = useStyles($icon, $style)
+  const className = useStyles($icon, ...$styles)
 
   return (
     <svg

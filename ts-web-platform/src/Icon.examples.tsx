@@ -9,10 +9,10 @@ const examples = {
       {Object.keys(icons).map(iconType => (
         <Icon
           key={iconType}
-          $style={{
+          $styles={[{
             margin: '1rem',
             flex: '1 1 auto',
-          }}
+          }]}
           type={iconType as IconType}
           title={iconType}
         />

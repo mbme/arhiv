@@ -1,17 +1,22 @@
-import {
-  Obj,
-  isFunction,
-} from '@v/utils'
+import { Dict } from '@v/utils'
+import { IStyleObject } from '@v/web-utils'
 import { theme } from './theme'
 
-const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as Obj)[prop][val] || val
+const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as any)[prop][val] || val
 const getSpacing = getThemeProp('spacing')
 const getColor = getThemeProp('color')
+export const getAnimation = getThemeProp('animations')
+const getFontSize = getThemeProp('fontSize')
+const getFontFamily = getThemeProp('fontFamily')
+const getZIndex = getThemeProp('zIndex')
+const getBorder = getThemeProp('border')
+const getBoxShadow = getThemeProp('boxShadow')
 
 const mediaFrom = (minWidth: string) => `@media screen and (min-width: ${minWidth})`
 
-type Rule = (val: any) => Obj
-const Rules: { [name: string]: Rule | Obj | undefined } = {
+type Rule = (val: any) => IStyleObject
+
+const Rules: Dict<Rule> = {
   m: val => ({
     margin: getSpacing(val),
   }),
@@ -73,6 +78,26 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     right: getSpacing(val),
   }),
 
+  border: val => ({
+    border: getBorder(val),
+  }),
+  borderTop: val => ({
+    borderTop: getBorder(val),
+  }),
+  borderRight: val => ({
+    borderRight: getBorder(val),
+  }),
+  borderBottom: val => ({
+    borderBottom: getBorder(val),
+  }),
+  borderLeft: val => ({
+    borderTop: getBorder(val),
+  }),
+
+  boxShadow: val => ({
+    borderShadow: getBoxShadow(val),
+  }),
+
   width: val => ({
     width: getSpacing(val),
   }),
@@ -81,14 +106,15 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
   }),
 
   fontSize: val => ({
-    fontSize: getThemeProp('fontSize')(val),
+    fontSize: getFontSize(val),
   }),
   fontFamily: val => ({
-    fontFamily: getThemeProp('fontFamily')(val),
+    fontFamily: getFontFamily(val),
   }),
   zIndex: val => ({
-    zIndex: getThemeProp('zIndex')(val),
+    zIndex: getZIndex(val),
   }),
+
 
   color: val => ({
     color: getColor(val),
@@ -100,19 +126,19 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
     backgroundColor: getColor(val),
   }),
 
-  relative: {
+  relative: val => val && {
     position: 'relative',
   },
 
-  absolute: {
+  absolute: val => val && {
     position: 'absolute',
   },
 
-  bold: {
+  bold: val => val && {
     fontWeight: 'bold',
   },
 
-  uppercase: {
+  uppercase: val => val && {
     textTransform: 'uppercase',
   },
 
@@ -131,19 +157,19 @@ const Rules: { [name: string]: Rule | Obj | undefined } = {
   }),
 }
 
-function mergeInto(target: Obj, source: Obj) {
+function mergeInto(target: IStyleObject, source: IStyleObject) {
   for (const [key, value] of Object.entries(source)) {
     target[key] = value // eslint-disable-line no-param-reassign
   }
 }
 
-export function stylishTransformer(src: Obj): Obj {
-  const result: Obj = {}
+export function stylishTransformer(src: IStyleObject): IStyleObject {
+  const result: IStyleObject = {}
 
   for (const [prop, value] of Object.entries(src)) {
     const rule = Rules[prop]
     if (rule) {
-      mergeInto(result, isFunction(rule) ? rule(value) : rule)
+      mergeInto(result, rule(value))
     } else {
       result[prop] = value
     }

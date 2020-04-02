@@ -1,6 +1,9 @@
 import * as React from 'react'
-import { Link } from '@v/web-utils/src/router'
-import { useStyles, StyleArg } from '@v/web-utils'
+import { Link } from '@v/web-utils'
+import {
+  StyleArg,
+  useStyles,
+} from './core'
 
 const $cleanLink = {
   color: 'inherit',

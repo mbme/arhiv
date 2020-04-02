@@ -4,14 +4,8 @@ import {
   hash2className,
   hash2animation,
 } from './StyleNode'
-import {
-  IStyleObject,
-  StyleTransformer,
-} from './types'
-import {
-  applyTransformer,
-  mergeStyles,
-} from './utils'
+import { IStyleObject } from './types'
+import { mergeStyles } from './utils'
 
 const log = createLogger('StylishRenderer')
 
@@ -19,10 +13,7 @@ export class StylishRenderer {
   private _rendered = new Set<string>()
   private _sheet: CSSStyleSheet
 
-  constructor(
-    el: HTMLStyleElement,
-    private _transformer?: StyleTransformer,
-  ) {
+  constructor(el: HTMLStyleElement) {
     if (!el.sheet) {
       throw new Error("Element doesn't have a stylesheet attached")
     }
@@ -34,7 +25,7 @@ export class StylishRenderer {
   }
 
   render(styles: IStyleObject[]): string {
-    const style = new StyleNode(applyTransformer(mergeStyles(styles), this._transformer))
+    const style = new StyleNode(mergeStyles(styles))
     const className = hash2className(style.hash)
 
     if (!this._rendered.has(className)) {
@@ -50,7 +41,7 @@ export class StylishRenderer {
   }
 
   renderKeyframes(styleObj: IStyleObject): string {
-    const style = new StyleNode(applyTransformer(styleObj, this._transformer))
+    const style = new StyleNode(styleObj)
     const animationName = hash2animation(style.hash)
 
     if (!this._rendered.has(animationName)) {

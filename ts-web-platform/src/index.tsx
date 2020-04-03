@@ -3,6 +3,7 @@ export { StylishProvider } from './core'
 
 export { Button } from './Button'
 export { Select } from './Select'
+export { Toggle } from './Toggle'
 export { Input } from './Input'
 export { Textarea } from './Textarea'
 export { Icon } from './Icon'

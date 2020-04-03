@@ -3,6 +3,7 @@ import {
   Observable,
   promise$,
 } from '@v/reactive'
+import { Counter } from '@v/utils'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,
@@ -62,4 +63,11 @@ export function useBoolean(initialValue = false) {
     },
     set: setValue,
   }
+}
+
+const _counter = new Counter()
+export function useCounter() {
+  const [counter] = React.useState<number>(() => _counter.incAndGet())
+
+  return counter
 }

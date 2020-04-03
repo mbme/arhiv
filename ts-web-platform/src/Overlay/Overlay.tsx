@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { Counter, noop } from '@v/utils'
+import { noop } from '@v/utils'
 import {
   createContext,
+  useCounter,
 } from '@v/web-utils'
 import {
   useStyles,
@@ -73,14 +74,11 @@ function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {
   )
 }
 
-const idCounter = new Counter()
-
 export function Overlay(props: IOverlay) {
   const renderer = OverlayContext.use()
+  const id = useCounter()
 
   React.useEffect(() => {
-    const id = idCounter.incAndGet()
-
     renderer.show(id, props)
 
     return () => renderer.hide(id)

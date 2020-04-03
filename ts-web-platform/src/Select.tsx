@@ -1,8 +1,7 @@
 import * as React from 'react'
 
-interface IProps {
+interface IProps extends Omit<React.HTMLProps<HTMLSelectElement>, 'onChange'> {
   options: { [key: string]: string }
-  name: string
   onChange(value: string): void
 }
 

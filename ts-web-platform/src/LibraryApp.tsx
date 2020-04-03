@@ -2,17 +2,8 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
 import { injectGlobalStyles } from '@v/web-utils'
-
-import { StylishProvider } from './core'
-import { OverlayRenderer } from './Overlay'
 import { globalStyles } from './core/global-styles'
-import { ButtonExamples } from './Button.examples'
-import { SelectExamples } from './Select.examples'
-import { InputExamples } from './Input.examples'
-import { TextareaExamples } from './Textarea.examples'
-import { IconExamples } from './Icon.examples'
-import { StyleExamples } from './core/examples'
-import { ConfirmationDialogExamples } from './Overlay/ConfirmationDialog.examples'
+import { Library } from './Library'
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -25,33 +16,25 @@ injectGlobalStyles(`
   }
 `)
 
-const rootEl = document.getElementById('root')
-if (!rootEl) {
-  throw new Error("Can't find #root element")
+function render() {
+  const rootEl = document.getElementById('root')
+  if (!rootEl) {
+    throw new Error("Can't find #root element")
+  }
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <Library />
+    </React.StrictMode>,
+    rootEl,
+    () => {
+      rootEl.style.visibility = 'visible'
+    },
+  )
 }
 
-ReactDOM.render(
-  <React.StrictMode>
-    <StylishProvider>
-      <OverlayRenderer>
-        <StyleExamples />
+render()
 
-        <IconExamples />
-
-        <ButtonExamples />
-
-        <SelectExamples />
-
-        <InputExamples />
-
-        <TextareaExamples />
-
-        <ConfirmationDialogExamples />
-      </OverlayRenderer>
-    </StylishProvider>
-  </React.StrictMode>,
-  rootEl,
-  () => {
-    rootEl.style.visibility = 'visible'
-  },
-)
+if ((module as any).hot) {
+  (module as any).hot.accept('./Library', render)
+}

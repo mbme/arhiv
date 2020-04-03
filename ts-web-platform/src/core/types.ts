@@ -3,7 +3,8 @@ import { theme } from './theme'
 
 export type Tags = keyof HTMLElementTagNameMap
 
-type CSSProps = CSS.Properties
+type CSSProps = CSS.Properties & CSS.PropertiesHyphen
+
 type Spacing = keyof typeof theme.spacing
 type Border = keyof typeof theme.border
 type Color = keyof typeof theme.color | CSS.Color
@@ -72,6 +73,8 @@ type CommonProps = Omit<CSSProps, keyof ITransformerProps> & ITransformerProps
 
 interface IStylishProps {
   '&:hover'?: CommonProps
+  '&:focus'?: CommonProps
+  '&:before'?: CommonProps
 }
 
 type CommonAndCustomProps = CommonProps & IStylishProps

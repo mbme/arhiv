@@ -1,4 +1,5 @@
 export { globalStyles } from './core/global-styles'
+export { StylishProvider } from './core'
 
 export { Button } from './Button'
 export { Select } from './Select'

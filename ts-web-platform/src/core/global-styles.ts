@@ -28,6 +28,8 @@ html {
   font-variant-numeric: tabular-nums;
   height: 100%;
   width: 100%;
+
+  overflow: hidden;
 }
 
 /* Body */
@@ -51,6 +53,8 @@ body {
 
   height: 100%;
   width: 100%;
+
+  overflow-y: scroll;
 }
 
 /* Suppress the focus outline on elements that cannot be accessed via keyboard. */

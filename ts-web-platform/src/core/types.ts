@@ -9,6 +9,12 @@ type Border = keyof typeof theme.border
 type Color = keyof typeof theme.color | CSS.Color
 
 interface ITransformerProps {
+  margin?: CSS.MarginProperty<Spacing>
+  marginTop?: CSS.MarginTopProperty<Spacing>
+  marginRight?: CSS.MarginRightProperty<Spacing>
+  marginBottom?: CSS.MarginBottomProperty<Spacing>
+  marginLeft?: CSS.MarginLeftProperty<Spacing>
+
   m?: CSS.MarginProperty<Spacing>
   mx?: CSS.MarginLeftProperty<Spacing> | CSS.MarginRightProperty<Spacing>
   my?: CSS.MarginTopProperty<Spacing> | CSS.MarginBottomProperty<Spacing>
@@ -16,6 +22,12 @@ interface ITransformerProps {
   mr?: CSS.MarginRightProperty<Spacing>
   mb?: CSS.MarginBottomProperty<Spacing>
   ml?: CSS.MarginLeftProperty<Spacing>
+
+  padding?: CSS.PaddingProperty<Spacing>
+  paddingTop?: CSS.PaddingTopProperty<Spacing>
+  paddingRight?: CSS.PaddingRightProperty<Spacing>
+  paddingBottom?: CSS.PaddingBottomProperty<Spacing>
+  paddingLeft?: CSS.PaddingLeftProperty<Spacing>
 
   p?: CSS.PaddingProperty<Spacing>
   px?: CSS.PaddingLeftProperty<Spacing> | CSS.PaddingRightProperty<Spacing>

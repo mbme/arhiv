@@ -26,7 +26,7 @@ export function StylishProvider({ children }: IProps) {
 
   return (
     <RendererContext.Provider value={renderer}>
-      {children}
+      {renderer ? children : null}
     </RendererContext.Provider>
   )
 }

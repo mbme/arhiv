@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Counter } from '@v/utils'
+import { Counter, noop } from '@v/utils'
 import {
   createContext,
 } from '@v/web-utils'
@@ -45,17 +45,26 @@ function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {
     }
   }
 
-  const keypressHandler = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape' && onClick) {
-      onClick()
+  React.useEffect(() => {
+    if (!onClick) {
+      return noop
     }
-  }
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClick()
+      }
+    }
+
+    document.addEventListener('keydown', handler)
+
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClick])
 
   return (
     <div
       className={className}
       onClick={clickHandler}
-      onKeyPress={keypressHandler}
       role="dialog"
       aria-modal="true"
     >
@@ -75,7 +84,7 @@ export function Overlay(props: IOverlay) {
     renderer.show(id, props)
 
     return () => renderer.hide(id)
-  })
+  }, [])
 
   return null
 }
@@ -100,10 +109,10 @@ export const OverlayRenderer = React.memo(({ children }: IProps) => {
 
   return (
     <OverlayContext.Provider value={renderer}>
-      {children}
       {topOverlay && (
         <TopOverlay key={id} {...topOverlay} />
       )}
+      {children}
     </OverlayContext.Provider>
   )
 })

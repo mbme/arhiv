@@ -17,6 +17,21 @@ const mediaFrom = (minWidth: string) => `@media screen and (min-width: ${minWidt
 type Rule = (val: any) => IStyleObject
 
 const Rules: Dict<Rule> = {
+  margin: val => ({
+    margin: getSpacing(val),
+  }),
+  marginTop: val => ({
+    marginTop: getSpacing(val),
+  }),
+  marginRight: val => ({
+    marginRight: getSpacing(val),
+  }),
+  marginBottom: val => ({
+    marginBottom: getSpacing(val),
+  }),
+  marginLeft: val => ({
+    marginLeft: getSpacing(val),
+  }),
   m: val => ({
     margin: getSpacing(val),
   }),
@@ -41,6 +56,21 @@ const Rules: Dict<Rule> = {
     marginLeft: getSpacing(val),
   }),
 
+  padding: val => ({
+    padding: getSpacing(val),
+  }),
+  paddingTop: val => ({
+    paddingTop: getSpacing(val),
+  }),
+  paddingRight: val => ({
+    paddingRight: getSpacing(val),
+  }),
+  paddingBottom: val => ({
+    paddingBottom: getSpacing(val),
+  }),
+  paddingLeft: val => ({
+    paddingLeft: getSpacing(val),
+  }),
   p: val => ({
     padding: getSpacing(val),
   }),
@@ -95,7 +125,7 @@ const Rules: Dict<Rule> = {
   }),
 
   boxShadow: val => ({
-    borderShadow: getBoxShadow(val),
+    boxShadow: getBoxShadow(val),
   }),
 
   width: val => ({

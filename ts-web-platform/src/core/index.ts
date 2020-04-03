@@ -1,3 +1,4 @@
+export { StylishProvider } from './StylishProvider'
 export { useStyles, useAnimation } from './hooks'
 export { StylishElement } from './StylishElement'
 export {

@@ -64,6 +64,12 @@ export class Textarea extends React.PureComponent<IProps> {
     onChange(e.target.value)
   }
 
+  onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      this._ref.current?.blur()
+    }
+  }
+
   insert(str: string) {
     const { value, onChange } = this.props
 
@@ -99,6 +105,7 @@ export class Textarea extends React.PureComponent<IProps> {
         placeholder={placeholder}
         onChange={this.onChange}
         onBlur={this.onBlur}
+        onKeyDown={this.onKeyDown}
       />
     )
   }

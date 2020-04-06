@@ -9,7 +9,8 @@ import { isFunction } from '@v/utils'
 const pad0 = (s: string, maxLength: number) => s.padStart(maxLength, '0')
 
 const YYYY = expect('YYYY').map(() => (date: Date) => date.getFullYear().toString())
-const MM = expect('MM').map(() => (date: Date) => (date.getMonth() + 1).toString())
+const MM = expect('MM').map(() => (date: Date) => pad0((date.getMonth() + 1).toString(), 2))
+const M = expect('M').map(() => (date: Date) => (date.getMonth() + 1).toString())
 const DD = expect('DD').map(() => (date: Date) => pad0(date.getDate().toString(), 2))
 const HH = expect('HH').map(() => (date: Date) => pad0(date.getHours().toString(), 2))
 const mm = expect('mm').map(() => (date: Date) => pad0(date.getMinutes().toString(), 2))
@@ -18,6 +19,7 @@ const SSS = expect('SSS').map(() => (date: Date) => pad0(date.getSeconds().toStr
 
 const patternParser = YYYY
   .orElse(MM)
+  .orElse(M)
   .orElse(DD)
   .orElse(HH)
   .orElse(mm)

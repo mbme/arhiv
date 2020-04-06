@@ -39,11 +39,19 @@ type PassThroughProps =
   | 'zIndex'
 
   | 'width'
+  | 'maxWidth'
+  | 'minWidth'
   | 'height'
 
   | 'color'
   | 'bgColor'
   | 'backgroundColor'
+
+  | 'border'
+  | 'borderTop'
+  | 'borderRight'
+  | 'borderBottom'
+  | 'borderLeft'
 
   | 'fromSm'
   | 'fromMd'
@@ -54,15 +62,29 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   children?: React.ReactNode
   onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
   innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+  dangerouslySetInnerHTML?: {
+    __html: string;
+  }
   $styles?: StyleArg[]
 }
 
-export function Box<E extends Tags = 'div'>({ as, children, onClick, innerRef, $styles = [], ...props }: IProps<E>) {
-  const className = useStyles(props, ...$styles)
+export function Box<E extends Tags = 'div'>(props: IProps<E>) {
+  const {
+    as,
+    children,
+    onClick,
+    innerRef,
+    dangerouslySetInnerHTML,
+    $styles = [],
+    ...styleProps
+  } = props
+
+  const className = useStyles(styleProps, ...$styles)
 
   return React.createElement(as || 'div', {
     ref: innerRef,
     onClick,
     className,
+    dangerouslySetInnerHTML,
   }, children)
 }

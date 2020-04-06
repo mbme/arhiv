@@ -4,7 +4,11 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
 import { injectGlobalStyles } from '@v/web-utils'
-import { globalStyles } from '@v/web-platform'
+import {
+  globalStyles,
+  StylishProvider,
+  OverlayRenderer,
+} from '@v/web-platform'
 import { Gmail } from './gmail'
 import { PoshtaStore } from './poshta-store'
 import { App } from './App'
@@ -42,7 +46,11 @@ async function run() {
 
   ReactDOM.render(
     <React.StrictMode>
-      <App store={store} />
+      <StylishProvider>
+        <OverlayRenderer>
+          <App store={store} />
+        </OverlayRenderer>
+      </StylishProvider>
     </React.StrictMode>,
     rootEl,
     () => {

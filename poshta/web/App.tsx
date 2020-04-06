@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Box } from '@v/web-platform'
-import { PoshtaStore } from './poshta-store'
 import { useObservable } from '@v/web-utils'
+import { PoshtaStore } from './poshta-store'
+import { MessageShort } from './MessageShort'
 
 interface IProps {
   store: PoshtaStore,
@@ -14,22 +15,16 @@ export function App({ store }: IProps) {
     return null
   }
 
-  const items = state.messages.map((message) => {
-    console.error(message)
-    return (
-      <Box key={message.id} mb="large">
-        <hr />
-        {message.labelIds.join(', ')}
-        <br/>
-        <h2 dangerouslySetInnerHTML={{ __html: message.snippet }} />
-        <br/>
-        {message.payload.headers.map(({name, value}) => <Box><b>{name}</b>: {value}</Box>)}
-      </Box>
-    )
-  })
+  const items = state.messages.map(message => (
+    <MessageShort key={message.id} message={message} />
+  ))
 
   return (
-    <Box>
+    <Box
+      maxWidth="50rem"
+      m="0 auto"
+      p="large"
+    >
       {items}
     </Box>
   )

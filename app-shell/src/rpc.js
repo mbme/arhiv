@@ -36,8 +36,4 @@
       delete pendingRequests[callId]
     },
   }
-
-  if (window.onRPCReady) {
-    window.onRPCReady()
-  }
 })('app-shell')

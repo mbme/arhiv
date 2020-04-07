@@ -59,10 +59,4 @@ async function run() {
   )
 }
 
-if (window.RPC) {
-  run().catch(console.error)
-} else {
-  window.onRPCReady = () => {
-    run().catch(console.error)
-  }
-}
+run().catch(console.error)

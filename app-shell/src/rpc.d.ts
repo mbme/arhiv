@@ -14,7 +14,6 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/interface-name-prefix
   interface Window {
     RPC: IRPC
-    onRPCReady?: () => void
   }
 }
 

@@ -29,24 +29,12 @@ impl std::str::FromStr for RpcMessage {
     }
 }
 
-fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
-    // register script message handler before injecting script so that window.webkit is immediately available
+fn install_rpc_action_handler(webview: &WebView, action_handler: &ActionHandler) {
     let ucm = webview.get_user_content_manager().unwrap();
-    ucm.register_script_message_handler("app-shell");
-
-    webview.run_javascript(
-        include_str!("./rpc.js"),
-        None::<&gio::Cancellable>,
-        |result| {
-            if let Err(err) = result {
-                log::error!("Failed to inject RPC script: {}", err);
-                panic!("Failed to inject RPC script");
-            }
-        },
-    );
 
     let action_handler = action_handler.clone();
     let webview = webview.clone();
+
     ucm.connect_script_message_received(move |_, result| {
         let rpc_message: String = result
             .get_value()
@@ -73,6 +61,24 @@ fn inject_rpc(webview: &WebView, action_handler: ActionHandler) {
             },
         );
     });
+}
+
+fn inject_rpc(webview: &WebView) {
+    let ucm = webview.get_user_content_manager().unwrap();
+
+    // register script message handler before injecting script so that window.webkit is immediately available
+    ucm.register_script_message_handler("app-shell");
+
+    webview.run_javascript(
+        include_str!("./rpc.js"),
+        None::<&gio::Cancellable>,
+        |result| {
+            if let Err(err) = result {
+                log::error!("Failed to inject RPC script: {}", err);
+                panic!("Failed to inject RPC script");
+            }
+        },
+    );
 }
 
 // https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebsiteDataManager.html#webkit-website-data-manager-new
@@ -121,13 +127,13 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
     let html_content = fs::read_to_string(html_file).unwrap();
 
     if let Some(ref action_handler) = builder.action_handler {
-        let action_handler = action_handler.clone();
+        install_rpc_action_handler(&webview, action_handler);
 
         webview.connect_load_changed(move |webview, load_event| {
             log::debug!("webview load event {}", load_event);
 
             if load_event == LoadEvent::Committed {
-                inject_rpc(webview, action_handler.clone());
+                inject_rpc(webview);
             }
         });
     }

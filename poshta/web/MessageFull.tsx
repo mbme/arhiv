@@ -15,21 +15,25 @@ interface IProps {
 }
 
 export function MessageFull({ message }: IProps ) {
-  let body: React.ReactNode = '<NO BODY>'
+  const body = React.useMemo(() => {
+    if (message.hasHTMLBody()) {
+      return (
+        <Box
+          dangerouslySetInnerHTML={{ __html: message.getHTMLBody() }}
+        />
+      )
+    }
 
-  if (message.hasHTMLBody()) {
-    body = (
-      <Box
-        dangerouslySetInnerHTML={{ __html: message.getHTMLBody() }}
-      />
-    )
-  } else if (message.hasTextBody()) {
-    body = (
-      <Text>
-        {message.getTextBody()}
-      </Text>
-    )
-  }
+    if (message.hasTextBody()) {
+      return (
+        <Text>
+          {message.getTextBody()}
+        </Text>
+      )
+    }
+
+    return '<NO BODY>'
+  }, [message])
 
   return (
     <Box

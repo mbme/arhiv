@@ -12,6 +12,7 @@ const $modal: StyleArg = {
   padding: 'medium',
   border: 'default',
   boxShadow: 'default',
+  height: 'auto',
 }
 
 interface IProps {

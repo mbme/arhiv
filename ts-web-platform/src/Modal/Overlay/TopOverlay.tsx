@@ -19,6 +19,8 @@ const $container: StyleArg = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'flex-start',
+
+  overflowY: 'auto',
 }
 
 export function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {

@@ -31,6 +31,12 @@ function useKeybindings(store: PoshtaStore, use: boolean) {
           store.selectFocused()
         },
       },
+      {
+        code: 'KeyL',
+        action() {
+          store.selectFocused()
+        },
+      },
     )
 
     document.addEventListener('keydown', handler)

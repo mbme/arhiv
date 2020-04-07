@@ -3,7 +3,7 @@ import {
   Observable,
 } from '@v/reactive'
 
-export abstract class Store<State> {
+export abstract class Store<State extends object> {
   private _cell: Cell<State>
 
   constructor(initialState: State) {
@@ -18,7 +18,10 @@ export abstract class Store<State> {
     return this._cell.value
   }
 
-  protected _setState(newState: State) {
-    this._cell.value = newState
+  protected _setState(newState: Partial<State>) {
+    this._cell.value = {
+      ...this._cell.value,
+      ...newState,
+    }
   }
 }

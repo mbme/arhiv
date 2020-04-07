@@ -26,7 +26,8 @@
       const responseHandler = pendingRequests[callId]
 
       if (!responseHandler) {
-        console.error(`RPC: got response for unknown call id ${callId}, ignoring`)
+        // eslint-disable-next-line no-console
+        console.error(`RPC: got response for unknown call id ${callId}, ignoring`, result)
         return
       }
 

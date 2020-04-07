@@ -4,6 +4,7 @@ import {
   promise$,
 } from '@v/reactive'
 import { Counter } from '@v/utils'
+import { Store } from './Store'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,
@@ -70,4 +71,10 @@ export function useCounter() {
   const [counter] = React.useState<number>(() => _counter.incAndGet())
 
   return counter
+}
+
+export function useStore<S extends object>(store: Store<S>): [S, any] {
+  const [value, error] = useObservable(() => store.state$, [store])
+
+  return [value || store.state, error]
 }

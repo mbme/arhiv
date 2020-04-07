@@ -1,7 +1,5 @@
-export {
-  Overlay,
-  OverlayRenderer,
-} from './Overlay'
+export { OverlayRenderer } from './Overlay/Renderer'
+export { Overlay } from './Overlay'
 export { ProgressLocker } from './ProgressLocker'
 export { Modal } from './Modal'
 export { ConfirmationDialog } from './ConfirmationDialog'

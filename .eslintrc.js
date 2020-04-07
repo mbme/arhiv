@@ -38,6 +38,7 @@ module.exports = {
     ],
     "quote-props": "off",
     "no-continue": "off",
+    "no-console": ["error"],
     "curly": [
       "error",
       "all",

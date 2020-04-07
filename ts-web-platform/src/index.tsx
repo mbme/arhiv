@@ -17,7 +17,7 @@ export {
   ProgressLocker,
   Modal,
   ConfirmationDialog,
-} from './Overlay'
+} from './Modal'
 
 export { Link } from '@v/web-utils/src/router'
 export { CleanLink } from './CleanLink'

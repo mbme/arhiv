@@ -23,25 +23,11 @@ interface IProps {
   focused?: boolean
 }
 
-export function MessageShort({ message, focused }: IProps ) {
-  const ref = React.useRef<HTMLDivElement>(null)
-
-  React.useEffect(() => {
-    if (focused && ref.current) {
-      ref.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      })
-    }
-  }, [focused, ref.current])
-
+export function MessageFull({ message }: IProps ) {
   return (
     <Box
       mb="large"
       p="medium"
-      border="1px solid black"
-      bgColor={focused ? 'yellow' : undefined}
-      innerRef={ref}
     >
       <Row alignX="left">
         {message.labelIds.map(label => (

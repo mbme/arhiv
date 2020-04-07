@@ -9,7 +9,7 @@ import {
   StylishProvider,
   OverlayRenderer,
 } from '@v/web-platform'
-import { Gmail } from './gmail'
+import { GmailAPI } from './gmail'
 import { PoshtaStore } from './poshta-store'
 import { App } from './App'
 
@@ -32,7 +32,7 @@ async function run() {
 
   log.info('Got auth token', token)
 
-  const gmail = new Gmail(token)
+  const gmail = new GmailAPI(token)
 
   console.error(await gmail.getProfile())
 

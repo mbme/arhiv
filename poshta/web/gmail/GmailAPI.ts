@@ -1,59 +1,17 @@
 import { IQueryParam, stringifyQueryParams } from '@v/web-utils'
+import {
+  IGmailProfile,
+  IGmailMessageList,
+  IGmailMessage,
+} from './types'
+import { GmailMessage } from './GmailMessage'
 
 const BASE_URL = 'https://www.googleapis.com/gmail/v1/users/me'
 
-interface IGmailProfile {
-  emailAddress: string,
-  messagesTotal: number,
-  threadsTotal: number,
-}
-
-interface IGmailMessageHeader {
-  name: string,
-  value: string,
-}
-
-interface IGmailMessagePayload {
-  body: IGmailMessagePayloadBody,
-  filename?: string,
-  headers: IGmailMessageHeader[],
-  mimeType: string,
-  partId: string,
-  parts?: IGmailMessagePayload[],
-}
-
-interface IGmailMessagePayloadBody {
-  attachmentId?: string,
-  data: string, // base64, to decode Buffer.alloc(data.length, data, 'base64').toString()
-  size: number,
-}
-
-// https://developers.google.com/gmail/api/v1/reference/users/messages#resource
-export interface IGmailMessage {
-  id: string,
-  internalDate: number,
-  labelIds: string[],
-  payload: IGmailMessagePayload,
-  sizeEstimate: number,
-  snippet: string,
-  threadId: string,
-}
-
-interface IGmailMessageRef {
-  id: string,
-  threadId: string,
-}
-
-interface IGmailMessageList {
-  messages: IGmailMessageRef[],
-  nextPageToken: string,
-  resultSizeEstimate: number,
-}
-
-export class Gmail {
+export class GmailAPI {
   constructor(private _token: string) {}
 
-  private async _get(path: string, params: IQueryParam[] = []) {
+  private async _get<T = object>(path: string, params: IQueryParam[] = []): Promise<T> {
     const response = await fetch(BASE_URL + path + stringifyQueryParams(params), {
       method: 'GET',
       headers: {
@@ -103,7 +61,7 @@ export class Gmail {
         return total
       },
 
-      loadNextPage: async (): Promise<IGmailMessage[]> => {
+      loadNextPage: async (): Promise<GmailMessage[]> => {
         page += 1
 
         const result: IGmailMessageList = await this._get('/messages', [
@@ -122,12 +80,14 @@ export class Gmail {
     }
   }
 
-  getMessage(id: string): Promise<IGmailMessage> {
-    return this._get(`/messages/${id}`)
+  async getMessage(id: string): Promise<GmailMessage> {
+    const data: IGmailMessage = await this._get(`/messages/${id}`)
+
+    return new GmailMessage(data)
   }
 
   // https://developers.google.com/gmail/api/guides/batch#example
-  async batchGetMessages(ids: string[]): Promise<IGmailMessage[]> {
+  async batchGetMessages(ids: string[]): Promise<GmailMessage[]> {
     const boundary = 'batch-get-message'
 
     const bodyItems = ids.map(id => [
@@ -166,7 +126,9 @@ export class Gmail {
       const i1 = chunk.indexOf('\r\n\r\n') // skip part headers
       const i2 = chunk.indexOf('\r\n\r\n', i1 + 4) // skip response headers
 
-      return JSON.parse(chunk.substring(i2 + 4))
+      const data = JSON.parse(chunk.substring(i2 + 4))
+
+      return new GmailMessage(data)
     })
   }
 }

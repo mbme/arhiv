@@ -1,14 +1,14 @@
 import { Store } from '@v/web-utils'
-import { Gmail, IGmailMessage } from './gmail'
+import { GmailAPI, GmailMessage } from './gmail'
 
 interface IState {
-  messages: IGmailMessage[]
+  messages: GmailMessage[]
   focusedIndex: number
-  selected?: IGmailMessage
+  selected?: GmailMessage
 }
 
 export class PoshtaStore extends Store<IState> {
-  constructor(private _gmail: Gmail) {
+  constructor(private _gmail: GmailAPI) {
     super({
       messages: [],
       focusedIndex: -1,
@@ -55,7 +55,7 @@ export class PoshtaStore extends Store<IState> {
     this.select(messages[focusedIndex])
   }
 
-  select(message?: IGmailMessage) {
+  select(message?: GmailMessage) {
     this._setState({
       selected: message,
     })

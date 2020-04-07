@@ -1,58 +1,64 @@
 import * as React from 'react'
 import {
+  Text,
   Box,
   Row,
   Spacer,
 } from '@v/web-platform'
-import { IGmailMessage } from './gmail'
+import { GmailMessage } from './gmail'
 import { ChronoFormatter } from '@v/chrono'
 
 const dateFormat = new ChronoFormatter('HH:mm DD.MM.YYYY')
 
-function getHeaderValue(message: IGmailMessage, name: string): string | undefined {
-  const header = message.payload.headers.find(item => item.name === name)
-  if (!header) {
-    return undefined
-  }
-
-  return header.value
-}
-
 interface IProps {
-  message: IGmailMessage
-  focused?: boolean
+  message: GmailMessage
 }
 
 export function MessageFull({ message }: IProps ) {
+  let body: React.ReactNode = '<NO BODY>'
+
+  if (message.hasHTMLBody()) {
+    body = (
+      <Box
+        dangerouslySetInnerHTML={{ __html: message.getHTMLBody() }}
+      />
+    )
+  } else if (message.hasTextBody()) {
+    body = (
+      <Text>
+        {message.getTextBody()}
+      </Text>
+    )
+  }
+
   return (
     <Box
       mb="large"
       p="medium"
     >
       <Row alignX="left">
-        {message.labelIds.map(label => (
+        {message.labels.map(label => (
           <Box key={label} bgColor="yellow" mr="fine">
             {label}
           </Box>
         ))}
         <Spacer />
         <Box>
-          {dateFormat.format(new Date(getHeaderValue(message, 'Date') || ''))}
+          {dateFormat.format(message.date)}
         </Box>
       </Row>
 
-      <h3>{getHeaderValue(message, 'Subject')}</h3>
+      <h3>{message.subject}</h3>
 
-      <Box
-        dangerouslySetInnerHTML={{ __html: message.snippet }}
-        mb="large"
-      />
+      <Box mb="large">
+        {body}
+      </Box>
 
       <Box>
-        <b>From: </b> {getHeaderValue(message, 'From')}
+        <b>From: </b> {message.from}
       </Box>
       <Box>
-        <b>To: </b> {getHeaderValue(message, 'To')}
+        <b>To: </b> {message.to}
       </Box>
     </Box>
   )

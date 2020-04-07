@@ -9,6 +9,7 @@ export { Textarea } from './Textarea'
 export { Icon } from './Icon'
 export { FilePicker } from './FilePicker'
 export { Box } from './Box'
+export { Text } from './Text'
 export { Heading } from './Heading'
 export { Label } from './Label'
 export {

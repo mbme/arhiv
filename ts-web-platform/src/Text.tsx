@@ -13,6 +13,7 @@ type PassThroughProps =
   | 'uppercase'
   | 'bold'
   | 'letterSpacing'
+  | 'whiteSpace'
 
   | 'color'
   | 'bgColor'

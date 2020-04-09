@@ -26,7 +26,7 @@ export function MessageFull({ message }: IProps ) {
 
     if (message.hasTextBody()) {
       return (
-        <Text>
+        <Text whiteSpace="pre-wrap">
           {message.getTextBody()}
         </Text>
       )

@@ -127,3 +127,33 @@ export const isSha256 = (str: string) => /^[a-f0-9]{64}$/i.test(str)
 export function parseInt10(str: string) {
   return parseInt(str, 10)
 }
+
+function padString(input: string): string {
+  const segmentLength = 4
+  const stringLength = input.length
+  const diff = stringLength % segmentLength
+
+  if (!diff) {
+    return input
+  }
+
+  let position = stringLength
+  let padLength = segmentLength - diff
+  const paddedStringLength = stringLength + padLength
+  const buffer = Buffer.alloc(paddedStringLength)
+
+  buffer.write(input)
+
+  while (padLength--) {
+    buffer.write('=', position++)
+  }
+
+  return buffer.toString()
+}
+
+// based on https://github.com/brianloveswords/base64url
+export function base64url2base64(base64url: string): string {
+  return padString(base64url)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+}

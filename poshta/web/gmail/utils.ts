@@ -1,15 +1,11 @@
+import { base64url2base64 } from '@v/utils'
 import {
   IGmailMessagePayload,
 } from './types'
 
-interface ISplitResult {
-  textPart?: IGmailMessagePayload
-  htmlPart?: IGmailMessagePayload
-  attachments: IGmailMessagePayload[]
-}
 
 export function decodeData(data: string): string {
-  return Buffer.alloc(data.length, data, 'base64').toString()
+  return Buffer.from(base64url2base64(data), 'base64').toString('utf8')
 }
 
 function isTextPart(part: IGmailMessagePayload): boolean {
@@ -22,6 +18,12 @@ function isHTMLPart(part: IGmailMessagePayload): boolean {
 
 function isAlternativePart(part: IGmailMessagePayload): boolean {
   return part.mimeType === 'multipart/alternative'
+}
+
+interface ISplitResult {
+  textPart?: IGmailMessagePayload
+  htmlPart?: IGmailMessagePayload
+  attachments: IGmailMessagePayload[]
 }
 
 function splitAlternativePart(alternativePart: IGmailMessagePayload): ISplitResult {

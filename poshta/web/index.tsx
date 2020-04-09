@@ -21,7 +21,6 @@ injectGlobalStyles(`
   ${globalStyles}
 
   #root {
-    height: 100vh;
     visibility: hidden;
   }
 `)

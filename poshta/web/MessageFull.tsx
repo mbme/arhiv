@@ -37,8 +37,9 @@ export function MessageFull({ message }: IProps ) {
 
   return (
     <Box
-      mb="large"
-      p="medium"
+      px="medium"
+      pt="medium"
+      mb="medium"
     >
       <Row alignX="left" mb="medium">
         {message.labels.map(label => (
@@ -61,9 +62,7 @@ export function MessageFull({ message }: IProps ) {
 
       <h3>{message.subject}</h3>
 
-      <Box mb="large">
-        {body}
-      </Box>
+      {body}
     </Box>
   )
 }

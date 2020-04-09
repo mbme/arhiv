@@ -8,6 +8,7 @@ import { IOverlay } from './context'
 
 const $container: StyleArg = {
   backgroundColor: 'bgOverlay',
+  padding: 'large',
 
   position: 'fixed',
   top: '0',

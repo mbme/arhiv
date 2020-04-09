@@ -5,11 +5,13 @@ import {
 } from '../core'
 import { Overlay } from './Overlay'
 
+const $overlay: StyleArg = {
+  backgroundColor: 'bg2',
+}
+
 const $modal: StyleArg = {
   backgroundColor: 'bg0',
-  marginTop: '17vh',
   minWidth: '375px',
-  padding: 'medium',
   border: 'default',
   boxShadow: 'default',
   height: 'auto',
@@ -25,7 +27,7 @@ export function Modal({ children, onCancel, innerRef }: IProps) {
   const className = useStyles($modal)
 
   return (
-    <Overlay onClick={onCancel} innerRef={innerRef}>
+    <Overlay onClick={onCancel} innerRef={innerRef} $styles={[$overlay]}>
       <div className={className}>
         {children}
       </div>

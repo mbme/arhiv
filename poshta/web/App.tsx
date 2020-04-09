@@ -30,6 +30,13 @@ export function App({ store }: IProps) {
             modalRef.current?.scrollBy({ top: -100, behavior: 'smooth' })
           },
         },
+        {
+          code: 'KeyG',
+          shiftKey: true,
+          action() {
+            modalRef.current?.scrollBy({ top: modalRef.current.scrollHeight, behavior: 'smooth' })
+          },
+        },
       ]
     }
 
@@ -73,7 +80,7 @@ export function App({ store }: IProps) {
 
   return (
     <Box
-      maxWidth="50rem"
+      width="50rem"
       m="0 auto"
       p="large"
     >
@@ -84,7 +91,10 @@ export function App({ store }: IProps) {
           onCancel={() => store.select(undefined)}
           innerRef={modalRef}
         >
-          <Box maxWidth="50rem">
+          <Box
+            maxWidth="50rem"
+            minWidth="40rem"
+          >
             <MessageFull message={state.selected!} />
           </Box>
         </Modal>

@@ -18,13 +18,14 @@ const $modal: StyleArg = {
 interface IProps {
   children: React.ReactNode
   onCancel(): void
+  innerRef?: React.RefObject<HTMLDivElement>
 }
 
-export function Modal({ children, onCancel }: IProps) {
+export function Modal({ children, onCancel, innerRef }: IProps) {
   const className = useStyles($modal)
 
   return (
-    <Overlay onClick={onCancel}>
+    <Overlay onClick={onCancel} innerRef={innerRef}>
       <div className={className}>
         {children}
       </div>

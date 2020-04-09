@@ -1,18 +1,39 @@
 import * as React from 'react'
 import { Box, Modal } from '@v/web-platform'
-import { noop } from '@v/utils'
-import { createKeybindingsHandler, useStore } from '@v/web-utils'
+import { useStore, useHotkeys } from '@v/web-utils'
 import { PoshtaStore } from './poshta-store'
 import { MessageShort } from './MessageShort'
 import { MessageFull } from './MessageFull'
 
-function useKeybindings(store: PoshtaStore, use: boolean) {
-  React.useEffect(() => {
-    if (!use) {
-      return noop
+interface IProps {
+  store: PoshtaStore,
+}
+
+export function App({ store }: IProps) {
+  const [state] = useStore(store)
+  const modalRef = React.useRef<HTMLDivElement>(null)
+
+  const showModal = !!state.selected
+
+  const hotkeys = React.useMemo(() => {
+    if (showModal) {
+      return [
+        {
+          code: 'KeyJ',
+          action() {
+            modalRef.current?.scrollBy({ top: 100, behavior: 'smooth' })
+          },
+        },
+        {
+          code: 'KeyK',
+          action() {
+            modalRef.current?.scrollBy({ top: -100, behavior: 'smooth' })
+          },
+        },
+      ]
     }
 
-    const handler = createKeybindingsHandler(
+    return [
       {
         code: 'KeyJ',
         action() {
@@ -37,24 +58,10 @@ function useKeybindings(store: PoshtaStore, use: boolean) {
           store.selectFocused()
         },
       },
-    )
+    ]
+  }, [store, showModal])
 
-    document.addEventListener('keydown', handler)
-
-    return () => {
-      document.removeEventListener('keydown', handler)
-    }
-  }, [use])
-}
-
-interface IProps {
-  store: PoshtaStore,
-}
-
-export function App({ store }: IProps) {
-  const [state] = useStore(store)
-
-  useKeybindings(store, !state.selected)
+  useHotkeys(hotkeys)
 
   const items = state.messages.map((message, index) => (
     <MessageShort
@@ -72,12 +79,13 @@ export function App({ store }: IProps) {
     >
       {items}
 
-      {state.selected && (
-        <Modal onCancel={() => store.select(undefined)}>
+      {showModal && (
+        <Modal
+          onCancel={() => store.select(undefined)}
+          innerRef={modalRef}
+        >
           <Box maxWidth="50rem">
-            <MessageFull
-              message={state.selected}
-            />
+            <MessageFull message={state.selected!} />
           </Box>
         </Modal>
       )}

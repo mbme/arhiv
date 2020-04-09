@@ -23,7 +23,7 @@ const $container: StyleArg = {
   overflowY: 'auto',
 }
 
-export function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {
+export function TopOverlay({ children, onClick, innerRef, $styles = [] }: IOverlay) {
   const className = useStyles($container, ...$styles)
 
   const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -54,6 +54,7 @@ export function TopOverlay({ children, onClick, $styles = [] }: IOverlay) {
       onClick={clickHandler}
       role="dialog"
       aria-modal="true"
+      ref={innerRef}
     >
       {children}
     </div>

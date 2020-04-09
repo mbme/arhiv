@@ -9,6 +9,7 @@ export interface IOverlay {
   children: React.ReactNode
   onClick?(): void
   $styles?: StyleArg[]
+  innerRef?: React.RefObject<HTMLDivElement>
 }
 
 export interface IOverlayRenderer {

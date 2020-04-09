@@ -3,7 +3,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
-import { injectGlobalStyles } from '@v/web-utils'
+import { injectGlobalStyles, HotkeysResolverProvider } from '@v/web-utils'
 import {
   globalStyles,
   StylishProvider,
@@ -47,9 +47,11 @@ async function run() {
   ReactDOM.render(
     <React.StrictMode>
       <StylishProvider>
-        <OverlayRenderer>
-          <App store={store} />
-        </OverlayRenderer>
+        <HotkeysResolverProvider>
+          <OverlayRenderer>
+            <App store={store} />
+          </OverlayRenderer>
+        </HotkeysResolverProvider>
       </StylishProvider>
     </React.StrictMode>,
     rootEl,

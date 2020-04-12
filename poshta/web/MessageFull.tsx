@@ -5,8 +5,9 @@ import {
   Row,
   Spacer,
 } from '@v/web-platform'
-import { GmailMessage } from './gmail'
 import { ChronoFormatter } from '@v/chrono'
+import { GmailMessage } from './gmail'
+import { Sandbox } from './Sandbox'
 
 const dateFormat = new ChronoFormatter('HH:mm DD.MM.YYYY')
 
@@ -18,9 +19,7 @@ export function MessageFull({ message }: IProps ) {
   const body = React.useMemo(() => {
     if (message.hasHTMLBody()) {
       return (
-        <Box
-          dangerouslySetInnerHTML={{ __html: message.getHTMLBody() }}
-        />
+        <Sandbox content={message.getHTMLBody()} />
       )
     }
 
@@ -60,7 +59,9 @@ export function MessageFull({ message }: IProps ) {
         <b>To: </b> {message.to}
       </Box>
 
-      <h3>{message.subject}</h3>
+      <Box>
+        <b>Subject: {message.subject}</b>
+      </Box>
 
       {body}
     </Box>

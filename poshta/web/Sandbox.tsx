@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { HotkeysResolverContext } from '@v/web-utils'
+import { noop } from '@v/utils'
 
 interface IProps {
   content: string
@@ -8,6 +10,21 @@ interface IProps {
 export function Sandbox({ content, loadRemoteContent }: IProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = React.useState(600)
+  const hotkeysResolver = HotkeysResolverContext.use()
+
+  React.useEffect(() => {
+    if (!iframeRef.current) {
+      return noop
+    }
+
+    const document = iframeRef.current.contentDocument!
+
+    hotkeysResolver.addDocument(document)
+
+    return () => {
+      hotkeysResolver.removeDocument(document)
+    }
+  }, [iframeRef.current])
 
   React.useEffect(() => {
     const document = iframeRef.current!.contentDocument!

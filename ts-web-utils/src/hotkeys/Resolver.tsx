@@ -9,6 +9,7 @@ interface IProps {
 
 export function HotkeysResolverProvider({ children }: IProps) {
   const allHotkeys = React.useRef<Array<IKeybinding[]>>([])
+  const [documents, setDocuments] = React.useState([document])
 
   const resolver = React.useMemo<IHotkeyResolver>(() => ({
     add(hotkeys) {
@@ -16,6 +17,12 @@ export function HotkeysResolverProvider({ children }: IProps) {
     },
     remove(hotkeys) {
       removeMut(allHotkeys.current, hotkeys)
+    },
+    addDocument(document: Document) {
+      setDocuments(documents => [...documents, document])
+    },
+    removeDocument(document: Document) {
+      setDocuments(documents => documents.filter(item => item !== document))
     },
   }), [])
 
@@ -34,12 +41,16 @@ export function HotkeysResolverProvider({ children }: IProps) {
       }
     }
 
-    document.addEventListener('keydown', handler)
+    for (const document of documents) {
+      document.addEventListener('keydown', handler)
+    }
 
     return () => {
-      document.removeEventListener('keydown', handler)
+      for (const document of documents) {
+        document.removeEventListener('keydown', handler)
+      }
     }
-  }, [])
+  }, [documents])
 
   return (
     <HotkeysResolverContext.Provider value={resolver}>

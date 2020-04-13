@@ -5,8 +5,6 @@ use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub const SCHEMA_VERSION: u8 = 1;
-
 pub type Revision = u32;
 pub type Id = String;
 
@@ -17,12 +15,11 @@ pub struct Document {
     pub rev: Revision,
     #[serde(rename = "type")]
     pub document_type: String,
-    pub schema_version: u8,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub refs: Vec<Id>,
     pub attachment_refs: Vec<Id>,
-    pub deleted: bool,
+    pub archived: bool,
     pub props: HashMap<String, Value>,
 }
 
@@ -34,12 +31,11 @@ impl Document {
             id: gen_id(),
             rev: 0,
             document_type: document_type.to_string(),
-            schema_version: SCHEMA_VERSION,
             created_at: now,
             updated_at: now,
             refs: vec![],
             attachment_refs: vec![],
-            deleted: false,
+            archived: false,
             props: HashMap::new(),
         }
     }

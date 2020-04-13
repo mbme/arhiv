@@ -1,0 +1,52 @@
+use crate::utils::ensure_exists;
+use anyhow::*;
+use std::fs;
+use std::path::Path;
+
+pub struct PathManager {
+    pub root_path: String,
+}
+
+impl PathManager {
+    pub fn new(root_path: String) -> PathManager {
+        PathManager { root_path }
+    }
+
+    pub fn get_data_direcotry(&self) -> String {
+        format!("{}/data", self.root_path)
+    }
+
+    pub fn get_db_file(&self) -> String {
+        format!("{}/arhiv.sqlite", self.root_path)
+    }
+
+    pub fn assert_dirs_exist(&self) -> Result<()> {
+        ensure_exists(&self.root_path, true)?;
+        ensure_exists(&self.get_data_direcotry(), true)?;
+
+        Ok(())
+    }
+
+    pub fn assert_db_file_exists(&self) -> Result<()> {
+        ensure_exists(&self.get_db_file(), false)?;
+
+        Ok(())
+    }
+
+    pub fn create_dirs(&self) -> Result<()> {
+        let path = Path::new(&self.root_path);
+
+        if !path.is_absolute() {
+            return Err(anyhow!("path must be absolute: {}", &self.root_path));
+        }
+
+        if path.exists() {
+            return Err(anyhow!("path already exists: {}", &self.root_path));
+        }
+
+        fs::create_dir(&self.root_path)?;
+        fs::create_dir(&self.get_data_direcotry())?;
+
+        Ok(())
+    }
+}

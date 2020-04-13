@@ -1,4 +1,5 @@
 {
   "arhivRoot": "",
-  "primaryUrl": ""
+  "primaryUrl": "",
+  "serverPort": 8080
 }

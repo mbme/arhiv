@@ -32,7 +32,15 @@ export const theme = {
       'Ubuntu', 'Cantarell', '"Fira Sans"', // Ubuntu, Gnome, Firefox OS
       '"Droid Sans"', '"Helvetica Neue"', 'sans-serif', // Old Android
     ].join(', '),
-    mono: 'monospace, monospace',
+    mono: [
+      'SFMono-Regular',
+      'Menlo',
+      'Monaco',
+      'Consolas',
+      '"Liberation Mono"',
+      '"Courier New"',
+      'monospace',
+    ].join(', '),
   },
   fontSize: {
     fine: '0.75rem',

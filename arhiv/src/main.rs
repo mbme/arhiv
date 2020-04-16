@@ -1,32 +1,12 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::Arhiv;
+use arhiv::arhiv::Arhiv;
+use arhiv::config::Config;
 use clap::{crate_version, App};
-use config::Config;
-use std::env;
-use std::fs;
-
-mod arhiv;
-mod config;
-mod entities;
-// mod server;
-mod utils;
-
-fn read_config() -> Config {
-    let path = &format!(
-        "{}/arhiv.json",
-        env::var("CARGO_MANIFEST_DIR").expect("env var CARGO_MANIFEST_DIR must be set")
-    );
-
-    fs::read_to_string(path)
-        .expect(&format!("must be able to read arhiv config at {}", path))
-        .parse()
-        .expect(&format!("must be able to parse arhiv config at {}", path))
-}
 
 fn get_arhiv() -> Arhiv {
-    Arhiv::open(read_config()).expect("must be able open create arhiv")
+    Arhiv::open(Config::read().unwrap(), false).expect("must be able to open arhiv")
 }
 
 fn main() {
@@ -43,7 +23,7 @@ fn main() {
 
     match matches.subcommand() {
         ("init", Some(_)) => {
-            Arhiv::create(read_config()).expect("must be able to create arhiv");
+            Arhiv::create(Config::read().unwrap()).expect("must be able to create arhiv");
         }
         ("rev", Some(_)) => {
             println!("revision: {}", get_arhiv().get_rev().unwrap());

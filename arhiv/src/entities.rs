@@ -1,8 +1,6 @@
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::collections::HashMap;
 use uuid::Uuid;
 
 pub type Revision = u32;
@@ -20,7 +18,7 @@ pub struct Document {
     pub refs: Vec<Id>,
     pub attachment_refs: Vec<Id>,
     pub archived: bool,
-    pub props: HashMap<String, Value>,
+    pub data: String,
 }
 
 impl Document {
@@ -36,7 +34,7 @@ impl Document {
             refs: vec![],
             attachment_refs: vec![],
             archived: false,
-            props: HashMap::new(),
+            data: "".to_string(),
         }
     }
 

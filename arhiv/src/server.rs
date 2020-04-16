@@ -39,7 +39,7 @@ impl Arhiv {
                 .and(warp::path("attachment-data"))
                 .and(warp::path::param::<String>())
                 .map(move |id: String| {
-                    let file = arhiv.lock().unwrap().storage.get_attachment_data_path(&id);
+                    let file = arhiv.lock().unwrap().get_attachment_data_path(&id);
 
                     // FIXME stream file, support ranges
                     http::Response::builder().body(std::fs::read(file).unwrap())

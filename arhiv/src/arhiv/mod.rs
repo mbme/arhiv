@@ -1,24 +1,24 @@
-use self::storage::{get_rev, put_document, Storage};
+use self::storage::*;
 use crate::config::Config;
 use crate::entities::*;
+use crate::utils::ensure_exists;
 use anyhow::*;
+use std::path::Path;
 
 mod storage;
 
 pub struct Arhiv {
     storage: Storage,
     pub config: Config,
-    pub prime: bool,
 }
 
 impl Arhiv {
-    pub fn open(config: Config, prime: bool) -> Result<Arhiv> {
+    pub fn open(config: Config) -> Result<Arhiv> {
         let root_dir = &config.arhiv_root.clone();
 
         Ok(Arhiv {
             config,
             storage: Storage::open(root_dir)?,
-            prime,
         })
     }
 
@@ -35,33 +35,76 @@ impl Arhiv {
     }
 
     pub fn list_documents(&self) -> Result<Vec<Document>> {
-        let conn = self.storage.get_connection();
+        let conn = self.storage.get_connection()?;
 
-        unimplemented!();
+        get_documents(&conn, !self.config.prime)
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        unimplemented!();
+        let conn = self.storage.get_connection()?;
+
+        get_document(&conn, id, !self.config.prime)
     }
 
-    pub fn save_document(&self, mut document: Document) {
-        unimplemented!();
+    pub fn save_document(&self, mut document: Document) -> Result<()> {
+        let mut conn = self.storage.get_writable_connection()?;
+        let tx = conn.transaction()?;
+
+        if self.config.prime {
+            let rev = get_rev(&tx)?;
+            document.rev = rev + 1;
+        } else {
+            document.rev = 0;
+        }
+
+        put_document(&tx, &document)?;
+
+        tx.commit()?;
+
+        Ok(())
     }
 
     pub fn list_attachments(&self) -> Result<Vec<Attachment>> {
-        unimplemented!();
+        let conn = self.storage.get_connection()?;
+
+        get_attachments(&conn, !self.config.prime)
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
-        unimplemented!();
+        let conn = self.storage.get_connection()?;
+
+        get_attachment(&conn, id, !self.config.prime)
     }
 
     pub fn get_attachment_data_path(&self, id: &Id) -> Result<Option<String>> {
         unimplemented!();
     }
 
-    pub fn save_attachment(&self, file: &str, move_file: bool) -> Attachment {
-        unimplemented!();
+    pub fn save_attachment(&self, file: &str, move_file: bool) -> Result<Attachment> {
+        ensure_exists(file, false).expect("new attachment file must exist");
+
+        let mut attachment = Attachment::new(
+            Path::new(file)
+                .file_name()
+                .expect("file must have name")
+                .to_str()
+                .unwrap(),
+        );
+
+        let mut conn = self.storage.get_writable_connection()?;
+        let tx = conn.transaction()?;
+
+        if self.config.prime {
+            let rev = get_rev(&tx)?;
+            attachment.rev = rev + 1;
+        }
+
+        put_attachment(&tx, &attachment)?;
+        // FIXME save attachment data
+
+        tx.commit()?;
+
+        Ok(attachment)
     }
 
     pub fn sync(&self) -> Result<()> {
@@ -94,14 +137,16 @@ impl Arhiv {
             put_document(&tx, &document)?;
         }
 
-        // for mut attachment in changeset.attachments {
-        //     attachment.rev = new_rev;
-        //     if self.storage.has_attachment_data(&attachment.id) {
-        //         self.storage.add_attachment(&attachment)?;
-        //     } else {
-        //         return Err(anyhow!("Got attachment {} without a file", attachment.id));
-        //     }
-        // }
+        for mut attachment in changeset.attachments {
+            attachment.rev = new_rev;
+            put_attachment(&tx, &attachment)?;
+            // FIXME save data
+            // if self.storage.has_attachment_data(&attachment.id) {
+            //     self.storage.add_attachment(&attachment)?;
+            // } else {
+            //     return Err(anyhow!("Got attachment {} without a file", attachment.id));
+            // }
+        }
 
         tx.commit()?;
 

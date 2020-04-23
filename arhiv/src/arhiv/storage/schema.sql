@@ -1,27 +1,29 @@
 BEGIN;
 
-create table documents (
-  id text not null,
-  rev number,
-  created_at text not null,
-  updated_at text not null,
-  archived boolean not null,
+CREATE TABLE documents (
+  id TEXT NOT NULL,
+  rev NUMBER NOT NULL,
 
-  type text not null,
-  refs text not null,
-  attachment_refs text not null,
-  data text not null,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  archived BOOLEAN NOT NULL,
 
-  primary key (id, rev)
+  type TEXT NOT NULL,
+  refs TEXT NOT NULL,
+  attachment_refs TEXT NOT NULL,
+  data TEXT NOT NULL,
+
+  PRIMARY KEY (id, rev)
 );
 
-create table attachments (
-  id text not null,
-  rev number,
-  created_at text not null,
-  filename text not null,
+CREATE TABLE attachments (
+  id TEXT NOT NULL,
+  rev NUMBER NOT NULL,
 
-  primary key (id, rev)
+  created_at TEXT NOT NULL,
+  filename TEXT NOT NULL,
+
+  PRIMARY KEY (id)
 );
 
 COMMIT;

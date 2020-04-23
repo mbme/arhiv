@@ -58,9 +58,8 @@ pub fn get_rev(conn: &Connection) -> Result<Revision> {
     Ok(rev)
 }
 
-pub fn get_documents(conn: &Connection) -> Result<Vec<Document>> {
-    // FIXME https://stackoverflow.com/a/48328243
-    let mut stmt = conn.prepare_cached("SELECT * FROM documents ORDER BY rev DESC LIMIT 10")?;
+pub fn get_documents(conn: &Connection, include_new: bool) -> Result<Vec<Document>> {
+    let mut stmt = conn.prepare_cached("SELECT * FROM documents GROUP BY id ORDER BY rev DESC")?;
 
     let rows = stmt.query_and_then(NO_PARAMS, utils::extract_document)?;
 
@@ -73,8 +72,21 @@ pub fn get_documents(conn: &Connection) -> Result<Vec<Document>> {
     Ok(documents)
 }
 
-pub fn get_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments ORDER BY rev DESC LIMIT 10")?;
+pub fn get_document(conn: &Connection, id: &Id, include_new: bool) -> Result<Option<Document>> {
+    let mut stmt =
+        conn.prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY rev DESC LIMIT 1")?;
+
+    let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
+
+    if let Some(row) = rows.next() {
+        Ok(Some(row?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_attachments(conn: &Connection, include_new: bool) -> Result<Vec<Attachment>> {
+    let mut stmt = conn.prepare_cached("SELECT * FROM attachments ORDER BY rev DESC")?;
 
     let rows = stmt.query_and_then(NO_PARAMS, utils::extract_attachment)?;
 
@@ -87,9 +99,22 @@ pub fn get_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
     Ok(attachments)
 }
 
+pub fn get_attachment(conn: &Connection, id: &Id, include_new: bool) -> Result<Option<Attachment>> {
+    let mut stmt =
+        conn.prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY rev DESC LIMIT 1")?;
+
+    let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;
+
+    if let Some(row) = rows.next() {
+        Ok(Some(row?))
+    } else {
+        Ok(None)
+    }
+}
+
 pub fn put_document(conn: &Connection, document: &Document) -> Result<()> {
     let mut stmt = conn.prepare_cached(
-        "INSERT INTO documents
+        "INSERT OR REPLACE INTO documents
         (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )?;
@@ -104,6 +129,23 @@ pub fn put_document(conn: &Connection, document: &Document) -> Result<()> {
         utils::serialize_refs(&document.refs)?,
         utils::serialize_refs(&document.attachment_refs)?,
         document.data,
+    ])?;
+
+    Ok(())
+}
+
+pub fn put_attachment(conn: &Connection, attachment: &Attachment) -> Result<()> {
+    let mut stmt = conn.prepare_cached(
+        "INSERT OR REPLACE INTO attachments
+        (id, rev, created_at, filename)
+        VALUES (?, ?, ?, ?)",
+    )?;
+
+    stmt.execute(params![
+        attachment.id,
+        attachment.rev,
+        attachment.created_at,
+        attachment.filename,
     ])?;
 
     Ok(())

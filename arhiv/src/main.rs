@@ -6,7 +6,7 @@ use arhiv::config::Config;
 use clap::{crate_version, App};
 
 fn get_arhiv() -> Arhiv {
-    Arhiv::open(Config::read().unwrap(), false).expect("must be able to open arhiv")
+    Arhiv::open(Config::read().unwrap()).expect("must be able to open arhiv")
 }
 
 fn main() {

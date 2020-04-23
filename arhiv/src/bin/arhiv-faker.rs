@@ -13,7 +13,7 @@ fn gen_random_document() -> Document {
 fn main() {
     env_logger::init();
 
-    let arhiv = Arhiv::open(Config::read().unwrap(), false).expect("must be able to open arhiv");
+    let arhiv = Arhiv::open(Config::read().unwrap()).expect("must be able to open arhiv");
 
     let mut documents = vec![];
 

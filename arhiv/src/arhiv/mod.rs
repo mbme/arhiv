@@ -34,16 +34,24 @@ impl Arhiv {
         get_rev(&self.storage.get_connection()?)
     }
 
+    fn get_mode(&self) -> QueryMode {
+        if self.config.prime {
+            QueryMode::Commited
+        } else {
+            QueryMode::All
+        }
+    }
+
     pub fn list_documents(&self) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_documents(&conn, !self.config.prime)
+        get_documents(&conn, self.get_mode())
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_document(&conn, id, !self.config.prime)
+        get_document(&conn, id, self.get_mode())
     }
 
     pub fn save_document(&self, mut document: Document) -> Result<()> {
@@ -67,13 +75,13 @@ impl Arhiv {
     pub fn list_attachments(&self) -> Result<Vec<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachments(&conn, !self.config.prime)
+        get_attachments(&conn, self.get_mode())
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachment(&conn, id, !self.config.prime)
+        get_attachment(&conn, id, self.get_mode())
     }
 
     pub fn get_attachment_data_path(&self, id: &Id) -> Result<Option<String>> {

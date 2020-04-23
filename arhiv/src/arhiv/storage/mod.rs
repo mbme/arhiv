@@ -58,8 +58,20 @@ pub fn get_rev(conn: &Connection) -> Result<Revision> {
     Ok(rev)
 }
 
-pub fn get_documents(conn: &Connection, include_new: bool) -> Result<Vec<Document>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM documents GROUP BY id ORDER BY rev DESC")?;
+pub enum QueryMode {
+    All,
+    Commited,
+    New,
+}
+
+pub fn get_documents(conn: &Connection, mode: QueryMode) -> Result<Vec<Document>> {
+    let mut stmt = conn.prepare_cached({
+        match mode {
+            QueryMode::All => "SELECT * FROM documents GROUP BY id HAVING rev = 0 OR max(rev) ORDER BY rev DESC",
+            QueryMode::Commited => "SELECT * FROM documents WHERE rev > 0 GROUP BY id HAVING max(rev) ORDER BY rev DESC",
+            QueryMode::New => "SELECT * FROM documents WHERE rev = 0",
+        }
+    })?;
 
     let rows = stmt.query_and_then(NO_PARAMS, utils::extract_document)?;
 
@@ -72,9 +84,18 @@ pub fn get_documents(conn: &Connection, include_new: bool) -> Result<Vec<Documen
     Ok(documents)
 }
 
-pub fn get_document(conn: &Connection, id: &Id, include_new: bool) -> Result<Option<Document>> {
-    let mut stmt =
-        conn.prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY rev DESC LIMIT 1")?;
+pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Document>> {
+    let mut stmt = conn.prepare_cached({
+        match mode {
+            QueryMode::All => {
+                "SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING rev = 0 OR max(rev)"
+            }
+            QueryMode::Commited => {
+                "SELECT * FROM documents WHERE id = ?1 AND rev > 0 GROUP BY id HAVING max(rev)"
+            }
+            QueryMode::New => "SELECT * FROM documents WHERE id = ?1 AND rev = 0",
+        }
+    })?;
 
     let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -85,8 +106,14 @@ pub fn get_document(conn: &Connection, id: &Id, include_new: bool) -> Result<Opt
     }
 }
 
-pub fn get_attachments(conn: &Connection, include_new: bool) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments ORDER BY rev DESC")?;
+pub fn get_attachments(conn: &Connection, mode: QueryMode) -> Result<Vec<Attachment>> {
+    let mut stmt = conn.prepare_cached({
+        match mode {
+            QueryMode::All => "SELECT * FROM attachments ORDER BY rev DESC",
+            QueryMode::Commited => "SELECT * FROM attachments WHERE rev > 0 ORDER BY rev DESC",
+            QueryMode::New => "SELECT * FROM attachments WHERE rev = 0 ORDER BY rev DESC",
+        }
+    })?;
 
     let rows = stmt.query_and_then(NO_PARAMS, utils::extract_attachment)?;
 
@@ -99,9 +126,14 @@ pub fn get_attachments(conn: &Connection, include_new: bool) -> Result<Vec<Attac
     Ok(attachments)
 }
 
-pub fn get_attachment(conn: &Connection, id: &Id, include_new: bool) -> Result<Option<Attachment>> {
-    let mut stmt =
-        conn.prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY rev DESC LIMIT 1")?;
+pub fn get_attachment(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Attachment>> {
+    let mut stmt = conn.prepare_cached({
+        match mode {
+            QueryMode::All => "SELECT * FROM attachments WHERE id = ?1",
+            QueryMode::Commited => "SELECT * FROM attachments WHERE id = ?1 AND rev > 0",
+            QueryMode::New => "SELECT * FROM attachments WHERE id = ?1 AND rev = 0",
+        }
+    })?;
 
     let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;
 

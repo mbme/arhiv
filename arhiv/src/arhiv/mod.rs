@@ -1,7 +1,7 @@
 use self::storage::*;
 use crate::config::Config;
 use crate::entities::*;
-use crate::utils::ensure_exists;
+use crate::utils::{ensure_exists, FsTransaction};
 use anyhow::*;
 use std::path::Path;
 
@@ -31,7 +31,9 @@ impl Arhiv {
     }
 
     pub fn get_rev(&self) -> Result<Revision> {
-        get_rev(&self.storage.get_connection()?)
+        let conn = self.storage.get_connection()?;
+
+        get_rev(&conn)
     }
 
     fn get_mode(&self) -> QueryMode {
@@ -45,7 +47,11 @@ impl Arhiv {
     pub fn list_documents(&self) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_documents(&conn, self.get_mode())
+        if self.config.prime {
+            get_commited_documents(&conn)
+        } else {
+            get_all_documents(&conn)
+        }
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
@@ -54,16 +60,12 @@ impl Arhiv {
         get_document(&conn, id, self.get_mode())
     }
 
-    pub fn save_document(&self, mut document: Document) -> Result<()> {
+    pub fn stage_document(&self, mut document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
 
-        if self.config.prime {
-            let rev = get_rev(&tx)?;
-            document.rev = rev + 1;
-        } else {
-            document.rev = 0;
-        }
+        // make sure document rev is Staging
+        document.rev = 0;
 
         put_document(&tx, &document)?;
 
@@ -75,7 +77,11 @@ impl Arhiv {
     pub fn list_attachments(&self) -> Result<Vec<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachments(&conn, self.get_mode())
+        if self.config.prime {
+            get_commited_attachments(&conn)
+        } else {
+            get_all_attachments(&conn)
+        }
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
@@ -84,14 +90,14 @@ impl Arhiv {
         get_attachment(&conn, id, self.get_mode())
     }
 
-    pub fn get_attachment_data_path(&self, id: &Id) -> Result<Option<String>> {
-        unimplemented!();
+    pub fn get_attachment_data_path(&self, id: &Id) -> String {
+        self.storage.get_attachment_file_path(id)
     }
 
-    pub fn save_attachment(&self, file: &str, move_file: bool) -> Result<Attachment> {
+    pub fn stage_attachment(&self, file: &str) -> Result<Attachment> {
         ensure_exists(file, false).expect("new attachment file must exist");
 
-        let mut attachment = Attachment::new(
+        let attachment = Attachment::new(
             Path::new(file)
                 .file_name()
                 .expect("file must have name")
@@ -101,22 +107,40 @@ impl Arhiv {
 
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
-
-        if self.config.prime {
-            let rev = get_rev(&tx)?;
-            attachment.rev = rev + 1;
-        }
+        let mut fs_tx = FsTransaction::new();
 
         put_attachment(&tx, &attachment)?;
-        // FIXME save attachment data
+        fs_tx.move_file(
+            file.to_string(),
+            self.storage.get_attachment_file_path(&attachment.id),
+        )?;
 
         tx.commit()?;
+        fs_tx.commit();
 
         Ok(attachment)
     }
 
-    pub fn sync(&self) -> Result<()> {
-        unimplemented!();
+    pub fn get_changeset(&self) -> Result<Changeset> {
+        let mut conn = self.storage.get_writable_connection()?;
+        let tx = conn.transaction()?;
+
+        let rev = get_rev(&tx)?;
+        let documents = get_staged_documents(&tx)?;
+        let attachments = get_staged_attachments(&tx)?;
+        let new_attachments = attachments
+            .into_iter()
+            .map(|attachment| NewAttachment {
+                file_path: self.storage.get_attachment_file_path(&attachment.id),
+                attachment,
+            })
+            .collect();
+
+        Ok(Changeset {
+            replica_rev: rev,
+            documents,
+            new_attachments,
+        })
     }
 
     pub fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
@@ -145,23 +169,37 @@ impl Arhiv {
             put_document(&tx, &document)?;
         }
 
-        for mut attachment in changeset.attachments {
+        let mut fs_tx = FsTransaction::new();
+        for new_attachment in changeset.new_attachments {
+            // save attachment
+            let mut attachment = new_attachment.attachment;
             attachment.rev = new_rev;
             put_attachment(&tx, &attachment)?;
-            // FIXME save data
-            // if self.storage.has_attachment_data(&attachment.id) {
-            //     self.storage.add_attachment(&attachment)?;
-            // } else {
-            //     return Err(anyhow!("Got attachment {} without a file", attachment.id));
-            // }
+
+            // save attachment file
+            fs_tx.move_file(
+                new_attachment.file_path,
+                self.storage.get_attachment_file_path(&attachment.id),
+            )?;
         }
 
         tx.commit()?;
+        fs_tx.commit();
 
         Ok(())
     }
 
     pub fn get_changes(&self, replica_rev: Revision) -> Result<ChangesetResponse> {
-        unimplemented!()
+        let conn = self.storage.get_connection()?;
+
+        let documents = get_commited_documents_with_rev(&conn, replica_rev + 1)?;
+        let attachments = get_commited_attachments_with_rev(&conn, replica_rev + 1)?;
+
+        Ok(ChangesetResponse {
+            primary_rev: get_rev(&conn)?,
+            replica_rev,
+            documents,
+            attachments,
+        })
     }
 }

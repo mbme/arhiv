@@ -12,7 +12,7 @@ impl PathManager {
         PathManager { root_path }
     }
 
-    pub fn get_data_direcotry(&self) -> String {
+    pub fn get_data_directory(&self) -> String {
         format!("{}/data", self.root_path)
     }
 
@@ -22,7 +22,7 @@ impl PathManager {
 
     pub fn assert_dirs_exist(&self) -> Result<()> {
         ensure_exists(&self.root_path, true)?;
-        ensure_exists(&self.get_data_direcotry(), true)?;
+        ensure_exists(&self.get_data_directory(), true)?;
 
         Ok(())
     }
@@ -45,7 +45,7 @@ impl PathManager {
         }
 
         fs::create_dir(&self.root_path)?;
-        fs::create_dir(&self.get_data_direcotry())?;
+        fs::create_dir(&self.get_data_directory())?;
 
         Ok(())
     }

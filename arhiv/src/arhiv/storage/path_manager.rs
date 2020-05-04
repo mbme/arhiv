@@ -1,4 +1,4 @@
-use crate::utils::ensure_exists;
+use crate::utils::{ensure_dir_exists, ensure_file_exists};
 use anyhow::*;
 use std::fs;
 use std::path::Path;
@@ -21,14 +21,14 @@ impl PathManager {
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {
-        ensure_exists(&self.root_path, true)?;
-        ensure_exists(&self.get_data_directory(), true)?;
+        ensure_dir_exists(&self.root_path)?;
+        ensure_dir_exists(&self.get_data_directory())?;
 
         Ok(())
     }
 
     pub fn assert_db_file_exists(&self) -> Result<()> {
-        ensure_exists(&self.get_db_file(), false)?;
+        ensure_file_exists(&self.get_db_file())?;
 
         Ok(())
     }

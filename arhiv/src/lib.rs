@@ -4,5 +4,5 @@
 pub mod arhiv;
 pub mod config;
 pub mod entities;
-// mod server;
+pub mod server;
 pub mod utils;

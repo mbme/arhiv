@@ -85,17 +85,10 @@ impl std::str::FromStr for Attachment {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct NewAttachment {
-    pub attachment: Attachment,
-    pub file_path: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Changeset {
-    pub replica_rev: Revision,
+    pub base_rev: Revision,
     pub documents: Vec<Document>,
-    pub new_attachments: Vec<NewAttachment>,
+    pub attachments: Vec<Attachment>,
 }
 
 impl Changeset {
@@ -104,7 +97,7 @@ impl Changeset {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.documents.is_empty() && self.new_attachments.is_empty()
+        self.documents.is_empty() && self.attachments.is_empty()
     }
 }
 
@@ -112,10 +105,10 @@ impl Changeset {
 #[serde(rename_all = "camelCase")]
 pub struct ChangesetResponse {
     // replica storage revision
-    pub replica_rev: Revision,
+    pub base_rev: Revision,
 
     // primary storage revision
-    pub primary_rev: Revision,
+    pub latest_rev: Revision,
 
     // documents with rev > replica_rev
     pub documents: Vec<Document>,

@@ -62,6 +62,26 @@ pub fn get_rev(conn: &Connection) -> Result<Revision> {
     Ok(rev)
 }
 
+pub fn has_staged_changes(conn: &Connection) -> Result<bool> {
+    let documents_count: i32 = conn.query_row(
+        "SELECT COUNT(*) FROM documents WHERE rev = 0",
+        NO_PARAMS,
+        |row| row.get(0),
+    )?;
+
+    if documents_count > 0 {
+        return Ok(true);
+    }
+
+    let attachments_count: i32 = conn.query_row(
+        "SELECT COUNT(*) FROM attachments WHERE rev = 0",
+        NO_PARAMS,
+        |row| row.get(0),
+    )?;
+
+    Ok(attachments_count > 0)
+}
+
 pub fn get_all_documents(conn: &Connection) -> Result<Vec<Document>> {
     let mut stmt = conn.prepare_cached(
         "SELECT * FROM documents GROUP BY id HAVING rev = 0 OR max(rev) ORDER BY rev DESC",
@@ -211,6 +231,18 @@ pub fn put_attachment(conn: &Connection, attachment: &Attachment) -> Result<()> 
         attachment.created_at,
         attachment.filename,
     ])?;
+
+    Ok(())
+}
+
+pub fn delete_staged_documents(conn: &Connection) -> Result<()> {
+    conn.execute("DELETE * FROM documents WHERE rev = 0", NO_PARAMS)?;
+
+    Ok(())
+}
+
+pub fn delete_staged_attachments(conn: &Connection) -> Result<()> {
+    conn.execute("DELETE * FROM attachments WHERE rev = 0", NO_PARAMS)?;
 
     Ok(())
 }

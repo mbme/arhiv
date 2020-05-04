@@ -3,6 +3,7 @@
 
 use arhiv::arhiv::Arhiv;
 use arhiv::config::Config;
+use arhiv::server::start_server;
 use clap::{crate_version, App};
 
 fn get_arhiv() -> Arhiv {
@@ -15,7 +16,7 @@ fn main() {
     let mut app = App::new("arhiv")
         .subcommand(App::new("init").about("Initialize arhiv on local machine"))
         .subcommand(App::new("rev").about("Print current revision"))
-        .subcommand(App::new("start").about("Run primary server"))
+        .subcommand(App::new("server").about("Run primary server"))
         .subcommand(App::new("sync").about("Trigger sync with primary server"))
         .version(crate_version!());
 
@@ -26,11 +27,13 @@ fn main() {
             Arhiv::create(Config::read().unwrap()).expect("must be able to create arhiv");
         }
         ("rev", Some(_)) => {
-            println!("revision: {}", get_arhiv().get_rev().unwrap());
+            println!(
+                "revision: {}",
+                get_arhiv().get_rev().expect("must be able to get revision")
+            );
         }
-        ("start", Some(_)) => {
-            // let arhiv = Arhiv::open(read_config()).expect("must be able to open arhiv");
-            // arhiv.start_server();
+        ("server", Some(_)) => {
+            start_server(get_arhiv());
         }
         _ => app.print_help().unwrap(),
     }

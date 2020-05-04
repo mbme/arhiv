@@ -1,6 +1,7 @@
 use arhiv::arhiv::Arhiv;
 use arhiv::config::Config;
 use arhiv::entities::*;
+use std::collections::HashMap;
 
 fn gen_random_document() -> Document {
     let mut document = Document::new("note");
@@ -23,12 +24,12 @@ fn main() {
     }
 
     let changeset = Changeset {
-        replica_rev: 0,
+        base_rev: 0,
         documents,
         attachments: vec![],
     };
 
     arhiv
-        .apply_changeset(changeset)
+        .apply_changeset(changeset, HashMap::new())
         .expect("must be able to apply changeset with fake data");
 }

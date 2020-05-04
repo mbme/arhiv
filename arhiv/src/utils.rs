@@ -1,17 +1,39 @@
 use anyhow::*;
 use std::fs;
 
-pub fn ensure_exists(path: &str, dir: bool) -> Result<()> {
+pub fn file_exists(path: &str) -> Result<bool> {
     match fs::metadata(path) {
-        Ok(metadata) if dir && !metadata.is_dir() => {
-            Err(anyhow!("path isn't a directory: {}", path))
-        }
+        Ok(metadata) if !metadata.is_file() => Err(anyhow!("path isn't a file: {}", path)),
 
-        Ok(metadata) if !dir && !metadata.is_file() => Err(anyhow!("path isn't a file: {}", path)),
+        Ok(_) => Ok(true),
 
-        Ok(_) => Ok(()),
+        Err(_) => Ok(false),
+    }
+}
 
-        Err(_) => Err(anyhow!("path doesn't exist {}", path)),
+pub fn dir_exists(path: &str) -> Result<bool> {
+    match fs::metadata(path) {
+        Ok(metadata) if !metadata.is_dir() => Err(anyhow!("path isn't a directory: {}", path)),
+
+        Ok(_) => Ok(true),
+
+        Err(_) => Ok(false),
+    }
+}
+
+pub fn ensure_dir_exists(path: &str) -> Result<()> {
+    if dir_exists(path)? {
+        Ok(())
+    } else {
+        Err(anyhow!("dir doesn't exist {}", path))
+    }
+}
+
+pub fn ensure_file_exists(path: &str) -> Result<()> {
+    if file_exists(path)? {
+        Ok(())
+    } else {
+        Err(anyhow!("file doesn't exist {}", path))
     }
 }
 

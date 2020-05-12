@@ -68,6 +68,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "arhiv-notes"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "app-shell",
+ "arhiv",
+ "env_logger",
+ "log 0.4.8",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "atk"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

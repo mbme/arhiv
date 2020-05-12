@@ -1,8 +1,11 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-pub mod arhiv;
+mod arhiv;
 pub mod config;
 pub mod entities;
 pub mod server;
 pub mod utils;
+
+pub use arhiv::Arhiv;
+pub use arhiv::QueryFilter;

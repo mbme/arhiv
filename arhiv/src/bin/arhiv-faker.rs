@@ -1,6 +1,6 @@
-use arhiv::arhiv::Arhiv;
 use arhiv::config::Config;
 use arhiv::entities::*;
+use arhiv::Arhiv;
 use std::collections::HashMap;
 
 fn gen_random_document() -> Document {

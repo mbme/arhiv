@@ -38,4 +38,8 @@ impl Config {
             .parse()
             .with_context(|| format!("must be able to parse arhiv config at {}", path))
     }
+
+    pub fn must_read() -> Config {
+        Config::read().expect("must be able to read arhiv config")
+    }
 }

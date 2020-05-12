@@ -1,14 +1,10 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::arhiv::Arhiv;
 use arhiv::config::Config;
 use arhiv::server::start_server;
+use arhiv::Arhiv;
 use clap::{crate_version, App};
-
-fn get_arhiv() -> Arhiv {
-    Arhiv::open(Config::read().unwrap()).expect("must be able to open arhiv")
-}
 
 fn main() {
     env_logger::init();
@@ -24,16 +20,18 @@ fn main() {
 
     match matches.subcommand() {
         ("init", Some(_)) => {
-            Arhiv::create(Config::read().unwrap()).expect("must be able to create arhiv");
+            Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
         }
         ("rev", Some(_)) => {
             println!(
                 "revision: {}",
-                get_arhiv().get_rev().expect("must be able to get revision")
+                Arhiv::must_open()
+                    .get_rev()
+                    .expect("must be able to get revision")
             );
         }
         ("server", Some(_)) => {
-            start_server(get_arhiv());
+            start_server(Arhiv::must_open());
         }
         _ => app.print_help().unwrap(),
     }

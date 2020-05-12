@@ -2,6 +2,7 @@
 members = [
   "app-shell",
   "arhiv",
+  "arhiv-notes",
   "arhiv-desktop-gtk",
   "poshta",
 ]

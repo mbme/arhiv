@@ -84,7 +84,10 @@ impl Arhiv {
     fn get_changeset_response(&self, base_rev: Revision) -> Result<ChangesetResponse> {
         let conn = self.storage.get_connection()?;
 
-        let documents = get_commited_documents_with_rev(&conn, base_rev + 1)?;
+        let mut filter = QueryFilter::default();
+        filter.page = None; // fetch all items
+
+        let documents = get_documents(&conn, base_rev + 1, filter)?;
         let attachments = get_commited_attachments_with_rev(&conn, base_rev + 1)?;
 
         Ok(ChangesetResponse {

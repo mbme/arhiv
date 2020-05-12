@@ -4,6 +4,7 @@ use crate::entities::*;
 use crate::utils::{ensure_file_exists, FsTransaction};
 use anyhow::*;
 use std::path::Path;
+pub use storage::QueryFilter;
 
 mod storage;
 mod sync;
@@ -14,6 +15,10 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
+    pub fn must_open() -> Arhiv {
+        Arhiv::open(Config::must_read()).expect("must be able to open arhiv")
+    }
+
     pub fn open(config: Config) -> Result<Arhiv> {
         let root_dir = &config.arhiv_root.clone();
 
@@ -45,14 +50,14 @@ impl Arhiv {
         }
     }
 
-    pub fn list_documents(&self) -> Result<Vec<Document>> {
+    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        if self.config.prime {
-            get_commited_documents(&conn)
-        } else {
-            get_all_documents(&conn)
-        }
+        get_documents(
+            &conn,
+            if self.config.prime { 1 } else { 0 },
+            filter.unwrap_or_default(),
+        )
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {

@@ -1,9 +1,9 @@
 {
-  "name": "@v/poshta",
+  "name": "@v/arhiv-notes",
   "private": true,
   "license": "MIT",
   "version": "0.0.1",
-  "description": "alternative gmail UI",
+  "description": "arhiv notes",
   "main": "",
   "scripts": {
     "build": "webpack",

@@ -1,10 +1,10 @@
-use arhiv::config::Config;
 use arhiv::entities::*;
 use arhiv::Arhiv;
+use arhiv_notes::notes::NOTE_TYPE;
 use std::collections::HashMap;
 
 fn gen_random_document() -> Document {
-    let mut document = Document::new("note");
+    let mut document = Document::new(NOTE_TYPE);
 
     document.data = "{ name: \"test\", data: \"data\" }".to_string();
 
@@ -14,7 +14,7 @@ fn gen_random_document() -> Document {
 fn main() {
     env_logger::init();
 
-    let arhiv = Arhiv::open(Config::read().unwrap()).expect("must be able to open arhiv");
+    let arhiv = Arhiv::must_open();
 
     let mut documents = vec![];
 

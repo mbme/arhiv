@@ -1,10 +1,8 @@
 use app_shell::AppShellBuilder;
 use arhiv::entities::Document;
-use notes::ArhivNotes;
+use arhiv_notes::notes::ArhivNotes;
 use serde_json::Value;
 use std::rc::Rc;
-
-mod notes;
 
 fn main() {
     env_logger::init();

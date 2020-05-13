@@ -7,7 +7,7 @@ type Json =
   | { [prop: string]: Json }
 
 interface IRPC {
-  call(action: string, params?: Json): Promise<Json>
+  call<T = Json>(action: string, params?: any): Promise<T>
 }
 
 declare global {

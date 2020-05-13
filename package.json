@@ -10,7 +10,8 @@
     "ts-parser-combinator",
     "ts-web-utils",
     "ts-web-platform",
-    "poshta"
+    "poshta",
+    "arhiv-notes"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",

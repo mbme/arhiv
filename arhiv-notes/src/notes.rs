@@ -5,7 +5,7 @@ pub struct ArhivNotes {
     arhiv: Arhiv,
 }
 
-const NOTE_TYPE: &str = "note";
+pub const NOTE_TYPE: &str = "note";
 
 impl ArhivNotes {
     pub fn must_open() -> ArhivNotes {

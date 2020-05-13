@@ -40,19 +40,19 @@ pub fn get_documents(
     filter: QueryFilter,
 ) -> Result<Vec<Document>> {
     let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
-    let mut params: Vec<(&str, &dyn ToSql)> = vec![("min_rev", &min_rev)];
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
     if let Some(ref document_type) = filter.document_type {
         query.push("AND type = :type");
-        params.push(("type", document_type));
+        params.push((":type", document_type));
     }
 
     query.push("GROUP BY id HAVING max(rev) ORDER BY rev DESC");
 
     if let Some(ref page) = filter.page {
         query.push("LIMIT :limit OFFSET :offset");
-        params.push(("limit", &page.size));
-        params.push(("offset", &page.offset));
+        params.push((":limit", &page.size));
+        params.push((":offset", &page.offset));
     }
 
     let mut stmt = conn.prepare_cached(&query.join(" "))?;

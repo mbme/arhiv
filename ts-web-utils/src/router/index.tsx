@@ -18,3 +18,4 @@ export {
 export { Redirect } from './Redirect'
 export { Link } from './Link'
 export { RouterContext } from './context'
+export { Route } from './Route'

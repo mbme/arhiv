@@ -3,13 +3,18 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
-import { injectGlobalStyles, HotkeysResolverProvider } from '@v/web-utils'
+import {
+  injectGlobalStyles,
+  HotkeysResolverProvider,
+  Route,
+} from '@v/web-utils'
 import {
   globalStyles,
   StylishProvider,
   OverlayRenderer,
 } from '@v/web-platform'
 import { App } from './App'
+import { pathMatcher as pm } from '@v/utils'
 
 configureLogger({ minLogLevel: 'INFO' })
 
@@ -34,7 +39,9 @@ async function run() {
       <StylishProvider>
         <HotkeysResolverProvider>
           <OverlayRenderer>
-            <App />
+            <Route pm={pm`/notes`}>
+              {() => <App />}
+            </Route>
           </OverlayRenderer>
         </HotkeysResolverProvider>
       </StylishProvider>

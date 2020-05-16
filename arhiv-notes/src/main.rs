@@ -9,32 +9,36 @@ fn main() {
 
     let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
-    let notes = ArhivNotes::must_open();
-    let action_handler = Rc::new(move |action: String, params: Value| {
-        if action == "list" {
-            return serde_json::to_value(notes.list()).expect("must be able to serialize");
-        }
+    let notes = Rc::new(ArhivNotes::must_open());
 
-        if action == "get_note" {
-            let id = params.as_str().expect("id must be string").to_string();
+    AppShellBuilder::create("v.arhiv.notes")
+        .with_title("Arhiv Notes")
+        .with_action("list", {
+            let notes = notes.clone();
 
-            return serde_json::to_value(notes.get_note(&id)).expect("must be able to serialize");
-        }
+            move |_params| serde_json::to_value(&notes.list()).expect("must be able to serialize")
+        })
+        .with_action("get_note", {
+            let notes = notes.clone();
 
-        if action == "put_note" {
-            let note: Document = serde_json::from_value(params).expect("param must be document");
+            move |params| {
+                let id = params.as_str().expect("id must be string").to_string();
 
-            notes.put_note(note);
+                serde_json::to_value(notes.get_note(&id)).expect("must be able to serialize")
+            }
+        })
+        .with_action("put_note", {
+            let notes = notes.clone();
 
-            return Value::Null;
-        }
+            move |params| {
+                let note: Document =
+                    serde_json::from_value(params).expect("param must be document");
 
-        Value::Null
-    });
+                notes.put_note(note);
 
-    AppShellBuilder::create("v.arhiv.notes".to_string())
-        .with_title("Arhiv Notes".to_string())
-        .with_rpc(action_handler)
+                Value::Null
+            }
+        })
         .show_inspector()
         .load(path_str);
 }

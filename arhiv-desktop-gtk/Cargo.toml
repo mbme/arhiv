@@ -1,8 +1,0 @@
-[package]
-name = "arhiv-desktop-gtk"
-version = "0.1.0"
-authors = ["mbme"]
-edition = "2018"
-
-[dependencies]
-app-shell = { path = "../app-shell" }

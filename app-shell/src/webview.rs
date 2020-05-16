@@ -1,4 +1,4 @@
-use crate::builder::{ActionHandler, AppShellBuilder};
+use crate::builder::AppShellBuilder;
 use anyhow::*;
 use glib::translate::from_glib_full;
 use serde::{Deserialize, Serialize};
@@ -29,10 +29,9 @@ impl std::str::FromStr for RpcMessage {
     }
 }
 
-fn install_rpc_action_handler(webview: &WebView, action_handler: &ActionHandler) {
+fn install_rpc_action_handler(webview: &WebView, builder: Rc<AppShellBuilder>) {
     let ucm = webview.get_user_content_manager().unwrap();
 
-    let action_handler = action_handler.clone();
     let webview = webview.clone();
 
     ucm.connect_script_message_received(move |_, result| {
@@ -46,7 +45,14 @@ fn install_rpc_action_handler(webview: &WebView, action_handler: &ActionHandler)
 
         let rpc_message: RpcMessage = rpc_message.parse().unwrap();
 
-        let result = action_handler(rpc_message.action, rpc_message.params);
+        if !builder.actions.contains_key(&rpc_message.action) {
+            log::warn!("RPC got unexpected action {}", rpc_message.action);
+            return;
+        }
+
+        let handler = builder.actions.get(&rpc_message.action).unwrap();
+
+        let result = handler(rpc_message.params);
 
         webview.run_javascript(
             &format!(
@@ -126,8 +132,8 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
 
     let html_content = fs::read_to_string(html_file).unwrap();
 
-    if let Some(ref action_handler) = builder.action_handler {
-        install_rpc_action_handler(&webview, action_handler);
+    if !builder.actions.is_empty() {
+        install_rpc_action_handler(&webview, builder);
 
         webview.connect_load_changed(move |webview, load_event| {
             log::debug!("webview load event {}", load_event);

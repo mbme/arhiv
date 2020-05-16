@@ -1,6 +1,5 @@
 use app_shell::AppShellBuilder;
 use serde_json::{value, Value};
-use std::rc::Rc;
 
 mod auth;
 
@@ -12,17 +11,11 @@ async fn main() {
 
     let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
-    let action_handler = Rc::new(move |action: String, _params: Value| {
-        if action == "get_token" {
-            return value::to_value(token.clone()).unwrap();
-        }
-
-        Value::Null
-    });
-
-    AppShellBuilder::create("v.poshta".to_string())
-        .with_title("Poshta".to_string())
-        .with_rpc(action_handler)
+    AppShellBuilder::create("v.poshta")
+        .with_title("Poshta")
+        .with_action("get_token", move |_params: Value| {
+            value::to_value(token.clone()).unwrap()
+        })
         .show_inspector()
         .load(path_str);
 }

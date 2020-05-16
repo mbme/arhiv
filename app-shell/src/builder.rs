@@ -1,8 +1,6 @@
 use serde_json::Value;
+use std::collections::HashMap;
 use std::path::Path;
-use std::rc::Rc;
-
-pub type ActionHandler = Rc<dyn Fn(String, Value) -> Value>;
 
 pub struct AppShellBuilder {
     pub(crate) app_id: String,
@@ -10,11 +8,13 @@ pub struct AppShellBuilder {
     pub(crate) default_size: (i32, i32),
     pub(crate) show_inspector: bool,
     pub(crate) data_dir: Option<String>,
-    pub(crate) action_handler: Option<ActionHandler>,
+    pub(crate) actions: HashMap<String, Box<dyn Fn(Value) -> Value>>,
 }
 
 impl AppShellBuilder {
-    pub fn create(app_id: String) -> Self {
+    pub fn create<S: Into<String>>(app_id: S) -> Self {
+        let app_id = app_id.into();
+
         assert_eq!(gio::Application::id_is_valid(&app_id), true);
 
         AppShellBuilder {
@@ -23,12 +23,12 @@ impl AppShellBuilder {
             default_size: (800, 600),
             data_dir: None,
             show_inspector: false,
-            action_handler: None,
+            actions: HashMap::new(),
         }
     }
 
-    pub fn with_title(mut self, title: String) -> Self {
-        self.title = title;
+    pub fn with_title<S: Into<String>>(mut self, title: S) -> Self {
+        self.title = title.into();
         self
     }
 
@@ -42,7 +42,9 @@ impl AppShellBuilder {
         self
     }
 
-    pub fn with_data_dir(mut self, data_dir: String) -> Self {
+    pub fn with_data_dir<S: Into<String>>(mut self, data_dir: S) -> Self {
+        let data_dir = data_dir.into();
+
         let path = Path::new(&data_dir);
 
         if !path.is_absolute() {
@@ -53,8 +55,12 @@ impl AppShellBuilder {
         self
     }
 
-    pub fn with_rpc(mut self, action_handler: ActionHandler) -> Self {
-        self.action_handler = Some(action_handler);
+    pub fn with_action<S, F>(mut self, action: S, handler: F) -> Self
+    where
+        S: Into<String>,
+        F: Fn(Value) -> Value + 'static,
+    {
+        self.actions.insert(action.into(), Box::new(handler));
         self
     }
 }

@@ -20,14 +20,11 @@ interface INoteProps {
 }
 type Note = IDocument<'note', INoteProps>
 
-export function list(): Promise<Note[]> {
-  return window.RPC.call('list')
+
+interface IRPC {
+  list(): Promise<Note[]>
+  get_note(id: string): Promise<Note | null>
+  put_note(note: Note): Promise<void>
 }
 
-export function getNote(id: string): Promise<Note | null> {
-  return window.RPC.call('get_note', id)
-}
-
-export async function putNote(note: Note) {
-  await window.RPC.call('get_note', note)
-}
+export const API = window.RPC_PROXY as IRPC

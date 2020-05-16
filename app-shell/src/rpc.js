@@ -36,4 +36,10 @@
       delete pendingRequests[callId]
     },
   }
+
+  window.RPC_PROXY = new Proxy({}, {
+    get(_, prop) {
+      return params => window.RPC.call(prop, params)
+    }
+  })
 })('app-shell')

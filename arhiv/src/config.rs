@@ -1,3 +1,4 @@
+use crate::utils::file_exists;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -26,17 +27,37 @@ impl std::str::FromStr for Config {
     }
 }
 
-impl Config {
-    pub fn read() -> Result<Config> {
-        let path = &format!(
+fn find_config_file() -> Option<String> {
+    // FIXME read global config in prod mode
+
+    let mut dir = env::current_dir().expect("must be able to get current dir");
+
+    loop {
+        let config = format!(
             "{}/arhiv.json",
-            env::var("CARGO_MANIFEST_DIR").context("env var CARGO_MANIFEST_DIR must be set")?
+            &dir.to_str().expect("must be able to serialize path")
         );
 
-        fs::read_to_string(path)
-            .with_context(|| format!("must be able to read arhiv config at {}", path))?
+        if file_exists(&config).unwrap_or(false) {
+            return Some(config);
+        }
+
+        if let Some(parent) = dir.parent() {
+            dir = parent.to_path_buf();
+        } else {
+            return None;
+        }
+    }
+}
+
+impl Config {
+    pub fn read() -> Result<Config> {
+        let path = find_config_file().expect("must be able to find arhiv config");
+
+        fs::read_to_string(&path)
+            .with_context(|| format!("must be able to read arhiv config at {}", &path))?
             .parse()
-            .with_context(|| format!("must be able to parse arhiv config at {}", path))
+            .with_context(|| format!("must be able to parse arhiv config at {}", &path))
     }
 
     pub fn must_read() -> Config {

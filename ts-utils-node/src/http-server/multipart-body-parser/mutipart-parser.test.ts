@@ -4,12 +4,12 @@ import {
   assertTrue,
   before,
   after,
-} from '~/tester'
+} from '@v/tester'
 import {
   createTempDir,
   rmrfSync,
   readText,
-} from '~/utils/fs'
+} from '../../fs'
 import {
   extractBoundary,
   CRLF,

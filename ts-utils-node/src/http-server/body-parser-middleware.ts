@@ -1,9 +1,9 @@
 import {
   removeFile,
-} from '~/utils/fs'
+} from '../fs'
 import {
   readStreamAsString,
-} from '~/utils/node'
+} from '../node'
 import {
   JSONBody,
   StringBody,

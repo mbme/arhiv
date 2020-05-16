@@ -1,5 +1,5 @@
 import path from 'path'
-import { Counter } from '~/utils'
+import { Counter } from '@v/utils'
 import {
   isSubarrayAt,
   CRLF,

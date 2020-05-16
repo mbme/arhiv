@@ -1,5 +1,5 @@
 import http from 'http'
-import { createLogger } from '~/logger'
+import { createLogger } from '@v/logger'
 import { MultipartBody } from '../types'
 import { MultipartParser } from './parser'
 import { extractBoundary } from './utils'

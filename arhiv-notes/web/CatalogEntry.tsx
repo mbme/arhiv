@@ -1,11 +1,15 @@
 import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
-import { Box } from '@v/web-platform'
+import {
+  Box,
+  Label,
+} from '@v/web-platform'
+import { Note } from './notes'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 interface IProps {
-  note: Note,
+  note: Note
 }
 
 export function CatalogEntry({ note }: IProps) {
@@ -13,12 +17,11 @@ export function CatalogEntry({ note }: IProps) {
     <Box
       mb="small"
       p="small"
-      cursor="pointer"
     >
       <Label
         fontSize="fine"
       >
-        {document.type}
+        {note.type}
       </Label>
 
       {note.data.name}
@@ -27,7 +30,7 @@ export function CatalogEntry({ note }: IProps) {
         as="small"
         display="block"
       >
-        {dateFormat.format(document.updatedAt)}
+        {dateFormat.format(new Date(note.updatedAt))}
       </Box>
     </Box>
   )

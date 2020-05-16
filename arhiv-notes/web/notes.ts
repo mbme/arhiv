@@ -18,8 +18,7 @@ interface INoteProps {
   name: string,
   data: string,
 }
-type Note = IDocument<'note', INoteProps>
-
+export type Note = IDocument<'note', INoteProps>
 
 interface IRPC {
   list(): Promise<Note[]>

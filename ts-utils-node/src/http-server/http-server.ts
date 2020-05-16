@@ -4,16 +4,16 @@ import urlParser from 'url'
 import zlib from 'zlib'
 import { Stream } from 'stream'
 import { Socket } from 'net'
-import { createLogger } from '~/logger'
+import { createLogger } from '@v/logger'
 import {
   isObject,
   promiseTimeout,
-} from '~/utils'
-import { PathMatcher } from '~/utils/path-matcher'
+} from '@v/utils'
+import { PathMatcher } from '@v/utils'
 import {
   gzip,
   pipePromise,
-} from '~/utils/node'
+} from '../node'
 import {
   IContext,
   Next,

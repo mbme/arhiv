@@ -2,7 +2,8 @@
 #![deny(clippy::pedantic)]
 
 use anyhow::*;
-use clap::{crate_version, App};
+use binutils::notify::send_notification;
+use clap::{crate_version, App, Arg};
 use lazy_static::*;
 use regex::Regex;
 use std::process::Command;
@@ -72,10 +73,60 @@ fn enable_device(device_id: &str, enable: bool) -> Result<()> {
     Ok(())
 }
 
+struct Touchpad {
+    id: String,
+}
+
+impl Touchpad {
+    fn find() -> Self {
+        let id = get_touchpad_id().expect("must be able to find touchpad");
+
+        Touchpad { id }
+    }
+
+    fn is_enabled(&self) -> bool {
+        is_device_enabled(&self.id).expect("must be able to read touchpad status")
+    }
+
+    fn enable(&self) {
+        enable_device(&self.id, true).expect("must be able to enable touchpad");
+    }
+
+    fn disable(&self) {
+        enable_device(&self.id, false).expect("must be able to disable touchpad");
+    }
+
+    fn toggle(&self) {
+        enable_device(&self.id, !self.is_enabled()).expect("must be able to toggle touchpad");
+    }
+}
+
+fn print_status(touchpad: &Touchpad, notify: bool) {
+    let message = format!(
+        "Touchpad is {}",
+        if touchpad.is_enabled() {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
+
+    println!("{}", &message);
+
+    if notify {
+        send_notification(&message).expect("must be able to send notification");
+    }
+}
+
 fn main() {
     env_logger::init();
 
     let app = App::new("mb-touchpad")
+        .arg(
+            Arg::with_name("notify")
+                .short("n")
+                .help("Send notification with current touchpad state"),
+        )
         .subcommand(App::new("status").about("Print current state of touchpad"))
         .subcommand(App::new("on").about("Enable touchpad"))
         .subcommand(App::new("off").about("Disable touchpad"))
@@ -84,26 +135,26 @@ fn main() {
 
     let matches = app.get_matches();
 
-    let id = get_touchpad_id().expect("must be able to find touchpad");
-    log::info!("Touchpad id: {}", &id);
+    let touchpad = Touchpad::find();
+    log::info!("Touchpad id: {}", &touchpad.id);
+
+    let notify = matches.is_present("notify");
 
     match matches.subcommand_name() {
         Some("status") => {
-            let enabled = is_device_enabled(&id).expect("must be able to read touchpad status");
-            println!(
-                "Touchpad is {}",
-                if enabled { "enabled" } else { "disabled " }
-            );
+            print_status(&touchpad, notify);
         }
         Some("on") => {
-            enable_device(&id, true).expect("must be able to enable touchpad");
+            touchpad.enable();
+            print_status(&touchpad, notify);
         }
         Some("off") => {
-            enable_device(&id, false).expect("must be able to disable touchpad");
+            touchpad.disable();
+            print_status(&touchpad, notify);
         }
         Some("toggle") => {
-            let enabled = is_device_enabled(&id).expect("must be able to read touchpad status");
-            enable_device(&id, !enabled).expect("must be able to toggle touchpad");
+            touchpad.toggle();
+            print_status(&touchpad, notify);
         }
         Some(command) => {
             log::error!("Unexpected command: {}", command);

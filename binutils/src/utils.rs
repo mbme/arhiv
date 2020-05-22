@@ -1,4 +1,5 @@
 use anyhow::*;
+use regex::Regex;
 use std::process::Command;
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
@@ -13,8 +14,17 @@ pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     Ok(output_str)
 }
 
-pub fn send_notification(message: &str) -> Result<()> {
-    run_command("notify-send", vec!["-u", "low", message])?;
+pub fn send_notification(message: &str) {
+    run_command("notify-send", vec!["-u", "low", message])
+        .expect("must be able to send notification");
+}
 
-    Ok(())
+pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
+    regex.captures(s).map(|captures| {
+        captures
+            .get(1)
+            .expect("group 1 must be present")
+            .as_str()
+            .to_string()
+    })
 }

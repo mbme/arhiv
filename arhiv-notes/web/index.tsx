@@ -2,11 +2,12 @@
 /// <reference path="../../app-shell/src/rpc.d.ts" />
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { configureLogger, createLogger } from '@v/logger'
+import { configureLogger } from '@v/logger'
 import {
   injectGlobalStyles,
   HotkeysResolverProvider,
   Route,
+  RouterProvider,
 } from '@v/web-utils'
 import {
   globalStyles,
@@ -18,8 +19,6 @@ import { pathMatcher as pm } from '@v/utils'
 
 configureLogger({ minLogLevel: 'INFO' })
 
-const log = createLogger('arhiv-notes')
-
 injectGlobalStyles(`
   ${globalStyles}
 
@@ -28,7 +27,7 @@ injectGlobalStyles(`
   }
 `)
 
-async function run() {
+function run() {
   const rootEl = document.getElementById('root')
   if (!rootEl) {
     throw new Error("Can't find #root element")
@@ -36,15 +35,17 @@ async function run() {
 
   ReactDOM.render(
     <React.StrictMode>
-      <StylishProvider>
-        <HotkeysResolverProvider>
-          <OverlayRenderer>
-            <Route pm={pm`/notes`}>
-              {() => <App />}
-            </Route>
-          </OverlayRenderer>
-        </HotkeysResolverProvider>
-      </StylishProvider>
+      <RouterProvider hashBased>
+        <StylishProvider>
+          <HotkeysResolverProvider>
+            <OverlayRenderer>
+              <Route pm={pm`/`}>
+                {() => <App />}
+              </Route>
+            </OverlayRenderer>
+          </HotkeysResolverProvider>
+        </StylishProvider>
+      </RouterProvider>
     </React.StrictMode>,
     rootEl,
     () => {
@@ -53,4 +54,4 @@ async function run() {
   )
 }
 
-run().catch(console.error)
+run()

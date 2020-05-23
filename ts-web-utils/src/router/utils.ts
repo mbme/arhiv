@@ -19,7 +19,7 @@ export function updateParam(params: IQueryParam[], name: string, value: string |
   ))
 }
 
-function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
+export function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
   if (isString(simpleLocation)) {
     return {
       path: simpleLocation,
@@ -30,23 +30,6 @@ function simpleLocation2Location(simpleLocation: SimpleLocation): ILocation {
   return {
     path: simpleLocation.path,
     params: simpleLocation.params || [],
-  }
-}
-
-export function getCurrentLocation(): ILocation {
-  const location = new URL(document.location.toString())
-  const params: IQueryParam[] = []
-
-  location.searchParams.forEach((value, key) => {
-    params.push({
-      name: key,
-      value,
-    })
-  })
-
-  return {
-    path: location.pathname,
-    params,
   }
 }
 
@@ -65,12 +48,4 @@ export function stringifyQueryParams(params: IQueryParam[]): string {
   }
 
   return result
-}
-
-export function getUrl(simpleLocation: SimpleLocation) {
-  const location = simpleLocation2Location(simpleLocation)
-
-  const paramsStr = stringifyQueryParams(location.params)
-
-  return `${window.location.origin}${location.path}${paramsStr}`
 }

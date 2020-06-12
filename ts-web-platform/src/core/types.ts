@@ -75,6 +75,7 @@ interface IStylishProps {
   '&:hover'?: CommonProps
   '&:focus'?: CommonProps
   '&:before'?: CommonProps
+  '&:first-child'?: CommonProps
 }
 
 type CommonAndCustomProps = CommonProps & IStylishProps

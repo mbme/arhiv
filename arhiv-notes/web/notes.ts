@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/* eslint-disable @typescript-eslint/triple-slash-reference, @typescript-eslint/camelcase */
 /// <reference path="../../app-shell/src/rpc.d.ts" />
 
 interface IDocument<T extends string = string, P extends object = {}> {
@@ -20,10 +20,19 @@ interface INoteProps {
 }
 export type Note = IDocument<'note', INoteProps>
 
+export interface IAttachment {
+  readonly id: string
+  readonly rev: number
+  readonly createdAt: string
+  readonly filename: string
+}
+
 interface IRPC {
   list(): Promise<Note[]>
   get_note(id: string): Promise<Note | null>
   put_note(note: Note): Promise<void>
+  create_note(): Promise<Note>
+  get_attachment(id: string): Promise<IAttachment | null>
 }
 
 export const API = window.RPC_PROXY as IRPC

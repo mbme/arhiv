@@ -14,8 +14,11 @@ import {
   StylishProvider,
   OverlayRenderer,
 } from '@v/web-platform'
-import { App } from './App'
 import { pathMatcher as pm } from '@v/utils'
+import { Catalog } from './Catalog'
+import { Card } from './Card'
+import { CardEditorContainer } from './CardEditor'
+import { NotFound } from './parts'
 
 configureLogger({ minLogLevel: 'INFO' })
 
@@ -40,7 +43,19 @@ function run() {
           <HotkeysResolverProvider>
             <OverlayRenderer>
               <Route pm={pm`/`}>
-                {() => <App />}
+                {() => <Catalog />}
+              </Route>
+              <Route pm={pm`/${'id'}`}>
+                {({ id }) => <Card id={id} />}
+              </Route>
+              <Route pm={pm`/${'id'}/edit`}>
+                {({ id }) => <CardEditorContainer id={id} />}
+              </Route>
+              <Route pm={pm`/new`}>
+                {() => <CardEditorContainer />}
+              </Route>
+              <Route pm={pm`/${'*'}`}>
+                {() => NotFound}
               </Route>
             </OverlayRenderer>
           </HotkeysResolverProvider>

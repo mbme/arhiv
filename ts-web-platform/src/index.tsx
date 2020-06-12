@@ -1,5 +1,10 @@
 export { globalStyles } from './core/global-styles'
-export { StylishProvider } from './core'
+export {
+  StylishProvider,
+  StyleArg,
+  useStyles,
+  useAnimation,
+} from './core'
 
 export { Button } from './Button'
 export { Select } from './Select'
@@ -28,3 +33,4 @@ export {
   Column,
   Spacer,
 } from './Layout'
+export { clickOnEnter } from './utils'

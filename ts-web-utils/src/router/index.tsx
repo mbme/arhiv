@@ -17,5 +17,8 @@ export {
 
 export { Redirect } from './Redirect'
 export { Link } from './Link'
-export { RouterProvider } from './context'
+export {
+  RouterProvider,
+  RouterContext,
+} from './context'
 export { Route } from './Route'

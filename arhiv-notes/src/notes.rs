@@ -25,6 +25,13 @@ impl ArhivNotes {
             .expect("must be able to list notes")
     }
 
+    pub fn create_note() -> Document {
+        let mut document = Document::new(NOTE_TYPE);
+        document.data = "{}".to_string();
+
+        document
+    }
+
     pub fn get_note(&self, id: &Id) -> Option<Document> {
         let result = self
             .arhiv
@@ -42,5 +49,11 @@ impl ArhivNotes {
         self.arhiv
             .stage_document(note)
             .expect("must be able to save note");
+    }
+
+    pub fn get_attachment(&self, id: &Id) -> Option<Attachment> {
+        self.arhiv
+            .get_attachment(id)
+            .expect("must be able to get attachment")
     }
 }

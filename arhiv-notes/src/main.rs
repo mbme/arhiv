@@ -39,6 +39,11 @@ fn main() {
                 Value::Null
             }
         })
+        .with_action("create_note", {
+            move |_params| {
+                serde_json::to_value(ArhivNotes::create_note()).expect("must be able to serialize")
+            }
+        })
         .show_inspector()
         .load(path_str);
 }

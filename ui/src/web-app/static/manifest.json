@@ -1,8 +1,0 @@
-{
-  "name": "V",
-  "short_name": "v",
-  "theme_color": "#2196f3",
-  "background_color": "#2196f3",
-  "display": "standalone",
-  "start_url": "."
-}

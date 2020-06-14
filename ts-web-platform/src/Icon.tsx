@@ -108,6 +108,7 @@ const $icon: StyleArg = {
 
 interface IFeatherIconProps extends Pick<React.SVGProps<SVGSVGElement>, 'onClick'> {
   type: IconType
+  $style?: StyleArg
   $styles?: StyleArg[]
   title?: string
 }
@@ -118,10 +119,11 @@ export function Icon(props: IFeatherIconProps) {
     type,
     title,
     onClick,
+    $style,
     $styles = [],
   } = props
 
-  const className = useStyles($icon, ...$styles)
+  const className = useStyles($icon, $style, ...$styles)
 
   return (
     <svg

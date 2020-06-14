@@ -4,7 +4,7 @@ import {
   Row,
   ProgressLocker,
 } from '@v/web-platform'
-import { usePromise } from '@v/web-utils'
+import { usePromise, RouterContext } from '@v/web-utils'
 import { API } from './notes'
 import { CloseIcon, Frame } from './parts'
 import { Metadata } from './Metadata'
@@ -15,6 +15,7 @@ interface IProps {
 }
 
 export function Card({ id }: IProps) {
+  const router = RouterContext.use()
   const [note] = usePromise(() => API.get_note(id), [id])
 
   if (!note) { // FIXME not found
@@ -29,7 +30,7 @@ export function Card({ id }: IProps) {
         Edit
       </Link>
 
-      <CloseIcon documentId={note.id} />
+      <CloseIcon onClick={() => router.goBack() } />
     </Row>
   )
 

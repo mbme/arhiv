@@ -104,6 +104,14 @@ export class WebRouter {
     }
   }
 
+  goBack(fallback: SimpleLocation = { path: '/' }) {
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      this.push(fallback)
+    }
+  }
+
   stop() {
     window.removeEventListener(this._hashBased ? 'hashchange' : 'popstate', this._propagateCurrentLocation)
   }

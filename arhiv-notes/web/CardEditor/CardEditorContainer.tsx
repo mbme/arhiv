@@ -83,11 +83,11 @@ export function CardEditorContainer({ id }: IProps) {
       archived: true,
     })
 
-    // FIXME go back in history or go home
+    router.goBack()
   }
 
   const onCancel = () => {
-    // FIXME go back in history or go home
+    router.goBack()
   }
 
   return (

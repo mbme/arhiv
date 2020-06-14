@@ -1,7 +1,18 @@
 import * as React from 'react'
-import { IAttachment } from '../../notes'
+import { IAttachment, API } from '../../notes'
 import { Image, StyleArg } from '@v/web-platform'
-import { useObservable } from '@v/web-utils'
+import { usePromise } from '@v/web-utils'
+
+const IMAGE_EXT = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.svg',
+]
+
+function isImageFileName(filename: string): boolean {
+  return IMAGE_EXT.some(ext => filename.endsWith(ext))
+}
 
 const $image: StyleArg = {
   mt: 'medium',
@@ -15,24 +26,24 @@ interface IProps {
 }
 
 export function MarkupAttachment({ attachment, link, description }: IProps) {
-  const [blobUrl] = useObservable(() => attachment.getUrl$(), [attachment])
+  const [url] = usePromise(() => API.get_attachment_url(attachment.id), [attachment.id])
 
-  if (!blobUrl) {
+  if (!url) {
     return null
   }
 
-  if (attachment.attachment.mimeType.startsWith('image/')) {
+  if (isImageFileName(attachment.filename)) {
     return (
       <Image
         $style={$image}
-        src={blobUrl}
+        src={url}
         alt={description || link}
       />
     )
   }
 
   return (
-    <a href={blobUrl} target="_blank" rel="noopener noreferrer">
+    <a href={url} target="_blank" rel="noopener noreferrer">
       {description || link}
     </a>
   )

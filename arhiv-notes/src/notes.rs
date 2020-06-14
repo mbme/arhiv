@@ -56,4 +56,8 @@ impl ArhivNotes {
             .get_attachment(id)
             .expect("must be able to get attachment")
     }
+
+    pub fn get_attachment_url(&self, id: &Id) -> Option<String> {
+        unimplemented!()
+    }
 }

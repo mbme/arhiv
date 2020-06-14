@@ -33,6 +33,7 @@ interface IRPC {
   put_note(note: Note): Promise<void>
   create_note(): Promise<Note>
   get_attachment(id: string): Promise<IAttachment | null>
+  get_attachment_url(id: string): Promise<string | null>
 }
 
 export const API = window.RPC_PROXY as IRPC

@@ -34,6 +34,7 @@ interface IRPC {
   create_note(): Promise<Note>
   get_attachment(id: string): Promise<IAttachment | null>
   get_attachment_url(id: string): Promise<string | null>
+  pick_attachments(): Promise<IAttachment[]>
 }
 
 export const API = window.RPC_PROXY as IRPC

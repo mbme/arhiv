@@ -1,4 +1,5 @@
 pub use crate::builder::AppShellBuilder;
+pub use crate::file_picker::pick_files;
 use crate::webview::build_webview;
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -8,6 +9,7 @@ use std::rc::Rc;
 use webkit2gtk::{WebInspectorExt, WebViewExt};
 
 mod builder;
+mod file_picker;
 mod webview;
 
 impl AppShellBuilder {

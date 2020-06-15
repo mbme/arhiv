@@ -1,5 +1,5 @@
-use app_shell::AppShellBuilder;
-use arhiv::entities::Document;
+use app_shell::{pick_files, AppShellBuilder};
+use arhiv::entities::*;
 use arhiv_notes::notes::ArhivNotes;
 use serde_json::Value;
 use std::rc::Rc;
@@ -61,6 +61,20 @@ fn main() {
 
                 serde_json::to_value(notes.get_attachment_url(&id))
                     .expect("must be able to serialize")
+            }
+        })
+        .with_action("pick_attachments", {
+            let notes = notes.clone();
+
+            move |_params| {
+                let files = pick_files(true);
+
+                let attachments: Vec<Attachment> = files
+                    .iter()
+                    .map(|file| notes.stage_attachment(file.to_str().unwrap()))
+                    .collect();
+
+                serde_json::to_value(attachments).expect("must be able to serialize")
             }
         })
         .show_inspector()

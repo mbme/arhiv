@@ -20,9 +20,15 @@ function applyTransformer(style: IStyleObject): IStyleObject {
 export function useStyles(...items: StyleArg[]) {
   const renderer = RendererContext.use()
 
-  const args = items.filter(item => item).map(item => applyTransformer(item as IStyleObject))
+  const args = items.map((item) => {
+    if (item) {
+      return applyTransformer(item as IStyleObject)
+    }
 
-  return React.useMemo(() => renderer.render(args), args)
+    return item
+  })
+
+  return React.useMemo(() => renderer.render(args.filter(item => item) as IStyleObject[]), args)
 }
 
 export function useAnimation(item: IKeyframeProps | keyof typeof theme.animations) {

@@ -116,7 +116,7 @@ impl Arhiv {
         let mut fs_tx = FsTransaction::new();
 
         put_attachment(&tx, &attachment)?;
-        fs_tx.move_file(
+        fs_tx.hard_link_file(
             file.to_string(),
             self.storage.get_attachment_file_path(&attachment.id),
         )?;

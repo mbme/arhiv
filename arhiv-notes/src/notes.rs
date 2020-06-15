@@ -2,7 +2,7 @@ use arhiv::entities::*;
 use arhiv::{Arhiv, QueryFilter};
 
 pub struct ArhivNotes {
-    arhiv: Arhiv,
+    pub arhiv: Arhiv,
 }
 
 pub const NOTE_TYPE: &str = "note";
@@ -55,6 +55,12 @@ impl ArhivNotes {
         self.arhiv
             .get_attachment(id)
             .expect("must be able to get attachment")
+    }
+
+    pub fn stage_attachment(&self, file: &str) -> Attachment {
+        self.arhiv
+            .stage_attachment(file)
+            .expect("must be able to stage new attachment")
     }
 
     pub fn get_attachment_url(&self, id: &Id) -> Option<String> {

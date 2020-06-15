@@ -1,45 +1,24 @@
 import * as React from 'react'
-import { FilePicker, Icon } from '@v/web-platform'
+import { Icon } from '@v/web-platform'
 import { createLink } from '../markup-parser'
+import { API } from '../notes'
 
 interface IProps {
   onAttachments(links: string[]): void
 }
 
 export function AddAttachmentButton({ onAttachments }: IProps) {
-  const filePickerRef = React.useRef<FilePicker>(null)
+  const selectFiles = async () => {
+    const attachments = await API.pick_attachments()
 
-  const onSelected = async (files: File[]) => {
-    const links = files.map(async (file) => {
-      const id = await arhiv.attachments.createAttachment(file)
-
-      const attachment = await arhiv.attachments.getAttachment(id)
-      if (!attachment) {
-        throw new Error(`Can't find new attachment ${id} (file ${file.name})`)
-      }
-
-      return createLink(attachment.id, file.name)
-    })
-
-    onAttachments(await Promise.all(links))
-  }
-
-  const openFilePicker = () => {
-    filePickerRef.current!.open()
+    onAttachments(attachments.map(attachment => createLink(attachment.id, attachment.filename)))
   }
 
   return (
-    <>
-      <Icon
-        title="Attach files"
-        type="paperclip"
-        onClick={openFilePicker}
-      />
-
-      <FilePicker
-        ref={filePickerRef}
-        onSelected={onSelected}
-      />
-    </>
+    <Icon
+      title="Attach files"
+      type="paperclip"
+      onClick={selectFiles}
+    />
   )
 }

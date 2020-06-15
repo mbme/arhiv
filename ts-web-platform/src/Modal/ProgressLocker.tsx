@@ -34,13 +34,11 @@ export const ProgressLocker = React.memo(() => {
     <Overlay $styles={$styles}>
       <Icon
         type="loader"
-        $styles={[
-          {
-            width: '24px',
-            height: '24px',
-            animation: `${spinAnimation} 1.5s infinite`,
-          }
-        ]}
+        $style={{
+          width: '24px',
+          height: '24px',
+          animation: `${spinAnimation} 1.5s infinite`,
+        }}
       />
     </Overlay>
   )

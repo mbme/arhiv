@@ -2,8 +2,9 @@ import {
   Cell,
   Observable,
 } from '@v/reactive'
+import { Obj } from '@v/utils'
 
-export abstract class Store<State extends object> {
+export abstract class Store<State extends Obj> {
   private _cell: Cell<State>
 
   constructor(initialState: State) {

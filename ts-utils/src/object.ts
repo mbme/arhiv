@@ -1,7 +1,7 @@
 import { isObject } from './type-asserts'
 import { Obj } from './types'
 
-export const isEmptyObject = (x: object) => Object.keys(x).length === 0
+export const isEmptyObject = (x: Obj) => Object.keys(x).length === 0
 
 export function mapObject<T, V>(obj: { [key: string]: T }, fn: (value: T, key: string) => V) {
   const result: { [key: string]: V } = {}
@@ -55,9 +55,9 @@ export function merge<T>(origVal: T, newVal: T): T {
   return result as T
 }
 
-export function createProxy<T extends object>(
+export function createProxy<T extends Obj>(
   target: T,
-  handler: (prop: string, target: T) => any,
+  handler: (prop: string, target: T) => unknown,
 ) {
   return new Proxy(target, {
     get(_, prop: string) {

@@ -18,7 +18,6 @@ import { pathMatcher as pm } from '@v/utils'
 import { Catalog } from './Catalog'
 import { Card } from './Card'
 import { CardEditorContainer } from './CardEditor'
-import { NotFound } from './parts'
 
 configureLogger({ minLogLevel: 'INFO' })
 
@@ -53,9 +52,6 @@ function run() {
               </Route>
               <Route pm={pm`/new`}>
                 {() => <CardEditorContainer />}
-              </Route>
-              <Route pm={pm`/${'*'}`}>
-                {() => NotFound}
               </Route>
             </OverlayRenderer>
           </HotkeysResolverProvider>

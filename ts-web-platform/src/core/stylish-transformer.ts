@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return,
+ @typescript-eslint/no-unsafe-member-access */
 import { Dict } from '@v/utils'
 import { IStyleObject } from '@v/web-utils'
 import { theme } from './theme'

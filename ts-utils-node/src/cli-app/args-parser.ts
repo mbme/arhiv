@@ -1,8 +1,9 @@
 import { Command } from './command'
+import { Obj } from '@v/utils'
 
 export class NeedHelpError extends Error { }
 
-export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
+export class ArgsParserBuilder<CT extends Obj, C extends keyof CT> {
   private constructor(
     private _help: boolean,
     private _commmands: Array<Command<C, any>>,
@@ -12,7 +13,7 @@ export class ArgsParserBuilder<CT extends object, C extends keyof CT> {
     return new ArgsParserBuilder(help, [])
   }
 
-  addCommand<C1 extends string, CO1 extends object>(command: Command<C1, CO1>) {
+  addCommand<C1 extends string, CO1 extends Obj>(command: Command<C1, CO1>) {
     return new ArgsParserBuilder<CT & { [key in C1]: CO1 }, C | C1>(
       this._help,
       [...this._commmands, command],

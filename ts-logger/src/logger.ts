@@ -73,9 +73,6 @@ export class Logger {
         console.error(logMessage, ...params)
         break
       }
-      default: {
-        throw new Error(`Wrong level ${level}`)
-      }
     }
   }
 

@@ -8,6 +8,7 @@ import { createLogger } from '@v/logger'
 import {
   isObject,
   promiseTimeout,
+  Obj,
 } from '@v/utils'
 import { PathMatcher } from '@v/utils'
 import {
@@ -26,9 +27,9 @@ import {
 import { createBodyParserMiddleware } from './body-parser-middleware'
 
 type Middleware = (context: IContext, next: Next) => Promise<void> | void
-type RequestHandler<P extends object> = (context: IContext, params: P) => Promise<void> | void
+type RequestHandler<P extends Obj> = (context: IContext, params: P) => Promise<void> | void
 
-interface IRoute<P extends object> {
+interface IRoute<P extends Obj> {
   test(context: IContext): P | undefined
   cb: RequestHandler<P>
 }
@@ -52,7 +53,7 @@ export class HTTPServer {
     this._middlewares.push(cb)
   }
 
-  addRoute<P extends object>(
+  addRoute<P extends Obj>(
     method: HttpMethod,
     pathMatcher: PathMatcher<P>,
     cb: RequestHandler<P>,
@@ -69,11 +70,11 @@ export class HTTPServer {
     })
   }
 
-  get<P extends object>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
+  get<P extends Obj>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
     this.addRoute('GET', pathMatcher, cb)
   }
 
-  post<P extends object>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
+  post<P extends Obj>(pathMatcher: PathMatcher<P>, cb: RequestHandler<P>) {
     this.addRoute('POST', pathMatcher, cb)
   }
 

@@ -60,41 +60,17 @@ module.exports = {
     "@typescript-eslint/adjacent-overload-signatures": "error",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/await-thenable": "error",
-    "@typescript-eslint/ban-ts-ignore": "error",
     "@typescript-eslint/ban-types": "error",
-    "@typescript-eslint/class-name-casing": "error",
     "@typescript-eslint/consistent-type-assertions": "error",
     "@typescript-eslint/consistent-type-definitions": "error",
-    "@typescript-eslint/interface-name-prefix": [
-      "error",
-      {
-        "prefixWithI": "always",
-      },
-    ],
-    "@typescript-eslint/explicit-member-accessibility": [
-      "off",
-      {
-        "accessibility": "explicit"
-      }
-    ],
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/indent": [
       "error",
       2,
     ],
-    "@typescript-eslint/member-delimiter-style": [
-      "off",
-      {
-        "multiline": {
-          "delimiter": "none",
-          "requireLast": true
-        },
-        "singleline": {
-          "delimiter": "semi",
-          "requireLast": false
-        }
-      }
-    ],
+    "@typescript-eslint/member-delimiter-style": "off",
     "@typescript-eslint/member-ordering": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "error",
@@ -136,5 +112,7 @@ module.exports = {
     "@typescript-eslint/type-annotation-spacing": "error",
     "@typescript-eslint/unbound-method": "error",
     "@typescript-eslint/unified-signatures": "error",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
   }
 };

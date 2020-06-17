@@ -3,7 +3,7 @@ import { isFunction } from './type-asserts'
 export function createArray<T>(size: number, val: ((index: number) => T) | T): T[] {
   const arr = Array(size)
 
-  return isFunction(val) ? arr.fill(0).map((_, i) => val(i)) : arr.fill(val)
+  return isFunction(val) ? arr.fill(0).map((_, i) => val(i)) : arr.fill(val) as T[]
 }
 
 export function uniq<T>(arr: T[], getKey: (item: T) => string) {

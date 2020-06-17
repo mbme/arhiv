@@ -1,6 +1,7 @@
 import {
   test,
   assertDeepEqual,
+  assertTrue,
   assertFalse,
 } from '@v/tester'
 
@@ -37,8 +38,28 @@ test('matches strings and params', () => {
   }
 
   {
-    const result = pm`/test/${'param'}/234`.match('/test//234')
-    assertDeepEqual(result, { param: '' })
+    const result = pm`/test/${'param'}/234`.match('/test/1/234')
+    assertDeepEqual(result, { param: '1' })
+  }
+
+  {
+    const result = pm`/`.match('/')
+    assertTrue(!!result)
+  }
+
+  {
+    const result = pm`/`.match('/test')
+    assertFalse(!!result)
+  }
+
+  {
+    const result = pm`/${'param'}`.match('/')
+    assertFalse(!!result)
+  }
+
+  {
+    const result = pm`/${'param'}`.match('/test')
+    assertDeepEqual(result, { param: 'test' })
   }
 })
 

@@ -7,12 +7,9 @@ import {
   configureLogger,
 } from '@v/logger'
 import {
-  getFiles,
-} from '@v/utils-node/src/fs'
-import {
-  CliApp,
-  command,
-} from '@v/utils-node/src/cli-app'
+  fs,
+  cli,
+} from '@v/utils-node'
 import {
   TestFile,
 } from './test-file/test-file'
@@ -29,12 +26,12 @@ async function listFiles(srcPath: string): Promise<string[]> {
 
   const wsDirs = packageJson.workspaces.map(wsDir => `${srcPath}/${wsDir}`)
 
-  return (await Promise.all(wsDirs.map(wsDir => consumeAsyncIterable(getFiles(wsDir, options))))).flat()
+  return (await Promise.all(wsDirs.map(wsDir => consumeAsyncIterable(fs.getFiles(wsDir, options))))).flat()
 }
 
-CliApp.create('tester')
+cli.CliApp.create('tester')
   .addCommand(
-    command('', 'Run all tests')
+    cli.command('', 'Run all tests')
       .option('-u', 'update changed snapshots')
       .positional('filter', 'filter to apply to test files'),
     async (options) => {

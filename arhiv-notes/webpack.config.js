@@ -1,9 +1,14 @@
 // eslint-disable-next-line
 const path = require('path')
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: './web/index.tsx',
+  entry: [
+    isProduction ? null : 'react-devtools',
+    './web/index.tsx',
+  ].filter(Boolean),
   module: {
     rules: [
       {

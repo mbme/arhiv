@@ -5,13 +5,14 @@ import {
   IGmailMessage,
 } from './types'
 import { GmailMessage } from './GmailMessage'
+import { Obj } from '@v/utils'
 
 const BASE_URL = 'https://www.googleapis.com/gmail/v1/users/me'
 
 export class GmailAPI {
   constructor(private _token: string) {}
 
-  private async _get<T = object>(path: string, params: IQueryParam[] = []): Promise<T> {
+  private async _get<T = Obj>(path: string, params: IQueryParam[] = []): Promise<T> {
     const response = await fetch(BASE_URL + path + stringifyQueryParams(params), {
       method: 'GET',
       headers: {
@@ -23,7 +24,7 @@ export class GmailAPI {
       throw new Error(`GET ${path} failed: ${response.status}`)
     }
 
-    return response.json()
+    return response.json() as Promise<T>
   }
 
   // https://developers.google.com/gmail/api/v1/reference/users/getProfile
@@ -126,7 +127,7 @@ export class GmailAPI {
       const i1 = chunk.indexOf('\r\n\r\n') // skip part headers
       const i2 = chunk.indexOf('\r\n\r\n', i1 + 4) // skip response headers
 
-      const data = JSON.parse(chunk.substring(i2 + 4))
+      const data = JSON.parse(chunk.substring(i2 + 4)) as IGmailMessage
 
       return new GmailMessage(data)
     })

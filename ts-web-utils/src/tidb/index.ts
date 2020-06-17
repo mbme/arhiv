@@ -1,3 +1,5 @@
+import { Obj } from '@v/utils'
+
 function request2promise<R>(request: IDBRequest<R>): Promise<R> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -17,13 +19,13 @@ export async function applyForPersistentStorage(): Promise<boolean> {
 //   [StoreNames]: StoredObjectType,
 // }
 
-export class TIDB<ObjectStores extends object> {
+export class TIDB<ObjectStores extends Obj> {
   private constructor(
     private _db: IDBDatabase,
     public readonly version: number,
   ) { }
 
-  static async open<ObjectStores extends object>(
+  static async open<ObjectStores extends Obj>(
     name: string,
     version: number,
     upgrade: (oldVersion: number, db: TIDB<ObjectStores>) => void,
@@ -89,7 +91,7 @@ export class TIDB<ObjectStores extends object> {
   }
 }
 
-export class TIDBTransaction<ObjectStores extends object, StoreName extends keyof ObjectStores> {
+export class TIDBTransaction<ObjectStores extends Obj, StoreName extends keyof ObjectStores> {
   constructor(private _tx: IDBTransaction) { }
 
   store<T extends StoreName, TType = ObjectStores[T]>(name: T) {
@@ -101,7 +103,7 @@ class TIDBStore<T> {
   constructor(private _store: IDBObjectStore) { }
 
   getAll(): Promise<T[]> {
-    return request2promise(this._store.getAll())
+    return request2promise<T[]>(this._store.getAll())
   }
 
   async getAllKeys(): Promise<string[]> {
@@ -111,7 +113,7 @@ class TIDBStore<T> {
   }
 
   get(key: string): Promise<T | undefined> {
-    return request2promise(this._store.get(key))
+    return request2promise<T>(this._store.get(key))
   }
 
   async put(value: T): Promise<void> {

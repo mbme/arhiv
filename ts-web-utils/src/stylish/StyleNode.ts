@@ -13,8 +13,8 @@ const pattern = /&/g
 
 // Helper class, which parses & transforms style object
 export class StyleNode {
-  private media: Map<string, StyleNode> = new Map()
-  private nested: Map<string, StyleNode> = new Map()
+  private media = new Map<string, StyleNode>()
+  private nested = new Map<string, StyleNode>()
   private propsStr: string
 
   hash: string

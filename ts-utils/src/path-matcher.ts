@@ -1,8 +1,9 @@
-import { Dict } from './types'
+import { Obj } from './types'
 import {
   trimPrefix,
   trimSuffix,
 } from './string'
+import { getLastEl } from './array'
 
 interface IStaticSegment {
   type: 'static'
@@ -20,20 +21,19 @@ interface IEverythingSegment {
 
 type Segment<N extends string> = IStaticSegment | INamedSegment<N> | IEverythingSegment
 
-export class PathMatcher<C extends object> {
+export class PathMatcher<C extends Obj> {
   constructor(
     private _segments: Segment<keyof C>[] = [],
   ) { }
 
   match(pathRaw: string): C | undefined {
-    const path = trimPrefix(pathRaw, '/').split('/')
+    const path = trimPrefix(pathRaw, '/').split('/').filter(Boolean)
 
-    if (path.length < this._segments.length) {
+    if (path.length !== this._segments.length && getLastEl(this._segments)?.type !== 'everything') {
       return undefined
     }
 
-    const result: Dict<any> = {}
-
+    const result: Obj = {}
     for (let i = 0; i < this._segments.length; i += 1) {
       const segment = this._segments[i]
       const pathSegment = path[i]

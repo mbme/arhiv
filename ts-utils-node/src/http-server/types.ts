@@ -1,6 +1,7 @@
 import http from 'http'
 import urlParser from 'url'
 import { Stream } from 'stream'
+import { Obj } from '@v/utils'
 
 const HTTP_METHOD = {
   OPTIONS: 'OPTIONS',
@@ -20,7 +21,7 @@ export function parseHttpMethod(s?: string): HttpMethod {
 
   const normalizedS = s.toUpperCase()
 
-  if (!(HTTP_METHOD as any)[normalizedS]) {
+  if (!(HTTP_METHOD as Obj)[normalizedS]) {
     throw new Error(`got unexpected http method ${s}`)
   }
 
@@ -41,7 +42,7 @@ export interface IRequest {
 export interface IResponse {
   statusCode: number,
   headers: IHeaders,
-  body?: string | object | Stream,
+  body?: string | Obj | Stream,
 }
 
 export type Next = () => Promise<void>
@@ -73,7 +74,7 @@ export class MultipartBody {
 }
 
 export class JSONBody {
-  constructor(public readonly value: object) { }
+  constructor(public readonly value: Obj) { }
 }
 
 export class StringBody {

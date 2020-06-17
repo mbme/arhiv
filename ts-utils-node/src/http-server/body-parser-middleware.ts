@@ -12,6 +12,7 @@ import {
   MultipartBody,
 } from './types'
 import { parseMultipartBody } from './multipart-body-parser'
+import { Obj } from '@v/utils'
 
 export function createBodyParserMiddleware(tmpDir: string) {
   return async function bodyParserMiddleware({ req, httpReq }: IContext, next: Next) {
@@ -36,7 +37,7 @@ export function createBodyParserMiddleware(tmpDir: string) {
     }
 
     if (contentType.startsWith('application/json')) {
-      req.body = new JSONBody(JSON.parse(await readStreamAsString(httpReq)) as object)
+      req.body = new JSONBody(JSON.parse(await readStreamAsString(httpReq)) as Obj)
 
       return next()
     }

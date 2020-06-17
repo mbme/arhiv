@@ -1,15 +1,15 @@
 import * as React from 'react'
-import { PathMatcher } from '@v/utils'
+import { PathMatcher, Obj } from '@v/utils'
 import { RouterContext } from './context'
 import { useObservable } from '../hooks'
 import { IQueryParam } from './types'
 
-interface IProps<T extends object> {
+interface IProps<T extends Obj> {
   pm: PathMatcher<T>,
   children(props: T, queryParams: IQueryParam[]): React.ReactNode
 }
 
-export function Route<T extends object>({ pm, children }: IProps<T>) {
+export function Route<T extends Obj>({ pm, children }: IProps<T>) {
   const router = RouterContext.use()
   const [location] = useObservable(() => router.location$.value$)
 

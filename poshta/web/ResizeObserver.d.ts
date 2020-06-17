@@ -82,7 +82,7 @@ declare class ResizeObserver {
    * [SVGElement](https://developer.mozilla.org/en-US/docs/Web/API/SVGElement)
    * targets.
    */
-  disconnect: () => void;
+  disconnect: () => void
 
   /**
    * The `observe()` method of the
@@ -104,7 +104,7 @@ declare class ResizeObserver {
    * An options object allowing you to set options for the observation.
    * Currently this only has one possible option that can be set.
    */
-  observe: (target: Element, options?: ResizeObserverObserveOptions) => void;
+  observe: (target: Element, options?: ResizeObserverObserveOptions) => void
 
   /**
    * The **unobserve()** method of the
@@ -113,7 +113,7 @@ declare class ResizeObserver {
    * [Element](https://developer.mozilla.org/en-US/docs/Web/API/Element) or
    * [SVGElement](https://developer.mozilla.org/en-US/docs/Web/API/SVGElement).
    */
-  unobserve: (target: Element) => void;
+  unobserve: (target: Element) => void
 }
 
 interface ResizeObserverObserveOptions {
@@ -123,7 +123,7 @@ interface ResizeObserverObserveOptions {
    *
    * @default "content-box"
    */
-  box?: "content-box" | "border-box";
+  box?: 'content-box' | 'border-box'
 }
 
 /**
@@ -169,7 +169,7 @@ interface ResizeObserverObserveOptions {
 type ResizeObserverCallback = (
   entries: ResizeObserverEntry[],
   observer: ResizeObserver,
-) => void;
+) => void
 
 /**
  * The **ResizeObserverEntry** interface represents the object passed to the

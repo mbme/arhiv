@@ -2,6 +2,7 @@ import {
   getLastEl,
   removeMut,
   Dict,
+  Obj,
 } from '@v/utils'
 
 const nameRegex = /^[a-zA-Z0-9-]+$/
@@ -44,7 +45,7 @@ function getOptionHelp(option: IOption<any, any>) {
   return result
 }
 
-export class Command<C extends string, CO extends object> {
+export class Command<C extends string, CO extends Obj> {
   constructor(
     public readonly name: C,
     public readonly description: string,

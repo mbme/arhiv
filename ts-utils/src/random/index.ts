@@ -1,7 +1,7 @@
 function getRandomBytes(bytes: number): Uint8Array {
-  if (crypto.getRandomValues) {
+  if (global.crypto?.getRandomValues) {
     // browser
-    return crypto.getRandomValues(new Uint8Array(bytes))
+    return global.crypto.getRandomValues(new Uint8Array(bytes))
   }
 
   // Node.js

@@ -4,6 +4,7 @@ import {
   Procedure,
   AsyncProcedure,
   Callbacks,
+  Obj,
 } from '@v/utils'
 import {
   ArgsParserBuilder,
@@ -12,7 +13,7 @@ import {
 import { Command } from './command'
 
 type OnExit = (cb: Procedure | AsyncProcedure) => void
-type Runnable<O extends object> = (options: O, onExit: OnExit) => void | Promise<void>
+type Runnable<O extends Obj> = (options: O, onExit: OnExit) => void | Promise<void>
 
 export class CliApp {
   private _argsParser: ArgsParserBuilder<any, any>
@@ -30,7 +31,7 @@ export class CliApp {
     return new CliApp(appName, help)
   }
 
-  addCommand<O extends object>(command: Command<string, O>, cb: Runnable<O>) {
+  addCommand<O extends Obj>(command: Command<string, O>, cb: Runnable<O>) {
     this._argsParser = this._argsParser.addCommand(command)
     this._runnables[command.name] = cb
 

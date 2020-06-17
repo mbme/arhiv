@@ -3,7 +3,7 @@ import {
   Observable,
   promise$,
 } from '@v/reactive'
-import { Counter } from '@v/utils'
+import { Counter, Obj } from '@v/utils'
 import { Store } from './Store'
 
 export function useObservable<T>(
@@ -33,7 +33,7 @@ export function useObservable<T>(
 export function usePromise<T>(
   getPromise: () => Promise<T>,
   deps: any[] = [],
-): [T | undefined, boolean] {
+): [T | undefined, any] {
   const [value, setValue] = React.useState<T | undefined>(undefined)
   const [error, setError] = React.useState<any>(undefined)
 
@@ -73,7 +73,7 @@ export function useCounter() {
   return counter
 }
 
-export function useStore<S extends object>(store: Store<S>): [S, any] {
+export function useStore<S extends Obj>(store: Store<S>): [S, any] {
   const [value, error] = useObservable(() => store.state$, [store])
 
   return [value || store.state, error]

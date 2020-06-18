@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference, @typescript-eslint/camelcase */
+/* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference path="../../app-shell/src/rpc.d.ts" />
 
-interface IDocument<T extends string = string, P extends object = {}> {
+import { Obj } from '@v/utils'
+
+interface IDocument<T extends string = string, P extends Obj = Obj> {
   readonly id: string
   readonly rev: number
   readonly type: T

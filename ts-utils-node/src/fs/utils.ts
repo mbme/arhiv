@@ -131,7 +131,7 @@ export async function moveFile(filePath: string, newFilePath: string) {
   try {
     await fs.promises.rename(filePath, newFilePath)
   } catch (e) {
-    if (e.code === 'EXDEV') {
+    if ((e as Obj).code === 'EXDEV') {
       await moveFileAcrossDevices(filePath, newFilePath)
     } else {
       throw e

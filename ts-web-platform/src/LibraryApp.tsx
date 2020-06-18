@@ -4,6 +4,7 @@ import * as ReactDOM from 'react-dom'
 import { injectGlobalStyles } from '@v/web-utils'
 import { globalStyles } from './core/global-styles'
 import { Library } from './Library'
+import { Obj } from '@v/utils'
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -35,6 +36,7 @@ function render() {
 
 render()
 
-if ((module as any).hot) {
-  (module as any).hot.accept('./Library', render)
+if ((module as Obj).hot) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+  (module as Obj).hot.accept('./Library', render)
 }

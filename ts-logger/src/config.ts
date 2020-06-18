@@ -1,6 +1,7 @@
 import {
   ILoggerConfig,
 } from './types'
+import { Obj } from '@v/utils'
 
 export const config: ILoggerConfig = {
   minLogLevel: 'INFO',
@@ -10,6 +11,6 @@ export const config: ILoggerConfig = {
 
 export function configureLogger(patch: Partial<ILoggerConfig>) {
   for (const [key, value] of Object.entries(patch)) {
-    (config as any)[key] = value
+    (config as Obj)[key] = value
   }
 }

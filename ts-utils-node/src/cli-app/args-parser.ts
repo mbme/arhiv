@@ -58,7 +58,7 @@ export class ArgsParserBuilder<CT extends Obj, C extends keyof CT> {
       throw new Error(`got unexpected command "${commandName}" and no empty command has been specified`)
     }
 
-    const options = command.parseOptions(args.slice(command.name ? 1 : 0))
+    const options = command.parseOptions(args.slice(command.name ? 1 : 0)) as CT[C]
 
     return [command.name, options]
   }

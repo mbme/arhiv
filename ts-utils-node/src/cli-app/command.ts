@@ -15,7 +15,7 @@ interface IOption<O extends string, V> {
   defaultValue?: V
 }
 
-function option2string(option: IOption<any, any>): string {
+function option2string(option: IOption<string, any>): string {
   if (option.positional === 'one') {
     return `<${option.name}>`
   }

@@ -17,7 +17,7 @@ export class StylishRenderer {
     if (!el.sheet) {
       throw new Error("Element doesn't have a stylesheet attached")
     }
-    this._sheet = el.sheet as CSSStyleSheet
+    this._sheet = el.sheet
   }
 
   private _insert(rule: string) {

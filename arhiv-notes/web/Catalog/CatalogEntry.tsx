@@ -5,6 +5,7 @@ import {
   Label,
 } from '@v/web-platform'
 import { Note } from '../notes'
+import { RouterContext } from '@v/web-utils'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
@@ -13,10 +14,13 @@ interface IProps {
 }
 
 export function CatalogEntry({ note }: IProps) {
+  const router = RouterContext.use()
+
   return (
     <Box
       mb="small"
       p="small"
+      onClick={() => router.push({ path: `/${note.id}` }) }
     >
       <Label
         fontSize="fine"

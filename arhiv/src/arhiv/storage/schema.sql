@@ -23,7 +23,7 @@ CREATE TABLE attachments (
   created_at TEXT NOT NULL,
   filename TEXT NOT NULL,
 
-  PRIMARY KEY (id)
+  PRIMARY KEY (id, rev)
 );
 
 COMMIT;

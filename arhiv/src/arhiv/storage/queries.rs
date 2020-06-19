@@ -181,13 +181,28 @@ pub fn put_attachment(conn: &Connection, attachment: &Attachment) -> Result<()> 
 }
 
 pub fn delete_staged_documents(conn: &Connection) -> Result<()> {
-    conn.execute("DELETE * FROM documents WHERE rev = 0", NO_PARAMS)?;
+    let rows = conn.execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
+
+    log::debug!("deleted {} staged documents", rows);
 
     Ok(())
 }
 
 pub fn delete_staged_attachments(conn: &Connection) -> Result<()> {
-    conn.execute("DELETE * FROM attachments WHERE rev = 0", NO_PARAMS)?;
+    let rows = conn.execute("DELETE FROM attachments WHERE rev = 0", NO_PARAMS)?;
+
+    log::debug!("deleted {} staged attachments", rows);
 
     Ok(())
+}
+
+pub fn get_changeset(conn: &Connection) -> Result<Changeset> {
+    let changeset = Changeset {
+        base_rev: get_rev(conn)?,
+        documents: get_staged_documents(conn)?,
+        attachments: get_staged_attachments(conn)?,
+    };
+    log::debug!("prepared a changeset {}", changeset);
+
+    Ok(changeset)
 }

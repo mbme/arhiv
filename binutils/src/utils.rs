@@ -6,6 +6,11 @@ pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     let output = Command::new(command).args(args).output()?;
 
     if !output.status.success() {
+        log::error!(
+            "command failed:\n{}\n{}",
+            output.status,
+            String::from_utf8(output.stderr)?
+        );
         bail!("Command executed with failing error code");
     }
 

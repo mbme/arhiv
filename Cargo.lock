@@ -67,6 +67,7 @@ dependencies = [
  "anyhow",
  "app-shell",
  "arhiv",
+ "binutils",
  "env_logger",
  "log 0.4.8",
  "serde",
@@ -1633,6 +1634,7 @@ dependencies = [
  "libsqlite3-sys",
  "lru-cache",
  "memchr",
+ "serde_json",
  "smallvec",
  "time",
 ]

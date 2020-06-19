@@ -1,5 +1,6 @@
 use arhiv::entities::*;
 use arhiv::{Arhiv, QueryFilter};
+use serde_json::json;
 
 pub struct ArhivNotes {
     pub arhiv: Arhiv,
@@ -27,7 +28,7 @@ impl ArhivNotes {
 
     pub fn create_note() -> Document {
         let mut document = Document::new(NOTE_TYPE);
-        document.data = "{}".to_string();
+        document.data = json!({ "name": "", "data": "" });
 
         document
     }
@@ -49,18 +50,6 @@ impl ArhivNotes {
         self.arhiv
             .stage_document(note)
             .expect("must be able to save note");
-    }
-
-    pub fn get_attachment(&self, id: &Id) -> Option<Attachment> {
-        self.arhiv
-            .get_attachment(id)
-            .expect("must be able to get attachment")
-    }
-
-    pub fn stage_attachment(&self, file: &str) -> Attachment {
-        self.arhiv
-            .stage_attachment(file)
-            .expect("must be able to stage new attachment")
     }
 
     pub fn get_attachment_url(&self, id: &Id) -> Option<String> {

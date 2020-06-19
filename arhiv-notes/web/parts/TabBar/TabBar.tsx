@@ -15,6 +15,7 @@ export function TabBar({ tabs, activeTabId, onClick }: IProps) {
     <Row alignX="left">
       {tabs.map(tabId => (
         <Tab
+          key={tabId}
           id={tabId}
           isActive={tabId === activeTabId }
           onClick={onClick}

@@ -1,4 +1,4 @@
-export { OverlayRenderer } from './Overlay/Renderer'
+export { default as OverlayRenderer } from './Overlay/Renderer'
 export { Overlay } from './Overlay'
 export { ProgressLocker } from './ProgressLocker'
 export { Modal } from './Modal'

@@ -10,7 +10,7 @@ interface IProps {
   children: React.ReactNode,
 }
 
-export const OverlayRenderer = React.memo(({ children }: IProps) => {
+function OverlayRenderer({ children }: IProps) {
   const [overlays, setOverlays] = React.useState<ReadonlyArray<[number, IOverlay]>>([])
 
   const renderer = React.useMemo<IOverlayRenderer>(() => ({
@@ -32,4 +32,6 @@ export const OverlayRenderer = React.memo(({ children }: IProps) => {
       {children}
     </OverlayContext.Provider>
   )
-})
+}
+
+export default React.memo(OverlayRenderer)

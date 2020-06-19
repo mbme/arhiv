@@ -1,6 +1,8 @@
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+use std::fmt;
 use uuid::Uuid;
 
 pub type Revision = u32;
@@ -18,7 +20,7 @@ pub struct Document {
     pub refs: Vec<Id>,
     pub attachment_refs: Vec<Id>,
     pub archived: bool,
-    pub data: String,
+    pub data: Value,
 }
 
 impl Document {
@@ -34,7 +36,7 @@ impl Document {
             refs: vec![],
             attachment_refs: vec![],
             archived: false,
-            data: "".to_string(),
+            data: Value::Object(Map::new()),
         }
     }
 
@@ -48,6 +50,16 @@ impl std::str::FromStr for Document {
 
     fn from_str(data: &str) -> Result<Document> {
         serde_json::from_str(data).context("Failed to parse document json")
+    }
+}
+
+impl fmt::Display for Document {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[Document {}:{} {}]",
+            self.document_type, self.id, self.rev,
+        )
     }
 }
 
@@ -83,6 +95,12 @@ impl std::str::FromStr for Attachment {
     }
 }
 
+impl fmt::Display for Attachment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[Attachment {} \"{}\"]", self.id, self.filename)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Changeset {
@@ -98,6 +116,18 @@ impl Changeset {
 
     pub fn is_empty(&self) -> bool {
         self.documents.is_empty() && self.attachments.is_empty()
+    }
+}
+
+impl fmt::Display for Changeset {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[Changeset: {} documents, {} attachments since {}]",
+            self.documents.len(),
+            self.attachments.len(),
+            self.base_rev,
+        )
     }
 }
 

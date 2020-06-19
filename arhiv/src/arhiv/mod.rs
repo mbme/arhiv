@@ -77,6 +77,8 @@ impl Arhiv {
 
         tx.commit()?;
 
+        log::trace!("staged new document {}", &document);
+
         Ok(())
     }
 
@@ -123,6 +125,8 @@ impl Arhiv {
 
         tx.commit()?;
         fs_tx.commit();
+
+        log::debug!("staged new attachment {}: {}", attachment, file);
 
         Ok(attachment)
     }

@@ -50,7 +50,8 @@ fn main() {
             move |params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
-                serde_json::to_value(notes.get_attachment(&id)).expect("must be able to serialize")
+                serde_json::to_value(notes.arhiv.get_attachment(&id).unwrap())
+                    .expect("must be able to serialize")
             }
         })
         .with_action("get_attachment_url", {
@@ -71,7 +72,12 @@ fn main() {
 
                 let attachments: Vec<Attachment> = files
                     .iter()
-                    .map(|file| notes.stage_attachment(file.to_str().unwrap()))
+                    .map(|file| {
+                        notes
+                            .arhiv
+                            .stage_attachment(file.to_str().unwrap())
+                            .unwrap()
+                    })
                     .collect();
 
                 serde_json::to_value(attachments).expect("must be able to serialize")

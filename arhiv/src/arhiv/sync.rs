@@ -8,26 +8,18 @@ use std::collections::HashMap;
 use std::fs::File;
 
 impl Arhiv {
-    fn get_changeset(&self) -> Result<Changeset> {
-        let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
-
-        let rev = get_rev(&tx)?;
-        let documents = get_staged_documents(&tx)?;
-        let attachments = get_staged_attachments(&tx)?;
-
-        Ok(Changeset {
-            base_rev: rev,
-            documents,
-            attachments,
-        })
-    }
-
-    pub fn apply_changeset(
+    fn apply_changeset(
         &self,
         changeset: Changeset,
-        attachment_data: HashMap<String, String>,
+        attachment_data: HashMap<Id, String>,
+        local: bool,
     ) -> Result<()> {
+        log::debug!(
+            "applying {} changeset {}",
+            if local { "local" } else { "remote" },
+            &changeset
+        );
+
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
 
@@ -45,7 +37,7 @@ impl Arhiv {
             return Ok(());
         }
 
-        if has_staged_changes(&tx)? {
+        if !local && has_staged_changes(&tx)? {
             return Err(anyhow!("can't apply changes: there are staged changes"));
         }
 
@@ -77,6 +69,7 @@ impl Arhiv {
 
         tx.commit()?;
         fs_tx.commit();
+        log::debug!("successfully applied a changeset");
 
         Ok(())
     }
@@ -135,7 +128,12 @@ impl Arhiv {
             .as_ref()
             .ok_or(anyhow!("can't sync: primary_url is missing"))?;
 
-        let changeset = self.get_changeset()?;
+        let changeset = {
+            let mut conn = self.storage.get_connection()?;
+            let tx = conn.transaction()?;
+
+            get_changeset(&tx)?
+        };
 
         for attachment in changeset.attachments.iter() {
             // FIXME async parallel upload
@@ -167,10 +165,12 @@ impl Arhiv {
             return Err(anyhow!("can't sync locally: not a prime"));
         }
 
-        let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
+        let changeset = {
+            let mut conn = self.storage.get_connection()?;
+            let tx = conn.transaction()?;
 
-        let changeset = self.get_changeset()?;
+            get_changeset(&tx)?
+        };
 
         let mut attachment_data = HashMap::new();
         for attachment in &changeset.attachments {
@@ -180,12 +180,17 @@ impl Arhiv {
             );
         }
 
-        self.apply_changeset(changeset, attachment_data)?;
+        self.apply_changeset(changeset, attachment_data, true)?;
 
-        delete_staged_documents(&tx)?;
-        delete_staged_attachments(&tx)?;
+        {
+            let mut conn = self.storage.get_writable_connection()?;
+            let tx = conn.transaction()?;
 
-        tx.commit()?;
+            delete_staged_documents(&tx)?;
+            delete_staged_attachments(&tx)?;
+
+            tx.commit()?;
+        }
 
         Ok(())
     }
@@ -201,7 +206,7 @@ impl Arhiv {
 
         let base_rev = changeset.base_rev.clone();
 
-        self.apply_changeset(changeset, attachment_data)?;
+        self.apply_changeset(changeset, attachment_data, false)?;
 
         self.get_changeset_response(base_rev)
     }

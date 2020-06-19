@@ -54,13 +54,13 @@ fn main() {
                     .expect("must be able to serialize")
             }
         })
-        .with_action("get_attachment_url", {
+        .with_action("get_attachment_location", {
             let notes = notes.clone();
 
             move |params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
-                serde_json::to_value(notes.get_attachment_url(&id))
+                serde_json::to_value(notes.arhiv.get_attachment_location(&id).unwrap())
                     .expect("must be able to serialize")
             }
         })

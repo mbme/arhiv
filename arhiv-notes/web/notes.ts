@@ -29,13 +29,15 @@ export interface IAttachment {
   readonly filename: string
 }
 
+export type AttachmentLocation = { Url: string } | { File: string } | { Unknown: null }
+
 interface IRPC {
   list(): Promise<Note[]>
   get_note(id: string): Promise<Note | null>
   put_note(note: Note): Promise<void>
   create_note(): Promise<Note>
   get_attachment(id: string): Promise<IAttachment | null>
-  get_attachment_url(id: string): Promise<string | null>
+  get_attachment_location(id: string): Promise<AttachmentLocation>
   pick_attachments(): Promise<IAttachment[]>
 }
 

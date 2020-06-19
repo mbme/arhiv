@@ -1,13 +1,21 @@
 use self::storage::*;
 use crate::config::Config;
 use crate::entities::*;
-use crate::utils::{ensure_file_exists, FsTransaction};
+use crate::utils::{ensure_file_exists, file_exists, FsTransaction};
 use anyhow::*;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 pub use storage::QueryFilter;
 
 mod storage;
 mod sync;
+
+#[derive(Serialize, Deserialize)]
+pub enum AttachmentLocation {
+    Url(String),
+    File(String),
+    Unknown,
+}
 
 pub struct Arhiv {
     storage: Storage,
@@ -100,6 +108,30 @@ impl Arhiv {
 
     pub fn get_attachment_data_path(&self, id: &Id) -> String {
         self.storage.get_attachment_file_path(id)
+    }
+
+    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
+        let attachment = self.get_attachment(id)?;
+
+        if attachment.is_none() {
+            bail!("unknown attachment {}", id);
+        }
+
+        let local_file_path = self.get_attachment_data_path(id);
+
+        if file_exists(&local_file_path)? {
+            return Ok(AttachmentLocation::File(local_file_path));
+        }
+
+        let primary_url = self
+            .config
+            .primary_url
+            .as_ref()
+            .ok_or(anyhow!("config.primary_url is missing"))?;
+
+        let url = AttachmentLocation::Url(format!("{}/attachment-data/{}", primary_url, id));
+
+        Ok(url)
     }
 
     pub fn stage_attachment(&self, file: &str) -> Result<Attachment> {

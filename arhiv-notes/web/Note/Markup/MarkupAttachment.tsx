@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { IAttachment, API } from '../../notes'
-import { Image, StyleArg } from '@v/web-platform'
+import { Image, StyleArg, Text } from '@v/web-platform'
 import { usePromise } from '@v/web-utils'
 
 const IMAGE_EXT = [
@@ -26,11 +26,21 @@ interface IProps {
 }
 
 export function MarkupAttachment({ attachment, link, description }: IProps) {
-  const [url] = usePromise(() => API.get_attachment_url(attachment.id), [attachment.id])
+  const [attachmentLocation] = usePromise(() => API.get_attachment_location(attachment.id), [attachment.id])
 
-  if (!url) {
+  if (!attachmentLocation) {
     return null
   }
+
+  if ('Unknown' in attachmentLocation) {
+    return (
+      <Text color="red">
+        {attachment.filename}
+      </Text>
+    )
+  }
+
+  const url = 'Url' in attachmentLocation ? attachmentLocation.Url : `file://${attachmentLocation.File}`
 
   if (isImageFileName(attachment.filename)) {
     return (

@@ -1,10 +1,10 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
+import './webpack-hot'
 import { injectGlobalStyles } from '@v/web-utils'
 import { globalStyles } from './core/global-styles'
 import { Library } from './Library'
-import { Obj } from '@v/utils'
 
 injectGlobalStyles(`
   ${globalStyles}
@@ -17,7 +17,7 @@ injectGlobalStyles(`
   }
 `)
 
-function render() {
+function render(Component: React.ComponentType) {
   const rootEl = document.getElementById('root')
   if (!rootEl) {
     throw new Error("Can't find #root element")
@@ -25,7 +25,7 @@ function render() {
 
   ReactDOM.render(
     <React.StrictMode>
-      <Library />
+      <Component />
     </React.StrictMode>,
     rootEl,
     () => {
@@ -34,9 +34,8 @@ function render() {
   )
 }
 
-render()
+render(Library)
 
-if ((module as Obj).hot) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  (module as Obj).hot.accept('./Library', render)
+if (module.hot) {
+  module.hot.accept('./Library', () => render(Library))
 }

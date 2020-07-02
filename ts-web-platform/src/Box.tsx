@@ -47,6 +47,9 @@ type PassThroughProps =
   | 'bgColor'
   | 'backgroundColor'
 
+  | 'cursor'
+  | 'boxShadow'
+
   | 'border'
   | 'borderRadius'
   | 'borderTop'
@@ -66,6 +69,7 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   dangerouslySetInnerHTML?: {
     __html: string;
   }
+  $style?: StyleArg
   $styles?: StyleArg[]
 }
 
@@ -76,11 +80,12 @@ export function Box<E extends Tags = 'div'>(props: IProps<E>) {
     onClick,
     innerRef,
     dangerouslySetInnerHTML,
+    $style,
     $styles = [],
     ...styleProps
   } = props
 
-  const className = useStyles(styleProps, ...$styles)
+  const className = useStyles(styleProps, $style, ...$styles)
 
   return React.createElement(as || 'div', {
     ref: innerRef,

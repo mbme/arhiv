@@ -6,7 +6,7 @@ import {
 import { Icon } from '../Icon'
 import { Overlay } from './Overlay'
 
-export const ProgressLocker = React.memo(() => {
+function ProgressLocker() {
   const [visible, setVisible] = React.useState(false)
 
   const pulseAnimation = useAnimation('pulse')
@@ -42,4 +42,6 @@ export const ProgressLocker = React.memo(() => {
       />
     </Overlay>
   )
-})
+}
+
+export default React.memo(ProgressLocker)

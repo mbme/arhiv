@@ -1,0 +1,17 @@
+[env]
+RUST_LOG = "DEBUG"
+
+[tasks.start-web]
+command = "yarn"
+args = ["start"]
+
+[tasks.start-shell]
+command = "cargo"
+args = ["run"]
+
+[tasks.devtools]
+command = "yarn"
+args = ["devtools"]
+
+[tasks.start]
+run_task = { name = ["start-web", "start-shell"], parallel = true }

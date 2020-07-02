@@ -38,10 +38,10 @@ interface ITransformerProps {
   pb?: CSS.PaddingBottomProperty<Spacing>
   pl?: CSS.PaddingLeftProperty<Spacing>
 
-  top?: CSS.TopProperty<Spacing>
-  left?: CSS.LeftProperty<Spacing>
-  bottom?: CSS.BottomProperty<Spacing>
-  right?: CSS.RightProperty<Spacing>
+  top?: CSS.TopProperty<Spacing> | 0
+  left?: CSS.LeftProperty<Spacing> | 0
+  bottom?: CSS.BottomProperty<Spacing> | 0
+  right?: CSS.RightProperty<Spacing> | 0
 
   border?: CSS.BorderProperty<Border>
   borderTop?: CSS.BorderTopProperty<Border>

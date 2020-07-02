@@ -20,6 +20,7 @@ export function CatalogEntry({ note }: IProps) {
     <Box
       mb="small"
       p="small"
+      cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
     >
       <Label

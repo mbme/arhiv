@@ -21,4 +21,7 @@ export {
   RouterProvider,
   RouterContext,
 } from './context'
-export { Route } from './Route'
+export {
+  Route,
+  Routes,
+} from './Routes'

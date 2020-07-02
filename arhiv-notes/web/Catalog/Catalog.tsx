@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Column, ProgressLocker } from '@v/web-platform'
+import { ProgressLocker } from '@v/web-platform'
 import { usePromise } from '@v/web-utils'
 import { API } from '../notes'
 import { CatalogEntry } from './CatalogEntry'
@@ -22,13 +22,8 @@ export function Catalog() {
     ))
 
   return (
-    <Column
-      width="500px"
-      maxWidth="100%"
-      alignX="stretch"
-      mx="auto"
-    >
+    <>
       {items}
-    </Column>
+    </>
   )
 }

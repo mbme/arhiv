@@ -63,13 +63,19 @@ impl Arhiv {
         get_document(&conn, id, QueryMode::All)
     }
 
-    pub fn stage_document(&self, mut document: Document) -> Result<()> {
+    pub fn stage_document(&self, updated_document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
 
-        // make sure document rev is Staging
-        document.rev = 0;
+        let mut document = get_document(&tx, &updated_document.id, QueryMode::All)?.ok_or(
+            anyhow!("can't update unknown document {}", updated_document.id),
+        )?;
+
+        document.rev = 0; // make sure document rev is Staging
         document.updated_at = Utc::now();
+        document.data = updated_document.data;
+        document.refs = updated_document.refs;
+        document.attachment_refs = updated_document.attachment_refs;
 
         put_document(&tx, &document)?;
 

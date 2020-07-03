@@ -47,7 +47,6 @@ impl ArhivNotes {
     }
 
     pub fn put_note(&self, note: Document) {
-        // FIXME validate
         self.arhiv
             .stage_document(note)
             .expect("must be able to save note");

@@ -3,6 +3,7 @@ use crate::config::Config;
 use crate::entities::*;
 use crate::utils::{ensure_file_exists, file_exists, FsTransaction};
 use anyhow::*;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 pub use storage::QueryFilter;
@@ -50,28 +51,16 @@ impl Arhiv {
         get_rev(&conn)
     }
 
-    fn get_mode(&self) -> QueryMode {
-        if self.config.prime {
-            QueryMode::Commited
-        } else {
-            QueryMode::All
-        }
-    }
-
     pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_documents(
-            &conn,
-            if self.config.prime { 1 } else { 0 },
-            filter.unwrap_or_default(),
-        )
+        get_documents(&conn, 0, filter.unwrap_or_default())
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_document(&conn, id, self.get_mode())
+        get_document(&conn, id, QueryMode::All)
     }
 
     pub fn stage_document(&self, mut document: Document) -> Result<()> {
@@ -80,6 +69,7 @@ impl Arhiv {
 
         // make sure document rev is Staging
         document.rev = 0;
+        document.updated_at = Utc::now();
 
         put_document(&tx, &document)?;
 
@@ -103,7 +93,7 @@ impl Arhiv {
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachment(&conn, id, self.get_mode())
+        get_attachment(&conn, id, QueryMode::All)
     }
 
     pub fn get_attachment_data_path(&self, id: &Id) -> String {

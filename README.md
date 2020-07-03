@@ -1,6 +1,6 @@
 # Dependencies
 * `rust`
 * `cargo`
-* `cargo-make` to run commands https://github.com/sagiegurari/cargo-make
+* `just` command runner https://github.com/casey/just
 * `yarn` as package manager https://yarnpkg.com/
 * `nodejs`

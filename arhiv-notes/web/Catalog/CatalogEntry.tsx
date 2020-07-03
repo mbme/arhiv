@@ -2,7 +2,6 @@ import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
-  Label,
 } from '@v/web-platform'
 import { Note } from '../notes'
 import { RouterContext } from '@v/web-utils'
@@ -23,12 +22,6 @@ export function CatalogEntry({ note }: IProps) {
       cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
     >
-      <Label
-        fontSize="fine"
-      >
-        {note.type}
-      </Label>
-
       {note.data.name}
 
       <Box

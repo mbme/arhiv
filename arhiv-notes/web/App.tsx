@@ -15,7 +15,8 @@ import { Header } from './Header'
 import { Catalog } from './Catalog'
 import { Card } from './Card'
 import { CardEditorContainer } from './CardEditor'
-import { NotFound } from './parts'
+import { NotFoundBlock } from './parts'
+import { Url } from './Url'
 
 export function App() {
   return (
@@ -24,8 +25,8 @@ export function App() {
         <HotkeysResolverProvider>
           <OverlayRenderer>
             <Column
-              width="500px"
-              maxWidth="100%"
+              minWidth="30rem"
+              maxWidth="40rem"
               alignX="stretch"
               mx="auto"
               bgColor="bg2"
@@ -35,7 +36,7 @@ export function App() {
 
               <Spacer height="large" />
 
-              <Routes onNotFound={() => NotFound}>
+              <Routes onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}>
                 {[
                   [pm`/`, () => <Catalog />],
                   [pm`/new`, () => <CardEditorContainer />],
@@ -44,6 +45,10 @@ export function App() {
                 ]}
               </Routes>
             </Column>
+
+            {process.env.NODE_ENV === 'development' && (
+              <Url />
+            )}
           </OverlayRenderer>
         </HotkeysResolverProvider>
       </StylishProvider>

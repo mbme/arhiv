@@ -1,10 +1,11 @@
-// eslint-disable-next-line
-const path = require('path')
+const path = require('path') // eslint-disable-line
+const webpack = require('webpack') // eslint-disable-line
 
-const isProduction = process.env.NODE_ENV === 'production'
+const mode = process.env.NODE_ENV || 'development'
+const isProduction = mode === 'production'
 
 module.exports = {
-  mode: process.env.NODE_ENV || 'development',
+  mode,
   entry: [
     isProduction ? null : 'react-devtools',
     './web/index.tsx',
@@ -24,4 +25,9 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'static'),
   },
+  plugins: [
+    new webpack.DefinePlugin({ // eslint-disable-line
+      'process.env.NODE_ENV': JSON.stringify(mode),
+    }),
+  ]
 }

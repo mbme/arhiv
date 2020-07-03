@@ -5,8 +5,8 @@ import {
   Row,
   Button,
   Spacer,
-  clickOnEnter,
   StyleArg,
+  Link,
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
 
@@ -27,28 +27,22 @@ export function Header() {
       as="nav"
       alignX="center"
       boxShadow="default"
-      py="fine"
+      p="fine"
       width="100%"
       bgColor="bg1"
       zIndex={1}
       $style={$container}
     >
-      <div
-        role="tab"
-        tabIndex={0}
-        onKeyPress={clickOnEnter}
-      >
+      <Link to={{ path: '/' }}>
         Catalog
-      </div>
+      </Link>
 
-      <Spacer
-        flex="0"
-        width="medium"
-      />
+      <Spacer flex="1" />
 
       <Box
-        width="11rem"
-        mr="large"
+        minWidth="11rem"
+        maxWidth="22rem"
+        mx="large"
       >
         <Input
           light

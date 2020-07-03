@@ -47,7 +47,7 @@ pub fn get_documents(
         params.push((":type", document_type));
     }
 
-    query.push("GROUP BY id HAVING max(rev) ORDER BY rev DESC");
+    query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
     if let Some(ref page) = filter.page {
         query.push("LIMIT :limit OFFSET :offset");
@@ -71,7 +71,9 @@ pub fn get_staged_documents(conn: &Connection) -> Result<Vec<Document>> {
 }
 
 pub fn get_all_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments ORDER BY rev DESC")?;
+    let mut stmt = conn.prepare_cached(
+        "SELECT * FROM attachments GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)",
+    )?;
 
     let row = stmt.query(NO_PARAMS)?;
 
@@ -82,8 +84,7 @@ pub fn get_commited_attachments_with_rev(
     conn: &Connection,
     min_rev: Revision,
 ) -> Result<Vec<Attachment>> {
-    let mut stmt =
-        conn.prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 ORDER BY rev DESC")?;
+    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 GROUP BY id")?;
 
     let row = stmt.query(params![min_rev])?;
 
@@ -95,8 +96,7 @@ pub fn get_commited_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
 }
 
 pub fn get_staged_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    let mut stmt =
-        conn.prepare_cached("SELECT * FROM attachments WHERE rev = 0 ORDER BY rev DESC")?;
+    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev = 0")?;
 
     let row = stmt.query(NO_PARAMS)?;
 
@@ -107,10 +107,10 @@ pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Optio
     let mut stmt = conn.prepare_cached({
         match mode {
             QueryMode::All => {
-                "SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING rev = 0 OR max(rev)"
+                "SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1"
             }
             QueryMode::Commited => {
-                "SELECT * FROM documents WHERE id = ?1 AND rev > 0 GROUP BY id HAVING max(rev)"
+                "SELECT * FROM documents WHERE id = ?1 AND rev > 0 GROUP BY id HAVING MAX(rev)"
             }
         }
     })?;
@@ -127,8 +127,8 @@ pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Optio
 pub fn get_attachment(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Attachment>> {
     let mut stmt = conn.prepare_cached({
         match mode {
-            QueryMode::All => "SELECT * FROM attachments WHERE id = ?1",
-            QueryMode::Commited => "SELECT * FROM attachments WHERE id = ?1 AND rev > 0",
+            QueryMode::All => "SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1",
+            QueryMode::Commited => "SELECT * FROM attachments WHERE id = ?1 AND rev > 0 GROUP BY id HAVING MAX(rev)",
         }
     })?;
 

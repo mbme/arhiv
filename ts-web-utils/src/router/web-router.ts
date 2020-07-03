@@ -18,10 +18,15 @@ function getHashLocation() {
 }
 
 export class WebRouter {
+  locationRaw$ = new Cell<string>(this._getCurrentRawLocation())
   location$ = new Cell<ILocation>(this._getCurrentLocation())
 
   constructor(private _hashBased = false) {
     window.addEventListener(_hashBased ? 'hashchange' : 'popstate', this._propagateCurrentLocation)
+  }
+
+  private _getCurrentRawLocation(): string {
+    return document.location.toString()
   }
 
   private _getCurrentLocation(): ILocation {
@@ -43,8 +48,8 @@ export class WebRouter {
     }
   }
 
-
   private _propagateCurrentLocation = () => {
+    this.locationRaw$.value = this._getCurrentRawLocation()
     this.location$.value = this._getCurrentLocation()
   }
 

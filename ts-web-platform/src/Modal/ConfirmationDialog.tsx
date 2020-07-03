@@ -14,23 +14,26 @@ interface IProps {
 export function ConfirmationDialog({ children, confirmation, onConfirmed, onCancel }: IProps) {
   return (
     <Modal onCancel={onCancel}>
-      <Box mb="medium">
-        {children}
+      <Box px="large" py="medium">
+
+        <Box mb="medium">
+          {children}
+        </Box>
+
+        <Row alignX="right">
+          <Button onClick={onCancel}>
+            CANCEL
+          </Button>
+
+          <Button
+            variant="primary"
+            onClick={onConfirmed}
+            $style={{ ml: 'medium' }}
+          >
+            {confirmation}
+          </Button>
+        </Row>
       </Box>
-
-      <Row alignX="right">
-        <Button onClick={onCancel}>
-          CANCEL
-        </Button>
-
-        <Button
-          variant="primary"
-          onClick={onConfirmed}
-          $style={{ ml: 'medium' }}
-        >
-          {confirmation}
-        </Button>
-      </Row>
     </Modal>
   )
 }

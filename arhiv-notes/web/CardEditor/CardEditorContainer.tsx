@@ -10,6 +10,7 @@ import {
 import { API } from '../notes'
 import { CardEditor } from './CardEditor'
 import { selectLinks, parseMarkup } from '../markup-parser'
+import { NotFoundBlock, ErrorBlock } from '../parts'
 
 const log = createLogger('CardEditor')
 
@@ -44,7 +45,7 @@ interface IProps {
 export function CardEditorContainer({ id }: IProps) {
   const router = RouterContext.use()
 
-  const [note] = usePromise(() => {
+  const [note, err] = usePromise(() => {
     if (id) {
       return API.get_note(id)
     }
@@ -52,9 +53,23 @@ export function CardEditorContainer({ id }: IProps) {
     return API.create_note()
   }, [id])
 
-  if (!note) { // FIXME not found
+  if (err) {
+    return (
+      <ErrorBlock error={err} />
+    )
+  }
+
+  if (note === undefined) {
     return (
       <ProgressLocker />
+    )
+  }
+
+  if (note === null) {
+    return (
+      <NotFoundBlock>
+        Can't find note with id "{id}"
+      </NotFoundBlock>
     )
   }
 

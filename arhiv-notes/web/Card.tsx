@@ -6,7 +6,7 @@ import {
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
 import { API } from './notes'
-import { CloseIcon, Frame } from './parts'
+import { CloseIcon, Frame, ErrorBlock, NotFoundBlock } from './parts'
 import { Metadata } from './Metadata'
 import { Note } from './Note'
 
@@ -16,17 +16,31 @@ interface IProps {
 
 export function Card({ id }: IProps) {
   const router = RouterContext.use()
-  const [note] = usePromise(() => API.get_note(id), [id])
+  const [note, err] = usePromise(() => API.get_note(id), [id])
 
-  if (!note) { // FIXME not found
+  if (err) {
+    return (
+      <ErrorBlock error={err} />
+    )
+  }
+
+  if (note === undefined) {
     return (
       <ProgressLocker />
     )
   }
 
+  if (note === null) {
+    return (
+      <NotFoundBlock>
+        Can't find note with id "{id}"
+      </NotFoundBlock>
+    )
+  }
+
   const buttons = (
     <Row>
-      <Link to={{ path: '/${id}/edit' }}>
+      <Link to={{ path: `/${id}/edit` }}>
         Edit
       </Link>
 

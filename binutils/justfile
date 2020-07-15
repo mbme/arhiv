@@ -1,0 +1,13 @@
+# Local Variables:
+# mode: makefile
+# End:
+# vim: set ft=make :
+
+build:
+  cargo build
+
+install:
+  cargo install --path .
+
+get-backlight:
+  cargo run --bin mb-backlight status

@@ -63,6 +63,10 @@ pub async fn start_server(arhiv: Arhiv) {
                 let file = arhiv.lock().unwrap().get_attachment_data_path(&id);
 
                 // FIXME stream file, support ranges
+                // res.headers['Content-Disposition'] = `inline; filename=${fileId}`
+                // res.headers['Content-Type'] = await getMimeType(filePath)
+                // res.headers['Cache-Control'] = 'immutable, private, max-age=31536000' // max caching
+
                 http::Response::builder().body(std::fs::read(file).unwrap())
             })
     };

@@ -51,7 +51,7 @@ impl Arhiv {
         get_rev(&conn)
     }
 
-    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
+    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<QueryPage<Document>> {
         let conn = self.storage.get_connection()?;
 
         get_documents(&conn, 0, filter.unwrap_or_default())
@@ -87,6 +87,7 @@ impl Arhiv {
     }
 
     pub fn list_attachments(&self) -> Result<Vec<Attachment>> {
+        // FIXME pagination
         let conn = self.storage.get_connection()?;
 
         if self.config.prime {

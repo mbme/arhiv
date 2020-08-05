@@ -18,12 +18,14 @@ impl ArhivNotes {
     pub fn list(&self) -> Vec<Document> {
         let query = QueryFilter {
             document_type: Some(NOTE_TYPE.to_string()),
-            page: None,
+            page_offset: None,
+            page_size: None,
         };
 
         self.arhiv
             .list_documents(Some(query))
             .expect("must be able to list notes")
+            .results
     }
 
     pub fn create_note() -> Document {

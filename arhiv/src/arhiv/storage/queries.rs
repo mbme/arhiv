@@ -38,8 +38,9 @@ pub fn get_documents(
     conn: &Connection,
     min_rev: Revision,
     filter: QueryFilter,
-) -> Result<Vec<Document>> {
-    let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
+) -> Result<QueryPage<Document>> {
+    let mut query =
+        vec!["SELECT *, COUNT(*) OVER() AS total_count FROM documents WHERE rev >= :min_rev"];
     let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
     if let Some(ref document_type) = filter.document_type {
@@ -47,27 +48,52 @@ pub fn get_documents(
         params.push((":type", document_type));
     }
 
+    // local documents with rev === 0 have higher priority
     query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
-    if let Some(ref page) = filter.page {
-        query.push("LIMIT :limit OFFSET :offset");
-        params.push((":limit", &page.size));
-        params.push((":offset", &page.offset));
+    if let Some(ref page_size) = filter.page_size {
+        query.push("LIMIT :limit");
+        params.push((":limit", page_size));
+    }
+
+    if let Some(ref page_offset) = filter.page_offset {
+        query.push("OFFSET :offset");
+        params.push((":offset", page_offset));
     }
 
     let mut stmt = conn.prepare_cached(&query.join(" "))?;
 
-    let row = stmt.query_named(&params)?;
+    let mut rows = stmt.query_named(&params)?;
 
-    utils::extract_documents(row)
+    let mut documents = Vec::new();
+    let mut total = Option::None;
+    while let Some(row) = rows.next()? {
+        if total.is_none() {
+            total = Some(row.get("total_count")?);
+        }
+
+        documents.push(utils::extract_document(row)?);
+    }
+
+    Ok(QueryPage {
+        results: documents,
+        total: total.unwrap_or(0),
+        page_size: filter.page_size,
+        page_offset: filter.page_offset,
+    })
 }
 
 pub fn get_staged_documents(conn: &Connection) -> Result<Vec<Document>> {
     let mut stmt = conn.prepare_cached("SELECT * FROM documents WHERE rev = 0")?;
 
-    let row = stmt.query(NO_PARAMS)?;
+    let mut rows = stmt.query(NO_PARAMS)?;
 
-    utils::extract_documents(row)
+    let mut documents = Vec::new();
+    while let Some(row) = rows.next()? {
+        documents.push(utils::extract_document(row)?);
+    }
+
+    Ok(documents)
 }
 
 pub fn get_all_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
@@ -75,9 +101,14 @@ pub fn get_all_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
         "SELECT * FROM attachments GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)",
     )?;
 
-    let row = stmt.query(NO_PARAMS)?;
+    let mut rows = stmt.query(NO_PARAMS)?;
 
-    utils::extract_attachments(row)
+    let mut attachments = Vec::new();
+    while let Some(row) = rows.next()? {
+        attachments.push(utils::extract_attachment(row)?);
+    }
+
+    Ok(attachments)
 }
 
 pub fn get_commited_attachments_with_rev(
@@ -86,9 +117,14 @@ pub fn get_commited_attachments_with_rev(
 ) -> Result<Vec<Attachment>> {
     let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 GROUP BY id")?;
 
-    let row = stmt.query(params![min_rev])?;
+    let mut rows = stmt.query(params![min_rev])?;
 
-    utils::extract_attachments(row)
+    let mut attachments = Vec::new();
+    while let Some(row) = rows.next()? {
+        attachments.push(utils::extract_attachment(row)?);
+    }
+
+    Ok(attachments)
 }
 
 pub fn get_commited_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
@@ -98,9 +134,14 @@ pub fn get_commited_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
 pub fn get_staged_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
     let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev = 0")?;
 
-    let row = stmt.query(NO_PARAMS)?;
+    let mut rows = stmt.query(NO_PARAMS)?;
 
-    utils::extract_attachments(row)
+    let mut attachments = Vec::new();
+    while let Some(row) = rows.next()? {
+        attachments.push(utils::extract_attachment(row)?);
+    }
+
+    Ok(attachments)
 }
 
 pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Document>> {

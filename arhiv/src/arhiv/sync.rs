@@ -78,15 +78,15 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let mut filter = QueryFilter::default();
-        filter.page = None; // fetch all items
+        filter.page_size = None; // fetch all items
 
-        let documents = get_documents(&conn, base_rev + 1, filter)?;
+        let page = get_documents(&conn, base_rev + 1, filter)?;
         let attachments = get_commited_attachments_with_rev(&conn, base_rev + 1)?;
 
         Ok(ChangesetResponse {
             latest_rev: get_rev(&conn)?,
             base_rev,
-            documents,
+            documents: page.results,
             attachments,
         })
     }

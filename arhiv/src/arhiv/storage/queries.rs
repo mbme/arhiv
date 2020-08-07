@@ -38,14 +38,19 @@ pub fn get_documents(
     conn: &Connection,
     min_rev: Revision,
     filter: QueryFilter,
-) -> Result<QueryPage<Document>> {
-    let mut query =
-        vec!["SELECT *, COUNT(*) OVER() AS total_count FROM documents WHERE rev >= :min_rev"];
+) -> Result<Vec<Document>> {
+    let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
     let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
     if let Some(ref document_type) = filter.document_type {
         query.push("AND type = :type");
         params.push((":type", document_type));
+    }
+
+    if let Some(ref matcher) = filter.matcher {
+        query.push("AND instr(json_extract(data, ':matcher_selector'), ':matcher_pattern')");
+        params.push((":matcher_selector", &matcher.selector));
+        params.push((":matcher_pattern", &matcher.pattern));
     }
 
     // local documents with rev === 0 have higher priority
@@ -66,21 +71,11 @@ pub fn get_documents(
     let mut rows = stmt.query_named(&params)?;
 
     let mut documents = Vec::new();
-    let mut total = Option::None;
     while let Some(row) = rows.next()? {
-        if total.is_none() {
-            total = Some(row.get("total_count")?);
-        }
-
         documents.push(utils::extract_document(row)?);
     }
 
-    Ok(QueryPage {
-        results: documents,
-        total: total.unwrap_or(0),
-        page_size: filter.page_size,
-        page_offset: filter.page_offset,
-    })
+    Ok(documents)
 }
 
 pub fn get_staged_documents(conn: &Connection) -> Result<Vec<Document>> {

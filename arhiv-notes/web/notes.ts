@@ -32,7 +32,7 @@ export interface IAttachment {
 export type AttachmentLocation = { Url: string } | { File: string } | { Unknown: null }
 
 interface IRPC {
-  list(): Promise<Note[]>
+  list(pattern: string): Promise<Note[]>
   get_note(id: string): Promise<Note | null>
   put_note(note: Note): Promise<void>
   create_note(): Promise<Note>

@@ -6,9 +6,9 @@ use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-pub use storage::QueryFilter;
+use storage::QueryFilter;
 
-mod storage;
+pub mod storage;
 mod sync;
 
 #[derive(Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl Arhiv {
         get_rev(&conn)
     }
 
-    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<QueryPage<Document>> {
+    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
         get_documents(&conn, 0, filter.unwrap_or_default())

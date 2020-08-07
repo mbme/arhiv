@@ -1,5 +1,5 @@
 use arhiv::entities::*;
-use arhiv::{Arhiv, QueryFilter};
+use arhiv::{Arhiv, Matcher, QueryFilter};
 use serde_json::json;
 
 pub struct ArhivNotes {
@@ -15,17 +15,28 @@ impl ArhivNotes {
         }
     }
 
-    pub fn list(&self) -> Vec<Document> {
+    pub fn list(&self, pattern: String) -> Vec<Document> {
+        let matcher = {
+            if pattern.is_empty() {
+                None
+            } else {
+                Some(Matcher {
+                    selector: "$.name".to_string(),
+                    pattern,
+                })
+            }
+        };
+
         let query = QueryFilter {
             document_type: Some(NOTE_TYPE.to_string()),
             page_offset: None,
             page_size: None,
+            matcher,
         };
 
         self.arhiv
             .list_documents(Some(query))
             .expect("must be able to list notes")
-            .results
     }
 
     pub fn create_note() -> Document {

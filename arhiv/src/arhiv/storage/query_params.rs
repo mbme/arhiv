@@ -5,10 +5,16 @@ pub enum QueryMode {
     Commited,
 }
 
+pub struct Matcher {
+    pub selector: String,
+    pub pattern: String,
+}
+
 pub struct QueryFilter {
     pub document_type: Option<String>,
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
+    pub matcher: Option<Matcher>,
 }
 
 impl Default for QueryFilter {
@@ -17,13 +23,7 @@ impl Default for QueryFilter {
             document_type: None,
             page_offset: Some(0),
             page_size: Some(20),
+            matcher: None,
         }
     }
-}
-
-pub struct QueryPage<T> {
-    pub results: Vec<T>,
-    pub total: u16,
-    pub page_offset: Option<u8>,
-    pub page_size: Option<u8>,
 }

@@ -80,13 +80,13 @@ impl Arhiv {
         let mut filter = QueryFilter::default();
         filter.page_size = None; // fetch all items
 
-        let page = get_documents(&conn, base_rev + 1, filter)?;
+        let documents = get_documents(&conn, base_rev + 1, filter)?;
         let attachments = get_commited_attachments_with_rev(&conn, base_rev + 1)?;
 
         Ok(ChangesetResponse {
             latest_rev: get_rev(&conn)?,
             base_rev,
-            documents: page.results,
+            documents,
             attachments,
         })
     }

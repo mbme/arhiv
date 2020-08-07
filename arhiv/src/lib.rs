@@ -7,5 +7,5 @@ pub mod entities;
 pub mod server;
 pub mod utils;
 
+pub use arhiv::storage::{Matcher, QueryFilter};
 pub use arhiv::Arhiv;
-pub use arhiv::QueryFilter;

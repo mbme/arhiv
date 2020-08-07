@@ -16,7 +16,11 @@ fn main() {
         .with_action("list", {
             let notes = notes.clone();
 
-            move |_params| serde_json::to_value(&notes.list()).expect("must be able to serialize")
+            move |params| {
+                let pattern = params.as_str().expect("id must be string").to_string();
+
+                serde_json::to_value(&notes.list(pattern)).expect("must be able to serialize")
+            }
         })
         .with_action("get_note", {
             let notes = notes.clone();

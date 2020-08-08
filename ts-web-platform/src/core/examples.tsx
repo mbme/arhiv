@@ -1,22 +1,34 @@
 import * as React from 'react'
-import { theme } from './theme'
 import { Example } from '../Example'
 import { Box } from '../Box'
+
+const colors = [
+  '--color-primary',
+  '--color-secondary',
+  '--color-text',
+  '--color-textLight',
+  '--color-heading',
+  '--color-link',
+  '--color-bg0',
+  '--color-bg1',
+  '--color-bg2',
+  '--color-bgOverlay',
+]
 
 export function StyleExamples() {
   return (
     <Example section title="Theme">
       <Example title="Colors">
-        {Object.entries(theme.color).map(([name, value]) => (
+        {colors.map(value => (
           <Box
-            key={name}
+            key={value}
             height="3rem"
-            backgroundColor={value}
+            backgroundColor={`var(${value})`}
             display="flex"
             alignItems="center"
             justifyContent="center"
           >
-            {name}
+            {value}
           </Box>
         ))}
       </Example>

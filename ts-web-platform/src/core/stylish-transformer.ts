@@ -6,10 +6,8 @@ import { theme } from './theme'
 
 const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as any)[prop][val] || val
 const getSpacing = getThemeProp('spacing')
-const getColor = getThemeProp('color')
 export const getAnimation = getThemeProp('animations')
 const getFontSize = getThemeProp('fontSize')
-const getFontFamily = getThemeProp('fontFamily')
 const getZIndex = getThemeProp('zIndex')
 const getBorder = getThemeProp('border')
 const getBoxShadow = getThemeProp('boxShadow')
@@ -140,22 +138,13 @@ const Rules: Dict<Rule> = {
   fontSize: val => ({
     fontSize: getFontSize(val),
   }),
-  fontFamily: val => ({
-    fontFamily: getFontFamily(val),
-  }),
   zIndex: val => ({
     zIndex: getZIndex(val),
   }),
 
 
-  color: val => ({
-    color: getColor(val),
-  }),
-  backgroundColor: val => ({
-    backgroundColor: getColor(val),
-  }),
   bgColor: val => ({
-    backgroundColor: getColor(val),
+    backgroundColor: val,
   }),
 
   relative: val => val && {

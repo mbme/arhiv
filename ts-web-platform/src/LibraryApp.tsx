@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
-import './webpack-hot'
+import { Procedure } from '@v/utils'
 import { injectGlobalStyles } from '@v/web-utils'
 import { globalStyles } from './core/global-styles'
 import { Library } from './Library'
@@ -38,4 +38,10 @@ render(Library)
 
 if (module.hot) {
   module.hot.accept('./Library', () => render(Library))
+}
+
+declare let module: {
+  hot?: {
+    accept(module: string, cb: Procedure): void
+  }
 }

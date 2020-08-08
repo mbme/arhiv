@@ -12,36 +12,6 @@ export const theme = {
   boxShadow: {
     default: '0 2px 4px rgba(0,0,0,.2)',
   },
-  color: {
-    primary: '#FF553C',
-    secondary: '#5E5A57',
-    light: '#ffffff',
-    text: '#333333',
-    heading: '#000000',
-    link: '#FDAF3C',
-    bg0: '#ffffff',
-    bg1: '#f5f5f5',
-    bg2: '#F9F9FA',
-    bgOverlay: 'rgba(255,255,255, .65)',
-    danger: 'red',
-  },
-  fontFamily: {
-    base: [
-      '-apple-system', 'BlinkMacSystemFont', // Safari Mac/iOS, Chrome
-      '"Segoe UI"', 'Roboto', 'Oxygen', // Windows, Android, KDE
-      'Ubuntu', 'Cantarell', '"Fira Sans"', // Ubuntu, Gnome, Firefox OS
-      '"Droid Sans"', '"Helvetica Neue"', 'sans-serif', // Old Android
-    ].join(', '),
-    mono: [
-      'SFMono-Regular',
-      'Menlo',
-      'Monaco',
-      'Consolas',
-      '"Liberation Mono"',
-      '"Courier New"',
-      'monospace',
-    ].join(', '),
-  },
   fontSize: {
     fine: '0.75rem',
     small: '0.875rem',

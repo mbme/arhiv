@@ -5,7 +5,7 @@ import {
 } from './core'
 
 const $textarea: StyleArg = {
-  backgroundColor: 'bg0',
+  backgroundColor: 'var(--color-bg0)',
   display: 'block',
   width: '100%',
   p: 'medium',

@@ -23,7 +23,7 @@ const getStyles = (props: IProps): StyleArg[] => [
     backgroundColor: 'inherit',
     borderBottom: 'default',
   } : {
-    backgroundColor: 'bg0',
+    backgroundColor: 'var(--color-bg0)',
     boxShadow: 'default',
     border: 'default',
   },
@@ -38,7 +38,7 @@ const $clearIcon: StyleArg = {
   right: 'fine',
   top: '50%',
   transform: 'translateY(-50%)',
-  color: 'secondary',
+  color: 'var(--color-secondary)',
 }
 
 type NativeProps =

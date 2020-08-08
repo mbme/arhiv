@@ -6,11 +6,11 @@ import {
 import { Overlay } from './Overlay'
 
 const $overlay: StyleArg = {
-  backgroundColor: 'bg2',
+  backgroundColor: 'var(--color-bg2)',
 }
 
 const $modal: StyleArg = {
-  backgroundColor: 'bg0',
+  backgroundColor: 'var(--color-bg0)',
   minWidth: '375px',
   border: 'default',
   boxShadow: 'default',

@@ -8,7 +8,7 @@ export function Label<E extends Tags>(props: ITextProps<E>) {
   return (
     <Text
       uppercase
-      color="secondary"
+      color="var(--color-secondary)"
       letterSpacing="1.2px"
       fontWeight={500}
       fontSize="small"

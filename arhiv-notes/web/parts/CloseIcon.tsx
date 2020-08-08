@@ -3,7 +3,7 @@ import { Icon, StyleArg } from '@v/web-platform'
 import { Procedure } from '@v/utils'
 
 const $icon: StyleArg = {
-  color: 'secondary',
+  color: 'var(--color-secondary)',
 }
 
 interface IProps {

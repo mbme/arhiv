@@ -102,7 +102,7 @@ const $icon: StyleArg = {
   cursor: 'pointer',
   transition: 'color 0.17s ease',
   '&:hover': {
-    color: 'primary',
+    color: 'var(--color-primary)',
   },
 }
 

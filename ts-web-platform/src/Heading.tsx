@@ -8,7 +8,7 @@ export function Heading(props: Props) {
   return (
     <Text
       as="h1"
-      color="heading"
+      color="var(--color-heading)"
       fontSize="xlarge"
       bold
       mb="medium"

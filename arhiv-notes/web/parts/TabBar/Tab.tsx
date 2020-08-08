@@ -17,7 +17,7 @@ const $tab: StyleArg = {
   userSelect: 'none',
   minWidth: '7rem',
   '&:hover': {
-    color: 'link',
+    color: 'var(--color-link)',
   },
 }
 
@@ -25,7 +25,7 @@ const $tabActive: StyleArg = {
   background: 'bg0',
   border: 'default',
   borderBottom: '0 none',
-  color: 'link',
+  color: 'var(--color-link)',
 
   py: '0.3rem',
   // to hide part of container's border

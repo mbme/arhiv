@@ -6,6 +6,29 @@ export const globalStyles = `
 :root {
   --font-size: 16px;
   --line-height: 1.30;
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, /* Safari Mac/iOS, Chrome */
+      "Segoe UI", Roboto, Oxygen, /* Windows, Android, KDE */
+      Ubuntu, Cantarell, "Fira Sans", /* Ubuntu, Gnome, Firefox OS */
+      "Droid Sans", "Helvetica Neue", sans-serif; /* Old Android */
+  --font-family-mono: SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      "Liberation Mono",
+      "Courier New",
+      monospace;
+
+  --color-primary: #FF553C;
+  --color-secondary: #5E5A57;
+  --color-text: #333333;
+  --color-textLight: #ffffff;
+  --color-heading: #000000;
+  --color-link: #FDAF3C;
+  --color-bg0: #ffffff;
+  --color-bg1: #f5f5f5;
+  --color-bg2: #F9F9FA;
+  --color-bgOverlay: rgba(255,255,255, .65);
 }
 
 @media screen and (min-width: 768px) {
@@ -22,7 +45,7 @@ export const globalStyles = `
 }
 
 html {
-  font-family: ${theme.fontFamily.base};
+  font-family: var(--font-family-base);
   font-size: var(--font-size);
   line-height: var(--line-height);
   font-variant-numeric: tabular-nums;
@@ -41,15 +64,15 @@ html {
 body {
   margin: 0; /* 1 */
   padding: 0;
-  font-family: ${theme.fontFamily.base};
+  font-family: var(--font-family-base);
   font-size: var(--font-size);
   line-height: var(--line-height);
   font-weight: 400;
   text-align: left; /* 3 */
   text-rendering: optimizeLegibility;
 
-  background-color: ${theme.color.bg0}; /* 2 */
-  color: ${theme.color.text};
+  background-color: var(--color-bg0); /* 2 */
+  color: var(--color-text);
 
   height: 100%;
   width: 100%;
@@ -82,7 +105,7 @@ hr {
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   margin-bottom: ${theme.spacing.medium};
-  color: ${theme.color.heading};
+  color: var(--color-heading);
 }
 
 /* Reset margins on paragraphs */
@@ -142,7 +165,7 @@ strong {
 
 small {
   font-size: ${theme.fontSize.fine};
-  color: ${theme.color.secondary};
+  color: var(--color-secondary);
 }
 
 /* Prevent sub and sup elements from affecting the line height in all browsers. */
@@ -160,11 +183,11 @@ sup { top: -.5em; }
 
 /* Links */
 a {
-  color: ${theme.color.link};
+  color: var(--color-link);
   text-decoration: none;
 }
 a:hover {
-  color: ${theme.color.link};
+  color: var(--color-link);
   text-decoration: none;
 }
 
@@ -173,7 +196,7 @@ pre,
 code,
 kbd,
 samp {
-  font-family: ${theme.fontFamily.mono}; /* Correct the inheritance and scaling of font size in all browsers. */
+  font-family: var(--font-family-mono); /* Correct the inheritance and scaling of font size in all browsers. */
   font-size: 1em; /* Correct the odd em font sizing in all browsers. */
 }
 

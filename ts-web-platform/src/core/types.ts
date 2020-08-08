@@ -7,7 +7,6 @@ type CSSProps = CSS.Properties & CSS.PropertiesHyphen
 
 type Spacing = keyof typeof theme.spacing
 type Border = keyof typeof theme.border
-type Color = keyof typeof theme.color | CSS.Color
 
 interface ITransformerProps {
   margin?: CSS.MarginProperty<Spacing>
@@ -55,12 +54,9 @@ interface ITransformerProps {
   height?: CSS.HeightProperty<Spacing>
 
   fontSize?: CSS.FontSizeProperty<keyof typeof theme.fontSize>
-  fontFamily?: keyof typeof theme.fontFamily | CSS.FontFamilyProperty
   zIndex?: keyof typeof theme.zIndex | CSS.ZIndexProperty
 
-  color?: Color
-  bgColor?: Color
-  backgroundColor?: Color
+  bgColor?: CSS.Color
 
   relative?: boolean
   absolute?: boolean

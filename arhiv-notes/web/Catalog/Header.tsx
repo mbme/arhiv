@@ -25,10 +25,8 @@ export function Header({ filter, onChange }: IProps) {
     <Row
       as="nav"
       alignX="center"
-      boxShadow="default"
       p="fine"
       width="100%"
-      bgColor="bg1"
       zIndex={1}
       $style={$container}
     >

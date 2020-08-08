@@ -32,13 +32,13 @@ function getStyles(props: IProps): StyleArg[] {
 
     props.disabled && {
       cursor: 'auto',
-      color: 'secondary',
-      backgroundColor: 'bg1',
+      color: 'var(--color-secondary)',
+      backgroundColor: 'var(--color-bg1)',
     },
 
     !props.disabled && props.variant === 'primary' && {
-      backgroundColor: 'primary',
-      color: 'light',
+      backgroundColor: 'var(--color-primary)',
+      color: 'var(--color-textLight)',
       boxShadow: 'default',
       '&:hover': {
         transform: 'scale(1.05)',
@@ -46,17 +46,17 @@ function getStyles(props: IProps): StyleArg[] {
     },
 
     !props.disabled && props.variant === 'secondary' && {
-      color: 'text',
-      backgroundColor: 'bg0',
+      color: 'var(--color-text)',
+      backgroundColor: 'var(--color-bg0)',
       '&:hover': {
-        backgroundColor: 'bg1',
+        backgroundColor: 'var(--color-bg1)',
       },
     },
 
     !props.disabled && props.variant === 'link' && {
       border: '0 none',
       background: 'transparent',
-      color: 'link',
+      color: 'var(--color-link)',
     },
   ]
 }

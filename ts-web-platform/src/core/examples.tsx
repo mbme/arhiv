@@ -6,13 +6,12 @@ const colors = [
   '--color-primary',
   '--color-secondary',
   '--color-text',
-  '--color-textLight',
+  '--color-text-light',
   '--color-heading',
   '--color-link',
   '--color-bg0',
   '--color-bg1',
-  '--color-bg2',
-  '--color-bgOverlay',
+  '--color-bg-overlay',
 ]
 
 export function StyleExamples() {

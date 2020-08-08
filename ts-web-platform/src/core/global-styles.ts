@@ -22,13 +22,12 @@ export const globalStyles = `
   --color-primary: #FF553C;
   --color-secondary: #5E5A57;
   --color-text: #333333;
-  --color-textLight: #ffffff;
+  --color-text-light: #ffffff;
   --color-heading: #000000;
   --color-link: #FDAF3C;
   --color-bg0: #ffffff;
   --color-bg1: #f5f5f5;
-  --color-bg2: #F9F9FA;
-  --color-bgOverlay: rgba(255,255,255, .65);
+  --color-bg-overlay: rgba(255,255,255, .65);
 }
 
 @media screen and (min-width: 768px) {

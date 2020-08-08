@@ -38,7 +38,7 @@ function getStyles(props: IProps): StyleArg[] {
 
     !props.disabled && props.variant === 'primary' && {
       backgroundColor: 'var(--color-primary)',
-      color: 'var(--color-textLight)',
+      color: 'var(--color-text-light)',
       boxShadow: 'default',
       '&:hover': {
         transform: 'scale(1.05)',

@@ -7,7 +7,7 @@ import {
 import { IOverlay } from './context'
 
 const $container: StyleArg = {
-  backgroundColor: 'var(--color-bgOverlay)',
+  backgroundColor: 'var(--color-bg-overlay)',
   padding: 'large',
 
   position: 'fixed',
@@ -24,8 +24,8 @@ const $container: StyleArg = {
   overflowY: 'auto',
 }
 
-export function TopOverlay({ children, onClick, innerRef, $styles = [] }: IOverlay) {
-  const className = useStyles($container, ...$styles)
+export function TopOverlay({ children, onClick, innerRef, $style, $styles = [] }: IOverlay) {
+  const className = useStyles($container, $style, ...$styles)
 
   const clickHandler = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onClick && e.target === e.currentTarget) {

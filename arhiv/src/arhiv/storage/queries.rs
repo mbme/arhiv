@@ -48,7 +48,7 @@ pub fn get_documents(
     }
 
     if let Some(ref matcher) = filter.matcher {
-        query.push("AND instr(json_extract(data, ':matcher_selector'), ':matcher_pattern')");
+        query.push("AND instr(json_extract(data, :matcher_selector), :matcher_pattern)");
         params.push((":matcher_selector", &matcher.selector));
         params.push((":matcher_pattern", &matcher.pattern));
     }

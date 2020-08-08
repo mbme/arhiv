@@ -135,7 +135,10 @@ export class Input extends React.PureComponent<IProps> {
     } = this.props
 
     return (
-      <Box relative>
+      <Box
+        relative
+        width="100%"
+      >
         <StylishElement
           as="input"
           $styles={getStyles(this.props)}

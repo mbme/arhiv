@@ -8,10 +8,8 @@ import {
   StylishProvider,
   OverlayRenderer,
   Column,
-  Spacer,
 } from '@v/web-platform'
 import { pathMatcher as pm } from '@v/utils'
-import { Header } from './Header'
 import { Catalog } from './Catalog'
 import { Card } from './Card'
 import { CardEditorContainer } from './CardEditor'
@@ -28,15 +26,11 @@ export function App() {
               minWidth="30rem"
               maxWidth="40rem"
               alignX="stretch"
-              mx="auto"
-              bgColor="bg2"
               height="100%"
             >
-              <Header />
-
-              <Spacer height="large" />
-
-              <Routes onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}>
+              <Routes
+                onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
+              >
                 {[
                   [pm`/`, () => <Catalog />],
                   [pm`/new`, () => <CardEditorContainer />],

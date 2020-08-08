@@ -12,7 +12,6 @@ const $tab: StyleArg = {
   textTransform: 'uppercase',
   fontSize: 'small',
   letterSpacing: '1.2px',
-  background: 'bg1',
   cursor: 'pointer',
   userSelect: 'none',
   minWidth: '7rem',
@@ -22,7 +21,6 @@ const $tab: StyleArg = {
 }
 
 const $tabActive: StyleArg = {
-  background: 'bg0',
   border: 'default',
   borderBottom: '0 none',
   color: 'var(--color-link)',

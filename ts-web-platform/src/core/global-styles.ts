@@ -26,7 +26,6 @@ export const globalStyles = `
   --color-heading: #000000;
   --color-link: #FDAF3C;
   --color-bg0: #ffffff;
-  --color-bg1: #f5f5f5;
   --color-bg-overlay: rgba(255,255,255, .65);
 }
 

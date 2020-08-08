@@ -33,7 +33,7 @@ function getStyles(props: IProps): StyleArg[] {
     props.disabled && {
       cursor: 'auto',
       color: 'var(--color-secondary)',
-      backgroundColor: 'var(--color-bg1)',
+      backgroundColor: 'var(--color-bg0)',
     },
 
     !props.disabled && props.variant === 'primary' && {
@@ -49,7 +49,7 @@ function getStyles(props: IProps): StyleArg[] {
       color: 'var(--color-text)',
       backgroundColor: 'var(--color-bg0)',
       '&:hover': {
-        backgroundColor: 'var(--color-bg1)',
+        transform: 'scale(1.05)',
       },
     },
 

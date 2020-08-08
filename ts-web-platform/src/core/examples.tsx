@@ -10,7 +10,6 @@ const colors = [
   '--color-heading',
   '--color-link',
   '--color-bg0',
-  '--color-bg1',
   '--color-bg-overlay',
 ]
 

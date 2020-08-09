@@ -11,7 +11,7 @@ fn main() {
     let mut app = App::new("arhiv")
         .subcommand(App::new("init").about("Initialize arhiv on local machine"))
         .subcommand(App::new("status").about("Print current status"))
-        .subcommand(App::new("server").about("Run prime server"))
+        .subcommand(App::new("prime-server").about("Run prime server"))
         .subcommand(App::new("commit").about("Commit changes"))
         .version(crate_version!());
 
@@ -29,7 +29,7 @@ fn main() {
                     .expect("must be able to get status")
             );
         }
-        ("server", Some(_)) => {
+        ("prime-server", Some(_)) => {
             Arhiv::must_open().start_server();
         }
         ("commit", Some(_)) => {

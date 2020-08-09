@@ -24,7 +24,7 @@ impl Arhiv {
                 .and(warp::body::bytes())
                 .map(move |id: String, data: Bytes| {
                     let arhiv = arhiv.lock().unwrap();
-                    let dst = arhiv.storage.get_temp_attachment_file_path(&id);
+                    let dst = arhiv.storage.get_staged_attachment_file_path(&id);
 
                     if Path::new(&dst).exists() {
                         log::error!("temp attachment data {} already exists", dst);
@@ -56,7 +56,7 @@ impl Arhiv {
                 .and(warp::path::param::<String>())
                 .map(move |id: String| {
                     let arhiv = arhiv.lock().unwrap();
-                    let file = arhiv.get_attachment_data_path(&id);
+                    let file = arhiv.storage.get_committed_attachment_file_path(&id);
 
                     // FIXME stream file, support ranges
                     // res.headers['Content-Disposition'] = `inline; filename=${fileId}`
@@ -80,7 +80,7 @@ impl Arhiv {
 
                     for attachment in &changeset.attachments {
                         let id = attachment.id.clone();
-                        let path = arhiv.storage.get_temp_attachment_file_path(&id);
+                        let path = arhiv.storage.get_staged_attachment_file_path(&id);
 
                         attachment_data.insert(id, path);
                     }

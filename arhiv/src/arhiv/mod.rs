@@ -140,19 +140,22 @@ impl Arhiv {
         get_attachment(&conn, id)
     }
 
-    pub fn get_attachment_data_path(&self, id: &Id) -> String {
-        self.storage.get_attachment_file_path(id)
-    }
-
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
-        let attachment = self.get_attachment(id)?;
+        let attachment = self
+            .get_attachment(id)?
+            .ok_or(anyhow!("unknown attachment {}", id))?;
 
-        if attachment.is_none() {
-            bail!("unknown attachment {}", id);
+        if attachment.is_staged() {
+            let local_file_path = self.storage.get_staged_attachment_file_path(id);
+
+            if file_exists(&local_file_path)? {
+                return Ok(AttachmentLocation::File(local_file_path));
+            } else {
+                return Ok(AttachmentLocation::Unknown);
+            }
         }
 
-        let local_file_path = self.get_attachment_data_path(id);
-
+        let local_file_path = self.storage.get_committed_attachment_file_path(id);
         if file_exists(&local_file_path)? {
             return Ok(AttachmentLocation::File(local_file_path));
         }
@@ -186,7 +189,7 @@ impl Arhiv {
         put_attachment(&tx, &attachment)?;
         fs_tx.hard_link_file(
             file.to_string(),
-            self.storage.get_temp_attachment_file_path(&attachment.id),
+            self.storage.get_staged_attachment_file_path(&attachment.id),
         )?;
 
         tx.commit()?;

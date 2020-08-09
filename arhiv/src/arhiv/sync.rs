@@ -62,7 +62,8 @@ impl Arhiv {
             // save attachment file
             fs_tx.move_file(
                 file_path.to_string(),
-                self.storage.get_attachment_file_path(&attachment.id),
+                self.storage
+                    .get_committed_attachment_file_path(&attachment.id),
             )?;
         }
 
@@ -112,7 +113,7 @@ impl Arhiv {
 
         for attachment in changeset.attachments.iter() {
             // FIXME async parallel upload
-            let file = File::open(self.get_attachment_data_path(&attachment.id))?;
+            let file = File::open(self.storage.get_staged_attachment_file_path(&attachment.id))?;
 
             let res = Client::new().post(primary_url).body(file).send()?;
 
@@ -165,7 +166,7 @@ impl Arhiv {
         for attachment in &changeset.attachments {
             attachment_data.insert(
                 attachment.id.clone(),
-                self.storage.get_temp_attachment_file_path(&attachment.id),
+                self.storage.get_staged_attachment_file_path(&attachment.id),
             );
         }
 

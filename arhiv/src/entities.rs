@@ -85,6 +85,10 @@ impl Attachment {
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize attachment to json")
     }
+
+    pub fn is_staged(&self) -> bool {
+        self.rev == 0
+    }
 }
 
 impl std::str::FromStr for Attachment {

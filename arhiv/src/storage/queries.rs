@@ -14,24 +14,39 @@ pub fn get_rev(conn: &Connection) -> Result<Revision> {
     Ok(rev)
 }
 
-pub fn has_staged_changes(conn: &Connection) -> Result<bool> {
-    let documents_count: i32 = conn.query_row(
-        "SELECT COUNT(*) FROM documents WHERE rev = 0",
+pub fn count_documents(conn: &Connection) -> Result<(u32, u32)> {
+    conn.query_row(
+        "SELECT
+            IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
+            IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
+        FROM documents",
         NO_PARAMS,
-        |row| row.get(0),
-    )?;
+        |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+    )
+    .context("Failed to count documents")
+}
 
-    if documents_count > 0 {
+pub fn count_attachments(conn: &Connection) -> Result<(u32, u32)> {
+    conn.query_row(
+        "SELECT
+            IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
+            IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
+        FROM attachments",
+        NO_PARAMS,
+        |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+    )
+    .context("Failed to count attachments")
+}
+
+pub fn has_staged_changes(conn: &Connection) -> Result<bool> {
+    let (_, staged_documents) = count_documents(conn)?;
+    if staged_documents > 0 {
         return Ok(true);
     }
 
-    let attachments_count: i32 = conn.query_row(
-        "SELECT COUNT(*) FROM attachments WHERE rev = 0",
-        NO_PARAMS,
-        |row| row.get(0),
-    )?;
+    let (_, staged_attachments) = count_attachments(conn)?;
 
-    Ok(attachments_count > 0)
+    Ok(staged_attachments > 0)
 }
 
 pub fn get_documents(
@@ -106,7 +121,7 @@ pub fn get_all_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
     Ok(attachments)
 }
 
-pub fn get_commited_attachments_with_rev(
+pub fn get_committed_attachments_with_rev(
     conn: &Connection,
     min_rev: Revision,
 ) -> Result<Vec<Attachment>> {
@@ -122,8 +137,8 @@ pub fn get_commited_attachments_with_rev(
     Ok(attachments)
 }
 
-pub fn get_commited_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    get_commited_attachments_with_rev(conn, 1)
+pub fn get_committed_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
+    get_committed_attachments_with_rev(conn, 1)
 }
 
 pub fn get_staged_attachments(conn: &Connection) -> Result<Vec<Attachment>> {

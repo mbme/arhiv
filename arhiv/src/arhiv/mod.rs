@@ -5,6 +5,7 @@ use crate::utils::{ensure_file_exists, file_exists, FsTransaction};
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::Path;
 
 mod server;
@@ -19,8 +20,24 @@ pub enum AttachmentLocation {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status {
-    pub rev: u32,
     pub is_prime: bool,
+    pub rev: u32,
+
+    pub commited_documents: u32,
+    pub staged_documents: u32,
+
+    pub commited_attachments: u32,
+    pub staged_attachments: u32,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_json::to_string_pretty(self).expect("Failed to serialize status to json")
+        )
+    }
 }
 
 pub struct Arhiv {
@@ -54,10 +71,16 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let rev = get_rev(&conn)?;
+        let (commited_documents, staged_documents) = count_documents(&conn)?;
+        let (commited_attachments, staged_attachments) = count_attachments(&conn)?;
 
         Ok(Status {
             rev,
             is_prime: self.config.prime,
+            commited_documents,
+            staged_documents,
+            commited_attachments,
+            staged_attachments,
         })
     }
 
@@ -73,26 +96,29 @@ impl Arhiv {
         get_document(&conn, id)
     }
 
-    pub fn stage_document(&self, updated_document: Document) -> Result<()> {
+    pub fn stage_document(&self, mut updated_document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
 
-        let mut document = get_document(&tx, &updated_document.id)?.ok_or(anyhow!(
-            "can't update unknown document {}",
-            updated_document.id
-        ))?;
+        if let Some(mut document) = get_document(&tx, &updated_document.id)? {
+            document.rev = 0; // make sure document rev is Staging
+            document.updated_at = Utc::now();
+            document.data = updated_document.data;
+            document.refs = updated_document.refs;
+            document.attachment_refs = updated_document.attachment_refs;
 
-        document.rev = 0; // make sure document rev is Staging
-        document.updated_at = Utc::now();
-        document.data = updated_document.data;
-        document.refs = updated_document.refs;
-        document.attachment_refs = updated_document.attachment_refs;
+            put_document(&tx, &document)?;
+            tx.commit()?;
+            log::trace!("staged document {}", &document);
+        } else {
+            updated_document.rev = 0;
+            updated_document.created_at = Utc::now();
+            updated_document.updated_at = Utc::now();
 
-        put_document(&tx, &document)?;
-
-        tx.commit()?;
-
-        log::trace!("staged new document {}", &document);
+            put_document(&tx, &updated_document)?;
+            tx.commit()?;
+            log::trace!("staged new document {}", &updated_document);
+        }
 
         Ok(())
     }
@@ -102,7 +128,7 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         if self.config.prime {
-            get_commited_attachments(&conn)
+            get_committed_attachments(&conn)
         } else {
             get_all_attachments(&conn)
         }

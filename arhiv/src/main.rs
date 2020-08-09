@@ -23,7 +23,7 @@ fn main() {
         }
         ("status", Some(_)) => {
             println!(
-                "{:?}",
+                "{}",
                 Arhiv::must_open()
                     .get_status()
                     .expect("must be able to get status")

@@ -14,4 +14,7 @@ remove-arhiv:
 init-arhiv:
   cd arhiv && cargo run --bin arhiv init
 
+arhiv *PARAMS:
+  cd arhiv && cargo run --bin arhiv {{PARAMS}}
+
 reset-arhiv: remove-arhiv init-arhiv

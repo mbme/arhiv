@@ -80,7 +80,7 @@ impl Arhiv {
         filter.page_size = None; // fetch all items
 
         let documents = get_documents(&conn, base_rev + 1, filter)?;
-        let attachments = get_commited_attachments_with_rev(&conn, base_rev + 1)?;
+        let attachments = get_committed_attachments_with_rev(&conn, base_rev + 1)?;
 
         Ok(ChangesetResponse {
             latest_rev: get_rev(&conn)?,
@@ -165,7 +165,7 @@ impl Arhiv {
         for attachment in &changeset.attachments {
             attachment_data.insert(
                 attachment.id.clone(),
-                self.storage.get_attachment_file_path(&attachment.id),
+                self.storage.get_temp_attachment_file_path(&attachment.id),
             );
         }
 

@@ -1,6 +1,6 @@
-use super::storage::*;
 use super::Arhiv;
 use crate::entities::*;
+use crate::storage::*;
 use crate::utils::FsTransaction;
 use anyhow::*;
 use reqwest::blocking::Client;
@@ -59,7 +59,6 @@ impl Arhiv {
                 .get(&attachment.id)
                 .ok_or(anyhow!("Attachment data for {} is missing", &attachment.id))?;
 
-            // FIXME check if we need this for local commits
             // save attachment file
             fs_tx.move_file(
                 file_path.to_string(),
@@ -91,9 +90,46 @@ impl Arhiv {
         })
     }
 
-    fn apply_changeset_response(&self, response: ChangesetResponse) -> Result<()> {
+    pub fn commit(&self) -> Result<()> {
+        if self.config.prime {
+            self.commit_locally()
+        } else {
+            self.commit_remotely()
+        }
+    }
+
+    fn commit_remotely(&self) -> Result<()> {
+        let primary_url = self
+            .config
+            .primary_url
+            .as_ref()
+            .ok_or(anyhow!("can't sync: primary_url is missing"))?;
+
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
+
+        let changeset = get_changeset(&tx)?;
+
+        for attachment in changeset.attachments.iter() {
+            // FIXME async parallel upload
+            let file = File::open(self.get_attachment_data_path(&attachment.id))?;
+
+            let res = Client::new().post(primary_url).body(file).send()?;
+
+            if !res.status().is_success() {
+                return Err(anyhow!(
+                    "failed to upload attachment data {}",
+                    &attachment.id
+                ));
+            }
+        }
+
+        let response: ChangesetResponse = Client::new()
+            .post(primary_url)
+            .json(&changeset)
+            .send()?
+            .text()?
+            .parse()?;
 
         let rev = get_rev(&tx)?;
 
@@ -117,54 +153,7 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn sync(&self) -> Result<()> {
-        if self.config.prime {
-            return Err(anyhow!("can't sync: not a replica"));
-        }
-
-        let primary_url = self
-            .config
-            .primary_url
-            .as_ref()
-            .ok_or(anyhow!("can't sync: primary_url is missing"))?;
-
-        let changeset = {
-            let mut conn = self.storage.get_connection()?;
-            let tx = conn.transaction()?;
-
-            get_changeset(&tx)?
-        };
-
-        for attachment in changeset.attachments.iter() {
-            // FIXME async parallel upload
-            let file = File::open(self.get_attachment_data_path(&attachment.id))?;
-
-            let res = Client::new().post(primary_url).body(file).send()?;
-
-            if !res.status().is_success() {
-                return Err(anyhow!(
-                    "failed to upload attachment data {}",
-                    &attachment.id
-                ));
-            }
-        }
-
-        // FIXME lock database until we get a response
-        let response: ChangesetResponse = Client::new()
-            .post(primary_url)
-            .json(&changeset)
-            .send()?
-            .text()?
-            .parse()?;
-
-        self.apply_changeset_response(response)
-    }
-
-    pub fn sync_locally(&self) -> Result<()> {
-        if !self.config.prime {
-            return Err(anyhow!("can't sync locally: not a prime"));
-        }
-
+    fn commit_locally(&self) -> Result<()> {
         let changeset = {
             let mut conn = self.storage.get_connection()?;
             let tx = conn.transaction()?;

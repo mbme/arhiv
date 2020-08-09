@@ -1,14 +1,13 @@
-use self::storage::*;
 use crate::config::Config;
 use crate::entities::*;
+use crate::storage::*;
 use crate::utils::{ensure_file_exists, file_exists, FsTransaction};
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use storage::QueryFilter;
 
-pub mod storage;
+mod server;
 mod sync;
 
 #[derive(Serialize, Deserialize)]
@@ -18,9 +17,15 @@ pub enum AttachmentLocation {
     Unknown,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Status {
+    pub rev: u32,
+    pub is_prime: bool,
+}
+
 pub struct Arhiv {
-    storage: Storage,
-    pub config: Config,
+    pub(crate) storage: Storage,
+    pub(crate) config: Config,
 }
 
 impl Arhiv {
@@ -45,10 +50,15 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn get_rev(&self) -> Result<Revision> {
+    pub fn get_status(&self) -> Result<Status> {
         let conn = self.storage.get_connection()?;
 
-        get_rev(&conn)
+        let rev = get_rev(&conn)?;
+
+        Ok(Status {
+            rev,
+            is_prime: self.config.prime,
+        })
     }
 
     pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
@@ -60,16 +70,17 @@ impl Arhiv {
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_document(&conn, id, QueryMode::All)
+        get_document(&conn, id)
     }
 
     pub fn stage_document(&self, updated_document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.transaction()?;
 
-        let mut document = get_document(&tx, &updated_document.id, QueryMode::All)?.ok_or(
-            anyhow!("can't update unknown document {}", updated_document.id),
-        )?;
+        let mut document = get_document(&tx, &updated_document.id)?.ok_or(anyhow!(
+            "can't update unknown document {}",
+            updated_document.id
+        ))?;
 
         document.rev = 0; // make sure document rev is Staging
         document.updated_at = Utc::now();
@@ -100,7 +111,7 @@ impl Arhiv {
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachment(&conn, id, QueryMode::All)
+        get_attachment(&conn, id)
     }
 
     pub fn get_attachment_data_path(&self, id: &Id) -> String {
@@ -149,7 +160,7 @@ impl Arhiv {
         put_attachment(&tx, &attachment)?;
         fs_tx.hard_link_file(
             file.to_string(),
-            self.storage.get_attachment_file_path(&attachment.id),
+            self.storage.get_temp_attachment_file_path(&attachment.id),
         )?;
 
         tx.commit()?;

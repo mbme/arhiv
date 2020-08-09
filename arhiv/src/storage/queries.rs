@@ -139,17 +139,8 @@ pub fn get_staged_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
     Ok(attachments)
 }
 
-pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Document>> {
-    let mut stmt = conn.prepare_cached({
-        match mode {
-            QueryMode::All => {
-                "SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1"
-            }
-            QueryMode::Commited => {
-                "SELECT * FROM documents WHERE id = ?1 AND rev > 0 GROUP BY id HAVING MAX(rev)"
-            }
-        }
-    })?;
+pub fn get_document(conn: &Connection, id: &Id) -> Result<Option<Document>> {
+    let mut stmt = conn.prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
     let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -160,13 +151,8 @@ pub fn get_document(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Optio
     }
 }
 
-pub fn get_attachment(conn: &Connection, id: &Id, mode: QueryMode) -> Result<Option<Attachment>> {
-    let mut stmt = conn.prepare_cached({
-        match mode {
-            QueryMode::All => "SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1",
-            QueryMode::Commited => "SELECT * FROM attachments WHERE id = ?1 AND rev > 0 GROUP BY id HAVING MAX(rev)",
-        }
-    })?;
+pub fn get_attachment(conn: &Connection, id: &Id) -> Result<Option<Attachment>> {
+    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
     let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;
 

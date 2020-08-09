@@ -81,5 +81,5 @@ fn main() {
         notes.put_note(document);
     }
 
-    notes.arhiv.sync_locally().expect("must be able to sync");
+    notes.arhiv.commit().expect("must be able to commit");
 }

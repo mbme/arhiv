@@ -2,7 +2,6 @@
 #![deny(clippy::pedantic)]
 
 use arhiv::config::Config;
-use arhiv::server::start_server;
 use arhiv::Arhiv;
 use clap::{crate_version, App};
 
@@ -11,9 +10,9 @@ fn main() {
 
     let mut app = App::new("arhiv")
         .subcommand(App::new("init").about("Initialize arhiv on local machine"))
-        .subcommand(App::new("rev").about("Print current revision"))
-        .subcommand(App::new("server").about("Run primary server"))
-        .subcommand(App::new("sync").about("Trigger sync with primary server"))
+        .subcommand(App::new("status").about("Print current status"))
+        .subcommand(App::new("server").about("Run prime server"))
+        .subcommand(App::new("commit").about("Commit changes"))
         .version(crate_version!());
 
     let matches = app.clone().get_matches();
@@ -22,16 +21,19 @@ fn main() {
         ("init", Some(_)) => {
             Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
         }
-        ("rev", Some(_)) => {
+        ("status", Some(_)) => {
             println!(
-                "revision: {}",
+                "{:?}",
                 Arhiv::must_open()
-                    .get_rev()
-                    .expect("must be able to get revision")
+                    .get_status()
+                    .expect("must be able to get status")
             );
         }
         ("server", Some(_)) => {
-            start_server(Arhiv::must_open());
+            Arhiv::must_open().start_server();
+        }
+        ("commit", Some(_)) => {
+            Arhiv::must_open().commit().expect("must commit");
         }
         _ => app.print_help().unwrap(),
     }

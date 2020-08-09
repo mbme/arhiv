@@ -54,4 +54,8 @@ impl Storage {
     pub fn get_attachment_file_path(&self, id: &Id) -> String {
         format!("{}/{}", self.path_manager.get_data_directory(), id)
     }
+
+    pub fn get_temp_attachment_file_path(&self, id: &Id) -> String {
+        format!("{}/{}", self.path_manager.get_temp_data_directory(), id)
+    }
 }

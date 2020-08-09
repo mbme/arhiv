@@ -1,10 +1,5 @@
 use std::default::Default;
 
-pub enum QueryMode {
-    All,
-    Commited,
-}
-
 pub struct Matcher {
     pub selector: String,
     pub pattern: String,

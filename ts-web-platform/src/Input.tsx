@@ -11,21 +11,12 @@ const getStyles = (props: IProps): StyleArg[] => [
     display: 'block',
     width: '100%',
     height: '100%',
-    border: '0 none',
-    backgroundColor: 'inherit',
-
-    px: 'medium',
-    py: 'small',
-  },
-
-  props.light ? {
-    py: 'fine',
-    backgroundColor: 'inherit',
-    borderBottom: 'default',
-  } : {
     backgroundColor: 'var(--color-bg0)',
     boxShadow: 'default',
     border: 'default',
+
+    px: 'medium',
+    py: 'small',
   },
 
   props.onClear && {
@@ -54,7 +45,6 @@ type NativeProps =
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   onChange(value: string): void
   autoFocus?: boolean
-  light?: boolean
   onClear?(): void
 }
 

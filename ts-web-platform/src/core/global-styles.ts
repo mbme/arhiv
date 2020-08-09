@@ -29,6 +29,19 @@ export const globalStyles = `
   --color-bg-overlay: rgba(255,255,255, .65);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #88c0d0;
+    --color-secondary: #8fbcbb;
+    --color-text: #d8dee9;
+    --color-text-light: #eceff4;
+    --color-heading: #d8dee9;
+    --color-link: #81a1c1;
+    --color-bg0: #2e3440;
+    --color-bg-overlay: #4c566a;
+  }
+}
+
 @media screen and (min-width: 768px) {
   :root {
     --font-size: 18px;
@@ -40,6 +53,10 @@ export const globalStyles = `
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+:focus {
+  outline: 1px solid var(--color-secondary);
 }
 
 html {

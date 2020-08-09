@@ -29,6 +29,7 @@ export function Header({ filter, onChange }: IProps) {
       width="100%"
       zIndex={1}
       $style={$container}
+      bgColor="var(--color-bg0)"
     >
       <Input
         name="filter"

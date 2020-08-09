@@ -2,39 +2,6 @@ import * as React from 'react'
 import { Input } from './Input'
 import { Example } from './Example'
 
-function LightInputExample() {
-  const [value, setValue] = React.useState('')
-
-  return (
-    <Example title="Light input">
-      <Input
-        name="input1"
-        placeholder="Input example (light)"
-        value={value}
-        light
-        onChange={setValue}
-      />
-    </Example>
-  )
-}
-
-function LightInputWithClearExample() {
-  const [value, setValue] = React.useState('')
-
-  return (
-    <Example title="Light input with clear">
-      <Input
-        name="input11"
-        placeholder="Input example (light) with clear"
-        value={value}
-        light
-        onChange={setValue}
-        onClear={() => setValue('')}
-      />
-    </Example>
-  )
-}
-
 function InputExample() {
   const [value, setValue] = React.useState('')
 
@@ -69,10 +36,6 @@ function InputWithClearExample() {
 export function InputExamples() {
   return (
     <Example section title="Input">
-      <LightInputExample />
-
-      <LightInputWithClearExample />
-
       <InputExample />
 
       <InputWithClearExample />

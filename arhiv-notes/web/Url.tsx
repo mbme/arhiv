@@ -7,7 +7,7 @@ const $style: StyleArg = {
   bottom: 0,
   left: 0,
   zIndex: 1,
-  backgroundColor: 'yellow',
+  backgroundColor: 'var(--color-bg-overlay)',
 }
 
 export function Url() {

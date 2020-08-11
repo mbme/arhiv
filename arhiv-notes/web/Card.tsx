@@ -1,12 +1,10 @@
 import * as React from 'react'
 import {
-  Link,
-  Row,
   ProgressLocker,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
 import { API } from './notes'
-import { CloseIcon, Frame, ErrorBlock, NotFoundBlock } from './parts'
+import { Frame, ErrorBlock, NotFoundBlock, Action } from './parts'
 import { Metadata } from './Metadata'
 import { Note } from './Note'
 
@@ -16,6 +14,7 @@ interface IProps {
 
 export function Card({ id }: IProps) {
   const router = RouterContext.use()
+  const [metadata, showMetadata] = React.useState(false)
   const [note, err] = usePromise(() => API.get_note(id), [id])
 
   if (err) {
@@ -38,25 +37,47 @@ export function Card({ id }: IProps) {
     )
   }
 
-  const buttons = (
-    <Row>
-      <Link to={{ path: `/${id}/edit` }}>
-        Edit
-      </Link>
+  const actions = metadata ? (
+    <Action
+      type="action"
+      onClick={() => showMetadata(false)}
+    >
+      Back
+    </Action>
+  ) : (
+    <>
+      <Action
+        type="location"
+        to={{ path: `/${id}/edit` }}
+      >
+        Edit Note
+      </Action>
 
-      <CloseIcon onClick={() => router.goBack() } />
-    </Row>
+      <Action
+        type="action"
+        onClick={() => showMetadata(true)}
+      >
+        Show Metadata
+      </Action>
+
+      <Action
+        type="action"
+        onClick={() => router.goBack()}
+      >
+        Close
+      </Action>
+    </>
   )
-
-  const tabs = {
-    [note.type]: () => <Note name={note.data.name} data={note.data.data} />,
-    'metadata': () => <Metadata document={note} />,
-  }
 
   return (
     <Frame
-      tabs={tabs}
-      buttons={buttons}
-    />
+      actions={actions}
+    >
+      {metadata ? (
+        <Metadata document={note} />
+      ) : (
+        <Note name={note.data.name} data={note.data.data} />
+      )}
+    </Frame>
   )
 }

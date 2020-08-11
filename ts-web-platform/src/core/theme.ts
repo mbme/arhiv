@@ -7,7 +7,7 @@ export const theme = {
     xlarge: '3rem',
   },
   border: {
-    default: '1px solid rgba(0,0,0,.09)',
+    default: '1px solid var(--color-secondary)',
   },
   boxShadow: {
     default: '0 2px 4px rgba(0,0,0,.2)',

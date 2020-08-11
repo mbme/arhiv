@@ -1,8 +1,8 @@
 import * as React from 'react'
 import {
-  Icon,
   ConfirmationDialog,
 } from '@v/web-platform'
+import { Action } from '../parts'
 
 interface IProps {
   onConfirmed(): void
@@ -13,11 +13,12 @@ export function DeleteDocumentButton({ onConfirmed }: IProps) {
 
   return (
     <>
-      <Icon
-        title="Delete document"
-        type="trash-2"
+      <Action
+        type="action"
         onClick={() => showModal(true)}
-      />
+      >
+        Delete
+      </Action>
 
       {isModalVisible && (
         <ConfirmationDialog

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Procedure } from '@v/utils'
-import { Button, Input, Row, Spacer, Textarea } from '@v/web-platform'
-import { Frame } from '../parts'
+import { Input, Spacer, Textarea } from '@v/web-platform'
+import { Frame, Action } from '../parts'
 import { Note } from '../Note'
 import { AddAttachmentButton } from './AddAttachmentButton'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
@@ -23,6 +23,7 @@ export function CardEditor(props: IProps) {
     onDelete,
   } = props
 
+  const [preview, showPreview] = React.useState(false)
   const [name, setName] = React.useState(originalName)
   const [data, setData] = React.useState(originalData)
 
@@ -35,67 +36,70 @@ export function CardEditor(props: IProps) {
     textAreaRef.current!.focus()
   }
 
-  const buttons = (
+  const actions = preview ? (
+    <Action
+      type="action"
+      onClick={() => showPreview(false)}
+    >
+      Back
+    </Action>
+  ) : (
     <>
+      <Action
+        type="action"
+        onClick={() => onSave(name, data)}
+        disabled={!isValid}
+      >
+        Save Note
+      </Action>
+
+      <Action
+        type="action"
+        onClick={onCancel}
+      >
+        Cancel
+      </Action>
+
+      <Action
+        type="action"
+        onClick={() => showPreview(true)}
+      >
+        Show Preview
+      </Action>
+
+      <AddAttachmentButton onAttachments={onAttachments} />
+
       {onDelete && <DeleteDocumentButton onConfirmed={onDelete} />}
     </>
   )
 
-  const tabs = {
-    editor: () => (
-      <>
-        <Input
-          name="name"
-          value={name}
-          onChange={setName}
-          autoFocus
-        />
-
-        <Spacer height="medium" />
-
-        <Textarea
-          name="data"
-          value={data}
-          onChange={setData}
-          ref={textAreaRef}
-        />
-
-        <Spacer height="medium" />
-
-        <Row
-          alignX="space-between"
-          mb="small"
-        >
-          <AddAttachmentButton onAttachments={onAttachments} />
-
-          <Row>
-            <Button
-              variant="link"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-
-            <Spacer width="medium" />
-
-            <Button
-              variant="primary"
-              onClick={() => onSave(name, data)}
-              disabled={!isValid}
-            >
-              Save
-            </Button>
-          </Row>
-        </Row>
-      </>
-    ),
-    preview: () => <Note name={name} data={data} />,
-  }
-
   return (
     <Frame
-      tabs={tabs}
-      buttons={buttons}
-    />
+      actions={actions}
+    >
+      {preview ? (
+        <Note name={name} data={data} />
+      ) : (
+        <>
+          <Input
+            name="name"
+            value={name}
+            onChange={setName}
+            autoFocus
+          />
+
+          <Spacer height="medium" />
+
+          <Textarea
+            name="data"
+            value={data}
+            onChange={setData}
+            ref={textAreaRef}
+          />
+
+          <Spacer height="medium" />
+        </>
+      )}
+    </Frame>
   )
 }

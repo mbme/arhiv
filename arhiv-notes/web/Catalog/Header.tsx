@@ -2,11 +2,8 @@ import * as React from 'react'
 import {
   Input,
   Row,
-  Button,
-  Spacer,
   StyleArg,
 } from '@v/web-platform'
-import { RouterContext } from '@v/web-utils'
 
 const $container: StyleArg = {
   position: 'sticky',
@@ -19,7 +16,6 @@ interface IProps {
 }
 
 export function Header({ filter, onChange }: IProps) {
-  const router = RouterContext.use()
 
   return (
     <Row
@@ -38,15 +34,6 @@ export function Header({ filter, onChange }: IProps) {
         onChange={onChange}
         onClear={() => onChange('')}
       />
-
-      <Spacer width="xlarge" />
-
-      <Button
-        variant="primary"
-        onClick={() => router.push({ path: '/new' })}
-      >
-        Add
-      </Button>
     </Row>
   )
 }

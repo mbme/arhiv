@@ -42,6 +42,9 @@ type PassThroughProps =
   | 'maxWidth'
   | 'minWidth'
   | 'height'
+  | 'overflowX'
+  | 'overflowY'
+  | 'overflow'
 
   | 'color'
   | 'bgColor'

@@ -5,7 +5,7 @@ import {
 import { usePromise } from '@v/web-utils'
 import { API } from '../notes'
 import { CatalogEntry } from './CatalogEntry'
-import { ErrorBlock } from '../parts'
+import { ErrorBlock, Frame, Action } from '../parts'
 import { Header } from './Header'
 
 export function Catalog() {
@@ -32,14 +32,25 @@ export function Catalog() {
       />
     ))
 
+  const actions = (
+    <Action
+      type="location"
+      to={{ path: '/new' }}
+    >
+      Add Note
+    </Action>
+  )
+
   return (
-    <>
+    <Frame
+      actions={actions}
+    >
       <Header
         filter={filter}
         onChange={setFilter}
       />
 
       {items}
-    </>
+    </Frame>
   )
 }

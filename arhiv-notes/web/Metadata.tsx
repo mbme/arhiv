@@ -12,6 +12,7 @@ interface IProps {
   document: Note
 }
 
+// FIXME render refs and attachment refs
 export function Metadata({ document }: IProps) {
   return (
     <>

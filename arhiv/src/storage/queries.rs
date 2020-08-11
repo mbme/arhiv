@@ -237,7 +237,7 @@ pub fn get_changeset(conn: &Connection) -> Result<Changeset> {
     let changeset = Changeset {
         base_rev: get_rev(conn)?,
         documents: get_staged_documents(conn)?,
-        attachments: get_staged_attachments(conn)?,
+        attachments: get_staged_attachments(conn)?, // FIXME ignore unused local attachments
     };
     log::debug!("prepared a changeset {}", changeset);
 

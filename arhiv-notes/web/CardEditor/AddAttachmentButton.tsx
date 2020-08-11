@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { Icon } from '@v/web-platform'
 import { createLink } from '../markup-parser'
 import { API } from '../notes'
+import { Action } from '../parts'
 
 interface IProps {
   onAttachments(links: string[]): void
@@ -15,10 +15,11 @@ export function AddAttachmentButton({ onAttachments }: IProps) {
   }
 
   return (
-    <Icon
-      title="Attach files"
-      type="paperclip"
+    <Action
+      type="action"
       onClick={selectFiles}
-    />
+    >
+      Attach File
+    </Action>
   )
 }

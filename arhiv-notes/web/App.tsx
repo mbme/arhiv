@@ -7,7 +7,6 @@ import {
 import {
   StylishProvider,
   OverlayRenderer,
-  Column,
 } from '@v/web-platform'
 import { pathMatcher as pm } from '@v/utils'
 import { Catalog } from './Catalog'
@@ -22,23 +21,16 @@ export function App() {
       <StylishProvider>
         <HotkeysResolverProvider>
           <OverlayRenderer>
-            <Column
-              minWidth="30rem"
-              maxWidth="40rem"
-              alignX="stretch"
-              height="100%"
+            <Routes
+              onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
             >
-              <Routes
-                onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
-              >
-                {[
-                  [pm`/`, () => <Catalog />],
-                  [pm`/new`, () => <CardEditorContainer />],
-                  [pm`/${'id'}`, ({ id }) => <Card id={id} />],
-                  [pm`/${'id'}/edit`, ({ id }) => <CardEditorContainer id={id} />],
-                ]}
-              </Routes>
-            </Column>
+              {[
+                [pm`/`, () => <Catalog />],
+                [pm`/new`, () => <CardEditorContainer />],
+                [pm`/${'id'}`, ({ id }) => <Card id={id} />],
+                [pm`/${'id'}/edit`, ({ id }) => <CardEditorContainer id={id} />],
+              ]}
+            </Routes>
 
             {process.env.NODE_ENV === 'development' && (
               <Url />

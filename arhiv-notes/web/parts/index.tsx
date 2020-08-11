@@ -1,5 +1,5 @@
 export { CloseIcon } from './CloseIcon'
 export { Frame } from './Frame'
-export { TabBar } from './TabBar'
+export { Action } from './Frame/Action'
 export { ErrorBlock } from './ErrorBlock'
 export { NotFoundBlock } from './NotFoundBlock'

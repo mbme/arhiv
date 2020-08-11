@@ -121,7 +121,7 @@ const Rules: Dict<Rule> = {
     borderBottom: getBorder(val),
   }),
   borderLeft: val => ({
-    borderTop: getBorder(val),
+    borderLeft: getBorder(val),
   }),
 
   boxShadow: val => ({

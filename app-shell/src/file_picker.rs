@@ -23,7 +23,7 @@ pub fn pick_files(select_multiple: bool) -> Vec<PathBuf> {
 
     let files = dialog.get_filenames();
 
-    dialog.destroy();
+    dialog.close();
 
     files
 }

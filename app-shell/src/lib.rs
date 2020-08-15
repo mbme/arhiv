@@ -31,12 +31,12 @@ impl AppShellBuilder {
             {
                 let webview = webview.clone();
                 window.connect_key_press_event(move |_, key| {
-                    if key.get_keyval() == gdk::enums::key::F5 {
+                    if key.get_keyval() == gdk::keys::constants::F5 {
                         webview.reload();
                     }
 
                     if key.get_state() == gdk::ModifierType::CONTROL_MASK
-                        && key.get_keyval() == gdk::enums::key::r
+                        && key.get_keyval() == gdk::keys::constants::r
                     {
                         webview.reload();
                     }

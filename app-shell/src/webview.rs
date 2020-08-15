@@ -123,8 +123,8 @@ pub fn build_webview(builder: Rc<AppShellBuilder>, html_file: &Path) -> Rc<WebVi
         WebsiteDataManager::new_ephemeral()
     };
 
-    let web_context = WebContext::new_with_website_data_manager(&data_manager);
-    let webview = Rc::new(WebView::new_with_context(&web_context));
+    let web_context = WebContext::with_website_data_manager(&data_manager);
+    let webview = Rc::new(WebView::with_context(&web_context));
 
     let settings = WebViewExt::get_settings(webview.as_ref()).unwrap();
     settings.set_enable_developer_extras(builder.show_inspector);

@@ -1,7 +1,10 @@
 use super::query_params::*;
 use super::utils;
 use crate::entities::*;
+use crate::utils::fuzzy_match;
 use anyhow::*;
+use rusqlite::functions::FunctionFlags;
+use rusqlite::Error as RusqliteError;
 use rusqlite::{params, Connection, ToSql, NO_PARAMS};
 
 pub fn get_rev(conn: &Connection) -> Result<Revision> {
@@ -63,7 +66,9 @@ pub fn get_documents(
     }
 
     if let Some(ref matcher) = filter.matcher {
-        query.push("AND instr(json_extract(data, :matcher_selector), :matcher_pattern)");
+        init_fuzzy_search(conn)?;
+
+        query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
         params.push((":matcher_selector", &matcher.selector));
         params.push((":matcher_pattern", &matcher.pattern));
     }
@@ -242,4 +247,28 @@ pub fn get_changeset(conn: &Connection) -> Result<Changeset> {
     log::debug!("prepared a changeset {}", changeset);
 
     Ok(changeset)
+}
+
+fn init_fuzzy_search(conn: &Connection) -> Result<()> {
+    conn.create_scalar_function(
+        "fuzzySearch",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            let haystack = ctx
+                .get_raw(0)
+                .as_str()
+                .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
+
+            let needle = ctx
+                .get_raw(1)
+                .as_str()
+                .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
+
+            Ok(fuzzy_match(needle, haystack))
+        },
+    )
+    .context(anyhow!("Failed to define fuzzySearch function"))
 }

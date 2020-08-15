@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ProgressLocker,
 } from '@v/web-platform'
-import { usePromise } from '@v/web-utils'
+import { usePromise, useDebounced } from '@v/web-utils'
 import { API } from '../notes'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
@@ -10,7 +10,9 @@ import { Header } from './Header'
 
 export function Catalog() {
   const [filter, setFilter] = React.useState('')
-  const [notes, err] = usePromise(() => API.list(filter), [filter])
+  const debouncedFilter = useDebounced(filter, 300)
+
+  const [notes, err] = usePromise(() => API.list(debouncedFilter), [debouncedFilter])
 
   if (err) {
     return (

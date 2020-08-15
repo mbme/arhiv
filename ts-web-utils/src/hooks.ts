@@ -78,3 +78,45 @@ export function useStore<S extends Obj>(store: Store<S>): [S, any] {
 
   return [value || store.state, error]
 }
+
+export function useDebouncedCallback(
+  cb: (...args: any[]) => void,
+  timeoutMs: number,
+  deps: any[] = [],
+) {
+  const cbRef = React.useRef(cb)
+  const timeoutRef = React.useRef<number | undefined>(undefined)
+
+  // keep callback reference up-to-date
+  React.useEffect(() => {
+    cbRef.current = cb
+  }, deps)
+
+  // clear pending timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      window.clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  return React.useCallback((...args: any[]) => {
+    window.clearTimeout(timeoutRef.current)
+
+    timeoutRef.current = window.setTimeout(() => {
+      cbRef.current(...args)
+    }, timeoutMs)
+  }, [])
+}
+
+
+export function useDebounced<T>(value: T, timeoutMs: number) {
+  const [debouncedValue, setDebouncedValue] = React.useState<T>(value)
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedValue(value), timeoutMs)
+
+    return () => window.clearTimeout(timeout)
+  }, [value])
+
+  return debouncedValue
+}

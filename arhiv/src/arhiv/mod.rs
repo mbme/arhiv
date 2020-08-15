@@ -1,7 +1,8 @@
 use crate::config::Config;
 use crate::entities::*;
+use crate::fs_transaction::FsTransaction;
 use crate::storage::*;
-use crate::utils::{ensure_file_exists, file_exists, FsTransaction};
+use crate::utils::{ensure_file_exists, file_exists};
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};

@@ -26,4 +26,4 @@ tokio = { version = "0.2", features = ["macros"] }
 warp = "0.2"
 bytes = "0.5"
 
-rusqlite = { version = "0.23", features = ["chrono", "serde_json"] }
+rusqlite = { version = "0.23", features = ["chrono", "serde_json", "functions"] }

@@ -37,79 +37,53 @@ pub fn ensure_file_exists(path: &str) -> Result<()> {
     }
 }
 
-enum FsOperation {
-    Move { src: String, dest: String },
-    HardLink { src: String, dest: String },
-}
-
-pub struct FsTransaction {
-    ops: Vec<FsOperation>,
-}
-
-impl FsTransaction {
-    pub fn new() -> FsTransaction {
-        FsTransaction { ops: vec![] }
+pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
+    // if needle is empty then it matches everything
+    if needle.is_empty() {
+        return true;
     }
 
-    pub fn move_file(&mut self, src: String, dest: String) -> Result<()> {
-        if let Err(err) = fs::rename(&src, &dest) {
-            Err(anyhow!("Failed to Move {} to {}: {}", &src, &dest, err))
-        } else {
-            log::debug!("Moved {} to {}", &src, &dest);
-            self.ops.push(FsOperation::Move { src, dest });
-
-            Ok(())
-        }
+    if needle.len() > haystack.len() {
+        return false;
     }
 
-    pub fn hard_link_file(&mut self, src: String, dest: String) -> Result<()> {
-        if let Err(err) = fs::hard_link(&src, &dest) {
-            Err(anyhow!("Failed to HardLink {} to {}: {}", &src, &dest, err))
-        } else {
-            log::debug!("Hard Linked {} to {}", &src, &dest);
-            self.ops.push(FsOperation::HardLink { src, dest });
+    let needle = needle.to_lowercase();
+    let haystack = haystack.to_lowercase();
 
-            Ok(())
-        }
+    if needle.len() == haystack.len() {
+        return needle == haystack;
     }
 
-    pub fn revert(&mut self) {
-        if self.ops.is_empty() {
-            return;
-        }
+    let mut haystack_chars = haystack.chars();
 
-        log::warn!("Reverting {} operations", &self.ops.len());
-
-        for op in &self.ops {
-            match op {
-                FsOperation::Move { src, dest } => {
-                    if let Err(err) = fs::rename(dest, src) {
-                        log::error!("Failed to revert Move {} to {}: {}", src, dest, err);
-                    } else {
-                        log::warn!("Reverted Move {} to {}", src, dest);
-                    }
+    'outer: for needle_char in needle.chars() {
+        loop {
+            if let Some(haystack_char) = haystack_chars.next() {
+                if haystack_char == needle_char {
+                    continue 'outer;
                 }
-
-                FsOperation::HardLink { src, dest } => {
-                    if let Err(err) = fs::remove_file(dest) {
-                        log::error!("Failed to revert HardLink {} to {}: {}", src, dest, err);
-                    } else {
-                        log::warn!("Reverted HardLink {} to {}", src, dest);
-                    }
-                }
+            } else {
+                return false;
             }
         }
-
-        self.ops.clear();
     }
 
-    pub fn commit(&mut self) {
-        self.ops.clear();
-    }
+    return true;
 }
 
-impl Drop for FsTransaction {
-    fn drop(&mut self) {
-        self.revert();
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fuzzy_match() {
+        assert_eq!(fuzzy_match("", ""), true);
+        assert_eq!(fuzzy_match("", "test"), true);
+        assert_eq!(fuzzy_match("test", "test"), true);
+        assert_eq!(fuzzy_match("test", "te"), false);
+        assert_eq!(fuzzy_match("TEST", "teSt"), true);
+        assert_eq!(fuzzy_match("123", "1test2test3"), true);
+        assert_eq!(fuzzy_match("123", "123test2test3"), true);
+        assert_eq!(fuzzy_match("123", "12test2test"), false);
     }
 }

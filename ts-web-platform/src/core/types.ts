@@ -9,54 +9,54 @@ type Spacing = keyof typeof theme.spacing
 type Border = keyof typeof theme.border
 
 interface ITransformerProps {
-  margin?: CSS.MarginProperty<Spacing>
-  marginTop?: CSS.MarginTopProperty<Spacing>
-  marginRight?: CSS.MarginRightProperty<Spacing>
-  marginBottom?: CSS.MarginBottomProperty<Spacing>
-  marginLeft?: CSS.MarginLeftProperty<Spacing>
+  margin?: CSS.Property.Margin<Spacing>
+  marginTop?: CSS.Property.MarginTop<Spacing>
+  marginRight?: CSS.Property.MarginRight<Spacing>
+  marginBottom?: CSS.Property.MarginBottom<Spacing>
+  marginLeft?: CSS.Property.MarginLeft<Spacing>
 
-  m?: CSS.MarginProperty<Spacing>
-  mx?: CSS.MarginLeftProperty<Spacing> | CSS.MarginRightProperty<Spacing>
-  my?: CSS.MarginTopProperty<Spacing> | CSS.MarginBottomProperty<Spacing>
-  mt?: CSS.MarginTopProperty<Spacing>
-  mr?: CSS.MarginRightProperty<Spacing>
-  mb?: CSS.MarginBottomProperty<Spacing>
-  ml?: CSS.MarginLeftProperty<Spacing>
+  m?: CSS.Property.Margin<Spacing>
+  mx?: CSS.Property.MarginLeft<Spacing> | CSS.Property.MarginRight<Spacing>
+  my?: CSS.Property.MarginTop<Spacing> | CSS.Property.MarginBottom<Spacing>
+  mt?: CSS.Property.MarginTop<Spacing>
+  mr?: CSS.Property.MarginRight<Spacing>
+  mb?: CSS.Property.MarginBottom<Spacing>
+  ml?: CSS.Property.MarginLeft<Spacing>
 
-  padding?: CSS.PaddingProperty<Spacing>
-  paddingTop?: CSS.PaddingTopProperty<Spacing>
-  paddingRight?: CSS.PaddingRightProperty<Spacing>
-  paddingBottom?: CSS.PaddingBottomProperty<Spacing>
-  paddingLeft?: CSS.PaddingLeftProperty<Spacing>
+  padding?: CSS.Property.Padding<Spacing>
+  paddingTop?: CSS.Property.PaddingTop<Spacing>
+  paddingRight?: CSS.Property.PaddingRight<Spacing>
+  paddingBottom?: CSS.Property.PaddingBottom<Spacing>
+  paddingLeft?: CSS.Property.PaddingLeft<Spacing>
 
-  p?: CSS.PaddingProperty<Spacing>
-  px?: CSS.PaddingLeftProperty<Spacing> | CSS.PaddingRightProperty<Spacing>
-  py?: CSS.PaddingTopProperty<Spacing> | CSS.PaddingBottomProperty<Spacing>
-  pt?: CSS.PaddingTopProperty<Spacing>
-  pr?: CSS.PaddingRightProperty<Spacing>
-  pb?: CSS.PaddingBottomProperty<Spacing>
-  pl?: CSS.PaddingLeftProperty<Spacing>
+  p?: CSS.Property.Padding<Spacing>
+  px?: CSS.Property.PaddingLeft<Spacing> | CSS.Property.PaddingRight<Spacing>
+  py?: CSS.Property.PaddingTop<Spacing> | CSS.Property.PaddingBottom<Spacing>
+  pt?: CSS.Property.PaddingTop<Spacing>
+  pr?: CSS.Property.PaddingRight<Spacing>
+  pb?: CSS.Property.PaddingBottom<Spacing>
+  pl?: CSS.Property.PaddingLeft<Spacing>
 
-  top?: CSS.TopProperty<Spacing> | 0
-  left?: CSS.LeftProperty<Spacing> | 0
-  bottom?: CSS.BottomProperty<Spacing> | 0
-  right?: CSS.RightProperty<Spacing> | 0
+  top?: CSS.Property.Top<Spacing> | 0
+  left?: CSS.Property.Left<Spacing> | 0
+  bottom?: CSS.Property.Bottom<Spacing> | 0
+  right?: CSS.Property.Right<Spacing> | 0
 
-  border?: CSS.BorderProperty<Border>
-  borderTop?: CSS.BorderTopProperty<Border>
-  borderRight?: CSS.BorderRightProperty<Border>
-  borderBottom?: CSS.BorderBottomProperty<Border>
-  borderLeft?: CSS.BorderLeftProperty<Border>
+  border?: CSS.Property.Border<Border>
+  borderTop?: CSS.Property.BorderTop<Border>
+  borderRight?: CSS.Property.BorderRight<Border>
+  borderBottom?: CSS.Property.BorderBottom<Border>
+  borderLeft?: CSS.Property.BorderLeft<Border>
 
-  boxShadow?: keyof typeof theme.boxShadow | CSS.BoxShadowProperty
+  boxShadow?: keyof typeof theme.boxShadow | CSS.Property.BoxShadow
 
-  width?: CSS.WidthProperty<Spacing>
-  height?: CSS.HeightProperty<Spacing>
+  width?: CSS.Property.Width<Spacing>
+  height?: CSS.Property.Height<Spacing>
 
-  fontSize?: CSS.FontSizeProperty<keyof typeof theme.fontSize>
-  zIndex?: keyof typeof theme.zIndex | CSS.ZIndexProperty
+  fontSize?: CSS.Property.FontSize<keyof typeof theme.fontSize>
+  zIndex?: keyof typeof theme.zIndex | CSS.Property.ZIndex
 
-  bgColor?: CSS.Color
+  bgColor?: CSS.Property.Color
 
   relative?: boolean
   absolute?: boolean

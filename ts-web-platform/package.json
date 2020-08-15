@@ -7,14 +7,14 @@
   "main": "src/index.tsx",
   "sideEffects": false,
   "dependencies": {
-    "csstype": "^2.6.10",
+    "csstype": "^3.0.2",
     "react": "^16.13.1"
   },
   "devDependencies": {
     "@types/react": "^16.9.31",
     "@types/react-dom": "^16.9.6",
     "react-dom": "^16.13.1",
-    "ts-loader": "^7.0.0",
+    "ts-loader": "^8.0.0",
     "webpack": "^4.42.1",
     "webpack-dev-server": "^3.10.3"
   },

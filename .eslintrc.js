@@ -110,7 +110,7 @@ module.exports = {
     "@typescript-eslint/strict-boolean-expressions": "off",
     "@typescript-eslint/triple-slash-reference": "error",
     "@typescript-eslint/type-annotation-spacing": "error",
-    "@typescript-eslint/unbound-method": "error",
+    "@typescript-eslint/unbound-method": "off",
     "@typescript-eslint/unified-signatures": "error",
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",

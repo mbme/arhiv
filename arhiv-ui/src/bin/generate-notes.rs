@@ -1,5 +1,5 @@
 use arhiv::entities::*;
-use arhiv_notes::notes::*;
+use arhiv_ui::notes::*;
 use binutils::utils::run_command;
 use serde::{Deserialize, Serialize};
 use serde_json::json;

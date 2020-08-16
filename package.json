@@ -11,11 +11,11 @@
     "ts-web-utils",
     "ts-web-platform",
     "poshta",
-    "arhiv-notes"
+    "arhiv-ui"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",
-    "lint": "eslint --cache --ext .ts,.tsx,.js,.jsx ts-* poshta arhiv-notes",
+    "lint": "eslint --cache --ext .ts,.tsx,.js,.jsx ts-* poshta arhiv-ui",
     "test": "tester"
   },
   "devDependencies": {

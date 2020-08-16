@@ -1,6 +1,6 @@
 use app_shell::{pick_files, AppShellBuilder};
 use arhiv::entities::*;
-use arhiv_notes::notes::ArhivNotes;
+use arhiv_ui::notes::ArhivNotes;
 use serde_json::Value;
 use std::rc::Rc;
 

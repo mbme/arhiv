@@ -22,9 +22,9 @@ impl Arhiv {
         );
 
         let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
+        let conn = conn.get_tx()?;
 
-        let rev = get_rev(&tx)?;
+        let rev = conn.get_rev()?;
 
         if changeset.base_rev > rev {
             return Err(anyhow!(
@@ -38,7 +38,7 @@ impl Arhiv {
             return Ok(());
         }
 
-        if !local && has_staged_changes(&tx)? {
+        if !local && conn.has_staged_changes()? {
             return Err(anyhow!("can't apply changes: there are staged changes"));
         }
 
@@ -47,14 +47,14 @@ impl Arhiv {
         for mut document in changeset.documents {
             // FIXME merge documents
             document.rev = new_rev;
-            put_document(&tx, &document)?;
+            conn.put_document(&document)?;
         }
 
         let mut fs_tx = FsTransaction::new();
         for mut attachment in changeset.attachments {
             // save attachment
             attachment.rev = new_rev;
-            put_attachment(&tx, &attachment)?;
+            conn.put_attachment(&attachment)?;
 
             let file_path = attachment_data
                 .get(&attachment.id)
@@ -68,7 +68,7 @@ impl Arhiv {
             )?;
         }
 
-        tx.commit()?;
+        conn.commit()?;
         fs_tx.commit();
         log::debug!("successfully applied a changeset");
 
@@ -81,11 +81,11 @@ impl Arhiv {
         let mut filter = QueryFilter::default();
         filter.page_size = None; // fetch all items
 
-        let documents = get_documents(&conn, base_rev + 1, filter)?;
-        let attachments = get_committed_attachments_with_rev(&conn, base_rev + 1)?;
+        let documents = conn.get_documents(base_rev + 1, filter)?;
+        let attachments = conn.get_committed_attachments_with_rev(base_rev + 1)?;
 
         Ok(ChangesetResponse {
-            latest_rev: get_rev(&conn)?,
+            latest_rev: conn.get_rev()?,
             base_rev,
             documents,
             attachments,
@@ -108,9 +108,9 @@ impl Arhiv {
             .ok_or(anyhow!("can't sync: primary_url is missing"))?;
 
         let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
+        let conn = conn.get_tx()?;
 
-        let changeset = get_changeset(&tx)?;
+        let changeset = conn.get_changeset()?;
 
         for attachment in changeset.attachments.iter() {
             // FIXME async parallel upload
@@ -133,34 +133,33 @@ impl Arhiv {
             .text()?
             .parse()?;
 
-        let rev = get_rev(&tx)?;
+        let rev = conn.get_rev()?;
 
         if response.base_rev != rev {
             return Err(anyhow!("base_rev isn't equal to current rev"));
         }
 
         for document in response.documents {
-            put_document(&tx, &document)?;
+            conn.put_document(&document)?;
         }
 
         for attachment in response.attachments {
-            put_attachment(&tx, &attachment)?;
+            conn.put_attachment(&attachment)?;
         }
 
-        delete_staged_documents(&tx)?;
-        delete_staged_attachments(&tx)?;
+        conn.delete_staged_documents()?;
+        conn.delete_staged_attachments()?;
 
-        tx.commit()?;
+        conn.commit()?;
 
         Ok(())
     }
 
     fn commit_locally(&self) -> Result<()> {
         let changeset = {
-            let mut conn = self.storage.get_connection()?;
-            let tx = conn.transaction()?;
+            let conn = self.storage.get_connection()?;
 
-            get_changeset(&tx)?
+            conn.get_changeset()?
         };
 
         let mut attachment_data = HashMap::new();
@@ -175,12 +174,12 @@ impl Arhiv {
 
         {
             let mut conn = self.storage.get_writable_connection()?;
-            let tx = conn.transaction()?;
+            let conn = conn.get_tx()?;
 
-            delete_staged_documents(&tx)?;
-            delete_staged_attachments(&tx)?;
+            conn.delete_staged_documents()?;
+            conn.delete_staged_attachments()?;
 
-            tx.commit()?;
+            conn.commit()?;
         }
 
         Ok(())

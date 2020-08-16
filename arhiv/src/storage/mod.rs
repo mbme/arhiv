@@ -1,10 +1,12 @@
 use crate::entities::*;
 use anyhow::*;
+pub use connection::*;
 use path_manager::PathManager;
 pub use queries::*;
 pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
 
+mod connection;
 mod path_manager;
 mod queries;
 mod query_params;
@@ -33,22 +35,22 @@ impl Storage {
         Ok(Storage { path_manager })
     }
 
-    pub fn get_connection(&self) -> Result<Connection> {
+    pub fn get_connection(&self) -> Result<StorageConnection> {
         let conn = Connection::open_with_flags(
             self.path_manager.get_db_file(),
             OpenFlags::SQLITE_OPEN_READ_ONLY,
         )?;
 
-        Ok(conn)
+        Ok(StorageConnection::new(conn))
     }
 
-    pub fn get_writable_connection(&self) -> Result<Connection> {
+    pub fn get_writable_connection(&self) -> Result<MutStorageConnection> {
         let conn = Connection::open_with_flags(
             self.path_manager.get_db_file(),
             OpenFlags::SQLITE_OPEN_READ_WRITE,
         )?;
 
-        Ok(conn)
+        Ok(MutStorageConnection::new(conn))
     }
 
     pub fn get_committed_attachment_file_path(&self, id: &Id) -> String {

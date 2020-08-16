@@ -7,268 +7,280 @@ use rusqlite::functions::FunctionFlags;
 use rusqlite::Error as RusqliteError;
 use rusqlite::{params, Connection, ToSql, NO_PARAMS};
 
-pub fn get_rev(conn: &Connection) -> Result<Revision> {
-    let rev = conn.query_row(
-        "SELECT IFNULL(MAX(rev), 0) FROM (SELECT rev FROM documents UNION ALL SELECT rev FROM attachments)",
-        NO_PARAMS,
-        |row| row.get(0),
-    )?;
+pub trait Queries {
+    fn get_connection(&self) -> &Connection;
 
-    Ok(rev)
-}
+    fn get_rev(&self) -> Result<Revision> {
+        let conn = self.get_connection();
 
-pub fn count_documents(conn: &Connection) -> Result<(u32, u32)> {
-    conn.query_row(
-        "SELECT
+        let rev = conn.query_row(
+            "SELECT IFNULL(MAX(rev), 0) FROM (SELECT rev FROM documents UNION ALL SELECT rev FROM attachments)",
+            NO_PARAMS,
+            |row| row.get(0),
+        )?;
+
+        Ok(rev)
+    }
+
+    fn count_documents(&self) -> Result<(u32, u32)> {
+        self.get_connection()
+            .query_row(
+                "SELECT
             IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
             IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
         FROM documents",
-        NO_PARAMS,
-        |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
-    )
-    .context("Failed to count documents")
-}
+                NO_PARAMS,
+                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+            )
+            .context("Failed to count documents")
+    }
 
-pub fn count_attachments(conn: &Connection) -> Result<(u32, u32)> {
-    conn.query_row(
-        "SELECT
+    fn count_attachments(&self) -> Result<(u32, u32)> {
+        self.get_connection()
+            .query_row(
+                "SELECT
             IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
             IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
         FROM attachments",
-        NO_PARAMS,
-        |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
-    )
-    .context("Failed to count attachments")
-}
-
-pub fn has_staged_changes(conn: &Connection) -> Result<bool> {
-    let (_, staged_documents) = count_documents(conn)?;
-    if staged_documents > 0 {
-        return Ok(true);
+                NO_PARAMS,
+                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+            )
+            .context("Failed to count attachments")
     }
 
-    let (_, staged_attachments) = count_attachments(conn)?;
+    fn has_staged_changes(&self) -> Result<bool> {
+        let (_, staged_documents) = self.count_documents()?;
+        if staged_documents > 0 {
+            return Ok(true);
+        }
 
-    Ok(staged_attachments > 0)
-}
+        let (_, staged_attachments) = self.count_attachments()?;
 
-pub fn get_documents(
-    conn: &Connection,
-    min_rev: Revision,
-    filter: QueryFilter,
-) -> Result<Vec<Document>> {
-    let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
-    let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
-
-    if let Some(ref document_type) = filter.document_type {
-        query.push("AND type = :type");
-        params.push((":type", document_type));
+        Ok(staged_attachments > 0)
     }
 
-    if let Some(ref matcher) = filter.matcher {
-        init_fuzzy_search(conn)?;
+    fn get_documents(&self, min_rev: Revision, filter: QueryFilter) -> Result<Vec<Document>> {
+        let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
+        let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
-        query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
-        params.push((":matcher_selector", &matcher.selector));
-        params.push((":matcher_pattern", &matcher.pattern));
+        if let Some(ref document_type) = filter.document_type {
+            query.push("AND type = :type");
+            params.push((":type", document_type));
+        }
+
+        if let Some(ref matcher) = filter.matcher {
+            self.init_fuzzy_search()?;
+
+            query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
+            params.push((":matcher_selector", &matcher.selector));
+            params.push((":matcher_pattern", &matcher.pattern));
+        }
+
+        // local documents with rev === 0 have higher priority
+        query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
+
+        if let Some(ref page_size) = filter.page_size {
+            query.push("LIMIT :limit");
+            params.push((":limit", page_size));
+        }
+
+        if let Some(ref page_offset) = filter.page_offset {
+            query.push("OFFSET :offset");
+            params.push((":offset", page_offset));
+        }
+
+        let mut stmt = self.get_connection().prepare_cached(&query.join(" "))?;
+
+        let mut rows = stmt.query_named(&params)?;
+
+        let mut documents = Vec::new();
+        while let Some(row) = rows.next()? {
+            documents.push(utils::extract_document(row)?);
+        }
+
+        Ok(documents)
     }
 
-    // local documents with rev === 0 have higher priority
-    query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
+    fn get_staged_documents(&self) -> Result<Vec<Document>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents WHERE rev = 0")?;
 
-    if let Some(ref page_size) = filter.page_size {
-        query.push("LIMIT :limit");
-        params.push((":limit", page_size));
+        let mut rows = stmt.query(NO_PARAMS)?;
+
+        let mut documents = Vec::new();
+        while let Some(row) = rows.next()? {
+            documents.push(utils::extract_document(row)?);
+        }
+
+        Ok(documents)
     }
 
-    if let Some(ref page_offset) = filter.page_offset {
-        query.push("OFFSET :offset");
-        params.push((":offset", page_offset));
+    fn get_all_attachments(&self) -> Result<Vec<Attachment>> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "SELECT * FROM attachments GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)",
+        )?;
+
+        let mut rows = stmt.query(NO_PARAMS)?;
+
+        let mut attachments = Vec::new();
+        while let Some(row) = rows.next()? {
+            attachments.push(utils::extract_attachment(row)?);
+        }
+
+        Ok(attachments)
     }
 
-    let mut stmt = conn.prepare_cached(&query.join(" "))?;
+    fn get_committed_attachments_with_rev(&self, min_rev: Revision) -> Result<Vec<Attachment>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 GROUP BY id")?;
 
-    let mut rows = stmt.query_named(&params)?;
+        let mut rows = stmt.query(params![min_rev])?;
 
-    let mut documents = Vec::new();
-    while let Some(row) = rows.next()? {
-        documents.push(utils::extract_document(row)?);
+        let mut attachments = Vec::new();
+        while let Some(row) = rows.next()? {
+            attachments.push(utils::extract_attachment(row)?);
+        }
+
+        Ok(attachments)
     }
 
-    Ok(documents)
-}
-
-pub fn get_staged_documents(conn: &Connection) -> Result<Vec<Document>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM documents WHERE rev = 0")?;
-
-    let mut rows = stmt.query(NO_PARAMS)?;
-
-    let mut documents = Vec::new();
-    while let Some(row) = rows.next()? {
-        documents.push(utils::extract_document(row)?);
+    fn get_committed_attachments(&self) -> Result<Vec<Attachment>> {
+        self.get_committed_attachments_with_rev(1)
     }
 
-    Ok(documents)
-}
+    fn get_staged_attachments(&self) -> Result<Vec<Attachment>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM attachments WHERE rev = 0")?;
 
-pub fn get_all_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached(
-        "SELECT * FROM attachments GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)",
-    )?;
+        let mut rows = stmt.query(NO_PARAMS)?;
 
-    let mut rows = stmt.query(NO_PARAMS)?;
+        let mut attachments = Vec::new();
+        while let Some(row) = rows.next()? {
+            attachments.push(utils::extract_attachment(row)?);
+        }
 
-    let mut attachments = Vec::new();
-    while let Some(row) = rows.next()? {
-        attachments.push(utils::extract_attachment(row)?);
+        Ok(attachments)
     }
 
-    Ok(attachments)
-}
+    fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+        let mut stmt = self.get_connection().prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
-pub fn get_committed_attachments_with_rev(
-    conn: &Connection,
-    min_rev: Revision,
-) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 GROUP BY id")?;
+        let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
-    let mut rows = stmt.query(params![min_rev])?;
-
-    let mut attachments = Vec::new();
-    while let Some(row) = rows.next()? {
-        attachments.push(utils::extract_attachment(row)?);
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
     }
 
-    Ok(attachments)
-}
+    fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
+        let mut stmt = self.get_connection().prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
-pub fn get_committed_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    get_committed_attachments_with_rev(conn, 1)
-}
+        let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;
 
-pub fn get_staged_attachments(conn: &Connection) -> Result<Vec<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE rev = 0")?;
-
-    let mut rows = stmt.query(NO_PARAMS)?;
-
-    let mut attachments = Vec::new();
-    while let Some(row) = rows.next()? {
-        attachments.push(utils::extract_attachment(row)?);
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
     }
 
-    Ok(attachments)
-}
-
-pub fn get_document(conn: &Connection, id: &Id) -> Result<Option<Document>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
-
-    let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
-
-    if let Some(row) = rows.next() {
-        Ok(Some(row?))
-    } else {
-        Ok(None)
-    }
-}
-
-pub fn get_attachment(conn: &Connection, id: &Id) -> Result<Option<Attachment>> {
-    let mut stmt = conn.prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
-
-    let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;
-
-    if let Some(row) = rows.next() {
-        Ok(Some(row?))
-    } else {
-        Ok(None)
-    }
-}
-
-pub fn put_document(conn: &Connection, document: &Document) -> Result<()> {
-    let mut stmt = conn.prepare_cached(
-        "INSERT OR REPLACE INTO documents
+    fn put_document(&self, document: &Document) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "INSERT OR REPLACE INTO documents
         (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    )?;
+        )?;
 
-    stmt.execute(params![
-        document.id,
-        document.rev,
-        document.created_at,
-        document.updated_at,
-        document.archived,
-        document.document_type,
-        utils::serialize_refs(&document.refs)?,
-        utils::serialize_refs(&document.attachment_refs)?,
-        document.data,
-    ])?;
+        stmt.execute(params![
+            document.id,
+            document.rev,
+            document.created_at,
+            document.updated_at,
+            document.archived,
+            document.document_type,
+            utils::serialize_refs(&document.refs)?,
+            utils::serialize_refs(&document.attachment_refs)?,
+            document.data,
+        ])?;
 
-    Ok(())
-}
+        Ok(())
+    }
 
-pub fn put_attachment(conn: &Connection, attachment: &Attachment) -> Result<()> {
-    let mut stmt = conn.prepare_cached(
-        "INSERT OR REPLACE INTO attachments
+    fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "INSERT OR REPLACE INTO attachments
         (id, rev, created_at, filename)
         VALUES (?, ?, ?, ?)",
-    )?;
+        )?;
 
-    stmt.execute(params![
-        attachment.id,
-        attachment.rev,
-        attachment.created_at,
-        attachment.filename,
-    ])?;
+        stmt.execute(params![
+            attachment.id,
+            attachment.rev,
+            attachment.created_at,
+            attachment.filename,
+        ])?;
 
-    Ok(())
-}
+        Ok(())
+    }
 
-pub fn delete_staged_documents(conn: &Connection) -> Result<()> {
-    let rows = conn.execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
+    fn delete_staged_documents(&self) -> Result<()> {
+        let rows = self
+            .get_connection()
+            .execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
 
-    log::debug!("deleted {} staged documents", rows);
+        log::debug!("deleted {} staged documents", rows);
 
-    Ok(())
-}
+        Ok(())
+    }
 
-pub fn delete_staged_attachments(conn: &Connection) -> Result<()> {
-    let rows = conn.execute("DELETE FROM attachments WHERE rev = 0", NO_PARAMS)?;
+    fn delete_staged_attachments(&self) -> Result<()> {
+        let rows = self
+            .get_connection()
+            .execute("DELETE FROM attachments WHERE rev = 0", NO_PARAMS)?;
 
-    log::debug!("deleted {} staged attachments", rows);
+        log::debug!("deleted {} staged attachments", rows);
 
-    Ok(())
-}
+        Ok(())
+    }
 
-pub fn get_changeset(conn: &Connection) -> Result<Changeset> {
-    let changeset = Changeset {
-        base_rev: get_rev(conn)?,
-        documents: get_staged_documents(conn)?,
-        attachments: get_staged_attachments(conn)?, // FIXME ignore unused local attachments
-    };
-    log::debug!("prepared a changeset {}", changeset);
+    fn get_changeset(&self) -> Result<Changeset> {
+        let changeset = Changeset {
+            base_rev: self.get_rev()?,
+            documents: self.get_staged_documents()?,
+            attachments: self.get_staged_attachments()?, // FIXME ignore unused local attachments
+        };
+        log::debug!("prepared a changeset {}", changeset);
 
-    Ok(changeset)
-}
+        Ok(changeset)
+    }
 
-fn init_fuzzy_search(conn: &Connection) -> Result<()> {
-    conn.create_scalar_function(
-        "fuzzySearch",
-        2,
-        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-        move |ctx| {
-            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+    fn init_fuzzy_search(&self) -> Result<()> {
+        self.get_connection()
+            .create_scalar_function(
+                "fuzzySearch",
+                2,
+                FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+                move |ctx| {
+                    assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
 
-            let haystack = ctx
-                .get_raw(0)
-                .as_str()
-                .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
+                    let haystack = ctx
+                        .get_raw(0)
+                        .as_str()
+                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
 
-            let needle = ctx
-                .get_raw(1)
-                .as_str()
-                .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
+                    let needle = ctx
+                        .get_raw(1)
+                        .as_str()
+                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
 
-            Ok(fuzzy_match(needle, haystack))
-        },
-    )
-    .context(anyhow!("Failed to define fuzzySearch function"))
+                    Ok(fuzzy_match(needle, haystack))
+                },
+            )
+            .context(anyhow!("Failed to define fuzzySearch function"))
+    }
 }

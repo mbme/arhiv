@@ -42,8 +42,8 @@ impl fmt::Display for Status {
 }
 
 pub struct Arhiv {
-    pub(crate) storage: Storage,
-    pub(crate) config: Config,
+    storage: Storage,
+    config: Config,
 }
 
 impl Arhiv {
@@ -71,9 +71,9 @@ impl Arhiv {
     pub fn get_status(&self) -> Result<Status> {
         let conn = self.storage.get_connection()?;
 
-        let rev = get_rev(&conn)?;
-        let (commited_documents, staged_documents) = count_documents(&conn)?;
-        let (commited_attachments, staged_attachments) = count_attachments(&conn)?;
+        let rev = conn.get_rev()?;
+        let (commited_documents, staged_documents) = conn.count_documents()?;
+        let (commited_attachments, staged_attachments) = conn.count_attachments()?;
 
         Ok(Status {
             rev,
@@ -88,36 +88,36 @@ impl Arhiv {
     pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_documents(&conn, 0, filter.unwrap_or_default())
+        conn.get_documents(0, filter.unwrap_or_default())
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let conn = self.storage.get_connection()?;
 
-        get_document(&conn, id)
+        conn.get_document(id)
     }
 
     pub fn stage_document(&self, mut updated_document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
+        let conn = conn.get_tx()?;
 
-        if let Some(mut document) = get_document(&tx, &updated_document.id)? {
+        if let Some(mut document) = conn.get_document(&updated_document.id)? {
             document.rev = 0; // make sure document rev is Staging
             document.updated_at = Utc::now();
             document.data = updated_document.data;
             document.refs = updated_document.refs;
             document.attachment_refs = updated_document.attachment_refs;
 
-            put_document(&tx, &document)?;
-            tx.commit()?;
+            conn.put_document(&document)?;
+            conn.commit()?;
             log::trace!("staged document {}", &document);
         } else {
             updated_document.rev = 0;
             updated_document.created_at = Utc::now();
             updated_document.updated_at = Utc::now();
 
-            put_document(&tx, &updated_document)?;
-            tx.commit()?;
+            conn.put_document(&updated_document)?;
+            conn.commit()?;
             log::trace!("staged new document {}", &updated_document);
         }
 
@@ -129,16 +129,16 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         if self.config.prime {
-            get_committed_attachments(&conn)
+            conn.get_committed_attachments()
         } else {
-            get_all_attachments(&conn)
+            conn.get_all_attachments()
         }
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        get_attachment(&conn, id)
+        conn.get_attachment(id)
     }
 
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
@@ -184,16 +184,16 @@ impl Arhiv {
         );
 
         let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.transaction()?;
+        let conn = conn.get_tx()?;
         let mut fs_tx = FsTransaction::new();
 
-        put_attachment(&tx, &attachment)?;
+        conn.put_attachment(&attachment)?;
         fs_tx.hard_link_file(
             file.to_string(),
             self.storage.get_staged_attachment_file_path(&attachment.id),
         )?;
 
-        tx.commit()?;
+        conn.commit()?;
         fs_tx.commit();
 
         log::debug!("staged new attachment {}: {}", attachment, file);

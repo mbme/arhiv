@@ -1,18 +1,29 @@
-use arhiv::entities::*;
-use arhiv::{Arhiv, Matcher, QueryFilter};
+use super::{Arhiv, Matcher, QueryFilter};
+use crate::entities::*;
 use serde_json::json;
 
 pub struct ArhivNotes {
     pub arhiv: Arhiv,
 }
 
+impl Arhiv {
+    pub fn notes(self) -> ArhivNotes {
+        ArhivNotes::new(self)
+    }
+}
+
 pub const NOTE_TYPE: &str = "note";
 
 impl ArhivNotes {
-    pub fn must_open() -> ArhivNotes {
-        ArhivNotes {
-            arhiv: Arhiv::must_open(),
-        }
+    pub fn new(arhiv: Arhiv) -> ArhivNotes {
+        ArhivNotes { arhiv }
+    }
+
+    pub fn create_note() -> Document {
+        let mut document = Document::new(NOTE_TYPE);
+        document.data = json!({ "name": "", "data": "" });
+
+        document
     }
 
     pub fn list(&self, pattern: String) -> Vec<Document> {
@@ -37,13 +48,6 @@ impl ArhivNotes {
         self.arhiv
             .list_documents(Some(query))
             .expect("must be able to list notes")
-    }
-
-    pub fn create_note() -> Document {
-        let mut document = Document::new(NOTE_TYPE);
-        document.data = json!({ "name": "", "data": "" });
-
-        document
     }
 
     pub fn get_note(&self, id: &Id) -> Option<Document> {

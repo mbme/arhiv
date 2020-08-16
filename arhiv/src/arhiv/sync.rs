@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use std::fs::File;
 
 impl Arhiv {
-    // FIXME use parent transaction
     fn apply_changeset(
         &self,
         changeset: Changeset,

@@ -8,5 +8,6 @@ mod fs_transaction;
 mod storage;
 pub mod utils;
 
-pub use crate::arhiv::Arhiv;
+pub use arhiv::notes::ArhivNotes;
+pub use arhiv::Arhiv;
 pub use storage::{Matcher, QueryFilter};

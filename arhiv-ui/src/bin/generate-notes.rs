@@ -1,5 +1,5 @@
 use arhiv::entities::*;
-use arhiv_ui::notes::*;
+use arhiv::{Arhiv, ArhivNotes};
 use binutils::utils::run_command;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -55,7 +55,7 @@ fn relpath(subpath: &str) -> String {
 fn main() {
     env_logger::init();
 
-    let notes = ArhivNotes::must_open();
+    let notes = Arhiv::must_open().notes();
 
     let mut attachment_ids: Vec<Id> = vec![];
 

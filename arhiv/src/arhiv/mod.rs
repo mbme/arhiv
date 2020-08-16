@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::Path;
 
+pub mod notes;
 mod server;
 mod sync;
 

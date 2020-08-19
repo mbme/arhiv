@@ -61,12 +61,12 @@ impl Arhiv {
         })
     }
 
-    pub fn create(config: Config) -> Result<()> {
+    pub fn create(config: Config) -> Result<Arhiv> {
         let root_dir = &config.arhiv_root.clone();
 
-        Storage::create(root_dir)?;
+        let storage = Storage::create(root_dir)?;
 
-        Ok(())
+        Ok(Arhiv { config, storage })
     }
 
     pub fn get_status(&self) -> Result<Status> {
@@ -200,5 +200,9 @@ impl Arhiv {
         log::debug!("staged new attachment {}: {}", attachment, file);
 
         Ok(attachment)
+    }
+
+    pub fn get_root_dir(&self) -> &str {
+        return &self.config.arhiv_root;
     }
 }

@@ -2,12 +2,13 @@
 #![deny(clippy::pedantic)]
 
 mod arhiv;
-pub mod config;
+mod config;
 pub mod entities;
 mod fs_transaction;
 mod storage;
 pub mod utils;
 
-pub use arhiv::notes::ArhivNotes;
-pub use arhiv::Arhiv;
+pub use crate::arhiv::notes::ArhivNotes;
+pub use crate::arhiv::Arhiv;
+pub use config::Config;
 pub use storage::{Matcher, QueryFilter};

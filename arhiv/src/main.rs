@@ -1,8 +1,7 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::config::Config;
-use arhiv::Arhiv;
+use arhiv::{Arhiv, Config};
 use clap::{crate_version, App};
 
 fn main() {

@@ -1,5 +1,5 @@
-use arhiv::config::Config;
 use arhiv::utils::dir_exists;
+use arhiv::Config;
 use std::fs;
 
 fn main() {

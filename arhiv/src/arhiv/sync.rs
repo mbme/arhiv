@@ -78,7 +78,10 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let mut filter = QueryFilter::default();
-        filter.page_size = None; // fetch all items
+
+        // fetch all items
+        filter.page_size = None;
+        filter.skip_archived = None;
 
         let documents = conn.get_documents(base_rev + 1, filter)?;
         let attachments = conn.get_committed_attachments_with_rev(base_rev + 1)?;

@@ -21,6 +21,8 @@ fn main() {
             Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
         }
         ("status", Some(_)) => {
+            // FIXME print root dir
+            // FIXME print number of unused temp attachments
             println!(
                 "{}",
                 Arhiv::must_open()

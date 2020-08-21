@@ -10,6 +10,7 @@ pub struct QueryFilter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
     pub matcher: Option<Matcher>,
+    pub skip_archived: Option<bool>,
 }
 
 impl Default for QueryFilter {
@@ -19,6 +20,7 @@ impl Default for QueryFilter {
             page_offset: Some(0),
             page_size: Some(20),
             matcher: None,
+            skip_archived: Some(true),
         }
     }
 }

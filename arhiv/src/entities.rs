@@ -8,7 +8,7 @@ use uuid::Uuid;
 pub type Revision = u32;
 pub type Id = String;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Document {
     pub id: Id,
@@ -42,6 +42,10 @@ impl Document {
 
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
+    }
+
+    pub fn is_staged(&self) -> bool {
+        self.rev == 0
     }
 }
 

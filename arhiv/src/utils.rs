@@ -1,7 +1,5 @@
 use anyhow::*;
-use std::env;
 use std::fs;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn file_exists(path: &str) -> Result<bool> {
     match fs::metadata(path) {
@@ -37,20 +35,6 @@ pub fn ensure_file_exists(path: &str) -> Result<()> {
     } else {
         Err(anyhow!("file doesn't exist {}", path))
     }
-}
-
-pub fn generate_temp_dir(prefix: &str) -> String {
-    let mut path = env::temp_dir();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos();
-
-    path.push(format!("{}-{}", prefix, nanos));
-
-    path.to_str()
-        .expect("must be able to convert path to string")
-        .to_string()
 }
 
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {

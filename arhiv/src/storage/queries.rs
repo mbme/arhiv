@@ -76,6 +76,10 @@ pub trait Queries {
             params.push((":matcher_pattern", &matcher.pattern));
         }
 
+        if filter.skip_archived.unwrap_or(false) {
+            query.push("AND archived = false");
+        }
+
         // local documents with rev === 0 have higher priority
         query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 

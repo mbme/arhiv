@@ -1,6 +1,6 @@
 use super::{Arhiv, Matcher, QueryFilter};
 use crate::entities::*;
-use serde_json::json;
+use serde_json::{json, Value};
 
 pub struct ArhivNotes {
     pub arhiv: Arhiv,
@@ -21,9 +21,13 @@ impl ArhivNotes {
 
     pub fn create_note() -> Document {
         let mut document = Document::new(NOTE_TYPE);
-        document.data = json!({ "name": "", "data": "" });
+        document.data = ArhivNotes::data("", "");
 
         document
+    }
+
+    pub fn data<S: Into<String>>(name: S, data: S) -> Value {
+        json!({ "name": name.into(), "data": data.into() })
     }
 
     pub fn list(&self, pattern: String) -> Vec<Document> {
@@ -43,6 +47,7 @@ impl ArhivNotes {
             page_offset: None,
             page_size: None,
             matcher,
+            skip_archived: Some(true),
         };
 
         self.arhiv

@@ -98,28 +98,28 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document(&self, mut updated_document: Document) -> Result<()> {
+    pub fn stage_document(&self, mut document: Document) -> Result<()> {
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
-        if let Some(mut document) = conn.get_document(&updated_document.id)? {
-            document.rev = 0; // make sure document rev is Staging
+        if let Some(mut existing_document) = conn.get_document(&document.id)? {
+            existing_document.rev = 0; // make sure document rev is Staging
+            existing_document.updated_at = Utc::now();
+            existing_document.data = document.data;
+            existing_document.refs = document.refs;
+            existing_document.attachment_refs = document.attachment_refs;
+
+            conn.put_document(&existing_document)?;
+            conn.commit()?;
+            log::trace!("staged document {}", &existing_document);
+        } else {
+            document.rev = 0;
+            document.created_at = Utc::now();
             document.updated_at = Utc::now();
-            document.data = updated_document.data;
-            document.refs = updated_document.refs;
-            document.attachment_refs = updated_document.attachment_refs;
 
             conn.put_document(&document)?;
             conn.commit()?;
-            log::trace!("staged document {}", &document);
-        } else {
-            updated_document.rev = 0;
-            updated_document.created_at = Utc::now();
-            updated_document.updated_at = Utc::now();
-
-            conn.put_document(&updated_document)?;
-            conn.commit()?;
-            log::trace!("staged new document {}", &updated_document);
+            log::trace!("staged new document {}", &document);
         }
 
         Ok(())

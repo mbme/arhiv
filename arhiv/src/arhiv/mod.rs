@@ -78,7 +78,7 @@ impl Arhiv {
 
         Ok(Status {
             rev,
-            is_prime: self.config.prime,
+            is_prime: self.config.is_prime,
             commited_documents,
             staged_documents,
             commited_attachments,
@@ -86,7 +86,7 @@ impl Arhiv {
         })
     }
 
-    pub fn list_documents(&self, filter: Option<QueryFilter>) -> Result<Vec<Document>> {
+    pub fn list_documents(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
         conn.get_documents(0, filter.unwrap_or_default())
@@ -125,15 +125,10 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn list_attachments(&self) -> Result<Vec<Attachment>> {
-        // FIXME pagination
+    pub fn list_attachments(&self, filter: Option<AttachmentFilter>) -> Result<Vec<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        if self.config.prime {
-            conn.get_committed_attachments()
-        } else {
-            conn.get_all_attachments()
-        }
+        conn.get_attachments(0, filter.unwrap_or_default())
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {

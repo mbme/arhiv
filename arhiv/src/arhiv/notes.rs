@@ -1,4 +1,4 @@
-use super::{Arhiv, Matcher, QueryFilter};
+use super::{Arhiv, DocumentFilter, Matcher};
 use crate::entities::*;
 use serde_json::{json, Value};
 
@@ -42,7 +42,7 @@ impl ArhivNotes {
             }
         };
 
-        let query = QueryFilter {
+        let filter = DocumentFilter {
             document_type: Some(NOTE_TYPE.to_string()),
             page_offset: None,
             page_size: None,
@@ -51,7 +51,7 @@ impl ArhivNotes {
         };
 
         self.arhiv
-            .list_documents(Some(query))
+            .list_documents(Some(filter))
             .expect("must be able to list notes")
     }
 

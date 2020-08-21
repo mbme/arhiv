@@ -59,7 +59,7 @@ pub trait Queries {
         Ok(staged_attachments > 0)
     }
 
-    fn get_documents(&self, min_rev: Revision, filter: QueryFilter) -> Result<Vec<Document>> {
+    fn get_documents(&self, min_rev: Revision, filter: DocumentFilter) -> Result<Vec<Document>> {
         let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
         let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
@@ -120,12 +120,37 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_all_attachments(&self) -> Result<Vec<Attachment>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM attachments GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)",
-        )?;
+    fn get_attachments(
+        &self,
+        min_rev: Revision,
+        filter: AttachmentFilter,
+    ) -> Result<Vec<Attachment>> {
+        let mut query = vec!["SELECT * FROM attachments WHERE rev >= :min_rev"];
+        let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
-        let mut rows = stmt.query(NO_PARAMS)?;
+        if let Some(ref pattern) = filter.pattern {
+            self.init_fuzzy_search()?;
+
+            query.push("AND fuzzySearch(filename, :matcher_pattern)");
+            params.push((":pattern", pattern));
+        }
+
+        // local attachments with rev === 0 have higher priority
+        query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
+
+        if let Some(ref page_size) = filter.page_size {
+            query.push("LIMIT :limit");
+            params.push((":limit", page_size));
+        }
+
+        if let Some(ref page_offset) = filter.page_offset {
+            query.push("OFFSET :offset");
+            params.push((":offset", page_offset));
+        }
+
+        let mut stmt = self.get_connection().prepare_cached(&query.join(" "))?;
+
+        let mut rows = stmt.query_named(&params)?;
 
         let mut attachments = Vec::new();
         while let Some(row) = rows.next()? {
@@ -133,25 +158,6 @@ pub trait Queries {
         }
 
         Ok(attachments)
-    }
-
-    fn get_committed_attachments_with_rev(&self, min_rev: Revision) -> Result<Vec<Attachment>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM attachments WHERE rev >= ?1 GROUP BY id")?;
-
-        let mut rows = stmt.query(params![min_rev])?;
-
-        let mut attachments = Vec::new();
-        while let Some(row) = rows.next()? {
-            attachments.push(utils::extract_attachment(row)?);
-        }
-
-        Ok(attachments)
-    }
-
-    fn get_committed_attachments(&self) -> Result<Vec<Attachment>> {
-        self.get_committed_attachments_with_rev(1)
     }
 
     fn get_staged_attachments(&self) -> Result<Vec<Attachment>> {

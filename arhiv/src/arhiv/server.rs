@@ -1,5 +1,7 @@
 use super::Arhiv;
 use crate::entities::*;
+use crate::storage::Queries;
+use anyhow::*;
 use bytes::Bytes;
 use std::collections::HashMap;
 use std::fs;
@@ -97,5 +99,25 @@ impl Arhiv {
             .or(post_changeset);
 
         warp::serve(routes).run(([127, 0, 0, 1], port)).await;
+    }
+
+    fn exchange(
+        &self,
+        changeset: Changeset,
+        attachment_data: HashMap<String, String>,
+    ) -> Result<ChangesetResponse> {
+        if !self.config.is_prime {
+            return Err(anyhow!("can't exchange: not a prime"));
+        }
+
+        if !changeset.is_empty() && self.storage.get_connection()?.has_staged_changes()? {
+            return Err(anyhow!("can't exchange: there are staged changes"));
+        }
+
+        let base_rev = changeset.base_rev.clone();
+
+        self.apply_changeset(changeset, attachment_data)?;
+
+        self.get_changeset_response(base_rev)
     }
 }

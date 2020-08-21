@@ -10,9 +10,11 @@ fn main() {
     let mut app = App::new("arhiv")
         .subcommand(App::new("init").about("Initialize arhiv on local machine"))
         .subcommand(App::new("status").about("Print current status"))
+        .subcommand(App::new("changes").about("List changes"))
         .subcommand(App::new("prime-server").about("Run prime server"))
-        .subcommand(App::new("commit").about("Commit changes"))
+        .subcommand(App::new("sync").about("Sync changes"))
         .version(crate_version!());
+    // FIXME verbose flag to enable debug logs
 
     let matches = app.clone().get_matches();
 
@@ -30,11 +32,14 @@ fn main() {
                     .expect("must be able to get status")
             );
         }
+        ("changes", Some(_)) => {
+            // FIXME implement
+        }
         ("prime-server", Some(_)) => {
             Arhiv::must_open().start_server();
         }
-        ("commit", Some(_)) => {
-            Arhiv::must_open().commit().expect("must commit");
+        ("sync", Some(_)) => {
+            Arhiv::must_open().sync().expect("must sync");
         }
         _ => app.print_help().unwrap(),
     }

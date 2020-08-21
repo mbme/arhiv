@@ -11,7 +11,7 @@ pub struct TempArhiv {
 impl TempArhiv {
     pub fn new(prime: bool) -> TempArhiv {
         let config = Config {
-            prime,
+            is_prime: prime,
             arhiv_root: generate_temp_dir("TempArhiv"),
             primary_url: None,
             server_port: 0,

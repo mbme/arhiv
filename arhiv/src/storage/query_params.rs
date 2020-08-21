@@ -5,7 +5,7 @@ pub struct Matcher {
     pub pattern: String,
 }
 
-pub struct QueryFilter {
+pub struct DocumentFilter {
     pub document_type: Option<String>,
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
@@ -13,14 +13,30 @@ pub struct QueryFilter {
     pub skip_archived: Option<bool>,
 }
 
-impl Default for QueryFilter {
+impl Default for DocumentFilter {
     fn default() -> Self {
-        QueryFilter {
+        DocumentFilter {
             document_type: None,
             page_offset: Some(0),
             page_size: Some(20),
             matcher: None,
             skip_archived: Some(true),
+        }
+    }
+}
+
+pub struct AttachmentFilter {
+    pub page_offset: Option<u8>,
+    pub page_size: Option<u8>,
+    pub pattern: Option<String>,
+}
+
+impl Default for AttachmentFilter {
+    fn default() -> Self {
+        AttachmentFilter {
+            page_offset: Some(0),
+            page_size: Some(20),
+            pattern: None,
         }
     }
 }

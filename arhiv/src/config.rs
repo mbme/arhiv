@@ -7,7 +7,7 @@ use std::fs;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    pub prime: bool,
+    pub is_prime: bool,
     pub arhiv_root: String,
     pub primary_url: Option<String>,
 

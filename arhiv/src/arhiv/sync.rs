@@ -8,17 +8,12 @@ use std::collections::HashMap;
 use std::fs::File;
 
 impl Arhiv {
-    fn apply_changeset(
+    pub(super) fn apply_changeset(
         &self,
         changeset: Changeset,
         attachment_data: HashMap<Id, String>,
-        local: bool,
     ) -> Result<()> {
-        log::debug!(
-            "applying {} changeset {}",
-            if local { "local" } else { "remote" },
-            &changeset
-        );
+        log::debug!("applying changeset {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
@@ -35,10 +30,6 @@ impl Arhiv {
 
         if changeset.is_empty() {
             return Ok(());
-        }
-
-        if !local && conn.has_staged_changes()? {
-            return Err(anyhow!("can't apply changes: there are staged changes"));
         }
 
         let new_rev = rev + 1;
@@ -74,17 +65,19 @@ impl Arhiv {
         Ok(())
     }
 
-    fn get_changeset_response(&self, base_rev: Revision) -> Result<ChangesetResponse> {
+    pub(super) fn get_changeset_response(&self, base_rev: Revision) -> Result<ChangesetResponse> {
         let conn = self.storage.get_connection()?;
 
-        let mut filter = QueryFilter::default();
-
+        let mut document_filter = DocumentFilter::default();
         // fetch all items
-        filter.page_size = None;
-        filter.skip_archived = None;
+        document_filter.page_size = None;
+        document_filter.skip_archived = None;
+        let documents = conn.get_documents(base_rev + 1, document_filter)?;
 
-        let documents = conn.get_documents(base_rev + 1, filter)?;
-        let attachments = conn.get_committed_attachments_with_rev(base_rev + 1)?;
+        let mut attachment_filter = AttachmentFilter::default();
+        // fetch all items
+        attachment_filter.page_size = None;
+        let attachments = conn.get_attachments(base_rev + 1, attachment_filter)?;
 
         Ok(ChangesetResponse {
             latest_rev: conn.get_rev()?,
@@ -94,15 +87,15 @@ impl Arhiv {
         })
     }
 
-    pub fn commit(&self) -> Result<()> {
-        if self.config.prime {
-            self.commit_locally()
+    pub fn sync(&self) -> Result<()> {
+        if self.config.is_prime {
+            self.sync_locally()
         } else {
-            self.commit_remotely()
+            self.sync_remotely()
         }
     }
 
-    fn commit_remotely(&self) -> Result<()> {
+    fn sync_remotely(&self) -> Result<()> {
         let primary_url = self
             .config
             .primary_url
@@ -157,7 +150,7 @@ impl Arhiv {
         Ok(())
     }
 
-    fn commit_locally(&self) -> Result<()> {
+    fn sync_locally(&self) -> Result<()> {
         let changeset = {
             let conn = self.storage.get_connection()?;
 
@@ -172,7 +165,7 @@ impl Arhiv {
             );
         }
 
-        self.apply_changeset(changeset, attachment_data, true)?;
+        self.apply_changeset(changeset, attachment_data)?;
 
         {
             let mut conn = self.storage.get_writable_connection()?;
@@ -185,21 +178,5 @@ impl Arhiv {
         }
 
         Ok(())
-    }
-
-    pub fn exchange(
-        &self,
-        changeset: Changeset,
-        attachment_data: HashMap<String, String>,
-    ) -> Result<ChangesetResponse> {
-        if !self.config.prime {
-            return Err(anyhow!("can't exchange: not a prime"));
-        }
-
-        let base_rev = changeset.base_rev.clone();
-
-        self.apply_changeset(changeset, attachment_data, false)?;
-
-        self.get_changeset_response(base_rev)
     }
 }

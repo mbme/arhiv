@@ -11,4 +11,4 @@ pub mod utils;
 pub use crate::arhiv::notes::ArhivNotes;
 pub use crate::arhiv::Arhiv;
 pub use config::Config;
-pub use storage::{Matcher, QueryFilter};
+pub use storage::{AttachmentFilter, DocumentFilter, Matcher};

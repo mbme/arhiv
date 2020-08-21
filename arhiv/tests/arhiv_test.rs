@@ -28,7 +28,7 @@ fn add_document() -> Result<()> {
         assert_eq!(other_document.is_staged(), true);
     }
 
-    arhiv.commit()?;
+    arhiv.sync()?;
 
     {
         let other_document = arhiv.get_document(&document.id)?.unwrap();
@@ -48,7 +48,7 @@ fn delete_document() -> Result<()> {
 
     arhiv.stage_document(document.clone())?;
     assert_eq!(arhiv.list_documents(None)?.len(), 0);
-    arhiv.commit()?;
+    arhiv.sync()?;
 
     {
         let other_document = arhiv.get_document(&document.id)?.unwrap();

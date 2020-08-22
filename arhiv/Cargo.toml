@@ -20,10 +20,9 @@ uuid = { version = "0.8", features = ["v4"]}
 
 chrono = { version = "0.4", features = ["serde"] }
 
-reqwest = { version = "0.10", features = ["blocking", "json"] }
-
 tokio = { version = "0.2", features = ["macros"] }
+tokio-util = "0.3.1"
+reqwest = { version = "0.10", features = ["json", "stream"] }
 warp = "0.2"
-bytes = "0.5"
 
-rusqlite = { version = "0.23", features = ["chrono", "serde_json", "functions"] }
+rusqlite = { version = "0.24", features = ["chrono", "serde_json", "functions"] }

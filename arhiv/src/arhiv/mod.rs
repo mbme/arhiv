@@ -13,6 +13,9 @@ pub mod notes;
 mod server;
 mod sync;
 
+#[cfg(test)]
+mod arhiv_tests;
+
 #[derive(Serialize, Deserialize)]
 pub enum AttachmentLocation {
     Url(String),
@@ -105,6 +108,7 @@ impl Arhiv {
         if let Some(mut existing_document) = conn.get_document(&document.id)? {
             existing_document.rev = 0; // make sure document rev is Staging
             existing_document.updated_at = Utc::now();
+            existing_document.archived = document.archived;
             existing_document.data = document.data;
             existing_document.refs = document.refs;
             existing_document.attachment_refs = document.attachment_refs;

@@ -4,7 +4,8 @@
 use arhiv::{Arhiv, Config};
 use clap::{crate_version, App};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let mut app = App::new("arhiv")
@@ -36,10 +37,12 @@ fn main() {
             // FIXME implement
         }
         ("prime-server", Some(_)) => {
-            Arhiv::must_open().start_server();
+            let server = Arhiv::must_open().start_server();
+
+            server.join(false).await;
         }
         ("sync", Some(_)) => {
-            Arhiv::must_open().sync().expect("must sync");
+            Arhiv::must_open().sync().await.expect("must sync");
         }
         _ => app.print_help().unwrap(),
     }

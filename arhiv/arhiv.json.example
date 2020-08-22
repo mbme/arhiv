@@ -1,5 +1,5 @@
 {
-  "prime": false,
+  "isPrime": false,
   "arhivRoot": "",
   "primaryUrl": "",
   "serverPort": 8080

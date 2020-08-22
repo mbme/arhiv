@@ -6,6 +6,33 @@ use anyhow::*;
 use rusqlite::functions::FunctionFlags;
 use rusqlite::Error as RusqliteError;
 use rusqlite::{params, Connection, ToSql, NO_PARAMS};
+use std::collections::HashMap;
+use std::rc::Rc;
+
+struct Params {
+    params: HashMap<&'static str, Rc<dyn ToSql>>,
+}
+
+impl Params {
+    pub fn new() -> Self {
+        Params {
+            params: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, key: &'static str, value: Rc<dyn ToSql>) {
+        self.params.insert(key, value);
+    }
+
+    pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {
+        let mut params: Vec<(&str, &dyn ToSql)> = vec![];
+        for (key, value) in self.params.iter() {
+            params.push((key, value.as_ref()));
+        }
+
+        params
+    }
+}
 
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
@@ -61,19 +88,21 @@ pub trait Queries {
 
     fn get_documents(&self, min_rev: Revision, filter: DocumentFilter) -> Result<Vec<Document>> {
         let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
-        let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
-        if let Some(ref document_type) = filter.document_type {
+        let mut params = Params::new();
+        params.insert(":min_rev", Rc::new(min_rev));
+
+        if let Some(document_type) = filter.document_type {
             query.push("AND type = :type");
-            params.push((":type", document_type));
+            params.insert(":type", Rc::new(document_type));
         }
 
-        if let Some(ref matcher) = filter.matcher {
+        if let Some(matcher) = filter.matcher {
             self.init_fuzzy_search()?;
 
             query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
-            params.push((":matcher_selector", &matcher.selector));
-            params.push((":matcher_pattern", &matcher.pattern));
+            params.insert(":matcher_selector", Rc::new(matcher.selector));
+            params.insert(":matcher_pattern", Rc::new(matcher.pattern));
         }
 
         if filter.skip_archived.unwrap_or(false) {
@@ -83,19 +112,27 @@ pub trait Queries {
         // local documents with rev === 0 have higher priority
         query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
-        if let Some(ref page_size) = filter.page_size {
-            query.push("LIMIT :limit");
-            params.push((":limit", page_size));
+        match (filter.page_size, filter.page_offset) {
+            (None, None) => {}
+            (page_size, page_offset) => {
+                let page_size = page_size
+                    .map(|val| val.to_string())
+                    .unwrap_or("-1".to_string());
+
+                query.push("LIMIT :limit");
+                params.insert(":limit", Rc::new(page_size));
+
+                let page_offset = page_offset.unwrap_or(0);
+                query.push("OFFSET :offset");
+                params.insert(":offset", Rc::new(page_offset));
+            }
         }
 
-        if let Some(ref page_offset) = filter.page_offset {
-            query.push("OFFSET :offset");
-            params.push((":offset", page_offset));
-        }
+        let query = query.join(" ");
+        log::trace!("get_documents: {}", &query);
+        let mut stmt = self.get_connection().prepare_cached(&query)?;
 
-        let mut stmt = self.get_connection().prepare_cached(&query.join(" "))?;
-
-        let mut rows = stmt.query_named(&params)?;
+        let mut rows = stmt.query_named(&params.get())?;
 
         let mut documents = Vec::new();
         while let Some(row) = rows.next()? {
@@ -126,31 +163,41 @@ pub trait Queries {
         filter: AttachmentFilter,
     ) -> Result<Vec<Attachment>> {
         let mut query = vec!["SELECT * FROM attachments WHERE rev >= :min_rev"];
-        let mut params: Vec<(&str, &dyn ToSql)> = vec![(":min_rev", &min_rev)];
 
-        if let Some(ref pattern) = filter.pattern {
+        let mut params = Params::new();
+        params.insert(":min_rev", Rc::new(min_rev));
+
+        if let Some(pattern) = filter.pattern {
             self.init_fuzzy_search()?;
 
             query.push("AND fuzzySearch(filename, :matcher_pattern)");
-            params.push((":pattern", pattern));
+            params.insert(":pattern", Rc::new(pattern));
         }
 
         // local attachments with rev === 0 have higher priority
         query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
-        if let Some(ref page_size) = filter.page_size {
-            query.push("LIMIT :limit");
-            params.push((":limit", page_size));
+        match (filter.page_size, filter.page_offset) {
+            (None, None) => {}
+            (page_size, page_offset) => {
+                let page_size = page_size
+                    .map(|val| val.to_string())
+                    .unwrap_or("-1".to_string());
+
+                query.push("LIMIT :limit");
+                params.insert(":limit", Rc::new(page_size));
+
+                let page_offset = page_offset.unwrap_or(0);
+                query.push("OFFSET :offset");
+                params.insert(":offset", Rc::new(page_offset));
+            }
         }
 
-        if let Some(ref page_offset) = filter.page_offset {
-            query.push("OFFSET :offset");
-            params.push((":offset", page_offset));
-        }
+        let query = query.join(" ");
+        log::trace!("get_attachments: {}", &query);
+        let mut stmt = self.get_connection().prepare_cached(&query)?;
 
-        let mut stmt = self.get_connection().prepare_cached(&query.join(" "))?;
-
-        let mut rows = stmt.query_named(&params)?;
+        let mut rows = stmt.query_named(&params.get())?;
 
         let mut attachments = Vec::new();
         while let Some(row) = rows.next()? {

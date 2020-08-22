@@ -2,17 +2,12 @@ use super::Arhiv;
 use crate::entities::*;
 use crate::fs_transaction::FsTransaction;
 use crate::storage::*;
+use crate::utils::{ensure_file_exists, read_file_as_stream};
 use anyhow::*;
-use reqwest::blocking::Client;
-use std::collections::HashMap;
-use std::fs::File;
+use reqwest::Client;
 
 impl Arhiv {
-    pub(super) fn apply_changeset(
-        &self,
-        changeset: Changeset,
-        attachment_data: HashMap<Id, String>,
-    ) -> Result<()> {
+    pub(super) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
         log::debug!("applying changeset {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
@@ -46,9 +41,9 @@ impl Arhiv {
             attachment.rev = new_rev;
             conn.put_attachment(&attachment)?;
 
-            let file_path = attachment_data
-                .get(&attachment.id)
-                .ok_or(anyhow!("Attachment data for {} is missing", &attachment.id))?;
+            let file_path = self.storage.get_staged_attachment_file_path(&attachment.id);
+            ensure_file_exists(&file_path)
+                .context(anyhow!("Attachment data for {} is missing", &attachment.id))?;
 
             // save attachment file
             fs_tx.move_file(
@@ -65,7 +60,10 @@ impl Arhiv {
         Ok(())
     }
 
-    pub(super) fn get_changeset_response(&self, base_rev: Revision) -> Result<ChangesetResponse> {
+    pub(super) fn generate_changeset_response(
+        &self,
+        base_rev: Revision,
+    ) -> Result<ChangesetResponse> {
         let conn = self.storage.get_connection()?;
 
         let mut document_filter = DocumentFilter::default();
@@ -87,15 +85,35 @@ impl Arhiv {
         })
     }
 
-    pub fn sync(&self) -> Result<()> {
+    pub async fn sync(&self) -> Result<()> {
+        let changeset = self.storage.get_connection()?.get_changeset()?;
+
         if self.config.is_prime {
-            self.sync_locally()
+            self.sync_locally(changeset)
         } else {
-            self.sync_remotely()
+            self.sync_remotely(changeset).await
         }
     }
 
-    fn sync_remotely(&self) -> Result<()> {
+    fn sync_locally(&self, changeset: Changeset) -> Result<()> {
+        self.apply_changeset(changeset)?;
+
+        {
+            let mut conn = self.storage.get_writable_connection()?;
+            let conn = conn.get_tx()?;
+
+            conn.delete_staged_documents()?;
+            conn.delete_staged_attachments()?;
+
+            conn.commit()?;
+        }
+
+        Ok(())
+    }
+
+    async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
+        log::debug!("sync_remotely: starting {}", &changeset);
+
         let primary_url = self
             .config
             .primary_url
@@ -105,33 +123,43 @@ impl Arhiv {
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
-        let changeset = conn.get_changeset()?;
-
         for attachment in changeset.attachments.iter() {
-            // FIXME async parallel upload
-            let file = File::open(self.storage.get_staged_attachment_file_path(&attachment.id))?;
+            let file_path = self.storage.get_staged_attachment_file_path(&attachment.id);
+            log::debug!(
+                "sync_remotely: uploading attachment {} ({})",
+                &attachment.id,
+                &file_path
+            );
 
-            let res = Client::new().post(primary_url).body(file).send()?;
+            let file_stream = read_file_as_stream(&file_path).await?;
+
+            let res = Client::new()
+                .post(primary_url)
+                .body(reqwest::Body::wrap_stream(file_stream))
+                .send()
+                .await?;
 
             if !res.status().is_success() {
-                return Err(anyhow!(
-                    "failed to upload attachment data {}",
-                    &attachment.id
-                ));
+                bail!("failed to upload attachment data {}", &attachment.id);
             }
         }
 
+        log::debug!("sync_remotely: sending changeset...");
         let response: ChangesetResponse = Client::new()
-            .post(primary_url)
+            .post(&format!("{}/changeset", primary_url))
             .json(&changeset)
-            .send()?
-            .text()?
+            .send()
+            .await?
+            .text()
+            .await?
             .parse()?;
+
+        log::debug!("sync_remotely: got response {}", &response);
 
         let rev = conn.get_rev()?;
 
         if response.base_rev != rev {
-            return Err(anyhow!("base_rev isn't equal to current rev"));
+            bail!("base_rev isn't equal to current rev");
         }
 
         for document in response.documents {
@@ -147,35 +175,7 @@ impl Arhiv {
 
         conn.commit()?;
 
-        Ok(())
-    }
-
-    fn sync_locally(&self) -> Result<()> {
-        let changeset = {
-            let conn = self.storage.get_connection()?;
-
-            conn.get_changeset()?
-        };
-
-        let mut attachment_data = HashMap::new();
-        for attachment in &changeset.attachments {
-            attachment_data.insert(
-                attachment.id.clone(),
-                self.storage.get_staged_attachment_file_path(&attachment.id),
-            );
-        }
-
-        self.apply_changeset(changeset, attachment_data)?;
-
-        {
-            let mut conn = self.storage.get_writable_connection()?;
-            let conn = conn.get_tx()?;
-
-            conn.delete_staged_documents()?;
-            conn.delete_staged_attachments()?;
-
-            conn.commit()?;
-        }
+        log::debug!("sync_remotely: success!");
 
         Ok(())
     }

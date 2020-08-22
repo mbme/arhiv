@@ -155,11 +155,30 @@ pub struct ChangesetResponse {
     pub attachments: Vec<Attachment>,
 }
 
+impl ChangesetResponse {
+    pub fn serialize(&self) -> String {
+        serde_json::to_string(self).expect("Failed to serialize ChangesetResponse to json")
+    }
+}
+
 impl std::str::FromStr for ChangesetResponse {
     type Err = anyhow::Error;
 
     fn from_str(data: &str) -> Result<ChangesetResponse> {
-        serde_json::from_str(data).context("Failed to parse ChangesetResponse")
+        serde_json::from_str(data).context(anyhow!("Failed to parse ChangesetResponse:\n{}", data))
+    }
+}
+
+impl fmt::Display for ChangesetResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[ChangesetResponse: rev {}, {} documents, {} attachments since {}]",
+            self.latest_rev,
+            self.documents.len(),
+            self.attachments.len(),
+            self.base_rev,
+        )
     }
 }
 

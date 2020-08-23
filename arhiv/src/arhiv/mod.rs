@@ -138,7 +138,13 @@ impl Arhiv {
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        conn.get_attachment(id)
+        conn.get_attachment(id, false)
+    }
+
+    pub fn get_committed_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
+        let conn = self.storage.get_connection()?;
+
+        conn.get_attachment(id, true)
     }
 
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {

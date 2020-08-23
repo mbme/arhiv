@@ -46,6 +46,7 @@ name = "arhiv"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytes",
  "chrono",
  "clap",
  "env_logger",

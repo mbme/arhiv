@@ -223,6 +223,7 @@ pub trait Queries {
     }
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+        // FIXME does this query correctly return max revision?
         let mut stmt = self.get_connection().prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
@@ -234,7 +235,8 @@ pub trait Queries {
         }
     }
 
-    fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
+    fn get_attachment(&self, id: &Id, only_committed: bool) -> Result<Option<Attachment>> {
+        // FIXME does this query correctly return max revision?
         let mut stmt = self.get_connection().prepare_cached("SELECT * FROM attachments WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_attachment)?;

@@ -123,6 +123,7 @@ impl Arhiv {
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
+        // TODO parallel file upload
         for attachment in changeset.attachments.iter() {
             let file_path = self.storage.get_staged_attachment_file_path(&attachment.id);
             log::debug!(
@@ -134,7 +135,10 @@ impl Arhiv {
             let file_stream = read_file_as_stream(&file_path).await?;
 
             let res = Client::new()
-                .post(primary_url)
+                .post(&format!(
+                    "{}/attachment-data/{}",
+                    &primary_url, &attachment.id
+                ))
                 .body(reqwest::Body::wrap_stream(file_stream))
                 .send()
                 .await?;

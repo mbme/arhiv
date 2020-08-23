@@ -1,13 +1,15 @@
 use super::Arhiv;
 use crate::entities::*;
 use crate::storage::Queries;
+use crate::utils::read_file_as_stream;
 use anyhow::*;
+use bytes;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use warp::{http, reply, Filter};
+use warp::{http, hyper, reply, Filter, Reply};
 
 pub struct Server {
     join_handle: JoinHandle<()>,
@@ -40,83 +42,29 @@ impl Arhiv {
         let port = self.config.server_port;
 
         let arhiv = Arc::new(self);
+        let arhiv_filter = warp::any().map(move || arhiv.clone());
 
-        // POST /attachment-data/:id
-        let post_attachment_data = {
-            let arhiv = arhiv.clone();
+        // POST /attachment-data/:id file bytes
+        let post_attachment_data = warp::post()
+            .and(warp::path("attachment-data"))
+            .and(warp::path::param::<String>())
+            .and(warp::body::bytes())
+            .and(arhiv_filter.clone())
+            .map(post_attachment_data_handler);
 
-            warp::post()
-                .and(warp::path("attachment-data"))
-                .and(warp::path::param::<String>())
-                .and(warp::body::bytes())
-                .map(move |id: String, data: _| {
-                    let dst = arhiv.storage.get_staged_attachment_file_path(&id);
+        // GET /attachment-data/:id -> file bytes
+        let get_attachment_data = warp::get()
+            .and(warp::path("attachment-data"))
+            .and(warp::path::param::<String>())
+            .and(arhiv_filter.clone())
+            .and_then(get_attachment_data_handler);
 
-                    if Path::new(&dst).exists() {
-                        log::error!("temp attachment data {} already exists", dst);
-
-                        // FIXME check hashes instead of throwing an error
-                        return reply::with_status(
-                            format!("temp attachment data {} already exists", dst),
-                            http::StatusCode::CONFLICT,
-                        );
-                    }
-
-                    if let Err(err) = fs::write(dst, &data) {
-                        return reply::with_status(
-                            format!("failed to write data: {}", err),
-                            http::StatusCode::INTERNAL_SERVER_ERROR,
-                        );
-                    }
-
-                    reply::with_status("".to_string(), http::StatusCode::OK)
-                })
-        };
-
-        // GET /attachment-data/:id
-        let get_attachment_data = {
-            let arhiv = arhiv.clone();
-
-            warp::get()
-                .and(warp::path("attachment-data"))
-                .and(warp::path::param::<String>())
-                .map(move |id: String| {
-                    let file = arhiv.storage.get_committed_attachment_file_path(&id);
-
-                    // FIXME stream file, support ranges
-                    // res.headers['Content-Disposition'] = `inline; filename=${fileId}`
-                    // res.headers['Content-Type'] = await getMimeType(filePath)
-                    // res.headers['Cache-Control'] = 'immutable, private, max-age=31536000' // max caching
-
-                    http::Response::builder().body(std::fs::read(file).unwrap())
-                })
-        };
-
-        // POST /changeset Changeset
-        let post_changeset = {
-            let arhiv = arhiv.clone();
-
-            warp::post()
-                .and(warp::path("changeset"))
-                .and(warp::body::json())
-                .map(move |changeset: Changeset| {
-                    let result = arhiv.exchange(changeset);
-
-                    match result {
-                        Ok(changeset_response) => {
-                            reply::with_status(changeset_response.serialize(), http::StatusCode::OK)
-                        }
-                        err => {
-                            log::error!("Failed to apply a changeset: {:?}", err);
-
-                            reply::with_status(
-                                format!("failed to apply a changeset: {:?}", err),
-                                http::StatusCode::INTERNAL_SERVER_ERROR,
-                            )
-                        }
-                    }
-                })
-        };
+        // POST /changeset JSON Changeset -> JSON ChangesetResponse
+        let post_changeset = warp::post()
+            .and(warp::path("changeset"))
+            .and(warp::body::json())
+            .and(arhiv_filter.clone())
+            .map(post_changeset_handler);
 
         let routes = post_attachment_data
             .or(get_attachment_data)
@@ -151,5 +99,104 @@ impl Arhiv {
         self.apply_changeset(changeset)?;
 
         self.generate_changeset_response(base_rev)
+    }
+}
+fn post_attachment_data_handler(
+    id: String,
+    data: bytes::Bytes,
+    arhiv: Arc<Arhiv>,
+) -> impl warp::Reply {
+    let dst = arhiv.storage.get_staged_attachment_file_path(&id);
+
+    if Path::new(&dst).exists() {
+        log::error!("temp attachment data {} already exists", dst);
+
+        // FIXME check hashes instead of throwing an error
+        return reply::with_status(
+            format!("temp attachment data {} already exists", dst),
+            http::StatusCode::CONFLICT,
+        );
+    }
+
+    if let Err(err) = fs::write(dst, &data) {
+        return reply::with_status(
+            format!("failed to write data: {}", err),
+            http::StatusCode::INTERNAL_SERVER_ERROR,
+        );
+    }
+
+    reply::with_status("".to_string(), http::StatusCode::OK)
+}
+
+async fn get_attachment_data_handler(
+    id: String,
+    arhiv: Arc<Arhiv>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let attachment = match arhiv.get_committed_attachment(&id) {
+        Ok(Some(attachment)) => attachment,
+        Ok(None) => {
+            return Ok(reply::with_status(
+                format!("can't find attachment with id {}", &id),
+                http::StatusCode::NOT_FOUND,
+            )
+            .into_response());
+        }
+        Err(err) => {
+            return Ok(reply::with_status(
+                format!("failed to find attachment {}: {}", &id, err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+            .into_response());
+        }
+    };
+
+    let path = arhiv.storage.get_committed_attachment_file_path(&id);
+    if !Path::new(&path).exists() {
+        return Ok(reply::with_status(
+            format!("can't find attachment with id {}", &id),
+            http::StatusCode::NOT_FOUND,
+        )
+        .into_response());
+    }
+
+    let file = match read_file_as_stream(&path).await {
+        Ok(file) => file,
+        Err(err) => {
+            return Ok(reply::with_status(
+                format!("failed to read attachment {}: {}", &id, err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+            .into_response());
+        }
+    };
+
+    // FIXME support ranges, status code: partial content
+    // res.headers['Content-Type'] = await getMimeType(filePath)
+
+    Ok(http::Response::builder()
+        .header(
+            "Content-Disposition",
+            format!("inline; filename={}", attachment.filename),
+        )
+        .header("Cache-Control", "immutable, private, max-age=31536000") // max caching
+        .body(hyper::Body::wrap_stream(file))
+        .expect("must be able to construct response"))
+}
+
+fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp::Reply {
+    let result = arhiv.exchange(changeset);
+
+    match result {
+        Ok(changeset_response) => {
+            reply::with_status(changeset_response.serialize(), http::StatusCode::OK)
+        }
+        err => {
+            log::error!("Failed to apply a changeset: {:?}", err);
+
+            reply::with_status(
+                format!("failed to apply a changeset: {:?}", err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        }
     }
 }

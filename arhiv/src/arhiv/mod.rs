@@ -167,15 +167,9 @@ impl Arhiv {
             return Ok(AttachmentLocation::File(local_file_path));
         }
 
-        let primary_url = self
-            .config
-            .primary_url
-            .as_ref()
-            .ok_or(anyhow!("config.primary_url is missing"))?;
-
-        let url = AttachmentLocation::Url(format!("{}/attachment-data/{}", primary_url, id));
-
-        Ok(url)
+        Ok(AttachmentLocation::Url(
+            self.config.get_attachment_data_url(id)?,
+        ))
     }
 
     pub fn stage_attachment(&self, file: &str) -> Result<Attachment> {

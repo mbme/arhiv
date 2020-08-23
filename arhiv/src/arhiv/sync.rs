@@ -114,12 +114,6 @@ impl Arhiv {
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
         log::debug!("sync_remotely: starting {}", &changeset);
 
-        let primary_url = self
-            .config
-            .primary_url
-            .as_ref()
-            .ok_or(anyhow!("can't sync: primary_url is missing"))?;
-
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
@@ -135,10 +129,7 @@ impl Arhiv {
             let file_stream = read_file_as_stream(&file_path).await?;
 
             let res = Client::new()
-                .post(&format!(
-                    "{}/attachment-data/{}",
-                    &primary_url, &attachment.id
-                ))
+                .post(&self.config.get_attachment_data_url(&attachment.id)?)
                 .body(reqwest::Body::wrap_stream(file_stream))
                 .send()
                 .await?;
@@ -150,7 +141,7 @@ impl Arhiv {
 
         log::debug!("sync_remotely: sending changeset...");
         let response: ChangesetResponse = Client::new()
-            .post(&format!("{}/changeset", primary_url))
+            .post(&self.config.get_changeset_url()?)
             .json(&changeset)
             .send()
             .await?

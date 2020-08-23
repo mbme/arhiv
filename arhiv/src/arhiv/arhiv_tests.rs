@@ -135,7 +135,7 @@ async fn test_prime_sync() -> Result<()> {
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
     let prime = new_arhiv(true);
-    let server = prime.start_server();
+    let (join_handle, shutdown_sender) = prime.start_server();
 
     let replica = new_arhiv(false);
     let document = ArhivNotes::create_note();
@@ -148,7 +148,8 @@ async fn test_replica_sync() -> Result<()> {
         false
     );
 
-    server.join(true).await;
+    shutdown_sender.send(()).unwrap();
+    join_handle.await.unwrap();
 
     Ok(())
 }

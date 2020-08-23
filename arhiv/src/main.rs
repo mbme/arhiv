@@ -37,9 +37,9 @@ async fn main() {
             // FIXME implement
         }
         ("prime-server", Some(_)) => {
-            let server = Arhiv::must_open().start_server();
+            let (join_handle, _) = Arhiv::must_open().start_server();
 
-            server.join(false).await;
+            join_handle.await.expect("must join");
         }
         ("sync", Some(_)) => {
             Arhiv::must_open().sync().await.expect("must sync");

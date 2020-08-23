@@ -13,3 +13,4 @@ serde_json = "1.0"
 app-shell = { path = "../app-shell" }
 arhiv = { path = "../arhiv" }
 binutils = { path = "../binutils" }
+tokio = { version = "0.2", features = ["macros"] }

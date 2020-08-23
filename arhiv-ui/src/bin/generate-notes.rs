@@ -52,14 +52,15 @@ fn relpath(subpath: &str) -> String {
     format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let notes = Arhiv::must_open().notes();
 
     let mut attachment_ids: Vec<Id> = vec![];
 
-    let dir = relpath("resources");
+    let dir = relpath("../resources");
     for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         let path = path.to_str().unwrap();
@@ -73,7 +74,7 @@ fn main() {
         }
     }
 
-    let text = fs::read_to_string(relpath("resources/text.txt")).unwrap();
+    let text = fs::read_to_string(relpath("../resources/text.txt")).unwrap();
     for note_data in gen_notes(text, 30, attachment_ids.clone()) {
         let mut document = ArhivNotes::create_note();
         document.data = json!({ "name": note_data.name, "data": note_data.data });
@@ -81,5 +82,5 @@ fn main() {
         notes.put_note(document);
     }
 
-    notes.arhiv.sync().expect("must be able to sync");
+    notes.arhiv.sync().await.expect("must be able to sync");
 }

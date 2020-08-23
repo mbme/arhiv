@@ -73,6 +73,7 @@ dependencies = [
  "log 0.4.11",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

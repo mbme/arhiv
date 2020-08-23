@@ -63,4 +63,22 @@ impl Config {
     pub fn must_read() -> Config {
         Config::read().expect("must be able to read arhiv config")
     }
+
+    pub fn get_attachment_data_url(&self, id: &str) -> Result<String> {
+        let primary_url = self
+            .primary_url
+            .as_ref()
+            .ok_or(anyhow!("config.primary_url is missing"))?;
+
+        Ok(format!("{}/attachment-data/{}", primary_url, id))
+    }
+
+    pub fn get_changeset_url(&self) -> Result<String> {
+        let primary_url = self
+            .primary_url
+            .as_ref()
+            .ok_or(anyhow!("config.primary_url is missing"))?;
+
+        Ok(format!("{}/changeset", primary_url))
+    }
 }

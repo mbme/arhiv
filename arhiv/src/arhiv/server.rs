@@ -11,34 +11,8 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
 
-pub struct Server {
-    join_handle: JoinHandle<()>,
-    shutdown_sender: oneshot::Sender<()>,
-}
-
-impl Server {
-    pub fn new(join_handle: JoinHandle<()>, shutdown_sender: oneshot::Sender<()>) -> Self {
-        Server {
-            join_handle,
-            shutdown_sender,
-        }
-    }
-
-    pub async fn join(self, shutdown: bool) {
-        if shutdown {
-            self.shutdown_sender
-                .send(())
-                .expect("must be able to send shutdown signal");
-        }
-
-        self.join_handle
-            .await
-            .expect("must be able to await the server");
-    }
-}
-
 impl Arhiv {
-    pub fn start_server(self) -> Server {
+    pub fn start_server(self) -> (JoinHandle<()>, oneshot::Sender<()>) {
         let port = self.config.server_port;
 
         let arhiv = Arc::new(self);
@@ -82,7 +56,7 @@ impl Arhiv {
 
         log::info!("started server on {}", addr);
 
-        Server::new(join_handle, shutdown_sender)
+        (join_handle, shutdown_sender)
     }
 
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {

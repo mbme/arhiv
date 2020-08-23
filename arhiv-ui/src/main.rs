@@ -79,7 +79,7 @@ fn main() {
                     .map(|file| {
                         notes
                             .arhiv
-                            .stage_attachment(file.to_str().unwrap())
+                            .stage_attachment(file.to_str().unwrap(), false)
                             .unwrap()
                     })
                     .collect();

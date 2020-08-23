@@ -3,6 +3,7 @@ use std::fs;
 
 enum FsOperation {
     Move { src: String, dest: String },
+    Copy { src: String, dest: String },
     HardLink { src: String, dest: String },
 }
 
@@ -21,6 +22,17 @@ impl FsTransaction {
         } else {
             log::debug!("Moved {} to {}", &src, &dest);
             self.ops.push(FsOperation::Move { src, dest });
+
+            Ok(())
+        }
+    }
+
+    pub fn copy_file(&mut self, src: String, dest: String) -> Result<()> {
+        if let Err(err) = fs::copy(&src, &dest) {
+            Err(anyhow!("Failed to Copy {} to {}: {}", &src, &dest, err))
+        } else {
+            log::debug!("Copied {} to {}", &src, &dest);
+            self.ops.push(FsOperation::Copy { src, dest });
 
             Ok(())
         }
@@ -51,6 +63,14 @@ impl FsTransaction {
                         log::error!("Failed to revert Move {} to {}: {}", src, dest, err);
                     } else {
                         log::warn!("Reverted Move {} to {}", src, dest);
+                    }
+                }
+
+                FsOperation::Copy { src, dest } => {
+                    if let Err(err) = fs::remove_file(dest) {
+                        log::error!("Failed to revert Copy {} to {}: {}", src, dest, err);
+                    } else {
+                        log::warn!("Reverted Copy {} to {}", src, dest);
                     }
                 }
 

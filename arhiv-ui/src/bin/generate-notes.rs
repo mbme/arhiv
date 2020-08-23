@@ -65,7 +65,7 @@ async fn main() {
         if path.ends_with(".jpg") || path.ends_with(".jpeg") {
             let attachment = notes
                 .arhiv
-                .stage_attachment(path)
+                .stage_attachment(path, false)
                 .expect("must be able to create attachment");
             attachment_ids.push(attachment.id);
         }

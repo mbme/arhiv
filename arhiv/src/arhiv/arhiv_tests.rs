@@ -1,3 +1,4 @@
+use crate::utils::project_relpath;
 use crate::{Arhiv, ArhivNotes, Config};
 use anyhow::*;
 use std::env;
@@ -53,6 +54,10 @@ fn generate_temp_dir(prefix: &str) -> String {
     path.to_str()
         .expect("must be able to convert path to string")
         .to_string()
+}
+
+fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
+    Ok(fs::read(src)? == fs::read(dst)?)
 }
 
 #[test]
@@ -112,6 +117,27 @@ fn test_prime_crud() -> Result<()> {
 #[test]
 fn test_replica_crud() -> Result<()> {
     test_crud(&new_arhiv(false))
+}
+
+#[test]
+fn add_attachment() -> Result<()> {
+    let replica = new_arhiv(false);
+    assert_eq!(replica.list_attachments(None)?.len(), 0);
+
+    let src = &project_relpath("../resources/k2.jpg");
+    let attachment = replica.stage_attachment(src, true)?;
+
+    let mut document = ArhivNotes::create_note();
+    document.attachment_refs.push(attachment.id.clone());
+    replica.stage_document(document.clone())?;
+
+    let attachment_location = replica.get_attachment_location(&attachment.id)?;
+    let dst = attachment_location.get_file_path().unwrap();
+
+    assert_eq!(replica.list_attachments(None)?.len(), 1);
+    assert_eq!(are_equal_files(src, dst)?, true);
+
+    Ok(())
 }
 
 #[tokio::test]

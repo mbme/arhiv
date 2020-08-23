@@ -23,6 +23,15 @@ pub enum AttachmentLocation {
     Unknown,
 }
 
+impl AttachmentLocation {
+    pub fn get_file_path(&self) -> Option<&str> {
+        match self {
+            AttachmentLocation::File(ref path) => Some(path),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Status {
     pub is_prime: bool,
@@ -166,7 +175,7 @@ impl Arhiv {
         ))
     }
 
-    pub fn stage_attachment(&self, file: &str) -> Result<Attachment> {
+    pub fn stage_attachment(&self, file: &str, copy: bool) -> Result<Attachment> {
         ensure_file_exists(file).expect("new attachment file must exist");
 
         let attachment = Attachment::new(
@@ -182,10 +191,18 @@ impl Arhiv {
         let mut fs_tx = FsTransaction::new();
 
         conn.put_attachment(&attachment)?;
-        fs_tx.hard_link_file(
-            file.to_string(),
-            self.storage.get_staged_attachment_file_path(&attachment.id),
-        )?;
+
+        if copy {
+            fs_tx.copy_file(
+                file.to_string(),
+                self.storage.get_staged_attachment_file_path(&attachment.id),
+            )?;
+        } else {
+            fs_tx.hard_link_file(
+                file.to_string(),
+                self.storage.get_staged_attachment_file_path(&attachment.id),
+            )?;
+        }
 
         conn.commit()?;
         fs_tx.commit();

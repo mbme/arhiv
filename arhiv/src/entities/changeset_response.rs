@@ -1,0 +1,48 @@
+use anyhow::*;
+use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use super::{Attachment, Document, Revision};
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangesetResponse {
+    // replica storage revision
+    pub base_rev: Revision,
+
+    // primary storage revision
+    pub latest_rev: Revision,
+
+    // documents with rev > replica_rev
+    pub documents: Vec<Document>,
+
+    // attachments with rev > replica_rev
+    pub attachments: Vec<Attachment>,
+}
+
+impl ChangesetResponse {
+    pub fn serialize(&self) -> String {
+        serde_json::to_string(self).expect("Failed to serialize ChangesetResponse to json")
+    }
+}
+
+impl std::str::FromStr for ChangesetResponse {
+    type Err = anyhow::Error;
+
+    fn from_str(data: &str) -> Result<ChangesetResponse> {
+        serde_json::from_str(data).context(anyhow!("Failed to parse ChangesetResponse:\n{}", data))
+    }
+}
+
+impl fmt::Display for ChangesetResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[ChangesetResponse: rev {}, {} documents, {} attachments since {}]",
+            self.latest_rev,
+            self.documents.len(),
+            self.attachments.len(),
+            self.base_rev,
+        )
+    }
+}

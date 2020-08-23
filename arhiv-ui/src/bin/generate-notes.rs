@@ -1,4 +1,5 @@
 use arhiv::entities::*;
+use arhiv::utils::project_relpath;
 use arhiv::{Arhiv, ArhivNotes};
 use binutils::utils::run_command;
 use serde::{Deserialize, Serialize};
@@ -48,10 +49,6 @@ fn gen_notes(text: String, count: u8, attachment_ids: Vec<Id>) -> Vec<NoteData> 
     result
 }
 
-fn relpath(subpath: &str) -> String {
-    format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
-}
-
 #[tokio::main]
 async fn main() {
     env_logger::init();
@@ -60,7 +57,7 @@ async fn main() {
 
     let mut attachment_ids: Vec<Id> = vec![];
 
-    let dir = relpath("../resources");
+    let dir = project_relpath("../resources");
     for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         let path = path.to_str().unwrap();
@@ -74,7 +71,7 @@ async fn main() {
         }
     }
 
-    let text = fs::read_to_string(relpath("../resources/text.txt")).unwrap();
+    let text = fs::read_to_string(project_relpath("../resources/text.txt")).unwrap();
     for note_data in gen_notes(text, 30, attachment_ids.clone()) {
         let mut document = ArhivNotes::create_note();
         document.data = json!({ "name": note_data.name, "data": note_data.data });

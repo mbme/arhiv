@@ -45,6 +45,10 @@ pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File
     Ok(FramedRead::new(file, BytesCodec::new()))
 }
 
+pub fn project_relpath(subpath: &str) -> String {
+    format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
+}
+
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
     // if needle is empty then it matches everything
     if needle.is_empty() {

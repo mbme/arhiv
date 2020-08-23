@@ -106,15 +106,17 @@ async fn get_attachment_data_handler(
     id: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let attachment = match arhiv.get_committed_attachment(&id) {
-        Ok(Some(attachment)) => attachment,
-        Ok(None) => {
+    let attachment = match arhiv.get_attachment(&id) {
+        Ok(Some(attachment)) if attachment.is_committed() => attachment,
+
+        Ok(Some(_)) | Ok(None) => {
             return Ok(reply::with_status(
                 format!("can't find attachment with id {}", &id),
                 http::StatusCode::NOT_FOUND,
             )
             .into_response());
         }
+
         Err(err) => {
             return Ok(reply::with_status(
                 format!("failed to find attachment {}: {}", &id, err),

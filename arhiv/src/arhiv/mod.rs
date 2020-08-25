@@ -15,9 +15,6 @@ mod server;
 mod status;
 mod sync;
 
-#[cfg(test)]
-mod arhiv_tests;
-
 pub struct Arhiv {
     storage: Storage,
     config: Arc<Config>,
@@ -182,4 +179,22 @@ impl Arhiv {
 pub enum AttachmentLocation {
     Url(String),
     File(String),
+}
+
+#[cfg(test)]
+impl Drop for Arhiv {
+    // teardown
+    fn drop(&mut self) {
+        println!(
+            "DROPPING {} at {}",
+            if self.config.is_prime {
+                "PRIME"
+            } else {
+                "REPLICA"
+            },
+            self.get_root_dir()
+        );
+
+        std::fs::remove_dir_all(self.get_root_dir()).expect("must be able to remove arhiv");
+    }
 }

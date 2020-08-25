@@ -1,81 +1,9 @@
-use crate::utils::project_relpath;
-use crate::{Arhiv, ArhivNotes, Config};
 use anyhow::*;
-use std::env;
-use std::fs;
-use std::sync::atomic::{AtomicU16, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use arhiv::utils::project_relpath;
+use arhiv::{Arhiv, ArhivNotes};
+use utils::*;
 
-static SERVERS_COUNTER: AtomicU16 = AtomicU16::new(0);
-
-impl Drop for Arhiv {
-    // teardown
-    fn drop(&mut self) {
-        println!(
-            "DROPPING {} at {}",
-            if self.config.is_prime {
-                "PRIME"
-            } else {
-                "REPLICA"
-            },
-            self.get_root_dir()
-        );
-        fs::remove_dir_all(self.get_root_dir()).expect("must be able to remove arhiv");
-    }
-}
-
-fn generate_port() -> u16 {
-    9876 + SERVERS_COUNTER.fetch_add(1, Ordering::Relaxed)
-}
-
-fn new_arhiv(prime: bool) -> Arhiv {
-    new_arhiv_with_port(prime, generate_port())
-}
-
-fn new_arhiv_with_port(prime: bool, server_port: u16) -> Arhiv {
-    let primary_url = {
-        if prime {
-            None
-        } else {
-            Some(format!("http://localhost:{}", server_port))
-        }
-    };
-
-    let config = Config {
-        is_prime: prime,
-        arhiv_root: generate_temp_dir("TempArhiv"),
-        primary_url,
-        server_port,
-    };
-
-    Arhiv::create(config).expect("must be able to create temp arhiv")
-}
-
-fn generate_temp_dir(prefix: &str) -> String {
-    let mut path = env::temp_dir();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos();
-
-    path.push(format!("{}-{}", prefix, nanos));
-
-    path.to_str()
-        .expect("must be able to convert path to string")
-        .to_string()
-}
-
-fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
-    Ok(fs::read(src)? == fs::read(dst)?)
-}
-
-#[test]
-fn it_works() -> Result<()> {
-    let arhiv = new_arhiv(true);
-    assert_eq!(arhiv.list_documents(None)?.len(), 0);
-
-    Ok(())
-}
+mod utils;
 
 fn test_crud(arhiv: &Arhiv) -> Result<()> {
     // CREATE
@@ -120,12 +48,12 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
 
 #[test]
 fn test_prime_crud() -> Result<()> {
-    test_crud(&new_arhiv(true))
+    test_crud(&new_prime())
 }
 
 #[test]
 fn test_replica_crud() -> Result<()> {
-    test_crud(&new_arhiv(false))
+    test_crud(&new_replica())
 }
 
 fn test_attachments(arhiv: &Arhiv) -> Result<()> {
@@ -152,17 +80,17 @@ fn test_attachments(arhiv: &Arhiv) -> Result<()> {
 
 #[test]
 fn test_prime_attachments() -> Result<()> {
-    test_attachments(&new_arhiv(true))
+    test_attachments(&new_prime())
 }
 
 #[test]
 fn test_replica_attachments() -> Result<()> {
-    test_attachments(&new_arhiv(false))
+    test_attachments(&new_replica())
 }
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {
-    let arhiv = new_arhiv(true);
+    let arhiv = new_prime();
 
     let document = ArhivNotes::create_note();
     arhiv.stage_document(document.clone())?;
@@ -181,11 +109,10 @@ async fn test_prime_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
-    let port = generate_port();
-    let prime = new_arhiv_with_port(true, port);
+    let (prime, replica) = new_arhiv_pair();
+
     let (join_handle, shutdown_sender) = prime.start_server();
 
-    let replica = new_arhiv_with_port(false, port);
     let document = ArhivNotes::create_note();
     replica.stage_document(document.clone())?;
 
@@ -204,8 +131,7 @@ async fn test_replica_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_download_attachment() -> Result<()> {
-    let port = generate_port();
-    let prime = new_arhiv_with_port(true, port);
+    let (prime, replica) = new_arhiv_pair();
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = prime.stage_attachment(src, true)?;
@@ -213,7 +139,6 @@ async fn test_download_attachment() -> Result<()> {
 
     let (join_handle, shutdown_sender) = prime.start_server();
 
-    let replica = new_arhiv_with_port(false, port);
     replica.sync().await?;
 
     let data = replica.get_attachment_data(&attachment.id);

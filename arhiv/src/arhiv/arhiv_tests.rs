@@ -3,7 +3,10 @@ use crate::{Arhiv, ArhivNotes, Config};
 use anyhow::*;
 use std::env;
 use std::fs;
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+static SERVERS_COUNTER: AtomicU16 = AtomicU16::new(0);
 
 impl Drop for Arhiv {
     // teardown
@@ -21,9 +24,15 @@ impl Drop for Arhiv {
     }
 }
 
-pub fn new_arhiv(prime: bool) -> Arhiv {
-    let server_port = 9876;
+fn generate_port() -> u16 {
+    9876 + SERVERS_COUNTER.fetch_add(1, Ordering::Relaxed)
+}
 
+fn new_arhiv(prime: bool) -> Arhiv {
+    new_arhiv_with_port(prime, generate_port())
+}
+
+fn new_arhiv_with_port(prime: bool, server_port: u16) -> Arhiv {
     let primary_url = {
         if prime {
             None
@@ -172,10 +181,11 @@ async fn test_prime_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
-    let prime = new_arhiv(true);
+    let port = generate_port();
+    let prime = new_arhiv_with_port(true, port);
     let (join_handle, shutdown_sender) = prime.start_server();
 
-    let replica = new_arhiv(false);
+    let replica = new_arhiv_with_port(false, port);
     let document = ArhivNotes::create_note();
     replica.stage_document(document.clone())?;
 
@@ -194,7 +204,8 @@ async fn test_replica_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_download_attachment() -> Result<()> {
-    let prime = new_arhiv(true);
+    let port = generate_port();
+    let prime = new_arhiv_with_port(true, port);
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = prime.stage_attachment(src, true)?;
@@ -202,7 +213,7 @@ async fn test_download_attachment() -> Result<()> {
 
     let (join_handle, shutdown_sender) = prime.start_server();
 
-    let replica = new_arhiv(false);
+    let replica = new_arhiv_with_port(false, port);
     replica.sync().await?;
 
     let data = replica.get_attachment_data(&attachment.id);

@@ -64,7 +64,7 @@ fn main() {
             move |params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
-                serde_json::to_value(notes.arhiv.get_attachment_location(&id).unwrap())
+                serde_json::to_value(notes.arhiv.get_attachment_location(id).unwrap())
                     .expect("must be able to serialize")
             }
         })

@@ -119,25 +119,36 @@ fn test_replica_crud() -> Result<()> {
     test_crud(&new_arhiv(false))
 }
 
-#[test]
-fn add_attachment() -> Result<()> {
-    let replica = new_arhiv(false);
-    assert_eq!(replica.list_attachments(None)?.len(), 0);
+fn test_attachments(arhiv: &Arhiv) -> Result<()> {
+    assert_eq!(arhiv.list_attachments(None)?.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = replica.stage_attachment(src, true)?;
+    let attachment = arhiv.stage_attachment(src, true)?;
+    assert_eq!(
+        arhiv
+            .get_attachment_data(&attachment.id)
+            .staged_file_exists()?,
+        true
+    );
 
-    let mut document = ArhivNotes::create_note();
-    document.attachment_refs.push(attachment.id.clone());
-    replica.stage_document(document.clone())?;
+    let dst = &arhiv
+        .get_attachment_data(&attachment.id)
+        .get_staged_file_path();
 
-    let attachment_location = replica.get_attachment_location(&attachment.id)?;
-    let dst = attachment_location.get_file_path().unwrap();
-
-    assert_eq!(replica.list_attachments(None)?.len(), 1);
+    assert_eq!(arhiv.list_attachments(None)?.len(), 1);
     assert_eq!(are_equal_files(src, dst)?, true);
 
     Ok(())
+}
+
+#[test]
+fn test_prime_attachments() -> Result<()> {
+    test_attachments(&new_arhiv(true))
+}
+
+#[test]
+fn test_replica_attachments() -> Result<()> {
+    test_attachments(&new_arhiv(false))
 }
 
 #[tokio::test]
@@ -149,6 +160,7 @@ async fn test_prime_sync() -> Result<()> {
     assert_eq!(arhiv.get_document(&document.id)?.unwrap().is_staged(), true);
 
     arhiv.sync().await?;
+    // FIXME test with attachments
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().is_staged(),
@@ -173,6 +185,32 @@ async fn test_replica_sync() -> Result<()> {
         replica.get_document(&document.id)?.unwrap().is_staged(),
         false
     );
+
+    shutdown_sender.send(()).unwrap();
+    join_handle.await.unwrap();
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_download_attachment() -> Result<()> {
+    let prime = new_arhiv(true);
+
+    let src = &project_relpath("../resources/k2.jpg");
+    let attachment = prime.stage_attachment(src, true)?;
+    prime.sync().await?;
+
+    let (join_handle, shutdown_sender) = prime.start_server();
+
+    let replica = new_arhiv(false);
+    replica.sync().await?;
+
+    let data = replica.get_attachment_data(&attachment.id);
+    data.download_data().await?;
+
+    let dst = &data.get_committed_file_path();
+
+    assert_eq!(are_equal_files(src, dst)?, true);
 
     shutdown_sender.send(()).unwrap();
     join_handle.await.unwrap();

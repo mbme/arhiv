@@ -2,61 +2,25 @@ use crate::config::Config;
 use crate::entities::*;
 use crate::fs_transaction::FsTransaction;
 use crate::storage::*;
-use crate::utils::{ensure_file_exists, file_exists};
+use crate::utils::ensure_file_exists;
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use status::Status;
 use std::path::Path;
+use std::sync::Arc;
 
 pub mod notes;
 mod server;
+mod status;
 mod sync;
 
 #[cfg(test)]
 mod arhiv_tests;
 
-#[derive(Serialize, Deserialize)]
-pub enum AttachmentLocation {
-    Url(String),
-    File(String),
-    Unknown,
-}
-
-impl AttachmentLocation {
-    pub fn get_file_path(&self) -> Option<&str> {
-        match self {
-            AttachmentLocation::File(ref path) => Some(path),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Status {
-    pub is_prime: bool,
-    pub rev: u32,
-
-    pub commited_documents: u32,
-    pub staged_documents: u32,
-
-    pub commited_attachments: u32,
-    pub staged_attachments: u32,
-}
-
-impl fmt::Display for Status {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            serde_json::to_string_pretty(self).expect("Failed to serialize status to json")
-        )
-    }
-}
-
 pub struct Arhiv {
     storage: Storage,
-    config: Config,
+    config: Arc<Config>,
 }
 
 impl Arhiv {
@@ -65,20 +29,21 @@ impl Arhiv {
     }
 
     pub fn open(config: Config) -> Result<Arhiv> {
-        let root_dir = &config.arhiv_root.clone();
+        let config = Arc::new(config);
+        let storage = Storage::open(config.clone())?;
 
-        Ok(Arhiv {
-            config,
-            storage: Storage::open(root_dir)?,
-        })
+        Ok(Arhiv { config, storage })
     }
 
     pub fn create(config: Config) -> Result<Arhiv> {
-        let root_dir = &config.arhiv_root.clone();
-
-        let storage = Storage::create(root_dir)?;
+        let config = Arc::new(config);
+        let storage = Storage::create(config.clone())?;
 
         Ok(Arhiv { config, storage })
+    }
+
+    pub fn get_root_dir(&self) -> &str {
+        &self.config.arhiv_root
     }
 
     pub fn get_status(&self) -> Result<Status> {
@@ -150,31 +115,6 @@ impl Arhiv {
         conn.get_attachment(id)
     }
 
-    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
-        let attachment = self
-            .get_attachment(id)?
-            .ok_or(anyhow!("unknown attachment {}", id))?;
-
-        if attachment.is_staged() {
-            let local_file_path = self.storage.get_staged_attachment_file_path(id);
-
-            if file_exists(&local_file_path)? {
-                return Ok(AttachmentLocation::File(local_file_path));
-            } else {
-                return Ok(AttachmentLocation::Unknown);
-            }
-        }
-
-        let local_file_path = self.storage.get_committed_attachment_file_path(id);
-        if file_exists(&local_file_path)? {
-            return Ok(AttachmentLocation::File(local_file_path));
-        }
-
-        Ok(AttachmentLocation::Url(
-            self.config.get_attachment_data_url(id)?,
-        ))
-    }
-
     pub fn stage_attachment(&self, file: &str, copy: bool) -> Result<Attachment> {
         ensure_file_exists(file).expect("new attachment file must exist");
 
@@ -192,16 +132,15 @@ impl Arhiv {
 
         conn.put_attachment(&attachment)?;
 
+        let path = self
+            .storage
+            .get_attachment_data(attachment.id.clone())
+            .get_staged_file_path();
+
         if copy {
-            fs_tx.copy_file(
-                file.to_string(),
-                self.storage.get_staged_attachment_file_path(&attachment.id),
-            )?;
+            fs_tx.copy_file(file.to_string(), path)?;
         } else {
-            fs_tx.hard_link_file(
-                file.to_string(),
-                self.storage.get_staged_attachment_file_path(&attachment.id),
-            )?;
+            fs_tx.hard_link_file(file.to_string(), path)?;
         }
 
         conn.commit()?;
@@ -212,7 +151,35 @@ impl Arhiv {
         Ok(attachment)
     }
 
-    pub fn get_root_dir(&self) -> &str {
-        return &self.config.arhiv_root;
+    pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {
+        self.storage.get_attachment_data(id.clone())
     }
+
+    pub fn get_attachment_location(&self, id: Id) -> Result<AttachmentLocation> {
+        let attachment = self
+            .get_attachment(&id)?
+            .ok_or(anyhow!("unknown attachment {}", id))?;
+
+        let data = self.storage.get_attachment_data(id.clone());
+
+        if attachment.is_staged() {
+            if !data.staged_file_exists()? {
+                bail!("can't find staged file for attachment {}", id);
+            }
+
+            return Ok(AttachmentLocation::File(data.get_staged_file_path()));
+        }
+
+        if data.committed_file_exists()? {
+            return Ok(AttachmentLocation::File(data.get_committed_file_path()));
+        }
+
+        Ok(AttachmentLocation::Url(data.get_url()?))
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum AttachmentLocation {
+    Url(String),
+    File(String),
 }

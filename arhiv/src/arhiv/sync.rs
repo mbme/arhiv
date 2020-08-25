@@ -41,15 +41,15 @@ impl Arhiv {
             attachment.rev = new_rev;
             conn.put_attachment(&attachment)?;
 
-            let file_path = self.storage.get_staged_attachment_file_path(&attachment.id);
+            let attachment_data = self.get_attachment_data(&attachment.id);
+            let file_path = attachment_data.get_staged_file_path();
             ensure_file_exists(&file_path)
                 .context(anyhow!("Attachment data for {} is missing", &attachment.id))?;
 
             // save attachment file
             fs_tx.move_file(
                 file_path.to_string(),
-                self.storage
-                    .get_committed_attachment_file_path(&attachment.id),
+                attachment_data.get_committed_file_path(),
             )?;
         }
 
@@ -119,7 +119,10 @@ impl Arhiv {
 
         // TODO parallel file upload
         for attachment in changeset.attachments.iter() {
-            let file_path = self.storage.get_staged_attachment_file_path(&attachment.id);
+            let data = self.get_attachment_data(&attachment.id);
+
+            let file_path = data.get_staged_file_path();
+
             log::debug!(
                 "sync_remotely: uploading attachment {} ({})",
                 &attachment.id,
@@ -128,15 +131,12 @@ impl Arhiv {
 
             let file_stream = read_file_as_stream(&file_path).await?;
 
-            let res = Client::new()
-                .post(&self.config.get_attachment_data_url(&attachment.id)?)
+            Client::new()
+                .post(&data.get_url()?)
                 .body(reqwest::Body::wrap_stream(file_stream))
                 .send()
-                .await?;
-
-            if !res.status().is_success() {
-                bail!("failed to upload attachment data {}", &attachment.id);
-            }
+                .await?
+                .error_for_status()?;
         }
 
         log::debug!("sync_remotely: sending changeset...");
@@ -145,6 +145,7 @@ impl Arhiv {
             .json(&changeset)
             .send()
             .await?
+            .error_for_status()?
             .text()
             .await?
             .parse()?;
@@ -161,13 +162,25 @@ impl Arhiv {
             conn.put_document(&document)?;
         }
 
+        let mut fs_tx = FsTransaction::new();
         for attachment in response.attachments {
             conn.put_attachment(&attachment)?;
+
+            // if we've sent few attachments, move them to committed data directory
+            if changeset.contains_attachment(&attachment.id) {
+                let attachment_data = self.get_attachment_data(&attachment.id);
+
+                fs_tx.move_file(
+                    attachment_data.get_staged_file_path(),
+                    attachment_data.get_committed_file_path(),
+                )?;
+            }
         }
 
         conn.delete_staged_documents()?;
         conn.delete_staged_attachments()?;
 
+        fs_tx.commit();
         conn.commit()?;
 
         log::debug!("sync_remotely: success!");

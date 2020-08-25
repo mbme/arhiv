@@ -29,7 +29,7 @@ export interface IAttachment {
   readonly filename: string
 }
 
-export type AttachmentLocation = { Url: string } | { File: string } | { Unknown: null }
+export type AttachmentLocation = { Url: string } | { File: string }
 
 interface IRPC {
   list(pattern: string): Promise<Note[]>

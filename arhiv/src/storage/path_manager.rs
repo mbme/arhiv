@@ -4,12 +4,14 @@ use std::fs;
 use std::path::Path;
 
 pub struct PathManager {
-    pub root_path: String,
+    root_path: String,
 }
 
 impl PathManager {
-    pub fn new(root_path: String) -> PathManager {
-        PathManager { root_path }
+    pub fn new<S: Into<String>>(root_path: S) -> PathManager {
+        PathManager {
+            root_path: root_path.into(),
+        }
     }
 
     pub fn get_data_directory(&self) -> String {

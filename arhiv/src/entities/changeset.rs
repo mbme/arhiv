@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use super::{Attachment, Document, Revision};
+use super::{Attachment, Document, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +18,13 @@ impl Changeset {
 
     pub fn is_empty(&self) -> bool {
         self.documents.is_empty() && self.attachments.is_empty()
+    }
+
+    pub fn contains_attachment(&self, id: &Id) -> bool {
+        self.attachments
+            .iter()
+            .find(|attachment| attachment.id == *id)
+            .is_some()
     }
 }
 

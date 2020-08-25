@@ -80,7 +80,7 @@ fn post_attachment_data_handler(
     data: bytes::Bytes,
     arhiv: Arc<Arhiv>,
 ) -> impl warp::Reply {
-    let dst = arhiv.storage.get_staged_attachment_file_path(&id);
+    let dst = arhiv.storage.get_attachment_data(id).get_staged_file_path();
 
     if Path::new(&dst).exists() {
         log::error!("temp attachment data {} already exists", dst);
@@ -126,7 +126,10 @@ async fn get_attachment_data_handler(
         }
     };
 
-    let path = arhiv.storage.get_committed_attachment_file_path(&id);
+    let path = arhiv
+        .storage
+        .get_attachment_data(id.clone())
+        .get_committed_file_path();
     if !Path::new(&path).exists() {
         return Ok(reply::with_status(
             format!("can't find attachment with id {}", &id),

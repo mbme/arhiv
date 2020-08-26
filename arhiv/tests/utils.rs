@@ -3,6 +3,7 @@ use arhiv::{Arhiv, Config};
 use std::env;
 use std::fs;
 use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 static SERVERS_COUNTER: AtomicU16 = AtomicU16::new(0);
@@ -52,10 +53,10 @@ pub fn new_replica() -> Arhiv {
     new_arhiv(false, generate_port())
 }
 
-pub fn new_arhiv_pair() -> (Arhiv, Arhiv) {
+pub fn new_arhiv_pair() -> (Arc<Arhiv>, Arhiv) {
     let port = generate_port();
 
-    (new_arhiv(true, port), new_arhiv(false, port))
+    (Arc::new(new_arhiv(true, port)), new_arhiv(false, port))
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {

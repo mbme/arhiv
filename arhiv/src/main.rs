@@ -1,7 +1,7 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::{Arhiv, Config};
+use arhiv::{start_server, Arhiv, Config};
 use clap::{crate_version, App};
 
 #[tokio::main]
@@ -37,7 +37,7 @@ async fn main() {
             // FIXME implement
         }
         ("prime-server", Some(_)) => {
-            let (join_handle, _) = Arhiv::must_open().start_server();
+            let (join_handle, _) = start_server(Arhiv::must_open());
 
             join_handle.await.expect("must join");
         }

@@ -11,54 +11,58 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
 
+pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::Sender<()>) {
+    let arhiv = arhiv.into();
+
+    let arhiv_filter = {
+        let arhiv = arhiv.clone();
+
+        warp::any().map(move || arhiv.clone())
+    };
+
+    // POST /attachment-data/:id file bytes
+    let post_attachment_data = warp::post()
+        .and(warp::path("attachment-data"))
+        .and(warp::path::param::<String>())
+        .and(warp::body::bytes())
+        .and(arhiv_filter.clone())
+        .map(post_attachment_data_handler);
+
+    // GET /attachment-data/:id -> file bytes
+    let get_attachment_data = warp::get()
+        .and(warp::path("attachment-data"))
+        .and(warp::path::param::<String>())
+        .and(arhiv_filter.clone())
+        .and_then(get_attachment_data_handler);
+
+    // POST /changeset JSON Changeset -> JSON ChangesetResponse
+    let post_changeset = warp::post()
+        .and(warp::path("changeset"))
+        .and(warp::body::json())
+        .and(arhiv_filter.clone())
+        .map(post_changeset_handler);
+
+    let routes = post_attachment_data
+        .or(get_attachment_data)
+        .or(post_changeset);
+
+    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+
+    let port = arhiv.config.server_port;
+    let (addr, server) =
+        warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
+            shutdown_receiver.await.ok();
+        });
+
+    // Spawn the server into a runtime
+    let join_handle = tokio::task::spawn(server);
+
+    log::info!("started server on {}", addr);
+
+    (join_handle, shutdown_sender)
+}
+
 impl Arhiv {
-    pub fn start_server(self) -> (JoinHandle<()>, oneshot::Sender<()>) {
-        let port = self.config.server_port;
-
-        let arhiv = Arc::new(self);
-        let arhiv_filter = warp::any().map(move || arhiv.clone());
-
-        // POST /attachment-data/:id file bytes
-        let post_attachment_data = warp::post()
-            .and(warp::path("attachment-data"))
-            .and(warp::path::param::<String>())
-            .and(warp::body::bytes())
-            .and(arhiv_filter.clone())
-            .map(post_attachment_data_handler);
-
-        // GET /attachment-data/:id -> file bytes
-        let get_attachment_data = warp::get()
-            .and(warp::path("attachment-data"))
-            .and(warp::path::param::<String>())
-            .and(arhiv_filter.clone())
-            .and_then(get_attachment_data_handler);
-
-        // POST /changeset JSON Changeset -> JSON ChangesetResponse
-        let post_changeset = warp::post()
-            .and(warp::path("changeset"))
-            .and(warp::body::json())
-            .and(arhiv_filter.clone())
-            .map(post_changeset_handler);
-
-        let routes = post_attachment_data
-            .or(get_attachment_data)
-            .or(post_changeset);
-
-        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
-
-        let (addr, server) =
-            warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
-                shutdown_receiver.await.ok();
-            });
-
-        // Spawn the server into a runtime
-        let join_handle = tokio::task::spawn(server);
-
-        log::info!("started server on {}", addr);
-
-        (join_handle, shutdown_sender)
-    }
-
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
         if !self.config.is_prime {
             return Err(anyhow!("can't exchange: not a prime"));
@@ -75,6 +79,7 @@ impl Arhiv {
         self.generate_changeset_response(base_rev)
     }
 }
+
 fn post_attachment_data_handler(
     id: String,
     data: bytes::Bytes,

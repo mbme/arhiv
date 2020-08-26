@@ -6,6 +6,7 @@ use crate::utils::ensure_file_exists;
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+pub use server::start_server;
 use status::Status;
 use std::path::Path;
 use std::sync::Arc;

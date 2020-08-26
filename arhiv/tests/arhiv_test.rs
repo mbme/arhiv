@@ -1,6 +1,6 @@
 use anyhow::*;
 use arhiv::utils::project_relpath;
-use arhiv::{Arhiv, ArhivNotes};
+use arhiv::{start_server, Arhiv, ArhivNotes};
 use utils::*;
 
 mod utils;
@@ -92,16 +92,40 @@ fn test_replica_attachments() -> Result<()> {
 async fn test_prime_sync() -> Result<()> {
     let arhiv = new_prime();
 
-    let document = ArhivNotes::create_note();
+    let src = &project_relpath("../resources/k2.jpg");
+    let attachment = arhiv.stage_attachment(src, true)?;
+
+    let mut document = ArhivNotes::create_note();
+    document.attachment_refs.push(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
     assert_eq!(arhiv.get_document(&document.id)?.unwrap().is_staged(), true);
 
     arhiv.sync().await?;
-    // FIXME test with attachments
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().is_staged(),
         false
+    );
+
+    // Test attachment data
+    let data = arhiv.get_attachment_data(&attachment.id);
+
+    assert_eq!(data.staged_file_exists()?, false);
+    assert_eq!(data.committed_file_exists()?, true);
+    assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+
+    // Test if document is updated correctly
+    {
+        let mut document = arhiv.get_document(&document.id)?.unwrap();
+        document.data = ArhivNotes::data("test", "test");
+        arhiv.stage_document(document)?;
+    }
+
+    arhiv.sync().await?;
+
+    assert_eq!(
+        arhiv.get_document(&document.id)?.unwrap().data,
+        ArhivNotes::data("test", "test")
     );
 
     Ok(())
@@ -111,9 +135,13 @@ async fn test_prime_sync() -> Result<()> {
 async fn test_replica_sync() -> Result<()> {
     let (prime, replica) = new_arhiv_pair();
 
-    let (join_handle, shutdown_sender) = prime.start_server();
+    let (join_handle, shutdown_sender) = start_server(prime.clone());
 
-    let document = ArhivNotes::create_note();
+    let src = &project_relpath("../resources/k2.jpg");
+    let attachment = replica.stage_attachment(src, true)?;
+
+    let mut document = ArhivNotes::create_note();
+    document.attachment_refs.push(attachment.id.clone());
     replica.stage_document(document.clone())?;
 
     replica.sync().await?;
@@ -121,6 +149,37 @@ async fn test_replica_sync() -> Result<()> {
     assert_eq!(
         replica.get_document(&document.id)?.unwrap().is_staged(),
         false
+    );
+
+    // Test attachment data
+    {
+        let data = replica.get_attachment_data(&attachment.id);
+
+        assert_eq!(data.staged_file_exists()?, false);
+        assert_eq!(data.committed_file_exists()?, true);
+        assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+    }
+
+    {
+        let data = prime.get_attachment_data(&attachment.id);
+
+        assert_eq!(data.staged_file_exists()?, false);
+        assert_eq!(data.committed_file_exists()?, true);
+        assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+    }
+
+    // Test if document is updated correctly
+    {
+        let mut document = replica.get_document(&document.id)?.unwrap();
+        document.data = ArhivNotes::data("test", "test");
+        replica.stage_document(document)?;
+    }
+
+    replica.sync().await?;
+
+    assert_eq!(
+        replica.get_document(&document.id)?.unwrap().data,
+        ArhivNotes::data("test", "test")
     );
 
     shutdown_sender.send(()).unwrap();
@@ -137,7 +196,7 @@ async fn test_download_attachment() -> Result<()> {
     let attachment = prime.stage_attachment(src, true)?;
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender) = prime.start_server();
+    let (join_handle, shutdown_sender) = start_server(prime.clone());
 
     replica.sync().await?;
 

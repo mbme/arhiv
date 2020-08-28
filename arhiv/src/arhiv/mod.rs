@@ -48,7 +48,8 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let rev = conn.get_rev()?;
-        let (commited_documents, staged_documents) = conn.count_documents()?;
+        let commited_documents = conn.count_committed_documents()?;
+        let staged_documents = conn.count_staged_documents()?;
         let (commited_attachments, staged_attachments) = conn.count_attachments()?;
 
         Ok(Status {
@@ -64,7 +65,7 @@ impl Arhiv {
     pub fn list_documents(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        conn.get_documents(0, filter.unwrap_or_default())
+        conn.get_documents(filter.unwrap_or_default())
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
@@ -85,7 +86,7 @@ impl Arhiv {
             existing_document.refs = document.refs;
             existing_document.attachment_refs = document.attachment_refs;
 
-            conn.put_document(&existing_document)?;
+            conn.put_document(&existing_document, false)?;
             conn.commit()?;
             log::trace!("staged document {}", &existing_document);
         } else {
@@ -93,7 +94,7 @@ impl Arhiv {
             document.created_at = Utc::now();
             document.updated_at = Utc::now();
 
-            conn.put_document(&document)?;
+            conn.put_document(&document, false)?;
             conn.commit()?;
             log::trace!("staged new document {}", &document);
         }
@@ -104,7 +105,7 @@ impl Arhiv {
     pub fn list_attachments(&self, filter: Option<AttachmentFilter>) -> Result<Vec<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        conn.get_attachments(0, filter.unwrap_or_default())
+        conn.get_attachments(filter.unwrap_or_default())
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {

@@ -32,7 +32,8 @@ impl Arhiv {
         for mut document in changeset.documents {
             // FIXME merge documents
             document.rev = new_rev;
-            conn.put_document(&document)?;
+            conn.put_document(&document, true)?;
+            conn.put_document(&document, false)?;
         }
 
         let mut fs_tx = FsTransaction::new();
@@ -66,16 +67,8 @@ impl Arhiv {
     ) -> Result<ChangesetResponse> {
         let conn = self.storage.get_connection()?;
 
-        let mut document_filter = DocumentFilter::default();
-        // fetch all items
-        document_filter.page_size = None;
-        document_filter.skip_archived = None;
-        let documents = conn.get_documents(base_rev + 1, document_filter)?;
-
-        let mut attachment_filter = AttachmentFilter::default();
-        // fetch all items
-        attachment_filter.page_size = None;
-        let attachments = conn.get_attachments(base_rev + 1, attachment_filter)?;
+        let documents = conn.get_documents_since(base_rev + 1)?;
+        let attachments = conn.get_attachments_since(base_rev + 1)?;
 
         Ok(ChangesetResponse {
             latest_rev: conn.get_rev()?,
@@ -102,8 +95,7 @@ impl Arhiv {
             let mut conn = self.storage.get_writable_connection()?;
             let conn = conn.get_tx()?;
 
-            conn.delete_staged_documents()?;
-            conn.delete_staged_attachments()?;
+            conn.delete_staged_attachments()?; // TODO delete temp local files
 
             conn.commit()?;
         }
@@ -159,7 +151,8 @@ impl Arhiv {
         }
 
         for document in response.documents {
-            conn.put_document(&document)?;
+            conn.put_document(&document, true)?;
+            conn.put_document(&document, false)?;
         }
 
         let mut fs_tx = FsTransaction::new();
@@ -177,8 +170,7 @@ impl Arhiv {
             }
         }
 
-        conn.delete_staged_documents()?;
-        conn.delete_staged_attachments()?;
+        conn.delete_staged_attachments()?; // TODO delete temp local files
 
         fs_tx.commit();
         conn.commit()?;

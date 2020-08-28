@@ -48,6 +48,7 @@ impl ArhivNotes {
             page_size: None,
             matcher,
             skip_archived: Some(true),
+            only_staged: None,
         };
 
         self.arhiv

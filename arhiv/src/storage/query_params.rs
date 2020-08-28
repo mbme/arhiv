@@ -11,6 +11,7 @@ pub struct DocumentFilter {
     pub page_size: Option<u8>,
     pub matcher: Option<Matcher>,
     pub skip_archived: Option<bool>,
+    pub only_staged: Option<bool>,
 }
 
 impl Default for DocumentFilter {
@@ -21,9 +22,19 @@ impl Default for DocumentFilter {
             page_size: Some(20),
             matcher: None,
             skip_archived: Some(true),
+            only_staged: None,
         }
     }
 }
+
+pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
+    document_type: None,
+    page_offset: None,
+    page_size: None,
+    matcher: None,
+    skip_archived: None,
+    only_staged: Some(true),
+};
 
 pub struct AttachmentFilter {
     pub page_offset: Option<u8>,

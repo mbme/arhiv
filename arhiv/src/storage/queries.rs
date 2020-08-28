@@ -38,59 +38,55 @@ pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
     fn get_rev(&self) -> Result<Revision> {
-        let conn = self.get_connection();
-
-        let rev = conn.query_row(
-            "SELECT IFNULL(MAX(rev), 0) FROM (SELECT rev FROM documents UNION ALL SELECT rev FROM attachments)",
-            NO_PARAMS,
-            |row| row.get(0),
-        )?;
-
-        Ok(rev)
-    }
-
-    fn count_documents(&self) -> Result<(u32, u32)> {
         self.get_connection()
             .query_row(
-                "SELECT
-            IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
-            IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
-        FROM documents",
+                "SELECT IFNULL(MAX(rev), 0) FROM documents_history",
                 NO_PARAMS,
-                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+                |row| row.get(0),
             )
-            .context("Failed to count documents")
+            .context("failed to get max rev")
+    }
+
+    fn count_staged_documents(&self) -> Result<u32> {
+        self.get_connection()
+            .query_row(
+                "SELECT COUNT(*) FROM documents WHERE rev = 0",
+                NO_PARAMS,
+                |row| Ok(row.get_unwrap(0)),
+            )
+            .context("Failed to count staged documents")
+    }
+
+    fn count_committed_documents(&self) -> Result<u32> {
+        self.get_connection()
+            .query_row(
+                "SELECT COUNT(*) FROM documents_history GROUP BY id HAVING MAX(rev)",
+                NO_PARAMS,
+                |row| Ok(row.get_unwrap(0)),
+            )
+            .context("Failed to count committed documents")
     }
 
     fn count_attachments(&self) -> Result<(u32, u32)> {
         self.get_connection()
             .query_row(
                 "SELECT
-            IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
-            IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
-        FROM attachments",
+                    IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
+                    IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
+                FROM attachments",
                 NO_PARAMS,
                 |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
             )
             .context("Failed to count attachments")
     }
 
-    fn has_staged_changes(&self) -> Result<bool> {
-        let (_, staged_documents) = self.count_documents()?;
-        if staged_documents > 0 {
-            return Ok(true);
-        }
-
-        let (_, staged_attachments) = self.count_attachments()?;
-
-        Ok(staged_attachments > 0)
-    }
-
-    fn get_documents(&self, min_rev: Revision, filter: DocumentFilter) -> Result<Vec<Document>> {
-        let mut query = vec!["SELECT * FROM documents WHERE rev >= :min_rev"];
-
+    fn get_documents(&self, filter: DocumentFilter) -> Result<Vec<Document>> {
+        let mut query = vec!["SELECT * FROM documents WHERE true"];
         let mut params = Params::new();
-        params.insert(":min_rev", Rc::new(min_rev));
+
+        if filter.only_staged.unwrap_or(false) {
+            query.push("AND rev = 0")
+        }
 
         if let Some(document_type) = filter.document_type {
             query.push("AND type = :type");
@@ -108,9 +104,6 @@ pub trait Queries {
         if filter.skip_archived.unwrap_or(false) {
             query.push("AND archived = false");
         }
-
-        // local documents with rev === 0 have higher priority
-        query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
@@ -142,12 +135,13 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_staged_documents(&self) -> Result<Vec<Document>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM documents WHERE rev = 0")?;
+    fn get_documents_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
+        // FIXME check query grouping
+        let mut stmt = self.get_connection().prepare_cached(
+            "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING MAX(rev)",
+        )?;
 
-        let mut rows = stmt.query(NO_PARAMS)?;
+        let mut rows = stmt.query(params![min_rev])?;
 
         let mut documents = Vec::new();
         while let Some(row) = rows.next()? {
@@ -157,15 +151,9 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_attachments(
-        &self,
-        min_rev: Revision,
-        filter: AttachmentFilter,
-    ) -> Result<Vec<Attachment>> {
-        let mut query = vec!["SELECT * FROM attachments WHERE rev >= :min_rev"];
-
+    fn get_attachments(&self, filter: AttachmentFilter) -> Result<Vec<Attachment>> {
+        let mut query = vec!["SELECT * FROM attachments WHERE true"];
         let mut params = Params::new();
-        params.insert(":min_rev", Rc::new(min_rev));
 
         if let Some(pattern) = filter.pattern {
             self.init_fuzzy_search()?;
@@ -207,6 +195,21 @@ pub trait Queries {
         Ok(attachments)
     }
 
+    fn get_attachments_since(&self, min_rev: Revision) -> Result<Vec<Attachment>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM attachments WHERE rev >= ?1")?;
+
+        let mut rows = stmt.query(vec![min_rev])?;
+
+        let mut attachments = Vec::new();
+        while let Some(row) = rows.next()? {
+            attachments.push(utils::extract_attachment(row)?);
+        }
+
+        Ok(attachments)
+    }
+
     fn get_staged_attachments(&self) -> Result<Vec<Attachment>> {
         let mut stmt = self
             .get_connection()
@@ -223,8 +226,9 @@ pub trait Queries {
     }
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        // FIXME does this query correctly return max revision?
-        let mut stmt = self.get_connection().prepare_cached("SELECT * FROM documents WHERE id = ?1 ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END) LIMIT 1")?;
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents WHERE id = ?1")?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -249,12 +253,17 @@ pub trait Queries {
         }
     }
 
-    fn put_document(&self, document: &Document) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "INSERT OR REPLACE INTO documents
+    fn put_document(&self, document: &Document, history: bool) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(&format!(
+            "INSERT OR REPLACE INTO {}
         (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )?;
+            if history {
+                "documents_history"
+            } else {
+                "documents"
+            },
+        ))?;
 
         stmt.execute(params![
             document.id,
@@ -288,16 +297,6 @@ pub trait Queries {
         Ok(())
     }
 
-    fn delete_staged_documents(&self) -> Result<()> {
-        let rows = self
-            .get_connection()
-            .execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
-
-        log::debug!("deleted {} staged documents", rows);
-
-        Ok(())
-    }
-
     fn delete_staged_attachments(&self) -> Result<()> {
         let rows = self
             .get_connection()
@@ -311,7 +310,7 @@ pub trait Queries {
     fn get_changeset(&self) -> Result<Changeset> {
         let changeset = Changeset {
             base_rev: self.get_rev()?,
-            documents: self.get_staged_documents()?,
+            documents: self.get_documents(DOCUMENT_FILTER_STAGED)?,
             attachments: self.get_staged_attachments()?, // FIXME ignore unused local attachments
         };
         log::debug!("prepared a changeset {}", changeset);

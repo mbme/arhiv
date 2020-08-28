@@ -68,7 +68,7 @@ impl Arhiv {
             return Err(anyhow!("can't exchange: not a prime"));
         }
 
-        if !changeset.is_empty() && self.storage.get_connection()?.has_staged_changes()? {
+        if !changeset.is_empty() && self.storage.get_connection()?.count_staged_documents()? > 0 {
             return Err(anyhow!("can't exchange: there are staged changes"));
         }
 

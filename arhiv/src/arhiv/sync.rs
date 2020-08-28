@@ -89,18 +89,7 @@ impl Arhiv {
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
-        self.apply_changeset(changeset)?;
-
-        {
-            let mut conn = self.storage.get_writable_connection()?;
-            let conn = conn.get_tx()?;
-
-            conn.delete_staged_attachments()?; // TODO delete temp local files
-
-            conn.commit()?;
-        }
-
-        Ok(())
+        self.apply_changeset(changeset)
     }
 
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
@@ -169,8 +158,6 @@ impl Arhiv {
                 )?;
             }
         }
-
-        conn.delete_staged_attachments()?; // TODO delete temp local files
 
         fs_tx.commit();
         conn.commit()?;

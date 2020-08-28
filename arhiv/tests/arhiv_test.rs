@@ -94,17 +94,39 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = arhiv.stage_attachment(src, true)?;
+    let other_attachment = arhiv.stage_attachment(src, true)?;
 
     let mut document = ArhivNotes::create_note();
     document.attachment_refs.push(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
     assert_eq!(arhiv.get_document(&document.id)?.unwrap().is_staged(), true);
 
+    assert_eq!(
+        arhiv
+            .get_attachment(&other_attachment.id)?
+            .unwrap()
+            .is_staged(),
+        true
+    );
+
     arhiv.sync().await?;
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().is_staged(),
         false
+    );
+    assert_eq!(
+        arhiv.get_attachment(&attachment.id)?.unwrap().is_staged(),
+        false
+    );
+
+    // make sure unused attachment wasn't committed
+    assert_eq!(
+        arhiv
+            .get_attachment(&other_attachment.id)?
+            .unwrap()
+            .is_staged(),
+        true
     );
 
     // Test attachment data
@@ -194,6 +216,11 @@ async fn test_download_attachment() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = prime.stage_attachment(src, true)?;
+
+    let mut document = ArhivNotes::create_note();
+    document.attachment_refs.push(attachment.id.clone());
+    prime.stage_document(document)?;
+
     prime.sync().await?;
 
     let (join_handle, shutdown_sender) = start_server(prime.clone());

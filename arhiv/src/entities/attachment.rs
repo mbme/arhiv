@@ -14,7 +14,6 @@ pub struct Attachment {
     pub filename: String,
 }
 
-// FIXME attachment dto?
 impl Attachment {
     pub(crate) fn new(filename: &str) -> Attachment {
         Attachment {

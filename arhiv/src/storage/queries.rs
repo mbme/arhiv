@@ -6,7 +6,7 @@ use anyhow::*;
 use rusqlite::functions::FunctionFlags;
 use rusqlite::Error as RusqliteError;
 use rusqlite::{params, Connection, ToSql, NO_PARAMS};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 struct Params {
@@ -136,7 +136,6 @@ pub trait Queries {
     }
 
     fn get_documents_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
-        // FIXME check query grouping
         let mut stmt = self.get_connection().prepare_cached(
             "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING MAX(rev)",
         )?;
@@ -297,21 +296,26 @@ pub trait Queries {
         Ok(())
     }
 
-    fn delete_staged_attachments(&self) -> Result<()> {
-        let rows = self
-            .get_connection()
-            .execute("DELETE FROM attachments WHERE rev = 0", NO_PARAMS)?;
-
-        log::debug!("deleted {} staged attachments", rows);
-
-        Ok(())
-    }
-
     fn get_changeset(&self) -> Result<Changeset> {
+        let documents = self.get_documents(DOCUMENT_FILTER_STAGED)?;
+
+        let attachments_in_use: HashSet<String> = documents
+            .iter()
+            .map(|document| document.attachment_refs.clone())
+            .flatten()
+            .collect();
+
+        let attachments = self
+            .get_staged_attachments()?
+            .into_iter()
+            // ignore unused local attachments
+            .filter(|attachment| attachments_in_use.contains(&attachment.id))
+            .collect();
+
         let changeset = Changeset {
             base_rev: self.get_rev()?,
-            documents: self.get_documents(DOCUMENT_FILTER_STAGED)?,
-            attachments: self.get_staged_attachments()?, // FIXME ignore unused local attachments
+            documents,
+            attachments,
         };
         log::debug!("prepared a changeset {}", changeset);
 

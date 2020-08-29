@@ -171,9 +171,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
     let result = arhiv.exchange(changeset);
 
     match result {
-        Ok(changeset_response) => {
-            reply::with_status(changeset_response.serialize(), http::StatusCode::OK)
-        }
+        Ok(changeset_response) => reply::json(&changeset_response),
         err => {
             log::error!("Failed to apply a changeset: {:?}", err);
 
@@ -181,6 +179,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
                 format!("failed to apply a changeset: {:?}", err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
+            .into_response()
         }
     }
 }

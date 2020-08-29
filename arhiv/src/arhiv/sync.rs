@@ -16,11 +16,11 @@ impl Arhiv {
         let rev = conn.get_rev()?;
 
         if changeset.base_rev > rev {
-            return Err(anyhow!(
+            bail!(
                 "base_rev {} is greater than prime rev {}",
                 changeset.base_rev,
                 rev
-            ));
+            );
         }
 
         if changeset.is_empty() {

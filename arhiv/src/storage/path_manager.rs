@@ -44,11 +44,11 @@ impl PathManager {
         let path = Path::new(&self.root_path);
 
         if !path.is_absolute() {
-            return Err(anyhow!("path must be absolute: {}", &self.root_path));
+            bail!("path must be absolute: {}", &self.root_path);
         }
 
         if path.exists() {
-            return Err(anyhow!("path already exists: {}", &self.root_path));
+            bail!("path already exists: {}", &self.root_path);
         }
 
         fs::create_dir(&self.root_path)?;

@@ -65,11 +65,11 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::
 impl Arhiv {
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
         if !self.config.is_prime {
-            return Err(anyhow!("can't exchange: not a prime"));
+            bail!("can't exchange: not a prime");
         }
 
         if !changeset.is_empty() && self.storage.get_connection()?.count_staged_documents()? > 0 {
-            return Err(anyhow!("can't exchange: there are staged changes"));
+            bail!("can't exchange: there are staged changes");
         }
 
         let base_rev = changeset.base_rev.clone();

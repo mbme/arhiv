@@ -1,5 +1,5 @@
 # What is arhiv
-* plain text database
+* personal database
 * tool to manage (create/edit/query/search...), sync, backup documents (including large media files)
 * universal, for any kind of information
 * local first
@@ -11,6 +11,7 @@
 * platform to integrate all the data
 * decreasing complexity
 * controlling data
+* as simple as possible, but not simpler
 
 # Characteristics
 * single-user database

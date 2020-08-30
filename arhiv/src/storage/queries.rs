@@ -80,7 +80,7 @@ pub trait Queries {
             .context("Failed to count attachments")
     }
 
-    fn get_documents(&self, filter: DocumentFilter) -> Result<Vec<Document>> {
+    fn list_documents(&self, filter: DocumentFilter) -> Result<Vec<Document>> {
         let mut query = vec!["SELECT * FROM documents WHERE true"];
         let mut params = Params::new();
 
@@ -150,7 +150,7 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_attachments(&self, filter: AttachmentFilter) -> Result<Vec<Attachment>> {
+    fn list_attachments(&self, filter: AttachmentFilter) -> Result<Vec<Attachment>> {
         let mut query = vec!["SELECT * FROM attachments WHERE true"];
         let mut params = Params::new();
 
@@ -160,9 +160,6 @@ pub trait Queries {
             query.push("AND fuzzySearch(filename, :matcher_pattern)");
             params.insert(":pattern", Rc::new(pattern));
         }
-
-        // local attachments with rev === 0 have higher priority
-        query.push("GROUP BY id ORDER BY (CASE WHEN rev = 0 THEN 1 ELSE 2 END)");
 
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
@@ -297,7 +294,7 @@ pub trait Queries {
     }
 
     fn get_changeset(&self) -> Result<Changeset> {
-        let documents = self.get_documents(DOCUMENT_FILTER_STAGED)?;
+        let documents = self.list_documents(DOCUMENT_FILTER_STAGED)?;
 
         let attachments_in_use: HashSet<String> = documents
             .iter()

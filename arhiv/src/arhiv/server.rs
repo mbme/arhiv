@@ -64,10 +64,6 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::
 
 impl Arhiv {
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
-        if !self.config.is_prime {
-            bail!("can't exchange: not a prime");
-        }
-
         if !changeset.is_empty() && self.storage.get_connection()?.count_staged_documents()? > 0 {
             bail!("can't exchange: there are staged changes");
         }
@@ -171,7 +167,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
     let result = arhiv.exchange(changeset);
 
     match result {
-        Ok(changeset_response) => reply::json(&changeset_response),
+        Ok(changeset_response) => reply::json(&changeset_response).into_response(),
         err => {
             log::error!("Failed to apply a changeset: {:?}", err);
 

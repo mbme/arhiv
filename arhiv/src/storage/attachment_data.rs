@@ -47,10 +47,6 @@ impl<'a> AttachmentData<'a> {
     }
 
     pub async fn download_data(&self) -> Result<()> {
-        if self.config.is_prime {
-            bail!("can't download attachment data on prime instance");
-        }
-
         let path = self.get_committed_file_path();
         if file_exists(&path)? {
             bail!(

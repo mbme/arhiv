@@ -65,7 +65,7 @@ impl Arhiv {
     pub fn list_documents(&self, filter: Option<DocumentFilter>) -> Result<Vec<Document>> {
         let conn = self.storage.get_connection()?;
 
-        conn.get_documents(filter.unwrap_or_default())
+        conn.list_documents(filter.unwrap_or_default())
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
@@ -105,7 +105,7 @@ impl Arhiv {
     pub fn list_attachments(&self, filter: Option<AttachmentFilter>) -> Result<Vec<Attachment>> {
         let conn = self.storage.get_connection()?;
 
-        conn.get_attachments(filter.unwrap_or_default())
+        conn.list_attachments(filter.unwrap_or_default())
     }
 
     pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {

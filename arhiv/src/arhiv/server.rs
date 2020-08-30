@@ -64,13 +64,14 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::
 
 impl Arhiv {
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
-        if !changeset.is_empty() && self.storage.get_connection()?.count_staged_documents()? > 0 {
+        let (_, staged) = self.storage.get_connection()?.count_documents()?;
+        if !changeset.is_empty() && staged > 0 {
             bail!("can't exchange: there are staged changes");
         }
 
         let base_rev = changeset.base_rev.clone();
 
-        self.apply_changeset(changeset)?;
+        self.apply_changeset(changeset, false)?;
 
         self.generate_changeset_response(base_rev)
     }

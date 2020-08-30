@@ -7,13 +7,13 @@ use anyhow::*;
 use reqwest::Client;
 
 impl Arhiv {
-    pub(super) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
+    pub(super) fn apply_changeset(&self, changeset: Changeset, delete_staged: bool) -> Result<()> {
         log::debug!("applying changeset {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
-        let conn = conn.get_tx()?;
+        let tx = conn.get_tx()?;
 
-        let rev = conn.get_rev()?;
+        let rev = tx.get_rev()?;
 
         if changeset.base_rev > rev {
             bail!(
@@ -32,15 +32,19 @@ impl Arhiv {
         for mut document in changeset.documents {
             // FIXME merge documents
             document.rev = new_rev;
-            conn.put_document(&document, true)?;
-            conn.put_document(&document, false)?;
+            tx.put_document(&document, false)?;
+            tx.put_document_history(&document)?;
+        }
+
+        if delete_staged {
+            tx.delete_staged_documents()?;
         }
 
         let mut fs_tx = FsTransaction::new();
         for mut attachment in changeset.attachments {
             // save attachment
             attachment.rev = new_rev;
-            conn.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment)?;
 
             let attachment_data = self.get_attachment_data(&attachment.id);
             let file_path = attachment_data.get_staged_file_path();
@@ -54,7 +58,7 @@ impl Arhiv {
             )?;
         }
 
-        conn.commit()?;
+        tx.commit()?;
         fs_tx.commit();
         log::debug!("successfully applied a changeset");
 
@@ -79,9 +83,12 @@ impl Arhiv {
     }
 
     pub async fn sync(&self) -> Result<()> {
-        let changeset = self.storage.get_connection()?.get_changeset()?;
+        let conn = self.storage.get_connection()?;
 
-        if self.config.is_prime {
+        let is_prime = conn.is_prime()?;
+        let changeset = conn.get_changeset()?;
+
+        if is_prime {
             self.sync_locally(changeset)
         } else {
             self.sync_remotely(changeset).await
@@ -89,14 +96,14 @@ impl Arhiv {
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
-        self.apply_changeset(changeset)
+        self.apply_changeset(changeset, true)
     }
 
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
         log::debug!("sync_remotely: starting {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
-        let conn = conn.get_tx()?;
+        let tx = conn.get_tx()?;
 
         // TODO parallel file upload
         for attachment in changeset.attachments.iter() {
@@ -133,20 +140,20 @@ impl Arhiv {
 
         log::debug!("sync_remotely: got response {}", &response);
 
-        let rev = conn.get_rev()?;
+        let rev = tx.get_rev()?;
 
         if response.base_rev != rev {
             bail!("base_rev isn't equal to current rev");
         }
 
         for document in response.documents {
-            conn.put_document(&document, true)?;
-            conn.put_document(&document, false)?;
+            tx.put_document(&document, false)?;
         }
+        tx.delete_staged_documents()?;
 
         let mut fs_tx = FsTransaction::new();
         for attachment in response.attachments {
-            conn.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment)?;
 
             // if we've sent few attachments, move them to committed data directory
             if changeset.contains_attachment(&attachment.id) {
@@ -160,7 +167,7 @@ impl Arhiv {
         }
 
         fs_tx.commit();
-        conn.commit()?;
+        tx.commit()?;
 
         log::debug!("sync_remotely: success!");
 

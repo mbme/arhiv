@@ -6,10 +6,10 @@ pub struct Status {
     pub is_prime: bool,
     pub rev: u32,
 
-    pub commited_documents: u32,
+    pub committed_documents: u32,
     pub staged_documents: u32,
 
-    pub commited_attachments: u32,
+    pub committed_attachments: u32,
     pub staged_attachments: u32,
 }
 

@@ -33,9 +33,9 @@ impl Arhiv {
         Ok(Arhiv { config, storage })
     }
 
-    pub fn create(config: Config) -> Result<Arhiv> {
+    pub fn create(prime: bool, config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
-        let storage = Storage::create(config.clone())?;
+        let storage = Storage::create(prime, config.clone())?;
 
         Ok(Arhiv { config, storage })
     }
@@ -48,16 +48,16 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let rev = conn.get_rev()?;
-        let commited_documents = conn.count_committed_documents()?;
-        let staged_documents = conn.count_staged_documents()?;
-        let (commited_attachments, staged_attachments) = conn.count_attachments()?;
+        let (committed_documents, staged_documents) = conn.count_documents()?;
+        let (committed_attachments, staged_attachments) = conn.count_attachments()?;
+        let is_prime = conn.is_prime()?;
 
         Ok(Status {
             rev,
-            is_prime: self.config.is_prime,
-            commited_documents,
+            is_prime,
+            committed_documents,
             staged_documents,
-            commited_attachments,
+            committed_attachments,
             staged_attachments,
         })
     }
@@ -86,7 +86,7 @@ impl Arhiv {
             existing_document.refs = document.refs;
             existing_document.attachment_refs = document.attachment_refs;
 
-            conn.put_document(&existing_document, false)?;
+            conn.put_document(&existing_document, true)?;
             conn.commit()?;
             log::trace!("staged document {}", &existing_document);
         } else {
@@ -94,7 +94,7 @@ impl Arhiv {
             document.created_at = Utc::now();
             document.updated_at = Utc::now();
 
-            conn.put_document(&document, false)?;
+            conn.put_document(&document, true)?;
             conn.commit()?;
             log::trace!("staged new document {}", &document);
         }
@@ -126,10 +126,10 @@ impl Arhiv {
         );
 
         let mut conn = self.storage.get_writable_connection()?;
-        let conn = conn.get_tx()?;
+        let tx = conn.get_tx()?;
         let mut fs_tx = FsTransaction::new();
 
-        conn.put_attachment(&attachment)?;
+        tx.put_attachment(&attachment)?;
 
         let path = self
             .storage
@@ -142,7 +142,7 @@ impl Arhiv {
             fs_tx.hard_link_file(file.to_string(), path)?;
         }
 
-        conn.commit()?;
+        tx.commit()?;
         fs_tx.commit();
 
         log::debug!("staged new attachment {}: {}", attachment, file);
@@ -187,13 +187,24 @@ pub enum AttachmentLocation {
 impl Drop for Arhiv {
     // teardown
     fn drop(&mut self) {
+        let is_prime = {
+            let result = self
+                .storage
+                .get_connection()
+                .and_then(|conn| conn.is_prime());
+
+            match result {
+                Ok(result) => result,
+                Err(err) => {
+                    println!("Drop: Failed to query: {}", err);
+                    false
+                }
+            }
+        };
+
         println!(
             "DROPPING {} at {}",
-            if self.config.is_prime {
-                "PRIME"
-            } else {
-                "REPLICA"
-            },
+            if is_prime { "PRIME" } else { "REPLICA" },
             self.get_root_dir()
         );
 

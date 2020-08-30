@@ -9,7 +9,8 @@ async fn main() {
     env_logger::init();
 
     let mut app = App::new("arhiv")
-        .subcommand(App::new("init").about("Initialize arhiv on local machine"))
+        .subcommand(App::new("init-prime").about("Initialize Prime arhiv on local machine"))
+        .subcommand(App::new("init-replica").about("Initialize Replica arhiv on local machine"))
         .subcommand(App::new("status").about("Print current status"))
         .subcommand(App::new("changes").about("List changes"))
         .subcommand(App::new("prime-server").about("Run prime server"))
@@ -20,8 +21,12 @@ async fn main() {
     let matches = app.clone().get_matches();
 
     match matches.subcommand() {
-        ("init", Some(_)) => {
-            Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
+        ("init-prime", Some(_)) => {
+            Arhiv::create(true, Config::must_read()).expect("must be able to create Prime arhiv");
+        }
+        ("init-replica", Some(_)) => {
+            Arhiv::create(false, Config::must_read())
+                .expect("must be able to create Replica arhiv");
         }
         ("status", Some(_)) => {
             // FIXME print root dir

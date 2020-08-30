@@ -36,13 +36,12 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
     };
 
     let config = Config {
-        is_prime: prime,
         arhiv_root: generate_temp_dir("TempArhiv"),
         primary_url,
         server_port,
     };
 
-    Arhiv::create(config).expect("must be able to create temp arhiv")
+    Arhiv::create(prime, config).expect("must be able to create temp arhiv")
 }
 
 pub fn new_prime() -> Arhiv {

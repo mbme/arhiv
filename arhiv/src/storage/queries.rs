@@ -5,7 +5,7 @@ use crate::utils::fuzzy_match;
 use anyhow::*;
 use rusqlite::functions::FunctionFlags;
 use rusqlite::Error as RusqliteError;
-use rusqlite::{params, Connection, ToSql, NO_PARAMS};
+use rusqlite::{params, Connection, OptionalExtension, ToSql, NO_PARAMS};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
@@ -37,34 +37,43 @@ impl Params {
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
+    fn get_setting<S: Into<String>>(&self, key: S) -> Result<Option<String>> {
+        self.get_connection()
+            .query_row(
+                "SELECT value FROM settings WHERE key=?",
+                params![key.into()],
+                |row| row.get(0),
+            )
+            .optional()
+            .context("failed to get setting")
+    }
+
+    fn is_prime(&self) -> Result<bool> {
+        self.get_setting("is_prime")
+            .map(|value| value.unwrap_or("".to_string()) == "true")
+    }
+
     fn get_rev(&self) -> Result<Revision> {
         self.get_connection()
             .query_row(
-                "SELECT IFNULL(MAX(rev), 0) FROM documents_history",
+                "SELECT IFNULL(MAX(rev), 0) FROM documents",
                 NO_PARAMS,
                 |row| row.get(0),
             )
             .context("failed to get max rev")
     }
 
-    fn count_staged_documents(&self) -> Result<u32> {
+    fn count_documents(&self) -> Result<(u32, u32)> {
         self.get_connection()
             .query_row(
-                "SELECT COUNT(*) FROM documents WHERE rev = 0",
+                "SELECT
+                    IFNULL(SUM(CASE WHEN staged = false THEN 1 ELSE 0 END), 0) AS committed,
+                    IFNULL(SUM(CASE WHEN staged = true THEN 1 ELSE 0 END), 0) AS staged
+                FROM documents",
                 NO_PARAMS,
-                |row| Ok(row.get_unwrap(0)),
+                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
             )
-            .context("Failed to count staged documents")
-    }
-
-    fn count_committed_documents(&self) -> Result<u32> {
-        self.get_connection()
-            .query_row(
-                "SELECT COUNT(*) FROM documents_history GROUP BY id HAVING MAX(rev)",
-                NO_PARAMS,
-                |row| Ok(row.get_unwrap(0)),
-            )
-            .context("Failed to count committed documents")
+            .context("Failed to count documents")
     }
 
     fn count_attachments(&self) -> Result<(u32, u32)> {
@@ -85,7 +94,7 @@ pub trait Queries {
         let mut params = Params::new();
 
         if filter.only_staged.unwrap_or(false) {
-            query.push("AND rev = 0")
+            query.push("AND staged = true")
         }
 
         if let Some(document_type) = filter.document_type {
@@ -105,6 +114,8 @@ pub trait Queries {
             query.push("AND archived = false");
         }
 
+        query.push("GROUP BY id HAVING staged = true OR staged = false");
+
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
             (page_size, page_offset) => {
@@ -122,7 +133,7 @@ pub trait Queries {
         }
 
         let query = query.join(" ");
-        log::trace!("get_documents: {}", &query);
+        log::trace!("list_documents: {}", &query);
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;
@@ -178,7 +189,7 @@ pub trait Queries {
         }
 
         let query = query.join(" ");
-        log::trace!("get_attachments: {}", &query);
+        log::trace!("list_attachments: {}", &query);
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;
@@ -224,7 +235,7 @@ pub trait Queries {
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT * FROM documents WHERE id = ?1")?;
+            .prepare_cached("SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING staged = true OR staged = false")?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -247,50 +258,6 @@ pub trait Queries {
         } else {
             Ok(None)
         }
-    }
-
-    fn put_document(&self, document: &Document, history: bool) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(&format!(
-            "INSERT OR REPLACE INTO {}
-        (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            if history {
-                "documents_history"
-            } else {
-                "documents"
-            },
-        ))?;
-
-        stmt.execute(params![
-            document.id,
-            document.rev,
-            document.created_at,
-            document.updated_at,
-            document.archived,
-            document.document_type,
-            utils::serialize_refs(&document.refs)?,
-            utils::serialize_refs(&document.attachment_refs)?,
-            document.data,
-        ])?;
-
-        Ok(())
-    }
-
-    fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "INSERT OR REPLACE INTO attachments
-        (id, rev, created_at, filename)
-        VALUES (?, ?, ?, ?)",
-        )?;
-
-        stmt.execute(params![
-            attachment.id,
-            attachment.rev,
-            attachment.created_at,
-            attachment.filename,
-        ])?;
-
-        Ok(())
     }
 
     fn get_changeset(&self) -> Result<Changeset> {
@@ -342,5 +309,94 @@ pub trait Queries {
                 },
             )
             .context(anyhow!("Failed to define fuzzySearch function"))
+    }
+}
+
+pub trait MutableQueries: Queries {
+    fn create_tables(&self) -> Result<()> {
+        self.get_connection()
+            .execute_batch(include_str!("./schema.sql"))?;
+
+        Ok(())
+    }
+
+    fn set_setting<S: Into<String>>(&self, key: S, value: Option<String>) -> Result<()> {
+        self.get_connection()
+            .execute(
+                "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+                params![key.into(), value],
+            )
+            .context("failed to set setting")?;
+
+        Ok(())
+    }
+
+    fn put_document(&self, document: &Document, staged: bool) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "INSERT OR REPLACE INTO documents
+            (staged, id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )?;
+
+        stmt.execute(params![
+            staged,
+            document.id,
+            document.rev,
+            document.created_at,
+            document.updated_at,
+            document.archived,
+            document.document_type,
+            utils::serialize_refs(&document.refs)?,
+            utils::serialize_refs(&document.attachment_refs)?,
+            document.data,
+        ])?;
+
+        Ok(())
+    }
+
+    fn put_document_history(&self, document: &Document) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "INSERT INTO documents_history
+            (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )?;
+
+        stmt.execute(params![
+            document.id,
+            document.rev,
+            document.created_at,
+            document.updated_at,
+            document.archived,
+            document.document_type,
+            utils::serialize_refs(&document.refs)?,
+            utils::serialize_refs(&document.attachment_refs)?,
+            document.data,
+        ])?;
+
+        Ok(())
+    }
+
+    fn delete_staged_documents(&self) -> Result<()> {
+        self.get_connection()
+            .execute("DELETE FROM documents WHERE staged = true", NO_PARAMS)?;
+
+        Ok(())
+    }
+
+    fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
+        let mut stmt = self.get_connection().prepare_cached(
+            "INSERT OR REPLACE INTO attachments
+            (id, rev, created_at, filename)
+            VALUES (?, ?, ?, ?)",
+        )?;
+
+        stmt.execute(params![
+            attachment.id,
+            attachment.rev,
+            attachment.created_at,
+            attachment.filename,
+        ])?;
+
+        Ok(())
     }
 }

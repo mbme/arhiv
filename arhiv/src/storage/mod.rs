@@ -33,17 +33,26 @@ impl Storage {
         })
     }
 
-    pub fn create(config: Arc<Config>) -> Result<Storage> {
+    pub fn create(prime: bool, config: Arc<Config>) -> Result<Storage> {
         let path_manager = PathManager::new(config.arhiv_root.clone());
         path_manager.create_dirs()?;
 
-        let conn = Connection::open(path_manager.get_db_file())?;
-        conn.execute_batch(include_str!("./schema.sql"))?;
-
-        Ok(Storage {
+        let storage = Storage {
             config,
             path_manager,
-        })
+        };
+
+        let mut conn =
+            MutStorageConnection::new(Connection::open(storage.path_manager.get_db_file())?);
+
+        let tx = conn.get_tx()?;
+
+        tx.create_tables()?;
+        tx.set_setting("is_prime", Some(prime.to_string()))?;
+
+        tx.commit()?;
+
+        Ok(storage)
     }
 
     pub fn get_connection(&self) -> Result<StorageConnection> {

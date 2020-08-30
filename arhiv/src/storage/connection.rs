@@ -45,8 +45,11 @@ impl Queries for StorageConnection {
         &self.conn
     }
 }
+
 impl<'a> Queries for TxStorageConnection<'a> {
     fn get_connection(&self) -> &Connection {
         &self.tx
     }
 }
+
+impl<'a> MutableQueries for TxStorageConnection<'a> {}

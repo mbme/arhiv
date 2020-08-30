@@ -150,6 +150,41 @@ impl Arhiv {
         Ok(attachment)
     }
 
+    pub fn update_attachment_filename<S: Into<String>>(&self, id: &Id, filename: S) -> Result<()> {
+        let mut attachment = self
+            .get_attachment(&id)?
+            .ok_or(anyhow!("unknown attachment {}", id))?;
+        attachment.filename = filename.into();
+
+        if attachment.is_staged() {
+            let mut conn = self.storage.get_writable_connection()?;
+            let tx = conn.get_tx()?;
+
+            tx.put_attachment(&attachment)?;
+
+            tx.commit()?;
+
+            return Ok(());
+        }
+
+        if self.storage.get_connection()?.is_prime()? {
+            let mut conn = self.storage.get_writable_connection()?;
+            let tx = conn.get_tx()?;
+
+            let current_rev = tx.get_rev()?;
+
+            attachment.rev = current_rev + 1;
+
+            tx.put_attachment(&attachment)?;
+
+            tx.commit()?;
+
+            return Ok(());
+        }
+
+        bail!("committed attachment filename must be updated on Prime");
+    }
+
     pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {
         self.storage.get_attachment_data(id.clone())
     }

@@ -89,6 +89,41 @@ fn test_replica_attachments() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_update_attachment_filename() -> Result<()> {
+    let arhiv = new_prime();
+
+    let src = &project_relpath("../resources/k2.jpg");
+    let attachment = arhiv.stage_attachment(src, true)?;
+    assert_eq!(attachment.filename, "k2.jpg");
+
+    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
+    assert_eq!(
+        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
+        "k1.jpg"
+    );
+
+    assert_eq!(arhiv.get_status()?.rev, 0);
+
+    let mut document = ArhivNotes::create_note();
+    document.attachment_refs.push(attachment.id.clone());
+    arhiv.stage_document(document.clone())?;
+
+    arhiv.sync().await?;
+
+    assert_eq!(arhiv.get_status()?.rev, 1);
+
+    // make sure we increase rev after updating committed filename
+    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
+    assert_eq!(
+        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
+        "k1.jpg"
+    );
+    assert_eq!(arhiv.get_status()?.rev, 2);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_prime_sync() -> Result<()> {
     let arhiv = new_prime();
 

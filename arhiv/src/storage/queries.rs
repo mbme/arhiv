@@ -56,7 +56,10 @@ pub trait Queries {
     fn get_rev(&self) -> Result<Revision> {
         self.get_connection()
             .query_row(
-                "SELECT IFNULL(MAX(rev), 0) FROM documents",
+                "SELECT IFNULL(MAX(rev), 0) FROM (
+                    SELECT MAX(rev) as rev FROM documents
+                        UNION ALL
+                    SELECT MAX(rev) as rev FROM attachments)",
                 NO_PARAMS,
                 |row| row.get(0),
             )

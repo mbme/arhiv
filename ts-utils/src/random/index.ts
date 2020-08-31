@@ -5,7 +5,7 @@ function getRandomBytes(bytes: number): Uint8Array {
   }
 
   // Node.js
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line
   return require('crypto').randomBytes(bytes)
 }
 

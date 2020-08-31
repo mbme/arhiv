@@ -1,7 +1,6 @@
-use crate::utils::file_exists;
+use crate::utils::find_config_file;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::fs;
 
 #[derive(Serialize, Deserialize)]
@@ -19,31 +18,8 @@ fn default_server_port() -> u16 {
 }
 
 impl Config {
-    fn find_config_file() -> Option<String> {
-        // FIXME read global config in prod mode
-
-        let mut dir = env::current_dir().expect("must be able to get current dir");
-
-        loop {
-            let config = format!(
-                "{}/arhiv.json",
-                &dir.to_str().expect("must be able to serialize path")
-            );
-
-            if file_exists(&config).unwrap_or(false) {
-                return Some(config);
-            }
-
-            if let Some(parent) = dir.parent() {
-                dir = parent.to_path_buf();
-            } else {
-                return None;
-            }
-        }
-    }
-
     pub fn read() -> Result<Config> {
-        let path = Config::find_config_file().expect("must be able to find arhiv config");
+        let path = find_config_file("arhiv.json")?;
         log::debug!("Found Arhiv config at {}", &path);
 
         let data = fs::read_to_string(&path)?;

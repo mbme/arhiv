@@ -27,7 +27,7 @@ fn generate_temp_dir(prefix: &str) -> String {
 }
 
 fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
-    let primary_url = {
+    let prime_url = {
         if prime {
             None
         } else {
@@ -37,7 +37,7 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
 
     let config = Config {
         arhiv_root: generate_temp_dir("TempArhiv"),
-        primary_url,
+        prime_url,
         server_port,
     };
 

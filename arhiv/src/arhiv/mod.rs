@@ -7,13 +7,11 @@ use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 pub use server::start_server;
-use status::Status;
 use std::path::Path;
 use std::sync::Arc;
 
 pub mod notes;
 mod server;
-mod status;
 mod sync;
 
 pub struct Arhiv {
@@ -47,12 +45,14 @@ impl Arhiv {
     pub fn get_status(&self) -> Result<Status> {
         let conn = self.storage.get_connection()?;
 
+        let root_dir = self.get_root_dir().to_string();
         let rev = conn.get_rev()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
         let (committed_attachments, staged_attachments) = conn.count_attachments()?;
         let is_prime = conn.is_prime()?;
 
         Ok(Status {
+            root_dir,
             rev,
             is_prime,
             committed_documents,
@@ -218,9 +218,23 @@ pub enum AttachmentLocation {
     File(String),
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Status {
+    pub root_dir: String,
+    pub is_prime: bool,
+    pub rev: u32,
+
+    pub committed_documents: u32,
+    pub staged_documents: u32,
+
+    pub committed_attachments: u32,
+    pub staged_attachments: u32,
+}
+
 #[cfg(test)]
 impl Drop for Arhiv {
-    // teardown
+    // Remove temporary Arhiv in tests
     fn drop(&mut self) {
         let is_prime = {
             let result = self

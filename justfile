@@ -3,8 +3,6 @@
 # End:
 # vim: set ft=make :
 
-export RUST_LOG := "DEBUG"
-
 gen-notes:
   cd arhiv-ui && cargo run --bin generate-notes
 

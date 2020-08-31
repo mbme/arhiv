@@ -1,15 +1,9 @@
-use super::{Arhiv, DocumentFilter, Matcher};
-use crate::entities::*;
+use arhiv::entities::*;
+use arhiv::{Arhiv, DocumentFilter, Matcher};
 use serde_json::{json, Value};
 
 pub struct ArhivNotes {
     pub arhiv: Arhiv,
-}
-
-impl Arhiv {
-    pub fn notes(self) -> ArhivNotes {
-        ArhivNotes::new(self)
-    }
 }
 
 pub const NOTE_TYPE: &str = "note";

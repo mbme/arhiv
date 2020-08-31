@@ -10,7 +10,6 @@ pub use server::start_server;
 use std::path::Path;
 use std::sync::Arc;
 
-pub mod notes;
 mod server;
 mod sync;
 

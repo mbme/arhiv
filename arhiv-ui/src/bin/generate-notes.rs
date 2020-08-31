@@ -1,6 +1,7 @@
 use arhiv::entities::*;
 use arhiv::utils::project_relpath;
-use arhiv::{Arhiv, ArhivNotes};
+use arhiv::Arhiv;
+use arhiv_modules::ArhivNotes;
 use binutils::utils::run_command;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -20,6 +21,7 @@ struct NoteData {
     data: String,
 }
 
+// FIXME move this into arhiv-modules when this is implemented in pure Rust
 fn gen_notes(text: String, count: u8, attachment_ids: Vec<Id>) -> Vec<NoteData> {
     let arg = FakerArgs {
         text,
@@ -53,7 +55,7 @@ fn gen_notes(text: String, count: u8, attachment_ids: Vec<Id>) -> Vec<NoteData> 
 async fn main() {
     env_logger::init();
 
-    let notes = Arhiv::must_open().notes();
+    let notes = ArhivNotes::new(Arhiv::must_open());
 
     let mut attachment_ids: Vec<Id> = vec![];
 

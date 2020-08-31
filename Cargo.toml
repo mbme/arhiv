@@ -2,6 +2,7 @@
 members = [
   "app-shell",
   "arhiv",
+  "arhiv-modules",
   "arhiv-ui",
   "poshta",
   "binutils",

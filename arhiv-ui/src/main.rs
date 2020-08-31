@@ -1,6 +1,7 @@
 use app_shell::{pick_files, AppShellBuilder};
 use arhiv::entities::*;
-use arhiv::{Arhiv, ArhivNotes};
+use arhiv::Arhiv;
+use arhiv_modules::ArhivNotes;
 use serde_json::Value;
 use std::rc::Rc;
 
@@ -9,7 +10,7 @@ fn main() {
 
     let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
-    let notes = Rc::new(Arhiv::must_open().notes());
+    let notes = Rc::new(ArhivNotes::new(Arhiv::must_open()));
 
     AppShellBuilder::create("v.arhiv.notes")
         .with_title("Arhiv Notes")

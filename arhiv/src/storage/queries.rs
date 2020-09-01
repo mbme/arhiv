@@ -389,15 +389,17 @@ pub trait MutableQueries: Queries {
     fn put_attachment(&self, attachment: &Attachment) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO attachments
-            (id, rev, created_at, filename)
-            VALUES (?, ?, ?, ?)",
+            (id, rev, hash, created_at, filename, archived)
+            VALUES (?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             attachment.id,
             attachment.rev,
+            attachment.hash,
             attachment.created_at,
             attachment.filename,
+            attachment.archived,
         ])?;
 
         Ok(())

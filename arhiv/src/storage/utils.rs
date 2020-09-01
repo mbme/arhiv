@@ -28,7 +28,9 @@ pub fn extract_attachment(row: &Row) -> Result<Attachment> {
     Ok(Attachment {
         id: row.get("id")?,
         rev: row.get("rev")?,
+        hash: row.get("hash")?,
         created_at: row.get("created_at")?,
         filename: row.get("filename")?,
+        archived: row.get("archived")?,
     })
 }

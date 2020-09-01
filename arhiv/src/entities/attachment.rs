@@ -1,4 +1,5 @@
-use super::{gen_id, Id, Revision};
+use super::{Id, Revision};
+use crate::utils::gen_uuid;
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -9,17 +10,21 @@ use std::fmt;
 pub struct Attachment {
     pub id: Id,
     pub rev: Revision,
+    pub hash: String,
     pub created_at: DateTime<Utc>,
     pub filename: String,
+    pub archived: bool, // data has been removed
 }
 
 impl Attachment {
-    pub(crate) fn new(filename: &str) -> Attachment {
+    pub(crate) fn new(hash: String, filename: &str) -> Attachment {
         Attachment {
-            id: gen_id(),
+            id: gen_uuid(),
             rev: 0,
+            hash,
             created_at: Utc::now(),
             filename: filename.to_owned(),
+            archived: false,
         }
     }
 

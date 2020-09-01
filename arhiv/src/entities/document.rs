@@ -1,4 +1,5 @@
-use super::{gen_id, Id, Revision};
+use super::{Id, Revision};
+use crate::utils::gen_uuid;
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -25,7 +26,7 @@ impl Document {
         let now = Utc::now();
 
         Document {
-            id: gen_id(),
+            id: gen_uuid(),
             rev: 0,
             document_type: document_type.into(),
             created_at: now,

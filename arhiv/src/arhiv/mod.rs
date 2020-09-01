@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::entities::*;
 use crate::fs_transaction::FsTransaction;
 use crate::storage::*;
-use crate::utils::ensure_file_exists;
+use crate::utils::{ensure_file_exists, get_file_hash_sha256};
 use anyhow::*;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -117,11 +117,12 @@ impl Arhiv {
         ensure_file_exists(file).expect("new attachment file must exist");
 
         let attachment = Attachment::new(
+            get_file_hash_sha256(file)?,
             Path::new(file)
                 .file_name()
                 .expect("file must have name")
                 .to_str()
-                .unwrap(),
+                .expect("file name must be valid string"),
         );
 
         let mut conn = self.storage.get_writable_connection()?;

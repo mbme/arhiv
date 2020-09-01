@@ -39,8 +39,10 @@ CREATE TABLE attachments (
   id TEXT NOT NULL,
   rev NUMBER NOT NULL,
 
+  hash TEXT NOT NULL,
   created_at TEXT NOT NULL,
   filename TEXT NOT NULL,
+  archived BOOLEAN NOT NULL,
 
   PRIMARY KEY (id)
 );

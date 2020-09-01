@@ -4,3 +4,5 @@ dist/
 .log/
 arhiv.json
 .eslintcache
+
+*.pkg.tar.zst

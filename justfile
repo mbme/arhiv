@@ -17,6 +17,9 @@ arhiv *PARAMS:
 
 reset-arhiv: remove-arhiv init-arhiv
 
+prod-build-install:
+  cd {{invocation_directory()}}; makepkg -efi; rm -rf pkg
+
 check-ts:
   yarn compiler-errors
 

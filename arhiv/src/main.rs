@@ -1,12 +1,17 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
+use arhiv::utils::is_production_mode;
 use arhiv::{start_server, Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use log::LevelFilter;
 
 #[tokio::main]
 async fn main() {
+    if !is_production_mode() {
+        println!("DEBUG MODE");
+    }
+
     let matches = App::new("arhiv")
         .subcommand(
             SubCommand::with_name("init")

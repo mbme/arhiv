@@ -1,0 +1,35 @@
+# Maintainer: mbme
+
+pkgname=mb-binutils
+pkgrel=1
+pkgver="0.2.0"
+pkgdesc='Helpful utils for querying and managing volume, backlight etc.'
+arch=(x86_64)
+license=(MIT)
+depends=(libnotify libpulse light xorg-xinput)
+makedepends=(cargo jq)
+
+pkgver() {
+  cd ..
+  cargo read-manifest | jq ".version"
+}
+
+build() {
+  cd ..
+  export MODE=production
+  cargo build --locked --release --target-dir=target
+}
+
+check() {
+  cd ..
+  cargo test --locked --release --target-dir=target
+}
+
+package() {
+  cd ..
+  find target/release \
+    -maxdepth 1 \
+    -executable \
+    -type f \
+    -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
+}

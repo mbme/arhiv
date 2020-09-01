@@ -1,14 +1,15 @@
 use anyhow::*;
 use arhiv::utils::project_relpath;
-use arhiv::{start_server, Arhiv, ArhivNotes};
+use arhiv::{start_server, Arhiv};
+use serde_json::json;
 use utils::*;
 
 mod utils;
 
 fn test_crud(arhiv: &Arhiv) -> Result<()> {
     // CREATE
-    let mut document = ArhivNotes::create_note();
-    document.data = ArhivNotes::data("test", "test");
+    let mut document = new_document();
+    document.data = json!({ "test": "test" });
     arhiv.stage_document(document.clone())?;
     assert_eq!(arhiv.list_documents(None)?.len(), 1);
 
@@ -23,7 +24,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
     // UPDATE
     {
         let mut other_document = arhiv.get_document(&document.id)?.unwrap();
-        other_document.data = ArhivNotes::data("1", "1");
+        other_document.data = json!({ "test": "1" });
         arhiv.stage_document(other_document.clone())?;
 
         assert_eq!(
@@ -104,7 +105,7 @@ async fn test_update_attachment_filename() -> Result<()> {
 
     assert_eq!(arhiv.get_status()?.rev, 0);
 
-    let mut document = ArhivNotes::create_note();
+    let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
 
@@ -131,7 +132,7 @@ async fn test_prime_sync() -> Result<()> {
     let attachment = arhiv.stage_attachment(src, true)?;
     let other_attachment = arhiv.stage_attachment(src, true)?;
 
-    let mut document = ArhivNotes::create_note();
+    let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
     assert_eq!(arhiv.get_document(&document.id)?.unwrap().is_staged(), true);
@@ -174,7 +175,7 @@ async fn test_prime_sync() -> Result<()> {
     // Test if document is updated correctly
     {
         let mut document = arhiv.get_document(&document.id)?.unwrap();
-        document.data = ArhivNotes::data("test", "test");
+        document.data = json!({ "test": "other" });
         arhiv.stage_document(document)?;
     }
 
@@ -182,7 +183,7 @@ async fn test_prime_sync() -> Result<()> {
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().data,
-        ArhivNotes::data("test", "test")
+        json!({ "test": "other" }),
     );
 
     Ok(())
@@ -197,7 +198,7 @@ async fn test_replica_sync() -> Result<()> {
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = replica.stage_attachment(src, true)?;
 
-    let mut document = ArhivNotes::create_note();
+    let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
     replica.stage_document(document.clone())?;
 
@@ -228,7 +229,7 @@ async fn test_replica_sync() -> Result<()> {
     // Test if document is updated correctly
     {
         let mut document = replica.get_document(&document.id)?.unwrap();
-        document.data = ArhivNotes::data("test", "test");
+        document.data = json!({ "test": "1" });
         replica.stage_document(document)?;
     }
 
@@ -236,7 +237,7 @@ async fn test_replica_sync() -> Result<()> {
 
     assert_eq!(
         replica.get_document(&document.id)?.unwrap().data,
-        ArhivNotes::data("test", "test")
+        json!({ "test": "1" }),
     );
 
     shutdown_sender.send(()).unwrap();
@@ -252,7 +253,7 @@ async fn test_download_attachment() -> Result<()> {
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = prime.stage_attachment(src, true)?;
 
-    let mut document = ArhivNotes::create_note();
+    let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
     prime.stage_document(document)?;
 

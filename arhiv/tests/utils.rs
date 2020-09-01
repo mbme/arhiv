@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::{Arhiv, Config};
+use arhiv::{entities::Document, Arhiv, Config};
 use std::env;
 use std::fs;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -56,6 +56,10 @@ pub fn new_arhiv_pair() -> (Arc<Arhiv>, Arhiv) {
     let port = generate_port();
 
     (Arc::new(new_arhiv(true, port)), new_arhiv(false, port))
+}
+
+pub fn new_document() -> Document {
+    Document::new("test")
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {

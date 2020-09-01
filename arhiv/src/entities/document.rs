@@ -21,13 +21,13 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(document_type: &str) -> Document {
+    pub fn new<S: Into<String>>(document_type: S) -> Document {
         let now = Utc::now();
 
         Document {
             id: gen_id(),
             rev: 0,
-            document_type: document_type.to_string(),
+            document_type: document_type.into(),
             created_at: now,
             updated_at: now,
             refs: vec![],

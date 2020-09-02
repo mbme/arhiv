@@ -2,6 +2,7 @@ use app_shell::{pick_files, AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::Arhiv;
 use arhiv_modules::ArhivNotes;
+use rs_utils::is_production_mode;
 use serde_json::Value;
 use std::rc::Rc;
 
@@ -9,6 +10,12 @@ fn main() {
     env_logger::init();
 
     let notes = Rc::new(ArhivNotes::new(Arhiv::must_open()));
+
+    let src = if is_production_mode() {
+        AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
+    } else {
+        AppSource::JSFile(format!("{}/dist/bundle.js", env!("CARGO_MANIFEST_DIR")))
+    };
 
     AppShellBuilder::create("v.arhiv.notes")
         .with_title("Arhiv Notes")
@@ -87,8 +94,5 @@ fn main() {
             }
         })
         .show_inspector()
-        .load(AppSource::JSFile(format!(
-            "{}/dist/bundle.js",
-            env!("CARGO_MANIFEST_DIR")
-        )));
+        .load(src);
 }

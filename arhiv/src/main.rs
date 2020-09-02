@@ -93,7 +93,7 @@ async fn main() {
             // FIXME print number of unused temp attachments
         }
         ("prime-server", Some(_)) => {
-            let (join_handle, _) = start_server(Arhiv::must_open());
+            let (join_handle, _, _) = start_server(Arhiv::must_open());
 
             join_handle.await.expect("must join");
         }

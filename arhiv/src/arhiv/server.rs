@@ -5,13 +5,16 @@ use crate::utils::read_file_as_stream;
 use anyhow::*;
 use bytes;
 use std::fs;
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
 
-pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::Sender<()>) {
+pub fn start_server<A: Into<Arc<Arhiv>>>(
+    arhiv: A,
+) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
     let arhiv = arhiv.into();
 
     let arhiv_filter = {
@@ -59,7 +62,7 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(arhiv: A) -> (JoinHandle<()>, oneshot::
 
     log::info!("started server on {}", addr);
 
-    (join_handle, shutdown_sender)
+    (join_handle, shutdown_sender, addr)
 }
 
 impl Arhiv {

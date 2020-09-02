@@ -2,15 +2,7 @@ use anyhow::*;
 use arhiv::{entities::Document, Arhiv, Config};
 use std::env;
 use std::fs;
-use std::sync::atomic::{AtomicU16, Ordering};
-use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-
-static SERVERS_COUNTER: AtomicU16 = AtomicU16::new(0);
-
-fn generate_port() -> u16 {
-    9876 + SERVERS_COUNTER.fetch_add(1, Ordering::Relaxed)
-}
 
 fn generate_temp_dir(prefix: &str) -> String {
     let mut path = env::temp_dir();
@@ -45,17 +37,15 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
 }
 
 pub fn new_prime() -> Arhiv {
-    new_arhiv(true, generate_port())
+    new_arhiv(true, 0)
 }
 
 pub fn new_replica() -> Arhiv {
-    new_arhiv(false, generate_port())
+    new_arhiv(false, 0)
 }
 
-pub fn new_arhiv_pair() -> (Arc<Arhiv>, Arhiv) {
-    let port = generate_port();
-
-    (Arc::new(new_arhiv(true, port)), new_arhiv(false, port))
+pub fn new_replica_with_port(port: u16) -> Arhiv {
+    new_arhiv(false, port)
 }
 
 pub fn new_document() -> Document {

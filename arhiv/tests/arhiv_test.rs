@@ -2,6 +2,7 @@ use anyhow::*;
 use arhiv::utils::project_relpath;
 use arhiv::{start_server, Arhiv};
 use serde_json::json;
+use std::sync::Arc;
 use utils::*;
 
 mod utils;
@@ -191,9 +192,9 @@ async fn test_prime_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
-    let (prime, replica) = new_arhiv_pair();
-
-    let (join_handle, shutdown_sender) = start_server(prime.clone());
+    let prime = Arc::new(new_prime());
+    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let replica = new_replica_with_port(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = replica.stage_attachment(src, true)?;
@@ -248,7 +249,7 @@ async fn test_replica_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_download_attachment() -> Result<()> {
-    let (prime, replica) = new_arhiv_pair();
+    let prime = Arc::new(new_prime());
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = prime.stage_attachment(src, true)?;
@@ -259,7 +260,8 @@ async fn test_download_attachment() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender) = start_server(prime.clone());
+    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let replica = new_replica_with_port(addr.port());
 
     replica.sync().await?;
 

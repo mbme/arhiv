@@ -1,5 +1,5 @@
-use crate::utils::{ensure_dir_exists, ensure_file_exists};
 use anyhow::*;
+use rs_utils::{ensure_dir_exists, ensure_file_exists};
 use std::fs;
 use std::path::Path;
 

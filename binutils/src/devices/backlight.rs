@@ -1,4 +1,5 @@
-use crate::utils::{run_command, send_notification};
+use crate::utils::send_notification;
+use rs_utils::run_command;
 
 pub struct Backlight;
 

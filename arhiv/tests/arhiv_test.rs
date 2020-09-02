@@ -1,6 +1,6 @@
 use anyhow::*;
-use arhiv::utils::project_relpath;
 use arhiv::{start_server, Arhiv};
+use rs_utils::project_relpath;
 use serde_json::json;
 use std::sync::Arc;
 use utils::*;

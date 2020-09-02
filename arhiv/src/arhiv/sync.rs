@@ -1,10 +1,9 @@
 use super::Arhiv;
 use crate::entities::*;
-use crate::fs_transaction::FsTransaction;
 use crate::storage::*;
-use crate::utils::{ensure_file_exists, read_file_as_stream};
 use anyhow::*;
 use reqwest::Client;
+use rs_utils::{ensure_file_exists, read_file_as_stream, FsTransaction};
 
 impl Arhiv {
     pub(super) fn apply_changeset(&self, changeset: Changeset, delete_staged: bool) -> Result<()> {

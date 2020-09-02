@@ -4,9 +4,7 @@
 mod arhiv;
 mod config;
 pub mod entities;
-mod fs_transaction;
 mod storage;
-pub mod utils;
 
 pub use crate::arhiv::{start_server, Arhiv};
 pub use config::Config;

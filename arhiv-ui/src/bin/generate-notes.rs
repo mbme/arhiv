@@ -1,8 +1,7 @@
 use arhiv::entities::*;
-use arhiv::utils::project_relpath;
 use arhiv::Arhiv;
 use arhiv_modules::ArhivNotes;
-use binutils::utils::run_command;
+use rs_utils::{project_relpath, run_command};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;

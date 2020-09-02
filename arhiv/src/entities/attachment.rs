@@ -1,7 +1,7 @@
 use super::{Id, Revision};
-use crate::utils::gen_uuid;
 use anyhow::*;
 use chrono::{DateTime, Utc};
+use rs_utils::gen_uuid;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 

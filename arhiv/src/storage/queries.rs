@@ -1,8 +1,8 @@
 use super::query_params::*;
 use super::utils;
 use crate::entities::*;
-use crate::utils::fuzzy_match;
 use anyhow::*;
+use rs_utils::fuzzy_match;
 use rusqlite::functions::FunctionFlags;
 use rusqlite::Error as RusqliteError;
 use rusqlite::{params, Connection, OptionalExtension, ToSql, NO_PARAMS};

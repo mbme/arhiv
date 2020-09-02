@@ -10,8 +10,9 @@ env_logger = "0.7"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tokio = { version = "0.2", features = ["macros"] }
+
 app-shell = { path = "../app-shell" }
 arhiv = { path = "../arhiv" }
 arhiv-modules = { path = "../arhiv-modules" }
-binutils = { path = "../binutils" }
-tokio = { version = "0.2", features = ["macros"] }
+rs-utils = { path = "../rs-utils" }

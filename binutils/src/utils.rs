@@ -1,23 +1,5 @@
-use anyhow::*;
 use regex::Regex;
-use std::process::Command;
-
-pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
-    let output = Command::new(command).args(args).output()?;
-
-    if !output.status.success() {
-        log::error!(
-            "command failed:\n{}\n{}",
-            output.status,
-            String::from_utf8(output.stderr)?
-        );
-        bail!("Command executed with failing error code");
-    }
-
-    let output_str = String::from_utf8(output.stdout)?;
-
-    Ok(output_str)
-}
+use rs_utils::run_command;
 
 pub fn send_notification(message: &str) {
     run_command("notify-send", vec!["-u", "low", message])

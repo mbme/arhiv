@@ -1,10 +1,10 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::utils::is_production_mode;
 use arhiv::{start_server, Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use log::LevelFilter;
+use rs_utils::is_production_mode;
 
 #[tokio::main]
 async fn main() {

@@ -1,9 +1,9 @@
 use super::Arhiv;
 use crate::entities::*;
 use crate::storage::Queries;
-use crate::utils::read_file_as_stream;
 use anyhow::*;
 use bytes;
+use rs_utils::read_file_as_stream;
 use std::fs;
 use std::net::SocketAddr;
 use std::path::Path;

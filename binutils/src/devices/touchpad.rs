@@ -1,7 +1,8 @@
-use crate::utils::{match_str, run_command, send_notification};
+use crate::utils::{match_str, send_notification};
 use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
+use rs_utils::run_command;
 
 pub struct Touchpad {
     pub id: String,

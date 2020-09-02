@@ -1,5 +1,5 @@
-use crate::utils::find_config_file;
 use anyhow::*;
+use rs_utils::find_config_file;
 use serde::{Deserialize, Serialize};
 use std::fs;
 

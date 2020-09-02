@@ -53,13 +53,12 @@ dependencies = [
  "futures",
  "log",
  "reqwest",
+ "rs-utils",
  "rusqlite",
  "serde",
  "serde_json",
- "sha2",
  "tokio",
  "tokio-util",
- "uuid",
  "warp",
 ]
 
@@ -83,9 +82,9 @@ dependencies = [
  "app-shell",
  "arhiv",
  "arhiv-modules",
- "binutils",
  "env_logger",
  "log",
+ "rs-utils",
  "serde",
  "serde_json",
  "tokio",
@@ -162,6 +161,7 @@ dependencies = [
  "lazy_static",
  "log",
  "regex",
+ "rs-utils",
 ]
 
 [[package]]
@@ -1672,6 +1672,20 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "rs-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "env_logger",
+ "log",
+ "sha2",
+ "tokio",
+ "tokio-util",
+ "uuid",
 ]
 
 [[package]]

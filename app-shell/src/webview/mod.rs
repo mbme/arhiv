@@ -62,7 +62,7 @@ pub fn build_webview(builder: Rc<AppShellBuilder>) -> Rc<WebView> {
     let webview = Rc::new(WebView::with_context(&web_context));
 
     let settings = WebViewExt::get_settings(webview.as_ref()).unwrap();
-    settings.set_enable_developer_extras(builder.show_inspector);
+    settings.set_enable_developer_extras(builder.enable_inspector);
     settings.set_allow_universal_access_from_file_urls(true);
 
     if !builder.actions.is_empty() {

@@ -6,7 +6,7 @@ pub struct AppShellBuilder {
     pub(crate) app_id: String,
     pub(crate) title: String,
     pub(crate) default_size: (i32, i32),
-    pub(crate) show_inspector: bool,
+    pub(crate) enable_inspector: bool,
     pub(crate) data_dir: Option<String>,
     pub(crate) actions: HashMap<String, Box<dyn Fn(Value) -> Value>>,
 }
@@ -22,7 +22,7 @@ impl AppShellBuilder {
             title: "".to_string(),
             default_size: (800, 600),
             data_dir: None,
-            show_inspector: false,
+            enable_inspector: false,
             actions: HashMap::new(),
         }
     }
@@ -37,8 +37,8 @@ impl AppShellBuilder {
         self
     }
 
-    pub fn show_inspector(mut self) -> Self {
-        self.show_inspector = true;
+    pub fn enable_inspector(mut self) -> Self {
+        self.enable_inspector = true;
         self
     }
 

@@ -22,6 +22,6 @@ fn main() {
 
             value::to_value(files).unwrap()
         })
-        .show_inspector()
+        .enable_inspector()
         .load(AppSource::HTMLFile(path_str));
 }

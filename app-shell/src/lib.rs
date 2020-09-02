@@ -6,7 +6,7 @@ use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 pub use html_template::*;
 use std::rc::Rc;
-use webkit2gtk::{WebInspectorExt, WebViewExt};
+use webkit2gtk::WebViewExt;
 
 mod builder;
 mod file_picker;
@@ -53,11 +53,6 @@ impl AppShellBuilder {
             }
 
             window.show_all();
-
-            if builder.show_inspector {
-                let inspector = webview.get_inspector().unwrap();
-                inspector.show();
-            }
         });
 
         application.run(&[]);

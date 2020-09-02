@@ -10,6 +10,13 @@ module.exports = {
     isProduction ? null : 'react-devtools',
     './web/index.tsx',
   ].filter(Boolean),
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'static'),
+  },
+  resolve: {
+    extensions: [ '.tsx', '.ts', '.js' ],
+  },
   module: {
     rules: [
       {
@@ -17,13 +24,6 @@ module.exports = {
         use: 'ts-loader',
       },
     ],
-  },
-  resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ],
-  },
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'static'),
   },
   plugins: [
     new webpack.DefinePlugin({ // eslint-disable-line

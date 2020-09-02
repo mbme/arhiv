@@ -1,4 +1,4 @@
-use app_shell::AppShellBuilder;
+use app_shell::{AppShellBuilder, AppSource};
 use serde_json::{value, Value};
 
 mod auth;
@@ -9,13 +9,14 @@ async fn main() {
 
     let token = auth::auth().await;
 
-    let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
-
     AppShellBuilder::create("v.poshta")
         .with_title("Poshta")
         .with_action("get_token", move |_params: Value| {
             value::to_value(token.clone()).unwrap()
         })
         .show_inspector()
-        .load(path_str);
+        .load(AppSource::JSFile(format!(
+            "{}/dist/bundle.js",
+            env!("CARGO_MANIFEST_DIR")
+        )));
 }

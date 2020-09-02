@@ -1,0 +1,17 @@
+<div>
+  <h1>HELLO WORLD</h1>
+
+  <script>
+    window.RPC_PROXY.get_value().then((response) => {
+      console.log('RPC get_value response:', response);
+    });
+
+    function pickFiles() {
+      window.RPC_PROXY.pick_files().then((response) => {
+        console.log('RPC pick_files response:', response);
+      });
+    }
+  </script>
+
+  <button onClick="pickFiles()">PICK FILES</button>
+</div>

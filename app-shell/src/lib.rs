@@ -4,23 +4,30 @@ use crate::webview::build_webview;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
-use std::path::Path;
+pub use html_template::*;
 use std::rc::Rc;
 use webkit2gtk::{WebInspectorExt, WebViewExt};
 
 mod builder;
 mod file_picker;
+mod html_template;
 mod webview;
 
 impl AppShellBuilder {
-    pub fn load(self, html_file: String) {
+    pub fn load(self, src: AppSource) {
         let application =
             Application::new(Some(&self.app_id), gio::ApplicationFlags::FLAGS_NONE).unwrap();
 
         let builder = Rc::new(self);
         application.connect_activate(move |app| {
-            let html_file = Path::new(&html_file);
-            let webview = build_webview(builder.clone(), &html_file);
+            let webview = build_webview(builder.clone());
+
+            webview.load_html(
+                &src.render(),
+                src.get_base_path()
+                    .map(|path| format!("file://{}", path))
+                    .as_deref(),
+            );
 
             let window = ApplicationWindow::new(app);
             window.set_title(&builder.title);

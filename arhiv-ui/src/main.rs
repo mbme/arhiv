@@ -1,4 +1,4 @@
-use app_shell::{pick_files, AppShellBuilder};
+use app_shell::{pick_files, AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::Arhiv;
 use arhiv_modules::ArhivNotes;
@@ -7,8 +7,6 @@ use std::rc::Rc;
 
 fn main() {
     env_logger::init();
-
-    let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
 
     let notes = Rc::new(ArhivNotes::new(Arhiv::must_open()));
 
@@ -89,5 +87,8 @@ fn main() {
             }
         })
         .show_inspector()
-        .load(path_str);
+        .load(AppSource::JSFile(format!(
+            "{}/dist/bundle.js",
+            env!("CARGO_MANIFEST_DIR")
+        )));
 }

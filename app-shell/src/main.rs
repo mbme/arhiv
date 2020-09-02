@@ -10,7 +10,7 @@ fn init_logger() {
 fn main() {
     init_logger();
 
-    let path_str = format!("{}/static/index.html", env!("CARGO_MANIFEST_DIR"));
+    let path_str = format!("{}/static/app.html", env!("CARGO_MANIFEST_DIR"));
 
     AppShellBuilder::create("v.app-shell.playground")
         .with_title("App Shell Playground")
@@ -23,5 +23,5 @@ fn main() {
             value::to_value(files).unwrap()
         })
         .show_inspector()
-        .load(path_str);
+        .load(AppSource::HTMLFile(path_str));
 }

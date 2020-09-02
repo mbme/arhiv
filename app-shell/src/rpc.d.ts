@@ -15,7 +15,6 @@ declare global {
   interface Window {
     RPC: IRPC
     RPC_PROXY: object
-    _ON_RPC_READY?: () => void
   }
 }
 

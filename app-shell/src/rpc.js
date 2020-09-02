@@ -42,8 +42,4 @@
       return params => window.RPC.call(prop, params)
     }
   })
-
-  if (window._ON_RPC_READY) {
-    window._ON_RPC_READY()
-  }
 })('app-shell')

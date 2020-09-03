@@ -26,6 +26,7 @@ injectGlobalStyles(`
 `)
 
 async function run() {
+  /* eslint-disable */
   const callResult: any = await window.RPC.call('get_token')
   const token = callResult.value
 

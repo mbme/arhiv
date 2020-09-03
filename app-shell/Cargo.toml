@@ -20,6 +20,5 @@ gio = { version = "", features = ["v2_44"] }
 gdk = ""
 glib = ""
 
-# [dev-dependencies]
 warp = "0.2"
 tokio = { version = "0.2", features = ["macros"] }

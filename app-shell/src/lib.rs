@@ -59,7 +59,6 @@ impl AppShellBuilder {
         application.run(&[]);
     }
 
-    // #[cfg(dev)]
     #[tokio::main]
     pub async fn serve(self, src: AppSource) {
         use rpc_message::RpcMessage;

@@ -1,0 +1,34 @@
+# Maintainer: mbme
+
+pkgname=arhiv-ui
+pkgrel=1
+pkgver="0.1.0"
+pkgdesc='UI for arhiv - Personal database'
+arch=(x86_64)
+license=(MIT)
+depends=(sqlite gtk3 webkit2gtk)
+makedepends=(cargo jq yarn)
+
+pkgver() {
+  cd ..
+  cargo read-manifest | jq ".version"
+}
+
+build() {
+  cd ..
+  yarn run build-prod
+
+  export MODE=production
+  cargo build --locked --release --target-dir=target
+}
+
+check() {
+  cd ..
+  cargo test --locked --release --target-dir=target
+}
+
+package() {
+  cd ..
+  install -Dm 755 target/release/${pkgname} -t "${pkgdir}/usr/bin"
+  install -Dm 644 "v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
+}

@@ -10,7 +10,7 @@ remove-arhiv:
   cd arhiv && cargo run --bin remove-arhiv
 
 init-arhiv:
-  cd arhiv && cargo run --bin arhiv init-prime
+  cd arhiv && cargo run --bin arhiv init prime
 
 arhiv *PARAMS:
   cd arhiv && cargo run --bin arhiv {{PARAMS}}
@@ -30,3 +30,9 @@ test-ts:
   yarn test
 
 validate-ts: check-ts lint-ts test-ts
+
+ui-start-web:
+  cd arhiv-ui; yarn start
+
+ui-start-shell:
+  cd arhiv-ui; cargo run

@@ -17,8 +17,8 @@ fn main() {
         AppSource::JSFile(format!("{}/dist/bundle.js", env!("CARGO_MANIFEST_DIR")))
     };
 
-    AppShellBuilder::create("v.arhiv.notes")
-        .with_title("Arhiv Notes")
+    AppShellBuilder::create("v.arhiv.ui")
+        .with_title("Arhiv UI")
         .with_action("list", {
             let notes = notes.clone();
 

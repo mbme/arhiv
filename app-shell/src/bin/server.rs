@@ -1,14 +1,8 @@
 use app_shell::*;
 use serde_json::{value, Value};
 
-fn init_logger() {
-    env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Debug)
-        .init();
-}
-
 fn main() {
-    init_logger();
+    env_logger::init();
 
     let path_str = format!("{}/static/app.html", env!("CARGO_MANIFEST_DIR"));
 
@@ -22,6 +16,5 @@ fn main() {
 
             value::to_value(files).unwrap()
         })
-        .enable_inspector()
-        .load(AppSource::HTMLFile(path_str));
+        .serve(AppSource::HTMLFile(path_str));
 }

@@ -16,7 +16,7 @@ impl AppSource {
         }
     }
 
-    pub fn render(&self) -> String {
+    pub fn render(&self, title: &str, network_rpc: bool) -> String {
         let script = match self {
             AppSource::JSFile(path) => format!("<script src=\"file://{}\" defer></script>", path),
             AppSource::JSSource(source) => format!("<script>{}</script>", source),
@@ -33,8 +33,13 @@ impl AppSource {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script>{}</script>
+    <title>{}</title>
+
+    <script>
+      {}
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
 
@@ -42,7 +47,12 @@ impl AppSource {
   </body>
 </html>
 "#,
-            include_str!("./rpc.js"),
+            title,
+            if network_rpc {
+                include_str!("./rpc.network.js")
+            } else {
+                include_str!("./rpc.js")
+            },
             script
         )
     }

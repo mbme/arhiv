@@ -4,12 +4,12 @@ use arhiv::Arhiv;
 use arhiv_modules::ArhivNotes;
 use rs_utils::is_production_mode;
 use serde_json::Value;
-use std::rc::Rc;
+use std::sync::Arc;
 
 fn main() {
     env_logger::init();
 
-    let notes = Rc::new(ArhivNotes::new(Arhiv::must_open()));
+    let notes = Arc::new(ArhivNotes::new(Arhiv::must_open()));
 
     let src = if is_production_mode() {
         AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
@@ -93,6 +93,5 @@ fn main() {
                 serde_json::to_value(attachments).expect("must be able to serialize")
             }
         })
-        .enable_inspector()
         .load(src);
 }

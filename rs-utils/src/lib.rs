@@ -18,7 +18,7 @@ pub fn project_relpath(subpath: &str) -> String {
 }
 
 // development or production
-const MODE: Option<&'static str> = option_env!("MODE");
+pub const MODE: Option<&'static str> = option_env!("MODE");
 
 pub fn is_production_mode() -> bool {
     MODE.unwrap_or("development") == "production"

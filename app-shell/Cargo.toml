@@ -8,27 +8,18 @@ edition = "2018"
 log = "0.4"
 env_logger = "0.7"
 anyhow = "1.0"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-[dependencies.webkit2gtk]
-version = "0.10"
-features = ["v2_16"]
+webkit2gtk = { version = "0.10", features = ["v2_16"] }
+webkit2gtk-sys = { version = "", features = ["v2_16"] }
 
-[dependencies.webkit2gtk-sys]
-version = ""
-features = ["v2_16"]
+gtk = { version = "0.9", features = ["v3_16", "embed-lgpl-docs"] }
+gio = { version = "", features = ["v2_44"] }
+gdk = ""
+glib = ""
 
-[dependencies.gtk]
-version = "0.9"
-features = ["v3_16", "embed-lgpl-docs"]
-
-[dependencies.gio]
-version = ""
-features = ["v2_44"]
-
-[dependencies.gdk]
-version = ""
-
-[dependencies.glib]
-version = ""
+# [dev-dependencies]
+warp = "0.2"
+tokio = { version = "0.2", features = ["macros"] }

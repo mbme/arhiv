@@ -1,0 +1,12 @@
+# Local Variables:
+# mode: makefile
+# End:
+# vim: set ft=make :
+
+export RUST_LOG := "DEBUG"
+
+app:
+  cargo run --bin app
+
+server:
+  cargo run --bin server

@@ -1,3 +1,4 @@
+use crate::rpc_message::{RpcMessage, RpcMessageResponse};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
@@ -6,9 +7,8 @@ pub struct AppShellBuilder {
     pub(crate) app_id: String,
     pub(crate) title: String,
     pub(crate) default_size: (i32, i32),
-    pub(crate) enable_inspector: bool,
     pub(crate) data_dir: Option<String>,
-    pub(crate) actions: HashMap<String, Box<dyn Fn(Value) -> Value>>,
+    pub(crate) actions: HashMap<String, Box<dyn Fn(Value) -> Value + Send + Sync>>,
 }
 
 impl AppShellBuilder {
@@ -22,7 +22,6 @@ impl AppShellBuilder {
             title: "".to_string(),
             default_size: (800, 600),
             data_dir: None,
-            enable_inspector: false,
             actions: HashMap::new(),
         }
     }
@@ -34,11 +33,6 @@ impl AppShellBuilder {
 
     pub fn with_default_size(mut self, width: i32, height: i32) -> Self {
         self.default_size = (width, height);
-        self
-    }
-
-    pub fn enable_inspector(mut self) -> Self {
-        self.enable_inspector = true;
         self
     }
 
@@ -58,9 +52,34 @@ impl AppShellBuilder {
     pub fn with_action<S, F>(mut self, action: S, handler: F) -> Self
     where
         S: Into<String>,
-        F: Fn(Value) -> Value + 'static,
+        F: Fn(Value) -> Value + 'static + Send + Sync,
     {
         self.actions.insert(action.into(), Box::new(handler));
         self
+    }
+
+    pub(crate) fn handle_rpc_message(&self, message: RpcMessage) -> RpcMessageResponse {
+        log::debug!("RPC MESSAGE: {}", message);
+
+        let handler = match self.actions.get(&message.action) {
+            Some(handler) => handler,
+            None => {
+                log::error!("RPC got unexpected action {}", message.action);
+
+                return RpcMessageResponse {
+                    call_id: message.call_id,
+                    result: Value::Null,
+                    err: Some("Unknown action".to_string()),
+                };
+            }
+        };
+
+        let result = handler(message.params);
+
+        RpcMessageResponse {
+            call_id: message.call_id,
+            result,
+            err: None,
+        }
     }
 }

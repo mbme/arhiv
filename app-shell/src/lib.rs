@@ -11,6 +11,7 @@ use webkit2gtk::WebViewExt;
 mod builder;
 mod file_picker;
 mod html_template;
+mod rpc_message;
 mod webview;
 
 impl AppShellBuilder {
@@ -23,7 +24,7 @@ impl AppShellBuilder {
             let webview = build_webview(builder.clone());
 
             webview.load_html(
-                &src.render(),
+                &src.render(&builder.title, false),
                 src.get_base_path()
                     .map(|path| format!("file://{}", path))
                     .as_deref(),
@@ -56,5 +57,51 @@ impl AppShellBuilder {
         });
 
         application.run(&[]);
+    }
+
+    // #[cfg(dev)]
+    #[tokio::main]
+    pub async fn serve(self, src: AppSource) {
+        use rpc_message::RpcMessage;
+        use std::sync::Arc;
+        use warp::{reply, Filter, Reply};
+
+        // for file picker
+        gtk::init().expect("must be able to init gtk");
+
+        let src = Arc::new(src);
+        let builder = Arc::new(self);
+
+        let post_rpc = {
+            let builder = builder.clone();
+
+            warp::post()
+                .and(warp::path("rpc"))
+                .and(warp::body::json())
+                .map(move |msg: RpcMessage| {
+                    let result = builder.handle_rpc_message(msg);
+
+                    reply::json(&result).into_response()
+                })
+        };
+
+        let get_app = {
+            let src = src.clone();
+            let builder = builder.clone();
+
+            warp::get()
+                .and(warp::path::end())
+                .map(move || reply::html(AppSource::render(&src, &builder.title, true)))
+        };
+
+        let get_favicon = warp::get()
+            .and(warp::path("favicon.ico"))
+            .map(|| reply::with_status("", warp::http::StatusCode::NOT_FOUND));
+
+        let routes = get_app.or(post_rpc).or(get_favicon);
+
+        // TODO serve dir if AppSource is File
+
+        warp::serve(routes).run(([127, 0, 0, 1], 7001)).await;
     }
 }

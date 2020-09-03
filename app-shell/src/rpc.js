@@ -22,7 +22,12 @@
       })
     },
 
-    _callResult(callId, result) {
+    _callResponse(response) {
+      const {
+        callId,
+        result,
+      } = response
+
       const responseHandler = pendingRequests[callId]
 
       if (!responseHandler) {

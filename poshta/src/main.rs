@@ -14,7 +14,6 @@ async fn main() {
         .with_action("get_token", move |_params: Value| {
             value::to_value(token.clone()).unwrap()
         })
-        .enable_inspector()
         .load(AppSource::JSFile(format!(
             "{}/dist/bundle.js",
             env!("CARGO_MANIFEST_DIR")

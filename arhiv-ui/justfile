@@ -10,6 +10,3 @@ start-web:
 
 start-shell:
   cargo run
-
-devtools:
-  yarn devtools

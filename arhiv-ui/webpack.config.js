@@ -7,10 +7,7 @@ const isProduction = mode === 'production'
 module.exports = {
   mode,
 
-  entry: [
-    isProduction ? null : 'react-devtools',
-    './web/index.tsx',
-  ].filter(Boolean),
+  entry: './web/index.tsx',
 
   output: {
     filename: 'bundle.js',

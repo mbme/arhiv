@@ -54,7 +54,7 @@ cli.CliApp.create('tester')
         }
 
         try {
-          const testFile = await TestFile.load(srcPath, file, updateSnapshots)
+          const testFile = TestFile.load(srcPath, file, updateSnapshots)
           tests.push(testFile)
         } catch (e) {
           console.log(`Failed to load test file ${file}: ${e}`)

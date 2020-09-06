@@ -27,7 +27,7 @@ lint-ts:
   yarn lint
 
 test-ts:
-  yarn test
+  yarn tester
 
 validate-ts: check-ts lint-ts test-ts
 

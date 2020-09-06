@@ -7,5 +7,8 @@
   "main": "src/index.ts",
   "bin": {
     "tester": "./bin/tester"
+  },
+  "dependencies": {
+     "@swc-node/register": "^0.4.7"
   }
 }

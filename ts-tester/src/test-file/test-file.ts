@@ -157,10 +157,11 @@ export class TestFile {
     return failures
   }
 
-  static async load(srcPath: string, testFile: string, updateSnapshots: boolean) {
+  static load(srcPath: string, testFile: string, updateSnapshots: boolean) {
     initializeTestContext(srcPath, testFile)
 
-    await import(testFile) // collect tests from the file into test context
+    // eslint-disable-next-line
+    require(testFile) // collect tests from the file into test context
 
     return new TestFile(getTestContext(), updateSnapshots)
   }

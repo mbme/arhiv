@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-ts-node --transpile-only -O '{ "module": "commonjs" }' ts-tester/src/bin.ts $@
+export SWC_NODE_PROJECT="../tsconfig-swc.json"
+node -r @swc-node/register ts-tester/src/bin.ts $@

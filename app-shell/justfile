@@ -6,7 +6,7 @@
 export RUST_LOG := "DEBUG"
 
 app:
-  cargo run --bin app
+  cargo run
 
 server:
-  cargo run --bin server
+  SERVER=1 cargo run

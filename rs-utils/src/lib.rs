@@ -3,6 +3,7 @@ pub use config::*;
 pub use crypto::*;
 pub use fs::*;
 pub use fs_transaction::FsTransaction;
+pub use markov::Markov;
 use std::env;
 use std::process::Command;
 pub use string::*;
@@ -11,6 +12,7 @@ mod config;
 mod crypto;
 mod fs;
 mod fs_transaction;
+mod markov;
 mod string;
 
 pub fn project_relpath(subpath: &str) -> String {

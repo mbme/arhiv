@@ -1,8 +1,6 @@
-// eslint-disable-next-line
 const path = require('path')
 
 module.exports = {
-  mode: 'development',
   entry: './src/LibraryApp.tsx',
   module: {
     rules: [

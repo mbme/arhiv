@@ -1,6 +1,12 @@
 import * as React from 'react'
 import { Procedure } from '@v/utils'
-import { Input, Spacer, Textarea } from '@v/web-platform'
+import {
+  Input,
+  Spacer,
+  Textarea,
+  InternalTextarea,
+  useForm,
+} from '@v/web-platform'
 import { Frame, Action } from '../parts'
 import { Note } from '../Note'
 import { AddAttachmentButton } from './AddAttachmentButton'
@@ -23,13 +29,19 @@ export function CardEditor(props: IProps) {
     onDelete,
   } = props
 
+  const {
+    Form,
+    values: {
+      name,
+      data,
+    },
+  } = useForm()
+
   const [preview, showPreview] = React.useState(false)
-  const [name, setName] = React.useState(originalName)
-  const [data, setData] = React.useState(originalData)
 
   const isValid = name && (name !== originalName || data !== originalData)
 
-  const textAreaRef = React.useRef<Textarea>(null)
+  const textAreaRef = React.useRef<InternalTextarea>(null)
 
   const onAttachments = (links: string[]) => {
     textAreaRef.current!.insert(links.join(' '))
@@ -77,29 +89,27 @@ export function CardEditor(props: IProps) {
     <Frame
       actions={actions}
     >
-      {preview ? (
-        <Note name={name} data={data} />
-      ) : (
-        <>
-          <Input
-            name="name"
-            value={name}
-            onChange={setName}
-            autoFocus
-          />
+      <Form>
+        {preview ? (
+          <Note name={name} data={data} />
+        ) : (
+          <>
+            <Input
+              name="name"
+              autoFocus
+            />
 
-          <Spacer height="medium" />
+            <Spacer height="medium" />
 
-          <Textarea
-            name="data"
-            value={data}
-            onChange={setData}
-            ref={textAreaRef}
-          />
+            <Textarea
+              name="data"
+              ref={textAreaRef}
+            />
 
-          <Spacer height="medium" />
-        </>
-      )}
+            <Spacer height="medium" />
+          </>
+        )}
+      </Form>
     </Frame>
   )
 }

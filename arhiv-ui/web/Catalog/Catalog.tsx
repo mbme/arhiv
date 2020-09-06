@@ -1,15 +1,29 @@
 import * as React from 'react'
 import {
   ProgressLocker,
+  StyleArg,
+  useForm,
+  Input,
+  Row,
 } from '@v/web-platform'
 import { usePromise, useDebounced } from '@v/web-utils'
 import { API } from '../notes'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
-import { Header } from './Header'
+
+const $header: StyleArg = {
+  position: 'sticky',
+  top: 0,
+}
 
 export function Catalog() {
-  const [filter, setFilter] = React.useState('')
+  const {
+    Form,
+    values: {
+      filter,
+    },
+  } = useForm()
+
   const debouncedFilter = useDebounced(filter, 300)
 
   const [notes, err] = usePromise(() => API.list(debouncedFilter), [debouncedFilter])
@@ -47,10 +61,22 @@ export function Catalog() {
     <Frame
       actions={actions}
     >
-      <Header
-        filter={filter}
-        onChange={setFilter}
-      />
+      <Form>
+        <Row
+          as="nav"
+          alignX="center"
+          p="fine"
+          width="100%"
+          zIndex={1}
+          $style={$header}
+          bgColor="var(--color-bg0)"
+        >
+          <Input
+            name="filter"
+            placeholder="Filter documents"
+          />
+        </Row>
+      </Form>
 
       {items}
     </Frame>

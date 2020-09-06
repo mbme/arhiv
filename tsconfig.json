@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "incremental": true,
-    "allowJs": true,
     "esModuleInterop": true,
     "lib": [
       "esnext",

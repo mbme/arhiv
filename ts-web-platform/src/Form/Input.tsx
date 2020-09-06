@@ -1,12 +1,30 @@
 import * as React from 'react'
-import { Icon } from './Icon'
-import { Box } from './Box'
+import { Icon } from '../Icon'
+import { Box } from '../Box'
 import {
   StyleArg,
   StylishElement,
-} from './core'
+} from '../core'
+import { useFormControl } from './Form'
 
-const getStyles = (props: IProps): StyleArg[] => [
+type NativeProps =
+  'type'
+  | 'name'
+  | 'value'
+  | 'onKeyDown'
+  | 'onBlur'
+  | 'defaultValue'
+  | 'placeholder'
+  | 'autoComplete'
+
+interface IInternalProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
+  name: string
+  onChange(value: string): void
+  autoFocus?: boolean
+  onClear?(): void
+}
+
+const getStyles = (props: IInternalProps): StyleArg[] => [
   {
     display: 'block',
     width: '100%',
@@ -32,23 +50,7 @@ const $clearIcon: StyleArg = {
   color: 'var(--color-secondary)',
 }
 
-type NativeProps =
-  'type'
-  | 'name'
-  | 'value'
-  | 'onKeyDown'
-  | 'onBlur'
-  | 'defaultValue'
-  | 'placeholder'
-  | 'autoComplete'
-
-interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
-  onChange(value: string): void
-  autoFocus?: boolean
-  onClear?(): void
-}
-
-export class Input extends React.PureComponent<IProps> {
+class InternalInput extends React.PureComponent<IInternalProps> {
   ref = React.createRef<HTMLInputElement>()
 
   componentDidMount() {
@@ -156,3 +158,23 @@ export class Input extends React.PureComponent<IProps> {
     )
   }
 }
+
+interface IInputProps extends Omit<IInternalProps, 'onChange'> {
+  name: string
+}
+
+export const Input = React.forwardRef<InternalInput, IInputProps>((props, ref) => {
+  const {
+    value,
+    setValue,
+  } = useFormControl(props.name)
+
+  return (
+    <InternalInput
+      ref={ref}
+      {...props}
+      value={value}
+      onChange={setValue}
+    />
+  )
+})

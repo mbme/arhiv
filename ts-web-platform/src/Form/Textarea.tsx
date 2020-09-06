@@ -2,7 +2,8 @@ import * as React from 'react'
 import {
   StyleArg,
   StylishElement,
-} from './core'
+} from '../core'
+import { useFormControl } from './Form'
 
 const $textarea: StyleArg = {
   backgroundColor: 'var(--color-bg0)',
@@ -18,7 +19,7 @@ const $textarea: StyleArg = {
   boxShadow: 'default',
 }
 
-interface IProps {
+interface IInternalProps {
   name: string
   value: string
   onChange(value: string): void
@@ -26,7 +27,7 @@ interface IProps {
   $styles?: StyleArg[]
 }
 
-export class Textarea extends React.PureComponent<IProps> {
+export class InternalTextarea extends React.PureComponent<IInternalProps> {
   private _ref = React.createRef<HTMLTextAreaElement>()
 
   private _selectionStart = 0
@@ -110,3 +111,21 @@ export class Textarea extends React.PureComponent<IProps> {
     )
   }
 }
+
+type TextareaProps = Omit<IInternalProps, 'onChange' | 'value'>
+
+export const Textarea = React.forwardRef<InternalTextarea, TextareaProps>((props, ref) => {
+  const {
+    value,
+    setValue,
+  } = useFormControl(props.name)
+
+  return (
+    <InternalTextarea
+      ref={ref}
+      {...props}
+      value={value}
+      onChange={setValue}
+    />
+  )
+})

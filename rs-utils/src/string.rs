@@ -32,6 +32,22 @@ pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
     return true;
 }
 
+pub fn capitalize<S: Into<String>>(s: S) -> String {
+    let s = s.into();
+
+    if s.is_empty() {
+        return s;
+    }
+
+    let mut iter = s.chars();
+    let first_char = iter.next().unwrap().to_uppercase().to_string();
+
+    let mut result: String = iter.collect();
+    result.insert_str(0, &first_char);
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -46,5 +62,13 @@ mod tests {
         assert_eq!(fuzzy_match("123", "1test2test3"), true);
         assert_eq!(fuzzy_match("123", "123test2test3"), true);
         assert_eq!(fuzzy_match("123", "12test2test"), false);
+    }
+
+    #[test]
+    fn test_capitalize() {
+        assert_eq!(capitalize(""), "");
+        assert_eq!(capitalize("123"), "123");
+        assert_eq!(capitalize("Test"), "Test");
+        assert_eq!(capitalize("test"), "Test");
     }
 }

@@ -70,7 +70,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arhiv",
+ "env_logger",
  "log",
+ "rand 0.7.3",
+ "rs-utils",
  "serde",
  "serde_json",
  "tokio",
@@ -1684,6 +1687,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "log",
+ "rand 0.7.3",
  "sha2",
  "tokio",
  "tokio-util",

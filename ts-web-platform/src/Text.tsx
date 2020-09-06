@@ -28,11 +28,22 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   children?: React.ReactNode
   onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
   innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+  mono?: boolean
   $styles?: StyleArg[]
 }
 
-export function Text<E extends Tags = 'div'>({ as, children, onClick, innerRef, $styles = [], ...props }: IProps<E>) {
-  const className = useStyles(props, ...$styles)
+export function Text<E extends Tags = 'div'>(props: IProps<E>) {
+  const {
+    as,
+    children,
+    onClick,
+    innerRef,
+    mono,
+    $styles = [],
+    ...otherProps
+  } = props
+
+  const className = useStyles(otherProps, mono && { fontFamily: 'var(--font-family-mono)' }, ...$styles)
 
   return React.createElement(as || 'div', {
     ref: innerRef,

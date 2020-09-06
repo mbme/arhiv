@@ -4,6 +4,7 @@
 * universal, for any kind of information
 * local first
 * holistic
+* resilient
 * data format
 * cross-linking
 

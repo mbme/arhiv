@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --incremental false --project tsconfig.json",
-    "lint": "eslint --cache --ext .ts,.tsx,.js,.jsx ts-* poshta arhiv-ui",
+    "lint": "eslint --cache --ext .ts,.tsx ts-* poshta arhiv-ui",
     "test": "tester"
   },
   "devDependencies": {

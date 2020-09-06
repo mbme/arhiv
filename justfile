@@ -36,3 +36,6 @@ ui-start-web:
 
 ui-start-shell:
   cd arhiv-ui; cargo run
+
+check:
+  cargo check

@@ -1,4 +1,4 @@
-use app_shell::{pick_files, AppShellBuilder, AppSource};
+use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::Arhiv;
 use arhiv_modules::ArhivNotes;
@@ -22,7 +22,7 @@ fn main() {
         .with_action("list", {
             let notes = notes.clone();
 
-            move |params| {
+            move |_, params| {
                 let pattern = params.as_str().expect("id must be string").to_string();
 
                 serde_json::to_value(&notes.list(pattern)).expect("must be able to serialize")
@@ -31,7 +31,7 @@ fn main() {
         .with_action("get_note", {
             let notes = notes.clone();
 
-            move |params| {
+            move |_, params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
                 serde_json::to_value(notes.get_note(&id)).expect("must be able to serialize")
@@ -40,7 +40,7 @@ fn main() {
         .with_action("put_note", {
             let notes = notes.clone();
 
-            move |params| {
+            move |_, params| {
                 let note: Document =
                     serde_json::from_value(params).expect("param must be document");
 
@@ -50,14 +50,14 @@ fn main() {
             }
         })
         .with_action("create_note", {
-            move |_params| {
+            move |_, _params| {
                 serde_json::to_value(ArhivNotes::create_note()).expect("must be able to serialize")
             }
         })
         .with_action("get_attachment", {
             let notes = notes.clone();
 
-            move |params| {
+            move |_, params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
                 serde_json::to_value(notes.arhiv.get_attachment(&id).unwrap())
@@ -67,7 +67,7 @@ fn main() {
         .with_action("get_attachment_location", {
             let notes = notes.clone();
 
-            move |params| {
+            move |_, params| {
                 let id = params.as_str().expect("id must be string").to_string();
 
                 serde_json::to_value(notes.arhiv.get_attachment_location(id).unwrap())
@@ -77,8 +77,8 @@ fn main() {
         .with_action("pick_attachments", {
             let notes = notes.clone();
 
-            move |_params| {
-                let files = pick_files(true);
+            move |context, _params| {
+                let files = context.pick_files(true);
 
                 let attachments: Vec<Attachment> = files
                     .iter()

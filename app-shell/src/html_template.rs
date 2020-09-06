@@ -1,3 +1,4 @@
+use crate::AppShellBuilder;
 use std::fs;
 
 pub enum AppSource {
@@ -16,7 +17,7 @@ impl AppSource {
         }
     }
 
-    pub fn render(&self, title: &str, network_rpc: bool) -> String {
+    pub fn render(&self, builder: &AppShellBuilder) -> String {
         let script = match self {
             AppSource::JSFile(path) => format!("<script src=\"file://{}\" defer></script>", path),
             AppSource::JSSource(source) => format!("<script>{}</script>", source),
@@ -47,8 +48,8 @@ impl AppSource {
   </body>
 </html>
 "#,
-            title,
-            if network_rpc {
+            builder.title,
+            if builder.server_mode {
                 include_str!("./rpc.network.js")
             } else {
                 include_str!("./rpc.js")

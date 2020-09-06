@@ -1,15 +1,15 @@
-pub use crate::builder::AppShellBuilder;
-pub use crate::file_picker::pick_files;
-use crate::webview::build_webview;
+pub use builder::AppShellBuilder;
+pub use context::AppShellContext;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 pub use html_template::*;
 use std::rc::Rc;
 use webkit2gtk::WebViewExt;
+use webview::build_webview;
 
 mod builder;
-mod file_picker;
+mod context;
 mod html_template;
 mod rpc_message;
 mod webview;
@@ -24,7 +24,7 @@ impl AppShellBuilder {
             let webview = build_webview(builder.clone());
 
             webview.load_html(
-                &src.render(&builder.title, false),
+                &src.render(&builder),
                 src.get_base_path()
                     .map(|path| format!("file://{}", path))
                     .as_deref(),
@@ -59,16 +59,17 @@ impl AppShellBuilder {
         application.run(&[]);
     }
 
-    #[tokio::main]
-    pub async fn serve(self, src: AppSource) {
+    pub fn serve(mut self, src: AppSource) {
         use rpc_message::RpcMessage;
         use std::sync::Arc;
+        use tokio::runtime;
         use warp::{reply, Filter, Reply};
 
         // for file picker
         gtk::init().expect("must be able to init gtk");
 
         let src = Arc::new(src);
+        self.server_mode = true;
         let builder = Arc::new(self);
 
         let post_rpc = {
@@ -90,7 +91,7 @@ impl AppShellBuilder {
 
             warp::get()
                 .and(warp::path::end())
-                .map(move || reply::html(AppSource::render(&src, &builder.title, true)))
+                .map(move || reply::html(AppSource::render(&src, &builder)))
         };
 
         let get_favicon = warp::get()
@@ -100,7 +101,8 @@ impl AppShellBuilder {
         let routes = get_app.or(post_rpc).or(get_favicon);
 
         // TODO serve dir if AppSource is File
-
-        warp::serve(routes).run(([127, 0, 0, 1], 7001)).await;
+        let mut rt = runtime::Runtime::new().unwrap();
+        let future = warp::serve(routes).run(([127, 0, 0, 1], 7001));
+        rt.block_on(future);
     }
 }

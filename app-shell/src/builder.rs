@@ -1,3 +1,4 @@
+use crate::context::AppShellContext;
 use crate::rpc_message::{RpcMessage, RpcMessageResponse};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -8,7 +9,9 @@ pub struct AppShellBuilder {
     pub(crate) title: String,
     pub(crate) default_size: (i32, i32),
     pub(crate) data_dir: Option<String>,
-    pub(crate) actions: HashMap<String, Box<dyn Fn(Value) -> Value + Send + Sync>>,
+    pub(crate) actions:
+        HashMap<String, Box<dyn Fn(&AppShellContext, Value) -> Value + Send + Sync>>,
+    pub(crate) server_mode: bool,
 }
 
 impl AppShellBuilder {
@@ -23,6 +26,7 @@ impl AppShellBuilder {
             default_size: (800, 600),
             data_dir: None,
             actions: HashMap::new(),
+            server_mode: false,
         }
     }
 
@@ -52,7 +56,7 @@ impl AppShellBuilder {
     pub fn with_action<S, F>(mut self, action: S, handler: F) -> Self
     where
         S: Into<String>,
-        F: Fn(Value) -> Value + 'static + Send + Sync,
+        F: Fn(&AppShellContext, Value) -> Value + 'static + Send + Sync,
     {
         self.actions.insert(action.into(), Box::new(handler));
         self
@@ -74,7 +78,8 @@ impl AppShellBuilder {
             }
         };
 
-        let result = handler(message.params);
+        let context = AppShellContext::new(self.server_mode);
+        let result = handler(&context, message.params);
 
         RpcMessageResponse {
             call_id: message.call_id,

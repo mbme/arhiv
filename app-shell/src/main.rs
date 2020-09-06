@@ -8,11 +8,11 @@ fn main() {
 
     let builder = AppShellBuilder::create("v.app-shell.playground")
         .with_title("App Shell Playground")
-        .with_action("get_value", move |_params: Value| {
+        .with_action("get_value", move |_, _params: Value| {
             value::to_value("some value").unwrap()
         })
-        .with_action("pick_files", move |_params: Value| {
-            let files = pick_files(true);
+        .with_action("pick_files", move |context: _, _params: Value| {
+            let files = context.pick_files(true);
 
             value::to_value(files).unwrap()
         });

@@ -11,7 +11,7 @@ async fn main() {
 
     AppShellBuilder::create("v.poshta")
         .with_title("Poshta")
-        .with_action("get_token", move |_params: Value| {
+        .with_action("get_token", move |_, _params: Value| {
             value::to_value(token.clone()).unwrap()
         })
         .load(AppSource::JSFile(format!(

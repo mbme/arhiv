@@ -1,22 +1,7 @@
 use anyhow::*;
 use arhiv::{entities::Document, Arhiv, Config};
-use std::env;
+use rs_utils::generate_temp_path;
 use std::fs;
-use std::time::{SystemTime, UNIX_EPOCH};
-
-fn generate_temp_dir(prefix: &str) -> String {
-    let mut path = env::temp_dir();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos();
-
-    path.push(format!("{}-{}", prefix, nanos));
-
-    path.to_str()
-        .expect("must be able to convert path to string")
-        .to_string()
-}
 
 fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
     let prime_url = {
@@ -28,7 +13,7 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
     };
 
     let config = Config {
-        arhiv_root: generate_temp_dir("TempArhiv"),
+        arhiv_root: generate_temp_path("TempArhiv"),
         prime_url,
         server_port,
     };

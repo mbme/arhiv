@@ -235,27 +235,6 @@ pub struct Status {
 impl Drop for Arhiv {
     // Remove temporary Arhiv in tests
     fn drop(&mut self) {
-        let is_prime = {
-            let result = self
-                .storage
-                .get_connection()
-                .and_then(|conn| conn.is_prime());
-
-            match result {
-                Ok(result) => result,
-                Err(err) => {
-                    println!("Drop: Failed to query: {}", err);
-                    false
-                }
-            }
-        };
-
-        println!(
-            "DROPPING {} at {}",
-            if is_prime { "PRIME" } else { "REPLICA" },
-            self.get_root_dir()
-        );
-
         std::fs::remove_dir_all(self.get_root_dir()).expect("must be able to remove arhiv");
     }
 }

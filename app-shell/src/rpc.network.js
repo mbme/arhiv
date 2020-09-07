@@ -5,7 +5,7 @@
     async call(action, params = {}) {
       const callId = counter += 1
 
-      const response = await fetch('/rpc', {
+      const response = await fetch(window.RPC_URL, {
         method: 'POST',
         cache: 'no-cache',
         headers: {

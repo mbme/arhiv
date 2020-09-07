@@ -9,9 +9,9 @@ pub struct TempFile {
 }
 
 impl TempFile {
-    pub fn new(prefix: &str) -> Self {
+    pub fn new(file_name: &str) -> Self {
         TempFile {
-            path: generate_temp_path(prefix),
+            path: file_in_temp_dir(file_name),
         }
     }
 
@@ -26,15 +26,20 @@ impl Drop for TempFile {
     }
 }
 
-pub fn generate_temp_path(prefix: &str) -> String {
+pub fn file_in_temp_dir(file_name: &str) -> String {
     let mut path = env::temp_dir();
 
-    let name = generate_random_name(5);
-    path.push(format!("{}-{}", prefix, name));
+    path.push(file_name);
 
     path.to_str()
         .expect("must be able to convert path to string")
         .to_string()
+}
+
+pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
+    let name = generate_random_name(5);
+
+    file_in_temp_dir(&format!("{}{}{}", prefix, name, suffix))
 }
 
 fn generate_random_name(length: usize) -> String {

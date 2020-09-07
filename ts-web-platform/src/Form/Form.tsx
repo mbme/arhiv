@@ -3,9 +3,12 @@ import { Dict } from '@v/utils'
 import { Cell } from '@v/reactive'
 import { useObservable } from '@v/web-utils'
 
-export const FormContext = React.createContext<Cell<Dict> | undefined>(undefined)
+type Values = Dict<string | undefined>
+type ValuesCell = Cell<Values>
 
-function createForm(values$: Cell<Dict>) {
+export const FormContext = React.createContext<ValuesCell | undefined>(undefined)
+
+function createForm(values$: ValuesCell) {
   interface IProps {
     children: React.ReactNode
   }
@@ -20,7 +23,7 @@ function createForm(values$: Cell<Dict>) {
 }
 
 export function useForm() {
-  const [values$] = React.useState(() => new Cell<Dict>({}))
+  const [values$] = React.useState(() => new Cell<Values>({}))
 
   const [values] = useObservable(() => values$.value$)
 

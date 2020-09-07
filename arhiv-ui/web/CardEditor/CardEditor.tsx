@@ -32,8 +32,8 @@ export function CardEditor(props: IProps) {
   const {
     Form,
     values: {
-      name,
-      data,
+      name = '',
+      data = '',
     },
   } = useForm()
 

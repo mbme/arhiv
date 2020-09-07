@@ -1,4 +1,3 @@
-import '../../app-shell/src/rpc'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger } from '@v/logger'

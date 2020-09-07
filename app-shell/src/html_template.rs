@@ -38,6 +38,7 @@ impl AppSource {
 
     <script>
       {}
+      {}
     </script>
   </head>
 
@@ -49,6 +50,11 @@ impl AppSource {
 </html>
 "#,
             builder.title,
+            if builder.server_mode {
+                format!("window.RPC_URL = '{}';", builder.get_rpc_url())
+            } else {
+                "".to_string()
+            },
             if builder.server_mode {
                 include_str!("./rpc.network.js")
             } else {

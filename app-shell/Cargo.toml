@@ -22,3 +22,4 @@ glib = ""
 
 warp = "0.2"
 tokio = { version = "0.2", features = ["macros"] }
+rs-utils = { path = "../rs-utils" }

@@ -8,7 +8,7 @@
   "scripts": {
     "build": "webpack",
     "build-prod": "webpack --mode=production",
-    "start": "webpack -w"
+    "start": "webpack --mode=development -w"
   },
   "dependencies": {
     "react": "^16.13.0",

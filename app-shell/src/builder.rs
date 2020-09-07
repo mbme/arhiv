@@ -12,6 +12,7 @@ pub struct AppShellBuilder {
     pub(crate) actions:
         HashMap<String, Box<dyn Fn(&AppShellContext, Value) -> Value + Send + Sync>>,
     pub(crate) server_mode: bool,
+    pub(crate) server_port: u16,
 }
 
 impl AppShellBuilder {
@@ -27,6 +28,7 @@ impl AppShellBuilder {
             data_dir: None,
             actions: HashMap::new(),
             server_mode: false,
+            server_port: 7001,
         }
     }
 
@@ -86,5 +88,9 @@ impl AppShellBuilder {
             result,
             err: None,
         }
+    }
+
+    pub(crate) fn get_rpc_url(&self) -> String {
+        format!("http://localhost:{}/rpc", self.server_port)
     }
 }

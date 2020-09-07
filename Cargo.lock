@@ -35,6 +35,7 @@ dependencies = [
  "glib",
  "gtk",
  "log",
+ "rs-utils",
  "serde",
  "serde_json",
  "tokio",

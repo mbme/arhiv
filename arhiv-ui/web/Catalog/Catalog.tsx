@@ -20,7 +20,7 @@ export function Catalog() {
   const {
     Form,
     values: {
-      filter,
+      filter = '',
     },
   } = useForm()
 

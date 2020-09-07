@@ -23,7 +23,7 @@ fn main() {
             let notes = notes.clone();
 
             move |_, params| {
-                let pattern = params.as_str().expect("id must be string").to_string();
+                let pattern = params.as_str().expect("pattern must be string").to_string();
 
                 serde_json::to_value(&notes.list(pattern)).expect("must be able to serialize")
             }

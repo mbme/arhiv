@@ -8,6 +8,7 @@ use std::fs;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
+use tokio::signal;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
@@ -54,7 +55,15 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(
     let port = arhiv.config.server_port;
     let (addr, server) =
         warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
-            shutdown_receiver.await.ok();
+            tokio::select! {
+                _ = signal::ctrl_c() => {
+                   log::info!("got Ctrl-C")
+                }
+
+                Ok(_) = shutdown_receiver => {
+                    log::info!("got shutdown signal");
+                }
+            }
         });
 
     // Spawn the server into a runtime

@@ -21,5 +21,5 @@ gdk = ""
 glib = ""
 
 warp = "0.2"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "0.2", features = ["macros", "signal"] }
 rs-utils = { path = "../rs-utils" }

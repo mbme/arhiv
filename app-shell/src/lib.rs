@@ -59,13 +59,14 @@ impl AppShellBuilder {
         application.run(&[]);
     }
 
-    pub fn serve(mut self, src: AppSource) {
+    #[tokio::main]
+    pub async fn serve(mut self, src: AppSource) {
         use rpc_message::RpcMessage;
         use rs_utils::{is_production_mode, TempFile};
         use std::fs;
         use std::process::Command;
         use std::sync::Arc;
-        use tokio::runtime;
+        use tokio::signal;
         use warp::*;
 
         if is_production_mode() {
@@ -108,15 +109,21 @@ impl AppShellBuilder {
         };
 
         // run server
-        let mut rt = runtime::Runtime::new().unwrap();
-        let future = warp::serve(post_rpc).run(([127, 0, 0, 1], builder.server_port));
-        println!("RPC server listening on {}", builder.get_rpc_url(),);
+        let (addr, server) = warp::serve(post_rpc).bind_with_graceful_shutdown(
+            ([127, 0, 0, 1], builder.server_port),
+            async {
+                signal::ctrl_c().await.expect("failed to listen for event");
+                println!("\nGot Ctrl-C, stopping the server");
+            },
+        );
+        let future = tokio::task::spawn(server);
+        println!("RPC server listening on {}", addr);
 
         Command::new("chromium")
             .arg(format!("file://{}", temp_file.get_path()))
             .spawn()
             .expect("failed to run chromium");
 
-        rt.block_on(future);
+        future.await.expect("failed to wait for server");
     }
 }

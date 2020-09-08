@@ -9,4 +9,4 @@ app:
   cargo run
 
 server:
-  SERVER=1 cargo run
+  cargo run --features dev-server

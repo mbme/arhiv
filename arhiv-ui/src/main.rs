@@ -93,5 +93,5 @@ fn main() {
                 serde_json::to_value(attachments).expect("must be able to serialize")
             }
         })
-        .load(src);
+        .start(src);
 }

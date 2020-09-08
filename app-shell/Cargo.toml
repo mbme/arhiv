@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["mbme"]
 edition = "2018"
 
+[features]
+dev-server = []
+
 [dependencies]
 log = "0.4"
 env_logger = "0.7"

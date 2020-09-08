@@ -1,12 +1,6 @@
 pub use builder::AppShellBuilder;
 pub use context::AppShellContext;
-use gio::prelude::*;
-use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow};
-pub use html_template::*;
-use std::rc::Rc;
-use webkit2gtk::WebViewExt;
-use webview::build_webview;
+pub use html_template::AppSource;
 
 mod builder;
 mod context;
@@ -15,7 +9,22 @@ mod rpc_message;
 mod webview;
 
 impl AppShellBuilder {
-    pub fn load(self, src: AppSource) {
+    pub fn start(self, src: AppSource) {
+        if cfg!(feature = "dev-server") {
+            self.serve(src)
+        } else {
+            self.load(src)
+        }
+    }
+
+    fn load(self, src: AppSource) {
+        use gio::prelude::*;
+        use gtk::prelude::*;
+        use gtk::{Application, ApplicationWindow};
+        use std::rc::Rc;
+        use webkit2gtk::WebViewExt;
+        use webview::build_webview;
+
         let application =
             Application::new(Some(&self.app_id), gio::ApplicationFlags::FLAGS_NONE).unwrap();
 
@@ -60,7 +69,7 @@ impl AppShellBuilder {
     }
 
     #[tokio::main]
-    pub async fn serve(mut self, src: AppSource) {
+    async fn serve(mut self, src: AppSource) {
         use rpc_message::RpcMessage;
         use rs_utils::{is_production_mode, TempFile};
         use std::fs;

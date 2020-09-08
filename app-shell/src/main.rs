@@ -17,9 +17,5 @@ fn main() {
             value::to_value(files).unwrap()
         });
 
-    if option_env!("SERVER").is_some() {
-        builder.serve(AppSource::HTMLFile(path_str));
-    } else {
-        builder.load(AppSource::HTMLFile(path_str));
-    }
+    builder.start(AppSource::HTMLFile(path_str));
 }

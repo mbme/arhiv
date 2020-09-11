@@ -1,9 +1,8 @@
 import * as React from 'react'
 import {
   Button,
-  Link,
 } from '@v/web-platform'
-import { SimpleLocation } from '@v/web-utils'
+import { RouterContext, SimpleLocation } from '@v/web-utils'
 
 type Action = {
   type: 'location',
@@ -17,13 +16,15 @@ type Action = {
 }
 
 export function Action(action: Action) {
+  const router = RouterContext.use()
+
   if (action.type === 'location') {
     return (
-      <Link
-        to={action.to}
+      <Button
+        onClick={() => router.push(action.to)}
       >
         {action.children}
-      </Link>
+      </Button>
     )
   }
 

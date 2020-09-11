@@ -117,7 +117,7 @@ pub trait Queries {
             query.push("AND archived = false");
         }
 
-        query.push("GROUP BY id HAVING staged = true OR staged = false");
+        query.push("GROUP BY id HAVING staged = MAX(staged)");
 
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
@@ -151,7 +151,7 @@ pub trait Queries {
 
     fn get_documents_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
         let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING MAX(rev)",
+            "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING rev = MAX(rev)",
         )?;
 
         let mut rows = stmt.query(params![min_rev])?;
@@ -236,9 +236,9 @@ pub trait Queries {
     }
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING staged = true OR staged = false")?;
+        let mut stmt = self.get_connection().prepare_cached(
+            "SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING staged = MAX(staged)",
+        )?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -334,7 +334,7 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn put_document(&self, document: &Document, staged: bool) -> Result<()> {
+    fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
             (staged, id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
@@ -342,7 +342,7 @@ pub trait MutableQueries: Queries {
         )?;
 
         stmt.execute(params![
-            staged,
+            document.is_staged(),
             document.id,
             document.rev,
             document.created_at,

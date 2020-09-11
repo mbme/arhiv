@@ -31,7 +31,7 @@ impl Arhiv {
         for mut document in changeset.documents {
             // FIXME merge documents
             document.rev = new_rev;
-            tx.put_document(&document, false)?;
+            tx.put_document(&document)?;
             tx.put_document_history(&document)?;
         }
 
@@ -146,7 +146,7 @@ impl Arhiv {
         }
 
         for document in response.documents {
-            tx.put_document(&document, false)?;
+            tx.put_document(&document)?;
         }
         tx.delete_staged_documents()?;
 

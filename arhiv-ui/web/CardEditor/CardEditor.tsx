@@ -6,11 +6,17 @@ import {
   Textarea,
   InternalTextarea,
   useForm,
+  StyleArg,
 } from '@v/web-platform'
 import { Frame, Action } from '../parts'
 import { Note } from '../Note'
 import { AddAttachmentButton } from './AddAttachmentButton'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
+
+
+const $container: StyleArg = {
+  pt: 'large',
+}
 
 interface IProps {
   name: string
@@ -35,7 +41,7 @@ export function CardEditor(props: IProps) {
       name = '',
       data = '',
     },
-  } = useForm()
+  } = useForm({ name: originalName, data: originalData })
 
   const [preview, showPreview] = React.useState(false)
 
@@ -88,6 +94,7 @@ export function CardEditor(props: IProps) {
   return (
     <Frame
       actions={actions}
+      $style={$container}
     >
       <Form>
         {preview ? (
@@ -96,6 +103,7 @@ export function CardEditor(props: IProps) {
           <>
             <Input
               name="name"
+              placeholder="Name"
               autoFocus
             />
 
@@ -103,6 +111,7 @@ export function CardEditor(props: IProps) {
 
             <Textarea
               name="data"
+              placeholder="Data"
               ref={textAreaRef}
             />
 

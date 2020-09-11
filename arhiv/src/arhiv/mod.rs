@@ -84,7 +84,7 @@ impl Arhiv {
             existing_document.refs = document.refs;
             existing_document.attachment_refs = document.attachment_refs;
 
-            conn.put_document(&existing_document, true)?;
+            conn.put_document(&existing_document)?;
             conn.commit()?;
             log::trace!("staged document {}", &existing_document);
         } else {
@@ -92,7 +92,7 @@ impl Arhiv {
             document.created_at = Utc::now();
             document.updated_at = Utc::now();
 
-            conn.put_document(&document, true)?;
+            conn.put_document(&document)?;
             conn.commit()?;
             log::trace!("staged new document {}", &document);
         }

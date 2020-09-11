@@ -22,8 +22,8 @@ function createForm(values$: ValuesCell) {
   }
 }
 
-export function useForm() {
-  const [values$] = React.useState(() => new Cell<Values>({}))
+export function useForm(initialValues: Values = {}) {
+  const [values$] = React.useState(() => new Cell<Values>(initialValues))
 
   const [values] = useObservable(() => values$.value$)
 

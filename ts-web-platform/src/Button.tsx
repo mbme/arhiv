@@ -28,6 +28,7 @@ function getStyles(props: IProps): StyleArg[] {
       textTransform: 'uppercase',
       letterSpacing: '1.2px',
       fontSize: '80%',
+      whiteSpace: 'nowrap',
     },
 
     props.disabled && {

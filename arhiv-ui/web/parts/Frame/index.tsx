@@ -14,12 +14,19 @@ const $container: StyleArg = {
   overflowY: 'hidden',
 }
 
+const $actionContainer: StyleArg = {
+  '&>*': {
+    my: 'small',
+  },
+}
+
 interface IProps {
   children: React.ReactNode,
   actions: React.ReactNode,
+  $style?: StyleArg,
 }
 
-export function Frame({ children, actions }: IProps) {
+export function Frame({ children, actions, $style }: IProps) {
   return (
     <Box
       as="section"
@@ -29,14 +36,18 @@ export function Frame({ children, actions }: IProps) {
         <Box
           bgColor="var(--color-primary)"
           width="100%"
+          display="flex"
+          justifyContent="center"
         >
           <Link to={{ path: '/' }}>
             Notes
           </Link>
         </Box>
+
         <Link to={{ path: '/' }}>
           Contacts
         </Link>
+
         <Link to={{ path: '/' }}>
           Movies
         </Link>
@@ -44,16 +55,19 @@ export function Frame({ children, actions }: IProps) {
 
       <Box
         px="medium"
-        pt="medium"
         width="40rem"
         overflowY="auto"
         borderLeft="default"
         borderRight="default"
+        $style={$style}
       >
         {children}
       </Box>
 
-      <Column>
+      <Column
+        pl="small"
+        $style={$actionContainer}
+      >
         {actions}
       </Column>
     </Box>

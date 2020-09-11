@@ -10,6 +10,8 @@ use std::fs;
 fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
     let name = markov.generate_sentence_constrained(8, false);
 
+    let mut attachment_refs = vec![];
+
     // generate note data
     let mut data: Vec<String> = vec![];
     let mut rng = thread_rng();
@@ -26,6 +28,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
                 .expect("attachment ids must be provided");
 
             sentences.push(create_link(id, id));
+            attachment_refs.push(id.clone());
         }
 
         sentences.shuffle(&mut rng);
@@ -35,7 +38,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
 
     let mut document = ArhivNotes::create_note();
     document.data = json!({ "name": name, "data": data.join("\n\n") });
-    document.attachment_refs = attachment_ids.clone();
+    document.attachment_refs = attachment_refs;
 
     document
 }

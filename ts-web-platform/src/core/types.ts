@@ -72,6 +72,7 @@ interface IStylishProps {
   '&:focus'?: CommonProps
   '&:before'?: CommonProps
   '&:first-child'?: CommonProps
+  '&>*'?: CommonProps
 }
 
 type CommonAndCustomProps = CommonProps & IStylishProps

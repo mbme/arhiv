@@ -98,7 +98,7 @@ export function CardEditorContainer({ id }: IProps) {
       archived: true,
     })
 
-    router.goBack()
+    router.push({ path: '/' })
   }
 
   const onCancel = () => {

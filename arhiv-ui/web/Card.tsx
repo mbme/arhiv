@@ -1,12 +1,16 @@
 import * as React from 'react'
 import {
-  ProgressLocker,
+  ProgressLocker, StyleArg,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
 import { API } from './notes'
 import { Frame, ErrorBlock, NotFoundBlock, Action } from './parts'
 import { Metadata } from './Metadata'
 import { Note } from './Note'
+
+const $container: StyleArg = {
+  pt: 'medium',
+}
 
 interface IProps {
   id: string
@@ -72,6 +76,7 @@ export function Card({ id }: IProps) {
   return (
     <Frame
       actions={actions}
+      $style={$container}
     >
       {metadata ? (
         <Metadata document={note} />

@@ -52,6 +52,7 @@ export function Card({ id }: IProps) {
     <>
       <Action
         type="location"
+        replace
         to={{ path: `/${id}/edit` }}
       >
         Edit Note

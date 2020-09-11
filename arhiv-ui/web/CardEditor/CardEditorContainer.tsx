@@ -44,6 +44,7 @@ interface IProps {
 
 export function CardEditorContainer({ id }: IProps) {
   const router = RouterContext.use()
+  const isNew = !id
 
   const [note, err] = usePromise(() => {
     if (id) {
@@ -89,7 +90,7 @@ export function CardEditorContainer({ id }: IProps) {
       },
     })
 
-    router.push({ path: `/${note.id}` })
+    router.replace({ path: `/${note.id}` })
   }
 
   const onDelete = async () => {
@@ -102,7 +103,11 @@ export function CardEditorContainer({ id }: IProps) {
   }
 
   const onCancel = () => {
-    router.goBack()
+    if (isNew) {
+      router.goBack()
+    } else {
+      router.replace({ path: `/${note.id}` })
+    }
   }
 
   return (

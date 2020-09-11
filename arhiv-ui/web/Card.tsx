@@ -3,7 +3,7 @@ import {
   ProgressLocker, StyleArg,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
-import { API } from './notes'
+import { API } from './types'
 import { Frame, ErrorBlock, NotFoundBlock, Action } from './parts'
 import { Metadata } from './Metadata'
 import { Note } from './Note'

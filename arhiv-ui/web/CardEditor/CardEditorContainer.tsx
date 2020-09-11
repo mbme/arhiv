@@ -7,7 +7,7 @@ import {
   usePromise,
   RouterContext,
 } from '@v/web-utils'
-import { API } from '../notes'
+import { API } from '../types'
 import { CardEditor } from './CardEditor'
 import { selectLinks, parseMarkup } from '../markup-parser'
 import { NotFoundBlock, ErrorBlock } from '../parts'

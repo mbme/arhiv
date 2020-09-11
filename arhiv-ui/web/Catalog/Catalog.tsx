@@ -7,7 +7,7 @@ import {
   Row,
 } from '@v/web-platform'
 import { usePromise, useDebounced } from '@v/web-utils'
-import { API } from '../notes'
+import { API } from '../types'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
 

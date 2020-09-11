@@ -3,7 +3,7 @@ import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
 } from '@v/web-platform'
-import { Note } from '../notes'
+import { Note } from '../types'
 import { RouterContext } from '@v/web-utils'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')

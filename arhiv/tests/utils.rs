@@ -13,7 +13,7 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
     };
 
     let config = Config {
-        arhiv_root: generate_temp_path("TempArhiv"),
+        arhiv_root: generate_temp_path("TempArhiv", ""),
         prime_url,
         server_port,
     };

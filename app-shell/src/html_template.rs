@@ -1,4 +1,5 @@
 use crate::AppShellBuilder;
+use std::env;
 use std::fs;
 
 pub enum AppSource {
@@ -9,11 +10,17 @@ pub enum AppSource {
 }
 
 impl AppSource {
-    pub fn get_base_path(&self) -> Option<String> {
+    pub fn get_base_path(&self) -> String {
         match &self {
-            AppSource::JSFile(path) => Some(format!("file://{}", path)),
-            AppSource::HTMLFile(path) => Some(format!("file://{}", path)),
-            _ => None,
+            AppSource::JSFile(path) => format!("file://{}", path),
+            AppSource::HTMLFile(path) => format!("file://{}", path),
+            _ => format!(
+                "file://{}",
+                env::current_dir()
+                    .expect("failed to get current dir")
+                    .to_str()
+                    .expect("path must be a string")
+            ),
         }
     }
 

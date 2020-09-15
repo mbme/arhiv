@@ -32,12 +32,7 @@ impl AppShellBuilder {
         application.connect_activate(move |app| {
             let webview = build_webview(builder.clone());
 
-            webview.load_html(
-                &src.render(&builder),
-                src.get_base_path()
-                    .map(|path| format!("file://{}", path))
-                    .as_deref(),
-            );
+            webview.load_html(&src.render(&builder), Some(&src.get_base_path()));
 
             let window = ApplicationWindow::new(app);
             window.set_title(&builder.title);

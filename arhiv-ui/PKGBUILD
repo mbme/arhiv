@@ -16,7 +16,7 @@ pkgver() {
 
 build() {
   cd ..
-  yarn run build-prod
+  yarn run build
 
   export MODE=production
   cargo build --locked --release --target-dir=target

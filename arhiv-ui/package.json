@@ -6,8 +6,7 @@
   "description": "arhiv notes",
   "main": "",
   "scripts": {
-    "build": "webpack",
-    "build-prod": "webpack --mode=production",
+    "build": "webpack --mode=production",
     "start": "webpack --mode=development -w"
   },
   "dependencies": {

@@ -1,10 +1,10 @@
 import * as React from 'react'
 import {
+  Cell,
   Observable,
   promise$,
 } from '@v/reactive'
-import { Counter, Obj } from '@v/utils'
-import { Store } from './Store'
+import { Counter } from '@v/utils'
 
 export function useObservable<T>(
   getObservable$: () => Observable<T>,
@@ -26,6 +26,28 @@ export function useObservable<T>(
       },
     })
   }, deps)
+
+  return [value, error]
+}
+
+export function useCell<T>(cell$: Cell<T>): [T, any] {
+  const [value, setValue] = React.useState<T>(cell$.value)
+  const [error, setError] = React.useState<any>(undefined)
+
+  React.useEffect(() => {
+    setValue(cell$.value)
+    setError(undefined)
+
+    return cell$.value$.subscribe({
+      next(newValue) {
+        setValue(newValue)
+      },
+
+      error(e) {
+        setError(e)
+      },
+    })
+  }, [cell$])
 
   return [value, error]
 }
@@ -71,12 +93,6 @@ export function useCounter() {
   const [counter] = React.useState<number>(() => _counter.incAndGet())
 
   return counter
-}
-
-export function useStore<S extends Obj>(store: Store<S>): [S, any] {
-  const [value, error] = useObservable(() => store.state$, [store])
-
-  return [value || store.state, error]
 }
 
 export function useDebouncedCallback(

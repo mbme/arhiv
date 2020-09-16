@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, StyleArg } from '@v/web-platform'
-import { RouterContext, useObservable } from '@v/web-utils'
+import { RouterContext, useCell } from '@v/web-utils'
 
 const $style: StyleArg = {
   position: 'fixed',
@@ -12,7 +12,7 @@ const $style: StyleArg = {
 
 export function Url() {
   const router = RouterContext.use()
-  const [locationStr] = useObservable(() => router.locationRaw$.value$)
+  const [locationStr] = useCell(router.locationRaw$)
 
   return (
     <Box

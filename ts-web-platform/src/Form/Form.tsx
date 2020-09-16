@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Dict } from '@v/utils'
 import { Cell } from '@v/reactive'
-import { useObservable } from '@v/web-utils'
+import { useCell } from '@v/web-utils'
 
 type Values = Dict<string | undefined>
 type ValuesCell = Cell<Values>
@@ -25,7 +25,7 @@ function createForm(values$: ValuesCell) {
 export function useForm(initialValues: Values = {}) {
   const [values$] = React.useState(() => new Cell<Values>(initialValues))
 
-  const [values] = useObservable(() => values$.value$)
+  const [values] = useCell(values$)
 
   const Form = React.useMemo(() => createForm(values$), [values$])
 
@@ -45,7 +45,7 @@ export function useFormControl(name: string) {
     throw new Error('"name" must be provided')
   }
 
-  const [values] = useObservable(() => values$.value$, [values$])
+  const [values] = useCell(values$)
 
   return {
     value: (values || values$.value)[name] || '',

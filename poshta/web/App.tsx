@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, Modal } from '@v/web-platform'
-import { useStore, useHotkeys } from '@v/web-utils'
+import { useCell, useHotkeys } from '@v/web-utils'
 import { PoshtaStore } from './poshta-store'
 import { MessageShort } from './MessageShort'
 import { MessageFull } from './MessageFull'
@@ -10,7 +10,7 @@ interface IProps {
 }
 
 export function App({ store }: IProps) {
-  const [state] = useStore(store)
+  const [state] = useCell(store.state$)
   const modalRef = React.useRef<HTMLDivElement>(null)
 
   const showModal = !!state.selected

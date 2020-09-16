@@ -6,11 +6,12 @@ import {
 } from '@v/reactive'
 import { Counter } from '@v/utils'
 
-export function useObservable<T>(
+export function useObservable<T, K = undefined>(
   getObservable$: () => Observable<T>,
   deps: any[] = [],
-): [T | undefined, any] {
-  const [value, setValue] = React.useState<T | undefined>(undefined)
+  initialValue: K,
+): [T | K, any] {
+  const [value, setValue] = React.useState<T | K>(initialValue)
   const [error, setError] = React.useState<any>(undefined)
 
   React.useEffect(() => {
@@ -31,25 +32,7 @@ export function useObservable<T>(
 }
 
 export function useCell<T>(cell$: Cell<T>): [T, any] {
-  const [value, setValue] = React.useState<T>(cell$.value)
-  const [error, setError] = React.useState<any>(undefined)
-
-  React.useEffect(() => {
-    setValue(cell$.value)
-    setError(undefined)
-
-    return cell$.value$.subscribe({
-      next(newValue) {
-        setValue(newValue)
-      },
-
-      error(e) {
-        setError(e)
-      },
-    })
-  }, [cell$])
-
-  return [value, error]
+  return useObservable(() => cell$.value$, [cell$], cell$.value)
 }
 
 export function usePromise<T>(

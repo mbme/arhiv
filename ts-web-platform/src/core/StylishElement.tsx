@@ -8,7 +8,7 @@ import {
 interface IStylishProps<E extends Tags = 'div'> extends React.HTMLProps<HTMLElementTagNameMap[E]> {
   as?: E
   $styles?: StyleArg[]
-  innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+  innerRef?: React.Ref<HTMLElementTagNameMap[E]>
   ref?: undefined
 }
 

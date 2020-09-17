@@ -68,7 +68,7 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   as?: E
   children?: React.ReactNode
   onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
-  innerRef?: React.RefObject<HTMLElementTagNameMap[E]>
+  innerRef?: React.Ref<HTMLElementTagNameMap[E]>
   dangerouslySetInnerHTML?: {
     __html: string;
   }

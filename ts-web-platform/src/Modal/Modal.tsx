@@ -16,7 +16,7 @@ const $modal: StyleArg = {
 interface IProps {
   children: React.ReactNode
   onCancel(): void
-  innerRef?: React.RefObject<HTMLDivElement>
+  innerRef?: React.Ref<HTMLDivElement>
 }
 
 export function Modal({ children, onCancel, innerRef }: IProps) {

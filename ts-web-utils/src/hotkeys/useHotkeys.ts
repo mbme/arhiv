@@ -13,3 +13,9 @@ export function useHotkeys(hotkeys: IKeybinding[]) {
     }
   }, [hotkeys])
 }
+
+export function useHotkeysMemo(cb: () => IKeybinding[], deps: any[] = []) {
+  const hotkeys = React.useMemo(cb, deps)
+
+  useHotkeys(hotkeys)
+}

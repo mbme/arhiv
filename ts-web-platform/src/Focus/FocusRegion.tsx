@@ -1,4 +1,5 @@
 import { noop } from '@v/utils'
+import { useHotkeysMemo } from '@v/web-utils'
 import * as React from 'react'
 import {
   FocusManagerMode,
@@ -6,7 +7,11 @@ import {
   FocusManagerContext,
 } from './FocusContext'
 
-function createFocusRegion(context: FocusManager) {
+const FocusRegionStyle = {
+  display: 'contents',
+}
+
+function createFocusRegion(ref: React.MutableRefObject<HTMLDivElement | null>, context: FocusManager) {
   interface IProps {
     children: React.ReactNode
   }
@@ -14,39 +19,70 @@ function createFocusRegion(context: FocusManager) {
   return function FocusRegion({ children }: IProps) {
     return (
       <FocusManagerContext.Provider value={context}>
-        {children}
+        <div ref={ref} style={FocusRegionStyle}>
+          {children}
+        </div>
       </FocusManagerContext.Provider>
     )
   }
 }
 
 export function useFocusRegion(mode: FocusManagerMode) {
-  const [ref, setRef] = React.useState<HTMLElement | null>(null)
+  const ref = React.useRef<HTMLDivElement>(null)
   const [context] = React.useState(() => new FocusManager(mode))
 
   React.useEffect(() => {
-    if (!ref) {
+    if (!ref.current) {
       return noop
     }
 
-    // FIXME maybe just install listeners?
-    context.registerRegionNode(ref)
+    const el = ref.current
+
+    const onMouseEnter = () => {
+      context.activate()
+    }
+    const onMouseLeave = () => {
+      context.deactivate()
+    }
+    el.addEventListener('mouseenter', onMouseEnter)
+    el.addEventListener('mouseleave', onMouseLeave)
 
     return () => {
-      context.unregisterRegionNode()
+      el.removeEventListener('mouseenter', onMouseEnter)
+      el.removeEventListener('mouseleave', onMouseLeave)
     }
-  }, [ref])
+  }, [ref.current])
 
-  const parentContext = FocusManagerContext.use()
+  useHotkeysMemo(() => [
+    {
+      code: mode === 'row' ? 'KeyL' : 'KeyJ',
+      action() {
+        context.selectNext()
+      },
+    },
+    {
+      code: mode === 'row' ? 'KeyH' : 'KeyK',
+      action() {
+        context.selectPrevious()
+      },
+    },
+    {
+      code: 'Enter',
+      action() {
+        context.activateSelected()
+      },
+    },
+  ], [context, mode])
 
+  /* const parentContext = FocusManagerContext.use()
+   */
   // FIXME on mouse enter, is focused
   // FIXME register region ref, register in parentContext
 
-  const FocusRegion = React.useMemo(() => createFocusRegion(context), [context])
+  const FocusRegion = React.useMemo(() => createFocusRegion(ref, context), [context])
 
   return {
     context,
     FocusRegion,
-    setRef,
   }
 }

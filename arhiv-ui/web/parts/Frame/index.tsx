@@ -6,7 +6,6 @@ import {
   Link,
   useFocusRegion,
 } from '@v/web-platform'
-import { useHotkeysMemo } from '@v/web-utils'
 
 const $container: StyleArg = {
   display: 'grid',
@@ -31,39 +30,13 @@ interface IProps {
 export function Frame({ children, actions, $style }: IProps) {
   const {
     FocusRegion,
-    setRef,
-    context,
   } = useFocusRegion('column')
-
-  useHotkeysMemo(() => {
-    return [
-      {
-        code: 'KeyJ',
-        action() {
-          context.selectNext()
-        },
-      },
-      {
-        code: 'KeyK',
-        action() {
-          context.selectPrevious()
-        },
-      },
-      {
-        code: 'Enter',
-        action() {
-          context.activateSelected()
-        },
-      },
-    ]
-  }, [context])
 
   return (
     <FocusRegion>
       <Box
         as="section"
         $style={$container}
-        innerRef={setRef}
       >
         <Column>
           <Box

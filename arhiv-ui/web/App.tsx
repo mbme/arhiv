@@ -32,7 +32,7 @@ export function App() {
               ]}
             </Routes>
 
-            {process.env.NODE_ENV === 'development' && (
+            {!window.RPC_URL && process.env.NODE_ENV === 'development' && (
               <Url />
             )}
           </OverlayRenderer>

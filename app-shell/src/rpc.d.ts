@@ -15,6 +15,7 @@ declare global {
   interface Window {
     RPC: IRPC
     RPC_PROXY: object
+    RPC_URL?: string
   }
 }
 

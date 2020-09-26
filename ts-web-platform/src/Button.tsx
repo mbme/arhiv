@@ -12,6 +12,7 @@ interface IProps {
   variant?: ButtonVariant
   children: React.ReactNode
   $style?: StyleArg
+  innerRef?: React.Ref<HTMLButtonElement>
 }
 
 function getStyles(props: IProps): StyleArg[] {
@@ -68,6 +69,7 @@ export function Button(props: IProps) {
     disabled,
     children,
     $style,
+    innerRef,
   } = props
 
   const className = useStyles(
@@ -81,6 +83,7 @@ export function Button(props: IProps) {
       onClick={onClick}
       disabled={disabled}
       type="button"
+      ref={innerRef}
     >
       {children}
     </button>

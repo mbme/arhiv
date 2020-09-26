@@ -147,4 +147,11 @@ export class FocusManager {
 
     return !!value && value === node
   }
+
+  scrollSelectedIntoView() { // FIXME improve this
+    this.selected$.value?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
+  }
 }

@@ -80,15 +80,15 @@ export function FocusRegion({ children, mode, name }: IProps) {
       {
         code: mode === 'row' ? 'KeyL' : 'KeyJ',
         action() {
-          // FIXME scroll into view
           focusManager.selectNext()
+          focusManager.scrollSelectedIntoView()
         },
       },
       {
         code: mode === 'row' ? 'KeyH' : 'KeyK',
         action() {
-          // FIXME scroll into view
           focusManager.selectPrevious()
+          focusManager.scrollSelectedIntoView()
         },
       },
       {

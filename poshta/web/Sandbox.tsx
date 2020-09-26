@@ -19,11 +19,7 @@ export function Sandbox({ content, loadRemoteContent }: IProps) {
 
     const document = iframeRef.current.contentDocument!
 
-    hotkeysResolver.addDocument(document)
-
-    return () => {
-      hotkeysResolver.removeDocument(document)
-    }
+    return hotkeysResolver.registerDocument(document)
   }, [iframeRef.current])
 
   React.useEffect(() => {

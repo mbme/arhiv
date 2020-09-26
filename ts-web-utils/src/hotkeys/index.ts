@@ -1,5 +1,7 @@
-export { HotkeysResolverContext } from './context'
-export { HotkeysResolverProvider } from './Resolver'
+export {
+  HotkeysResolverContext,
+  HotkeysResolverProvider,
+} from './context'
 export {
   useHotkeys,
   useHotkeysMemo,

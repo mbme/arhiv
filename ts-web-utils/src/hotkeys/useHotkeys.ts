@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { IKeybinding } from './utils'
+import { IKeybinding } from './resolver'
 import { HotkeysResolverContext } from './context'
 
 export function useHotkeys(hotkeys: IKeybinding[]) {

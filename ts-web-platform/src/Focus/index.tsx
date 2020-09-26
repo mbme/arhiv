@@ -1,2 +1,2 @@
-export { useFocusRegion } from './FocusRegion'
-export { useFocusable } from './Focusable'
+export { FocusRegion } from './FocusRegion'
+export { useFocusable } from './useFocusable'

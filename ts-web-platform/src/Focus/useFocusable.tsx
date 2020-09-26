@@ -9,14 +9,15 @@ import { FocusManagerContext } from './FocusContext'
 export function useFocusable<T extends HTMLElement>(): [boolean, React.Ref<T>] {
   const [ref, setRef] = React.useState<T | null>(null)
 
-  const isNodeFocused = (node: HTMLElement | null) => !!node && node === ref
-
-  const context = FocusManagerContext.use()
+  const context = React.useContext(FocusManagerContext)
+  if (!context) {
+    throw new Error('FocusManager must be provided')
+  }
 
   const [isFocused] = useObservable(
-    () => context.selected$.value$.map(isNodeFocused),
-    [context.selected$, ref],
-    isNodeFocused(context.selected$.value),
+    () => context.isSelected$(ref),
+    [context, ref],
+    context.isSelected(ref),
   )
 
   React.useEffect(() => {
@@ -24,7 +25,18 @@ export function useFocusable<T extends HTMLElement>(): [boolean, React.Ref<T>] {
       return noop
     }
 
-    return context.registerNode(ref)
+    const onActivate = () => {
+      ref.click()
+    }
+    ref.addEventListener('activate', onActivate)
+
+    const unregister =  context.registerNode(ref)
+
+    return () => {
+      ref.removeEventListener('activate', onActivate)
+
+      unregister()
+    }
   }, [ref])
 
   return [isFocused, setRef]

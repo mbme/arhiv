@@ -9,7 +9,7 @@ import {
 } from '@v/web-platform'
 import { App } from './App'
 
-configureLogger({ minLogLevel: 'INFO' })
+configureLogger({ minLogLevel: 'DEBUG' })
 
 injectGlobalStyles(`
   ${globalStyles}

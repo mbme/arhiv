@@ -4,7 +4,7 @@ import {
   Column,
   StyleArg,
   Link,
-  useFocusRegion,
+  FocusRegion,
 } from '@v/web-platform'
 
 const $container: StyleArg = {
@@ -28,54 +28,68 @@ interface IProps {
 }
 
 export function Frame({ children, actions, $style }: IProps) {
-  const {
-    FocusRegion,
-  } = useFocusRegion('column')
-
   return (
-    <FocusRegion>
+    <FocusRegion
+      name="Frame"
+      mode="row"
+    >
       <Box
         as="section"
         $style={$container}
       >
-        <Column>
-          <Box
-            bgColor="var(--color-primary)"
-            width="100%"
-            display="flex"
-            justifyContent="center"
-          >
+        <FocusRegion
+          name="Navigation"
+          mode="column"
+        >
+          <Column>
+            <Box
+              bgColor="var(--color-primary)"
+              width="100%"
+              display="flex"
+              justifyContent="center"
+            >
+              <Link to={{ path: '/' }}>
+                Notes
+              </Link>
+            </Box>
+
             <Link to={{ path: '/' }}>
-              Notes
+              Contacts
             </Link>
+
+            <Link to={{ path: '/' }}>
+              Movies
+            </Link>
+          </Column>
+        </FocusRegion>
+
+        <FocusRegion
+          name="Content"
+          mode="column"
+        >
+          <Box
+            px="medium"
+            width="40rem"
+            overflowY="auto"
+            borderLeft="default"
+            borderRight="default"
+            $style={$style}
+          >
+            {children}
           </Box>
+        </FocusRegion>
 
-          <Link to={{ path: '/' }}>
-            Contacts
-          </Link>
-
-          <Link to={{ path: '/' }}>
-            Movies
-          </Link>
-        </Column>
-
-        <Box
-          px="medium"
-          width="40rem"
-          overflowY="auto"
-          borderLeft="default"
-          borderRight="default"
-          $style={$style}
+        <FocusRegion
+          name="Actions"
+          mode="column"
         >
-          {children}
-        </Box>
-
-        <Column
-          pl="small"
-          $style={$actionContainer}
-        >
-          {actions}
-        </Column>
+          <Column
+            pl="small"
+            $style={$actionContainer}
+          >
+            {actions}
+          </Column>
+        </FocusRegion>
       </Box>
     </FocusRegion>
   )

@@ -37,7 +37,7 @@ export {
   Spacer,
 } from './Layout'
 export {
-  useFocusRegion,
+  FocusRegion,
   useFocusable,
 } from './Focus'
 export { clickOnEnter } from './utils'

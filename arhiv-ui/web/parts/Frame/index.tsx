@@ -1,11 +1,12 @@
 import * as React from 'react'
 import {
   Box,
-  Column,
   StyleArg,
-  Link,
   FocusRegion,
 } from '@v/web-platform'
+import { Navigation } from './Navigation'
+import { Content } from './Content'
+import { Actions } from './Actions'
 
 const $container: StyleArg = {
   display: 'grid',
@@ -15,16 +16,10 @@ const $container: StyleArg = {
   overflowY: 'hidden',
 }
 
-const $actionContainer: StyleArg = {
-  '&>*': {
-    my: 'small',
-  },
-}
-
 interface IProps {
-  children: React.ReactNode,
-  actions: React.ReactNode,
-  $style?: StyleArg,
+  children: React.ReactNode
+  actions: React.ReactNode
+  $style?: StyleArg
 }
 
 export function Frame({ children, actions, $style }: IProps) {
@@ -41,54 +36,23 @@ export function Frame({ children, actions, $style }: IProps) {
           name="Navigation"
           mode="column"
         >
-          <Column>
-            <Box
-              bgColor="var(--color-primary)"
-              width="100%"
-              display="flex"
-              justifyContent="center"
-            >
-              <Link to={{ path: '/' }}>
-                Notes
-              </Link>
-            </Box>
-
-            <Link to={{ path: '/' }}>
-              Contacts
-            </Link>
-
-            <Link to={{ path: '/' }}>
-              Movies
-            </Link>
-          </Column>
+          <Navigation />
         </FocusRegion>
 
         <FocusRegion
           name="Content"
           mode="column"
         >
-          <Box
-            px="medium"
-            width="40rem"
-            overflowY="auto"
-            borderLeft="default"
-            borderRight="default"
-            $style={$style}
-          >
+          <Content $style={$style}>
             {children}
-          </Box>
+          </Content>
         </FocusRegion>
 
         <FocusRegion
           name="Actions"
           mode="column"
         >
-          <Column
-            pl="small"
-            $style={$actionContainer}
-          >
-            {actions}
-          </Column>
+          <Actions actions={actions} />
         </FocusRegion>
       </Box>
     </FocusRegion>

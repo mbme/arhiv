@@ -26,6 +26,7 @@ export const globalStyles = `
   --color-heading: #000000;
   --color-link: #FDAF3C;
   --color-bg0: #ffffff;
+  --color-bg-highlight: yellow;
   --color-bg-overlay: rgba(255,255,255, .65);
 }
 
@@ -38,6 +39,7 @@ export const globalStyles = `
     --color-heading: #d8dee9;
     --color-link: #81a1c1;
     --color-bg0: #2e3440;
+    --color-bg-highlight: yellow;
     --color-bg-overlay: #4c566a;
   }
 }

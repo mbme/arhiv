@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { noop } from '@v/utils'
 import { HotkeysResolverContext } from '@v/web-utils'
-import { FocusManagerContext } from './FocusContext'
+import { FocusManagerContext } from './context'
 import { FocusManager, FocusManagerMode } from './focus-manager'
 
 const FocusRegionStyle = {

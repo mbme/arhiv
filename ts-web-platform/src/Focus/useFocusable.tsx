@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useObservable } from '@v/web-utils'
 import { noop } from '@v/utils'
-import { FocusManagerContext } from './FocusContext'
+import { FocusManagerContext } from './context'
 
 // FIXME
 // onEnter

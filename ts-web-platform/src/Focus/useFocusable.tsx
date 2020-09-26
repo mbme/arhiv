@@ -3,10 +3,7 @@ import { useObservable } from '@v/web-utils'
 import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 
-// FIXME
-// onEnter
-// onFocus/onBlur
-export function useFocusable<T extends HTMLElement>(): [boolean, React.Ref<T>] {
+export function useFocusable<T extends HTMLElement>(disabled = false): [boolean, React.Ref<T>] {
   const [ref, setRef] = React.useState<T | null>(null)
 
   const context = React.useContext(FocusManagerContext)
@@ -21,7 +18,7 @@ export function useFocusable<T extends HTMLElement>(): [boolean, React.Ref<T>] {
   )
 
   React.useEffect(() => {
-    if (!ref) {
+    if (!ref || disabled) {
       return noop
     }
 
@@ -37,7 +34,7 @@ export function useFocusable<T extends HTMLElement>(): [boolean, React.Ref<T>] {
 
       unregister()
     }
-  }, [ref])
+  }, [ref, disabled])
 
   return [isFocused, setRef]
 }

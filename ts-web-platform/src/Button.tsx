@@ -3,6 +3,7 @@ import {
   StyleArg,
   useStyles,
 } from './core'
+import { useFocusable } from './Focus'
 
 type ButtonVariant = 'primary' | 'secondary' | 'link'
 
@@ -12,7 +13,6 @@ interface IProps {
   variant?: ButtonVariant
   children: React.ReactNode
   $style?: StyleArg
-  innerRef?: React.Ref<HTMLButtonElement>
 }
 
 function getStyles(props: IProps): StyleArg[] {
@@ -69,11 +69,15 @@ export function Button(props: IProps) {
     disabled,
     children,
     $style,
-    innerRef,
   } = props
+
+  const [isFocused, setRef] = useFocusable<HTMLButtonElement>(disabled)
 
   const className = useStyles(
     ...getStyles(props),
+    isFocused && {
+      border: '1px solid red',
+    },
     $style,
   )
 
@@ -83,7 +87,7 @@ export function Button(props: IProps) {
       onClick={onClick}
       disabled={disabled}
       type="button"
-      ref={innerRef}
+      ref={setRef}
     >
       {children}
     </button>

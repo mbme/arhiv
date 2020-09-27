@@ -8,8 +8,8 @@ export class FocusManager {
   private _nodes = new Set<HTMLElement>()
   private _log: Logger
 
-  readonly selected$ = new Cell<HTMLElement | null>(null)
   readonly enabled$ = new Cell(false)
+  readonly selectedNode$ = new Cell<HTMLElement | null>(null)
 
   constructor(
     private _mode: FocusManagerMode,
@@ -22,7 +22,7 @@ export class FocusManager {
     this._nodes.add(node)
 
     const onMouseEnter = () => {
-      this.selected$.value = node
+      this.selectedNode$.value = node
     }
 
     node.addEventListener('mouseenter', onMouseEnter)
@@ -41,7 +41,7 @@ export class FocusManager {
     this._log.debug('enabled')
 
     this.enabled$.value = true
-    if (this.selected$.value) {
+    if (this.selectedNode$.value) {
       return
     }
 
@@ -58,7 +58,7 @@ export class FocusManager {
     }
 
     if (firstEl) {
-      this.selected$.value = firstEl
+      this.selectedNode$.value = firstEl
     }
   }
 
@@ -81,13 +81,13 @@ export class FocusManager {
     return rect.y + window.scrollY
   }
 
-  selectPrevious() {
-    if (!this.enabled$.value || !this.selected$.value) {
+  selectPreviousNode() {
+    if (!this.enabled$.value || !this.selectedNode$.value) {
       return
     }
-    this._log.debug('select previous')
+    this._log.debug('select previous node')
 
-    const currentOffset = this._getOffset(this.selected$.value)
+    const currentOffset = this._getOffset(this.selectedNode$.value)
 
     let prevEl = null
     for (const node of this._nodes) {
@@ -103,17 +103,17 @@ export class FocusManager {
     }
 
     if (prevEl) {
-      this.selected$.value = prevEl
+      this.selectedNode$.value = prevEl
     }
   }
 
-  selectNext() {
-    if (!this.enabled$.value || !this.selected$.value) {
+  selectNextNode() {
+    if (!this.enabled$.value || !this.selectedNode$.value) {
       return
     }
-    this._log.debug('select next')
+    this._log.debug('select next node')
 
-    const currentOffset = this._getOffset(this.selected$.value)
+    const currentOffset = this._getOffset(this.selectedNode$.value)
 
     let nextEl = null
     for (const node of this._nodes) {
@@ -129,32 +129,32 @@ export class FocusManager {
     }
 
     if (nextEl) {
-      this.selected$.value = nextEl
+      this.selectedNode$.value = nextEl
     }
   }
 
-  activateSelected() {
+  activateSelectedNode() {
     if (!this.enabled$.value) {
       return
     }
 
     this._log.debug('activate selected')
 
-    this.selected$.value?.dispatchEvent(new Event('activate'))
+    this.selectedNode$.value?.dispatchEvent(new Event('activate'))
   }
 
-  isSelected$(node: HTMLElement | null): Observable<boolean> {
-    return this.selected$.value$.map(value => !!value && value === node)
+  isNodeSelected$(node: HTMLElement | null): Observable<boolean> {
+    return this.selectedNode$.value$.map(value => !!value && value === node)
   }
 
-  isSelected(node: HTMLElement | null): boolean {
-    const value = this.selected$.value
+  isNodeSelected(node: HTMLElement | null): boolean {
+    const value = this.selectedNode$.value
 
     return !!value && value === node
   }
 
-  scrollSelectedIntoView() { // FIXME improve this
-    this.selected$.value?.scrollIntoView({
+  scrollSelectedNodeIntoView() { // FIXME improve this
+    this.selectedNode$.value?.scrollIntoView({
       behavior: 'smooth',
       block: 'nearest',
     })

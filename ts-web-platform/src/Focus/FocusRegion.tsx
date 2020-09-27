@@ -36,7 +36,7 @@ export function FocusRegion({ children, mode, name }: IProps) {
     const unregister = parentFocusManager.registerNode(node)
 
     // automatically enable region when selected
-    const unsub = parentFocusManager.isSelected$(node).subscribe({
+    const unsub = parentFocusManager.isNodeSelected$(node).subscribe({
       next(isSelected: boolean) {
         if (isSelected) {
           focusManager.enable()
@@ -82,21 +82,21 @@ export function FocusRegion({ children, mode, name }: IProps) {
       {
         code: mode === 'row' ? 'KeyL' : 'KeyJ',
         action() {
-          focusManager.selectNext()
-          focusManager.scrollSelectedIntoView()
+          focusManager.selectNextNode()
+          focusManager.scrollSelectedNodeIntoView()
         },
       },
       {
         code: mode === 'row' ? 'KeyH' : 'KeyK',
         action() {
-          focusManager.selectPrevious()
-          focusManager.scrollSelectedIntoView()
+          focusManager.selectPreviousNode()
+          focusManager.scrollSelectedNodeIntoView()
         },
       },
       {
         code: 'Enter',
         action() {
-          focusManager.activateSelected()
+          focusManager.activateSelectedNode()
         },
       },
     ]

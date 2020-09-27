@@ -68,7 +68,6 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   as?: E
   children?: React.ReactNode
   onClick?(e: React.MouseEvent<HTMLElementTagNameMap[E]>): void
-  innerRef?: React.Ref<HTMLElementTagNameMap[E]>
   dangerouslySetInnerHTML?: {
     __html: string;
   }
@@ -76,24 +75,25 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   $styles?: StyleArg[]
 }
 
-export function Box<E extends Tags = 'div'>(props: IProps<E>) {
-  const {
-    as,
-    children,
-    onClick,
-    innerRef,
-    dangerouslySetInnerHTML,
-    $style,
-    $styles = [],
-    ...styleProps
-  } = props
+export const Box = React.forwardRef(
+  function Box<E extends Tags = 'div'>(props: IProps<E>, ref: React.Ref<HTMLElementTagNameMap[E]>) {
+    const {
+      as,
+      children,
+      onClick,
+      dangerouslySetInnerHTML,
+      $style,
+      $styles = [],
+      ...styleProps
+    } = props
 
-  const className = useStyles(styleProps, $style, ...$styles)
+    const className = useStyles(styleProps, $style, ...$styles)
 
-  return React.createElement(as || 'div', {
-    ref: innerRef,
-    onClick,
-    className,
-    dangerouslySetInnerHTML,
-  }, children)
-}
+    return React.createElement(as || 'div', {
+      ref,
+      onClick,
+      className,
+      dangerouslySetInnerHTML,
+    }, children)
+  } ,
+)

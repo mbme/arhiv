@@ -82,7 +82,7 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
       $style={isSelected ? $selected : undefined}
     >
       <StylishElement
-        innerRef={mergeRefs(ref, externalRef)}
+        ref={mergeRefs(ref, externalRef)}
         as="input"
         $styles={getStyles(props.withClear)}
         type={type}

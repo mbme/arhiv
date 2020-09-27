@@ -26,7 +26,7 @@ export function CatalogEntry({ note }: IProps) {
       border={isSelected ? '1px solid red' : '1px solid transparent'}
       cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
-      innerRef={ref}
+      ref={ref}
     >
       {note.data.name}
 

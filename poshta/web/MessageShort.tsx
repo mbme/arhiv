@@ -33,7 +33,7 @@ export function MessageShort({ message, focused }: IProps ) {
       p="medium"
       border="1px solid black"
       bgColor={focused ? 'yellow' : undefined}
-      innerRef={ref}
+      ref={ref}
     >
       <Row alignX="left">
         {message.labels.map(label => (

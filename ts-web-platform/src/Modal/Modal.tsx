@@ -16,20 +16,21 @@ const $modal: StyleArg = {
 interface IProps {
   children: React.ReactNode
   onCancel(): void
-  innerRef?: React.Ref<HTMLDivElement>
 }
 
-export function Modal({ children, onCancel, innerRef }: IProps) {
-  const className = useStyles($modal)
+export const Modal = React.forwardRef(
+  function Modal({ children, onCancel }: IProps, ref: React.Ref<HTMLDivElement>) {
+    const className = useStyles($modal)
 
-  return (
-    <Overlay
-      onClick={onCancel}
-      innerRef={innerRef}
-    >
-      <div className={className}>
-        {children}
-      </div>
-    </Overlay>
-  )
-}
+    return (
+      <Overlay
+        onClick={onCancel}
+        innerRef={ref}
+      >
+        <div className={className}>
+          {children}
+        </div>
+      </Overlay>
+    )
+  }
+)

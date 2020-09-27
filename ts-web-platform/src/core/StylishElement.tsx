@@ -5,19 +5,22 @@ import {
   Tags,
 } from './types'
 
-interface IStylishProps<E extends Tags = 'div'> extends React.HTMLProps<HTMLElementTagNameMap[E]> {
+interface IProps<E extends Tags = 'div'> extends React.HTMLProps<HTMLElementTagNameMap[E]> {
   as?: E
   $styles?: StyleArg[]
-  innerRef?: React.Ref<HTMLElementTagNameMap[E]>
-  ref?: undefined
 }
 
-export function StylishElement<E extends Tags = 'div'>({ $styles = [], as, innerRef, ...props }: IStylishProps<E>) {
-  const className = useStyles(...$styles)
+export const StylishElement = React.forwardRef(
+  function StylishElement<E extends Tags = 'div'>(
+    { $styles = [], as, ...props }: IProps<E>,
+    ref: React.Ref<HTMLElementTagNameMap[E]>,
+  ) {
+    const className = useStyles(...$styles)
 
-  return React.createElement(as || 'div', {
-    ref: innerRef,
-    className,
-    ...props
-  })
-}
+    return React.createElement(as || 'div', {
+      ref,
+      className,
+      ...props
+    })
+  },
+)

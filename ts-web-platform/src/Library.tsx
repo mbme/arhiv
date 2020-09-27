@@ -1,5 +1,6 @@
 import * as React from 'react'
 
+import { HotkeysResolverProvider } from '@v/web-utils'
 import { StylishProvider } from './core'
 import { OverlayRenderer } from './Modal'
 import { ButtonExamples } from './Button.examples'
@@ -9,25 +10,33 @@ import { TextareaExamples } from './Form/Textarea.examples'
 import { IconExamples } from './Icon.examples'
 import { StyleExamples } from './core/examples'
 import { ConfirmationDialogExamples } from './Modal/ConfirmationDialog.examples'
+import { FocusRegion } from './Focus'
 
 export function Library() {
   return (
     <StylishProvider>
-      <OverlayRenderer>
-        <StyleExamples />
+      <HotkeysResolverProvider>
+        <FocusRegion
+          name="Global"
+          mode="column"
+        >
+          <OverlayRenderer>
+            <StyleExamples />
 
-        <IconExamples />
+            <IconExamples />
 
-        <ButtonExamples />
+            <ButtonExamples />
 
-        <SelectExamples />
+            <SelectExamples />
 
-        <InputExamples />
+            <InputExamples />
 
-        <TextareaExamples />
+            <TextareaExamples />
 
-        <ConfirmationDialogExamples />
-      </OverlayRenderer>
+            <ConfirmationDialogExamples />
+          </OverlayRenderer>
+        </FocusRegion>
+      </HotkeysResolverProvider>
     </StylishProvider>
   )
 }

@@ -39,3 +39,6 @@ ui-start-shell:
 
 check:
   cargo check
+
+web-platform:
+ cd ts-web-platform; yarn start

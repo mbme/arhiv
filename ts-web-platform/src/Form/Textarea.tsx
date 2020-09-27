@@ -71,9 +71,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
 
   return (
     <StylishElement
+      ref={mergeRefs(ref, externalRef)}
       as="textarea"
       $styles={[$textarea, isSelected && $selected, ...$styles]}
-      innerRef={mergeRefs(ref, externalRef)}
       name={name}
       value={value}
       placeholder={placeholder}

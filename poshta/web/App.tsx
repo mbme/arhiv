@@ -89,7 +89,7 @@ export function App({ store }: IProps) {
       {showModal && (
         <Modal
           onCancel={() => store.select(undefined)}
-          innerRef={modalRef}
+          ref={modalRef}
         >
           <Box
             maxWidth="50rem"

@@ -21,7 +21,7 @@ const $textarea: StyleArg = {
   boxShadow: 'default',
 }
 
-const $focused: StyleArg = {
+const $selected: StyleArg = {
   border: '1px solid red',
 }
 
@@ -39,7 +39,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
   } = props
 
   const ref = React.useRef<HTMLTextAreaElement>(null)
-  const [isFocused, setRef] = useFocusable<HTMLTextAreaElement>()
+  const isSelected = useFocusable(ref)
 
   const {
     value,
@@ -72,8 +72,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
   return (
     <StylishElement
       as="textarea"
-      $styles={[$textarea, isFocused && $focused, ...$styles]}
-      innerRef={mergeRefs(ref, setRef, externalRef)}
+      $styles={[$textarea, isSelected && $selected, ...$styles]}
+      innerRef={mergeRefs(ref, externalRef)}
       name={name}
       value={value}
       placeholder={placeholder}

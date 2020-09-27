@@ -27,7 +27,7 @@ const getStyles = (withClear?: boolean): StyleArg[] => [
   },
 ]
 
-const $focused: StyleArg = {
+const $selected: StyleArg = {
   border: '1px solid red',
 }
 
@@ -67,7 +67,7 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
   } = useFormControl(name)
 
   const ref = React.useRef<HTMLInputElement>(null)
-  const [isFocused, setRef] = useFocusable<HTMLInputElement>()
+  const isSelected = useFocusable(ref)
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -79,10 +79,10 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
     <Box
       relative
       width="100%"
-      $style={isFocused ? $focused : undefined}
+      $style={isSelected ? $selected : undefined}
     >
       <StylishElement
-        innerRef={mergeRefs(ref, setRef, externalRef)}
+        innerRef={mergeRefs(ref, externalRef)}
         as="input"
         $styles={getStyles(props.withClear)}
         type={type}

@@ -71,11 +71,12 @@ export function Button(props: IProps) {
     $style,
   } = props
 
-  const [isFocused, setRef] = useFocusable<HTMLButtonElement>(disabled)
+  const ref = React.useRef<HTMLButtonElement>(null)
+  const isSelected = useFocusable(ref, disabled)
 
   const className = useStyles(
     ...getStyles(props),
-    isFocused && {
+    isSelected && {
       border: '1px solid red',
     },
     $style,
@@ -87,7 +88,7 @@ export function Button(props: IProps) {
       onClick={onClick}
       disabled={disabled}
       type="button"
-      ref={setRef}
+      ref={ref}
     >
       {children}
     </button>

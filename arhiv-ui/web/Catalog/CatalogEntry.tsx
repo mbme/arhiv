@@ -15,16 +15,18 @@ interface IProps {
 
 export function CatalogEntry({ note }: IProps) {
   const router = RouterContext.use()
-  const [isFocused, setRef] = useFocusable<HTMLDivElement>()
+
+  const ref = React.useRef<HTMLDivElement>(null)
+  const isSelected = useFocusable(ref)
 
   return (
     <Box
       mb="small"
       p="small"
-      border={isFocused ? '1px solid red' : '1px solid transparent'}
+      border={isSelected ? '1px solid red' : '1px solid transparent'}
       cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
-      innerRef={setRef}
+      innerRef={ref}
     >
       {note.data.name}
 

@@ -19,10 +19,11 @@ interface IProps extends Omit<React.ComponentProps<typeof RouterLink>, 'classNam
 }
 
 export function Link({ $style, clean, ...props }: IProps) {
-  const [isFocused, setRef] = useFocusable<HTMLAnchorElement>()
+  const ref = React.useRef<HTMLAnchorElement>(null)
+  const isSelected = useFocusable(ref)
 
   const className = useStyles(
-    isFocused && {
+    isSelected && {
       border: '1px solid red',
     },
     clean && $cleanLink,
@@ -31,7 +32,7 @@ export function Link({ $style, clean, ...props }: IProps) {
 
   return  (
     <RouterLink
-      ref={setRef}
+      ref={ref}
       className={className}
       {...props}
     />

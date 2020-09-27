@@ -1,40 +1,48 @@
 import * as React from 'react'
-import { useObservable } from '@v/web-utils'
 import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 
-export function useFocusable<T extends HTMLElement>(disabled = false): [boolean, React.RefCallback<T>] {
-  const [ref, setRef] = React.useState<T | null>(null)
-
+export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, disabled = false): boolean {
   const context = React.useContext(FocusManagerContext)
   if (!context) {
     throw new Error('FocusManager must be provided')
   }
 
-  const [isFocused] = useObservable(
-    () => context.isSelected$(ref),
-    [context, ref],
-    context.isSelected(ref),
-  )
+  const [isSelected, setIsFocused] = React.useState(() => context.isSelected(ref.current))
 
   React.useEffect(() => {
-    if (!ref || disabled) {
+    const el = ref.current
+    if (!el) {
+      throw new Error('dom element must be provided')
+    }
+
+    return context.isSelected$(el).subscribe({
+      next: setIsFocused,
+    })
+  }, [])
+
+  React.useEffect(() => {
+    if (disabled) {
       return noop
+    }
+    const el = ref.current
+    if (!el) {
+      throw new Error('dom element must be provided')
     }
 
     const onActivate = () => {
-      ref.click()
+      el.click()
     }
-    ref.addEventListener('activate', onActivate)
+    el.addEventListener('activate', onActivate)
 
-    const unregister =  context.registerNode(ref)
+    const unregister =  context.registerNode(el)
 
     return () => {
-      ref.removeEventListener('activate', onActivate)
+      el.removeEventListener('activate', onActivate)
 
       unregister()
     }
   }, [ref, disabled])
 
-  return [isFocused, setRef]
+  return isSelected
 }

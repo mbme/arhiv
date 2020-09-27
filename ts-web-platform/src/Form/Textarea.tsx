@@ -3,7 +3,7 @@ import {
   StyleArg,
   StylishElement,
 } from '../core'
-import { useFocusable } from '../Focus'
+import { useFocusable, useFocusOnActivate } from '../Focus'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
@@ -40,6 +40,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
 
   const ref = React.useRef<HTMLTextAreaElement>(null)
   const isSelected = useFocusable(ref)
+  useFocusOnActivate(ref)
 
   const {
     value,

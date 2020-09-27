@@ -54,10 +54,12 @@ export function FocusRegion({ children, mode, name }: IProps) {
 
   // activate region when hovered
   React.useEffect(() => {
-    const node = ref.current?.firstChild as HTMLElement | undefined
-    if (!node) {
-      throw new Error('child node is missing')
+    const childCount = ref.current?.childElementCount || 0
+    if (childCount !== 1) {
+      throw new Error(`FocusRegion must have a single child, got ${childCount}`)
     }
+
+    const node = ref.current?.firstChild as HTMLElement
 
     const onMouseEnter = () => {
       focusManager.activate()

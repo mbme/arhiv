@@ -2,15 +2,18 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
 import { Procedure } from '@v/utils'
+import { configureLogger } from '@v/logger'
 import { injectGlobalStyles } from '@v/web-utils'
 import { globalStyles } from './core/global-styles'
 import { Library } from './Library'
+
+configureLogger({ minLogLevel: 'DEBUG' })
 
 injectGlobalStyles(`
   ${globalStyles}
 
   #root {
-    height: 100vh;
+    min-height: 100vh;
     max-width: 50rem;
     margin: 0 auto;
     visibility: hidden;

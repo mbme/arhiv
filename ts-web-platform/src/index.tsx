@@ -39,5 +39,6 @@ export {
   FocusRegion,
   useFocusable,
   useFocusedRegion,
+  useFocusOnActivate,
 } from './Focus'
 export { clickOnEnter } from './utils'

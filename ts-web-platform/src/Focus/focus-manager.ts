@@ -1,21 +1,22 @@
 import { Procedure } from '@v/utils'
 import { Cell, Observable } from '@v/reactive'
-import { createLogger } from '@v/logger'
-
-const log = createLogger('FocusManager')
+import { createLogger, Logger } from '@v/logger'
 
 export type FocusManagerMode = 'row' | 'column'
 
 export class FocusManager {
   private _nodes = new Set<HTMLElement>()
+  private _log: Logger
 
   readonly selected$ = new Cell<HTMLElement | null>(null)
-  readonly active$ = new Cell(false)
+  readonly active$ = new Cell(false) // FIXME rename to enabled$
 
   constructor(
     private _mode: FocusManagerMode,
     public readonly name: string,
-  ) {}
+  ) {
+    this._log = createLogger(`FocusManager ${name}`)
+  }
 
   registerNode(node: HTMLElement): Procedure {
     this._nodes.add(node)
@@ -32,12 +33,12 @@ export class FocusManager {
     }
   }
 
-  activate() {
+  activate() { // FIXME rename enable/disable
     if (this.active$.value) {
       return
     }
 
-    log.debug(`${this.name} activated`)
+    this._log.debug('activated')
 
     this.active$.value = true
     if (this.selected$.value) {
@@ -66,7 +67,7 @@ export class FocusManager {
       return
     }
 
-    log.debug(`${this.name} deactivated`)
+    this._log.debug('deactivated')
     this.active$.value = false
   }
 
@@ -84,6 +85,7 @@ export class FocusManager {
     if (!this.active$.value || !this.selected$.value) {
       return
     }
+    this._log.debug('select previous')
 
     const currentOffset = this._getOffset(this.selected$.value)
 
@@ -109,6 +111,7 @@ export class FocusManager {
     if (!this.active$.value || !this.selected$.value) {
       return
     }
+    this._log.debug('select next')
 
     const currentOffset = this._getOffset(this.selected$.value)
 
@@ -134,6 +137,8 @@ export class FocusManager {
     if (!this.active$.value) {
       return
     }
+
+    this._log.debug('activate selected')
 
     this.selected$.value?.dispatchEvent(new Event('activate'))
   }

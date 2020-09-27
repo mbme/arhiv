@@ -7,7 +7,7 @@ import {
 } from '../core'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
-import { useFocusable } from '../Focus'
+import { useFocusable, useFocusOnActivate } from '../Focus'
 
 const getStyles = (withClear?: boolean): StyleArg[] => [
   {
@@ -68,6 +68,8 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
 
   const ref = React.useRef<HTMLInputElement>(null)
   const isSelected = useFocusable(ref)
+
+  useFocusOnActivate(ref)
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {

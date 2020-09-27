@@ -1,12 +1,8 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger } from '@v/logger'
-import {
-  injectGlobalStyles,
-} from '@v/web-utils'
-import {
-  globalStyles,
-} from '@v/web-platform'
+import { injectGlobalStyles } from '@v/web-utils'
+import { globalStyles } from '@v/web-platform'
 import { App } from './App'
 
 configureLogger({ minLogLevel: 'DEBUG' })

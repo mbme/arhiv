@@ -20,21 +20,23 @@ export function Library() {
           name="Global"
           mode="column"
         >
-          <OverlayRenderer>
-            <StyleExamples />
+          <div>
+            <OverlayRenderer>
+              <StyleExamples />
 
-            <IconExamples />
+              <IconExamples />
 
-            <ButtonExamples />
+              <ButtonExamples />
 
-            <SelectExamples />
+              <SelectExamples />
 
-            <InputExamples />
+              <InputExamples />
 
-            <TextareaExamples />
+              <TextareaExamples />
 
-            <ConfirmationDialogExamples />
-          </OverlayRenderer>
+              <ConfirmationDialogExamples />
+            </OverlayRenderer>
+          </div>
         </FocusRegion>
       </HotkeysResolverProvider>
     </StylishProvider>

@@ -40,5 +40,6 @@ export {
   useFocusable,
   useFocusedRegion,
   useFocusOnActivate,
+  useClickOnActivate,
 } from './Focus'
 export { clickOnEnter } from './utils'

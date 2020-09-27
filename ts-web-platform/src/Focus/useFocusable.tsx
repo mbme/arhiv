@@ -30,18 +30,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
       throw new Error('dom element must be provided')
     }
 
-    const onActivate = () => {
-      el.click()
-    }
-    el.addEventListener('activate', onActivate)
-
-    const unregister =  context.registerNode(el)
-
-    return () => {
-      el.removeEventListener('activate', onActivate)
-
-      unregister()
-    }
+    return context.registerNode(el)
   }, [ref, disabled])
 
   return isSelected

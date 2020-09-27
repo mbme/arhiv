@@ -17,6 +17,13 @@ function isMatchingEvent(keybinding: IKeybinding, e: KeyboardEvent): boolean {
       && e.metaKey === (keybinding.metaKey || false)
 }
 
+const TEXT_EDITOR_TAGS = ['input', 'textarea', 'select']
+function isTextEditorEvent(e: KeyboardEvent): boolean {
+  const tagName = (e.target as HTMLElement)?.tagName.toLowerCase()
+
+  return TEXT_EDITOR_TAGS.includes(tagName)
+}
+
 export class HotkeysResolver {
   private _hotkeys: Array<IKeybinding[]> = []
 
@@ -29,6 +36,10 @@ export class HotkeysResolver {
   }
 
   private _onKeyDown = (e: KeyboardEvent) => {
+    if (isTextEditorEvent(e)) {
+      return
+    }
+
     for (let i = this._hotkeys.length - 1; i >= 0; i -= 1) {
       const hotkeys = this._hotkeys[i]
 

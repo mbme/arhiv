@@ -4,7 +4,7 @@ import {
   StyleArg,
   useStyles,
 } from './core'
-import { useFocusable } from './Focus'
+import { useClickOnActivate, useFocusable } from './Focus'
 
 const $cleanLink: StyleArg = {
   color: 'inherit',
@@ -21,6 +21,7 @@ interface IProps extends Omit<React.ComponentProps<typeof RouterLink>, 'classNam
 export function Link({ $style, clean, ...props }: IProps) {
   const ref = React.useRef<HTMLAnchorElement>(null)
   const isSelected = useFocusable(ref)
+  useClickOnActivate(ref)
 
   const className = useStyles(
     isSelected && {

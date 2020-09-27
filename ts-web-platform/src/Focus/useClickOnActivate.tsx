@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { noop } from '@v/utils'
 
-export function useFocusOnActivate<T extends HTMLElement>(ref: React.RefObject<T>, disabled = false) {
+export function useClickOnActivate<T extends HTMLElement>(ref: React.RefObject<T>, disabled = false) {
   React.useEffect(() => {
     if (disabled) {
       return noop
@@ -13,21 +13,13 @@ export function useFocusOnActivate<T extends HTMLElement>(ref: React.RefObject<T
     }
 
     const onActivate = () => {
-      el.focus()
-    }
-
-    const onKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        (e.target as HTMLElement)?.blur()
-      }
+      el.click()
     }
 
     el.addEventListener('activate', onActivate)
-    el.addEventListener('keydown', onKeydown)
 
     return () => {
       el.removeEventListener('activate', onActivate)
-      el.removeEventListener('keydown', onKeydown)
     }
   }, [disabled])
 }

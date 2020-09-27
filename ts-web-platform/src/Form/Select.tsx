@@ -1,31 +1,52 @@
 import * as React from 'react'
+import {
+  StyleArg,
+  StylishElement,
+} from '../core'
+import { useFocusable, useFocusOnActivate } from '../Focus'
+import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
-interface IProps extends Omit<React.HTMLProps<HTMLSelectElement>, 'onChange' | 'value'> {
+const $selected: StyleArg = {
+  border: '1px solid red',
+}
+
+type NativeProps = 'name' | 'defaultValue'
+
+interface IProps extends Pick<React.HTMLProps<HTMLSelectElement>, NativeProps> {
   name: string
   options: { [key: string]: string }
 }
 
-export function Select({ options, name, ...other }: IProps) {
-  const {
-    value,
-    setValue,
-  } = useFormControl(name)
+export const Select = React.forwardRef<HTMLSelectElement, IProps>(
+  function Select({ options, name }: IProps, externalRef) {
+    const {
+      value,
+      setValue,
+    } = useFormControl(name)
 
-  const items = Object.entries(options).map(([key, label]) => (
-    <option key={key} value={key}>
-      {label}
-    </option>
-  ))
+    const ref = React.useRef<HTMLSelectElement>(null)
+    const isSelected = useFocusable(ref)
 
-  return (
-    <select
-      name={name}
-      value={value}
-      onChange={e => setValue(e.target.value)}
-      {...other}
-    >
-      {items}
-    </select>
-  )
-}
+    useFocusOnActivate(ref)
+
+    const items = Object.entries(options).map(([key, label]) => (
+      <option key={key} value={key}>
+        {label}
+      </option>
+    ))
+
+    return (
+      <StylishElement
+        as="select"
+        ref={mergeRefs(ref, externalRef)}
+        name={name}
+        value={value}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value)}
+        $style={isSelected ? $selected : undefined}
+      >
+        {items}
+      </StylishElement>
+    )
+  } ,
+)

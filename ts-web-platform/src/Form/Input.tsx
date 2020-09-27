@@ -71,12 +71,6 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
 
   useFocusOnActivate(ref)
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      (e.target as HTMLInputElement).blur()
-    }
-  }
-
   return (
     <Box
       relative
@@ -94,7 +88,6 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
         autoComplete={autoComplete}
         placeholder={placeholder}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
-        onKeyDown={onKeyDown}
       />
 
       {withClear && value && (

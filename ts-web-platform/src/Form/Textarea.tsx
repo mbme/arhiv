@@ -64,12 +64,6 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
     updateHeight()
   }, [value])
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Escape') {
-      (e.target as HTMLTextAreaElement).blur()
-    }
-  }
-
   return (
     <StylishElement
       ref={mergeRefs(ref, externalRef)}
@@ -79,7 +73,6 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
       value={value}
       placeholder={placeholder}
       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
-      onKeyDown={onKeyDown}
     />
   )
 })

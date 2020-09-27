@@ -5,26 +5,11 @@ import {
   StyleArg,
   StylishElement,
 } from '../core'
+import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
+import { useFocusable } from '../Focus'
 
-type NativeProps =
-  'type'
-  | 'name'
-  | 'value'
-  | 'onKeyDown'
-  | 'onBlur'
-  | 'defaultValue'
-  | 'placeholder'
-  | 'autoComplete'
-
-interface IInternalProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
-  name: string
-  onChange(value: string): void
-  autoFocus?: boolean
-  onClear?(): void
-}
-
-const getStyles = (props: IInternalProps): StyleArg[] => [
+const getStyles = (withClear?: boolean): StyleArg[] => [
   {
     display: 'block',
     width: '100%',
@@ -37,10 +22,14 @@ const getStyles = (props: IInternalProps): StyleArg[] => [
     py: 'small',
   },
 
-  props.onClear && {
+  withClear && {
     paddingRight: 'medium',
   },
 ]
+
+const $focused: StyleArg = {
+  border: '1px solid red',
+}
 
 const $clearIcon: StyleArg = {
   position: 'absolute',
@@ -50,131 +39,69 @@ const $clearIcon: StyleArg = {
   color: 'var(--color-secondary)',
 }
 
-class InternalInput extends React.PureComponent<IInternalProps> {
-  ref = React.createRef<HTMLInputElement>()
+type NativeProps =
+  'type'
+  | 'name'
+  | 'defaultValue'
+  | 'placeholder'
+  | 'autoComplete'
 
-  componentDidMount() {
-    const {
-      autoFocus,
-    } = this.props
-
-    if (autoFocus) {
-      this.focus()
-    }
-  }
-
-  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {
-      onChange,
-    } = this.props
-
-    onChange(e.target.value)
-  }
-
-  onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const {
-      onKeyDown,
-    } = this.props
-
-    if (e.key === 'Escape') {
-      this.blur()
-    }
-
-    if (onKeyDown) {
-      onKeyDown(e)
-    }
-  }
-
-  focus = () => {
-    if (!this.ref.current) {
-      return
-    }
-
-    this.ref.current.focus()
-    const { length } = this.ref.current.value
-    this.ref.current.setSelectionRange(length, length) // put cursor at the end of the input
-  }
-
-  blur = () => {
-    if (!this.ref.current) {
-      return
-    }
-
-    this.ref.current.blur()
-  }
-
-  onClickClear = () => {
-    const {
-      onChange,
-      onClear,
-    } = this.props
-
-    onChange('')
-    onClear!()
-  }
-
-  render() {
-    const {
-      onClear,
-      autoFocus,
-      type,
-      name,
-      value,
-      defaultValue,
-      autoComplete,
-      placeholder,
-      onBlur,
-    } = this.props
-
-    return (
-      <Box
-        relative
-        width="100%"
-      >
-        <StylishElement
-          as="input"
-          $styles={getStyles(this.props)}
-          innerRef={this.ref}
-          type={type}
-          name={name}
-          value={value}
-          defaultValue={defaultValue}
-          autoComplete={autoComplete}
-          placeholder={placeholder}
-          onChange={this.onChange}
-          onKeyDown={this.onKeyDown}
-          autoFocus={autoFocus}
-          onBlur={onBlur}
-        />
-
-        {onClear && value && (
-          <Icon
-            type="x"
-            $styles={[$clearIcon]}
-            onClick={this.onClickClear}
-          />
-        )}
-      </Box>
-    )
-  }
-}
-
-interface IInputProps extends Omit<IInternalProps, 'onChange'> {
+interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   name: string
+  withClear?: boolean
 }
 
-export const Input = React.forwardRef<InternalInput, IInputProps>((props, ref) => {
+export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(props, externalRef) {
+  const {
+    type,
+    name,
+    defaultValue,
+    placeholder,
+    autoComplete,
+    withClear,
+  } = props
+
   const {
     value,
     setValue,
-  } = useFormControl(props.name)
+  } = useFormControl(name)
+
+  const ref = React.useRef<HTMLInputElement>(null)
+  const [isFocused, setRef] = useFocusable<HTMLInputElement>()
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      (e.target as HTMLInputElement).blur()
+    }
+  }
 
   return (
-    <InternalInput
-      ref={ref}
-      {...props}
-      value={value}
-      onChange={setValue}
-    />
+    <Box
+      relative
+      width="100%"
+      $style={isFocused ? $focused : undefined}
+    >
+      <StylishElement
+        innerRef={mergeRefs(ref, setRef, externalRef)}
+        as="input"
+        $styles={getStyles(props.withClear)}
+        type={type}
+        name={name}
+        value={value}
+        defaultValue={defaultValue}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
+        onKeyDown={onKeyDown}
+      />
+
+      {withClear && value && (
+        <Icon
+          type="x"
+          $styles={[$clearIcon]}
+          onClick={() => setValue('')}
+        />
+      )}
+    </Box>
   )
 })

@@ -4,7 +4,7 @@ import {
   Input,
   Spacer,
   Textarea,
-  InternalTextarea,
+  useTextareaController,
   useForm,
   StyleArg,
 } from '@v/web-platform'
@@ -47,11 +47,12 @@ export function CardEditor(props: IProps) {
 
   const isValid = name && (name !== originalName || data !== originalData)
 
-  const textAreaRef = React.useRef<InternalTextarea>(null)
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null)
+  const textAreaController = useTextareaController(textAreaRef)
 
   const onAttachments = (links: string[]) => {
-    textAreaRef.current!.insert(links.join(' '))
-    textAreaRef.current!.focus()
+    textAreaController.insert(links.join(' '))
+    textAreaController.focus()
   }
 
   const actions = preview ? (
@@ -104,7 +105,6 @@ export function CardEditor(props: IProps) {
             <Input
               name="name"
               placeholder="Name"
-              autoFocus
             />
 
             <Spacer height="medium" />

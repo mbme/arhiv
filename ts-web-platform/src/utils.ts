@@ -30,3 +30,11 @@ export function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>): React.Re
     }
   }
 }
+
+export function focusInput(input: HTMLInputElement) {
+  input.focus()
+
+  // put cursor at the end of the input
+  const { length } = input.value
+  input.setSelectionRange(length, length)
+}

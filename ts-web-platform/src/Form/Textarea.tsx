@@ -3,6 +3,8 @@ import {
   StyleArg,
   StylishElement,
 } from '../core'
+import { useFocusable } from '../Focus'
+import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
 const $textarea: StyleArg = {
@@ -19,113 +21,64 @@ const $textarea: StyleArg = {
   boxShadow: 'default',
 }
 
-interface IInternalProps {
+const $focused: StyleArg = {
+  border: '1px solid red',
+}
+
+interface IProps {
   name: string
-  value: string
-  onChange(value: string): void
   placeholder?: string
   $styles?: StyleArg[]
 }
 
-export class InternalTextarea extends React.PureComponent<IInternalProps> {
-  private _ref = React.createRef<HTMLTextAreaElement>()
+export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function Textarea(props, externalRef) {
+  const {
+    name,
+    placeholder,
+    $styles = [],
+  } = props
 
-  private _selectionStart = 0
+  const ref = React.useRef<HTMLTextAreaElement>(null)
+  const [isFocused, setRef] = useFocusable<HTMLTextAreaElement>()
 
-  private _selectionEnd = 0
-
-  componentDidMount() {
-    this.updateHeight()
-    window.addEventListener('resize', this.updateHeight)
-  }
-
-  componentDidUpdate() {
-    this.updateHeight()
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.updateHeight)
-  }
-
-  updateHeight = () => {
-    this._ref.current!.style.height = 'auto'
-    this._ref.current!.style.height = `${this._ref.current!.scrollHeight}px`
-  }
-
-  onBlur = () => {
-    this._selectionStart = this._ref.current!.selectionStart
-    this._selectionEnd = this._ref.current!.selectionEnd
-  }
-
-  onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const {
-      onChange,
-    } = this.props
-
-    onChange(e.target.value)
-  }
-
-  onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Escape') {
-      this._ref.current?.blur()
-    }
-  }
-
-  insert(str: string) {
-    const { value, onChange } = this.props
-
-    this._ref.current!.value = `${value.substring(0, this._selectionStart)}${str}${value.substring(this._selectionEnd)}`
-
-    this._selectionStart += str.length
-    this._selectionEnd = this._selectionStart
-
-    this._ref.current!.setSelectionRange(this._selectionStart, this._selectionEnd)
-
-    onChange(this._ref.current!.value)
-  }
-
-  focus() {
-    this._ref.current!.focus()
-  }
-
-  render() {
-    const {
-      name,
-      value,
-      placeholder,
-      $styles = [],
-    } = this.props
-
-    return (
-      <StylishElement
-        as="textarea"
-        $styles={[$textarea, ...$styles]}
-        innerRef={this._ref}
-        name={name}
-        value={value}
-        placeholder={placeholder}
-        onChange={this.onChange}
-        onBlur={this.onBlur}
-        onKeyDown={this.onKeyDown}
-      />
-    )
-  }
-}
-
-type TextareaProps = Omit<IInternalProps, 'onChange' | 'value'>
-
-export const Textarea = React.forwardRef<InternalTextarea, TextareaProps>((props, ref) => {
   const {
     value,
     setValue,
-  } = useFormControl(props.name)
+  } = useFormControl(name)
+
+  const updateHeight = () => {
+    ref.current!.style.height = 'auto'
+    ref.current!.style.height = `${ref.current!.scrollHeight}px`
+  }
+
+  React.useEffect(() => {
+    window.addEventListener('resize', updateHeight)
+
+    return () => {
+      window.removeEventListener('resize', updateHeight)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    updateHeight()
+  }, [value])
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      (e.target as HTMLTextAreaElement).blur()
+    }
+  }
 
   return (
-    <InternalTextarea
-      ref={ref}
-      {...props}
+    <StylishElement
+      as="textarea"
+      $styles={[$textarea, isFocused && $focused, ...$styles]}
+      innerRef={mergeRefs(ref, setRef, externalRef)}
+      name={name}
       value={value}
-      onChange={setValue}
+      placeholder={placeholder}
+      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
+      onKeyDown={onKeyDown}
     />
   )
 })

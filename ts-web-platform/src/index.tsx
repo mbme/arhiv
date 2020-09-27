@@ -11,7 +11,7 @@ export {
   useForm,
   Input,
   Textarea,
-  InternalTextarea,
+  useTextareaController,
   Select,
 } from './Form'
 export { Icon } from './Icon'

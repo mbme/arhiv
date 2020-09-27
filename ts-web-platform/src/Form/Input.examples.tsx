@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { noop } from '@v/utils'
 import { Input } from './Input'
 import { Example } from '../Example'
 import { useForm } from './Form'
@@ -21,7 +20,7 @@ export function InputExamples() {
           <Input
             name="input21"
             placeholder="Input example with clear"
-            onClear={noop}
+            withClear
           />
         </Example>
       </Form>

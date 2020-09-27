@@ -3,7 +3,7 @@ import { useObservable } from '@v/web-utils'
 import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 
-export function useFocusable<T extends HTMLElement>(disabled = false): [boolean, React.Ref<T>] {
+export function useFocusable<T extends HTMLElement>(disabled = false): [boolean, React.RefCallback<T>] {
   const [ref, setRef] = React.useState<T | null>(null)
 
   const context = React.useContext(FocusManagerContext)

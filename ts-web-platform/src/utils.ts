@@ -1,3 +1,4 @@
+import { isFunction } from '@v/utils'
 import * as React from 'react'
 
 export function clickOnEnter(e: React.KeyboardEvent) {
@@ -5,5 +6,27 @@ export function clickOnEnter(e: React.KeyboardEvent) {
     // we use dispatchEvent here cause click() doesn't work on SVG elements
     // bubbles is required to make this work in React
     e.target.dispatchEvent(new Event('click', { bubbles: true }))
+  }
+}
+
+// merge react refs
+export function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>): React.Ref<T> | undefined {
+  if (refs.filter(Boolean).length === 0) {
+    return undefined
+  }
+
+  return (value) => {
+    for (const ref of refs) {
+      if (!ref) {
+        continue
+      }
+
+      if (isFunction(ref)) {
+        ref(value)
+      } else {
+        // eslint-disable-next-line
+        (ref as any).current = value
+      }
+    }
   }
 }

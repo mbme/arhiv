@@ -11,25 +11,28 @@ interface IProps {
   children: React.ReactNode
 }
 
-export function Link({ to, newTab, className, children }: IProps) {
-  const router = RouterContext.use()
+export const Link = React.forwardRef<HTMLAnchorElement, IProps>(
+  function Link({ to, newTab, className, children }: IProps, ref) {
+    const router = RouterContext.use()
 
-  const url = router.getUrl(to)
+    const url = router.getUrl(to)
 
-  const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    router.push(to)
-    e.preventDefault()
-  }
+    const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      router.push(to)
+      e.preventDefault()
+    }
 
-  return (
-    <a
-      href={url}
-      onClick={onClick}
-      target={newTab ? '_blank' : undefined}
-      rel={newTab ? 'noopener' : undefined}
-      className={className}
-    >
-      {children}
-    </a>
-  )
-}
+    return (
+      <a
+        ref={ref}
+        href={url}
+        onClick={onClick}
+        target={newTab ? '_blank' : undefined}
+        rel={newTab ? 'noopener' : undefined}
+        className={className}
+      >
+        {children}
+      </a>
+    )
+  },
+)

@@ -28,8 +28,7 @@ export {
   ConfirmationDialog,
 } from './Modal'
 
-export { Link } from '@v/web-utils/src/router'
-export { CleanLink } from './CleanLink'
+export { Link } from './Link'
 export { Image } from './Image'
 export {
   Row,

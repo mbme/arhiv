@@ -35,13 +35,13 @@ export function FocusRegion({ children, mode, name }: IProps) {
 
     const unregister = parentFocusManager.registerNode(node)
 
-    // automatically activate region when selected
+    // automatically enable region when selected
     const unsub = parentFocusManager.isSelected$(node).subscribe({
       next(isSelected: boolean) {
         if (isSelected) {
-          focusManager.activate()
+          focusManager.enable()
         } else {
-          focusManager.deactivate()
+          focusManager.disable()
         }
       }
     })
@@ -52,7 +52,7 @@ export function FocusRegion({ children, mode, name }: IProps) {
     }
   }, [parentFocusManager])
 
-  // activate region when hovered
+  // enable region when hovered
   React.useEffect(() => {
     const childCount = ref.current?.childElementCount || 0
     if (childCount !== 1) {
@@ -62,10 +62,10 @@ export function FocusRegion({ children, mode, name }: IProps) {
     const node = ref.current?.firstChild as HTMLElement
 
     const onMouseEnter = () => {
-      focusManager.activate()
+      focusManager.enable()
     }
     const onMouseLeave = () => {
-      focusManager.deactivate()
+      focusManager.disable()
     }
     node.addEventListener('mouseenter', onMouseEnter)
     node.addEventListener('mouseleave', onMouseLeave)
@@ -101,9 +101,9 @@ export function FocusRegion({ children, mode, name }: IProps) {
       },
     ]
 
-    return focusManager.active$.value$.subscribe({
-      next(isActive) {
-        if (isActive) {
+    return focusManager.enabled$.value$.subscribe({
+      next(isEnabled) {
+        if (isEnabled) {
           hotkeysResolver.add(hotkeys)
         } else {
           hotkeysResolver.remove(hotkeys)

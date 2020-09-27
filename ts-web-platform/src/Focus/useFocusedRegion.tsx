@@ -8,7 +8,7 @@ export function useFocusedRegion(): boolean {
     throw new Error('FocusManager must be provided')
   }
 
-  const [isActive] = useCell(context.active$)
+  const [isEnabled] = useCell(context.enabled$)
 
-  return isActive
+  return isEnabled
 }

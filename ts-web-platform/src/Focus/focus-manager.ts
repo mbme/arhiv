@@ -9,7 +9,7 @@ export class FocusManager {
   private _log: Logger
 
   readonly selected$ = new Cell<HTMLElement | null>(null)
-  readonly active$ = new Cell(false) // FIXME rename to enabled$
+  readonly enabled$ = new Cell(false)
 
   constructor(
     private _mode: FocusManagerMode,
@@ -33,14 +33,14 @@ export class FocusManager {
     }
   }
 
-  activate() { // FIXME rename enable/disable
-    if (this.active$.value) {
+  enable() {
+    if (this.enabled$.value) {
       return
     }
 
-    this._log.debug('activated')
+    this._log.debug('enabled')
 
-    this.active$.value = true
+    this.enabled$.value = true
     if (this.selected$.value) {
       return
     }
@@ -62,13 +62,13 @@ export class FocusManager {
     }
   }
 
-  deactivate() {
-    if (!this.active$.value) {
+  disable() {
+    if (!this.enabled$.value) {
       return
     }
 
-    this._log.debug('deactivated')
-    this.active$.value = false
+    this._log.debug('disabled')
+    this.enabled$.value = false
   }
 
   private _getOffset(node: HTMLElement): number {
@@ -82,7 +82,7 @@ export class FocusManager {
   }
 
   selectPrevious() {
-    if (!this.active$.value || !this.selected$.value) {
+    if (!this.enabled$.value || !this.selected$.value) {
       return
     }
     this._log.debug('select previous')
@@ -108,7 +108,7 @@ export class FocusManager {
   }
 
   selectNext() {
-    if (!this.active$.value || !this.selected$.value) {
+    if (!this.enabled$.value || !this.selected$.value) {
       return
     }
     this._log.debug('select next')
@@ -134,7 +134,7 @@ export class FocusManager {
   }
 
   activateSelected() {
-    if (!this.active$.value) {
+    if (!this.enabled$.value) {
       return
     }
 

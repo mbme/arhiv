@@ -25,13 +25,17 @@ export function FocusRegion({ children, mode, name }: IProps) {
 
   React.useEffect(() => {
     if (!parentFocusManager) {
+      focusManager.enable() // always enabled if there is no parent focus manager
+
       return noop
     }
 
-    const node = ref.current?.firstChild as HTMLElement | undefined
-    if (!node) {
-      throw new Error('child node is missing')
+    const childCount = ref.current?.childElementCount || 0
+    if (childCount !== 1) {
+      throw new Error(`FocusRegion must have a single DOM child, got ${childCount}`)
     }
+
+    const node = ref.current?.firstChild as HTMLElement
 
     const unregister = parentFocusManager.registerNode(node)
 
@@ -46,21 +50,7 @@ export function FocusRegion({ children, mode, name }: IProps) {
       }
     })
 
-    return () => {
-      unregister()
-      unsub()
-    }
-  }, [parentFocusManager])
-
-  // enable region when hovered
-  React.useEffect(() => {
-    const childCount = ref.current?.childElementCount || 0
-    if (childCount !== 1) {
-      throw new Error(`FocusRegion must have a single child, got ${childCount}`)
-    }
-
-    const node = ref.current?.firstChild as HTMLElement
-
+    // enable region when hovered
     const onMouseEnter = () => {
       focusManager.enable()
     }
@@ -73,8 +63,13 @@ export function FocusRegion({ children, mode, name }: IProps) {
     return () => {
       node.removeEventListener('mouseenter', onMouseEnter)
       node.removeEventListener('mouseleave', onMouseLeave)
+
+      unsub()
+
+      unregister()
     }
-  }, [])
+  }, [parentFocusManager])
+
 
   // install keybindings
   React.useEffect(() => {

@@ -1,11 +1,11 @@
-import { Procedure } from '@v/utils'
+import { Procedure, removeMut } from '@v/utils'
 import { Cell, Observable } from '@v/reactive'
 import { createLogger, Logger } from '@v/logger'
 
 export type FocusManagerMode = 'row' | 'column'
 
 export class FocusManager {
-  private _nodes = new Set<HTMLElement>()
+  private _nodes: HTMLElement[] = []
   private _log: Logger
 
   readonly enabled$ = new Cell(false)
@@ -19,7 +19,11 @@ export class FocusManager {
   }
 
   registerNode(node: HTMLElement): Procedure {
-    this._nodes.add(node)
+    if (this._nodes.includes(node)) {
+      throw new Error('node has been registered')
+    }
+
+    this._nodes.push(node)
 
     const onMouseEnter = () => {
       this.selectedNode$.value = node
@@ -29,7 +33,7 @@ export class FocusManager {
 
     return () => {
       node.removeEventListener('mouseenter', onMouseEnter)
-      this._nodes.delete(node)
+      removeMut(this._nodes, node)
     }
   }
 
@@ -71,14 +75,34 @@ export class FocusManager {
     this.enabled$.value = false
   }
 
-  private _getOffset(node: HTMLElement): number {
+  private _getOffset(node: HTMLElement): [number, number] {
     const rect = node.getBoundingClientRect()
 
+    const offsetX = rect.x + window.scrollX
+    const offsetY = rect.y + window.scrollY
+
     if (this._mode === 'row') {
-      return rect.x + window.scrollX
+      return [offsetX, offsetY]
     }
 
-    return rect.y + window.scrollY
+    return [offsetY, offsetX]
+  }
+
+  private _sort() {
+    this._nodes.sort((a: HTMLElement, b: HTMLElement) => {
+      const offsetA = this._getOffset(a)
+      const offsetB = this._getOffset(b)
+
+      const diff = offsetA[0] - offsetB[0]
+
+      // if difference of the main coordinate is big, use it
+      if (Math.abs(diff) > 4) {
+        return diff
+      }
+
+      // else compare secondary coordinate
+      return offsetA[1] - offsetB[1]
+    })
   }
 
   selectPreviousNode() {
@@ -87,24 +111,12 @@ export class FocusManager {
     }
     this._log.debug('select previous node')
 
-    const currentOffset = this._getOffset(this.selectedNode$.value)
+    this._sort()
 
-    let prevEl = null
-    for (const node of this._nodes) {
-      const offset = this._getOffset(node)
+    const currentPos = this._nodes.indexOf(this.selectedNode$.value)
+    const prevPos = Math.max(0, currentPos - 1)
 
-      if (offset >= currentOffset) {
-        continue
-      }
-
-      if (!prevEl || offset > this._getOffset(prevEl)) {
-        prevEl = node
-      }
-    }
-
-    if (prevEl) {
-      this.selectedNode$.value = prevEl
-    }
+    this.selectedNode$.value = this._nodes[prevPos]
   }
 
   selectNextNode() {
@@ -113,24 +125,12 @@ export class FocusManager {
     }
     this._log.debug('select next node')
 
-    const currentOffset = this._getOffset(this.selectedNode$.value)
+    this._sort()
 
-    let nextEl = null
-    for (const node of this._nodes) {
-      const offset = this._getOffset(node)
+    const currentPos = this._nodes.indexOf(this.selectedNode$.value)
+    const nextPos = Math.min(this._nodes.length - 1, currentPos + 1)
 
-      if (offset <= currentOffset) {
-        continue
-      }
-
-      if (!nextEl || offset < this._getOffset(nextEl)) {
-        nextEl = node
-      }
-    }
-
-    if (nextEl) {
-      this.selectedNode$.value = nextEl
-    }
+    this.selectedNode$.value = this._nodes[nextPos]
   }
 
   activateSelectedNode() {

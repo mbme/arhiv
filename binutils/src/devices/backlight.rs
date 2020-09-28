@@ -3,13 +3,15 @@ use rs_utils::run_command;
 
 pub struct Backlight;
 
+const STEP: &'static str = "5";
+
 impl Backlight {
     pub fn inc() {
-        run_command("light", vec!["-A", "10"]).expect("must be able to increase backlight");
+        run_command("light", vec!["-A", STEP]).expect("must be able to increase backlight");
     }
 
     pub fn dec() {
-        run_command("light", vec!["-U", "10"]).expect("must be able to decrease backlight");
+        run_command("light", vec!["-U", STEP]).expect("must be able to decrease backlight");
     }
 
     pub fn print_status(notify: bool) {

@@ -8,11 +8,11 @@ export class FocusManager {
   private _nodes: HTMLElement[] = []
   private _log: Logger
 
-  readonly enabled$ = new Cell(false)
-  readonly selectedNode$ = new Cell<HTMLElement | null>(null)
+  readonly enabled$ = new Cell(false, true)
+  readonly selectedNode$ = new Cell<HTMLElement | null>(null, true)
 
   constructor(
-    private _mode: FocusManagerMode,
+    public readonly mode: FocusManagerMode,
     public readonly name: string,
   ) {
     this._log = createLogger(`FocusManager ${name}`)
@@ -25,14 +25,17 @@ export class FocusManager {
 
     this._nodes.push(node)
 
-    const onMouseEnter = () => {
-      this.selectedNode$.value = node
+    const onPointerMove = () => {
+      if (this.enabled$.value) {
+        this.selectedNode$.value = node
+      }
     }
 
-    node.addEventListener('mouseenter', onMouseEnter)
+    node.addEventListener('pointermove', onPointerMove, { passive: true })
 
     return () => {
-      node.removeEventListener('mouseenter', onMouseEnter)
+      node.removeEventListener('pointermove', onPointerMove)
+
       removeMut(this._nodes, node)
     }
   }
@@ -81,7 +84,7 @@ export class FocusManager {
     const offsetX = rect.x + window.scrollX
     const offsetY = rect.y + window.scrollY
 
-    if (this._mode === 'row') {
+    if (this.mode === 'row') {
       return [offsetX, offsetY]
     }
 

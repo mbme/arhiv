@@ -3,11 +3,10 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { configureLogger, createLogger } from '@v/logger'
-import { injectGlobalStyles, HotkeysResolverProvider } from '@v/web-utils'
+import { injectGlobalStyles } from '@v/web-utils'
 import {
   globalStyles,
-  StylishProvider,
-  OverlayRenderer,
+  PlatformProvider,
 } from '@v/web-platform'
 import { GmailAPI } from './gmail'
 import { PoshtaStore } from './poshta-store'
@@ -46,13 +45,9 @@ async function run() {
 
   ReactDOM.render(
     <React.StrictMode>
-      <StylishProvider>
-        <HotkeysResolverProvider>
-          <OverlayRenderer>
-            <App store={store} />
-          </OverlayRenderer>
-        </HotkeysResolverProvider>
-      </StylishProvider>
+      <PlatformProvider>
+        <App store={store} />
+      </PlatformProvider>
     </React.StrictMode>,
     rootEl,
     () => {

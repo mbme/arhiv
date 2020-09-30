@@ -1,6 +1,5 @@
 export { globalStyles } from './core/global-styles'
 export {
-  StylishProvider,
   StyleArg,
   useStyles,
   useAnimation,
@@ -22,7 +21,6 @@ export { Heading } from './Heading'
 export { Label } from './Label'
 export {
   Overlay,
-  OverlayRenderer,
   ProgressLocker,
   Modal,
   ConfirmationDialog,
@@ -39,7 +37,7 @@ export {
   FocusRegion,
   useFocusable,
   useFocusedRegion,
-  useFocusOnActivate,
-  useClickOnActivate,
 } from './Focus'
 export { clickOnEnter } from './utils'
+
+export { PlatformProvider } from './PlatformProvider'

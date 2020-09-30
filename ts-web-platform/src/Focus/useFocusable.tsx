@@ -8,7 +8,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
     throw new Error('FocusManager must be provided')
   }
 
-  const [isSelected, setIsFocused] = React.useState(() => context.isNodeSelected(ref.current))
+  const [isSelected, setIsSelected] = React.useState(() => context.isNodeSelected(ref.current))
 
   React.useEffect(() => {
     const el = ref.current
@@ -17,7 +17,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
     }
 
     return context.isNodeSelected$(el).subscribe({
-      next: setIsFocused,
+      next: setIsSelected,
     })
   }, [])
 

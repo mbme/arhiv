@@ -3,6 +3,7 @@ import { Button } from '../Button'
 import { Modal } from './Modal'
 import { Box } from '../Box'
 import { Row } from '../Layout'
+import { FocusRegion } from '../Focus'
 
 interface IProps {
   children: React.ReactNode
@@ -20,19 +21,24 @@ export function ConfirmationDialog({ children, confirmation, onConfirmed, onCanc
           {children}
         </Box>
 
-        <Row alignX="right">
-          <Button onClick={onCancel}>
-            CANCEL
-          </Button>
+        <FocusRegion
+          name="ConfirmationDialog"
+          mode="row"
+        >
+          <Row alignX="right">
+            <Button onClick={onCancel}>
+              CANCEL
+            </Button>
 
-          <Button
-            variant="primary"
-            onClick={onConfirmed}
-            $style={{ ml: 'medium' }}
-          >
-            {confirmation}
-          </Button>
-        </Row>
+            <Button
+              variant="primary"
+              onClick={onConfirmed}
+              $style={{ ml: 'medium' }}
+            >
+              {confirmation}
+            </Button>
+          </Row>
+        </FocusRegion>
       </Box>
     </Modal>
   )

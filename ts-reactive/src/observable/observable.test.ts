@@ -2,35 +2,14 @@ import { noop } from '@v/utils'
 import {
   test,
   assertEqual,
-  assertDeepEqual,
   assertTrue,
 } from '@v/tester'
-import { Observable } from './index'
-
-const complete = Symbol('complete')
-const error = Symbol('error')
-
-async function assertObservable<T>(o$: Observable<T>, expected: Array<T | typeof complete | typeof error>) {
-  const actual: typeof expected = []
-
-  await new Promise((resolve) => {
-    o$.subscribe({
-      next(value) {
-        actual.push(value)
-      },
-      error() {
-        actual.push(error)
-        resolve()
-      },
-      complete() {
-        actual.push(complete)
-        resolve()
-      },
-    })
-  })
-
-  assertDeepEqual(actual, expected)
-}
+import { Observable } from './observable'
+import {
+  assertObservable,
+  complete,
+  error,
+} from './test-utils'
 
 test('observable completes', async () => {
   { // complete

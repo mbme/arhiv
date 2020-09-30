@@ -26,8 +26,8 @@ check-ts:
 lint-ts:
   yarn lint
 
-test-ts:
-  yarn tester
+test-ts *PARAMS:
+  yarn tester {{PARAMS}}
 
 validate-ts: check-ts lint-ts test-ts
 

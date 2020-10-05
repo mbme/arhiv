@@ -118,8 +118,8 @@ export function FocusRegion({ children, mode, name }: IProps) {
     const onMouseLeave = () => {
       focusManager.disable()
     }
-    node.addEventListener('mouseenter', onMouseEnter)
-    node.addEventListener('mouseleave', onMouseLeave)
+    node.addEventListener('mouseenter', onMouseEnter, { passive: true })
+    node.addEventListener('mouseleave', onMouseLeave, { passive: true })
 
     return () => {
       node.removeEventListener('mouseenter', onMouseEnter)

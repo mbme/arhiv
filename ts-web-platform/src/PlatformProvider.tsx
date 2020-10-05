@@ -6,13 +6,12 @@ import { OverlayRenderer } from './Modal'
 import { FocusProvider, FocusRegion } from './Focus'
 
 interface IProps {
-  hashBasedRouter?: boolean,
   children: React.ReactNode
 }
 
-export function PlatformProvider({ children, hashBasedRouter }: IProps) {
+export function PlatformProvider({ children }: IProps) {
   return (
-    <RouterProvider hashBased={hashBasedRouter}>
+    <RouterProvider hashBased>
       <StylishProvider>
         <HotkeysResolverProvider>
           <FocusProvider>

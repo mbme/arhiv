@@ -13,7 +13,7 @@ import { ConfirmationDialogExamples } from './Modal/ConfirmationDialog.examples'
 
 export function Library() {
   return (
-    <PlatformProvider hashBasedRouter>
+    <PlatformProvider>
       <StyleExamples />
 
       <IconExamples />

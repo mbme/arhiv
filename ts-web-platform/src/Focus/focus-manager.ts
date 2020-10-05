@@ -9,7 +9,7 @@ export class FocusManager {
   private _log: Logger
 
   readonly enabled$ = new Cell(false, true)
-  readonly selectedNode$ = new Cell<HTMLElement | null>(null, true)
+  readonly selectedNode$ = new Cell<HTMLElement | null>(null)
 
   constructor(
     public readonly mode: FocusManagerMode,
@@ -40,8 +40,12 @@ export class FocusManager {
     }
   }
 
+  isEnabled(): boolean {
+    return this.enabled$.value
+  }
+
   enable() {
-    if (this.enabled$.value) {
+    if (this.isEnabled()) {
       return
     }
 
@@ -70,7 +74,7 @@ export class FocusManager {
   }
 
   disable() {
-    if (!this.enabled$.value) {
+    if (!this.isEnabled()) {
       return
     }
 
@@ -109,7 +113,7 @@ export class FocusManager {
   }
 
   selectPreviousNode() {
-    if (!this.enabled$.value || !this.selectedNode$.value) {
+    if (!this.isEnabled() || !this.selectedNode$.value) {
       return
     }
     this._log.debug('select previous node')
@@ -123,7 +127,7 @@ export class FocusManager {
   }
 
   selectNextNode() {
-    if (!this.enabled$.value || !this.selectedNode$.value) {
+    if (!this.isEnabled() || !this.selectedNode$.value) {
       return
     }
     this._log.debug('select next node')
@@ -137,7 +141,7 @@ export class FocusManager {
   }
 
   activateSelectedNode() {
-    if (!this.enabled$.value) {
+    if (!this.isEnabled()) {
       return
     }
 
@@ -147,13 +151,13 @@ export class FocusManager {
   }
 
   isNodeSelected$(node: HTMLElement | null): Observable<boolean> {
-    return this.selectedNode$.value$.map(value => !!value && value === node)
+    return this.selectedNode$.value$.map(value => !!value && value === node && this.isEnabled())
   }
 
   isNodeSelected(node: HTMLElement | null): boolean {
     const value = this.selectedNode$.value
 
-    return !!value && value === node
+    return !!value && value === node && this.isEnabled()
   }
 
   scrollSelectedNodeIntoView() { // FIXME improve this

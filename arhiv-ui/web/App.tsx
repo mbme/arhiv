@@ -14,7 +14,7 @@ import { Url } from './Url'
 
 export function App() {
   return (
-    <PlatformProvider hashBasedRouter>
+    <PlatformProvider>
       <Routes
         onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
       >

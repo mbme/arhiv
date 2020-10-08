@@ -22,7 +22,7 @@ export class WebRouter {
   location$ = new Cell<ILocation>(this._getCurrentLocation())
 
   constructor(private _hashBased = false) {
-    window.addEventListener(_hashBased ? 'hashchange' : 'popstate', this._propagateCurrentLocation)
+    window.addEventListener('popstate', this._propagateCurrentLocation)
   }
 
   private _getCurrentRawLocation(): string {
@@ -70,23 +70,15 @@ export class WebRouter {
   push(location: SimpleLocation) {
     const url = this.getUrl(location)
 
-    if (this._hashBased) {
-      window.location.href = url
-    } else {
-      window.history.pushState(undefined, '', url)
-      this._propagateCurrentLocation()
-    }
+    window.history.pushState(undefined, '', url)
+    this._propagateCurrentLocation()
   }
 
   replace(location: SimpleLocation) {
     const url = this.getUrl(location)
 
-    if (this._hashBased) {
-      window.location.href = url
-    } else {
-      window.history.replaceState(undefined, '', url)
-      this._propagateCurrentLocation()
-    }
+    window.history.replaceState(undefined, '', url)
+    this._propagateCurrentLocation()
   }
 
   replaceParams(params: IQueryParam[]) {
@@ -101,12 +93,8 @@ export class WebRouter {
 
     const url = this.getUrl(newLocation)
 
-    if (this._hashBased) {
-      window.location.href = url
-    } else {
-      window.history.replaceState(undefined, '', url)
-      this._propagateCurrentLocation()
-    }
+    window.history.replaceState(undefined, '', url)
+    this._propagateCurrentLocation()
   }
 
   goBack(fallback: SimpleLocation = { path: '/' }) {
@@ -118,6 +106,6 @@ export class WebRouter {
   }
 
   stop() {
-    window.removeEventListener(this._hashBased ? 'hashchange' : 'popstate', this._propagateCurrentLocation)
+    window.removeEventListener('popstate', this._propagateCurrentLocation)
   }
 }

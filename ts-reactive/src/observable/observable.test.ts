@@ -13,12 +13,7 @@ import {
 
 test('observable completes', async () => {
   { // complete
-    const o$ = new Observable<number>((observer) => {
-      observer.next(1)
-      observer.complete()
-
-      return noop
-    })
+    const o$ = Observable.from(1)
 
     await assertObservable(o$, [1, complete])
   }

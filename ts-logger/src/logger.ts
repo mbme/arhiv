@@ -52,9 +52,9 @@ export class Logger {
     const logMessage = [
       getDate(),
       this._getNamespace(),
-      level.padEnd(5),
+      config.includeLogLevel && level.padEnd(5),
       msg,
-    ].join(' ')
+    ].filter(Boolean).join(' ')
 
     switch (level) {
       case 'DEBUG': {

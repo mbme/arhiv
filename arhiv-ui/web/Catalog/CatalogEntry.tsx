@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
+  useClickOnActivate,
   useFocusable,
 } from '@v/web-platform'
 import { Note } from '../types'
@@ -18,6 +19,7 @@ export function CatalogEntry({ note }: IProps) {
 
   const ref = React.useRef<HTMLDivElement>(null)
   const isSelected = useFocusable(ref)
+  useClickOnActivate(ref)
 
   return (
     <Box

@@ -6,6 +6,7 @@ import { Obj } from '@v/utils'
 export const config: ILoggerConfig = {
   minLogLevel: 'INFO',
   includeDateTime: false,
+  includeLogLevel: false,
   namespaceSize: 20,
 }
 

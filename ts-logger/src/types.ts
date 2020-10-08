@@ -10,5 +10,6 @@ export type LogLevel = keyof typeof LEVELS
 export interface ILoggerConfig {
   minLogLevel: LogLevel
   includeDateTime: boolean
+  includeLogLevel: boolean
   namespaceSize: number
 }

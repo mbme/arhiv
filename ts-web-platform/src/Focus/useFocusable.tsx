@@ -8,7 +8,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
     throw new Error('FocusManager must be provided')
   }
 
-  const [isSelected, setIsSelected] = React.useState(() => context.isNodeSelected(ref.current))
+  const [isSelected, setIsSelected] = React.useState(() => context.isChildSelected(ref.current || undefined))
 
   React.useEffect(() => {
     const el = ref.current
@@ -16,7 +16,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
       throw new Error('dom element must be provided')
     }
 
-    return context.isNodeSelected$(el).subscribe({
+    return context.isChildSelected$(el).subscribe({
       next: setIsSelected,
     })
   }, [])
@@ -30,7 +30,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
       throw new Error('dom element must be provided')
     }
 
-    return context.registerNode(el)
+    return context.registerChild(el)
   }, [ref, disabled])
 
   return isSelected

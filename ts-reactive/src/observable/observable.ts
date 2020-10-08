@@ -195,4 +195,13 @@ export class Observable<T> {
       })
     })
   }
+
+  static from<T>(value: T): Observable<T> {
+    return new Observable<T>((observer) => {
+      observer.next(value)
+      observer.complete()
+
+      return noop
+    })
+  }
 }

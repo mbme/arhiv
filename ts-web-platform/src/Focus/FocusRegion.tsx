@@ -9,29 +9,33 @@ const FocusRegionStyle = {
   display: 'contents',
 }
 
-function useDefaultKeybindings(focusManager: FocusManager) {
+function useDefaultKeybindings(focusManager?: FocusManager) {
   const hotkeysResolver = HotkeysResolverContext.use()
 
   React.useEffect(() => {
+    if (!focusManager) {
+      return noop
+    }
+
     const hotkeys = [
       {
         code: focusManager.mode === 'row' ? 'KeyL' : 'KeyJ',
         action() {
-          focusManager.selectNextNode()
-          focusManager.scrollSelectedNodeIntoView()
+          focusManager.selectNextChild()
+          focusManager.scrollSelectedChildIntoView()
         },
       },
       {
         code: focusManager.mode === 'row' ? 'KeyH' : 'KeyK',
         action() {
-          focusManager.selectPreviousNode()
-          focusManager.scrollSelectedNodeIntoView()
+          focusManager.selectPreviousChild()
+          focusManager.scrollSelectedChildIntoView()
         },
       },
       {
         code: 'Enter',
         action() {
-          focusManager.activateSelectedNode()
+          focusManager.activateSelectedChild()
         },
       },
     ]
@@ -60,83 +64,49 @@ export function FocusRegion({ children, mode, name }: IProps) {
 
   const ref = React.useRef<HTMLDivElement>(null)
 
-  const [focusManager] = React.useState(() => new FocusManager(mode, `${parentFocusManager?.name || ''}>${name}`))
+  const [focusManager, setFocusManager] = React.useState<FocusManager | undefined>(undefined)
   useDefaultKeybindings(focusManager)
 
-  // Root focus region
   React.useEffect(() => {
-    if (parentFocusManager) {
+    if (!ref.current) {
+      throw new Error('node must be available')
+    }
+
+    const prefixedName = parentFocusManager ? `${parentFocusManager.name}>${name}` : name
+    const newFocusManager = new FocusManager(ref.current, mode, prefixedName)
+    setFocusManager(newFocusManager)
+
+    return () => {
+      newFocusManager.destroy()
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!focusManager) {
       return noop
     }
+
+    // non-root focus region
+    if (parentFocusManager) {
+      return parentFocusManager.registerChild(focusManager)
+    }
+
+    // root focus region
 
     if (!focusStack) {
       throw new Error('FocusStack must be available')
     }
 
     return focusStack.add(focusManager)
-  }, [])
-
-  // Non-root focus region
-  React.useEffect(() => {
-    if (!parentFocusManager) {
-      return noop
-    }
-
-    const childCount = ref.current?.childElementCount || 0
-    if (childCount !== 1) {
-      throw new Error(`FocusRegion must have a single DOM child, got ${childCount}`)
-    }
-
-    const node = ref.current?.firstChild as HTMLElement
-
-    const unregister = parentFocusManager.registerNode(node)
-
-    // enable region when selected
-    const unsubIsSelected = parentFocusManager.isNodeSelected$(node).subscribe({
-      next(isSelected: boolean) {
-        if (isSelected) {
-          focusManager.enable()
-        } else {
-          focusManager.disable()
-        }
-      }
-    })
-
-    // disable region if parent region disabled
-    const unsubIsEnabled = parentFocusManager.enabled$.value$.subscribe({
-      next(isEnabled) {
-        if (!isEnabled) {
-          focusManager.disable()
-        }
-      }
-    })
-
-    // enable region when hovered
-    const onMouseEnter = () => {
-      focusManager.enable()
-    }
-    const onMouseLeave = () => {
-      focusManager.disable()
-    }
-    node.addEventListener('mouseenter', onMouseEnter, { passive: true })
-    node.addEventListener('mouseleave', onMouseLeave, { passive: true })
-
-    return () => {
-      node.removeEventListener('mouseenter', onMouseEnter)
-      node.removeEventListener('mouseleave', onMouseLeave)
-
-      unsubIsSelected()
-      unsubIsEnabled()
-
-      unregister()
-    }
-  }, [])
+  }, [focusManager])
 
   return (
-    <FocusManagerContext.Provider value={focusManager}>
-      <div ref={ref} style={FocusRegionStyle}>
-        {children}
-      </div>
-    </FocusManagerContext.Provider>
+    <div ref={ref} style={FocusRegionStyle}>
+      {focusManager && (
+        <FocusManagerContext.Provider value={focusManager}>
+          {children}
+        </FocusManagerContext.Provider>
+      )}
+    </div>
   )
 }

@@ -2,15 +2,17 @@ import * as React from 'react'
 import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 
+// TODO select child in Focus Manager if it was focused
 export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, disabled = false): boolean {
   const context = React.useContext(FocusManagerContext)
-  if (!context) {
-    throw new Error('FocusManager must be provided')
-  }
 
-  const [isSelected, setIsSelected] = React.useState(() => context.isChildSelected(ref.current || undefined))
+  const [isSelected, setIsSelected] = React.useState(false)
 
   React.useEffect(() => {
+    if (!context) {
+      return noop
+    }
+
     const el = ref.current
     if (!el) {
       throw new Error('dom element must be provided')
@@ -19,19 +21,20 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
     return context.isChildSelected$(el).subscribe({
       next: setIsSelected,
     })
-  }, [])
+  }, [context])
 
   React.useEffect(() => {
-    if (disabled) {
+    if (disabled || !context) {
       return noop
     }
+
     const el = ref.current
     if (!el) {
       throw new Error('dom element must be provided')
     }
 
     return context.registerChild(el)
-  }, [ref, disabled])
+  }, [context, disabled])
 
   return isSelected
 }

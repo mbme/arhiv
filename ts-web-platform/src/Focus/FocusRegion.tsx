@@ -1,8 +1,11 @@
 import * as React from 'react'
-import { HotkeysResolverContext } from '@v/web-utils'
+import {
+  HotkeysResolverContext,
+  IKeybinding,
+} from '@v/web-utils'
+import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 import { FocusManager, FocusManagerMode } from './focus-manager'
-import { noop } from '@v/utils'
 import { FocusStackContext } from './FocusProvider'
 
 const FocusRegionStyle = {
@@ -17,7 +20,7 @@ function useDefaultKeybindings(focusManager?: FocusManager) {
       return noop
     }
 
-    const hotkeys = [
+    const hotkeys: IKeybinding[] = [
       {
         code: focusManager.mode === 'row' ? 'KeyL' : 'KeyJ',
         action() {
@@ -34,7 +37,8 @@ function useDefaultKeybindings(focusManager?: FocusManager) {
       },
       {
         code: 'Enter',
-        action() {
+        action(e) {
+          e.preventDefault()
           focusManager.activateSelectedChild()
         },
       },
@@ -102,11 +106,9 @@ export function FocusRegion({ children, mode, name }: IProps) {
 
   return (
     <div ref={ref} style={FocusRegionStyle}>
-      {focusManager && (
-        <FocusManagerContext.Provider value={focusManager}>
-          {children}
-        </FocusManagerContext.Provider>
-      )}
+      <FocusManagerContext.Provider value={focusManager}>
+        {children}
+      </FocusManagerContext.Provider>
     </div>
   )
 }

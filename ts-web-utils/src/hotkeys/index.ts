@@ -6,3 +6,6 @@ export {
   useHotkeys,
   useHotkeysMemo,
 } from './useHotkeys'
+export {
+  IKeybinding,
+} from './resolver'

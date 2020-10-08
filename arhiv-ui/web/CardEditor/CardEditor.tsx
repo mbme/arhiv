@@ -7,6 +7,7 @@ import {
   useTextareaController,
   useForm,
   StyleArg,
+  Box,
 } from '@v/web-platform'
 import { Frame, Action } from '../parts'
 import { Note } from '../Note'
@@ -51,8 +52,9 @@ export function CardEditor(props: IProps) {
   const textAreaController = useTextareaController(textAreaRef)
 
   const onAttachments = (links: string[]) => {
-    textAreaController.insert(links.join(' '))
-    textAreaController.focus()
+    if (links.length) {
+      textAreaController.insert(links.join(' '))
+    }
   }
 
   const actions = preview ? (
@@ -97,28 +99,28 @@ export function CardEditor(props: IProps) {
       actions={actions}
       $style={$container}
     >
-      <Form>
-        {preview ? (
-          <Note name={name} data={data} />
-        ) : (
-          <>
-            <Input
-              name="name"
-              placeholder="Name"
-            />
+      <Box hidden={preview}>
+        <Form>
+          <Input
+            name="name"
+            placeholder="Name"
+          />
 
-            <Spacer height="medium" />
+          <Spacer height="medium" />
 
-            <Textarea
-              name="data"
-              placeholder="Data"
-              ref={textAreaRef}
-            />
+          <Textarea
+            name="data"
+            placeholder="Data"
+            ref={textAreaRef}
+          />
 
-            <Spacer height="medium" />
-          </>
-        )}
-      </Form>
+          <Spacer height="medium" />
+        </Form>
+      </Box>
+
+      {preview && (
+        <Note name={name} data={data} />
+      )}
     </Frame>
   )
 }

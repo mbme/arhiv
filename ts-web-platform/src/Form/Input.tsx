@@ -8,8 +8,9 @@ import {
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 import { useFocusable, useFocusOnActivate } from '../Focus'
+import { Label } from '../Label'
 
-const getStyles = (withClear?: boolean): StyleArg[] => [
+const getStyles = (withClear?: boolean, isSelected?: boolean): StyleArg[] => [
   {
     display: 'block',
     width: '100%',
@@ -25,11 +26,11 @@ const getStyles = (withClear?: boolean): StyleArg[] => [
   withClear && {
     paddingRight: 'medium',
   },
-]
 
-const $selected: StyleArg = {
-  border: '1px solid red',
-}
+  isSelected && {
+    border: '1px solid red',
+  },
+]
 
 const $clearIcon: StyleArg = {
   position: 'absolute',
@@ -48,6 +49,7 @@ type NativeProps =
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   name: string
+  label: string
   withClear?: boolean
 }
 
@@ -55,6 +57,7 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
   const {
     type,
     name,
+    label,
     defaultValue,
     placeholder,
     autoComplete,
@@ -75,12 +78,13 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
     <Box
       relative
       width="100%"
-      $style={isSelected ? $selected : undefined}
     >
+      <Label>{label}</Label>
+
       <StylishElement
         ref={mergeRefs(ref, externalRef)}
         as="input"
-        $styles={getStyles(props.withClear)}
+        $styles={getStyles(props.withClear, isSelected)}
         type={type}
         name={name}
         value={value}

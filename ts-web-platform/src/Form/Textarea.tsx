@@ -1,9 +1,11 @@
 import * as React from 'react'
+import { Box } from '../Box'
 import {
   StyleArg,
   StylishElement,
 } from '../core'
 import { useFocusable, useFocusOnActivate } from '../Focus'
+import { Label } from '../Label'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
@@ -27,6 +29,7 @@ const $selected: StyleArg = {
 
 interface IProps {
   name: string
+  label: string
   placeholder?: string
   $styles?: StyleArg[]
 }
@@ -34,6 +37,7 @@ interface IProps {
 export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function Textarea(props, externalRef) {
   const {
     name,
+    label,
     placeholder,
     $styles = [],
   } = props
@@ -53,7 +57,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
   }
 
   React.useEffect(() => {
-    window.addEventListener('resize', updateHeight)
+    window.addEventListener('resize', updateHeight, { passive: true })
 
     return () => {
       window.removeEventListener('resize', updateHeight)
@@ -65,14 +69,18 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
   }, [value])
 
   return (
-    <StylishElement
-      ref={mergeRefs(ref, externalRef)}
-      as="textarea"
-      $styles={[$textarea, isSelected && $selected, ...$styles]}
-      name={name}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
-    />
+    <Box>
+      <Label>{label}</Label>
+
+      <StylishElement
+        ref={mergeRefs(ref, externalRef)}
+        as="textarea"
+        $styles={[$textarea, isSelected && $selected, ...$styles]}
+        name={name}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
+      />
+    </Box>
   )
 })

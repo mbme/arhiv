@@ -3,16 +3,11 @@ import {
   Box,
   Column,
   Link,
-  useFocusedRegion,
 } from '@v/web-platform'
 
 export function Navigation() {
-  const isActive = useFocusedRegion()
-
   return (
-    <Column
-      bgColor={isActive ? 'var(--color-bg-highlight)' : undefined}
-    >
+    <Column>
       <Box
         bgColor="var(--color-primary)"
         width="100%"

@@ -77,6 +77,7 @@ export function Card({ id }: IProps) {
   return (
     <Frame
       actions={actions}
+      title="Card"
       $style={$container}
     >
       {metadata ? (

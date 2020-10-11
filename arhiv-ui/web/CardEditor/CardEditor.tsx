@@ -17,6 +17,7 @@ import { DeleteDocumentButton } from './DeleteDocumentButton'
 
 const $container: StyleArg = {
   pt: 'large',
+  minHeight: '100%',
 }
 
 interface IProps {
@@ -97,11 +98,13 @@ export function CardEditor(props: IProps) {
   return (
     <Frame
       actions={actions}
+      title="Card Editor"
       $style={$container}
     >
       <Box hidden={preview}>
         <Form>
           <Input
+            label="Name"
             name="name"
             placeholder="Name"
           />
@@ -109,6 +112,7 @@ export function CardEditor(props: IProps) {
           <Spacer height="medium" />
 
           <Textarea
+            label="Data"
             name="data"
             placeholder="Data"
             ref={textAreaRef}

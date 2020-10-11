@@ -1,74 +1,53 @@
 import * as React from 'react'
-import {
-  HotkeysResolverContext,
-  IKeybinding,
-} from '@v/web-utils'
 import { noop } from '@v/utils'
 import { FocusManagerContext } from './context'
 import { FocusManager, FocusManagerMode } from './focus-manager'
 import { FocusStackContext } from './FocusProvider'
+import { Box } from '../Box'
+import { StyleArg } from '../core'
+import { useDefaultKeybindings } from './useDefaultKeybindings'
 
-const FocusRegionStyle = {
-  display: 'contents',
+const $title: StyleArg = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  textAlign: 'center',
+  textTransform: 'uppercase',
+  bgColor: 'orange',
+  height: '1.3rem',
 }
 
-function useDefaultKeybindings(focusManager?: FocusManager) {
-  const hotkeysResolver = HotkeysResolverContext.use()
-
-  React.useEffect(() => {
-    if (!focusManager) {
-      return noop
-    }
-
-    const hotkeys: IKeybinding[] = [
-      {
-        code: focusManager.mode === 'row' ? 'KeyL' : 'KeyJ',
-        action() {
-          focusManager.selectNextChild()
-          focusManager.scrollSelectedChildIntoView()
-        },
-      },
-      {
-        code: focusManager.mode === 'row' ? 'KeyH' : 'KeyK',
-        action() {
-          focusManager.selectPreviousChild()
-          focusManager.scrollSelectedChildIntoView()
-        },
-      },
-      {
-        code: 'Enter',
-        action(e) {
-          e.preventDefault()
-          focusManager.activateSelectedChild()
-        },
-      },
-    ]
-
-    return focusManager.enabled$.value$.subscribe({
-      next(isEnabled) {
-        if (isEnabled) {
-          hotkeysResolver.add(hotkeys)
-        } else {
-          hotkeysResolver.remove(hotkeys)
-        }
-      },
-    })
-  }, [focusManager, hotkeysResolver])
-}
+const getStyles = (highlight?: boolean, withTitle?: boolean): StyleArg[] => [
+  {
+    position: 'relative',
+  },
+  highlight && {
+    bgColor: 'var(--color-bg-highlight)',
+  },
+  withTitle && {
+    paddingTop: '1.3rem',
+  },
+]
 
 interface IProps {
   name: string
   mode: FocusManagerMode
+  highlight?: boolean
+  $style?: StyleArg
+  title?: string
   children: React.ReactNode
 }
 
-export function FocusRegion({ children, mode, name }: IProps) {
+export function FocusRegion({ children, mode, name, highlight, title, $style }: IProps) {
   const parentFocusManager = React.useContext(FocusManagerContext)
   const focusStack = React.useContext(FocusStackContext)
 
   const ref = React.useRef<HTMLDivElement>(null)
 
   const [focusManager, setFocusManager] = React.useState<FocusManager | undefined>(undefined)
+  const [isEnabled, setIsEnabled] = React.useState(false)
+
   useDefaultKeybindings(focusManager)
 
   React.useEffect(() => {
@@ -80,8 +59,13 @@ export function FocusRegion({ children, mode, name }: IProps) {
     const newFocusManager = new FocusManager(ref.current, mode, prefixedName)
     setFocusManager(newFocusManager)
 
+    const unsub = newFocusManager.enabled$.value$.subscribe({
+      next: setIsEnabled
+    })
+
     return () => {
       newFocusManager.destroy()
+      unsub()
     }
   }, [])
 
@@ -105,10 +89,22 @@ export function FocusRegion({ children, mode, name }: IProps) {
   }, [focusManager])
 
   return (
-    <div ref={ref} style={FocusRegionStyle}>
+    <Box
+      ref={ref}
+      $styles={getStyles(isEnabled && highlight, !!title)}
+      $style={$style}
+    >
+      {title && (
+        <Box
+          $style={$title}
+        >
+          {title}
+        </Box>
+      )}
+
       <FocusManagerContext.Provider value={focusManager}>
         {children}
       </FocusManagerContext.Provider>
-    </div>
+    </Box>
   )
 }

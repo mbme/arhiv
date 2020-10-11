@@ -202,17 +202,10 @@ export class FocusManager {
   }
 
   private _getOffset(child: FocusChild): [number, number] {
-    let coords
-    if (child instanceof FocusManager) {
-      const rect = (child._domNode.firstChild as HTMLElement).getBoundingClientRect()
-      coords = [rect.x, rect.y]
-    } else {
-      const rect = child.getBoundingClientRect()
-      coords = [rect.x, rect.y]
-    }
+    const rect = this._getNode(child).getBoundingClientRect()
 
-    const offsetX = coords[0] + window.scrollX
-    const offsetY = coords[1] + window.scrollY
+    const offsetX = rect.x + window.scrollX
+    const offsetY = rect.y + window.scrollY
 
     if (this.mode === 'row') {
       return [offsetX, offsetY]

@@ -1,9 +1,11 @@
 import * as React from 'react'
+import { Box } from '../Box'
 import {
   StyleArg,
   StylishElement,
 } from '../core'
 import { useFocusable, useFocusOnActivate } from '../Focus'
+import { Label } from '../Label'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
@@ -15,11 +17,12 @@ type NativeProps = 'name' | 'defaultValue'
 
 interface IProps extends Pick<React.HTMLProps<HTMLSelectElement>, NativeProps> {
   name: string
+  label: string
   options: { [key: string]: string }
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, IProps>(
-  function Select({ options, name }: IProps, externalRef) {
+  function Select({ options, name, label }: IProps, externalRef) {
     const {
       value,
       setValue,
@@ -37,16 +40,20 @@ export const Select = React.forwardRef<HTMLSelectElement, IProps>(
     ))
 
     return (
-      <StylishElement
-        as="select"
-        ref={mergeRefs(ref, externalRef)}
-        name={name}
-        value={value}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value)}
-        $style={isSelected ? $selected : undefined}
-      >
-        {items}
-      </StylishElement>
+      <Box>
+        <Label>{label}</Label>
+
+        <StylishElement
+          as="select"
+          ref={mergeRefs(ref, externalRef)}
+          name={name}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value)}
+          $style={isSelected ? $selected : undefined}
+        >
+          {items}
+        </StylishElement>
+      </Box>
     )
   } ,
 )

@@ -10,6 +10,7 @@ export function SelectExamples() {
     <Example section title="Select">
       <Form>
         <Select
+          label="Select"
           name="select"
           options={{ val1: 'val1', val2: 'val2' }}
         />

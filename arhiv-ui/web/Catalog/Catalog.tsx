@@ -1,20 +1,15 @@
 import * as React from 'react'
 import {
   ProgressLocker,
-  StyleArg,
   useForm,
   Input,
-  Row,
+  Column,
+  Box,
 } from '@v/web-platform'
 import { usePromise, useDebounced } from '@v/web-utils'
 import { API } from '../types'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
-
-const $header: StyleArg = {
-  position: 'sticky',
-  top: 0,
-}
 
 export function Catalog() {
   const {
@@ -60,25 +55,36 @@ export function Catalog() {
   return (
     <Frame
       actions={actions}
+      title="Catalog"
     >
-      <Form>
-        <Row
+      <Column
+        height="100%"
+        overflow="hidden"
+        flex="0 0 auto"
+      >
+        <Box
           as="nav"
-          alignX="center"
           p="fine"
           width="100%"
-          zIndex={1}
-          $style={$header}
           bgColor="var(--color-bg0)"
         >
-          <Input
-            name="filter"
-            placeholder="Filter documents"
-          />
-        </Row>
-      </Form>
+          <Form>
+            <Input
+              label="Filter"
+              name="filter"
+              placeholder="Filter documents"
+            />
+          </Form>
+        </Box>
 
-      {items}
+        <Box
+          flex="1 1 auto"
+          overflowY="auto"
+          width="100%"
+        >
+          {items}
+        </Box>
+      </Column>
     </Frame>
   )
 }

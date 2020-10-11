@@ -5,7 +5,6 @@ import {
   FocusRegion,
 } from '@v/web-platform'
 import { Navigation } from './Navigation'
-import { Content } from './Content'
 import { Actions } from './Actions'
 
 const $container: StyleArg = {
@@ -16,13 +15,19 @@ const $container: StyleArg = {
   overflowY: 'hidden',
 }
 
+const $content: StyleArg = {
+  height: '100%',
+  overflowY: 'auto',
+}
+
 interface IProps {
   children: React.ReactNode
   actions: React.ReactNode
+  title: string
   $style?: StyleArg
 }
 
-export function Frame({ children, actions, $style }: IProps) {
+export function Frame({ children, actions, title, $style }: IProps) {
   return (
     <FocusRegion
       name="Frame"
@@ -35,6 +40,8 @@ export function Frame({ children, actions, $style }: IProps) {
         <FocusRegion
           name="Navigation"
           mode="column"
+          highlight
+          title="Apps"
         >
           <Navigation />
         </FocusRegion>
@@ -42,15 +49,26 @@ export function Frame({ children, actions, $style }: IProps) {
         <FocusRegion
           name="Content"
           mode="column"
+          highlight
+          title={title}
+          $style={$content}
         >
-          <Content $style={$style}>
+          <Box
+            px="medium"
+            width="40rem"
+            height="100%"
+            overflowY="auto"
+            $style={$style}
+          >
             {children}
-          </Content>
+          </Box>
         </FocusRegion>
 
         <FocusRegion
           name="Actions"
           mode="column"
+          highlight
+          title="Actions"
         >
           <Actions actions={actions} />
         </FocusRegion>

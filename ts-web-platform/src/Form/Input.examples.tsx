@@ -11,6 +11,7 @@ export function InputExamples() {
       <Form>
         <Example title="Input">
           <Input
+            label="Input #2"
             name="input2"
             placeholder="Input example"
           />
@@ -18,6 +19,7 @@ export function InputExamples() {
 
         <Example title="Input with clear">
           <Input
+            label="Input #21"
             name="input21"
             placeholder="Input example with clear"
             withClear

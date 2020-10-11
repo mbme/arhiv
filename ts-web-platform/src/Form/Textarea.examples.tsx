@@ -10,6 +10,7 @@ export function TextareaExamples() {
     <Example section title="Textarea">
       <Form>
         <Textarea
+          label="Textarea"
           name="textarea"
           placeholder="Textarea example"
         />

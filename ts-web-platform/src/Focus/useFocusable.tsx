@@ -1,15 +1,20 @@
 import * as React from 'react'
-import { noop } from '@v/utils'
+import { noop, Procedure } from '@v/utils'
 import { FocusManagerContext } from './context'
 
-// TODO select child in Focus Manager if it was focused
-export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, disabled = false): boolean {
-  const context = React.useContext(FocusManagerContext)
+interface IOptions {
+  disabled?: boolean
+  onFocus?: Procedure
+  autoFocus?: boolean
+}
+
+export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, options: IOptions = {}): boolean {
+  const focusManager = React.useContext(FocusManagerContext)
 
   const [isSelected, setIsSelected] = React.useState(false)
 
   React.useEffect(() => {
-    if (!context) {
+    if (!focusManager) {
       return noop
     }
 
@@ -18,13 +23,13 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
       throw new Error('dom element must be provided')
     }
 
-    return context.isChildSelected$(el).subscribe({
+    return focusManager.isChildSelected$(el).subscribe({
       next: setIsSelected,
     })
-  }, [context])
+  }, [focusManager])
 
   React.useEffect(() => {
-    if (disabled || !context) {
+    if (options.disabled || !focusManager) {
       return noop
     }
 
@@ -33,8 +38,14 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, dis
       throw new Error('dom element must be provided')
     }
 
-    return context.registerChild(el)
-  }, [context, disabled])
+    return focusManager.registerChild(el, options.autoFocus)
+  }, [focusManager, options.disabled])
+
+  React.useEffect(() => {
+    if (options.onFocus && isSelected) {
+      options.onFocus()
+    }
+  }, [options.onFocus, isSelected])
 
   return isSelected
 }

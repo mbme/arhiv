@@ -52,6 +52,7 @@ export function Frame({ children, actions, title, $style }: IProps) {
           highlight
           title={title}
           $style={$content}
+          autoFocus
         >
           <Box
             px="medium"

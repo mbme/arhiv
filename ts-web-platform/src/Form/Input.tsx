@@ -9,6 +9,7 @@ import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 import { useFocusable, useFocusOnActivate } from '../Focus'
 import { Label } from '../Label'
+import { Procedure } from '@v/utils'
 
 const getStyles = (withClear?: boolean, isSelected?: boolean): StyleArg[] => [
   {
@@ -51,6 +52,7 @@ interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   name: string
   label: string
   withClear?: boolean
+  onFocus?: Procedure
 }
 
 export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(props, externalRef) {
@@ -62,6 +64,7 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
     placeholder,
     autoComplete,
     withClear,
+    onFocus,
   } = props
 
   const {
@@ -70,7 +73,7 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
   } = useFormControl(name)
 
   const ref = React.useRef<HTMLInputElement>(null)
-  const isSelected = useFocusable(ref)
+  const isSelected = useFocusable(ref, { onFocus })
 
   useFocusOnActivate(ref)
 

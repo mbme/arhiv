@@ -36,10 +36,11 @@ interface IProps {
   highlight?: boolean
   $style?: StyleArg
   title?: string
+  autoFocus?: boolean
   children: React.ReactNode
 }
 
-export function FocusRegion({ children, mode, name, highlight, title, $style }: IProps) {
+export function FocusRegion({ children, mode, name, highlight, title, autoFocus, $style }: IProps) {
   const parentFocusManager = React.useContext(FocusManagerContext)
   const focusStack = React.useContext(FocusStackContext)
 
@@ -76,7 +77,7 @@ export function FocusRegion({ children, mode, name, highlight, title, $style }: 
 
     // non-root focus region
     if (parentFocusManager) {
-      return parentFocusManager.registerChild(focusManager)
+      return parentFocusManager.registerChild(focusManager, autoFocus)
     }
 
     // root focus region

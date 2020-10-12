@@ -19,14 +19,12 @@ export function useDefaultKeybindings(focusManager?: FocusManager) {
         code: focusManager.mode === 'row' ? 'KeyL' : 'KeyJ',
         action() {
           focusManager.selectNextChild()
-          focusManager.scrollSelectedChildIntoView()
         },
       },
       {
         code: focusManager.mode === 'row' ? 'KeyH' : 'KeyK',
         action() {
           focusManager.selectPreviousChild()
-          focusManager.scrollSelectedChildIntoView()
         },
       },
       {

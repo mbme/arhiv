@@ -12,20 +12,23 @@ const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 interface IProps {
   note: Note
+  onFocus(): void
+  autoFocus: boolean
 }
 
-export function CatalogEntry({ note }: IProps) {
+export function CatalogEntry({ note, onFocus, autoFocus }: IProps) {
   const router = RouterContext.use()
 
   const ref = React.useRef<HTMLDivElement>(null)
-  const isSelected = useFocusable(ref)
+  const isFocused = useFocusable(ref, { onFocus, autoFocus })
+
   useClickOnActivate(ref)
 
   return (
     <Box
       mb="small"
       p="small"
-      border={isSelected ? '1px solid red' : '1px solid transparent'}
+      border={isFocused ? '1px solid red' : '1px solid transparent'}
       cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
       ref={ref}

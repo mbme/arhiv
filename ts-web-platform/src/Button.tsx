@@ -72,7 +72,7 @@ export function Button(props: IProps) {
   } = props
 
   const ref = React.useRef<HTMLButtonElement>(null)
-  const isSelected = useFocusable(ref, disabled)
+  const isSelected = useFocusable(ref, { disabled })
   useClickOnActivate(ref, disabled)
 
   const className = useStyles(

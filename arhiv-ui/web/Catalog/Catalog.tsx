@@ -11,17 +11,32 @@ import { API } from '../types'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
 
+interface IState {
+  filter: string
+  focusedId?: string
+}
+
+const STATE: IState = {
+  filter: '',
+  focusedId: undefined,
+} 
+
 export function Catalog() {
   const {
     Form,
     values: {
       filter = '',
     },
-  } = useForm()
+  } = useForm({ filter: STATE.filter })
 
   const debouncedFilter = useDebounced(filter, 300)
 
   const [notes, err] = usePromise(() => API.list(debouncedFilter), [debouncedFilter])
+
+  // save filter in a temp variable
+  React.useEffect(() => {
+    STATE.filter = debouncedFilter
+  }, [debouncedFilter])
 
   if (err) {
     return (
@@ -40,6 +55,8 @@ export function Catalog() {
       <CatalogEntry
         key={note.id}
         note={note}
+        autoFocus={note.id === STATE.focusedId}
+        onFocus={() => { STATE.focusedId = note.id }}
       />
     ))
 
@@ -73,6 +90,7 @@ export function Catalog() {
               label="Filter"
               name="filter"
               placeholder="Filter documents"
+              onFocus={() => { STATE.focusedId = undefined }}
             />
           </Form>
         </Box>

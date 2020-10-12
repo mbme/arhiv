@@ -21,7 +21,7 @@ export class FocusManager {
     this._log = createLogger(`FocusManager ${name}`)
   }
 
-  registerChild(child: FocusChild): Procedure {
+  registerChild(child: FocusChild, autoFocus?: boolean): Procedure {
     if (this._destroyed) {
       throw new Error('FocusManager already destroyed')
     }
@@ -37,8 +37,9 @@ export class FocusManager {
     this._children.push(child)
 
     // automatically select first added child if enabled
-    if (this.isEnabled() && this._children.length === 1) {
-      this._log.debug('registerChild: auto selecting first child')
+    const focusFirstChild = this.isEnabled() && this._children.length === 1
+
+    if (autoFocus || focusFirstChild) {
       this._setSelected(child)
     }
 
@@ -166,17 +167,6 @@ export class FocusManager {
     }
   }
 
-  scrollSelectedChildIntoView() { // FIXME improve this
-    if (!this.selectedChild$.value) {
-      return
-    }
-
-    this._getNode(this.selectedChild$.value).scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-    })
-  }
-
   isChildSelected$(child: HTMLElement | undefined): Observable<boolean> {
     return this.enabled$.value$.switchMap((enabled) => {
       if (!enabled) {
@@ -247,6 +237,11 @@ export class FocusManager {
     if (child instanceof FocusManager) {
       child.enable()
     }
+
+    this._getNode(child).scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
   }
 
   private _selectNearestChild(pos: number) {

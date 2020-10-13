@@ -9,6 +9,6 @@
     "tester": "./bin/tester"
   },
   "dependencies": {
-     "@swc-node/register": "^0.5.3"
+     "@swc-node/register": "^1.0.0"
   }
 }

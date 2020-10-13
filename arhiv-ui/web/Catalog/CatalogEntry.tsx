@@ -5,8 +5,8 @@ import {
   useClickOnActivate,
   useFocusable,
 } from '@v/web-platform'
-import { Note } from '../types'
 import { RouterContext } from '@v/web-utils'
+import { Note } from '../types'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 

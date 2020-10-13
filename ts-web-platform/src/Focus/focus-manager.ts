@@ -40,7 +40,7 @@ export class FocusManager {
     const focusFirstChild = this.isEnabled() && this._children.length === 1
 
     if (autoFocus || focusFirstChild) {
-      this._setSelected(child)
+      this._setSelected(child, autoFocus)
     }
 
     const onPointerMove = () => {
@@ -133,7 +133,7 @@ export class FocusManager {
       prevPos = Math.max(0, currentPos - 1)
     }
 
-    this._setSelected(this._children[prevPos])
+    this._setSelected(this._children[prevPos], true)
   }
 
   selectNextChild() {
@@ -150,7 +150,7 @@ export class FocusManager {
       nextPos = Math.min(this._children.length - 1, currentPos + 1)
     }
 
-    this._setSelected(this._children[nextPos])
+    this._setSelected(this._children[nextPos], true)
   }
 
   activateSelectedChild() {
@@ -221,10 +221,15 @@ export class FocusManager {
     })
   }
 
-  private _setSelected(child: FocusChild) {
+  private _setSelected(child: FocusChild, scrollIntoView = false) {
     const prevChild = this.selectedChild$.value
 
     if (child === prevChild) {
+      // make sure this focus manager is enabled
+      if (child instanceof FocusManager) {
+        child.enable()
+      }
+
       return
     }
 
@@ -238,10 +243,12 @@ export class FocusManager {
       child.enable()
     }
 
-    this._getNode(child).scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-    })
+    if (scrollIntoView) {
+      this._getNode(child).scrollIntoView({
+        behavior: 'auto',
+        block: 'center',
+      })
+    }
   }
 
   private _selectNearestChild(pos: number) {

@@ -19,7 +19,7 @@ interface IState {
 const STATE: IState = {
   filter: '',
   focusedId: undefined,
-} 
+}
 
 export function Catalog() {
   const {

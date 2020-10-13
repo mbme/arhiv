@@ -68,7 +68,7 @@ export function App({ store }: IProps) {
     ]
   }, [store, showModal])
 
-  useHotkeys(hotkeys)
+  useHotkeys(0, hotkeys)
 
   const items = state.messages.map((message, index) => (
     <MessageShort

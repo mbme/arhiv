@@ -9,16 +9,21 @@ export class FocusManager {
   private _children: FocusChild[] = []
   private _log: Logger
   private _destroyed = false
+  private _domNode: HTMLElement | undefined = undefined
 
   readonly enabled$ = new Cell(false, true)
   readonly selectedChild$ = new Cell<FocusChild | undefined>(undefined, true)
 
   constructor(
-    private _domNode: HTMLElement,
     public readonly mode: FocusManagerMode,
     public readonly name: string,
+    public readonly depth: number,
   ) {
     this._log = createLogger(`FocusManager ${name}`)
+  }
+
+  setDOMNode(domNode: HTMLElement | undefined) {
+    this._domNode = domNode
   }
 
   registerChild(child: FocusChild, autoFocus?: boolean): Procedure {
@@ -185,7 +190,12 @@ export class FocusManager {
 
   private _getNode(child: FocusChild): HTMLElement {
     if (child instanceof FocusManager) {
-      return child._domNode
+      const node = child._domNode
+      if (!node) {
+        throw new Error(`Focus manager ${child.name} doesn't have a dom node`)
+      }
+
+      return node
     }
 
     return child

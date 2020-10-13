@@ -10,14 +10,13 @@ interface IOptions {
 
 export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, options: IOptions = {}): boolean {
   const focusManager = React.useContext(FocusManagerContext)
+  if (!focusManager) {
+    throw new Error('Focus Manager must be available')
+  }
 
   const [isSelected, setIsSelected] = React.useState(false)
 
   React.useEffect(() => {
-    if (!focusManager) {
-      return noop
-    }
-
     const el = ref.current
     if (!el) {
       throw new Error('dom element must be provided')
@@ -26,10 +25,10 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, opt
     return focusManager.isChildSelected$(el).subscribe({
       next: setIsSelected,
     })
-  }, [focusManager])
+  }, [])
 
   React.useEffect(() => {
-    if (options.disabled || !focusManager) {
+    if (options.disabled) {
       return noop
     }
 
@@ -39,7 +38,7 @@ export function useFocusable<T extends HTMLElement>(ref: React.RefObject<T>, opt
     }
 
     return focusManager.registerChild(el, options.autoFocus)
-  }, [focusManager, options.disabled])
+  }, [options.disabled])
 
   React.useEffect(() => {
     if (options.onFocus && isSelected) {

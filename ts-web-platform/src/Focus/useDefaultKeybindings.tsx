@@ -1,19 +1,14 @@
 import * as React from 'react'
-import { noop } from '@v/utils'
 import {
   HotkeysResolverContext,
   IKeybinding,
 } from '@v/web-utils'
 import { FocusManager } from './focus-manager'
 
-export function useDefaultKeybindings(focusManager?: FocusManager) {
+export function useDefaultKeybindings(focusManager: FocusManager) {
   const hotkeysResolver = HotkeysResolverContext.use()
 
   React.useEffect(() => {
-    if (!focusManager) {
-      return noop
-    }
-
     const hotkeys: IKeybinding[] = [
       {
         code: focusManager.mode === 'row' ? 'KeyL' : 'KeyJ',
@@ -29,21 +24,26 @@ export function useDefaultKeybindings(focusManager?: FocusManager) {
       },
       {
         code: 'Enter',
-        action(e) {
-          e.preventDefault()
+        preventDefault: true,
+        action() {
           focusManager.activateSelectedChild()
         },
       },
     ]
 
-    return focusManager.enabled$.value$.subscribe({
+    const unsub = focusManager.enabled$.value$.subscribe({
       next(isEnabled) {
         if (isEnabled) {
-          hotkeysResolver.add(hotkeys)
+          hotkeysResolver.add(focusManager.depth, hotkeys)
         } else {
           hotkeysResolver.remove(hotkeys)
         }
       },
     })
-  }, [focusManager, hotkeysResolver])
+
+    return () => {
+      unsub()
+      hotkeysResolver.remove(hotkeys)
+    }
+  }, [])
 }

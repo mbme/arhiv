@@ -4,7 +4,6 @@ export {
 } from './context'
 export {
   useHotkeys,
-  useHotkeysMemo,
 } from './useHotkeys'
 export {
   IKeybinding,

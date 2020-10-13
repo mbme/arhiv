@@ -46,7 +46,13 @@ export function FocusRegion({ children, mode, name, highlight, title, autoFocus,
 
   const ref = React.useRef<HTMLDivElement>(null)
 
-  const [focusManager, setFocusManager] = React.useState<FocusManager | undefined>(undefined)
+  const [focusManager] = React.useState(() => {
+    const prefixedName = parentFocusManager ? `${parentFocusManager.name}>${name}` : name
+
+    const depth = parentFocusManager ? parentFocusManager.depth + 1 : 0
+
+    return new FocusManager(mode, prefixedName, depth)
+  })
   const [isEnabled, setIsEnabled] = React.useState(false)
 
   useDefaultKeybindings(focusManager)
@@ -56,16 +62,14 @@ export function FocusRegion({ children, mode, name, highlight, title, autoFocus,
       throw new Error('node must be available')
     }
 
-    const prefixedName = parentFocusManager ? `${parentFocusManager.name}>${name}` : name
-    const newFocusManager = new FocusManager(ref.current, mode, prefixedName)
-    setFocusManager(newFocusManager)
+    focusManager.setDOMNode(ref.current)
 
-    const unsub = newFocusManager.enabled$.value$.subscribe({
+    const unsub = focusManager.enabled$.value$.subscribe({
       next: setIsEnabled
     })
 
     return () => {
-      newFocusManager.destroy()
+      focusManager.destroy()
       unsub()
     }
   }, [])

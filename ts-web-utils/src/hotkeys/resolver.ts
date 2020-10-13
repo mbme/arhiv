@@ -1,4 +1,6 @@
-import { removeMut } from '@v/utils'
+import {
+  removeAtMut,
+} from '@v/utils'
 
 export interface IKeybinding {
   code: string
@@ -6,6 +8,7 @@ export interface IKeybinding {
   altKey?: boolean
   shiftKey?: boolean
   metaKey?: boolean
+  preventDefault?: boolean
   action(e: KeyboardEvent): void
 }
 
@@ -24,15 +27,35 @@ function isTextEditorEvent(e: KeyboardEvent): boolean {
   return TEXT_EDITOR_TAGS.includes(tagName)
 }
 
-export class HotkeysResolver {
-  private _hotkeys: Array<IKeybinding[]> = []
+interface IKeybindings {
+  keybindings: IKeybinding[]
+  priority: number
+}
 
-  add(hotkeys: IKeybinding[]) {
-    this._hotkeys.push(hotkeys)
+export class HotkeysResolver {
+  private _hotkeys: IKeybindings[] = []
+
+  add(priority: number, keybindings: IKeybinding[]) {
+    this._hotkeys.push({
+      keybindings,
+      priority,
+    })
+
+    this._sort()
   }
 
-  remove(hotkeys: IKeybinding[]) {
-    removeMut(this._hotkeys, hotkeys)
+  remove(keybindings: IKeybinding[]): boolean {
+    const pos = this._hotkeys.findIndex(item => item.keybindings === keybindings)
+
+    removeAtMut(this._hotkeys, pos)
+
+    this._sort()
+
+    return pos > -1
+  }
+
+  private _sort() {
+    this._hotkeys.sort((a, b) => b.priority - a.priority)
   }
 
   private _onKeyDown = (e: KeyboardEvent) => {
@@ -40,16 +63,20 @@ export class HotkeysResolver {
       return
     }
 
-    for (let i = this._hotkeys.length - 1; i >= 0; i -= 1) {
-      const hotkeys = this._hotkeys[i]
+    for (const hotkeys of this._hotkeys) {
+      const keybinding = hotkeys.keybindings.find(item => isMatchingEvent(item, e))
 
-      const keybinding = hotkeys.find(item => isMatchingEvent(item, e))
-
-      if (keybinding) {
-        keybinding.action(e)
-
-        return
+      if (!keybinding) {
+        continue
       }
+
+      if (keybinding.preventDefault) {
+        e.preventDefault()
+      }
+
+      keybinding.action(e)
+
+      return
     }
   }
 

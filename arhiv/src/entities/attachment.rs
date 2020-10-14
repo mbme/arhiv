@@ -1,7 +1,6 @@
-use super::{Id, Revision};
+use super::{gen_id, Id, Revision};
 use anyhow::*;
 use chrono::{DateTime, Utc};
-use rs_utils::gen_uuid;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -19,7 +18,7 @@ pub struct Attachment {
 impl Attachment {
     pub(crate) fn new(hash: String, filename: &str) -> Attachment {
         Attachment {
-            id: gen_uuid(),
+            id: gen_id(),
             rev: 0,
             hash,
             created_at: Utc::now(),

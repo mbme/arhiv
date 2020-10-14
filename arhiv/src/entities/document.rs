@@ -1,7 +1,6 @@
-use super::{Id, Revision};
+use super::{gen_id, Id, Revision};
 use anyhow::*;
 use chrono::{DateTime, Utc};
-use rs_utils::gen_uuid;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::fmt;
@@ -26,7 +25,7 @@ impl Document {
         let now = Utc::now();
 
         Document {
-            id: gen_uuid(),
+            id: gen_id(),
             rev: 0,
             document_type: document_type.into(),
             created_at: now,

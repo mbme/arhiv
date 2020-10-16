@@ -16,6 +16,7 @@ interface IState {
   focusedId?: string
 }
 
+// FIXME use global state
 const STATE: IState = {
   filter: '',
   focusedId: undefined,
@@ -81,13 +82,12 @@ export function Catalog() {
       >
         <Box
           as="nav"
-          p="fine"
+          pb="small"
           width="100%"
-          bgColor="var(--color-bg0)"
         >
           <Form>
             <Input
-              label="Filter"
+              label=""
               name="filter"
               placeholder="Filter documents"
               onFocus={() => { STATE.focusedId = undefined }}

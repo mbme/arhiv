@@ -10,7 +10,7 @@ import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
 const $selected: StyleArg = {
-  border: '1px solid red',
+  border: 'active',
 }
 
 type NativeProps = 'name' | 'defaultValue'

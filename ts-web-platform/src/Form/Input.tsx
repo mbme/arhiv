@@ -29,7 +29,7 @@ const getStyles = (withClear?: boolean, isSelected?: boolean): StyleArg[] => [
   },
 
   isSelected && {
-    border: '1px solid red',
+    border: 'active',
   },
 ]
 
@@ -82,7 +82,9 @@ export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(p
       relative
       width="100%"
     >
-      <Label>{label}</Label>
+      {label && (
+        <Label>{label}</Label>
+      )}
 
       <StylishElement
         ref={mergeRefs(ref, externalRef)}

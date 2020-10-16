@@ -15,19 +15,21 @@ const $cleanLink: StyleArg = {
 
 interface IProps extends Omit<React.ComponentProps<typeof RouterLink>, 'className'> {
   $style?: StyleArg
+  $styles?: StyleArg[]
   clean?: boolean
 }
 
-export function Link({ $style, clean, ...props }: IProps) {
+export function Link({ $styles = [], $style, clean, ...props }: IProps) {
   const ref = React.useRef<HTMLAnchorElement>(null)
   const isSelected = useFocusable(ref)
   useClickOnActivate(ref)
 
   const className = useStyles(
-    isSelected && {
-      border: '1px solid red',
+    {
+      border: isSelected ? 'active' : 'invisible',
     },
     clean && $cleanLink,
+    ...$styles,
     $style,
   )
 

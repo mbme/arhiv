@@ -1,6 +1,11 @@
 import * as React from 'react'
-import { Button } from '@v/web-platform'
+import { Button, StyleArg } from '@v/web-platform'
 import { RouterContext, SimpleLocation } from '@v/web-utils'
+
+const $action: StyleArg = {
+  textTransform: 'uppercase',
+  width: '100%',
+}
 
 type Action = {
   type: 'location',
@@ -17,8 +22,8 @@ type Action = {
 export function Action(action: Action) {
   const router = RouterContext.use()
 
-  if (action.type === 'location') {
-    const onClick = () => {
+  const onClick = () => {
+    if (action.type === 'location') {
       if (action.replace) {
         router.replace(action.to)
       } else {
@@ -26,25 +31,18 @@ export function Action(action: Action) {
       }
     }
 
-    return (
-      <Button
-        onClick={onClick}
-      >
-        {action.children}
-      </Button>
-    )
+    if (action.type === 'action') {
+      action.onClick()
+    }
   }
 
-  if (action.type === 'action') {
-    return (
-      <Button
-        onClick={action.onClick}
-        disabled={action.disabled}
-      >
-        {action.children}
-      </Button>
-    )
-  }
-
-  return null
+  return (
+    <Button
+      onClick={onClick}
+      disabled={'disabled' in action ? action.disabled : false}
+      $style={$action}
+    >
+      {action.children}
+    </Button>
+  )
 }

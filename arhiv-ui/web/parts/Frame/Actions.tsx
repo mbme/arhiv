@@ -6,7 +6,7 @@ import {
 
 const $actionContainer: StyleArg = {
   '&>*': {
-    my: 'small',
+    mb: 'small',
   },
 }
 
@@ -17,7 +17,7 @@ interface IProps {
 export function Actions({ actions }: IProps) {
   return (
     <Column
-      pl="small"
+      px="small"
       $style={$actionContainer}
     >
       {actions}

@@ -7,26 +7,33 @@ import { Box } from '../Box'
 import { StyleArg } from '../core'
 import { useDefaultKeybindings } from './useDefaultKeybindings'
 
-const $title: StyleArg = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  textAlign: 'center',
-  textTransform: 'uppercase',
-  bgColor: 'orange',
-  height: '1.3rem',
-}
+const getTitleStyles = (highlight?: boolean): StyleArg[] => [
+  {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    fontFamily: 'var(--font-family-mono)',
 
-const getStyles = (highlight?: boolean, withTitle?: boolean): StyleArg[] => [
+    height: 'calc(var(--line-height) * 1rem)',
+
+    bgColor: 'var(--color-bg-secondary)',
+    transition: 'background-color 100ms linear',
+  },
+
+  highlight && {
+    bgColor: 'var(--color-bg-primary)',
+  },
+]
+
+const getContainerStyles = (withTitle?: boolean): StyleArg[] => [
   {
     position: 'relative',
   },
-  highlight && {
-    bgColor: 'var(--color-bg-highlight)',
-  },
   withTitle && {
-    paddingTop: '1.3rem',
+    paddingTop: 'calc(var(--line-height) * 1rem + 0.4rem)',
   },
 ]
 
@@ -96,12 +103,12 @@ export function FocusRegion({ children, mode, name, highlight, title, autoFocus,
   return (
     <Box
       ref={ref}
-      $styles={getStyles(isEnabled && highlight, !!title)}
+      $styles={getContainerStyles(!!title)}
       $style={$style}
     >
       {title && (
         <Box
-          $style={$title}
+          $styles={getTitleStyles(isEnabled && highlight)}
         >
           {title}
         </Box>

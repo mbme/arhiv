@@ -1,29 +1,50 @@
 import * as React from 'react'
 import {
-  Box,
   Column,
   Link,
+  StyleArg,
 } from '@v/web-platform'
+
+const getStyles = (isActive?: boolean): StyleArg[] => [
+  {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    textTransform: 'uppercase',
+    py: 'fine',
+  },
+  isActive && {
+    color: 'var(--color-link)',
+    '&:hover': {
+      color: 'var(--color-link)',
+    },
+  },
+]
 
 export function Navigation() {
   return (
     <Column>
-      <Box
-        bgColor="var(--color-primary)"
-        width="100%"
-        display="flex"
-        justifyContent="center"
+      <Link
+        to={{ path: '/' }}
+        $styles={getStyles(true)}
+        clean
       >
-        <Link to={{ path: '/' }}>
-          Notes
-        </Link>
-      </Box>
+        Notes
+      </Link>
 
-      <Link to={{ path: '/' }}>
+      <Link
+        to={{ path: '/' }}
+        $styles={getStyles()}
+        clean
+      >
         Contacts
       </Link>
 
-      <Link to={{ path: '/' }}>
+      <Link
+        to={{ path: '/' }}
+        $styles={getStyles()}
+        clean
+      >
         Movies
       </Link>
     </Column>

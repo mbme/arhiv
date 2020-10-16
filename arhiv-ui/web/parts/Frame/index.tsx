@@ -9,10 +9,17 @@ import { Actions } from './Actions'
 
 const $container: StyleArg = {
   display: 'grid',
-  gridTemplateColumns: '10rem auto 10rem 1fr',
+  gridTemplateColumns: '1fr 2.2fr 1fr',
   gridAutoFlow: 'column',
+  gridGap: '0.8rem',
+
   height: '100vh',
   overflowY: 'hidden',
+  p: 'fine',
+
+  maxWidth: '88rem',
+  minWidth: '63rem',
+  mx: 'auto',
 }
 
 const $content: StyleArg = {
@@ -55,8 +62,6 @@ export function Frame({ children, actions, title, $style }: IProps) {
           autoFocus
         >
           <Box
-            px="medium"
-            width="40rem"
             height="100%"
             overflowY="auto"
             $style={$style}

@@ -21,10 +21,9 @@ function getStyles(props: IProps): StyleArg[] {
       py: 'fine',
       px: 'medium',
       border: 'default',
-      borderRadius: '2px',
       cursor: 'pointer',
       userSelect: 'none',
-      transition: 'background-color 100ms linear, transform 50ms ease-in',
+      transition: 'background-color 100ms linear',
 
       textTransform: 'uppercase',
       letterSpacing: '1.2px',
@@ -42,17 +41,11 @@ function getStyles(props: IProps): StyleArg[] {
       backgroundColor: 'var(--color-primary)',
       color: 'var(--color-text-light)',
       boxShadow: 'default',
-      '&:hover': {
-        transform: 'scale(1.05)',
-      },
     },
 
     !props.disabled && props.variant === 'secondary' && {
       color: 'var(--color-text)',
       backgroundColor: 'var(--color-bg0)',
-      '&:hover': {
-        transform: 'scale(1.05)',
-      },
     },
 
     !props.disabled && props.variant === 'link' && {
@@ -78,7 +71,7 @@ export function Button(props: IProps) {
   const className = useStyles(
     ...getStyles(props),
     isSelected && {
-      border: '1px solid red',
+      border: 'active',
     },
     $style,
   )

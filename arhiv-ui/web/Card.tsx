@@ -1,5 +1,6 @@
 import * as React from 'react'
 import {
+  Box,
   ProgressLocker, StyleArg,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
@@ -51,11 +52,10 @@ export function Card({ id }: IProps) {
   ) : (
     <>
       <Action
-        type="location"
-        replace
-        to={{ path: `/${id}/edit` }}
+        type="action"
+        onClick={() => router.goBack()}
       >
-        Edit Note
+        Close
       </Action>
 
       <Action
@@ -66,10 +66,11 @@ export function Card({ id }: IProps) {
       </Action>
 
       <Action
-        type="action"
-        onClick={() => router.goBack()}
+        type="location"
+        replace
+        to={{ path: `/${id}/edit` }}
       >
-        Close
+        Edit Note
       </Action>
     </>
   )
@@ -80,11 +81,15 @@ export function Card({ id }: IProps) {
       title="Card"
       $style={$container}
     >
-      {metadata ? (
-        <Metadata document={note} />
-      ) : (
-        <Note name={note.data.name} data={note.data.data} />
-      )}
+      <Box
+        px="medium"
+      >
+        {metadata ? (
+          <Metadata document={note} />
+        ) : (
+          <Note name={note.data.name} data={note.data.data} />
+        )}
+      </Box>
     </Frame>
   )
 }

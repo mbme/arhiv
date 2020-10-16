@@ -8,6 +8,8 @@ export const theme = {
   },
   border: {
     default: '1px solid var(--color-secondary)',
+    active: '1px solid var(--color-primary)',
+    invisible: '1px solid transparent',
   },
   boxShadow: {
     default: '0 2px 4px rgba(0,0,0,.2)',

@@ -26,8 +26,10 @@ export const globalStyles = `
   --color-heading: #000000;
   --color-link: #FDAF3C;
   --color-bg0: #ffffff;
-  --color-bg-highlight: yellow;
   --color-bg-overlay: rgba(255,255,255, .65);
+
+  --color-bg-primary: #FF553Cd1;
+  --color-bg-secondary: #5e5a5759;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,7 +41,6 @@ export const globalStyles = `
     --color-heading: #d8dee9;
     --color-link: #81a1c1;
     --color-bg0: #2e3440;
-    --color-bg-highlight: yellow;
     --color-bg-overlay: #4c566a;
   }
 }
@@ -58,7 +59,7 @@ export const globalStyles = `
 }
 
 :focus {
-  outline: 1px solid var(--color-secondary);
+  outline: 1px solid var(--color-primary);
 }
 
 html {
@@ -94,7 +95,7 @@ body {
   height: 100%;
   width: 100%;
 
-  overflow-y: scroll;
+  overflow: auto;
 }
 
 /* Suppress the focus outline on elements that cannot be accessed via keyboard. */

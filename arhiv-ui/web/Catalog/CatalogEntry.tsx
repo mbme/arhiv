@@ -28,7 +28,7 @@ export function CatalogEntry({ note, onFocus, autoFocus }: IProps) {
     <Box
       mb="small"
       p="small"
-      border={isFocused ? '1px solid red' : '1px solid transparent'}
+      border={isFocused ? 'active' : 'invisible'}
       cursor="pointer"
       onClick={() => router.push({ path: `/${note.id}` }) }
       ref={ref}

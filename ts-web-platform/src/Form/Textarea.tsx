@@ -24,7 +24,7 @@ const $textarea: StyleArg = {
 }
 
 const $selected: StyleArg = {
-  border: '1px solid red',
+  border: 'active',
 }
 
 interface IProps {

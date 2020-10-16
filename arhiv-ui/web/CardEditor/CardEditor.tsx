@@ -16,7 +16,6 @@ import { DeleteDocumentButton } from './DeleteDocumentButton'
 
 
 const $container: StyleArg = {
-  pt: 'large',
   minHeight: '100%',
 }
 

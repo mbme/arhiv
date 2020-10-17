@@ -119,3 +119,23 @@ export function useDebounced<T>(value: T, timeoutMs: number) {
 
   return debouncedValue
 }
+
+export function useIsWindowFocused() {
+  const [isFocused, setIsFocused] = React.useState(() => document.hasFocus())
+
+  React.useEffect(() => {
+    const updateFocus = () => {
+      setIsFocused(document.hasFocus())
+    }
+
+    window.addEventListener('focus', updateFocus, { passive: true })
+    window.addEventListener('blur', updateFocus, { passive: true })
+
+    return () => {
+      window.removeEventListener('focus', updateFocus)
+      window.removeEventListener('blur', updateFocus)
+    }
+  }, [])
+
+  return isFocused
+}

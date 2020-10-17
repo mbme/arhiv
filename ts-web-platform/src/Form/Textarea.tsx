@@ -68,6 +68,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
     updateHeight()
   }, [value])
 
+  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)
+
   return (
     <Box>
       <Label>{label}</Label>
@@ -79,7 +81,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function T
         name={name}
         value={value}
         placeholder={placeholder}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)}
+        onChange={onChange}
       />
     </Box>
   )

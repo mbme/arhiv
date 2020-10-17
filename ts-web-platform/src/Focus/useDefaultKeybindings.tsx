@@ -23,6 +23,21 @@ export function useDefaultKeybindings(focusManager: FocusManager) {
         },
       },
       {
+        code: 'Tab',
+        preventDefault: true,
+        action() {
+          focusManager.selectNextChild()
+        },
+      },
+      {
+        code: 'Tab',
+        shiftKey: true,
+        preventDefault: true,
+        action() {
+          focusManager.selectPreviousChild()
+        },
+      },
+      {
         code: 'Enter',
         preventDefault: true,
         action() {

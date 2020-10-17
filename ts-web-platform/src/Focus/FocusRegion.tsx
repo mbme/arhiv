@@ -6,6 +6,7 @@ import { FocusStackContext } from './FocusProvider'
 import { Box } from '../Box'
 import { StyleArg } from '../core'
 import { useDefaultKeybindings } from './useDefaultKeybindings'
+import { useIsWindowFocused } from '@v/web-utils'
 
 const getTitleStyles = (highlight?: boolean): StyleArg[] => [
   {
@@ -50,6 +51,7 @@ interface IProps {
 export function FocusRegion({ children, mode, name, highlight, title, autoFocus, $style }: IProps) {
   const parentFocusManager = React.useContext(FocusManagerContext)
   const focusStack = React.useContext(FocusStackContext)
+  const isWindowFocused = useIsWindowFocused()
 
   const ref = React.useRef<HTMLDivElement>(null)
 
@@ -108,7 +110,7 @@ export function FocusRegion({ children, mode, name, highlight, title, autoFocus,
     >
       {title && (
         <Box
-          $styles={getTitleStyles(isEnabled && highlight)}
+          $styles={getTitleStyles(isWindowFocused && isEnabled && highlight)}
         >
           {title}
         </Box>

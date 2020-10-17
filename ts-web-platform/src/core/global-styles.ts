@@ -59,7 +59,8 @@ export const globalStyles = `
 }
 
 :focus {
-  outline: 1px solid var(--color-primary);
+  outline: none;
+  border: 1px solid orange !important;
 }
 
 html {

@@ -17,7 +17,6 @@ interface IProps {
 export function Actions({ actions }: IProps) {
   return (
     <Column
-      px="small"
       $style={$actionContainer}
     >
       {actions}

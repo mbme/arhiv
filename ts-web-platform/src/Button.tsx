@@ -29,6 +29,8 @@ function getStyles(props: IProps): StyleArg[] {
       letterSpacing: '1.2px',
       fontSize: '80%',
       whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
 
     props.disabled && {

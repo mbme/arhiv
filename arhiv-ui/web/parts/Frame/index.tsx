@@ -9,7 +9,7 @@ import { Actions } from './Actions'
 
 const $container: StyleArg = {
   display: 'grid',
-  gridTemplateColumns: '1fr 2.2fr 1fr',
+  gridTemplateColumns: 'minmax(100px, 1fr) 3fr minmax(100px, 1fr)',
   gridAutoFlow: 'column',
   gridGap: '0.8rem',
 
@@ -17,8 +17,8 @@ const $container: StyleArg = {
   overflowY: 'hidden',
   p: 'fine',
 
-  maxWidth: '88rem',
-  minWidth: '63rem',
+  maxWidth: '80rem',
+  minWidth: '44rem',
   mx: 'auto',
 }
 

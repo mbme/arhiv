@@ -26,11 +26,11 @@ impl Arhiv {
             return Ok(());
         }
 
-        let new_rev = rev + 1;
+        let new_rev = rev.inc();
 
         for mut document in changeset.documents {
             // FIXME merge documents
-            document.rev = new_rev;
+            document.rev = new_rev.clone();
             tx.put_document(&document)?;
             tx.put_document_history(&document)?;
         }
@@ -42,7 +42,7 @@ impl Arhiv {
         let mut fs_tx = FsTransaction::new();
         for mut attachment in changeset.attachments {
             // save attachment
-            attachment.rev = new_rev;
+            attachment.rev = new_rev.clone();
             tx.put_attachment(&attachment)?;
 
             let attachment_data = self.get_attachment_data(&attachment.id);
@@ -70,8 +70,9 @@ impl Arhiv {
     ) -> Result<ChangesetResponse> {
         let conn = self.storage.get_connection()?;
 
-        let documents = conn.get_documents_since(base_rev + 1)?;
-        let attachments = conn.get_attachments_since(base_rev + 1)?;
+        let next_rev = base_rev.inc();
+        let documents = conn.get_documents_since(&next_rev)?;
+        let attachments = conn.get_attachments_since(&next_rev)?;
 
         Ok(ChangesetResponse {
             latest_rev: conn.get_rev()?,

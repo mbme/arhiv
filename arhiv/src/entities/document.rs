@@ -1,13 +1,14 @@
-use super::{gen_id, Id, Revision};
+use super::{Id, Revision};
 use anyhow::*;
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Value;
 use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Document {
+pub struct Document<T = Value> {
     pub id: Id,
     pub rev: Revision,
     #[serde(rename = "type")]
@@ -17,36 +18,58 @@ pub struct Document {
     pub refs: Vec<Id>,
     pub attachment_refs: Vec<Id>,
     pub archived: bool,
-    pub data: Value,
+    pub data: T,
 }
 
 impl Document {
-    pub fn new<S: Into<String>>(document_type: S) -> Document {
+    pub fn new<S: Into<String>, T: Default>(document_type: S) -> Document<T> {
         let now = Utc::now();
 
         Document {
-            id: gen_id(),
-            rev: 0,
+            id: Id::new(),
+            rev: Revision::STAGING,
             document_type: document_type.into(),
             created_at: now,
             updated_at: now,
             refs: vec![],
             attachment_refs: vec![],
             archived: false,
-            data: Value::Object(Map::new()),
+            data: T::default(),
+        }
+    }
+
+    pub fn into<K: DeserializeOwned>(self) -> Document<K> {
+        Document {
+            id: self.id,
+            rev: self.rev,
+            document_type: self.document_type,
+            created_at: self.created_at,
+            updated_at: self.updated_at,
+            refs: self.refs,
+            attachment_refs: self.attachment_refs,
+            archived: self.archived,
+            data: serde_json::from_value(self.data).expect("must be able to parse data"),
         }
     }
 
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
     }
+}
 
-    pub fn is_staged(&self) -> bool {
-        self.rev == 0
-    }
-
-    pub fn is_committed(&self) -> bool {
-        self.rev > 0
+impl<T: Serialize> Document<T> {
+    pub fn into_value(self) -> Document {
+        Document {
+            id: self.id,
+            rev: self.rev,
+            document_type: self.document_type,
+            created_at: self.created_at,
+            updated_at: self.updated_at,
+            refs: self.refs,
+            attachment_refs: self.attachment_refs,
+            archived: self.archived,
+            data: serde_json::to_value(self.data).expect("must be able to convert to value"),
+        }
     }
 }
 
@@ -62,7 +85,7 @@ impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[Document {}:{} {}]",
+            "[Document {}: {} {}]",
             self.document_type, self.id, self.rev,
         )
     }

@@ -1,4 +1,4 @@
-use super::{gen_id, Id, Revision};
+use super::{Id, Revision};
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -18,8 +18,8 @@ pub struct Attachment {
 impl Attachment {
     pub(crate) fn new(hash: String, filename: &str) -> Attachment {
         Attachment {
-            id: gen_id(),
-            rev: 0,
+            id: Id::new(),
+            rev: Revision::STAGING,
             hash,
             created_at: Utc::now(),
             filename: filename.to_owned(),
@@ -29,14 +29,6 @@ impl Attachment {
 
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize attachment to json")
-    }
-
-    pub fn is_staged(&self) -> bool {
-        self.rev == 0
-    }
-
-    pub fn is_committed(&self) -> bool {
-        self.rev > 0
     }
 }
 

@@ -1,13 +1,12 @@
 use arhiv::entities::*;
 use arhiv::Arhiv;
-use arhiv_modules::{create_link, ArhivNotes};
+use arhiv_modules::*;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
-use serde_json::json;
 use std::fs;
 
-fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
+fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Note {
     let name = markov.generate_sentence_constrained(8, false);
 
     let mut attachment_refs = vec![];
@@ -27,7 +26,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
                 .choose(&mut rng)
                 .expect("attachment ids must be provided");
 
-            sentences.push(create_link(id, id));
+            sentences.push(create_link(id.into(), ""));
             attachment_refs.push(id.clone());
         }
 
@@ -36,18 +35,21 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Document {
         data.push(sentences.join(" "));
     }
 
-    let mut document = ArhivNotes::create_note();
-    document.data = json!({ "name": name, "data": data.join("\n\n") });
-    document.attachment_refs = attachment_refs;
+    let mut note = Note::new();
+    note.0.data = NoteData {
+        name,
+        data: data.join("\n\n"),
+    };
+    note.0.attachment_refs = attachment_refs;
 
-    document
+    note
 }
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
 
-    let notes = ArhivNotes::new(Arhiv::must_open());
+    let arhiv = Arhiv::must_open();
 
     let mut attachment_ids: Vec<Id> = vec![];
 
@@ -57,8 +59,7 @@ async fn main() {
         let path = path.to_str().unwrap();
 
         if path.ends_with(".jpg") || path.ends_with(".jpeg") {
-            let attachment = notes
-                .arhiv
+            let attachment = arhiv
                 .stage_attachment(path, false)
                 .expect("must be able to create attachment");
             attachment_ids.push(attachment.id);
@@ -69,8 +70,10 @@ async fn main() {
     let markov = Markov::new(&text);
 
     for _ in 0..30 {
-        notes.put_note(gen_note(&markov, &attachment_ids));
+        arhiv
+            .stage_document(gen_note(&markov, &attachment_ids).into_document())
+            .expect("must be able to save document");
     }
 
-    notes.arhiv.sync().await.expect("must be able to sync");
+    arhiv.sync().await.expect("must be able to sync");
 }

@@ -19,7 +19,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
         let other_document = arhiv.get_document(&document.id)?.unwrap();
 
         assert_eq!(other_document.data, document.data);
-        assert_eq!(other_document.is_staged(), true);
+        assert_eq!(other_document.rev.is_staged(), true);
     }
 
     // UPDATE
@@ -104,7 +104,7 @@ async fn test_update_attachment_filename() -> Result<()> {
         "k1.jpg"
     );
 
-    assert_eq!(arhiv.get_status()?.rev, 0);
+    assert_eq!(arhiv.get_status()?.rev.0, 0);
 
     let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
@@ -112,7 +112,7 @@ async fn test_update_attachment_filename() -> Result<()> {
 
     arhiv.sync().await?;
 
-    assert_eq!(arhiv.get_status()?.rev, 1);
+    assert_eq!(arhiv.get_status()?.rev.0, 1);
 
     // make sure we increase rev after updating committed filename
     arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
@@ -120,7 +120,7 @@ async fn test_update_attachment_filename() -> Result<()> {
         arhiv.get_attachment(&attachment.id)?.unwrap().filename,
         "k1.jpg"
     );
-    assert_eq!(arhiv.get_status()?.rev, 2);
+    assert_eq!(arhiv.get_status()?.rev.0, 2);
 
     Ok(())
 }
@@ -136,12 +136,16 @@ async fn test_prime_sync() -> Result<()> {
     let mut document = new_document();
     document.attachment_refs.push(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
-    assert_eq!(arhiv.get_document(&document.id)?.unwrap().is_staged(), true);
+    assert_eq!(
+        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
+        true
+    );
 
     assert_eq!(
         arhiv
             .get_attachment(&other_attachment.id)?
             .unwrap()
+            .rev
             .is_staged(),
         true
     );
@@ -149,11 +153,15 @@ async fn test_prime_sync() -> Result<()> {
     arhiv.sync().await?;
 
     assert_eq!(
-        arhiv.get_document(&document.id)?.unwrap().is_staged(),
+        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
         false
     );
     assert_eq!(
-        arhiv.get_attachment(&attachment.id)?.unwrap().is_staged(),
+        arhiv
+            .get_attachment(&attachment.id)?
+            .unwrap()
+            .rev
+            .is_staged(),
         false
     );
 
@@ -162,6 +170,7 @@ async fn test_prime_sync() -> Result<()> {
         arhiv
             .get_attachment(&other_attachment.id)?
             .unwrap()
+            .rev
             .is_staged(),
         true
     );
@@ -206,7 +215,7 @@ async fn test_replica_sync() -> Result<()> {
     replica.sync().await?;
 
     assert_eq!(
-        replica.get_document(&document.id)?.unwrap().is_staged(),
+        replica.get_document(&document.id)?.unwrap().rev.is_staged(),
         false
     );
 

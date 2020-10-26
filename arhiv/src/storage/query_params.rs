@@ -1,11 +1,16 @@
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 
+#[derive(Serialize, Deserialize)]
 pub struct Matcher {
     pub selector: String,
     pub pattern: String,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DocumentFilter {
+    #[serde(rename = "type")]
     pub document_type: Option<String>,
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,

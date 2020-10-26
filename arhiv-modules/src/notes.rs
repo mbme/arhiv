@@ -1,71 +1,31 @@
+use crate::DocumentImpl;
 use arhiv::entities::*;
-use arhiv::{Arhiv, DocumentFilter, Matcher};
-use serde_json::{json, Value};
+use serde::{Deserialize, Serialize};
 
-pub struct ArhivNotes {
-    pub arhiv: Arhiv,
+#[derive(Serialize, Deserialize, Default)]
+pub struct NoteData {
+    pub name: String,
+    pub data: String,
 }
 
-pub const NOTE_TYPE: &str = "note";
+pub struct Note(pub Document<NoteData>);
 
-impl ArhivNotes {
-    pub fn new(arhiv: Arhiv) -> ArhivNotes {
-        ArhivNotes { arhiv }
+impl DocumentImpl for Note {
+    const TYPE: &'static str = "note";
+
+    type Data = NoteData;
+
+    fn new() -> Self {
+        Note(Document::new(Self::TYPE))
     }
 
-    pub fn create_note() -> Document {
-        let mut document = Document::new(NOTE_TYPE);
-        document.data = ArhivNotes::data("", "");
+    fn from(document: Document) -> Self {
+        assert_eq!(document.document_type, Self::TYPE, "Not a note");
 
-        document
+        Note(document.into())
     }
 
-    pub fn data<S: Into<String>>(name: S, data: S) -> Value {
-        json!({ "name": name.into(), "data": data.into() })
-    }
-
-    pub fn list(&self, pattern: String) -> Vec<Document> {
-        let matcher = {
-            if pattern.is_empty() {
-                None
-            } else {
-                Some(Matcher {
-                    selector: "$.name".to_string(),
-                    pattern,
-                })
-            }
-        };
-
-        let filter = DocumentFilter {
-            document_type: Some(NOTE_TYPE.to_string()),
-            page_offset: None,
-            page_size: None,
-            matcher,
-            skip_archived: Some(true),
-            only_staged: None,
-        };
-
-        self.arhiv
-            .list_documents(Some(filter))
-            .expect("must be able to list notes")
-    }
-
-    pub fn get_note(&self, id: &Id) -> Option<Document> {
-        let result = self
-            .arhiv
-            .get_document(id)
-            .expect("must be able to get note");
-
-        if let Some(ref document) = result {
-            assert_eq!(document.document_type, NOTE_TYPE);
-        }
-
-        result
-    }
-
-    pub fn put_note(&self, note: Document) {
-        self.arhiv
-            .stage_document(note)
-            .expect("must be able to save note");
+    fn into_document(self) -> Document<Self::Data> {
+        self.0
     }
 }

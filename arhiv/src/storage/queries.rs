@@ -4,8 +4,8 @@ use crate::entities::*;
 use anyhow::*;
 use rs_utils::fuzzy_match;
 use rusqlite::functions::FunctionFlags;
-use rusqlite::Error as RusqliteError;
-use rusqlite::{params, Connection, OptionalExtension, ToSql, NO_PARAMS};
+use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
+use rusqlite::{params, Connection, OptionalExtension, NO_PARAMS};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
@@ -31,6 +31,32 @@ impl Params {
         }
 
         params
+    }
+}
+
+impl FromSql for Revision {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_i64().map(|value| (value as u32).into())
+    }
+}
+
+impl ToSql for Revision {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self.0))
+    }
+}
+
+impl FromSql for Id {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(|value| value.to_string().into())
+    }
+}
+
+impl ToSql for Id {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        let value: &str = &self.0;
+
+        Ok(ToSqlOutput::from(value))
     }
 }
 
@@ -61,7 +87,7 @@ pub trait Queries {
                         UNION ALL
                     SELECT MAX(rev) as rev FROM attachments)",
                 NO_PARAMS,
-                |row| row.get(0),
+                |row| row.get(0).into(),
             )
             .context("failed to get max rev")
     }
@@ -149,7 +175,7 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_documents_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
+    fn get_documents_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
         let mut stmt = self.get_connection().prepare_cached(
             "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING rev = MAX(rev)",
         )?;
@@ -205,7 +231,7 @@ pub trait Queries {
         Ok(attachments)
     }
 
-    fn get_attachments_since(&self, min_rev: Revision) -> Result<Vec<Attachment>> {
+    fn get_attachments_since(&self, min_rev: &Revision) -> Result<Vec<Attachment>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM attachments WHERE rev >= ?1")?;
@@ -266,7 +292,7 @@ pub trait Queries {
     fn get_changeset(&self) -> Result<Changeset> {
         let documents = self.list_documents(DOCUMENT_FILTER_STAGED)?;
 
-        let attachments_in_use: HashSet<String> = documents
+        let attachments_in_use: HashSet<Id> = documents
             .iter()
             .map(|document| document.attachment_refs.clone())
             .flatten()
@@ -296,6 +322,7 @@ pub trait Queries {
                 2,
                 FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
                 move |ctx| {
+                    use rusqlite::Error as RusqliteError;
                     assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
 
                     let haystack = ctx
@@ -342,7 +369,7 @@ pub trait MutableQueries: Queries {
         )?;
 
         stmt.execute(params![
-            document.is_staged(),
+            document.rev.is_staged(),
             document.id,
             document.rev,
             document.created_at,

@@ -1,7 +1,7 @@
 use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
-use arhiv::Arhiv;
-use arhiv_modules::ArhivNotes;
+use arhiv::{Arhiv, DocumentFilter};
+use arhiv_modules::*;
 use rs_utils::is_production_mode;
 use serde_json::Value;
 use std::sync::Arc;
@@ -9,7 +9,7 @@ use std::sync::Arc;
 fn main() {
     env_logger::init();
 
-    let notes = Arc::new(ArhivNotes::new(Arhiv::must_open()));
+    let arhiv = Arc::new(Arhiv::must_open());
 
     let src = if is_production_mode() {
         AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
@@ -20,62 +20,96 @@ fn main() {
     AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
         .with_action("list", {
-            let notes = notes.clone();
+            let arhiv = arhiv.clone();
 
             move |_, params| {
-                let pattern = params.as_str().expect("pattern must be string").to_string();
+                let filter: Option<DocumentFilter> =
+                    serde_json::from_value(params).expect("param must be document filter");
 
-                serde_json::to_value(&notes.list(pattern)).expect("must be able to serialize")
+                let result = arhiv
+                    .list_documents(filter)
+                    .expect("must be able to list documents");
+
+                serde_json::to_value(&result).expect("must be able to serialize")
             }
         })
-        .with_action("get_note", {
-            let notes = notes.clone();
+        .with_action("get", {
+            let arhiv = arhiv.clone();
 
             move |_, params| {
-                let id = params.as_str().expect("id must be string").to_string();
+                let id: Id = params
+                    .as_str()
+                    .expect("id must be string")
+                    .to_string()
+                    .into();
 
-                serde_json::to_value(notes.get_note(&id)).expect("must be able to serialize")
+                let result = arhiv
+                    .get_document(&id)
+                    .expect("must be able to get document");
+
+                serde_json::to_value(result).expect("must be able to serialize")
             }
         })
-        .with_action("put_note", {
-            let notes = notes.clone();
+        .with_action("put", {
+            let arhiv = arhiv.clone();
 
             move |_, params| {
-                let note: Document =
+                let document: Document =
                     serde_json::from_value(params).expect("param must be document");
 
-                notes.put_note(note);
+                arhiv
+                    .stage_document(document)
+                    .expect("must be able to save document");
 
                 Value::Null
             }
         })
-        .with_action("create_note", {
-            move |_, _params| {
-                serde_json::to_value(ArhivNotes::create_note()).expect("must be able to serialize")
+        .with_action("create", {
+            move |_, params| {
+                let document_type = params.as_str().expect("type must be string");
+
+                let result = match document_type {
+                    Note::TYPE => Some(Note::new().into_document()),
+                    _ => {
+                        log::error!("action create: got unknown type {}", document_type);
+
+                        None
+                    }
+                };
+
+                serde_json::to_value(result).expect("must be able to serialize")
             }
         })
         .with_action("get_attachment", {
-            let notes = notes.clone();
+            let arhiv = arhiv.clone();
 
             move |_, params| {
-                let id = params.as_str().expect("id must be string").to_string();
+                let id: Id = params
+                    .as_str()
+                    .expect("id must be string")
+                    .to_string()
+                    .into();
 
-                serde_json::to_value(notes.arhiv.get_attachment(&id).unwrap())
+                serde_json::to_value(arhiv.get_attachment(&id).unwrap())
                     .expect("must be able to serialize")
             }
         })
         .with_action("get_attachment_location", {
-            let notes = notes.clone();
+            let arhiv = arhiv.clone();
 
             move |_, params| {
-                let id = params.as_str().expect("id must be string").to_string();
+                let id: Id = params
+                    .as_str()
+                    .expect("id must be string")
+                    .to_string()
+                    .into();
 
-                serde_json::to_value(notes.arhiv.get_attachment_location(id).unwrap())
+                serde_json::to_value(arhiv.get_attachment_location(id).unwrap())
                     .expect("must be able to serialize")
             }
         })
         .with_action("pick_attachments", {
-            let notes = notes.clone();
+            let arhiv = arhiv.clone();
 
             move |context, _params| {
                 let files = context.pick_files(true);
@@ -83,8 +117,7 @@ fn main() {
                 let attachments: Vec<Attachment> = files
                     .iter()
                     .map(|file| {
-                        notes
-                            .arhiv
+                        arhiv
                             .stage_attachment(file.to_str().unwrap(), false)
                             .unwrap()
                     })

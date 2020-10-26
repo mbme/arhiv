@@ -72,30 +72,38 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document(&self, mut document: Document) -> Result<()> {
+    pub fn stage_document<T: Serialize>(&self, updated_document: Document<T>) -> Result<()> {
+        let updated_document = updated_document.into_value();
+
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
-        if let Some(mut existing_document) = conn.get_document(&document.id)? {
-            existing_document.rev = 0; // make sure document rev is Staging
-            existing_document.updated_at = Utc::now();
-            existing_document.archived = document.archived;
-            existing_document.data = document.data;
-            existing_document.refs = document.refs;
-            existing_document.attachment_refs = document.attachment_refs;
+        let mut document = {
+            if let Some(mut document) = conn.get_document(&updated_document.id)? {
+                if document.document_type != updated_document.document_type {
+                    bail!("Change of document type is prohibited")
+                }
 
-            conn.put_document(&existing_document)?;
-            conn.commit()?;
-            log::trace!("staged document {}", &existing_document);
-        } else {
-            document.rev = 0;
-            document.created_at = Utc::now();
-            document.updated_at = Utc::now();
+                document.rev = Revision::STAGING; // make sure document rev is Staging
+                document.updated_at = Utc::now();
 
-            conn.put_document(&document)?;
-            conn.commit()?;
-            log::trace!("staged new document {}", &document);
-        }
+                document
+            } else {
+                let mut new_document = Document::new(updated_document.document_type);
+                new_document.id = updated_document.id;
+
+                new_document
+            }
+        };
+
+        document.archived = updated_document.archived;
+        document.data = updated_document.data;
+        document.refs = updated_document.refs;
+        document.attachment_refs = updated_document.attachment_refs;
+
+        conn.put_document(&document)?;
+        conn.commit()?;
+        log::trace!("staged document {}", &document);
 
         Ok(())
     }
@@ -155,7 +163,7 @@ impl Arhiv {
             .ok_or(anyhow!("unknown attachment {}", id))?;
         attachment.filename = filename.into();
 
-        if attachment.is_staged() {
+        if attachment.rev.is_staged() {
             let mut conn = self.storage.get_writable_connection()?;
             let tx = conn.get_tx()?;
 
@@ -172,7 +180,7 @@ impl Arhiv {
 
             let current_rev = tx.get_rev()?;
 
-            attachment.rev = current_rev + 1;
+            attachment.rev = current_rev.inc();
 
             tx.put_attachment(&attachment)?;
 
@@ -195,7 +203,7 @@ impl Arhiv {
 
         let data = self.storage.get_attachment_data(id.clone());
 
-        if attachment.is_staged() {
+        if attachment.rev.is_staged() {
             if !data.staged_file_exists()? {
                 bail!("can't find staged file for attachment {}", id);
             }
@@ -222,7 +230,7 @@ pub enum AttachmentLocation {
 pub struct Status {
     pub root_dir: String,
     pub is_prime: bool,
-    pub rev: u32,
+    pub rev: Revision,
 
     pub committed_documents: u32,
     pub staged_documents: u32,

@@ -1,3 +1,4 @@
+use crate::entities::Id;
 use anyhow::*;
 use rs_utils::find_config_file;
 use serde::{Deserialize, Serialize};
@@ -31,7 +32,7 @@ impl Config {
         Config::read().expect("must be able to read arhiv config")
     }
 
-    pub fn get_attachment_data_url(&self, id: &str) -> Result<String> {
+    pub fn get_attachment_data_url(&self, id: &Id) -> Result<String> {
         let prime_url = self
             .prime_url
             .as_ref()

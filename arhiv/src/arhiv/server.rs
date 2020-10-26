@@ -94,6 +94,8 @@ fn post_attachment_data_handler(
     data: bytes::Bytes,
     arhiv: Arc<Arhiv>,
 ) -> impl warp::Reply {
+    let id: Id = id.into();
+
     let dst = arhiv.storage.get_attachment_data(id).get_staged_file_path();
 
     if Path::new(&dst).exists() {
@@ -120,8 +122,10 @@ async fn get_attachment_data_handler(
     id: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let id: Id = id.into();
+
     let attachment = match arhiv.get_attachment(&id) {
-        Ok(Some(attachment)) if attachment.is_committed() => attachment,
+        Ok(Some(attachment)) if attachment.rev.is_committed() => attachment,
 
         Ok(Some(_)) | Ok(None) => {
             return Ok(reply::with_status(

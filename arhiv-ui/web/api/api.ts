@@ -44,13 +44,15 @@ export interface IListPage<T> {
 }
 
 interface IRPC {
-  list<T extends string, P extends Obj, D extends IDocument<T, P> | undefined>(
-    filter: IDocumentFilter<D extends undefined ? undefined : T>
-  ): Promise<IListPage<D extends undefined ? IDocument : D>>
+  list<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
+    filter: IDocumentFilter<T>
+  ): Promise<IListPage<D>>
+
+  list(filter: IDocumentFilter): Promise<IListPage<IDocument>>
 
   get(id: string): Promise<IDocument | null>
   put(document: IDocument): Promise<void>
-  create<T extends string, P extends Obj, D extends IDocument<T, P>>(type: T): Promise<D>
+  create<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(type: T): Promise<D>
 
   get_attachment(id: string): Promise<IAttachment | null>
   get_attachment_location(id: string): Promise<AttachmentLocation>

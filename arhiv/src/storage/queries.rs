@@ -123,7 +123,7 @@ pub trait Queries {
         let mut items = Vec::new();
         let mut has_more = false;
         while let Some(row) = rows.next()? {
-            if page_size > -1 && items.len() as i32 == page_size {
+            if page_size > -1 && items.len() as i32 == page_size - 1 {
                 has_more = true;
                 break; // due to break we ignore last item
             }
@@ -189,7 +189,7 @@ pub trait Queries {
         let mut items = Vec::new();
         let mut has_more = false;
         while let Some(row) = rows.next()? {
-            if page_size > -1 && items.len() as i32 == page_size {
+            if page_size > -1 && items.len() as i32 == page_size - 1 {
                 has_more = true;
                 break; // due to break we ignore last item
             }

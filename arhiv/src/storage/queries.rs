@@ -9,57 +9,6 @@ use rusqlite::{params, Connection, OptionalExtension, NO_PARAMS};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-struct Params {
-    params: HashMap<&'static str, Rc<dyn ToSql>>,
-}
-
-impl Params {
-    pub fn new() -> Self {
-        Params {
-            params: HashMap::new(),
-        }
-    }
-
-    pub fn insert(&mut self, key: &'static str, value: Rc<dyn ToSql>) {
-        self.params.insert(key, value);
-    }
-
-    pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {
-        let mut params: Vec<(&str, &dyn ToSql)> = vec![];
-        for (key, value) in self.params.iter() {
-            params.push((key, value.as_ref()));
-        }
-
-        params
-    }
-}
-
-impl FromSql for Revision {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_i64().map(|value| (value as u32).into())
-    }
-}
-
-impl ToSql for Revision {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.0))
-    }
-}
-
-impl FromSql for Id {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(|value| value.to_string().into())
-    }
-}
-
-impl ToSql for Id {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        let value: &str = &self.0;
-
-        Ok(ToSqlOutput::from(value))
-    }
-}
-
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
@@ -118,7 +67,7 @@ pub trait Queries {
             .context("Failed to count attachments")
     }
 
-    fn list_documents(&self, filter: DocumentFilter) -> Result<Vec<Document>> {
+    fn list_documents(&self, filter: DocumentFilter) -> Result<ListPage<Document>> {
         let mut query = vec!["SELECT * FROM documents WHERE true"];
         let mut params = Params::new();
 
@@ -145,17 +94,21 @@ pub trait Queries {
 
         query.push("GROUP BY id HAVING staged = MAX(staged)");
 
+        let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
-            (page_size, page_offset) => {
-                let page_size = page_size
-                    .map(|val| val.to_string())
-                    .unwrap_or("-1".to_string());
+            (page_size_opt, page_offset_opt) => {
+                page_size = page_size_opt.map(|val| val as i32).unwrap_or(-1);
+
+                // fetch (page_size + 1) items so that we know that there are more items than page_size
+                if page_size > -1 {
+                    page_size += 1
+                }
 
                 query.push("LIMIT :limit");
                 params.insert(":limit", Rc::new(page_size));
 
-                let page_offset = page_offset.unwrap_or(0);
+                let page_offset = page_offset_opt.unwrap_or(0);
                 query.push("OFFSET :offset");
                 params.insert(":offset", Rc::new(page_offset));
             }
@@ -167,12 +120,18 @@ pub trait Queries {
 
         let mut rows = stmt.query_named(&params.get())?;
 
-        let mut documents = Vec::new();
+        let mut items = Vec::new();
+        let mut has_more = false;
         while let Some(row) = rows.next()? {
-            documents.push(utils::extract_document(row)?);
+            if page_size > -1 && items.len() as i32 == page_size {
+                has_more = true;
+                break; // due to break we ignore last item
+            }
+
+            items.push(utils::extract_document(row)?);
         }
 
-        Ok(documents)
+        Ok(ListPage { items, has_more })
     }
 
     fn get_documents_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
@@ -190,7 +149,7 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn list_attachments(&self, filter: AttachmentFilter) -> Result<Vec<Attachment>> {
+    fn list_attachments(&self, filter: AttachmentFilter) -> Result<ListPage<Attachment>> {
         let mut query = vec!["SELECT * FROM attachments WHERE true"];
         let mut params = Params::new();
 
@@ -201,17 +160,21 @@ pub trait Queries {
             params.insert(":pattern", Rc::new(pattern));
         }
 
+        let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
-            (page_size, page_offset) => {
-                let page_size = page_size
-                    .map(|val| val.to_string())
-                    .unwrap_or("-1".to_string());
+            (page_size_opt, page_offset_opt) => {
+                page_size = page_size_opt.map(|val| val as i32).unwrap_or(-1);
+
+                // fetch (page_size + 1) items so that we know that there are more items than page_size
+                if page_size > -1 {
+                    page_size += 1
+                }
 
                 query.push("LIMIT :limit");
                 params.insert(":limit", Rc::new(page_size));
 
-                let page_offset = page_offset.unwrap_or(0);
+                let page_offset = page_offset_opt.unwrap_or(0);
                 query.push("OFFSET :offset");
                 params.insert(":offset", Rc::new(page_offset));
             }
@@ -223,12 +186,18 @@ pub trait Queries {
 
         let mut rows = stmt.query_named(&params.get())?;
 
-        let mut attachments = Vec::new();
+        let mut items = Vec::new();
+        let mut has_more = false;
         while let Some(row) = rows.next()? {
-            attachments.push(utils::extract_attachment(row)?);
+            if page_size > -1 && items.len() as i32 == page_size {
+                has_more = true;
+                break; // due to break we ignore last item
+            }
+
+            items.push(utils::extract_attachment(row)?);
         }
 
-        Ok(attachments)
+        Ok(ListPage { items, has_more })
     }
 
     fn get_attachments_since(&self, min_rev: &Revision) -> Result<Vec<Attachment>> {
@@ -290,7 +259,7 @@ pub trait Queries {
     }
 
     fn get_changeset(&self) -> Result<Changeset> {
-        let documents = self.list_documents(DOCUMENT_FILTER_STAGED)?;
+        let documents = self.list_documents(DOCUMENT_FILTER_STAGED)?.items;
 
         let attachments_in_use: HashSet<Id> = documents
             .iter()
@@ -430,5 +399,56 @@ pub trait MutableQueries: Queries {
         ])?;
 
         Ok(())
+    }
+}
+
+struct Params {
+    params: HashMap<&'static str, Rc<dyn ToSql>>,
+}
+
+impl Params {
+    pub fn new() -> Self {
+        Params {
+            params: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, key: &'static str, value: Rc<dyn ToSql>) {
+        self.params.insert(key, value);
+    }
+
+    pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {
+        let mut params: Vec<(&str, &dyn ToSql)> = vec![];
+        for (key, value) in self.params.iter() {
+            params.push((key, value.as_ref()));
+        }
+
+        params
+    }
+}
+
+impl FromSql for Revision {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_i64().map(|value| (value as u32).into())
+    }
+}
+
+impl ToSql for Revision {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self.0))
+    }
+}
+
+impl FromSql for Id {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(|value| value.to_string().into())
+    }
+}
+
+impl ToSql for Id {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        let value: &str = &self.0;
+
+        Ok(ToSqlOutput::from(value))
     }
 }

@@ -1,4 +1,4 @@
-import { IDocument, API, IDocumentFilter } from './api'
+import { IDocument, API, IDocumentFilter, IListPage } from './api'
 
 export interface INoteProps {
   name: string,
@@ -7,7 +7,7 @@ export interface INoteProps {
 
 export type Note = IDocument<'note', INoteProps>
 
-export function listNotes(pattern: string): Promise<Note[]> {
+export function listNotes(pattern: string): Promise<IListPage<Note>> {
   const filter: IDocumentFilter<'note'> = {
     type: 'note',
     matcher: pattern ? {

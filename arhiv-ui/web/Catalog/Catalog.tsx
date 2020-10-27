@@ -52,6 +52,7 @@ export function Catalog() {
   }
 
   const items = notes
+    .items
     .map(note => (
       <CatalogEntry
         key={note.id}

@@ -38,10 +38,16 @@ export interface IDocumentFilter<T extends string | undefined = undefined> {
 
 export type AttachmentLocation = { Url: string } | { File: string }
 
+export interface IListPage<T> {
+  items: T[]
+  hasMore: boolean
+}
+
 interface IRPC {
   list<T extends string, P extends Obj, D extends IDocument<T, P> | undefined>(
     filter: IDocumentFilter<D extends undefined ? undefined : T>
-  ): Promise<Array<D extends undefined ? IDocument : D>>
+  ): Promise<IListPage<D extends undefined ? IDocument : D>>
+
   get(id: string): Promise<IDocument | null>
   put(document: IDocument): Promise<void>
   create<T extends string, P extends Obj, D extends IDocument<T, P>>(type: T): Promise<D>

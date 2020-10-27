@@ -4,7 +4,7 @@ import {
   ProgressLocker, StyleArg,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
-import { API } from './types'
+import { getNote } from './api'
 import { Frame, ErrorBlock, NotFoundBlock, Action } from './parts'
 import { Metadata } from './Metadata'
 import { Note } from './Note'
@@ -20,7 +20,7 @@ interface IProps {
 export function Card({ id }: IProps) {
   const router = RouterContext.use()
   const [metadata, showMetadata] = React.useState(false)
-  const [note, err] = usePromise(() => API.get_note(id), [id])
+  const [note, err] = usePromise(() => getNote(id), [id])
 
   if (err) {
     return (

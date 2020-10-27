@@ -6,7 +6,7 @@ import {
   useFocusable,
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
-import { Note } from '../types'
+import { Note } from '../api'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 

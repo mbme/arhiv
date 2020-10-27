@@ -7,7 +7,7 @@ import {
   usePromise,
   RouterContext,
 } from '@v/web-utils'
-import { API } from '../types'
+import { API, createNote, getNote } from '../api'
 import { CardEditor } from './CardEditor'
 import { selectLinks, parseMarkup } from '../markup-parser'
 import { NotFoundBlock, ErrorBlock } from '../parts'
@@ -23,7 +23,7 @@ async function extractRefs(data: string) {
   for (const link of selectLinks(markup)) {
     const id = link.link
 
-    if (await API.get_note(id)) {
+    if (await API.get(id)) {
       documentRefs.add(id)
     } else if (await API.get_attachment(id)) {
       attachmentRefs.add(id)
@@ -48,10 +48,10 @@ export function CardEditorContainer({ id }: IProps) {
 
   const [note, err] = usePromise(() => {
     if (id) {
-      return API.get_note(id)
+      return getNote(id)
     }
 
-    return API.create_note()
+    return createNote()
   }, [id])
 
   if (err) {
@@ -80,7 +80,7 @@ export function CardEditorContainer({ id }: IProps) {
       attachmentRefs,
     } = await extractRefs(data)
 
-    await API.put_note({
+    await API.put({
       ...note,
       refs,
       attachmentRefs,
@@ -94,7 +94,7 @@ export function CardEditorContainer({ id }: IProps) {
   }
 
   const onDelete = async () => {
-    await API.put_note({
+    await API.put({
       ...note,
       archived: true,
     })

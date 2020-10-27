@@ -7,7 +7,7 @@ import {
   Box,
 } from '@v/web-platform'
 import { usePromise, useDebounced } from '@v/web-utils'
-import { API } from '../types'
+import { listNotes } from '../api'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
 
@@ -32,7 +32,7 @@ export function Catalog() {
 
   const debouncedFilter = useDebounced(filter, 300)
 
-  const [notes, err] = usePromise(() => API.list(debouncedFilter), [debouncedFilter])
+  const [notes, err] = usePromise(() => listNotes(debouncedFilter), [debouncedFilter])
 
   // save filter in a temp variable
   React.useEffect(() => {

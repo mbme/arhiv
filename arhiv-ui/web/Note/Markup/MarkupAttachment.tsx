@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { IAttachment, API } from '../../types'
+import { IAttachment, API } from '../../api'
 import { Image, StyleArg } from '@v/web-platform'
 import { usePromise } from '@v/web-utils'
 

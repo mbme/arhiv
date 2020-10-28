@@ -1,4 +1,4 @@
-import { IDocument, API, IDocumentFilter, IListPage } from './api'
+import { IDocument, API } from './api'
 
 export interface INoteProps {
   name: string,
@@ -6,19 +6,6 @@ export interface INoteProps {
 }
 
 export type Note = IDocument<'note', INoteProps>
-
-export function listNotes(pattern: string): Promise<IListPage<Note>> {
-  const filter: IDocumentFilter<'note'> = {
-    type: 'note',
-    matcher: pattern ? {
-      selector: '$.name',
-      pattern,
-    } : undefined,
-    skipArchived: true,
-  }
-
-  return API.list(filter)
-}
 
 export async function getNote(id: string): Promise<Note | null> {
   const document = await API.get(id)

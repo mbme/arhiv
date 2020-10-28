@@ -5,11 +5,12 @@ import {
   Input,
   Column,
   Box,
+  Button,
 } from '@v/web-platform'
-import { usePromise, useDebounced } from '@v/web-utils'
-import { listNotes } from '../api'
+import { useDebounced } from '@v/web-utils'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
+import { useList } from './useList'
 
 interface IState {
   filter: string
@@ -31,28 +32,31 @@ export function Catalog() {
   } = useForm({ filter: STATE.filter })
 
   const debouncedFilter = useDebounced(filter, 300)
-
-  const [notes, err] = usePromise(() => listNotes(debouncedFilter), [debouncedFilter])
+  const {
+    items,
+    hasMore,
+    error,
+    loadMore,
+  } = useList(debouncedFilter)
 
   // save filter in a temp variable
   React.useEffect(() => {
     STATE.filter = debouncedFilter
   }, [debouncedFilter])
 
-  if (err) {
+  if (error) {
     return (
-      <ErrorBlock error={err} />
+      <ErrorBlock error={error} />
     )
   }
 
-  if (!notes) {
+  if (!items) {
     return (
       <ProgressLocker />
     )
   }
 
-  const items = notes
-    .items
+  const notes = items
     .map(note => (
       <CatalogEntry
         key={note.id}
@@ -101,7 +105,16 @@ export function Catalog() {
           overflowY="auto"
           width="100%"
         >
-          {items}
+          {notes}
+
+          {hasMore && (
+            <Button
+              variant="link"
+              onClick={loadMore}
+            >
+              Load more
+            </Button>
+          )}
         </Box>
       </Column>
     </Frame>

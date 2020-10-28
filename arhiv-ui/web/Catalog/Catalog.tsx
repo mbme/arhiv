@@ -50,21 +50,19 @@ export function Catalog() {
     )
   }
 
-  if (!items) {
-    return (
-      <ProgressLocker />
-    )
-  }
-
-  const notes = items
-    .map(note => (
-      <CatalogEntry
-        key={note.id}
-        note={note}
-        autoFocus={note.id === STATE.focusedId}
-        onFocus={() => { STATE.focusedId = note.id }}
-      />
-    ))
+  const content = items ? (
+    items
+      .map(note => (
+        <CatalogEntry
+          key={note.id}
+          note={note}
+          autoFocus={note.id === STATE.focusedId}
+          onFocus={() => { STATE.focusedId = note.id }}
+        />
+      ))
+  ) : (
+    <ProgressLocker />
+  )
 
   const actions = (
     <Action
@@ -105,7 +103,7 @@ export function Catalog() {
           overflowY="auto"
           width="100%"
         >
-          {notes}
+          {content}
 
           {hasMore && (
             <Button

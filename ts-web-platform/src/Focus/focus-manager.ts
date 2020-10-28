@@ -39,10 +39,20 @@ export class FocusManager {
       this._log.debug(`add ${child.name}`)
     }
 
+    let currentPos = -1
+    if (this.selectedChild$.value) {
+      currentPos = this._children.indexOf(this.selectedChild$.value)
+    }
+
     this._children.push(child)
 
+    // update current pos if needed
+    if (currentPos > -1) {
+      this._selectNearestChild(currentPos, true)
+    }
+
     // automatically select first added child if enabled
-    const focusFirstChild = this.isEnabled() && this._children.length === 1
+    const focusFirstChild = this._children.length === 1
 
     if (autoFocus || focusFirstChild) {
       this._setSelected(child, autoFocus)
@@ -67,7 +77,7 @@ export class FocusManager {
 
       removeMut(this._children, child)
 
-      if (this.isEnabled() && this.selectedChild$.value === child) {
+      if (this.selectedChild$.value === child) {
         this._log.debug('unregisterChild: auto selecting first child')
         this.selectedChild$.value = undefined
         this._selectNearestChild(pos)
@@ -261,7 +271,7 @@ export class FocusManager {
     }
   }
 
-  private _selectNearestChild(pos: number) {
+  private _selectNearestChild(pos: number, scrollIntoView = false) {
     if (!this._children.length) {
       return
     }
@@ -271,6 +281,6 @@ export class FocusManager {
     const nextPos = Math.min(pos, this._children.length - 1)
 
     this._log.debug(`select child ${nextPos}`)
-    this._setSelected(this._children[nextPos])
+    this._setSelected(this._children[nextPos], scrollIntoView)
   }
 }

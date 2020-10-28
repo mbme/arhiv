@@ -12,7 +12,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
     let mut document = new_document();
     document.data = json!({ "test": "test" });
     arhiv.stage_document(document.clone())?;
-    assert_eq!(arhiv.list_documents(None)?.len(), 1);
+    assert_eq!(arhiv.list_documents(None)?.items.len(), 1);
 
     // READ
     {
@@ -36,13 +36,13 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
 
     // DELETE
     {
-        assert_eq!(arhiv.list_documents(None)?.len(), 1);
+        assert_eq!(arhiv.list_documents(None)?.items.len(), 1);
         let mut other_document = arhiv.get_document(&document.id)?.unwrap();
         other_document.archived = true;
         arhiv.stage_document(other_document)?;
 
         assert_eq!(arhiv.get_document(&document.id)?.unwrap().archived, true);
-        assert_eq!(arhiv.list_documents(None)?.len(), 0);
+        assert_eq!(arhiv.list_documents(None)?.items.len(), 0);
     }
 
     Ok(())
@@ -59,7 +59,7 @@ fn test_replica_crud() -> Result<()> {
 }
 
 fn test_attachments(arhiv: &Arhiv) -> Result<()> {
-    assert_eq!(arhiv.list_attachments(None)?.len(), 0);
+    assert_eq!(arhiv.list_attachments(None)?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
     let attachment = arhiv.stage_attachment(src, true)?;
@@ -74,7 +74,7 @@ fn test_attachments(arhiv: &Arhiv) -> Result<()> {
         .get_attachment_data(&attachment.id)
         .get_staged_file_path();
 
-    assert_eq!(arhiv.list_attachments(None)?.len(), 1);
+    assert_eq!(arhiv.list_attachments(None)?.items.len(), 1);
     assert_eq!(are_equal_files(src, dst)?, true);
 
     Ok(())

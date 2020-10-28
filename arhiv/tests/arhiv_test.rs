@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::{start_server, Arhiv};
+use arhiv::{start_server, Arhiv, DocumentFilter};
 use rs_utils::project_relpath;
 use serde_json::json;
 use std::sync::Arc;
@@ -56,6 +56,24 @@ fn test_prime_crud() -> Result<()> {
 #[test]
 fn test_replica_crud() -> Result<()> {
     test_crud(&new_replica())
+}
+
+#[test]
+fn test_pagination() -> Result<()> {
+    let arhiv = new_prime();
+
+    arhiv.stage_document(new_document())?;
+    arhiv.stage_document(new_document())?;
+
+    let page = arhiv.list_documents(Some(DocumentFilter {
+        page_size: Some(1),
+        ..DocumentFilter::default()
+    }))?;
+
+    assert_eq!(page.items.len(), 1);
+    assert_eq!(page.has_more, true);
+
+    Ok(())
 }
 
 fn test_attachments(arhiv: &Arhiv) -> Result<()> {

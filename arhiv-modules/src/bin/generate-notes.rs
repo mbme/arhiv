@@ -38,7 +38,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Note {
     let mut note = Note::new();
     note.0.data = NoteData {
         name,
-        data: data.join("\n\n"),
+        data: data.join("\n\n").into(),
     };
     note.0.attachment_refs = attachment_refs;
 

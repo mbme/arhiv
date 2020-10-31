@@ -1,21 +1,15 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
+mod markup;
 mod notes;
 
 use arhiv::entities::*;
+pub use markup::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 pub use notes::*;
-
-pub fn create_link(url: &str, text: &str) -> String {
-    if text.is_empty() {
-        format!("[[{}]]", url)
-    } else {
-        format!("[[{}][{}]]", url, text)
-    }
-}
 
 pub trait DocumentImpl {
     const TYPE: &'static str;

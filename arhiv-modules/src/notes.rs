@@ -1,11 +1,12 @@
 use crate::DocumentImpl;
+use crate::MarkupString;
 use arhiv::entities::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NoteData {
     pub name: String,
-    pub data: String,
+    pub data: MarkupString,
 }
 
 pub struct Note(pub Document<NoteData>);

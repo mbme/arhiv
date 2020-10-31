@@ -27,14 +27,14 @@ fn is_newline(c: char) -> bool {
 }
 
 // one or more newlines
-pub fn parse_newlines(input: &str) -> IResult<&str, Node> {
+fn parse_newlines(input: &str) -> IResult<&str, Node> {
     map(
         take_while1(is_newline), //
         |e: &str| Node::Newlines(e.len()),
     )(input)
 }
 
-pub fn parse_header(input: &str) -> IResult<&str, Node> {
+fn parse_header(input: &str) -> IResult<&str, Node> {
     let (input, _) = tag("# ")(input)?;
 
     map(take_till1(is_newline), |e: &str| {
@@ -42,7 +42,7 @@ pub fn parse_header(input: &str) -> IResult<&str, Node> {
     })(input)
 }
 
-pub fn parse_link(input: &str) -> IResult<&str, InlineNode> {
+fn parse_link(input: &str) -> IResult<&str, InlineNode> {
     map(
         pair(
             delimited(tag("[["), is_not("]"), tag("]")), //
@@ -55,14 +55,14 @@ pub fn parse_link(input: &str) -> IResult<&str, InlineNode> {
     )(input)
 }
 
-pub fn parse_bold(input: &str) -> IResult<&str, InlineNode> {
+fn parse_bold(input: &str) -> IResult<&str, InlineNode> {
     map(
         delimited(tag("*"), is_not("*"), tag("*")), //
         |value: &str| InlineNode::Bold(value.to_string()),
     )(input)
 }
 
-fn normalize_line(items: Line) -> Line {
+fn group_strings_in_line(items: Line) -> Line {
     let mut line: Line = Vec::new();
 
     let mut acc = Vec::new();
@@ -89,7 +89,7 @@ fn normalize_line(items: Line) -> Line {
     line
 }
 
-pub fn parse_line(input: &str) -> IResult<&str, Node> {
+fn parse_line(input: &str) -> IResult<&str, Node> {
     let (rest, input) = take_till1(is_newline)(input)?;
 
     let (_, result) = map(
@@ -98,7 +98,7 @@ pub fn parse_line(input: &str) -> IResult<&str, Node> {
             parse_bold,
             map(take(1usize), |c: &str| InlineNode::String(c.to_string())),
         )))),
-        |items| Node::Line(normalize_line(items)),
+        |items| Node::Line(group_strings_in_line(items)),
     )(input)?;
 
     Ok((rest, result))

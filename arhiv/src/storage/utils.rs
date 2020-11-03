@@ -1,12 +1,14 @@
+use std::collections::HashSet;
+
 use crate::entities::*;
 use anyhow::*;
 use rusqlite::Row;
 
-fn extract_refs(value: String) -> serde_json::Result<Vec<Id>> {
-    serde_json::from_str::<Vec<Id>>(&value)
+fn extract_refs(value: String) -> serde_json::Result<HashSet<Id>> {
+    serde_json::from_str::<HashSet<Id>>(&value)
 }
 
-pub fn serialize_refs(refs: &Vec<Id>) -> serde_json::Result<String> {
+pub fn serialize_refs(refs: &HashSet<Id>) -> serde_json::Result<String> {
     serde_json::to_string(&refs)
 }
 
@@ -19,7 +21,6 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
         refs: extract_refs(row.get("refs")?)?,
-        attachment_refs: extract_refs(row.get("attachment_refs")?)?,
         data: row.get("data")?,
     })
 }

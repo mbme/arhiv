@@ -1,6 +1,7 @@
-use parser::parse_markup;
-use parser::Node;
+use arhiv::entities::*;
+pub use parser::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::convert::From;
 
 mod parser;
@@ -26,4 +27,19 @@ pub fn create_link(url: &str, text: &str) -> String {
     } else {
         format!("[[{}][{}]]", url, text)
     }
+}
+
+pub fn extract_refs(markup: &Vec<Node>) -> HashSet<Id> {
+    markup
+        .iter()
+        .filter_map(Node::get_children)
+        .flatten()
+        .filter_map(|node| {
+            if let InlineNode::Link(reference, _) = node {
+                Some(Id(reference.clone()))
+            } else {
+                None
+            }
+        })
+        .collect()
 }

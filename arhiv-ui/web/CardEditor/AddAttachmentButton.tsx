@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { createLink } from '../markup-parser'
-import { API } from '../api'
+import { API, createLink } from '../api'
 import { Action } from '../parts'
 
 interface IProps {

@@ -4,12 +4,13 @@ use arhiv_modules::*;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
+use std::collections::HashSet;
 use std::fs;
 
 fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Note {
     let name = markov.generate_sentence_constrained(8, false);
 
-    let mut attachment_refs = vec![];
+    let mut refs = HashSet::new();
 
     // generate note data
     let mut data: Vec<String> = vec![];
@@ -27,7 +28,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Note {
                 .expect("attachment ids must be provided");
 
             sentences.push(create_link(id.into(), ""));
-            attachment_refs.push(id.clone());
+            refs.insert(id.clone());
         }
 
         sentences.shuffle(&mut rng);
@@ -40,7 +41,7 @@ fn gen_note(markov: &Markov, attachment_ids: &Vec<Id>) -> Note {
         name,
         data: data.join("\n\n").into(),
     };
-    note.0.attachment_refs = attachment_refs;
+    note.0.refs = refs;
 
     note
 }

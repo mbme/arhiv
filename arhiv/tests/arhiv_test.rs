@@ -125,7 +125,7 @@ async fn test_update_attachment_filename() -> Result<()> {
     assert_eq!(arhiv.get_status()?.rev.0, 0);
 
     let mut document = new_document();
-    document.attachment_refs.push(attachment.id.clone());
+    document.refs.insert(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
 
     arhiv.sync().await?;
@@ -152,7 +152,7 @@ async fn test_prime_sync() -> Result<()> {
     let other_attachment = arhiv.stage_attachment(src, true)?;
 
     let mut document = new_document();
-    document.attachment_refs.push(attachment.id.clone());
+    document.refs.insert(attachment.id.clone());
     arhiv.stage_document(document.clone())?;
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
@@ -227,7 +227,7 @@ async fn test_replica_sync() -> Result<()> {
     let attachment = replica.stage_attachment(src, true)?;
 
     let mut document = new_document();
-    document.attachment_refs.push(attachment.id.clone());
+    document.refs.insert(attachment.id.clone());
     replica.stage_document(document.clone())?;
 
     replica.sync().await?;
@@ -282,7 +282,7 @@ async fn test_download_attachment() -> Result<()> {
     let attachment = prime.stage_attachment(src, true)?;
 
     let mut document = new_document();
-    document.attachment_refs.push(attachment.id.clone());
+    document.refs.insert(attachment.id.clone());
     prime.stage_document(document)?;
 
     prime.sync().await?;

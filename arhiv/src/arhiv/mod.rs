@@ -98,8 +98,7 @@ impl Arhiv {
 
         document.archived = updated_document.archived;
         document.data = updated_document.data;
-        document.refs = updated_document.refs;
-        document.attachment_refs = updated_document.attachment_refs;
+        document.refs = updated_document.refs; // FIXME validate refs
 
         conn.put_document(&document)?;
         conn.commit()?;

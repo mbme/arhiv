@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,8 +16,7 @@ pub struct Document<T = Value> {
     pub document_type: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub refs: Vec<Id>,
-    pub attachment_refs: Vec<Id>,
+    pub refs: HashSet<Id>,
     pub archived: bool,
     pub data: T,
 }
@@ -31,8 +31,7 @@ impl Document {
             document_type: document_type.into(),
             created_at: now,
             updated_at: now,
-            refs: vec![],
-            attachment_refs: vec![],
+            refs: HashSet::new(),
             archived: false,
             data: T::default(),
         }
@@ -46,7 +45,6 @@ impl Document {
             created_at: self.created_at,
             updated_at: self.updated_at,
             refs: self.refs,
-            attachment_refs: self.attachment_refs,
             archived: self.archived,
             data: serde_json::from_value(self.data).expect("must be able to parse data"),
         }
@@ -66,7 +64,6 @@ impl<T: Serialize> Document<T> {
             created_at: self.created_at,
             updated_at: self.updated_at,
             refs: self.refs,
-            attachment_refs: self.attachment_refs,
             archived: self.archived,
             data: serde_json::to_value(self.data).expect("must be able to convert to value"),
         }

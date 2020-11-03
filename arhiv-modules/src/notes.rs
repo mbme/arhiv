@@ -1,7 +1,9 @@
+use crate::extract_refs;
 use crate::DocumentImpl;
 use crate::MarkupString;
 use arhiv::entities::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NoteData {
@@ -20,7 +22,7 @@ impl DocumentImpl for Note {
         Note(Document::new(Self::TYPE))
     }
 
-    fn from(document: Document) -> Self {
+    fn from_document(document: Document) -> Self {
         assert_eq!(document.document_type, Self::TYPE, "Not a note");
 
         Note(document.into())
@@ -28,5 +30,11 @@ impl DocumentImpl for Note {
 
     fn into_document(self) -> Document<Self::Data> {
         self.0
+    }
+
+    fn extract_refs(&self) -> HashSet<Id> {
+        let nodes = self.0.data.data.parse();
+
+        extract_refs(&nodes)
     }
 }

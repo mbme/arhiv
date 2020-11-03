@@ -13,7 +13,6 @@ CREATE TABLE documents (
   archived BOOLEAN NOT NULL,
   type TEXT NOT NULL,
   refs TEXT NOT NULL,
-  attachment_refs TEXT NOT NULL,
   data TEXT NOT NULL,
 
   staged BOOLEAN NOT NULL,
@@ -29,7 +28,6 @@ CREATE TABLE documents_history (
   archived BOOLEAN NOT NULL,
   type TEXT NOT NULL,
   refs TEXT NOT NULL,
-  attachment_refs TEXT NOT NULL,
   data TEXT NOT NULL,
 
   PRIMARY KEY (id, rev)

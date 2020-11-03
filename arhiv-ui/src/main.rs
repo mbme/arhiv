@@ -57,8 +57,23 @@ fn main() {
                 let document: Document =
                     serde_json::from_value(params).expect("param must be document");
 
+                let mut document = match document.document_type.as_str() {
+                    Note::TYPE => Note::from_document(document),
+                    _ => {
+                        log::error!(
+                            "action put: got document of unknown type {}",
+                            &document.document_type
+                        );
+
+                        return Value::Null;
+                    }
+                };
+
+                // Extract & update refs
+                document.0.refs = document.extract_refs();
+
                 arhiv
-                    .stage_document(document)
+                    .stage_document(document.into_document())
                     .expect("must be able to save document");
 
                 Value::Null
@@ -76,6 +91,15 @@ fn main() {
                         None
                     }
                 };
+
+                serde_json::to_value(result).expect("must be able to serialize")
+            }
+        })
+        .with_action("parse_markup", {
+            move |_, params| {
+                let markup = params.as_str().expect("markup must be string");
+
+                let result = parse_markup(markup);
 
                 serde_json::to_value(result).expect("must be able to serialize")
             }

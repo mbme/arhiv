@@ -261,9 +261,9 @@ pub trait Queries {
     fn get_changeset(&self) -> Result<Changeset> {
         let documents = self.list_documents(DOCUMENT_FILTER_STAGED)?.items;
 
-        let attachments_in_use: HashSet<Id> = documents
+        let ids_in_use: HashSet<Id> = documents
             .iter()
-            .map(|document| document.attachment_refs.clone())
+            .map(|document| document.refs.clone())
             .flatten()
             .collect();
 
@@ -271,7 +271,7 @@ pub trait Queries {
             .get_staged_attachments()?
             .into_iter()
             // ignore unused local attachments
-            .filter(|attachment| attachments_in_use.contains(&attachment.id))
+            .filter(|attachment| ids_in_use.contains(&attachment.id))
             .collect();
 
         let changeset = Changeset {
@@ -333,8 +333,8 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (staged, id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (staged, id, rev, created_at, updated_at, archived, type, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
@@ -346,7 +346,6 @@ pub trait MutableQueries: Queries {
             document.archived,
             document.document_type,
             utils::serialize_refs(&document.refs)?,
-            utils::serialize_refs(&document.attachment_refs)?,
             document.data,
         ])?;
 
@@ -356,8 +355,8 @@ pub trait MutableQueries: Queries {
     fn put_document_history(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, created_at, updated_at, archived, type, refs, attachment_refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, created_at, updated_at, archived, type, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
@@ -368,7 +367,6 @@ pub trait MutableQueries: Queries {
             document.archived,
             document.document_type,
             utils::serialize_refs(&document.refs)?,
-            utils::serialize_refs(&document.attachment_refs)?,
             document.data,
         ])?;
 

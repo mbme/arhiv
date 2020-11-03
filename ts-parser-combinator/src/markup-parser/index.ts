@@ -1,7 +1,7 @@
 import {
   isFailure,
   isSuccess,
-} from '@v/parser-combinator'
+} from '../parser'
 import { markupParser } from './parsers'
 import * as nodes from './nodes'
 

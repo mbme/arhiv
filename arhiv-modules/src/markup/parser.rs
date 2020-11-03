@@ -1,25 +1,37 @@
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take, take_till1, take_while1};
-use nom::combinator::{complete, map, value};
+use nom::combinator::{complete, map, opt, value};
 use nom::multi::{many0, many1};
 use nom::sequence::{delimited, pair};
+use serde::Serialize;
 
 use nom::IResult;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum InlineNode {
     String(String),
-    Link(String, String),
+    Link(String, String), // FIXME support external urls (https/ftp)
     Bold(String),
+    Mono(String),
+    Strikethrough(String),
 }
 
 pub type Line = Vec<InlineNode>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Node {
     Newlines(usize),
     Header(String),
     Line(Line),
+}
+
+impl Node {
+    pub fn get_children(&self) -> Option<&Vec<InlineNode>> {
+        match &self {
+            Node::Line(line) => Some(line),
+            _ => None,
+        }
+    }
 }
 
 fn is_newline(c: char) -> bool {
@@ -37,9 +49,15 @@ fn parse_newlines(input: &str) -> IResult<&str, Node> {
 fn parse_header(input: &str) -> IResult<&str, Node> {
     let (input, _) = tag("# ")(input)?;
 
-    map(take_till1(is_newline), |e: &str| {
-        Node::Header(e.to_string())
-    })(input)
+    let (rest, result) = map(
+        take_till1(is_newline), //
+        |e: &str| Node::Header(e.to_string()),
+    )(input)?;
+
+    // skip final newline if any
+    let (rest, _) = opt(tag("\n"))(rest)?;
+
+    Ok((rest, result))
 }
 
 fn parse_link(input: &str) -> IResult<&str, InlineNode> {
@@ -59,6 +77,20 @@ fn parse_bold(input: &str) -> IResult<&str, InlineNode> {
     map(
         delimited(tag("*"), is_not("*"), tag("*")), //
         |value: &str| InlineNode::Bold(value.to_string()),
+    )(input)
+}
+
+fn parse_mono(input: &str) -> IResult<&str, InlineNode> {
+    map(
+        delimited(tag("`"), is_not("`"), tag("`")), //
+        |value: &str| InlineNode::Mono(value.to_string()),
+    )(input)
+}
+
+fn parse_strikethrough(input: &str) -> IResult<&str, InlineNode> {
+    map(
+        delimited(tag("~"), is_not("~"), tag("~")), //
+        |value: &str| InlineNode::Strikethrough(value.to_string()),
     )(input)
 }
 
@@ -96,10 +128,15 @@ fn parse_line(input: &str) -> IResult<&str, Node> {
         complete(many1(alt((
             parse_link, //
             parse_bold,
+            parse_mono,
+            parse_strikethrough,
             map(take(1usize), |c: &str| InlineNode::String(c.to_string())),
         )))),
         |items| Node::Line(group_strings_in_line(items)),
     )(input)?;
+
+    // skip final newline if any
+    let (rest, _) = opt(tag("\n"))(rest)?;
 
     Ok((rest, result))
 }
@@ -120,8 +157,8 @@ pub fn parse_markup(input: &str) -> Vec<Node> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nom::error::ErrorKind;
-    use nom::Err::Error;
+    use nom::error::{Error, ErrorKind};
+    use nom::Err;
 
     #[test]
     fn test_parse_header() {
@@ -132,10 +169,13 @@ mod tests {
 
         assert_eq!(
             parse_header("# test\nok"),
-            Ok(("\nok", Node::Header("test".to_string())))
+            Ok(("ok", Node::Header("test".to_string())))
         );
 
-        assert_eq!(parse_header("#test"), Err(Error(("#test", ErrorKind::Tag))));
+        assert_eq!(
+            parse_header("#test"),
+            Err(Err::Error(Error::new("#test", ErrorKind::Tag)))
+        );
     }
 
     #[test]
@@ -153,7 +193,10 @@ mod tests {
             Ok(("", InlineNode::Link("url".to_string(), "".to_string())))
         );
 
-        assert_eq!(parse_link("[[]]"), Err(Error(("]]", ErrorKind::IsNot))));
+        assert_eq!(
+            parse_link("[[]]"),
+            Err(Err::Error(Error::new("]]", ErrorKind::IsNot)))
+        );
     }
 
     #[test]
@@ -165,11 +208,27 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_mono() {
+        assert_eq!(
+            parse_mono("`test `"),
+            Ok(("", InlineNode::Mono("test ".to_string())))
+        )
+    }
+
+    #[test]
+    fn test_parse_strikethrough() {
+        assert_eq!(
+            parse_strikethrough("~test ~"),
+            Ok(("", InlineNode::Strikethrough("test ".to_string())))
+        )
+    }
+
+    #[test]
     fn test_parse_line() {
         assert_eq!(
             parse_line("ok go*test * line\nb"),
             Ok((
-                "\nb",
+                "b",
                 Node::Line(vec![
                     InlineNode::String("ok go".to_string()),
                     InlineNode::Bold("test ".to_string()),
@@ -194,11 +253,8 @@ line2
             vec![
                 Node::Newlines(1),
                 Node::Header("Header".to_string()),
-                Node::Newlines(1),
                 Node::Line(vec![InlineNode::String("line1".to_string())]),
-                Node::Newlines(1),
                 Node::Line(vec![InlineNode::String("line2".to_string())]),
-                Node::Newlines(1),
             ]
         );
     }

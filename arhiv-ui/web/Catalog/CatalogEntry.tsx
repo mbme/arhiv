@@ -12,15 +12,13 @@ const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 interface IProps {
   note: Note
-  onFocus(): void
-  autoFocus: boolean
 }
 
-export function CatalogEntry({ note, onFocus, autoFocus }: IProps) {
+export function CatalogEntry({ note }: IProps) {
   const router = RouterContext.use()
 
   const ref = React.useRef<HTMLDivElement>(null)
-  const isFocused = useFocusable(ref, { onFocus, autoFocus })
+  const isFocused = useFocusable(ref)
 
   useClickOnActivate(ref)
 

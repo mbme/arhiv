@@ -12,24 +12,13 @@ import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../parts'
 import { useList } from './useList'
 
-interface IState {
-  filter: string
-  focusedId?: string
-}
-
-// FIXME use global state
-const STATE: IState = {
-  filter: '',
-  focusedId: undefined,
-}
-
 export function Catalog() {
   const {
     Form,
     values: {
       filter = '',
     },
-  } = useForm({ filter: STATE.filter })
+  } = useForm()
 
   const debouncedFilter = useDebounced(filter, 300)
   const {
@@ -38,11 +27,6 @@ export function Catalog() {
     error,
     loadMore,
   } = useList(debouncedFilter)
-
-  // save filter in a temp variable
-  React.useEffect(() => {
-    STATE.filter = debouncedFilter
-  }, [debouncedFilter])
 
   if (error) {
     return (
@@ -56,8 +40,6 @@ export function Catalog() {
         <CatalogEntry
           key={note.id}
           note={note}
-          autoFocus={note.id === STATE.focusedId}
-          onFocus={() => { STATE.focusedId = note.id }}
         />
       ))
   ) : (
@@ -93,7 +75,6 @@ export function Catalog() {
               label=""
               name="filter"
               placeholder="Filter documents"
-              onFocus={() => { STATE.focusedId = undefined }}
             />
           </Form>
         </Box>

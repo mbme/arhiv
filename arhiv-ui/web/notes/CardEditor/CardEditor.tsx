@@ -9,7 +9,7 @@ import {
   StyleArg,
   Box,
 } from '@v/web-platform'
-import { Frame, Action } from '../parts'
+import { Frame, Action } from '../../parts'
 import { Note } from '../Note'
 import { AddAttachmentButton } from './AddAttachmentButton'
 import { DeleteDocumentButton } from './DeleteDocumentButton'

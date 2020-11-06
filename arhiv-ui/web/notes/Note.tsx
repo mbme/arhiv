@@ -4,7 +4,7 @@ import {
 } from '@v/web-platform'
 import {
   Markup,
-} from './Markup'
+} from '../Markup'
 
 interface IProps {
   name: string

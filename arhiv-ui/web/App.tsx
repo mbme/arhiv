@@ -5,12 +5,9 @@ import {
 import {
   PlatformProvider,
 } from '@v/web-platform'
-import { pathMatcher as pm } from '@v/utils'
-import { Catalog } from './Catalog'
-import { Card } from './Card'
-import { CardEditorContainer } from './CardEditor'
 import { NotFoundBlock } from './parts'
 import { Url } from './Url'
+import { routes as noteRoutes } from './notes'
 
 export function App() {
   return (
@@ -19,10 +16,7 @@ export function App() {
         onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
       >
         {[
-          [pm`/`, () => <Catalog />],
-          [pm`/new`, () => <CardEditorContainer />],
-          [pm`/${'id'}`, ({ id }) => <Card id={id} />],
-          [pm`/${'id'}/edit`, ({ id }) => <CardEditorContainer id={id} />],
+          ...noteRoutes,
         ]}
       </Routes>
 

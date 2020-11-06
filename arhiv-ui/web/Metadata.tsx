@@ -4,12 +4,12 @@ import {
   Box,
 } from '@v/web-platform'
 import { ChronoFormatter } from '@v/chrono'
-import { Note } from './api'
+import { IDocument } from './api'
 
 const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm')
 
 interface IProps {
-  document: Note
+  document: IDocument
 }
 
 // FIXME render refs and attachment refs

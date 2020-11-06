@@ -1,12 +1,13 @@
 import * as React from 'react'
 import {
   Box,
-  ProgressLocker, StyleArg,
+  ProgressLocker,
+  StyleArg,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
-import { getNote } from './api'
-import { Frame, ErrorBlock, NotFoundBlock, Action } from './parts'
-import { Metadata } from './Metadata'
+import { getNote } from '../api'
+import { Frame, ErrorBlock, NotFoundBlock, Action } from '../parts'
+import { Metadata } from '../Metadata'
 import { Note } from './Note'
 
 const $container: StyleArg = {
@@ -68,7 +69,7 @@ export function Card({ id }: IProps) {
       <Action
         type="location"
         replace
-        to={{ path: `/${id}/edit` }}
+        to={{ path: `/notes/${id}/edit` }}
       >
         Edit Note
       </Action>

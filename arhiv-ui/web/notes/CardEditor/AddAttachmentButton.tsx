@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { API, createLink } from '../api'
-import { Action } from '../parts'
+import { API, createLink } from '../../api'
+import { Action } from '../../parts'
 
 interface IProps {
   onAttachments(links: string[]): void

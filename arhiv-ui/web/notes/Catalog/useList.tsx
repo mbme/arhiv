@@ -1,6 +1,6 @@
-import { noop } from '@v/utils'
 import * as React from 'react'
-import { API, IDocumentFilter, IListPage, Note } from '../api'
+import { noop } from '@v/utils'
+import { API, IDocumentFilter, IListPage, Note } from '../../api'
 
 const PAGE_SIZE = 10
 

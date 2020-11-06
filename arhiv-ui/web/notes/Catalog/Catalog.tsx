@@ -9,7 +9,7 @@ import {
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
 import { CatalogEntry } from './CatalogEntry'
-import { ErrorBlock, Frame, Action } from '../parts'
+import { ErrorBlock, Frame, Action } from '../../parts'
 import { useList } from './useList'
 
 export function Catalog() {
@@ -49,7 +49,7 @@ export function Catalog() {
   const actions = (
     <Action
       type="location"
-      to={{ path: '/new' }}
+      to={{ path: '/notes/new' }}
     >
       Add Note
     </Action>

@@ -5,7 +5,7 @@ import {
   Box,
   StyleArg,
 } from '@v/web-platform'
-import { API, MarkupInlineNode, MarkupNode } from '../../api'
+import { API, MarkupInlineNode, MarkupNode } from '../api'
 import { MarkupLink } from './MarkupLink'
 
 const $article: StyleArg = {

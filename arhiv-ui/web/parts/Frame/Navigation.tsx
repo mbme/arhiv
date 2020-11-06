@@ -25,7 +25,7 @@ export function Navigation() {
   return (
     <Column>
       <Link
-        to={{ path: '/' }}
+        to={{ path: '/notes' }}
         $styles={getStyles(true)}
         clean
       >

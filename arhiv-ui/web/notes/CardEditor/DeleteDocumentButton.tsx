@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ConfirmationDialog,
 } from '@v/web-platform'
-import { Action } from '../parts'
+import { Action } from '../../parts'
 
 interface IProps {
   onConfirmed(): void

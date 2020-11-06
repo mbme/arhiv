@@ -6,7 +6,7 @@ import {
   useFocusable,
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
-import { Note } from '../api'
+import { Note } from '../../api'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
@@ -28,7 +28,7 @@ export function CatalogEntry({ note }: IProps) {
       p="small"
       border={isFocused ? 'active' : 'invisible'}
       cursor="pointer"
-      onClick={() => router.push({ path: `/${note.id}` }) }
+      onClick={() => router.push({ path: `/notes/${note.id}` }) }
       ref={ref}
     >
       {note.data.name}

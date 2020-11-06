@@ -6,9 +6,9 @@ import {
   usePromise,
   RouterContext,
 } from '@v/web-utils'
-import { API, createNote, getNote } from '../api'
+import { API, createNote, getNote } from '../../api'
 import { CardEditor } from './CardEditor'
-import { NotFoundBlock, ErrorBlock } from '../parts'
+import { NotFoundBlock, ErrorBlock } from '../../parts'
 
 interface IProps {
   id?: string
@@ -55,7 +55,7 @@ export function CardEditorContainer({ id }: IProps) {
       },
     })
 
-    router.replace({ path: `/${note.id}` })
+    router.replace({ path: `/notes/${note.id}` })
   }
 
   const onDelete = async () => {
@@ -64,14 +64,14 @@ export function CardEditorContainer({ id }: IProps) {
       archived: true,
     })
 
-    router.push({ path: '/' })
+    router.push({ path: '/notes' })
   }
 
   const onCancel = () => {
     if (isNew) {
       router.goBack()
     } else {
-      router.replace({ path: `/${note.id}` })
+      router.replace({ path: `/notes/${note.id}` })
     }
   }
 

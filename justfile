@@ -6,6 +6,9 @@
 gen-notes:
   cd arhiv-modules; cargo run --bin generate-notes
 
+gen-projects-tasks:
+  cd arhiv-modules; cargo run --bin generate-projects-tasks
+
 remove-arhiv:
   cd arhiv; cargo run --bin remove-arhiv
 

@@ -1,4 +1,5 @@
-import { IDocument, API } from './api'
+import { API } from './api'
+import { IDocument } from './types'
 
 export interface INoteProps {
   name: string,
@@ -22,5 +23,5 @@ export async function getNote(id: string): Promise<Note | null> {
 }
 
 export function createNote(): Promise<Note> {
-  return API.create('note')
+  return API.create({ documentType: 'note' })
 }

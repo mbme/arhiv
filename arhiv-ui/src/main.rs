@@ -3,6 +3,7 @@ use arhiv::entities::*;
 use arhiv::{Arhiv, DocumentFilter};
 use arhiv_modules::*;
 use rs_utils::is_production_mode;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -55,7 +56,7 @@ fn main() {
 
             move |_, params| {
                 let document: Document =
-                    serde_json::from_value(params).expect("param must be document");
+                    serde_json::from_value(params).expect("params must be document");
 
                 let mut document = match document.document_type.as_str() {
                     Note::TYPE => Note::from_document(document),
@@ -81,18 +82,34 @@ fn main() {
         })
         .with_action("create", {
             move |_, params| {
-                let document_type = params.as_str().expect("type must be string");
+                let args: CreateDocumentArgs =
+                    serde_json::from_value(params).expect("failed to parse params");
 
-                let result = match document_type {
-                    Note::TYPE => Some(Note::new().into_document()),
-                    _ => {
-                        log::error!("action create: got unknown type {}", document_type);
-
-                        None
+                match args.document_type.as_str() {
+                    Note::TYPE => {
+                        //
+                        serde_json::to_value(Note::new().into_document())
+                            .expect("must be able to serialize")
                     }
-                };
+                    Project::TYPE => {
+                        //
+                        serde_json::to_value(Project::new().into_document())
+                            .expect("must be able to serialize")
+                    }
+                    Task::TYPE => {
+                        //
+                        let project_id: Id =
+                            serde_json::from_value(args.args).expect("failed to parse id");
 
-                serde_json::to_value(result).expect("must be able to serialize")
+                        serde_json::to_value(Task::new(project_id).into_document())
+                            .expect("must be able to serialize")
+                    }
+                    _ => {
+                        log::error!("action create: got unknown type {}", args.document_type);
+
+                        Value::Null
+                    }
+                }
             }
         })
         .with_action("parse_markup", {
@@ -151,4 +168,11 @@ fn main() {
             }
         })
         .start(src);
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateDocumentArgs {
+    document_type: String,
+    args: Value,
 }

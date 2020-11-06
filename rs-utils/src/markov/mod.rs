@@ -157,14 +157,14 @@ impl Markov {
         include_separator: bool,
     ) -> String {
         let mut attempt = 0;
-        let max_attempts = 20;
+        let max_attempts = 100;
 
         loop {
             attempt += 1;
             if attempt > max_attempts {
                 panic!(format!(
                     "Failed to generate sentence in {} attempts",
-                    attempt
+                    max_attempts
                 ))
             }
 

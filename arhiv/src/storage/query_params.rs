@@ -44,7 +44,6 @@ pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
 pub struct AttachmentFilter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
-    pub pattern: Option<String>,
 }
 
 impl Default for AttachmentFilter {
@@ -52,7 +51,6 @@ impl Default for AttachmentFilter {
         AttachmentFilter {
             page_offset: Some(0),
             page_size: Some(20),
-            pattern: None,
         }
     }
 }

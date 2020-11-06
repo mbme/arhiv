@@ -13,14 +13,16 @@ pub struct NoteData {
 
 pub struct Note(pub Document<NoteData>);
 
+impl Note {
+    pub fn new() -> Self {
+        Note(Document::new(Self::TYPE, NoteData::default()))
+    }
+}
+
 impl DocumentImpl for Note {
     const TYPE: &'static str = "note";
 
     type Data = NoteData;
-
-    fn new() -> Self {
-        Note(Document::new(Self::TYPE))
-    }
 
     fn from_document(document: Document) -> Self {
         assert_eq!(document.document_type, Self::TYPE, "Not a note");

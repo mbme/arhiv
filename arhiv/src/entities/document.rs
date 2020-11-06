@@ -22,7 +22,7 @@ pub struct Document<T = Value> {
 }
 
 impl Document {
-    pub fn new<S: Into<String>, T: Default>(document_type: S) -> Document<T> {
+    pub fn new<S: Into<String>, T>(document_type: S, data: T) -> Document<T> {
         let now = Utc::now();
 
         Document {
@@ -33,7 +33,7 @@ impl Document {
             updated_at: now,
             refs: HashSet::new(),
             archived: false,
-            data: T::default(),
+            data,
         }
     }
 

@@ -34,7 +34,7 @@ pub fn new_replica_with_port(port: u16) -> Arhiv {
 }
 
 pub fn new_document() -> Document {
-    Document::new("test")
+    Document::new("test", serde_json::Value::Null)
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {

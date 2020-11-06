@@ -86,10 +86,12 @@ impl Arhiv {
 
                 document.rev = Revision::STAGING; // make sure document rev is Staging
                 document.updated_at = Utc::now();
+                document.data = updated_document.data;
 
                 document
             } else {
-                let mut new_document = Document::new(updated_document.document_type);
+                let mut new_document =
+                    Document::new(updated_document.document_type, updated_document.data);
                 new_document.id = updated_document.id;
 
                 new_document
@@ -97,7 +99,6 @@ impl Arhiv {
         };
 
         document.archived = updated_document.archived;
-        document.data = updated_document.data;
         document.refs = updated_document.refs; // FIXME validate refs
 
         conn.put_document(&document)?;

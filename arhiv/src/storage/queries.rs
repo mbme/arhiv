@@ -153,13 +153,6 @@ pub trait Queries {
         let mut query = vec!["SELECT * FROM attachments WHERE true"];
         let mut params = Params::new();
 
-        if let Some(pattern) = filter.pattern {
-            self.init_fuzzy_search()?;
-
-            query.push("AND fuzzySearch(filename, :matcher_pattern)");
-            params.insert(":pattern", Rc::new(pattern));
-        }
-
         let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}

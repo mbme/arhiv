@@ -11,6 +11,7 @@ import { useDebounced } from '@v/web-utils'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../../parts'
 import { useList } from './useList'
+import { Note } from '../../api'
 
 export function Catalog() {
   const {
@@ -26,7 +27,11 @@ export function Catalog() {
     hasMore,
     error,
     loadMore,
-  } = useList(debouncedFilter)
+  } = useList<Note>(
+    'note',
+    '$.name',
+    debouncedFilter
+  )
 
   if (error) {
     return (
@@ -36,10 +41,10 @@ export function Catalog() {
 
   const content = items ? (
     items
-      .map(note => (
+      .map(item => (
         <CatalogEntry
-          key={note.id}
-          note={note}
+          key={item.id}
+          note={item}
         />
       ))
   ) : (

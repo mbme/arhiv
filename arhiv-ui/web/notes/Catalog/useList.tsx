@@ -1,13 +1,24 @@
 import * as React from 'react'
-import { noop } from '@v/utils'
-import { API, IDocumentFilter, IListPage, Note } from '../../api'
+import { noop, Obj } from '@v/utils'
+import { API, IDocument, IDocumentFilter, IListPage } from '../../api'
 
 const PAGE_SIZE = 10
 
-export function useList(pattern: string) {
-  const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter<'note'>>()
+interface IList<D> {
+  items?: D[]
+  error?: any
+  hasMore: boolean
+  loadMore(): void
+}
 
-  const [items, setItems] = React.useState<Note[]>()
+export function useList<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
+  type: T,
+  selector: string,
+  pattern: string,
+): IList<D> {
+  const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter<typeof type>>()
+
+  const [items, setItems] = React.useState<D[]>()
   const [hasMore, setHasMore] = React.useState(false)
   const [error, setError] = React.useState<any>()
 
@@ -17,12 +28,12 @@ export function useList(pattern: string) {
     setError(undefined)
 
     setDocumentFilter({
-      type: 'note',
+      type,
       pageOffset: 0,
       pageSize: PAGE_SIZE,
       skipArchived: true,
       matcher: pattern ? {
-        selector: '$.name',
+        selector,
         pattern,
       } : undefined,
     })
@@ -35,7 +46,7 @@ export function useList(pattern: string) {
 
     let relevant = true
 
-    API.list<Note>(documentFilter).then((page: IListPage<Note>) => {
+    API.list<D>(documentFilter).then((page: IListPage<D>) => {
       if (relevant) {
         setItems(currentItems => [...(currentItems || []), ...page.items])
         setHasMore(page.hasMore)

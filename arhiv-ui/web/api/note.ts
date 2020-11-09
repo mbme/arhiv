@@ -1,5 +1,11 @@
 import { API } from './api'
 import { IDocument } from './types'
+import { IDocumentDataDescription } from '../data-description'
+
+export const NoteDataDescription: IDocumentDataDescription = {
+  'name': { type: 'string' },
+  'data': { type: 'markup-string' },
+}
 
 export interface INoteProps {
   name: string,

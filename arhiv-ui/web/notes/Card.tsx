@@ -3,10 +3,10 @@ import {
   ProgressLocker,
 } from '@v/web-platform'
 import { usePromise, RouterContext } from '@v/web-utils'
-import { getNote } from '../api'
+import { getNote, NoteDataDescription } from '../api'
 import { Frame, ErrorBlock, NotFoundBlock, Action } from '../parts'
-import { Metadata } from '../Metadata'
-import { Note } from './Note'
+import { Metadata } from './Metadata'
+import { DocumentData } from './DocumentData'
 
 interface IProps {
   id: string
@@ -78,7 +78,7 @@ export function Card({ id }: IProps) {
       {metadata ? (
         <Metadata document={note} />
       ) : (
-        <Note name={note.data.name} data={note.data.data} />
+        <DocumentData document={note} dataDescription={NoteDataDescription} />
       )}
     </Frame>
   )

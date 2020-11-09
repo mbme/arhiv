@@ -1,5 +1,7 @@
 import * as React from 'react'
+import { pathMatcher as pm } from '@v/utils'
 import {
+  Redirect,
   Routes,
 } from '@v/web-utils'
 import {
@@ -16,6 +18,7 @@ export function App() {
         onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
       >
         {[
+          [pm`/`, () => <Redirect to="/notes" />],
           ...noteRoutes,
         ]}
       </Routes>

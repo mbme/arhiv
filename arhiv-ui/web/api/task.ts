@@ -1,10 +1,10 @@
 import { IDocument } from './types'
-import { IDocumentDataDescription } from '../data-description'
+import { DocumentDataDescription } from '../data-description'
 
 const TASK_COMPLEXITY = ['Unknown' , 'Small' , 'Medium' , 'Large' , 'Epic'] as const
 const TASK_STATUS = ['Inbox' , 'Todo' , 'Later' , 'InProgress' , 'Paused' , 'Done' , 'Cancelled'] as const
 
-export const TaskDataDescription: IDocumentDataDescription = {
+export const TaskDataDescription: DocumentDataDescription<ITaskProps> = {
   'title': { type: 'string' },
   'description': { type: 'markup-string' },
   'complexity': { type: 'enum', values: TASK_COMPLEXITY },

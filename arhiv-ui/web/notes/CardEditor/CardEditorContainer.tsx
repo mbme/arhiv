@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Obj } from '@v/utils'
 import {
   ProgressLocker,
 } from '@v/web-platform'
@@ -6,7 +7,7 @@ import {
   usePromise,
   RouterContext,
 } from '@v/web-utils'
-import { API, createNote, getNote } from '../../api'
+import { API, createNote, getNote, NoteDataDescription } from '../../api'
 import { CardEditor } from './CardEditor'
 import { NotFoundBlock, ErrorBlock } from '../../parts'
 
@@ -46,13 +47,10 @@ export function CardEditorContainer({ id }: IProps) {
     )
   }
 
-  const onSave = async (name: string, data: string) => {
+  const onSave = async (data: Obj) => {
     await API.put({
       ...note,
-      data: {
-        name,
-        data,
-      },
+      data,
     })
 
     router.replace({ path: `/notes/${note.id}` })
@@ -77,8 +75,8 @@ export function CardEditorContainer({ id }: IProps) {
 
   return (
     <CardEditor
-      name={note.data.name}
-      data={note.data.data}
+      data={note.data}
+      dataDescription={NoteDataDescription}
       onSave={onSave}
       onDelete={id ? onDelete : undefined}
       onCancel={onCancel}

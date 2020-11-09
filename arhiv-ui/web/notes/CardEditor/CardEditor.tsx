@@ -1,30 +1,28 @@
 import * as React from 'react'
-import { Procedure } from '@v/utils'
+import { Obj, Procedure } from '@v/utils'
 import {
   Input,
-  Spacer,
   Textarea,
-  useTextareaController,
   useForm,
   Box,
 } from '@v/web-platform'
 import { Frame, Action } from '../../parts'
-import { Note } from '../Note'
-import { AddAttachmentButton } from './AddAttachmentButton'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
+import { DocumentDataDescription } from '../../data-description'
+import { DocumentData } from '../DocumentData'
 
-interface IProps {
-  name: string
-  data: string
-  onSave(name: string, data: string): void
+interface IProps<P extends Obj> {
+  data: P,
+  dataDescription: DocumentDataDescription<P>,
+  onSave(values: P): void
   onCancel: Procedure
   onDelete?: Procedure
 }
 
-export function CardEditor(props: IProps) {
+export function CardEditor<P extends Obj>(props: IProps<P>) {
   const {
-    name: originalName,
-    data: originalData,
+    data,
+    dataDescription,
     onSave,
     onCancel,
     onDelete,
@@ -32,24 +30,10 @@ export function CardEditor(props: IProps) {
 
   const {
     Form,
-    values: {
-      name = '',
-      data = '',
-    },
-  } = useForm({ name: originalName, data: originalData })
+    values,
+  } = useForm(data)
 
   const [preview, showPreview] = React.useState(false)
-
-  const isValid = name && (name !== originalName || data !== originalData)
-
-  const textAreaRef = React.useRef<HTMLTextAreaElement>(null)
-  const textAreaController = useTextareaController(textAreaRef)
-
-  const onAttachments = (links: string[]) => {
-    if (links.length) {
-      textAreaController.insert(links.join(' '))
-    }
-  }
 
   const actions = preview ? (
     <Action
@@ -62,10 +46,9 @@ export function CardEditor(props: IProps) {
     <>
       <Action
         type="action"
-        onClick={() => onSave(name, data)}
-        disabled={!isValid}
+        onClick={() => onSave(values as P)}
       >
-        Save Note
+        Save Document
       </Action>
 
       <Action
@@ -82,11 +65,46 @@ export function CardEditor(props: IProps) {
         Show Preview
       </Action>
 
-      <AddAttachmentButton onAttachments={onAttachments} />
-
       {onDelete && <DeleteDocumentButton onConfirmed={onDelete} />}
     </>
   )
+
+  const fields = Object.entries(dataDescription).map(([name, fieldType]) => {
+    let field
+    switch (fieldType.type) {
+      case 'string': {
+        field = (
+          <Input
+            label={name}
+            name={name}
+            placeholder={name}
+          />
+        )
+        break
+      }
+
+      case 'markup-string': {
+        field = (
+          <Textarea
+            label={name}
+            name={name}
+            placeholder={name}
+          />
+        )
+        break
+      }
+
+      default: {
+        throw new Error(`Unexpected field type: ${fieldType.type}`)
+      }
+    }
+
+    return (
+      <Box key={name} mb="medium">
+        {field}
+      </Box>
+    )
+  })
 
   return (
     <Frame
@@ -95,27 +113,15 @@ export function CardEditor(props: IProps) {
     >
       <Box hidden={preview}>
         <Form>
-          <Input
-            label="Name"
-            name="name"
-            placeholder="Name"
-          />
-
-          <Spacer height="medium" />
-
-          <Textarea
-            label="Data"
-            name="data"
-            placeholder="Data"
-            ref={textAreaRef}
-          />
-
-          <Spacer height="medium" />
+          {fields}
         </Form>
       </Box>
 
       {preview && (
-        <Note name={name} data={data} />
+        <DocumentData
+          data={values}
+          dataDescription={dataDescription}
+        />
       )}
     </Frame>
   )

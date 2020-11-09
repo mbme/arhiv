@@ -1,17 +1,17 @@
-import { Box, Label } from '@v/web-platform'
 import * as React from 'react'
-import { IDocument } from '../api'
-import { IDocumentDataDescription } from '../data-description'
+import { Obj } from '@v/utils'
+import { Box, Label } from '@v/web-platform'
+import { DocumentDataDescription } from '../data-description'
 import { Markup } from '../Markup'
 
-interface IProps {
-  document: IDocument
-  dataDescription: IDocumentDataDescription
+interface IProps<P extends Obj> {
+  data: P
+  dataDescription: DocumentDataDescription<P>
 }
 
-export function DocumentData({ document, dataDescription }: IProps) {
+export function DocumentData<P extends Obj>({ data, dataDescription }: IProps<P>) {
   const fields = Object.entries(dataDescription).map(([name, fieldType]) => {
-    const value = document.data[name]
+    const value = data[name]
 
     let field
     switch (fieldType.type) {

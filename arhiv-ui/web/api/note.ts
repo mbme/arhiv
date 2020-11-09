@@ -1,8 +1,8 @@
 import { API } from './api'
 import { IDocument } from './types'
-import { IDocumentDataDescription } from '../data-description'
+import { DocumentDataDescription } from '../data-description'
 
-export const NoteDataDescription: IDocumentDataDescription = {
+export const NoteDataDescription: DocumentDataDescription<INoteProps> = {
   'name': { type: 'string' },
   'data': { type: 'markup-string' },
 }

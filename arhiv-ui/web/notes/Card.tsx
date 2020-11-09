@@ -78,7 +78,10 @@ export function Card({ id }: IProps) {
       {metadata ? (
         <Metadata document={note} />
       ) : (
-        <DocumentData document={note} dataDescription={NoteDataDescription} />
+        <DocumentData
+          data={note.data}
+          dataDescription={NoteDataDescription}
+        />
       )}
     </Frame>
   )

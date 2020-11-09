@@ -1,7 +1,7 @@
 import { IDocument } from './types'
-import { IDocumentDataDescription } from '../data-description'
+import { DocumentDataDescription } from '../data-description'
 
-export const ProjectDataDescription: IDocumentDataDescription = {
+export const ProjectDataDescription: DocumentDataDescription<IProjectProps> = {
   'title': { type: 'string' },
   'description': { type: 'markup-string' },
 }

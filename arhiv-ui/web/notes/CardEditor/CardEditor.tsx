@@ -6,18 +6,12 @@ import {
   Textarea,
   useTextareaController,
   useForm,
-  StyleArg,
   Box,
 } from '@v/web-platform'
 import { Frame, Action } from '../../parts'
 import { Note } from '../Note'
 import { AddAttachmentButton } from './AddAttachmentButton'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-
-
-const $container: StyleArg = {
-  minHeight: '100%',
-}
 
 interface IProps {
   name: string
@@ -98,7 +92,6 @@ export function CardEditor(props: IProps) {
     <Frame
       actions={actions}
       title="Card Editor"
-      $style={$container}
     >
       <Box hidden={preview}>
         <Form>

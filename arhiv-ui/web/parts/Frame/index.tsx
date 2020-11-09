@@ -3,6 +3,7 @@ import {
   Box,
   StyleArg,
   FocusRegion,
+  Column,
 } from '@v/web-platform'
 import { Navigation } from './Navigation'
 import { Actions } from './Actions'
@@ -31,10 +32,9 @@ interface IProps {
   children: React.ReactNode
   actions: React.ReactNode
   title: string
-  $style?: StyleArg
 }
 
-export function Frame({ children, actions, title, $style }: IProps) {
+export function Frame({ children, actions, title  }: IProps) {
   return (
     <FocusRegion
       name="Frame"
@@ -61,13 +61,13 @@ export function Frame({ children, actions, title, $style }: IProps) {
           $style={$content}
           autoFocus
         >
-          <Box
+          <Column
             height="100%"
             overflowY="auto"
-            $style={$style}
+            alignX="stretch"
           >
             {children}
-          </Box>
+          </Column>
         </FocusRegion>
 
         <FocusRegion

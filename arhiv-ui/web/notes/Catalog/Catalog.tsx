@@ -3,7 +3,6 @@ import {
   ProgressLocker,
   useForm,
   Input,
-  Column,
   Box,
   Button,
 } from '@v/web-platform'
@@ -63,44 +62,37 @@ export function Catalog() {
   return (
     <Frame
       actions={actions}
-      title="Catalog"
+      title="Notes Catalog"
     >
-      <Column
-        height="100%"
-        overflow="hidden"
-        flex="0 0 auto"
+      <Box
+        pb="small"
+        width="100%"
       >
-        <Box
-          as="nav"
-          pb="small"
-          width="100%"
-        >
-          <Form>
-            <Input
-              label=""
-              name="filter"
-              placeholder="Filter documents"
-            />
-          </Form>
-        </Box>
+        <Form>
+          <Input
+            label=""
+            name="filter"
+            placeholder="Filter documents"
+          />
+        </Form>
+      </Box>
 
-        <Box
-          flex="1 1 auto"
-          overflowY="auto"
-          width="100%"
-        >
-          {content}
+      <Box
+        flex="1 1 auto"
+        overflowY="auto"
+        width="100%"
+      >
+        {content}
 
-          {hasMore && (
-            <Button
-              variant="link"
-              onClick={loadMore}
-            >
-              Load more
-            </Button>
-          )}
-        </Box>
-      </Column>
+        {hasMore && (
+          <Button
+            variant="link"
+            onClick={loadMore}
+          >
+            Load more
+          </Button>
+        )}
+      </Box>
     </Frame>
   )
 }

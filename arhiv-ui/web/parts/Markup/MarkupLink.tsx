@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { usePromise } from '@v/web-utils'
 import { MarkupAttachment } from './MarkupAttachment'
-import { API } from '../api'
+import { API } from '../../api'
 
 interface IProps {
   link: string

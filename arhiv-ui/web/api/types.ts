@@ -2,7 +2,7 @@ import { Obj } from '@v/utils'
 
 export interface CreateDocumentArgs<T extends string> {
   documentType: T
-  args?: any
+  args: any
 }
 
 export interface IDocument<T extends string = string, P extends Obj = Obj> {

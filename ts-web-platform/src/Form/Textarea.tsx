@@ -34,55 +34,57 @@ interface IProps {
   $styles?: StyleArg[]
 }
 
-export const Textarea = React.forwardRef<HTMLTextAreaElement, IProps>(function Textarea(props, externalRef) {
-  const {
-    name,
-    label,
-    placeholder,
-    $styles = [],
-  } = props
+export const Textarea = React.forwardRef(
+  function Textarea(props: IProps, externalRef: React.Ref<HTMLTextAreaElement>) {
+    const {
+      name,
+      label,
+      placeholder,
+      $styles = [],
+    } = props
 
-  const ref = React.useRef<HTMLTextAreaElement>(null)
-  const isSelected = useFocusable(ref)
-  useFocusOnActivate(ref)
+    const ref = React.useRef<HTMLTextAreaElement>(null)
+    const isSelected = useFocusable(ref)
+    useFocusOnActivate(ref)
 
-  const {
-    value,
-    setValue,
-  } = useFormControl(name)
+    const {
+      value,
+      setValue,
+    } = useFormControl(name)
 
-  const updateHeight = () => {
-    ref.current!.style.height = 'auto'
-    ref.current!.style.height = `${ref.current!.scrollHeight}px`
-  }
-
-  React.useEffect(() => {
-    window.addEventListener('resize', updateHeight, { passive: true })
-
-    return () => {
-      window.removeEventListener('resize', updateHeight)
+    const updateHeight = () => {
+      ref.current!.style.height = 'auto'
+      ref.current!.style.height = `${ref.current!.scrollHeight}px`
     }
-  }, [])
 
-  React.useEffect(() => {
-    updateHeight()
-  }, [value])
+    React.useEffect(() => {
+      window.addEventListener('resize', updateHeight, { passive: true })
 
-  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)
+      return () => {
+        window.removeEventListener('resize', updateHeight)
+      }
+    }, [])
 
-  return (
-    <Box>
-      <Label>{label}</Label>
+    React.useEffect(() => {
+      updateHeight()
+    }, [value])
 
-      <StylishElement
-        ref={mergeRefs(ref, externalRef)}
-        as="textarea"
-        $styles={[$textarea, isSelected && $selected, ...$styles]}
-        name={name}
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-      />
-    </Box>
-  )
-})
+    const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)
+
+    return (
+      <Box>
+        <Label>{label}</Label>
+
+        <StylishElement
+          ref={mergeRefs(ref, externalRef)}
+          as="textarea"
+          $styles={[$textarea, isSelected && $selected, ...$styles]}
+          name={name}
+          value={value}
+          placeholder={placeholder}
+          onChange={onChange}
+        />
+      </Box>
+    )
+  },
+)

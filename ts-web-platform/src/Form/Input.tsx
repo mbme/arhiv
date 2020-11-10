@@ -55,57 +55,59 @@ interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   onFocus?: Procedure
 }
 
-export const Input = React.forwardRef<HTMLInputElement, IProps>(function Input(props, externalRef) {
-  const {
-    type,
-    name,
-    label,
-    defaultValue,
-    placeholder,
-    autoComplete,
-    withClear,
-    onFocus,
-  } = props
+export const Input = React.forwardRef(
+  function Input(props: IProps, externalRef: React.Ref<HTMLInputElement>) {
+    const {
+      type,
+      name,
+      label,
+      defaultValue,
+      placeholder,
+      autoComplete,
+      withClear,
+      onFocus,
+    } = props
 
-  const {
-    value,
-    setValue,
-  } = useFormControl(name)
+    const {
+      value,
+      setValue,
+    } = useFormControl(name)
 
-  const ref = React.useRef<HTMLInputElement>(null)
-  const isSelected = useFocusable(ref, { onFocus })
+    const ref = React.useRef<HTMLInputElement>(null)
+    const isSelected = useFocusable(ref, { onFocus })
 
-  useFocusOnActivate(ref)
+    useFocusOnActivate(ref)
 
-  return (
-    <Box
-      relative
-      width="100%"
-    >
-      {label && (
-        <Label>{label}</Label>
-      )}
+    return (
+      <Box
+        relative
+        width="100%"
+      >
+        {label && (
+          <Label>{label}</Label>
+        )}
 
-      <StylishElement
-        ref={mergeRefs(ref, externalRef)}
-        as="input"
-        $styles={getStyles(props.withClear, isSelected)}
-        type={type}
-        name={name}
-        value={value}
-        defaultValue={defaultValue}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
-      />
-
-      {withClear && value && (
-        <Icon
-          type="x"
-          $styles={[$clearIcon]}
-          onClick={() => setValue('')}
+        <StylishElement
+          ref={mergeRefs(ref, externalRef)}
+          as="input"
+          $styles={getStyles(props.withClear, isSelected)}
+          type={type}
+          name={name}
+          value={value}
+          defaultValue={defaultValue}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
         />
-      )}
-    </Box>
-  )
-})
+
+        {withClear && value && (
+          <Icon
+            type="x"
+            $styles={[$clearIcon]}
+            onClick={() => setValue('')}
+          />
+        )}
+      </Box>
+    )
+  },
+)

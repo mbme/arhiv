@@ -11,8 +11,8 @@ interface IProps {
   children: React.ReactNode
 }
 
-export const Link = React.forwardRef<HTMLAnchorElement, IProps>(
-  function Link({ to, newTab, className, children }: IProps, ref) {
+export const Link = React.forwardRef(
+  function Link({ to, newTab, className, children }: IProps, ref: React.Ref<HTMLAnchorElement>) {
     const router = RouterContext.use()
 
     const url = router.getUrl(to)

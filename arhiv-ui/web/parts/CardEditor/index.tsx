@@ -1,39 +1,52 @@
 import * as React from 'react'
 import { Obj, Procedure } from '@v/utils'
 import {
-  Input,
-  Textarea,
-  useForm,
   Box,
 } from '@v/web-platform'
-import { Frame, Action } from '../../parts'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
 import { DocumentDataDescription } from '../../data-description'
-import { DocumentData } from '../DocumentData'
+import { API, IDocument } from '../../api'
+import { CardEditorForm } from './CardEditorForm'
+import { CardData } from '../CardData'
+import { Action, Frame } from '..'
 
 interface IProps<P extends Obj> {
-  data: P,
-  dataDescription: DocumentDataDescription<P>,
-  onSave(values: P): void
+  document: IDocument<string, P>
+  dataDescription: DocumentDataDescription<P>
   onCancel: Procedure
+  onSave: Procedure
   onDelete?: Procedure
 }
 
 export function CardEditor<P extends Obj>(props: IProps<P>) {
   const {
-    data,
+    document,
     dataDescription,
-    onSave,
     onCancel,
+    onSave,
     onDelete,
   } = props
 
-  const {
-    Form,
-    values,
-  } = useForm(data)
-
   const [preview, showPreview] = React.useState(false)
+  const formRef = React.useRef<P>(null)
+
+  const saveDocument = async () => {
+    await API.put({
+      ...document,
+      data: formRef.current!,
+    })
+
+    onSave()
+  }
+
+  const deleteDocument = async () => {
+    await API.put({
+      ...document,
+      archived: true,
+    })
+
+    onDelete!()
+  }
 
   const actions = preview ? (
     <Action
@@ -46,7 +59,7 @@ export function CardEditor<P extends Obj>(props: IProps<P>) {
     <>
       <Action
         type="action"
-        onClick={() => onSave(values as P)}
+        onClick={saveDocument}
       >
         Save Document
       </Action>
@@ -65,46 +78,9 @@ export function CardEditor<P extends Obj>(props: IProps<P>) {
         Show Preview
       </Action>
 
-      {onDelete && <DeleteDocumentButton onConfirmed={onDelete} />}
+      {onDelete && <DeleteDocumentButton onConfirmed={deleteDocument} />}
     </>
   )
-
-  const fields = Object.entries(dataDescription).map(([name, fieldType]) => {
-    let field
-    switch (fieldType.type) {
-      case 'string': {
-        field = (
-          <Input
-            label={name}
-            name={name}
-            placeholder={name}
-          />
-        )
-        break
-      }
-
-      case 'markup-string': {
-        field = (
-          <Textarea
-            label={name}
-            name={name}
-            placeholder={name}
-          />
-        )
-        break
-      }
-
-      default: {
-        throw new Error(`Unexpected field type: ${fieldType.type}`)
-      }
-    }
-
-    return (
-      <Box key={name} mb="medium">
-        {field}
-      </Box>
-    )
-  })
 
   return (
     <Frame
@@ -112,14 +88,16 @@ export function CardEditor<P extends Obj>(props: IProps<P>) {
       title="Card Editor"
     >
       <Box hidden={preview}>
-        <Form>
-          {fields}
-        </Form>
+        <CardEditorForm
+          ref={formRef}
+          data={document.data}
+          dataDescription={dataDescription}
+        />
       </Box>
 
       {preview && (
-        <DocumentData
-          data={values}
+        <CardData
+          data={formRef.current!}
           dataDescription={dataDescription}
         />
       )}

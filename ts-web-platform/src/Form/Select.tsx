@@ -21,8 +21,8 @@ interface IProps extends Pick<React.HTMLProps<HTMLSelectElement>, NativeProps> {
   options: { [key: string]: string }
 }
 
-export const Select = React.forwardRef<HTMLSelectElement, IProps>(
-  function Select({ options, name, label }: IProps, externalRef) {
+export const Select = React.forwardRef(
+  function Select({ options, name, label }: IProps, externalRef: React.Ref<HTMLSelectElement>) {
     const {
       value,
       setValue,
@@ -55,5 +55,5 @@ export const Select = React.forwardRef<HTMLSelectElement, IProps>(
         </StylishElement>
       </Box>
     )
-  } ,
+  },
 )

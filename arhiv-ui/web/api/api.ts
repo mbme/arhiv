@@ -13,11 +13,7 @@ import {
 } from './types'
 
 interface IRPC {
-  list<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
-    filter: IDocumentFilter<T>
-  ): Promise<IListPage<D>>
-
-  list(filter: IDocumentFilter): Promise<IListPage<IDocument>>
+  list<D extends IDocument = IDocument>(filter: IDocumentFilter): Promise<IListPage<D>>
 
   get(id: string): Promise<IDocument | null>
 

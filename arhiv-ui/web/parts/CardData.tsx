@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Obj } from '@v/utils'
-import { Box, Label } from '@v/web-platform'
+import { Box, Heading, Label } from '@v/web-platform'
 import { DocumentDataDescription } from '../data-description'
 import { Markup } from './Markup'
 
@@ -21,6 +21,22 @@ export function CardData<P extends Obj>({ data, dataDescription }: IProps<P>) {
         )
         break
       }
+
+      case 'string': {
+        if (fieldType.title) {
+          field = (
+            <Heading
+              fontSize="large"
+            >
+              {value}
+            </Heading>
+          )
+        } else {
+          field = value
+        }
+        break
+      }
+
       default: {
         field = value
         break

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {  RouterContext } from '@v/web-utils'
-import { NoteDataDescription } from '../api'
 import { CardLoader, Card } from '../parts'
+import { NoteDataDescription } from './note'
 
 interface IProps {
   id: string

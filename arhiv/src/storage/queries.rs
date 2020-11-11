@@ -75,17 +75,23 @@ pub trait Queries {
             query.push("AND staged = true")
         }
 
-        if let Some(document_type) = filter.document_type {
-            query.push("AND type = :type");
-            params.insert(":type", Rc::new(document_type));
-        }
+        for matcher in filter.matchers {
+            match matcher {
+                Matcher::Type(document_type) => {
+                    query.push("AND type = :type");
+                    params.insert(":type", Rc::new(document_type));
+                }
 
-        if let Some(matcher) = filter.matcher {
-            self.init_fuzzy_search()?;
+                Matcher::Data { selector, pattern } => {
+                    self.init_fuzzy_search()?;
 
-            query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
-            params.insert(":matcher_selector", Rc::new(matcher.selector));
-            params.insert(":matcher_pattern", Rc::new(matcher.pattern));
+                    query.push(
+                        "AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)",
+                    );
+                    params.insert(":matcher_selector", Rc::new(selector));
+                    params.insert(":matcher_pattern", Rc::new(pattern));
+                }
+            }
         }
 
         if filter.skip_archived.unwrap_or(false) {

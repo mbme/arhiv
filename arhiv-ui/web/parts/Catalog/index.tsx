@@ -10,9 +10,27 @@ import { useDebounced } from '@v/web-utils'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../../parts'
 import { useList } from './useList'
-import { Note } from '../../api'
+import { IDocument, Matcher } from '../../api'
+import { Obj } from '@v/utils'
+import { DocumentDataDescription } from '../../data-description'
 
-export function Catalog() {
+interface IProps<P extends Obj> {
+  title: string
+  dataDescription: DocumentDataDescription<P>
+  getMatchers(filter: string): Matcher[]
+  onAdd(): void
+  onActivate(document: IDocument<string, P>): void
+}
+
+export function Catalog<P extends Obj>(props: IProps<P>) {
+  const {
+    title,
+    dataDescription,
+    getMatchers,
+    onAdd,
+    onActivate,
+  } = props
+
   const {
     Form,
     values: {
@@ -21,16 +39,13 @@ export function Catalog() {
   } = useForm()
 
   const debouncedFilter = useDebounced(filter, 300)
+  const matchers = React.useMemo(() => getMatchers(debouncedFilter), [debouncedFilter])
   const {
     items,
     hasMore,
     error,
     loadMore,
-  } = useList<Note>(
-    'note',
-    '$.name',
-    debouncedFilter
-  )
+  } = useList(matchers)
 
   if (error) {
     return (
@@ -43,7 +58,9 @@ export function Catalog() {
       .map(item => (
         <CatalogEntry
           key={item.id}
-          note={item}
+          document={item}
+          dataDescription={dataDescription}
+          onActivate={onActivate}
         />
       ))
   ) : (
@@ -52,17 +69,17 @@ export function Catalog() {
 
   const actions = (
     <Action
-      type="location"
-      to={{ path: '/notes/new' }}
+      type="action"
+      onClick={onAdd}
     >
-      Add Note
+      Add
     </Action>
   )
 
   return (
     <Frame
       actions={actions}
-      title="Notes Catalog"
+      title={title}
     >
       <Box
         pb="small"

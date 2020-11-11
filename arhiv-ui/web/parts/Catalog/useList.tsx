@@ -1,6 +1,12 @@
 import * as React from 'react'
-import { noop, Obj } from '@v/utils'
-import { API, IDocument, IDocumentFilter, IListPage } from '../../api'
+import { noop } from '@v/utils'
+import {
+  API,
+  IDocument,
+  IDocumentFilter,
+  IListPage,
+  Matcher,
+} from '../../api'
 
 const PAGE_SIZE = 10
 
@@ -11,12 +17,8 @@ interface IList<D> {
   loadMore(): void
 }
 
-export function useList<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
-  type: T,
-  selector: string,
-  pattern: string,
-): IList<D> {
-  const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter<typeof type>>()
+export function useList<D extends IDocument>(matchers: Matcher[]): IList<D> {
+  const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()
   const [hasMore, setHasMore] = React.useState(false)
@@ -28,16 +30,12 @@ export function useList<D extends IDocument<T, P>, T extends string = string, P 
     setError(undefined)
 
     setDocumentFilter({
-      type,
       pageOffset: 0,
       pageSize: PAGE_SIZE,
       skipArchived: true,
-      matcher: pattern ? {
-        selector,
-        pattern,
-      } : undefined,
+      matchers,
     })
-  }, [pattern])
+  }, [matchers])
 
   React.useEffect(() => {
     if (!documentFilter) {

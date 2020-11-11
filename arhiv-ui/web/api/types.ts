@@ -23,16 +23,12 @@ export interface IAttachment {
   readonly filename: string
 }
 
-export interface IMatcher {
-  selector: string
-  pattern: string
-}
+export type Matcher = { Type: string } | { Data: { selector: string, pattern: string } }
 
-export interface IDocumentFilter<T extends string | undefined = undefined> {
-  type: T
+export interface IDocumentFilter {
   pageOffset?: number
   pageSize?: number
-  matcher?: IMatcher
+  matchers: Matcher[]
   skipArchived?: boolean
   onlyStaged?: boolean
 }

@@ -3,6 +3,9 @@ name = "arhiv-ui"
 version = "0.1.0"
 edition = "2018"
 
+[features]
+production-mode = ["arhiv/production-mode"]
+
 [dependencies]
 log = "0.4"
 env_logger = "0.7"

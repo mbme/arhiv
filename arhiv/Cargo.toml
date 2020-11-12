@@ -5,6 +5,9 @@ authors = ["mbme"]
 edition = "2018"
 default-run = "arhiv"
 
+[features]
+production-mode = ["rs-utils/production-mode"]
+
 [dependencies]
 log = "0.4"
 env_logger = "0.7"

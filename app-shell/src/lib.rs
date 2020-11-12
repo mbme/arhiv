@@ -11,10 +11,12 @@ mod webview;
 impl AppShellBuilder {
     pub fn start(self, src: AppSource) {
         if cfg!(feature = "dev-server") {
-            self.serve(src)
-        } else {
-            self.load(src)
+            log::info!("Starting dev server");
+            log::info!("source: {}", src);
+            return self.serve(src);
         }
+
+        self.load(src)
     }
 
     fn load(self, src: AppSource) {
@@ -66,16 +68,12 @@ impl AppShellBuilder {
     #[tokio::main]
     async fn serve(mut self, src: AppSource) {
         use rpc_message::RpcMessage;
-        use rs_utils::{is_production_mode, TempFile};
+        use rs_utils::TempFile;
         use std::fs;
         use std::process::Command;
         use std::sync::Arc;
         use tokio::signal;
         use warp::*;
-
-        if is_production_mode() {
-            panic!("dev server must not be run in production mode")
-        }
 
         // for file picker
         gtk::init().expect("must be able to init gtk");

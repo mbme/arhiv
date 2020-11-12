@@ -1,5 +1,6 @@
 use crate::AppShellBuilder;
 use std::env;
+use std::fmt;
 use std::fs;
 
 pub enum AppSource {
@@ -69,5 +70,18 @@ impl AppSource {
             },
             script
         )
+    }
+}
+
+impl fmt::Display for AppSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", {
+            match self {
+                AppSource::HTMLFile(path) => format!("HTML file {}", path),
+                AppSource::HTMLSource(_) => "HTML string".to_owned(),
+                AppSource::JSFile(path) => format!("JS file {}", path),
+                AppSource::JSSource(_) => "JS string".to_owned(),
+            }
+        })
     }
 }

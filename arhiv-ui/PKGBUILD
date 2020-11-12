@@ -18,8 +18,7 @@ build() {
   cd ..
   yarn run build
 
-  export MODE=production
-  cargo build --locked --release --target-dir=target
+  cargo build --locked --release --target-dir=target --features production-mode
 }
 
 check() {

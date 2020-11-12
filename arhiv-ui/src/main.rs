@@ -2,7 +2,6 @@ use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::{Arhiv, DocumentFilter};
 use arhiv_modules::*;
-use rs_utils::is_production_mode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
@@ -12,7 +11,7 @@ fn main() {
 
     let arhiv = Arc::new(Arhiv::must_open());
 
-    let src = if is_production_mode() {
+    let src = if cfg!(feature = "production-mode") {
         AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
     } else {
         AppSource::JSFile(format!("{}/dist/bundle.js", env!("CARGO_MANIFEST_DIR")))

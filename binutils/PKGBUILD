@@ -16,7 +16,6 @@ pkgver() {
 
 build() {
   cd ..
-  export MODE=production
   cargo build --locked --release --target-dir=target
 }
 

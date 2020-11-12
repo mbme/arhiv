@@ -38,7 +38,7 @@ ui-start-web:
   cd arhiv-ui; yarn start
 
 ui-start-shell:
-  cd arhiv-ui; cargo run --features app-shell/dev-server
+  cd arhiv-ui; RUST_LOG=INFO cargo run --features app-shell/dev-server
 
 check:
   cargo check

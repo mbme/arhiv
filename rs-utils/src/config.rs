@@ -1,4 +1,3 @@
-use super::is_production_mode;
 use crate::fs::file_exists;
 use anyhow::*;
 use std::env;
@@ -29,7 +28,7 @@ pub fn get_config_home() -> Option<String> {
 pub fn find_config_file<S: Into<String>>(file_name: S) -> Result<String> {
     let file_name = file_name.into();
 
-    if is_production_mode() {
+    if cfg!(feature = "production-mode") {
         let config_home = get_config_home().ok_or(anyhow!("Failed to find user config dir"))?;
         let config = format!("{}/{}", config_home, file_name);
 

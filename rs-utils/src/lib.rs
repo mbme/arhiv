@@ -21,13 +21,6 @@ pub fn project_relpath(subpath: &str) -> String {
     format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
 }
 
-// development or production
-pub const MODE: Option<&'static str> = option_env!("MODE");
-
-pub fn is_production_mode() -> bool {
-    MODE.unwrap_or("development") == "production"
-}
-
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     let output = Command::new(command).args(args).output()?;
 

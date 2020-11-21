@@ -7,9 +7,9 @@
   "main": "src/index.ts",
   "sideEffects": false,
   "dependencies": {
-    "react": "^16.13.0"
+    "react": "^17.0.0"
   },
   "devDependencies": {
-    "@types/react": "^16.9.23"
+    "@types/react": "^17.0.0"
   }
 }

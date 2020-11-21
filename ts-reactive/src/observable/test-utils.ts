@@ -11,7 +11,7 @@ type ResultArray<T> = Array<T | typeof complete | typeof error>
 export async function observableToArray<T>(o$: Observable<T>): Promise<ResultArray<T>> {
   const result: ResultArray<T> = []
 
-  await new Promise((resolve) => {
+  await new Promise<void>((resolve) => {
     o$.subscribe({
       next(value) {
         result.push(value)

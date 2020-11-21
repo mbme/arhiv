@@ -32,8 +32,11 @@ export function CardEditor<P extends Obj>(props: IProps<P>) {
 
   const saveDocument = async () => {
     await API.put({
-      ...document,
-      data: formRef.current!,
+      document: {
+        ...document,
+        data: formRef.current!,
+      },
+      newAttachments: [], // FIXME new attachments
     })
 
     onSave()
@@ -41,8 +44,11 @@ export function CardEditor<P extends Obj>(props: IProps<P>) {
 
   const deleteDocument = async () => {
     await API.put({
-      ...document,
-      archived: true,
+      document: {
+        ...document,
+        archived: true,
+      },
+      newAttachments: [],
     })
 
     onDelete!()

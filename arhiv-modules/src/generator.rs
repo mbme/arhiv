@@ -1,13 +1,12 @@
 use super::*;
 use arhiv::entities::*;
-use arhiv::Arhiv;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
 use std::fs;
 
-pub fn create_attachments(arhiv: &Arhiv) -> Vec<Id> {
-    let mut attachment_ids: Vec<Id> = vec![];
+pub fn create_attachments() -> Vec<AttachmentSource> {
+    let mut attachments: Vec<AttachmentSource> = vec![];
 
     let dir = project_relpath("../resources");
     for entry in fs::read_dir(dir).unwrap() {
@@ -15,14 +14,12 @@ pub fn create_attachments(arhiv: &Arhiv) -> Vec<Id> {
         let path = path.to_str().unwrap();
 
         if path.ends_with(".jpg") || path.ends_with(".jpeg") {
-            let attachment = arhiv
-                .stage_attachment(path, false)
-                .expect("must be able to create attachment");
-            attachment_ids.push(attachment.id);
+            let attachment = AttachmentSource::new(path);
+            attachments.push(attachment);
         }
     }
 
-    attachment_ids
+    attachments
 }
 
 pub struct Generator {
@@ -31,13 +28,13 @@ pub struct Generator {
 }
 
 impl Generator {
-    pub fn new(attachment_ids: Vec<Id>) -> Self {
+    pub fn new(attachments: &Vec<AttachmentSource>) -> Self {
         let text = fs::read_to_string(project_relpath("../resources/text.txt")).unwrap();
         let markov = Markov::new(&text);
 
         Generator {
             markov,
-            attachment_ids,
+            attachment_ids: attachments.iter().map(|item| item.id.clone()).collect(),
         }
     }
 

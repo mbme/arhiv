@@ -3,10 +3,9 @@ use crate::entities::*;
 use crate::storage::*;
 use anyhow::*;
 use chrono::Utc;
-use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
+use rs_utils::FsTransaction;
 use serde::{Deserialize, Serialize};
 pub use server::start_server;
-use std::path::Path;
 use std::sync::Arc;
 
 mod server;
@@ -72,11 +71,17 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document<T: Serialize>(&self, updated_document: Document<T>) -> Result<()> {
+    pub fn stage_document<T: Serialize>(
+        &self,
+        updated_document: Document<T>,
+        new_attachments: Vec<AttachmentSource>,
+    ) -> Result<()> {
         let updated_document = updated_document.into_value();
 
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
+
+        let mut fs_tx = FsTransaction::new();
 
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
@@ -99,10 +104,72 @@ impl Arhiv {
         };
 
         document.archived = updated_document.archived;
-        document.refs = updated_document.refs; // FIXME validate refs
+        document.refs = updated_document.refs;
+
+        // Validate document references
+        let new_attachments_ids: Vec<&Id> = new_attachments.iter().map(|item| &item.id).collect();
+        for reference in document.refs.iter() {
+            // FIXME optimize validating id
+            if conn.get_document(reference)?.is_some() {
+                continue;
+            }
+            if conn.get_attachment(reference)?.is_some() {
+                continue;
+            }
+            if reference == &document.id {
+                log::warn!("Document {} references itself", &document.id);
+                continue;
+            }
+            if new_attachments_ids.contains(&reference) {
+                continue;
+            }
+
+            bail!(
+                "Document {} reference unknown entity {}",
+                &document.id,
+                reference
+            );
+        }
+
+        // Stage new attachments
+        for new_attachment in new_attachments {
+            if !document.refs.contains(&new_attachment.id) {
+                log::warn!(
+                    "Document {} new attachment {} is unused, ignoring",
+                    &document.id,
+                    &new_attachment
+                );
+                continue;
+            }
+
+            let attachment = Attachment::from(&new_attachment)?;
+            conn.put_attachment(&attachment)?;
+
+            let path = self
+                .storage
+                .get_attachment_data(attachment.id.clone())
+                .get_staged_file_path();
+
+            if new_attachment.copy {
+                fs_tx.copy_file(new_attachment.file_path.to_string(), path)?;
+            } else {
+                fs_tx.hard_link_file(new_attachment.file_path.to_string(), path)?;
+            }
+
+            log::debug!(
+                "staged new attachment {}: {}",
+                attachment,
+                new_attachment.file_path
+            );
+        }
 
         conn.put_document(&document)?;
+
         conn.commit()?;
+        fs_tx.commit();
+
+        // FIXME remove unused staged attachments
+
         log::trace!("staged document {}", &document);
 
         Ok(())
@@ -121,43 +188,6 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         conn.get_attachment(id)
-    }
-
-    pub fn stage_attachment(&self, file: &str, copy: bool) -> Result<Attachment> {
-        ensure_file_exists(file).expect("new attachment file must exist");
-
-        let attachment = Attachment::new(
-            get_file_hash_sha256(file)?,
-            Path::new(file)
-                .file_name()
-                .expect("file must have name")
-                .to_str()
-                .expect("file name must be valid string"),
-        );
-
-        let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.get_tx()?;
-        let mut fs_tx = FsTransaction::new();
-
-        tx.put_attachment(&attachment)?;
-
-        let path = self
-            .storage
-            .get_attachment_data(attachment.id.clone())
-            .get_staged_file_path();
-
-        if copy {
-            fs_tx.copy_file(file.to_string(), path)?;
-        } else {
-            fs_tx.hard_link_file(file.to_string(), path)?;
-        }
-
-        tx.commit()?;
-        fs_tx.commit();
-
-        log::debug!("staged new attachment {}: {}", attachment, file);
-
-        Ok(attachment)
     }
 
     pub fn update_attachment_filename<S: Into<String>>(&self, id: &Id, filename: S) -> Result<()> {

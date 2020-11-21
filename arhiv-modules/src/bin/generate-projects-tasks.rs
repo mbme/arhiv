@@ -27,8 +27,8 @@ async fn main() {
     env_logger::init();
 
     let arhiv = Arhiv::must_open();
-    let attachment_ids = create_attachments(&arhiv);
-    let generator = Generator::new(attachment_ids);
+    let attachments = create_attachments();
+    let generator = Generator::new(&attachments);
 
     for _ in 0..15 {
         // generate 15 projects
@@ -42,7 +42,7 @@ async fn main() {
         let project_id = project.0.id.clone();
 
         arhiv
-            .stage_document(project.into_document())
+            .stage_document(project.into_document(), attachments.clone())
             .expect("must be able to save document");
 
         let mut rng = thread_rng();
@@ -61,7 +61,7 @@ async fn main() {
             };
 
             arhiv
-                .stage_document(task.into_document())
+                .stage_document(task.into_document(), attachments.clone())
                 .expect("must be able to save document");
         }
     }

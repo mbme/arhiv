@@ -54,15 +54,15 @@ fn main() {
             let arhiv = arhiv.clone();
 
             move |_, params| {
-                let document: Document =
-                    serde_json::from_value(params).expect("params must be document");
+                let args: PutDocumentArgs =
+                    serde_json::from_value(params).expect("failed to parse params");
 
-                let mut document = match document.document_type.as_str() {
-                    Note::TYPE => Note::from_document(document),
+                let mut document = match args.document.document_type.as_str() {
+                    Note::TYPE => Note::from_document(args.document),
                     _ => {
                         log::error!(
                             "action put: got document of unknown type {}",
-                            &document.document_type
+                            &args.document.document_type
                         );
 
                         return Value::Null;
@@ -73,7 +73,7 @@ fn main() {
                 document.0.refs = document.extract_refs();
 
                 arhiv
-                    .stage_document(document.into_document())
+                    .stage_document(document.into_document(), args.new_attachments)
                     .expect("must be able to save document");
 
                 Value::Null
@@ -149,18 +149,12 @@ fn main() {
             }
         })
         .with_action("pick_attachments", {
-            let arhiv = arhiv.clone();
-
             move |context, _params| {
                 let files = context.pick_files(true);
 
-                let attachments: Vec<Attachment> = files
+                let attachments: Vec<AttachmentSource> = files
                     .iter()
-                    .map(|file| {
-                        arhiv
-                            .stage_attachment(file.to_str().unwrap(), false)
-                            .unwrap()
-                    })
+                    .map(|file| AttachmentSource::new_from_path_buf(file))
                     .collect();
 
                 serde_json::to_value(attachments).expect("must be able to serialize")
@@ -174,4 +168,11 @@ fn main() {
 struct CreateDocumentArgs {
     document_type: String,
     args: Value,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PutDocumentArgs {
+    document: Document,
+    new_attachments: Vec<AttachmentSource>,
 }

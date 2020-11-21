@@ -1,8 +1,13 @@
 import { Obj } from '@v/utils'
 
 export interface CreateDocumentArgs<T extends string> {
-  documentType: T
-  args: any
+  readonly documentType: T
+  readonly args: any
+}
+
+export interface PutDocumentArgs {
+  readonly document: IDocument
+  readonly newAttachments: IAttachmentSource[]
 }
 
 export interface IDocument<T extends string = string, P extends Obj = Obj> {
@@ -14,6 +19,13 @@ export interface IDocument<T extends string = string, P extends Obj = Obj> {
   readonly refs: readonly string[]
   readonly archived: boolean
   readonly data: P
+}
+
+export interface IAttachmentSource {
+  readonly id: string
+  readonly filePath: string
+  readonly filename: string
+  readonly copy: boolean
 }
 
 export interface IAttachment {
@@ -36,8 +48,8 @@ export interface IDocumentFilter {
 export type AttachmentLocation = { Url: string } | { File: string }
 
 export interface IListPage<T> {
-  items: T[]
-  hasMore: boolean
+  readonly items: T[]
+  readonly hasMore: boolean
 }
 
 export type MarkupInlineNode =

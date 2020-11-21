@@ -1,6 +1,9 @@
+use super::AttachmentSource;
 use super::{Id, Revision};
 use anyhow::*;
 use chrono::{DateTime, Utc};
+use rs_utils::ensure_file_exists;
+use rs_utils::get_file_hash_sha256;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -16,15 +19,17 @@ pub struct Attachment {
 }
 
 impl Attachment {
-    pub(crate) fn new(hash: String, filename: &str) -> Attachment {
-        Attachment {
-            id: Id::new(),
+    pub(crate) fn from(source: &AttachmentSource) -> Result<Attachment> {
+        ensure_file_exists(&source.file_path)?;
+
+        Ok(Attachment {
+            id: source.id.clone(),
             rev: Revision::STAGING,
-            hash,
+            hash: get_file_hash_sha256(&source.file_path)?,
             created_at: Utc::now(),
-            filename: filename.to_owned(),
+            filename: source.filename.clone(),
             archived: false,
-        }
+        })
     }
 
     pub fn serialize(&self) -> String {

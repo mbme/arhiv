@@ -7,8 +7,8 @@ async fn main() {
     env_logger::init();
 
     let arhiv = Arhiv::must_open();
-    let attachment_ids = create_attachments(&arhiv);
-    let generator = Generator::new(attachment_ids);
+    let attachments = create_attachments();
+    let generator = Generator::new(&attachments);
 
     for _ in 0..30 {
         let mut note = Note::new();
@@ -19,7 +19,7 @@ async fn main() {
         };
 
         arhiv
-            .stage_document(note.into_document())
+            .stage_document(note.into_document(), attachments.clone())
             .expect("must be able to save document");
     }
 

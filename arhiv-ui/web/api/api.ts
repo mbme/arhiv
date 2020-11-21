@@ -6,10 +6,12 @@ import {
   AttachmentLocation,
   CreateDocumentArgs,
   IAttachment,
+  IAttachmentSource,
   IDocument,
   IDocumentFilter,
   IListPage,
   MarkupNode,
+  PutDocumentArgs,
 } from './types'
 
 interface IRPC {
@@ -17,7 +19,7 @@ interface IRPC {
 
   get(id: string): Promise<IDocument | null>
 
-  put(document: IDocument): Promise<void>
+  put(args: PutDocumentArgs): Promise<void>
 
   create<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
     args: CreateDocumentArgs<T>,
@@ -27,7 +29,7 @@ interface IRPC {
 
   get_attachment(id: string): Promise<IAttachment | null>
   get_attachment_location(id: string): Promise<AttachmentLocation>
-  pick_attachments(): Promise<IAttachment[]>
+  pick_attachments(): Promise<IAttachmentSource[]>
 }
 
 export const API = window.RPC_PROXY as IRPC

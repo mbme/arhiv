@@ -1,4 +1,5 @@
 use anyhow::*;
+use arhiv::entities::*;
 use arhiv::{start_server, Arhiv, DocumentFilter};
 use rs_utils::project_relpath;
 use serde_json::json;
@@ -11,7 +12,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
     // CREATE
     let mut document = new_document();
     document.data = json!({ "test": "test" });
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(document.clone(), vec![])?;
     assert_eq!(arhiv.list_documents(None)?.items.len(), 1);
 
     // READ
@@ -26,7 +27,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
     {
         let mut other_document = arhiv.get_document(&document.id)?.unwrap();
         other_document.data = json!({ "test": "1" });
-        arhiv.stage_document(other_document.clone())?;
+        arhiv.stage_document(other_document.clone(), vec![])?;
 
         assert_eq!(
             arhiv.get_document(&document.id)?.unwrap().data,
@@ -39,7 +40,7 @@ fn test_crud(arhiv: &Arhiv) -> Result<()> {
         assert_eq!(arhiv.list_documents(None)?.items.len(), 1);
         let mut other_document = arhiv.get_document(&document.id)?.unwrap();
         other_document.archived = true;
-        arhiv.stage_document(other_document)?;
+        arhiv.stage_document(other_document, vec![])?;
 
         assert_eq!(arhiv.get_document(&document.id)?.unwrap().archived, true);
         assert_eq!(arhiv.list_documents(None)?.items.len(), 0);
@@ -62,8 +63,8 @@ fn test_replica_crud() -> Result<()> {
 fn test_pagination() -> Result<()> {
     let arhiv = new_prime();
 
-    arhiv.stage_document(new_document())?;
-    arhiv.stage_document(new_document())?;
+    arhiv.stage_document(new_document(), vec![])?;
+    arhiv.stage_document(new_document(), vec![])?;
 
     let page = arhiv.list_documents(Some(DocumentFilter {
         page_size: Some(1),
@@ -80,7 +81,14 @@ fn test_attachments(arhiv: &Arhiv) -> Result<()> {
     assert_eq!(arhiv.list_attachments(None)?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = arhiv.stage_attachment(src, true)?;
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut document = new_document();
+    document.refs.insert(attachment.id.clone());
+
+    arhiv.stage_document(document, vec![attachment.clone()])?;
     assert_eq!(
         arhiv
             .get_attachment_data(&attachment.id)
@@ -113,7 +121,16 @@ async fn test_update_attachment_filename() -> Result<()> {
     let arhiv = new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = arhiv.stage_attachment(src, true)?;
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut document = new_document();
+    document.refs.insert(attachment.id.clone());
+
+    arhiv.stage_document(document, vec![attachment.clone()])?;
+
+    let attachment = arhiv.get_attachment(&attachment.id)?.unwrap();
     assert_eq!(attachment.filename, "k2.jpg");
 
     arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
@@ -123,10 +140,6 @@ async fn test_update_attachment_filename() -> Result<()> {
     );
 
     assert_eq!(arhiv.get_status()?.rev.0, 0);
-
-    let mut document = new_document();
-    document.refs.insert(attachment.id.clone());
-    arhiv.stage_document(document.clone())?;
 
     arhiv.sync().await?;
 
@@ -148,12 +161,24 @@ async fn test_prime_sync() -> Result<()> {
     let arhiv = new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = arhiv.stage_attachment(src, true)?;
-    let other_attachment = arhiv.stage_attachment(src, true)?;
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut other_attachment = AttachmentSource::new(src);
+    other_attachment.copy = true;
 
     let mut document = new_document();
+    document.refs.insert(other_attachment.id.clone());
+
+    arhiv.stage_document(document.clone(), vec![other_attachment.clone()])?;
+
+    // now replace attachment ref with other_attachment ref
+    document.refs.clear();
     document.refs.insert(attachment.id.clone());
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(document.clone(), vec![attachment.clone()])?;
+    // so that attachment is unused now
+
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
         true
@@ -204,7 +229,7 @@ async fn test_prime_sync() -> Result<()> {
     {
         let mut document = arhiv.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" });
-        arhiv.stage_document(document)?;
+        arhiv.stage_document(document, vec![])?;
     }
 
     arhiv.sync().await?;
@@ -224,11 +249,13 @@ async fn test_replica_sync() -> Result<()> {
     let replica = new_replica_with_port(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = replica.stage_attachment(src, true)?;
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
 
     let mut document = new_document();
     document.refs.insert(attachment.id.clone());
-    replica.stage_document(document.clone())?;
+    replica.stage_document(document.clone(), vec![attachment.clone()])?;
 
     replica.sync().await?;
 
@@ -258,7 +285,7 @@ async fn test_replica_sync() -> Result<()> {
     {
         let mut document = replica.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "1" });
-        replica.stage_document(document)?;
+        replica.stage_document(document, vec![])?;
     }
 
     replica.sync().await?;
@@ -279,11 +306,13 @@ async fn test_download_attachment() -> Result<()> {
     let prime = Arc::new(new_prime());
 
     let src = &project_relpath("../resources/k2.jpg");
-    let attachment = prime.stage_attachment(src, true)?;
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
 
     let mut document = new_document();
     document.refs.insert(attachment.id.clone());
-    prime.stage_document(document)?;
+    prime.stage_document(document, vec![attachment.clone()])?;
 
     prime.sync().await?;
 

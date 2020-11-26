@@ -43,7 +43,7 @@ impl Arhiv {
         for mut attachment in changeset.attachments {
             // save attachment
             attachment.rev = new_rev.clone();
-            tx.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment, true)?;
 
             let attachment_data = self.get_attachment_data(&attachment.id);
             let file_path = attachment_data.get_staged_file_path();
@@ -153,7 +153,7 @@ impl Arhiv {
 
         let mut fs_tx = FsTransaction::new();
         for attachment in response.attachments {
-            tx.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment, true)?;
 
             // if we've sent few attachments, move them to committed data directory
             if changeset.contains_attachment(&attachment.id) {

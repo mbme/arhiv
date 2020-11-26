@@ -51,15 +51,3 @@ export interface IListPage<T> {
   readonly items: T[]
   readonly hasMore: boolean
 }
-
-export type MarkupInlineNode =
-  { String: string }
-  | { Link: [string, string] }
-  | { Bold: string }
-  | { Mono: string }
-  | { Strikethrough: string }
-
-export type MarkupNode =
-  { Newlines: number }
-  | { Header: string }
-  | { Line: MarkupInlineNode[] }

@@ -135,7 +135,16 @@ impl Arhiv {
         for new_attachment in new_attachments {
             if !document.refs.contains(&new_attachment.id) {
                 log::warn!(
-                    "Document {} new attachment {} is unused, ignoring",
+                    "Document {} new attachment is unused, ignoring: {}",
+                    &document.id,
+                    &new_attachment
+                );
+                continue;
+            }
+
+            if conn.get_attachment(&new_attachment.id)?.is_some() {
+                log::warn!(
+                    "Document {} new attachment already exists, ignoring: {}",
                     &document.id,
                     &new_attachment
                 );
@@ -143,7 +152,7 @@ impl Arhiv {
             }
 
             let attachment = Attachment::from(&new_attachment)?;
-            conn.put_attachment(&attachment)?;
+            conn.put_attachment(&attachment, false)?;
 
             let path = self
                 .storage
@@ -200,7 +209,7 @@ impl Arhiv {
             let mut conn = self.storage.get_writable_connection()?;
             let tx = conn.get_tx()?;
 
-            tx.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment, true)?;
 
             tx.commit()?;
 
@@ -215,7 +224,7 @@ impl Arhiv {
 
             attachment.rev = current_rev.inc();
 
-            tx.put_attachment(&attachment)?;
+            tx.put_attachment(&attachment, true)?;
 
             tx.commit()?;
 
@@ -229,7 +238,7 @@ impl Arhiv {
         self.storage.get_attachment_data(id.clone())
     }
 
-    pub fn get_attachment_location(&self, id: Id) -> Result<AttachmentLocation> {
+    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
         let attachment = self
             .get_attachment(&id)?
             .ok_or(anyhow!("unknown attachment {}", id))?;

@@ -51,7 +51,7 @@ impl Default for AttachmentFilter {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListPage<T> {
     pub items: Vec<T>,

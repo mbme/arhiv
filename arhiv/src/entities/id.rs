@@ -29,6 +29,12 @@ impl From<String> for Id {
     }
 }
 
+impl From<&str> for Id {
+    fn from(value: &str) -> Self {
+        Id(value.to_string())
+    }
+}
+
 impl From<Id> for String {
     fn from(value: Id) -> Self {
         value.0

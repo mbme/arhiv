@@ -38,6 +38,7 @@ async fn main() {
             title: generator.gen_string(),
             description: generator.gen_markup_string(1, 2),
         };
+        project.0.refs = project.extract_refs();
 
         let project_id = project.0.id.clone();
 
@@ -59,6 +60,7 @@ async fn main() {
                 complexity: *COMPLEXITY.choose(&mut rng).unwrap(),
                 status: *STATUS.choose(&mut rng).unwrap(),
             };
+            task.0.refs = task.extract_refs();
 
             arhiv
                 .stage_document(task.into_document(), attachments.clone())

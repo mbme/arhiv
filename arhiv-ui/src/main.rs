@@ -111,11 +111,16 @@ fn main() {
                 }
             }
         })
-        .with_action("parse_markup", {
+        .with_action("render_markup", {
+            let arhiv = arhiv.clone();
+
             move |_, params| {
                 let markup = params.as_str().expect("markup must be string");
 
-                let result = parse_markup(markup);
+                let string = MarkupString::from(markup);
+
+                let result =
+                    MarkupRenderer::new(&string, &arhiv, "/document".to_string()).to_html();
 
                 serde_json::to_value(result).expect("must be able to serialize")
             }
@@ -144,7 +149,7 @@ fn main() {
                     .to_string()
                     .into();
 
-                serde_json::to_value(arhiv.get_attachment_location(id).unwrap())
+                serde_json::to_value(arhiv.get_attachment_location(&id).unwrap())
                     .expect("must be able to serialize")
             }
         })

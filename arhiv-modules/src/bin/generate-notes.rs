@@ -17,6 +17,7 @@ async fn main() {
             name: generator.gen_string(),
             data: generator.gen_markup_string(1, 8),
         };
+        note.0.refs = note.extract_refs();
 
         arhiv
             .stage_document(note.into_document(), attachments.clone())
@@ -24,4 +25,6 @@ async fn main() {
     }
 
     arhiv.sync().await.expect("must be able to sync");
+
+    log::info!("Generated 30 notes!");
 }

@@ -10,7 +10,6 @@ import {
   IDocument,
   IDocumentFilter,
   IListPage,
-  MarkupNode,
   PutDocumentArgs,
 } from './types'
 
@@ -25,7 +24,7 @@ interface IRPC {
     args: CreateDocumentArgs<T>,
   ): Promise<D>
 
-  parse_markup(markup: string): Promise<MarkupNode[]>
+  render_markup(markup: string): Promise<string>
 
   get_attachment(id: string): Promise<IAttachment | null>
   get_attachment_location(id: string): Promise<AttachmentLocation>

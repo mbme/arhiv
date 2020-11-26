@@ -1,4 +1,3 @@
-use crate::extract_refs;
 use crate::DocumentImpl;
 use crate::MarkupString;
 use arhiv::entities::*;
@@ -35,8 +34,6 @@ impl DocumentImpl for Note {
     }
 
     fn extract_refs(&self) -> HashSet<Id> {
-        let nodes = self.0.data.data.parse();
-
-        extract_refs(&nodes)
+        self.0.data.data.extract_refs()
     }
 }

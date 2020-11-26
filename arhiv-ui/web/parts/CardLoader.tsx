@@ -18,11 +18,15 @@ type Props<P extends Obj> = {
 
 export function CardLoader<P>(props: Props<P>) {
   const [document, err] = usePromise(() => {
+    if (props.id) {
+      return API.get(props.id)
+    }
+
     if ('createDocument' in props) {
       return props.createDocument()
     }
 
-    return API.get(props.id)
+    throw new Error('id or createDocument prop must be provided')
   }, [])
 
   if (err) {

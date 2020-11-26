@@ -13,4 +13,4 @@ serde_json = "1.0"
 arhiv = { path = "../arhiv" }
 rs-utils = { path = "../rs-utils" }
 rand = "0.7.3"
-nom = "6.0.0"
+pulldown-cmark  = "0.8.0"

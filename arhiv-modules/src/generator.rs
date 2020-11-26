@@ -58,7 +58,7 @@ impl Generator {
                     .choose(&mut rng)
                     .expect("attachment ids must be provided");
 
-                sentences.push(create_link(id.into(), ""));
+                sentences.push(create_ref(id, ""));
             }
 
             sentences.shuffle(&mut rng);

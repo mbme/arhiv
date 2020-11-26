@@ -1,4 +1,3 @@
-use crate::extract_refs;
 use crate::DocumentImpl;
 use crate::MarkupString;
 use arhiv::entities::*;
@@ -66,9 +65,7 @@ impl DocumentImpl for Task {
     }
 
     fn extract_refs(&self) -> HashSet<Id> {
-        let nodes = self.0.data.description.parse();
-
-        let mut refs = extract_refs(&nodes);
+        let mut refs = self.0.data.description.extract_refs();
 
         refs.insert(self.0.data.project_id.clone());
 

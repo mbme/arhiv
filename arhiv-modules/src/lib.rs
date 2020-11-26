@@ -2,7 +2,7 @@
 #![deny(clippy::pedantic)]
 
 pub mod generator;
-mod markup;
+mod markdown;
 mod note;
 mod project;
 mod task;
@@ -13,7 +13,7 @@ use arhiv::entities::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-pub use markup::*;
+pub use markdown::*;
 
 pub use note::*;
 pub use project::*;

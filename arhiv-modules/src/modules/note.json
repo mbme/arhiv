@@ -1,0 +1,12 @@
+{
+  "document_type": "note",
+  "document_title": "name",
+  "fields": {
+    "name": {
+      "field_type": "String"
+    },
+    "data": {
+      "field_type": "MarkupString"
+    }
+  }
+}

@@ -10,10 +10,9 @@ export interface PutDocumentArgs {
   readonly newAttachments: IAttachmentSource[]
 }
 
-export interface IDocument<T extends string = string, P extends Obj = Obj> {
+export interface IDocument<P extends Obj = Obj> {
   readonly id: string
   readonly rev: number
-  readonly type: T
   readonly createdAt: string
   readonly updatedAt: string
   readonly refs: readonly string[]
@@ -35,7 +34,7 @@ export interface IAttachment {
   readonly filename: string
 }
 
-export type Matcher = { Type: string } | { Data: { selector: string, pattern: string } }
+export type Matcher = { Data: { selector: string, pattern: string } }
 
 export interface IDocumentFilter {
   pageOffset?: number

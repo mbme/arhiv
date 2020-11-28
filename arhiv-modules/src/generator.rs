@@ -1,9 +1,11 @@
-use super::*;
 use arhiv::entities::*;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
 use std::fs;
+
+use crate::markup::create_ref;
+use crate::markup::MarkupString;
 
 pub fn create_attachments() -> Vec<AttachmentSource> {
     let mut attachments: Vec<AttachmentSource> = vec![];

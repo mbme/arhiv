@@ -1,0 +1,25 @@
+{
+  "document_type": "task",
+  "document_title": "title",
+  "fields": {
+    "project_id": {
+      "field_type": "Ref"
+    },
+    "title": {
+      "field_type": "String"
+    },
+    "description": {
+      "field_type": "MarkupString"
+    },
+    "complexity": {
+      "field_type": {
+        "Enum": ["Unknown", "Small", "Medium", "Large", "Epic"]
+      }
+    },
+    "status": {
+      "field_type": {
+        "Enum": ["Inbox", "Todo", "Later", "InProgress", "Paused", "Done", "Cancelled"]
+      }
+    }
+  }
+}

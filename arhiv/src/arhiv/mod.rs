@@ -71,13 +71,11 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document<T: Serialize>(
+    pub fn stage_document(
         &self,
-        updated_document: Document<T>,
+        updated_document: Document,
         new_attachments: Vec<AttachmentSource>,
     ) -> Result<()> {
-        let updated_document = updated_document.into_value();
-
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
@@ -85,18 +83,13 @@ impl Arhiv {
 
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
-                if document.document_type != updated_document.document_type {
-                    bail!("Change of document type is prohibited")
-                }
-
                 document.rev = Revision::STAGING; // make sure document rev is Staging
                 document.updated_at = Utc::now();
                 document.data = updated_document.data;
 
                 document
             } else {
-                let mut new_document =
-                    Document::new(updated_document.document_type, updated_document.data);
+                let mut new_document = Document::new(updated_document.data);
                 new_document.id = updated_document.id;
 
                 new_document

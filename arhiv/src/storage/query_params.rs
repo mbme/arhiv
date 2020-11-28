@@ -4,7 +4,6 @@ use std::default::Default;
 #[derive(Serialize, Deserialize)]
 pub enum Matcher {
     Data { selector: String, pattern: String },
-    Type(String),
 }
 
 #[derive(Serialize, Deserialize)]

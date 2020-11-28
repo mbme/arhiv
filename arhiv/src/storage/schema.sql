@@ -11,7 +11,6 @@ CREATE TABLE documents (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived BOOLEAN NOT NULL,
-  type TEXT NOT NULL,
   refs TEXT NOT NULL,
   data TEXT NOT NULL,
 
@@ -26,7 +25,6 @@ CREATE TABLE documents_history (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived BOOLEAN NOT NULL,
-  type TEXT NOT NULL,
   refs TEXT NOT NULL,
   data TEXT NOT NULL,
 

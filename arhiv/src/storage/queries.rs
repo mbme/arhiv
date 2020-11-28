@@ -77,11 +77,6 @@ pub trait Queries {
 
         for matcher in filter.matchers {
             match matcher {
-                Matcher::Type(document_type) => {
-                    query.push("AND type = :type");
-                    params.insert(":type", Rc::new(document_type));
-                }
-
                 Matcher::Data { selector, pattern } => {
                     self.init_fuzzy_search()?;
 
@@ -332,8 +327,8 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (staged, id, rev, created_at, updated_at, archived, type, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (staged, id, rev, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
@@ -343,7 +338,6 @@ pub trait MutableQueries: Queries {
             document.created_at,
             document.updated_at,
             document.archived,
-            document.document_type,
             utils::serialize_refs(&document.refs)?,
             document.data,
         ])?;
@@ -354,8 +348,8 @@ pub trait MutableQueries: Queries {
     fn put_document_history(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, created_at, updated_at, archived, type, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
@@ -364,7 +358,6 @@ pub trait MutableQueries: Queries {
             document.created_at,
             document.updated_at,
             document.archived,
-            document.document_type,
             utils::serialize_refs(&document.refs)?,
             document.data,
         ])?;

@@ -1,0 +1,16 @@
+{
+  "document_type": "project",
+  "document_title": "title",
+  "collection_of": {
+    "item_type": "task",
+    "field_name": "project_id"
+  },
+  "fields": {
+    "title": {
+      "field_type": "String"
+    },
+    "description": {
+      "field_type": "MarkupString"
+    }
+  }
+}

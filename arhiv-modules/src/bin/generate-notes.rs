@@ -1,6 +1,7 @@
+use arhiv::entities::Document;
 use arhiv::Arhiv;
 use arhiv_modules::generator::*;
-use arhiv_modules::*;
+use arhiv_modules::modules::DocumentDataManager;
 
 #[tokio::main]
 async fn main() {
@@ -9,18 +10,18 @@ async fn main() {
     let arhiv = Arhiv::must_open();
     let attachments = create_attachments();
     let generator = Generator::new(&attachments);
+    let manager = DocumentDataManager::new();
 
     for _ in 0..30 {
-        let mut note = Note::new();
+        let mut data = manager.create("note".to_string()).unwrap();
+        manager.gen_data(&mut data, &generator).unwrap();
 
-        note.0.data = NoteData {
-            name: generator.gen_string(),
-            data: generator.gen_markup_string(1, 8),
-        };
-        note.0.refs = note.extract_refs();
+        let refs = manager.extract_refs(&data).unwrap();
+        let mut document = Document::new(data.into());
+        document.refs = refs;
 
         arhiv
-            .stage_document(note.into_document(), attachments.clone())
+            .stage_document(document, attachments.clone())
             .expect("must be able to save document");
     }
 

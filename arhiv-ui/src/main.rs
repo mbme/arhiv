@@ -1,7 +1,10 @@
 use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::{Arhiv, DocumentFilter};
-use arhiv_modules::*;
+use arhiv_modules::{
+    markup::MarkupRenderer, markup::MarkupString, modules::DocumentData,
+    modules::DocumentDataManager,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
@@ -10,6 +13,7 @@ fn main() {
     env_logger::init();
 
     let arhiv = Arc::new(Arhiv::must_open());
+    let data_manager = Arc::new(DocumentDataManager::new());
 
     let src = if cfg!(feature = "production-mode") {
         AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
@@ -19,6 +23,13 @@ fn main() {
 
     AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
+        .with_action("list_data_descriptions", {
+            let data_manager = data_manager.clone();
+
+            move |_, _| {
+                serde_json::to_value(&data_manager.modules).expect("must be able to serialize")
+            }
+        })
         .with_action("list", {
             let arhiv = arhiv.clone();
 
@@ -52,77 +63,34 @@ fn main() {
         })
         .with_action("put", {
             let arhiv = arhiv.clone();
+            let data_manager = data_manager.clone();
 
             move |_, params| {
-                let args: PutDocumentArgs =
+                let mut args: PutDocumentArgs =
                     serde_json::from_value(params).expect("failed to parse params");
 
-                let mut document = match args.document.document_type.as_str() {
-                    Note::TYPE => Note::from_document(args.document),
-                    _ => {
-                        log::error!(
-                            "action put: got document of unknown type {}",
-                            &args.document.document_type
-                        );
-
-                        return Value::Null;
-                    }
-                };
-
-                // Extract & update refs
-                document.0.refs = document.extract_refs();
+                data_manager
+                    .update_refs(&mut args.document)
+                    .expect("must be able to update refs");
 
                 arhiv
-                    .stage_document(document.into_document(), args.new_attachments)
+                    .stage_document(args.document, args.new_attachments)
                     .expect("must be able to save document");
 
                 Value::Null
             }
         })
         .with_action("create", {
+            let data_manager = data_manager.clone();
             move |_, params| {
                 let args: CreateDocumentArgs =
                     serde_json::from_value(params).expect("failed to parse params");
 
-                match args.document_type.as_str() {
-                    Note::TYPE => {
-                        //
-                        serde_json::to_value(Note::new().into_document())
-                            .expect("must be able to serialize")
-                    }
-                    Project::TYPE => {
-                        //
-                        serde_json::to_value(Project::new().into_document())
-                            .expect("must be able to serialize")
-                    }
-                    Task::TYPE => {
-                        //
-                        let project_id: Id =
-                            serde_json::from_value(args.args).expect("failed to parse id");
+                let document = data_manager
+                    .create_with_data(args.document_type, args.args)
+                    .expect("must be able to create document");
 
-                        serde_json::to_value(Task::new(project_id).into_document())
-                            .expect("must be able to serialize")
-                    }
-                    _ => {
-                        log::error!("action create: got unknown type {}", args.document_type);
-
-                        Value::Null
-                    }
-                }
-            }
-        })
-        .with_action("render_markup", {
-            let arhiv = arhiv.clone();
-
-            move |_, params| {
-                let markup = params.as_str().expect("markup must be string");
-
-                let string = MarkupString::from(markup);
-
-                let result =
-                    MarkupRenderer::new(&string, &arhiv, "/document".to_string()).to_html();
-
-                serde_json::to_value(result).expect("must be able to serialize")
+                serde_json::to_value(document).expect("must be able to serialize")
             }
         })
         .with_action("get_attachment", {
@@ -165,6 +133,20 @@ fn main() {
                 serde_json::to_value(attachments).expect("must be able to serialize")
             }
         })
+        .with_action("render_markup", {
+            let arhiv = arhiv.clone();
+
+            move |_, params| {
+                let markup = params.as_str().expect("markup must be string");
+
+                let string = MarkupString::from(markup);
+
+                let result =
+                    MarkupRenderer::new(&string, &arhiv, "/document".to_string()).to_html();
+
+                serde_json::to_value(result).expect("must be able to serialize")
+            }
+        })
         .start(src);
 }
 
@@ -172,7 +154,7 @@ fn main() {
 #[serde(rename_all = "camelCase")]
 struct CreateDocumentArgs {
     document_type: String,
-    args: Value,
+    args: DocumentData,
 }
 
 #[derive(Serialize, Deserialize)]

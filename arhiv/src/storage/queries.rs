@@ -76,17 +76,11 @@ pub trait Queries {
         }
 
         for matcher in filter.matchers {
-            match matcher {
-                Matcher::Data { selector, pattern } => {
-                    self.init_fuzzy_search()?;
+            self.init_fuzzy_search()?;
 
-                    query.push(
-                        "AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)",
-                    );
-                    params.insert(":matcher_selector", Rc::new(selector));
-                    params.insert(":matcher_pattern", Rc::new(pattern));
-                }
-            }
+            query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
+            params.insert(":matcher_selector", Rc::new(matcher.selector));
+            params.insert(":matcher_pattern", Rc::new(matcher.pattern));
         }
 
         if filter.skip_archived.unwrap_or(false) {

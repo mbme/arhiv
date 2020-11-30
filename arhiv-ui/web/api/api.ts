@@ -1,28 +1,29 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference path="../../../app-shell/src/rpc.d.ts" />
 
-import { Obj } from '@v/utils'
+import { Dict } from '@v/utils'
 import {
   AttachmentLocation,
-  CreateDocumentArgs,
+  ICreateDocumentArgs,
+  IDataDescription,
   IAttachment,
   IAttachmentSource,
   IDocument,
   IDocumentFilter,
   IListPage,
-  PutDocumentArgs,
+  IPutDocumentArgs,
 } from './types'
 
 interface IRPC {
+  list_data_descriptions(): Promise<Dict<IDataDescription>>
+
   list<D extends IDocument = IDocument>(filter: IDocumentFilter): Promise<IListPage<D>>
 
   get(id: string): Promise<IDocument | null>
 
-  put(args: PutDocumentArgs): Promise<void>
+  put(args: IPutDocumentArgs): Promise<void>
 
-  create<D extends IDocument<T, P>, T extends string = string, P extends Obj = Obj>(
-    args: CreateDocumentArgs<T>,
-  ): Promise<D>
+  create(args: ICreateDocumentArgs): Promise<IDocument>
 
   render_markup(markup: string): Promise<string>
 

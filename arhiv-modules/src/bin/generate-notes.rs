@@ -16,9 +16,8 @@ async fn main() {
         let mut data = manager.create("note".to_string()).unwrap();
         manager.gen_data(&mut data, &generator).unwrap();
 
-        let refs = manager.extract_refs(&data).unwrap();
         let mut document = Document::new(data.into());
-        document.refs = refs;
+        manager.update_refs(&mut document).unwrap();
 
         arhiv
             .stage_document(document, attachments.clone())

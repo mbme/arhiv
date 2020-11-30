@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 
 #[derive(Serialize, Deserialize)]
-pub enum Matcher {
-    Data { selector: String, pattern: String },
+pub struct Matcher {
+    pub selector: String,
+    pub pattern: String,
 }
 
 #[derive(Serialize, Deserialize)]

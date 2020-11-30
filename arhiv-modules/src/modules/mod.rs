@@ -4,17 +4,17 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 mod data_description;
 
-use arhiv::entities::Id;
+use arhiv::entities::{Document, Id};
 pub use data_description::*;
 use serde_json::Value;
 
 use crate::generator::Generator;
 use crate::markup::MarkupString;
 
-type DocumentData = Map<String, Value>;
+pub type DocumentData = Map<String, Value>;
 
 pub struct DocumentDataManager {
-    modules: HashMap<String, DataDescription>,
+    pub modules: HashMap<String, DataDescription>,
 }
 
 impl DocumentDataManager {
@@ -79,7 +79,7 @@ impl DocumentDataManager {
             .ok_or(anyhow!("Unknown document type {}", &document_type))
     }
 
-    pub fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
+    fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
         let mut result = HashSet::new();
 
         let data_description = self.get_data_description(data)?;
@@ -109,6 +109,21 @@ impl DocumentDataManager {
         }
 
         Ok(result)
+    }
+
+    pub fn update_refs(&self, document: &mut Document) -> Result<()> {
+        let data = {
+            match &document.data {
+                Value::Object(data) => data,
+                _ => {
+                    bail!("Document data must be an object");
+                }
+            }
+        };
+        let refs = self.extract_refs(&data)?;
+        document.refs = refs;
+
+        Ok(())
     }
 
     pub fn gen_data(&self, data: &mut DocumentData, generator: &Generator) -> Result<()> {

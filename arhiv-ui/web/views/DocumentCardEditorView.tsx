@@ -3,36 +3,35 @@ import {
   RouterContext,
 } from '@v/web-utils'
 import { CardEditor, CardLoader } from '../parts'
-import { createNote, NoteDataDescription } from './note'
+import { API } from '../api'
 
 interface IProps {
   id?: string
 }
 
-export function NoteCardEditor({ id }: IProps) {
+export function DocumentCardEditorView({ id }: IProps) {
   const router = RouterContext.use()
 
   const onCancel = () => {
     if (id) {
-      router.replace({ path: `/notes/${id}` })
+      router.replace({ path: `/documents/${id}` })
     } else {
       router.goBack()
     }
   }
 
-  const onDelete = () => router.push({ path: '/notes' })
+  const onDelete = () => router.push({ path: '/documents' })
 
   return (
     <CardLoader
       id={id}
-      createDocument={createNote}
+      createDocument={() => API.create({ documentType: 'note', args: {} })}
     >
       {document => (
         <CardEditor
           document={document}
-          dataDescription={NoteDataDescription}
           onCancel={onCancel}
-          onSave={() => router.replace({ path: `/notes/${document.id}` })}
+          onSave={() => router.replace({ path: `/documents/${document.id}` })}
           onDelete={id ? onDelete : undefined}
         />
       )}

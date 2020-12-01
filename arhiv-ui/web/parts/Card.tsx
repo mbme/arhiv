@@ -1,25 +1,25 @@
 import * as React from 'react'
-import { Obj, Procedure } from '@v/utils'
+import { Procedure } from '@v/utils'
 import { IDocument } from '../api'
 import { Frame, Action } from '../parts'
 import { Metadata } from './Metadata'
-import { DocumentDataDescription } from '../data-description'
 import { CardData } from './CardData'
+import { useDataDescription } from '../data-manager'
 
-interface IProps<P extends Obj> {
-  document: IDocument<string, P>
-  dataDescription: DocumentDataDescription<P>
+interface IProps {
+  document: IDocument
   onEdit: Procedure
   onClose: Procedure
 }
 
-export function Card<P>(props: IProps<P>) {
+export function Card(props: IProps) {
   const {
     document,
-    dataDescription,
     onEdit,
     onClose,
   } = props
+
+  const dataDescription = useDataDescription(document.data.type)
 
   const [metadata, showMetadata] = React.useState(false)
 

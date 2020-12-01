@@ -2,21 +2,20 @@ import * as React from 'react'
 import {
   ProgressLocker,
 } from '@v/web-platform'
-import { Obj } from '@v/utils'
 import { usePromise  } from '@v/web-utils'
 import { API, IDocument } from '../api'
 import { ErrorBlock, NotFoundBlock } from '../parts'
 
-type Props<P extends Obj> = {
+type Props = {
   id: string
-  children(document: IDocument<string, P>): JSX.Element
+  children(document: IDocument): JSX.Element
 } | {
   id: undefined
-  createDocument(): Promise<IDocument<string, P>>
-  children(document: IDocument<string, P>): JSX.Element
+  createDocument(): Promise<IDocument>
+  children(document: IDocument): JSX.Element
 }
 
-export function CardLoader<P>(props: Props<P>) {
+export function CardLoader(props: Props) {
   const [document, err] = usePromise(() => {
     if (props.id) {
       return API.get(props.id)

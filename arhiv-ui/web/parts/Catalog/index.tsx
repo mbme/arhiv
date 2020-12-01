@@ -10,22 +10,21 @@ import { useDebounced } from '@v/web-utils'
 import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../../parts'
 import { useList } from './useList'
-import { IDocument, Matcher } from '../../api'
-import { Obj } from '@v/utils'
-import { DocumentDataDescription } from '../../data-description'
+import { IDocument, IMatcher } from '../../api'
+import { useDataDescription } from '../../data-manager'
 
-interface IProps<P extends Obj> {
+interface IProps {
+  documentType: string
   title: string
-  dataDescription: DocumentDataDescription<P>
-  getMatchers(filter: string): Matcher[]
+  getMatchers(filter: string): IMatcher[]
   onAdd(): void
-  onActivate(document: IDocument<string, P>): void
+  onActivate(document: IDocument): void
 }
 
-export function Catalog<P extends Obj>(props: IProps<P>) {
+export function Catalog(props: IProps) {
   const {
     title,
-    dataDescription,
+    documentType,
     getMatchers,
     onAdd,
     onActivate,
@@ -38,6 +37,7 @@ export function Catalog<P extends Obj>(props: IProps<P>) {
     },
   } = useForm()
 
+  const dataDescription = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
   const matchers = React.useMemo(() => getMatchers(debouncedFilter), [debouncedFilter])
   const {

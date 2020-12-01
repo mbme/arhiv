@@ -1,34 +1,33 @@
 import * as React from 'react'
-import { Obj, Procedure } from '@v/utils'
+import { Procedure } from '@v/utils'
 import {
   Box,
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-import { DocumentDataDescription } from '../../data-description'
 import { API, IDocument } from '../../api'
 import { CardEditorForm } from './CardEditorForm'
 import { CardData } from '../CardData'
 import { Action, Frame } from '..'
+import { useDataDescription } from '../../data-manager'
 
-interface IProps<P extends Obj> {
-  document: IDocument<string, P>
-  dataDescription: DocumentDataDescription<P>
+interface IProps {
+  document: IDocument
   onCancel: Procedure
   onSave: Procedure
   onDelete?: Procedure
 }
 
-export function CardEditor<P extends Obj>(props: IProps<P>) {
+export function CardEditor(props: IProps) {
   const {
     document,
-    dataDescription,
     onCancel,
     onSave,
     onDelete,
   } = props
 
+  const dataDescription = useDataDescription(document.data.type)
   const [preview, showPreview] = React.useState(false)
-  const formRef = React.useRef<P>(null)
+  const formRef = React.useRef(null)
 
   const saveDocument = async () => {
     await API.put({

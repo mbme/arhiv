@@ -1,16 +1,16 @@
 import * as React from 'react'
 import { Obj } from '@v/utils'
 import { Box, Heading, Label } from '@v/web-platform'
-import { DocumentDataDescription } from '../data-description'
 import { Markup } from './Markup'
+import { IDataDescription } from '../api'
 
 interface IProps<P extends Obj> {
   data: P
-  dataDescription: DocumentDataDescription<P>
+  dataDescription: IDataDescription
 }
 
 export function CardData<P extends Obj>({ data, dataDescription }: IProps<P>) {
-  const fields = Object.entries(dataDescription).map(([name, fieldType]) => {
+  const fields = Object.entries(dataDescription.fields).map(([name, fieldType]) => {
     const value = data[name]
 
     let field

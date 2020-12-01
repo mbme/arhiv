@@ -5,6 +5,7 @@ use std::default::Default;
 pub struct Matcher {
     pub selector: String,
     pub pattern: String,
+    // FIXME allow to choose matcher type: fuzzy, strict etc.
 }
 
 #[derive(Serialize, Deserialize)]

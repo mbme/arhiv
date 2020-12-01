@@ -50,7 +50,7 @@ export interface IListPage<T> {
 export interface IDataDescription {
   readonly documentType: string
   readonly fields: {
-    [name: string]: IField
+    readonly [name: string]: IField
   }
 }
 

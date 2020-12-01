@@ -1,23 +1,24 @@
 import { Dict } from '@v/utils'
+import { createContext } from '@v/web-utils'
 import { IDataDescription, IDocument } from './api'
 
-export class DocumentDataManager {
+export class DataManager {
   constructor(
     private _modules: Dict<IDataDescription>,
   ) {}
 
-  private _getDataDescription(type: string): IDataDescription {
-    const dataDescription = this._modules[type]
+  getDataDescription(documentType: string): IDataDescription {
+    const dataDescription = this._modules[documentType]
 
     if (!dataDescription) {
-      throw new Error(`Unknown module type ${type}`)
+      throw new Error(`Unknown document type ${documentType}`)
     }
 
     return dataDescription
   }
 
   pickTitle(document: IDocument): string {
-    const dataDescription = this._getDataDescription(document.data.type)
+    const dataDescription = this.getDataDescription(document.data.type)
 
     const titleField = Object.entries(dataDescription.fields).find(([, field]) => field.fieldType === 'String')
     if (!titleField) {
@@ -27,4 +28,12 @@ export class DocumentDataManager {
     return document.data[titleField[0]] as string
   }
 
+}
+
+export const DataManagerContext = createContext<DataManager>()
+
+export function useDataDescription(documentType: string): IDataDescription {
+  const dataManager = DataManagerContext.use()
+
+  return dataManager.getDataDescription(documentType)
 }

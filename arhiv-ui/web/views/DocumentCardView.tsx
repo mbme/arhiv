@@ -1,16 +1,15 @@
 import * as React from 'react'
 import {  RouterContext } from '@v/web-utils'
 import { CardLoader, Card } from '../parts'
-import { NoteDataDescription } from './note'
 
 interface IProps {
   id: string
 }
 
-export function NoteCard({ id }: IProps) {
+export function DocumentCardView({ id }: IProps) {
   const router = RouterContext.use()
 
-  const onEdit = () => router.replace(`/notes/${id}/edit` )
+  const onEdit = () => router.replace(`/documents/${id}/edit` )
   const onClose = () => router.goBack()
 
   return (
@@ -18,7 +17,6 @@ export function NoteCard({ id }: IProps) {
       {document => (
         <Card
           document={document}
-          dataDescription={NoteDataDescription}
           onEdit={onEdit}
           onClose={onClose}
         />

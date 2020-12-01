@@ -7,27 +7,38 @@ import {
 import {
   PlatformProvider,
 } from '@v/web-platform'
-import { NotFoundBlock } from './parts'
-import { Url } from './Url'
-import { routes as noteRoutes } from './notes'
-import { routes as projectsTasksRoutes } from './projects-tasks'
+import { NotFoundBlock, Url } from './parts'
+
+import { DataManager, DataManagerContext } from './data-manager'
+import { MODULES } from './api'
+
+import { DocumentCatalogView } from './views/DocumentCatalogView'
+import { DocumentCardView } from './views/DocumentCardView'
+import { DocumentCardEditorView } from './views/DocumentCardEditorView'
 
 export function App() {
+  const [dataManager] = React.useState(() => new DataManager(MODULES))
+
   return (
     <PlatformProvider>
-      <Routes
-        onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
-      >
-        {[
-          [pm`/`, () => <Redirect to="/notes" />], // TODO status board
-          ...noteRoutes,
-          ...projectsTasksRoutes,
-        ]}
-      </Routes>
+      <DataManagerContext.Provider value={dataManager}>
+        <Routes
+          onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
+        >
+          {[
+            [pm`/`, () => <Redirect to="/documents" />], // TODO status board
 
-      {!window.RPC_URL && process.env.NODE_ENV === 'development' && (
-        <Url />
-      )}
+            [pm`/documents`, () => <DocumentCatalogView />],
+            [pm`/documents/new`, () => <DocumentCardEditorView />],
+            [pm`/documents/${'id'}`, ({ id }) => <DocumentCardView id={id} />],
+            [pm`/documents/${'id'}/edit`, ({ id }) => <DocumentCardEditorView id={id} />],
+          ]}
+        </Routes>
+
+        {!window.RPC_URL && process.env.NODE_ENV === 'development' && (
+          <Url />
+        )}
+      </DataManagerContext.Provider>
     </PlatformProvider>
   )
 }

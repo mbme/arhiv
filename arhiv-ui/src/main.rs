@@ -23,13 +23,10 @@ fn main() {
 
     AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
-        .with_action("list_data_descriptions", {
-            let data_manager = data_manager.clone();
-
-            move |_, _| {
-                serde_json::to_value(&data_manager.modules).expect("must be able to serialize")
-            }
-        })
+        .with_js_variable(
+            "DATA_DESCRIPTION",
+            serde_json::to_value(&data_manager.modules).expect("must be able to convert to value"),
+        )
         .with_action("list", {
             let arhiv = arhiv.clone();
 

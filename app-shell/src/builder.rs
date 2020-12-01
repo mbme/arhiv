@@ -1,6 +1,6 @@
 use crate::context::AppShellContext;
 use crate::rpc_message::{RpcMessage, RpcMessageResponse};
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -13,6 +13,7 @@ pub struct AppShellBuilder {
         HashMap<String, Box<dyn Fn(&AppShellContext, Value) -> Value + Send + Sync>>,
     pub(crate) server_mode: bool,
     pub(crate) server_port: u16,
+    pub(crate) js_variables: Map<String, Value>,
 }
 
 impl AppShellBuilder {
@@ -29,6 +30,7 @@ impl AppShellBuilder {
             actions: HashMap::new(),
             server_mode: false,
             server_port: 7001,
+            js_variables: Map::new(),
         }
     }
 
@@ -61,6 +63,15 @@ impl AppShellBuilder {
         F: Fn(&AppShellContext, Value) -> Value + 'static + Send + Sync,
     {
         self.actions.insert(action.into(), Box::new(handler));
+        self
+    }
+
+    pub fn with_js_variable<S: Into<String>, V: Into<Value>>(
+        mut self,
+        variable: S,
+        value: V,
+    ) -> Self {
+        self.js_variables.insert(variable.into(), value.into());
         self
     }
 

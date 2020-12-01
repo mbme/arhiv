@@ -11,11 +11,11 @@ interface IRPC {
 }
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/interface-name-prefix
   interface Window {
     RPC: IRPC
-    RPC_PROXY: object
+    RPC_PROXY: unknown
     RPC_URL?: string
+    JS_VARIABLES: Record<string, unknown>
   }
 }
 

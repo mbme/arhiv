@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference path="../../../app-shell/src/rpc.d.ts" />
 
-import { Dict } from '@v/utils'
 import {
   AttachmentLocation,
   ICreateDocumentArgs,
@@ -15,8 +14,6 @@ import {
 } from './types'
 
 interface IRPC {
-  list_data_descriptions(): Promise<Dict<IDataDescription>>
-
   list<D extends IDocument = IDocument>(filter: IDocumentFilter): Promise<IListPage<D>>
 
   get(id: string): Promise<IDocument | null>
@@ -33,3 +30,5 @@ interface IRPC {
 }
 
 export const API = window.RPC_PROXY as IRPC
+
+export const MODULES = window.JS_VARIABLES.DATA_DESCRIPTION as Record<string, IDataDescription>

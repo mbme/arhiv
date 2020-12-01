@@ -45,8 +45,14 @@ impl AppSource {
     <title>{}</title>
 
     <script>
+      // RPC URL
       {}
+
+      // RPC CLIENT
       {}
+
+      // JS VARIABLES
+      window.JS_VARIABLES = {};
     </script>
   </head>
 
@@ -58,16 +64,21 @@ impl AppSource {
 </html>
 "#,
             builder.title,
+            // RPC URL
             if builder.server_mode {
                 format!("window.RPC_URL = '{}';", builder.get_rpc_url())
             } else {
                 "".to_string()
             },
+            // RPC CLIENT
             if builder.server_mode {
                 include_str!("./rpc.network.js")
             } else {
                 include_str!("./rpc.js")
             },
+            // JS VARIABLES
+            serde_json::to_string_pretty(&builder.js_variables)
+                .expect("must be able to serialize JS variables"),
             script
         )
     }

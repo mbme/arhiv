@@ -25,3 +25,8 @@ export {
   Route,
   Routes,
 } from './Routes'
+
+
+export {
+  useLocation,
+} from './hooks'

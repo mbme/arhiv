@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { pathMatcher as pm } from '@v/utils'
 import {
+  ILocation,
   Redirect,
   Routes,
 } from '@v/web-utils'
@@ -12,9 +13,14 @@ import { NotFoundBlock, Url } from './parts'
 import { DataManager, DataManagerContext } from './data-manager'
 import { MODULES } from './api'
 
-import { CatalogView } from './views/CatalogView'
+import { CatalogView, DOCUMENT_TYPE_QUERY_PARAM } from './views/CatalogView'
 import { CardView } from './views/CardView'
 import { CardEditorView } from './views/CardEditorView'
+
+const defaultLocation: ILocation = {
+  path: '/documents',
+  params: [{ name: DOCUMENT_TYPE_QUERY_PARAM, value: 'note' }],
+}
 
 export function App() {
   const [dataManager] = React.useState(() => new DataManager(MODULES))
@@ -26,7 +32,7 @@ export function App() {
           onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
         >
           {[
-            [pm`/`, () => <Redirect to="/documents" />], // TODO status board
+            [pm`/`, () => <Redirect to={defaultLocation} />], // TODO status board
 
             [pm`/documents`, () => <CatalogView />],
             [pm`/documents/new`, () => <CardEditorView />],

@@ -88,7 +88,9 @@ impl DocumentDataManager {
             match field.field_type {
                 FieldType::MarkupString => {
                     let value: MarkupString = serde_json::from_value(
-                        data.get(name).expect("field must be present").clone(),
+                        data.get(name)
+                            .expect(&format!("field '{}' must be present", name))
+                            .clone(),
                     )
                     .expect("field must parse");
 
@@ -133,15 +135,11 @@ impl DocumentDataManager {
             match field.field_type {
                 FieldType::String => {
                     data.insert(name.clone(), generator.gen_string().into());
-                    break;
                 }
                 FieldType::MarkupString => {
                     data.insert(name.clone(), generator.gen_markup_string(1, 8).0.into());
-                    break;
                 }
-                _ => {
-                    break;
-                }
+                _ => {}
             }
         }
 

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: String,
     pub collection_of: Option<Collection>,
@@ -9,6 +10,7 @@ pub struct DataDescription {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Field {
     pub field_type: FieldType,
 }
@@ -22,6 +24,7 @@ pub enum FieldType {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Collection {
     pub item_type: String,
     pub field_name: String,

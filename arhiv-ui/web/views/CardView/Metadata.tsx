@@ -4,7 +4,7 @@ import {
   Box,
 } from '@v/web-platform'
 import { ChronoFormatter } from '@v/chrono'
-import { IDocument } from '../api'
+import { IDocument } from '../../api'
 
 const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm')
 

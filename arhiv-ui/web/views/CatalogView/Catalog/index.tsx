@@ -7,10 +7,10 @@ import {
   Button,
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
-import { CatalogEntry } from './CatalogEntry'
-import { ErrorBlock, Frame, Action } from '../../parts'
+import { ErrorBlock, Frame, Action } from '../../../parts'
+import { IDocument, IMatcher } from '../../../api'
 import { useList } from './useList'
-import { IDocument, IMatcher } from '../../api'
+import { CatalogEntry } from './CatalogEntry'
 
 interface IProps {
   title: string

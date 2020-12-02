@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Input, Textarea } from '@v/web-platform'
-import { FieldType } from '../../api'
+import { FieldType } from '../../../api'
 
 interface IProps {
   name: string

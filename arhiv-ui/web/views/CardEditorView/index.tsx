@@ -2,14 +2,15 @@ import * as React from 'react'
 import {
   RouterContext,
 } from '@v/web-utils'
-import { CardEditor, CardLoader } from '../parts'
-import { API } from '../api'
+import { CardLoader } from '../../parts'
+import { API } from '../../api'
+import { CardEditor } from './CardEditor'
 
 interface IProps {
   id?: string
 }
 
-export function DocumentCardEditorView({ id }: IProps) {
+export function CardEditorView({ id }: IProps) {
   const router = RouterContext.use()
 
   const onCancel = () => {

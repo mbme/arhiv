@@ -6,7 +6,7 @@ import {
   IDocumentFilter,
   IListPage,
   IMatcher,
-} from '../../api'
+} from '../../../api'
 
 const PAGE_SIZE = 10
 

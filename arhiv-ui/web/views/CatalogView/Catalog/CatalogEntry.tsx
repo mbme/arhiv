@@ -5,8 +5,8 @@ import {
   useClickOnActivate,
   useFocusable,
 } from '@v/web-platform'
-import { IDocument } from '../../api'
-import { useDataDescription } from '../../data-manager'
+import { IDocument } from '../../../api'
+import { useDataDescription } from '../../../data-manager'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 

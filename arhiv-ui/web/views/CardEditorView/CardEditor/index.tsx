@@ -4,10 +4,9 @@ import {
   Box,
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-import { API, IDocument } from '../../api'
+import { API, IDocument } from '../../../api'
+import { Action, CardData, Frame } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
-import { CardData } from '../CardData'
-import { Action, Frame } from '..'
 
 interface IProps {
   document: IDocument

@@ -4,9 +4,7 @@ export { Action } from './Frame/Action'
 export { ErrorBlock } from './ErrorBlock'
 export { NotFoundBlock } from './NotFoundBlock'
 
-export { Card } from './Card'
+export { CardData } from './CardData'
 export { CardLoader } from './CardLoader'
-export { CardEditor } from './CardEditor'
-export { Catalog } from './Catalog'
 
 export { Url } from './Url'

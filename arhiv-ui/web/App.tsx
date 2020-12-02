@@ -12,9 +12,9 @@ import { NotFoundBlock, Url } from './parts'
 import { DataManager, DataManagerContext } from './data-manager'
 import { MODULES } from './api'
 
-import { DocumentCatalogView } from './views/DocumentCatalogView'
-import { DocumentCardView } from './views/DocumentCardView'
-import { DocumentCardEditorView } from './views/DocumentCardEditorView'
+import { CatalogView } from './views/CatalogView'
+import { CardView } from './views/CardView'
+import { CardEditorView } from './views/CardEditorView'
 
 export function App() {
   const [dataManager] = React.useState(() => new DataManager(MODULES))
@@ -28,10 +28,10 @@ export function App() {
           {[
             [pm`/`, () => <Redirect to="/documents" />], // TODO status board
 
-            [pm`/documents`, () => <DocumentCatalogView />],
-            [pm`/documents/new`, () => <DocumentCardEditorView />],
-            [pm`/documents/${'id'}`, ({ id }) => <DocumentCardView id={id} />],
-            [pm`/documents/${'id'}/edit`, ({ id }) => <DocumentCardEditorView id={id} />],
+            [pm`/documents`, () => <CatalogView />],
+            [pm`/documents/new`, () => <CardEditorView />],
+            [pm`/documents/${'id'}`, ({ id }) => <CardView id={id} />],
+            [pm`/documents/${'id'}/edit`, ({ id }) => <CardEditorView id={id} />],
           ]}
         </Routes>
 

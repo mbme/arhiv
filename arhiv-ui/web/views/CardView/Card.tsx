@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { Procedure } from '@v/utils'
-import { IDocument } from '../api'
-import { Frame, Action } from '../parts'
+import { IDocument } from '../../api'
+import { Frame, Action, CardData } from '../../parts'
 import { Metadata } from './Metadata'
-import { CardData } from './CardData'
 
 interface IProps {
   document: IDocument

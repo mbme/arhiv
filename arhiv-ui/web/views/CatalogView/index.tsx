@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
-import { Catalog } from '../parts'
-import { IDocument, IMatcher } from '../api'
+import { IDocument, IMatcher } from '../../api'
+import { Catalog } from './Catalog'
 
-export function DocumentCatalogView() {
+export function CatalogView() {
   const router = RouterContext.use()
 
   const getMatchers = (filter: string): IMatcher[] => [

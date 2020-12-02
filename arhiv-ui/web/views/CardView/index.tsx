@@ -1,12 +1,13 @@
 import * as React from 'react'
 import {  RouterContext } from '@v/web-utils'
-import { CardLoader, Card } from '../parts'
+import { CardLoader } from '../../parts'
+import { Card } from './Card'
 
 interface IProps {
   id: string
 }
 
-export function DocumentCardView({ id }: IProps) {
+export function CardView({ id }: IProps) {
   const router = RouterContext.use()
 
   const onEdit = () => router.replace(`/documents/${id}/edit` )

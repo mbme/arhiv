@@ -14,7 +14,7 @@ export function CardData({ data }: IProps) {
     titleField,
   } = useDataDescription(data.type)
 
-  const fields = Object.entries(dataDescription.fields).map(([name, field]) => {
+  const fields = dataDescription.fields.map(({ name, fieldType }) => {
     const value = data[name]
 
     return (
@@ -22,7 +22,7 @@ export function CardData({ data }: IProps) {
         <Label>{name}</Label>
         <CardDataField
           value={value}
-          fieldType={field.fieldType}
+          fieldType={fieldType}
           isTitle={name === titleField}
         />
       </Box>

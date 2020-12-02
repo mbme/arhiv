@@ -1,25 +1,30 @@
 {
   "documentType": "task",
   "documentTitle": "title",
-  "fields": {
-    "projectId": {
+  "fields": [
+    {
+      "name": "projectId",
       "fieldType": "Ref"
     },
-    "title": {
+    {
+      "name": "title",
       "fieldType": "String"
     },
-    "description": {
+    {
+      "name": "description",
       "fieldType": "MarkupString"
     },
-    "complexity": {
+    {
+      "name": "complexity",
       "fieldType": {
         "Enum": ["Unknown", "Small", "Medium", "Large", "Epic"]
       }
     },
-    "status": {
+    {
+      "name": "status",
       "fieldType": {
         "Enum": ["Inbox", "Todo", "Later", "InProgress", "Paused", "Done", "Cancelled"]
       }
     }
-  }
+  ]
 }

@@ -51,12 +51,11 @@ export interface IListPage<T> {
 
 export interface IDataDescription {
   readonly documentType: string
-  readonly fields: {
-    readonly [name: string]: IField
-  }
+  readonly fields: IField[]
 }
 
 export interface IField {
+  name: string
   fieldType: FieldType
 }
 

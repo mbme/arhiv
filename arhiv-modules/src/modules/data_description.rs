@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: String,
     pub collection_of: Option<Collection>,
-    pub fields: HashMap<String, Field>,
+    pub fields: Vec<Field>,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Field {
+    pub name: String,
     pub field_type: FieldType,
 }
 

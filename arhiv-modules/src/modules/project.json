@@ -5,12 +5,14 @@
     "itemType": "task",
     "fieldName": "project_id"
   },
-  "fields": {
-    "title": {
+  "fields": [
+    {
+      "name": "title",
       "fieldType": "String"
     },
-    "description": {
+    {
+      "name": "description",
       "fieldType": "MarkupString"
     }
-  }
+  ]
 }

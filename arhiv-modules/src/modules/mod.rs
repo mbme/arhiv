@@ -41,20 +41,20 @@ impl DocumentDataManager {
         let mut result: DocumentData = Map::new();
         result.insert("type".to_string(), Value::String(document_type));
 
-        for (name, field) in description.fields.iter() {
-            if let Some(value) = initial_values.get(name) {
-                result.insert(name.clone(), (*value).clone());
+        for field in &description.fields {
+            if let Some(value) = initial_values.get(&field.name) {
+                result.insert(field.name.clone(), (*value).clone());
                 continue;
             }
 
             match &field.field_type {
                 FieldType::String | FieldType::MarkupString => {
-                    result.insert(name.clone(), Value::from(""));
+                    result.insert(field.name.clone(), Value::from(""));
                     break;
                 }
                 FieldType::Enum(values) => {
                     let value = values.get(0).expect("enum must contain values");
-                    result.insert(name.clone(), Value::String((*value).clone()));
+                    result.insert(field.name.clone(), Value::String((*value).clone()));
                     break;
                 }
                 FieldType::Ref => {
@@ -84,12 +84,12 @@ impl DocumentDataManager {
 
         let data_description = self.get_data_description(data)?;
 
-        for (name, field) in data_description.fields.iter() {
+        for field in &data_description.fields {
             match field.field_type {
                 FieldType::MarkupString => {
                     let value: MarkupString = serde_json::from_value(
-                        data.get(name)
-                            .expect(&format!("field '{}' must be present", name))
+                        data.get(&field.name)
+                            .expect(&format!("field '{}' must be present", field.name))
                             .clone(),
                     )
                     .expect("field must parse");
@@ -98,7 +98,9 @@ impl DocumentDataManager {
                 }
                 FieldType::Ref => {
                     let value: Id = serde_json::from_value(
-                        data.get(name).expect("field must be present").clone(),
+                        data.get(&field.name)
+                            .expect("field must be present")
+                            .clone(),
                     )
                     .expect("field must parse");
 
@@ -131,13 +133,16 @@ impl DocumentDataManager {
     pub fn gen_data(&self, data: &mut DocumentData, generator: &Generator) -> Result<()> {
         let description = self.get_data_description(data)?;
 
-        for (name, field) in description.fields.iter() {
+        for field in &description.fields {
             match field.field_type {
                 FieldType::String => {
-                    data.insert(name.clone(), generator.gen_string().into());
+                    data.insert(field.name.clone(), generator.gen_string().into());
                 }
                 FieldType::MarkupString => {
-                    data.insert(name.clone(), generator.gen_markup_string(1, 8).0.into());
+                    data.insert(
+                        field.name.clone(),
+                        generator.gen_markup_string(1, 8).0.into(),
+                    );
                 }
                 _ => {}
             }

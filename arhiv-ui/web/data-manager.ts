@@ -21,12 +21,12 @@ export class DataManager {
   pickTitleField(documentType: string): string {
     const dataDescription = this.getDataDescription(documentType)
 
-    const titleField = Object.entries(dataDescription.fields).find(([, field]) => field.fieldType === 'String')
+    const titleField = dataDescription.fields.find(({ fieldType }) => fieldType === 'String')
     if (!titleField) {
       throw new Error("can't pick field for title")
     }
 
-    return titleField[0]
+    return titleField.name
   }
 }
 

@@ -16,7 +16,6 @@ export function DocumentCatalogView() {
 
   return (
     <Catalog
-      documentType="note"
       title="Documents Catalog"
       getMatchers={getMatchers}
       onAdd={onAdd}

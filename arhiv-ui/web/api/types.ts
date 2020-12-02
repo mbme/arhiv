@@ -7,10 +7,12 @@ export interface IDocument {
   readonly updatedAt: string
   readonly refs: readonly string[]
   readonly archived: boolean
-  readonly data: {
-    type: string,
-    [name: string]: any,
-  }
+  readonly data: IDocumentData
+}
+
+export interface IDocumentData {
+  readonly type: string
+  readonly [name: string]: any
 }
 
 export interface IAttachmentSource {

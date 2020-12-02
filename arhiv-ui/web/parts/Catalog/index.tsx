@@ -11,10 +11,8 @@ import { CatalogEntry } from './CatalogEntry'
 import { ErrorBlock, Frame, Action } from '../../parts'
 import { useList } from './useList'
 import { IDocument, IMatcher } from '../../api'
-import { useDataDescription } from '../../data-manager'
 
 interface IProps {
-  documentType: string
   title: string
   getMatchers(filter: string): IMatcher[]
   onAdd(): void
@@ -24,7 +22,6 @@ interface IProps {
 export function Catalog(props: IProps) {
   const {
     title,
-    documentType,
     getMatchers,
     onAdd,
     onActivate,
@@ -37,7 +34,6 @@ export function Catalog(props: IProps) {
     },
   } = useForm()
 
-  const dataDescription = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
   const matchers = React.useMemo(() => getMatchers(debouncedFilter), [debouncedFilter])
   const {
@@ -59,7 +55,6 @@ export function Catalog(props: IProps) {
         <CatalogEntry
           key={item.id}
           document={item}
-          dataDescription={dataDescription}
           onActivate={onActivate}
         />
       ))

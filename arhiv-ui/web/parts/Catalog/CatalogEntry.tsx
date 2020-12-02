@@ -5,24 +5,25 @@ import {
   useClickOnActivate,
   useFocusable,
 } from '@v/web-platform'
-import { Obj } from '@v/utils'
 import { IDocument } from '../../api'
-import { DocumentDataDescription, pickTitle } from '../../data-description'
+import { useDataDescription } from '../../data-manager'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
-interface IProps<T extends string, P extends Obj> {
-  document: IDocument<T, P>
-  dataDescription: DocumentDataDescription<P>
-  onActivate(document: IDocument<T, P>): void
+interface IProps {
+  document: IDocument
+  onActivate(document: IDocument): void
 }
 
-export function CatalogEntry<T extends string, P extends Obj>(props: IProps<T, P>) {
+export function CatalogEntry(props: IProps) {
   const {
     document,
-    dataDescription,
     onActivate,
   } = props
+
+  const {
+    titleField,
+  } = useDataDescription(document.data.type)
 
   const ref = React.useRef<HTMLDivElement>(null)
   const isFocused = useFocusable(ref)
@@ -38,7 +39,7 @@ export function CatalogEntry<T extends string, P extends Obj>(props: IProps<T, P
       onClick={() => onActivate(document)}
       ref={ref}
     >
-      {pickTitle(document, dataDescription)}
+      {document.data[titleField]}
 
       <Box
         as="small"

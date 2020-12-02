@@ -23,7 +23,7 @@ export function Metadata({ document }: IProps) {
 
       <Box mb="medium">
         <Label>type</Label>
-        {document.type}
+        {document.data.type}
       </Box>
 
       <Box mb="medium">

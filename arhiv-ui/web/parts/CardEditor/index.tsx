@@ -8,7 +8,6 @@ import { API, IDocument } from '../../api'
 import { CardEditorForm } from './CardEditorForm'
 import { CardData } from '../CardData'
 import { Action, Frame } from '..'
-import { useDataDescription } from '../../data-manager'
 
 interface IProps {
   document: IDocument
@@ -25,7 +24,6 @@ export function CardEditor(props: IProps) {
     onDelete,
   } = props
 
-  const dataDescription = useDataDescription(document.data.type)
   const [preview, showPreview] = React.useState(false)
   const formRef = React.useRef(null)
 
@@ -96,14 +94,12 @@ export function CardEditor(props: IProps) {
         <CardEditorForm
           ref={formRef}
           data={document.data}
-          dataDescription={dataDescription}
         />
       </Box>
 
       {preview && (
         <CardData
           data={formRef.current!}
-          dataDescription={dataDescription}
         />
       )}
     </Frame>

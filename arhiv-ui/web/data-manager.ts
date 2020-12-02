@@ -1,6 +1,7 @@
+import * as React from 'react'
 import { Dict } from '@v/utils'
 import { createContext } from '@v/web-utils'
-import { IDataDescription, IDocument } from './api'
+import { IDataDescription } from './api'
 
 export class DataManager {
   constructor(
@@ -17,23 +18,25 @@ export class DataManager {
     return dataDescription
   }
 
-  pickTitle(document: IDocument): string {
-    const dataDescription = this.getDataDescription(document.data.type)
+  pickTitleField(documentType: string): string {
+    const dataDescription = this.getDataDescription(documentType)
 
     const titleField = Object.entries(dataDescription.fields).find(([, field]) => field.fieldType === 'String')
     if (!titleField) {
       throw new Error("can't pick field for title")
     }
 
-    return document.data[titleField[0]] as string
+    return titleField[0]
   }
-
 }
 
 export const DataManagerContext = createContext<DataManager>()
 
-export function useDataDescription(documentType: string): IDataDescription {
+export function useDataDescription(documentType: string) {
   const dataManager = DataManagerContext.use()
 
-  return dataManager.getDataDescription(documentType)
+  return React.useMemo(() => ({
+    dataDescription: dataManager.getDataDescription(documentType),
+    titleField: dataManager.pickTitleField(documentType),
+  }), [documentType])
 }

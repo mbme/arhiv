@@ -4,7 +4,6 @@ import { IDocument } from '../api'
 import { Frame, Action } from '../parts'
 import { Metadata } from './Metadata'
 import { CardData } from './CardData'
-import { useDataDescription } from '../data-manager'
 
 interface IProps {
   document: IDocument
@@ -18,8 +17,6 @@ export function Card(props: IProps) {
     onEdit,
     onClose,
   } = props
-
-  const dataDescription = useDataDescription(document.data.type)
 
   const [metadata, showMetadata] = React.useState(false)
 
@@ -65,7 +62,6 @@ export function Card(props: IProps) {
       ) : (
         <CardData
           data={document.data}
-          dataDescription={dataDescription}
         />
       )}
     </Frame>

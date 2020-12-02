@@ -5,7 +5,7 @@ import {
   IDocument,
   IDocumentFilter,
   IListPage,
-  Matcher,
+  IMatcher,
 } from '../../api'
 
 const PAGE_SIZE = 10
@@ -17,7 +17,7 @@ interface IList<D> {
   loadMore(): void
 }
 
-export function useList<D extends IDocument>(matchers: Matcher[]): IList<D> {
+export function useList<D extends IDocument>(matchers: IMatcher[]): IList<D> {
   const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()

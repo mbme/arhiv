@@ -1,60 +1,36 @@
 import * as React from 'react'
-import { Obj } from '@v/utils'
 import {
-  Input,
-  Textarea,
   useForm,
   Box,
 } from '@v/web-platform'
-import { DocumentDataDescription } from '../../data-description'
+import { IDocumentData } from '../../api'
+import { useDataDescription } from '../../data-manager'
+import { CardEditorFormField } from './CardEditorFormField'
 
-interface IProps<P extends Obj> {
-  data: P,
-  dataDescription: DocumentDataDescription<P>,
+interface IProps {
+  data: IDocumentData,
 }
 
 export const CardEditorForm = React.forwardRef(
-  function CardEditorForm<P extends Obj>({ data, dataDescription }: IProps<P>, ref: React.Ref<P>) {
+  function CardEditorForm({ data }: IProps, ref: React.Ref<IDocumentData>) {
     const {
       Form,
       values,
     } = useForm(data)
 
-    React.useImperativeHandle(ref, () => values as P, [values])
+    const {
+      dataDescription,
+    } = useDataDescription(data.type)
 
-    const fields = Object.entries(dataDescription).map(([name, fieldType]) => {
-      let field
-      switch (fieldType.type) {
-        case 'string': {
-          field = (
-            <Input
-              label={name}
-              name={name}
-              placeholder={name}
-            />
-          )
-          break
-        }
+    React.useImperativeHandle(ref, () => ({ ...data, ...values }), [values])
 
-        case 'markup-string': {
-          field = (
-            <Textarea
-              label={name}
-              name={name}
-              placeholder={name}
-            />
-          )
-          break
-        }
-
-        default: {
-          throw new Error(`Unexpected field type: ${fieldType.type}`)
-        }
-      }
-
+    const fields = Object.entries(dataDescription.fields).map(([name, field]) => {
       return (
         <Box key={name} mb="medium">
-          {field}
+          <CardEditorFormField
+            name={name}
+            fieldType={field.fieldType}
+          />
         </Box>
       )
     })

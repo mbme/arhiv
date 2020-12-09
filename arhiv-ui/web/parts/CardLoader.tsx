@@ -10,7 +10,7 @@ type Props = {
   id: string
   children(document: IDocument): JSX.Element
 } | {
-  id: undefined
+  id?: undefined
   createDocument(): Promise<IDocument>
   children(document: IDocument): JSX.Element
 }

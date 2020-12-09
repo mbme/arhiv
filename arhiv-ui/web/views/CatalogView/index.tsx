@@ -1,28 +1,23 @@
 import * as React from 'react'
-import { RouterContext, useLocation } from '@v/web-utils'
-import { IDocument, IMatcher } from '../../api'
+import { RouterContext } from '@v/web-utils'
+import { IDocument } from '../../api'
 import { Catalog } from './Catalog'
 
-export const DOCUMENT_TYPE_QUERY_PARAM = 'type'
+interface IProps {
+  documentType: string
+}
 
-export function CatalogView() {
+export function CatalogView({ documentType }: IProps) {
   const router = RouterContext.use()
 
-  const location = useLocation()
-  const documentType = location.params.find(param => param.name === DOCUMENT_TYPE_QUERY_PARAM)
-
-  const getMatchers = (filter: string): IMatcher[] => [
-    { selector: '$.type', pattern: documentType?.value || '' },
-    { selector: '$.name', pattern: filter },
-  ]
-
-  const onAdd = () => router.push('/documents/new')
+  const onAdd = () => router.push(`/catalog/${documentType}/new`)
   const onActivate = (document: IDocument) => router.push(`/documents/${document.id}`)
 
   return (
     <Catalog
-      title="Documents Catalog"
-      getMatchers={getMatchers}
+      key={documentType}
+      documentType={documentType}
+      title={`${documentType} Catalog`}
       onAdd={onAdd}
       onActivate={onActivate}
     />

@@ -76,9 +76,16 @@ pub trait Queries {
         }
 
         for matcher in filter.matchers {
-            self.init_fuzzy_search()?;
+            if matcher.fuzzy {
+                self.init_fuzzy_search()?;
 
-            query.push("AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)");
+                query.push(
+                    "AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)",
+                );
+            } else {
+                query.push("AND json_extract(data, :matcher_selector) = :matcher_pattern");
+            }
+
             params.insert(":matcher_selector", Rc::new(matcher.selector));
             params.insert(":matcher_pattern", Rc::new(matcher.pattern));
         }

@@ -11,10 +11,11 @@ import { ErrorBlock, Frame, Action } from '../../../parts'
 import { IDocument, IMatcher } from '../../../api'
 import { useList } from './useList'
 import { CatalogEntry } from './CatalogEntry'
+import { useDataDescription } from '../../../data-manager'
 
 interface IProps {
   title: string
-  getMatchers(filter: string): IMatcher[]
+  documentType: string
   onAdd(): void
   onActivate(document: IDocument): void
 }
@@ -22,7 +23,7 @@ interface IProps {
 export function Catalog(props: IProps) {
   const {
     title,
-    getMatchers,
+    documentType,
     onAdd,
     onActivate,
   } = props
@@ -34,8 +35,13 @@ export function Catalog(props: IProps) {
     },
   } = useForm()
 
+  const { titleField } = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
-  const matchers = React.useMemo(() => getMatchers(debouncedFilter), [debouncedFilter])
+  const matchers = React.useMemo<IMatcher[]>(() => [
+    { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true },
+    { selector: '$.type', pattern: documentType, fuzzy: false }
+  ], [debouncedFilter, documentType])
+
   const {
     items,
     hasMore,

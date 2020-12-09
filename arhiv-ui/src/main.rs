@@ -83,9 +83,10 @@ fn main() {
                 let args: CreateDocumentArgs =
                     serde_json::from_value(params).expect("failed to parse params");
 
-                let document = data_manager
+                let data = data_manager
                     .create_with_data(args.document_type, args.args)
-                    .expect("must be able to create document");
+                    .expect("must be able to create document data");
+                let document = Document::new(data.into());
 
                 serde_json::to_value(document).expect("must be able to serialize")
             }

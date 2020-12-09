@@ -32,6 +32,7 @@ export interface IAttachment {
 export interface IMatcher {
   selector: string
   pattern: string
+  fuzzy: boolean
 }
 
 export interface IDocumentFilter {

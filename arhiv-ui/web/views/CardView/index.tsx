@@ -12,6 +12,7 @@ export function CardView({ id }: IProps) {
 
   const onEdit = () => router.replace(`/documents/${id}/edit` )
   const onClose = () => router.goBack()
+  const onMetadata = () => router.replace(`/documents/${id}/metadata` )
 
   return (
     <CardLoader id={id}>
@@ -20,6 +21,7 @@ export function CardView({ id }: IProps) {
           document={document}
           onEdit={onEdit}
           onClose={onClose}
+          onMetadata={onMetadata}
         />
       )}
     </CardLoader>

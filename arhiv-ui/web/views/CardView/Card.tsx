@@ -2,12 +2,12 @@ import * as React from 'react'
 import { Procedure } from '@v/utils'
 import { IDocument } from '../../api'
 import { Frame, Action, CardData } from '../../parts'
-import { Metadata } from './Metadata'
 
 interface IProps {
   document: IDocument
   onEdit: Procedure
   onClose: Procedure
+  onMetadata: Procedure
 }
 
 export function Card(props: IProps) {
@@ -15,18 +15,10 @@ export function Card(props: IProps) {
     document,
     onEdit,
     onClose,
+    onMetadata,
   } = props
 
-  const [metadata, showMetadata] = React.useState(false)
-
-  const actions = metadata ? (
-    <Action
-      type="action"
-      onClick={() => showMetadata(false)}
-    >
-      Back
-    </Action>
-  ) : (
+  const actions = (
     <>
       <Action
         type="action"
@@ -37,7 +29,7 @@ export function Card(props: IProps) {
 
       <Action
         type="action"
-        onClick={() => showMetadata(true)}
+        onClick={onMetadata}
       >
         Show Metadata
       </Action>
@@ -56,13 +48,9 @@ export function Card(props: IProps) {
       actions={actions}
       title="Card"
     >
-      {metadata ? (
-        <Metadata document={document} />
-      ) : (
-        <CardData
-          data={document.data}
-        />
-      )}
+      <CardData
+        data={document.data}
+      />
     </Frame>
   )
 }

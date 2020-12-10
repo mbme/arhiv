@@ -18,6 +18,7 @@ import {
   NewCardEditorView,
   CardEditorView,
 } from './views/CardEditorView'
+import { MetadataView } from './views/MetadataView'
 
 export function App() {
   const [dataManager] = React.useState(() => new DataManager(MODULES))
@@ -42,6 +43,10 @@ export function App() {
             [
               pm`/documents/${'id'}`,
               ({ id }) => <CardView id={id} />,
+            ],
+            [
+              pm`/documents/${'id'}/metadata`,
+              ({ id }) => <MetadataView id={id} />,
             ],
             [
               pm`/documents/${'id'}/edit`,

@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::project_relpath;
 use serde_json::Map;
-use std::fs;
+use std::{collections::HashMap, fs};
 
 use crate::modules::{DocumentData, DocumentDataManager, FieldType};
 
@@ -31,11 +31,11 @@ pub struct Faker {
     attachments: Vec<AttachmentSource>,
     generator: TextGenerator,
     data_manager: DocumentDataManager,
+    pub quantity_limits: HashMap<String, u8>,
+    pub field_size_limits: HashMap<(String, String), (u8, u8)>,
 }
 
 impl Faker {
-    const FAKE_ITEMS_LIMIT: u16 = 30;
-
     pub fn new() -> Self {
         let attachments = create_attachments();
         let generator = TextGenerator::new(&attachments);
@@ -45,7 +45,20 @@ impl Faker {
             attachments,
             generator,
             data_manager,
+            quantity_limits: HashMap::new(),
+            field_size_limits: HashMap::new(),
         }
+    }
+
+    fn get_quantity_limit(&self, document_type: &str) -> u8 {
+        *self.quantity_limits.get(document_type).unwrap_or(&30)
+    }
+
+    fn get_field_size_limits(&self, document_type: &str, field_name: &str) -> (u8, u8) {
+        *self
+            .field_size_limits
+            .get(&(document_type.to_string(), field_name.to_string()))
+            .unwrap_or(&(1, 8))
     }
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
@@ -69,9 +82,10 @@ impl Faker {
                     data.insert(field.name.clone(), self.generator.gen_string().into());
                 }
                 FieldType::MarkupString => {
+                    let (min, max) = self.get_field_size_limits(&document_type, &field.name);
                     data.insert(
                         field.name.clone(),
-                        self.generator.gen_markup_string(1, 8).0.into(),
+                        self.generator.gen_markup_string(min, max).0.into(),
                     );
                 }
                 FieldType::Enum(values) => {
@@ -98,7 +112,10 @@ impl Faker {
             .get_data_description_by_type(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 
-        for _ in 0..Faker::FAKE_ITEMS_LIMIT {
+        let quantity = self.get_quantity_limit(&document_type);
+
+        let mut child_total: u32 = 0;
+        for _ in 0..quantity {
             let document = self.create_fake(document_type.clone(), Map::new());
             let id = document.id.clone();
             arhiv
@@ -107,8 +124,9 @@ impl Faker {
 
             if let Some(collection_options) = &data_description.collection_of {
                 let child_document_type = collection_options.item_type.clone();
+                let child_quantity = self.get_quantity_limit(&child_document_type);
 
-                for _ in 0..Faker::FAKE_ITEMS_LIMIT {
+                for _ in 0..child_quantity {
                     let mut initial_values = Map::new();
                     initial_values.insert(
                         collection_options.item_field_name.clone(),
@@ -121,7 +139,18 @@ impl Faker {
                         .stage_document(child_document, self.attachments.clone())
                         .expect("must be able to save child document");
                 }
+
+                child_total += child_quantity as u32;
             }
+        }
+
+        if let Some(collection_options) = &data_description.collection_of {
+            println!(
+                "Generated {} {} and {} child {}",
+                quantity, document_type, child_total, collection_options.item_type
+            );
+        } else {
+            println!("Generated {} {}", quantity, document_type);
         }
     }
 }

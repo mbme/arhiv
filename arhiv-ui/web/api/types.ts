@@ -63,7 +63,7 @@ export interface IField {
 export type FieldType =
   'String'
   | 'MarkupString'
-  | 'Ref'
+  | { Ref: string }
   | { Enum: string[] }
 
 export interface ICreateDocumentArgs {

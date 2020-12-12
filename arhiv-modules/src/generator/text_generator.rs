@@ -7,34 +7,17 @@ use std::fs;
 use crate::markup::create_ref;
 use crate::markup::MarkupString;
 
-pub fn create_attachments() -> Vec<AttachmentSource> {
-    let mut attachments: Vec<AttachmentSource> = vec![];
-
-    let dir = project_relpath("../resources");
-    for entry in fs::read_dir(dir).unwrap() {
-        let path = entry.unwrap().path();
-        let path = path.to_str().unwrap();
-
-        if path.ends_with(".jpg") || path.ends_with(".jpeg") {
-            let attachment = AttachmentSource::new(path);
-            attachments.push(attachment);
-        }
-    }
-
-    attachments
-}
-
-pub struct Generator {
+pub struct TextGenerator {
     markov: Markov,
     attachment_ids: Vec<Id>,
 }
 
-impl Generator {
+impl TextGenerator {
     pub fn new(attachments: &Vec<AttachmentSource>) -> Self {
         let text = fs::read_to_string(project_relpath("../resources/text.txt")).unwrap();
         let markov = Markov::new(&text);
 
-        Generator {
+        TextGenerator {
             markov,
             attachment_ids: attachments.iter().map(|item| item.id.clone()).collect(),
         }

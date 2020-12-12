@@ -4,7 +4,9 @@
   "fields": [
     {
       "name": "projectId",
-      "fieldType": "Ref"
+      "fieldType": {
+        "Ref": "project"
+      }
     },
     {
       "name": "title",

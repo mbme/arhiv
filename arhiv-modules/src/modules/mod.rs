@@ -8,7 +8,7 @@ use arhiv::entities::{Document, Id};
 pub use data_description::*;
 use serde_json::Value;
 
-use crate::generator::Generator;
+use crate::generator::TextGenerator;
 use crate::markup::MarkupString;
 
 pub type DocumentData = Map<String, Value>;
@@ -24,6 +24,12 @@ impl DocumentDataManager {
         }
     }
 
+    pub fn get_data_description_by_type(&self, document_type: &str) -> Result<&DataDescription> {
+        self.modules
+            .get(document_type)
+            .ok_or(anyhow!("Unknown document type {}", document_type))
+    }
+
     pub fn create(&self, document_type: String) -> Result<DocumentData> {
         self.create_with_data(document_type, Map::new())
     }
@@ -33,10 +39,7 @@ impl DocumentDataManager {
         document_type: String,
         initial_values: DocumentData,
     ) -> Result<DocumentData> {
-        let description = self
-            .modules
-            .get(&document_type)
-            .ok_or(anyhow!("Unknown document type {}", &document_type))?;
+        let description = self.get_data_description_by_type(&document_type)?;
 
         let mut result: DocumentData = Map::new();
         result.insert("type".to_string(), Value::String(document_type));
@@ -50,14 +53,13 @@ impl DocumentDataManager {
             match &field.field_type {
                 FieldType::String | FieldType::MarkupString => {
                     result.insert(field.name.clone(), Value::from(""));
-                    break;
                 }
                 FieldType::Enum(values) => {
                     let value = values.get(0).expect("enum must contain values");
                     result.insert(field.name.clone(), Value::String((*value).clone()));
-                    break;
                 }
-                FieldType::Ref => {
+                FieldType::Ref(_) => {
+                    // FIXME check ref document type
                     bail!("initial value for Ref must be provided");
                 }
             }
@@ -96,7 +98,8 @@ impl DocumentDataManager {
 
                     result.extend(value.extract_refs());
                 }
-                FieldType::Ref => {
+                FieldType::Ref(_) => {
+                    // FIXME check ref document type
                     let value: Id = serde_json::from_value(
                         data.get(&field.name)
                             .expect("field must be present")
@@ -130,7 +133,7 @@ impl DocumentDataManager {
         Ok(())
     }
 
-    pub fn gen_data(&self, data: &mut DocumentData, generator: &Generator) -> Result<()> {
+    pub fn gen_data(&self, data: &mut DocumentData, generator: &TextGenerator) -> Result<()> {
         let description = self.get_data_description(data)?;
 
         for field in &description.fields {

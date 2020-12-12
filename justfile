@@ -3,11 +3,8 @@
 # End:
 # vim: set ft=make :
 
-gen-notes:
-  cd arhiv-modules; cargo run --bin generate-notes
-
-gen-projects-tasks:
-  cd arhiv-modules; cargo run --bin generate-projects-tasks
+generate-fakes:
+  cd arhiv-modules; cargo run --bin generate-fakes
 
 remove-arhiv:
   cd arhiv; cargo run --bin remove-arhiv

@@ -3,7 +3,7 @@
   "documentTitle": "title",
   "collectionOf": {
     "itemType": "task",
-    "fieldName": "project_id"
+    "itemFieldName": "projectId"
   },
   "fields": [
     {

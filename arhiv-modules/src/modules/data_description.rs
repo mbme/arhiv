@@ -19,7 +19,7 @@ pub struct Field {
 pub enum FieldType {
     String,
     MarkupString,
-    Ref,
+    Ref(String),
     Enum(Vec<String>),
 }
 
@@ -27,5 +27,5 @@ pub enum FieldType {
 #[serde(rename_all = "camelCase")]
 pub struct Collection {
     pub item_type: String,
-    pub field_name: String,
+    pub item_field_name: String,
 }

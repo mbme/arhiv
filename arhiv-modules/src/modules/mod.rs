@@ -155,6 +155,7 @@ fn get_modules() -> HashMap<String, DataDescription> {
     // FIXME deny "type" field
     // FIXME validate data description
     // FIXME generate json schema based on data description
+    // FIXME check if collection child type has field with name equal to collection type
 
     modules
 }

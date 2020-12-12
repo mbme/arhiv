@@ -27,5 +27,4 @@ pub enum FieldType {
 #[serde(rename_all = "camelCase")]
 pub struct Collection {
     pub item_type: String,
-    pub item_field_name: String,
 }

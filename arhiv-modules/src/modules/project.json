@@ -2,8 +2,7 @@
   "documentType": "project",
   "documentTitle": "title",
   "collectionOf": {
-    "itemType": "task",
-    "itemFieldName": "projectId"
+    "itemType": "task"
   },
   "fields": [
     {

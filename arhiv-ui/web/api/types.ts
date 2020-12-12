@@ -52,12 +52,17 @@ export interface IListPage<T> {
 
 export interface IDataDescription {
   readonly documentType: string
+  readonly collectionOf?: ICollection
   readonly fields: IField[]
 }
 
+export interface ICollection {
+  readonly itemType: string
+}
+
 export interface IField {
-  name: string
-  fieldType: FieldType
+  readonly name: string
+  readonly fieldType: FieldType
 }
 
 export type FieldType =

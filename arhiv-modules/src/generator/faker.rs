@@ -128,10 +128,8 @@ impl Faker {
 
                 for _ in 0..child_quantity {
                     let mut initial_values = Map::new();
-                    initial_values.insert(
-                        collection_options.item_field_name.clone(),
-                        serde_json::to_value(&id).unwrap(),
-                    );
+                    initial_values
+                        .insert(document_type.clone(), serde_json::to_value(&id).unwrap());
                     let child_document =
                         self.create_fake(child_document_type.clone(), initial_values);
 

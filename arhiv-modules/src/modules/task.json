@@ -3,7 +3,7 @@
   "documentTitle": "title",
   "fields": [
     {
-      "name": "projectId",
+      "name": "project",
       "fieldType": {
         "Ref": "project"
       }

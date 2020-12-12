@@ -8,7 +8,6 @@ use arhiv::entities::{Document, Id};
 pub use data_description::*;
 use serde_json::Value;
 
-use crate::generator::TextGenerator;
 use crate::markup::MarkupString;
 
 pub type DocumentData = Map<String, Value>;
@@ -129,27 +128,6 @@ impl DocumentDataManager {
         };
         let refs = self.extract_refs(&data)?;
         document.refs = refs;
-
-        Ok(())
-    }
-
-    pub fn gen_data(&self, data: &mut DocumentData, generator: &TextGenerator) -> Result<()> {
-        let description = self.get_data_description(data)?;
-
-        for field in &description.fields {
-            match field.field_type {
-                FieldType::String => {
-                    data.insert(field.name.clone(), generator.gen_string().into());
-                }
-                FieldType::MarkupString => {
-                    data.insert(
-                        field.name.clone(),
-                        generator.gen_markup_string(1, 8).0.into(),
-                    );
-                }
-                _ => {}
-            }
-        }
 
         Ok(())
     }

@@ -5,21 +5,18 @@ import {
   useClickOnActivate,
   useFocusable,
 } from '@v/web-platform'
-import { IDocument } from '../../../api'
-import { useDataDescription } from '../../../data-manager'
+import { RouterContext } from '@v/web-utils'
+import { IDocument } from '../../api'
+import { useDataDescription } from '../../data-manager'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
 interface IProps {
   document: IDocument
-  onActivate(document: IDocument): void
 }
 
-export function CatalogEntry(props: IProps) {
-  const {
-    document,
-    onActivate,
-  } = props
+export function CatalogEntry({ document }: IProps) {
+  const router = RouterContext.use()
 
   const {
     titleField,
@@ -36,7 +33,7 @@ export function CatalogEntry(props: IProps) {
       p="small"
       border={isFocused ? 'active' : 'invisible'}
       cursor="pointer"
-      onClick={() => onActivate(document)}
+      onClick={() => router.push(`/documents/${document.id}`)}
       ref={ref}
     >
       {document.data[titleField]}

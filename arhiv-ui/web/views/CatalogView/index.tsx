@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
-import { IDocument } from '../../api'
-import { Catalog } from './Catalog'
+import { Action, Catalog, Frame } from '../../parts'
 
 interface IProps {
   documentType: string
@@ -10,16 +9,24 @@ interface IProps {
 export function CatalogView({ documentType }: IProps) {
   const router = RouterContext.use()
 
-  const onAdd = () => router.push(`/catalog/${documentType}/new`)
-  const onActivate = (document: IDocument) => router.push(`/documents/${document.id}`)
+  const actions = (
+    <Action
+      type="action"
+      onClick={() => router.push(`/catalog/${documentType}/new`)}
+    >
+      Add
+    </Action>
+  )
 
   return (
-    <Catalog
-      key={documentType}
-      documentType={documentType}
+    <Frame
+      actions={actions}
       title={`${documentType} Catalog`}
-      onAdd={onAdd}
-      onActivate={onActivate}
-    />
+    >
+      <Catalog
+        key={documentType}
+        documentType={documentType}
+      />
+    </Frame>
   )
 }

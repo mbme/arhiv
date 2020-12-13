@@ -6,7 +6,7 @@ import {
   IDocumentFilter,
   IListPage,
   IMatcher,
-} from '../../../api'
+} from '../../api'
 
 const PAGE_SIZE = 10
 
@@ -17,7 +17,7 @@ interface IList<D> {
   loadMore(): void
 }
 
-export function useList<D extends IDocument>(matchers: IMatcher[]): IList<D> {
+export function useList<D extends IDocument>(matchers: Array<IMatcher | undefined>): IList<D> {
   const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()
@@ -33,9 +33,9 @@ export function useList<D extends IDocument>(matchers: IMatcher[]): IList<D> {
       pageOffset: 0,
       pageSize: PAGE_SIZE,
       skipArchived: true,
-      matchers,
+      matchers: matchers.filter(Boolean) as IMatcher[],
     })
-  }, [matchers])
+  }, [JSON.stringify(matchers.filter(Boolean))]) // FIXME shallow equality
 
   React.useEffect(() => {
     if (!documentFilter) {

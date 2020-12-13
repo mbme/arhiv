@@ -7,27 +7,18 @@ import {
   Button,
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
-import { ErrorBlock, Frame, Action } from '../../../parts'
-import { IDocument, IMatcher } from '../../../api'
+import { ErrorBlock } from '../ErrorBlock'
+import { useDataDescription } from '../../data-manager'
+import { IMatcher } from '../../api'
 import { useList } from './useList'
 import { CatalogEntry } from './CatalogEntry'
-import { useDataDescription } from '../../../data-manager'
 
 interface IProps {
-  title: string
   documentType: string
-  onAdd(): void
-  onActivate(document: IDocument): void
+  collectionMatcher?: IMatcher
 }
 
-export function Catalog(props: IProps) {
-  const {
-    title,
-    documentType,
-    onAdd,
-    onActivate,
-  } = props
-
+export function Catalog({ documentType, collectionMatcher }: IProps) {
   const {
     Form,
     values: {
@@ -37,17 +28,17 @@ export function Catalog(props: IProps) {
 
   const { titleField } = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
-  const matchers = React.useMemo<IMatcher[]>(() => [
-    { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true },
-    { selector: '$.type', pattern: documentType, fuzzy: false }
-  ], [debouncedFilter, documentType])
 
   const {
     items,
     hasMore,
     error,
     loadMore,
-  } = useList(matchers)
+  } = useList([
+    { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true },
+    { selector: '$.type', pattern: documentType, fuzzy: false },
+    collectionMatcher,
+  ])
 
   if (error) {
     return (
@@ -61,27 +52,14 @@ export function Catalog(props: IProps) {
         <CatalogEntry
           key={item.id}
           document={item}
-          onActivate={onActivate}
         />
       ))
   ) : (
     <ProgressLocker />
   )
 
-  const actions = (
-    <Action
-      type="action"
-      onClick={onAdd}
-    >
-      Add
-    </Action>
-  )
-
   return (
-    <Frame
-      actions={actions}
-      title={title}
-    >
+    <>
       <Box
         pb="small"
         width="100%"
@@ -111,6 +89,6 @@ export function Catalog(props: IProps) {
           </Button>
         )}
       </Box>
-    </Frame>
+    </>
   )
 }

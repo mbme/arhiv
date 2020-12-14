@@ -112,7 +112,7 @@ impl Markov {
         }
     }
 
-    pub fn generate_sentence(&self, include_separator: bool) -> (String, usize) {
+    pub fn generate_sentence(&self, include_separator: bool) -> (String, u32) {
         let mut sentence: Vec<String> = vec![];
 
         let initial_word = pick_word(&self.starts);
@@ -148,12 +148,13 @@ impl Markov {
             result.push_str(&pick_word(&self.separators));
         }
 
-        (result, words_count)
+        (result, words_count as u32)
     }
 
     pub fn generate_sentence_constrained(
         &self,
-        max_words: usize,
+        min_words: u32,
+        max_words: u32,
         include_separator: bool,
     ) -> String {
         let mut attempt = 0;
@@ -169,7 +170,7 @@ impl Markov {
             }
 
             let (sentence, words) = self.generate_sentence(include_separator);
-            if words <= max_words {
+            if words >= min_words && words <= max_words {
                 return sentence;
             }
         }

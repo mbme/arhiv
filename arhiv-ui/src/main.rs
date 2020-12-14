@@ -34,6 +34,8 @@ fn main() {
                 let filter: Option<DocumentFilter> =
                     serde_json::from_value(params).expect("param must be document filter");
 
+                // FIXME validate matcher props
+
                 let result = arhiv
                     .list_documents(filter)
                     .expect("must be able to list documents");

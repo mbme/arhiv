@@ -68,33 +68,40 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: DocumentFilter) -> Result<ListPage<Document>> {
-        let mut query = vec!["SELECT * FROM documents WHERE true"];
+        let mut query: Vec<String> = vec!["SELECT * FROM documents WHERE true".to_string()];
         let mut params = Params::new();
 
         if filter.only_staged.unwrap_or(false) {
-            query.push("AND staged = true")
+            query.push("AND staged = true".to_string())
         }
 
-        for matcher in filter.matchers {
+        for (i, matcher) in filter.matchers.into_iter().enumerate() {
+            let matcher_selector_var = format!(":matcher_selector_{}", i);
+            let matcher_pattern_var = format!(":matcher_pattern_{}", i);
+
             if matcher.fuzzy {
                 self.init_fuzzy_search()?;
 
-                query.push(
-                    "AND fuzzySearch(json_extract(data, :matcher_selector), :matcher_pattern)",
-                );
+                query.push(format!(
+                    "AND fuzzySearch(json_extract(data, {}), {})",
+                    matcher_selector_var, matcher_pattern_var,
+                ));
             } else {
-                query.push("AND json_extract(data, :matcher_selector) = :matcher_pattern");
+                query.push(format!(
+                    "AND json_extract(data, {}) = {}",
+                    matcher_selector_var, matcher_pattern_var,
+                ));
             }
 
-            params.insert(":matcher_selector", Rc::new(matcher.selector));
-            params.insert(":matcher_pattern", Rc::new(matcher.pattern));
+            params.insert(&matcher_selector_var, Rc::new(matcher.selector));
+            params.insert(&matcher_pattern_var, Rc::new(matcher.pattern));
         }
 
         if filter.skip_archived.unwrap_or(false) {
-            query.push("AND archived = false");
+            query.push("AND archived = false".to_string());
         }
 
-        query.push("GROUP BY id HAVING staged = MAX(staged)");
+        query.push("GROUP BY id HAVING staged = MAX(staged)".to_string());
 
         let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
@@ -107,17 +114,17 @@ pub trait Queries {
                     page_size += 1
                 }
 
-                query.push("LIMIT :limit");
+                query.push("LIMIT :limit".to_string());
                 params.insert(":limit", Rc::new(page_size));
 
                 let page_offset = page_offset_opt.unwrap_or(0);
-                query.push("OFFSET :offset");
+                query.push("OFFSET :offset".to_string());
                 params.insert(":offset", Rc::new(page_offset));
             }
         }
 
         let query = query.join(" ");
-        log::trace!("list_documents: {}", &query);
+        log::debug!("list_documents: {}", &query);
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;
@@ -176,7 +183,7 @@ pub trait Queries {
         }
 
         let query = query.join(" ");
-        log::trace!("list_attachments: {}", &query);
+        log::debug!("list_attachments: {}", &query);
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;
@@ -395,7 +402,7 @@ pub trait MutableQueries: Queries {
 }
 
 struct Params {
-    params: HashMap<&'static str, Rc<dyn ToSql>>,
+    params: HashMap<String, Rc<dyn ToSql>>,
 }
 
 impl Params {
@@ -405,8 +412,8 @@ impl Params {
         }
     }
 
-    pub fn insert(&mut self, key: &'static str, value: Rc<dyn ToSql>) {
-        self.params.insert(key, value);
+    pub fn insert<S: Into<String>>(&mut self, key: S, value: Rc<dyn ToSql>) {
+        self.params.insert(key.into(), value);
     }
 
     pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {

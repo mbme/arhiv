@@ -31,8 +31,8 @@ pub struct Faker {
     attachments: Vec<AttachmentSource>,
     generator: TextGenerator,
     data_manager: DocumentDataManager,
-    pub quantity_limits: HashMap<String, u8>,
-    pub field_size_limits: HashMap<(String, String), (u8, u8)>,
+    pub quantity_limits: HashMap<String, u32>,
+    pub field_size_limits: HashMap<(String, String), (u32, u32)>,
 }
 
 impl Faker {
@@ -50,15 +50,14 @@ impl Faker {
         }
     }
 
-    fn get_quantity_limit(&self, document_type: &str) -> u8 {
+    fn get_quantity_limit(&self, document_type: &str) -> u32 {
         *self.quantity_limits.get(document_type).unwrap_or(&30)
     }
 
-    fn get_field_size_limits(&self, document_type: &str, field_name: &str) -> (u8, u8) {
-        *self
-            .field_size_limits
+    fn get_field_size_limits(&self, document_type: &str, field_name: &str) -> Option<(u32, u32)> {
+        self.field_size_limits
             .get(&(document_type.to_string(), field_name.to_string()))
-            .unwrap_or(&(1, 8))
+            .map(|(min, max)| (*min, *max))
     }
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
@@ -79,10 +78,18 @@ impl Faker {
         for field in &description.fields {
             match &field.field_type {
                 FieldType::String => {
-                    data.insert(field.name.clone(), self.generator.gen_string().into());
+                    let (min, max) = self
+                        .get_field_size_limits(&document_type, &field.name)
+                        .unwrap_or((1, 8));
+                    data.insert(
+                        field.name.clone(),
+                        self.generator.gen_string(min, max).into(),
+                    );
                 }
                 FieldType::MarkupString => {
-                    let (min, max) = self.get_field_size_limits(&document_type, &field.name);
+                    let (min, max) = self
+                        .get_field_size_limits(&document_type, &field.name)
+                        .unwrap_or((1, 8));
                     data.insert(
                         field.name.clone(),
                         self.generator.gen_markup_string(min, max).0.into(),

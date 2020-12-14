@@ -23,18 +23,19 @@ impl TextGenerator {
         }
     }
 
-    pub fn gen_string(&self) -> String {
-        self.markov.generate_sentence_constrained(8, false)
+    pub fn gen_string(&self, min_words: u32, max_words: u32) -> String {
+        self.markov
+            .generate_sentence_constrained(min_words, max_words, false)
     }
 
-    pub fn gen_markup_string(&self, min_paragraphs: u8, max_paragraphs: u8) -> MarkupString {
+    pub fn gen_markup_string(&self, min_paragraphs: u32, max_paragraphs: u32) -> MarkupString {
         let mut data: Vec<String> = vec![];
         let mut rng = thread_rng();
         for _ in 0..rng.gen_range(min_paragraphs, max_paragraphs + 1) {
             let mut sentences = vec![];
 
             for _ in 0..rng.gen_range(1, 8) {
-                sentences.push(self.markov.generate_sentence_constrained(20, true));
+                sentences.push(self.markov.generate_sentence_constrained(2, 20, true));
             }
 
             if rng.gen_bool(0.33) {

@@ -35,9 +35,9 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     error,
     loadMore,
   } = useList([
-    { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true },
     { selector: '$.type', pattern: documentType, fuzzy: false },
     collectionMatcher,
+    debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
   ])
 
   if (error) {

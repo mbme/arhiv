@@ -34,23 +34,23 @@ export function App() {
 
             [
               pm`/catalog/${'documentType'}`,
-              ({ documentType }) => <CatalogView documentType={documentType}/>,
+              ({ documentType }) => <CatalogView key={documentType} documentType={documentType}/>,
             ],
             [
               pm`/catalog/${'documentType'}/new`,
-              ({ documentType }) => <NewCardEditorView documentType={documentType} />,
+              ({ documentType }) => <NewCardEditorView key={documentType} documentType={documentType} />,
             ],
             [
               pm`/documents/${'id'}`,
-              ({ id }) => <CardView id={id} />,
+              ({ id }) => <CardView key={id} id={id} />,
             ],
             [
               pm`/documents/${'id'}/metadata`,
-              ({ id }) => <MetadataView id={id} />,
+              ({ id }) => <MetadataView key={id} id={id} />,
             ],
             [
               pm`/documents/${'id'}/edit`,
-              ({ id }) => <CardEditorView id={id} />,
+              ({ id }) => <CardEditorView key={id} id={id} />,
             ],
           ]}
         </Routes>

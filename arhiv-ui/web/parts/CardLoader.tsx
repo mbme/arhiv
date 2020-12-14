@@ -26,7 +26,7 @@ export function CardLoader(props: Props) {
     }
 
     throw new Error('id or createDocument prop must be provided')
-  }, [])
+  }, [props.id])
 
   if (err) {
     return (

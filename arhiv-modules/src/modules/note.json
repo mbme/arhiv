@@ -4,11 +4,15 @@
   "fields": [
     {
       "name": "name",
-      "fieldType": "String"
+      "fieldType": {
+        "String": {}
+      }
     },
     {
       "name": "data",
-      "fieldType": "MarkupString"
+      "fieldType": {
+        "MarkupString": {}
+      }
     }
   ]
 }

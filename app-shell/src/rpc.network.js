@@ -18,6 +18,10 @@
         })
       }).then(response => response.json())
 
+      if (response.err) {
+        return Promise.reject(response.err)
+      }
+
       return response.result
     },
   }

@@ -17,8 +17,8 @@ pub struct Field {
 
 #[derive(Serialize, Deserialize)]
 pub enum FieldType {
-    String,
-    MarkupString,
+    String {},
+    MarkupString {},
     Ref(String),
     Enum(Vec<String>),
 }

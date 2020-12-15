@@ -1,4 +1,4 @@
-import { Obj } from '@v/utils'
+import { EmptyObject, Obj } from '@v/utils'
 
 export interface IDocument {
   readonly id: string
@@ -66,8 +66,8 @@ export interface IField {
 }
 
 export type FieldType =
-  'String'
-  | 'MarkupString'
+  { String: EmptyObject }
+  | { MarkupString: EmptyObject }
   | { Ref: string }
   | { Enum: string[] }
 

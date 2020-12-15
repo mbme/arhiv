@@ -10,7 +10,7 @@ interface IProps {
 }
 
 export function CardDataField({ value, fieldType, isTitle }: IProps) {
-  if (fieldType === 'String' && isTitle) {
+  if ('String' in fieldType && isTitle) {
     return (
       <Heading
         fontSize="large"
@@ -20,7 +20,7 @@ export function CardDataField({ value, fieldType, isTitle }: IProps) {
     )
   }
 
-  if (fieldType === 'MarkupString') {
+  if ('MarkupString' in fieldType) {
     return  (
       <Markup value={value} />
     )

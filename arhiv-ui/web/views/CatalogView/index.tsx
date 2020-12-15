@@ -12,9 +12,9 @@ export function CatalogView({ documentType }: IProps) {
   const actions = (
     <Action
       type="action"
-      onClick={() => router.push(`/catalog/${documentType}/new`)}
+      onClick={() => router.push(`/documents/${documentType}/new`)}
     >
-      Add
+      Add {documentType}
     </Action>
   )
 

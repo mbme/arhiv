@@ -1,5 +1,6 @@
 use crate::context::AppShellContext;
 use crate::rpc_message::{RpcMessage, RpcMessageResponse};
+use anyhow::*;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::Path;
@@ -10,7 +11,7 @@ pub struct AppShellBuilder {
     pub(crate) default_size: (i32, i32),
     pub(crate) data_dir: Option<String>,
     pub(crate) actions:
-        HashMap<String, Box<dyn Fn(&AppShellContext, Value) -> Value + Send + Sync>>,
+        HashMap<String, Box<dyn Fn(&AppShellContext, Value) -> Result<Value> + Send + Sync>>,
     pub(crate) server_mode: bool,
     pub(crate) server_port: u16,
     pub(crate) js_variables: Map<String, Value>,
@@ -60,7 +61,7 @@ impl AppShellBuilder {
     pub fn with_action<S, F>(mut self, action: S, handler: F) -> Self
     where
         S: Into<String>,
-        F: Fn(&AppShellContext, Value) -> Value + 'static + Send + Sync,
+        F: Fn(&AppShellContext, Value) -> Result<Value> + 'static + Send + Sync,
     {
         self.actions.insert(action.into(), Box::new(handler));
         self
@@ -92,12 +93,18 @@ impl AppShellBuilder {
         };
 
         let context = AppShellContext::new(self.server_mode);
-        let result = handler(&context, message.params);
 
-        RpcMessageResponse {
-            call_id: message.call_id,
-            result,
-            err: None,
+        match handler(&context, message.params) {
+            Ok(result) => RpcMessageResponse {
+                call_id: message.call_id,
+                result,
+                err: None,
+            },
+            Err(err) => RpcMessageResponse {
+                call_id: message.call_id,
+                result: Value::Null,
+                err: Some(err.to_string()),
+            },
         }
     }
 

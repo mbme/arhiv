@@ -13,6 +13,8 @@ export type Dict<T = string> = Record<string, T>
 
 export type Obj = Dict<any>
 
+export type EmptyObject = Dict<never>
+
 // make all properties mutable
 export type Mutable<T> = {
   -readonly [P in keyof T]: T[P];

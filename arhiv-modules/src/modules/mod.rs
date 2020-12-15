@@ -50,7 +50,7 @@ impl DocumentDataManager {
             }
 
             match &field.field_type {
-                FieldType::String | FieldType::MarkupString => {
+                FieldType::String {} | FieldType::MarkupString {} => {
                     result.insert(field.name.clone(), Value::from(""));
                 }
                 FieldType::Enum(values) => {
@@ -87,7 +87,7 @@ impl DocumentDataManager {
 
         for field in &data_description.fields {
             match field.field_type {
-                FieldType::MarkupString => {
+                FieldType::MarkupString {} => {
                     let value: MarkupString = serde_json::from_value(
                         data.get(&field.name)
                             .expect(&format!("field '{}' must be present", field.name))
@@ -108,7 +108,7 @@ impl DocumentDataManager {
 
                     result.insert(value);
                 }
-                FieldType::String | FieldType::Enum(_) => {
+                FieldType::String {} | FieldType::Enum(_) => {
                     continue;
                 }
             }

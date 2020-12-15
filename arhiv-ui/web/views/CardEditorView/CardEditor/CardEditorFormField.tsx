@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Input, Textarea } from '@v/web-platform'
+import { Input, Select, Textarea } from '@v/web-platform'
+import { Dict } from '@v/utils'
 import { FieldType } from '../../../api'
 
 interface IProps {
@@ -8,7 +9,7 @@ interface IProps {
 }
 
 export function CardEditorFormField({ name, fieldType }: IProps) {
-  if (fieldType === 'String') {
+  if ('String' in fieldType) {
     return (
       <Input
         label={name}
@@ -18,7 +19,7 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
     )
   }
 
-  if (fieldType === 'MarkupString') {
+  if ('MarkupString' in fieldType) {
     return (
       <Textarea
         label={name}
@@ -28,5 +29,31 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
     )
   }
 
-  throw new Error(`Unsupported field type ${fieldType}`)
+  if ('Ref' in fieldType) {
+    return (
+      <Input
+        label={name}
+        name={name}
+        placeholder={name}
+        readOnly
+      />
+    )
+  }
+
+  if ('Enum' in fieldType) {
+    const options: Dict = {}
+    for (const value of fieldType.Enum) {
+      options[value] = value
+    }
+
+    return (
+      <Select
+        label={name}
+        name={name}
+        options={options}
+      />
+    )
+  }
+
+  throw new Error(`Unsupported field type ${JSON.stringify(fieldType)}`)
 }

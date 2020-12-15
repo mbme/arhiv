@@ -14,7 +14,13 @@ function getHashLocation() {
 
   const endPos = queryPos === -1 ? window.location.hash.length : queryPos
 
-  return window.location.hash.substring(1, endPos) || '/'
+  const pathname = window.location.hash.substring(1, endPos) || '/'
+  const query = queryPos === -1 ? '' : window.location.hash.substring(queryPos, window.location.hash.length)
+
+  return {
+    pathname,
+    query,
+  }
 }
 
 export class WebRouter {
@@ -30,17 +36,35 @@ export class WebRouter {
   }
 
   private _getCurrentLocation(): ILocation {
-    const location = new URL(document.location.toString())
+    let path = ''
     const params: IQueryParam[] = []
 
-    location.searchParams.forEach((value, key) => {
-      params.push({
-        name: key,
-        value,
-      })
-    })
+    if (this._hashBased) {
+      const {
+        pathname,
+        query,
+      } = getHashLocation()
 
-    const path = this._hashBased ? getHashLocation() : location.pathname
+      path = pathname
+
+      const searchParams = new URLSearchParams(query)
+      searchParams.forEach((value, key) => {
+        params.push({
+          name: key,
+          value,
+        })
+      })
+    } else {
+      const location = new URL(document.location.toString())
+
+      path = location.pathname
+      location.searchParams.forEach((value, key) => {
+        params.push({
+          name: key,
+          value,
+        })
+      })
+    }
 
     return {
       path,

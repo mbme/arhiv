@@ -10,11 +10,15 @@
     },
     {
       "name": "title",
-      "fieldType": "String"
+      "fieldType": {
+        "String": {}
+      }
     },
     {
       "name": "description",
-      "fieldType": "MarkupString"
+      "fieldType": {
+        "MarkupString": {}
+      }
     },
     {
       "name": "complexity",

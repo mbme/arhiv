@@ -47,6 +47,7 @@ type NativeProps =
   | 'defaultValue'
   | 'placeholder'
   | 'autoComplete'
+  | 'readOnly'
 
 interface IProps extends Pick<React.HTMLProps<HTMLInputElement>, NativeProps> {
   name: string

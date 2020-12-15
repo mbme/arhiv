@@ -77,7 +77,7 @@ impl Faker {
         let mut rng = thread_rng();
         for field in &description.fields {
             match &field.field_type {
-                FieldType::String => {
+                FieldType::String {} => {
                     let (min, max) = self
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));
@@ -86,7 +86,7 @@ impl Faker {
                         self.generator.gen_string(min, max).into(),
                     );
                 }
-                FieldType::MarkupString => {
+                FieldType::MarkupString {} => {
                     let (min, max) = self
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));

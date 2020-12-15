@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Dict } from '@v/utils'
+import { Dict, isObject } from '@v/utils'
 import { createContext } from '@v/web-utils'
 import { IDataDescription } from './api'
 
@@ -21,12 +21,20 @@ export class DataManager {
   pickTitleField(documentType: string): string {
     const dataDescription = this.getDataDescription(documentType)
 
-    const titleField = dataDescription.fields.find(({ fieldType }) => fieldType === 'String')
+    const titleField = dataDescription.fields.find(({ fieldType }) => 'String' in fieldType)
     if (!titleField) {
       throw new Error("can't pick field for title")
     }
 
     return titleField.name
+  }
+
+  getMandatoryFields(documentType: string): string[] {
+    const dataDescription = this.getDataDescription(documentType)
+
+    return dataDescription.fields
+      .filter(({ fieldType }) => isObject(fieldType) && 'Ref' in fieldType)
+      .map(({ name }) => name)
   }
 }
 
@@ -35,8 +43,10 @@ export const DataManagerContext = createContext<DataManager>()
 export function useDataDescription(documentType: string) {
   const dataManager = DataManagerContext.use()
 
+  // FIXME split into separate hooks
   return React.useMemo(() => ({
     dataDescription: dataManager.getDataDescription(documentType),
     titleField: dataManager.pickTitleField(documentType),
+    mandatoryFields: dataManager.getMandatoryFields(documentType),
   }), [documentType])
 }

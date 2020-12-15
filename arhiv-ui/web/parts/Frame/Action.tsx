@@ -11,12 +11,12 @@ type Action = {
   type: 'location',
   to: SimpleLocation,
   replace?: boolean
-  children: string,
+  children: React.ReactNode,
 } | {
   type: 'action',
   onClick(): void,
-  children: string,
   disabled?: boolean,
+  children: React.ReactNode,
 }
 
 export function Action(action: Action) {

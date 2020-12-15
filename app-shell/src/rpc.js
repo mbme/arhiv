@@ -12,7 +12,7 @@
       return new Promise((resolve) => {
         const callId = counter += 1
 
-        pendingRequests[callId] = resolve
+        pendingRequests[callId] = { resolve, reject }
 
         channel.postMessage(JSON.stringify({
           callId,
@@ -26,17 +26,22 @@
       const {
         callId,
         result,
+        err,
       } = response
 
-      const responseHandler = pendingRequests[callId]
+      const responseHandlers = pendingRequests[callId]
 
-      if (!responseHandler) {
+      if (!responseHandlers) {
         // eslint-disable-next-line no-console
         console.error(`RPC: got response for unknown call id ${callId}, ignoring`, result)
         return
       }
 
-      responseHandler(result)
+      if (err) {
+        responseHandlers.reject(err)
+      } else {
+        responseHandlers.resolve(result)
+      }
 
       delete pendingRequests[callId]
     },

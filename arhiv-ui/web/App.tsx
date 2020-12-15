@@ -37,7 +37,7 @@ export function App() {
               ({ documentType }) => <CatalogView key={documentType} documentType={documentType}/>,
             ],
             [
-              pm`/catalog/${'documentType'}/new`,
+              pm`/documents/${'documentType'}/new`,
               ({ documentType }) => <NewCardEditorView key={documentType} documentType={documentType} />,
             ],
             [

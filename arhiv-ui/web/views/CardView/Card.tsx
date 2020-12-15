@@ -26,6 +26,16 @@ export function Card({ document }: IProps) {
 
       <Action
         type="action"
+        onClick={() => router.push({
+          path: `/documents/${childDocumentType}/new`,
+          params: [{ name: documentType, value: document.id }],
+        })}
+      >
+        Add {childDocumentType}
+      </Action>
+
+      <Action
+        type="action"
         onClick={() => router.replace(`/documents/${document.id}/metadata` )}
       >
         Show Metadata

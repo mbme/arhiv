@@ -1,3 +1,4 @@
+use anyhow::*;
 use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::{Arhiv, DocumentFilter};
@@ -32,15 +33,15 @@ fn main() {
 
             move |_, params| {
                 let filter: Option<DocumentFilter> =
-                    serde_json::from_value(params).expect("param must be document filter");
+                    serde_json::from_value(params).context("param must be document filter")?;
 
                 // FIXME validate matcher props
 
                 let result = arhiv
                     .list_documents(filter)
-                    .expect("must be able to list documents");
+                    .context("must be able to list documents")?;
 
-                serde_json::to_value(&result).expect("must be able to serialize")
+                serde_json::to_value(&result).context("must be able to serialize")
             }
         })
         .with_action("get", {
@@ -49,15 +50,15 @@ fn main() {
             move |_, params| {
                 let id: Id = params
                     .as_str()
-                    .expect("id must be string")
+                    .context("id must be string")?
                     .to_string()
                     .into();
 
                 let result = arhiv
                     .get_document(&id)
-                    .expect("must be able to get document");
+                    .context("must be able to get document")?;
 
-                serde_json::to_value(result).expect("must be able to serialize")
+                serde_json::to_value(result).context("must be able to serialize")
             }
         })
         .with_action("put", {
@@ -66,31 +67,31 @@ fn main() {
 
             move |_, params| {
                 let mut args: PutDocumentArgs =
-                    serde_json::from_value(params).expect("failed to parse params");
+                    serde_json::from_value(params).context("failed to parse params")?;
 
                 data_manager
                     .update_refs(&mut args.document)
-                    .expect("must be able to update refs");
+                    .context("must be able to update refs")?;
 
                 arhiv
                     .stage_document(args.document, args.new_attachments)
-                    .expect("must be able to save document");
+                    .context("must be able to save document")?;
 
-                Value::Null
+                Ok(Value::Null)
             }
         })
         .with_action("create", {
             let data_manager = data_manager.clone();
             move |_, params| {
                 let args: CreateDocumentArgs =
-                    serde_json::from_value(params).expect("failed to parse params");
+                    serde_json::from_value(params).context("failed to parse params")?;
 
                 let data = data_manager
                     .create_with_data(args.document_type, args.args)
-                    .expect("must be able to create document data");
+                    .context("must be able to create document data")?;
                 let document = Document::new(data.into());
 
-                serde_json::to_value(document).expect("must be able to serialize")
+                serde_json::to_value(document).context("must be able to serialize")
             }
         })
         .with_action("get_attachment", {
@@ -99,12 +100,15 @@ fn main() {
             move |_, params| {
                 let id: Id = params
                     .as_str()
-                    .expect("id must be string")
+                    .context("id must be string")?
                     .to_string()
                     .into();
 
-                serde_json::to_value(arhiv.get_attachment(&id).unwrap())
-                    .expect("must be able to serialize")
+                let attachment = arhiv
+                    .get_attachment(&id)
+                    .context("must be able to get attachment")?;
+
+                serde_json::to_value(&attachment).context("must be able to serialize")
             }
         })
         .with_action("get_attachment_location", {
@@ -113,12 +117,15 @@ fn main() {
             move |_, params| {
                 let id: Id = params
                     .as_str()
-                    .expect("id must be string")
+                    .context("id must be string")?
                     .to_string()
                     .into();
 
-                serde_json::to_value(arhiv.get_attachment_location(&id).unwrap())
-                    .expect("must be able to serialize")
+                let attachment_location = arhiv
+                    .get_attachment_location(&id)
+                    .context("must be able to get attachment location")?;
+
+                serde_json::to_value(&attachment_location).context("must be able to serialize")
             }
         })
         .with_action("pick_attachments", {
@@ -130,21 +137,21 @@ fn main() {
                     .map(|file| AttachmentSource::new_from_path_buf(file))
                     .collect();
 
-                serde_json::to_value(attachments).expect("must be able to serialize")
+                serde_json::to_value(attachments).context("must be able to serialize")
             }
         })
         .with_action("render_markup", {
             let arhiv = arhiv.clone();
 
             move |_, params| {
-                let markup = params.as_str().expect("markup must be string");
+                let markup = params.as_str().context("markup must be string")?;
 
                 let string = MarkupString::from(markup);
 
                 let result =
                     MarkupRenderer::new(&string, &arhiv, "/document".to_string()).to_html();
 
-                serde_json::to_value(result).expect("must be able to serialize")
+                serde_json::to_value(result).context("must be able to serialize")
             }
         })
         .start(src);

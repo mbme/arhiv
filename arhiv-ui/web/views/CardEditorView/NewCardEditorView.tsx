@@ -2,8 +2,10 @@ import * as React from 'react'
 import {
   RouterContext,
 } from '@v/web-utils'
+import { Dict } from '@v/utils'
 import { CardLoader } from '../../parts'
 import { API } from '../../api'
+import { useDataDescription } from '../../data-manager'
 import { CardEditor } from './CardEditor'
 
 interface IProps {
@@ -12,10 +14,23 @@ interface IProps {
 
 export function NewCardEditorView({ documentType }: IProps) {
   const router = RouterContext.use()
+  const { mandatoryFields } = useDataDescription(documentType)
+
+  const args: Dict<any> = {}
+
+  for (const mandatoryField of mandatoryFields) {
+    const param = router.location$.value.params.find(item => item.name === mandatoryField)
+
+    if (!param) {
+      throw new Error(`Manadatory query param ${mandatoryField} is missing`)
+    }
+
+    args[mandatoryField] = param.value
+  }
 
   return (
     <CardLoader
-      createDocument={() => API.create({ documentType, args: {} })}
+      createDocument={() => API.create({ documentType, args })}
     >
       {document => (
         <CardEditor

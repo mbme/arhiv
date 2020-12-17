@@ -1,3 +1,4 @@
+use anyhow::*;
 use app_shell::*;
 use serde_json::{value, Value};
 
@@ -9,12 +10,12 @@ fn main() {
     let builder = AppShellBuilder::create("v.app-shell.playground")
         .with_title("App Shell Playground")
         .with_action("get_value", move |_, _params: Value| {
-            value::to_value("some value").unwrap()
+            value::to_value("some value").context("must be able to serialize")
         })
         .with_action("pick_files", move |context: _, _params: Value| {
             let files = context.pick_files(true);
 
-            value::to_value(files).unwrap()
+            value::to_value(files).context("must be able to serialize")
         });
 
     builder.start(AppSource::HTMLFile(path_str));

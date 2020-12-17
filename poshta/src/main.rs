@@ -1,3 +1,4 @@
+use anyhow::*;
 use app_shell::{AppShellBuilder, AppSource};
 use serde_json::{value, Value};
 
@@ -12,7 +13,7 @@ async fn main() {
     AppShellBuilder::create("v.poshta")
         .with_title("Poshta")
         .with_action("get_token", move |_, _params: Value| {
-            value::to_value(token.clone()).unwrap()
+            value::to_value(token.clone()).context("must be able to serialize")
         })
         .start(AppSource::JSFile(format!(
             "{}/dist/bundle.js",

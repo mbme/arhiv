@@ -6,7 +6,7 @@ use reqwest::Client;
 use rs_utils::{ensure_file_exists, read_file_as_stream, FsTransaction};
 
 impl Arhiv {
-    pub(super) fn apply_changeset(&self, changeset: Changeset, delete_staged: bool) -> Result<()> {
+    pub(super) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
         log::debug!("applying changeset {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
@@ -33,10 +33,6 @@ impl Arhiv {
             document.rev = new_rev.clone();
             tx.put_document(&document)?;
             tx.put_document_history(&document)?;
-        }
-
-        if delete_staged {
-            tx.delete_staged_documents()?;
         }
 
         let mut fs_tx = FsTransaction::new();
@@ -96,7 +92,12 @@ impl Arhiv {
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
-        self.apply_changeset(changeset, true)
+        self.apply_changeset(changeset)?;
+
+        // make sure there are no more staged documents
+        assert_eq!(self.storage.get_connection()?.count_documents()?.1, 0);
+
+        Ok(())
     }
 
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
@@ -149,7 +150,9 @@ impl Arhiv {
         for document in response.documents {
             tx.put_document(&document)?;
         }
-        tx.delete_staged_documents()?;
+
+        // make sure there are no more staged documents
+        assert_eq!(tx.count_documents()?.1, 0);
 
         let mut fs_tx = FsTransaction::new();
         for attachment in response.attachments {

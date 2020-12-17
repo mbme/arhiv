@@ -24,7 +24,7 @@ impl Default for DocumentFilter {
             page_offset: Some(0),
             page_size: Some(20),
             matchers: vec![],
-            archived: Some(true),
+            archived: None,
             only_staged: None,
         }
     }

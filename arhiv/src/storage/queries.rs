@@ -45,8 +45,8 @@ pub trait Queries {
         self.get_connection()
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN staged = false THEN 1 ELSE 0 END), 0) AS committed,
-                    IFNULL(SUM(CASE WHEN staged = true THEN 1 ELSE 0 END), 0) AS staged
+                    IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
+                    IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
                 FROM documents",
                 NO_PARAMS,
                 |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
@@ -72,7 +72,7 @@ pub trait Queries {
         let mut params = Params::new();
 
         if filter.only_staged.unwrap_or(false) {
-            query.push("AND staged = true".to_string())
+            query.push("AND rev = 0".to_string())
         }
 
         for (i, matcher) in filter.matchers.into_iter().enumerate() {
@@ -99,8 +99,6 @@ pub trait Queries {
 
         query.push("AND archived = :archived".to_string());
         params.insert(":archived", Rc::new(filter.archived.unwrap_or(false)));
-
-        query.push("GROUP BY id HAVING staged = MAX(staged)".to_string());
 
         let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
@@ -232,9 +230,9 @@ pub trait Queries {
     }
 
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM documents WHERE id = ?1 GROUP BY id HAVING staged = MAX(staged)",
-        )?;
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents WHERE id = ?1")?;
 
         let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
 
@@ -334,12 +332,11 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (staged, id, rev, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
-            document.rev.is_staged(),
             document.id,
             document.rev,
             document.created_at,
@@ -368,13 +365,6 @@ pub trait MutableQueries: Queries {
             utils::serialize_refs(&document.refs)?,
             document.data,
         ])?;
-
-        Ok(())
-    }
-
-    fn delete_staged_documents(&self) -> Result<()> {
-        self.get_connection()
-            .execute("DELETE FROM documents WHERE staged = true", NO_PARAMS)?;
 
         Ok(())
     }

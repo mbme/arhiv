@@ -14,9 +14,7 @@ CREATE TABLE documents (
   refs TEXT NOT NULL,
   data TEXT NOT NULL,
 
-  staged BOOLEAN NOT NULL,
-
-  PRIMARY KEY (id, staged)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE documents_history (

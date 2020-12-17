@@ -100,6 +100,28 @@ pub trait Queries {
         query.push("AND archived = :archived".to_string());
         params.insert(":archived", Rc::new(filter.archived.unwrap_or(false)));
 
+        for (i, order) in filter.order.into_iter().enumerate() {
+            match order {
+                OrderBy::UpdatedAt { asc } => {
+                    query.push(format!(
+                        "ORDER BY updated_at {}",
+                        if asc { "ASC" } else { "DESC" }
+                    ));
+                }
+                OrderBy::Field { selector, asc } => {
+                    let selector_var = format!(":order_selector_{}", i);
+
+                    query.push(format!(
+                        "ORDER BY json_extract(data, {}) {}",
+                        selector_var,
+                        if asc { "ASC" } else { "DESC" }
+                    ));
+
+                    params.insert(&selector_var, Rc::new(selector))
+                }
+            }
+        }
+
         let mut page_size: i32 = -1;
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}

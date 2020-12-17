@@ -35,12 +35,17 @@ export interface IMatcher {
   fuzzy: boolean
 }
 
+export type OrderBy =
+  { Field: { selector: string, asc: boolean } }
+  | { UpdatedAt: { asc: boolean } }
+
 export interface IDocumentFilter {
   pageOffset?: number
   pageSize?: number
   matchers: IMatcher[]
   archived?: boolean
   onlyStaged?: boolean
+  order: OrderBy[],
 }
 
 export type AttachmentLocation = { Url: string } | { File: string }

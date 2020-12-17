@@ -1,14 +1,26 @@
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Matcher {
     pub selector: String,
     pub pattern: String,
     pub fuzzy: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
+pub enum OrderBy {
+    Field { selector: String, asc: bool },
+    UpdatedAt { asc: bool },
+}
+
+impl Default for OrderBy {
+    fn default() -> Self {
+        OrderBy::UpdatedAt { asc: true }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentFilter {
     pub page_offset: Option<u8>,
@@ -16,6 +28,7 @@ pub struct DocumentFilter {
     pub matchers: Vec<Matcher>,
     pub archived: Option<bool>,
     pub only_staged: Option<bool>,
+    pub order: Vec<OrderBy>,
 }
 
 impl Default for DocumentFilter {
@@ -26,6 +39,7 @@ impl Default for DocumentFilter {
             matchers: vec![],
             archived: None,
             only_staged: None,
+            order: vec![],
         }
     }
 }
@@ -36,6 +50,7 @@ pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
     matchers: vec![],
     archived: None,
     only_staged: Some(true),
+    order: vec![],
 };
 
 pub struct AttachmentFilter {

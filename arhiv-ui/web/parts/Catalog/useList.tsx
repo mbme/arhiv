@@ -33,6 +33,7 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
       pageOffset: 0,
       pageSize: PAGE_SIZE,
       matchers: matchers.filter(Boolean) as IMatcher[],
+      order: [{ UpdatedAt: { asc: false } }],
     })
   }, [JSON.stringify(matchers.filter(Boolean))]) // FIXME shallow equality
 

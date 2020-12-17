@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
 import { Action, Catalog, Frame } from '../../parts'
+import { useDataDescription } from '../../data-manager'
 
 interface IProps {
   documentType: string
@@ -9,13 +10,19 @@ interface IProps {
 export function CatalogView({ documentType }: IProps) {
   const router = RouterContext.use()
 
+  const { mandatoryFields } = useDataDescription(documentType)
+
   const actions = (
-    <Action
-      type="action"
-      onClick={() => router.push(`/documents/${documentType}/new`)}
-    >
-      Add {documentType}
-    </Action>
+    <>
+      {mandatoryFields.length === 0 && (
+        <Action
+          type="action"
+          onClick={() => router.push(`/documents/${documentType}/new`)}
+        >
+          Add {documentType}
+        </Action>
+      )}
+    </>
   )
 
   return (

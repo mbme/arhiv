@@ -45,7 +45,7 @@ export function Card({ document }: IProps) {
         type="action"
         onClick={() => router.replace(`/documents/${document.id}/edit` )}
       >
-        Edit Document
+        Edit {documentType}
       </Action>
     </>
   )

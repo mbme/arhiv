@@ -30,8 +30,8 @@ export function CardData({ data }: IProps) {
   })
 
   return (
-    <>
+    <Box px="medium">
       {fields}
-    </>
+    </Box>
   )
 }

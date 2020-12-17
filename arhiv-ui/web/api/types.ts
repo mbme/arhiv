@@ -39,7 +39,7 @@ export interface IDocumentFilter {
   pageOffset?: number
   pageSize?: number
   matchers: IMatcher[]
-  skipArchived?: boolean
+  archived?: boolean
   onlyStaged?: boolean
 }
 

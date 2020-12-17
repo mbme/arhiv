@@ -97,9 +97,8 @@ pub trait Queries {
             params.insert(&matcher_pattern_var, Rc::new(matcher.pattern));
         }
 
-        if filter.skip_archived.unwrap_or(false) {
-            query.push("AND archived = false".to_string());
-        }
+        query.push("AND archived = :archived".to_string());
+        params.insert(":archived", Rc::new(filter.archived.unwrap_or(false)));
 
         query.push("GROUP BY id HAVING staged = MAX(staged)".to_string());
 

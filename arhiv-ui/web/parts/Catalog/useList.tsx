@@ -32,7 +32,6 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
     setDocumentFilter({
       pageOffset: 0,
       pageSize: PAGE_SIZE,
-      skipArchived: true,
       matchers: matchers.filter(Boolean) as IMatcher[],
     })
   }, [JSON.stringify(matchers.filter(Boolean))]) // FIXME shallow equality

@@ -14,7 +14,7 @@ pub struct DocumentFilter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
     pub matchers: Vec<Matcher>,
-    pub skip_archived: Option<bool>,
+    pub archived: Option<bool>,
     pub only_staged: Option<bool>,
 }
 
@@ -24,7 +24,7 @@ impl Default for DocumentFilter {
             page_offset: Some(0),
             page_size: Some(20),
             matchers: vec![],
-            skip_archived: Some(true),
+            archived: Some(true),
             only_staged: None,
         }
     }
@@ -34,7 +34,7 @@ pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
     page_offset: None,
     page_size: None,
     matchers: vec![],
-    skip_archived: None,
+    archived: None,
     only_staged: Some(true),
 };
 

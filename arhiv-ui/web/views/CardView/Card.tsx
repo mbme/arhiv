@@ -24,15 +24,17 @@ export function Card({ document }: IProps) {
         Close
       </Action>
 
-      <Action
-        type="action"
-        onClick={() => router.push({
-          path: `/documents/${childDocumentType}/new`,
-          params: [{ name: documentType, value: document.id }],
-        })}
-      >
-        Add {childDocumentType}
-      </Action>
+      {childDocumentType && (
+        <Action
+          type="action"
+          onClick={() => router.push({
+            path: `/documents/${childDocumentType}/new`,
+            params: [{ name: documentType, value: document.id }],
+          })}
+        >
+          Add {childDocumentType}
+        </Action>
+      )}
 
       <Action
         type="action"

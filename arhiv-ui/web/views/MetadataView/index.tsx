@@ -11,15 +11,15 @@ export function MetadataView({ id }: IProps) {
   const router = RouterContext.use()
 
   const onEdit = () => router.replace(`/documents/${id}/edit` )
-  const onShow = () => router.replace(`/documents/${id}`)
+  const onClose = () => router.replace(`/documents/${id}`)
 
   const actions = (
     <>
       <Action
         type="action"
-        onClick={onShow}
+        onClick={onClose}
       >
-        Show Document
+        Close
       </Action>
 
       <Action

@@ -3,7 +3,6 @@ import {
   StyleArg,
   useStyles,
 } from './core'
-import { useClickOnActivate, useFocusable } from './Focus'
 
 type ButtonVariant = 'primary' | 'secondary' | 'link'
 
@@ -67,14 +66,9 @@ export function Button(props: IProps) {
   } = props
 
   const ref = React.useRef<HTMLButtonElement>(null)
-  const isSelected = useFocusable(ref, { disabled })
-  useClickOnActivate(ref, disabled)
 
   const className = useStyles(
     ...getStyles(props),
-    isSelected && {
-      border: 'active',
-    },
     $style,
   )
 

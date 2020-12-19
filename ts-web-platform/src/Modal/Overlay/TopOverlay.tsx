@@ -4,7 +4,6 @@ import {
   useStyles,
   StyleArg,
 } from '../../core'
-import { FocusRegion } from '../../Focus'
 import { IOverlay } from './context'
 
 const $container: StyleArg = {
@@ -51,16 +50,14 @@ export function TopOverlay({ children, onClick, innerRef, $style, $styles = [] }
   }, [onClick])
 
   return (
-    <FocusRegion name="Modal" mode="column">
-      <div
-        className={className}
-        onClick={clickHandler}
-        role="dialog"
-        aria-modal="true"
-        ref={innerRef}
-      >
-        {children}
-      </div>
-    </FocusRegion>
+    <div
+      className={className}
+      onClick={clickHandler}
+      role="dialog"
+      aria-modal="true"
+      ref={innerRef}
+    >
+      {children}
+    </div>
   )
 }

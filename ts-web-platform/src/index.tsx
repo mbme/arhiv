@@ -33,11 +33,6 @@ export {
   Column,
   Spacer,
 } from './Layout'
-export {
-  FocusRegion,
-  useFocusable,
-  useClickOnActivate,
-} from './Focus'
 export { clickOnEnter } from './utils'
 
 export { PlatformProvider } from './PlatformProvider'

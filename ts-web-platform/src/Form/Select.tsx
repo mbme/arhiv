@@ -1,17 +1,11 @@
 import * as React from 'react'
 import { Box } from '../Box'
 import {
-  StyleArg,
   StylishElement,
 } from '../core'
-import { useFocusable, useFocusOnActivate } from '../Focus'
 import { Label } from '../Label'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
-
-const $selected: StyleArg = {
-  border: 'active',
-}
 
 type NativeProps = 'name' | 'defaultValue'
 
@@ -29,9 +23,6 @@ export const Select = React.forwardRef(
     } = useFormControl(name)
 
     const ref = React.useRef<HTMLSelectElement>(null)
-    const isSelected = useFocusable(ref)
-
-    useFocusOnActivate(ref)
 
     const items = Object.entries(options).map(([key, label]) => (
       <option key={key} value={key}>
@@ -49,7 +40,6 @@ export const Select = React.forwardRef(
           name={name}
           value={value}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value)}
-          $style={isSelected ? $selected : undefined}
         >
           {items}
         </StylishElement>

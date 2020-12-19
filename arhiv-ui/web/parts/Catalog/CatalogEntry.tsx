@@ -2,8 +2,6 @@ import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
-  useClickOnActivate,
-  useFocusable,
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
 import { IDocument } from '../../api'
@@ -23,15 +21,11 @@ export function CatalogEntry({ document }: IProps) {
   } = useDataDescription(document.data.type)
 
   const ref = React.useRef<HTMLDivElement>(null)
-  const isFocused = useFocusable(ref)
-
-  useClickOnActivate(ref)
 
   return (
     <Box
       mb="small"
       p="small"
-      border={isFocused ? 'active' : 'invisible'}
       cursor="pointer"
       onClick={() => router.push(`/documents/${document.id}`)}
       ref={ref}

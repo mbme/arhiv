@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
   Box,
   StyleArg,
-  FocusRegion,
   Column,
 } from '@v/web-platform'
 import { Navigation } from './Navigation'
@@ -36,49 +35,29 @@ interface IProps {
 
 export function Frame({ children, actions, title  }: IProps) {
   return (
-    <FocusRegion
-      name="Frame"
-      mode="row"
+    <Box
+      as="section"
+      $style={$container}
     >
+      <Navigation />
+
       <Box
-        as="section"
-        $style={$container}
+        $style={$content}
       >
-        <FocusRegion
-          name="Navigation"
-          mode="column"
-          highlight
-          title="Apps"
+        <Column
+          height="100%"
+          overflowY="auto"
+          alignX="stretch"
         >
-          <Navigation />
-        </FocusRegion>
+          <Box mb="medium">
+            {title}
+          </Box>
 
-        <FocusRegion
-          name="Content"
-          mode="column"
-          highlight
-          title={title}
-          $style={$content}
-          autoFocus
-        >
-          <Column
-            height="100%"
-            overflowY="auto"
-            alignX="stretch"
-          >
-            {children}
-          </Column>
-        </FocusRegion>
-
-        <FocusRegion
-          name="Actions"
-          mode="column"
-          highlight
-          title="Actions"
-        >
-          <Actions actions={actions} />
-        </FocusRegion>
+          {children}
+        </Column>
       </Box>
-    </FocusRegion>
+
+      <Actions actions={actions} />
+    </Box>
   )
 }

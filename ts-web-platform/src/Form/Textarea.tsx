@@ -4,7 +4,6 @@ import {
   StyleArg,
   StylishElement,
 } from '../core'
-import { useFocusable, useFocusOnActivate } from '../Focus'
 import { Label } from '../Label'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
@@ -21,10 +20,6 @@ const $textarea: StyleArg = {
 
   border: 'default',
   boxShadow: 'default',
-}
-
-const $selected: StyleArg = {
-  border: 'active',
 }
 
 interface IProps {
@@ -44,8 +39,6 @@ export const Textarea = React.forwardRef(
     } = props
 
     const ref = React.useRef<HTMLTextAreaElement>(null)
-    const isSelected = useFocusable(ref)
-    useFocusOnActivate(ref)
 
     const {
       value,
@@ -78,7 +71,7 @@ export const Textarea = React.forwardRef(
         <StylishElement
           ref={mergeRefs(ref, externalRef)}
           as="textarea"
-          $styles={[$textarea, isSelected && $selected, ...$styles]}
+          $styles={[$textarea, ...$styles]}
           name={name}
           value={value}
           placeholder={placeholder}

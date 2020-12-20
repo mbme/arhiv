@@ -3,43 +3,85 @@ import {
   Box,
   StyleArg,
   Column,
+  Link,
+  Heading,
+  Spacer,
 } from '@v/web-platform'
-import { Navigation } from './Navigation'
-import { Actions } from './Actions'
 
 const $container: StyleArg = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(100px, 1fr) 3fr minmax(100px, 1fr)',
-  gridAutoFlow: 'column',
-  gridGap: '0.8rem',
+  gridTemplateColumns: 'auto 250px',
+  gridTemplateRows: '50px auto',
+  gridAutoFlow: 'row',
 
   height: '100vh',
   overflowY: 'hidden',
-  p: 'fine',
 
-  maxWidth: '80rem',
-  minWidth: '44rem',
+  maxWidth: '54rem',
+  minWidth: '34rem',
   mx: 'auto',
 }
 
+const $header: StyleArg = {
+  bgColor: '#88c0d0',
+
+  px: 'medium',
+  py: 'small',
+
+  display: 'flex',
+}
+
 const $content: StyleArg = {
+  gridRow: '2',
+  pt: 'medium',
+  pl: 'medium',
   height: '100%',
   overflowY: 'auto',
+  bgColor: 'var(--color-bg0)',
+}
+
+const $actions: StyleArg = {
+  gridRow: '2',
+  pl: 'medium',
+  '&>*': {
+    mb: 'small',
+  },
 }
 
 interface IProps {
   children: React.ReactNode
-  actions: React.ReactNode
+  actions?: React.ReactNode
   title: string
 }
 
-export function Frame({ children, actions, title  }: IProps) {
+export function Frame({ children, actions = null, title  }: IProps) {
   return (
     <Box
       as="section"
       $style={$container}
     >
-      <Navigation />
+      <Box
+        $style={$header}
+      >
+        <Link to="/" clean>
+          Dashboard
+        </Link>
+
+        <Spacer
+          width="1rem"
+          flex="0 0 1rem"
+        />
+
+        <span>
+          Stats
+        </span>
+
+        <Spacer />
+
+        <span>
+          Synced
+        </span>
+      </Box>
 
       <Box
         $style={$content}
@@ -49,15 +91,22 @@ export function Frame({ children, actions, title  }: IProps) {
           overflowY="auto"
           alignX="stretch"
         >
-          <Box mb="medium">
+          <Heading
+            fontSize="medium"
+            uppercase
+            color="var(--color-secondary)"
+          >
             {title}
-          </Box>
-
+          </Heading>
           {children}
         </Column>
       </Box>
 
-      <Actions actions={actions} />
+      <Column
+        $style={$actions}
+      >
+        {actions}
+      </Column>
     </Box>
   )
 }

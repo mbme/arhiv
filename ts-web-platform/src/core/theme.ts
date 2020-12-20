@@ -4,7 +4,8 @@ export const theme = {
     small: '0.5rem',
     medium: '1.25rem',
     large: '2rem',
-    xlarge: '3rem',
+    xlarge: '3.25rem',
+    xxlarge: '5.25rem',
   },
   border: {
     default: '1px solid var(--color-secondary)',
@@ -20,6 +21,7 @@ export const theme = {
     medium: '1rem',
     large: '1.777rem',
     xlarge: '2.369rem',
+    xxlarge: '3.158rem',
   },
   zIndex: {
     modal: 10,

@@ -60,7 +60,7 @@ export const globalStyles = `
 
 :focus {
   outline: none;
-  border: 1px solid orange !important;
+  border: 1px solid var(--color-primary) !important;
 }
 
 html {

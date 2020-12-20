@@ -26,7 +26,11 @@ export const CardEditorForm = React.forwardRef(
 
     const fields = dataDescription.fields.map(({ name, fieldType }) => {
       return (
-        <Box key={name} mb="medium">
+        <Box
+          key={name}
+          mb="medium"
+          mr="medium"
+        >
           <CardEditorFormField
             name={name}
             fieldType={fieldType}

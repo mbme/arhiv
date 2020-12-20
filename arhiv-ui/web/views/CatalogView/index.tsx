@@ -14,6 +14,13 @@ export function CatalogView({ documentType }: IProps) {
 
   const actions = (
     <>
+      <Action
+        type="action"
+        onClick={() => router.push('/')}
+      >
+        Close
+      </Action>
+
       {mandatoryFields.length === 0 && (
         <Action
           type="action"

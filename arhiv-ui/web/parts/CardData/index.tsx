@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Box, Label } from '@v/web-platform'
+import { Box, Label, Spacer } from '@v/web-platform'
 import { IDocumentData } from '../../api'
 import { useDataDescription } from '../../data-manager'
 import { CardDataField } from './CardDataField'
@@ -19,7 +19,10 @@ export function CardData({ data }: IProps) {
 
     return (
       <Box key={name} mb="medium">
-        <Label>{name}</Label>
+        <Label>
+          {name}
+        </Label>
+        <Spacer height="small" />
         <CardDataField
           value={value}
           fieldType={fieldType}
@@ -30,7 +33,7 @@ export function CardData({ data }: IProps) {
   })
 
   return (
-    <Box px="medium">
+    <Box pr="medium">
       {fields}
     </Box>
   )

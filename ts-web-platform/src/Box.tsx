@@ -73,6 +73,7 @@ export interface IProps<E extends Tags> extends Pick<StyleProps, PassThroughProp
   dangerouslySetInnerHTML?: {
     __html: string;
   }
+  tabIndex?: string
   $style?: StyleArg
   $styles?: StyleArg[]
 }
@@ -84,6 +85,7 @@ export const Box = React.forwardRef(
       children,
       onClick,
       dangerouslySetInnerHTML,
+      tabIndex,
       $style,
       $styles = [],
       ...styleProps
@@ -96,6 +98,7 @@ export const Box = React.forwardRef(
       onClick,
       className,
       dangerouslySetInnerHTML,
+      tabIndex,
     }, children)
   } ,
 )

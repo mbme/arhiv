@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { pathMatcher as pm } from '@v/utils'
 import {
-  Redirect,
   Routes,
 } from '@v/web-utils'
 import {
@@ -19,6 +18,7 @@ import {
   CardEditorView,
 } from './views/CardEditorView'
 import { MetadataView } from './views/MetadataView'
+import { DashboardView } from './views/DashboardView'
 
 export function App() {
   const [dataManager] = React.useState(() => new DataManager(MODULES))
@@ -30,7 +30,10 @@ export function App() {
           onNotFound={() => <NotFoundBlock>View not found</NotFoundBlock>}
         >
           {[
-            [pm`/`, () => <Redirect to="/catalog/note" />], // TODO status board
+            [
+              pm`/`,
+              () => <DashboardView />
+            ], // TODO status board
 
             [
               pm`/catalog/${'documentType'}`,

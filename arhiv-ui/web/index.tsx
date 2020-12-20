@@ -12,6 +12,7 @@ injectGlobalStyles(`
 
   #root {
     visibility: hidden;
+    background-color: lightgray;
   }
 `)
 

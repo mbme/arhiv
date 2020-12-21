@@ -37,6 +37,7 @@ export interface IMatcher {
 
 export type OrderBy =
   { Field: { selector: string, asc: boolean } }
+  | { EnumField: { selector: string, asc: boolean, enumOrder: string[] } }
   | { UpdatedAt: { asc: boolean } }
 
 export interface IDocumentFilter {

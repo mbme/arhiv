@@ -119,6 +119,30 @@ pub trait Queries {
 
                     params.insert(&selector_var, Rc::new(selector))
                 }
+                OrderBy::EnumField {
+                    selector,
+                    asc,
+                    enum_order,
+                } => {
+                    let selector_var = format!(":order_selector_{}", i);
+
+                    // TODO use variables instead of string interp
+                    let cases: String = enum_order
+                        .iter()
+                        .enumerate()
+                        .map(|(j, item)| format!("WHEN '{}' THEN {}", item, j))
+                        .collect();
+
+                    query.push(format!(
+                        "ORDER BY CASE json_extract(data, {}) {} ELSE {} END {}",
+                        selector_var,
+                        cases,
+                        enum_order.len(),
+                        if asc { "ASC" } else { "DESC" }
+                    ));
+
+                    params.insert(&selector_var, Rc::new(selector))
+                }
             }
         }
 

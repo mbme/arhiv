@@ -10,8 +10,18 @@ pub struct Matcher {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum OrderBy {
-    Field { selector: String, asc: bool },
-    UpdatedAt { asc: bool },
+    Field {
+        selector: String,
+        asc: bool,
+    },
+    EnumField {
+        selector: String,
+        asc: bool,
+        enum_order: Vec<String>,
+    },
+    UpdatedAt {
+        asc: bool,
+    },
 }
 
 impl Default for OrderBy {

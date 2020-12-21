@@ -127,11 +127,12 @@ pub trait Queries {
                     let selector_var = format!(":order_selector_{}", i);
 
                     // TODO use variables instead of string interp
-                    let cases: String = enum_order
+                    let cases = enum_order
                         .iter()
                         .enumerate()
                         .map(|(j, item)| format!("WHEN '{}' THEN {}", item, j))
-                        .collect();
+                        .collect::<Vec<String>>()
+                        .join(" ");
 
                     query.push(format!(
                         "ORDER BY CASE json_extract(data, {}) {} ELSE {} END {}",

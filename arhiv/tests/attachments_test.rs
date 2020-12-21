@@ -1,0 +1,120 @@
+use anyhow::*;
+use arhiv::entities::*;
+use arhiv::{start_server, Arhiv};
+use rs_utils::project_relpath;
+use std::sync::Arc;
+pub use utils::*;
+
+mod utils;
+
+fn test_attachments(arhiv: &Arhiv) -> Result<()> {
+    assert_eq!(arhiv.list_attachments(None)?.items.len(), 0);
+
+    let src = &project_relpath("../resources/k2.jpg");
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut document = empty_document();
+    document.refs.insert(attachment.id.clone());
+
+    arhiv.stage_document(document, vec![attachment.clone()])?;
+    assert_eq!(
+        arhiv
+            .get_attachment_data(&attachment.id)
+            .staged_file_exists()?,
+        true
+    );
+
+    let dst = &arhiv
+        .get_attachment_data(&attachment.id)
+        .get_staged_file_path();
+
+    assert_eq!(arhiv.list_attachments(None)?.items.len(), 1);
+    assert_eq!(are_equal_files(src, dst)?, true);
+
+    Ok(())
+}
+
+#[test]
+fn test_prime_attachments() -> Result<()> {
+    test_attachments(&new_prime())
+}
+
+#[test]
+fn test_replica_attachments() -> Result<()> {
+    test_attachments(&new_replica())
+}
+
+#[tokio::test]
+async fn test_update_attachment_filename() -> Result<()> {
+    let arhiv = new_prime();
+
+    let src = &project_relpath("../resources/k2.jpg");
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut document = empty_document();
+    document.refs.insert(attachment.id.clone());
+
+    arhiv.stage_document(document, vec![attachment.clone()])?;
+
+    let attachment = arhiv.get_attachment(&attachment.id)?.unwrap();
+    assert_eq!(attachment.filename, "k2.jpg");
+
+    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
+    assert_eq!(
+        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
+        "k1.jpg"
+    );
+
+    assert_eq!(arhiv.get_status()?.rev.0, 0);
+
+    arhiv.sync().await?;
+
+    assert_eq!(arhiv.get_status()?.rev.0, 1);
+
+    // make sure we increase rev after updating committed filename
+    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
+    assert_eq!(
+        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
+        "k1.jpg"
+    );
+    assert_eq!(arhiv.get_status()?.rev.0, 2);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_download_attachment() -> Result<()> {
+    let prime = Arc::new(new_prime());
+
+    let src = &project_relpath("../resources/k2.jpg");
+
+    let mut attachment = AttachmentSource::new(src);
+    attachment.copy = true;
+
+    let mut document = empty_document();
+    document.refs.insert(attachment.id.clone());
+    prime.stage_document(document, vec![attachment.clone()])?;
+
+    prime.sync().await?;
+
+    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let replica = new_replica_with_port(addr.port());
+
+    replica.sync().await?;
+
+    let data = replica.get_attachment_data(&attachment.id);
+    data.download_data().await?;
+
+    let dst = &data.get_committed_file_path();
+
+    assert_eq!(are_equal_files(src, dst)?, true);
+
+    shutdown_sender.send(()).unwrap();
+    join_handle.await.unwrap();
+
+    Ok(())
+}

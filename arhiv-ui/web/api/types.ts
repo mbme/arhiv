@@ -40,13 +40,14 @@ export type OrderBy =
   | { EnumField: { selector: string, asc: boolean, enumOrder: string[] } }
   | { UpdatedAt: { asc: boolean } }
 
+export type DocumentFilterMode = 'Staged' | 'Archived'
+
 export interface IDocumentFilter {
   pageOffset?: number
   pageSize?: number
   matchers: IMatcher[]
-  archived?: boolean
-  onlyStaged?: boolean
   order: OrderBy[],
+  mode?: DocumentFilterMode,
 }
 
 export type AttachmentLocation = { Url: string } | { File: string }

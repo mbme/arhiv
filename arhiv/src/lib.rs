@@ -8,4 +8,6 @@ mod storage;
 
 pub use crate::arhiv::{start_server, Arhiv, AttachmentLocation};
 pub use config::Config;
-pub use storage::{AttachmentFilter, DocumentFilter, Matcher, OrderBy};
+pub use storage::{
+    AttachmentFilter, DocumentFilter, DocumentFilterMode, ListPage, Matcher, OrderBy,
+};

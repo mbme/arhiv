@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::{entities::Document, Arhiv, Config};
+use arhiv::{entities::Document, Arhiv, Config, ListPage};
 use rs_utils::generate_temp_path;
 use std::fs;
 
@@ -43,4 +43,8 @@ pub fn new_document(value: serde_json::Value) -> Document {
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
     Ok(fs::read(src)? == fs::read(dst)?)
+}
+
+pub fn get_values(page: ListPage<Document>) -> Vec<serde_json::Value> {
+    page.items.into_iter().map(|item| item.data).collect()
 }

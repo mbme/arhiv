@@ -1,6 +1,6 @@
 use anyhow::*;
 use arhiv::*;
-use serde_json::{json, Value};
+use serde_json::json;
 pub use utils::*;
 
 mod utils;
@@ -19,6 +19,58 @@ fn test_pagination() -> Result<()> {
 
     assert_eq!(page.items.len(), 1);
     assert_eq!(page.has_more, true);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_modes() -> Result<()> {
+    let arhiv = new_prime();
+
+    // committed
+    arhiv.stage_document(new_document(json!("1")), vec![])?;
+
+    {
+        // archived
+        let mut doc = new_document(json!("2"));
+        doc.archived = true;
+        arhiv.stage_document(doc, vec![])?;
+    }
+
+    arhiv.sync().await?;
+
+    // staged
+    arhiv.stage_document(new_document(json!("3")), vec![])?;
+
+    {
+        // test default
+        let page = arhiv.list_documents(DocumentFilter {
+            order: vec![OrderBy::UpdatedAt { asc: false }],
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page), vec![json!("3"), json!("1"),]);
+    }
+
+    {
+        // test archived
+        let page = arhiv.list_documents(DocumentFilter {
+            mode: Some(DocumentFilterMode::Archived),
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page), vec![json!("2")]);
+    }
+
+    {
+        // test staged
+        let page = arhiv.list_documents(DocumentFilter {
+            mode: Some(DocumentFilterMode::Staged),
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page), vec![json!("3")]);
+    }
 
     Ok(())
 }
@@ -42,10 +94,7 @@ fn test_order_by_enum_field() -> Result<()> {
     })?;
 
     assert_eq!(
-        page.items
-            .into_iter()
-            .map(|item| item.data)
-            .collect::<Vec<Value>>(),
+        get_values(page),
         vec![
             json!({ "enum": "high" }),
             json!({ "enum": "medium" }),

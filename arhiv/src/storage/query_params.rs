@@ -31,14 +31,19 @@ impl Default for OrderBy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub enum DocumentFilterMode {
+    Archived,
+    Staged,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentFilter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
     pub matchers: Vec<Matcher>,
-    pub archived: Option<bool>,
-    pub only_staged: Option<bool>,
     pub order: Vec<OrderBy>,
+    pub mode: Option<DocumentFilterMode>,
 }
 
 impl Default for DocumentFilter {
@@ -47,9 +52,8 @@ impl Default for DocumentFilter {
             page_offset: Some(0),
             page_size: Some(20),
             matchers: vec![],
-            archived: None,
-            only_staged: None,
             order: vec![],
+            mode: None,
         }
     }
 }
@@ -58,8 +62,7 @@ pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
     page_offset: None,
     page_size: None,
     matchers: vec![],
-    archived: None,
-    only_staged: Some(true),
+    mode: Some(DocumentFilterMode::Staged),
     order: vec![],
 };
 

@@ -71,8 +71,16 @@ pub trait Queries {
         let mut query: Vec<String> = vec!["SELECT * FROM documents WHERE true".to_string()];
         let mut params = Params::new();
 
-        if filter.only_staged.unwrap_or(false) {
-            query.push("AND rev = 0".to_string())
+        match filter.mode {
+            Some(DocumentFilterMode::Staged) => {
+                query.push("AND rev = 0".to_string());
+            }
+            Some(DocumentFilterMode::Archived) => {
+                query.push("AND archived = true".to_string());
+            }
+            None => {
+                query.push("AND archived = false".to_string());
+            }
         }
 
         for (i, matcher) in filter.matchers.into_iter().enumerate() {
@@ -96,9 +104,6 @@ pub trait Queries {
             params.insert(&matcher_selector_var, Rc::new(matcher.selector));
             params.insert(&matcher_pattern_var, Rc::new(matcher.pattern));
         }
-
-        query.push("AND archived = :archived".to_string());
-        params.insert(":archived", Rc::new(filter.archived.unwrap_or(false)));
 
         for (i, order) in filter.order.into_iter().enumerate() {
             match order {

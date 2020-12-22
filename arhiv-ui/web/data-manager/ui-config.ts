@@ -5,6 +5,7 @@ export interface IUIOptions {
   catalog: {
     pageSize?: number
     order: OrderBy[]
+    groupByField?: string
   }
 
   catalogEntry: {
@@ -17,6 +18,7 @@ const DEFAULT_UI_OPTIONS: IUIOptions = {
   catalog: {
     pageSize: 12,
     order: [{ UpdatedAt: { asc: false } }],
+    groupByField: undefined,
   },
 
   catalogEntry: {
@@ -45,6 +47,7 @@ UI_OVERRIDES['project'] = {
 UI_OVERRIDES['task'] = {
   catalog: {
     pageSize: undefined,
+    groupByField: 'status',
     order: [
       {
         EnumField: {

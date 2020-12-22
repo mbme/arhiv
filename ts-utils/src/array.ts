@@ -65,3 +65,30 @@ export function isEqualArray(a: any[], b: any[]) {
 export function getLastEl<T>(arr: T[]): T | undefined {
   return arr[arr.length - 1]
 }
+
+// Split array into subarrays. New subarray starts when fn returns true.
+export function partitionBy<T>(fn: (item: T, pos: number) => boolean, array: T[]): Array<T[]> {
+  const result: Array<T[]> = []
+
+  if (!array.length) {
+    return result
+  }
+
+  let current: T[] = []
+  array.forEach((item, pos) => {
+    if (fn(item, pos)) {
+      if (current.length) {
+        result.push(current)
+      }
+      current = []
+    }
+
+    current.push(item)
+  })
+
+  if (current.length) {
+    result.push(current)
+  }
+
+  return result
+}

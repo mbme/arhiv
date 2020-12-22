@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
-import { Action, Catalog, Frame } from '../../parts'
+import { Catalog, Frame, useActions } from '../../parts'
 import { useDataDescription } from '../../data-manager'
 
 interface IProps {
@@ -12,29 +12,19 @@ export function CatalogView({ documentType }: IProps) {
 
   const { mandatoryFields } = useDataDescription(documentType)
 
-  const actions = (
-    <>
-      <Action
-        type="action"
-        onClick={() => router.push('/')}
-      >
-        Close
-      </Action>
-
-      {mandatoryFields.length === 0 && (
-        <Action
-          type="action"
-          onClick={() => router.push(`/documents/${documentType}/new`)}
-        >
-          Add {documentType}
-        </Action>
-      )}
-    </>
-  )
+  useActions(() => [
+    {
+      onClick: () => router.push('/'),
+      children: 'Close',
+    },
+    mandatoryFields.length === 0 ? {
+      onClick: () => router.push(`/documents/${documentType}/new`),
+      children: `Add ${documentType}`,
+    } : undefined,
+  ])
 
   return (
     <Frame
-      actions={actions}
       title={`${documentType} Catalog`}
     >
       <Catalog

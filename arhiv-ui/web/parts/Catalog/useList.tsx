@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { noop } from '@v/utils'
+import { noop, withoutUndefined } from '@v/utils'
 import {
   API,
   IDocument,
@@ -37,10 +37,10 @@ export function useList<D extends IDocument>({ matchers, pageSize, order }: IOpt
     setDocumentFilter({
       pageOffset: 0,
       pageSize,
-      matchers: matchers.filter(Boolean) as IMatcher[],
+      matchers: withoutUndefined(matchers),
       order,
     })
-  }, [JSON.stringify(matchers.filter(Boolean)), pageSize]) // FIXME shallow equality
+  }, [JSON.stringify(matchers), pageSize]) // FIXME shallow equality
 
   React.useEffect(() => {
     if (!documentFilter) {

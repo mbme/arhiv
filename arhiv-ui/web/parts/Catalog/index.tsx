@@ -74,7 +74,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
           <Input
             label=""
             name="filter"
-            placeholder="Filter documents"
+            placeholder={`Filter ${documentType}s`}
           />
         </Form>
       </Box>

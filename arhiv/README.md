@@ -24,16 +24,25 @@
   - primary increases revision on each update
 
 # Prime
-* the main instance with all the data (even giant attachments like movies)
+* the main instance with all the data (even big attachments like movies)
 * there might be only one primary instance at a time
 * primary receive data from replicas in a form of Changesets
 * primary manages revision 
+* allows to rename attachments (by increasing their revision)
 
 # Replica
 * local instance which gets its data from the primary
 * replica has a full copy of documents and attachments (without BLOBs)
 * replica choose which BLOBs to fetch from primary
-* replica allows to create/update/delete documents and create attachments
+* replica allows to create/update/archive/erase documents and create attachments
+  archive vs erase:
+    archived documents are hidden from search by default 
+    Prime keeps history of archived documents
+    archived documents can be unarchived
+    archived documents cannot be updated unless they are unarchived
+    erased documents are arhived documents with null data
+    Prime removes history of erased documents
+    erased documents cannot be unarchived
 * replica runs compaction when there are 0 locks
 
 # Sync protocol

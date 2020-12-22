@@ -37,11 +37,15 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     hasMore,
     error,
     loadMore,
-  } = useList([
-    { selector: '$.type', pattern: documentType, fuzzy: false },
-    collectionMatcher,
-    debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
-  ], uiOptions.catalog.pageSize)
+  } = useList({
+    matchers: [
+      { selector: '$.type', pattern: documentType, fuzzy: false },
+      collectionMatcher,
+      debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
+    ],
+    pageSize: uiOptions.catalog.pageSize,
+    order: uiOptions.catalog.order,
+  })
 
   if (error) {
     return (

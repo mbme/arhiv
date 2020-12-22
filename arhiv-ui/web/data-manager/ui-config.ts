@@ -1,8 +1,10 @@
 import { merge } from '@v/utils'
+import { OrderBy } from '../api'
 
 export interface IUIOptions {
   catalog: {
     pageSize?: number
+    order: OrderBy[]
   }
 
   catalogEntry: {
@@ -14,6 +16,7 @@ export interface IUIOptions {
 const DEFAULT_UI_OPTIONS: IUIOptions = {
   catalog: {
     pageSize: 12,
+    order: [{ UpdatedAt: { asc: false } }],
   },
 
   catalogEntry: {
@@ -41,7 +44,21 @@ UI_OVERRIDES['project'] = {
 
 UI_OVERRIDES['task'] = {
   catalog: {
-    pageSize: undefined
+    pageSize: undefined,
+    order: [
+      {
+        EnumField: {
+          selector: '$.status',
+          asc: true,
+          enumOrder: ['Inbox', 'InProgress', 'Paused', 'Todo', 'Done', 'Later', 'Cancelled' ],
+        },
+      },
+      {
+        UpdatedAt: {
+          asc: false,
+        },
+      },
+    ],
   },
 
   catalogEntry: {

@@ -17,6 +17,7 @@ pub enum OrderBy {
     EnumField {
         selector: String,
         asc: bool,
+        #[serde(rename = "enumOrder")]
         enum_order: Vec<String>,
     },
     UpdatedAt {

@@ -32,16 +32,13 @@ fn main() {
             let arhiv = arhiv.clone();
 
             move |_, params| {
-                let filter: DocumentFilter =
-                    serde_json::from_value(params).context("param must be document filter")?;
+                let filter: DocumentFilter = serde_json::from_value(params)?;
 
                 // FIXME validate matcher props
 
-                let result = arhiv
-                    .list_documents(filter)
-                    .context("must be able to list documents")?;
+                let result = arhiv.list_documents(filter)?;
 
-                serde_json::to_value(&result).context("must be able to serialize")
+                Ok(serde_json::to_value(&result)?)
             }
         })
         .with_action("get", {
@@ -54,11 +51,9 @@ fn main() {
                     .to_string()
                     .into();
 
-                let result = arhiv
-                    .get_document(&id)
-                    .context("must be able to get document")?;
+                let result = arhiv.get_document(&id)?;
 
-                serde_json::to_value(result).context("must be able to serialize")
+                Ok(serde_json::to_value(result)?)
             }
         })
         .with_action("put", {
@@ -66,16 +61,11 @@ fn main() {
             let data_manager = data_manager.clone();
 
             move |_, params| {
-                let mut args: PutDocumentArgs =
-                    serde_json::from_value(params).context("failed to parse params")?;
+                let mut args: PutDocumentArgs = serde_json::from_value(params)?;
 
-                data_manager
-                    .update_refs(&mut args.document)
-                    .context("must be able to update refs")?;
+                data_manager.update_refs(&mut args.document)?;
 
-                arhiv
-                    .stage_document(args.document, args.new_attachments)
-                    .context("must be able to save document")?;
+                arhiv.stage_document(args.document, args.new_attachments)?;
 
                 Ok(Value::Null)
             }
@@ -83,15 +73,13 @@ fn main() {
         .with_action("create", {
             let data_manager = data_manager.clone();
             move |_, params| {
-                let args: CreateDocumentArgs =
-                    serde_json::from_value(params).context("failed to parse params")?;
+                let args: CreateDocumentArgs = serde_json::from_value(params)?;
 
-                let data = data_manager
-                    .create_with_data(args.document_type, args.args)
-                    .context("must be able to create document data")?;
+                let data = data_manager.create_with_data(args.document_type, args.args)?;
+
                 let document = Document::new(data.into());
 
-                serde_json::to_value(document).context("must be able to serialize")
+                Ok(serde_json::to_value(document)?)
             }
         })
         .with_action("get_attachment", {
@@ -104,11 +92,9 @@ fn main() {
                     .to_string()
                     .into();
 
-                let attachment = arhiv
-                    .get_attachment(&id)
-                    .context("must be able to get attachment")?;
+                let attachment = arhiv.get_attachment(&id)?;
 
-                serde_json::to_value(&attachment).context("must be able to serialize")
+                Ok(serde_json::to_value(&attachment)?)
             }
         })
         .with_action("get_attachment_location", {
@@ -121,11 +107,9 @@ fn main() {
                     .to_string()
                     .into();
 
-                let attachment_location = arhiv
-                    .get_attachment_location(&id)
-                    .context("must be able to get attachment location")?;
+                let attachment_location = arhiv.get_attachment_location(&id)?;
 
-                serde_json::to_value(&attachment_location).context("must be able to serialize")
+                Ok(serde_json::to_value(&attachment_location)?)
             }
         })
         .with_action("pick_attachments", {
@@ -137,7 +121,7 @@ fn main() {
                     .map(|file| AttachmentSource::new_from_path_buf(file))
                     .collect();
 
-                serde_json::to_value(attachments).context("must be able to serialize")
+                Ok(serde_json::to_value(attachments)?)
             }
         })
         .with_action("render_markup", {
@@ -151,7 +135,7 @@ fn main() {
                 let result =
                     MarkupRenderer::new(&string, &arhiv, "/document".to_string()).to_html();
 
-                serde_json::to_value(result).context("must be able to serialize")
+                Ok(serde_json::to_value(result)?)
             }
         })
         .start(src);

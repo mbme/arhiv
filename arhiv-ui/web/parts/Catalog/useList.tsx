@@ -6,6 +6,7 @@ import {
   IDocumentFilter,
   IListPage,
   IMatcher,
+  OrderBy,
 } from '../../api'
 
 interface IList<D> {
@@ -15,7 +16,13 @@ interface IList<D> {
   loadMore(): void
 }
 
-export function useList<D extends IDocument>(matchers: Array<IMatcher | undefined>, pageSize?: number): IList<D> {
+interface IOptions {
+  matchers: Array<IMatcher | undefined>
+  pageSize?: number
+  order: OrderBy[]
+}
+
+export function useList<D extends IDocument>({ matchers, pageSize, order }: IOptions): IList<D> {
   const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()
@@ -31,7 +38,7 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
       pageOffset: 0,
       pageSize,
       matchers: matchers.filter(Boolean) as IMatcher[],
-      order: [{ UpdatedAt: { asc: false } }],
+      order,
     })
   }, [JSON.stringify(matchers.filter(Boolean)), pageSize]) // FIXME shallow equality
 

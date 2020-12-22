@@ -1,7 +1,8 @@
 const path = require('path')
 
-module.exports = {
+module.exports = env => ({
   entry: './web/index.tsx',
+  devtools: env.production ? undefined : 'inline-source-map',
 
   output: {
     filename: 'bundle.js',
@@ -20,4 +21,4 @@ module.exports = {
       },
     ],
   },
-}
+})

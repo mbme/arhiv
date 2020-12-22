@@ -12,6 +12,7 @@
     "target": "es2019",
 
     "jsx": "react",
+    "sourceMap": true,
 
     "skipLibCheck": true,
 

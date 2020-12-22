@@ -14,7 +14,7 @@
     "arhiv-ui"
   ],
   "scripts": {
-    "compiler-errors": "tsc --noEmit --project tsconfig.json --tsBuildInfoFile node_modules/.cache/tsconfig.tsbuildinfo",
+    "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "lint": "eslint --cache --ext .ts,.tsx ts-* poshta arhiv-ui",
     "tester": "tester"
   },

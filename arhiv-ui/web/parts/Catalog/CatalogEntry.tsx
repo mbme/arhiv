@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
+  Row,
   StyleArg,
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
@@ -19,10 +20,11 @@ const $style: StyleArg = {
 
 interface IProps {
   document: IDocument
-  showModificationDate?: boolean
+  showModificationDate: boolean
+  showDataFields: string[]
 }
 
-export function CatalogEntry({ document, showModificationDate }: IProps) {
+export function CatalogEntry({ document, showModificationDate, showDataFields }: IProps) {
   const router = RouterContext.use()
 
   const {
@@ -40,14 +42,26 @@ export function CatalogEntry({ document, showModificationDate }: IProps) {
     >
       {document.data[titleField]}
 
-      {showModificationDate && (
-        <Box
-          as="small"
-          display="block"
-        >
-          {dateFormat.format(new Date(document.updatedAt))}
-        </Box>
-      )}
+      <Row alignX="left">
+        {showModificationDate && (
+          <Box
+            as="small"
+            display="block"
+          >
+            {dateFormat.format(new Date(document.updatedAt))}
+          </Box>
+        )}
+        {showDataFields.map(field => (
+          <Box
+            key={field}
+            as="small"
+            display="block"
+            mr="medium"
+          >
+            {field}: {document.data[field]}
+          </Box>
+        ))}
+      </Row>
     </Box>
   )
 }

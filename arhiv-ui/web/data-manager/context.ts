@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { merge } from '@v/utils'
 import { createContext } from '@v/web-utils'
-import { DEFAULT_UI_OPTIONS, UIConfig } from './ui-config'
+import { getUIOptions } from './ui-config'
 import { DataManager } from './data-manager'
 
 export const DataManagerContext = createContext<DataManager>()
@@ -14,6 +13,6 @@ export function useDataDescription(documentType: string) {
     dataDescription: dataManager.getDataDescription(documentType),
     titleField: dataManager.pickTitleField(documentType),
     mandatoryFields: dataManager.getMandatoryFields(documentType),
-    uiOptions: merge(DEFAULT_UI_OPTIONS, UIConfig[documentType] || {}),
+    uiOptions: getUIOptions(documentType),
   }), [documentType])
 }

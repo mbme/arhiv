@@ -41,7 +41,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     { selector: '$.type', pattern: documentType, fuzzy: false },
     collectionMatcher,
     debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
-  ], uiOptions.catalog?.pageSize)
+  ], uiOptions.catalog.pageSize)
 
   if (error) {
     return (
@@ -55,7 +55,8 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
         <CatalogEntry
           key={item.id}
           document={item}
-          showModificationDate={uiOptions?.catalogEntry?.showModificationDate}
+          showModificationDate={uiOptions.catalogEntry.showModificationDate}
+          showDataFields={uiOptions.catalogEntry.showDataFields}
         />
       ))
   ) : (

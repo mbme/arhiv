@@ -1,26 +1,35 @@
+import { merge } from '@v/utils'
+
 export interface IUIOptions {
-  catalog?: {
+  catalog: {
     pageSize?: number
   }
 
-  catalogEntry?: {
-    showModificationDate?: boolean
+  catalogEntry: {
+    showModificationDate: boolean
+    showDataFields: string[]
   }
 }
 
-export const DEFAULT_UI_OPTIONS: IUIOptions = {
+const DEFAULT_UI_OPTIONS: IUIOptions = {
   catalog: {
     pageSize: 12,
   },
 
   catalogEntry: {
     showModificationDate: true,
+    showDataFields: [],
   },
 }
 
-export const UIConfig: Record<string, IUIOptions> = {}
+interface IUIOptionsOverrides {
+  catalog?: Partial<IUIOptions['catalog']>
+  catalogEntry?: Partial<IUIOptions['catalogEntry']>
+}
 
-UIConfig['project'] = {
+const UI_OVERRIDES: Record<string, IUIOptionsOverrides> = {}
+
+UI_OVERRIDES['project'] = {
   catalog: {
     pageSize: undefined
   },
@@ -30,12 +39,17 @@ UIConfig['project'] = {
   }
 }
 
-UIConfig['task'] = {
+UI_OVERRIDES['task'] = {
   catalog: {
     pageSize: undefined
   },
 
   catalogEntry: {
-    showModificationDate: false
+    showModificationDate: false,
+    showDataFields: ['complexity', 'status'],
   }
+}
+
+export function getUIOptions(documentType: string): IUIOptions {
+  return merge<IUIOptions>(DEFAULT_UI_OPTIONS, (UI_OVERRIDES[documentType] || {}) as any)
 }

@@ -1,7 +1,5 @@
-import * as React from 'react'
 import { Dict, isObject } from '@v/utils'
-import { createContext } from '@v/web-utils'
-import { IDataDescription } from './api'
+import { IDataDescription } from '../api'
 
 export class DataManager {
   constructor(
@@ -36,17 +34,4 @@ export class DataManager {
       .filter(({ fieldType }) => isObject(fieldType) && 'Ref' in fieldType)
       .map(({ name }) => name)
   }
-}
-
-export const DataManagerContext = createContext<DataManager>()
-
-export function useDataDescription(documentType: string) {
-  const dataManager = DataManagerContext.use()
-
-  // FIXME split into separate hooks
-  return React.useMemo(() => ({
-    dataDescription: dataManager.getDataDescription(documentType),
-    titleField: dataManager.pickTitleField(documentType),
-    mandatoryFields: dataManager.getMandatoryFields(documentType),
-  }), [documentType])
 }

@@ -19,9 +19,10 @@ const $style: StyleArg = {
 
 interface IProps {
   document: IDocument
+  showModificationDate?: boolean
 }
 
-export function CatalogEntry({ document }: IProps) {
+export function CatalogEntry({ document, showModificationDate }: IProps) {
   const router = RouterContext.use()
 
   const {
@@ -39,12 +40,14 @@ export function CatalogEntry({ document }: IProps) {
     >
       {document.data[titleField]}
 
-      <Box
-        as="small"
-        display="block"
-      >
-        {dateFormat.format(new Date(document.updatedAt))}
-      </Box>
+      {showModificationDate && (
+        <Box
+          as="small"
+          display="block"
+        >
+          {dateFormat.format(new Date(document.updatedAt))}
+        </Box>
+      )}
     </Box>
   )
 }

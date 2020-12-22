@@ -26,7 +26,10 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     },
   } = useForm()
 
-  const { titleField } = useDataDescription(documentType)
+  const {
+    titleField,
+    uiOptions,
+  } = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
 
   const {
@@ -38,7 +41,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     { selector: '$.type', pattern: documentType, fuzzy: false },
     collectionMatcher,
     debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
-  ])
+  ], uiOptions.catalog?.pageSize)
 
   if (error) {
     return (
@@ -52,6 +55,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
         <CatalogEntry
           key={item.id}
           document={item}
+          showModificationDate={uiOptions?.catalogEntry?.showModificationDate}
         />
       ))
   ) : (

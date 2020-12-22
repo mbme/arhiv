@@ -8,8 +8,6 @@ import {
   IMatcher,
 } from '../../api'
 
-const PAGE_SIZE = 10
-
 interface IList<D> {
   items?: D[]
   error?: any
@@ -17,7 +15,7 @@ interface IList<D> {
   loadMore(): void
 }
 
-export function useList<D extends IDocument>(matchers: Array<IMatcher | undefined>): IList<D> {
+export function useList<D extends IDocument>(matchers: Array<IMatcher | undefined>, pageSize?: number): IList<D> {
   const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()
@@ -31,11 +29,11 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
 
     setDocumentFilter({
       pageOffset: 0,
-      pageSize: PAGE_SIZE,
+      pageSize,
       matchers: matchers.filter(Boolean) as IMatcher[],
       order: [{ UpdatedAt: { asc: false } }],
     })
-  }, [JSON.stringify(matchers.filter(Boolean))]) // FIXME shallow equality
+  }, [JSON.stringify(matchers.filter(Boolean)), pageSize]) // FIXME shallow equality
 
   React.useEffect(() => {
     if (!documentFilter) {
@@ -62,6 +60,10 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
     error,
 
     loadMore() {
+      if (!pageSize) {
+        return
+      }
+
       setDocumentFilter((currentFilter) => {
         if (!currentFilter) {
           return currentFilter
@@ -69,7 +71,7 @@ export function useList<D extends IDocument>(matchers: Array<IMatcher | undefine
 
         return {
           ...currentFilter,
-          pageOffset: (currentFilter.pageOffset || 0) + PAGE_SIZE,
+          pageOffset: (currentFilter.pageOffset || 0) + pageSize,
         }
       })
     }

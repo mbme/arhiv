@@ -16,6 +16,10 @@ type PassThroughProps =
   | 'alignItems'
   | 'justifyContent'
 
+  | 'gridTemplateColumns'
+  | 'gridTemplateRows'
+  | 'gridGap'
+
   | 'm'
   | 'mx'
   | 'my'

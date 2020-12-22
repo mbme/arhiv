@@ -11,11 +11,11 @@ interface IProps {
 
 export function Example({ section, title, children }: IProps) {
   return (
-    <Box mb={section ? 'xlarge' : 'medium'}>
+    <Box mb={section ? 'xlarge' : 'large'}>
       {title && (
         <Heading
           fontSize={section ? 'large' : 'medium'}
-          mb={section ? 'large' : 'small'}
+          mb={section ? 'large' : 'medium'}
         >
           {title}
         </Heading>

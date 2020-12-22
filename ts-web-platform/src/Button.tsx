@@ -20,6 +20,7 @@ function getStyles(props: IProps): StyleArg[] {
       py: 'fine',
       px: 'medium',
       border: 'default',
+      borderRadius: 'var(--border-radius-form)',
       cursor: 'pointer',
       userSelect: 'none',
       transition: 'background-color 100ms linear',
@@ -53,6 +54,8 @@ function getStyles(props: IProps): StyleArg[] {
       border: '0 none',
       background: 'transparent',
       color: 'var(--color-link)',
+      px: '0',
+      borderRadius: '0',
     },
   ]
 }

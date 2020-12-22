@@ -1,11 +1,25 @@
 import * as React from 'react'
 import { Box } from '../Box'
 import {
+  StyleArg,
   StylishElement,
 } from '../core'
 import { Label } from '../Label'
+import { Spacer } from '../Layout'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
+
+const $style: StyleArg = {
+  backgroundColor: 'var(--color-bg0)',
+  boxShadow: 'default',
+  border: 'default',
+  borderRadius: 'var(--border-radius-form)',
+
+  px: 'medium',
+  py: 'small',
+
+  minWidth: '16rem',
+}
 
 type NativeProps = 'name' | 'defaultValue'
 
@@ -33,6 +47,7 @@ export const Select = React.forwardRef(
     return (
       <Box>
         <Label>{label}</Label>
+        <Spacer height="small" />
 
         <StylishElement
           as="select"
@@ -40,6 +55,7 @@ export const Select = React.forwardRef(
           name={name}
           value={value}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value)}
+          $style={$style}
         >
           {items}
         </StylishElement>

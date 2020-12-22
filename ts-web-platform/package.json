@@ -19,6 +19,6 @@
     "webpack-dev-server": "^3.10.3"
   },
   "scripts": {
-    "start": "webpack-dev-server --open chromium"
+    "start": "webpack serve --open chromium"
   }
 }

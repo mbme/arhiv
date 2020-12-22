@@ -5,6 +5,7 @@ import {
   StylishElement,
 } from '../core'
 import { Label } from '../Label'
+import { Spacer } from '../Layout'
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 
@@ -20,6 +21,7 @@ const $textarea: StyleArg = {
 
   border: 'default',
   boxShadow: 'default',
+  borderRadius: 'var(--border-radius-form)',
 }
 
 interface IProps {
@@ -67,6 +69,7 @@ export const Textarea = React.forwardRef(
     return (
       <Box>
         <Label>{label}</Label>
+        <Spacer height="small" />
 
         <StylishElement
           ref={mergeRefs(ref, externalRef)}

@@ -10,11 +10,14 @@ import { IconExamples } from './Icon.examples'
 import { LinkExamples } from './Link.examples'
 import { StyleExamples } from './core/examples'
 import { ConfirmationDialogExamples } from './Modal/ConfirmationDialog.examples'
+import { HeadingExamples } from './Heading.examples'
 
 export function Library() {
   return (
     <PlatformProvider>
       <StyleExamples />
+
+      <HeadingExamples />
 
       <IconExamples />
 

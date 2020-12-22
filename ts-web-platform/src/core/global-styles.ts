@@ -30,6 +30,8 @@ export const globalStyles = `
 
   --color-bg-primary: #FF553Cd1;
   --color-bg-secondary: #5e5a5759;
+
+  --border-radius-form: 2px;
 }
 
 @media (prefers-color-scheme: dark) {

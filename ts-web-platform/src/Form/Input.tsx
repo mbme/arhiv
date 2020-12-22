@@ -8,6 +8,7 @@ import {
 import { mergeRefs } from '../utils'
 import { useFormControl } from './Form'
 import { Label } from '../Label'
+import { Spacer } from '../Layout'
 
 const getStyles = (withClear?: boolean): StyleArg[] => [
   {
@@ -17,6 +18,7 @@ const getStyles = (withClear?: boolean): StyleArg[] => [
     backgroundColor: 'var(--color-bg0)',
     boxShadow: 'default',
     border: 'default',
+    borderRadius: 'var(--border-radius-form)',
 
     px: 'medium',
     py: 'small',
@@ -73,9 +75,8 @@ export const Input = React.forwardRef(
         relative
         width="100%"
       >
-        {label && (
-          <Label>{label}</Label>
-        )}
+        <Label>{label}</Label>
+        <Spacer height="small" />
 
         <StylishElement
           ref={mergeRefs(ref, externalRef)}

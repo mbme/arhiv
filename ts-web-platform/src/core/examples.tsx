@@ -2,8 +2,8 @@
 import * as React from 'react'
 import { Example } from '../Example'
 import { Box } from '../Box'
-import { Row } from '../Layout'
 import { Text } from '../Text'
+import { Grid, Row } from '../Layout'
 
 const colors = [
   '--color-primary',
@@ -40,29 +40,30 @@ export function StyleExamples() {
   return (
     <Example section title="Theme">
       <Example title="Colors">
-        {colors.map(value => (
-          <Row
-            key={value}
-            height="3rem"
-            mb="0.5rem"
-          >
-            <Box
-              width="10rem"
-              display="flex"
-              justifyContent="flex-end"
-              mr="0.5rem"
-            >
-              {value}
-            </Box>
-
-            <Box
-              width="3rem"
+        <Grid>
+          {colors.map(value => (
+            <Row
+              key={value}
               height="3rem"
-              backgroundColor={`var(${value})`}
-              border="1px solid purple"
-            />
-          </Row>
-        ))}
+            >
+              <Box
+                width="10rem"
+                display="flex"
+                justifyContent="flex-end"
+                mr="0.5rem"
+              >
+                {value}
+              </Box>
+
+              <Box
+                width="3rem"
+                height="3rem"
+                backgroundColor={`var(${value})`}
+                border="1px solid purple"
+              />
+            </Row>
+          ))}
+        </Grid>
       </Example>
 
       <Example title="General Font">

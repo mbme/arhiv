@@ -32,6 +32,7 @@ export {
   Row,
   Column,
   Spacer,
+  Grid,
 } from './Layout'
 export { clickOnEnter } from './utils'
 

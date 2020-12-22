@@ -105,3 +105,39 @@ fn test_order_by_enum_field() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_multiple_order_by() -> Result<()> {
+    let arhiv = new_prime();
+
+    arhiv.stage_document(new_document(json!({ "prop": "b", "other": "2" })), vec![])?;
+    arhiv.stage_document(new_document(json!({ "prop": "a", "other": "1" })), vec![])?;
+    arhiv.stage_document(new_document(json!({ "prop": "a", "other": "2" })), vec![])?;
+    arhiv.stage_document(new_document(json!({ "prop": "b", "other": "1" })), vec![])?;
+
+    let page = arhiv.list_documents(DocumentFilter {
+        order: vec![
+            OrderBy::Field {
+                selector: "$.prop".to_string(),
+                asc: true,
+            },
+            OrderBy::Field {
+                selector: "$.other".to_string(),
+                asc: false,
+            },
+        ],
+        ..DocumentFilter::default()
+    })?;
+
+    assert_eq!(
+        get_values(page),
+        vec![
+            json!({ "prop": "a", "other": "2" }),
+            json!({ "prop": "a", "other": "1" }),
+            json!({ "prop": "b", "other": "2" }),
+            json!({ "prop": "b", "other": "1" }),
+        ],
+    );
+
+    Ok(())
+}

@@ -105,51 +105,57 @@ pub trait Queries {
             params.insert(&matcher_pattern_var, Rc::new(matcher.pattern));
         }
 
-        for (i, order) in filter.order.into_iter().enumerate() {
-            match order {
-                OrderBy::UpdatedAt { asc } => {
-                    query.push(format!(
-                        "ORDER BY updated_at {}",
-                        if asc { "ASC" } else { "DESC" }
-                    ));
-                }
-                OrderBy::Field { selector, asc } => {
-                    let selector_var = format!(":order_selector_{}", i);
+        if !filter.order.is_empty() {
+            query.push("ORDER BY".to_string());
 
-                    query.push(format!(
-                        "ORDER BY json_extract(data, {}) {}",
-                        selector_var,
-                        if asc { "ASC" } else { "DESC" }
-                    ));
+            let mut order_query = vec![];
 
-                    params.insert(&selector_var, Rc::new(selector))
-                }
-                OrderBy::EnumField {
-                    selector,
-                    asc,
-                    enum_order,
-                } => {
-                    let selector_var = format!(":order_selector_{}", i);
+            for (i, order) in filter.order.into_iter().enumerate() {
+                match order {
+                    OrderBy::UpdatedAt { asc } => {
+                        order_query
+                            .push(format!("updated_at {}", if asc { "ASC" } else { "DESC" }));
+                    }
+                    OrderBy::Field { selector, asc } => {
+                        let selector_var = format!(":order_selector_{}", i);
 
-                    // TODO use variables instead of string interp
-                    let cases = enum_order
-                        .iter()
-                        .enumerate()
-                        .map(|(j, item)| format!("WHEN '{}' THEN {}", item, j))
-                        .collect::<Vec<String>>()
-                        .join(" ");
+                        order_query.push(format!(
+                            "json_extract(data, {}) {}",
+                            selector_var,
+                            if asc { "ASC" } else { "DESC" }
+                        ));
 
-                    query.push(format!(
-                        "ORDER BY CASE json_extract(data, {}) {} ELSE {} END {}",
-                        selector_var,
-                        cases,
-                        enum_order.len(),
-                        if asc { "ASC" } else { "DESC" }
-                    ));
+                        params.insert(&selector_var, Rc::new(selector))
+                    }
+                    OrderBy::EnumField {
+                        selector,
+                        asc,
+                        enum_order,
+                    } => {
+                        let selector_var = format!(":order_selector_{}", i);
 
-                    params.insert(&selector_var, Rc::new(selector))
+                        // TODO use variables instead of string interp
+                        let cases = enum_order
+                            .iter()
+                            .enumerate()
+                            .map(|(j, item)| format!("WHEN '{}' THEN {}", item, j))
+                            .collect::<Vec<String>>()
+                            .join(" ");
+
+                        order_query.push(format!(
+                            "CASE json_extract(data, {}) {} ELSE {} END {}",
+                            selector_var,
+                            cases,
+                            enum_order.len(),
+                            if asc { "ASC" } else { "DESC" }
+                        ));
+
+                        params.insert(&selector_var, Rc::new(selector))
+                    }
                 }
             }
+
+            query.push(order_query.join(", "));
         }
 
         let mut page_size: i32 = -1;

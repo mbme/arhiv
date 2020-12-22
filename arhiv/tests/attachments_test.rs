@@ -1,13 +1,15 @@
 use anyhow::*;
 use arhiv::entities::*;
-use arhiv::{start_server, Arhiv};
+use arhiv::start_server;
 use rs_utils::project_relpath;
 use std::sync::Arc;
 pub use utils::*;
 
 mod utils;
 
-fn test_attachments(arhiv: &Arhiv) -> Result<()> {
+#[test]
+fn test_attachments() -> Result<()> {
+    let arhiv = new_prime();
     assert_eq!(arhiv.list_attachments(None)?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
@@ -36,18 +38,10 @@ fn test_attachments(arhiv: &Arhiv) -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_prime_attachments() -> Result<()> {
-    test_attachments(&new_prime())
-}
-
-#[test]
-fn test_replica_attachments() -> Result<()> {
-    test_attachments(&new_replica())
-}
-
 #[tokio::test]
 async fn test_update_attachment_filename() -> Result<()> {
+    // It should work only on prime
+
     let arhiv = new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");

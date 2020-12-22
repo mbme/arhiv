@@ -32,7 +32,7 @@ fn main() {
             let arhiv = arhiv.clone();
 
             move |_, params| {
-                let filter: Option<DocumentFilter> =
+                let filter: DocumentFilter =
                     serde_json::from_value(params).context("param must be document filter")?;
 
                 // FIXME validate matcher props

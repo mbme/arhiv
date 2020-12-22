@@ -59,10 +59,10 @@ impl Arhiv {
         })
     }
 
-    pub fn list_documents(&self, filter: Option<DocumentFilter>) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: DocumentFilter) -> Result<ListPage<Document>> {
         let conn = self.storage.get_connection()?;
 
-        conn.list_documents(filter.unwrap_or_default())
+        conn.list_documents(filter)
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
-import { Catalog, Frame, useActions } from '../../parts'
+import { Catalog, FrameTitle, useActions } from '../../parts'
 import { useDataDescription } from '../../data-manager'
 
 interface IProps {
@@ -24,13 +24,15 @@ export function CatalogView({ documentType }: IProps) {
   ])
 
   return (
-    <Frame
-      title={`${documentType} Catalog`}
-    >
+    <>
+      <FrameTitle>
+        {documentType} Catalog
+      </FrameTitle>
+
       <Catalog
         key={documentType}
         documentType={documentType}
       />
-    </Frame>
+    </>
   )
 }

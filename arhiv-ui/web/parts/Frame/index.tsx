@@ -1,2 +1,2 @@
 export { Frame } from './Frame'
-export { useActions } from './actions'
+export { useActions } from './context'

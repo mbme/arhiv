@@ -3,7 +3,7 @@ import {
   RouterContext,
 } from '@v/web-utils'
 import { Dict } from '@v/utils'
-import { CardLoader } from '../../parts'
+import { CardLoader, FrameTitle } from '../../parts'
 import { API } from '../../api'
 import { useDataDescription } from '../../data-manager'
 import { CardEditor } from './CardEditor'
@@ -33,11 +33,17 @@ export function NewCardEditorView({ documentType }: IProps) {
       createDocument={() => API.create({ documentType, args })}
     >
       {document => (
-        <CardEditor
-          document={document}
-          onSave={() => router.replace({ path: `/documents/${document.id}` })}
-          onCancel={() => router.goBack()}
-        />
+        <>
+          <FrameTitle>
+            New {document.data.type}
+          </FrameTitle>
+
+          <CardEditor
+            document={document}
+            onSave={() => router.replace({ path: `/documents/${document.id}` })}
+            onCancel={() => router.goBack()}
+          />
+        </>
       )}
     </CardLoader>
   )

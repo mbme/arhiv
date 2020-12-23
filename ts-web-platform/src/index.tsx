@@ -34,6 +34,10 @@ export {
   Spacer,
   Grid,
 } from './Layout'
-export { clickOnEnter } from './utils'
+export {
+  clickOnEnter,
+  Registry,
+  createRegistry,
+} from './utils'
 
 export { PlatformProvider } from './PlatformProvider'

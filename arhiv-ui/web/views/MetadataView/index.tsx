@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {  RouterContext } from '@v/web-utils'
-import { Action, CardLoader, Frame } from '../../parts'
+import { CardLoader, FrameTitle, useActions } from '../../parts'
 import { Metadata } from './Metadata'
 
 interface IProps {
@@ -13,34 +13,28 @@ export function MetadataView({ id }: IProps) {
   const onEdit = () => router.replace(`/documents/${id}/edit` )
   const onClose = () => router.replace(`/documents/${id}`)
 
-  const actions = (
-    <>
-      <Action
-        type="action"
-        onClick={onClose}
-      >
-        Close
-      </Action>
-
-      <Action
-        type="action"
-        onClick={onEdit}
-      >
-        Edit Document
-      </Action>
-    </>
-  )
+  useActions(() => [
+    {
+      onClick: onClose,
+      children: 'Close',
+    },
+    {
+      onClick: onEdit,
+      children: 'Edit Document',
+    },
+  ], [])
 
   return (
-    <Frame
-      actions={actions}
-      title="Metadata"
-    >
-      <CardLoader id={id}>
-        {document => (
+    <CardLoader id={id}>
+      {document => (
+        <>
+          <FrameTitle>
+            {document.data.type} Metadata
+          </FrameTitle>
+
           <Metadata document={document} />
-        )}
-      </CardLoader>
-    </Frame>
+        </>
+      )}
+    </CardLoader>
   )
 }

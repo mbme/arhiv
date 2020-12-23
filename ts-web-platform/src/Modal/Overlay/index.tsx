@@ -2,17 +2,21 @@ import * as React from 'react'
 import {
   useCounter,
 } from '@v/web-utils'
-import { IOverlay, OverlayContext } from './context'
+import { IOverlay, OverlayRegistry } from './context'
 
-export function Overlay(props: IOverlay) {
-  const renderer = OverlayContext.use()
+function Overlay(props: IOverlay) {
+  const registry = OverlayRegistry.use()
   const id = useCounter()
 
   React.useEffect(() => {
-    renderer.show(id, props)
+    registry.put(id, props)
 
-    return () => renderer.hide(id)
+    return () => {
+      registry.remove(id)
+    }
   })
 
   return null
 }
+
+export default React.memo(Overlay)

@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   RouterContext,
 } from '@v/web-utils'
-import { CardLoader } from '../../parts'
+import { CardLoader, FrameTitle } from '../../parts'
 import { CardEditor } from './CardEditor'
 
 interface IProps {
@@ -20,12 +20,18 @@ export function CardEditorView({ id }: IProps) {
       id={id}
     >
       {document => (
-        <CardEditor
-          document={document}
-          onCancel={onCancel}
-          onSave={() => router.replace({ path: `/documents/${document.id}` })}
-          onDelete={onDelete}
-        />
+        <>
+          <FrameTitle>
+            {document.data.type} Editor
+          </FrameTitle>
+
+          <CardEditor
+            document={document}
+            onCancel={onCancel}
+            onSave={() => router.replace({ path: `/documents/${document.id}` })}
+            onDelete={onDelete}
+          />
+        </>
       )}
     </CardLoader>
   )

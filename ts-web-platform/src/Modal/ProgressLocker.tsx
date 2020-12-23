@@ -4,7 +4,7 @@ import {
   StyleArg,
 } from '../core'
 import { Icon } from '../Icon'
-import { Overlay } from './Overlay'
+import Overlay from './Overlay'
 
 function ProgressLocker() {
   const [visible, setVisible] = React.useState(false)

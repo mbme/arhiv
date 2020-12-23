@@ -1,6 +1,8 @@
 import { isFunction } from '@v/utils'
 import * as React from 'react'
 
+export { Registry, createRegistry } from './registry'
+
 export function clickOnEnter(e: React.KeyboardEvent) {
   if (e.key === 'Enter') {
     e.preventDefault()

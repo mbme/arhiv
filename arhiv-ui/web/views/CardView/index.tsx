@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { CardLoader } from '../../parts'
+import { CardLoader, FrameTitle } from '../../parts'
 import { Card } from './Card'
 
 interface IProps {
@@ -10,9 +10,15 @@ export function CardView({ id }: IProps) {
   return (
     <CardLoader id={id}>
       {document => (
-        <Card
-          document={document}
-        />
+        <>
+          <FrameTitle>
+            {document.data.type} Card
+          </FrameTitle>
+
+          <Card
+            document={document}
+          />
+        </>
       )}
     </CardLoader>
   )

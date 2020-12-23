@@ -4,14 +4,10 @@ import {
   StyleArg,
   Column,
   Link,
-  Heading,
   Spacer,
-  Button,
 } from '@v/web-platform'
-import {
-  ActionsContext,
-  IAction,
-} from './actions'
+import { ActionsRenderer } from './ActionsRenderer'
+import { ActionsRegistry } from './context'
 
 const $container: StyleArg = {
   display: 'grid',
@@ -48,89 +44,60 @@ const $content: StyleArg = {
 const $actions: StyleArg = {
   gridRow: '2',
   pl: 'medium',
-  '&>*': {
-    mb: 'small',
-  },
-}
-
-const $action: StyleArg = {
-  textTransform: 'uppercase',
-  width: '100%',
 }
 
 interface IProps {
   children: React.ReactNode
-  title: string
 }
 
-export function Frame({ children, title  }: IProps) {
-  const [actions, setActions] = React.useState<IAction[]>([])
-
+export function Frame({ children }: IProps) {
   return (
-    <Box
-      as="section"
-      $style={$container}
-    >
+    <ActionsRegistry.Provider>
       <Box
-        $style={$header}
+        as="section"
+        $style={$container}
       >
-        <Link to="/" clean>
-          Dashboard
-        </Link>
-
-        <Spacer
-          width="1rem"
-          flex="0 0 1rem"
-        />
-
-        <span>
-          Stats
-        </span>
-
-        <Spacer />
-
-        <span>
-          Synced
-        </span>
-      </Box>
-
-      <Box
-        $style={$content}
-      >
-        <Column
-          height="100%"
-          overflowY="auto"
-          alignX="stretch"
+        <Box
+          $style={$header}
         >
-          <Heading
-            fontSize="medium"
-            uppercase
-            color="var(--color-secondary)"
+          <Link to="/" clean>
+            Dashboard
+          </Link>
+
+          <Spacer
+            width="1rem"
+            flex="0 0 1rem"
+          />
+
+          <span>
+            Stats
+          </span>
+
+          <Spacer />
+
+          <span>
+            Synced
+          </span>
+        </Box>
+
+        <Box
+          $style={$content}
+        >
+          <Column
+            height="100%"
+            overflowY="auto"
+            alignX="stretch"
           >
-            {title}
-          </Heading>
-
-
-          <ActionsContext.Provider value={setActions}>
             {children}
-          </ActionsContext.Provider>
+          </Column>
+        </Box>
+
+        <Column
+          $style={$actions}
+        >
+          <ActionsRenderer />
         </Column>
       </Box>
-
-      <Column
-        $style={$actions}
-      >
-        {actions.map((action, i) => (
-          <Button
-            key={i}
-            onClick={action.onClick}
-            disabled={action.disabled}
-            $style={$action}
-          >
-            {action.children}
-          </Button>
-        ))}
-      </Column>
-    </Box>
+    </ActionsRegistry.Provider>
   )
 }

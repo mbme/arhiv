@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, Link, StyleArg } from '@v/web-platform'
-import { Frame } from '../parts'
+import { FrameTitle } from '../parts'
 import { MODULES } from '../api'
 
 const $link: StyleArg = {
@@ -35,12 +35,14 @@ export function DashboardView() {
   ))
 
   return (
-    <Frame
-      title="Dashboard"
-    >
+    <>
+      <FrameTitle>
+        Dashboard
+      </FrameTitle>
+
       <Box $style={$container}>
         {links}
       </Box>
-    </Frame>
+    </>
   )
 }

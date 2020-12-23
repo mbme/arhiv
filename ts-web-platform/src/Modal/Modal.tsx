@@ -3,7 +3,7 @@ import {
   useStyles,
   StyleArg,
 } from '../core'
-import { Overlay } from './Overlay'
+import Overlay from './Overlay'
 
 const $modal: StyleArg = {
   backgroundColor: 'var(--color-bg0)',

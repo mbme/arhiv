@@ -1,9 +1,7 @@
 import {
-  createContext,
-} from '@v/web-utils'
-import {
   StyleArg,
 } from '../../core'
+import { createRegistry } from '../../utils'
 
 export interface IOverlay {
   children: React.ReactNode
@@ -13,9 +11,4 @@ export interface IOverlay {
   innerRef?: React.Ref<HTMLDivElement>
 }
 
-export interface IOverlayRenderer {
-  show(id: number, overlay: IOverlay): void
-  hide(id: number): void
-}
-
-export const OverlayContext = createContext<IOverlayRenderer>()
+export const OverlayRegistry = createRegistry<IOverlay>()

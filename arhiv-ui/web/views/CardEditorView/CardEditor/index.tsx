@@ -5,7 +5,7 @@ import {
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
 import { API, IDocument } from '../../../api'
-import { Action, CardData, Frame } from '../../../parts'
+import { CardData, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
 
 interface IProps {
@@ -50,45 +50,34 @@ export function CardEditor(props: IProps) {
     onDelete!()
   }
 
-  const actions = preview ? (
-    <Action
-      type="action"
-      onClick={() => showPreview(false)}
-    >
-      Back
-    </Action>
-  ) : (
-    <>
-      <Action
-        type="action"
-        onClick={saveDocument}
-      >
-        Save Document
-      </Action>
+  useActions(() => {
+    if (preview) {
+      return [
+        {
+          onClick: () => showPreview(false),
+          children: 'Back',
+        },
+      ]
+    }
 
-      <Action
-        type="action"
-        onClick={onCancel}
-      >
-        Cancel
-      </Action>
-
-      <Action
-        type="action"
-        onClick={() => showPreview(true)}
-      >
-        Show Preview
-      </Action>
-
-      {onDelete && <DeleteDocumentButton onConfirmed={deleteDocument} />}
-    </>
-  )
+    return [
+      {
+        onClick: saveDocument,
+        children: 'Save Document',
+      },
+      {
+        onClick: onCancel,
+        children: 'Cancel',
+      },
+      {
+        onClick: () => showPreview(true),
+        children: 'Show Preview',
+      },
+    ]
+  }, [preview])
 
   return (
-    <Frame
-      actions={actions}
-      title="Card Editor"
-    >
+    <>
       <Box hidden={preview}>
         <CardEditorForm
           ref={formRef}
@@ -101,6 +90,8 @@ export function CardEditor(props: IProps) {
           data={formRef.current!}
         />
       )}
-    </Frame>
+
+      {onDelete && <DeleteDocumentButton onConfirmed={deleteDocument} />}
+    </>
   )
 }

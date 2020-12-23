@@ -2,7 +2,7 @@ const path = require('path')
 
 module.exports = env => ({
   entry: './web/index.tsx',
-  devtools: env.production ? undefined : 'inline-source-map',
+  devtool: env?.production ? undefined : 'inline-source-map',
 
   output: {
     filename: 'bundle.js',

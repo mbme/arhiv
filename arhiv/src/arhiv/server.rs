@@ -2,7 +2,6 @@ use super::Arhiv;
 use crate::entities::*;
 use crate::storage::Queries;
 use anyhow::*;
-use bytes;
 use rs_utils::read_file_as_stream;
 use std::fs;
 use std::net::SocketAddr;
@@ -91,7 +90,7 @@ impl Arhiv {
 
 fn post_attachment_data_handler(
     id: String,
-    data: bytes::Bytes,
+    data: warp::hyper::body::Bytes,
     arhiv: Arc<Arhiv>,
 ) -> impl warp::Reply {
     let id: Id = id.into();

@@ -7,11 +7,11 @@ edition = "2018"
 production-mode = ["arhiv/production-mode"]
 
 [dependencies]
-log = "0.4"
-env_logger = "0.7"
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+log = "0.4.11"
+env_logger = "0.8.2"
+anyhow = "1.0.36"
+serde = { version = "1.0.118", features = ["derive"] }
+serde_json = "1.0.60"
 tokio = { version = "0.2", features = ["macros"] }
 
 app-shell = { path = "../app-shell" }

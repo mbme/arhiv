@@ -47,6 +47,7 @@ fn generate_random_name(length: usize) -> String {
 
     iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
         .take(length)
         .collect()
 }

@@ -9,27 +9,26 @@ default-run = "arhiv"
 production-mode = ["rs-utils/production-mode"]
 
 [dependencies]
-log = "0.4"
-env_logger = "0.7"
+log = "0.4.11"
+env_logger = "0.8.2"
 
-anyhow = "1.0"
+anyhow = "1.0.36"
 
-clap = { version = "2.33", features = ["color"] }
+clap = { version = "2.33.3", features = ["color"] }
 
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1.0.118", features = ["derive"] }
+serde_json = "1.0.60"
 
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.19", features = ["serde"] }
 
 futures = "0.3.5"
 tokio = { version = "0.2", features = ["macros", "signal"] }
 tokio-util = { version  = "0.3.1", features = ["compat"]}
-reqwest = { version = "0.10", features = ["json", "stream"] }
+reqwest = { version = "0.10.10", features = ["json", "stream"] }
 nanoid = "0.3.0"
 
-warp = "0.2"
-bytes = ""
+warp = "0.2.5"
 
-rusqlite = { version = "0.24", features = ["chrono", "serde_json", "functions"] }
+rusqlite = { version = "0.24.2", features = ["chrono", "serde_json", "functions"] }
 
 rs-utils = { path = "../rs-utils" }

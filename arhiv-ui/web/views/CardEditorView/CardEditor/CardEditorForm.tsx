@@ -8,11 +8,12 @@ import { useDataDescription } from '../../../data-manager'
 import { CardEditorFormField } from './CardEditorFormField'
 
 interface IProps {
+  documentType: string
   data: IDocumentData,
 }
 
 export const CardEditorForm = React.forwardRef(
-  function CardEditorForm({ data }: IProps, ref: React.Ref<IDocumentData>) {
+  function CardEditorForm({ documentType, data }: IProps, ref: React.Ref<IDocumentData>) {
     const {
       Form,
       values,
@@ -20,7 +21,7 @@ export const CardEditorForm = React.forwardRef(
 
     const {
       dataDescription,
-    } = useDataDescription(data.type)
+    } = useDataDescription(documentType)
 
     React.useImperativeHandle(ref, () => ({ ...data, ...values }), [values])
 

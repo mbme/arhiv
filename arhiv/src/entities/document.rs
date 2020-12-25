@@ -11,6 +11,7 @@ use std::fmt;
 pub struct Document {
     pub id: Id,
     pub rev: Revision,
+    pub document_type: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub refs: HashSet<Id>,
@@ -19,12 +20,13 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(data: Value) -> Document {
+    pub fn new(document_type: String, data: Value) -> Document {
         let now = Utc::now();
 
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
+            document_type,
             created_at: now,
             updated_at: now,
             refs: HashSet::new(),

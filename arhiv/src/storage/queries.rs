@@ -84,25 +84,40 @@ pub trait Queries {
         }
 
         for (i, matcher) in filter.matchers.into_iter().enumerate() {
-            let matcher_selector_var = format!(":matcher_selector_{}", i);
-            let matcher_pattern_var = format!(":matcher_pattern_{}", i);
+            match matcher {
+                Matcher::Field { selector, pattern } => {
+                    let matcher_selector_var = format!(":matcher_selector_{}", i);
+                    let matcher_pattern_var = format!(":matcher_pattern_{}", i);
 
-            if matcher.fuzzy {
-                self.init_fuzzy_search()?;
+                    query.push(format!(
+                        "AND json_extract(data, {}) = {}",
+                        matcher_selector_var, matcher_pattern_var,
+                    ));
 
-                query.push(format!(
-                    "AND fuzzySearch(json_extract(data, {}), {})",
-                    matcher_selector_var, matcher_pattern_var,
-                ));
-            } else {
-                query.push(format!(
-                    "AND json_extract(data, {}) = {}",
-                    matcher_selector_var, matcher_pattern_var,
-                ));
+                    params.insert(&matcher_selector_var, Rc::new(selector));
+                    params.insert(&matcher_pattern_var, Rc::new(pattern));
+                }
+                Matcher::FuzzyField { selector, pattern } => {
+                    let matcher_selector_var = format!(":matcher_selector_{}", i);
+                    let matcher_pattern_var = format!(":matcher_pattern_{}", i);
+
+                    self.init_fuzzy_search()?;
+
+                    query.push(format!(
+                        "AND fuzzySearch(json_extract(data, {}), {})",
+                        matcher_selector_var, matcher_pattern_var,
+                    ));
+                    params.insert(&matcher_selector_var, Rc::new(selector));
+                    params.insert(&matcher_pattern_var, Rc::new(pattern));
+                }
+                Matcher::Type { document_type } => {
+                    let matcher_type_var = format!(":matcher_type_{}", i);
+
+                    query.push(format!("AND type = {}", matcher_type_var));
+
+                    params.insert(&matcher_type_var, Rc::new(document_type));
+                }
             }
-
-            params.insert(&matcher_selector_var, Rc::new(matcher.selector));
-            params.insert(&matcher_pattern_var, Rc::new(matcher.pattern));
         }
 
         if !filter.order.is_empty() {
@@ -390,13 +405,14 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (id, rev, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
+            document.document_type,
             document.created_at,
             document.updated_at,
             document.archived,
@@ -410,13 +426,14 @@ pub trait MutableQueries: Queries {
     fn put_document_history(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
+            document.document_type,
             document.created_at,
             document.updated_at,
             document.archived,

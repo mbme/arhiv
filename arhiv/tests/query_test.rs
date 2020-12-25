@@ -141,3 +141,65 @@ fn test_multiple_order_by() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_matcher() -> Result<()> {
+    let arhiv = new_prime();
+    arhiv.stage_document(new_document(json!({ "test": "value" })), vec![])?;
+    arhiv.stage_document(new_document(json!({ "test": "value1" })), vec![])?;
+
+    {
+        // test unexpected type
+        let page = arhiv.list_documents(DocumentFilter {
+            matchers: vec![Matcher::Type {
+                document_type: "random".to_string(),
+            }],
+            ..DocumentFilter::default()
+        })?;
+
+        let empty: Vec<serde_json::Value> = vec![];
+        assert_eq!(get_values(page), empty);
+    }
+
+    {
+        // test expected type
+        let page = arhiv.list_documents(DocumentFilter {
+            matchers: vec![Matcher::Type {
+                document_type: "test_type".to_string(),
+            }],
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page).len(), 2);
+    }
+
+    {
+        // test Field
+
+        let page = arhiv.list_documents(DocumentFilter {
+            matchers: vec![Matcher::Field {
+                selector: "$.test".to_string(),
+                pattern: "value".to_string(),
+            }],
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page).len(), 1);
+    }
+
+    {
+        // test FuzzyField
+
+        let page = arhiv.list_documents(DocumentFilter {
+            matchers: vec![Matcher::FuzzyField {
+                selector: "$.test".to_string(),
+                pattern: "val".to_string(),
+            }],
+            ..DocumentFilter::default()
+        })?;
+
+        assert_eq!(get_values(page).len(), 2);
+    }
+
+    Ok(())
+}

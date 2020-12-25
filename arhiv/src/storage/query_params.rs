@@ -2,10 +2,19 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Matcher {
-    pub selector: String,
-    pub pattern: String,
-    pub fuzzy: bool,
+pub enum Matcher {
+    Field {
+        selector: String,
+        pattern: String,
+    },
+    FuzzyField {
+        selector: String,
+        pattern: String,
+    },
+    Type {
+        #[serde(rename = "documentType")]
+        document_type: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]

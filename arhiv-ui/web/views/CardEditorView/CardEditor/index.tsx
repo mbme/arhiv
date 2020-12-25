@@ -81,12 +81,14 @@ export function CardEditor(props: IProps) {
       <Box hidden={preview}>
         <CardEditorForm
           ref={formRef}
+          documentType={document.documentType}
           data={document.data}
         />
       </Box>
 
       {preview && (
         <CardData
+          documentType={document.documentType}
           data={formRef.current!}
         />
       )}

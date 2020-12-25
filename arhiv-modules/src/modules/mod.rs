@@ -41,7 +41,6 @@ impl DocumentDataManager {
         let description = self.get_data_description_by_type(&document_type)?;
 
         let mut result: DocumentData = Map::new();
-        result.insert("type".to_string(), Value::String(document_type));
 
         for field in &description.fields {
             if let Some(value) = initial_values.get(&field.name) {
@@ -67,23 +66,10 @@ impl DocumentDataManager {
         Ok(result)
     }
 
-    fn get_data_description(&self, data: &DocumentData) -> Result<&DataDescription> {
-        let document_type = data
-            .get("type")
-            .ok_or(anyhow!("document data must have type"))?;
-        let document_type = document_type
-            .as_str()
-            .ok_or(anyhow!("document type must be string"))?;
-
-        self.modules
-            .get(document_type)
-            .ok_or(anyhow!("Unknown document type {}", &document_type))
-    }
-
-    fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
+    fn extract_refs(&self, document_type: &str, data: &DocumentData) -> Result<HashSet<Id>> {
         let mut result = HashSet::new();
 
-        let data_description = self.get_data_description(data)?;
+        let data_description = self.get_data_description_by_type(document_type)?;
 
         for field in &data_description.fields {
             match field.field_type {
@@ -126,7 +112,7 @@ impl DocumentDataManager {
                 }
             }
         };
-        let refs = self.extract_refs(&data)?;
+        let refs = self.extract_refs(&document.document_type, &data)?;
         document.refs = refs;
 
         Ok(())
@@ -152,7 +138,6 @@ fn get_modules() -> HashMap<String, DataDescription> {
         modules.insert(module.document_type.clone(), module);
     }
 
-    // FIXME deny "type" field
     // FIXME validate data description
     // FIXME generate json schema based on data description
     // FIXME check if collection child type has field with name equal to collection type

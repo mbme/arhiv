@@ -10,7 +10,7 @@ import {
 import { useDebounced } from '@v/web-utils'
 import { ErrorBlock } from '../ErrorBlock'
 import { useDataDescription } from '../../data-manager'
-import { IDocument, IMatcher } from '../../api'
+import { IDocument, Matcher } from '../../api'
 import { useList } from './useList'
 import { CatalogEntry } from './CatalogEntry'
 import { partitionBy } from '@v/utils'
@@ -32,7 +32,7 @@ function createRule(field?: string) {
 
 interface IProps {
   documentType: string
-  collectionMatcher?: IMatcher
+  collectionMatcher?: Matcher
 }
 
 export function Catalog({ documentType, collectionMatcher }: IProps) {
@@ -56,9 +56,9 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     loadMore,
   } = useList({
     matchers: [
-      { selector: '$.type', pattern: documentType, fuzzy: false },
+      { Type: { documentType } },
       collectionMatcher,
-      debouncedFilter ? { selector: `$.${titleField}`, pattern: debouncedFilter, fuzzy: true } : undefined,
+      debouncedFilter ? { FuzzyField: { selector: `$.${titleField}`, pattern: debouncedFilter } } : undefined,
     ],
     pageSize: uiOptions.catalog.pageSize,
     order: uiOptions.catalog.order,

@@ -22,7 +22,7 @@ export function CardEditorView({ id }: IProps) {
       {document => (
         <>
           <FrameTitle>
-            {document.data.type} Editor
+            {document.documentType} Editor
           </FrameTitle>
 
           <CardEditor

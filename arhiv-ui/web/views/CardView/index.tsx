@@ -12,7 +12,7 @@ export function CardView({ id }: IProps) {
       {document => (
         <>
           <FrameTitle>
-            {document.data.type} Card
+            {document.documentType} Card
           </FrameTitle>
 
           <Card

@@ -5,14 +5,15 @@ import { useDataDescription } from '../../data-manager'
 import { CardDataField } from './CardDataField'
 
 interface IProps {
+  documentType: string
   data: IDocumentData
 }
 
-export function CardData({ data }: IProps) {
+export function CardData({ documentType, data }: IProps) {
   const {
     dataDescription,
     titleField,
-  } = useDataDescription(data.type)
+  } = useDataDescription(documentType)
 
   const fields = dataDescription.fields.map(({ name, fieldType }) => {
     const value = data[name]

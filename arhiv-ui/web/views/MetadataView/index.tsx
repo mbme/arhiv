@@ -29,7 +29,7 @@ export function MetadataView({ id }: IProps) {
       {document => (
         <>
           <FrameTitle>
-            {document.data.type} Metadata
+            {document.documentType} Metadata
           </FrameTitle>
 
           <Metadata document={document} />

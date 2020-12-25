@@ -103,7 +103,7 @@ impl Faker {
             }
         }
 
-        let mut document = Document::new(data.into());
+        let mut document = Document::new(document_type, data.into());
         self.data_manager
             .update_refs(&mut document)
             .expect("Failed to update refs");

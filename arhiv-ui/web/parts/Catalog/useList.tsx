@@ -5,7 +5,7 @@ import {
   IDocument,
   IDocumentFilter,
   IListPage,
-  IMatcher,
+  Matcher,
   OrderBy,
 } from '../../api'
 
@@ -17,7 +17,7 @@ interface IList<D> {
 }
 
 interface IOptions {
-  matchers: Array<IMatcher | undefined>
+  matchers: Array<Matcher | undefined>
   pageSize?: number
   order: OrderBy[]
 }

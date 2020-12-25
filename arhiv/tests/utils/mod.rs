@@ -34,11 +34,11 @@ pub fn new_replica_with_port(port: u16) -> Arhiv {
 }
 
 pub fn empty_document() -> Document {
-    Document::new(serde_json::Value::Null)
+    Document::new("test_type".to_string(), serde_json::json!({}))
 }
 
 pub fn new_document(value: serde_json::Value) -> Document {
-    Document::new(value)
+    Document::new("test_type".to_string(), value)
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {

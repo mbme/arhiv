@@ -11,7 +11,7 @@ interface IProps {
 export function Card({ document }: IProps) {
   const router = RouterContext.use()
 
-  const documentType = document.data.type
+  const documentType = document.documentType
   const { dataDescription } = useDataDescription(documentType)
   const childDocumentType = dataDescription.collectionOf?.itemType
 
@@ -42,6 +42,7 @@ export function Card({ document }: IProps) {
   return (
     <>
       <CardData
+        documentType={documentType}
         data={document.data}
       />
 
@@ -49,7 +50,7 @@ export function Card({ document }: IProps) {
         <Catalog
           key={childDocumentType}
           documentType={childDocumentType}
-          collectionMatcher={{ selector: `$.${documentType}`, pattern: document.id, fuzzy: false }}
+          collectionMatcher={{ Field: { selector: `$.${documentType}`, pattern: document.id }}}
         />
       )}
     </>

@@ -81,6 +81,7 @@ impl Arhiv {
 
         let mut fs_tx = FsTransaction::new();
 
+        // FIXME optimize this
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
                 document.rev = Revision::STAGING; // make sure document rev is Staging
@@ -89,7 +90,8 @@ impl Arhiv {
 
                 document
             } else {
-                let mut new_document = Document::new(updated_document.data);
+                let mut new_document =
+                    Document::new(updated_document.document_type, updated_document.data);
                 new_document.id = updated_document.id;
 
                 new_document

@@ -35,7 +35,7 @@ export function NewCardEditorView({ documentType }: IProps) {
       {document => (
         <>
           <FrameTitle>
-            New {document.data.type}
+            New {document.documentType}
           </FrameTitle>
 
           <CardEditor

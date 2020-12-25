@@ -29,7 +29,7 @@ export function CatalogEntry({ document, showModificationDate, showDataFields }:
 
   const {
     titleField,
-  } = useDataDescription(document.data.type)
+  } = useDataDescription(document.documentType)
 
   return (
     <Box

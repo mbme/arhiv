@@ -3,6 +3,7 @@ import { EmptyObject, Obj } from '@v/utils'
 export interface IDocument {
   readonly id: string
   readonly rev: number
+  readonly documentType: string
   readonly createdAt: string
   readonly updatedAt: string
   readonly refs: readonly string[]
@@ -11,7 +12,6 @@ export interface IDocument {
 }
 
 export interface IDocumentData {
-  readonly type: string
   readonly [name: string]: any
 }
 
@@ -29,11 +29,10 @@ export interface IAttachment {
   readonly filename: string
 }
 
-export interface IMatcher {
-  selector: string
-  pattern: string
-  fuzzy: boolean
-}
+export type Matcher =
+  { Field: { selector: string, pattern: string } }
+  | { FuzzyField: { selector: string, pattern: string } }
+  | { Type: { documentType: string } }
 
 export type OrderBy =
   { Field: { selector: string, asc: boolean } }
@@ -45,7 +44,7 @@ export type DocumentFilterMode = 'Staged' | 'Archived'
 export interface IDocumentFilter {
   pageOffset?: number
   pageSize?: number
-  matchers: IMatcher[]
+  matchers: Matcher[]
   order: OrderBy[],
   mode?: DocumentFilterMode,
 }

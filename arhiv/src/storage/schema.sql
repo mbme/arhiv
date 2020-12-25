@@ -8,6 +8,7 @@ CREATE TABLE settings (
 CREATE TABLE documents (
   id TEXT NOT NULL,
   rev NUMBER NOT NULL,
+  type TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived BOOLEAN NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE documents (
 CREATE TABLE documents_history (
   id TEXT NOT NULL,
   rev NUMBER NOT NULL,
+  type TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   archived BOOLEAN NOT NULL,

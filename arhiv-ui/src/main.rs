@@ -75,9 +75,9 @@ fn main() {
             move |_, params| {
                 let args: CreateDocumentArgs = serde_json::from_value(params)?;
 
-                let data = data_manager.create_with_data(args.document_type, args.args)?;
+                let data = data_manager.create_with_data(args.document_type.clone(), args.args)?;
 
-                let document = Document::new(data.into());
+                let document = Document::new(args.document_type, data.into());
 
                 Ok(serde_json::to_value(document)?)
             }

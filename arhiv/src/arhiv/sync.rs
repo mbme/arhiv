@@ -27,30 +27,26 @@ impl Arhiv {
         }
 
         let new_rev = rev.inc();
+        let mut fs_tx = FsTransaction::new();
 
         for mut document in changeset.documents {
             // FIXME merge documents
             document.rev = new_rev.clone();
             tx.put_document(&document)?;
             tx.put_document_history(&document)?;
-        }
 
-        let mut fs_tx = FsTransaction::new();
-        for mut attachment in changeset.attachments {
-            // save attachment
-            attachment.rev = new_rev.clone();
-            tx.put_attachment(&attachment, true)?;
+            if document.is_attachment() {
+                let attachment_data = self.get_attachment_data(&document.id);
+                let file_path = attachment_data.get_staged_file_path();
+                ensure_file_exists(&file_path)
+                    .context(anyhow!("Attachment data for {} is missing", &document.id))?;
 
-            let attachment_data = self.get_attachment_data(&attachment.id);
-            let file_path = attachment_data.get_staged_file_path();
-            ensure_file_exists(&file_path)
-                .context(anyhow!("Attachment data for {} is missing", &attachment.id))?;
-
-            // save attachment file
-            fs_tx.move_file(
-                file_path.to_string(),
-                attachment_data.get_committed_file_path(),
-            )?;
+                // save attachment file
+                fs_tx.move_file(
+                    file_path.to_string(),
+                    attachment_data.get_committed_file_path(),
+                )?;
+            }
         }
 
         tx.commit()?;
@@ -68,23 +64,24 @@ impl Arhiv {
 
         let next_rev = base_rev.inc();
         let documents = conn.get_documents_since(&next_rev)?;
-        let attachments = conn.get_attachments_since(&next_rev)?;
 
         Ok(ChangesetResponse {
             latest_rev: conn.get_rev()?,
             base_rev,
             documents,
-            attachments,
         })
     }
 
     pub async fn sync(&self) -> Result<()> {
         let conn = self.storage.get_connection()?;
 
-        let is_prime = conn.is_prime()?;
-        let changeset = conn.get_changeset()?;
+        let changeset = Changeset {
+            base_rev: conn.get_rev()?,
+            documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
+        };
+        log::debug!("prepared a changeset {}", changeset);
 
-        if is_prime {
+        if conn.is_prime()? {
             self.sync_locally(changeset)
         } else {
             self.sync_remotely(changeset).await
@@ -107,7 +104,11 @@ impl Arhiv {
         let tx = conn.get_tx()?;
 
         // TODO parallel file upload
-        for attachment in changeset.attachments.iter() {
+        for attachment in changeset
+            .documents
+            .iter()
+            .filter(|document| document.is_attachment())
+        {
             let data = self.get_attachment_data(&attachment.id);
 
             let file_path = data.get_staged_file_path();
@@ -147,20 +148,14 @@ impl Arhiv {
             bail!("base_rev isn't equal to current rev");
         }
 
+        let mut fs_tx = FsTransaction::new();
+
         for document in response.documents {
             tx.put_document(&document)?;
-        }
-
-        // make sure there are no more staged documents
-        assert_eq!(tx.count_documents()?.1, 0);
-
-        let mut fs_tx = FsTransaction::new();
-        for attachment in response.attachments {
-            tx.put_attachment(&attachment, true)?;
 
             // if we've sent few attachments, move them to committed data directory
-            if changeset.contains_attachment(&attachment.id) {
-                let attachment_data = self.get_attachment_data(&attachment.id);
+            if changeset.contains_attachment(&document.id) {
+                let attachment_data = self.get_attachment_data(&document.id);
 
                 fs_tx.move_file(
                     attachment_data.get_staged_file_path(),
@@ -168,6 +163,9 @@ impl Arhiv {
                 )?;
             }
         }
+
+        // make sure there are no more staged documents
+        assert_eq!(tx.count_documents()?.1, 0);
 
         fs_tx.commit();
         tx.commit()?;

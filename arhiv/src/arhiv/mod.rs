@@ -90,6 +90,10 @@ impl Arhiv {
 
                 document
             } else {
+                if updated_document.is_attachment() {
+                    bail!("attachments must not be created manually");
+                }
+
                 let mut new_document =
                     Document::new(updated_document.document_type, updated_document.data);
                 new_document.id = updated_document.id;
@@ -106,9 +110,6 @@ impl Arhiv {
         for reference in document.refs.iter() {
             // FIXME optimize validating id
             if conn.get_document(reference)?.is_some() {
-                continue;
-            }
-            if conn.get_attachment(reference)?.is_some() {
                 continue;
             }
             if reference == &document.id {
@@ -137,7 +138,7 @@ impl Arhiv {
                 continue;
             }
 
-            if conn.get_attachment(&new_attachment.id)?.is_some() {
+            if conn.get_document(&new_attachment.id)?.is_some() {
                 log::warn!(
                     "Document {} new attachment already exists, ignoring: {}",
                     &document.id,
@@ -146,8 +147,8 @@ impl Arhiv {
                 continue;
             }
 
-            let attachment = Attachment::from(&new_attachment)?;
-            conn.put_attachment(&attachment, false)?;
+            let attachment = Document::from(&new_attachment)?;
+            conn.put_document(&attachment)?;
 
             let path = self
                 .storage
@@ -179,64 +180,18 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn list_attachments(
-        &self,
-        filter: Option<AttachmentFilter>,
-    ) -> Result<ListPage<Attachment>> {
-        let conn = self.storage.get_connection()?;
-
-        conn.list_attachments(filter.unwrap_or_default())
-    }
-
-    pub fn get_attachment(&self, id: &Id) -> Result<Option<Attachment>> {
-        let conn = self.storage.get_connection()?;
-
-        conn.get_attachment(id)
-    }
-
-    pub fn update_attachment_filename<S: Into<String>>(&self, id: &Id, filename: S) -> Result<()> {
-        let mut attachment = self
-            .get_attachment(&id)?
-            .ok_or(anyhow!("unknown attachment {}", id))?;
-        attachment.filename = filename.into();
-
-        if attachment.rev.is_staged() {
-            let mut conn = self.storage.get_writable_connection()?;
-            let tx = conn.get_tx()?;
-
-            tx.put_attachment(&attachment, true)?;
-
-            tx.commit()?;
-
-            return Ok(());
-        }
-
-        if self.storage.get_connection()?.is_prime()? {
-            let mut conn = self.storage.get_writable_connection()?;
-            let tx = conn.get_tx()?;
-
-            let current_rev = tx.get_rev()?;
-
-            attachment.rev = current_rev.inc();
-
-            tx.put_attachment(&attachment, true)?;
-
-            tx.commit()?;
-
-            return Ok(());
-        }
-
-        bail!("committed attachment filename must be updated on Prime");
-    }
-
     pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {
         self.storage.get_attachment_data(id.clone())
     }
 
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
         let attachment = self
-            .get_attachment(&id)?
+            .get_document(&id)?
             .ok_or(anyhow!("unknown attachment {}", id))?;
+
+        if !attachment.is_attachment() {
+            bail!("document {} isn't an attachment", id);
+        }
 
         let data = self.storage.get_attachment_data(id.clone());
 

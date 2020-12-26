@@ -123,8 +123,10 @@ async fn get_attachment_data_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let id: Id = id.into();
 
-    let attachment = match arhiv.get_attachment(&id) {
-        Ok(Some(attachment)) if attachment.rev.is_committed() => attachment,
+    let attachment = match arhiv.get_document(&id) {
+        Ok(Some(attachment)) if attachment.is_attachment() && attachment.rev.is_committed() => {
+            attachment
+        }
 
         Ok(Some(_)) | Ok(None) => {
             return Ok(reply::with_status(
@@ -168,11 +170,21 @@ async fn get_attachment_data_handler(
 
     // FIXME support ranges, status code: partial content
     // res.headers['Content-Type'] = await getMimeType(filePath)
+    let info = match attachment.get_attachment_info() {
+        Ok(info) => info,
+        Err(err) => {
+            return Ok(reply::with_status(
+                format!("failed to read attachment info {}: {}", &id, err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+            .into_response());
+        }
+    };
 
     Ok(http::Response::builder()
         .header(
             "Content-Disposition",
-            format!("inline; filename={}", attachment.filename),
+            format!("inline; filename={}", info.filename),
         )
         .header("Cache-Control", "immutable, private, max-age=31536000") // max caching
         .body(hyper::Body::wrap_stream(file))

@@ -38,7 +38,7 @@ async fn test_prime_sync() -> Result<()> {
 
     assert_eq!(
         arhiv
-            .get_attachment(&other_attachment.id)?
+            .get_document(&other_attachment.id)?
             .unwrap()
             .rev
             .is_staged(),
@@ -52,18 +52,14 @@ async fn test_prime_sync() -> Result<()> {
         false
     );
     assert_eq!(
-        arhiv
-            .get_attachment(&attachment.id)?
-            .unwrap()
-            .rev
-            .is_staged(),
+        arhiv.get_document(&attachment.id)?.unwrap().rev.is_staged(),
         false
     );
 
     // make sure unused attachment wasn't committed
     assert_eq!(
         arhiv
-            .get_attachment(&other_attachment.id)?
+            .get_document(&other_attachment.id)?
             .unwrap()
             .rev
             .is_staged(),

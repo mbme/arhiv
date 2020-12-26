@@ -1,0 +1,24 @@
+{
+  "documentType": "attachment",
+  "documentTitle": "filename",
+  "fields": [
+    {
+      "name": "filename",
+      "fieldType": {
+        "String": {}
+      }
+    },
+    {
+      "name": "hash",
+      "fieldType": {
+        "String": {}
+      }
+    },
+    {
+      "name": "details",
+      "fieldType": {
+        "MarkupString": {}
+      }
+    }
+  ]
+}

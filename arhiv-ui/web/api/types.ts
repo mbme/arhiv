@@ -22,13 +22,6 @@ export interface IAttachmentSource {
   readonly copy: boolean
 }
 
-export interface IAttachment {
-  readonly id: string
-  readonly rev: number
-  readonly createdAt: string
-  readonly filename: string
-}
-
 export type Matcher =
   { Field: { selector: string, pattern: string } }
   | { FuzzyField: { selector: string, pattern: string } }

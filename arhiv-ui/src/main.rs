@@ -82,21 +82,6 @@ fn main() {
                 Ok(serde_json::to_value(document)?)
             }
         })
-        .with_action("get_attachment", {
-            let arhiv = arhiv.clone();
-
-            move |_, params| {
-                let id: Id = params
-                    .as_str()
-                    .context("id must be string")?
-                    .to_string()
-                    .into();
-
-                let attachment = arhiv.get_attachment(&id)?;
-
-                Ok(serde_json::to_value(&attachment)?)
-            }
-        })
         .with_action("get_attachment_location", {
             let arhiv = arhiv.clone();
 

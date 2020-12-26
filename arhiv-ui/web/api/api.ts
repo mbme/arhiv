@@ -5,7 +5,6 @@ import {
   AttachmentLocation,
   ICreateDocumentArgs,
   IDataDescription,
-  IAttachment,
   IAttachmentSource,
   IDocument,
   IDocumentFilter,
@@ -24,7 +23,6 @@ interface IRPC {
 
   render_markup(markup: string): Promise<string>
 
-  get_attachment(id: string): Promise<IAttachment | null>
   get_attachment_location(id: string): Promise<AttachmentLocation>
   pick_attachments(): Promise<IAttachmentSource[]>
 }

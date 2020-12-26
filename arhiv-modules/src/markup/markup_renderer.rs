@@ -43,23 +43,9 @@ impl<'a> MarkupRenderer<'a> {
                         .get_document(&id)
                         .expect("must be able to get document");
 
-                    // FIXME extract title
-                    if let Some(_) = document {
-                        // render Document Link
-                        return link_event(
-                            normalized_title,
-                            format!("{}/{}", &self.document_path, id),
-                        );
-                    }
-
-                    let attachment = {
-                        let attachment = self
-                            .arhiv
-                            .get_attachment(&id)
-                            .expect("must be able to get attachment");
-
-                        match attachment {
-                            Some(attachment) => attachment,
+                    let document = {
+                        match document {
+                            Some(document) => document,
                             None => {
                                 log::warn!(
                                     "Got broken reference: {} ({:?} {} {})",
@@ -68,10 +54,24 @@ impl<'a> MarkupRenderer<'a> {
                                     destination,
                                     title
                                 );
+
                                 return event;
                             }
                         }
                     };
+
+                    if !document.is_attachment() {
+                        // FIXME extract title
+                        // render Document Link
+                        return link_event(
+                            normalized_title,
+                            format!("{}/{}", &self.document_path, id),
+                        );
+                    }
+
+                    let info = document
+                        .get_attachment_info()
+                        .expect("must be able to get attachment info");
 
                     let attachment_location = {
                         let attachment_location = self
@@ -86,7 +86,7 @@ impl<'a> MarkupRenderer<'a> {
                     };
 
                     // render Image
-                    if is_image_file(&attachment.filename) {
+                    if is_image_file(&info.filename) {
                         return Event::Start(Tag::Image(
                             LinkType::Inline,
                             attachment_location.into(),

@@ -1,6 +1,5 @@
 use anyhow::*;
-use arhiv::entities::*;
-use arhiv::start_server;
+use arhiv::{entities::*, start_server, DocumentFilter, Matcher};
 use rs_utils::project_relpath;
 use std::sync::Arc;
 pub use utils::*;
@@ -10,7 +9,10 @@ mod utils;
 #[test]
 fn test_attachments() -> Result<()> {
     let arhiv = new_prime();
-    assert_eq!(arhiv.list_attachments(None)?.items.len(), 0);
+    assert_eq!(
+        arhiv.list_documents(DocumentFilter::default())?.items.len(),
+        0
+    );
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -32,50 +34,14 @@ fn test_attachments() -> Result<()> {
         .get_attachment_data(&attachment.id)
         .get_staged_file_path();
 
-    assert_eq!(arhiv.list_attachments(None)?.items.len(), 1);
+    let page = arhiv.list_documents(DocumentFilter {
+        matchers: vec![Matcher::Type {
+            document_type: ATTACHMENT_TYPE.to_string(),
+        }],
+        ..DocumentFilter::default()
+    })?;
+    assert_eq!(page.items.len(), 1);
     assert_eq!(are_equal_files(src, dst)?, true);
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_update_attachment_filename() -> Result<()> {
-    // It should work only on prime
-
-    let arhiv = new_prime();
-
-    let src = &project_relpath("../resources/k2.jpg");
-
-    let mut attachment = AttachmentSource::new(src);
-    attachment.copy = true;
-
-    let mut document = empty_document();
-    document.refs.insert(attachment.id.clone());
-
-    arhiv.stage_document(document, vec![attachment.clone()])?;
-
-    let attachment = arhiv.get_attachment(&attachment.id)?.unwrap();
-    assert_eq!(attachment.filename, "k2.jpg");
-
-    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
-    assert_eq!(
-        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
-        "k1.jpg"
-    );
-
-    assert_eq!(arhiv.get_status()?.rev.0, 0);
-
-    arhiv.sync().await?;
-
-    assert_eq!(arhiv.get_status()?.rev.0, 1);
-
-    // make sure we increase rev after updating committed filename
-    arhiv.update_attachment_filename(&attachment.id, "k1.jpg")?;
-    assert_eq!(
-        arhiv.get_attachment(&attachment.id)?.unwrap().filename,
-        "k1.jpg"
-    );
-    assert_eq!(arhiv.get_status()?.rev.0, 2);
 
     Ok(())
 }

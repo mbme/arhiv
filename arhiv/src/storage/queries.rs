@@ -23,6 +23,13 @@ pub trait Queries {
             .context("failed to get setting")
     }
 
+    fn get_schema_version(&self) -> Result<u8> {
+        self.get_setting("schema_version")?
+            .expect("schema version must be defined")
+            .parse()
+            .context("failed to parse schema version")
+    }
+
     fn is_prime(&self) -> Result<bool> {
         self.get_setting("is_prime")
             .map(|value| value.unwrap_or("".to_string()) == "true")

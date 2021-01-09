@@ -6,7 +6,7 @@ use rs_utils::project_relpath;
 use serde_json::Map;
 use std::{collections::HashMap, fs};
 
-use crate::modules::{DataSchema, DocumentData, FieldType};
+use crate::modules::{DocumentData, FieldType};
 
 use super::TextGenerator;
 
@@ -30,7 +30,6 @@ fn create_attachments() -> Vec<AttachmentSource> {
 pub struct Faker {
     attachments: Vec<AttachmentSource>,
     generator: TextGenerator,
-    data_schema: DataSchema,
     pub quantity_limits: HashMap<String, u32>,
     pub field_size_limits: HashMap<(String, String), (u32, u32)>,
 }
@@ -39,12 +38,10 @@ impl Faker {
     pub fn new() -> Self {
         let attachments = create_attachments();
         let generator = TextGenerator::new(&attachments);
-        let data_schema = DataSchema::new();
 
         Faker {
             attachments,
             generator,
-            data_schema,
             quantity_limits: HashMap::new(),
             field_size_limits: HashMap::new(),
         }
@@ -60,17 +57,22 @@ impl Faker {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
-        let mut data = self
-            .data_schema
+    fn create_fake(
+        &self,
+        document_type: String,
+        initial_values: DocumentData,
+        arhiv: &Arhiv,
+    ) -> Document {
+        let mut data = arhiv
+            .schema
             .create_with_data(document_type.clone(), initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
                 document_type
             ));
 
-        let description = self
-            .data_schema
+        let description = arhiv
+            .schema
             .get_data_description_by_type(&document_type)
             .unwrap();
 
@@ -104,7 +106,8 @@ impl Faker {
         }
 
         let mut document = Document::new(document_type, data.into());
-        self.data_schema
+        arhiv
+            .schema
             .update_refs(&mut document)
             .expect("Failed to update refs");
 
@@ -114,8 +117,8 @@ impl Faker {
     pub fn create_fakes<S: Into<String>>(&self, document_type: S, arhiv: &Arhiv) {
         let document_type = document_type.into();
 
-        let data_description = self
-            .data_schema
+        let data_description = arhiv
+            .schema
             .get_data_description_by_type(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 
@@ -123,7 +126,7 @@ impl Faker {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let document = self.create_fake(document_type.clone(), Map::new());
+            let document = self.create_fake(document_type.clone(), Map::new(), &arhiv);
             let id = document.id.clone();
             arhiv
                 .stage_document(document, self.attachments.clone())
@@ -138,7 +141,7 @@ impl Faker {
                     initial_values
                         .insert(document_type.clone(), serde_json::to_value(&id).unwrap());
                     let child_document =
-                        self.create_fake(child_document_type.clone(), initial_values);
+                        self.create_fake(child_document_type.clone(), initial_values, &arhiv);
 
                     arhiv
                         .stage_document(child_document, self.attachments.clone())

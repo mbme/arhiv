@@ -22,6 +22,15 @@ impl Arhiv {
             );
         }
 
+        let schema_version = tx.get_schema_version()?;
+        if schema_version != changeset.schema_version {
+            bail!(
+                "db schema version {} is different from changeset version {}",
+                schema_version,
+                changeset.schema_version,
+            )
+        }
+
         if changeset.is_empty() {
             return Ok(());
         }
@@ -76,6 +85,7 @@ impl Arhiv {
         let conn = self.storage.get_connection()?;
 
         let changeset = Changeset {
+            schema_version: conn.get_schema_version()?,
             base_rev: conn.get_rev()?,
             documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
         };

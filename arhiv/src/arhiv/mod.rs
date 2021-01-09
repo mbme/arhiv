@@ -1,6 +1,6 @@
-use crate::config::Config;
 use crate::entities::*;
 use crate::storage::*;
+use crate::{config::Config, modules::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::FsTransaction;
@@ -12,11 +12,14 @@ mod server;
 mod sync;
 
 pub struct Arhiv {
+    pub schema: DataSchema,
     storage: Storage,
     config: Arc<Config>,
 }
 
 impl Arhiv {
+    pub const SCHEMA: &'static str = DataSchema::SCHEMA;
+
     pub fn must_open() -> Arhiv {
         Arhiv::open(Config::must_read()).expect("must be able to open arhiv")
     }
@@ -24,15 +27,41 @@ impl Arhiv {
     pub fn open(config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
         let storage = Storage::open(config.clone())?;
+        let schema = DataSchema::new();
 
-        Ok(Arhiv { config, storage })
+        let schema_version: u8 = storage.get_connection()?.get_schema_version()?;
+
+        if schema_version != schema.version {
+            bail!(
+                "db version {} is different from app version {}",
+                schema_version,
+                schema.version,
+            )
+        }
+
+        Ok(Arhiv {
+            schema,
+            config,
+            storage,
+        })
     }
 
     pub fn create(prime: bool, config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
         let storage = Storage::create(prime, config.clone())?;
+        let schema = DataSchema::new();
 
-        Ok(Arhiv { config, storage })
+        // save schema version into db
+        let mut conn = storage.get_writable_connection()?;
+        let conn = conn.get_tx()?;
+        conn.set_setting("schema_version", Some(schema.version.to_string()))?;
+        conn.commit()?;
+
+        Ok(Arhiv {
+            schema,
+            config,
+            storage,
+        })
     }
 
     pub fn get_root_dir(&self) -> &str {

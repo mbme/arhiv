@@ -6,6 +6,7 @@ use super::{Document, Id, Revision};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Changeset {
+    pub schema_version: u8,
     pub base_rev: Revision,
     pub documents: Vec<Document>,
 }

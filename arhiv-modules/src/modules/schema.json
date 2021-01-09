@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "documentType": "attachment",
+      "documentTitle": "filename",
+      "fields": [
+        {
+          "name": "filename",
+          "fieldType": {
+            "String": {}
+          }
+        },
+        {
+          "name": "hash",
+          "fieldType": {
+            "String": {}
+          }
+        },
+        {
+          "name": "details",
+          "fieldType": {
+            "MarkupString": {}
+          }
+        }
+      ]
+    },
+    {
+      "documentType": "note",
+      "documentTitle": "name",
+      "fields": [
+        {
+          "name": "name",
+          "fieldType": {
+            "String": {}
+          }
+        },
+        {
+          "name": "data",
+          "fieldType": {
+            "MarkupString": {}
+          }
+        }
+      ]
+    },
+    {
+      "documentType": "project",
+      "documentTitle": "title",
+      "collectionOf": {
+        "itemType": "task"
+      },
+      "fields": [
+        {
+          "name": "title",
+          "fieldType": {
+            "String": {}
+          }
+        },
+        {
+          "name": "description",
+          "fieldType": {
+            "MarkupString": {}
+          }
+        }
+      ]
+    },
+    {
+      "documentType": "task",
+      "documentTitle": "title",
+      "fields": [
+        {
+          "name": "project",
+          "fieldType": {
+            "Ref": "project"
+          }
+        },
+        {
+          "name": "title",
+          "fieldType": {
+            "String": {}
+          }
+        },
+        {
+          "name": "description",
+          "fieldType": {
+            "MarkupString": {}
+          }
+        },
+        {
+          "name": "complexity",
+          "fieldType": {
+            "Enum": ["Unknown", "Small", "Medium", "Large", "Epic"]
+          }
+        },
+        {
+          "name": "status",
+          "fieldType": {
+            "Enum": ["Inbox", "Todo", "Later", "InProgress", "Paused", "Done", "Cancelled"]
+          }
+        }
+      ]
+    }
+  ]
+}

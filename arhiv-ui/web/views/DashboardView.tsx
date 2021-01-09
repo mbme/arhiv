@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Box, Link, StyleArg } from '@v/web-platform'
 import { FrameTitle } from '../parts'
-import { MODULES } from '../api'
+import { SCHEMA } from '../api'
 
 const $link: StyleArg = {
   textTransform: 'uppercase',
@@ -23,14 +23,14 @@ const $container: StyleArg = {
 }
 
 export function DashboardView() {
-  const links = Object.keys(MODULES).map(module => (
+  const links = SCHEMA.modules.map(module => (
     <Link
-      key={module}
-      to={`/catalog/${module}`}
+      key={module.documentType}
+      to={`/catalog/${module.documentType}`}
       $style={$link}
       clean
     >
-      {module}
+      {module.documentType}
     </Link>
   ))
 

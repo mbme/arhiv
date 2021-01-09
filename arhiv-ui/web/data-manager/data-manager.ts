@@ -1,13 +1,13 @@
-import { Dict, isObject } from '@v/utils'
-import { IDataDescription } from '../api'
+import { isObject } from '@v/utils'
+import { IDataDescription, IDataSchema } from '../api'
 
 export class DataManager {
   constructor(
-    private _modules: Dict<IDataDescription>,
+    private _schema: IDataSchema,
   ) {}
 
   getDataDescription(documentType: string): IDataDescription {
-    const dataDescription = this._modules[documentType]
+    const dataDescription = this._schema.modules.find(item => item.documentType === documentType)
 
     if (!dataDescription) {
       throw new Error(`Unknown document type ${documentType}`)

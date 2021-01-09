@@ -1,6 +1,5 @@
 use anyhow::*;
 use serde_json::Map;
-use std::collections::HashMap;
 use std::collections::HashSet;
 mod data_description;
 
@@ -12,20 +11,23 @@ use crate::markup::MarkupString;
 
 pub type DocumentData = Map<String, Value>;
 
-pub struct DocumentDataManager {
-    pub modules: HashMap<String, DataDescription>,
-}
+impl DataSchema {
+    pub const SCHEMA: &'static str = include_str!("./schema.json");
 
-impl DocumentDataManager {
-    pub fn new() -> DocumentDataManager {
-        DocumentDataManager {
-            modules: get_modules(),
-        }
+    pub fn new() -> DataSchema {
+        let schema: DataSchema =
+            serde_json::from_str(DataSchema::SCHEMA).expect("schema must be valid");
+        // FIXME validate data description
+        // FIXME generate json schema based on data description
+        // FIXME check if collection child type has field with name equal to collection type
+
+        schema
     }
 
     pub fn get_data_description_by_type(&self, document_type: &str) -> Result<&DataDescription> {
         self.modules
-            .get(document_type)
+            .iter()
+            .find(|module| module.document_type == document_type)
             .ok_or(anyhow!("Unknown document type {}", document_type))
     }
 
@@ -117,30 +119,4 @@ impl DocumentDataManager {
 
         Ok(())
     }
-}
-
-fn get_modules() -> HashMap<String, DataDescription> {
-    let mut modules: HashMap<String, DataDescription> = HashMap::new();
-
-    {
-        let module = include_str!("./note.json");
-        let module: DataDescription = serde_json::from_str(module).expect("module must be valid");
-        modules.insert(module.document_type.clone(), module);
-    }
-    {
-        let module = include_str!("./project.json");
-        let module: DataDescription = serde_json::from_str(module).expect("module must be valid");
-        modules.insert(module.document_type.clone(), module);
-    }
-    {
-        let module = include_str!("./task.json");
-        let module: DataDescription = serde_json::from_str(module).expect("module must be valid");
-        modules.insert(module.document_type.clone(), module);
-    }
-
-    // FIXME validate data description
-    // FIXME generate json schema based on data description
-    // FIXME check if collection child type has field with name equal to collection type
-
-    modules
 }

@@ -4,12 +4,12 @@
 import {
   AttachmentLocation,
   ICreateDocumentArgs,
-  IDataDescription,
   IAttachmentSource,
   IDocument,
   IDocumentFilter,
   IListPage,
   IPutDocumentArgs,
+  IDataSchema,
 } from './types'
 
 interface IRPC {
@@ -29,4 +29,4 @@ interface IRPC {
 
 export const API = window.RPC_PROXY as IRPC
 
-export const MODULES = window.JS_VARIABLES.DATA_DESCRIPTION as Record<string, IDataDescription>
+export const SCHEMA = window.JS_VARIABLES.DATA_DESCRIPTION as IDataSchema

@@ -49,6 +49,11 @@ export interface IListPage<T> {
   readonly hasMore: boolean
 }
 
+export interface IDataSchema {
+  readonly version: number
+  readonly modules: IDataDescription[]
+}
+
 export interface IDataDescription {
   readonly documentType: string
   readonly collectionOf?: ICollection

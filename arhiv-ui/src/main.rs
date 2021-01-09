@@ -3,8 +3,7 @@ use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
 use arhiv::{Arhiv, DocumentFilter};
 use arhiv_modules::{
-    markup::MarkupRenderer, markup::MarkupString, modules::DocumentData,
-    modules::DocumentDataManager,
+    markup::MarkupRenderer, markup::MarkupString, modules::DataSchema, modules::DocumentData,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -14,7 +13,7 @@ fn main() {
     env_logger::init();
 
     let arhiv = Arc::new(Arhiv::must_open());
-    let data_manager = Arc::new(DocumentDataManager::new());
+    let data_schema = Arc::new(DataSchema::new());
 
     let src = if cfg!(feature = "production-mode") {
         AppSource::JSSource(include_str!("../dist/bundle.js").to_string())
@@ -24,10 +23,7 @@ fn main() {
 
     AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
-        .with_js_variable(
-            "DATA_DESCRIPTION",
-            serde_json::to_value(&data_manager.modules).expect("must be able to convert to value"),
-        )
+        .with_js_variable("DATA_SCHEMA", DataSchema::SCHEMA)
         .with_action("list", {
             let arhiv = arhiv.clone();
 
@@ -58,12 +54,12 @@ fn main() {
         })
         .with_action("put", {
             let arhiv = arhiv.clone();
-            let data_manager = data_manager.clone();
+            let data_schema = data_schema.clone();
 
             move |_, params| {
                 let mut args: PutDocumentArgs = serde_json::from_value(params)?;
 
-                data_manager.update_refs(&mut args.document)?;
+                data_schema.update_refs(&mut args.document)?;
 
                 arhiv.stage_document(args.document, args.new_attachments)?;
 
@@ -71,11 +67,11 @@ fn main() {
             }
         })
         .with_action("create", {
-            let data_manager = data_manager.clone();
+            let data_schema = data_schema.clone();
             move |_, params| {
                 let args: CreateDocumentArgs = serde_json::from_value(params)?;
 
-                let data = data_manager.create_with_data(args.document_type.clone(), args.args)?;
+                let data = data_schema.create_with_data(args.document_type.clone(), args.args)?;
 
                 let document = Document::new(args.document_type, data.into());
 

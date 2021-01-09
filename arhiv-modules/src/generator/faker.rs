@@ -6,7 +6,7 @@ use rs_utils::project_relpath;
 use serde_json::Map;
 use std::{collections::HashMap, fs};
 
-use crate::modules::{DocumentData, DocumentDataManager, FieldType};
+use crate::modules::{DataSchema, DocumentData, FieldType};
 
 use super::TextGenerator;
 
@@ -30,7 +30,7 @@ fn create_attachments() -> Vec<AttachmentSource> {
 pub struct Faker {
     attachments: Vec<AttachmentSource>,
     generator: TextGenerator,
-    data_manager: DocumentDataManager,
+    data_schema: DataSchema,
     pub quantity_limits: HashMap<String, u32>,
     pub field_size_limits: HashMap<(String, String), (u32, u32)>,
 }
@@ -39,12 +39,12 @@ impl Faker {
     pub fn new() -> Self {
         let attachments = create_attachments();
         let generator = TextGenerator::new(&attachments);
-        let data_manager = DocumentDataManager::new();
+        let data_schema = DataSchema::new();
 
         Faker {
             attachments,
             generator,
-            data_manager,
+            data_schema,
             quantity_limits: HashMap::new(),
             field_size_limits: HashMap::new(),
         }
@@ -62,7 +62,7 @@ impl Faker {
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
         let mut data = self
-            .data_manager
+            .data_schema
             .create_with_data(document_type.clone(), initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
@@ -70,7 +70,7 @@ impl Faker {
             ));
 
         let description = self
-            .data_manager
+            .data_schema
             .get_data_description_by_type(&document_type)
             .unwrap();
 
@@ -104,7 +104,7 @@ impl Faker {
         }
 
         let mut document = Document::new(document_type, data.into());
-        self.data_manager
+        self.data_schema
             .update_refs(&mut document)
             .expect("Failed to update refs");
 
@@ -115,7 +115,7 @@ impl Faker {
         let document_type = document_type.into();
 
         let data_description = self
-            .data_manager
+            .data_schema
             .get_data_description_by_type(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 

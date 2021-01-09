@@ -9,7 +9,7 @@ import {
 import { Frame, NotFoundBlock, Url } from './parts'
 
 import { DataManager, DataManagerContext } from './data-manager'
-import { MODULES } from './api'
+import { SCHEMA } from './api'
 
 import { CatalogView } from './views/CatalogView'
 import { CardView } from './views/CardView'
@@ -21,7 +21,7 @@ import { MetadataView } from './views/MetadataView'
 import { DashboardView } from './views/DashboardView'
 
 export function App() {
-  const [dataManager] = React.useState(() => new DataManager(MODULES))
+  const [dataManager] = React.useState(() => new DataManager(SCHEMA))
 
   return (
     <PlatformProvider>

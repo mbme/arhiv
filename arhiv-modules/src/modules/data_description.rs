@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+pub struct DataSchema {
+    pub version: u8,
+    pub modules: Vec<DataDescription>,
+}
+
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: String,

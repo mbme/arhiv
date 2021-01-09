@@ -19,7 +19,7 @@ impl Changeset {
         self.documents.is_empty()
     }
 
-    pub fn contains_attachment(&self, id: &Id) -> bool {
+    pub fn contains(&self, id: &Id) -> bool {
         self.documents
             .iter()
             .find(|document| document.id == *id)

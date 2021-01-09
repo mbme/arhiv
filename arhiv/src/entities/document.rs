@@ -50,10 +50,10 @@ impl Document {
             filename: source.filename.clone(),
         };
 
-        Ok(Document::new(
-            ATTACHMENT_TYPE.to_string(),
-            serde_json::to_value(&info)?,
-        ))
+        Ok(Document {
+            id: source.id.clone(),
+            ..Document::new(ATTACHMENT_TYPE.to_string(), serde_json::to_value(&info)?)
+        })
     }
 
     pub fn get_attachment_info(self) -> Result<AttachmentInfo> {

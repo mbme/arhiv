@@ -153,8 +153,8 @@ impl Arhiv {
         for document in response.documents {
             tx.put_document(&document)?;
 
-            // if we've sent few attachments, move them to committed data directory
-            if changeset.contains_attachment(&document.id) {
+            // if we've sent any attachments, move them to committed data directory
+            if document.is_attachment() && changeset.contains(&document.id) {
                 let attachment_data = self.get_attachment_data(&document.id);
 
                 fs_tx.move_file(

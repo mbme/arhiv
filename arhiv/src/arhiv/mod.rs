@@ -104,6 +104,9 @@ impl Arhiv {
 
         document.archived = updated_document.archived;
         document.refs = updated_document.refs;
+        if document.is_attachment() && !document.refs.is_empty() {
+            bail!("attachment refs must be empty")
+        }
 
         // Validate document references
         let new_attachments_ids: Vec<&Id> = new_attachments.iter().map(|item| &item.id).collect();
@@ -175,7 +178,7 @@ impl Arhiv {
 
         // FIXME remove unused staged attachments
 
-        log::trace!("staged document {}", &document);
+        log::debug!("staged document {}", &document);
 
         Ok(())
     }

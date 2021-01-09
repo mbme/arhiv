@@ -17,31 +17,13 @@ async fn test_prime_sync() -> Result<()> {
     let mut attachment = AttachmentSource::new(src);
     attachment.copy = true;
 
-    let mut other_attachment = AttachmentSource::new(src);
-    other_attachment.copy = true;
-
     let mut document = empty_document();
-    document.refs.insert(other_attachment.id.clone());
-
-    arhiv.stage_document(document.clone(), vec![other_attachment.clone()])?;
-
-    // now replace attachment ref with other_attachment ref
-    document.refs.clear();
     document.refs.insert(attachment.id.clone());
+
     arhiv.stage_document(document.clone(), vec![attachment.clone()])?;
-    // so that attachment is unused now
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
-        true
-    );
-
-    assert_eq!(
-        arhiv
-            .get_document(&other_attachment.id)?
-            .unwrap()
-            .rev
-            .is_staged(),
         true
     );
 
@@ -54,16 +36,6 @@ async fn test_prime_sync() -> Result<()> {
     assert_eq!(
         arhiv.get_document(&attachment.id)?.unwrap().rev.is_staged(),
         false
-    );
-
-    // make sure unused attachment wasn't committed
-    assert_eq!(
-        arhiv
-            .get_document(&other_attachment.id)?
-            .unwrap()
-            .rev
-            .is_staged(),
-        true
     );
 
     // Test attachment data

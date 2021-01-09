@@ -1,5 +1,5 @@
-use arhiv::entities::*;
-use arhiv::{entities::AttachmentSource, Arhiv};
+use crate::entities::*;
+use crate::Arhiv;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::project_relpath;

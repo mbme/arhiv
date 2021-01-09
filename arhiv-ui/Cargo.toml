@@ -16,5 +16,4 @@ tokio = { version = "0.2", features = ["macros"] }
 
 app-shell = { path = "../app-shell" }
 arhiv = { path = "../arhiv" }
-arhiv-modules = { path = "../arhiv-modules" }
 rs-utils = { path = "../rs-utils" }

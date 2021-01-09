@@ -1,9 +1,9 @@
 use anyhow::*;
 use app_shell::{AppShellBuilder, AppSource};
 use arhiv::entities::*;
-use arhiv::{Arhiv, DocumentFilter};
-use arhiv_modules::{
+use arhiv::{
     markup::MarkupRenderer, markup::MarkupString, modules::DataSchema, modules::DocumentData,
+    Arhiv, DocumentFilter,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

@@ -1,4 +1,4 @@
-use arhiv::entities::*;
+use crate::entities::*;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

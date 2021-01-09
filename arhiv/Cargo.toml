@@ -26,6 +26,8 @@ tokio = { version = "0.2", features = ["macros", "signal"] }
 tokio-util = { version  = "0.3.1", features = ["compat"]}
 reqwest = { version = "0.10.10", features = ["json", "stream"] }
 nanoid = "0.3.0"
+rand = "0.8.0"
+pulldown-cmark  = "0.8.0"
 
 warp = "0.2.5"
 

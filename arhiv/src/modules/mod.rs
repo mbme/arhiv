@@ -3,7 +3,7 @@ use serde_json::Map;
 use std::collections::HashSet;
 mod data_description;
 
-use arhiv::entities::{Document, Id};
+use crate::entities::{Document, Id};
 pub use data_description::*;
 use serde_json::Value;
 

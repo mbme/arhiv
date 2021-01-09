@@ -1,4 +1,4 @@
-use arhiv::entities::Id;
+use crate::entities::Id;
 
 const LINK_PREFIX: &'static str = "ref:";
 

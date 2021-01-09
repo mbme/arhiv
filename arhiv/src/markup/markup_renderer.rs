@@ -1,4 +1,4 @@
-use arhiv::{Arhiv, AttachmentLocation};
+use crate::{Arhiv, AttachmentLocation};
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 

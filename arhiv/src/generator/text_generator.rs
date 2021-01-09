@@ -1,4 +1,4 @@
-use arhiv::entities::*;
+use crate::entities::*;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};

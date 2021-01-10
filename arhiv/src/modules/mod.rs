@@ -12,7 +12,7 @@ use crate::markup::MarkupString;
 pub type DocumentData = Map<String, Value>;
 
 impl DataSchema {
-    pub const SCHEMA: &'static str = include_str!("./schema.json");
+    const SCHEMA: &'static str = include_str!("./schema.json");
 
     pub fn new() -> DataSchema {
         let schema: DataSchema =

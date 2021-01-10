@@ -19,7 +19,10 @@ fn main() {
 
     AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
-        .with_js_variable("DATA_SCHEMA", Arhiv::SCHEMA)
+        .with_js_variable(
+            "DATA_SCHEMA",
+            serde_json::to_value(arhiv.schema.clone()).expect("must be able to convert to value"),
+        )
         .with_action("list", {
             let arhiv = arhiv.clone();
 

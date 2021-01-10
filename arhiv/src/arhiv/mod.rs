@@ -18,8 +18,6 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub const SCHEMA: &'static str = DataSchema::SCHEMA;
-
     pub fn must_open() -> Arhiv {
         Arhiv::open(Config::must_read()).expect("must be able to open arhiv")
     }

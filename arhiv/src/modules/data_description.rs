@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DataSchema {
     pub version: u8,
     pub modules: Vec<DataDescription>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: String,
@@ -14,14 +14,14 @@ pub struct DataDescription {
     pub fields: Vec<Field>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Field {
     pub name: String,
     pub field_type: FieldType,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum FieldType {
     String {},
     MarkupString {},
@@ -29,7 +29,7 @@ pub enum FieldType {
     Enum(Vec<String>),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Collection {
     pub item_type: String,

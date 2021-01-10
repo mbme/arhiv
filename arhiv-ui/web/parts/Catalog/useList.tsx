@@ -22,7 +22,7 @@ interface IOptions {
   order: OrderBy[]
 }
 
-export function useList<D extends IDocument>({ matchers, pageSize, order }: IOptions): IList<D> {
+export function useList<D extends IDocument>(getOptions: () => IOptions, args: any[] = []): IList<D> {
   const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
 
   const [items, setItems] = React.useState<D[]>()
@@ -34,13 +34,19 @@ export function useList<D extends IDocument>({ matchers, pageSize, order }: IOpt
     setHasMore(false)
     setError(undefined)
 
+    const {
+      matchers,
+      pageSize,
+      order,
+    } = getOptions()
+
     setDocumentFilter({
       pageOffset: 0,
       pageSize,
       matchers: withoutUndefined(matchers),
       order,
     })
-  }, [JSON.stringify(matchers), pageSize]) // FIXME shallow equality
+  }, args)
 
   React.useEffect(() => {
     if (!documentFilter) {
@@ -67,18 +73,18 @@ export function useList<D extends IDocument>({ matchers, pageSize, order }: IOpt
     error,
 
     loadMore() {
-      if (!pageSize) {
-        return
-      }
-
       setDocumentFilter((currentFilter) => {
         if (!currentFilter) {
           return currentFilter
         }
 
+        if (!currentFilter.pageSize) {
+          return currentFilter
+        }
+
         return {
           ...currentFilter,
-          pageOffset: (currentFilter.pageOffset || 0) + pageSize,
+          pageOffset: (currentFilter.pageOffset || 0) + currentFilter.pageSize,
         }
       })
     }

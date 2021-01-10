@@ -54,7 +54,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     hasMore,
     error,
     loadMore,
-  } = useList({
+  } = useList(() => ({
     matchers: [
       { Type: { documentType } },
       collectionMatcher,
@@ -62,7 +62,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     ],
     pageSize: uiOptions.catalog.pageSize,
     order: uiOptions.catalog.order,
-  })
+  }), [debouncedFilter])
 
   if (error) {
     return (

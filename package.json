@@ -10,12 +10,11 @@
     "ts-parser-combinator",
     "ts-web-utils",
     "ts-web-platform",
-    "poshta",
     "arhiv-ui"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
-    "lint": "eslint --cache --ext .ts,.tsx ts-* poshta arhiv-ui",
+    "lint": "eslint --cache --ext .ts,.tsx ts-* arhiv-ui",
     "tester": "tester"
   },
   "devDependencies": {

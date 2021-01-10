@@ -3,7 +3,6 @@ members = [
   "app-shell",
   "arhiv",
   "arhiv-ui",
-  "poshta",
   "binutils",
   "rs-utils",
 ]

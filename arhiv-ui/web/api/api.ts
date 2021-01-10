@@ -29,4 +29,4 @@ interface IRPC {
 
 export const API = window.RPC_PROXY as IRPC
 
-export const SCHEMA = window.JS_VARIABLES.DATA_DESCRIPTION as IDataSchema
+export const SCHEMA = window.JS_VARIABLES.DATA_SCHEMA as IDataSchema

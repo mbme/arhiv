@@ -6,19 +6,16 @@
   "description": "arhiv notes",
   "main": "",
   "scripts": {
-    "build": "webpack --mode=production",
-    "start": "webpack --mode=development -w"
+    "build": "esbuild web/index.tsx --outfile=dist/bundle.js --bundle --sourcemap --define:process.env.NODE_ENV=\\\"development\\\"",
+    "build:prod": "yarn build --define:process.env.NODE_ENV=\\\"production\\\" --minify"
   },
   "dependencies": {
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },
   "devDependencies": {
-    "@types/node": "^14.0.13",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "ts-loader": "^8.0.0",
-    "webpack": "^5.6.0",
-    "webpack-cli": "^4.2.0"
+    "esbuild": "^0.8.31"
   }
 }

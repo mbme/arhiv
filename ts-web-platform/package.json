@@ -13,12 +13,11 @@
   "devDependencies": {
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "ts-loader": "^8.0.0",
-    "webpack": "^5.6.0",
-    "webpack-dev-server": "^3.10.3"
+    "esbuild": "^0.8.31",
+    "react-dom": "^17.0.0"
   },
   "scripts": {
-    "start": "webpack serve --open chromium"
+    "build": "esbuild src/LibraryApp.tsx --outfile=static/bundle.js --bundle --define:process.env.NODE_ENV=\\\"development\\\"",
+    "build:prod": "yarn build --define:process.env.NODE_ENV=\\\"production\\\" --minify"
   }
 }

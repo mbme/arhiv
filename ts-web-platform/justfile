@@ -1,0 +1,10 @@
+# Local Variables:
+# mode: makefile
+# End:
+# vim: set ft=make :
+
+start:
+  watchexec --exts ts,tsx yarn build
+
+serve:
+  python -m http.server 8000 -d ./static

@@ -1,22 +1,39 @@
+use std::sync::Arc;
+
 use anyhow::*;
 use app_shell::*;
+use async_trait::async_trait;
 use serde_json::{value, Value};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let path_str = format!("{}/static/app.html", env!("CARGO_MANIFEST_DIR"));
 
-    let builder = AppShellBuilder::create("v.app-shell.playground")
+    let handler = Arc::new(Handler {});
+
+    AppShellBuilder::create("v.app-shell.playground")
         .with_title("App Shell Playground")
-        .with_action("get_value", move |_, _params: Value| {
-            value::to_value("some value").context("must be able to serialize")
-        })
-        .with_action("pick_files", move |context: _, _params: Value| {
+        .start(AppSource::HTMLFile(path_str), handler)
+        .await;
+}
+
+struct Handler {}
+
+#[async_trait]
+impl ActionHandler for Handler {
+    async fn run(&self, action: String, context: &AppShellContext, value: Value) -> Result<Value> {
+        if action == "get_value" {
+            return value::to_value("some value").context("must be able to serialize");
+        }
+
+        if action == "pick_files" {
             let files = context.pick_files(true);
 
-            value::to_value(files).context("must be able to serialize")
-        });
+            return value::to_value(files).context("must be able to serialize");
+        }
 
-    builder.start(AppSource::HTMLFile(path_str));
+        unreachable!("unknown action: {}", action)
+    }
 }

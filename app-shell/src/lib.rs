@@ -1,6 +1,11 @@
+use std::sync::Arc;
+
+pub use builder::ActionHandler;
 pub use builder::AppShellBuilder;
 pub use context::AppShellContext;
 pub use html_template::AppSource;
+use rpc_message::{RpcMessage, RpcMessageResponse};
+use warp::{reply, Reply};
 
 mod builder;
 mod context;
@@ -9,30 +14,78 @@ mod rpc_message;
 mod webview;
 
 impl AppShellBuilder {
-    pub fn start(self, src: AppSource) {
+    pub async fn start(self, src: AppSource, handler: Arc<dyn ActionHandler>) {
         if cfg!(feature = "dev-server") {
             log::info!("Starting dev server");
             log::info!("source: {}", src);
-            return self.serve(src);
+            self.serve(src, handler).await;
+        } else {
+            self.load(src, handler);
         }
-
-        self.load(src)
     }
 
-    fn load(self, src: AppSource) {
+    fn load(self, src: AppSource, handler: Arc<dyn ActionHandler>) {
         use gio::prelude::*;
         use gtk::prelude::*;
         use gtk::{Application, ApplicationWindow};
-        use std::rc::Rc;
         use webkit2gtk::WebViewExt;
         use webview::build_webview;
+
+        type GlibChannel<T> = (glib::Sender<T>, glib::Receiver<T>);
 
         let application =
             Application::new(Some(&self.app_id), gio::ApplicationFlags::FLAGS_NONE).unwrap();
 
-        let builder = Rc::new(self);
+        let builder = Arc::new(self);
         application.connect_activate(move |app| {
-            let webview = build_webview(builder.clone());
+            let action_channel: GlibChannel<RpcMessage> =
+                glib::MainContext::channel(glib::PRIORITY_DEFAULT);
+            let (action_response_sender, action_response_receiver): GlibChannel<
+                RpcMessageResponse,
+            > = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
+
+            {
+                let builder = builder.clone();
+                let handler = handler.clone();
+
+                action_channel.1.attach(None, move |action| {
+                    let builder = builder.clone();
+                    let handler = handler.clone();
+                    let action_response_sender = action_response_sender.clone();
+
+                    glib::MainContext::default().spawn(async move {
+                        let context = AppShellContext::new(builder.server_mode);
+                        let result = handler
+                            .run(action.action.clone(), &context, action.params.clone())
+                            .await;
+
+                        let result = match result {
+                            Ok(result) => RpcMessageResponse {
+                                call_id: action.call_id,
+                                result,
+                                err: None,
+                            },
+                            Err(err) => RpcMessageResponse {
+                                call_id: action.call_id,
+                                result: serde_json::Value::Null,
+                                err: Some(err.to_string()),
+                            },
+                        };
+
+                        action_response_sender
+                            .send(result)
+                            .expect("must be able to publish result");
+                    });
+
+                    glib::Continue(true)
+                });
+            }
+
+            let webview = build_webview(
+                builder.data_dir.clone(),
+                action_channel.0,
+                action_response_receiver,
+            );
 
             webview.load_html(&src.render(&builder), Some(&src.get_base_path()));
 
@@ -65,13 +118,10 @@ impl AppShellBuilder {
         application.run(&[]);
     }
 
-    #[tokio::main]
-    async fn serve(mut self, src: AppSource) {
-        use rpc_message::RpcMessage;
+    async fn serve(mut self, src: AppSource, handler: Arc<dyn ActionHandler>) {
         use rs_utils::TempFile;
         use std::fs;
         use std::process::Command;
-        use std::sync::Arc;
         use tokio::signal;
         use warp::*;
 
@@ -93,6 +143,8 @@ impl AppShellBuilder {
         let post_rpc = {
             let builder = builder.clone();
 
+            let builder_filter = warp::any().map(move || builder.clone());
+
             let cors = warp::cors()
                 .allow_any_origin()
                 .allow_methods(&[http::Method::POST])
@@ -101,12 +153,9 @@ impl AppShellBuilder {
 
             warp::post()
                 .and(warp::path("rpc"))
+                .and(builder_filter.clone())
                 .and(warp::body::json())
-                .map(move |msg: RpcMessage| {
-                    let result = builder.handle_rpc_message(msg);
-
-                    reply::json(&result).into_response()
-                })
+                .and_then(rpc_action_handler)
                 .with(cors)
         };
 
@@ -128,4 +177,19 @@ impl AppShellBuilder {
 
         future.await.expect("failed to wait for server");
     }
+}
+
+async fn rpc_action_handler(
+    builder: Arc<AppShellBuilder>,
+    msg: RpcMessage,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    log::debug!("RPC MESSAGE: {}", msg);
+
+    // builder
+    //     .action_channel
+    //     .0
+    //     .send(msg.clone()) // FIXME remove clone
+    //     .expect("must be able to publish message");
+
+    Ok(reply::json(&msg).into_response())
 }

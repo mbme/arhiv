@@ -9,6 +9,14 @@ use std::sync::Arc;
 fn main() {
     env_logger::init();
 
+    let mut runtime = tokio::runtime::Builder::new()
+        // .threaded_scheduler()
+        // .core_threads(2)
+        .enable_all()
+        .build()
+        .expect("must be able to init tokio runtime");
+    let mut runtime = Arc::new(runtime);
+
     let arhiv = Arc::new(Arhiv::must_open());
 
     let src = if cfg!(feature = "production-mode") {
@@ -17,7 +25,7 @@ fn main() {
         AppSource::JSFile(format!("{}/dist/bundle.js", env!("CARGO_MANIFEST_DIR")))
     };
 
-    AppShellBuilder::create("v.arhiv.ui")
+    let shell_future = AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
         .with_js_variable(
             "DATA_SCHEMA",
@@ -53,6 +61,7 @@ fn main() {
         })
         .with_action("put", {
             let arhiv = arhiv.clone();
+            let runtime = runtime.clone();
 
             move |_, params| {
                 let mut args: PutDocumentArgs = serde_json::from_value(params)?;
@@ -60,6 +69,8 @@ fn main() {
                 arhiv.schema.update_refs(&mut args.document)?;
 
                 arhiv.stage_document(args.document, args.new_attachments)?;
+
+                runtime.spawn(arhiv.sync());
 
                 Ok(Value::Null)
             }
@@ -121,6 +132,8 @@ fn main() {
             }
         })
         .start(src);
+
+    runtime.block_on(shell_future);
 }
 
 #[derive(Serialize, Deserialize)]

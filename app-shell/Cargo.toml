@@ -22,7 +22,8 @@ gtk = { version = "0.9.2", features = ["v3_16"] }
 gio = { version = "0.9.1", features = ["v2_44"] }
 gdk = "0.13.2"
 glib = "0.10.3"
+async-trait = "0.1.42"
 
 warp = "0.2.5"
-tokio = { version = "0.2", features = ["macros", "signal"] }
+tokio = { version = "0.2", features = ["macros", "signal", "sync"] }
 rs-utils = { path = "../rs-utils" }

@@ -27,12 +27,11 @@ impl AppShellBuilder {
     fn load(self, src: AppSource, handler: Arc<dyn ActionHandler>) {
         use gio::prelude::*;
         use gtk::prelude::*;
-        use gtk::{Application, ApplicationWindow};
+        use gtk::ApplicationWindow;
         use webkit2gtk::WebViewExt;
         use webview::build_webview;
 
-        let application =
-            Application::new(Some(&self.app_id), gio::ApplicationFlags::FLAGS_NONE).unwrap();
+        let application = gtk::Application::new(Some(&self.app_id), Default::default()).unwrap();
 
         let builder = Arc::new(self);
         application.connect_activate(move |app| {
@@ -53,9 +52,7 @@ impl AppShellBuilder {
 
                     glib::MainContext::default().spawn(async move {
                         let context = AppShellContext::new(builder.server_mode);
-                        let result = handler
-                            .run(msg.action.clone(), &context, msg.params.clone())
-                            .await;
+                        let result = handler.run(msg.action, &context, msg.params).await;
 
                         let response = match result {
                             Ok(result) => RpcMessageResponse {
@@ -188,9 +185,7 @@ async fn rpc_action_handler(
     log::debug!("RPC MESSAGE: {}", msg);
 
     let context = AppShellContext::new(builder.server_mode);
-    let result = handler
-        .run(msg.action.clone(), &context, msg.params.clone())
-        .await;
+    let result = handler.run(msg.action, &context, msg.params).await;
 
     let response = match result {
         Ok(result) => RpcMessageResponse {

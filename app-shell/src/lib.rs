@@ -31,24 +31,22 @@ impl AppShellBuilder {
         use webkit2gtk::WebViewExt;
         use webview::build_webview;
 
-        type GlibChannel<T> = (glib::Sender<T>, glib::Receiver<T>);
-
         let application =
             Application::new(Some(&self.app_id), gio::ApplicationFlags::FLAGS_NONE).unwrap();
 
         let builder = Arc::new(self);
         application.connect_activate(move |app| {
-            let action_channel: GlibChannel<RpcMessage> =
-                glib::MainContext::channel(glib::PRIORITY_DEFAULT);
-            let (action_response_sender, action_response_receiver): GlibChannel<
-                RpcMessageResponse,
-            > = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
+            let (action_sender, action_receiver) =
+                glib::MainContext::channel::<RpcMessage>(glib::PRIORITY_DEFAULT);
+
+            let (action_response_sender, action_response_receiver) =
+                glib::MainContext::channel::<RpcMessageResponse>(glib::PRIORITY_DEFAULT);
 
             {
                 let builder = builder.clone();
                 let handler = handler.clone();
 
-                action_channel.1.attach(None, move |action| {
+                action_receiver.attach(None, move |msg| {
                     let builder = builder.clone();
                     let handler = handler.clone();
                     let action_response_sender = action_response_sender.clone();
@@ -56,24 +54,24 @@ impl AppShellBuilder {
                     glib::MainContext::default().spawn(async move {
                         let context = AppShellContext::new(builder.server_mode);
                         let result = handler
-                            .run(action.action.clone(), &context, action.params.clone())
+                            .run(msg.action.clone(), &context, msg.params.clone())
                             .await;
 
-                        let result = match result {
+                        let response = match result {
                             Ok(result) => RpcMessageResponse {
-                                call_id: action.call_id,
+                                call_id: msg.call_id,
                                 result,
                                 err: None,
                             },
                             Err(err) => RpcMessageResponse {
-                                call_id: action.call_id,
+                                call_id: msg.call_id,
                                 result: serde_json::Value::Null,
                                 err: Some(err.to_string()),
                             },
                         };
 
                         action_response_sender
-                            .send(result)
+                            .send(response)
                             .expect("must be able to publish result");
                     });
 
@@ -83,7 +81,7 @@ impl AppShellBuilder {
 
             let webview = build_webview(
                 builder.data_dir.clone(),
-                action_channel.0,
+                action_sender,
                 action_response_receiver,
             );
 
@@ -142,8 +140,10 @@ impl AppShellBuilder {
         // create rpc handler
         let post_rpc = {
             let builder = builder.clone();
+            let handler = handler.clone();
 
             let builder_filter = warp::any().map(move || builder.clone());
+            let handler_filter = warp::any().map(move || handler.clone());
 
             let cors = warp::cors()
                 .allow_any_origin()
@@ -154,6 +154,7 @@ impl AppShellBuilder {
             warp::post()
                 .and(warp::path("rpc"))
                 .and(builder_filter.clone())
+                .and(handler_filter.clone())
                 .and(warp::body::json())
                 .and_then(rpc_action_handler)
                 .with(cors)
@@ -181,15 +182,28 @@ impl AppShellBuilder {
 
 async fn rpc_action_handler(
     builder: Arc<AppShellBuilder>,
+    handler: Arc<dyn ActionHandler>,
     msg: RpcMessage,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     log::debug!("RPC MESSAGE: {}", msg);
 
-    // builder
-    //     .action_channel
-    //     .0
-    //     .send(msg.clone()) // FIXME remove clone
-    //     .expect("must be able to publish message");
+    let context = AppShellContext::new(builder.server_mode);
+    let result = handler
+        .run(msg.action.clone(), &context, msg.params.clone())
+        .await;
 
-    Ok(reply::json(&msg).into_response())
+    let response = match result {
+        Ok(result) => RpcMessageResponse {
+            call_id: msg.call_id,
+            result,
+            err: None,
+        },
+        Err(err) => RpcMessageResponse {
+            call_id: msg.call_id,
+            result: serde_json::Value::Null,
+            err: Some(err.to_string()),
+        },
+    };
+
+    Ok(reply::json(&response).into_response())
 }

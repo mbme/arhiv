@@ -23,7 +23,7 @@ struct Handler {}
 
 #[async_trait]
 impl ActionHandler for Handler {
-    async fn run(&self, action: String, context: &AppShellContext, value: Value) -> Result<Value> {
+    async fn run(&self, action: String, context: &AppShellContext, _value: Value) -> Result<Value> {
         if action == "get_value" {
             return value::to_value("some value").context("must be able to serialize");
         }

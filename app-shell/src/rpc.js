@@ -9,7 +9,7 @@
 
   window.RPC = {
     call(action, params = {}) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const callId = counter += 1
 
         pendingRequests[callId] = { resolve, reject }

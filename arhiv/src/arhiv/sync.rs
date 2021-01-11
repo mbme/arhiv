@@ -110,9 +110,6 @@ impl Arhiv {
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
         log::debug!("sync_remotely: starting {}", &changeset);
 
-        let mut conn = self.storage.get_writable_connection()?;
-        let tx = conn.get_tx()?;
-
         // TODO parallel file upload
         for attachment in changeset
             .documents
@@ -151,6 +148,9 @@ impl Arhiv {
             .parse()?;
 
         log::debug!("sync_remotely: got response {}", &response);
+
+        let mut conn = self.storage.get_writable_connection()?;
+        let tx = conn.get_tx()?;
 
         let rev = tx.get_rev()?;
 

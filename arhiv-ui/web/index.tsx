@@ -10,9 +10,14 @@ configureLogger({ minLogLevel: 'DEBUG' })
 injectGlobalStyles(`
   ${globalStyles}
 
+  body {
+    overflow-y: scroll;
+  }
+
   #root {
     visibility: hidden;
     background-color: lightgray;
+    height: auto;
   }
 `)
 

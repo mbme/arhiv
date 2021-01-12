@@ -15,8 +15,7 @@ const $container: StyleArg = {
   gridTemplateRows: '50px auto',
   gridAutoFlow: 'row',
 
-  height: '100vh',
-  overflowY: 'hidden',
+  minHeight: '100vh',
 
   maxWidth: '54rem',
   minWidth: '34rem',
@@ -30,6 +29,10 @@ const $header: StyleArg = {
   py: 'small',
 
   display: 'flex',
+
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
 }
 
 const $content: StyleArg = {
@@ -37,7 +40,6 @@ const $content: StyleArg = {
   pt: 'medium',
   pl: 'medium',
   height: '100%',
-  overflowY: 'auto',
   bgColor: 'var(--color-bg0)',
 }
 
@@ -85,7 +87,6 @@ export function Frame({ children }: IProps) {
         >
           <Column
             height="100%"
-            overflowY="auto"
             alignX="stretch"
           >
             {children}

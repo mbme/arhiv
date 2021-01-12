@@ -8,7 +8,9 @@ interface IProps {
 export function NotFoundBlock({ children }: IProps) {
   return (
     <Box bgColor="red">
-      <Heading>Not Found</Heading>
+      <Heading variant="2">
+        Not Found
+      </Heading>
 
       <Box p="medium">
         {children}

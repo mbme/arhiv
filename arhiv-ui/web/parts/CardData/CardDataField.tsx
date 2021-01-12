@@ -13,7 +13,7 @@ export function CardDataField({ value, fieldType, isTitle }: IProps) {
   if ('String' in fieldType && isTitle) {
     return (
       <Heading
-        fontSize="large"
+        variant="2"
       >
         {value}
       </Heading>

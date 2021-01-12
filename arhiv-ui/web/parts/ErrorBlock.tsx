@@ -9,7 +9,9 @@ interface IProps {
 export function ErrorBlock({ error }: IProps) {
   return (
     <Box bgColor="red">
-      <Heading>We've got a problem</Heading>
+      <Heading variant="2">
+        We've got a problem
+      </Heading>
 
       <pre>
         <code>

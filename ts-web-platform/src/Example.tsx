@@ -14,7 +14,7 @@ export function Example({ section, title, children }: IProps) {
     <Box mb={section ? 'xlarge' : 'large'}>
       {title && (
         <Heading
-          fontSize={section ? 'large' : 'medium'}
+          variant={section ? '2' : '1'}
           mb={section ? 'large' : 'medium'}
         >
           {title}

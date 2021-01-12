@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Heading } from '@v/web-platform'
+import { Text } from '@v/web-platform'
 
 interface IProps {
   children: React.ReactNode
@@ -7,12 +7,13 @@ interface IProps {
 
 export function FrameTitle({ children }: IProps) {
   return (
-    <Heading
+    <Text
+      as="h4"
       fontSize="medium"
       uppercase
       color="var(--color-secondary)"
     >
       {children}
-    </Heading>
+    </Text>
   )
 }

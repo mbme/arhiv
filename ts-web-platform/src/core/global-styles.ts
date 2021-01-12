@@ -5,7 +5,7 @@ export const globalStyles = `
 
 :root {
   --font-size: 16px;
-  --line-height: 1.30;
+  --line-height: 1.40;
 
   --font-family-base: -apple-system, BlinkMacSystemFont, /* Safari Mac/iOS, Chrome */
       "Segoe UI", Roboto, Oxygen, /* Windows, Android, KDE */
@@ -50,7 +50,7 @@ export const globalStyles = `
 @media screen and (min-width: 768px) {
   :root {
     --font-size: 18px;
-    --line-height: 1.35;
+    --line-height: 1.60;
   }
 }
 

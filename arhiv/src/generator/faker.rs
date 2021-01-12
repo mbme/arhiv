@@ -6,7 +6,7 @@ use rs_utils::project_relpath;
 use serde_json::Map;
 use std::{collections::HashMap, fs};
 
-use crate::modules::{DocumentData, FieldType};
+use crate::schema::{DocumentData, FieldType};
 
 use super::TextGenerator;
 

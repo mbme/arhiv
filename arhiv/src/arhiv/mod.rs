@@ -1,6 +1,6 @@
 use crate::entities::*;
 use crate::storage::*;
-use crate::{config::Config, modules::DataSchema};
+use crate::{config::Config, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::FsTransaction;

@@ -69,10 +69,6 @@ impl<'a> MarkupRenderer<'a> {
                         );
                     }
 
-                    let info = document
-                        .get_attachment_info()
-                        .expect("must be able to get attachment info");
-
                     let attachment_location = {
                         let attachment_location = self
                             .arhiv
@@ -85,8 +81,14 @@ impl<'a> MarkupRenderer<'a> {
                         }
                     };
 
+                    let filename = self
+                        .arhiv
+                        .schema
+                        .get_field_string(&document, "filename")
+                        .expect("must be able to read filename");
+
                     // render Image
-                    if is_image_file(&info.filename) {
+                    if is_image_file(&filename) {
                         return Event::Start(Tag::Image(
                             LinkType::Inline,
                             attachment_location.into(),

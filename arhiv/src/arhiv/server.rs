@@ -170,11 +170,11 @@ async fn get_attachment_data_handler(
 
     // FIXME support ranges, status code: partial content
     // res.headers['Content-Type'] = await getMimeType(filePath)
-    let info = match attachment.get_attachment_info() {
-        Ok(info) => info,
+    let filename = match arhiv.schema.get_field_string(&attachment, "filename") {
+        Ok(filename) => filename,
         Err(err) => {
             return Ok(reply::with_status(
-                format!("failed to read attachment info {}: {}", &id, err),
+                format!("failed to read attachment filename {}: {}", &id, err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
             .into_response());
@@ -184,7 +184,7 @@ async fn get_attachment_data_handler(
     Ok(http::Response::builder()
         .header(
             "Content-Disposition",
-            format!("inline; filename={}", info.filename),
+            format!("inline; filename={}", filename),
         )
         .header("Cache-Control", "immutable, private, max-age=31536000") // max caching
         .body(hyper::Body::wrap_stream(file))

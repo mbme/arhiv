@@ -3,7 +3,7 @@ use crate::storage::*;
 use crate::{config::Config, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
-use rs_utils::FsTransaction;
+use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
 use serde::{Deserialize, Serialize};
 pub use server::start_server;
 use std::sync::Arc;
@@ -177,25 +177,22 @@ impl Arhiv {
                 continue;
             }
 
-            let attachment = Document::from(&new_attachment)?;
-            conn.put_document(&attachment)?;
-
             let path = self
                 .storage
-                .get_attachment_data(attachment.id.clone())
+                .get_attachment_data(new_attachment.id.clone())
                 .get_staged_file_path();
 
+            let source_path = new_attachment.file_path.to_string();
             if new_attachment.copy {
-                fs_tx.copy_file(new_attachment.file_path.to_string(), path)?;
+                fs_tx.copy_file(source_path.clone(), path)?;
             } else {
-                fs_tx.hard_link_file(new_attachment.file_path.to_string(), path)?;
+                fs_tx.hard_link_file(source_path.clone(), path)?;
             }
 
-            log::debug!(
-                "staged new attachment {}: {}",
-                attachment,
-                new_attachment.file_path
-            );
+            let attachment = self.create_attachment(new_attachment)?;
+            conn.put_document(&attachment)?;
+
+            log::debug!("staged new attachment {}: {}", attachment, source_path);
         }
 
         conn.put_document(&document)?;
@@ -208,6 +205,26 @@ impl Arhiv {
         log::debug!("staged document {}", &document);
 
         Ok(())
+    }
+
+    fn create_attachment(&self, source: AttachmentSource) -> Result<Document> {
+        use serde_json::Map;
+
+        ensure_file_exists(&source.file_path)?;
+
+        let mut initial_values = Map::new();
+        let hash = get_file_hash_sha256(&source.file_path)?;
+        initial_values.insert("hash".to_string(), hash.into());
+        initial_values.insert("filename".to_string(), source.filename.into());
+
+        let data = self
+            .schema
+            .create_with_data(ATTACHMENT_TYPE.to_string(), initial_values)?;
+
+        Ok(Document {
+            id: source.id.clone(),
+            ..Document::new(ATTACHMENT_TYPE.to_string(), data.into())
+        })
     }
 
     pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {

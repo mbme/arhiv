@@ -119,4 +119,19 @@ impl DataSchema {
 
         Ok(())
     }
+
+    pub fn get_field(&self, document: &Document, field: &str) -> Result<Value> {
+        let value = document
+            .data
+            .get(field)
+            .ok_or(anyhow!("can't find field {}", field))?;
+
+        Ok(value.clone())
+    }
+
+    pub fn get_field_string(&self, document: &Document, field: &str) -> Result<String> {
+        let value = self.get_field(document, field)?;
+
+        serde_json::from_value(value).context("can't use value as String")
+    }
 }

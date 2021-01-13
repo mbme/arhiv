@@ -4,7 +4,7 @@ import {
   Box,
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-import { API, IDocument } from '../../../api'
+import { API, IAttachmentSource, IDocument } from '../../../api'
 import { CardData, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
 
@@ -24,6 +24,7 @@ export function CardEditor(props: IProps) {
   } = props
 
   const [preview, showPreview] = React.useState(false)
+  const [newAttachments, setNewAttachments] = React.useState<IAttachmentSource[]>([])
   const formRef = React.useRef(null)
 
   const saveDocument = async () => {
@@ -70,6 +71,13 @@ export function CardEditor(props: IProps) {
         children: 'Cancel',
       },
       {
+        async onClick() {
+          const attachments = await API.pick_attachments()
+          setNewAttachments(prevState => [...prevState, ...attachments])
+        },
+        children: 'Attach File',
+      },
+      {
         onClick: () => showPreview(true),
         children: 'Show Preview',
       },
@@ -90,6 +98,7 @@ export function CardEditor(props: IProps) {
         <CardData
           documentType={document.documentType}
           data={formRef.current!}
+          newAttachments={newAttachments}
         />
       )}
 

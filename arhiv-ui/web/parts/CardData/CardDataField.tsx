@@ -1,15 +1,16 @@
 import { Heading } from '@v/web-platform'
 import * as React from 'react'
-import { FieldType } from '../../api'
+import { FieldType, IAttachmentSource } from '../../api'
 import { Markup } from '../Markup'
 
 interface IProps {
   value: any
   fieldType: FieldType
   isTitle: boolean
+  newAttachments: IAttachmentSource[]
 }
 
-export function CardDataField({ value, fieldType, isTitle }: IProps) {
+export function CardDataField({ value, fieldType, isTitle, newAttachments }: IProps) {
   if ('String' in fieldType && isTitle) {
     return (
       <Heading
@@ -22,7 +23,7 @@ export function CardDataField({ value, fieldType, isTitle }: IProps) {
 
   if ('MarkupString' in fieldType) {
     return  (
-      <Markup value={value} />
+      <Markup value={value} newAttachments={newAttachments} />
     )
   }
 

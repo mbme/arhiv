@@ -84,3 +84,11 @@ export interface IPutDocumentArgs {
   readonly document: IDocument
   readonly newAttachments: IAttachmentSource[]
 }
+
+export interface IRenderMarkupArgs {
+  readonly value: string
+  readonly options: {
+    readonly newAttachments: IAttachmentSource[]
+    readonly documentPath: string
+  }
+}

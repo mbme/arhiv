@@ -10,6 +10,7 @@ import {
   IListPage,
   IPutDocumentArgs,
   IDataSchema,
+  IRenderMarkupArgs,
 } from './types'
 
 interface IRPC {
@@ -21,7 +22,7 @@ interface IRPC {
 
   create(args: ICreateDocumentArgs): Promise<IDocument>
 
-  render_markup(markup: string): Promise<string>
+  render_markup(args: IRenderMarkupArgs): Promise<string>
 
   get_attachment_location(id: string): Promise<AttachmentLocation>
   pick_attachments(): Promise<IAttachmentSource[]>

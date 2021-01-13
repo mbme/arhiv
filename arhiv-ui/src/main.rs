@@ -1,6 +1,9 @@
 use anyhow::*;
 use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
-use arhiv::entities::*;
+use arhiv::{
+    entities::*,
+    markup::{create_link, RenderOptions},
+};
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, DocumentFilter};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -44,6 +47,13 @@ struct CreateDocumentArgs {
 struct PutDocumentArgs {
     document: Document,
     new_attachments: Vec<AttachmentSource>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RenderMarkupArgs {
+    value: String,
+    options: RenderOptions,
 }
 
 struct Handler {
@@ -121,16 +131,23 @@ impl ActionHandler for Handler {
                 .map(|file| AttachmentSource::new_from_path_buf(file))
                 .collect();
 
+            let links = attachments
+                .iter()
+                .map(|attachment| create_link(&attachment.id.to_string(), ""))
+                .collect::<Vec<String>>()
+                .join(" ");
+
+            context.copy_to_clipboard(&links);
+
             return Ok(serde_json::to_value(attachments)?);
         }
 
         if action == "render_markup" {
-            let markup = params.as_str().context("markup must be string")?;
+            let args: RenderMarkupArgs = serde_json::from_value(params)?;
 
-            let string = MarkupString::from(markup);
+            let string = MarkupString::from(args.value);
 
-            let result =
-                MarkupRenderer::new(&string, &self.arhiv, "/document".to_string()).to_html();
+            let result = MarkupRenderer::new(&self.arhiv, &args.options).to_html(&string);
 
             return Ok(serde_json::to_value(result)?);
         }

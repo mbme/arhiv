@@ -42,4 +42,12 @@ impl AppShellContext {
 
         files
     }
+
+    pub fn copy_to_clipboard(&self, data: &str) {
+        let display = gdk::Display::get_default().unwrap();
+
+        gtk::Clipboard::get_default(&display)
+            .unwrap()
+            .set_text(data);
+    }
 }

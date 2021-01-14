@@ -32,10 +32,13 @@ impl Arhiv {
         }
 
         if changeset.is_empty() {
+            log::debug!("empty changeset, ignoring");
             return Ok(());
         }
 
         let new_rev = rev.inc();
+        log::debug!("current rev is {}, new rev is {}", rev, new_rev);
+
         let mut fs_tx = FsTransaction::new();
 
         for mut document in changeset.documents {

@@ -18,6 +18,8 @@ const $container: StyleArg = {
   gridTemplateRows: 'repeat(auto-fill, minmax(16rem, 1fr))',
   gridGap: '0.8rem',
 
+  maxHeight: '100%',
+
   flex: '1 1 auto',
   pr: 'medium',
 }

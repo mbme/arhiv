@@ -100,7 +100,7 @@ impl<'a> MarkupRenderer<'a> {
 
                         match attachment_location {
                             AttachmentLocation::Url(location) => location,
-                            AttachmentLocation::File(location) => format!("file://{}", location),
+                            AttachmentLocation::File(location) => format!("file:{}", location),
                         }
                     };
 

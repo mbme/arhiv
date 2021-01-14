@@ -2,7 +2,7 @@ use anyhow::*;
 use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
 use arhiv::{
     entities::*,
-    markup::{create_link, RenderOptions},
+    markup::{create_ref, RenderOptions},
 };
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, DocumentFilter};
 use async_trait::async_trait;
@@ -133,7 +133,7 @@ impl ActionHandler for Handler {
 
             let links = attachments
                 .iter()
-                .map(|attachment| create_link(&attachment.id.to_string(), ""))
+                .map(|attachment| create_ref(&attachment.id, ""))
                 .collect::<Vec<String>>()
                 .join(" ");
 

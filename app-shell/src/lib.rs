@@ -132,7 +132,7 @@ impl AppShellBuilder {
         let temp_file = TempFile::new(&format!("{}.html", &builder.app_id));
         fs::write(temp_file.get_path(), AppSource::render(&src, &builder))
             .expect("failed to write data into temp file");
-        println!("Root file: file://{}", temp_file.get_path());
+        println!("Root file: file:{}", temp_file.get_path());
 
         // create rpc handler
         let post_rpc = {
@@ -169,7 +169,7 @@ impl AppShellBuilder {
         println!("RPC server listening on {}", addr);
 
         Command::new("chromium")
-            .arg(format!("file://{}", temp_file.get_path()))
+            .arg(format!("file:{}", temp_file.get_path()))
             .spawn()
             .expect("failed to run chromium");
 

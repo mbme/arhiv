@@ -33,7 +33,7 @@ export function CardEditor(props: IProps) {
         ...document,
         data: formRef.current!,
       },
-      newAttachments: [], // FIXME new attachments
+      newAttachments,
     })
 
     onSave()

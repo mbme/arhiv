@@ -2,6 +2,7 @@ use crate::AppShellBuilder;
 use std::env;
 use std::fmt;
 use std::fs;
+use std::path::Path;
 
 pub enum AppSource {
     JSFile(String),
@@ -13,10 +14,16 @@ pub enum AppSource {
 impl AppSource {
     pub fn get_base_path(&self) -> String {
         match &self {
-            AppSource::JSFile(path) => format!("file://{}", path),
-            AppSource::HTMLFile(path) => format!("file://{}", path),
+            AppSource::JSFile(path) => format!(
+                "file:{}",
+                Path::new(path).parent().unwrap().to_string_lossy()
+            ),
+            AppSource::HTMLFile(path) => format!(
+                "file:{}",
+                Path::new(path).parent().unwrap().to_string_lossy()
+            ),
             _ => format!(
-                "file://{}",
+                "file:{}",
                 env::current_dir()
                     .expect("failed to get current dir")
                     .to_str()
@@ -27,7 +34,7 @@ impl AppSource {
 
     pub fn render(&self, builder: &AppShellBuilder) -> String {
         let script = match self {
-            AppSource::JSFile(path) => format!("<script src=\"file://{}\" defer></script>", path),
+            AppSource::JSFile(path) => format!("<script src=\"file:{}\" defer></script>", path),
             AppSource::JSSource(source) => format!("<script>{}</script>", source),
 
             AppSource::HTMLFile(path) => fs::read_to_string(path).expect("HTML file must exist"),

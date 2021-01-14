@@ -31,13 +31,13 @@ function getStyles(props: Props): StyleArg[] {
       fontWeight: 'bold',
     },
     (!props.variant || props.variant === '1') && {
-      fontSize: 'large',
+      fontSize: 'medium',
     },
     props.variant === '2' && {
-      fontSize: 'xlarge',
+      fontSize: 'large',
     },
     props.variant === '3' && {
-      fontSize: 'xxlarge',
+      fontSize: 'xlarge',
     },
   ]
 }

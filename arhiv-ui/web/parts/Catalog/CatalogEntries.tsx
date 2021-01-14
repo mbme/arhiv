@@ -47,7 +47,7 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
   const entries = partitionBy(createRule(fieldName), items)
     .map(group => (
       <Box mb="large" key={group[0].data[fieldName]}>
-        <Heading variant="2">
+        <Heading variant="1">
           {group[0].data[fieldName]} ({group.length})
         </Heading>
 

@@ -29,13 +29,12 @@ impl Arhiv {
 
         let schema_version: u8 = storage.get_connection()?.get_schema_version()?;
 
-        if schema_version != schema.version {
-            bail!(
-                "db version {} is different from app version {}",
-                schema_version,
-                schema.version,
-            )
-        }
+        ensure!(
+            schema_version == schema.version,
+            "db version {} is different from app version {}",
+            schema_version,
+            schema.version
+        );
 
         Ok(Arhiv {
             schema,
@@ -46,14 +45,18 @@ impl Arhiv {
 
     pub fn create(prime: bool, config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
-        let storage = Storage::create(prime, config.clone())?;
+        let storage = Storage::create(config.clone())?;
         let schema = DataSchema::new();
 
-        // save schema version into db
         let mut conn = storage.get_writable_connection()?;
-        let conn = conn.get_tx()?;
-        conn.set_setting("schema_version", Some(schema.version.to_string()))?;
-        conn.commit()?;
+        let tx = conn.get_tx()?;
+
+        // initial settings
+        tx.set_setting(DbSettings::IsPrime, prime.to_string())?;
+        tx.set_setting(DbSettings::DbRevision, "0".to_string())?;
+        tx.set_setting(DbSettings::SchemaVersion, schema.version.to_string())?;
+
+        tx.commit()?;
 
         Ok(Arhiv {
             schema,

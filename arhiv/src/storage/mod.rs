@@ -7,6 +7,7 @@ use path_manager::PathManager;
 pub use queries::*;
 pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
+pub use settings::DbSettings;
 use std::sync::Arc;
 
 mod attachment_data;
@@ -14,6 +15,7 @@ mod connection;
 mod path_manager;
 mod queries;
 mod query_params;
+mod settings;
 mod utils;
 
 pub struct Storage {
@@ -33,7 +35,7 @@ impl Storage {
         })
     }
 
-    pub fn create(prime: bool, config: Arc<Config>) -> Result<Storage> {
+    pub fn create(config: Arc<Config>) -> Result<Storage> {
         let path_manager = PathManager::new(config.arhiv_root.clone());
         path_manager.create_dirs()?;
 
@@ -48,7 +50,6 @@ impl Storage {
         let tx = conn.get_tx()?;
 
         tx.create_tables()?;
-        tx.set_setting("is_prime", Some(prime.to_string()))?;
 
         tx.commit()?;
 

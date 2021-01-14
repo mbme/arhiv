@@ -6,7 +6,7 @@ use reqwest::Client;
 use rs_utils::{ensure_file_exists, read_file_as_stream, FsTransaction};
 
 impl Arhiv {
-    pub(super) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
+    pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
         log::debug!("applying changeset {}", &changeset);
 
         let mut conn = self.storage.get_writable_connection()?;
@@ -61,6 +61,8 @@ impl Arhiv {
             }
         }
 
+        tx.set_setting(DbSettings::DbRevision, new_rev.to_string())?;
+
         tx.commit()?;
         fs_tx.commit();
         log::debug!("successfully applied a changeset");
@@ -68,7 +70,7 @@ impl Arhiv {
         Ok(())
     }
 
-    pub(super) fn generate_changeset_response(
+    pub(crate) fn generate_changeset_response(
         &self,
         base_rev: Revision,
     ) -> Result<ChangesetResponse> {
@@ -94,11 +96,23 @@ impl Arhiv {
         };
         log::debug!("prepared a changeset {}", changeset);
 
-        if conn.is_prime()? {
+        let is_prime = conn.is_prime()?;
+
+        let result = if is_prime {
             self.sync_locally(changeset)
         } else {
             self.sync_remotely(changeset).await
+        };
+
+        if let Err(ref err) = result {
+            log::error!(
+                "sync failed on {}: {}",
+                if is_prime { "prime" } else { "replica" },
+                err
+            );
         }
+
+        result
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
@@ -157,9 +171,12 @@ impl Arhiv {
 
         let rev = tx.get_rev()?;
 
-        if response.base_rev != rev {
-            bail!("base_rev isn't equal to current rev");
-        }
+        ensure!(
+            response.base_rev == rev,
+            "base_rev {} isn't equal to current rev {}",
+            response.base_rev,
+            rev,
+        );
 
         let mut fs_tx = FsTransaction::new();
 
@@ -176,6 +193,8 @@ impl Arhiv {
                 )?;
             }
         }
+
+        tx.set_setting(DbSettings::DbRevision, response.latest_rev.to_string())?;
 
         // make sure there are no more staged documents
         assert_eq!(tx.count_documents()?.1, 0);

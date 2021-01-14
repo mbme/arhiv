@@ -1,48 +1,44 @@
-use super::query_params::*;
 use super::utils;
+use super::{query_params::*, settings::DbSettings};
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::fuzzy_match;
 use rusqlite::functions::FunctionFlags;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::{params, Connection, OptionalExtension, NO_PARAMS};
+use rusqlite::{params, Connection};
 use std::collections::HashMap;
 use std::rc::Rc;
 
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
-    fn get_setting<S: Into<String>>(&self, key: S) -> Result<Option<String>> {
+    fn get_setting(&self, setting: DbSettings) -> Result<String> {
         self.get_connection()
             .query_row(
                 "SELECT value FROM settings WHERE key=?",
-                params![key.into()],
+                params![setting.to_string()],
                 |row| row.get(0),
             )
-            .optional()
             .context("failed to get setting")
     }
 
     fn get_schema_version(&self) -> Result<u8> {
-        self.get_setting("schema_version")?
-            .expect("schema version must be defined")
+        self.get_setting(DbSettings::SchemaVersion)?
             .parse()
             .context("failed to parse schema version")
     }
 
     fn is_prime(&self) -> Result<bool> {
-        self.get_setting("is_prime")
-            .map(|value| value.unwrap_or("".to_string()) == "true")
+        self.get_setting(DbSettings::IsPrime)
+            .map(|value| value == "true")
     }
 
     fn get_rev(&self) -> Result<Revision> {
-        self.get_connection()
-            .query_row(
-                "SELECT IFNULL(MAX(rev), 0) as rev FROM documents",
-                NO_PARAMS,
-                |row| row.get(0).into(),
-            )
-            .context("failed to get max rev")
+        let value = self.get_setting(DbSettings::DbRevision)?;
+
+        let value: u32 = value.parse().expect("db_revision must be a number");
+
+        Ok(value.into())
     }
 
     fn count_documents(&self) -> Result<(u32, u32)> {
@@ -222,7 +218,9 @@ pub trait Queries {
             "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING rev = MAX(rev)",
         )?;
 
-        let mut rows = stmt.query(params![min_rev])?;
+        let mut rows = stmt
+            .query(params![min_rev])
+            .context(anyhow!("Failed to get documents since {}", min_rev))?;
 
         let mut documents = Vec::new();
         while let Some(row) = rows.next()? {
@@ -237,7 +235,9 @@ pub trait Queries {
             .get_connection()
             .prepare_cached("SELECT * FROM documents WHERE id = ?1")?;
 
-        let mut rows = stmt.query_and_then(params![id], utils::extract_document)?;
+        let mut rows = stmt
+            .query_and_then(params![id], utils::extract_document)
+            .context(anyhow!("Failed to get document {}", &id))?;
 
         if let Some(row) = rows.next() {
             Ok(Some(row?))
@@ -281,11 +281,11 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn set_setting<S: Into<String>>(&self, key: S, value: Option<String>) -> Result<()> {
+    fn set_setting(&self, setting: DbSettings, value: String) -> Result<()> {
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                params![key.into(), value],
+                params![setting.to_string(), value],
             )
             .context("failed to set setting")?;
 
@@ -308,7 +308,8 @@ pub trait MutableQueries: Queries {
             document.archived,
             utils::serialize_refs(&document.refs)?,
             document.data,
-        ])?;
+        ])
+        .context(anyhow!("Failed to put document {}", &document.id))?;
 
         Ok(())
     }
@@ -329,7 +330,12 @@ pub trait MutableQueries: Queries {
             document.archived,
             utils::serialize_refs(&document.refs)?,
             document.data,
-        ])?;
+        ])
+        .context(anyhow!(
+            "Failed to put document into history {} rev {}",
+            &document.id,
+            &document.rev
+        ))?;
 
         Ok(())
     }

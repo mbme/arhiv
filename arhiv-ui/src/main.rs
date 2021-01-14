@@ -12,7 +12,9 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::Builder::from_default_env()
+        .filter_module("hyper::proto::h1", log::LevelFilter::Warn)
+        .init();
 
     let arhiv = Arc::new(Arhiv::must_open());
     let handler = Arc::new(Handler {

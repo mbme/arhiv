@@ -48,6 +48,11 @@ const $actions: StyleArg = {
   pl: 'medium',
 }
 
+const $actionsBox: StyleArg = {
+  position: 'sticky',
+  top: '50px',
+}
+
 interface IProps {
   children: React.ReactNode
 }
@@ -96,7 +101,9 @@ export function Frame({ children }: IProps) {
         <Column
           $style={$actions}
         >
-          <ActionsRenderer />
+          <Box $style={$actionsBox}>
+            <ActionsRenderer />
+          </Box>
         </Column>
       </Box>
     </ActionsRegistry.Provider>

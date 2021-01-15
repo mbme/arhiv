@@ -102,7 +102,7 @@ export function CardEditor(props: IProps) {
         />
       )}
 
-      {onDelete && <DeleteDocumentButton onConfirmed={deleteDocument} />}
+      {onDelete && !preview && <DeleteDocumentButton onConfirmed={deleteDocument} />}
     </>
   )
 }

@@ -43,6 +43,7 @@ impl AppShellContext {
         files
     }
 
+    // FIXME doesn't always work
     pub fn copy_to_clipboard(&self, data: &str) {
         let display = gdk::Display::get_default().unwrap();
 

@@ -1,9 +1,6 @@
 use anyhow::*;
 use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
-use arhiv::{
-    entities::*,
-    markup::{create_ref, RenderOptions},
-};
+use arhiv::{entities::*, markup::RenderOptions};
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, DocumentFilter};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -132,14 +129,6 @@ impl ActionHandler for Handler {
                 .iter()
                 .map(|file| AttachmentSource::new_from_path_buf(file))
                 .collect();
-
-            let links = attachments
-                .iter()
-                .map(|attachment| create_ref(&attachment.id, ""))
-                .collect::<Vec<String>>()
-                .join(" ");
-
-            context.copy_to_clipboard(&links);
 
             return Ok(serde_json::to_value(attachments)?);
         }

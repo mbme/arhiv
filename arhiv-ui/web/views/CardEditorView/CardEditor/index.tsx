@@ -4,9 +4,10 @@ import {
   Box,
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-import { API, IAttachmentSource, IDocument } from '../../../api'
+import { API, createRef, IAttachmentSource, IDocument } from '../../../api'
 import { CardData, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
+import { copyTextToClipboard } from '@v/web-utils'
 
 interface IProps {
   document: IDocument
@@ -73,6 +74,9 @@ export function CardEditor(props: IProps) {
       {
         async onClick() {
           const attachments = await API.pick_attachments()
+
+          copyTextToClipboard(attachments.map(item => createRef(item.id)).join(' '))
+
           setNewAttachments(prevState => [...prevState, ...attachments])
         },
         children: 'Attach File',
@@ -82,7 +86,7 @@ export function CardEditor(props: IProps) {
         children: 'Show Preview',
       },
     ]
-  }, [preview])
+  }, [preview, saveDocument, onCancel])
 
   return (
     <>

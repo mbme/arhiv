@@ -7,10 +7,10 @@ fn main() {
 
     let config = Config::must_read();
 
-    if dir_exists(&config.arhiv_root).unwrap() {
-        fs::remove_dir_all(&config.arhiv_root).expect("must be able to remove arhiv");
-        log::info!("removed arhiv {}", &config.arhiv_root);
+    if dir_exists(config.get_root_dir()).unwrap() {
+        fs::remove_dir_all(config.get_root_dir()).expect("must be able to remove arhiv");
+        log::info!("removed arhiv {}", config.get_root_dir());
     } else {
-        log::info!("arhiv {} doesn't exist", &config.arhiv_root);
+        log::info!("arhiv {} doesn't exist", config.get_root_dir());
     }
 }

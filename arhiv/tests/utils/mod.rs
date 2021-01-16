@@ -4,18 +4,18 @@ use rs_utils::generate_temp_path;
 use std::fs;
 
 fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
-    let prime_url = {
+    let config = {
         if prime {
-            None
+            Config::Prime {
+                arhiv_root: generate_temp_path("TempArhiv", ""),
+                server_port,
+            }
         } else {
-            Some(format!("http://localhost:{}", server_port))
+            Config::Replica {
+                arhiv_root: generate_temp_path("TempArhiv", ""),
+                prime_url: format!("http://localhost:{}", server_port),
+            }
         }
-    };
-
-    let config = Config {
-        arhiv_root: generate_temp_path("TempArhiv", ""),
-        prime_url,
-        server_port,
     };
 
     Arhiv::create(prime, config).expect("must be able to create temp arhiv")

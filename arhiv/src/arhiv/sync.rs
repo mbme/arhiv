@@ -161,13 +161,7 @@ impl Arhiv {
 
         log::debug!("sync_remotely: sending changeset...");
         let response: ChangesetResponse = Client::new()
-            .post(&format!(
-                "{}/changeset",
-                self.config
-                    .prime_url
-                    .as_ref()
-                    .expect("config.prime_url must be set")
-            ))
+            .post(&format!("{}/changeset", self.config.get_prime_url()?))
             .json(&changeset)
             .send()
             .await?

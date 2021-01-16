@@ -15,15 +15,15 @@ impl PathManager {
     }
 
     pub fn get_data_directory(&self) -> String {
-        format!("{}/data", self.config.arhiv_root)
+        format!("{}/data", self.config.get_root_dir())
     }
 
     pub fn get_temp_data_directory(&self) -> String {
-        format!("{}/temp-data", self.config.arhiv_root)
+        format!("{}/temp-data", self.config.get_root_dir())
     }
 
     pub fn get_db_file(&self) -> String {
-        format!("{}/arhiv.sqlite", self.config.arhiv_root)
+        format!("{}/arhiv.sqlite", self.config.get_root_dir())
     }
 
     pub fn get_committed_file_path(&self, id: &Id) -> String {
@@ -35,17 +35,13 @@ impl PathManager {
     }
 
     pub fn get_attachment_data_url(&self, id: &Id) -> Result<String> {
-        let prime_url = self
-            .config
-            .prime_url
-            .as_ref()
-            .ok_or(anyhow!("config.prime_url is missing"))?;
+        let prime_url = self.config.get_prime_url()?;
 
         Ok(format!("{}/attachment-data/{}", prime_url, id))
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {
-        ensure_dir_exists(&self.config.arhiv_root)?;
+        ensure_dir_exists(&self.config.get_root_dir())?;
         ensure_dir_exists(&self.get_data_directory())?;
         ensure_dir_exists(&self.get_temp_data_directory())?;
 
@@ -59,21 +55,21 @@ impl PathManager {
     }
 
     pub fn create_dirs(&self) -> Result<()> {
-        let path = Path::new(&self.config.arhiv_root);
+        let path = Path::new(self.config.get_root_dir());
 
         ensure!(
             path.is_absolute(),
             "path must be absolute: {}",
-            &self.config.arhiv_root
+            self.config.get_root_dir()
         );
 
         ensure!(
             !path.exists(),
             "path already exists: {}",
-            &self.config.arhiv_root
+            self.config.get_root_dir()
         );
 
-        fs::create_dir(&self.config.arhiv_root)?;
+        fs::create_dir(&self.config.get_root_dir())?;
         fs::create_dir(&self.get_data_directory())?;
         fs::create_dir(&self.get_temp_data_directory())?;
 

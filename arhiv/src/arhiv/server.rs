@@ -47,7 +47,10 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
 
     let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
-    let port = arhiv.config.server_port;
+    let port = arhiv
+        .config
+        .get_server_port()
+        .expect("config.server_port must be configured");
     let (addr, server) =
         warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
             tokio::select! {

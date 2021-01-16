@@ -39,7 +39,7 @@ impl Arhiv {
             schema.version
         );
 
-        log::info!("Open arhiv in {}", &config.arhiv_root);
+        log::info!("Open arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
@@ -65,7 +65,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        log::info!("Created arhiv in {}", &config.arhiv_root);
+        log::info!("Created arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
@@ -75,7 +75,7 @@ impl Arhiv {
     }
 
     pub fn get_root_dir(&self) -> &str {
-        &self.config.arhiv_root
+        self.config.get_root_dir()
     }
 
     pub fn get_status(&self) -> Result<Status> {

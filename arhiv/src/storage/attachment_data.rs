@@ -1,6 +1,5 @@
 use super::path_manager::PathManager;
 use super::Id;
-use crate::config::Config;
 use anyhow::*;
 use futures::stream::TryStreamExt;
 use rs_utils::file_exists;
@@ -10,28 +9,19 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 pub struct AttachmentData<'a> {
     pub id: Id,
     path_manager: &'a PathManager,
-    config: &'a Config,
 }
 
 impl<'a> AttachmentData<'a> {
-    pub fn new(id: Id, path_manager: &'a PathManager, config: &'a Config) -> AttachmentData<'a> {
-        AttachmentData {
-            id,
-            path_manager,
-            config,
-        }
+    pub fn new(id: Id, path_manager: &'a PathManager) -> AttachmentData<'a> {
+        AttachmentData { id, path_manager }
     }
 
     pub fn get_committed_file_path(&self) -> String {
-        format!("{}/{}", self.path_manager.get_data_directory(), self.id)
+        self.path_manager.get_committed_file_path(&self.id)
     }
 
     pub fn get_staged_file_path(&self) -> String {
-        format!(
-            "{}/{}",
-            self.path_manager.get_temp_data_directory(),
-            self.id
-        )
+        self.path_manager.get_staged_file_path(&self.id)
     }
 
     pub fn committed_file_exists(&self) -> Result<bool> {
@@ -43,7 +33,7 @@ impl<'a> AttachmentData<'a> {
     }
 
     pub fn get_url(&self) -> Result<String> {
-        self.config.get_attachment_data_url(&self.id)
+        self.path_manager.get_attachment_data_url(&self.id)
     }
 
     pub async fn download_data(&self) -> Result<()> {

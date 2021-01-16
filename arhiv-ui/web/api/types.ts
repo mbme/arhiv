@@ -32,14 +32,14 @@ export type OrderBy =
   | { EnumField: { selector: string, asc: boolean, enumOrder: string[] } }
   | { UpdatedAt: { asc: boolean } }
 
-export type DocumentFilterMode = 'Staged' | 'Archived'
+export type FilterMode = 'Staged' | 'Archived'
 
-export interface IDocumentFilter {
+export interface IFilter {
   pageOffset?: number
   pageSize?: number
   matchers: Matcher[]
   order: OrderBy[],
-  mode?: DocumentFilterMode,
+  mode?: FilterMode,
 }
 
 export type AttachmentLocation = { Url: string } | { File: string }

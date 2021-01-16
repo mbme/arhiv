@@ -67,15 +67,15 @@ pub trait Queries {
             .context("Failed to count attachments")
     }
 
-    fn list_documents(&self, filter: DocumentFilter) -> Result<ListPage<Document>> {
+    fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let mut query: Vec<String> = vec!["SELECT * FROM documents WHERE true".to_string()];
         let mut params = Params::new();
 
         match filter.mode {
-            Some(DocumentFilterMode::Staged) => {
+            Some(FilterMode::Staged) => {
                 query.push("AND rev = 0".to_string());
             }
-            Some(DocumentFilterMode::Archived) => {
+            Some(FilterMode::Archived) => {
                 query.push("AND archived = true".to_string());
             }
             None => {

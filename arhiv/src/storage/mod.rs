@@ -1,5 +1,6 @@
-use crate::config::Config;
-use crate::entities::*;
+use std::sync::Arc;
+
+use crate::{entities::*, Config};
 use anyhow::*;
 pub use attachment_data::AttachmentData;
 pub use connection::*;
@@ -8,7 +9,6 @@ pub use queries::*;
 pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
 pub use settings::DbSettings;
-use std::sync::Arc;
 
 mod attachment_data;
 mod connection;
@@ -19,33 +19,24 @@ mod settings;
 mod utils;
 
 pub struct Storage {
-    config: Arc<Config>,
     path_manager: PathManager,
 }
 
 impl Storage {
     pub fn open(config: Arc<Config>) -> Result<Storage> {
-        let path_manager = PathManager::new(config.arhiv_root.clone());
+        let path_manager = PathManager::new(config);
+
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
-        Ok(Storage {
-            config,
-            path_manager,
-        })
+        Ok(Storage { path_manager })
     }
 
     pub fn create(config: Arc<Config>) -> Result<Storage> {
-        let path_manager = PathManager::new(config.arhiv_root.clone());
+        let path_manager = PathManager::new(config);
         path_manager.create_dirs()?;
 
-        let storage = Storage {
-            config,
-            path_manager,
-        };
-
-        let mut conn =
-            MutStorageConnection::new(Connection::open(storage.path_manager.get_db_file())?);
+        let mut conn = MutStorageConnection::new(Connection::open(path_manager.get_db_file())?);
 
         let tx = conn.get_tx()?;
 
@@ -53,7 +44,7 @@ impl Storage {
 
         tx.commit()?;
 
-        Ok(storage)
+        Ok(Storage { path_manager })
     }
 
     pub fn get_connection(&self) -> Result<StorageConnection> {
@@ -75,6 +66,6 @@ impl Storage {
     }
 
     pub fn get_attachment_data(&self, id: Id) -> AttachmentData {
-        AttachmentData::new(id, &self.path_manager, &self.config)
+        AttachmentData::new(id, &self.path_manager)
     }
 }

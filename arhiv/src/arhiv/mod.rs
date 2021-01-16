@@ -24,6 +24,7 @@ impl Arhiv {
 
     pub fn open(config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
+
         let storage = Storage::open(config.clone())?;
         let schema = DataSchema::new();
 
@@ -45,7 +46,9 @@ impl Arhiv {
 
     pub fn create(prime: bool, config: Config) -> Result<Arhiv> {
         let config = Arc::new(config);
+
         let storage = Storage::create(config.clone())?;
+
         let schema = DataSchema::new();
 
         let mut conn = storage.get_writable_connection()?;
@@ -53,7 +56,7 @@ impl Arhiv {
 
         // initial settings
         tx.set_setting(DbSettings::IsPrime, prime.to_string())?;
-        tx.set_setting(DbSettings::DbRevision, "0".to_string())?;
+        tx.set_setting(DbSettings::DbRevision, 0.to_string())?;
         tx.set_setting(DbSettings::SchemaVersion, schema.version.to_string())?;
 
         tx.commit()?;
@@ -89,7 +92,7 @@ impl Arhiv {
         })
     }
 
-    pub fn list_documents(&self, filter: DocumentFilter) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let conn = self.storage.get_connection()?;
 
         conn.list_documents(filter)

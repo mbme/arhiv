@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::DocumentFilter;
+use arhiv::Filter;
 use serde_json::json;
 pub use utils::*;
 
@@ -15,10 +15,7 @@ fn test_crud() -> Result<()> {
     let id = {
         let document = new_document(original_data.clone());
         arhiv.stage_document(document.clone(), vec![])?;
-        assert_eq!(
-            arhiv.list_documents(DocumentFilter::default())?.items.len(),
-            1
-        );
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
 
         document.id
     };
@@ -42,19 +39,13 @@ fn test_crud() -> Result<()> {
 
     // DELETE
     {
-        assert_eq!(
-            arhiv.list_documents(DocumentFilter::default())?.items.len(),
-            1
-        );
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.archived = true;
         arhiv.stage_document(other_document, vec![])?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().archived, true);
-        assert_eq!(
-            arhiv.list_documents(DocumentFilter::default())?.items.len(),
-            0
-        );
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
     }
 
     Ok(())

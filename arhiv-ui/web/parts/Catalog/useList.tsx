@@ -3,7 +3,7 @@ import { noop, withoutUndefined } from '@v/utils'
 import {
   API,
   IDocument,
-  IDocumentFilter,
+  IFilter,
   IListPage,
   Matcher,
   OrderBy,
@@ -23,7 +23,7 @@ interface IOptions {
 }
 
 export function useList<D extends IDocument>(getOptions: () => IOptions, args: any[] = []): IList<D> {
-  const [documentFilter, setDocumentFilter] = React.useState<IDocumentFilter>()
+  const [filter, setFilter] = React.useState<IFilter>()
 
   const [items, setItems] = React.useState<D[]>()
   const [hasMore, setHasMore] = React.useState(false)
@@ -40,7 +40,7 @@ export function useList<D extends IDocument>(getOptions: () => IOptions, args: a
       order,
     } = getOptions()
 
-    setDocumentFilter({
+    setFilter({
       pageOffset: 0,
       pageSize,
       matchers: withoutUndefined(matchers),
@@ -49,13 +49,13 @@ export function useList<D extends IDocument>(getOptions: () => IOptions, args: a
   }, args)
 
   React.useEffect(() => {
-    if (!documentFilter) {
+    if (!filter) {
       return noop
     }
 
     let relevant = true
 
-    API.list<D>(documentFilter).then((page: IListPage<D>) => {
+    API.list<D>(filter).then((page: IListPage<D>) => {
       if (relevant) {
         setItems(currentItems => [...(currentItems || []), ...page.items])
         setHasMore(page.hasMore)
@@ -65,7 +65,7 @@ export function useList<D extends IDocument>(getOptions: () => IOptions, args: a
     return () => {
       relevant = false
     }
-  }, [documentFilter])
+  }, [filter])
 
   return {
     items,
@@ -73,7 +73,7 @@ export function useList<D extends IDocument>(getOptions: () => IOptions, args: a
     error,
 
     loadMore() {
-      setDocumentFilter((currentFilter) => {
+      setFilter((currentFilter) => {
         if (!currentFilter) {
           return currentFilter
         }

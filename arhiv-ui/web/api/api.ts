@@ -6,7 +6,7 @@ import {
   ICreateDocumentArgs,
   IAttachmentSource,
   IDocument,
-  IDocumentFilter,
+  IFilter,
   IListPage,
   IPutDocumentArgs,
   IDataSchema,
@@ -14,7 +14,7 @@ import {
 } from './types'
 
 interface IRPC {
-  list<D extends IDocument = IDocument>(filter: IDocumentFilter): Promise<IListPage<D>>
+  list<D extends IDocument = IDocument>(filter: IFilter): Promise<IListPage<D>>
 
   get(id: string): Promise<IDocument | null>
 

@@ -41,24 +41,24 @@ impl Default for OrderBy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum DocumentFilterMode {
+pub enum FilterMode {
     Archived,
     Staged,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DocumentFilter {
+pub struct Filter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
     pub matchers: Vec<Matcher>,
     pub order: Vec<OrderBy>,
-    pub mode: Option<DocumentFilterMode>,
+    pub mode: Option<FilterMode>,
 }
 
-impl Default for DocumentFilter {
+impl Default for Filter {
     fn default() -> Self {
-        DocumentFilter {
+        Filter {
             page_offset: Some(0),
             page_size: Some(20),
             matchers: vec![],
@@ -68,29 +68,15 @@ impl Default for DocumentFilter {
     }
 }
 
-pub const DOCUMENT_FILTER_STAGED: DocumentFilter = DocumentFilter {
+pub const DOCUMENT_FILTER_STAGED: Filter = Filter {
     page_offset: None,
     page_size: None,
     matchers: vec![],
-    mode: Some(DocumentFilterMode::Staged),
+    mode: Some(FilterMode::Staged),
     order: vec![],
 };
 
-pub struct AttachmentFilter {
-    pub page_offset: Option<u8>,
-    pub page_size: Option<u8>,
-}
-
-impl Default for AttachmentFilter {
-    fn default() -> Self {
-        AttachmentFilter {
-            page_offset: Some(0),
-            page_size: Some(20),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListPage<T> {
     pub items: Vec<T>,

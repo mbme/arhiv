@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::{entities::*, start_server, DocumentFilter, Matcher};
+use arhiv::{entities::*, start_server, Filter, Matcher};
 use rs_utils::project_relpath;
 use std::sync::Arc;
 pub use utils::*;
@@ -9,10 +9,7 @@ mod utils;
 #[test]
 fn test_attachments() -> Result<()> {
     let arhiv = new_prime();
-    assert_eq!(
-        arhiv.list_documents(DocumentFilter::default())?.items.len(),
-        0
-    );
+    assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -34,11 +31,11 @@ fn test_attachments() -> Result<()> {
         .get_attachment_data(&attachment.id)
         .get_staged_file_path();
 
-    let page = arhiv.list_documents(DocumentFilter {
+    let page = arhiv.list_documents(Filter {
         matchers: vec![Matcher::Type {
             document_type: ATTACHMENT_TYPE.to_string(),
         }],
-        ..DocumentFilter::default()
+        ..Filter::default()
     })?;
     assert_eq!(page.items.len(), 1);
     assert_eq!(are_equal_files(src, dst)?, true);

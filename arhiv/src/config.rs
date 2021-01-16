@@ -1,10 +1,9 @@
-use crate::entities::Id;
 use anyhow::*;
 use rs_utils::find_config_file;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fs;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub arhiv_root: String,
@@ -30,23 +29,5 @@ impl Config {
 
     pub fn must_read() -> Config {
         Config::read().expect("must be able to read arhiv config")
-    }
-
-    pub fn get_attachment_data_url(&self, id: &Id) -> Result<String> {
-        let prime_url = self
-            .prime_url
-            .as_ref()
-            .ok_or(anyhow!("config.prime_url is missing"))?;
-
-        Ok(format!("{}/attachment-data/{}", prime_url, id))
-    }
-
-    pub fn get_changeset_url(&self) -> Result<String> {
-        let prime_url = self
-            .prime_url
-            .as_ref()
-            .ok_or(anyhow!("config.prime_url is missing"))?;
-
-        Ok(format!("{}/changeset", prime_url))
     }
 }

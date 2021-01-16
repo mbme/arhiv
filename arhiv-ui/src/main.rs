@@ -1,7 +1,7 @@
 use anyhow::*;
 use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
 use arhiv::{entities::*, markup::RenderOptions};
-use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, DocumentFilter};
+use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, Filter};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -63,7 +63,7 @@ struct Handler {
 impl ActionHandler for Handler {
     async fn run(&self, action: String, context: &AppShellContext, params: Value) -> Result<Value> {
         if action == "list" {
-            let filter: DocumentFilter = serde_json::from_value(params)?;
+            let filter: Filter = serde_json::from_value(params)?;
 
             // FIXME validate matcher props
 

@@ -12,9 +12,9 @@ fn test_pagination() -> Result<()> {
     arhiv.stage_document(empty_document(), vec![])?;
     arhiv.stage_document(empty_document(), vec![])?;
 
-    let page = arhiv.list_documents(DocumentFilter {
+    let page = arhiv.list_documents(Filter {
         page_size: Some(1),
-        ..DocumentFilter::default()
+        ..Filter::default()
     })?;
 
     assert_eq!(page.items.len(), 1);
@@ -44,9 +44,9 @@ async fn test_modes() -> Result<()> {
 
     {
         // test default
-        let page = arhiv.list_documents(DocumentFilter {
+        let page = arhiv.list_documents(Filter {
             order: vec![OrderBy::UpdatedAt { asc: false }],
-            ..DocumentFilter::default()
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page), vec![json!("3"), json!("1"),]);
@@ -54,9 +54,9 @@ async fn test_modes() -> Result<()> {
 
     {
         // test archived
-        let page = arhiv.list_documents(DocumentFilter {
-            mode: Some(DocumentFilterMode::Archived),
-            ..DocumentFilter::default()
+        let page = arhiv.list_documents(Filter {
+            mode: Some(FilterMode::Archived),
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page), vec![json!("2")]);
@@ -64,9 +64,9 @@ async fn test_modes() -> Result<()> {
 
     {
         // test staged
-        let page = arhiv.list_documents(DocumentFilter {
-            mode: Some(DocumentFilterMode::Staged),
-            ..DocumentFilter::default()
+        let page = arhiv.list_documents(Filter {
+            mode: Some(FilterMode::Staged),
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page), vec![json!("3")]);
@@ -84,13 +84,13 @@ fn test_order_by_enum_field() -> Result<()> {
     arhiv.stage_document(new_document(json!({ "enum": "other" })), vec![])?;
     arhiv.stage_document(new_document(json!({ "enum": "medium" })), vec![])?;
 
-    let page = arhiv.list_documents(DocumentFilter {
+    let page = arhiv.list_documents(Filter {
         order: vec![OrderBy::EnumField {
             selector: "$.enum".to_string(),
             asc: true,
             enum_order: vec!["high".to_string(), "medium".to_string(), "low".to_string()],
         }],
-        ..DocumentFilter::default()
+        ..Filter::default()
     })?;
 
     assert_eq!(
@@ -115,7 +115,7 @@ fn test_multiple_order_by() -> Result<()> {
     arhiv.stage_document(new_document(json!({ "prop": "a", "other": "2" })), vec![])?;
     arhiv.stage_document(new_document(json!({ "prop": "b", "other": "1" })), vec![])?;
 
-    let page = arhiv.list_documents(DocumentFilter {
+    let page = arhiv.list_documents(Filter {
         order: vec![
             OrderBy::Field {
                 selector: "$.prop".to_string(),
@@ -126,7 +126,7 @@ fn test_multiple_order_by() -> Result<()> {
                 asc: false,
             },
         ],
-        ..DocumentFilter::default()
+        ..Filter::default()
     })?;
 
     assert_eq!(
@@ -150,11 +150,11 @@ async fn test_matcher() -> Result<()> {
 
     {
         // test unexpected type
-        let page = arhiv.list_documents(DocumentFilter {
+        let page = arhiv.list_documents(Filter {
             matchers: vec![Matcher::Type {
                 document_type: "random".to_string(),
             }],
-            ..DocumentFilter::default()
+            ..Filter::default()
         })?;
 
         let empty: Vec<serde_json::Value> = vec![];
@@ -163,11 +163,11 @@ async fn test_matcher() -> Result<()> {
 
     {
         // test expected type
-        let page = arhiv.list_documents(DocumentFilter {
+        let page = arhiv.list_documents(Filter {
             matchers: vec![Matcher::Type {
                 document_type: "test_type".to_string(),
             }],
-            ..DocumentFilter::default()
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page).len(), 2);
@@ -176,12 +176,12 @@ async fn test_matcher() -> Result<()> {
     {
         // test Field
 
-        let page = arhiv.list_documents(DocumentFilter {
+        let page = arhiv.list_documents(Filter {
             matchers: vec![Matcher::Field {
                 selector: "$.test".to_string(),
                 pattern: "value".to_string(),
             }],
-            ..DocumentFilter::default()
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page).len(), 1);
@@ -190,12 +190,12 @@ async fn test_matcher() -> Result<()> {
     {
         // test FuzzyField
 
-        let page = arhiv.list_documents(DocumentFilter {
+        let page = arhiv.list_documents(Filter {
             matchers: vec![Matcher::FuzzyField {
                 selector: "$.test".to_string(),
                 pattern: "val".to_string(),
             }],
-            ..DocumentFilter::default()
+            ..Filter::default()
         })?;
 
         assert_eq!(get_values(page).len(), 2);

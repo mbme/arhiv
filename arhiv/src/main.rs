@@ -1,6 +1,8 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
+use std::sync::Arc;
+
 use arhiv::{start_server, Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use log::LevelFilter;
@@ -92,7 +94,16 @@ async fn main() {
             // FIXME print number of unused temp attachments
         }
         ("prime-server", Some(_)) => {
-            let (join_handle, _, _) = start_server(Arhiv::must_open());
+            let arhiv = Arc::new(Arhiv::must_open());
+            if !arhiv
+                .get_status()
+                .expect("must be able to get status")
+                .is_prime
+            {
+                panic!("server must be started on prime instance");
+            }
+
+            let (join_handle, _, _) = start_server(arhiv);
 
             join_handle.await.expect("must join");
         }

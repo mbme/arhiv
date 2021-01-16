@@ -6,9 +6,11 @@ use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
 use serde::{Deserialize, Serialize};
 pub use server::start_server;
+use status::Status;
 use std::sync::Arc;
 
 mod server;
+mod status;
 mod sync;
 
 pub struct Arhiv {
@@ -37,6 +39,8 @@ impl Arhiv {
             schema.version
         );
 
+        log::info!("Open arhiv in {}", &config.arhiv_root);
+
         Ok(Arhiv {
             schema,
             config,
@@ -60,6 +64,8 @@ impl Arhiv {
         tx.set_setting(DbSettings::SchemaVersion, schema.version.to_string())?;
 
         tx.commit()?;
+
+        log::info!("Created arhiv in {}", &config.arhiv_root);
 
         Ok(Arhiv {
             schema,
@@ -109,6 +115,12 @@ impl Arhiv {
         updated_document: Document,
         new_attachments: Vec<AttachmentSource>,
     ) -> Result<()> {
+        log::debug!(
+            "Staging document {} with {} new attachments",
+            &updated_document.id,
+            new_attachments.len()
+        );
+
         let mut conn = self.storage.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
@@ -117,6 +129,8 @@ impl Arhiv {
         // FIXME optimize this
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
+                log::debug!("Updating existing document {}", &updated_document.id);
+
                 document.rev = Revision::STAGING; // make sure document rev is Staging
                 document.updated_at = Utc::now();
                 document.data = updated_document.data;
@@ -126,6 +140,8 @@ impl Arhiv {
                 if updated_document.is_attachment() {
                     bail!("attachments must not be created manually");
                 }
+
+                log::debug!("Creating new document {}", &updated_document.id);
 
                 let mut new_document =
                     Document::new(updated_document.document_type, updated_document.data);
@@ -149,7 +165,7 @@ impl Arhiv {
                 continue;
             }
             if reference == &document.id {
-                log::warn!("Document {} references itself", &document.id);
+                log::warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;
             }
             if new_attachments_ids.contains(&reference) {
@@ -198,7 +214,7 @@ impl Arhiv {
             let attachment = self.create_attachment(new_attachment)?;
             conn.put_document(&attachment)?;
 
-            log::debug!("staged new attachment {}: {}", attachment, source_path);
+            log::info!("staged new attachment {}: {}", attachment, source_path);
         }
 
         conn.put_document(&document)?;
@@ -226,6 +242,12 @@ impl Arhiv {
         let data = self
             .schema
             .create_with_data(ATTACHMENT_TYPE.to_string(), initial_values)?;
+
+        log::info!(
+            "Created attachment {} from {}",
+            &source.id,
+            &source.file_path
+        );
 
         Ok(Document {
             id: source.id.clone(),
@@ -268,20 +290,6 @@ impl Arhiv {
 pub enum AttachmentLocation {
     Url(String),
     File(String),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Status {
-    pub root_dir: String,
-    pub is_prime: bool,
-    pub rev: Revision,
-
-    pub committed_documents: u32,
-    pub staged_documents: u32,
-
-    pub committed_attachments: u32,
-    pub staged_attachments: u32,
 }
 
 #[cfg(test)]

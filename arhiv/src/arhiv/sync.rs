@@ -88,6 +88,12 @@ impl Arhiv {
 
     pub async fn sync(&self) -> Result<()> {
         let conn = self.storage.get_connection()?;
+        let is_prime = conn.is_prime()?;
+
+        log::info!(
+            "Initiating {} sync",
+            if is_prime { "local" } else { "remote" }
+        );
 
         let changeset = Changeset {
             schema_version: conn.get_schema_version()?,
@@ -95,8 +101,6 @@ impl Arhiv {
             documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
         };
         log::debug!("prepared a changeset {}", changeset);
-
-        let is_prime = conn.is_prime()?;
 
         let result = if is_prime {
             self.sync_locally(changeset)
@@ -110,6 +114,8 @@ impl Arhiv {
                 if is_prime { "prime" } else { "replica" },
                 err
             );
+        } else {
+            log::info!("sync succeeded");
         }
 
         result

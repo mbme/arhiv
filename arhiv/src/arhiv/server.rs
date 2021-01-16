@@ -12,11 +12,7 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
 
-pub fn start_server<A: Into<Arc<Arhiv>>>(
-    arhiv: A,
-) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
-    let arhiv = arhiv.into();
-
+pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
     let arhiv_filter = {
         let arhiv = arhiv.clone();
 
@@ -73,21 +69,6 @@ pub fn start_server<A: Into<Arc<Arhiv>>>(
     (join_handle, shutdown_sender, addr)
 }
 
-impl Arhiv {
-    fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
-        let (_, staged) = self.storage.get_connection()?.count_documents()?;
-        if staged > 0 {
-            bail!("can't exchange: there are staged changes");
-        }
-
-        let base_rev = changeset.base_rev.clone();
-
-        self.apply_changeset(changeset)?;
-
-        self.generate_changeset_response(base_rev)
-    }
-}
-
 fn post_attachment_data_handler(
     id: String,
     data: warp::hyper::body::Bytes,
@@ -95,7 +76,12 @@ fn post_attachment_data_handler(
 ) -> impl warp::Reply {
     let id: Id = id.into();
 
-    let dst = arhiv.storage.get_attachment_data(id).get_staged_file_path();
+    log::info!("Saving data for attachment {}", &id);
+
+    let dst = arhiv
+        .storage
+        .get_attachment_data(id.clone())
+        .get_staged_file_path();
 
     if Path::new(&dst).exists() {
         log::error!("temp attachment data {} already exists", dst);
@@ -108,6 +94,8 @@ fn post_attachment_data_handler(
     }
 
     if let Err(err) = fs::write(dst, &data) {
+        log::error!("Failed to save data for attachment {}: {}", &id, &err);
+
         return reply::with_status(
             format!("failed to write data: {}", err),
             http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -123,12 +111,24 @@ async fn get_attachment_data_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let id: Id = id.into();
 
+    log::debug!("Serving data for attachment {}", &id);
+
     let attachment = match arhiv.get_document(&id) {
-        Ok(Some(attachment)) if attachment.is_attachment() && attachment.rev.is_committed() => {
-            attachment
+        Ok(Some(attachment)) if attachment.is_attachment() => attachment,
+
+        Ok(Some(_)) => {
+            log::warn!("Requested document {} isn't an attachment", &id);
+
+            return Ok(reply::with_status(
+                format!("Requested document {} isn't an attachment", &id),
+                http::StatusCode::BAD_REQUEST,
+            )
+            .into_response());
         }
 
-        Ok(Some(_)) | Ok(None) => {
+        Ok(None) => {
+            log::warn!("Requested attachment {} is not found", &id);
+
             return Ok(reply::with_status(
                 format!("can't find attachment with id {}", &id),
                 http::StatusCode::NOT_FOUND,
@@ -137,6 +137,8 @@ async fn get_attachment_data_handler(
         }
 
         Err(err) => {
+            log::error!("Failed to find attachment {}: {}", &id, &err);
+
             return Ok(reply::with_status(
                 format!("failed to find attachment {}: {}", &id, err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -150,8 +152,10 @@ async fn get_attachment_data_handler(
         .get_attachment_data(id.clone())
         .get_committed_file_path();
     if !Path::new(&path).exists() {
+        log::warn!("Requested attachment data {} is not found", &id);
+
         return Ok(reply::with_status(
-            format!("can't find attachment with id {}", &id),
+            format!("can't find attachment data with id {}", &id),
             http::StatusCode::NOT_FOUND,
         )
         .into_response());
@@ -160,8 +164,10 @@ async fn get_attachment_data_handler(
     let file = match read_file_as_stream(&path).await {
         Ok(file) => file,
         Err(err) => {
+            log::error!("Failed to read attachment data {}: {}", &id, &err);
+
             return Ok(reply::with_status(
-                format!("failed to read attachment {}: {}", &id, err),
+                format!("failed to read attachment data {}: {}", &id, err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
             .into_response());
@@ -173,6 +179,8 @@ async fn get_attachment_data_handler(
     let filename = match arhiv.schema.get_field_string(&attachment, "filename") {
         Ok(filename) => filename,
         Err(err) => {
+            log::error!("Failed to get attachment filename {}: {}", &id, &err);
+
             return Ok(reply::with_status(
                 format!("failed to read attachment filename {}: {}", &id, err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -191,7 +199,24 @@ async fn get_attachment_data_handler(
         .expect("must be able to construct response"))
 }
 
+impl Arhiv {
+    fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
+        let (_, staged) = self.storage.get_connection()?.count_documents()?;
+        if staged > 0 {
+            bail!("can't exchange: there are staged changes");
+        }
+
+        let base_rev = changeset.base_rev.clone();
+
+        self.apply_changeset(changeset)?;
+
+        self.generate_changeset_response(base_rev)
+    }
+}
+
 fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp::Reply {
+    log::info!("Processing changeset {}", &changeset);
+
     let result = arhiv.exchange(changeset);
 
     match result {

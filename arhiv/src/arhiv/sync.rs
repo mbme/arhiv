@@ -9,27 +9,33 @@ impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
         log::debug!("applying changeset {}", &changeset);
 
+        ensure!(
+            changeset.arhiv_id == self.config.get_arhiv_id(),
+            "changeset arhiv_id {} must be equal to {}",
+            changeset.arhiv_id,
+            self.config.get_arhiv_id()
+        );
+
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
         let rev = tx.get_rev()?;
 
-        if changeset.base_rev > rev {
-            bail!(
-                "base_rev {} is greater than prime rev {}",
-                changeset.base_rev,
-                rev
-            );
-        }
+        ensure!(
+            changeset.base_rev <= rev,
+            "base_rev {} is greater than prime rev {}",
+            changeset.base_rev,
+            rev
+        );
 
         let schema_version = tx.get_schema_version()?;
-        if schema_version != changeset.schema_version {
-            bail!(
-                "db schema version {} is different from changeset version {}",
-                schema_version,
-                changeset.schema_version,
-            )
-        }
+
+        ensure!(
+            schema_version == changeset.schema_version,
+            "db schema version {} is different from changeset version {}",
+            schema_version,
+            changeset.schema_version,
+        );
 
         if changeset.is_empty() {
             log::debug!("empty changeset, ignoring");
@@ -80,6 +86,7 @@ impl Arhiv {
         let documents = conn.get_documents_since(&next_rev)?;
 
         Ok(ChangesetResponse {
+            arhiv_id: conn.get_arhiv_id()?,
             latest_rev: conn.get_rev()?,
             base_rev,
             documents,
@@ -96,6 +103,7 @@ impl Arhiv {
         );
 
         let changeset = Changeset {
+            arhiv_id: self.config.get_arhiv_id().to_string(),
             schema_version: conn.get_schema_version()?,
             base_rev: conn.get_rev()?,
             documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,

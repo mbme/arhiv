@@ -41,6 +41,12 @@ pub trait Queries {
         Ok(value.into())
     }
 
+    fn get_arhiv_id(&self) -> Result<String> {
+        let value = self.get_setting(DbSettings::ArhivId)?;
+
+        Ok(value)
+    }
+
     fn count_documents(&self) -> Result<(u32, u32)> {
         self.get_connection()
             .query_row(

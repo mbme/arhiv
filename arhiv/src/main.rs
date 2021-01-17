@@ -15,18 +15,7 @@ async fn main() {
 
     let matches = App::new("arhiv")
         .subcommand(
-            SubCommand::with_name("init")
-                .about("Initialize Arhiv instance on local machine")
-                .setting(AppSettings::SubcommandRequiredElseHelp)
-                .setting(AppSettings::DisableHelpSubcommand)
-                .setting(AppSettings::DeriveDisplayOrder)
-                .subcommand(
-                    SubCommand::with_name("prime").about("Initialize Prime Arhiv on local machine"),
-                )
-                .subcommand(
-                    SubCommand::with_name("replica")
-                        .about("Initialize Replica Arhiv on local machine"),
-                ),
+            SubCommand::with_name("init").about("Initialize Arhiv instance on local machine"),
         )
         .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(SubCommand::with_name("prime-server").about("Run prime server"))
@@ -61,17 +50,9 @@ async fn main() {
     env_logger::builder().filter(None, log_level).init();
 
     match matches.subcommand() {
-        ("init", Some(subcommand_matches)) => match subcommand_matches.subcommand() {
-            ("prime", Some(_)) => {
-                Arhiv::create(true, Config::must_read())
-                    .expect("must be able to create Prime arhiv");
-            }
-            ("replica", Some(_)) => {
-                Arhiv::create(false, Config::must_read())
-                    .expect("must be able to create Replica arhiv");
-            }
-            _ => unreachable!(),
-        },
+        ("init", Some(_)) => {
+            Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
+        }
         ("status", Some(_)) => {
             let status = Arhiv::must_open()
                 .get_status()

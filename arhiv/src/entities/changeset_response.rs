@@ -7,6 +7,8 @@ use super::{Document, Revision};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangesetResponse {
+    pub arhiv_id: String,
+
     // replica storage revision
     pub base_rev: Revision,
 
@@ -35,7 +37,8 @@ impl fmt::Display for ChangesetResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[ChangesetResponse: rev {}, {} documents since {}]",
+            "[{} ChangesetResponse: rev {}, {} documents since {}]",
+            self.arhiv_id,
             self.latest_rev,
             self.documents.len(),
             self.base_rev,

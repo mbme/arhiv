@@ -7,18 +7,20 @@ fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
     let config = {
         if prime {
             Config::Prime {
+                arhiv_id: "test_arhiv".to_string(),
                 arhiv_root: generate_temp_path("TempArhiv", ""),
                 server_port,
             }
         } else {
             Config::Replica {
+                arhiv_id: "test_arhiv".to_string(),
                 arhiv_root: generate_temp_path("TempArhiv", ""),
                 prime_url: format!("http://localhost:{}", server_port),
             }
         }
     };
 
-    Arhiv::create(prime, config).expect("must be able to create temp arhiv")
+    Arhiv::create(config).expect("must be able to create temp arhiv")
 }
 
 pub fn new_prime() -> Arhiv {

@@ -205,9 +205,7 @@ async fn get_attachment_data_handler(
 impl Arhiv {
     fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
         let (_, staged) = self.storage.get_connection()?.count_documents()?;
-        if staged > 0 {
-            bail!("can't exchange: there are staged changes");
-        }
+        ensure!(staged == 0, "can't exchange: there are staged changes",);
 
         let base_rev = changeset.base_rev.clone();
 

@@ -17,7 +17,6 @@ pub enum Config {
         arhiv_id: String,
         arhiv_root: String,
 
-        instance_id: String,
         prime_url: String,
     },
 }
@@ -38,6 +37,20 @@ impl Config {
 
     pub fn must_read() -> Config {
         Config::read().expect("must be able to read arhiv config")
+    }
+
+    pub fn is_prime(&self) -> bool {
+        match self {
+            Config::Prime { .. } => true,
+            Config::Replica { .. } => false,
+        }
+    }
+
+    pub fn get_arhiv_id(&self) -> &str {
+        match self {
+            Config::Prime { arhiv_id, .. } => arhiv_id,
+            Config::Replica { arhiv_id, .. } => arhiv_id,
+        }
     }
 
     pub fn get_root_dir(&self) -> &str {

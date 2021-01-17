@@ -30,14 +30,33 @@ impl Arhiv {
         let storage = Storage::open(config.clone())?;
         let schema = DataSchema::new();
 
-        let schema_version: u8 = storage.get_connection()?.get_schema_version()?;
+        // check if config settings are equal to db settings
+        {
+            let conn = storage.get_connection()?;
 
-        ensure!(
-            schema_version == schema.version,
-            "db version {} is different from app version {}",
-            schema_version,
-            schema.version
-        );
+            let schema_version = conn.get_schema_version()?;
+            let arhiv_id = conn.get_arhiv_id()?;
+            let is_prime = conn.is_prime()?;
+
+            ensure!(
+                schema_version == schema.version,
+                "db version {} is different from app version {}",
+                schema_version,
+                schema.version
+            );
+            ensure!(
+                arhiv_id == config.get_arhiv_id(),
+                "db arhiv_id {} is different from config.arhiv_id {}",
+                arhiv_id,
+                config.get_arhiv_id(),
+            );
+            ensure!(
+                is_prime == config.is_prime(),
+                "db is_prime {} is different from config {}",
+                is_prime,
+                config.is_prime(),
+            );
+        }
 
         log::info!("Open arhiv in {}", config.get_root_dir());
 
@@ -48,7 +67,17 @@ impl Arhiv {
         })
     }
 
-    pub fn create(prime: bool, config: Config) -> Result<Arhiv> {
+    pub fn create(config: Config) -> Result<Arhiv> {
+        log::info!(
+            "Initializing {} arhiv in {}",
+            if config.is_prime() {
+                "prime"
+            } else {
+                "replica"
+            },
+            config.get_root_dir()
+        );
+
         let config = Arc::new(config);
 
         let storage = Storage::create(config.clone())?;
@@ -59,7 +88,8 @@ impl Arhiv {
         let tx = conn.get_tx()?;
 
         // initial settings
-        tx.set_setting(DbSettings::IsPrime, prime.to_string())?;
+        tx.set_setting(DbSettings::ArhivId, config.get_arhiv_id().to_string())?;
+        tx.set_setting(DbSettings::IsPrime, config.is_prime().to_string())?;
         tx.set_setting(DbSettings::DbRevision, 0.to_string())?;
         tx.set_setting(DbSettings::SchemaVersion, schema.version.to_string())?;
 
@@ -83,11 +113,13 @@ impl Arhiv {
 
         let root_dir = self.get_root_dir().to_string();
         let rev = conn.get_rev()?;
+        let arhiv_id = conn.get_arhiv_id()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
         let (committed_attachments, staged_attachments) = conn.count_attachments()?;
         let is_prime = conn.is_prime()?;
 
         Ok(Status {
+            arhiv_id,
             root_dir,
             rev,
             is_prime,

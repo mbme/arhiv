@@ -18,7 +18,8 @@ async fn main() {
             SubCommand::with_name("init").about("Initialize Arhiv instance on local machine"),
         )
         .subcommand(SubCommand::with_name("status").about("Print current status"))
-        .subcommand(SubCommand::with_name("prime-server").about("Run prime server"))
+        .subcommand(SubCommand::with_name("config").about("Print config"))
+        .subcommand(SubCommand::with_name("server").about("Run prime server"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
@@ -51,7 +52,7 @@ async fn main() {
 
     match matches.subcommand() {
         ("init", Some(_)) => {
-            Arhiv::create(Config::must_read()).expect("must be able to create arhiv");
+            Arhiv::create(Config::must_read().0).expect("must be able to create arhiv");
         }
         ("status", Some(_)) => {
             let status = Arhiv::must_open()
@@ -59,8 +60,9 @@ async fn main() {
                 .expect("must be able to get status");
 
             println!(
-                "{} Arhiv (rev {}) on {}",
+                "{} Arhiv {} (rev {}) on {}",
                 if status.is_prime { "Prime" } else { "Replica" },
+                status.arhiv_id,
                 status.rev,
                 status.root_dir,
             );
@@ -68,13 +70,17 @@ async fn main() {
                 "  Documents: {} committed, {} staged",
                 status.committed_documents, status.staged_documents
             );
-            println!(
-                "Attachments: {} committed, {} staged",
-                status.committed_attachments, status.staged_attachments
-            );
             // FIXME print number of unused temp attachments
         }
-        ("prime-server", Some(_)) => {
+        ("config", Some(_)) => {
+            let (config, path) = Config::must_read();
+            println!("Arhiv config {}:", path);
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&config).expect("must be able to serialize config")
+            );
+        }
+        ("server", Some(_)) => {
             let arhiv = Arc::new(Arhiv::must_open());
             if !arhiv
                 .get_status()

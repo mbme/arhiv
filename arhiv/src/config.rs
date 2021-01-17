@@ -1,11 +1,12 @@
 use anyhow::*;
 use rs_utils::find_config_file;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Config {
+    #[serde(rename_all = "camelCase")]
     Prime {
         arhiv_id: String,
         arhiv_root: String,
@@ -13,6 +14,8 @@ pub enum Config {
         #[serde(default = "default_server_port")]
         server_port: u16,
     },
+
+    #[serde(rename_all = "camelCase")]
     Replica {
         arhiv_id: String,
         arhiv_root: String,
@@ -26,16 +29,18 @@ fn default_server_port() -> u16 {
 }
 
 impl Config {
-    pub fn read() -> Result<Config> {
+    pub fn read() -> Result<(Config, String)> {
         let path = find_config_file("arhiv.json")?;
         log::debug!("Found Arhiv config at {}", &path);
 
         let data = fs::read_to_string(&path)?;
 
-        serde_json::from_str(&data).context("Failed to parse config json")
+        let config = serde_json::from_str(&data).context("Failed to parse config json")?;
+
+        Ok((config, path))
     }
 
-    pub fn must_read() -> Config {
+    pub fn must_read() -> (Config, String) {
         Config::read().expect("must be able to read arhiv config")
     }
 

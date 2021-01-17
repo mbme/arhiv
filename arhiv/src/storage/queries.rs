@@ -3,8 +3,8 @@ use super::{query_params::*, settings::DbSettings};
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::fuzzy_match;
-use rusqlite::functions::FunctionFlags;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
+use rusqlite::{functions::FunctionFlags, NO_PARAMS};
 use rusqlite::{params, Connection};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -53,24 +53,11 @@ pub trait Queries {
                 "SELECT
                     IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
                     IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
-                FROM documents WHERE type != ?1",
-                params![ATTACHMENT_TYPE],
+                FROM documents",
+                NO_PARAMS,
                 |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
             )
             .context("Failed to count documents")
-    }
-
-    fn count_attachments(&self) -> Result<(u32, u32)> {
-        self.get_connection()
-            .query_row(
-                "SELECT
-                    IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
-                    IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
-                FROM documents WHERE type = ?1",
-                params![ATTACHMENT_TYPE],
-                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
-            )
-            .context("Failed to count attachments")
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {

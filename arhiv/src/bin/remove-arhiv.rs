@@ -5,7 +5,7 @@ use std::fs;
 fn main() {
     env_logger::init();
 
-    let config = Config::must_read();
+    let config = Config::must_read().0;
 
     if dir_exists(config.get_root_dir()).unwrap() {
         fs::remove_dir_all(config.get_root_dir()).expect("must be able to remove arhiv");

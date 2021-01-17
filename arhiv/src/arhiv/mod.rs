@@ -21,7 +21,7 @@ pub struct Arhiv {
 
 impl Arhiv {
     pub fn must_open() -> Arhiv {
-        Arhiv::open(Config::must_read()).expect("must be able to open arhiv")
+        Arhiv::open(Config::must_read().0).expect("must be able to open arhiv")
     }
 
     pub fn open(config: Config) -> Result<Arhiv> {
@@ -115,7 +115,6 @@ impl Arhiv {
         let rev = conn.get_rev()?;
         let arhiv_id = conn.get_arhiv_id()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
-        let (committed_attachments, staged_attachments) = conn.count_attachments()?;
         let is_prime = conn.is_prime()?;
 
         Ok(Status {
@@ -125,8 +124,6 @@ impl Arhiv {
             is_prime,
             committed_documents,
             staged_documents,
-            committed_attachments,
-            staged_attachments,
         })
     }
 

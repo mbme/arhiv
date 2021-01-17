@@ -11,6 +11,9 @@ export const globalStyles = `
       "Segoe UI", Roboto, Oxygen, /* Windows, Android, KDE */
       Ubuntu, Cantarell, "Fira Sans", /* Ubuntu, Gnome, Firefox OS */
       "Droid Sans", "Helvetica Neue", sans-serif; /* Old Android */
+
+  --font-family-serif: serif;
+
   --font-family-mono: SFMono-Regular,
       Menlo,
       Monaco,
@@ -127,6 +130,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   margin-bottom: ${theme.spacing.medium};
   color: var(--color-heading);
+  font-family: var(--font-family-serif);
 }
 
 /* Reset margins on paragraphs */

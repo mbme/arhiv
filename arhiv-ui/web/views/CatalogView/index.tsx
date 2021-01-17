@@ -10,14 +10,17 @@ interface IProps {
 export function CatalogView({ documentType }: IProps) {
   const router = RouterContext.use()
 
-  const { mandatoryFields } = useDataDescription(documentType)
+  const {
+    mandatoryFields,
+    uiOptions,
+  } = useDataDescription(documentType)
 
   useActions(() => [
     {
       onClick: () => router.push('/'),
       children: 'Close',
     },
-    mandatoryFields.length === 0 ? {
+    (mandatoryFields.length === 0 && !uiOptions.catalog.skipAddDocumentAction) ? {
       onClick: () => router.push(`/documents/${documentType}/new`),
       children: `Add ${documentType}`,
     } : undefined,

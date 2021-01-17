@@ -6,6 +6,7 @@ export interface IUIOptions {
     pageSize?: number
     order: OrderBy[]
     groupByField?: string
+    skipAddDocumentAction?: boolean
   }
 
   catalogEntry: {
@@ -19,6 +20,7 @@ const DEFAULT_UI_OPTIONS: IUIOptions = {
     pageSize: 12,
     order: [{ UpdatedAt: { asc: false } }],
     groupByField: undefined,
+    skipAddDocumentAction: undefined,
   },
 
   catalogEntry: {
@@ -68,6 +70,12 @@ UI_OVERRIDES['task'] = {
     showModificationDate: false,
     showDataFields: ['complexity', 'status'],
   }
+}
+
+UI_OVERRIDES['attachment'] = {
+  catalog: {
+    skipAddDocumentAction: true,
+  },
 }
 
 export function getUIOptions(documentType: string): IUIOptions {

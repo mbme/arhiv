@@ -67,6 +67,14 @@ async fn main() {
                 status.root_dir,
             );
             println!(
+                "  Last update time: {}",
+                if status.last_update_time == chrono::MIN_DATETIME {
+                    "NEVER".to_string()
+                } else {
+                    status.last_update_time.to_string()
+                }
+            );
+            println!(
                 "  Documents: {} committed, {} staged",
                 status.committed_documents, status.staged_documents
             );

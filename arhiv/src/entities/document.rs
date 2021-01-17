@@ -8,6 +8,8 @@ use std::fmt;
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
 
+pub type Timestamp = DateTime<Utc>;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Document {

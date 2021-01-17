@@ -141,6 +141,8 @@ impl Arhiv {
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
         log::debug!("sync_remotely: starting {}", &changeset);
 
+        let last_update_time = self.storage.get_connection()?.get_last_update_time()?;
+
         // TODO parallel file upload
         for attachment in changeset
             .documents
@@ -183,13 +185,24 @@ impl Arhiv {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
+        let arhiv_id = tx.get_arhiv_id()?;
         let rev = tx.get_rev()?;
 
+        ensure!(
+            response.arhiv_id == arhiv_id,
+            "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
+            response.arhiv_id,
+            arhiv_id,
+        );
         ensure!(
             response.base_rev == rev,
             "base_rev {} isn't equal to current rev {}",
             response.base_rev,
             rev,
+        );
+        ensure!(
+            last_update_time == tx.get_last_update_time()?,
+            "last_update_time must not change",
         );
 
         let mut fs_tx = FsTransaction::new();

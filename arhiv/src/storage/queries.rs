@@ -5,7 +5,7 @@ use anyhow::*;
 use rs_utils::fuzzy_match;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{functions::FunctionFlags, NO_PARAMS};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -58,6 +58,20 @@ pub trait Queries {
                 |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
             )
             .context("Failed to count documents")
+    }
+
+    fn get_last_update_time(&self) -> Result<Timestamp> {
+        let result: Option<Timestamp> = self
+            .get_connection()
+            .query_row(
+                "SELECT updated_at FROM documents ORDER BY updated_at DESC LIMIT 1",
+                NO_PARAMS,
+                |row| Ok(row.get_unwrap(0)),
+            )
+            .optional()
+            .context("Failed to get last update time")?;
+
+        Ok(result.unwrap_or(chrono::MIN_DATETIME))
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {

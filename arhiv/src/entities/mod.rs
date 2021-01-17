@@ -8,6 +8,6 @@ mod revision;
 pub use attachment_source::AttachmentSource;
 pub use changeset::Changeset;
 pub use changeset_response::ChangesetResponse;
-pub use document::{Document, ATTACHMENT_TYPE};
+pub use document::{Document, Timestamp, ATTACHMENT_TYPE};
 pub use id::Id;
 pub use revision::Revision;

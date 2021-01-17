@@ -116,12 +116,14 @@ impl Arhiv {
         let arhiv_id = conn.get_arhiv_id()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
         let is_prime = conn.is_prime()?;
+        let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {
             arhiv_id,
             root_dir,
             rev,
             is_prime,
+            last_update_time,
             committed_documents,
             staged_documents,
         })

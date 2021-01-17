@@ -12,7 +12,7 @@ export const globalStyles = `
       Ubuntu, Cantarell, "Fira Sans", /* Ubuntu, Gnome, Firefox OS */
       "Droid Sans", "Helvetica Neue", sans-serif; /* Old Android */
 
-  --font-family-serif: serif;
+  --font-family-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
   --font-family-mono: SFMono-Regular,
       Menlo,

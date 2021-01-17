@@ -24,14 +24,17 @@ async fn main() {
         AppSource::JSFile(format!("{}/dist/bundle.js", env!("CARGO_MANIFEST_DIR")))
     };
 
-    AppShellBuilder::create("v.arhiv.ui")
+    let app_future = AppShellBuilder::create("v.arhiv.ui")
         .with_title("Arhiv UI")
         .with_js_variable(
             "DATA_SCHEMA",
             serde_json::to_value(arhiv.schema.clone()).expect("must be able to convert to value"),
         )
-        .start(src, handler)
-        .await;
+        .start(src, handler);
+
+    let (_, sync_result) = tokio::join!(app_future, arhiv.sync());
+
+    sync_result.expect("sync must work");
 }
 
 #[derive(Serialize, Deserialize)]

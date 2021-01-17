@@ -1,6 +1,5 @@
 use super::Arhiv;
 use crate::entities::*;
-use crate::storage::Queries;
 use anyhow::*;
 use rs_utils::read_file_as_stream;
 use std::fs;
@@ -202,34 +201,56 @@ async fn get_attachment_data_handler(
         .expect("must be able to construct response"))
 }
 
-impl Arhiv {
-    fn exchange(&self, changeset: Changeset) -> Result<ChangesetResponse> {
-        let (_, staged) = self.storage.get_connection()?.count_documents()?;
-        ensure!(staged == 0, "can't exchange: there are staged changes",);
-
-        let base_rev = changeset.base_rev.clone();
-
-        self.apply_changeset(changeset)?;
-
-        self.generate_changeset_response(base_rev)
-    }
-}
-
 fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp::Reply {
     log::info!("Processing changeset {}", &changeset);
 
-    let result = arhiv.exchange(changeset);
+    match arhiv.has_staged_changes() {
+        Ok(false) => {}
+        Ok(true) => {
+            log::error!("Rejecting changeset as arhiv has staged changes");
 
-    match result {
-        Ok(changeset_response) => reply::json(&changeset_response).into_response(),
+            return reply::with_status(
+                "arhiv prime has staged changes",
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+            .into_response();
+        }
+        Err(err) => {
+            log::error!("Failed to check for staged changes: {:?}", err);
+
+            return reply::with_status(
+                format!("Failed to check for staged changes: {:?}", err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            )
+            .into_response();
+        }
+    };
+
+    let base_rev = changeset.base_rev.clone();
+
+    if let Err(err) = arhiv.apply_changeset(changeset) {
+        log::error!("Failed to apply a changeset: {:?}", err);
+
+        return reply::with_status(
+            format!("failed to apply a changeset: {:?}", err),
+            http::StatusCode::INTERNAL_SERVER_ERROR,
+        )
+        .into_response();
+    }
+
+    match arhiv.generate_changeset_response(base_rev) {
+        Ok(changeset_response) => {
+            log::info!("Generated {}", &changeset_response);
+            return reply::json(&changeset_response).into_response();
+        }
         err => {
-            log::error!("Failed to apply a changeset: {:?}", err);
+            log::error!("Failed to generate a changeset response: {:?}", err);
 
-            reply::with_status(
+            return reply::with_status(
                 format!("failed to apply a changeset: {:?}", err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
-            .into_response()
+            .into_response();
         }
-    }
+    };
 }

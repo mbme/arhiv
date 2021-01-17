@@ -127,6 +127,12 @@ impl Arhiv {
         })
     }
 
+    pub fn has_staged_changes(&self) -> Result<bool> {
+        let (_, staged_documents) = self.storage.get_connection()?.count_documents()?;
+
+        Ok(staged_documents > 0)
+    }
+
     pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let conn = self.storage.get_connection()?;
 

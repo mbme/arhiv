@@ -1,10 +1,10 @@
 import * as React from 'react'
 import {
-  Label,
   Box,
 } from '@v/web-platform'
 import { ChronoFormatter } from '@v/chrono'
 import { IDocument } from '../../api'
+import { MetaField, Ref } from '../../parts'
 
 const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm')
 
@@ -12,39 +12,40 @@ interface IProps {
   document: IDocument
 }
 
-// FIXME render refs and attachment refs
 export function Metadata({ document }: IProps) {
   return (
     <>
-      <Box mb="medium">
-        <Label>id</Label>
+      <MetaField title="id">
         {document.id}
-      </Box>
+      </MetaField>
 
-      <Box mb="medium">
-        <Label>type</Label>
+      <MetaField title="type">
         {document.documentType}
-      </Box>
+      </MetaField>
 
-      <Box mb="medium">
-        <Label>revision</Label>
+      <MetaField title="revision">
         {document.rev}
-      </Box>
+      </MetaField>
 
-      <Box mb="medium">
-        <Label>created at</Label>
+      <MetaField title="created at">
         {dateFormat.format(new Date(document.createdAt))}
-      </Box>
+      </MetaField>
 
-      <Box mb="medium">
-        <Label>update at</Label>
+      <MetaField title="updated at">
         {dateFormat.format(new Date(document.updatedAt))}
-      </Box>
+      </MetaField>
 
-      <Box mb="medium">
-        <Label>archived</Label>
+      <MetaField title="archived">
         {document.archived.toString()}
-      </Box>
+      </MetaField>
+
+      <MetaField title="refs">
+        {document.refs.map(ref => (
+          <Box key={ref}>
+            <Ref id={ref} />
+          </Box>
+        ))}
+      </MetaField>
     </>
   )
 }

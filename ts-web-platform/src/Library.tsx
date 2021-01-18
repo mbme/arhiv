@@ -11,6 +11,7 @@ import { LinkExamples } from './Link.examples'
 import { StyleExamples } from './core/examples'
 import { ConfirmationDialogExamples } from './Modal/ConfirmationDialog.examples'
 import { HeadingExamples } from './Heading.examples'
+import { CodeBlockExamples } from './CodeBlock.examples'
 
 export function Library() {
   return (
@@ -24,6 +25,8 @@ export function Library() {
       <ButtonExamples />
 
       <LinkExamples />
+
+      <CodeBlockExamples />
 
       <SelectExamples />
 

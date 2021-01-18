@@ -16,26 +16,6 @@ const colors = [
   '--color-bg-overlay',
 ]
 
-const codeExample = `
-#[macro_use] extern crate tramp;
-
-use tramp::{tramp, Rec};
-
-fn factorial(n: u128) -> u128 {
-  fn fac_with_acc(n: u128, acc: u128) -> Rec<u128> {
-    if n > 1 {
-      rec_call!(fac_with_acc(n - 1, acc * n))
-    } else {
-      rec_ret!(acc)
-    }
-  }
-
-  tramp(fac_with_acc(n, 1))
-}
-
-assert_eq!(factorial(5), 120);
-`.trim()
-
 export function StyleExamples() {
   return (
     <Example section title="Theme">
@@ -73,11 +53,8 @@ export function StyleExamples() {
       </Example>
 
       <Example title="Monospace font">
-        <Text
-          mono
-          whiteSpace="pre"
-        >
-          {codeExample}
+        <Text mono>
+          {'fn fac_with_acc(n: u128, acc: u128) -> Rec<u128> { ... }'}
         </Text>
       </Example>
     </Example>

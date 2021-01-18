@@ -1,7 +1,8 @@
-import { Heading } from '@v/web-platform'
 import * as React from 'react'
+import { Heading } from '@v/web-platform'
 import { FieldType, IAttachmentSource } from '../../api'
 import { Markup } from '../Markup'
+import { Ref } from '../Ref'
 
 interface IProps {
   value: any
@@ -24,6 +25,12 @@ export function CardDataField({ value, fieldType, isTitle, newAttachments }: IPr
   if ('MarkupString' in fieldType) {
     return  (
       <Markup value={value} newAttachments={newAttachments} />
+    )
+  }
+
+  if ('Ref' in fieldType) {
+    return (
+      <Ref id={value} />
     )
   }
 

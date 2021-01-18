@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Box, Heading } from '@v/web-platform'
+import { Box, CodeBlock, Heading } from '@v/web-platform'
 import { prettyPrintJSON } from '@v/utils'
 
 interface IProps {
@@ -10,14 +10,12 @@ export function ErrorBlock({ error }: IProps) {
   return (
     <Box bgColor="red">
       <Heading variant="2">
-        We've got a problem
+        We've got a problem:
       </Heading>
 
-      <pre>
-        <code>
-          {prettyPrintJSON(error)}
-        </code>
-      </pre>
+      <CodeBlock>
+        {prettyPrintJSON(error)}
+      </CodeBlock>
     </Box>
   )
 }

@@ -19,6 +19,7 @@ import {
 } from './views/CardEditorView'
 import { MetadataView } from './views/MetadataView'
 import { DashboardView } from './views/DashboardView'
+import { StatusView } from './views/StatusView'
 
 export function App() {
   const [dataManager] = React.useState(() => new DataManager(SCHEMA))
@@ -35,6 +36,11 @@ export function App() {
                 pm`/`,
                 () => <DashboardView />
               ], // TODO status board
+
+              [
+                pm`/status`,
+                () => <StatusView />,
+              ],
 
               [
                 pm`/catalog/${'documentType'}`,

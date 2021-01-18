@@ -125,6 +125,12 @@ impl ActionHandler for Handler {
             return Ok(serde_json::to_value(&attachment_location)?);
         }
 
+        if action == "get_status" {
+            let status = self.arhiv.get_status()?;
+
+            return Ok(serde_json::to_value(&status)?);
+        }
+
         if action == "pick_attachments" {
             let files = context.pick_files(true);
 

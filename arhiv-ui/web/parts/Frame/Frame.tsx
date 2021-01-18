@@ -76,9 +76,9 @@ export function Frame({ children }: IProps) {
             flex="0 0 1rem"
           />
 
-          <span>
-            Stats
-          </span>
+          <Link to="/status" clean>
+            Status
+          </Link>
 
           <Spacer />
 

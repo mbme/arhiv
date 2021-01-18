@@ -11,6 +11,7 @@ import {
   IPutDocumentArgs,
   IDataSchema,
   IRenderMarkupArgs,
+  IStatus,
 } from './types'
 
 interface IRPC {
@@ -25,6 +26,9 @@ interface IRPC {
   render_markup(args: IRenderMarkupArgs): Promise<string>
 
   get_attachment_location(id: string): Promise<AttachmentLocation>
+
+  get_status(): Promise<IStatus>
+
   pick_attachments(): Promise<IAttachmentSource[]>
 }
 

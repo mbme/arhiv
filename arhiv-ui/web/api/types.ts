@@ -92,3 +92,14 @@ export interface IRenderMarkupArgs {
     readonly documentPath: string
   }
 }
+
+export interface IStatus {
+  readonly arhivId: string,
+  readonly rootDir: string,
+  readonly isPrime: boolean,
+  readonly rev: number,
+  readonly lastUpdateTime: string,
+  readonly debugMode: boolean,
+  readonly committedDocuments: number,
+  readonly stagedDocuments: number,
+}

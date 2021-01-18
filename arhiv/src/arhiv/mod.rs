@@ -109,9 +109,11 @@ impl Arhiv {
     }
 
     pub fn get_status(&self) -> Result<Status> {
+        let root_dir = self.get_root_dir().to_string();
+        let debug_mode = cfg!(not(feature = "production-mode"));
+
         let conn = self.storage.get_connection()?;
 
-        let root_dir = self.get_root_dir().to_string();
         let rev = conn.get_rev()?;
         let arhiv_id = conn.get_arhiv_id()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
@@ -123,6 +125,7 @@ impl Arhiv {
             root_dir,
             rev,
             is_prime,
+            debug_mode,
             last_update_time,
             committed_documents,
             staged_documents,

@@ -32,9 +32,13 @@ async fn main() {
         )
         .start(src, handler);
 
-    let (_, sync_result) = tokio::join!(app_future, arhiv.sync());
+    let sync_future = async {
+        if let Err(err) = arhiv.sync().await {
+            log::warn!("initial sync failed: {}", err);
+        }
+    };
 
-    sync_result.expect("sync must work");
+    tokio::join!(sync_future, app_future);
 }
 
 #[derive(Serialize, Deserialize)]

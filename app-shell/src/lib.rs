@@ -20,6 +20,7 @@ impl AppShellBuilder {
             log::info!("source: {}", src);
             self.serve(src, handler).await;
         } else {
+            log::info!("Starting app shell");
             self.load(src, handler);
         }
     }

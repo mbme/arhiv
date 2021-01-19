@@ -18,6 +18,12 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         warp::any().map(move || arhiv.clone())
     };
 
+    // GET /status
+    let get_status = warp::get()
+        .and(warp::path("status"))
+        .and(arhiv_filter.clone())
+        .map(get_status_handler);
+
     // POST /attachment-data/:id file bytes
     let post_attachment_data = warp::post()
         .and(warp::path("attachment-data"))
@@ -40,7 +46,8 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         .and(arhiv_filter.clone())
         .map(post_changeset_handler);
 
-    let routes = post_attachment_data
+    let routes = get_status
+        .or(post_attachment_data)
         .or(get_attachment_data)
         .or(post_changeset);
 
@@ -54,7 +61,7 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
             tokio::select! {
                 _ = signal::ctrl_c() => {
-                   log::info!("got Ctrl-C")
+                    log::info!("got Ctrl-C")
                 }
 
                 Ok(_) = shutdown_receiver => {
@@ -69,6 +76,24 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
     log::info!("started server on {}", addr);
 
     (join_handle, shutdown_sender, addr)
+}
+
+fn get_status_handler(arhiv: Arc<Arhiv>) -> impl warp::Reply {
+    log::info!("Get arhiv status");
+
+    let status = match arhiv.get_status() {
+        Ok(status) => status,
+        Err(err) => {
+            log::error!("Failed to get arhiv status: {}", &err);
+
+            return reply::with_status(
+                format!("failed to get arhiv status: {}", err),
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+            );
+        }
+    };
+
+    reply::with_status(status.to_string(), http::StatusCode::OK)
 }
 
 fn post_attachment_data_handler(

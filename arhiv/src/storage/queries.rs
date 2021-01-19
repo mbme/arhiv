@@ -321,16 +321,17 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn put_document_history(&self, document: &Document) -> Result<()> {
+    fn put_document_history(&self, document: &Document, base_rev: &Revision) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, type, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, base_rev, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
+            base_rev,
             document.document_type,
             document.created_at,
             document.updated_at,

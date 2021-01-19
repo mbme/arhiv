@@ -48,10 +48,10 @@ impl Arhiv {
         let mut fs_tx = FsTransaction::new();
 
         for mut document in changeset.documents {
-            // FIXME merge documents
             document.rev = new_rev.clone();
+
             tx.put_document(&document)?;
-            tx.put_document_history(&document)?;
+            tx.put_document_history(&document, &changeset.base_rev)?;
 
             if document.is_attachment() {
                 let attachment_data = self.get_attachment_data(&document.id);

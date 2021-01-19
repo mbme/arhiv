@@ -94,12 +94,16 @@ export interface IRenderMarkupArgs {
 }
 
 export interface IStatus {
-  readonly arhivId: string,
-  readonly rootDir: string,
-  readonly isPrime: boolean,
-  readonly rev: number,
-  readonly lastUpdateTime: string,
-  readonly debugMode: boolean,
-  readonly committedDocuments: number,
-  readonly stagedDocuments: number,
+  readonly db_status: {
+    readonly arhiv_id: string,
+    readonly is_prime: boolean,
+    readonly schema_version: number,
+    readonly db_rev: number,
+    readonly last_sync_time: number,
+  },
+  readonly root_dir: string,
+  readonly last_update_time: string,
+  readonly debug_mode: boolean,
+  readonly committed_documents: number,
+  readonly staged_documents: number,
 }

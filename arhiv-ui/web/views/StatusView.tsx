@@ -15,37 +15,41 @@ export function StatusView() {
 
       <Box>
         <MetaField title="arhiv id">
-          {status?.arhivId}
+          {status?.db_status.arhiv_id}
         </MetaField>
 
         <MetaField title="is prime">
-          {status?.isPrime.toString()}
+          {status?.db_status.is_prime.toString()}
         </MetaField>
 
-        {status?.isPrime && (
+        {status?.db_status.is_prime && (
           <MetaField title="root dir">
-            {status.rootDir}
+            {status.root_dir}
           </MetaField>
         )}
 
         <MetaField title="rev">
-          {status?.rev}
+          {status?.db_status.db_rev}
         </MetaField>
 
         <MetaField title="committed documents">
-          {status?.committedDocuments}
+          {status?.committed_documents}
         </MetaField>
 
         <MetaField title="staged documents">
-          {status?.stagedDocuments}
+          {status?.staged_documents}
         </MetaField>
 
         <MetaField title="last update time">
-          {status?.lastUpdateTime}
+          {status?.last_update_time}
+        </MetaField>
+
+        <MetaField title="last sync time">
+          {status?.db_status.last_sync_time}
         </MetaField>
 
         <MetaField title="debug mode">
-          {status?.debugMode.toString()}
+          {status?.debug_mode.toString()}
         </MetaField>
       </Box>
     </>

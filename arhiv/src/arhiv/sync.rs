@@ -19,21 +19,19 @@ impl Arhiv {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
-        let rev = tx.get_rev()?;
+        let db_status = tx.get_db_status()?;
 
         ensure!(
-            changeset.base_rev <= rev,
+            changeset.base_rev <= db_status.db_rev,
             "base_rev {} is greater than prime rev {}",
             changeset.base_rev,
-            rev
+            db_status.db_rev,
         );
 
-        let schema_version = tx.get_schema_version()?;
-
         ensure!(
-            schema_version == changeset.schema_version,
+            db_status.schema_version == changeset.schema_version,
             "db schema version {} is different from changeset version {}",
-            schema_version,
+            db_status.schema_version,
             changeset.schema_version,
         );
 
@@ -42,8 +40,12 @@ impl Arhiv {
             return Ok(());
         }
 
-        let new_rev = rev.inc();
-        log::debug!("current rev is {}, new rev is {}", rev, new_rev);
+        let new_rev = db_status.db_rev.inc();
+        log::debug!(
+            "current rev is {}, new rev is {}",
+            db_status.db_rev,
+            new_rev
+        );
 
         let mut fs_tx = FsTransaction::new();
 
@@ -76,7 +78,11 @@ impl Arhiv {
             }
         }
 
-        tx.set_setting(DbSettings::DbRevision, new_rev.to_string())?;
+        tx.put_db_status(DbStatus {
+            db_rev: new_rev,
+            last_sync_time: chrono::Utc::now(),
+            ..db_status
+        })?;
 
         tx.commit()?;
         fs_tx.commit();
@@ -94,9 +100,11 @@ impl Arhiv {
         let next_rev = base_rev.inc();
         let documents = conn.get_documents_since(&next_rev)?;
 
+        let db_status = conn.get_db_status()?;
+
         Ok(ChangesetResponse {
-            arhiv_id: conn.get_arhiv_id()?,
-            latest_rev: conn.get_rev()?,
+            arhiv_id: db_status.arhiv_id,
+            latest_rev: db_status.db_rev,
             base_rev,
             documents,
         })
@@ -104,33 +112,34 @@ impl Arhiv {
 
     pub async fn sync(&self) -> Result<()> {
         let conn = self.storage.get_connection()?;
-        let is_prime = conn.is_prime()?;
+
+        let db_status = conn.get_db_status()?;
 
         log::info!(
             "Initiating {} sync",
-            if is_prime { "local" } else { "remote" }
+            if db_status.is_prime {
+                "local"
+            } else {
+                "remote"
+            }
         );
 
         let changeset = Changeset {
             arhiv_id: self.config.get_arhiv_id().to_string(),
-            schema_version: conn.get_schema_version()?,
-            base_rev: conn.get_rev()?,
+            schema_version: db_status.schema_version.clone(),
+            base_rev: db_status.db_rev.clone(),
             documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
         };
         log::debug!("prepared a changeset {}", changeset);
 
-        let result = if is_prime {
+        let result = if db_status.is_prime {
             self.sync_locally(changeset)
         } else {
             self.sync_remotely(changeset).await
         };
 
         if let Err(ref err) = result {
-            log::error!(
-                "sync failed on {}: {}",
-                if is_prime { "prime" } else { "replica" },
-                err
-            );
+            log::error!("sync failed on {}: {}", db_status.get_prime_status(), err);
         } else {
             log::info!("sync succeeded");
         }
@@ -194,20 +203,19 @@ impl Arhiv {
         let mut conn = self.storage.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
-        let arhiv_id = tx.get_arhiv_id()?;
-        let rev = tx.get_rev()?;
+        let db_status = tx.get_db_status()?;
 
         ensure!(
-            response.arhiv_id == arhiv_id,
+            response.arhiv_id == db_status.arhiv_id,
             "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
             response.arhiv_id,
-            arhiv_id,
+            db_status.arhiv_id,
         );
         ensure!(
-            response.base_rev == rev,
+            response.base_rev == db_status.db_rev,
             "base_rev {} isn't equal to current rev {}",
             response.base_rev,
-            rev,
+            db_status.db_rev,
         );
         ensure!(
             last_update_time == tx.get_last_update_time()?,
@@ -230,10 +238,17 @@ impl Arhiv {
             }
         }
 
-        tx.set_setting(DbSettings::DbRevision, response.latest_rev.to_string())?;
+        tx.put_db_status(DbStatus {
+            db_rev: response.latest_rev,
+            last_sync_time: chrono::Utc::now(),
+            ..db_status
+        })?;
 
         // make sure there are no more staged documents
-        assert_eq!(tx.count_documents()?.1, 0);
+        ensure!(
+            tx.count_documents()?.1 == 0,
+            "There are staged documents after remote sync"
+        );
 
         fs_tx.commit();
         tx.commit()?;

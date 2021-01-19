@@ -1,17 +1,15 @@
 use serde::Serialize;
 use std::fmt;
 
-use crate::entities::{Revision, Timestamp};
+use crate::{entities::Timestamp, storage::DbStatus};
 
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Status {
-    pub arhiv_id: String,
-    pub root_dir: String,
-    pub is_prime: bool,
-    pub rev: Revision,
+    pub db_status: DbStatus,
+
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
+    pub root_dir: String,
 
     pub committed_documents: u32,
     pub staged_documents: u32,
@@ -22,9 +20,9 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "Arhiv {}/{} (rev {}) on {}",
-            self.arhiv_id,
-            if self.is_prime { "prime" } else { "replica" },
-            self.rev,
+            self.db_status.arhiv_id,
+            self.db_status.get_prime_status(),
+            self.db_status.db_rev,
             self.root_dir,
         )?;
 
@@ -35,6 +33,15 @@ impl fmt::Display for Status {
                 "NEVER".to_string()
             } else {
                 self.last_update_time.to_string()
+            }
+        )?;
+        writeln!(
+            f,
+            "  Last sync time: {}",
+            if self.db_status.last_sync_time == chrono::MIN_DATETIME {
+                "NEVER".to_string()
+            } else {
+                self.db_status.last_sync_time.to_string()
             }
         )?;
         writeln!(

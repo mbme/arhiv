@@ -8,7 +8,7 @@ use path_manager::PathManager;
 pub use queries::*;
 pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
-pub use settings::DbSettings;
+pub use settings::*;
 
 mod attachment_data;
 mod connection;

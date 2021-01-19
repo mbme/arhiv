@@ -34,26 +34,24 @@ impl Arhiv {
         {
             let conn = storage.get_connection()?;
 
-            let schema_version = conn.get_schema_version()?;
-            let arhiv_id = conn.get_arhiv_id()?;
-            let is_prime = conn.is_prime()?;
+            let db_status = conn.get_db_status()?;
 
             ensure!(
-                schema_version == schema.version,
+                db_status.schema_version == schema.version,
                 "db version {} is different from app version {}",
-                schema_version,
+                db_status.schema_version,
                 schema.version
             );
             ensure!(
-                arhiv_id == config.get_arhiv_id(),
+                db_status.arhiv_id == config.get_arhiv_id(),
                 "db arhiv_id {} is different from config.arhiv_id {}",
-                arhiv_id,
+                db_status.arhiv_id,
                 config.get_arhiv_id(),
             );
             ensure!(
-                is_prime == config.is_prime(),
+                db_status.is_prime == config.is_prime(),
                 "db is_prime {} is different from config {}",
-                is_prime,
+                db_status.is_prime,
                 config.is_prime(),
             );
         }
@@ -88,10 +86,13 @@ impl Arhiv {
         let tx = conn.get_tx()?;
 
         // initial settings
-        tx.set_setting(DbSettings::ArhivId, config.get_arhiv_id().to_string())?;
-        tx.set_setting(DbSettings::IsPrime, config.is_prime().to_string())?;
-        tx.set_setting(DbSettings::DbRevision, 0.to_string())?;
-        tx.set_setting(DbSettings::SchemaVersion, schema.version.to_string())?;
+        tx.put_db_status(DbStatus {
+            arhiv_id: config.get_arhiv_id().to_string(),
+            is_prime: config.is_prime(),
+            db_rev: 0.into(),
+            schema_version: schema.version,
+            last_sync_time: chrono::MIN_DATETIME,
+        })?;
 
         tx.commit()?;
 
@@ -114,19 +115,15 @@ impl Arhiv {
 
         let conn = self.storage.get_connection()?;
 
-        let rev = conn.get_rev()?;
-        let arhiv_id = conn.get_arhiv_id()?;
+        let db_status = conn.get_db_status()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
-        let is_prime = conn.is_prime()?;
         let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {
-            arhiv_id,
-            root_dir,
-            rev,
-            is_prime,
-            debug_mode,
+            db_status,
             last_update_time,
+            debug_mode,
+            root_dir,
             committed_documents,
             staged_documents,
         })

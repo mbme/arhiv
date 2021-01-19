@@ -1,5 +1,5 @@
-use super::utils;
-use super::{query_params::*, settings::DbSettings};
+use super::query_params::*;
+use super::{utils, DbStatus};
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::fuzzy_match;
@@ -9,42 +9,23 @@ use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
 use std::rc::Rc;
 
+const DB_STATUS_KEY: &'static str = "status";
+
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
-    fn get_setting(&self, setting: DbSettings) -> Result<String> {
+    fn get_db_status(&self) -> Result<DbStatus> {
         self.get_connection()
             .query_row(
-                "SELECT value FROM settings WHERE key=?",
-                params![setting.to_string()],
-                |row| row.get(0),
+                "SELECT value FROM settings WHERE key = ?1",
+                params![DB_STATUS_KEY],
+                |row| {
+                    let value: String = row.get_unwrap(0);
+
+                    Ok(serde_json::from_str(&value).expect("must parse DbStatus"))
+                },
             )
-            .context("failed to get setting")
-    }
-
-    fn get_schema_version(&self) -> Result<u8> {
-        self.get_setting(DbSettings::SchemaVersion)?
-            .parse()
-            .context("failed to parse schema version")
-    }
-
-    fn is_prime(&self) -> Result<bool> {
-        self.get_setting(DbSettings::IsPrime)
-            .map(|value| value == "true")
-    }
-
-    fn get_rev(&self) -> Result<Revision> {
-        let value = self.get_setting(DbSettings::DbRevision)?;
-
-        let value: u32 = value.parse().expect("db_revision must be a number");
-
-        Ok(value.into())
-    }
-
-    fn get_arhiv_id(&self) -> Result<String> {
-        let value = self.get_setting(DbSettings::ArhivId)?;
-
-        Ok(value)
+            .context("failed to read DbStatus")
     }
 
     fn count_documents(&self) -> Result<(u32, u32)> {
@@ -62,7 +43,7 @@ pub trait Queries {
 
     fn get_last_update_time(&self) -> Result<Timestamp> {
         let result: Option<Timestamp> = self
-            .get_connection()
+            .get_connection() // FIXME check if this ordering actually works
             .query_row(
                 "SELECT updated_at FROM documents ORDER BY updated_at DESC LIMIT 1",
                 NO_PARAMS,
@@ -288,13 +269,13 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn set_setting(&self, setting: DbSettings, value: String) -> Result<()> {
+    fn put_db_status(&self, status: DbStatus) -> Result<()> {
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                params![setting.to_string(), value],
+                params![DB_STATUS_KEY, serde_json::to_string(&status)?],
             )
-            .context("failed to set setting")?;
+            .context("failed to save DbStatus")?;
 
         Ok(())
     }

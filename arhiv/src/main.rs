@@ -75,6 +75,7 @@ async fn main() {
             if !arhiv
                 .get_status()
                 .expect("must be able to get status")
+                .db_status
                 .is_prime
             {
                 panic!("server must be started on prime instance");

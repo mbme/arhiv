@@ -3,7 +3,7 @@ use crate::entities::*;
 use crate::storage::*;
 use anyhow::*;
 use reqwest::Client;
-use rs_utils::{ensure_file_exists, read_file_as_stream, FsTransaction};
+use rs_utils::{ensure_file_exists, get_file_hash_sha256, read_file_as_stream, FsTransaction};
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
@@ -58,6 +58,15 @@ impl Arhiv {
                 let file_path = attachment_data.get_staged_file_path();
                 ensure_file_exists(&file_path)
                     .context(anyhow!("Attachment data for {} is missing", &document.id))?;
+
+                // double-check file integrity
+                let expected_hash = self.schema.get_field_string(&document, "hash")?;
+                let hash = get_file_hash_sha256(&file_path)?;
+                ensure!(
+                    hash == expected_hash,
+                    "Attachment {} data is corrupted: hash doesn't match",
+                    &document.id
+                );
 
                 // save attachment file
                 fs_tx.move_file(

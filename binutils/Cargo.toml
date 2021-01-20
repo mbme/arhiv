@@ -4,11 +4,11 @@ version = "0.3.0"
 edition = "2018"
 
 [dependencies]
-log = "0.4.11"
+log = "0.4.13"
 env_logger = "0.8.2"
-anyhow = "1.0.36"
+anyhow = "1.0.38"
 clap = { version = "2.33.3", features = ["color"] }
-regex = "1.4.2"
+regex = "1.4.3"
 lazy_static = "1.4.0"
 
 rs-utils = { path = "../rs-utils" }

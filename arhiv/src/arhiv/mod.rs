@@ -5,18 +5,16 @@ use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
 use serde::{Deserialize, Serialize};
-pub use server::start_server;
 use status::Status;
 use std::sync::Arc;
 
-mod server;
 mod status;
 mod sync;
 
 pub struct Arhiv {
     pub schema: DataSchema,
     storage: Storage,
-    config: Arc<Config>,
+    pub config: Arc<Config>,
 }
 
 impl Arhiv {

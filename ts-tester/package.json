@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "esbuild": "^0.8.31",
-    "esbuild-register": "^1.2.1"
+    "esbuild-register": "^2.0.0"
   }
 }

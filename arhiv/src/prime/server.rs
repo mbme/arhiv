@@ -105,10 +105,7 @@ fn post_attachment_data_handler(
 
     log::info!("Saving data for attachment {}", &id);
 
-    let dst = arhiv
-        .storage
-        .get_attachment_data(id.clone())
-        .get_staged_file_path();
+    let dst = arhiv.data_service.get_staged_file_path(&id);
 
     if Path::new(&dst).exists() {
         log::error!("temp attachment data {} already exists", dst);
@@ -174,10 +171,7 @@ async fn get_attachment_data_handler(
         }
     };
 
-    let path = arhiv
-        .storage
-        .get_attachment_data(id.clone())
-        .get_committed_file_path();
+    let path = arhiv.data_service.get_committed_file_path(&id);
     if !Path::new(&path).exists() {
         log::warn!("Requested attachment data {} is not found", &id);
 

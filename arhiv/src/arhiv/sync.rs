@@ -55,17 +55,15 @@ impl Arhiv {
             tx.put_document_history(&document, &changeset.base_rev)?;
 
             if document.is_attachment() {
-                let attachment_data = self.storage.get_attachment_data(document.id.clone());
-
                 ensure!(
-                    attachment_data.staged_file_exists()?,
+                    self.data_service.staged_file_exists(&document.id)?,
                     "Attachment data for {} is missing",
                     &document.id
                 );
 
                 // double-check file integrity
                 let expected_hash = self.schema.get_field_string(&document, "hash")?;
-                let hash = attachment_data.get_staged_file_hash()?;
+                let hash = self.data_service.get_staged_file_hash(&document.id)?;
                 ensure!(
                     hash == expected_hash,
                     "Attachment {} data is corrupted: hash doesn't match",
@@ -74,8 +72,8 @@ impl Arhiv {
 
                 // save attachment file
                 fs_tx.move_file(
-                    attachment_data.get_staged_file_path(),
-                    attachment_data.get_committed_file_path(),
+                    self.data_service.get_staged_file_path(&document.id),
+                    self.data_service.get_committed_file_path(&document.id),
                 )?;
             }
         }
@@ -170,9 +168,9 @@ impl Arhiv {
             .iter()
             .filter(|document| document.is_attachment())
         {
-            let data = self.storage.get_attachment_data(attachment.id.clone());
-
-            network_service.upload_attachment_data(&data).await?;
+            network_service
+                .upload_attachment_data(&attachment.id)
+                .await?;
         }
 
         let response: ChangesetResponse = network_service.send_changeset(&changeset).await?;
@@ -208,11 +206,9 @@ impl Arhiv {
 
             // if we've sent any attachments, move them to committed data directory
             if document.is_attachment() && changeset.contains(&document.id) {
-                let attachment_data = self.storage.get_attachment_data(document.id);
-
                 fs_tx.move_file(
-                    attachment_data.get_staged_file_path(),
-                    attachment_data.get_committed_file_path(),
+                    self.data_service.get_staged_file_path(&document.id),
+                    self.data_service.get_committed_file_path(&document.id),
                 )?;
             }
         }

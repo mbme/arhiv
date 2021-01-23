@@ -38,11 +38,14 @@ async fn test_prime_sync() -> Result<()> {
     );
 
     // Test attachment data
-    let data = arhiv.get_attachment_data(&attachment.id);
+    let data_service = arhiv.get_data_service();
 
-    assert_eq!(data.staged_file_exists()?, false);
-    assert_eq!(data.committed_file_exists()?, true);
-    assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+    assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
+    assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
+    assert_eq!(
+        are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
+        true
+    );
 
     // Test if document is updated correctly
     {
@@ -85,19 +88,25 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test attachment data
     {
-        let data = replica.get_attachment_data(&attachment.id);
+        let data_service = replica.get_data_service();
 
-        assert_eq!(data.staged_file_exists()?, false);
-        assert_eq!(data.committed_file_exists()?, true);
-        assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+        assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
+        assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
+        assert_eq!(
+            are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
+            true
+        );
     }
 
     {
-        let data = prime.get_attachment_data(&attachment.id);
+        let data_service = prime.get_data_service();
 
-        assert_eq!(data.staged_file_exists()?, false);
-        assert_eq!(data.committed_file_exists()?, true);
-        assert_eq!(are_equal_files(src, &data.get_committed_file_path())?, true);
+        assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
+        assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
+        assert_eq!(
+            are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
+            true
+        );
     }
 
     // Test if document is updated correctly

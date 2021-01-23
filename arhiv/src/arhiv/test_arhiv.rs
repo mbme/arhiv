@@ -1,5 +1,4 @@
-use crate::{entities::Id, storage::AttachmentData, Arhiv, Config};
-use anyhow::*;
+use crate::{data_service::DataService, replica::NetworkService, Arhiv, Config};
 use rs_utils::generate_temp_path;
 
 pub struct TestArhiv(Arc<Arhiv>);
@@ -31,16 +30,12 @@ impl TestArhiv {
         self.0.clone()
     }
 
-    pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {
-        self.storage.get_attachment_data(id.clone())
+    pub fn get_data_service(&self) -> &DataService {
+        &self.data_service
     }
 
-    pub async fn download_attachment_data(&self, id: &Id) -> Result<()> {
-        let data = self.storage.get_attachment_data(id.clone());
-
-        self.get_network_service()?
-            .download_attachment_data(&data)
-            .await
+    pub fn get_network_service(&self) -> NetworkService {
+        self.0.get_network_service().unwrap()
     }
 }
 

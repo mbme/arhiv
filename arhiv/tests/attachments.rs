@@ -21,14 +21,14 @@ fn test_attachments() -> Result<()> {
     arhiv.stage_document(document, vec![attachment.clone()])?;
     assert_eq!(
         arhiv
-            .get_attachment_data(&attachment.id)
-            .staged_file_exists()?,
+            .get_data_service()
+            .staged_file_exists(&attachment.id)?,
         true
     );
 
     let dst = &arhiv
-        .get_attachment_data(&attachment.id)
-        .get_staged_file_path();
+        .get_data_service()
+        .get_staged_file_path(&attachment.id);
 
     let page = arhiv.list_documents(Filter {
         matchers: vec![Matcher::Type {
@@ -62,11 +62,14 @@ async fn test_download_attachment() -> Result<()> {
 
     replica.sync().await?;
 
-    replica.download_attachment_data(&attachment.id).await?;
+    replica
+        .get_network_service()
+        .download_attachment_data(&attachment.id)
+        .await?;
 
     let dst = &replica
-        .get_attachment_data(&attachment.id)
-        .get_committed_file_path();
+        .get_data_service()
+        .get_committed_file_path(&attachment.id);
 
     assert_eq!(are_equal_files(src, dst)?, true);
 

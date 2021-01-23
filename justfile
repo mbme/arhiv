@@ -4,10 +4,10 @@
 # vim: set ft=make :
 
 generate-fakes:
-  cd arhiv; cargo run --bin generate-fakes
+  cd arhiv-utils; cargo run --bin generate-fakes
 
 remove-arhiv:
-  cd arhiv; cargo run --bin remove-arhiv
+  cd arhiv-utils; cargo run --bin remove-arhiv
 
 init-arhiv:
   cd arhiv; cargo run --bin arhiv init

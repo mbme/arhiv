@@ -91,6 +91,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "arhiv-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "arhiv",
+ "env_logger",
+ "log",
+ "rs-utils",
+ "tokio",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"

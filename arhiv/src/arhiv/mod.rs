@@ -1,20 +1,20 @@
-use crate::entities::*;
 use crate::storage::*;
+use crate::{client::NetworkService, entities::*};
 use crate::{config::Config, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
 use serde::{Deserialize, Serialize};
 use status::Status;
-use std::sync::Arc;
 
 mod status;
 mod sync;
+pub mod test_arhiv;
 
 pub struct Arhiv {
     pub schema: DataSchema,
-    storage: Storage,
-    pub config: Arc<Config>,
+    pub(crate) storage: Storage,
+    pub(crate) config: Config,
 }
 
 impl Arhiv {
@@ -23,9 +23,7 @@ impl Arhiv {
     }
 
     pub fn open(config: Config) -> Result<Arhiv> {
-        let config = Arc::new(config);
-
-        let storage = Storage::open(config.clone())?;
+        let storage = Storage::open(config.get_root_dir())?;
         let schema = DataSchema::new();
 
         // check if config settings are equal to db settings
@@ -74,9 +72,7 @@ impl Arhiv {
             config.get_root_dir()
         );
 
-        let config = Arc::new(config);
-
-        let storage = Storage::create(config.clone())?;
+        let storage = Storage::create(config.get_root_dir())?;
 
         let schema = DataSchema::new();
 
@@ -103,12 +99,12 @@ impl Arhiv {
         })
     }
 
-    pub fn get_root_dir(&self) -> &str {
-        self.config.get_root_dir()
+    fn get_network_service(&self) -> Result<NetworkService> {
+        Ok(NetworkService::new(self.config.get_prime_url()?))
     }
 
     pub fn get_status(&self) -> Result<Status> {
-        let root_dir = self.get_root_dir().to_string();
+        let root_dir = self.config.get_root_dir().to_string();
         let debug_mode = cfg!(not(feature = "production-mode"));
 
         let conn = self.storage.get_connection()?;
@@ -290,10 +286,6 @@ impl Arhiv {
         })
     }
 
-    pub fn get_attachment_data(&self, id: &Id) -> AttachmentData {
-        self.storage.get_attachment_data(id.clone())
-    }
-
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
         let attachment = self
             .get_document(&id)?
@@ -317,7 +309,9 @@ impl Arhiv {
             return Ok(AttachmentLocation::File(data.get_committed_file_path()));
         }
 
-        Ok(AttachmentLocation::Url(data.get_url()?))
+        let url = self.get_network_service()?.get_attachment_data_url(id);
+
+        Ok(AttachmentLocation::Url(url))
     }
 }
 
@@ -325,12 +319,4 @@ impl Arhiv {
 pub enum AttachmentLocation {
     Url(String),
     File(String),
-}
-
-#[cfg(test)]
-impl Drop for Arhiv {
-    // Remove temporary Arhiv in tests
-    fn drop(&mut self) {
-        std::fs::remove_dir_all(self.get_root_dir()).expect("must be able to remove arhiv");
-    }
 }

@@ -3,7 +3,6 @@ use arhiv::entities::*;
 use arhiv::start_server;
 use rs_utils::project_relpath;
 use serde_json::json;
-use std::sync::Arc;
 pub use utils::*;
 
 mod utils;
@@ -64,8 +63,8 @@ async fn test_prime_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
-    let prime = Arc::new(new_prime());
-    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let prime = new_prime();
+    let (join_handle, shutdown_sender, addr) = start_server(prime.unwrap());
     let replica = new_replica_with_port(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");

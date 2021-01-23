@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use crate::{entities::*, Config};
+use crate::entities::*;
 use anyhow::*;
 pub use attachment_data::AttachmentData;
 pub use connection::*;
@@ -23,8 +21,8 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn open(config: Arc<Config>) -> Result<Storage> {
-        let path_manager = PathManager::new(config);
+    pub fn open<S: Into<String>>(root_dir: S) -> Result<Storage> {
+        let path_manager = PathManager::new(root_dir.into());
 
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
@@ -32,8 +30,8 @@ impl Storage {
         Ok(Storage { path_manager })
     }
 
-    pub fn create(config: Arc<Config>) -> Result<Storage> {
-        let path_manager = PathManager::new(config);
+    pub fn create<S: Into<String>>(root_dir: S) -> Result<Storage> {
+        let path_manager = PathManager::new(root_dir.into());
         path_manager.create_dirs()?;
 
         let mut conn = MutStorageConnection::new(Connection::open(path_manager.get_db_file())?);

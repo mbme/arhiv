@@ -1,7 +1,6 @@
 use anyhow::*;
 use arhiv::{entities::*, start_server, Filter, Matcher};
 use rs_utils::project_relpath;
-use std::sync::Arc;
 pub use utils::*;
 
 mod utils;
@@ -45,7 +44,7 @@ fn test_attachments() -> Result<()> {
 
 #[tokio::test]
 async fn test_download_attachment() -> Result<()> {
-    let prime = Arc::new(new_prime());
+    let prime = new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -58,15 +57,16 @@ async fn test_download_attachment() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let (join_handle, shutdown_sender, addr) = start_server(prime.unwrap());
     let replica = new_replica_with_port(addr.port());
 
     replica.sync().await?;
 
-    let data = replica.get_attachment_data(&attachment.id);
-    data.download_data().await?;
+    replica.download_attachment_data(&attachment.id).await?;
 
-    let dst = &data.get_committed_file_path();
+    let dst = &replica
+        .get_attachment_data(&attachment.id)
+        .get_committed_file_path();
 
     assert_eq!(are_equal_files(src, dst)?, true);
 

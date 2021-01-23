@@ -1,38 +1,17 @@
 use anyhow::*;
-use arhiv::{entities::Document, Arhiv, Config, ListPage};
-use rs_utils::generate_temp_path;
+use arhiv::{entities::Document, ListPage, TestArhiv};
 use std::fs;
 
-fn new_arhiv(prime: bool, server_port: u16) -> Arhiv {
-    let config = {
-        if prime {
-            Config::Prime {
-                arhiv_id: "test_arhiv".to_string(),
-                arhiv_root: generate_temp_path("TempArhiv", ""),
-                server_port,
-            }
-        } else {
-            Config::Replica {
-                arhiv_id: "test_arhiv".to_string(),
-                arhiv_root: generate_temp_path("TempArhiv", ""),
-                prime_url: format!("http://localhost:{}", server_port),
-            }
-        }
-    };
-
-    Arhiv::create(config).expect("must be able to create temp arhiv")
+pub fn new_prime() -> TestArhiv {
+    TestArhiv::new(true, 0)
 }
 
-pub fn new_prime() -> Arhiv {
-    new_arhiv(true, 0)
+pub fn new_replica() -> TestArhiv {
+    TestArhiv::new(false, 0)
 }
 
-pub fn new_replica() -> Arhiv {
-    new_arhiv(false, 0)
-}
-
-pub fn new_replica_with_port(port: u16) -> Arhiv {
-    new_arhiv(false, port)
+pub fn new_replica_with_port(port: u16) -> TestArhiv {
+    TestArhiv::new(false, port)
 }
 
 pub fn empty_document() -> Document {

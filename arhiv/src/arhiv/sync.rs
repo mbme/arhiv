@@ -2,8 +2,7 @@ use super::Arhiv;
 use crate::entities::*;
 use crate::storage::*;
 use anyhow::*;
-use reqwest::Client;
-use rs_utils::{ensure_file_exists, get_file_hash_sha256, read_file_as_stream, FsTransaction};
+use rs_utils::FsTransaction;
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
@@ -56,14 +55,17 @@ impl Arhiv {
             tx.put_document_history(&document, &changeset.base_rev)?;
 
             if document.is_attachment() {
-                let attachment_data = self.get_attachment_data(&document.id);
-                let file_path = attachment_data.get_staged_file_path();
-                ensure_file_exists(&file_path)
-                    .context(anyhow!("Attachment data for {} is missing", &document.id))?;
+                let attachment_data = self.storage.get_attachment_data(document.id.clone());
+
+                ensure!(
+                    attachment_data.staged_file_exists()?,
+                    "Attachment data for {} is missing",
+                    &document.id
+                );
 
                 // double-check file integrity
                 let expected_hash = self.schema.get_field_string(&document, "hash")?;
-                let hash = get_file_hash_sha256(&file_path)?;
+                let hash = attachment_data.get_staged_file_hash()?;
                 ensure!(
                     hash == expected_hash,
                     "Attachment {} data is corrupted: hash doesn't match",
@@ -72,7 +74,7 @@ impl Arhiv {
 
                 // save attachment file
                 fs_tx.move_file(
-                    file_path.to_string(),
+                    attachment_data.get_staged_file_path(),
                     attachment_data.get_committed_file_path(),
                 )?;
             }
@@ -161,42 +163,19 @@ impl Arhiv {
 
         let last_update_time = self.storage.get_connection()?.get_last_update_time()?;
 
+        let network_service = self.get_network_service()?;
         // TODO parallel file upload
         for attachment in changeset
             .documents
             .iter()
             .filter(|document| document.is_attachment())
         {
-            let data = self.get_attachment_data(&attachment.id);
+            let data = self.storage.get_attachment_data(attachment.id.clone());
 
-            let file_path = data.get_staged_file_path();
-
-            log::debug!(
-                "sync_remotely: uploading attachment {} ({})",
-                &attachment.id,
-                &file_path
-            );
-
-            let file_stream = read_file_as_stream(&file_path).await?;
-
-            Client::new()
-                .post(&data.get_url()?)
-                .body(reqwest::Body::wrap_stream(file_stream))
-                .send()
-                .await?
-                .error_for_status()?;
+            network_service.upload_attachment_data(&data).await?;
         }
 
-        log::debug!("sync_remotely: sending changeset...");
-        let response: ChangesetResponse = Client::new()
-            .post(&format!("{}/changeset", self.config.get_prime_url()?))
-            .json(&changeset)
-            .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await?
-            .parse()?;
+        let response: ChangesetResponse = network_service.send_changeset(&changeset).await?;
 
         log::debug!("sync_remotely: got response {}", &response);
 
@@ -229,7 +208,7 @@ impl Arhiv {
 
             // if we've sent any attachments, move them to committed data directory
             if document.is_attachment() && changeset.contains(&document.id) {
-                let attachment_data = self.get_attachment_data(&document.id);
+                let attachment_data = self.storage.get_attachment_data(document.id);
 
                 fs_tx.move_file(
                     attachment_data.get_staged_file_path(),

@@ -11,21 +11,21 @@ mod query_params;
 mod settings;
 mod utils;
 
-pub struct Storage {
+pub struct DB {
     db_file: String,
 }
 
-impl Storage {
-    pub fn open<S: Into<String>>(db_file: S) -> Result<Storage> {
-        Ok(Storage {
+impl DB {
+    pub fn open<S: Into<String>>(db_file: S) -> Result<DB> {
+        Ok(DB {
             db_file: db_file.into(),
         })
     }
 
-    pub fn create<S: Into<String>>(db_file: S) -> Result<Storage> {
+    pub fn create<S: Into<String>>(db_file: S) -> Result<DB> {
         let db_file = db_file.into();
 
-        let mut conn = MutStorageConnection::new(Connection::open(&db_file)?);
+        let mut conn = MutDBConnection::new(Connection::open(&db_file)?);
 
         let tx = conn.get_tx()?;
 
@@ -33,18 +33,18 @@ impl Storage {
 
         tx.commit()?;
 
-        Ok(Storage { db_file })
+        Ok(DB { db_file })
     }
 
-    pub fn get_connection(&self) -> Result<StorageConnection> {
+    pub fn get_connection(&self) -> Result<DBConnection> {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
 
-        Ok(StorageConnection::new(conn))
+        Ok(DBConnection::new(conn))
     }
 
-    pub fn get_writable_connection(&self) -> Result<MutStorageConnection> {
+    pub fn get_writable_connection(&self) -> Result<MutDBConnection> {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
 
-        Ok(MutStorageConnection::new(conn))
+        Ok(MutDBConnection::new(conn))
     }
 }

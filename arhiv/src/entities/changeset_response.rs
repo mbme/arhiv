@@ -9,10 +9,10 @@ use super::{Document, Revision};
 pub struct ChangesetResponse {
     pub arhiv_id: String,
 
-    // replica storage revision
+    // replica revision
     pub base_rev: Revision,
 
-    // primary storage revision
+    // primary revision
     pub latest_rev: Revision,
 
     // documents with rev > replica_rev

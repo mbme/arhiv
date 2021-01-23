@@ -5,7 +5,6 @@ use std::path::Path;
 
 use crate::entities::Id;
 
-// FIXME rename to PathService
 pub struct PathManager {
     root_dir: String,
 }

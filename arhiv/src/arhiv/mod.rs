@@ -1,6 +1,7 @@
-use crate::{config::Config, data_service::DataService, schema::DataSchema};
-use crate::{entities::*, replica::NetworkService};
-use crate::{path_manager::PathManager, storage::*};
+use crate::{
+    config::Config, data_service::DataService, db::*, entities::*, path_manager::PathManager,
+    replica::NetworkService, schema::DataSchema,
+};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
@@ -12,7 +13,7 @@ pub mod test_arhiv;
 
 pub struct Arhiv {
     pub schema: DataSchema,
-    pub(crate) storage: Storage,
+    pub(crate) db: DB,
     pub(crate) config: Config,
     pub(crate) data_service: DataService,
 }
@@ -27,14 +28,14 @@ impl Arhiv {
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
-        let storage = Storage::open(path_manager.get_db_file())?;
+        let db = DB::open(path_manager.get_db_file())?;
 
         let schema = DataSchema::new();
         let data_service = DataService::new(path_manager);
 
         // check if config settings are equal to db settings
         {
-            let conn = storage.get_connection()?;
+            let conn = db.get_connection()?;
 
             let db_status = conn.get_db_status()?;
 
@@ -63,7 +64,7 @@ impl Arhiv {
         Ok(Arhiv {
             schema,
             config,
-            storage,
+            db,
             data_service,
         })
     }
@@ -82,12 +83,12 @@ impl Arhiv {
         let path_manager = PathManager::new(config.get_root_dir());
         path_manager.create_dirs()?;
 
-        let storage = Storage::create(path_manager.get_db_file())?;
+        let db = DB::create(path_manager.get_db_file())?;
 
         let schema = DataSchema::new();
         let data_service = DataService::new(path_manager);
 
-        let mut conn = storage.get_writable_connection()?;
+        let mut conn = db.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
         // initial settings
@@ -106,7 +107,7 @@ impl Arhiv {
         Ok(Arhiv {
             schema,
             config,
-            storage,
+            db,
             data_service,
         })
     }
@@ -121,7 +122,7 @@ impl Arhiv {
         let root_dir = self.config.get_root_dir().to_string();
         let debug_mode = cfg!(not(feature = "production-mode"));
 
-        let conn = self.storage.get_connection()?;
+        let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
         let (committed_documents, staged_documents) = conn.count_documents()?;
@@ -138,19 +139,19 @@ impl Arhiv {
     }
 
     pub fn has_staged_changes(&self) -> Result<bool> {
-        let (_, staged_documents) = self.storage.get_connection()?.count_documents()?;
+        let (_, staged_documents) = self.db.get_connection()?.count_documents()?;
 
         Ok(staged_documents > 0)
     }
 
     pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let conn = self.storage.get_connection()?;
+        let conn = self.db.get_connection()?;
 
         conn.list_documents(filter)
     }
 
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        let conn = self.storage.get_connection()?;
+        let conn = self.db.get_connection()?;
 
         conn.get_document(id)
     }
@@ -166,7 +167,7 @@ impl Arhiv {
             new_attachments.len()
         );
 
-        let mut conn = self.storage.get_writable_connection()?;
+        let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
         let mut fs_tx = FsTransaction::new();

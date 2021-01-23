@@ -2,37 +2,37 @@ use super::queries::*;
 use anyhow::*;
 use rusqlite::{Connection, Transaction};
 
-pub struct StorageConnection {
+pub struct DBConnection {
     conn: Connection,
 }
 
-impl StorageConnection {
+impl DBConnection {
     pub fn new(conn: Connection) -> Self {
-        StorageConnection { conn }
+        DBConnection { conn }
     }
 }
 
-pub struct MutStorageConnection {
+pub struct MutDBConnection {
     conn: Connection,
 }
 
-impl MutStorageConnection {
+impl MutDBConnection {
     pub fn new(conn: Connection) -> Self {
-        MutStorageConnection { conn }
+        MutDBConnection { conn }
     }
 
-    pub fn get_tx(&mut self) -> Result<TxStorageConnection> {
+    pub fn get_tx(&mut self) -> Result<TxDBConnection> {
         let tx = self.conn.transaction()?;
 
-        Ok(TxStorageConnection { tx })
+        Ok(TxDBConnection { tx })
     }
 }
 
-pub struct TxStorageConnection<'a> {
+pub struct TxDBConnection<'a> {
     tx: Transaction<'a>,
 }
 
-impl<'a> TxStorageConnection<'a> {
+impl<'a> TxDBConnection<'a> {
     pub fn commit(self) -> Result<()> {
         self.tx.commit()?;
 
@@ -40,16 +40,16 @@ impl<'a> TxStorageConnection<'a> {
     }
 }
 
-impl Queries for StorageConnection {
+impl Queries for DBConnection {
     fn get_connection(&self) -> &Connection {
         &self.conn
     }
 }
 
-impl<'a> Queries for TxStorageConnection<'a> {
+impl<'a> Queries for TxDBConnection<'a> {
     fn get_connection(&self) -> &Connection {
         &self.tx
     }
 }
 
-impl<'a> MutableQueries for TxStorageConnection<'a> {}
+impl<'a> MutableQueries for TxDBConnection<'a> {}

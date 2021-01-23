@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::fmt;
 
-use crate::{entities::Timestamp, storage::DbStatus};
+use crate::{db::DbStatus, entities::Timestamp};
 
 #[derive(Serialize)]
 pub struct Status {

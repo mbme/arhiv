@@ -1,6 +1,6 @@
 use super::Arhiv;
+use crate::db::*;
 use crate::entities::*;
-use crate::storage::*;
 use anyhow::*;
 use rs_utils::FsTransaction;
 
@@ -15,7 +15,7 @@ impl Arhiv {
             self.config.get_arhiv_id()
         );
 
-        let mut conn = self.storage.get_writable_connection()?;
+        let mut conn = self.db.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
         let db_status = tx.get_db_status()?;
@@ -95,7 +95,7 @@ impl Arhiv {
         &self,
         base_rev: Revision,
     ) -> Result<ChangesetResponse> {
-        let conn = self.storage.get_connection()?;
+        let conn = self.db.get_connection()?;
 
         let next_rev = base_rev.inc();
         let documents = conn.get_documents_since(&next_rev)?;
@@ -111,7 +111,7 @@ impl Arhiv {
     }
 
     pub async fn sync(&self) -> Result<()> {
-        let conn = self.storage.get_connection()?;
+        let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
 
@@ -151,7 +151,7 @@ impl Arhiv {
         self.apply_changeset(changeset)?;
 
         // make sure there are no more staged documents
-        assert_eq!(self.storage.get_connection()?.count_documents()?.1, 0);
+        assert_eq!(self.db.get_connection()?.count_documents()?.1, 0);
 
         Ok(())
     }
@@ -159,7 +159,7 @@ impl Arhiv {
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
         log::debug!("sync_remotely: starting {}", &changeset);
 
-        let last_update_time = self.storage.get_connection()?.get_last_update_time()?;
+        let last_update_time = self.db.get_connection()?.get_last_update_time()?;
 
         let network_service = self.get_network_service()?;
         // TODO parallel file upload
@@ -177,7 +177,7 @@ impl Arhiv {
 
         log::debug!("sync_remotely: got response {}", &response);
 
-        let mut conn = self.storage.get_writable_connection()?;
+        let mut conn = self.db.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
         let db_status = tx.get_db_status()?;

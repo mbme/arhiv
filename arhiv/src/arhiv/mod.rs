@@ -1,6 +1,6 @@
 use crate::storage::*;
-use crate::{client::NetworkService, entities::*};
 use crate::{config::Config, schema::DataSchema};
+use crate::{entities::*, replica::NetworkService};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};

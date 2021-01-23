@@ -4,7 +4,6 @@ use crate::{entities::*, replica::NetworkService};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
-use serde::{Deserialize, Serialize};
 use status::Status;
 
 mod status;
@@ -313,10 +312,4 @@ impl Arhiv {
 
         Ok(AttachmentLocation::Url(url))
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum AttachmentLocation {
-    Url(String),
-    File(String),
 }

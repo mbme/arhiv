@@ -1,4 +1,7 @@
-use crate::{entities::AttachmentSource, Arhiv, AttachmentLocation};
+use crate::{
+    entities::{AttachmentLocation, AttachmentSource},
+    Arhiv,
+};
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 use serde::{Deserialize, Serialize};

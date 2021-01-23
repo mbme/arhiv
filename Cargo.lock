@@ -63,7 +63,6 @@ dependencies = [
  "log",
  "nanoid",
  "pulldown-cmark",
- "rand 0.8.2",
  "reqwest",
  "rs-utils",
  "rusqlite",
@@ -98,7 +97,9 @@ dependencies = [
  "arhiv",
  "env_logger",
  "log",
+ "rand 0.8.2",
  "rs-utils",
+ "serde_json",
  "tokio",
 ]
 

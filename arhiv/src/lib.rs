@@ -5,12 +5,11 @@ mod arhiv;
 mod config;
 mod data_service;
 pub mod entities;
-pub mod generator;
 pub mod markup;
 mod path_manager;
 mod prime;
 mod replica;
-mod schema;
+pub mod schema;
 mod storage;
 
 pub use crate::arhiv::test_arhiv::TestArhiv;

@@ -1,5 +1,5 @@
-use arhiv::generator::*;
 use arhiv::Arhiv;
+use arhiv_utils::generator::*;
 
 #[tokio::main]
 async fn main() {

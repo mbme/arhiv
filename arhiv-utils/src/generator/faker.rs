@@ -1,12 +1,12 @@
-use crate::entities::*;
-use crate::Arhiv;
+use arhiv::entities::*;
+use arhiv::Arhiv;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::project_relpath;
 use serde_json::Map;
 use std::{collections::HashMap, fs};
 
-use crate::schema::{DocumentData, FieldType};
+use arhiv::schema::{DocumentData, FieldType};
 
 use super::TextGenerator;
 

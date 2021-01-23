@@ -1,11 +1,10 @@
-use crate::entities::*;
+use arhiv::entities::*;
+use arhiv::markup::create_ref;
+use arhiv::markup::MarkupString;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
 use std::fs;
-
-use crate::markup::create_ref;
-use crate::markup::MarkupString;
 
 pub struct TextGenerator {
     markov: Markov,

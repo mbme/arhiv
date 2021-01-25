@@ -16,12 +16,12 @@ pkgver() {
 
 build() {
   cd ..
-  cargo build --locked --release --target-dir=target
+  cargo build --locked --release --target-dir=target --features production-mode
 }
 
 check() {
   cd ..
-  cargo test --locked --release --target-dir=target
+  cargo test --locked --release --target-dir=target --features production-mode
 }
 
 package() {

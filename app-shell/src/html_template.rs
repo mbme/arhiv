@@ -35,7 +35,10 @@ impl AppSource {
     pub fn render(&self, builder: &AppShellBuilder) -> String {
         let script = match self {
             AppSource::JSFile(path) => format!("<script src=\"file:{}\" defer></script>", path),
-            AppSource::JSSource(source) => format!("<script>{}</script>", source),
+
+            // wrap JS code into commented out HTML comments to prevent '</script>' string break the app
+            // https://stackoverflow.com/a/28643409
+            AppSource::JSSource(source) => format!("<script>/*<!--*/{}/*-->*/</script>", source),
 
             AppSource::HTMLFile(path) => fs::read_to_string(path).expect("HTML file must exist"),
             AppSource::HTMLSource(source) => source.clone(),

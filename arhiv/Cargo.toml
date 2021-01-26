@@ -11,6 +11,8 @@ production-mode = ["rs-utils/production-mode"]
 [dependencies]
 tracing = "0.1"
 tracing-subscriber = "0.2"
+tracing-appender = "0.1"
+tracing-futures = "0.2"
 
 anyhow = "1.0.38"
 

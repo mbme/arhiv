@@ -14,8 +14,8 @@ pub mod test_arhiv;
 
 pub struct Arhiv {
     pub schema: DataSchema,
+    pub config: Config,
     pub(crate) db: DB,
-    pub(crate) config: Config,
     pub(crate) data_service: DataService,
 }
 

@@ -15,6 +15,9 @@ init-arhiv:
 arhiv *PARAMS:
   cd arhiv; cargo run --bin arhiv {{PARAMS}}
 
+arhiv-server:
+  cd arhiv; cargo run --bin arhiv-server
+
 reset-arhiv: remove-arhiv init-arhiv
 
 prod-build-install:

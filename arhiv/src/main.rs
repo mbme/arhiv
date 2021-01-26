@@ -1,9 +1,7 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use std::sync::Arc;
-
-use arhiv::{start_server, Arhiv, Config};
+use arhiv::{Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use rs_utils::get_log_level;
 use tracing::{debug, trace, Level};
@@ -20,7 +18,6 @@ async fn main() {
         )
         .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(SubCommand::with_name("config").about("Print config"))
-        .subcommand(SubCommand::with_name("server").about("Run prime server"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
@@ -38,12 +35,12 @@ async fn main() {
         .get_matches();
 
     let log_level = get_log_level(matches.occurrences_of("verbose"));
-    tracing::subscriber::set_global_default(
+    let _guard = tracing::subscriber::set_default(
         tracing_subscriber::FmtSubscriber::builder()
             .with_max_level(log_level)
+            .compact()
             .finish(),
-    )
-    .expect("setting default subscriber failed");
+    );
 
     if log_level == Level::DEBUG {
         debug!("DEBUG output enabled.");
@@ -71,21 +68,6 @@ async fn main() {
                 "{}",
                 serde_json::to_string_pretty(&config).expect("must be able to serialize config")
             );
-        }
-        ("server", Some(_)) => {
-            let arhiv = Arc::new(Arhiv::must_open());
-            if !arhiv
-                .get_status()
-                .expect("must be able to get status")
-                .db_status
-                .is_prime
-            {
-                panic!("server must be started on prime instance");
-            }
-
-            let (join_handle, _, _) = start_server(arhiv);
-
-            join_handle.await.expect("must join");
         }
         ("sync", Some(_)) => {
             Arhiv::must_open().sync().await.expect("must sync");

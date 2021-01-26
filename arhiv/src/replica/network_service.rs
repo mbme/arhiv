@@ -5,6 +5,7 @@ use reqwest::Client;
 use rs_utils::{file_exists, read_file_as_stream};
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
+use tracing::debug;
 
 pub struct NetworkService<'a> {
     prime_url: String,
@@ -28,7 +29,7 @@ impl<'a> NetworkService<'a> {
             );
         }
 
-        log::debug!("downloading attachment data for {} into {}", id, &path);
+        debug!("downloading attachment data for {} into {}", id, &path);
 
         let url = self.get_attachment_data_url(id);
 
@@ -53,7 +54,7 @@ impl<'a> NetworkService<'a> {
     pub async fn upload_attachment_data(&self, id: &Id) -> Result<()> {
         let file_path = self.data_service.get_staged_file_path(id);
 
-        log::debug!("uploading attachment {} ({})", id, &file_path);
+        debug!("uploading attachment {} ({})", id, &file_path);
 
         let file_stream = read_file_as_stream(&file_path).await?;
 
@@ -70,7 +71,7 @@ impl<'a> NetworkService<'a> {
     }
 
     pub async fn send_changeset(&self, changeset: &Changeset) -> Result<ChangesetResponse> {
-        log::debug!("sending changeset...");
+        debug!("sending changeset...");
 
         let response: ChangesetResponse = Client::new()
             .post(&format!("{}/changeset", self.prime_url))

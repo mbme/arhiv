@@ -6,6 +6,7 @@ use anyhow::*;
 use chrono::Utc;
 use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
 use status::Status;
+use tracing::{debug, info, warn};
 
 mod status;
 mod sync;
@@ -59,7 +60,7 @@ impl Arhiv {
             );
         }
 
-        log::info!("Open arhiv in {}", config.get_root_dir());
+        info!("Open arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
@@ -70,7 +71,7 @@ impl Arhiv {
     }
 
     pub fn create(config: Config) -> Result<Arhiv> {
-        log::info!(
+        info!(
             "Initializing {} arhiv in {}",
             if config.is_prime() {
                 "prime"
@@ -102,7 +103,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        log::info!("Created arhiv in {}", config.get_root_dir());
+        info!("Created arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
@@ -161,7 +162,7 @@ impl Arhiv {
         updated_document: Document,
         new_attachments: Vec<AttachmentSource>,
     ) -> Result<()> {
-        log::debug!(
+        debug!(
             "Staging document {} with {} new attachments",
             &updated_document.id,
             new_attachments.len()
@@ -175,7 +176,7 @@ impl Arhiv {
         // FIXME optimize this
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
-                log::debug!("Updating existing document {}", &updated_document.id);
+                debug!("Updating existing document {}", &updated_document.id);
 
                 document.rev = Revision::STAGING; // make sure document rev is Staging
                 document.updated_at = Utc::now();
@@ -187,7 +188,7 @@ impl Arhiv {
                     bail!("attachments must not be created manually");
                 }
 
-                log::debug!("Creating new document {}", &updated_document.id);
+                debug!("Creating new document {}", &updated_document.id);
 
                 let mut new_document =
                     Document::new(updated_document.document_type, updated_document.data);
@@ -211,7 +212,7 @@ impl Arhiv {
                 continue;
             }
             if reference == &document.id {
-                log::warn!("Document {} references itself, ignoring ref", &document.id);
+                warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;
             }
             if new_attachments_ids.contains(&reference) {
@@ -228,19 +229,17 @@ impl Arhiv {
         // Stage new attachments
         for new_attachment in new_attachments {
             if !document.refs.contains(&new_attachment.id) {
-                log::warn!(
+                warn!(
                     "Document {} new attachment is unused, ignoring: {}",
-                    &document.id,
-                    &new_attachment
+                    &document.id, &new_attachment
                 );
                 continue;
             }
 
             if conn.get_document(&new_attachment.id)?.is_some() {
-                log::warn!(
+                warn!(
                     "Document {} new attachment already exists, ignoring: {}",
-                    &document.id,
-                    &new_attachment
+                    &document.id, &new_attachment
                 );
                 continue;
             }
@@ -257,7 +256,7 @@ impl Arhiv {
             let attachment = self.create_attachment(new_attachment)?;
             conn.put_document(&attachment)?;
 
-            log::info!("staged new attachment {}: {}", attachment, source_path);
+            info!("staged new attachment {}: {}", attachment, source_path);
         }
 
         conn.put_document(&document)?;
@@ -267,7 +266,7 @@ impl Arhiv {
 
         // FIXME remove unused staged attachments
 
-        log::debug!("staged document {}", &document);
+        debug!("staged document {}", &document);
 
         Ok(())
     }
@@ -286,10 +285,9 @@ impl Arhiv {
             .schema
             .create_with_data(ATTACHMENT_TYPE.to_string(), initial_values)?;
 
-        log::info!(
+        info!(
             "Created attachment {} from {}",
-            &source.id,
-            &source.file_path
+            &source.id, &source.file_path
         );
 
         Ok(Document {

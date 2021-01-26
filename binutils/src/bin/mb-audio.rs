@@ -3,9 +3,11 @@
 
 use binutils::devices::{Microphone, Speakers};
 use clap::{crate_version, App, Arg};
+use rs_utils::setup_logger;
+use tracing::error;
 
 fn main() {
-    env_logger::init();
+    setup_logger();
 
     let app = App::new("mb-audio")
         .arg(
@@ -64,10 +66,10 @@ fn main() {
                 speakers.print_status(notify);
             }
             Some(command) => {
-                log::error!("Unexpected command: {}", command);
+                error!("Unexpected command: {}", command);
             }
             None => {
-                log::error!("Command is missing");
+                error!("Command is missing");
             }
         }
         return;
@@ -92,14 +94,14 @@ fn main() {
                 mic.print_status(notify);
             }
             Some(command) => {
-                log::error!("Unexpected command: {}", command);
+                error!("Unexpected command: {}", command);
             }
             None => {
-                log::error!("Command is missing");
+                error!("Command is missing");
             }
         }
         return;
     }
 
-    log::error!("Unknown subcommand {}", subcommand);
+    error!("Unknown subcommand {}", subcommand);
 }

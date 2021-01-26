@@ -1,6 +1,7 @@
 use crate::rpc_message::RpcMessage;
 use crate::rpc_message::RpcMessageResponse;
 use std::rc::Rc;
+use tracing::{error, info};
 use webkit2gtk::{
     SettingsExt, UserContentManagerExt, WebContext, WebView, WebViewExt, WebsiteDataManager,
 };
@@ -14,10 +15,10 @@ pub fn build_webview(
     responses: glib::Receiver<RpcMessageResponse>,
 ) -> Rc<WebView> {
     let data_manager = if let Some(ref path) = data_dir {
-        log::info!("website data manager: {}", path);
+        info!("website data manager: {}", path);
         create_website_data_manager(path)
     } else {
-        log::info!("website data manager: ephemeral");
+        info!("website data manager: ephemeral");
         WebsiteDataManager::new_ephemeral()
     };
 
@@ -55,7 +56,7 @@ pub fn build_webview(
                 None::<&gio::Cancellable>,
                 |result| {
                     if let Err(err) = result {
-                        log::error!("Failed to inject RPC response: {}", err);
+                        error!("Failed to inject RPC response: {}", err);
                     }
                 },
             );

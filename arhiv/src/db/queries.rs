@@ -8,6 +8,7 @@ use rusqlite::{functions::FunctionFlags, NO_PARAMS};
 use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
 use std::rc::Rc;
+use tracing::debug;
 
 const DB_STATUS_KEY: &'static str = "status";
 
@@ -182,7 +183,7 @@ pub trait Queries {
         }
 
         let query = query.join(" ");
-        log::debug!("list_documents: {}", &query);
+        debug!("list_documents: {}", &query);
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;

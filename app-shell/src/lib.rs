@@ -5,6 +5,7 @@ pub use builder::AppShellBuilder;
 pub use context::AppShellContext;
 pub use html_template::AppSource;
 use rpc_message::{RpcMessage, RpcMessageResponse};
+use tracing::{debug, info};
 use warp::{reply, Reply};
 
 mod builder;
@@ -16,11 +17,11 @@ mod webview;
 impl AppShellBuilder {
     pub async fn start(self, src: AppSource, handler: Arc<dyn ActionHandler>) {
         if cfg!(feature = "dev-server") {
-            log::info!("Starting dev server");
-            log::info!("source: {}", src);
+            info!("Starting dev server");
+            info!("source: {}", src);
             self.serve(src, handler).await;
         } else {
-            log::info!("Starting app shell");
+            info!("Starting app shell");
             self.load(src, handler);
         }
     }
@@ -183,7 +184,7 @@ async fn rpc_action_handler(
     handler: Arc<dyn ActionHandler>,
     msg: RpcMessage,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    log::debug!("RPC MESSAGE: {}", msg);
+    debug!("RPC MESSAGE: {}", msg);
 
     let context = AppShellContext::new(builder.server_mode);
     let result = handler.run(msg.action, &context, msg.params).await;

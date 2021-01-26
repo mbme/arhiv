@@ -2,6 +2,7 @@ use anyhow::*;
 use rs_utils::find_config_file;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use tracing::debug;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,7 +32,7 @@ fn default_server_port() -> u16 {
 impl Config {
     pub fn read() -> Result<(Config, String)> {
         let path = find_config_file("arhiv.json")?;
-        log::debug!("Found Arhiv config at {}", &path);
+        debug!("Found Arhiv config at {}", &path);
 
         let data = fs::read_to_string(&path)?;
 

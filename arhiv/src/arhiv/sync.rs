@@ -3,10 +3,11 @@ use crate::db::*;
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::FsTransaction;
+use tracing::{debug, error, info};
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
-        log::debug!("applying changeset {}", &changeset);
+        debug!("applying changeset {}", &changeset);
 
         ensure!(
             changeset.arhiv_id == self.config.get_arhiv_id(),
@@ -35,15 +36,14 @@ impl Arhiv {
         );
 
         if changeset.is_empty() {
-            log::debug!("empty changeset, ignoring");
+            debug!("empty changeset, ignoring");
             return Ok(());
         }
 
         let new_rev = db_status.db_rev.inc();
-        log::debug!(
+        debug!(
             "current rev is {}, new rev is {}",
-            db_status.db_rev,
-            new_rev
+            db_status.db_rev, new_rev
         );
 
         let mut fs_tx = FsTransaction::new();
@@ -86,7 +86,7 @@ impl Arhiv {
 
         tx.commit()?;
         fs_tx.commit();
-        log::debug!("successfully applied a changeset");
+        debug!("successfully applied a changeset");
 
         Ok(())
     }
@@ -115,7 +115,7 @@ impl Arhiv {
 
         let db_status = conn.get_db_status()?;
 
-        log::info!(
+        info!(
             "Initiating {} sync",
             if db_status.is_prime {
                 "local"
@@ -130,7 +130,7 @@ impl Arhiv {
             base_rev: db_status.db_rev.clone(),
             documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
         };
-        log::debug!("prepared a changeset {}", changeset);
+        debug!("prepared a changeset {}", changeset);
 
         let result = if db_status.is_prime {
             self.sync_locally(changeset)
@@ -139,9 +139,9 @@ impl Arhiv {
         };
 
         if let Err(ref err) = result {
-            log::error!("sync failed on {}: {}", db_status.get_prime_status(), err);
+            error!("sync failed on {}: {}", db_status.get_prime_status(), err);
         } else {
-            log::info!("sync succeeded");
+            info!("sync succeeded");
         }
 
         result
@@ -157,7 +157,7 @@ impl Arhiv {
     }
 
     async fn sync_remotely(&self, changeset: Changeset) -> Result<()> {
-        log::debug!("sync_remotely: starting {}", &changeset);
+        debug!("sync_remotely: starting {}", &changeset);
 
         let last_update_time = self.db.get_connection()?.get_last_update_time()?;
 
@@ -175,7 +175,7 @@ impl Arhiv {
 
         let response: ChangesetResponse = network_service.send_changeset(&changeset).await?;
 
-        log::debug!("sync_remotely: got response {}", &response);
+        debug!("sync_remotely: got response {}", &response);
 
         let mut conn = self.db.get_writable_connection()?;
         let tx = conn.get_tx()?;
@@ -228,7 +228,7 @@ impl Arhiv {
         fs_tx.commit();
         tx.commit()?;
 
-        log::debug!("sync_remotely: success!");
+        debug!("sync_remotely: success!");
 
         Ok(())
     }

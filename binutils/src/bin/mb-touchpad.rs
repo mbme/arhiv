@@ -3,9 +3,11 @@
 
 use binutils::devices::Touchpad;
 use clap::{crate_version, App, Arg};
+use rs_utils::setup_logger;
+use tracing::{error, info};
 
 fn main() {
-    env_logger::init();
+    setup_logger();
 
     let app = App::new("mb-touchpad")
         .arg(
@@ -22,7 +24,7 @@ fn main() {
     let matches = app.get_matches();
 
     let touchpad = Touchpad::find();
-    log::info!("Touchpad id: {}", &touchpad.id);
+    info!("Touchpad id: {}", &touchpad.id);
 
     let notify = matches.is_present("notify");
 
@@ -43,10 +45,10 @@ fn main() {
             touchpad.print_status(notify);
         }
         Some(command) => {
-            log::error!("Unexpected command: {}", command);
+            error!("Unexpected command {}", command);
         }
         None => {
-            log::error!("Command is missing");
+            error!("Command is missing");
         }
     }
 }

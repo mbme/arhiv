@@ -9,6 +9,7 @@ use std::sync::Arc;
 use tokio::signal;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
+use tracing::{debug, error, info, warn};
 use warp::{http, hyper, reply, Filter, Reply};
 
 pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
@@ -61,11 +62,11 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
             tokio::select! {
                 _ = signal::ctrl_c() => {
-                    log::info!("got Ctrl-C")
+                    info!("got Ctrl-C")
                 }
 
                 Ok(_) = shutdown_receiver => {
-                    log::info!("got shutdown signal");
+                    info!("got shutdown signal");
                 }
             }
         });
@@ -73,18 +74,18 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
     // Spawn the server into a runtime
     let join_handle = tokio::task::spawn(server);
 
-    log::info!("started server on {}", addr);
+    info!("started server on {}", addr);
 
     (join_handle, shutdown_sender, addr)
 }
 
 fn get_status_handler(arhiv: Arc<Arhiv>) -> impl warp::Reply {
-    log::info!("Get arhiv status");
+    info!("Get arhiv status");
 
     let status = match arhiv.get_status() {
         Ok(status) => status,
         Err(err) => {
-            log::error!("Failed to get arhiv status: {}", &err);
+            error!("Failed to get arhiv status: {}", &err);
 
             return reply::with_status(
                 format!("failed to get arhiv status: {}", err),
@@ -103,12 +104,12 @@ fn post_attachment_data_handler(
 ) -> impl warp::Reply {
     let id: Id = id.into();
 
-    log::info!("Saving data for attachment {}", &id);
+    info!("Saving data for attachment {}", &id);
 
     let dst = arhiv.data_service.get_staged_file_path(&id);
 
     if Path::new(&dst).exists() {
-        log::error!("temp attachment data {} already exists", dst);
+        error!("temp attachment data {} already exists", dst);
 
         // FIXME check hashes instead of throwing an error
         return reply::with_status(
@@ -118,7 +119,7 @@ fn post_attachment_data_handler(
     }
 
     if let Err(err) = fs::write(dst, &data) {
-        log::error!("Failed to save data for attachment {}: {}", &id, &err);
+        error!("Failed to save data for attachment {}: {}", &id, &err);
 
         return reply::with_status(
             format!("failed to write data: {}", err),
@@ -135,13 +136,13 @@ async fn get_attachment_data_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let id: Id = id.into();
 
-    log::debug!("Serving data for attachment {}", &id);
+    debug!("Serving data for attachment {}", &id);
 
     let attachment = match arhiv.get_document(&id) {
         Ok(Some(attachment)) if attachment.is_attachment() => attachment,
 
         Ok(Some(_)) => {
-            log::warn!("Requested document {} isn't an attachment", &id);
+            warn!("Requested document {} isn't an attachment", &id);
 
             return Ok(reply::with_status(
                 format!("Requested document {} isn't an attachment", &id),
@@ -151,7 +152,7 @@ async fn get_attachment_data_handler(
         }
 
         Ok(None) => {
-            log::warn!("Requested attachment {} is not found", &id);
+            warn!("Requested attachment {} is not found", &id);
 
             return Ok(reply::with_status(
                 format!("can't find attachment with id {}", &id),
@@ -161,7 +162,7 @@ async fn get_attachment_data_handler(
         }
 
         Err(err) => {
-            log::error!("Failed to find attachment {}: {}", &id, &err);
+            error!("Failed to find attachment {}: {}", &id, &err);
 
             return Ok(reply::with_status(
                 format!("failed to find attachment {}: {}", &id, err),
@@ -173,7 +174,7 @@ async fn get_attachment_data_handler(
 
     let path = arhiv.data_service.get_committed_file_path(&id);
     if !Path::new(&path).exists() {
-        log::warn!("Requested attachment data {} is not found", &id);
+        warn!("Requested attachment data {} is not found", &id);
 
         return Ok(reply::with_status(
             format!("can't find attachment data with id {}", &id),
@@ -185,7 +186,7 @@ async fn get_attachment_data_handler(
     let file = match read_file_as_stream(&path).await {
         Ok(file) => file,
         Err(err) => {
-            log::error!("Failed to read attachment data {}: {}", &id, &err);
+            error!("Failed to read attachment data {}: {}", &id, &err);
 
             return Ok(reply::with_status(
                 format!("failed to read attachment data {}: {}", &id, err),
@@ -200,7 +201,7 @@ async fn get_attachment_data_handler(
     let filename = match arhiv.schema.get_field_string(&attachment, "filename") {
         Ok(filename) => filename,
         Err(err) => {
-            log::error!("Failed to get attachment filename {}: {}", &id, &err);
+            error!("Failed to get attachment filename {}: {}", &id, &err);
 
             return Ok(reply::with_status(
                 format!("failed to read attachment filename {}: {}", &id, err),
@@ -221,12 +222,12 @@ async fn get_attachment_data_handler(
 }
 
 fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp::Reply {
-    log::info!("Processing changeset {}", &changeset);
+    info!("Processing changeset {}", &changeset);
 
     match arhiv.has_staged_changes() {
         Ok(false) => {}
         Ok(true) => {
-            log::error!("Rejecting changeset as arhiv has staged changes");
+            error!("Rejecting changeset as arhiv has staged changes");
 
             return reply::with_status(
                 "arhiv prime has staged changes",
@@ -235,7 +236,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
             .into_response();
         }
         Err(err) => {
-            log::error!("Failed to check for staged changes: {:?}", err);
+            error!("Failed to check for staged changes: {:?}", err);
 
             return reply::with_status(
                 format!("Failed to check for staged changes: {:?}", err),
@@ -248,7 +249,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
     let base_rev = changeset.base_rev.clone();
 
     if let Err(err) = arhiv.apply_changeset(changeset) {
-        log::error!("Failed to apply a changeset: {:?}", err);
+        error!("Failed to apply a changeset: {:?}", err);
 
         return reply::with_status(
             format!("failed to apply a changeset: {:?}", err),
@@ -259,11 +260,11 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
 
     match arhiv.generate_changeset_response(base_rev) {
         Ok(changeset_response) => {
-            log::info!("Generated {}", &changeset_response);
+            info!("Generated {}", &changeset_response);
             return reply::json(&changeset_response).into_response();
         }
         err => {
-            log::error!("Failed to generate a changeset response: {:?}", err);
+            error!("Failed to generate a changeset response: {:?}", err);
 
             return reply::with_status(
                 format!("failed to apply a changeset: {:?}", err),

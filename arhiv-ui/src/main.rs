@@ -3,15 +3,15 @@ use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
 use arhiv::{entities::*, markup::RenderOptions};
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, Filter};
 use async_trait::async_trait;
+use rs_utils::setup_logger;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
+use tracing::warn;
 
 #[tokio::main]
 async fn main() {
-    env_logger::Builder::from_default_env()
-        .filter_module("hyper::proto::h1", log::LevelFilter::Warn)
-        .init();
+    setup_logger();
 
     let arhiv = Arc::new(Arhiv::must_open());
     let handler = Arc::new(Handler {
@@ -34,7 +34,7 @@ async fn main() {
 
     let sync_future = async {
         if let Err(err) = arhiv.sync().await {
-            log::warn!("initial sync failed: {}", err);
+            warn!("initial sync failed: {}", err);
         }
     };
 

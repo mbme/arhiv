@@ -3,6 +3,7 @@ use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
 use rs_utils::run_command;
+use tracing::info;
 
 pub struct Touchpad {
     pub id: String,
@@ -28,7 +29,7 @@ impl Touchpad {
             let result = match_str(&ID_RE, line);
 
             if let Some(id) = result {
-                log::info!("{}", &line);
+                info!("{}", &line);
 
                 ids.push(id);
             }

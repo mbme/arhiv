@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use arhiv::{start_server, Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use log::LevelFilter;
+use rs_utils::get_log_level;
+use tracing::{debug, trace, Level};
 
 #[tokio::main]
 async fn main() {
@@ -26,29 +27,30 @@ async fn main() {
         .setting(AppSettings::DeriveDisplayOrder)
         .setting(AppSettings::VersionlessSubcommands)
         .arg(
-            Arg::with_name("debug")
-                .long("debug")
+            Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .multiple(true)
                 .global(true)
-                .help("Enable debug logs"),
-        )
-        .arg(
-            Arg::with_name("trace")
-                .long("trace")
-                .global(true)
-                .help("Enable trace logs"),
+                .help("Increases logging verbosity each use for up to 2 times"),
         )
         .version(crate_version!())
         .get_matches();
 
-    // init logger
-    let mut log_level = LevelFilter::Info;
-    if matches.occurrences_of("debug") > 0 {
-        log_level = LevelFilter::Debug;
+    let log_level = get_log_level(matches.occurrences_of("verbose"));
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_max_level(log_level)
+            .finish(),
+    )
+    .expect("setting default subscriber failed");
+
+    if log_level == Level::DEBUG {
+        debug!("DEBUG output enabled.");
     }
-    if matches.occurrences_of("trace") > 0 {
-        log_level = LevelFilter::Trace;
+    if log_level == Level::TRACE {
+        trace!("TRACE output enabled.");
     }
-    env_logger::builder().filter(None, log_level).init();
 
     match matches.subcommand() {
         ("init", Some(_)) => {

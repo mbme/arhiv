@@ -1,5 +1,6 @@
 use anyhow::*;
 use std::fs;
+use tracing::{debug, error, warn};
 
 enum FsOperation {
     Move { src: String, dest: String },
@@ -20,7 +21,7 @@ impl FsTransaction {
         if let Err(err) = fs::rename(&src, &dest) {
             Err(anyhow!("Failed to Move {} to {}: {}", &src, &dest, err))
         } else {
-            log::debug!("Moved {} to {}", &src, &dest);
+            debug!("Moved {} to {}", &src, &dest);
             self.ops.push(FsOperation::Move { src, dest });
 
             Ok(())
@@ -31,7 +32,7 @@ impl FsTransaction {
         if let Err(err) = fs::copy(&src, &dest) {
             Err(anyhow!("Failed to Copy {} to {}: {}", &src, &dest, err))
         } else {
-            log::debug!("Copied {} to {}", &src, &dest);
+            debug!("Copied {} to {}", &src, &dest);
             self.ops.push(FsOperation::Copy { src, dest });
 
             Ok(())
@@ -42,7 +43,7 @@ impl FsTransaction {
         if let Err(err) = fs::hard_link(&src, &dest) {
             Err(anyhow!("Failed to HardLink {} to {}: {}", &src, &dest, err))
         } else {
-            log::debug!("Hard Linked {} to {}", &src, &dest);
+            debug!("Hard Linked {} to {}", &src, &dest);
             self.ops.push(FsOperation::HardLink { src, dest });
 
             Ok(())
@@ -54,31 +55,31 @@ impl FsTransaction {
             return;
         }
 
-        log::warn!("Reverting {} operations", &self.ops.len());
+        warn!("Reverting {} operations", &self.ops.len());
 
         for op in &self.ops {
             match op {
                 FsOperation::Move { src, dest } => {
                     if let Err(err) = fs::rename(dest, src) {
-                        log::error!("Failed to revert Move {} to {}: {}", src, dest, err);
+                        error!("Failed to revert Move {} to {}: {}", src, dest, err);
                     } else {
-                        log::warn!("Reverted Move {} to {}", src, dest);
+                        warn!("Reverted Move {} to {}", src, dest);
                     }
                 }
 
                 FsOperation::Copy { src, dest } => {
                     if let Err(err) = fs::remove_file(dest) {
-                        log::error!("Failed to revert Copy {} to {}: {}", src, dest, err);
+                        error!("Failed to revert Copy {} to {}: {}", src, dest, err);
                     } else {
-                        log::warn!("Reverted Copy {} to {}", src, dest);
+                        warn!("Reverted Copy {} to {}", src, dest);
                     }
                 }
 
                 FsOperation::HardLink { src, dest } => {
                     if let Err(err) = fs::remove_file(dest) {
-                        log::error!("Failed to revert HardLink {} to {}: {}", src, dest, err);
+                        error!("Failed to revert HardLink {} to {}: {}", src, dest, err);
                     } else {
-                        log::warn!("Reverted HardLink {} to {}", src, dest);
+                        warn!("Reverted HardLink {} to {}", src, dest);
                     }
                 }
             }

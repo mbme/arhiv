@@ -5,6 +5,7 @@ use crate::{
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 
 use super::utils::extract_id;
 use super::MarkupString;
@@ -73,12 +74,9 @@ impl<'a> MarkupRenderer<'a> {
                         match document {
                             Some(document) => document,
                             None => {
-                                log::warn!(
+                                warn!(
                                     "Got broken reference: {} ({:?} {} {})",
-                                    &id,
-                                    link_type,
-                                    destination,
-                                    title
+                                    &id, link_type, destination, title
                                 );
 
                                 return event;

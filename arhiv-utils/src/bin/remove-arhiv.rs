@@ -1,16 +1,17 @@
 use arhiv::Config;
-use rs_utils::dir_exists;
+use rs_utils::{dir_exists, setup_logger};
 use std::fs;
+use tracing::info;
 
 fn main() {
-    env_logger::init();
+    setup_logger();
 
     let config = Config::must_read().0;
 
     if dir_exists(config.get_root_dir()).unwrap() {
         fs::remove_dir_all(config.get_root_dir()).expect("must be able to remove arhiv");
-        log::info!("removed arhiv {}", config.get_root_dir());
+        info!("removed arhiv {}", config.get_root_dir());
     } else {
-        log::info!("arhiv {} doesn't exist", config.get_root_dir());
+        info!("arhiv {} doesn't exist", config.get_root_dir());
     }
 }

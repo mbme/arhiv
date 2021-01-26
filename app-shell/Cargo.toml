@@ -8,8 +8,8 @@ edition = "2018"
 dev-server = []
 
 [dependencies]
-log = "0.4.13"
-env_logger = "0.8.2"
+tracing = "0.1"
+
 anyhow = "1.0.38"
 
 serde = { version = "1.0.120", features = ["derive"] }
@@ -25,5 +25,5 @@ glib = "0.10.3"
 async-trait = "0.1.42"
 
 warp = "0.3.0"
-tokio = { version = "1.0.2", features = ["macros", "signal", "sync"] }
+tokio = { version = "1.0.2", features = ["macros", "signal", "sync", "rt-multi-thread"] }
 rs-utils = { path = "../rs-utils" }

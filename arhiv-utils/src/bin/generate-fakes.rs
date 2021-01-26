@@ -1,9 +1,10 @@
 use arhiv::Arhiv;
 use arhiv_utils::generator::*;
+use rs_utils::setup_logger;
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    setup_logger();
 
     let arhiv = Arhiv::must_open();
 

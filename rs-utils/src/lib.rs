@@ -1,5 +1,4 @@
 use anyhow::*;
-pub use config::*;
 pub use crypto::*;
 pub use fs::*;
 pub use fs_temp::*;
@@ -9,7 +8,6 @@ use std::env;
 use std::process::Command;
 pub use string::*;
 
-mod config;
 mod crypto;
 mod fs;
 mod fs_temp;

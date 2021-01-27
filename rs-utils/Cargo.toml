@@ -3,9 +3,6 @@ name = "rs-utils"
 version = "0.1.0"
 edition = "2018"
 
-[features]
-production-mode = []
-
 [dependencies]
 log = "0.4"
 fern = "0.6"

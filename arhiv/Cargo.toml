@@ -6,7 +6,7 @@ edition = "2018"
 default-run = "arhiv"
 
 [features]
-production-mode = ["rs-utils/production-mode"]
+production-mode = []
 
 [dependencies]
 anyhow = "1.0.38"

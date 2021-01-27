@@ -1,5 +1,5 @@
 use anyhow::*;
-use rs_utils::{find_config_file, log::debug};
+use rs_utils::{file_exists, get_config_home, locate_dominating_file, log::debug};
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -78,4 +78,24 @@ impl Config {
             Config::Replica { .. } => bail!("can't get config.server_port on replica"),
         }
     }
+}
+
+// In development, recursively search from current dir upwards for {file_name}
+// In production, look up {file_name} in a system config directory
+fn find_config_file<S: Into<String>>(file_name: S) -> Result<String> {
+    let file_name = file_name.into();
+
+    if cfg!(feature = "production-mode") {
+        let config_home = get_config_home().ok_or(anyhow!("Failed to find user config dir"))?;
+        let config = format!("{}/{}", config_home, file_name);
+
+        if file_exists(&config).unwrap_or(false) {
+            return Ok(config);
+        }
+
+        bail!("Can't find Arhiv config at {}", config);
+    }
+
+    // in development
+    locate_dominating_file(file_name)
 }

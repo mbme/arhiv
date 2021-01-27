@@ -20,9 +20,6 @@ arhiv-server:
 
 reset-arhiv: remove-arhiv init-arhiv
 
-prod-build-install:
-  cd {{invocation_directory()}}; makepkg -efi; rm -rf pkg
-
 check-ts:
   yarn compiler-errors
 
@@ -47,4 +44,12 @@ check:
   cargo check
 
 web-platform:
- cd ts-web-platform; yarn start
+  cd ts-web-platform; yarn start
+
+prod-build-install:
+  cd {{invocation_directory()}}; makepkg -efi; rm -rf pkg
+
+prod-install-all:
+  cd binutils; just prod-build-install
+  cd arhiv; just prod-build-install
+  cd arhiv-ui; just prod-build-install

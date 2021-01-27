@@ -2,8 +2,7 @@ use crate::utils::{match_str, send_notification};
 use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
-use rs_utils::run_command;
-use tracing::info;
+use rs_utils::{log::info, run_command};
 
 pub struct Touchpad {
     pub id: String,

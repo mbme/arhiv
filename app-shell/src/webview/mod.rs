@@ -1,7 +1,7 @@
 use crate::rpc_message::RpcMessage;
 use crate::rpc_message::RpcMessageResponse;
+use rs_utils::log::{error, info};
 use std::rc::Rc;
-use tracing::{error, info};
 use webkit2gtk::{
     SettingsExt, UserContentManagerExt, WebContext, WebView, WebViewExt, WebsiteDataManager,
 };

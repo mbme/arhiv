@@ -2,13 +2,12 @@ use super::query_params::*;
 use super::{utils, DbStatus};
 use crate::entities::*;
 use anyhow::*;
-use rs_utils::fuzzy_match;
+use rs_utils::{fuzzy_match, log::debug};
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{functions::FunctionFlags, NO_PARAMS};
 use rusqlite::{params, Connection, OptionalExtension};
 use std::collections::HashMap;
 use std::rc::Rc;
-use tracing::debug;
 
 const DB_STATUS_KEY: &'static str = "status";
 

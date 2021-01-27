@@ -3,8 +3,7 @@
 
 use binutils::devices::Touchpad;
 use clap::{crate_version, App, Arg};
-use rs_utils::setup_logger;
-use tracing::{error, info};
+use rs_utils::log::{error, info, setup_logger};
 
 fn main() {
     setup_logger();

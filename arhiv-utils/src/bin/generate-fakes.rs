@@ -1,6 +1,6 @@
 use arhiv::Arhiv;
 use arhiv_utils::generator::*;
-use rs_utils::setup_logger;
+use rs_utils::log::setup_logger;
 
 #[tokio::main]
 async fn main() {

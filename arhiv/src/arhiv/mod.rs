@@ -4,9 +4,12 @@ use crate::{
 };
 use anyhow::*;
 use chrono::Utc;
-use rs_utils::{ensure_file_exists, get_file_hash_sha256, FsTransaction};
+use rs_utils::{
+    ensure_file_exists, get_file_hash_sha256,
+    log::{debug, info, warn},
+    FsTransaction,
+};
 use status::Status;
-use tracing::{debug, info, warn};
 
 mod status;
 mod sync;

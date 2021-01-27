@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::*;
 use app_shell::*;
 use async_trait::async_trait;
-use rs_utils::setup_logger;
+use rs_utils::log::setup_logger;
 use serde_json::{value, Value};
 
 #[tokio::main]

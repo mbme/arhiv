@@ -3,11 +3,10 @@ use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
 use arhiv::{entities::*, markup::RenderOptions};
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, Filter};
 use async_trait::async_trait;
-use rs_utils::setup_logger;
+use rs_utils::log::{setup_logger, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
-use tracing::warn;
 
 #[tokio::main]
 async fn main() {

@@ -7,7 +7,6 @@ edition = "2018"
 production-mode = ["rs-utils/production-mode"]
 
 [dependencies]
-tracing = "0.1"
 anyhow = "1.0.38"
 clap = { version = "2.33.3", features = ["color"] }
 regex = "1.4.3"

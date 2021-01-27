@@ -1,11 +1,10 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use std::sync::Arc;
-
-use tracing_subscriber::{fmt, layer::SubscriberExt};
+use std::{path::Path, sync::Arc};
 
 use arhiv::{start_server, Arhiv};
+use rs_utils::log::setup_server_logger;
 
 #[tokio::main]
 async fn main() {
@@ -23,17 +22,8 @@ async fn main() {
         panic!("server must be started on prime instance");
     }
 
-    let (file_writer, _guard) = tracing_appender::non_blocking(tracing_appender::rolling::daily(
-        arhiv.config.get_root_dir(),
-        "arhiv-server.log",
-    ));
-    tracing::subscriber::set_global_default(
-        fmt::Subscriber::builder()
-            .with_env_filter("arhiv=debug,hyper=info")
-            .finish()
-            .with(fmt::Layer::default().with_writer(file_writer)),
-    )
-    .expect("Unable to set global tracing subscriber");
+    let log_file = Path::new(arhiv.config.get_root_dir()).join("arhiv-server.log");
+    setup_server_logger(log_file);
 
     let (join_handle, _, _) = start_server(arhiv);
 

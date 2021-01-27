@@ -3,8 +3,7 @@
 
 use binutils::devices::{Microphone, Speakers};
 use clap::{crate_version, App, Arg};
-use rs_utils::setup_logger;
-use tracing::error;
+use rs_utils::log::{error, setup_logger};
 
 fn main() {
     setup_logger();

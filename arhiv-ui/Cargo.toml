@@ -7,7 +7,6 @@ edition = "2018"
 production-mode = ["arhiv/production-mode"]
 
 [dependencies]
-tracing ="0.1"
 anyhow = "1.0.38"
 serde = { version = "1.0.120", features = ["derive"] }
 serde_json = "1.0.61"

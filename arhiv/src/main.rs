@@ -3,8 +3,7 @@
 
 use arhiv::{Arhiv, Config};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use rs_utils::get_log_level;
-use tracing::{debug, trace, Level};
+use rs_utils::log::setup_logger_with_level;
 
 #[tokio::main]
 async fn main() {
@@ -34,20 +33,7 @@ async fn main() {
         .version(crate_version!())
         .get_matches();
 
-    let log_level = get_log_level(matches.occurrences_of("verbose"));
-    let _guard = tracing::subscriber::set_default(
-        tracing_subscriber::FmtSubscriber::builder()
-            .with_max_level(log_level)
-            .compact()
-            .finish(),
-    );
-
-    if log_level == Level::DEBUG {
-        debug!("DEBUG output enabled.");
-    }
-    if log_level == Level::TRACE {
-        trace!("TRACE output enabled.");
-    }
+    setup_logger_with_level(matches.occurrences_of("verbose"));
 
     match matches.subcommand() {
         ("init", Some(_)) => {

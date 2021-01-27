@@ -4,8 +4,8 @@ use crate::{
 };
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
+use rs_utils::log::warn;
 use serde::{Deserialize, Serialize};
-use tracing::warn;
 
 use super::utils::extract_id;
 use super::MarkupString;

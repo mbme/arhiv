@@ -2,10 +2,9 @@ use crate::{data_service::DataService, entities::*};
 use anyhow::*;
 use futures::stream::TryStreamExt;
 use reqwest::Client;
-use rs_utils::{file_exists, read_file_as_stream};
+use rs_utils::{file_exists, log::debug, read_file_as_stream};
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
-use tracing::debug;
 
 pub struct NetworkService<'a> {
     prime_url: String,

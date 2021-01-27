@@ -1,7 +1,9 @@
 use arhiv::Config;
-use rs_utils::{dir_exists, setup_logger};
+use rs_utils::{
+    dir_exists,
+    log::{info, setup_logger},
+};
 use std::fs;
-use tracing::info;
 
 fn main() {
     setup_logger();

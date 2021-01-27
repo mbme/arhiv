@@ -8,8 +8,6 @@ edition = "2018"
 dev-server = []
 
 [dependencies]
-tracing = "0.1"
-
 anyhow = "1.0.38"
 
 serde = { version = "1.0.120", features = ["derive"] }

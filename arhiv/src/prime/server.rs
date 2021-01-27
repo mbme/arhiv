@@ -1,6 +1,7 @@
 use crate::entities::*;
 use crate::Arhiv;
 use anyhow::*;
+use rs_utils::log::{debug, error, info, warn};
 use rs_utils::read_file_as_stream;
 use std::fs;
 use std::net::SocketAddr;
@@ -9,7 +10,6 @@ use std::sync::Arc;
 use tokio::signal;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use tracing::{debug, error, info, warn};
 use warp::{http, hyper, reply, Filter, Reply};
 
 pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {

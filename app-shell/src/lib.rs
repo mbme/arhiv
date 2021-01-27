@@ -5,7 +5,7 @@ pub use builder::AppShellBuilder;
 pub use context::AppShellContext;
 pub use html_template::AppSource;
 use rpc_message::{RpcMessage, RpcMessageResponse};
-use tracing::{debug, info};
+use rs_utils::log::{debug, info};
 use warp::{reply, Reply};
 
 mod builder;

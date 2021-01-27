@@ -1,8 +1,7 @@
 use anyhow::*;
-use rs_utils::find_config_file;
+use rs_utils::{find_config_file, log::debug};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use tracing::debug;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

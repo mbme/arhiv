@@ -2,8 +2,8 @@ use super::Arhiv;
 use crate::db::*;
 use crate::entities::*;
 use anyhow::*;
+use rs_utils::log::{debug, error, info};
 use rs_utils::FsTransaction;
-use tracing::{debug, error, info};
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {

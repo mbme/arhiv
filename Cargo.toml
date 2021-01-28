@@ -7,3 +7,7 @@ members = [
   "binutils",
   "rs-utils",
 ]
+
+# speed up debug builds
+[profile.dev]
+debug = 0

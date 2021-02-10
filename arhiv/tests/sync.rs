@@ -38,14 +38,10 @@ async fn test_prime_sync() -> Result<()> {
     );
 
     // Test attachment data
-    let data_service = arhiv.get_data_service();
+    let attachment_data = arhiv.get_attachment_data(attachment.id);
 
-    assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
-    assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
-    assert_eq!(
-        are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
-        true
-    );
+    assert_eq!(attachment_data.exists()?, true);
+    assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
 
     // Test if document is updated correctly
     {
@@ -88,25 +84,17 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test attachment data
     {
-        let data_service = replica.get_data_service();
+        let attachment_data = replica.get_attachment_data(attachment.id.clone());
 
-        assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
-        assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
-        assert_eq!(
-            are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
-            true
-        );
+        assert_eq!(attachment_data.exists()?, true);
+        assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
     }
 
     {
-        let data_service = prime.get_data_service();
+        let attachment_data = prime.get_attachment_data(attachment.id);
 
-        assert_eq!(data_service.staged_file_exists(&attachment.id)?, false);
-        assert_eq!(data_service.committed_file_exists(&attachment.id)?, true);
-        assert_eq!(
-            are_equal_files(src, &data_service.get_committed_file_path(&attachment.id))?,
-            true
-        );
+        assert_eq!(attachment_data.exists()?, true);
+        assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
     }
 
     // Test if document is updated correctly

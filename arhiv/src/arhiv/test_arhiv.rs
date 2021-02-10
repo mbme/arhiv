@@ -1,4 +1,5 @@
-use crate::{data_service::DataService, replica::NetworkService, Arhiv, Config};
+use super::AttachmentData;
+use crate::{entities::Id, replica::NetworkService, Arhiv, Config};
 use rs_utils::generate_temp_path;
 
 pub struct TestArhiv(Arc<Arhiv>);
@@ -30,8 +31,8 @@ impl TestArhiv {
         self.0.clone()
     }
 
-    pub fn get_data_service(&self) -> &DataService {
-        &self.data_service
+    pub fn get_attachment_data(&self, id: Id) -> AttachmentData {
+        self.0.get_attachment_data(id)
     }
 
     pub fn get_network_service(&self) -> NetworkService {
@@ -49,6 +50,7 @@ impl Drop for TestArhiv {
 }
 
 use std::{ops::Deref, sync::Arc};
+
 impl Deref for TestArhiv {
     type Target = Arhiv;
 

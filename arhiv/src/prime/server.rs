@@ -5,7 +5,6 @@ use rs_utils::log::{debug, error, info, warn};
 use rs_utils::read_file_as_stream;
 use std::fs;
 use std::net::SocketAddr;
-use std::path::Path;
 use std::sync::Arc;
 use tokio::signal;
 use tokio::sync::oneshot;
@@ -106,20 +105,29 @@ fn post_attachment_data_handler(
 
     info!("Saving data for attachment {}", &id);
 
-    let dst = arhiv.data_service.get_staged_file_path(&id);
+    let attachment_data = arhiv.get_attachment_data(id);
 
-    if Path::new(&dst).exists() {
-        error!("temp attachment data {} already exists", dst);
+    if attachment_data
+        .exists()
+        .expect("failed to check if attachment data exists")
+    {
+        error!("attachment data {} already exists", attachment_data.path);
 
         // FIXME check hashes instead of throwing an error
         return reply::with_status(
-            format!("temp attachment data {} already exists", dst),
+            format!(
+                "temp attachment data {} already exists",
+                attachment_data.path
+            ),
             http::StatusCode::CONFLICT,
         );
     }
 
-    if let Err(err) = fs::write(dst, &data) {
-        error!("Failed to save data for attachment {}: {}", &id, &err);
+    if let Err(err) = fs::write(attachment_data.path, &data) {
+        error!(
+            "Failed to save data for attachment {}: {}",
+            &attachment_data.id, &err
+        );
 
         return reply::with_status(
             format!("failed to write data: {}", err),
@@ -172,24 +180,37 @@ async fn get_attachment_data_handler(
         }
     };
 
-    let path = arhiv.data_service.get_committed_file_path(&id);
-    if !Path::new(&path).exists() {
-        warn!("Requested attachment data {} is not found", &id);
+    let attachment_data = arhiv.get_attachment_data(id);
+
+    if !attachment_data
+        .exists()
+        .expect("failed to check if attachment data exists")
+    {
+        warn!(
+            "Requested attachment data {} is not found",
+            &attachment_data.id
+        );
 
         return Ok(reply::with_status(
-            format!("can't find attachment data with id {}", &id),
+            format!("can't find attachment data with id {}", &attachment_data.id),
             http::StatusCode::NOT_FOUND,
         )
         .into_response());
     }
 
-    let file = match read_file_as_stream(&path).await {
+    let file = match read_file_as_stream(&attachment_data.path).await {
         Ok(file) => file,
         Err(err) => {
-            error!("Failed to read attachment data {}: {}", &id, &err);
+            error!(
+                "Failed to read attachment data {}: {}",
+                &attachment_data.id, &err
+            );
 
             return Ok(reply::with_status(
-                format!("failed to read attachment data {}: {}", &id, err),
+                format!(
+                    "failed to read attachment data {}: {}",
+                    &attachment_data.id, err
+                ),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
             .into_response());
@@ -201,10 +222,16 @@ async fn get_attachment_data_handler(
     let filename = match arhiv.schema.get_field_string(&attachment, "filename") {
         Ok(filename) => filename,
         Err(err) => {
-            error!("Failed to get attachment filename {}: {}", &id, &err);
+            error!(
+                "Failed to get attachment filename {}: {}",
+                &attachment_data.id, &err
+            );
 
             return Ok(reply::with_status(
-                format!("failed to read attachment filename {}: {}", &id, err),
+                format!(
+                    "failed to read attachment filename {}: {}",
+                    &attachment_data.id, err
+                ),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
             .into_response());

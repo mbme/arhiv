@@ -20,26 +20,17 @@ impl PathManager {
         format!("{}/data", self.root_dir)
     }
 
-    pub fn get_temp_data_directory(&self) -> String {
-        format!("{}/temp-data", self.root_dir)
-    }
-
     pub fn get_db_file(&self) -> String {
         format!("{}/arhiv.sqlite", self.root_dir)
     }
 
-    pub fn get_committed_file_path(&self, id: &Id) -> String {
+    pub fn get_attachment_data_path(&self, id: &Id) -> String {
         format!("{}/{}", self.get_data_directory(), id)
-    }
-
-    pub fn get_staged_file_path(&self, id: &Id) -> String {
-        format!("{}/{}", self.get_temp_data_directory(), id)
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {
         ensure_dir_exists(&self.root_dir)?;
         ensure_dir_exists(&self.get_data_directory())?;
-        ensure_dir_exists(&self.get_temp_data_directory())?;
 
         Ok(())
     }
@@ -63,7 +54,6 @@ impl PathManager {
 
         fs::create_dir(&self.root_dir)?;
         fs::create_dir(&self.get_data_directory())?;
-        fs::create_dir(&self.get_temp_data_directory())?;
 
         Ok(())
     }

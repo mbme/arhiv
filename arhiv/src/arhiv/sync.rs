@@ -3,7 +3,6 @@ use crate::db::*;
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::log::{debug, error, info};
-use rs_utils::FsTransaction;
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
@@ -46,8 +45,6 @@ impl Arhiv {
             db_status.db_rev, new_rev
         );
 
-        let mut fs_tx = FsTransaction::new();
-
         for mut document in changeset.documents {
             document.rev = new_rev.clone();
 
@@ -55,26 +52,22 @@ impl Arhiv {
             tx.put_document_history(&document, &changeset.base_rev)?;
 
             if document.is_attachment() {
+                let attachment_data = self.get_attachment_data(document.id.clone());
+
                 ensure!(
-                    self.data_service.staged_file_exists(&document.id)?,
+                    attachment_data.exists()?,
                     "Attachment data for {} is missing",
-                    &document.id
+                    &attachment_data.id
                 );
 
                 // double-check file integrity
                 let expected_hash = self.schema.get_field_string(&document, "hash")?;
-                let hash = self.data_service.get_staged_file_hash(&document.id)?;
+                let hash = attachment_data.get_hash()?;
                 ensure!(
                     hash == expected_hash,
                     "Attachment {} data is corrupted: hash doesn't match",
-                    &document.id
+                    &attachment_data.id
                 );
-
-                // save attachment file
-                fs_tx.move_file(
-                    self.data_service.get_staged_file_path(&document.id),
-                    self.data_service.get_committed_file_path(&document.id),
-                )?;
             }
         }
 
@@ -85,7 +78,6 @@ impl Arhiv {
         })?;
 
         tx.commit()?;
-        fs_tx.commit();
         debug!("successfully applied a changeset");
 
         Ok(())
@@ -168,8 +160,10 @@ impl Arhiv {
             .iter()
             .filter(|document| document.is_attachment())
         {
+            let attachment_data = self.get_attachment_data(attachment.id.clone());
+
             network_service
-                .upload_attachment_data(&attachment.id)
+                .upload_attachment_data(&attachment_data)
                 .await?;
         }
 
@@ -199,18 +193,8 @@ impl Arhiv {
             "last_update_time must not change",
         );
 
-        let mut fs_tx = FsTransaction::new();
-
         for document in response.documents {
             tx.put_document(&document)?;
-
-            // if we've sent any attachments, move them to committed data directory
-            if document.is_attachment() && changeset.contains(&document.id) {
-                fs_tx.move_file(
-                    self.data_service.get_staged_file_path(&document.id),
-                    self.data_service.get_committed_file_path(&document.id),
-                )?;
-            }
         }
 
         tx.put_db_status(DbStatus {
@@ -225,7 +209,6 @@ impl Arhiv {
             "There are staged documents after remote sync"
         );
 
-        fs_tx.commit();
         tx.commit()?;
 
         debug!("sync_remotely: success!");

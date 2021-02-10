@@ -3,11 +3,9 @@
 
 mod arhiv;
 mod config;
-mod data_service;
 mod db;
 pub mod entities;
 pub mod markup;
-mod path_manager;
 mod prime;
 mod replica;
 pub mod schema;

@@ -1,36 +1,36 @@
-use crate::{data_service::DataService, entities::*};
+use crate::{arhiv::AttachmentData, entities::*};
 use anyhow::*;
 use futures::stream::TryStreamExt;
 use reqwest::Client;
-use rs_utils::{file_exists, log::debug, read_file_as_stream};
+use rs_utils::{log::debug, read_file_as_stream};
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-pub struct NetworkService<'a> {
+pub struct NetworkService {
     prime_url: String,
-    data_service: &'a DataService,
 }
 
-impl<'a> NetworkService<'a> {
-    pub fn new<S: Into<String>>(prime_url: S, data_service: &'a DataService) -> Self {
+impl NetworkService {
+    pub fn new<S: Into<String>>(prime_url: S) -> Self {
         NetworkService {
             prime_url: prime_url.into(),
-            data_service,
         }
     }
 
-    pub async fn download_attachment_data(&self, id: &Id) -> Result<()> {
-        let path = self.data_service.get_committed_file_path(id);
-        if file_exists(&path)? {
+    pub async fn download_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
+        if attachment_data.exists()? {
             bail!(
                 "can't download attachment data: file {} already exists",
-                path
+                attachment_data.path
             );
         }
 
-        debug!("downloading attachment data for {} into {}", id, &path);
+        debug!(
+            "downloading attachment data for {} into {}",
+            &attachment_data.id, &attachment_data.path
+        );
 
-        let url = self.get_attachment_data_url(id);
+        let url = self.get_attachment_data_url(&attachment_data.id);
 
         let mut stream = reqwest::get(&url)
             .await?
@@ -42,7 +42,7 @@ impl<'a> NetworkService<'a> {
             .into_async_read()
             .compat();
 
-        let mut file = tokio_fs::File::create(path).await?;
+        let mut file = tokio_fs::File::create(&attachment_data.path).await?;
 
         // Invoke tokio::io::copy to actually perform the download.
         tokio::io::copy(&mut stream, &mut file).await?;
@@ -50,14 +50,15 @@ impl<'a> NetworkService<'a> {
         Ok(())
     }
 
-    pub async fn upload_attachment_data(&self, id: &Id) -> Result<()> {
-        let file_path = self.data_service.get_staged_file_path(id);
+    pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
+        debug!(
+            "uploading attachment {} ({})",
+            &attachment_data.id, &attachment_data.path
+        );
 
-        debug!("uploading attachment {} ({})", id, &file_path);
+        let file_stream = read_file_as_stream(&attachment_data.path).await?;
 
-        let file_stream = read_file_as_stream(&file_path).await?;
-
-        let url = self.get_attachment_data_url(id);
+        let url = self.get_attachment_data_url(&attachment_data.id);
 
         Client::new()
             .post(&url)

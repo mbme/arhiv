@@ -1,7 +1,4 @@
-use crate::{
-    config::Config, data_service::DataService, db::*, entities::*, path_manager::PathManager,
-    replica::NetworkService, schema::DataSchema,
-};
+use crate::{config::Config, db::*, entities::*, replica::NetworkService, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{
@@ -11,6 +8,12 @@ use rs_utils::{
 };
 use status::Status;
 
+use path_manager::PathManager;
+
+pub use attachment_data::AttachmentData;
+
+mod attachment_data;
+mod path_manager;
 mod status;
 mod sync;
 pub mod test_arhiv;
@@ -19,7 +22,7 @@ pub struct Arhiv {
     pub schema: DataSchema,
     pub config: Config,
     pub(crate) db: DB,
-    pub(crate) data_service: DataService,
+    path_manager: PathManager,
 }
 
 impl Arhiv {
@@ -35,7 +38,6 @@ impl Arhiv {
         let db = DB::open(path_manager.get_db_file())?;
 
         let schema = DataSchema::new();
-        let data_service = DataService::new(path_manager);
 
         // check if config settings are equal to db settings
         {
@@ -69,7 +71,7 @@ impl Arhiv {
             schema,
             config,
             db,
-            data_service,
+            path_manager,
         })
     }
 
@@ -90,7 +92,6 @@ impl Arhiv {
         let db = DB::create(path_manager.get_db_file())?;
 
         let schema = DataSchema::new();
-        let data_service = DataService::new(path_manager);
 
         let mut conn = db.get_writable_connection()?;
         let tx = conn.get_tx()?;
@@ -112,12 +113,12 @@ impl Arhiv {
             schema,
             config,
             db,
-            data_service,
+            path_manager,
         })
     }
 
     fn get_network_service(&self) -> Result<NetworkService> {
-        let network_service = NetworkService::new(self.config.get_prime_url()?, &self.data_service);
+        let network_service = NetworkService::new(self.config.get_prime_url()?);
 
         Ok(network_service)
     }
@@ -247,13 +248,13 @@ impl Arhiv {
                 continue;
             }
 
-            let path = self.data_service.get_staged_file_path(&new_attachment.id);
+            let attachment_data = self.get_attachment_data(new_attachment.id.clone());
 
             let source_path = new_attachment.file_path.to_string();
             if new_attachment.copy {
-                fs_tx.copy_file(source_path.clone(), path)?;
+                fs_tx.copy_file(source_path.clone(), attachment_data.path)?;
             } else {
-                fs_tx.hard_link_file(source_path.clone(), path)?;
+                fs_tx.hard_link_file(source_path.clone(), attachment_data.path)?;
             }
 
             let attachment = self.create_attachment(new_attachment)?;
@@ -299,6 +300,12 @@ impl Arhiv {
         })
     }
 
+    pub(crate) fn get_attachment_data(&self, id: Id) -> AttachmentData {
+        let path = self.path_manager.get_attachment_data_path(&id);
+
+        AttachmentData::new(id, path)
+    }
+
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
         let attachment = self
             .get_document(&id)?
@@ -310,20 +317,9 @@ impl Arhiv {
             id,
         );
 
-        if attachment.rev.is_staged() {
-            if !self.data_service.staged_file_exists(&id)? {
-                bail!("can't find staged file for attachment {}", id);
-            }
-
-            return Ok(AttachmentLocation::File(
-                self.data_service.get_staged_file_path(&id),
-            ));
-        }
-
-        if self.data_service.committed_file_exists(&id)? {
-            return Ok(AttachmentLocation::File(
-                self.data_service.get_committed_file_path(&id),
-            ));
+        let attachment_data = self.get_attachment_data(id.clone());
+        if attachment_data.exists()? {
+            return Ok(AttachmentLocation::File(attachment_data.path));
         }
 
         let url = self.get_network_service()?.get_attachment_data_url(id);

@@ -262,12 +262,6 @@ impl Arhiv {
             ..db_status
         })?;
 
-        // make sure there are no more staged documents
-        ensure!(
-            tx.count_documents()?.1 == 0,
-            "There are staged documents after remote sync"
-        );
-
         tx.commit()?;
 
         debug!("sync_remotely: success!");

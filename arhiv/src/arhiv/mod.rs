@@ -130,7 +130,7 @@ impl Arhiv {
         let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
-        let (committed_documents, staged_documents) = conn.count_documents()?;
+        let documents_count = conn.count_documents(&db_status.last_sync_time)?;
         let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {
@@ -138,15 +138,12 @@ impl Arhiv {
             last_update_time,
             debug_mode,
             root_dir,
-            committed_documents,
-            staged_documents,
+            documents_count,
         })
     }
 
     pub fn has_staged_changes(&self) -> Result<bool> {
-        let (_, staged_documents) = self.db.get_connection()?.count_documents()?;
-
-        Ok(staged_documents > 0)
+        self.db.get_connection()?.has_staged_documents()
     }
 
     pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {

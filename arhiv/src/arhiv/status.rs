@@ -1,18 +1,19 @@
 use serde::Serialize;
 use std::fmt;
 
-use crate::{db::DbStatus, entities::Timestamp};
+use crate::{
+    db::{DbStatus, DocumentsCount},
+    entities::Timestamp,
+};
 
 #[derive(Serialize)]
 pub struct Status {
     pub db_status: DbStatus,
+    pub documents_count: DocumentsCount,
 
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
     pub root_dir: String,
-
-    pub committed_documents: u32,
-    pub staged_documents: u32,
 }
 
 impl fmt::Display for Status {
@@ -46,8 +47,19 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "  Documents: {} committed, {} staged",
-            self.committed_documents, self.staged_documents
+            "  Documents:   {} committed, {} staged ({} updated, {} new)",
+            self.documents_count.documents_committed,
+            self.documents_count.count_staged_documents(),
+            self.documents_count.documents_updated,
+            self.documents_count.documents_new,
+        )?;
+        writeln!(
+            f,
+            "  Attachments: {} committed, {} staged ({} updated, {} new)",
+            self.documents_count.documents_committed,
+            self.documents_count.count_staged_attachments(),
+            self.documents_count.documents_updated,
+            self.documents_count.documents_new,
         )?;
 
         if self.debug_mode {

@@ -1,11 +1,12 @@
 use super::query_params::*;
-use super::{utils, DbStatus};
+use super::utils;
 use crate::entities::*;
 use anyhow::*;
 use rs_utils::{fuzzy_match, log::debug};
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{functions::FunctionFlags, NO_PARAMS};
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -28,17 +29,38 @@ pub trait Queries {
             .context("failed to read DbStatus")
     }
 
-    fn count_documents(&self) -> Result<(u32, u32)> {
+    fn count_documents(&self, last_sync_time: &Timestamp) -> Result<DocumentsCount> {
         self.get_connection()
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN rev > 0 THEN 1 ELSE 0 END), 0) AS committed,
-                    IFNULL(SUM(CASE WHEN rev = 0 THEN 1 ELSE 0 END), 0) AS staged
+                    IFNULL(SUM(CASE WHEN type != ?1 AND rev > 0                      THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN type != ?1 AND rev = 0 AND created_at <= ?2 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN type != ?1 AND rev = 0 AND created_at  > ?2 THEN 1 ELSE 0 END), 0) AS documents_new,
+                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev > 0                      THEN 1 ELSE 0 END), 0) AS attachments_committed,
+                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev = 0 AND created_at <= ?2 THEN 1 ELSE 0 END), 0) AS attachments_updated,
+                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev = 0 AND created_at  > ?2 THEN 1 ELSE 0 END), 0) AS attachments_new
                 FROM documents",
-                NO_PARAMS,
-                |row| Ok((row.get_unwrap(0), row.get_unwrap(1))),
+                vec![ATTACHMENT_TYPE.to_sql()?, last_sync_time.to_sql()?],
+                |row| Ok(DocumentsCount {
+                    documents_committed: row.get_unwrap(0),
+                    documents_updated: row.get_unwrap(1),
+                    documents_new: row.get_unwrap(2),
+                    attachments_committed: row.get_unwrap(3),
+                    attachments_updated: row.get_unwrap(4),
+                    attachments_new: row.get_unwrap(5),
+                }),
             )
             .context("Failed to count documents")
+    }
+
+    fn has_staged_documents(&self) -> Result<bool> {
+        self.get_connection()
+            .query_row(
+                "SELECT COUNT(*) FROM documents WHERE rev = 0",
+                NO_PARAMS,
+                |row| Ok(row.get_unwrap::<_, u32>(0) > 0),
+            )
+            .context("Failed to check for staged documents")
     }
 
     fn get_last_update_time(&self) -> Result<Timestamp> {
@@ -389,5 +411,45 @@ impl ToSql for Id {
         let value: &str = &self.0;
 
         Ok(ToSqlOutput::from(value))
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DbStatus {
+    pub arhiv_id: String,
+    pub is_prime: bool,
+    pub schema_version: u8,
+
+    pub db_rev: Revision,
+    pub last_sync_time: Timestamp,
+}
+
+impl DbStatus {
+    pub fn get_prime_status(&self) -> &str {
+        if self.is_prime {
+            "prime"
+        } else {
+            "replica"
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct DocumentsCount {
+    pub documents_committed: u32,
+    pub documents_updated: u32,
+    pub documents_new: u32,
+    pub attachments_committed: u32,
+    pub attachments_updated: u32,
+    pub attachments_new: u32,
+}
+
+impl DocumentsCount {
+    pub fn count_staged_documents(&self) -> u32 {
+        self.documents_updated + self.documents_new
+    }
+
+    pub fn count_staged_attachments(&self) -> u32 {
+        self.attachments_updated + self.attachments_new
     }
 }

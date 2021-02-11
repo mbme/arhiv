@@ -3,12 +3,10 @@ pub use connection::*;
 pub use queries::*;
 pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
-pub use settings::*;
 
 mod connection;
 mod queries;
 mod query_params;
-mod settings;
 mod utils;
 
 pub struct DB {

@@ -116,3 +116,49 @@ async fn test_replica_sync() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_sync_removes_unused_local_attachments() -> Result<()> {
+    let arhiv = new_prime();
+
+    let src = &project_relpath("../resources/k2.jpg");
+
+    let mut attachment1 = AttachmentSource::new(src);
+    attachment1.copy = true;
+
+    let mut document = empty_document();
+    document.refs.insert(attachment1.id.clone());
+
+    // stage document with attachment1
+    arhiv.stage_document(document.clone(), vec![attachment1.clone()])?;
+
+    let mut attachment2 = AttachmentSource::new(src);
+    attachment2.copy = true;
+    document.refs.clear();
+    document.refs.insert(attachment2.id.clone());
+
+    // stage document with attachment2, attachment1 is now unused
+    arhiv.stage_document(document.clone(), vec![attachment2.clone()])?;
+
+    arhiv.sync().await?;
+
+    assert_eq!(
+        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
+        false
+    );
+
+    // attachment1 should removed
+    assert_eq!(arhiv.get_document(&attachment1.id)?.is_none(), true);
+
+    // attachment2 should be committed
+    assert_eq!(
+        arhiv
+            .get_document(&attachment2.id)?
+            .unwrap()
+            .rev
+            .is_staged(),
+        false
+    );
+
+    Ok(())
+}

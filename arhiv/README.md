@@ -17,8 +17,9 @@
 # Characteristics
 * single-user database
 * stores documents and attachments
-* attachments are immutable
-* attachments have BLOBs
+* attachment is a document of type "attachment"
+  - attachments have BLOBs
+  - attachment BLOB is immutable (cannot be updated)
 * database has revisions 
   - empty database has revision 0
   - primary increases revision on each update
@@ -28,13 +29,12 @@
 * there might be only one primary instance at a time
 * primary receive data from replicas in a form of Changesets
 * primary manages revision 
-* allows to rename attachments (by increasing their revision)
 
 # Replica
 * local instance which gets its data from the primary
 * replica has a full copy of documents and attachments (without BLOBs)
 * replica choose which BLOBs to fetch from primary
-* replica allows to create/update/archive/erase documents and create attachments
+* replica allows to create/update/archive/erase documents
   archive vs erase:
     archived documents are hidden from search by default 
     Prime keeps history of archived documents
@@ -43,21 +43,19 @@
     erased documents are arhived documents with null data
     Prime removes history of erased documents
     erased documents cannot be unarchived
-* replica runs compaction when there are 0 locks
+
+# Assumptions
+* local time on machine is monotonously increasing
 
 # Sync protocol
-* replica sends Changeset
-  - baseRev - replica rev
-  - documents[] - new or updated documents
-  - attachments[] - new attachments
-* primary returns ChangesetResponse
+* replica sends Changeset (new & updated documents)
+* primary returns ChangesetResponse with new & updated documents
 
 # Versioning
 * prime keeps previous versions of documents
   - prime saves previous version of a document when a new version arrives
   - prime allows to query previous versions of the document
   - replica doesn't keep previous versions of documents
-* prime doesn't keep previous versions of attachments or their metadata
 
 # Backups
 * daily, weekly, monthly (oldest backup is one month old)

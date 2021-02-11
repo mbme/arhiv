@@ -266,9 +266,7 @@ impl Arhiv {
         conn.put_document(&document)?;
 
         conn.commit()?;
-        fs_tx.commit();
-
-        // FIXME remove unused staged attachments
+        fs_tx.commit()?;
 
         debug!("staged document {}", &document);
 

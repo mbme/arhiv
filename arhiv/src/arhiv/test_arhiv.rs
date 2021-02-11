@@ -43,7 +43,6 @@ impl TestArhiv {
 impl Drop for TestArhiv {
     // Remove temporary Arhiv in tests
     fn drop(&mut self) {
-        println!("CLEANUP");
         std::fs::remove_dir_all(self.0.config.get_root_dir())
             .expect("must be able to remove arhiv");
     }

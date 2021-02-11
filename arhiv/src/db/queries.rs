@@ -328,6 +328,17 @@ pub trait MutableQueries: Queries {
 
         Ok(())
     }
+
+    fn delete_document(&self, id: &Id) -> Result<()> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("DELETE FROM documents WHERE id = ?")?;
+
+        stmt.execute(params![id])
+            .context(anyhow!("Failed to delete document {}", id))?;
+
+        Ok(())
+    }
 }
 
 struct Params {

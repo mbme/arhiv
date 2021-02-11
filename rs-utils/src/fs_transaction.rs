@@ -6,6 +6,7 @@ enum FsOperation {
     Move { src: String, dest: String },
     Copy { src: String, dest: String },
     HardLink { src: String, dest: String },
+    Remove { src: String },
 }
 
 pub struct FsTransaction {
@@ -50,6 +51,10 @@ impl FsTransaction {
         }
     }
 
+    pub fn remove_file(&mut self, src: String) {
+        self.ops.push(FsOperation::Remove { src });
+    }
+
     pub fn revert(&mut self) {
         if self.ops.is_empty() {
             return;
@@ -82,14 +87,28 @@ impl FsTransaction {
                         warn!("Reverted HardLink {} to {}", src, dest);
                     }
                 }
+
+                FsOperation::Remove { .. } => {
+                    // do nothing
+                }
             }
         }
 
         self.ops.clear();
     }
 
-    pub fn commit(&mut self) {
+    pub fn commit(&mut self) -> Result<()> {
+        for op in self.ops.iter() {
+            if let FsOperation::Remove { src } = op {
+                if let Err(err) = fs::remove_file(src) {
+                    error!("Failed to commit Remove {} : {}", src, err);
+                }
+            }
+        }
+
         self.ops.clear();
+
+        Ok(())
     }
 }
 

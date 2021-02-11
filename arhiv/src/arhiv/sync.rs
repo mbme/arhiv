@@ -1,8 +1,13 @@
+use std::collections::HashSet;
+
 use super::Arhiv;
 use crate::db::*;
 use crate::entities::*;
 use anyhow::*;
-use rs_utils::log::{debug, error, info};
+use rs_utils::{
+    log::{debug, error, info, warn},
+    FsTransaction,
+};
 
 impl Arhiv {
     pub(crate) fn apply_changeset(&self, changeset: Changeset) -> Result<()> {
@@ -102,10 +107,50 @@ impl Arhiv {
         })
     }
 
-    pub async fn sync(&self) -> Result<()> {
+    fn generate_changeset(&self) -> Result<(Changeset, Vec<Document>)> {
         let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
+
+        let documents = conn.list_documents(DOCUMENT_FILTER_STAGED)?.items;
+
+        // collect ids in use
+        let mut refs: HashSet<Id> = HashSet::new();
+        for document in documents.iter() {
+            for id in document.refs.iter() {
+                refs.insert(id.clone());
+            }
+        }
+
+        let mut documents_in_use = Vec::new();
+        let mut unused_attachments = Vec::new();
+
+        for document in documents {
+            let is_unused_attachment = document.is_attachment()
+                // skip attachments which were created before last sync
+                && document.created_at > db_status.last_sync_time
+                // attachments which aren't in use
+                && !refs.contains(&document.id);
+
+            if is_unused_attachment {
+                unused_attachments.push(document);
+            } else {
+                documents_in_use.push(document);
+            }
+        }
+
+        let changeset = Changeset {
+            arhiv_id: self.config.get_arhiv_id().to_string(),
+            schema_version: db_status.schema_version.clone(),
+            base_rev: db_status.db_rev.clone(),
+            documents: documents_in_use,
+        };
+
+        Ok((changeset, unused_attachments))
+    }
+
+    pub async fn sync(&self) -> Result<()> {
+        let db_status = self.db.get_connection()?.get_db_status()?;
 
         info!(
             "Initiating {} sync",
@@ -116,12 +161,7 @@ impl Arhiv {
             }
         );
 
-        let changeset = Changeset {
-            arhiv_id: self.config.get_arhiv_id().to_string(),
-            schema_version: db_status.schema_version.clone(),
-            base_rev: db_status.db_rev.clone(),
-            documents: conn.list_documents(DOCUMENT_FILTER_STAGED)?.items,
-        };
+        let (changeset, unused_attachments) = self.generate_changeset()?;
         debug!("prepared a changeset {}", changeset);
 
         let result = if db_status.is_prime {
@@ -136,14 +176,33 @@ impl Arhiv {
             info!("sync succeeded");
         }
 
+        // remove unused local attachments
+        if !unused_attachments.is_empty() {
+            warn!(
+                "removing {} unused attachments after sync",
+                unused_attachments.len()
+            );
+
+            let mut conn = self.db.get_writable_connection()?;
+            let tx = conn.get_tx()?;
+            let mut fs_tx = FsTransaction::new();
+
+            for document in unused_attachments {
+                tx.delete_document(&document.id)?;
+
+                let attachment_data = self.get_attachment_data(document.id);
+                fs_tx.remove_file(attachment_data.path);
+            }
+
+            tx.commit()?;
+            fs_tx.commit()?;
+        }
+
         result
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
         self.apply_changeset(changeset)?;
-
-        // make sure there are no more staged documents
-        assert_eq!(self.db.get_connection()?.count_documents()?.1, 0);
 
         Ok(())
     }

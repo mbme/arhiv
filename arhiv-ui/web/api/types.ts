@@ -98,6 +98,7 @@ export interface IStatus {
     readonly arhiv_id: string,
     readonly is_prime: boolean,
     readonly schema_version: number,
+    readonly db_version: number,
     readonly db_rev: number,
     readonly last_sync_time: number,
   },

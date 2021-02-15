@@ -46,10 +46,16 @@ impl Arhiv {
             let db_status = conn.get_db_status()?;
 
             ensure!(
+                db_status.db_version == DB::VERSION,
+                "db version {} is different from app db version {}",
+                db_status.db_version,
+                DB::VERSION,
+            );
+            ensure!(
                 db_status.schema_version == schema.version,
-                "db version {} is different from app version {}",
+                "db schema version {} is different from app schema version {}",
                 db_status.schema_version,
-                schema.version
+                schema.version,
             );
             ensure!(
                 db_status.arhiv_id == config.get_arhiv_id(),
@@ -102,6 +108,7 @@ impl Arhiv {
             is_prime: config.is_prime(),
             db_rev: 0.into(),
             schema_version: schema.version,
+            db_version: DB::VERSION,
             last_sync_time: chrono::MIN_DATETIME,
         })?;
 

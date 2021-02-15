@@ -419,6 +419,7 @@ pub struct DbStatus {
     pub arhiv_id: String,
     pub is_prime: bool,
     pub schema_version: u8,
+    pub db_version: u8,
 
     pub db_rev: Revision,
     pub last_sync_time: Timestamp,

@@ -14,6 +14,8 @@ pub struct DB {
 }
 
 impl DB {
+    pub const VERSION: u8 = 1;
+
     pub fn open<S: Into<String>>(db_file: S) -> Result<DB> {
         Ok(DB {
             db_file: db_file.into(),

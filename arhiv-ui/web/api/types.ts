@@ -83,27 +83,3 @@ export interface IRenderMarkupArgs {
     readonly documentPath: string
   }
 }
-
-export interface IStatus {
-  readonly db_status: {
-    readonly arhiv_id: string,
-    readonly is_prime: boolean,
-    readonly schema_version: number,
-    readonly db_version: number,
-    readonly db_rev: number,
-    readonly last_sync_time: number,
-  },
-
-  readonly documents_count: {
-    readonly documents_committed: number,
-    readonly documents_updated: number,
-    readonly documents_new: number,
-    readonly attachments_committed: number,
-    readonly attachments_updated: number,
-    readonly attachments_new: number,
-  },
-
-  readonly last_update_time: string,
-  readonly root_dir: string,
-  readonly debug_mode: boolean,
-}

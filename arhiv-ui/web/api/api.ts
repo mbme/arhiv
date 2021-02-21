@@ -4,14 +4,12 @@
 import {
   AttachmentLocation,
   ICreateDocumentArgs,
-  IAttachmentSource,
   IDocument,
   IFilter,
   IListPage,
   IPutDocumentArgs,
   IDataSchema,
   IRenderMarkupArgs,
-  IStatus,
 } from './types'
 
 interface IRPC {
@@ -27,7 +25,7 @@ interface IRPC {
 
   get_attachment_location(id: string): Promise<AttachmentLocation>
 
-  get_status(): Promise<IStatus>
+  get_status(): Promise<string>
 
   pick_attachments(): Promise<IAttachmentSource[]>
 }

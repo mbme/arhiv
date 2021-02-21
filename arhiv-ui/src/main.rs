@@ -129,7 +129,7 @@ impl ActionHandler for Handler {
         if action == "get_status" {
             let status = self.arhiv.get_status()?;
 
-            return Ok(serde_json::to_value(&status)?);
+            return Ok(serde_json::to_value(&status.to_string())?);
         }
 
         // FIXME

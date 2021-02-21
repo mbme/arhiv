@@ -6,8 +6,6 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::fmt;
 
-pub const ATTACHMENT_TYPE: &'static str = "attachment";
-
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -37,10 +35,6 @@ impl Document {
             archived: false,
             data,
         }
-    }
-
-    pub fn is_attachment(&self) -> bool {
-        self.document_type == ATTACHMENT_TYPE
     }
 
     pub fn serialize(&self) -> String {

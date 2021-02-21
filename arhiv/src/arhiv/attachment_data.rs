@@ -1,23 +1,17 @@
 use anyhow::*;
-use rs_utils::{file_exists, get_file_hash_sha256};
-
-use crate::entities::Id;
+use rs_utils::file_exists;
 
 pub struct AttachmentData {
-    pub id: Id,
+    pub hash: String,
     pub path: String,
 }
 
 impl AttachmentData {
-    pub fn new(id: Id, path: String) -> Self {
-        AttachmentData { id, path }
+    pub fn new(hash: String, path: String) -> Self {
+        AttachmentData { hash, path }
     }
 
     pub fn exists(&self) -> Result<bool> {
         file_exists(&self.path)
-    }
-
-    pub fn get_hash(&self) -> Result<String> {
-        get_file_hash_sha256(&self.path)
     }
 }

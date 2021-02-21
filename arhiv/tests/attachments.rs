@@ -12,13 +12,12 @@ fn test_attachments() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let mut attachment = AttachmentSource::new(src);
-    attachment.copy = true;
+    let attachment = arhiv.add_attachment(src, true)?;
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
 
-    arhiv.stage_document(document, vec![attachment.clone()])?;
+    arhiv.stage_document(document)?;
     assert_eq!(arhiv.get_attachment_data(attachment.id).exists()?, true);
 
     let page = arhiv.list_documents(Filter {
@@ -38,12 +37,11 @@ async fn test_download_attachment() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let mut attachment = AttachmentSource::new(src);
-    attachment.copy = true;
+    let attachment = prime.add_attachment(src, true)?;
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
-    prime.stage_document(document, vec![attachment.clone()])?;
+    prime.stage_document(document)?;
 
     prime.sync().await?;
 

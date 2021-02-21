@@ -3,8 +3,6 @@ use rs_utils::{ensure_dir_exists, ensure_file_exists};
 use std::fs;
 use std::path::Path;
 
-use crate::entities::Id;
-
 pub struct PathManager {
     root_dir: String,
 }
@@ -24,8 +22,8 @@ impl PathManager {
         format!("{}/arhiv.sqlite", self.root_dir)
     }
 
-    pub fn get_attachment_data_path(&self, id: &Id) -> String {
-        format!("{}/{}", self.get_data_directory(), id)
+    pub fn get_attachment_data_path<S: Into<String>>(&self, hash: S) -> String {
+        format!("{}/{}", self.get_data_directory(), hash.into())
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {

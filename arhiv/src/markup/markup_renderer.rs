@@ -1,7 +1,4 @@
-use crate::{
-    entities::{AttachmentLocation, AttachmentSource},
-    Arhiv,
-};
+use crate::{entities::*, Arhiv};
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 use rs_utils::log::warn;
@@ -19,7 +16,6 @@ pub struct MarkupRenderer<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct RenderOptions {
     document_path: String,
-    new_attachments: Vec<AttachmentSource>,
 }
 
 impl<'a> MarkupRenderer<'a> {
@@ -45,26 +41,6 @@ impl<'a> MarkupRenderer<'a> {
                         title.to_string()
                     };
 
-                    // render new attachment
-                    if let Some(new_attachment) = self
-                        .options
-                        .new_attachments
-                        .iter()
-                        .find(|item| item.id == id)
-                    {
-                        // render Image
-                        if is_image_file(&new_attachment.filename) {
-                            return Event::Start(Tag::Image(
-                                LinkType::Inline,
-                                new_attachment.file_path.clone().into(),
-                                normalized_title.into(),
-                            ));
-                        }
-
-                        // render Attachment Link
-                        return link_event(new_attachment.file_path.clone(), normalized_title);
-                    }
-
                     let document = self
                         .arhiv
                         .get_document(&id)
@@ -84,7 +60,7 @@ impl<'a> MarkupRenderer<'a> {
                         }
                     };
 
-                    if !document.is_attachment() {
+                    if !Attachment::is_attachment(&document) {
                         // FIXME extract title
                         // render Document Link
                         return link_event(

@@ -51,7 +51,6 @@ struct CreateDocumentArgs {
 #[serde(rename_all = "camelCase")]
 struct PutDocumentArgs {
     document: Document,
-    new_attachments: Vec<AttachmentSource>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -95,8 +94,7 @@ impl ActionHandler for Handler {
 
             self.arhiv.schema.update_refs(&mut args.document)?;
 
-            self.arhiv
-                .stage_document(args.document, args.new_attachments)?;
+            self.arhiv.stage_document(args.document)?;
 
             self.arhiv.sync().await?;
 
@@ -109,7 +107,7 @@ impl ActionHandler for Handler {
             let data = self
                 .arhiv
                 .schema
-                .create_with_data(args.document_type.clone(), args.args)?;
+                .create_with_initial_values(args.document_type.clone(), args.args)?;
 
             let document = Document::new(args.document_type, data.into());
 
@@ -134,16 +132,17 @@ impl ActionHandler for Handler {
             return Ok(serde_json::to_value(&status)?);
         }
 
-        if action == "pick_attachments" {
-            let files = context.pick_files(true);
+        // FIXME
+        // if action == "pick_attachments" {
+        //     let files = context.pick_files(true);
 
-            let attachments: Vec<AttachmentSource> = files
-                .iter()
-                .map(|file| AttachmentSource::new_from_path_buf(file))
-                .collect();
+        //     let attachments: Vec<AttachmentSource> = files
+        //         .iter()
+        //         .map(|file| AttachmentSource::new_from_path_buf(file))
+        //         .collect();
 
-            return Ok(serde_json::to_value(attachments)?);
-        }
+        //     return Ok(serde_json::to_value(attachments)?);
+        // }
 
         if action == "render_markup" {
             let args: RenderMarkupArgs = serde_json::from_value(params)?;

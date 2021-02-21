@@ -12,13 +12,13 @@ pub struct TextGenerator {
 }
 
 impl TextGenerator {
-    pub fn new(attachments: &Vec<AttachmentSource>) -> Self {
+    pub fn new(attachment_ids: Vec<Id>) -> Self {
         let text = fs::read_to_string(project_relpath("../resources/text.txt")).unwrap();
         let markov = Markov::new(&text);
 
         TextGenerator {
             markov,
-            attachment_ids: attachments.iter().map(|item| item.id.clone()).collect(),
+            attachment_ids,
         }
     }
 

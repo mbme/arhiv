@@ -56,22 +56,16 @@ impl Arhiv {
             tx.put_document(&document)?;
             tx.put_document_history(&document, &changeset.base_rev)?;
 
-            if document.is_attachment() {
-                let attachment_data = self.get_attachment_data(document.id.clone());
+            if Attachment::is_attachment(&document) {
+                let attachment = Attachment::from(document)?;
+                let hash = attachment.get_data().hash;
+                let attachment_data = self.get_attachment_data(hash);
 
                 ensure!(
                     attachment_data.exists()?,
-                    "Attachment data for {} is missing",
-                    &attachment_data.id
-                );
-
-                // double-check file integrity
-                let expected_hash = self.schema.get_field_string(&document, "hash")?;
-                let hash = attachment_data.get_hash()?;
-                ensure!(
-                    hash == expected_hash,
-                    "Attachment {} data is corrupted: hash doesn't match",
-                    &attachment_data.id
+                    "Attachment data {} for attachment {} is missing",
+                    &attachment_data.hash,
+                    &attachment.0.id
                 );
             }
         }
@@ -126,7 +120,7 @@ impl Arhiv {
         let mut unused_attachments = Vec::new();
 
         for document in documents {
-            let is_unused_attachment = document.is_attachment()
+            let is_unused_attachment = Attachment::is_attachment(&document)
                 // skip attachments which were created before last sync
                 && document.created_at > db_status.last_sync_time
                 // attachments which aren't in use
@@ -190,7 +184,9 @@ impl Arhiv {
             for document in unused_attachments {
                 tx.delete_document(&document.id)?;
 
-                let attachment_data = self.get_attachment_data(document.id);
+                let attachment = Attachment::from(document)?;
+                let hash = attachment.get_data().hash;
+                let attachment_data = self.get_attachment_data(hash);
                 fs_tx.remove_file(attachment_data.path);
             }
 
@@ -217,9 +213,11 @@ impl Arhiv {
         for attachment in changeset
             .documents
             .iter()
-            .filter(|document| document.is_attachment())
+            .filter(|document| Attachment::is_attachment(document))
         {
-            let attachment_data = self.get_attachment_data(attachment.id.clone());
+            let attachment = Attachment::from(attachment.clone())?;
+            let hash = attachment.get_data().hash;
+            let attachment_data = self.get_attachment_data(hash);
 
             network_service
                 .upload_attachment_data(&attachment_data)

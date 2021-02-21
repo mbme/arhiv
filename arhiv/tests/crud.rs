@@ -14,7 +14,7 @@ fn test_crud() -> Result<()> {
     // CREATE
     let id = {
         let document = new_document(original_data.clone());
-        arhiv.stage_document(document.clone(), vec![])?;
+        arhiv.stage_document(document.clone())?;
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
 
         document.id
@@ -32,7 +32,7 @@ fn test_crud() -> Result<()> {
     {
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.data = json!({ "test": "1" });
-        arhiv.stage_document(other_document.clone(), vec![])?;
+        arhiv.stage_document(other_document.clone())?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
     }
@@ -42,7 +42,7 @@ fn test_crud() -> Result<()> {
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.archived = true;
-        arhiv.stage_document(other_document, vec![])?;
+        arhiv.stage_document(other_document)?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().archived, true);
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);

@@ -1,3 +1,4 @@
+use anyhow::*;
 use arhiv::entities::*;
 use arhiv::Arhiv;
 use rand::prelude::*;
@@ -10,8 +11,8 @@ use arhiv::schema::{DocumentData, FieldType};
 
 use super::TextGenerator;
 
-fn create_attachments() -> Vec<AttachmentSource> {
-    let mut attachments: Vec<AttachmentSource> = vec![];
+fn list_attachments() -> Vec<String> {
+    let mut attachments: Vec<String> = vec![];
 
     let dir = project_relpath("../resources");
     for entry in fs::read_dir(dir).unwrap() {
@@ -19,32 +20,36 @@ fn create_attachments() -> Vec<AttachmentSource> {
         let path = path.to_str().unwrap();
 
         if path.ends_with(".jpg") || path.ends_with(".jpeg") {
-            let attachment = AttachmentSource::new(path);
-            attachments.push(attachment);
+            attachments.push(path.to_string());
         }
     }
 
     attachments
 }
 
-pub struct Faker {
-    attachments: Vec<AttachmentSource>,
+pub struct Faker<'a> {
+    arhiv: &'a Arhiv,
     generator: TextGenerator,
     pub quantity_limits: HashMap<String, u32>,
     pub field_size_limits: HashMap<(String, String), (u32, u32)>,
 }
 
-impl Faker {
-    pub fn new() -> Self {
-        let attachments = create_attachments();
-        let generator = TextGenerator::new(&attachments);
+impl<'a> Faker<'a> {
+    pub fn new(arhiv: &'a Arhiv) -> Result<Faker> {
+        let mut attachment_ids: Vec<Id> = vec![];
+        for file_path in list_attachments() {
+            let document = arhiv.add_attachment(file_path, true)?;
+            attachment_ids.push(document.id);
+        }
 
-        Faker {
-            attachments,
+        let generator = TextGenerator::new(attachment_ids);
+
+        Ok(Faker {
+            arhiv,
             generator,
             quantity_limits: HashMap::new(),
             field_size_limits: HashMap::new(),
-        }
+        })
     }
 
     fn get_quantity_limit(&self, document_type: &str) -> u32 {
@@ -57,21 +62,18 @@ impl Faker {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(
-        &self,
-        document_type: String,
-        initial_values: DocumentData,
-        arhiv: &Arhiv,
-    ) -> Document {
-        let mut data = arhiv
+    fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
+        let mut data = self
+            .arhiv
             .schema
-            .create_with_data(document_type.clone(), initial_values)
+            .create_with_initial_values(document_type.clone(), initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
                 document_type
             ));
 
-        let description = arhiv
+        let description = self
+            .arhiv
             .schema
             .get_data_description_by_type(&document_type)
             .unwrap();
@@ -106,7 +108,7 @@ impl Faker {
         }
 
         let mut document = Document::new(document_type, data.into());
-        arhiv
+        self.arhiv
             .schema
             .update_refs(&mut document)
             .expect("Failed to update refs");
@@ -114,10 +116,11 @@ impl Faker {
         document
     }
 
-    pub fn create_fakes<S: Into<String>>(&self, document_type: S, arhiv: &Arhiv) {
+    pub fn create_fakes<S: Into<String>>(&self, document_type: S) {
         let document_type = document_type.into();
 
-        let data_description = arhiv
+        let data_description = self
+            .arhiv
             .schema
             .get_data_description_by_type(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
@@ -126,10 +129,10 @@ impl Faker {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let document = self.create_fake(document_type.clone(), Map::new(), &arhiv);
+            let document = self.create_fake(document_type.clone(), Map::new());
             let id = document.id.clone();
-            arhiv
-                .stage_document(document, self.attachments.clone())
+            self.arhiv
+                .stage_document(document)
                 .expect("must be able to save document");
 
             if let Some(collection_options) = &data_description.collection_of {
@@ -141,10 +144,10 @@ impl Faker {
                     initial_values
                         .insert(document_type.clone(), serde_json::to_value(&id).unwrap());
                     let child_document =
-                        self.create_fake(child_document_type.clone(), initial_values, &arhiv);
+                        self.create_fake(child_document_type.clone(), initial_values);
 
-                    arhiv
-                        .stage_document(child_document, self.attachments.clone())
+                    self.arhiv
+                        .stage_document(child_document)
                         .expect("must be able to save child document");
                 }
 

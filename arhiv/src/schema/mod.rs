@@ -32,10 +32,10 @@ impl DataSchema {
     }
 
     pub fn create(&self, document_type: String) -> Result<DocumentData> {
-        self.create_with_data(document_type, Map::new())
+        self.create_with_initial_values(document_type, Map::new())
     }
 
-    pub fn create_with_data(
+    pub fn create_with_initial_values(
         &self,
         document_type: String,
         initial_values: DocumentData,

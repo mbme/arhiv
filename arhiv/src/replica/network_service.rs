@@ -26,11 +26,11 @@ impl NetworkService {
         }
 
         debug!(
-            "downloading attachment data for {} into {}",
-            &attachment_data.id, &attachment_data.path
+            "downloading attachment data {} into {}",
+            &attachment_data.hash, &attachment_data.path
         );
 
-        let url = self.get_attachment_data_url(&attachment_data.id);
+        let url = self.get_attachment_data_url(&attachment_data.hash);
 
         let mut stream = reqwest::get(&url)
             .await?
@@ -53,12 +53,12 @@ impl NetworkService {
     pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
         debug!(
             "uploading attachment {} ({})",
-            &attachment_data.id, &attachment_data.path
+            &attachment_data.hash, &attachment_data.path
         );
 
         let file_stream = read_file_as_stream(&attachment_data.path).await?;
 
-        let url = self.get_attachment_data_url(&attachment_data.id);
+        let url = self.get_attachment_data_url(&attachment_data.hash);
 
         Client::new()
             .post(&url)
@@ -86,7 +86,7 @@ impl NetworkService {
         Ok(response)
     }
 
-    pub fn get_attachment_data_url(&self, attachment_id: &Id) -> String {
-        format!("{}/attachment-data/{}", self.prime_url, &attachment_id)
+    pub fn get_attachment_data_url(&self, hash: &str) -> String {
+        format!("{}/attachment-data/{}", self.prime_url, hash)
     }
 }

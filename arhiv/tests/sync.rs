@@ -1,5 +1,4 @@
 use anyhow::*;
-use arhiv::entities::*;
 use arhiv::start_server;
 use rs_utils::project_relpath;
 use serde_json::json;
@@ -13,13 +12,12 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let mut attachment = AttachmentSource::new(src);
-    attachment.copy = true;
+    let attachment = arhiv.add_attachment(src, true)?;
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
 
-    arhiv.stage_document(document.clone(), vec![attachment.clone()])?;
+    arhiv.stage_document(document.clone())?;
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
@@ -47,7 +45,7 @@ async fn test_prime_sync() -> Result<()> {
     {
         let mut document = arhiv.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" });
-        arhiv.stage_document(document, vec![])?;
+        arhiv.stage_document(document)?;
     }
 
     arhiv.sync().await?;
@@ -68,12 +66,11 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let mut attachment = AttachmentSource::new(src);
-    attachment.copy = true;
+    let attachment = replica.add_attachment(src, true)?;
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
-    replica.stage_document(document.clone(), vec![attachment.clone()])?;
+    replica.stage_document(document.clone())?;
 
     replica.sync().await?;
 
@@ -101,7 +98,7 @@ async fn test_replica_sync() -> Result<()> {
     {
         let mut document = replica.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "1" });
-        replica.stage_document(document, vec![])?;
+        replica.stage_document(document)?;
     }
 
     replica.sync().await?;
@@ -123,22 +120,21 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let mut attachment1 = AttachmentSource::new(src);
-    attachment1.copy = true;
+    let attachment1 = arhiv.add_attachment(src, true)?;
 
     let mut document = empty_document();
     document.refs.insert(attachment1.id.clone());
 
     // stage document with attachment1
-    arhiv.stage_document(document.clone(), vec![attachment1.clone()])?;
+    arhiv.stage_document(document.clone())?;
 
-    let mut attachment2 = AttachmentSource::new(src);
-    attachment2.copy = true;
+    let attachment2 = arhiv.add_attachment(src, true)?;
+
     document.refs.clear();
     document.refs.insert(attachment2.id.clone());
 
     // stage document with attachment2, attachment1 is now unused
-    arhiv.stage_document(document.clone(), vec![attachment2.clone()])?;
+    arhiv.stage_document(document.clone())?;
 
     arhiv.sync().await?;
 

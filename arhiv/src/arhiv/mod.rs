@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::{config::Config, db::*, entities::*, replica::NetworkService, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
@@ -165,23 +167,16 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document(
-        &self,
-        updated_document: Document,
-        new_attachments: Vec<AttachmentSource>,
-    ) -> Result<()> {
-        debug!(
-            "Staging document {} with {} new attachments",
-            &updated_document.id,
-            new_attachments.len()
-        );
+    pub fn stage_document(&self, updated_document: Document) -> Result<()> {
+        debug!("Staging document {}", &updated_document.id);
+
+        if Attachment::is_attachment(&updated_document) {
+            bail!("attachments must not be modified manually");
+        }
 
         let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
-        let mut fs_tx = FsTransaction::new();
-
-        // FIXME optimize this
         let mut document = {
             if let Some(mut document) = conn.get_document(&updated_document.id)? {
                 debug!("Updating existing document {}", &updated_document.id);
@@ -192,10 +187,6 @@ impl Arhiv {
 
                 document
             } else {
-                if updated_document.is_attachment() {
-                    bail!("attachments must not be created manually");
-                }
-
                 debug!("Creating new document {}", &updated_document.id);
 
                 let mut new_document =
@@ -208,12 +199,8 @@ impl Arhiv {
 
         document.archived = updated_document.archived;
         document.refs = updated_document.refs;
-        if document.is_attachment() && !document.refs.is_empty() {
-            bail!("attachment refs must be empty")
-        }
 
         // Validate document references
-        let new_attachments_ids: Vec<&Id> = new_attachments.iter().map(|item| &item.id).collect();
         for reference in document.refs.iter() {
             // FIXME optimize validating id
             if conn.get_document(reference)?.is_some() {
@@ -221,9 +208,6 @@ impl Arhiv {
             }
             if reference == &document.id {
                 warn!("Document {} references itself, ignoring ref", &document.id);
-                continue;
-            }
-            if new_attachments_ids.contains(&reference) {
                 continue;
             }
 
@@ -234,97 +218,96 @@ impl Arhiv {
             );
         }
 
-        // Stage new attachments
-        for new_attachment in new_attachments {
-            if !document.refs.contains(&new_attachment.id) {
-                warn!(
-                    "Document {} new attachment is unused, ignoring: {}",
-                    &document.id, &new_attachment
-                );
-                continue;
-            }
-
-            if conn.get_document(&new_attachment.id)?.is_some() {
-                warn!(
-                    "Document {} new attachment already exists, ignoring: {}",
-                    &document.id, &new_attachment
-                );
-                continue;
-            }
-
-            let attachment_data = self.get_attachment_data(new_attachment.id.clone());
-
-            let source_path = new_attachment.file_path.to_string();
-            if new_attachment.copy {
-                fs_tx.copy_file(source_path.clone(), attachment_data.path)?;
-            } else {
-                fs_tx.hard_link_file(source_path.clone(), attachment_data.path)?;
-            }
-
-            let attachment = self.create_attachment(new_attachment)?;
-            conn.put_document(&attachment)?;
-
-            info!("staged new attachment {}: {}", attachment, source_path);
-        }
-
         conn.put_document(&document)?;
 
         conn.commit()?;
-        fs_tx.commit()?;
 
         debug!("staged document {}", &document);
 
         Ok(())
     }
 
-    fn create_attachment(&self, source: AttachmentSource) -> Result<Document> {
-        use serde_json::Map;
+    pub fn add_attachment<S: Into<String>>(&self, file_path: S, copy: bool) -> Result<Document> {
+        let file_path = file_path.into();
 
-        ensure_file_exists(&source.file_path)?;
+        debug!("Staging attachment {}", &file_path);
 
-        let mut initial_values = Map::new();
-        let hash = get_file_hash_sha256(&source.file_path)?;
-        initial_values.insert("hash".to_string(), hash.into());
-        initial_values.insert("filename".to_string(), source.filename.into());
+        ensure_file_exists(&file_path)?;
 
-        let data = self
-            .schema
-            .create_with_data(ATTACHMENT_TYPE.to_string(), initial_values)?;
+        let filename = Path::new(&file_path)
+            .file_name()
+            .expect("file must have name")
+            .to_str()
+            .expect("file name must be valid string");
+
+        let hash = get_file_hash_sha256(&file_path)?;
+
+        let mut conn = self.db.get_writable_connection()?;
+        let conn = conn.get_tx()?;
+        let mut fs_tx = FsTransaction::new();
+
+        // FIXME check if hashcode is unique
+
+        let attachment = Attachment::new(AttachmentInfo {
+            filename: filename.to_string(),
+            hash: hash.clone(),
+        })?;
+
+        let attachment_data = self.get_attachment_data(hash);
+        if copy {
+            fs_tx.copy_file(file_path.clone(), attachment_data.path)?;
+        } else {
+            fs_tx.hard_link_file(file_path.clone(), attachment_data.path)?;
+        }
+
+        conn.put_document(&attachment.0)?;
+
+        conn.commit()?;
+        fs_tx.commit()?;
 
         info!(
             "Created attachment {} from {}",
-            &source.id, &source.file_path
+            &attachment.0.id, &file_path
         );
 
-        Ok(Document {
-            id: source.id.clone(),
-            ..Document::new(ATTACHMENT_TYPE.to_string(), data.into())
-        })
+        Ok(attachment.0)
     }
 
-    pub(crate) fn get_attachment_data(&self, id: Id) -> AttachmentData {
-        let path = self.path_manager.get_attachment_data_path(&id);
-
-        AttachmentData::new(id, path)
+    pub fn update_attachment_data<S: Into<String>>(
+        &self,
+        id: &Id,
+        file_path: S,
+    ) -> Result<Document> {
+        unimplemented!()
     }
 
-    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
-        let attachment = self
+    pub(crate) fn get_attachment_data(&self, hash: String) -> AttachmentData {
+        let path = self.path_manager.get_attachment_data_path(&hash);
+
+        AttachmentData::new(hash, path)
+    }
+
+    fn get_attachment(&self, id: &Id) -> Result<Attachment> {
+        let document = self
             .get_document(&id)?
             .ok_or(anyhow!("unknown attachment {}", id))?;
 
-        ensure!(
-            attachment.is_attachment(),
-            "document {} isn't an attachment",
-            id,
-        );
+        let attachment = Attachment::from(document)?;
 
-        let attachment_data = self.get_attachment_data(id.clone());
+        Ok(attachment)
+    }
+
+    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
+        let attachment = self.get_attachment(id)?;
+
+        let hash = attachment.get_data().hash;
+
+        let attachment_data = self.get_attachment_data(hash.clone());
         if attachment_data.exists()? {
             return Ok(AttachmentLocation::File(attachment_data.path));
         }
 
-        let url = self.get_network_service()?.get_attachment_data_url(id);
+        let url = self.get_network_service()?.get_attachment_data_url(&hash);
 
         Ok(AttachmentLocation::Url(url))
     }

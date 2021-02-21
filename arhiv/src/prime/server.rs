@@ -24,7 +24,7 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         .and(arhiv_filter.clone())
         .map(get_status_handler);
 
-    // POST /attachment-data/:id file bytes
+    // POST /attachment-data/:hash file bytes
     let post_attachment_data = warp::post()
         .and(warp::path("attachment-data"))
         .and(warp::path::param::<String>())
@@ -32,7 +32,7 @@ pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, 
         .and(arhiv_filter.clone())
         .map(post_attachment_data_handler);
 
-    // GET /attachment-data/:id -> file bytes
+    // GET /attachment-data/:hash -> file bytes
     let get_attachment_data = warp::get()
         .and(warp::path("attachment-data"))
         .and(warp::path::param::<String>())
@@ -97,15 +97,13 @@ fn get_status_handler(arhiv: Arc<Arhiv>) -> impl warp::Reply {
 }
 
 fn post_attachment_data_handler(
-    id: String,
+    hash: String,
     data: warp::hyper::body::Bytes,
     arhiv: Arc<Arhiv>,
 ) -> impl warp::Reply {
-    let id: Id = id.into();
+    info!("Saving attachment data {}", &hash);
 
-    info!("Saving data for attachment {}", &id);
-
-    let attachment_data = arhiv.get_attachment_data(id);
+    let attachment_data = arhiv.get_attachment_data(hash);
 
     if attachment_data
         .exists()
@@ -125,8 +123,8 @@ fn post_attachment_data_handler(
 
     if let Err(err) = fs::write(attachment_data.path, &data) {
         error!(
-            "Failed to save data for attachment {}: {}",
-            &attachment_data.id, &err
+            "Failed to save attachment data {}: {}",
+            &attachment_data.hash, &err
         );
 
         return reply::with_status(
@@ -139,48 +137,12 @@ fn post_attachment_data_handler(
 }
 
 async fn get_attachment_data_handler(
-    id: String,
+    hash: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let id: Id = id.into();
+    debug!("Serving attachment data {}", &hash);
 
-    debug!("Serving data for attachment {}", &id);
-
-    let attachment = match arhiv.get_document(&id) {
-        Ok(Some(attachment)) if attachment.is_attachment() => attachment,
-
-        Ok(Some(_)) => {
-            warn!("Requested document {} isn't an attachment", &id);
-
-            return Ok(reply::with_status(
-                format!("Requested document {} isn't an attachment", &id),
-                http::StatusCode::BAD_REQUEST,
-            )
-            .into_response());
-        }
-
-        Ok(None) => {
-            warn!("Requested attachment {} is not found", &id);
-
-            return Ok(reply::with_status(
-                format!("can't find attachment with id {}", &id),
-                http::StatusCode::NOT_FOUND,
-            )
-            .into_response());
-        }
-
-        Err(err) => {
-            error!("Failed to find attachment {}: {}", &id, &err);
-
-            return Ok(reply::with_status(
-                format!("failed to find attachment {}: {}", &id, err),
-                http::StatusCode::INTERNAL_SERVER_ERROR,
-            )
-            .into_response());
-        }
-    };
-
-    let attachment_data = arhiv.get_attachment_data(id);
+    let attachment_data = arhiv.get_attachment_data(hash);
 
     if !attachment_data
         .exists()
@@ -188,11 +150,11 @@ async fn get_attachment_data_handler(
     {
         warn!(
             "Requested attachment data {} is not found",
-            &attachment_data.id
+            &attachment_data.hash
         );
 
         return Ok(reply::with_status(
-            format!("can't find attachment data with id {}", &attachment_data.id),
+            format!("can't find attachment data {}", &attachment_data.hash),
             http::StatusCode::NOT_FOUND,
         )
         .into_response());
@@ -203,13 +165,13 @@ async fn get_attachment_data_handler(
         Err(err) => {
             error!(
                 "Failed to read attachment data {}: {}",
-                &attachment_data.id, &err
+                &attachment_data.hash, &err
             );
 
             return Ok(reply::with_status(
                 format!(
                     "failed to read attachment data {}: {}",
-                    &attachment_data.id, err
+                    &attachment_data.hash, err
                 ),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
@@ -218,31 +180,7 @@ async fn get_attachment_data_handler(
     };
 
     // FIXME support ranges, status code: partial content
-    // res.headers['Content-Type'] = await getMimeType(filePath)
-    let filename = match arhiv.schema.get_field_string(&attachment, "filename") {
-        Ok(filename) => filename,
-        Err(err) => {
-            error!(
-                "Failed to get attachment filename {}: {}",
-                &attachment_data.id, &err
-            );
-
-            return Ok(reply::with_status(
-                format!(
-                    "failed to read attachment filename {}: {}",
-                    &attachment_data.id, err
-                ),
-                http::StatusCode::INTERNAL_SERVER_ERROR,
-            )
-            .into_response());
-        }
-    };
-
     Ok(http::Response::builder()
-        .header(
-            "Content-Disposition",
-            format!("inline; filename={}", filename),
-        )
         .header("Cache-Control", "immutable, private, max-age=31536000") // max caching
         .body(hyper::Body::wrap_stream(file))
         .expect("must be able to construct response"))

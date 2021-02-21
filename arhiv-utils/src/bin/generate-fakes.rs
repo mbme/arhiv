@@ -8,7 +8,7 @@ async fn main() {
 
     let arhiv = Arhiv::must_open();
 
-    let mut faker = Faker::new();
+    let mut faker = Faker::new(&arhiv).unwrap();
 
     faker.quantity_limits.insert("project".to_string(), 10);
     faker
@@ -21,8 +21,8 @@ async fn main() {
         .field_size_limits
         .insert(("project".to_string(), "title".to_string()), (1, 4));
 
-    faker.create_fakes("note", &arhiv);
-    faker.create_fakes("project", &arhiv);
+    faker.create_fakes("note");
+    faker.create_fakes("project");
 
     arhiv.sync().await.expect("must be able to sync");
 

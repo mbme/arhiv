@@ -15,13 +15,6 @@ export interface IDocumentData {
   readonly [name: string]: any
 }
 
-export interface IAttachmentSource {
-  readonly id: string
-  readonly filePath: string
-  readonly filename: string
-  readonly copy: boolean
-}
-
 export type Matcher =
   { Field: { selector: string, pattern: string } }
   | { FuzzyField: { selector: string, pattern: string } }
@@ -82,13 +75,11 @@ export interface ICreateDocumentArgs {
 
 export interface IPutDocumentArgs {
   readonly document: IDocument
-  readonly newAttachments: IAttachmentSource[]
 }
 
 export interface IRenderMarkupArgs {
   readonly value: string
   readonly options: {
-    readonly newAttachments: IAttachmentSource[]
     readonly documentPath: string
   }
 }

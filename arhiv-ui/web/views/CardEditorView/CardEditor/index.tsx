@@ -4,7 +4,7 @@ import {
   Box,
 } from '@v/web-platform'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
-import { API, createRef, IAttachmentSource, IDocument } from '../../../api'
+import { API, createRef, IDocument } from '../../../api'
 import { CardData, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
 import { copyTextToClipboard } from '@v/web-utils'
@@ -25,7 +25,6 @@ export function CardEditor(props: IProps) {
   } = props
 
   const [preview, showPreview] = React.useState(false)
-  const [newAttachments, setNewAttachments] = React.useState<IAttachmentSource[]>([])
   const formRef = React.useRef(null)
 
   const saveDocument = async () => {
@@ -34,7 +33,6 @@ export function CardEditor(props: IProps) {
         ...document,
         data: formRef.current!,
       },
-      newAttachments,
     })
 
     onSave()
@@ -46,7 +44,6 @@ export function CardEditor(props: IProps) {
         ...document,
         archived: true,
       },
-      newAttachments: [],
     })
 
     onDelete!()
@@ -73,11 +70,9 @@ export function CardEditor(props: IProps) {
       },
       {
         async onClick() {
-          const attachments = await API.pick_attachments()
+          const attachmentIds = await API.pick_attachments()
 
-          copyTextToClipboard(attachments.map(item => createRef(item.id)).join(' '))
-
-          setNewAttachments(prevState => [...prevState, ...attachments])
+          copyTextToClipboard(attachmentIds.map(createRef).join(' '))
         },
         children: 'Attach File',
       },
@@ -102,7 +97,6 @@ export function CardEditor(props: IProps) {
         <CardData
           documentType={document.documentType}
           data={formRef.current!}
-          newAttachments={newAttachments}
         />
       )}
 

@@ -77,9 +77,11 @@ export interface IPutDocumentArgs {
   readonly document: IDocument
 }
 
+interface IRenderOptions {
+  readonly documentPath: string
+}
+
 export interface IRenderMarkupArgs {
   readonly value: string
-  readonly options: {
-    readonly documentPath: string
-  }
+  readonly options: IRenderOptions
 }

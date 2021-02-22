@@ -132,17 +132,19 @@ impl ActionHandler for Handler {
             return Ok(serde_json::to_value(&status.to_string())?);
         }
 
-        // FIXME
-        // if action == "pick_attachments" {
-        //     let files = context.pick_files(true);
+        if action == "pick_attachments" {
+            let files = context.pick_files(true);
 
-        //     let attachments: Vec<AttachmentSource> = files
-        //         .iter()
-        //         .map(|file| AttachmentSource::new_from_path_buf(file))
-        //         .collect();
+            let mut attachment_ids: Vec<Id> = vec![];
+            for file_path in files {
+                let document = self
+                    .arhiv
+                    .add_attachment(file_path.to_str().unwrap(), false)?;
+                attachment_ids.push(document.id);
+            }
 
-        //     return Ok(serde_json::to_value(attachments)?);
-        // }
+            return Ok(serde_json::to_value(attachment_ids)?);
+        }
 
         if action == "render_markup" {
             let args: RenderMarkupArgs = serde_json::from_value(params)?;

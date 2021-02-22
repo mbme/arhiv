@@ -27,7 +27,7 @@ interface IRPC {
 
   get_status(): Promise<string>
 
-  pick_attachments(): Promise<IAttachmentSource[]>
+  pick_attachments(): Promise<string[]>
 }
 
 export const API = window.RPC_PROXY as IRPC

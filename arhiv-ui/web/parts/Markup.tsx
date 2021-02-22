@@ -4,7 +4,7 @@ import {
   Box,
   StyleArg,
 } from '@v/web-platform'
-import { API, IAttachmentSource } from '../api'
+import { API } from '../api'
 
 const $article: StyleArg = {
   hyphens: 'auto',
@@ -13,19 +13,17 @@ const $article: StyleArg = {
 
 interface IProps {
   value: string
-  newAttachments: IAttachmentSource[]
 }
 
-export function Markup({ value, newAttachments }: IProps) {
+export function Markup({ value }: IProps) {
   const [result] = usePromise(() => (
     API.render_markup({
       value,
       options: {
-        newAttachments,
         documentPath: '/document',
       },
     })
-  ), [value, newAttachments])
+  ), [value])
 
   if (result === undefined) {
     return null

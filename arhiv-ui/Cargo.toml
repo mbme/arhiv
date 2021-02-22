@@ -8,11 +8,16 @@ production-mode = ["arhiv/production-mode"]
 
 [dependencies]
 anyhow = "1.0.38"
+
 serde = { version = "1.0.120", features = ["derive"] }
 serde_json = "1.0.61"
-tokio = { version = "1.0.2", features = ["macros"] }
-async-trait = "0.1.42"
 
-app-shell = { path = "../app-shell" }
+tokio = { version = "1.0.2", features = ["macros"] }
+
 arhiv = { path = "../arhiv" }
 rs-utils = { path = "../rs-utils" }
+
+rust-embed= { version = "5.8.0", features = ["interpolate-folder-path"]}
+
+mime_guess = "2.0.3"
+warp = "0.3.0"

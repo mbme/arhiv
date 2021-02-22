@@ -6,6 +6,10 @@ export class DataManager {
     private _schema: IDataSchema,
   ) {}
 
+  getModules(): readonly IDataDescription[] {
+    return this._schema.modules
+  }
+
   getDataDescription(documentType: string): IDataDescription {
     const dataDescription = this._schema.modules.find(item => item.documentType === documentType)
 

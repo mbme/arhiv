@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Box, Link, StyleArg } from '@v/web-platform'
 import { FrameTitle } from '../parts'
-import { SCHEMA } from '../api'
+import { DataManagerContext } from '../data-manager'
 
 const $link: StyleArg = {
   textTransform: 'uppercase',
@@ -25,7 +25,9 @@ const $container: StyleArg = {
 }
 
 export function DashboardView() {
-  const links = SCHEMA.modules.map(module => (
+  const dataManager = DataManagerContext.use()
+
+  const links = dataManager.getModules().map(module => (
     <Link
       key={module.documentType}
       to={`/catalog/${module.documentType}`}

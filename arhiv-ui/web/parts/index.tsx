@@ -9,5 +9,4 @@ export { CardData } from './CardData'
 export { CardLoader } from './CardLoader'
 export { Catalog } from './Catalog'
 
-export { Url } from './Url'
 export { FrameTitle } from './FrameTitle'

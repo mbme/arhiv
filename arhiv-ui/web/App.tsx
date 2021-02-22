@@ -1,15 +1,14 @@
 import * as React from 'react'
 import { pathMatcher as pm } from '@v/utils'
 import {
-  Routes,
+  Routes, usePromise,
 } from '@v/web-utils'
 import {
   PlatformProvider,
 } from '@v/web-platform'
-import { Frame, NotFoundBlock, Url } from './parts'
+import { Frame, NotFoundBlock } from './parts'
 
 import { DataManager, DataManagerContext } from './data-manager'
-import { SCHEMA } from './api'
 
 import { CatalogView } from './views/CatalogView'
 import { CardView } from './views/CardView'
@@ -20,9 +19,18 @@ import {
 import { MetadataView } from './views/MetadataView'
 import { DashboardView } from './views/DashboardView'
 import { StatusView } from './views/StatusView'
+import { API } from './api'
 
 export function App() {
-  const [dataManager] = React.useState(() => new DataManager(SCHEMA))
+  const [dataManager] = usePromise(async () => {
+    const SCHEMA = await API.get_schema()
+
+    return new DataManager(SCHEMA)
+  }, [])
+
+  if (!dataManager) {
+    return null
+  }
 
   return (
     <PlatformProvider>
@@ -65,10 +73,6 @@ export function App() {
             ]}
           </Routes>
         </Frame>
-
-        {!window.RPC_URL && process.env.NODE_ENV === 'development' && (
-          <Url />
-        )}
       </DataManagerContext.Provider>
     </PlatformProvider>
   )

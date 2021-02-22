@@ -35,8 +35,6 @@ export interface IFilter {
   mode?: FilterMode,
 }
 
-export type AttachmentLocation = { Url: string } | { File: string }
-
 export interface IListPage<T> {
   readonly items: T[]
   readonly hasMore: boolean

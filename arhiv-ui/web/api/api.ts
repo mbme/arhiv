@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference */
-/// <reference path="../../../app-shell/src/rpc.d.ts" />
-
+import { RPC_PROXY } from './rpc'
 import {
-  AttachmentLocation,
   ICreateDocumentArgs,
   IDocument,
   IFilter,
@@ -23,13 +20,11 @@ interface IRPC {
 
   render_markup(args: IRenderMarkupArgs): Promise<string>
 
-  get_attachment_location(id: string): Promise<AttachmentLocation>
-
   get_status(): Promise<string>
 
   pick_attachments(): Promise<string[]>
+
+  get_schema(): Promise<IDataSchema>
 }
 
-export const API = window.RPC_PROXY as IRPC
-
-export const SCHEMA = window.JS_VARIABLES.DATA_SCHEMA as IDataSchema
+export const API = RPC_PROXY as IRPC

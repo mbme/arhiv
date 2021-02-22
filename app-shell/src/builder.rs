@@ -1,4 +1,3 @@
-use crate::context::AppShellContext;
 use anyhow::*;
 use async_trait::async_trait;
 use serde_json::{Map, Value};
@@ -6,7 +5,7 @@ use std::path::Path;
 
 #[async_trait]
 pub trait ActionHandler: Send + Sync {
-    async fn run(&self, action: String, context: &AppShellContext, value: Value) -> Result<Value>;
+    async fn run(&self, action: String, value: Value) -> Result<Value>;
 }
 
 pub struct AppShellBuilder {

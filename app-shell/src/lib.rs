@@ -2,14 +2,12 @@ use std::sync::Arc;
 
 pub use builder::ActionHandler;
 pub use builder::AppShellBuilder;
-pub use context::AppShellContext;
 pub use html_template::AppSource;
 use rpc_message::{RpcMessage, RpcMessageResponse};
 use rs_utils::log::{debug, info};
 use warp::{reply, Reply};
 
 mod builder;
-mod context;
 mod html_template;
 mod rpc_message;
 mod webview;
@@ -35,7 +33,6 @@ impl AppShellBuilder {
 
         let application = gtk::Application::new(Some(&self.app_id), Default::default()).unwrap();
 
-        let builder = Arc::new(self);
         application.connect_activate(move |app| {
             let (action_sender, action_receiver) =
                 glib::MainContext::channel::<RpcMessage>(glib::PRIORITY_DEFAULT);
@@ -44,17 +41,14 @@ impl AppShellBuilder {
                 glib::MainContext::channel::<RpcMessageResponse>(glib::PRIORITY_DEFAULT);
 
             {
-                let builder = builder.clone();
                 let handler = handler.clone();
 
                 action_receiver.attach(None, move |msg| {
-                    let builder = builder.clone();
                     let handler = handler.clone();
                     let action_response_sender = action_response_sender.clone();
 
                     glib::MainContext::default().spawn(async move {
-                        let context = AppShellContext::new(builder.server_mode);
-                        let result = handler.run(msg.action, &context, msg.params).await;
+                        let result = handler.run(msg.action, msg.params).await;
 
                         let response = match result {
                             Ok(result) => RpcMessageResponse {
@@ -79,16 +73,16 @@ impl AppShellBuilder {
             }
 
             let webview = build_webview(
-                builder.data_dir.clone(),
+                self.data_dir.clone(),
                 action_sender,
                 action_response_receiver,
             );
 
-            webview.load_html(&src.render(&builder), Some(&src.get_base_path()));
+            webview.load_html(&src.render(&self), Some(&src.get_base_path()));
 
             let window = ApplicationWindow::new(app);
-            window.set_title(&builder.title);
-            window.set_default_size(builder.default_size.0, builder.default_size.1);
+            window.set_title(&self.title);
+            window.set_default_size(self.default_size.0, self.default_size.1);
             window.add(webview.as_ref());
 
             // reload on F5 and Ctrl-r
@@ -128,20 +122,17 @@ impl AppShellBuilder {
         self.server_mode = true;
 
         let src = Arc::new(src);
-        let builder = Arc::new(self);
 
         // render temp file
-        let temp_file = TempFile::new(&format!("{}.html", &builder.app_id));
-        fs::write(temp_file.get_path(), AppSource::render(&src, &builder))
+        let temp_file = TempFile::new(&format!("{}.html", self.app_id));
+        fs::write(temp_file.get_path(), AppSource::render(&src, &self))
             .expect("failed to write data into temp file");
         println!("Root file: file:{}", temp_file.get_path());
 
         // create rpc handler
         let post_rpc = {
-            let builder = builder.clone();
             let handler = handler.clone();
 
-            let builder_filter = warp::any().map(move || builder.clone());
             let handler_filter = warp::any().map(move || handler.clone());
 
             let cors = warp::cors()
@@ -152,7 +143,6 @@ impl AppShellBuilder {
 
             warp::post()
                 .and(warp::path("rpc"))
-                .and(builder_filter.clone())
                 .and(handler_filter.clone())
                 .and(warp::body::json())
                 .and_then(rpc_action_handler)
@@ -161,7 +151,7 @@ impl AppShellBuilder {
 
         // run server
         let (addr, server) = warp::serve(post_rpc).bind_with_graceful_shutdown(
-            ([127, 0, 0, 1], builder.server_port),
+            ([127, 0, 0, 1], self.server_port),
             async {
                 signal::ctrl_c().await.expect("failed to listen for event");
                 println!("\nGot Ctrl-C, stopping the server");
@@ -180,14 +170,12 @@ impl AppShellBuilder {
 }
 
 async fn rpc_action_handler(
-    builder: Arc<AppShellBuilder>,
     handler: Arc<dyn ActionHandler>,
     msg: RpcMessage,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     debug!("RPC MESSAGE: {}", msg);
 
-    let context = AppShellContext::new(builder.server_mode);
-    let result = handler.run(msg.action, &context, msg.params).await;
+    let result = handler.run(msg.action, msg.params).await;
 
     let response = match result {
         Ok(result) => RpcMessageResponse {

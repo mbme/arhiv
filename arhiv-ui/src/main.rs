@@ -1,9 +1,12 @@
 use anyhow::*;
-use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
+use app_shell::{ActionHandler, AppShellBuilder, AppSource};
 use arhiv::{entities::*, markup::RenderOptions, schema::DocumentData};
 use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, Filter};
 use async_trait::async_trait;
-use rs_utils::log::{setup_logger, warn};
+use rs_utils::{
+    log::{setup_logger, warn},
+    run_command,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
@@ -66,7 +69,7 @@ struct Handler {
 
 #[async_trait]
 impl ActionHandler for Handler {
-    async fn run(&self, action: String, context: &AppShellContext, params: Value) -> Result<Value> {
+    async fn run(&self, action: String, params: Value) -> Result<Value> {
         if action == "list" {
             let filter: Filter = serde_json::from_value(params)?;
 
@@ -133,13 +136,12 @@ impl ActionHandler for Handler {
         }
 
         if action == "pick_attachments" {
-            let files = context.pick_files(true);
+            let files = run_command("mb-filepicker", vec!["-m"])?;
+            let files: Vec<String> = serde_json::from_str(&files)?;
 
             let mut attachment_ids: Vec<Id> = vec![];
             for file_path in files {
-                let document = self
-                    .arhiv
-                    .add_attachment(file_path.to_str().unwrap(), false)?;
+                let document = self.arhiv.add_attachment(file_path, false)?;
                 attachment_ids.push(document.id);
             }
 

@@ -1,7 +1,7 @@
 use anyhow::*;
 use app_shell::{ActionHandler, AppShellBuilder, AppShellContext, AppSource};
-use arhiv::{entities::*, markup::RenderOptions};
-use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, DocumentData, Filter};
+use arhiv::{entities::*, markup::RenderOptions, schema::DocumentData};
+use arhiv::{markup::MarkupRenderer, markup::MarkupString, Arhiv, Filter};
 use async_trait::async_trait;
 use rs_utils::log::{setup_logger, warn};
 use serde::{Deserialize, Serialize};

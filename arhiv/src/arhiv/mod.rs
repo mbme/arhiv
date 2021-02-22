@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::{config::Config, db::*, entities::*, replica::NetworkService, schema::DataSchema};
+use crate::{config::Config, entities::*, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{
@@ -10,11 +10,16 @@ use rs_utils::{
 };
 use status::Status;
 
+use network_service::NetworkService;
 use path_manager::PathManager;
 
 pub use attachment_data::AttachmentData;
+use db::*;
+pub use db::{Filter, FilterMode, ListPage, Matcher, OrderBy};
 
 mod attachment_data;
+mod db;
+mod network_service;
 mod path_manager;
 mod status;
 mod sync;

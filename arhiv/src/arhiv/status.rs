@@ -1,10 +1,7 @@
+use super::db::{DbStatus, DocumentsCount};
+use crate::entities::Timestamp;
 use serde::Serialize;
 use std::fmt;
-
-use crate::{
-    db::{DbStatus, DocumentsCount},
-    entities::Timestamp,
-};
 
 #[derive(Serialize)]
 pub struct Status {

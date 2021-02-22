@@ -81,11 +81,9 @@ impl<'a> MarkupRenderer<'a> {
                         }
                     };
 
-                    let filename = self
-                        .arhiv
-                        .schema
-                        .get_field_string(&document, "filename")
-                        .expect("must be able to read filename");
+                    let attachment =
+                        Attachment::from(document).expect("document must be attachment");
+                    let filename = attachment.get_data().filename;
 
                     // render Image
                     if is_image_file(&filename) {

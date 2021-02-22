@@ -1,5 +1,5 @@
-use super::AttachmentData;
-use crate::{entities::Id, replica::NetworkService, Arhiv, Config};
+use super::{network_service::NetworkService, AttachmentData};
+use crate::{entities::Id, Arhiv, Config};
 use rs_utils::generate_temp_path;
 
 pub struct TestArhiv(Arc<Arhiv>);

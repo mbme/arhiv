@@ -65,7 +65,7 @@ impl Arhiv {
                     attachment_data.exists()?,
                     "Attachment data {} for attachment {} is missing",
                     &attachment_data.hash,
-                    &attachment.0.id
+                    &attachment.id
                 );
             }
         }

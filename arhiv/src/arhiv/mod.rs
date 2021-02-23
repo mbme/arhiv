@@ -247,14 +247,14 @@ impl Arhiv {
             fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
         }
 
-        conn.put_document(&attachment.0)?;
+        conn.put_document(&attachment)?;
 
         conn.commit()?;
         fs_tx.commit()?;
 
-        info!("Created attachment {} from {}", &attachment.0.id, file_path);
+        info!("Created attachment {} from {}", &attachment.id, file_path);
 
-        Ok(attachment.0)
+        Ok(attachment.into())
     }
 
     pub fn update_attachment_data(&self, id: &Id, file_path: &str) -> Result<Document> {

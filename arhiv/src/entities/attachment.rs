@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{ops::Deref, path::Path};
 
 use anyhow::*;
 use rs_utils::ensure_file_exists;
@@ -15,7 +15,7 @@ struct AttachmentInfo {
     pub hash: Hash,
 }
 
-pub struct Attachment(pub Document);
+pub struct Attachment(Document);
 
 impl Attachment {
     pub fn is_attachment(document: &Document) -> bool {
@@ -64,5 +64,19 @@ impl Attachment {
 
     pub fn get_filename(&self) -> String {
         self.get_data().filename
+    }
+}
+
+impl Deref for Attachment {
+    type Target = Document;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Into<Document> for Attachment {
+    fn into(self) -> Document {
+        self.0
     }
 }

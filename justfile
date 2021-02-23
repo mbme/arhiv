@@ -34,14 +34,8 @@ validate-ts: check-ts lint-ts test-ts
 ui-start-web:
   cd arhiv-ui; watchexec --exts ts,tsx yarn build
 
-ui-start-shell-server:
-  cd arhiv-ui; RUST_LOG=INFO cargo run --features app-shell/dev-server
-
 ui-start-shell:
-  cd arhiv-ui; RUST_LOG=INFO cargo run
-
-check:
-  cargo check
+  cd arhiv-ui; RUST_LOG=INFO cargo run -- --open=chromium
 
 web-platform:
   cd ts-web-platform; yarn start

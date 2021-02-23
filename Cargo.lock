@@ -47,6 +47,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arhiv",
+ "clap",
  "mime_guess",
  "rs-utils",
  "rust-embed",

@@ -8,7 +8,7 @@ use super::{Document, Hash};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct AttachmentInfo {
     pub filename: String,

@@ -213,7 +213,7 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
         }
     };
 
-    let base_rev = changeset.base_rev.clone();
+    let base_rev = changeset.base_rev;
 
     if let Err(err) = arhiv.apply_changeset(changeset) {
         error!("Failed to apply a changeset: {:?}", err);

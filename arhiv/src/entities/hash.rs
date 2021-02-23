@@ -1,21 +1,22 @@
 use core::fmt;
+use std::sync::Arc;
 
 use anyhow::*;
 use rs_utils::get_file_hash_sha256;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, PartialOrd)]
-pub struct Hash(String);
+pub struct Hash(Arc<String>);
 
 impl Hash {
     pub fn from_file(file_path: &str) -> Result<Self> {
         let hash = get_file_hash_sha256(&file_path)?;
 
-        Ok(Hash(hash))
+        Ok(Hash(Arc::new(hash)))
     }
 
     pub fn from_string(hash: String) -> Self {
-        Hash(hash)
+        Hash(Arc::new(hash))
     }
 }
 

@@ -110,7 +110,7 @@ impl Arhiv {
         tx.put_db_status(DbStatus {
             arhiv_id: config.get_arhiv_id().to_string(),
             is_prime: config.is_prime(),
-            db_rev: 0.into(),
+            db_rev: Revision::STAGING,
             schema_version: schema.version,
             db_version: DB::VERSION,
             last_sync_time: chrono::MIN_DATETIME,

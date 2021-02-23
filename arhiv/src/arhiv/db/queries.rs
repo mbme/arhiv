@@ -390,7 +390,9 @@ impl Params {
 
 impl FromSql for Revision {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_i64().map(|value| (value as u32).into())
+        value
+            .as_i64()
+            .map(|value| Revision::from_value(value as u32))
     }
 }
 
@@ -402,15 +404,15 @@ impl ToSql for Revision {
 
 impl FromSql for Id {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(|value| value.to_string().into())
+        value
+            .as_str()
+            .map(|value| Id::from_string(value.to_string()))
     }
 }
 
 impl ToSql for Id {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        let value: &str = &self.0;
-
-        Ok(ToSqlOutput::from(value))
+        Ok(ToSqlOutput::from(self.as_ref()))
     }
 }
 

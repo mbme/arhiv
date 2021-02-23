@@ -19,12 +19,6 @@ impl Hash {
     }
 }
 
-impl From<Hash> for String {
-    fn from(value: Hash) -> Self {
-        value.0
-    }
-}
-
 impl fmt::Display for Hash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)

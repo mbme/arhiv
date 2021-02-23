@@ -262,11 +262,9 @@ impl Arhiv {
     }
 
     pub(crate) fn get_attachment_data(&self, hash: Hash) -> AttachmentData {
-        let path = {
-            let hash: String = hash.clone().into();
-
-            self.path_manager.get_attachment_data_path(&hash)
-        };
+        let path = self
+            .path_manager
+            .get_attachment_data_path(&hash.to_string());
 
         AttachmentData::new(hash, path)
     }

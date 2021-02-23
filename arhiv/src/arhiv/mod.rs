@@ -28,7 +28,7 @@ pub mod test_arhiv;
 pub struct Arhiv {
     pub schema: DataSchema,
     pub config: Config,
-    pub(crate) db: DB,
+    db: DB,
     path_manager: PathManager,
 }
 

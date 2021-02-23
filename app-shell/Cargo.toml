@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["mbme"]
 edition = "2018"
 
+# speed up debug builds
+[profile.dev]
+debug = 0
+
 [features]
 dev-server = []
 

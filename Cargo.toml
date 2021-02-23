@@ -1,11 +1,14 @@
 [workspace]
 members = [
-  "app-shell",
   "arhiv",
   "arhiv-ui",
   "arhiv-utils",
-  "binutils",
   "rs-utils",
+]
+
+exclude = [
+  "binutils",
+  "app-shell"
 ]
 
 # speed up debug builds

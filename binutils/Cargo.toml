@@ -3,6 +3,10 @@ name = "binutils"
 version = "0.5.0"
 edition = "2018"
 
+# speed up debug builds
+[profile.dev]
+debug = 0
+
 [dependencies]
 anyhow = "1.0.38"
 clap = { version = "2.33.3", features = ["color"] }

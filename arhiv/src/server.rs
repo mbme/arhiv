@@ -122,6 +122,7 @@ fn post_attachment_data_handler(
         );
     }
 
+    // FIXME async stream data directly into file
     if let Err(err) = fs::write(attachment_data.path, &data) {
         error!(
             "Failed to save attachment data {}: {}",

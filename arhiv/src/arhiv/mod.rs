@@ -5,28 +5,28 @@ use rs_utils::{
     log::{debug, info, warn},
     FsTransaction,
 };
-use status::Status;
 
-use network_service::NetworkService;
-use path_manager::PathManager;
+use self::blobs::{AttachmentData, BlobManager};
+use self::db::*;
+pub use self::db::{Filter, FilterMode, ListPage, Matcher, OrderBy};
+use self::network_service::NetworkService;
+use self::path_manager::PathManager;
+use self::status::Status;
+pub use self::test_arhiv::TestArhiv;
 
-pub use attachment_data::AttachmentData;
-use db::*;
-pub use db::{Filter, FilterMode, ListPage, Matcher, OrderBy};
-
-mod attachment_data;
+mod blobs;
 mod db;
 mod network_service;
 mod path_manager;
 mod status;
 mod sync;
-pub mod test_arhiv;
+mod test_arhiv;
 
 pub struct Arhiv {
     pub schema: DataSchema,
     pub config: Config,
     db: DB,
-    path_manager: PathManager,
+    blob_manager: BlobManager,
 }
 
 impl Arhiv {
@@ -39,7 +39,7 @@ impl Arhiv {
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
-        let db = DB::open(path_manager.get_db_file())?;
+        let db = DB::open(&path_manager.db_file)?;
 
         let schema = DataSchema::new();
 
@@ -75,13 +75,14 @@ impl Arhiv {
             );
         }
 
+        let blob_manager = BlobManager::new(&path_manager.data_dir);
         info!("Open arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
             config,
             db,
-            path_manager,
+            blob_manager,
         })
     }
 
@@ -99,7 +100,7 @@ impl Arhiv {
         let path_manager = PathManager::new(config.get_root_dir());
         path_manager.create_dirs()?;
 
-        let db = DB::create(path_manager.get_db_file())?;
+        let db = DB::create(&path_manager.db_file)?;
 
         let schema = DataSchema::new();
 
@@ -118,13 +119,15 @@ impl Arhiv {
 
         tx.commit()?;
 
+        let blob_manager = BlobManager::new(&path_manager.data_dir);
+
         info!("Created arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
             schema,
             config,
             db,
-            path_manager,
+            blob_manager,
         })
     }
 
@@ -262,11 +265,7 @@ impl Arhiv {
     }
 
     pub(crate) fn get_attachment_data(&self, hash: Hash) -> AttachmentData {
-        let path = self
-            .path_manager
-            .get_attachment_data_path(&hash.to_string());
-
-        AttachmentData::new(hash, path)
+        self.blob_manager.get_attachment_data(hash)
     }
 
     fn get_attachment(&self, id: &Id) -> Result<Attachment> {

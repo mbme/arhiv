@@ -8,7 +8,6 @@ pub mod markup;
 pub mod schema;
 mod server;
 
-pub use crate::arhiv::test_arhiv::TestArhiv;
 pub use crate::arhiv::*;
 pub use config::Config;
 pub use server::start_server;

@@ -58,7 +58,7 @@ impl Arhiv {
 
             if Attachment::is_attachment(&document) {
                 let attachment = Attachment::from(document)?;
-                let hash = attachment.get_data().hash;
+                let hash = attachment.get_hash();
                 let attachment_data = self.get_attachment_data(hash);
 
                 ensure!(
@@ -185,7 +185,7 @@ impl Arhiv {
                 tx.delete_document(&document.id)?;
 
                 let attachment = Attachment::from(document)?;
-                let hash = attachment.get_data().hash;
+                let hash = attachment.get_hash();
                 let attachment_data = self.get_attachment_data(hash);
                 fs_tx.remove_file(attachment_data.path);
             }
@@ -216,7 +216,7 @@ impl Arhiv {
             .filter(|document| Attachment::is_attachment(document))
         {
             let attachment = Attachment::from(attachment.clone())?;
-            let hash = attachment.get_data().hash;
+            let hash = attachment.get_hash();
             let attachment_data = self.get_attachment_data(hash);
 
             network_service

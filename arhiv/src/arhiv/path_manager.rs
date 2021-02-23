@@ -22,8 +22,8 @@ impl PathManager {
         format!("{}/arhiv.sqlite", self.root_dir)
     }
 
-    pub fn get_attachment_data_path<S: Into<String>>(&self, hash: S) -> String {
-        format!("{}/{}", self.get_data_directory(), hash.into())
+    pub fn get_attachment_data_path(&self, filename: &str) -> String {
+        format!("{}/{}", self.get_data_directory(), filename)
     }
 
     pub fn assert_dirs_exist(&self) -> Result<()> {

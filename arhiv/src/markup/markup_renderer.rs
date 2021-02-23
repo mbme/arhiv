@@ -83,7 +83,7 @@ impl<'a> MarkupRenderer<'a> {
 
                     let attachment =
                         Attachment::from(document).expect("document must be attachment");
-                    let filename = attachment.get_data().filename;
+                    let filename = attachment.get_filename();
 
                     // render Image
                     if is_image_file(&filename) {

@@ -101,6 +101,7 @@ fn post_attachment_data_handler(
     data: warp::hyper::body::Bytes,
     arhiv: Arc<Arhiv>,
 ) -> impl warp::Reply {
+    let hash = Hash::from_string(hash);
     info!("Saving attachment data {}", &hash);
 
     let attachment_data = arhiv.get_attachment_data(hash);
@@ -140,6 +141,7 @@ async fn get_attachment_data_handler(
     hash: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let hash = Hash::from_string(hash);
     debug!("Serving attachment data {}", &hash);
 
     let attachment_data = arhiv.get_attachment_data(hash);

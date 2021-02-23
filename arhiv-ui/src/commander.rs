@@ -77,7 +77,7 @@ impl ArhivCommander {
 
             let mut attachment_ids: Vec<Id> = vec![];
             for file_path in files {
-                let document = self.arhiv.add_attachment(file_path, false)?;
+                let document = self.arhiv.add_attachment(&file_path, false)?;
                 attachment_ids.push(document.id);
             }
 

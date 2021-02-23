@@ -1,10 +1,7 @@
-use std::path::Path;
-
 use crate::{config::Config, entities::*, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{
-    ensure_file_exists, get_file_hash_sha256,
     log::{debug, info, warn},
     FsTransaction,
 };
@@ -232,20 +229,10 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn add_attachment<S: Into<String>>(&self, file_path: S, copy: bool) -> Result<Document> {
-        let file_path = file_path.into();
-
+    pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Document> {
         debug!("Staging attachment {}", &file_path);
 
-        ensure_file_exists(&file_path)?;
-
-        let filename = Path::new(&file_path)
-            .file_name()
-            .expect("file must have name")
-            .to_str()
-            .expect("file name must be valid string");
-
-        let hash = get_file_hash_sha256(&file_path)?;
+        let attachment = Attachment::new(file_path)?;
 
         let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
@@ -253,16 +240,11 @@ impl Arhiv {
 
         // FIXME check if hashcode is unique
 
-        let attachment = Attachment::new(AttachmentInfo {
-            filename: filename.to_string(),
-            hash: hash.clone(),
-        })?;
-
-        let attachment_data = self.get_attachment_data(hash);
+        let attachment_data = self.get_attachment_data(attachment.get_hash());
         if copy {
-            fs_tx.copy_file(file_path.clone(), attachment_data.path)?;
+            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
         } else {
-            fs_tx.hard_link_file(file_path.clone(), attachment_data.path)?;
+            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
         }
 
         conn.put_document(&attachment.0)?;
@@ -270,24 +252,21 @@ impl Arhiv {
         conn.commit()?;
         fs_tx.commit()?;
 
-        info!(
-            "Created attachment {} from {}",
-            &attachment.0.id, &file_path
-        );
+        info!("Created attachment {} from {}", &attachment.0.id, file_path);
 
         Ok(attachment.0)
     }
 
-    pub fn update_attachment_data<S: Into<String>>(
-        &self,
-        id: &Id,
-        file_path: S,
-    ) -> Result<Document> {
+    pub fn update_attachment_data(&self, id: &Id, file_path: &str) -> Result<Document> {
         unimplemented!()
     }
 
-    pub(crate) fn get_attachment_data(&self, hash: String) -> AttachmentData {
-        let path = self.path_manager.get_attachment_data_path(&hash);
+    pub(crate) fn get_attachment_data(&self, hash: Hash) -> AttachmentData {
+        let path = {
+            let hash: String = hash.clone().into();
+
+            self.path_manager.get_attachment_data_path(&hash)
+        };
 
         AttachmentData::new(hash, path)
     }
@@ -305,7 +284,7 @@ impl Arhiv {
     pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
         let attachment = self.get_attachment(id)?;
 
-        let hash = attachment.get_data().hash;
+        let hash = attachment.get_hash();
 
         let attachment_data = self.get_attachment_data(hash.clone());
         if attachment_data.exists()? {

@@ -1,12 +1,12 @@
 use anyhow::*;
 pub use connection::*;
+pub use dto::*;
 pub use queries::*;
-pub use query_params::*;
 use rusqlite::{Connection, OpenFlags};
 
 mod connection;
+mod dto;
 mod queries;
-mod query_params;
 mod utils;
 
 pub struct DB {

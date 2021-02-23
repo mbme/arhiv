@@ -1,4 +1,6 @@
+use rusqlite::types::ToSql;
 use std::collections::HashSet;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::entities::*;
 use anyhow::*;
@@ -23,4 +25,29 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         refs: extract_refs(row.get("refs")?)?,
         data: row.get("data")?,
     })
+}
+
+pub struct Params {
+    params: HashMap<String, Rc<dyn ToSql>>,
+}
+
+impl Params {
+    pub fn new() -> Self {
+        Params {
+            params: HashMap::new(),
+        }
+    }
+
+    pub fn insert<S: Into<String>>(&mut self, key: S, value: Rc<dyn ToSql>) {
+        self.params.insert(key.into(), value);
+    }
+
+    pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {
+        let mut params: Vec<(&str, &dyn ToSql)> = vec![];
+        for (key, value) in self.params.iter() {
+            params.push((key, value.as_ref()));
+        }
+
+        params
+    }
 }

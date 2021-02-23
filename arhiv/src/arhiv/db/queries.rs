@@ -1,4 +1,6 @@
-use super::query_params::*;
+use std::rc::Rc;
+
+use super::dto::*;
 use super::utils;
 use crate::entities::*;
 use anyhow::*;
@@ -6,9 +8,6 @@ use rs_utils::{fuzzy_match, log::debug};
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{functions::FunctionFlags, NO_PARAMS};
 use rusqlite::{params, Connection, OptionalExtension};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::rc::Rc;
 
 const DB_STATUS_KEY: &'static str = "status";
 
@@ -79,7 +78,7 @@ pub trait Queries {
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let mut query: Vec<String> = vec!["SELECT * FROM documents WHERE true".to_string()];
-        let mut params = Params::new();
+        let mut params = utils::Params::new();
 
         match filter.mode {
             Some(FilterMode::Staged) => {
@@ -363,31 +362,6 @@ pub trait MutableQueries: Queries {
     }
 }
 
-struct Params {
-    params: HashMap<String, Rc<dyn ToSql>>,
-}
-
-impl Params {
-    pub fn new() -> Self {
-        Params {
-            params: HashMap::new(),
-        }
-    }
-
-    pub fn insert<S: Into<String>>(&mut self, key: S, value: Rc<dyn ToSql>) {
-        self.params.insert(key.into(), value);
-    }
-
-    pub fn get(&self) -> Vec<(&str, &dyn ToSql)> {
-        let mut params: Vec<(&str, &dyn ToSql)> = vec![];
-        for (key, value) in self.params.iter() {
-            params.push((key, value.as_ref()));
-        }
-
-        params
-    }
-}
-
 impl FromSql for Revision {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         value
@@ -413,46 +387,5 @@ impl FromSql for Id {
 impl ToSql for Id {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self.as_ref()))
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DbStatus {
-    pub arhiv_id: String,
-    pub is_prime: bool,
-    pub schema_version: u8,
-    pub db_version: u8,
-
-    pub db_rev: Revision,
-    pub last_sync_time: Timestamp,
-}
-
-impl DbStatus {
-    pub fn get_prime_status(&self) -> &str {
-        if self.is_prime {
-            "prime"
-        } else {
-            "replica"
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct DocumentsCount {
-    pub documents_committed: u32,
-    pub documents_updated: u32,
-    pub documents_new: u32,
-    pub attachments_committed: u32,
-    pub attachments_updated: u32,
-    pub attachments_new: u32,
-}
-
-impl DocumentsCount {
-    pub fn count_staged_documents(&self) -> u32 {
-        self.documents_updated + self.documents_new
-    }
-
-    pub fn count_staged_attachments(&self) -> u32 {
-        self.attachments_updated + self.attachments_new
     }
 }

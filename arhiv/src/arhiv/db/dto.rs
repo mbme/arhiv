@@ -1,5 +1,47 @@
+use crate::entities::*;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
+
+#[derive(Serialize, Deserialize)]
+pub struct DbStatus {
+    pub arhiv_id: String,
+    pub is_prime: bool,
+    pub schema_version: u8,
+    pub db_version: u8,
+
+    pub db_rev: Revision,
+    pub last_sync_time: Timestamp,
+}
+
+impl DbStatus {
+    pub fn get_prime_status(&self) -> &str {
+        if self.is_prime {
+            "prime"
+        } else {
+            "replica"
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct DocumentsCount {
+    pub documents_committed: u32,
+    pub documents_updated: u32,
+    pub documents_new: u32,
+    pub attachments_committed: u32,
+    pub attachments_updated: u32,
+    pub attachments_new: u32,
+}
+
+impl DocumentsCount {
+    pub fn count_staged_documents(&self) -> u32 {
+        self.documents_updated + self.documents_new
+    }
+
+    pub fn count_staged_attachments(&self) -> u32 {
+        self.attachments_updated + self.attachments_new
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Matcher {

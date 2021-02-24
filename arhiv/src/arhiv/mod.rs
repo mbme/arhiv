@@ -9,7 +9,7 @@ use rs_utils::{
 
 use self::blobs::{AttachmentData, BlobManager};
 use self::db::*;
-pub use self::db::{Filter, FilterMode, ListPage, Matcher, OrderBy};
+pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy};
 use self::network_service::NetworkService;
 use self::path_manager::PathManager;
 use self::status::Status;

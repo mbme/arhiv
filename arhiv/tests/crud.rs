@@ -1,5 +1,5 @@
 use anyhow::*;
-use arhiv::Filter;
+use arhiv::{DocumentsCount, Filter};
 use serde_json::json;
 pub use utils::*;
 
@@ -37,7 +37,7 @@ fn test_crud() -> Result<()> {
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
     }
 
-    // DELETE
+    // ARCHIVE
     {
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
         let mut other_document = arhiv.get_document(&id)?.unwrap();
@@ -46,6 +46,73 @@ fn test_crud() -> Result<()> {
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().archived, true);
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_status() -> Result<()> {
+    let arhiv = new_prime();
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 0,
+                documents_new: 0,
+                attachments_committed: 0,
+                attachments_updated: 0,
+                attachments_new: 0,
+            }
+        );
+    }
+
+    // create document
+    let document = new_document(json!({ "test": "test" }));
+    arhiv.stage_document(document.clone())?;
+
+    // commit document
+    arhiv.sync().await?;
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.documents_count,
+            DocumentsCount {
+                documents_committed: 1,
+                documents_updated: 0,
+                documents_new: 0,
+                attachments_committed: 0,
+                attachments_updated: 0,
+                attachments_new: 0,
+            }
+        );
+    }
+
+    // update document
+    arhiv.stage_document(document.clone())?;
+
+    // create another document
+    arhiv.stage_document(new_document(json!({ "test": "test" })))?;
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 1,
+                documents_new: 1,
+                attachments_committed: 0,
+                attachments_updated: 0,
+                attachments_new: 0,
+            }
+        );
+
+        assert_eq!(status.documents_count.count_staged_documents(), 2);
     }
 
     Ok(())

@@ -23,7 +23,7 @@ impl DbStatus {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, PartialEq)]
 pub struct DocumentsCount {
     pub documents_committed: u32,
     pub documents_updated: u32,

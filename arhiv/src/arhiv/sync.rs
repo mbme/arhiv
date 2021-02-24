@@ -184,10 +184,8 @@ impl Arhiv {
             for document in unused_attachments {
                 tx.delete_document(&document.id)?;
 
-                let attachment = Attachment::from(document)?;
-                let hash = attachment.get_hash();
-                let attachment_data = self.get_attachment_data(hash);
-                fs_tx.remove_file(attachment_data.path);
+                let hash = Attachment::from(document)?.get_hash();
+                self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
             }
 
             tx.commit()?;

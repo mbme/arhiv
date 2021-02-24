@@ -36,7 +36,7 @@ async fn test_prime_sync() -> Result<()> {
     );
 
     // Test attachment data
-    let attachment_data = arhiv.get_attachment_data(attachment.id);
+    let attachment_data = arhiv.get_attachment_data_by_id(attachment.id);
 
     assert_eq!(attachment_data.exists()?, true);
     assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
@@ -81,14 +81,14 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test attachment data
     {
-        let attachment_data = replica.get_attachment_data(attachment.id.clone());
+        let attachment_data = replica.get_attachment_data_by_id(attachment.id.clone());
 
         assert_eq!(attachment_data.exists()?, true);
         assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
     }
 
     {
-        let attachment_data = prime.get_attachment_data(attachment.id);
+        let attachment_data = prime.get_attachment_data_by_id(attachment.id);
 
         assert_eq!(attachment_data.exists()?, true);
         assert_eq!(are_equal_files(src, &attachment_data.path)?, true);

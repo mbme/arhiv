@@ -18,7 +18,10 @@ fn test_attachments() -> Result<()> {
     document.refs.insert(attachment.id.clone());
 
     arhiv.stage_document(document)?;
-    assert_eq!(arhiv.get_attachment_data(attachment.id).exists()?, true);
+    assert_eq!(
+        arhiv.get_attachment_data_by_id(attachment.id).exists()?,
+        true
+    );
 
     let page = arhiv.list_documents(Filter {
         matchers: vec![Matcher::Type {
@@ -50,7 +53,7 @@ async fn test_download_attachment() -> Result<()> {
 
     replica.sync().await?;
 
-    let attachment_data = replica.get_attachment_data(attachment.id);
+    let attachment_data = replica.get_attachment_data_by_id(attachment.id);
     replica
         .get_network_service()
         .download_attachment_data(&attachment_data)

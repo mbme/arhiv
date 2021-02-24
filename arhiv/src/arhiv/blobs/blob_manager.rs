@@ -52,4 +52,13 @@ impl BlobManager {
 
         Ok(hash)
     }
+
+    pub fn remove_attachment_data(&self, fs_tx: &mut FsTransaction, hash: &Hash) {
+        let attachment_data_path = self.get_attachment_data_path(hash);
+
+        fs_tx.remove_file(attachment_data_path);
+    }
+
+    // FIXME pub fn get_attachment_data_stream(&self, hash: &hash) -> Result<FileStream>
+    // FIXME pub fn write_attachment_data_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
 }

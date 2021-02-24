@@ -31,7 +31,7 @@ impl TestArhiv {
         self.0.clone()
     }
 
-    pub fn get_attachment_data(&self, id: Id) -> AttachmentData {
+    pub fn get_attachment_data_by_id(&self, id: Id) -> AttachmentData {
         let attachment = self.0.get_attachment(&id).unwrap();
 
         self.0.get_attachment_data(attachment.get_hash())

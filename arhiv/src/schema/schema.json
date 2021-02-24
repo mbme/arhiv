@@ -16,12 +16,6 @@
           "fieldType": {
             "String": {}
           }
-        },
-        {
-          "name": "details",
-          "fieldType": {
-            "String": {}
-          }
         }
       ]
     },

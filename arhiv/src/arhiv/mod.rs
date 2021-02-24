@@ -2,6 +2,7 @@ use crate::{config::Config, entities::*, schema::DataSchema};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{
+    get_file_name,
     log::{debug, info, warn},
     FsTransaction,
 };
@@ -235,20 +236,18 @@ impl Arhiv {
     pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Document> {
         debug!("Staging attachment {}", &file_path);
 
-        let attachment = Attachment::new(file_path)?;
-
         let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
         let mut fs_tx = FsTransaction::new();
 
         // FIXME check if hashcode is unique
 
-        let attachment_data = self.get_attachment_data(attachment.get_hash());
-        if copy {
-            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
-        } else {
-            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
-        }
+        let hash = self
+            .blob_manager
+            .add_attachment_data(&mut fs_tx, file_path, copy)?;
+        let file_name = get_file_name(file_path).to_string();
+
+        let attachment = Attachment::new(file_name, hash);
 
         conn.put_document(&attachment)?;
 
@@ -260,8 +259,8 @@ impl Arhiv {
         Ok(attachment.into())
     }
 
-    pub fn update_attachment_data(&self, id: &Id, file_path: &str) -> Result<Document> {
-        unimplemented!()
+    pub fn update_attachment_data(&self, _id: &Id, _file_path: &str) -> Result<Document> {
+        unimplemented!();
     }
 
     pub(crate) fn get_attachment_data(&self, hash: Hash) -> AttachmentData {

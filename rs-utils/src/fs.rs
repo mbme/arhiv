@@ -40,11 +40,20 @@ pub fn ensure_file_exists(path: &str) -> Result<()> {
     }
 }
 
+pub fn get_file_name(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_name()
+        .expect("file must have name")
+        .to_str()
+        .expect("file name must be valid string")
+}
+
 pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File, BytesCodec>> {
     let file = tokio_fs::File::open(path).await?;
 
     Ok(FramedRead::new(file, BytesCodec::new()))
 }
+
 // $XDG_CONFIG_HOME or $HOME/.config
 pub fn get_config_home() -> Option<String> {
     if let Some(path) = env::var_os("XDG_CONFIG_HOME") {

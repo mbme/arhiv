@@ -1,19 +1,11 @@
-use std::{ops::Deref, path::Path};
+use std::ops::Deref;
 
 use anyhow::*;
-use rs_utils::ensure_file_exists;
 use serde::{Deserialize, Serialize};
 
 use super::{Document, Hash};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct AttachmentInfo {
-    pub filename: String,
-    pub hash: Hash,
-}
 
 pub struct Attachment(Document);
 
@@ -32,26 +24,13 @@ impl Attachment {
         Ok(Attachment(document))
     }
 
-    pub fn new(file_path: &str) -> Result<Self> {
-        ensure_file_exists(&file_path)?;
-
-        let filename = Path::new(file_path)
-            .file_name()
-            .expect("file must have name")
-            .to_str()
-            .expect("file name must be valid string");
-
-        let hash = Hash::from_file(file_path)?;
-
+    pub fn new(filename: String, hash: Hash) -> Self {
         let document = Document::new(
             ATTACHMENT_TYPE.to_string(),
-            serde_json::to_value(AttachmentInfo {
-                filename: filename.to_string(),
-                hash,
-            })?,
+            AttachmentInfo { filename, hash }.into(),
         );
 
-        Ok(Attachment(document))
+        Attachment(document)
     }
 
     fn get_data(&self) -> AttachmentInfo {
@@ -78,5 +57,18 @@ impl Deref for Attachment {
 impl Into<Document> for Attachment {
     fn into(self) -> Document {
         self.0
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct AttachmentInfo {
+    pub filename: String,
+    pub hash: Hash,
+}
+
+impl Into<serde_json::Value> for AttachmentInfo {
+    fn into(self) -> serde_json::Value {
+        serde_json::to_value(self).expect("must be able to serialize")
     }
 }

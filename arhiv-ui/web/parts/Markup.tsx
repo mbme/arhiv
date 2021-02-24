@@ -21,6 +21,7 @@ export function Markup({ value }: IProps) {
       value,
       options: {
         documentPath: '/document',
+        attachmentDataPath: '/attachment-data',
       },
     })
   ), [value])

@@ -132,7 +132,7 @@ impl Arhiv {
         })
     }
 
-    fn get_network_service(&self) -> Result<NetworkService> {
+    pub(crate) fn get_network_service(&self) -> Result<NetworkService> {
         let network_service = NetworkService::new(self.config.get_prime_url()?);
 
         Ok(network_service)
@@ -267,6 +267,16 @@ impl Arhiv {
         self.blob_manager.get_attachment_data(hash)
     }
 
+    pub(crate) fn get_attachment_data_by_id(&self, id: &Id) -> Result<AttachmentData> {
+        let attachment = self.get_attachment(id)?;
+
+        let hash = attachment.get_hash();
+
+        let attachment_data = self.get_attachment_data(hash);
+
+        Ok(attachment_data)
+    }
+
     fn get_attachment(&self, id: &Id) -> Result<Attachment> {
         let document = self
             .get_document(&id)?
@@ -275,20 +285,5 @@ impl Arhiv {
         let attachment = Attachment::from(document)?;
 
         Ok(attachment)
-    }
-
-    pub fn get_attachment_location(&self, id: &Id) -> Result<AttachmentLocation> {
-        let attachment = self.get_attachment(id)?;
-
-        let hash = attachment.get_hash();
-
-        let attachment_data = self.get_attachment_data(hash.clone());
-        if attachment_data.exists()? {
-            return Ok(AttachmentLocation::File(attachment_data.path));
-        }
-
-        let url = self.get_network_service()?.get_attachment_data_url(&hash);
-
-        Ok(AttachmentLocation::Url(url))
     }
 }

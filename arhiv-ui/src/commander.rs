@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::*;
 use arhiv::{entities::*, markup::*, schema::DocumentData, Arhiv, Filter};
 use rs_utils::run_command;
@@ -5,11 +7,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub struct ArhivCommander {
-    arhiv: Arhiv,
+    arhiv: Arc<Arhiv>,
 }
 
 impl ArhivCommander {
-    pub fn new(arhiv: Arhiv) -> ArhivCommander {
+    pub fn new(arhiv: Arc<Arhiv>) -> ArhivCommander {
         ArhivCommander { arhiv }
     }
 

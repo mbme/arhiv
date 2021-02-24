@@ -77,6 +77,7 @@ export interface IPutDocumentArgs {
 
 interface IRenderOptions {
   readonly documentPath: string
+  readonly attachmentDataPath: string
 }
 
 export interface IRenderMarkupArgs {

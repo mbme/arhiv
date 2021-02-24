@@ -1,6 +1,6 @@
 use crate::commander::ArhivCommander;
 use anyhow::*;
-use arhiv::Arhiv;
+use arhiv::{get_attachment_data_handler, Arhiv};
 use rs_utils::log::{debug, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -20,9 +20,11 @@ pub async fn start_server() -> (JoinHandle<()>, SocketAddr) {
         debug!("{}", item);
     }
 
-    let rpc = {
-        let commander = Arc::new(ArhivCommander::new(Arhiv::must_open()));
+    let arhiv = Arc::new(Arhiv::must_open());
 
+    // POST /rpc RpcMessage -> RpcMessageResponse
+    let rpc = {
+        let commander = Arc::new(ArhivCommander::new(arhiv.clone()));
         let commander_filter = warp::any().map(move || commander.clone());
 
         warp::path("rpc")
@@ -30,10 +32,25 @@ pub async fn start_server() -> (JoinHandle<()>, SocketAddr) {
             .and(warp::body::json())
             .and_then(rpc_action_handler)
     };
+
+    // GET /attachment-data/:hash file bytes
+    let attachment_data = {
+        let arhiv = arhiv.clone();
+        let arhiv_filter = warp::any().map(move || arhiv.clone());
+
+        warp::path("attachment-data")
+            .and(warp::path::param::<String>())
+            .and(arhiv_filter.clone())
+            .and_then(get_attachment_data_handler)
+    };
+
+    // GET / -> GET /index.html
     let index_html = warp::path::end().and_then(serve_index);
+
+    // GET /*
     let static_dir = warp::path::tail().and_then(serve);
 
-    let routes = rpc.or(index_html).or(static_dir);
+    let routes = rpc.or(attachment_data).or(index_html).or(static_dir);
 
     // run server
     let (addr, server) =

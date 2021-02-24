@@ -32,9 +32,7 @@ impl TestArhiv {
     }
 
     pub fn get_attachment_data_by_id(&self, id: Id) -> AttachmentData {
-        let attachment = self.0.get_attachment(&id).unwrap();
-
-        self.0.get_attachment_data(attachment.get_hash())
+        self.0.get_attachment_data_by_id(&id).unwrap()
     }
 
     pub fn get_network_service(&self) -> NetworkService {

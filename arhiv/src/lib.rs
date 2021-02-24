@@ -10,4 +10,4 @@ mod server;
 
 pub use crate::arhiv::*;
 pub use config::Config;
-pub use server::start_server;
+pub use server::{get_attachment_data_handler, start_server};

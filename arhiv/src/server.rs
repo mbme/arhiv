@@ -138,7 +138,7 @@ fn post_attachment_data_handler(
     reply::with_status("".to_string(), http::StatusCode::OK)
 }
 
-async fn get_attachment_data_handler(
+pub async fn get_attachment_data_handler(
     hash: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {

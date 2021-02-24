@@ -16,6 +16,7 @@ pub struct MarkupRenderer<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct RenderOptions {
     document_path: String,
+    attachment_data_path: String,
 }
 
 impl<'a> MarkupRenderer<'a> {
@@ -70,14 +71,27 @@ impl<'a> MarkupRenderer<'a> {
                     }
 
                     let attachment_location = {
-                        let attachment_location = self
+                        let attachment_data = self
                             .arhiv
-                            .get_attachment_location(&id)
-                            .expect("must be able to get attachment location");
+                            .get_attachment_data_by_id(&id)
+                            .expect("must be able to get attachment data");
 
-                        match attachment_location {
-                            AttachmentLocation::Url(location) => location,
-                            AttachmentLocation::File(location) => format!("file:{}", location),
+                        if attachment_data.exists().unwrap() {
+                            format!(
+                                "{}/{}",
+                                &self.options.attachment_data_path, &attachment_data.hash
+                            )
+                        } else if self.arhiv.config.is_prime() {
+                            // this is a prime instance, data is missing, so just render Document Link
+                            return link_event(
+                                normalized_title,
+                                format!("{}/{}", &self.options.document_path, id),
+                            );
+                        } else {
+                            self.arhiv
+                                .get_network_service()
+                                .unwrap()
+                                .get_attachment_data_url(&attachment_data.hash)
                         }
                     };
 

@@ -25,7 +25,6 @@ async fn main() {
         .arg(
             Arg::with_name("verbose")
                 .short("v")
-                .long("verbose")
                 .multiple(true)
                 .global(true)
                 .help("Increases logging verbosity each use for up to 2 times"),

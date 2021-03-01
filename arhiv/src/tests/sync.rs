@@ -1,5 +1,5 @@
 use super::utils::*;
-use crate::start_server;
+use crate::start_prime_server;
 use anyhow::*;
 use rs_utils::project_relpath;
 use serde_json::json;
@@ -59,7 +59,7 @@ async fn test_prime_sync() -> Result<()> {
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
     let prime = new_prime();
-    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.clone());
     let replica = new_replica(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");

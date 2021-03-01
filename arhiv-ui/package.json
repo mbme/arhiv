@@ -6,7 +6,7 @@
   "description": "arhiv notes",
   "main": "",
   "scripts": {
-    "build": "esbuild web/index.tsx --outfile=static/bundle.js --bundle --sourcemap --define:process.env.NODE_ENV=\\\"development\\\"",
+    "build": "esbuild src/index.tsx --outfile=static/bundle.js --bundle --sourcemap --define:process.env.NODE_ENV=\\\"development\\\"",
     "build:prod": "yarn build --define:process.env.NODE_ENV=\\\"production\\\" --minify"
   },
   "dependencies": {

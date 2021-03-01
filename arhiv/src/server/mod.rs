@@ -1,6 +1,9 @@
+use crate::commander::ArhivCommander;
 use crate::entities::*;
 use crate::Arhiv;
 use anyhow::*;
+use arhiv_ui_static_handler::*;
+use rpc_handler::rpc_action_handler;
 use rs_utils::log::{debug, error, info, warn};
 use rs_utils::read_file_as_stream;
 use std::fs;
@@ -11,7 +14,10 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use warp::{http, hyper, reply, Filter, Reply};
 
-pub fn start_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
+mod arhiv_ui_static_handler;
+mod rpc_handler;
+
+pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
     let arhiv_filter = {
         let arhiv = arhiv.clone();
 
@@ -138,7 +144,7 @@ fn post_attachment_data_handler(
     reply::with_status("".to_string(), http::StatusCode::OK)
 }
 
-pub async fn get_attachment_data_handler(
+async fn get_attachment_data_handler(
     hash: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
@@ -241,4 +247,50 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
             .into_response();
         }
     };
+}
+
+pub async fn start_ui_server() -> (JoinHandle<()>, SocketAddr) {
+    let arhiv = Arc::new(Arhiv::must_open());
+
+    // POST /rpc RpcMessage -> RpcMessageResponse
+    let rpc = {
+        let commander = Arc::new(ArhivCommander::new(arhiv.clone()));
+        let commander_filter = warp::any().map(move || commander.clone());
+
+        warp::path("rpc")
+            .and(commander_filter)
+            .and(warp::body::json())
+            .and_then(rpc_action_handler)
+    };
+
+    // GET /attachment-data/:hash file bytes
+    let attachment_data = {
+        let arhiv = arhiv.clone();
+        let arhiv_filter = warp::any().map(move || arhiv.clone());
+
+        warp::path("attachment-data")
+            .and(warp::path::param::<String>())
+            .and(arhiv_filter.clone())
+            .and_then(get_attachment_data_handler)
+    };
+
+    // GET / -> GET /index.html
+    let index_html = warp::path::end().and_then(arhiv_ui_index_handler);
+
+    // GET /*
+    let static_dir = warp::path::tail().and_then(arhiv_ui_static_handler);
+
+    let routes = rpc.or(attachment_data).or(index_html).or(static_dir);
+
+    // run server
+    let (addr, server) =
+        warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], 0), async {
+            signal::ctrl_c().await.expect("failed to listen for event");
+            println!("\nGot Ctrl-C, stopping the server");
+        });
+
+    let join_handle = tokio::task::spawn(server);
+    info!("RPC server listening on {}", addr);
+
+    (join_handle, addr)
 }

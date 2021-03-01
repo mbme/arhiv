@@ -1,5 +1,5 @@
 use super::utils::*;
-use crate::{entities::*, start_server, Filter, Matcher};
+use crate::{entities::*, start_prime_server, Filter, Matcher};
 use anyhow::*;
 use rs_utils::project_relpath;
 
@@ -46,7 +46,7 @@ async fn test_download_attachment() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender, addr) = start_server(prime);
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime);
     let replica = new_replica(addr.port());
 
     replica.sync().await?;

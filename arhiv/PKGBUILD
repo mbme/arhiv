@@ -31,4 +31,6 @@ package() {
     -executable \
     -type f \
     -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
+
+  install -Dm 644 "v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 }

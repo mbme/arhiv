@@ -3,7 +3,7 @@
 
 use std::{path::Path, sync::Arc};
 
-use arhiv::{start_server, Arhiv};
+use arhiv::{start_prime_server, Arhiv};
 use rs_utils::log::setup_server_logger;
 
 #[tokio::main]
@@ -25,7 +25,7 @@ async fn main() {
     let log_file = Path::new(arhiv.config.get_root_dir()).join("arhiv-server.log");
     setup_server_logger(log_file);
 
-    let (join_handle, _, _) = start_server(arhiv);
+    let (join_handle, _, _) = start_prime_server(arhiv);
 
     join_handle.await.expect("must join");
 }

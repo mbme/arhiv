@@ -3,8 +3,6 @@
 # End:
 # vim: set ft=make :
 
-export RUST_LOG := "DEBUG"
-
 app:
   cargo run
 

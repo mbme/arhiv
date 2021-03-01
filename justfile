@@ -35,7 +35,7 @@ ui-start-web:
   cd arhiv-ui; watchexec --exts ts,tsx yarn build
 
 ui-start-shell:
-  cd arhiv-ui; RUST_LOG=INFO cargo run -- --open=chromium
+  cd arhiv; cargo run --bin arhiv-ui -- --open=chromium
 
 web-platform:
   cd ts-web-platform; yarn start

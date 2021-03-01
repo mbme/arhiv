@@ -13,7 +13,6 @@ pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderB
 use self::network_service::NetworkService;
 use self::path_manager::PathManager;
 use self::status::Status;
-pub use self::test_arhiv::TestArhiv;
 
 mod blobs;
 mod db;
@@ -21,7 +20,6 @@ mod network_service;
 mod path_manager;
 mod status;
 mod sync;
-mod test_arhiv;
 
 pub struct Arhiv {
     pub schema: DataSchema,

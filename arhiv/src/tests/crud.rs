@@ -1,9 +1,7 @@
+use super::utils::*;
+use crate::{DocumentsCount, Filter};
 use anyhow::*;
-use arhiv::{DocumentsCount, Filter};
 use serde_json::json;
-pub use utils::*;
-
-mod utils;
 
 #[test]
 fn test_crud() -> Result<()> {

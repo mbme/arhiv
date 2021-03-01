@@ -1,9 +1,7 @@
+use super::utils::*;
+use crate::{entities::*, start_server, Filter, Matcher};
 use anyhow::*;
-use arhiv::{entities::*, start_server, Filter, Matcher};
 use rs_utils::project_relpath;
-pub use utils::*;
-
-mod utils;
 
 #[test]
 fn test_attachments() -> Result<()> {
@@ -19,7 +17,7 @@ fn test_attachments() -> Result<()> {
 
     arhiv.stage_document(document)?;
     assert_eq!(
-        arhiv.get_attachment_data_by_id(attachment.id).exists()?,
+        arhiv.get_attachment_data_by_id(&attachment.id)?.exists()?,
         true
     );
 
@@ -48,14 +46,14 @@ async fn test_download_attachment() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender, addr) = start_server(prime.unwrap());
-    let replica = new_replica_with_port(addr.port());
+    let (join_handle, shutdown_sender, addr) = start_server(prime);
+    let replica = new_replica(addr.port());
 
     replica.sync().await?;
 
-    let attachment_data = replica.get_attachment_data_by_id(attachment.id);
+    let attachment_data = replica.get_attachment_data_by_id(&attachment.id)?;
     replica
-        .get_network_service()
+        .get_network_service()?
         .download_attachment_data(&attachment_data)
         .await?;
 

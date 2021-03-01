@@ -5,6 +5,9 @@ authors = ["mbme"]
 edition = "2018"
 default-run = "arhiv"
 
+[lib]
+doctest = false
+
 [features]
 production-mode = []
 

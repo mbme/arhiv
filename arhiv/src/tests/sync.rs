@@ -1,10 +1,8 @@
+use super::utils::*;
+use crate::start_server;
 use anyhow::*;
-use arhiv::start_server;
 use rs_utils::project_relpath;
 use serde_json::json;
-pub use utils::*;
-
-mod utils;
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {
@@ -36,7 +34,7 @@ async fn test_prime_sync() -> Result<()> {
     );
 
     // Test attachment data
-    let attachment_data = arhiv.get_attachment_data_by_id(attachment.id);
+    let attachment_data = arhiv.get_attachment_data_by_id(&attachment.id)?;
 
     assert_eq!(attachment_data.exists()?, true);
     assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
@@ -61,8 +59,8 @@ async fn test_prime_sync() -> Result<()> {
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
     let prime = new_prime();
-    let (join_handle, shutdown_sender, addr) = start_server(prime.unwrap());
-    let replica = new_replica_with_port(addr.port());
+    let (join_handle, shutdown_sender, addr) = start_server(prime.clone());
+    let replica = new_replica(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -81,14 +79,14 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test attachment data
     {
-        let attachment_data = replica.get_attachment_data_by_id(attachment.id.clone());
+        let attachment_data = replica.get_attachment_data_by_id(&attachment.id)?;
 
         assert_eq!(attachment_data.exists()?, true);
         assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
     }
 
     {
-        let attachment_data = prime.get_attachment_data_by_id(attachment.id);
+        let attachment_data = prime.get_attachment_data_by_id(&attachment.id)?;
 
         assert_eq!(attachment_data.exists()?, true);
         assert_eq!(are_equal_files(src, &attachment_data.path)?, true);

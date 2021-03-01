@@ -1,5 +1,9 @@
 use anyhow::*;
-use rs_utils::{ensure_file_exists, log::debug, FsTransaction};
+use rs_utils::{
+    ensure_file_exists,
+    log::{debug, warn},
+    FsTransaction,
+};
 
 use super::AttachmentData;
 use crate::entities::Hash;
@@ -35,12 +39,21 @@ impl BlobManager {
 
         let hash = Hash::from_file(file_path)?;
 
-        let attachment_data_path = self.get_attachment_data_path(&hash);
+        let attachment_data = self.get_attachment_data(hash.clone());
+
+        // blob already exists, ignoring
+        if attachment_data.exists()? {
+            warn!(
+                "attachment data for {} already exists: {}",
+                file_path, &hash
+            );
+            return Ok(hash);
+        }
 
         if copy {
-            fs_tx.copy_file(file_path.to_string(), attachment_data_path)?;
+            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
         } else {
-            fs_tx.hard_link_file(file_path.to_string(), attachment_data_path)?;
+            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
         }
 
         debug!(

@@ -45,8 +45,6 @@ impl ArhivCommander {
 
             self.arhiv.stage_document(args.document)?;
 
-            self.arhiv.sync().await?;
-
             return Ok(Value::Null);
         }
 
@@ -90,6 +88,12 @@ impl ArhivCommander {
             let result = MarkupRenderer::new(&self.arhiv, &args.options).to_html(&string);
 
             return Ok(serde_json::to_value(result)?);
+        }
+
+        if action == "sync" {
+            self.arhiv.sync().await?;
+
+            return Ok(Value::Null);
         }
 
         unreachable!("unknown action: {}", action)

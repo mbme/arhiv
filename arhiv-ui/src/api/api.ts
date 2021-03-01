@@ -25,6 +25,8 @@ interface IRPC {
   pick_attachments(): Promise<string[]>
 
   get_schema(): Promise<IDataSchema>
+
+  sync(): Promise<void>
 }
 
 export const API = RPC_PROXY as IRPC

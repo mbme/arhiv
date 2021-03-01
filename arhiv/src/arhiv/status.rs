@@ -53,10 +53,10 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "  Attachments: {} committed, {} staged ({} updated, {} new)",
-            self.documents_count.documents_committed,
+            self.documents_count.attachments_committed,
             self.documents_count.count_staged_attachments(),
-            self.documents_count.documents_updated,
-            self.documents_count.documents_new,
+            self.documents_count.attachments_updated,
+            self.documents_count.attachments_new,
         )?;
 
         if self.debug_mode {

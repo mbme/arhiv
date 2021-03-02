@@ -7,11 +7,8 @@ export interface IUIOptions {
     order: OrderBy[]
     groupByField?: string
     skipAddDocumentAction?: boolean
-  }
-
-  catalogEntry: {
-    showModificationDate: boolean
-    showDataFields: string[]
+    showEntryModificationDate: boolean
+    showEntryDataFields: string[]
   }
 }
 
@@ -21,29 +18,22 @@ const DEFAULT_UI_OPTIONS: IUIOptions = {
     order: [{ UpdatedAt: { asc: false } }],
     groupByField: undefined,
     skipAddDocumentAction: undefined,
-  },
-
-  catalogEntry: {
-    showModificationDate: true,
-    showDataFields: [],
+    showEntryModificationDate: true,
+    showEntryDataFields: [],
   },
 }
 
 interface IUIOptionsOverrides {
   catalog?: Partial<IUIOptions['catalog']>
-  catalogEntry?: Partial<IUIOptions['catalogEntry']>
 }
 
 const UI_OVERRIDES: Record<string, IUIOptionsOverrides> = {}
 
 UI_OVERRIDES['project'] = {
   catalog: {
-    pageSize: undefined
+    pageSize: undefined,
+    showEntryModificationDate: false,
   },
-
-  catalogEntry: {
-    showModificationDate: false
-  }
 }
 
 UI_OVERRIDES['task'] = {
@@ -64,12 +54,9 @@ UI_OVERRIDES['task'] = {
         },
       },
     ],
+    showEntryModificationDate: false,
+    showEntryDataFields: ['complexity', 'status'],
   },
-
-  catalogEntry: {
-    showModificationDate: false,
-    showDataFields: ['complexity', 'status'],
-  }
 }
 
 UI_OVERRIDES['attachment'] = {

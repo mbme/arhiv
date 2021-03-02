@@ -29,8 +29,8 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
     <CatalogEntry
       key={item.id}
       document={item}
-      showModificationDate={uiOptions.catalogEntry.showModificationDate}
-      showDataFields={uiOptions.catalogEntry.showDataFields}
+      showModificationDate={uiOptions.catalog.showEntryModificationDate}
+      showDataFields={uiOptions.catalog.showEntryDataFields}
     />
   )
 

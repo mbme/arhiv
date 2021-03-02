@@ -15,6 +15,7 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
         label={name}
         name={name}
         placeholder={name}
+        autoComplete="off"
       />
     )
   }
@@ -35,7 +36,6 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
         label={name}
         name={name}
         placeholder={name}
-        readOnly
       />
     )
   }

@@ -12,6 +12,7 @@ import { useDataDescription } from '../../data-manager'
 import { Matcher } from '../../api'
 import { useList } from './useList'
 import { CatalogEntries } from './CatalogEntries'
+import { getUIOptions } from './options'
 
 interface IProps {
   documentType: string
@@ -26,9 +27,10 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     },
   } = useForm()
 
+  const uiOptions = React.useMemo(() => getUIOptions(documentType), [documentType])
+
   const {
     titleField,
-    uiOptions,
   } = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
 
@@ -43,8 +45,8 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
       collectionMatcher,
       debouncedFilter ? { FuzzyField: { selector: `$.${titleField}`, pattern: debouncedFilter } } : undefined,
     ],
-    pageSize: uiOptions.catalog.pageSize,
-    order: uiOptions.catalog.order,
+    pageSize: uiOptions.pageSize,
+    order: uiOptions.order,
   }), [debouncedFilter])
 
   if (error) {

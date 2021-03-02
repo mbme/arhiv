@@ -51,8 +51,12 @@ export function App() {
               ],
 
               [
+                pm`/catalog/attachment`,
+                () => <CatalogView key="attachment" documentType="attachment" skipAddDocumentAction />,
+              ],
+              [
                 pm`/catalog/${'documentType'}`,
-                ({ documentType }) => <CatalogView key={documentType} documentType={documentType}/>,
+                ({ documentType }) => <CatalogView key={documentType} documentType={documentType} />,
               ],
               [
                 pm`/documents/${'documentType'}/new`,

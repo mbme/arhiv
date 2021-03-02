@@ -6,7 +6,7 @@ import {
 } from '@v/web-platform'
 import { CatalogEntry } from './CatalogEntry'
 import { IDocument } from '../../api'
-import { IUIOptions } from '../../data-manager'
+import { ICatalogOptions } from './options'
 
 function createRule(field: string) {
   let lastVal: any = undefined
@@ -21,7 +21,7 @@ function createRule(field: string) {
 
 interface IProps {
   items: IDocument[]
-  uiOptions: IUIOptions
+  uiOptions: ICatalogOptions
 }
 
 export function CatalogEntries({ items, uiOptions }: IProps) {
@@ -29,12 +29,12 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
     <CatalogEntry
       key={item.id}
       document={item}
-      showModificationDate={uiOptions.catalog.showEntryModificationDate}
-      showDataFields={uiOptions.catalog.showEntryDataFields}
+      showModificationDate={uiOptions.showEntryModificationDate}
+      showDataFields={uiOptions.showEntryDataFields}
     />
   )
 
-  if (uiOptions.catalog.groupByField === undefined) {
+  if (uiOptions.groupByField === undefined) {
     return (
       <>
         {items.map(renderItem)}
@@ -42,7 +42,7 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
     )
   }
 
-  const fieldName: string = uiOptions.catalog.groupByField
+  const fieldName: string = uiOptions.groupByField
 
   const entries = partitionBy(createRule(fieldName), items)
     .map(group => (

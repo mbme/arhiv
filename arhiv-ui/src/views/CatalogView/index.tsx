@@ -5,14 +5,14 @@ import { useDataDescription } from '../../data-manager'
 
 interface IProps {
   documentType: string
+  skipAddDocumentAction?: boolean
 }
 
-export function CatalogView({ documentType }: IProps) {
+export function CatalogView({ documentType, skipAddDocumentAction }: IProps) {
   const router = RouterContext.use()
 
   const {
     mandatoryFields,
-    uiOptions,
   } = useDataDescription(documentType)
 
   useActions(() => [
@@ -20,7 +20,7 @@ export function CatalogView({ documentType }: IProps) {
       onClick: () => router.push('/'),
       children: 'Close',
     },
-    (mandatoryFields.length === 0 && !uiOptions.catalog.skipAddDocumentAction) ? {
+    (mandatoryFields.length === 0 && !skipAddDocumentAction) ? {
       onClick: () => router.push(`/documents/${documentType}/new`),
       children: `Add ${documentType}`,
     } : undefined,

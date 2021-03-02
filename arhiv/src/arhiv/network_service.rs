@@ -1,8 +1,11 @@
 use crate::{arhiv::AttachmentData, entities::*};
 use anyhow::*;
 use futures::stream::TryStreamExt;
-use reqwest::Client;
-use rs_utils::{log::debug, read_file_as_stream};
+use reqwest::{Client, StatusCode};
+use rs_utils::{
+    log::{debug, error, info},
+    read_file_as_stream,
+};
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
@@ -51,23 +54,39 @@ impl NetworkService {
     }
 
     pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
-        debug!(
-            "uploading attachment {} ({})",
-            &attachment_data.hash, &attachment_data.path
-        );
+        debug!("uploading attachment {}", &attachment_data.hash);
 
         let file_stream = read_file_as_stream(&attachment_data.path).await?;
 
         let url = self.get_attachment_data_url(&attachment_data.hash);
 
-        Client::new()
+        let response = Client::new()
             .post(&url)
             .body(reqwest::Body::wrap_stream(file_stream))
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
 
-        Ok(())
+        match response.status() {
+            StatusCode::OK => {
+                info!("uploaded attachment data {}", &attachment_data.hash);
+                Ok(())
+            }
+            StatusCode::CONFLICT => {
+                info!(
+                    "skipped uploading attachment data {}: already exists",
+                    &attachment_data.hash
+                );
+                Ok(())
+            }
+            _ => {
+                error!(
+                    "failed to upload attachment data {}: {:?}",
+                    &attachment_data.hash, response
+                );
+
+                Err(anyhow!("failed to upload attachment data"))
+            }
+        }
     }
 
     pub async fn send_changeset(&self, changeset: &Changeset) -> Result<ChangesetResponse> {

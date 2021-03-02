@@ -116,14 +116,11 @@ fn post_attachment_data_handler(
         .exists()
         .expect("failed to check if attachment data exists")
     {
-        error!("attachment data {} already exists", attachment_data.path);
+        warn!("attachment data {} already exists", attachment_data.path);
 
         // FIXME check hashes instead of throwing an error
         return reply::with_status(
-            format!(
-                "temp attachment data {} already exists",
-                attachment_data.path
-            ),
+            format!("attachment data {} already exists", attachment_data.path),
             http::StatusCode::CONFLICT,
         );
     }

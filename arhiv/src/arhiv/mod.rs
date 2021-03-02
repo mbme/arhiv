@@ -238,8 +238,6 @@ impl Arhiv {
         let conn = conn.get_tx()?;
         let mut fs_tx = FsTransaction::new();
 
-        // FIXME check if hashcode is unique
-
         let hash = self
             .blob_manager
             .add_attachment_data(&mut fs_tx, file_path, copy)?;

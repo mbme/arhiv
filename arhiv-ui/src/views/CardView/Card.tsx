@@ -2,13 +2,19 @@ import { RouterContext } from '@v/web-utils'
 import * as React from 'react'
 import { IDocument } from '../../api'
 import { useDataDescription } from '../../data-manager'
-import { CardData, Catalog, useActions } from '../../parts'
+import {
+  CardData,
+  Catalog,
+  CatalogOptionsOverrides,
+  useActions,
+} from '../../parts'
 
 interface IProps {
   document: IDocument
+  catalogOptions?: CatalogOptionsOverrides
 }
 
-export function Card({ document }: IProps) {
+export function Card({ document, catalogOptions }: IProps) {
   const router = RouterContext.use()
 
   const documentType = document.documentType
@@ -51,6 +57,7 @@ export function Card({ document }: IProps) {
           key={childDocumentType}
           documentType={childDocumentType}
           collectionMatcher={{ Field: { selector: `$.${documentType}`, pattern: document.id }}}
+          options={catalogOptions}
         />
       )}
     </>

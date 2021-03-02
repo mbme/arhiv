@@ -7,6 +7,6 @@ export { MetaField } from './MetaField'
 
 export { CardData } from './CardData'
 export { CardLoader } from './CardLoader'
-export { Catalog } from './Catalog'
+export { Catalog, CatalogOptionsOverrides } from './Catalog'
 
 export { FrameTitle } from './FrameTitle'

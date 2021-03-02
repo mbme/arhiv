@@ -1,14 +1,20 @@
 import * as React from 'react'
 import { RouterContext } from '@v/web-utils'
-import { Catalog, FrameTitle, useActions } from '../../parts'
+import {
+  Catalog,
+  CatalogOptionsOverrides,
+  FrameTitle,
+  useActions,
+} from '../../parts'
 import { useDataDescription } from '../../data-manager'
 
 interface IProps {
   documentType: string
   skipAddDocumentAction?: boolean
+  catalogOptions?: CatalogOptionsOverrides
 }
 
-export function CatalogView({ documentType, skipAddDocumentAction }: IProps) {
+export function CatalogView({ documentType, skipAddDocumentAction, catalogOptions }: IProps) {
   const router = RouterContext.use()
 
   const {
@@ -35,6 +41,7 @@ export function CatalogView({ documentType, skipAddDocumentAction }: IProps) {
       <Catalog
         key={documentType}
         documentType={documentType}
+        options={catalogOptions}
       />
     </>
   )

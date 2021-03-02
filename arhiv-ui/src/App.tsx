@@ -6,9 +6,14 @@ import {
 import {
   PlatformProvider,
 } from '@v/web-platform'
-import { Frame, NotFoundBlock } from './parts'
+import {
+  CatalogOptionsOverrides,
+  Frame,
+  NotFoundBlock,
+} from './parts'
 
 import { DataManager, DataManagerContext } from './data-manager'
+import { API } from './api'
 
 import { CatalogView } from './views/CatalogView'
 import { CardView } from './views/CardView'
@@ -19,7 +24,33 @@ import {
 import { MetadataView } from './views/MetadataView'
 import { DashboardView } from './views/DashboardView'
 import { StatusView } from './views/StatusView'
-import { API } from './api'
+import { DocumentRedirectView } from './views/DocumentRedirectView'
+
+const PROJECT_CATALOG_OPTIONS: CatalogOptionsOverrides = {
+  pageSize: undefined,
+  showEntryModificationDate: false,
+}
+
+const PROJECT_CARD_CATALOG_OPTIONS: CatalogOptionsOverrides = {
+  pageSize: undefined,
+  groupByField: 'status',
+  order: [
+    {
+      EnumField: {
+        selector: '$.status',
+        asc: true,
+        enumOrder: ['Inbox', 'InProgress', 'Paused', 'Todo', 'Done', 'Later', 'Cancelled' ],
+      },
+    },
+    {
+      UpdatedAt: {
+        asc: false,
+      },
+    },
+  ],
+  showEntryModificationDate: false,
+  showEntryDataFields: ['complexity', 'status'],
+}
 
 export function App() {
   const [dataManager] = usePromise(async () => {
@@ -50,21 +81,41 @@ export function App() {
                 () => <StatusView />,
               ],
 
+              // CATALOG OVERRIDES
               [
                 pm`/catalog/attachment`,
                 () => <CatalogView key="attachment" documentType="attachment" skipAddDocumentAction />,
               ],
+
+              [
+                pm`/catalog/project`,
+                () => <CatalogView key="project" documentType="project" catalogOptions={PROJECT_CATALOG_OPTIONS} />,
+              ],
+
               [
                 pm`/catalog/${'documentType'}`,
                 ({ documentType }) => <CatalogView key={documentType} documentType={documentType} />,
               ],
+
+              // CARD OVERRIDES
+              [
+                pm`/catalog/project/${'id'}`,
+                ({ id }) => <CardView key={id} id={id} catalogOptions={PROJECT_CARD_CATALOG_OPTIONS} />,
+              ],
+
+              [
+                pm`/catalog/${'documentType'}/${'id'}`,
+                ({ id }) => <CardView key={id} id={id} />,
+              ],
+
+              // -----------------
               [
                 pm`/documents/${'documentType'}/new`,
                 ({ documentType }) => <NewCardEditorView key={documentType} documentType={documentType} />,
               ],
               [
                 pm`/documents/${'id'}`,
-                ({ id }) => <CardView key={id} id={id} />,
+                ({ id }) => <DocumentRedirectView key={id} id={id} />,
               ],
               [
                 pm`/documents/${'id'}/metadata`,

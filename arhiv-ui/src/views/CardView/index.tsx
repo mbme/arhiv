@@ -1,12 +1,17 @@
 import * as React from 'react'
-import { CardLoader, FrameTitle } from '../../parts'
+import {
+  CardLoader,
+  CatalogOptionsOverrides,
+  FrameTitle,
+} from '../../parts'
 import { Card } from './Card'
 
 interface IProps {
   id: string
+  catalogOptions?: CatalogOptionsOverrides
 }
 
-export function CardView({ id }: IProps) {
+export function CardView({ id, catalogOptions }: IProps) {
   return (
     <CardLoader id={id}>
       {document => (
@@ -17,6 +22,7 @@ export function CardView({ id }: IProps) {
 
           <Card
             document={document}
+            catalogOptions={catalogOptions}
           />
         </>
       )}

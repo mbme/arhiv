@@ -17,34 +17,8 @@ const DEFAULT_UI_OPTIONS: ICatalogOptions = {
   showEntryDataFields: [],
 }
 
-const OVERRIDES: Record<string, Partial<ICatalogOptions>> = {}
+export type CatalogOptionsOverrides = Partial<ICatalogOptions>
 
-OVERRIDES['project'] = {
-  pageSize: undefined,
-  showEntryModificationDate: false,
-}
-
-OVERRIDES['task'] = {
-  pageSize: undefined,
-  groupByField: 'status',
-  order: [
-    {
-      EnumField: {
-        selector: '$.status',
-        asc: true,
-        enumOrder: ['Inbox', 'InProgress', 'Paused', 'Todo', 'Done', 'Later', 'Cancelled' ],
-      },
-    },
-    {
-      UpdatedAt: {
-        asc: false,
-      },
-    },
-  ],
-  showEntryModificationDate: false,
-  showEntryDataFields: ['complexity', 'status'],
-}
-
-export function getUIOptions(documentType: string): ICatalogOptions {
-  return merge<ICatalogOptions>(DEFAULT_UI_OPTIONS, (OVERRIDES[documentType] || {}) as any)
+export function getUIOptions(catalogOptions: CatalogOptionsOverrides = {}): ICatalogOptions {
+  return merge<ICatalogOptions>(DEFAULT_UI_OPTIONS, catalogOptions as any)
 }

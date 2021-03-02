@@ -12,14 +12,17 @@ import { useDataDescription } from '../../data-manager'
 import { Matcher } from '../../api'
 import { useList } from './useList'
 import { CatalogEntries } from './CatalogEntries'
-import { getUIOptions } from './options'
+import { getUIOptions, CatalogOptionsOverrides } from './options'
+
+export { CatalogOptionsOverrides }
 
 interface IProps {
   documentType: string
   collectionMatcher?: Matcher
+  options?: CatalogOptionsOverrides
 }
 
-export function Catalog({ documentType, collectionMatcher }: IProps) {
+export function Catalog({ documentType, collectionMatcher, options }: IProps) {
   const {
     Form,
     values: {
@@ -27,7 +30,7 @@ export function Catalog({ documentType, collectionMatcher }: IProps) {
     },
   } = useForm()
 
-  const uiOptions = React.useMemo(() => getUIOptions(documentType), [documentType])
+  const uiOptions = React.useMemo(() => getUIOptions(options), [options])
 
   const {
     titleField,

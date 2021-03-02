@@ -96,6 +96,12 @@ impl ArhivCommander {
             return Ok(Value::Null);
         }
 
+        if action == "is_sync_required" {
+            let is_sync_required = self.arhiv.get_status()?.is_sync_required();
+
+            return Ok(serde_json::to_value(is_sync_required)?);
+        }
+
         unreachable!("unknown action: {}", action)
     }
 }

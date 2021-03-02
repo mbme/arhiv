@@ -13,6 +13,12 @@ pub struct Status {
     pub root_dir: String,
 }
 
+impl Status {
+    pub fn is_sync_required(&self) -> bool {
+        self.documents_count.count_staged_documents() > 0
+    }
+}
+
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(

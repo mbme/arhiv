@@ -27,6 +27,8 @@ interface IRPC {
   get_schema(): Promise<IDataSchema>
 
   sync(): Promise<void>
+
+  is_sync_required(): Promise<boolean>
 }
 
 export const API = RPC_PROXY as IRPC

@@ -8,6 +8,7 @@ import {
 } from '@v/web-platform'
 import { ActionsRenderer } from './ActionsRenderer'
 import { ActionsRegistry } from './context'
+import { SyncStatus } from './SyncStatus'
 
 const $container: StyleArg = {
   display: 'grid',
@@ -82,9 +83,7 @@ export function Frame({ children }: IProps) {
 
           <Spacer />
 
-          <span>
-            Synced
-          </span>
+          <SyncStatus />
         </Box>
 
         <Box

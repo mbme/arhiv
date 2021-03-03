@@ -1,9 +1,19 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use arhiv::{Arhiv, Config};
+use std::{
+    env,
+    path::Path,
+    process::{Command, Stdio},
+    sync::Arc,
+};
+
+use arhiv::{
+    server::{start_prime_server, start_ui_server},
+    Arhiv, Config,
+};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use rs_utils::log::setup_logger_with_level;
+use rs_utils::log::{setup_logger_with_level, setup_server_logger};
 
 #[tokio::main]
 async fn main() {
@@ -18,6 +28,15 @@ async fn main() {
         .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(SubCommand::with_name("config").about("Print config"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
+        .subcommand(
+            SubCommand::with_name("ui").about("Show arhiv UI").arg(
+                Arg::with_name("open")
+                    .long("open")
+                    .takes_value(true)
+                    .help("Open app using provided browser or $BROWSER env variable"),
+            ),
+        )
+        .subcommand(SubCommand::with_name("server").about("Run prime server"))
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -32,13 +51,15 @@ async fn main() {
         .version(crate_version!())
         .get_matches();
 
-    setup_logger_with_level(matches.occurrences_of("verbose"));
-
     match matches.subcommand() {
         ("init", Some(_)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
             Arhiv::create(Config::must_read().0).expect("must be able to create arhiv");
         }
         ("status", Some(_)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
             let status = Arhiv::must_open()
                 .get_status()
                 .expect("must be able to get status");
@@ -47,6 +68,8 @@ async fn main() {
             // FIXME print number of unused temp attachments
         }
         ("config", Some(_)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
             let (config, path) = Config::must_read();
             println!("Arhiv config {}:", path);
             println!(
@@ -55,7 +78,50 @@ async fn main() {
             );
         }
         ("sync", Some(_)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
             Arhiv::must_open().sync().await.expect("must sync");
+        }
+        ("ui", Some(matches)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
+            let browser = {
+                if let Some(browser) = matches.value_of("open") {
+                    browser.to_string()
+                } else {
+                    env::var("BROWSER").expect("failed to read BROWSER env variable")
+                }
+            };
+
+            let (join_handle, addr) = start_ui_server().await;
+
+            Command::new(&browser)
+                .arg(format!("http://{}", addr))
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .expect(&format!("failed to run browser {}", browser));
+
+            join_handle.await.expect("must join");
+        }
+        ("server", Some(_)) => {
+            let arhiv = Arc::new(Arhiv::must_open());
+
+            if !arhiv
+                .get_status()
+                .expect("must be able to get status")
+                .db_status
+                .is_prime
+            {
+                panic!("server must be started on prime instance");
+            }
+
+            let log_file = Path::new(arhiv.config.get_root_dir()).join("arhiv-server.log");
+            setup_server_logger(log_file);
+
+            let (join_handle, _, _) = start_prime_server(arhiv);
+
+            join_handle.await.expect("must join");
         }
         _ => unreachable!(),
     }

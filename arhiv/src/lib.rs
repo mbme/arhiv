@@ -7,11 +7,10 @@ mod config;
 pub mod entities;
 pub mod markup;
 pub mod schema;
-mod server;
+pub mod server;
 
 #[cfg(test)]
 mod tests;
 
 pub use crate::arhiv::*;
 pub use config::Config;
-pub use server::{start_prime_server, start_ui_server};

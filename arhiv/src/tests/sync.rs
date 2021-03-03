@@ -1,5 +1,5 @@
 use super::utils::*;
-use crate::start_prime_server;
+use crate::server::start_prime_server;
 use anyhow::*;
 use rs_utils::project_relpath;
 use serde_json::json;

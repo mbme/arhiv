@@ -287,7 +287,7 @@ pub async fn start_ui_server() -> (JoinHandle<()>, SocketAddr) {
         });
 
     let join_handle = tokio::task::spawn(server);
-    info!("RPC server listening on {}", addr);
+    info!("RPC server listening on http://{}", addr);
 
     (join_handle, addr)
 }

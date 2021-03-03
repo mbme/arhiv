@@ -36,21 +36,21 @@ impl fmt::Display for Status {
             if self.last_update_time == chrono::MIN_DATETIME {
                 "NEVER".to_string()
             } else {
-                self.last_update_time.to_string()
+                format_date(self.last_update_time)
             }
         )?;
         writeln!(
             f,
-            "  Last sync time: {}",
+            "    Last sync time: {}",
             if self.db_status.last_sync_time == chrono::MIN_DATETIME {
                 "NEVER".to_string()
             } else {
-                self.db_status.last_sync_time.to_string()
+                format_date(self.db_status.last_sync_time)
             }
         )?;
         writeln!(
             f,
-            "  Documents:   {} committed, {} staged ({} updated, {} new)",
+            "   Documents:  {} committed, {} staged ({} updated, {} new)",
             self.documents_count.documents_committed,
             self.documents_count.count_staged_documents(),
             self.documents_count.documents_updated,
@@ -71,4 +71,10 @@ impl fmt::Display for Status {
 
         Ok(())
     }
+}
+
+fn format_date(date: Timestamp) -> String {
+    date.with_timezone(&chrono::Local)
+        .format("%a %b %e %T %Y")
+        .to_string()
 }

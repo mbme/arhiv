@@ -139,3 +139,20 @@ export function useIsWindowFocused() {
 
   return isFocused
 }
+
+export function useOnBeforeUnload() {
+  React.useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+
+      // Chrome requires returnValue to be set
+      e.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [])
+}

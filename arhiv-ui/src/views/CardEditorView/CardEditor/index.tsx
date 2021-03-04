@@ -3,11 +3,13 @@ import { Procedure } from '@v/utils'
 import {
   Box,
 } from '@v/web-platform'
+import {
+  copyTextToClipboard,
+} from '@v/web-utils'
 import { DeleteDocumentButton } from './DeleteDocumentButton'
 import { API, createRef, IDocument } from '../../../api'
 import { CardData, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
-import { copyTextToClipboard } from '@v/web-utils'
 
 interface IProps {
   document: IDocument

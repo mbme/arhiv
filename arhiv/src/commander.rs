@@ -1,6 +1,11 @@
 use std::sync::Arc;
 
-use crate::{entities::*, markup::*, schema::DocumentData, Arhiv, Filter};
+use crate::{
+    entities::*,
+    markup::*,
+    schema::{DocumentData, SCHEMA},
+    Arhiv, Filter,
+};
 use anyhow::*;
 use rs_utils::run_command;
 use serde::{Deserialize, Serialize};
@@ -17,7 +22,7 @@ impl ArhivCommander {
 
     pub async fn run(&self, action: String, params: Value) -> Result<Value> {
         if action == "get_schema" {
-            return Ok(serde_json::to_value(self.arhiv.schema.clone())?);
+            return Ok(serde_json::to_value(SCHEMA.clone())?);
         }
 
         if action == "list" {
@@ -41,7 +46,7 @@ impl ArhivCommander {
         if action == "put" {
             let mut args: PutDocumentArgs = serde_json::from_value(params)?;
 
-            self.arhiv.schema.update_refs(&mut args.document)?;
+            SCHEMA.update_refs(&mut args.document)?;
 
             self.arhiv.stage_document(args.document)?;
 
@@ -51,10 +56,7 @@ impl ArhivCommander {
         if action == "create" {
             let args: CreateDocumentArgs = serde_json::from_value(params)?;
 
-            let data = self
-                .arhiv
-                .schema
-                .create_with_initial_values(args.document_type.clone(), args.args)?;
+            let data = SCHEMA.create_with_initial_values(args.document_type.clone(), args.args)?;
 
             let document = Document::new(args.document_type, data.into());
 

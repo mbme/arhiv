@@ -30,6 +30,7 @@ dependencies = [
  "chrono",
  "clap",
  "futures",
+ "lazy_static",
  "mime_guess",
  "nanoid",
  "pulldown-cmark",

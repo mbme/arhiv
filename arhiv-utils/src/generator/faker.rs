@@ -1,6 +1,6 @@
 use anyhow::*;
-use arhiv::entities::*;
 use arhiv::Arhiv;
+use arhiv::{entities::*, schema::SCHEMA};
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::project_relpath;
@@ -63,20 +63,14 @@ impl<'a> Faker<'a> {
     }
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
-        let mut data = self
-            .arhiv
-            .schema
+        let mut data = SCHEMA
             .create_with_initial_values(document_type.clone(), initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
                 document_type
             ));
 
-        let description = self
-            .arhiv
-            .schema
-            .get_data_description_by_type(&document_type)
-            .unwrap();
+        let description = SCHEMA.get_data_description_by_type(&document_type).unwrap();
 
         let mut rng = thread_rng();
         for field in &description.fields {
@@ -86,7 +80,7 @@ impl<'a> Faker<'a> {
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));
                     data.insert(
-                        field.name.clone(),
+                        field.name.to_string(),
                         self.generator.gen_string(min, max).into(),
                     );
                 }
@@ -95,21 +89,20 @@ impl<'a> Faker<'a> {
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));
                     data.insert(
-                        field.name.clone(),
+                        field.name.to_string(),
                         self.generator.gen_markup_string(min, max).0.into(),
                     );
                 }
                 FieldType::Enum(values) => {
                     let value: &str = values.choose(&mut rng).unwrap();
-                    data.insert(field.name.clone(), value.into());
+                    data.insert(field.name.to_string(), value.into());
                 }
                 _ => {}
             }
         }
 
         let mut document = Document::new(document_type, data.into());
-        self.arhiv
-            .schema
+        SCHEMA
             .update_refs(&mut document)
             .expect("Failed to update refs");
 
@@ -119,9 +112,7 @@ impl<'a> Faker<'a> {
     pub fn create_fakes<S: Into<String>>(&self, document_type: S) {
         let document_type = document_type.into();
 
-        let data_description = self
-            .arhiv
-            .schema
+        let data_description = SCHEMA
             .get_data_description_by_type(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 
@@ -144,7 +135,7 @@ impl<'a> Faker<'a> {
                     initial_values
                         .insert(document_type.clone(), serde_json::to_value(&id).unwrap());
                     let child_document =
-                        self.create_fake(child_document_type.clone(), initial_values);
+                        self.create_fake(child_document_type.to_string(), initial_values);
 
                     self.arhiv
                         .stage_document(child_document)

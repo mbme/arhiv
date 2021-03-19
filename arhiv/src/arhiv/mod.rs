@@ -1,4 +1,4 @@
-use crate::{config::Config, entities::*, schema::DataSchema};
+use crate::{config::Config, entities::*, schema::SCHEMA};
 use anyhow::*;
 use chrono::Utc;
 use rs_utils::{
@@ -22,7 +22,6 @@ mod status;
 mod sync;
 
 pub struct Arhiv {
-    pub schema: DataSchema,
     pub config: Config,
     db: DB,
     blob_manager: BlobManager,
@@ -40,8 +39,6 @@ impl Arhiv {
 
         let db = DB::open(&path_manager.db_file)?;
 
-        let schema = DataSchema::new();
-
         // check if config settings are equal to db settings
         {
             let conn = db.get_connection()?;
@@ -55,10 +52,10 @@ impl Arhiv {
                 DB::VERSION,
             );
             ensure!(
-                db_status.schema_version == schema.version,
+                db_status.schema_version == SCHEMA.version,
                 "db schema version {} is different from app schema version {}",
                 db_status.schema_version,
-                schema.version,
+                SCHEMA.version,
             );
             ensure!(
                 db_status.arhiv_id == config.get_arhiv_id(),
@@ -78,7 +75,6 @@ impl Arhiv {
         info!("Open arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
-            schema,
             config,
             db,
             blob_manager,
@@ -101,8 +97,6 @@ impl Arhiv {
 
         let db = DB::create(&path_manager.db_file)?;
 
-        let schema = DataSchema::new();
-
         let mut conn = db.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
@@ -111,7 +105,7 @@ impl Arhiv {
             arhiv_id: config.get_arhiv_id().to_string(),
             is_prime: config.is_prime(),
             db_rev: Revision::STAGING,
-            schema_version: schema.version,
+            schema_version: SCHEMA.version,
             db_version: DB::VERSION,
             last_sync_time: chrono::MIN_DATETIME,
         })?;
@@ -123,7 +117,6 @@ impl Arhiv {
         info!("Created arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv {
-            schema,
             config,
             db,
             blob_manager,

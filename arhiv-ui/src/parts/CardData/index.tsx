@@ -12,7 +12,6 @@ interface IProps {
 export function CardData({ documentType, data }: IProps) {
   const {
     dataDescription,
-    titleField,
   } = useDataDescription(documentType)
 
   const fields = dataDescription.fields.map(({ name, fieldType }) => {
@@ -27,7 +26,6 @@ export function CardData({ documentType, data }: IProps) {
         <CardDataField
           value={value}
           fieldType={fieldType}
-          isTitle={name === titleField}
         />
       </Box>
     )

@@ -153,4 +153,26 @@ impl DataSchema {
 
         serde_json::from_value(value).context("can't use value as String")
     }
+
+    fn pick_title_field(&self, document_type: &str) -> Result<&Field> {
+        let description = self.get_data_description_by_type(document_type)?;
+
+        description
+            .fields
+            .iter()
+            .find(|field| match field.field_type {
+                FieldType::String {} | FieldType::MarkupString {} => true,
+                _ => false,
+            })
+            .ok_or(anyhow!("Failed to pick title field for {}", document_type))
+    }
+
+    pub fn get_preview(&self, document: &Document) -> Result<String> {
+        let field = self.pick_title_field(&document.document_type)?;
+
+        match field.field_type {
+            FieldType::String {} => self.get_field_string(document, field.name),
+            _ => unimplemented!(),
+        }
+    }
 }

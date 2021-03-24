@@ -9,7 +9,6 @@ export function useDataDescription(documentType: string) {
 
   return React.useMemo(() => ({
     dataDescription: dataManager.getDataDescription(documentType),
-    titleField: dataManager.pickTitleField(documentType),
     mandatoryFields: dataManager.getMandatoryFields(documentType),
   }), [documentType])
 }

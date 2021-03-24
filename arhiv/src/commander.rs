@@ -4,7 +4,7 @@ use crate::{
     entities::*,
     markup::*,
     schema::{DocumentData, SCHEMA},
-    Arhiv, Filter,
+    Arhiv, Filter, ListPage,
 };
 use anyhow::*;
 use rs_utils::run_command;
@@ -31,6 +31,8 @@ impl ArhivCommander {
             // FIXME validate matcher props
 
             let result = self.arhiv.list_documents(filter)?;
+
+            let result: ListPage<DocumentExt> = result.into();
 
             return Ok(serde_json::to_value(&result)?);
         }
@@ -108,22 +110,47 @@ impl ArhivCommander {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CreateDocumentArgs {
     document_type: String,
     args: DocumentData,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct PutDocumentArgs {
     document: Document,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RenderMarkupArgs {
     value: String,
     options: RenderOptions,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DocumentExt {
+    document: Document,
+    preview: String,
+}
+
+impl From<ListPage<Document>> for ListPage<DocumentExt> {
+    fn from(page: ListPage<Document>) -> Self {
+        ListPage {
+            items: page
+                .items
+                .into_iter()
+                .map(|document| DocumentExt {
+                    preview: SCHEMA
+                        .get_preview(&document)
+                        .unwrap_or("No preview".to_string()),
+                    document,
+                })
+                .collect(),
+            has_more: page.has_more,
+        }
+    }
 }

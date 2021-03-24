@@ -2,7 +2,7 @@ import * as React from 'react'
 import { noop, withoutUndefined } from '@v/utils'
 import {
   API,
-  IDocument,
+  IDocumentExt,
   IFilter,
   IListPage,
   Matcher,
@@ -22,10 +22,10 @@ interface IOptions {
   order: OrderBy[]
 }
 
-export function useList<D extends IDocument>(getOptions: () => IOptions, args: any[] = []): IList<D> {
+export function useList(getOptions: () => IOptions, args: any[] = []): IList<IDocumentExt> {
   const [filter, setFilter] = React.useState<IFilter>()
 
-  const [items, setItems] = React.useState<D[]>()
+  const [items, setItems] = React.useState<IDocumentExt[]>()
   const [hasMore, setHasMore] = React.useState(false)
   const [error, setError] = React.useState<any>()
 
@@ -55,7 +55,7 @@ export function useList<D extends IDocument>(getOptions: () => IOptions, args: a
 
     let relevant = true
 
-    API.list<D>(filter).then((page: IListPage<D>) => {
+    API.list(filter).then((page: IListPage<IDocumentExt>) => {
       if (relevant) {
         setItems(currentItems => [...(currentItems || []), ...page.items])
         setHasMore(page.hasMore)

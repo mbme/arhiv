@@ -31,8 +31,13 @@ export interface IFilter {
   pageOffset?: number
   pageSize?: number
   matchers: Matcher[]
-  order: OrderBy[],
-  mode?: FilterMode,
+  order: OrderBy[]
+  mode?: FilterMode
+}
+
+export interface IDocumentExt {
+  document: IDocument
+  preview: string
 }
 
 export interface IListPage<T> {

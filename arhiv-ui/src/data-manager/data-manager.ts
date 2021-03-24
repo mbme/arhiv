@@ -20,17 +20,6 @@ export class DataManager {
     return dataDescription
   }
 
-  pickTitleField(documentType: string): string {
-    const dataDescription = this.getDataDescription(documentType)
-
-    const titleField = dataDescription.fields.find(({ fieldType }) => 'String' in fieldType)
-    if (!titleField) {
-      throw new Error("can't pick field for title")
-    }
-
-    return titleField.name
-  }
-
   getMandatoryFields(documentType: string): string[] {
     const dataDescription = this.getDataDescription(documentType)
 

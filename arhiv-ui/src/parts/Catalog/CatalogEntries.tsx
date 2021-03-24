@@ -5,13 +5,13 @@ import {
   Heading,
 } from '@v/web-platform'
 import { CatalogEntry } from './CatalogEntry'
-import { IDocument } from '../../api'
+import { IDocumentExt } from '../../api'
 import { ICatalogOptions } from './options'
 
 function createRule(field: string) {
   let lastVal: any = undefined
-  return (item: IDocument): boolean => {
-    const currentVal = item.data[field]
+  return (item: IDocumentExt): boolean => {
+    const currentVal = item.document.data[field]
     const result = currentVal !== lastVal
     lastVal = currentVal
 
@@ -20,15 +20,16 @@ function createRule(field: string) {
 }
 
 interface IProps {
-  items: IDocument[]
+  items: IDocumentExt[]
   uiOptions: ICatalogOptions
 }
 
 export function CatalogEntries({ items, uiOptions }: IProps) {
-  const renderItem = (item: IDocument) => (
+  const renderItem = (item: IDocumentExt) => (
     <CatalogEntry
-      key={item.id}
-      document={item}
+      key={item.document.id}
+      document={item.document}
+      preview={item.preview}
       showModificationDate={uiOptions.showEntryModificationDate}
       showDataFields={uiOptions.showEntryDataFields}
     />
@@ -46,9 +47,9 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
 
   const entries = partitionBy(createRule(fieldName), items)
     .map(group => (
-      <Box mb="large" key={group[0].data[fieldName]}>
+      <Box mb="large" key={group[0].document.data[fieldName]}>
         <Heading variant="1">
-          {group[0].data[fieldName]} ({group.length})
+          {group[0].document.data[fieldName]} ({group.length})
         </Heading>
 
         {group.map(renderItem)}

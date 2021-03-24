@@ -8,7 +8,6 @@ import {
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
 import { ErrorBlock } from '../ErrorBlock'
-import { useDataDescription } from '../../data-manager'
 import { Matcher } from '../../api'
 import { useList } from './useList'
 import { CatalogEntries } from './CatalogEntries'
@@ -32,9 +31,6 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
 
   const uiOptions = React.useMemo(() => getUIOptions(options), [options])
 
-  const {
-    titleField,
-  } = useDataDescription(documentType)
   const debouncedFilter = useDebounced(filter, 300)
 
   const {
@@ -46,7 +42,7 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     matchers: [
       { Type: { documentType } },
       collectionMatcher,
-      debouncedFilter ? { FuzzyField: { selector: `$.${titleField}`, pattern: debouncedFilter } } : undefined,
+      debouncedFilter ? { FuzzyField: { selector: '$', pattern: debouncedFilter } } : undefined,
     ],
     pageSize: uiOptions.pageSize,
     order: uiOptions.order,

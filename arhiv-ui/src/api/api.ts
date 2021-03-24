@@ -7,10 +7,11 @@ import {
   IPutDocumentArgs,
   IDataSchema,
   IRenderMarkupArgs,
+  IDocumentExt,
 } from './types'
 
 interface IRPC {
-  list<D extends IDocument = IDocument>(filter: IFilter): Promise<IListPage<D>>
+  list(filter: IFilter): Promise<IListPage<IDocumentExt>>
 
   get(id: string): Promise<IDocument | null>
 

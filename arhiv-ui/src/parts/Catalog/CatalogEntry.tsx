@@ -7,7 +7,6 @@ import {
 } from '@v/web-platform'
 import { RouterContext } from '@v/web-utils'
 import { IDocument } from '../../api'
-import { useDataDescription } from '../../data-manager'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
@@ -20,16 +19,13 @@ const $style: StyleArg = {
 
 interface IProps {
   document: IDocument
+  preview: string
   showModificationDate: boolean
   showDataFields: string[]
 }
 
-export function CatalogEntry({ document, showModificationDate, showDataFields }: IProps) {
+export function CatalogEntry({ document, preview, showModificationDate, showDataFields }: IProps) {
   const router = RouterContext.use()
-
-  const {
-    titleField,
-  } = useDataDescription(document.documentType)
 
   return (
     <Box
@@ -40,7 +36,7 @@ export function CatalogEntry({ document, showModificationDate, showDataFields }:
       tabIndex="0"
       $style={$style}
     >
-      {document.data[titleField]}
+      {preview}
 
       <Row alignX="left">
         {showModificationDate && (

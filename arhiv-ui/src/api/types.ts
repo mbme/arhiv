@@ -79,13 +79,3 @@ export interface ICreateDocumentArgs {
 export interface IPutDocumentArgs {
   readonly document: IDocument
 }
-
-interface IRenderOptions {
-  readonly documentPath: string
-  readonly attachmentDataPath: string
-}
-
-export interface IRenderMarkupArgs {
-  readonly value: string
-  readonly options: IRenderOptions
-}

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use crate::{
     entities::*,
     markup::*,
-    schema::{DocumentData, SCHEMA},
-    Arhiv, Filter, ListPage,
+    schema::{DocumentData, FieldType, SCHEMA},
+    Arhiv, Filter,
 };
 use anyhow::*;
 use rs_utils::run_command;
@@ -13,11 +13,34 @@ use serde_json::Value;
 
 pub struct ArhivCommander {
     arhiv: Arc<Arhiv>,
+    render_options: RenderOptions,
 }
 
 impl ArhivCommander {
-    pub fn new(arhiv: Arc<Arhiv>) -> ArhivCommander {
-        ArhivCommander { arhiv }
+    pub fn new(arhiv: Arc<Arhiv>, render_options: RenderOptions) -> ArhivCommander {
+        ArhivCommander {
+            arhiv,
+            render_options,
+        }
+    }
+
+    fn get_renderer(&self) -> MarkupRenderer {
+        MarkupRenderer::new(&self.arhiv, &self.render_options)
+    }
+
+    fn get_preview(&self, document: &Document) -> Result<String> {
+        let field = SCHEMA.pick_title_field(&document.document_type)?;
+
+        match field.field_type {
+            FieldType::MarkupString {} => {
+                let text = SCHEMA.get_field_string(document, field.name)?;
+                let markup: MarkupString = text.lines().take(4).collect::<String>().into();
+
+                Ok(self.get_renderer().to_html(&markup))
+            }
+            FieldType::String {} => SCHEMA.get_field_string(document, field.name),
+            _ => unimplemented!(),
+        }
     }
 
     pub async fn run(&self, action: String, params: Value) -> Result<Value> {
@@ -30,9 +53,15 @@ impl ArhivCommander {
 
             // FIXME validate matcher props
 
-            let result = self.arhiv.list_documents(filter)?;
-
-            let result: ListPage<DocumentExt> = result.into();
+            let result = self
+                .arhiv
+                .list_documents(filter)?
+                .map(|document| DocumentExt {
+                    preview: self
+                        .get_preview(&document)
+                        .unwrap_or("No preview".to_string()),
+                    document,
+                });
 
             return Ok(serde_json::to_value(&result)?);
         }
@@ -85,11 +114,14 @@ impl ArhivCommander {
         }
 
         if action == "render_markup" {
-            let args: RenderMarkupArgs = serde_json::from_value(params)?;
+            let string = MarkupString::from(
+                params
+                    .as_str()
+                    .context("markup must be string")?
+                    .to_string(),
+            );
 
-            let string = MarkupString::from(args.value);
-
-            let result = MarkupRenderer::new(&self.arhiv, &args.options).to_html(&string);
+            let result = self.get_renderer().to_html(&string);
 
             return Ok(serde_json::to_value(result)?);
         }
@@ -123,34 +155,9 @@ struct PutDocumentArgs {
     document: Document,
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RenderMarkupArgs {
-    value: String,
-    options: RenderOptions,
-}
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DocumentExt {
     document: Document,
     preview: String,
-}
-
-impl From<ListPage<Document>> for ListPage<DocumentExt> {
-    fn from(page: ListPage<Document>) -> Self {
-        ListPage {
-            items: page
-                .items
-                .into_iter()
-                .map(|document| DocumentExt {
-                    preview: SCHEMA
-                        .get_preview(&document)
-                        .unwrap_or("No preview".to_string()),
-                    document,
-                })
-                .collect(),
-            has_more: page.has_more,
-        }
-    }
 }

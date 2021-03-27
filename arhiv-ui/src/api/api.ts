@@ -6,7 +6,6 @@ import {
   IListPage,
   IPutDocumentArgs,
   IDataSchema,
-  IRenderMarkupArgs,
   IDocumentExt,
 } from './types'
 
@@ -19,7 +18,7 @@ interface IRPC {
 
   create(args: ICreateDocumentArgs): Promise<IDocument>
 
-  render_markup(args: IRenderMarkupArgs): Promise<string>
+  render_markup(markup: string): Promise<string>
 
   get_status(): Promise<string>
 

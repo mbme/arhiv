@@ -124,3 +124,15 @@ pub struct ListPage<T> {
     pub items: Vec<T>,
     pub has_more: bool,
 }
+
+impl<T> ListPage<T> {
+    pub fn map<K, F>(self, f: F) -> ListPage<K>
+    where
+        F: Fn(T) -> K,
+    {
+        ListPage {
+            items: self.items.into_iter().map(f).collect(),
+            has_more: self.has_more,
+        }
+    }
+}

@@ -2,7 +2,6 @@ use crate::{entities::*, Arhiv};
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 use rs_utils::log::warn;
-use serde::{Deserialize, Serialize};
 
 use super::utils::extract_id;
 use super::MarkupString;
@@ -12,11 +11,9 @@ pub struct MarkupRenderer<'a> {
     options: &'a RenderOptions,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct RenderOptions {
-    document_path: String,
-    attachment_data_path: String,
+    pub document_path: String,
+    pub attachment_data_path: String,
 }
 
 impl<'a> MarkupRenderer<'a> {

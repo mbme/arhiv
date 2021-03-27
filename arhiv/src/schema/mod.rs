@@ -24,30 +24,18 @@ lazy_static! {
             DataDescription {
                 document_type: "note",
                 collection_of: None,
-                fields: vec![
-                    Field {
-                        name: "name",
-                        field_type: FieldType::String {},
-                    },
-                    Field {
-                        name: "data",
-                        field_type: FieldType::MarkupString {},
-                    },
-                ],
+                fields: vec![Field {
+                    name: "data",
+                    field_type: FieldType::MarkupString {},
+                },],
             },
             DataDescription {
                 document_type: "project",
                 collection_of: Some(Collection { item_type: "task" }),
-                fields: vec![
-                    Field {
-                        name: "title",
-                        field_type: FieldType::String {},
-                    },
-                    Field {
-                        name: "description",
-                        field_type: FieldType::MarkupString {},
-                    },
-                ],
+                fields: vec![Field {
+                    name: "description",
+                    field_type: FieldType::MarkupString {},
+                },],
             },
             DataDescription {
                 document_type: "task",
@@ -56,10 +44,6 @@ lazy_static! {
                     Field {
                         name: "project",
                         field_type: FieldType::Ref("project"),
-                    },
-                    Field {
-                        name: "title",
-                        field_type: FieldType::String {},
                     },
                     Field {
                         name: "description",

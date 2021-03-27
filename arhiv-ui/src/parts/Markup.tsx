@@ -16,15 +16,7 @@ interface IProps {
 }
 
 export function Markup({ value }: IProps) {
-  const [result] = usePromise(() => (
-    API.render_markup({
-      value,
-      options: {
-        documentPath: '/document',
-        attachmentDataPath: '/attachment-data',
-      },
-    })
-  ), [value])
+  const [result] = usePromise(() => API.render_markup(value), [value])
 
   if (result === undefined) {
     return null

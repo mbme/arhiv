@@ -1,5 +1,6 @@
 use crate::commander::ArhivCommander;
 use crate::entities::*;
+use crate::markup::RenderOptions;
 use crate::Arhiv;
 use anyhow::*;
 use arhiv_ui_static_handler::*;
@@ -251,7 +252,13 @@ pub async fn start_ui_server() -> (JoinHandle<()>, SocketAddr) {
 
     // POST /rpc RpcMessage -> RpcMessageResponse
     let rpc = {
-        let commander = Arc::new(ArhivCommander::new(arhiv.clone()));
+        let commander = Arc::new(ArhivCommander::new(
+            arhiv.clone(),
+            RenderOptions {
+                document_path: "/document".to_string(),
+                attachment_data_path: "/attachment-data".to_string(),
+            },
+        ));
         let commander_filter = warp::any().map(move || commander.clone());
 
         warp::path("rpc")

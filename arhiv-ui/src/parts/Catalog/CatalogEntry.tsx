@@ -36,7 +36,9 @@ export function CatalogEntry({ document, preview, showModificationDate, showData
       tabIndex="0"
       $style={$style}
     >
-      {preview}
+      <Box
+        dangerouslySetInnerHTML={{ __html: preview }}
+      />
 
       <Row alignX="left">
         {showModificationDate && (

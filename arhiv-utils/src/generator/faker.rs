@@ -88,9 +88,13 @@ impl<'a> Faker<'a> {
                     let (min, max) = self
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));
+
+                    let title = self.generator.gen_string(1, 5);
+                    let markup = self.generator.gen_markup_string(min, max).0;
+
                     data.insert(
                         field.name.to_string(),
-                        self.generator.gen_markup_string(min, max).0.into(),
+                        format!("# {}\n{}", title, markup).into(),
                     );
                 }
                 FieldType::Enum(values) => {

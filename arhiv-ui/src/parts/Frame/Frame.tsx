@@ -40,6 +40,7 @@ const $content: StyleArg = {
   gridRow: '2',
   pt: 'medium',
   pl: 'medium',
+  pr: 'medium',
   height: '100%',
   bgColor: 'var(--color-bg0)',
 }

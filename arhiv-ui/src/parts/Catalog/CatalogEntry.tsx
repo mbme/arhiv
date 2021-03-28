@@ -10,11 +10,23 @@ import { IDocument } from '../../api'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 
-const $style: StyleArg = {
+const $container: StyleArg = {
   border: 'invisible',
   '&:hover': {
     bgColor: 'rgb(160 231 251 / 47%)',
   }
+}
+
+const $preview: StyleArg = {
+  display: '-webkit-box',
+  '-webkit-line-clamp': 4,
+  '-webkit-box-orient': 'vertical',
+  lineClamp: 4,
+  overflow: 'hidden',
+
+  maxHeight: '10rem', // for images inside preview
+
+  mb: 'medium',
 }
 
 interface IProps {
@@ -34,10 +46,11 @@ export function CatalogEntry({ document, preview, showModificationDate, showData
       cursor="pointer"
       onClick={() => router.push(`/documents/${document.id}`)}
       tabIndex="0"
-      $style={$style}
+      $style={$container}
     >
       <Box
         dangerouslySetInnerHTML={{ __html: preview }}
+        $style={$preview}
       />
 
       <Row alignX="left">

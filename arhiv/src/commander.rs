@@ -34,7 +34,8 @@ impl ArhivCommander {
         match field.field_type {
             FieldType::MarkupString {} => {
                 let text = SCHEMA.get_field_string(document, field.name)?;
-                let markup: MarkupString = text.lines().take(4).collect::<String>().into();
+                let markup: MarkupString =
+                    text.lines().take(4).collect::<Vec<_>>().join("\n").into();
 
                 Ok(self.get_renderer().to_html(&markup))
             }

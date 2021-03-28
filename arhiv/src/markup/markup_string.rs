@@ -6,7 +6,7 @@ use std::convert::From;
 
 use super::utils::extract_id;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct MarkupString(pub String);
 
 impl MarkupString {

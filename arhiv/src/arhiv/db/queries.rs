@@ -283,6 +283,13 @@ pub trait Queries {
 }
 
 pub trait MutableQueries: Queries {
+    fn setup_pragmas(&self) -> Result<()> {
+        self.get_connection()
+            .execute_batch("PRAGMA journal_mode=WAL;")?;
+
+        Ok(())
+    }
+
     fn create_tables(&self) -> Result<()> {
         self.get_connection()
             .execute_batch(include_str!("./schema.sql"))?;

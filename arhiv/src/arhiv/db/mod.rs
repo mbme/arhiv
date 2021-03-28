@@ -27,6 +27,8 @@ impl DB {
 
         let mut conn = MutDBConnection::new(Connection::open(&db_file)?);
 
+        conn.setup_pragmas()?;
+
         let tx = conn.get_tx()?;
 
         tx.create_tables()?;

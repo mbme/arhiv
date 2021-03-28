@@ -46,6 +46,14 @@ impl Queries for DBConnection {
     }
 }
 
+impl Queries for MutDBConnection {
+    fn get_connection(&self) -> &Connection {
+        &self.conn
+    }
+}
+
+impl MutableQueries for MutDBConnection {}
+
 impl<'a> Queries for TxDBConnection<'a> {
     fn get_connection(&self) -> &Connection {
         &self.tx

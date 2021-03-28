@@ -4,16 +4,18 @@ use crate::markup::RenderOptions;
 use crate::Arhiv;
 use anyhow::*;
 use arhiv_ui_static_handler::*;
+use futures::{Stream, TryStreamExt};
 use rpc_handler::rpc_action_handler;
 use rs_utils::log::{debug, error, info, warn};
 use rs_utils::read_file_as_stream;
-use std::fs;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::fs as tokio_fs;
 use tokio::signal;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use warp::{http, hyper, reply, Filter, Reply};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
+use warp::{http, hyper, reply, Buf, Filter, Reply};
 
 mod arhiv_ui_static_handler;
 mod rpc_handler;
@@ -35,9 +37,9 @@ pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender
     let post_attachment_data = warp::post()
         .and(warp::path("attachment-data"))
         .and(warp::path::param::<String>())
-        .and(warp::body::bytes())
+        .and(warp::body::stream())
         .and(arhiv_filter.clone())
-        .map(post_attachment_data_handler);
+        .and_then(post_attachment_data_handler);
 
     // GET /attachment-data/:hash -> file bytes
     let get_attachment_data = warp::get()
@@ -51,7 +53,7 @@ pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender
         .and(warp::path("changeset"))
         .and(warp::body::json())
         .and(arhiv_filter.clone())
-        .map(post_changeset_handler);
+        .and_then(post_changeset_handler);
 
     let routes = get_status
         .or(post_attachment_data)
@@ -64,6 +66,7 @@ pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender
         .config
         .get_server_port()
         .expect("config.server_port must be configured");
+
     let (addr, server) =
         warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
             tokio::select! {
@@ -103,11 +106,11 @@ fn get_status_handler(arhiv: Arc<Arhiv>) -> impl warp::Reply {
     reply::with_status(status.to_string(), http::StatusCode::OK)
 }
 
-fn post_attachment_data_handler(
+async fn post_attachment_data_handler(
     hash: String,
-    data: warp::hyper::body::Bytes,
+    data: impl Stream<Item = Result<impl Buf, warp::Error>> + Send + Unpin + 'static,
     arhiv: Arc<Arhiv>,
-) -> impl warp::Reply {
+) -> Result<impl warp::Reply, warp::Rejection> {
     let hash = Hash::from_string(hash);
     info!("Saving attachment data {}", &hash);
 
@@ -120,26 +123,38 @@ fn post_attachment_data_handler(
         warn!("attachment data {} already exists", attachment_data.path);
 
         // FIXME check hashes instead of throwing an error
-        return reply::with_status(
+        return Ok(reply::with_status(
             format!("attachment data {} already exists", attachment_data.path),
             http::StatusCode::CONFLICT,
-        );
+        ));
     }
 
-    // FIXME async stream data directly into file
-    if let Err(err) = fs::write(attachment_data.path, &data) {
+    let mut stream = data
+        .map_ok(|mut buf| buf.copy_to_bytes(buf.remaining()))
+        // Convert the stream into an futures::io::AsyncRead.
+        // We must first convert the reqwest::Error into an futures::io::Error.
+        .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
+        .into_async_read()
+        .compat();
+
+    let mut file = tokio_fs::File::create(&attachment_data.path)
+        .await
+        .expect("must be able to create file");
+
+    // Invoke tokio::io::copy to actually write file to disk
+    if let Err(err) = tokio::io::copy(&mut stream, &mut file).await {
         error!(
             "Failed to save attachment data {}: {}",
             &attachment_data.hash, &err
         );
 
-        return reply::with_status(
+        return Ok(reply::with_status(
             format!("failed to write data: {}", err),
             http::StatusCode::INTERNAL_SERVER_ERROR,
-        );
+        ));
     }
 
-    reply::with_status("".to_string(), http::StatusCode::OK)
+    Ok(reply::with_status("".to_string(), http::StatusCode::OK))
 }
 
 async fn get_attachment_data_handler(
@@ -193,7 +208,10 @@ async fn get_attachment_data_handler(
         .expect("must be able to construct response"))
 }
 
-fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp::Reply {
+async fn post_changeset_handler(
+    changeset: Changeset,
+    arhiv: Arc<Arhiv>,
+) -> Result<impl warp::Reply, warp::Rejection> {
     info!("Processing changeset {}", &changeset);
 
     match arhiv.has_staged_changes() {
@@ -201,20 +219,20 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
         Ok(true) => {
             error!("Rejecting changeset as arhiv has staged changes");
 
-            return reply::with_status(
+            return Ok(reply::with_status(
                 "arhiv prime has staged changes",
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
-            .into_response();
+            .into_response());
         }
         Err(err) => {
             error!("Failed to check for staged changes: {:?}", err);
 
-            return reply::with_status(
+            return Ok(reply::with_status(
                 format!("Failed to check for staged changes: {:?}", err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
-            .into_response();
+            .into_response());
         }
     };
 
@@ -223,26 +241,26 @@ fn post_changeset_handler(changeset: Changeset, arhiv: Arc<Arhiv>) -> impl warp:
     if let Err(err) = arhiv.apply_changeset(changeset) {
         error!("Failed to apply a changeset: {:?}", err);
 
-        return reply::with_status(
+        return Ok(reply::with_status(
             format!("failed to apply a changeset: {:?}", err),
             http::StatusCode::INTERNAL_SERVER_ERROR,
         )
-        .into_response();
+        .into_response());
     }
 
     match arhiv.generate_changeset_response(base_rev) {
         Ok(changeset_response) => {
             info!("Generated {}", &changeset_response);
-            return reply::json(&changeset_response).into_response();
+            return Ok(reply::json(&changeset_response).into_response());
         }
         err => {
             error!("Failed to generate a changeset response: {:?}", err);
 
-            return reply::with_status(
+            return Ok(reply::with_status(
                 format!("failed to apply a changeset: {:?}", err),
                 http::StatusCode::INTERNAL_SERVER_ERROR,
             )
-            .into_response();
+            .into_response());
         }
     };
 }

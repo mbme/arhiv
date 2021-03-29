@@ -3,7 +3,7 @@
 
 use binutils::devices::Backlight;
 use clap::{crate_version, App, Arg};
-use rs_utils::log::{error, setup_logger};
+use rs_utils::log::setup_logger;
 
 fn main() {
     setup_logger();
@@ -24,9 +24,6 @@ fn main() {
     let notify = matches.is_present("notify");
 
     match matches.subcommand_name() {
-        Some("status") => {
-            Backlight::print_status(notify);
-        }
         Some("inc") => {
             Backlight::inc();
             Backlight::print_status(notify);
@@ -35,11 +32,8 @@ fn main() {
             Backlight::dec();
             Backlight::print_status(notify);
         }
-        Some(command) => {
-            error!("Unexpected command: {}", command);
-        }
-        None => {
-            error!("Command is missing");
+        _ => {
+            Backlight::print_status(notify);
         }
     }
 }

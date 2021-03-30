@@ -4,9 +4,9 @@ use super::dto::*;
 use super::utils;
 use crate::entities::*;
 use anyhow::*;
-use rs_utils::{fuzzy_match, log::debug};
+use rs_utils::log::debug;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::{functions::FunctionFlags, NO_PARAMS};
+use rusqlite::NO_PARAMS;
 use rusqlite::{params, Connection, OptionalExtension};
 
 const DB_STATUS_KEY: &'static str = "status";
@@ -109,8 +109,6 @@ pub trait Queries {
                 Matcher::FuzzyField { selector, pattern } => {
                     let matcher_selector_var = format!(":matcher_selector_{}", i);
                     let matcher_pattern_var = format!(":matcher_pattern_{}", i);
-
-                    self.init_fuzzy_search()?;
 
                     query.push(format!(
                         "AND fuzzySearch(json_extract(data, {}), {})",
@@ -254,49 +252,9 @@ pub trait Queries {
             Ok(None)
         }
     }
-
-    fn init_fuzzy_search(&self) -> Result<()> {
-        self.get_connection()
-            .create_scalar_function(
-                "fuzzySearch",
-                2,
-                FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-                move |ctx| {
-                    use rusqlite::Error as RusqliteError;
-                    assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
-
-                    let haystack = ctx
-                        .get_raw(0)
-                        .as_str()
-                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                    let needle = ctx
-                        .get_raw(1)
-                        .as_str()
-                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                    Ok(fuzzy_match(needle, haystack))
-                },
-            )
-            .context(anyhow!("Failed to define fuzzySearch function"))
-    }
 }
 
 pub trait MutableQueries: Queries {
-    fn setup_pragmas(&self) -> Result<()> {
-        self.get_connection()
-            .execute_batch("PRAGMA journal_mode=WAL;")?;
-
-        Ok(())
-    }
-
-    fn create_tables(&self) -> Result<()> {
-        self.get_connection()
-            .execute_batch(include_str!("./schema.sql"))?;
-
-        Ok(())
-    }
-
     fn put_db_status(&self, status: DbStatus) -> Result<()> {
         self.get_connection()
             .execute(

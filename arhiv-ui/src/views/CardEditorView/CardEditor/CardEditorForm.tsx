@@ -30,7 +30,6 @@ export const CardEditorForm = React.forwardRef(
         <Box
           key={name}
           mb="medium"
-          mr="medium"
         >
           <CardEditorFormField
             name={name}

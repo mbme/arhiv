@@ -67,7 +67,6 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     <>
       <Box
         pb="small"
-        pr="medium"
         width="100%"
       >
         <Form>

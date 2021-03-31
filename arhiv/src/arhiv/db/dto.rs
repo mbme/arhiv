@@ -49,8 +49,7 @@ pub enum Matcher {
         selector: String,
         pattern: String,
     },
-    FuzzyField {
-        selector: String,
+    Search {
         pattern: String,
     },
     Type {

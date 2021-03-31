@@ -31,3 +31,40 @@ CREATE TABLE documents_history (
 
   PRIMARY KEY (id, rev)
 );
+
+-- FULL TEXT SEARCH
+
+CREATE VIRTUAL TABLE documents_fts USING fts5(
+  id UNINDEXED,
+  rev UNINDEXED,
+  type UNINDEXED,
+  created_at UNINDEXED,
+  updated_at UNINDEXED,
+  archived UNINDEXED,
+  refs UNINDEXED,
+  data,
+  content='documents',
+  content_rowid='rowid'
+);
+
+CREATE TRIGGER documents_ai AFTER INSERT ON documents
+    BEGIN
+        INSERT INTO documents_fts (rowid, data)
+        VALUES (new.rowid, new.data);
+    END;
+
+CREATE TRIGGER documents_ad AFTER DELETE ON documents
+    BEGIN
+        INSERT INTO documents_fts (documents_fts, rowid, data)
+        VALUES ('delete', old.rowid, old.data);
+    END;
+
+CREATE TRIGGER documents_au AFTER UPDATE ON documents
+    BEGIN
+        INSERT INTO documents_fts (documents_fts, rowid, data)
+        VALUES ('delete', old.rowid, old.data);
+        INSERT INTO documents_fts (rowid, data)
+        VALUES (new.rowid, new.data);
+    END;
+
+------------------------

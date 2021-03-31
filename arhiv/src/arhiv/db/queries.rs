@@ -77,7 +77,7 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let mut query: Vec<String> = vec!["SELECT * FROM documents WHERE true".to_string()];
+        let mut query: Vec<String> = vec!["SELECT * FROM documents_fts WHERE true".to_string()];
         let mut params = utils::Params::new();
 
         match filter.mode {
@@ -92,6 +92,7 @@ pub trait Queries {
             }
         }
 
+        let mut with_fts = false;
         for (i, matcher) in filter.matchers.into_iter().enumerate() {
             match matcher {
                 Matcher::Field { selector, pattern } => {
@@ -106,16 +107,13 @@ pub trait Queries {
                     params.insert(&matcher_selector_var, Rc::new(selector));
                     params.insert(&matcher_pattern_var, Rc::new(pattern));
                 }
-                Matcher::FuzzyField { selector, pattern } => {
-                    let matcher_selector_var = format!(":matcher_selector_{}", i);
+                Matcher::Search { pattern } => {
+                    with_fts = true;
+
                     let matcher_pattern_var = format!(":matcher_pattern_{}", i);
 
-                    query.push(format!(
-                        "AND json_extract(data, {}) LIKE {}",
-                        matcher_selector_var, matcher_pattern_var,
-                    ));
-                    params.insert(&matcher_selector_var, Rc::new(selector));
-                    params.insert(&matcher_pattern_var, Rc::new(format!("%{}%", pattern)));
+                    query.push(format!("AND documents_fts MATCH {}", matcher_pattern_var,));
+                    params.insert(&matcher_pattern_var, Rc::new(pattern));
                 }
                 Matcher::Type { document_type } => {
                     let matcher_type_var = format!(":matcher_type_{}", i);
@@ -127,10 +125,14 @@ pub trait Queries {
             }
         }
 
-        if !filter.order.is_empty() {
+        if !filter.order.is_empty() || with_fts {
             query.push("ORDER BY".to_string());
 
             let mut order_query = vec![];
+
+            if with_fts {
+                order_query.push("rank".to_string());
+            }
 
             for (i, order) in filter.order.into_iter().enumerate() {
                 match order {

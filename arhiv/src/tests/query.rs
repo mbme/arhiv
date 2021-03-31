@@ -186,12 +186,11 @@ async fn test_matcher() -> Result<()> {
     }
 
     {
-        // test FuzzyField
+        // test Search
 
         let page = arhiv.list_documents(Filter {
-            matchers: vec![Matcher::FuzzyField {
-                selector: "$.test".to_string(),
-                pattern: "Val".to_string(),
+            matchers: vec![Matcher::Search {
+                pattern: "Val*".to_string(),
             }],
             ..Filter::default()
         })?;

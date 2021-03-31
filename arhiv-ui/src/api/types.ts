@@ -17,7 +17,7 @@ export interface IDocumentData {
 
 export type Matcher =
   { Field: { selector: string, pattern: string } }
-  | { FuzzyField: { selector: string, pattern: string } }
+  | { Search: { pattern: string } }
   | { Type: { documentType: string } }
 
 export type OrderBy =

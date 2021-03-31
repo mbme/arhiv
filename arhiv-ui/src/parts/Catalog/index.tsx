@@ -42,7 +42,7 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     matchers: [
       { Type: { documentType } },
       collectionMatcher,
-      debouncedFilter ? { FuzzyField: { selector: '$', pattern: debouncedFilter } } : undefined,
+      debouncedFilter ? { Search: { pattern: debouncedFilter } } : undefined,
     ],
     pageSize: uiOptions.pageSize,
     order: uiOptions.order,

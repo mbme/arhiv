@@ -9,7 +9,7 @@
     "tester": "./bin/tester"
   },
   "dependencies": {
-    "esbuild": "^0.9.6",
+    "esbuild": "^0.11.2",
     "esbuild-register": "^2.0.0"
   }
 }

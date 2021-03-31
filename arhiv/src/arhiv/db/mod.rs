@@ -2,8 +2,8 @@ use anyhow::*;
 pub use connection::*;
 pub use dto::*;
 pub use queries::*;
-use rs_utils::fuzzy_match;
-use rusqlite::{functions::FunctionFlags, Connection, Error as RusqliteError, OpenFlags};
+
+use rusqlite::{Connection, OpenFlags};
 
 mod connection;
 mod dto;
@@ -37,7 +37,6 @@ impl DB {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
 
         self.init_pragmas(&conn)?;
-        self.init_fuzzy_search(&conn)?;
 
         Ok(DBConnection::new(conn))
     }
@@ -46,7 +45,6 @@ impl DB {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
 
         self.init_pragmas(&conn)?;
-        self.init_fuzzy_search(&conn)?;
 
         Ok(MutDBConnection::new(conn))
     }
@@ -55,29 +53,5 @@ impl DB {
         conn.execute_batch("PRAGMA journal_mode=WAL;")?;
 
         Ok(())
-    }
-
-    fn init_fuzzy_search(&self, conn: &Connection) -> Result<()> {
-        conn.create_scalar_function(
-            "fuzzySearch",
-            2,
-            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-            move |ctx| {
-                assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
-
-                let haystack = ctx
-                    .get_raw(0)
-                    .as_str()
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                let needle = ctx
-                    .get_raw(1)
-                    .as_str()
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                Ok(fuzzy_match(needle, haystack))
-            },
-        )
-        .context(anyhow!("Failed to define fuzzySearch function"))
     }
 }

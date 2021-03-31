@@ -111,11 +111,11 @@ pub trait Queries {
                     let matcher_pattern_var = format!(":matcher_pattern_{}", i);
 
                     query.push(format!(
-                        "AND fuzzySearch(json_extract(data, {}), {})",
+                        "AND json_extract(data, {}) LIKE {}",
                         matcher_selector_var, matcher_pattern_var,
                     ));
                     params.insert(&matcher_selector_var, Rc::new(selector));
-                    params.insert(&matcher_pattern_var, Rc::new(pattern));
+                    params.insert(&matcher_pattern_var, Rc::new(format!("%{}%", pattern)));
                 }
                 Matcher::Type { document_type } => {
                     let matcher_type_var = format!(":matcher_type_{}", i);

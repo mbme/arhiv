@@ -1,12 +1,14 @@
 import {
   test,
   assertEqual,
+  assertThrows,
 } from '@v/tester'
 import {
   trimLeft,
   camelCase2kebabCase,
   trimPrefix,
   trimSuffix,
+  countSubstring,
 } from './string'
 
 test('trimLeft', () => {
@@ -34,4 +36,14 @@ test('trimSuffix', () => {
   assertEqual(trimSuffix('test/', '/'), 'test')
   assertEqual(trimSuffix('test//', '/'), 'test/')
   assertEqual(trimSuffix('test/', 'st/'), 'te')
+})
+
+test('countSubstring', () => {
+  assertEqual(countSubstring('test', 'tes'), 1)
+  assertEqual(countSubstring('', 'tes'), 0)
+  assertThrows(() => {
+    countSubstring('test', '')
+  })
+  assertEqual(countSubstring('testest', 'test'), 1)
+  assertEqual(countSubstring('"test"est', '"'), 2)
 })

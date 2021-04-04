@@ -7,6 +7,7 @@ import {
   Button,
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
+import { countSubstring } from '@v/utils'
 import { ErrorBlock } from '../ErrorBlock'
 import { Matcher } from '../../api'
 import { useList } from './useList'
@@ -15,6 +16,25 @@ import { getUIOptions, CatalogOptionsOverrides } from './options'
 
 export { CatalogOptionsOverrides }
 
+function isValidFilter(filter: string): boolean {
+  return countSubstring(filter, '"') % 2 === 0
+}
+
+function normalizeFilter(filter: string): string {
+  return filter
+    .split(' ')
+    .map(item => item.trim())
+    .filter(item => item.length > 0)
+    .map((item: string) => {
+      if (item.endsWith('*')) {
+        return item
+      }
+
+      return item + '*'
+    })
+    .join(' ')
+}
+
 interface IProps {
   documentType: string
   collectionMatcher?: Matcher
@@ -22,6 +42,8 @@ interface IProps {
 }
 
 export function Catalog({ documentType, collectionMatcher, options }: IProps) {
+  const uiOptions = React.useMemo(() => getUIOptions(options), [options])
+
   const {
     Form,
     values: {
@@ -29,9 +51,8 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     },
   } = useForm()
 
-  const uiOptions = React.useMemo(() => getUIOptions(options), [options])
-
-  const debouncedFilter = useDebounced(filter, 300)
+  const isValid = isValidFilter(filter)
+  const debouncedFilter = useDebounced(normalizeFilter(filter), 600, isValid)
 
   const {
     items,

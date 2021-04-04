@@ -157,3 +157,22 @@ export function base64url2base64(base64url: string): string {
     .replace(/-/g, '+')
     .replace(/_/g, '/')
 }
+
+export function countSubstring(str: string, substr: string): number {
+  if (!substr.length) {
+    throw new Error('substring must not be empty')
+  }
+
+  let count = 0
+
+  let pos = 0
+  while (pos < str.length) {
+    if (isSubSequence(str, pos, substr)) {
+      count += 1
+    }
+
+    pos += substr.length
+  }
+
+  return count
+}

@@ -4,7 +4,7 @@ import {
   Observable,
   promise$,
 } from '@v/reactive'
-import { Counter } from '@v/utils'
+import { Counter, noop } from '@v/utils'
 
 export function useObservable<T, K = undefined>(
   getObservable$: () => Observable<T>,
@@ -108,19 +108,23 @@ export function useDebouncedCallback(
 }
 
 
-export function useDebounced<T>(value: T, timeoutMs: number) {
+export function useDebounced<T>(value: T, timeoutMs: number, isValid = true): T {
   const [debouncedValue, setDebouncedValue] = React.useState<T>(value)
 
   React.useEffect(() => {
+    if (!isValid) {
+      return noop
+    }
+
     const timeout = window.setTimeout(() => setDebouncedValue(value), timeoutMs)
 
     return () => window.clearTimeout(timeout)
-  }, [value])
+  }, [value, isValid])
 
   return debouncedValue
 }
 
-export function useIsWindowFocused() {
+export function useIsWindowFocused(): boolean {
   const [isFocused, setIsFocused] = React.useState(() => document.hasFocus())
 
   React.useEffect(() => {

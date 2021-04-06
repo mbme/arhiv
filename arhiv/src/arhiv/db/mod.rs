@@ -28,6 +28,8 @@ impl DB {
 
         // create tables
         let conn = Connection::open(&db_file)?;
+        // turn WAL only once as it's permanent pragma
+        conn.execute_batch("PRAGMA journal_mode=WAL;")?;
         conn.execute_batch(include_str!("./schema.sql"))?;
 
         Ok(DB { db_file })
@@ -36,22 +38,12 @@ impl DB {
     pub fn get_connection(&self) -> Result<DBConnection> {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
 
-        self.init_pragmas(&conn)?;
-
         Ok(DBConnection::new(conn))
     }
 
     pub fn get_writable_connection(&self) -> Result<MutDBConnection> {
         let conn = Connection::open_with_flags(&self.db_file, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
 
-        self.init_pragmas(&conn)?;
-
         Ok(MutDBConnection::new(conn))
-    }
-
-    fn init_pragmas(&self, conn: &Connection) -> Result<()> {
-        conn.execute_batch("PRAGMA journal_mode=WAL;")?;
-
-        Ok(())
     }
 }

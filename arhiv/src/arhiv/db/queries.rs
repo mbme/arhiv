@@ -331,6 +331,12 @@ pub trait MutableQueries: Queries {
 
         Ok(())
     }
+
+    fn vacuum(&self) -> Result<()> {
+        self.get_connection().execute("VACUUM", NO_PARAMS)?;
+
+        Ok(())
+    }
 }
 
 impl FromSql for Revision {

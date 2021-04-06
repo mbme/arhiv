@@ -192,6 +192,9 @@ impl Arhiv {
             fs_tx.commit()?;
         }
 
+        // clean up the db
+        self.db.get_writable_connection()?.vacuum()?;
+
         result
     }
 

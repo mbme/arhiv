@@ -168,7 +168,14 @@ impl DataSchema {
     }
 
     pub fn extract_search_data(&self, document_type: &str, data: &str) -> Result<String> {
-        let field = self.pick_title_field(document_type)?;
+        let field = {
+            if let Ok(field) = self.pick_title_field(document_type) {
+                field
+            } else {
+                // else use whole data prop for search index
+                return Ok(data.to_string());
+            }
+        };
 
         let data: Value = serde_json::from_str(data)?;
 

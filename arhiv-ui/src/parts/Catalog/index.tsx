@@ -21,18 +21,16 @@ function isValidFilter(filter: string): boolean {
 }
 
 function normalizeFilter(filter: string): string {
-  return filter
+  if (!filter.trim().length) {
+    return ''
+  }
+
+  return 'NEAR(' + filter
     .split(' ')
     .map(item => item.trim())
     .filter(item => item.length > 0)
-    .map((item: string) => {
-      if (item.endsWith('*')) {
-        return item
-      }
-
-      return item + '*'
-    })
-    .join(' ')
+    .map(item => '"' + item + '"')
+    .join(' ')  + ')'
 }
 
 interface IProps {
@@ -69,13 +67,9 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     order: uiOptions.order,
   }), [debouncedFilter])
 
-  if (error) {
-    return (
-      <ErrorBlock error={error} />
-    )
-  }
-
-  const content = items ? (
+  const content = error ? (
+    <ErrorBlock error={error} />
+  ) : items ? (
     <CatalogEntries
       items={items}
       uiOptions={uiOptions}

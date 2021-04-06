@@ -166,4 +166,15 @@ impl DataSchema {
             })
             .ok_or(anyhow!("Failed to pick title field for {}", document_type))
     }
+
+    pub fn extract_search_data(&self, document_type: &str, data: &str) -> Result<String> {
+        let field = self.pick_title_field(document_type)?;
+
+        let data: Value = serde_json::from_str(data)?;
+
+        data[field.name]
+            .as_str()
+            .map(|value| value.to_string())
+            .ok_or(anyhow!("failed to extract field {}", field.name))
+    }
 }

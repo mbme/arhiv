@@ -77,7 +77,11 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let mut query: Vec<String> = vec!["SELECT * FROM documents_fts WHERE true".to_string()];
+        let mut query: Vec<String> = vec!["SELECT documents.*
+             FROM documents_index INNER JOIN documents
+             ON documents.rowid = documents_index.rowid
+             WHERE true"
+            .to_string()];
         let mut params = utils::Params::new();
 
         match filter.mode {
@@ -112,7 +116,7 @@ pub trait Queries {
 
                     let matcher_pattern_var = format!(":matcher_pattern_{}", i);
 
-                    query.push(format!("AND documents_fts MATCH {}", matcher_pattern_var,));
+                    query.push(format!("AND documents_index MATCH {}", matcher_pattern_var,));
                     params.insert(&matcher_pattern_var, Rc::new(pattern));
                 }
                 Matcher::Type { document_type } => {

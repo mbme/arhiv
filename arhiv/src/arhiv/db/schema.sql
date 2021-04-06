@@ -34,37 +34,31 @@ CREATE TABLE documents_history (
 
 -- FULL TEXT SEARCH
 
-CREATE VIRTUAL TABLE documents_fts USING fts5(
-  id UNINDEXED,
-  rev UNINDEXED,
-  type UNINDEXED,
-  created_at UNINDEXED,
-  updated_at UNINDEXED,
-  archived UNINDEXED,
-  refs UNINDEXED,
-  data,
-  content='documents',
-  content_rowid='rowid'
+CREATE VIRTUAL TABLE documents_index USING fts5(
+  search_data,
+  content="",
+  tokenize="trigram"
 );
 
-CREATE TRIGGER documents_ai AFTER INSERT ON documents
+CREATE TRIGGER documents_after_insert AFTER INSERT ON documents
     BEGIN
-        INSERT INTO documents_fts (rowid, data)
-        VALUES (new.rowid, new.data);
+        INSERT INTO documents_index (rowid, search_data)
+        VALUES (new.rowid, extract_search_data(new.type, new.data));
     END;
 
-CREATE TRIGGER documents_ad AFTER DELETE ON documents
+CREATE TRIGGER documents_after_delete AFTER DELETE ON documents
     BEGIN
-        INSERT INTO documents_fts (documents_fts, rowid, data)
-        VALUES ('delete', old.rowid, old.data);
+        INSERT INTO documents_index (documents_index, rowid, search_data)
+        VALUES ('delete', old.rowid, extract_search_data(old.type, old.data));
     END;
 
-CREATE TRIGGER documents_au AFTER UPDATE ON documents
+CREATE TRIGGER documents_after_update AFTER UPDATE ON documents
     BEGIN
-        INSERT INTO documents_fts (documents_fts, rowid, data)
-        VALUES ('delete', old.rowid, old.data);
-        INSERT INTO documents_fts (rowid, data)
-        VALUES (new.rowid, new.data);
+        INSERT INTO documents_index (documents_index, rowid, search_data)
+        VALUES ('delete', old.rowid, extract_search_data(old.type, old.data));
+
+        INSERT INTO documents_index (rowid, search_data)
+        VALUES (new.rowid, extract_search_data(new.type, new.data));
     END;
 
 ------------------------

@@ -61,6 +61,7 @@ type PassThroughProps =
 
   | 'border'
   | 'borderRadius'
+  | 'borderColor'
   | 'borderTop'
   | 'borderRight'
   | 'borderBottom'

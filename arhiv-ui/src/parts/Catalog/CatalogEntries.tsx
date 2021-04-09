@@ -26,13 +26,21 @@ interface IProps {
 
 export function CatalogEntries({ items, uiOptions }: IProps) {
   const renderItem = (item: IDocumentExt) => (
-    <CatalogEntry
-      key={item.document.id}
-      document={item.document}
-      preview={item.preview}
-      showModificationDate={uiOptions.showEntryModificationDate}
-      showDataFields={uiOptions.showEntryDataFields}
-    />
+    <React.Fragment key={item.document.id}>
+      <CatalogEntry
+        document={item.document}
+        preview={item.preview}
+        showModificationDate={uiOptions.showEntryModificationDate}
+        showDataFields={uiOptions.showEntryDataFields}
+      />
+
+      <Box
+        as="hr"
+        my="medium"
+        mx="medium"
+        borderColor="var(--color-link)"
+      />
+    </React.Fragment>
   )
 
   if (uiOptions.groupByField === undefined) {
@@ -47,7 +55,11 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
 
   const entries = partitionBy(createRule(fieldName), items)
     .map(group => (
-      <Box mb="large" key={group[0].document.data[fieldName]}>
+      <Box
+        key={group[0].document.data[fieldName]}
+        mt="medium"
+        mb="large"
+      >
         <Heading variant="1">
           {group[0].document.data[fieldName]} ({group.length})
         </Heading>

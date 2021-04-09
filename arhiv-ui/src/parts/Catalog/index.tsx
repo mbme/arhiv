@@ -5,6 +5,7 @@ import {
   Input,
   Box,
   Button,
+  Row,
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
 import { countSubstring } from '@v/utils'
@@ -81,7 +82,7 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
   return (
     <>
       <Box
-        pb="small"
+        pb="large"
         width="100%"
       >
         <Form>
@@ -101,12 +102,16 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
         {content}
 
         {hasMore && (
-          <Button
-            variant="link"
-            onClick={loadMore}
+          <Row
+            py="medium"
           >
-            Load more
-          </Button>
+            <Button
+              variant="link"
+              onClick={loadMore}
+            >
+              Load more
+            </Button>
+          </Row>
         )}
       </Box>
     </>

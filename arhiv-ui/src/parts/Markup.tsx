@@ -9,6 +9,7 @@ import { API } from '../api'
 const $article: StyleArg = {
   hyphens: 'auto',
   textAlign: 'justify',
+  overflowWrap: 'break-word',
 }
 
 interface IProps {

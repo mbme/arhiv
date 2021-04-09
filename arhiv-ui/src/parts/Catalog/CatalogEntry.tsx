@@ -26,7 +26,7 @@ const $preview: StyleArg = {
 
   maxHeight: '10rem', // for images inside preview
 
-  mb: 'medium',
+  mb: 'fine',
 }
 
 interface IProps {

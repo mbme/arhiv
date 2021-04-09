@@ -43,6 +43,7 @@ const $content: StyleArg = {
   pr: 'medium',
   height: '100%',
   bgColor: 'var(--color-bg0)',
+  overflow: 'hidden',
 }
 
 const $actions: StyleArg = {

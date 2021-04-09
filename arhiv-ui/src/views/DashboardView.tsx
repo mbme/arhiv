@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Box, Link, StyleArg } from '@v/web-platform'
+import { Column, Link, StyleArg } from '@v/web-platform'
 import { FrameTitle } from '../parts'
 import { DataManagerContext } from '../data-manager'
 
@@ -10,18 +10,8 @@ const $link: StyleArg = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-}
-
-const $container: StyleArg = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(16rem, 1fr))',
-  gridTemplateRows: 'repeat(auto-fill, minmax(16rem, 1fr))',
-  gridGap: '0.8rem',
-
-  maxHeight: '100%',
-
-  flex: '1 1 auto',
-  pr: 'medium',
+  minWidth: '16rem',
+  mb: 'medium',
 }
 
 export function DashboardView() {
@@ -44,9 +34,9 @@ export function DashboardView() {
         Dashboard
       </FrameTitle>
 
-      <Box $style={$container}>
+      <Column>
         {links}
-      </Box>
+      </Column>
     </>
   )
 }

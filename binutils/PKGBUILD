@@ -16,7 +16,7 @@ pkgver() {
 
 build() {
   cd ..
-  RUSTFLAGS="-C target-cpu=native" cargo build --locked --release --target-dir=target
+  cargo build --locked --release --target-dir=target
 }
 
 check() {

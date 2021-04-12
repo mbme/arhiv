@@ -29,12 +29,20 @@ async fn main() {
         .subcommand(SubCommand::with_name("config").about("Print config"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
         .subcommand(
-            SubCommand::with_name("ui").about("Show arhiv UI").arg(
-                Arg::with_name("open")
-                    .long("open")
-                    .takes_value(true)
-                    .help("Open app using provided browser or $BROWSER env variable"),
-            ),
+            SubCommand::with_name("ui")
+                .about("Show arhiv UI")
+                .arg(
+                    Arg::with_name("open")
+                        .long("open")
+                        .takes_value(true)
+                        .help("Open app using provided browser or $BROWSER env variable"),
+                )
+                .arg(
+                    Arg::with_name("port")
+                        .long("port")
+                        .takes_value(true)
+                        .help("Listen on specific port"),
+                ),
         )
         .subcommand(SubCommand::with_name("server").about("Run prime server"))
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -93,7 +101,11 @@ async fn main() {
                 }
             };
 
-            let (join_handle, addr) = start_ui_server().await;
+            let port: Option<u16> = matches
+                .value_of("port")
+                .map(|value| value.parse().expect("port must be valid u16"));
+
+            let (join_handle, addr) = start_ui_server(port).await;
 
             Command::new(&browser)
                 .arg(format!("http://{}", addr))

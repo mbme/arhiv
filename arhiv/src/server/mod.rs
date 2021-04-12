@@ -265,7 +265,7 @@ async fn post_changeset_handler(
     };
 }
 
-pub async fn start_ui_server() -> (JoinHandle<()>, SocketAddr) {
+pub async fn start_ui_server(port: Option<u16>) -> (JoinHandle<()>, SocketAddr) {
     let arhiv = Arc::new(Arhiv::must_open());
 
     // POST /rpc RpcMessage -> RpcMessageResponse
@@ -305,11 +305,13 @@ pub async fn start_ui_server() -> (JoinHandle<()>, SocketAddr) {
     let routes = rpc.or(attachment_data).or(index_html).or(static_dir);
 
     // run server
-    let (addr, server) =
-        warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], 0), async {
+    let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown(
+        ([127, 0, 0, 1], port.unwrap_or(0)),
+        async {
             signal::ctrl_c().await.expect("failed to listen for event");
             println!("\nGot Ctrl-C, stopping the server");
-        });
+        },
+    );
 
     let join_handle = tokio::task::spawn(server);
     info!("RPC server listening on http://{}", addr);

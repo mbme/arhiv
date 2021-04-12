@@ -4,6 +4,7 @@ version = "0.4.0"
 authors = ["mbme"]
 edition = "2018"
 default-run = "arhiv"
+publish = false
 
 [lib]
 doctest = false

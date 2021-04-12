@@ -7,3 +7,5 @@ arhiv.json
 *.tsbuildinfo
 
 *.pkg.tar.zst
+
+PKGBUILD

@@ -5,6 +5,7 @@
 * `watchexec` to run commands in response to file modifications
 * `yarn` as package manager https://yarnpkg.com/
 * `nodejs`
+* `cargo-release` for release management
 
 ## Rust projects
 * [app-shell](app-shell) - for building desktop UI apps using web technologies

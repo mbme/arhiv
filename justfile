@@ -41,9 +41,7 @@ web-platform:
   cd ts-web-platform; yarn start
 
 prod-build-install:
-  cd {{invocation_directory()}}; makepkg -efi; rm -rf pkg
+  cd {{invocation_directory()}}; cp PKGBUILD.template PKGBUILD; makepkg -efi; rm -rf pkg; rm *.pkg.tar.zst; rm PKGBUILD
 
-prod-install-all:
-  cd binutils; just prod-build-install
-  cd arhiv; just prod-build-install
-  cd arhiv-ui; just prod-build-install
+bump-version:
+  cd {{invocation_directory()}}; cargo release --no-dev-version minor

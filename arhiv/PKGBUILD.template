@@ -2,7 +2,7 @@
 
 pkgname=arhiv
 pkgrel=1
-pkgver="0.4.0"
+pkgver="0.0.0"
 pkgdesc='Personal database'
 arch=(x86_64)
 license=(MIT)
@@ -27,10 +27,10 @@ check() {
 package() {
   cd ..
   find target/release \
-    -maxdepth 1 \
-    -executable \
-    -type f \
-    -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
+       -maxdepth 1 \
+       -executable \
+       -type f \
+       -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
 
   install -Dm 644 "v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 }

@@ -2,7 +2,7 @@
 
 pkgname=mb-binutils
 pkgrel=1
-pkgver="0.6.0"
+pkgver="0.0.0"
 pkgdesc='Helpful utils for querying and managing volume, backlight etc.'
 arch=(x86_64)
 license=(MIT)
@@ -27,8 +27,8 @@ check() {
 package() {
   cd ..
   find target/release \
-    -maxdepth 1 \
-    -executable \
-    -type f \
-    -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
+       -maxdepth 1 \
+       -executable \
+       -type f \
+       -exec install -Dm 755 "{}" -t "$pkgdir"/usr/bin \;
 }

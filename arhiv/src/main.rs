@@ -35,7 +35,12 @@ async fn main() {
                     Arg::with_name("open")
                         .long("open")
                         .takes_value(true)
-                        .help("Open app using provided browser or $BROWSER env variable"),
+                        .value_name("BROWSER")
+                        .min_values(0)
+                        .env("BROWSER")
+                        .help(
+                            "Open app using provided browser or fall back to $BROWSER env variable",
+                        ),
                 )
                 .arg(
                     Arg::with_name("port")
@@ -103,26 +108,24 @@ async fn main() {
         ("ui", Some(matches)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));
 
-            let browser = {
-                if let Some(browser) = matches.value_of("open") {
-                    browser.to_string()
-                } else {
-                    env::var("BROWSER").expect("failed to read BROWSER env variable")
-                }
-            };
-
             let port: Option<u16> = matches
                 .value_of("port")
                 .map(|value| value.parse().expect("port must be valid u16"));
 
             let (join_handle, addr) = start_ui_server(port).await;
 
-            Command::new(&browser)
-                .arg(format!("http://{}", addr))
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn()
-                .expect(&format!("failed to run browser {}", browser));
+            if matches.occurrences_of("open") > 0 {
+                let browser = matches
+                    .value_of("open")
+                    .expect("either browser must be specified or $BROWSER env var must be set");
+
+                Command::new(&browser)
+                    .arg(format!("http://{}", addr))
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .spawn()
+                    .expect(&format!("failed to run browser {}", browser));
+            }
 
             join_handle.await.expect("must join");
         }

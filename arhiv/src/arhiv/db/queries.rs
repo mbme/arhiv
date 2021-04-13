@@ -258,6 +258,28 @@ pub trait Queries {
             Ok(None)
         }
     }
+
+    fn is_blob_in_use(&self, hash: &Hash) -> Result<bool> {
+        let result = self
+            .get_connection()
+            .prepare_cached(
+                "SELECT true FROM documents
+             WHERE type = ?1 AND json_extract(data, ?2) = ?3
+             LIMIT 1",
+            )?
+            .query_row(
+                params![
+                    ATTACHMENT_TYPE.to_sql()?,
+                    ATTACHMENT_HASH_SELECTOR.to_sql()?,
+                    hash.to_string(),
+                ],
+                |_row| Ok(true),
+            )
+            .optional()?
+            .unwrap_or(false);
+
+        Ok(result)
+    }
 }
 
 pub trait MutableQueries: Queries {

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::{Document, Hash};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
+pub const ATTACHMENT_HASH_SELECTOR: &'static str = "$.hash";
 
 pub struct Attachment(Document);
 

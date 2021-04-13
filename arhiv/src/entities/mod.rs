@@ -6,7 +6,7 @@ mod hash;
 mod id;
 mod revision;
 
-pub use attachment::{Attachment, ATTACHMENT_TYPE};
+pub use attachment::{Attachment, ATTACHMENT_HASH_SELECTOR, ATTACHMENT_TYPE};
 pub use changeset::Changeset;
 pub use changeset_response::ChangesetResponse;
 pub use document::{Document, Timestamp};

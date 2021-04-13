@@ -1,7 +1,9 @@
 use anyhow::*;
-use rs_utils::{ensure_dir_exists, ensure_file_exists};
-use std::fs;
+use rs_utils::{ensure_dir_exists, ensure_file_exists, log};
+use std::fs::{self, ReadDir};
 use std::path::Path;
+
+use crate::entities::Hash;
 
 pub struct PathManager {
     root_dir: String,
@@ -50,5 +52,39 @@ impl PathManager {
         fs::create_dir(&self.data_dir)?;
 
         Ok(())
+    }
+
+    pub fn iter_blobs(&self) -> Result<DataBlob> {
+        let read_dir = fs::read_dir(&self.data_dir)?;
+
+        Ok(DataBlob(read_dir))
+    }
+}
+
+pub struct DataBlob(ReadDir);
+
+impl Iterator for DataBlob {
+    type Item = Result<Hash>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let entry = match self.0.next() {
+                Some(Ok(entry)) => entry,
+                Some(Err(err)) => return Some(Err(err).context("Failed to read data entry")),
+                None => return None,
+            };
+
+            let entry_path = entry.path();
+            if entry_path.is_file() {
+                let file_name = entry_path
+                    .file_name()
+                    .ok_or(anyhow!("Failed to read file name"))
+                    .map(|value| Hash::from_string(value.to_string_lossy().to_string()));
+
+                return Some(file_name);
+            } else {
+                log::warn!("Blob {} isn't a file", entry_path.to_string_lossy());
+            }
+        }
     }
 }

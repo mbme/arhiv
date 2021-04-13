@@ -14,6 +14,7 @@ use self::network_service::NetworkService;
 use self::path_manager::PathManager;
 use self::status::Status;
 
+mod backup;
 mod blobs;
 mod db;
 mod network_service;
@@ -25,6 +26,7 @@ pub struct Arhiv {
     pub config: Config,
     db: DB,
     blob_manager: BlobManager,
+    path_manager: PathManager,
 }
 
 impl Arhiv {
@@ -78,6 +80,7 @@ impl Arhiv {
             config,
             db,
             blob_manager,
+            path_manager,
         })
     }
 
@@ -120,6 +123,7 @@ impl Arhiv {
             config,
             db,
             blob_manager,
+            path_manager,
         })
     }
 

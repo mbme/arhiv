@@ -45,6 +45,16 @@ async fn main() {
                 ),
         )
         .subcommand(SubCommand::with_name("server").about("Run prime server"))
+        .subcommand(
+            SubCommand::with_name("backup")
+                .about("Backup arhiv data")
+                .arg(
+                    Arg::with_name("backup_dir")
+                        .help("Directory to save backup")
+                        .index(1)
+                        .required(true),
+                ),
+        )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -134,6 +144,17 @@ async fn main() {
             let (join_handle, _, _) = start_prime_server(arhiv);
 
             join_handle.await.expect("must join");
+        }
+        ("backup", Some(matches)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
+            let arhiv = Arc::new(Arhiv::must_open());
+
+            let backup_dir = matches
+                .value_of("backup_dir")
+                .expect("backup_dir must be present");
+
+            arhiv.backup(backup_dir).expect("must be able to backup");
         }
         _ => unreachable!(),
     }

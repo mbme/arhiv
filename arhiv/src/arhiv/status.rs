@@ -23,7 +23,8 @@ impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "Arhiv {}/{} (rev {}) on {}",
+            "Arhiv {} {}/{} (rev {}) in {}",
+            env!("CARGO_PKG_VERSION"),
             self.db_status.arhiv_id,
             self.db_status.get_prime_status(),
             self.db_status.db_rev,

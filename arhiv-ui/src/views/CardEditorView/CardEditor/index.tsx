@@ -6,16 +6,15 @@ import {
 import {
   copyTextToClipboard,
 } from '@v/web-utils'
-import { DeleteDocumentButton } from './DeleteDocumentButton'
 import { API, createRef, IDocument } from '../../../api'
-import { CardData, useActions } from '../../../parts'
+import { CardData, ConfirmationButton, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
 
 interface IProps {
   document: IDocument
   onCancel: Procedure
   onSave: Procedure
-  onDelete?: Procedure
+  onArchive?: Procedure
 }
 
 export function CardEditor(props: IProps) {
@@ -23,7 +22,7 @@ export function CardEditor(props: IProps) {
     document,
     onCancel,
     onSave,
-    onDelete,
+    onArchive,
   } = props
 
   const [preview, showPreview] = React.useState(false)
@@ -40,7 +39,7 @@ export function CardEditor(props: IProps) {
     onSave()
   }
 
-  const deleteDocument = async () => {
+  const archiveDocument = async () => {
     await API.put({
       document: {
         ...document,
@@ -48,7 +47,7 @@ export function CardEditor(props: IProps) {
       },
     })
 
-    onDelete!()
+    onArchive!()
   }
 
   useActions(() => {
@@ -102,7 +101,14 @@ export function CardEditor(props: IProps) {
         />
       )}
 
-      {onDelete && !preview && <DeleteDocumentButton onConfirmed={deleteDocument} />}
+      {onArchive && !preview && (
+        <ConfirmationButton
+          name="Archive Document"
+          confirmation="Archive"
+          prompt={<>Are you sure you want to <b>archive this document?</b></>}
+          onConfirmed={archiveDocument}
+        />
+      )}
     </>
   )
 }

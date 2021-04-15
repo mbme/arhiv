@@ -10,3 +10,5 @@ export { CardLoader } from './CardLoader'
 export { Catalog, CatalogOptionsOverrides } from './Catalog'
 
 export { FrameTitle } from './FrameTitle'
+
+export { ConfirmationButton } from './ConfirmationButton'

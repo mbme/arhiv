@@ -2,19 +2,22 @@ import * as React from 'react'
 import {
   ConfirmationDialog,
 } from '@v/web-platform'
-import { useActions } from '../../../parts'
+import { useActions } from '.'
 
 interface IProps {
+  name: string
+  prompt: React.ReactNode
+  confirmation: string
   onConfirmed(): void
 }
 
-export function DeleteDocumentButton({ onConfirmed }: IProps) {
+export function ConfirmationButton({ name, prompt, confirmation, onConfirmed }: IProps) {
   const [isModalVisible, showModal] = React.useState(false)
 
   useActions(() => [
     {
       onClick: () => showModal(true),
-      children: 'Delete Document',
+      children: name,
     },
   ], [])
 
@@ -24,11 +27,11 @@ export function DeleteDocumentButton({ onConfirmed }: IProps) {
 
   return (
     <ConfirmationDialog
-      confirmation="Delete"
+      confirmation={confirmation}
       onConfirmed={onConfirmed}
       onCancel={() => showModal(false)}
     >
-      Are you sure you want to <b>delete this document?</b>
+      {prompt}
     </ConfirmationDialog>
   )
 }

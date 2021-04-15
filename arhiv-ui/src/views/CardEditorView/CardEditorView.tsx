@@ -13,7 +13,7 @@ export function CardEditorView({ id }: IProps) {
   const router = RouterContext.use()
 
   const onCancel = () => router.replace({ path: `/documents/${id}` })
-  const onDelete = () => router.push({ path: '/documents' })
+  const onArchive = () => router.push({ path: '/documents' })
 
   return (
     <CardLoader
@@ -29,7 +29,7 @@ export function CardEditorView({ id }: IProps) {
             document={document}
             onCancel={onCancel}
             onSave={() => router.replace({ path: `/documents/${document.id}` })}
-            onDelete={onDelete}
+            onArchive={onArchive}
           />
         </>
       )}

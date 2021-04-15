@@ -40,6 +40,7 @@ export const Textarea = React.forwardRef(
       $styles = [],
     } = props
 
+    const containerRef = React.useRef<HTMLDivElement>(null)
     const ref = React.useRef<HTMLTextAreaElement>(null)
 
     const {
@@ -48,8 +49,13 @@ export const Textarea = React.forwardRef(
     } = useFormControl(name)
 
     const updateHeight = () => {
+      // preserve height between updates
+      containerRef.current!.style.height = `${containerRef.current!.scrollHeight}px`
+
       ref.current!.style.height = 'auto'
       ref.current!.style.height = `${ref.current!.scrollHeight}px`
+
+      containerRef.current!.style.height = 'auto'
     }
 
     React.useEffect(() => {
@@ -67,7 +73,7 @@ export const Textarea = React.forwardRef(
     const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value)
 
     return (
-      <Box>
+      <Box ref={containerRef}>
         <Label>{label}</Label>
         <Spacer height="small" />
 

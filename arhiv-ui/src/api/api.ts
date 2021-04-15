@@ -18,6 +18,8 @@ interface IRPC {
 
   create(args: ICreateDocumentArgs): Promise<IDocument>
 
+  delete(id: string): Promise<void>
+
   render_markup(markup: string): Promise<string>
 
   get_status(): Promise<string>

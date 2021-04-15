@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, time::Instant};
 
 use super::dto::*;
 use super::utils;
@@ -343,19 +343,39 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
+    fn delete_document_history(&self, id: &Id) -> Result<()> {
+        let rows_count = self
+            .get_connection()
+            .execute("DELETE FROM documents_history WHERE id = ?", vec![id])?;
+
+        debug!("deleted {} rows from documents_history", rows_count);
+
+        Ok(())
+    }
+
     fn delete_document(&self, id: &Id) -> Result<()> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("DELETE FROM documents WHERE id = ?")?;
 
-        stmt.execute(params![id])
+        let rows_count = stmt
+            .execute(params![id])
             .context(anyhow!("Failed to delete document {}", id))?;
+
+        debug!("deleted {} rows from documents", rows_count);
 
         Ok(())
     }
 
     fn vacuum(&self) -> Result<()> {
+        let now = Instant::now();
+
         self.get_connection().execute("VACUUM", NO_PARAMS)?;
+
+        debug!(
+            "completed VACUUM in {} seconds",
+            now.elapsed().as_secs_f32()
+        );
 
         Ok(())
     }

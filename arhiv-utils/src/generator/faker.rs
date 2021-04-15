@@ -39,7 +39,7 @@ impl<'a> Faker<'a> {
         let mut attachment_ids: Vec<Id> = vec![];
         for file_path in list_attachments() {
             let document = arhiv.add_attachment(&file_path, true)?;
-            attachment_ids.push(document.id);
+            attachment_ids.push(document.id.clone());
         }
 
         let generator = TextGenerator::new(attachment_ids);

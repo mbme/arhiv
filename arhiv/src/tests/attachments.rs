@@ -11,6 +11,9 @@ fn test_attachments() -> Result<()> {
     let src = &project_relpath("../resources/k2.jpg");
 
     let attachment = arhiv.add_attachment(src, true)?;
+    let hash = attachment.get_hash();
+
+    assert_eq!(arhiv.get_attachment_data(hash.clone()).exists()?, true);
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
@@ -28,6 +31,10 @@ fn test_attachments() -> Result<()> {
         ..Filter::default()
     })?;
     assert_eq!(page.items.len(), 1);
+
+    // delete
+    arhiv.delete_document(&attachment.id)?;
+    assert_eq!(arhiv.get_attachment_data(hash.clone()).exists()?, false);
 
     Ok(())
 }

@@ -46,6 +46,22 @@ fn test_crud() -> Result<()> {
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
     }
 
+    // DELETE
+    {
+        let document = new_document(json!({ "test": "test" }));
+        arhiv.stage_document(document.clone())?;
+
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
+
+        arhiv.delete_document(&document.id)?;
+
+        assert_eq!(
+            arhiv.get_document(&document.id)?.unwrap().is_deleted(),
+            true
+        );
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
+    }
+
     Ok(())
 }
 

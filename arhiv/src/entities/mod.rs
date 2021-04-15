@@ -9,7 +9,7 @@ mod revision;
 pub use attachment::{Attachment, ATTACHMENT_HASH_SELECTOR, ATTACHMENT_TYPE};
 pub use changeset::Changeset;
 pub use changeset_response::ChangesetResponse;
-pub use document::{Document, Timestamp};
+pub use document::{Document, Timestamp, DELETED_TYPE};
 pub use hash::Hash;
 pub use id::Id;
 pub use revision::Revision;

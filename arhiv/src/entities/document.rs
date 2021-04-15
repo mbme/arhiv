@@ -6,6 +6,8 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::fmt;
 
+pub const DELETED_TYPE: &'static str = "deleted";
+
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,6 +41,19 @@ impl Document {
 
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
+    }
+
+    pub fn delete(&mut self) {
+        self.document_type = DELETED_TYPE.to_string();
+        self.rev = Revision::STAGING;
+        self.refs = HashSet::new();
+        self.archived = true;
+        self.data = serde_json::json!({});
+        self.updated_at = Utc::now();
+    }
+
+    pub fn is_deleted(&self) -> bool {
+        self.document_type == DELETED_TYPE
     }
 }
 

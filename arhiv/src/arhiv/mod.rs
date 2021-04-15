@@ -171,9 +171,15 @@ impl Arhiv {
     pub fn stage_document(&self, updated_document: Document) -> Result<()> {
         debug!("Staging document {}", &updated_document.id);
 
-        if Attachment::is_attachment(&updated_document) {
-            bail!("attachments must not be modified manually");
-        }
+        ensure!(
+            !Attachment::is_attachment(&updated_document),
+            "attachments must not be modified manually"
+        );
+
+        ensure!(
+            !updated_document.is_deleted(),
+            "deleted documents must not be updated"
+        );
 
         let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
@@ -223,12 +229,51 @@ impl Arhiv {
 
         conn.commit()?;
 
-        debug!("staged document {}", &document);
+        info!("saved document {}", &document.id);
 
         Ok(())
     }
 
-    pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Document> {
+    pub fn delete_document(&self, id: &Id) -> Result<()> {
+        let mut document = self
+            .get_document(id)?
+            .ok_or(anyhow!("can't find document {}", &id))?;
+
+        ensure!(
+            !document.is_deleted(),
+            "deleted documents must not be updated"
+        );
+
+        let mut conn = self.db.get_writable_connection()?;
+        let conn = conn.get_tx()?;
+
+        let mut fs_tx = FsTransaction::new();
+
+        // remove attachment data if needed
+        if Attachment::is_attachment(&document) {
+            let attachment = Attachment::from(document.clone())?;
+            let hash = attachment.get_hash();
+
+            self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
+            debug!(
+                "removing attachment data for deleted document {}",
+                &document.id
+            );
+        }
+
+        document.delete();
+
+        conn.put_document(&document)?;
+
+        fs_tx.commit()?;
+        conn.commit()?;
+
+        info!("deleted document {}", &document.id);
+
+        Ok(())
+    }
+
+    pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Attachment> {
         debug!("Staging attachment {}", &file_path);
 
         let mut conn = self.db.get_writable_connection()?;
@@ -249,10 +294,10 @@ impl Arhiv {
 
         info!("Created attachment {} from {}", &attachment.id, file_path);
 
-        Ok(attachment.into())
+        Ok(attachment)
     }
 
-    pub fn update_attachment_data(&self, _id: &Id, _file_path: &str) -> Result<Document> {
+    pub fn update_attachment_data(&self, _id: &Id, _file_path: &str) -> Result<Attachment> {
         unimplemented!();
     }
 

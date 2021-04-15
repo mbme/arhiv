@@ -95,6 +95,14 @@ impl ArhivCommander {
             return Ok(serde_json::to_value(document)?);
         }
 
+        if action == "delete" {
+            let id: Id = serde_json::from_value(params)?;
+
+            self.arhiv.delete_document(&id)?;
+
+            return Ok(Value::Null);
+        }
+
         if action == "get_status" {
             let status = self.arhiv.get_status()?;
 
@@ -108,7 +116,7 @@ impl ArhivCommander {
             let mut attachment_ids: Vec<Id> = vec![];
             for file_path in files {
                 let document = self.arhiv.add_attachment(&file_path, false)?;
-                attachment_ids.push(document.id);
+                attachment_ids.push(document.id.clone());
             }
 
             return Ok(serde_json::to_value(attachment_ids)?);

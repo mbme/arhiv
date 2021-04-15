@@ -50,8 +50,33 @@ impl Arhiv {
             db_status.db_rev, new_rev
         );
 
+        let mut fs_tx = FsTransaction::new();
+
         for mut document in changeset.documents {
             document.rev = new_rev;
+
+            // handle deleted documents
+            if document.is_deleted() {
+                // remove attachment data if needed
+                match self.get_document(&document.id)? {
+                    Some(ref original_document) if Attachment::is_attachment(original_document) => {
+                        let attachment = Attachment::from(document.clone())?;
+                        let hash = attachment.get_hash();
+
+                        self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
+                        debug!(
+                            "removing attachment data for deleted document {}",
+                            &document.id
+                        );
+                    }
+                    _ => {}
+                };
+
+                tx.put_document(&document)?;
+                tx.delete_document_history(&document.id)?;
+
+                continue;
+            }
 
             tx.put_document(&document)?;
             tx.put_document_history(&document, &changeset.base_rev)?;
@@ -76,6 +101,7 @@ impl Arhiv {
             ..db_status
         })?;
 
+        fs_tx.commit()?;
         tx.commit()?;
         debug!("successfully applied a changeset");
 

@@ -1,5 +1,7 @@
 mod data_description;
 
+use crate::entities::ATTACHMENT_TYPE;
+use crate::entities::DELETED_TYPE;
 pub use data_description::*;
 use lazy_static::*;
 
@@ -8,7 +10,12 @@ lazy_static! {
         version: 1,
         modules: vec![
             DataDescription {
-                document_type: "attachment",
+                document_type: DELETED_TYPE,
+                collection_of: None,
+                fields: vec![],
+            },
+            DataDescription {
+                document_type: ATTACHMENT_TYPE,
                 collection_of: None,
                 fields: vec![
                     Field {

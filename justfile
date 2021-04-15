@@ -31,8 +31,11 @@ test-ts *PARAMS:
 
 validate-ts: check-ts lint-ts test-ts
 
+ui-build-web:
+  cd arhiv-ui; yarn build
+
 ui-start-web:
-  cd arhiv-ui; watchexec --exts ts,tsx yarn build
+  watchexec --exts ts,tsx just ui-build-web
 
 ui-start-shell:
   just arhiv ui --open=chromium

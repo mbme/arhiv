@@ -8,28 +8,37 @@ use rs_utils::log::debug;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::NO_PARAMS;
 use rusqlite::{params, Connection, OptionalExtension};
-
-const DB_STATUS_KEY: &'static str = "status";
+use serde::{de::DeserializeOwned, Serialize};
 
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
-    fn get_db_status(&self) -> Result<DbStatus> {
-        self.get_connection()
+    fn get_setting<T: Serialize + DeserializeOwned>(&self, setting: DBSetting<T>) -> Result<T> {
+        let value: String = self
+            .get_connection()
             .query_row(
                 "SELECT value FROM settings WHERE key = ?1",
-                params![DB_STATUS_KEY],
-                |row| {
-                    let value: String = row.get_unwrap(0);
-
-                    Ok(serde_json::from_str(&value).expect("must parse DbStatus"))
-                },
+                vec![setting.0],
+                |row| row.get(0),
             )
-            .context("failed to read DbStatus")
+            .context(anyhow!("failed to read setting {}", setting.0))?;
+
+        serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
+    }
+
+    fn get_db_status(&self) -> Result<DbStatus> {
+        Ok(DbStatus {
+            arhiv_id: self.get_setting(SETTING_ARHIV_ID)?,
+            is_prime: self.get_setting(SETTING_IS_PRIME)?,
+            schema_version: self.get_setting(SETTING_SCHEMA_VERSION)?,
+            db_version: self.get_setting(SETTING_DB_VERSION)?,
+            db_rev: self.get_setting(SETTING_DB_REV)?,
+            last_sync_time: self.get_setting(SETTING_LAST_SYNC_TIME)?,
+        })
     }
 
     fn count_documents(&self) -> Result<DocumentsCount> {
-        let last_sync_time = self.get_db_status()?.last_sync_time;
+        let last_sync_time = self.get_setting(SETTING_LAST_SYNC_TIME)?;
 
         self.get_connection()
             .query_row(
@@ -285,13 +294,19 @@ pub trait Queries {
 }
 
 pub trait MutableQueries: Queries {
-    fn put_db_status(&self, status: DbStatus) -> Result<()> {
+    fn set_setting<T: Serialize + DeserializeOwned>(
+        &self,
+        setting: DBSetting<T>,
+        value: T,
+    ) -> Result<()> {
+        let value = serde_json::to_string(&value)?;
+
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                params![DB_STATUS_KEY, serde_json::to_string(&status)?],
+                params![setting.0, value],
             )
-            .context("failed to save DbStatus")?;
+            .context(anyhow!("failed to save setting {}", setting.0))?;
 
         Ok(())
     }

@@ -104,14 +104,12 @@ impl Arhiv {
         let tx = conn.get_tx()?;
 
         // initial settings
-        tx.put_db_status(DbStatus {
-            arhiv_id: config.get_arhiv_id().to_string(),
-            is_prime: config.is_prime(),
-            db_rev: Revision::STAGING,
-            schema_version: SCHEMA.version,
-            db_version: DB::VERSION,
-            last_sync_time: chrono::MIN_DATETIME,
-        })?;
+        tx.set_setting(SETTING_ARHIV_ID, config.get_arhiv_id().to_string())?;
+        tx.set_setting(SETTING_IS_PRIME, config.is_prime())?;
+        tx.set_setting(SETTING_DB_REV, Revision::STAGING)?;
+        tx.set_setting(SETTING_SCHEMA_VERSION, SCHEMA.version)?;
+        tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
+        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
 
         tx.commit()?;
 

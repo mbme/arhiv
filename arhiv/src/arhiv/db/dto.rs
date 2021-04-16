@@ -1,6 +1,15 @@
 use crate::entities::*;
-use serde::{Deserialize, Serialize};
-use std::default::Default;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{default::Default, marker::PhantomData};
+
+pub struct DBSetting<T: Serialize + DeserializeOwned>(pub &'static str, PhantomData<T>);
+
+pub const SETTING_ARHIV_ID: DBSetting<String> = DBSetting("arhiv_id", PhantomData);
+pub const SETTING_IS_PRIME: DBSetting<bool> = DBSetting("is_prime", PhantomData);
+pub const SETTING_SCHEMA_VERSION: DBSetting<u8> = DBSetting("schema_version", PhantomData);
+pub const SETTING_DB_VERSION: DBSetting<u8> = DBSetting("db_version", PhantomData);
+pub const SETTING_DB_REV: DBSetting<Revision> = DBSetting("db_rev", PhantomData);
+pub const SETTING_LAST_SYNC_TIME: DBSetting<Timestamp> = DBSetting("last_sync_time", PhantomData);
 
 #[derive(Serialize, Deserialize)]
 pub struct DbStatus {

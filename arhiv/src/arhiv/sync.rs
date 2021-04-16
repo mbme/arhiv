@@ -95,11 +95,8 @@ impl Arhiv {
             }
         }
 
-        tx.put_db_status(DbStatus {
-            db_rev: new_rev,
-            last_sync_time: chrono::Utc::now(),
-            ..db_status
-        })?;
+        tx.set_setting(SETTING_DB_REV, new_rev)?;
+        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
 
         fs_tx.commit()?;
         tx.commit()?;
@@ -117,11 +114,12 @@ impl Arhiv {
         let next_rev = base_rev.inc();
         let documents = conn.get_documents_since(&next_rev)?;
 
-        let db_status = conn.get_db_status()?;
+        let arhiv_id = conn.get_setting(SETTING_ARHIV_ID)?;
+        let latest_rev = conn.get_setting(SETTING_DB_REV)?;
 
         Ok(ChangesetResponse {
-            arhiv_id: db_status.arhiv_id,
-            latest_rev: db_status.db_rev,
+            arhiv_id,
+            latest_rev,
             base_rev,
             documents,
         })
@@ -281,11 +279,8 @@ impl Arhiv {
             tx.put_document(&document)?;
         }
 
-        tx.put_db_status(DbStatus {
-            db_rev: response.latest_rev,
-            last_sync_time: chrono::Utc::now(),
-            ..db_status
-        })?;
+        tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
+        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
 
         tx.commit()?;
 

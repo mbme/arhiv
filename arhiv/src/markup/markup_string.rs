@@ -13,6 +13,7 @@ impl MarkupString {
     pub(crate) fn parse(&self) -> Parser {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
+        options.insert(Options::ENABLE_TABLES);
 
         Parser::new_ext(&self.0, options)
     }

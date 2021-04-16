@@ -28,7 +28,9 @@ pub trait Queries {
             .context("failed to read DbStatus")
     }
 
-    fn count_documents(&self, last_sync_time: &Timestamp) -> Result<DocumentsCount> {
+    fn count_documents(&self) -> Result<DocumentsCount> {
+        let last_sync_time = self.get_db_status()?.last_sync_time;
+
         self.get_connection()
             .query_row(
                 "SELECT

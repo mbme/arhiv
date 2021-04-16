@@ -140,7 +140,7 @@ impl Arhiv {
         let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
-        let documents_count = conn.count_documents(&db_status.last_sync_time)?;
+        let documents_count = conn.count_documents()?;
         let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {

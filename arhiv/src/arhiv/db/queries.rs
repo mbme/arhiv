@@ -237,18 +237,37 @@ pub trait Queries {
         Ok(ListPage { items, has_more })
     }
 
-    fn get_documents_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM documents_history WHERE rev >= ?1 GROUP BY id HAVING rev = MAX(rev)",
-        )?;
+    fn copy_documents_from_history(&self, min_rev: &Revision) -> Result<()> {
+        self.get_connection()
+            .execute(
+                "INSERT OR REPLACE
+                 INTO documents(id, rev, type, created_at, updated_at, archived, refs, data)
+                         SELECT id, rev, type, created_at, updated_at, archived, refs, data
+                         FROM documents_history
+                         WHERE rev >= ?1
+                         GROUP BY id HAVING rev = MAX(rev)",
+                vec![min_rev],
+            )
+            .context(anyhow!(
+                "Failed to copy documents from documents_history since rev {}",
+                min_rev
+            ))?;
+
+        Ok(())
+    }
+
+    fn get_documents_history_since(&self, min_rev: &Revision) -> Result<Vec<DocumentHistory>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents_history WHERE rev >= ?1")?;
 
         let mut rows = stmt
             .query(params![min_rev])
-            .context(anyhow!("Failed to get documents since {}", min_rev))?;
+            .context(anyhow!("Failed to get documents history since {}", min_rev))?;
 
         let mut documents = Vec::new();
         while let Some(row) = rows.next()? {
-            documents.push(utils::extract_document(row)?);
+            documents.push(utils::extract_document_history(row)?);
         }
 
         Ok(documents)
@@ -360,10 +379,13 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn delete_document_history(&self, id: &Id) -> Result<()> {
-        let rows_count = self
-            .get_connection()
-            .execute("DELETE FROM documents_history WHERE id = ?", vec![id])?;
+    // delete all document versions except the latest one
+    fn erase_document_history(&self, id: &Id) -> Result<()> {
+        let rows_count = self.get_connection().execute(
+            "DELETE FROM documents_history
+             WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_history WHERE id = ?1)",
+            vec![id],
+        )?;
 
         debug!("deleted {} rows from documents_history", rows_count);
 

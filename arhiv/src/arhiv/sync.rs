@@ -73,7 +73,7 @@ impl Arhiv {
                 };
 
                 tx.put_document(&document)?;
-                tx.delete_document_history(&document.id)?;
+                tx.erase_document_history(&document.id)?;
 
                 continue;
             }
@@ -112,7 +112,7 @@ impl Arhiv {
         let conn = self.db.get_connection()?;
 
         let next_rev = base_rev.inc();
-        let documents = conn.get_documents_since(&next_rev)?;
+        let documents_history = conn.get_documents_history_since(&next_rev)?;
 
         let arhiv_id = conn.get_setting(SETTING_ARHIV_ID)?;
         let latest_rev = conn.get_setting(SETTING_DB_REV)?;
@@ -121,7 +121,7 @@ impl Arhiv {
             arhiv_id,
             latest_rev,
             base_rev,
-            documents,
+            documents_history,
         })
     }
 
@@ -275,9 +275,12 @@ impl Arhiv {
             "last_update_time must not change",
         );
 
-        for document in response.documents {
-            tx.put_document(&document)?;
+        for document_history in response.documents_history {
+            tx.put_document_history(&document_history.document, &document_history.base_rev)?;
         }
+
+        // copy documents updated since base_rev into documents table
+        tx.copy_documents_from_history(&response.base_rev)?;
 
         tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;

@@ -27,6 +27,13 @@ pub fn extract_document(row: &Row) -> Result<Document> {
     })
 }
 
+pub fn extract_document_history(row: &Row) -> Result<DocumentHistory> {
+    Ok(DocumentHistory::new(
+        extract_document(row)?,
+        row.get("base_rev")?,
+    ))
+}
+
 pub struct Params {
     params: HashMap<String, Rc<dyn ToSql>>,
 }

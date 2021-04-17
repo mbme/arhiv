@@ -216,28 +216,6 @@ async fn post_changeset_handler(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     info!("Processing changeset {}", &changeset);
 
-    match arhiv.has_staged_changes() {
-        Ok(false) => {}
-        Ok(true) => {
-            error!("Rejecting changeset as arhiv has staged changes");
-
-            return Ok(reply::with_status(
-                "arhiv prime has staged changes",
-                http::StatusCode::INTERNAL_SERVER_ERROR,
-            )
-            .into_response());
-        }
-        Err(err) => {
-            error!("Failed to check for staged changes: {:?}", err);
-
-            return Ok(reply::with_status(
-                format!("Failed to check for staged changes: {:?}", err),
-                http::StatusCode::INTERNAL_SERVER_ERROR,
-            )
-            .into_response());
-        }
-    };
-
     let base_rev = changeset.base_rev;
 
     if let Err(err) = arhiv.apply_changeset(changeset) {

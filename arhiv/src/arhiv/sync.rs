@@ -23,6 +23,11 @@ impl Arhiv {
         let mut conn = self.db.get_writable_connection()?;
         let tx = conn.get_tx()?;
 
+        ensure!(
+            !tx.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
         let db_status = tx.get_db_status()?;
 
         ensure!(
@@ -59,26 +64,25 @@ impl Arhiv {
             if document.is_deleted() {
                 // remove attachment data if needed
                 match self.get_document(&document.id)? {
-                    Some(ref original_document) if Attachment::is_attachment(original_document) => {
-                        let attachment = Attachment::from(document.clone())?;
+                    Some(original_document) if Attachment::is_attachment(&original_document) => {
+                        let attachment = Attachment::from(original_document)?;
                         let hash = attachment.get_hash();
 
                         self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
                         debug!(
                             "removing attachment data for deleted document {}",
-                            &document.id
+                            &attachment.id
                         );
                     }
                     _ => {}
                 };
 
-                tx.put_document(&document)?;
+                tx.put_document_history(&document, &changeset.base_rev)?;
                 tx.erase_document_history(&document.id)?;
 
                 continue;
             }
 
-            tx.put_document(&document)?;
             tx.put_document_history(&document, &changeset.base_rev)?;
 
             if Attachment::is_attachment(&document) {
@@ -95,12 +99,81 @@ impl Arhiv {
             }
         }
 
+        // copy documents updated since base_rev into documents table
+        tx.copy_documents_from_history(&changeset.base_rev)?;
+
         tx.set_setting(SETTING_DB_REV, new_rev)?;
-        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
 
         fs_tx.commit()?;
         tx.commit()?;
         debug!("successfully applied a changeset");
+
+        Ok(())
+    }
+
+    fn apply_changeset_response(&self, response: ChangesetResponse) -> Result<()> {
+        let mut conn = self.db.get_writable_connection()?;
+        let tx = conn.get_tx()?;
+
+        ensure!(
+            !tx.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
+        let db_status = tx.get_db_status()?;
+
+        ensure!(
+            response.arhiv_id == db_status.arhiv_id,
+            "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
+            response.arhiv_id,
+            db_status.arhiv_id,
+        );
+        ensure!(
+            response.base_rev == db_status.db_rev,
+            "base_rev {} isn't equal to current rev {}",
+            response.base_rev,
+            db_status.db_rev,
+        );
+
+        let mut fs_tx = FsTransaction::new();
+
+        for document_history in response.documents_history {
+            let document = &document_history.document;
+
+            // handle deleted documents
+            if document.is_deleted() {
+                // remove attachment data if needed
+                match self.get_document(&document.id)? {
+                    Some(original_document) if Attachment::is_attachment(&original_document) => {
+                        let attachment = Attachment::from(original_document)?;
+                        let hash = attachment.get_hash();
+
+                        self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
+                        debug!(
+                            "removing attachment data for deleted document {}",
+                            &attachment.id
+                        );
+                    }
+                    _ => {}
+                };
+
+                tx.put_document_history(&document_history.document, &document_history.base_rev)?;
+                tx.erase_document_history(&document.id)?;
+
+                continue;
+            }
+
+            tx.put_document_history(&document_history.document, &document_history.base_rev)?;
+        }
+
+        // copy documents updated since base_rev into documents table
+        tx.copy_documents_from_history(&response.base_rev)?;
+
+        tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
+
+        fs_tx.commit()?;
+        tx.commit()?;
+        debug!("successfully applied a changeset response");
 
         Ok(())
     }
@@ -190,9 +263,16 @@ impl Arhiv {
 
         if let Err(ref err) = result {
             error!("sync failed on {}: {}", db_status.get_prime_status(), err);
+
+            return result;
         } else {
             info!("sync succeeded");
         }
+
+        // update last sync time
+        self.db
+            .get_writable_connection()?
+            .set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
 
         // remove unused local attachments
         if !unused_attachments.is_empty() {
@@ -219,7 +299,7 @@ impl Arhiv {
         // clean up the db
         self.db.get_writable_connection()?.vacuum()?;
 
-        result
+        Ok(())
     }
 
     fn sync_locally(&self, changeset: Changeset) -> Result<()> {
@@ -253,39 +333,12 @@ impl Arhiv {
 
         debug!("sync_remotely: got response {}", &response);
 
-        let mut conn = self.db.get_writable_connection()?;
-        let tx = conn.get_tx()?;
-
-        let db_status = tx.get_db_status()?;
-
         ensure!(
-            response.arhiv_id == db_status.arhiv_id,
-            "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
-            response.arhiv_id,
-            db_status.arhiv_id,
-        );
-        ensure!(
-            response.base_rev == db_status.db_rev,
-            "base_rev {} isn't equal to current rev {}",
-            response.base_rev,
-            db_status.db_rev,
-        );
-        ensure!(
-            last_update_time == tx.get_last_update_time()?,
+            last_update_time == self.db.get_connection()?.get_last_update_time()?,
             "last_update_time must not change",
         );
 
-        for document_history in response.documents_history {
-            tx.put_document_history(&document_history.document, &document_history.base_rev)?;
-        }
-
-        // copy documents updated since base_rev into documents table
-        tx.copy_documents_from_history(&response.base_rev)?;
-
-        tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
-        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
-
-        tx.commit()?;
+        self.apply_changeset_response(response)?;
 
         debug!("sync_remotely: success!");
 

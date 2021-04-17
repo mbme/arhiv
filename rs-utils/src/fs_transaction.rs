@@ -97,7 +97,7 @@ impl FsTransaction {
         self.ops.clear();
     }
 
-    pub fn commit(&mut self) -> Result<()> {
+    pub fn commit(mut self) -> Result<()> {
         for op in self.ops.iter() {
             if let FsOperation::Remove { src } = op {
                 if let Err(err) = fs::remove_file(src) {

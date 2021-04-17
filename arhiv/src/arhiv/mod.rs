@@ -150,10 +150,6 @@ impl Arhiv {
         })
     }
 
-    pub fn has_staged_changes(&self) -> Result<bool> {
-        self.db.get_connection()?.has_staged_documents()
-    }
-
     pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let conn = self.db.get_connection()?;
 
@@ -245,25 +241,11 @@ impl Arhiv {
         let mut conn = self.db.get_writable_connection()?;
         let conn = conn.get_tx()?;
 
-        let mut fs_tx = FsTransaction::new();
-
-        // remove attachment data if needed
-        if Attachment::is_attachment(&document) {
-            let attachment = Attachment::from(document.clone())?;
-            let hash = attachment.get_hash();
-
-            self.blob_manager.remove_attachment_data(&mut fs_tx, &hash);
-            debug!(
-                "removing attachment data for deleted document {}",
-                &document.id
-            );
-        }
-
         document.delete();
+        // attachment data will be removed during sync
 
         conn.put_document(&document)?;
 
-        fs_tx.commit()?;
         conn.commit()?;
 
         info!("deleted document {}", &document.id);

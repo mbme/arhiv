@@ -17,7 +17,13 @@ import { getUIOptions, CatalogOptionsOverrides } from './options'
 
 export { CatalogOptionsOverrides }
 
-function isValidFilter(filter: string): boolean {
+function isValidFilter(rawFilter: string): boolean {
+  const filter = rawFilter.trim()
+
+  if (!filter.length) {
+    return true
+  }
+
   return filter.length >= 3 && countSubstring(filter, '"') % 2 === 0
 }
 

@@ -3,7 +3,7 @@ use std::ops::Deref;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
 
-use super::{Document, Hash};
+use super::{BLOBHash, Document};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
 pub const ATTACHMENT_HASH_SELECTOR: &'static str = "$.hash";
@@ -25,7 +25,7 @@ impl Attachment {
         Ok(Attachment(document))
     }
 
-    pub fn new(filename: String, hash: Hash) -> Self {
+    pub fn new(filename: String, hash: BLOBHash) -> Self {
         let document = Document::new(
             ATTACHMENT_TYPE.to_string(),
             AttachmentInfo { filename, hash }.into(),
@@ -38,7 +38,7 @@ impl Attachment {
         serde_json::from_value(self.0.data.clone()).expect("must be able to deserialize")
     }
 
-    pub fn get_hash(&self) -> Hash {
+    pub fn get_hash(&self) -> BLOBHash {
         self.get_data().hash
     }
 
@@ -65,7 +65,7 @@ impl Into<Document> for Attachment {
 #[serde(rename_all = "camelCase")]
 struct AttachmentInfo {
     pub filename: String,
-    pub hash: Hash,
+    pub hash: BLOBHash,
 }
 
 impl Into<serde_json::Value> for AttachmentInfo {

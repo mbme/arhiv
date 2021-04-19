@@ -1,6 +1,6 @@
 use super::db::*;
 use super::Arhiv;
-use crate::entities::Hash;
+use crate::entities::BLOBHash;
 
 use anyhow::*;
 use rs_utils::{ensure_dir_exists, file_exists, log, run_command};
@@ -93,11 +93,11 @@ impl BackupPaths {
         Ok(())
     }
 
-    pub fn get_blob_path(&self, blob_hash: &Hash) -> String {
+    pub fn get_blob_path(&self, blob_hash: &BLOBHash) -> String {
         format!("{}/{}", &self.data_dir, blob_hash)
     }
 
-    pub fn blob_exists(&self, blob_hash: &Hash) -> Result<bool> {
+    pub fn blob_exists(&self, blob_hash: &BLOBHash) -> Result<bool> {
         file_exists(&self.get_blob_path(blob_hash))
     }
 }

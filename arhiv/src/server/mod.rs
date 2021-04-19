@@ -113,7 +113,7 @@ async fn post_attachment_data_handler(
     data: impl Stream<Item = Result<impl Buf, warp::Error>> + Send + Unpin + 'static,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let hash = Hash::from_string(hash);
+    let hash = BLOBHash::from_string(hash);
     info!("Saving attachment data {}", &hash);
 
     let attachment_data = arhiv.get_attachment_data(hash).unwrap();
@@ -163,7 +163,7 @@ async fn get_attachment_data_handler(
     hash: String,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let hash = Hash::from_string(hash);
+    let hash = BLOBHash::from_string(hash);
     debug!("Serving attachment data {}", &hash);
 
     let attachment_data = arhiv.get_attachment_data(hash).unwrap();

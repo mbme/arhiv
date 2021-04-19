@@ -289,7 +289,7 @@ pub trait Queries {
         }
     }
 
-    fn is_blob_in_use(&self, hash: &Hash) -> Result<bool> {
+    fn is_blob_in_use(&self, hash: &BLOBHash) -> Result<bool> {
         let result = self
             .get_connection()
             .prepare_cached(
@@ -338,7 +338,7 @@ pub trait Queries {
         Ok(())
     }
 
-    fn get_blob_hashes(&self) -> Result<HashSet<Hash>> {
+    fn get_blob_hashes(&self) -> Result<HashSet<BLOBHash>> {
         let mut stmt = self
             .get_connection()
             .prepare("SELECT json_extract(data, ?1) FROM documents WHERE type = ?2")?;
@@ -355,7 +355,7 @@ pub trait Queries {
 
         let mut result = HashSet::new();
         while let Some(entry) = rows.next() {
-            let hash = Hash::from_string(entry?);
+            let hash = BLOBHash::from_string(entry?);
 
             result.insert(hash);
         }

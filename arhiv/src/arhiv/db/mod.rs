@@ -7,7 +7,7 @@ use rusqlite::{Connection, Error as RusqliteError, OpenFlags, NO_PARAMS};
 
 use rs_utils::log;
 
-use crate::entities::Hash;
+use crate::entities::BLOBHash;
 use crate::schema::SCHEMA;
 
 pub use attachment_data::AttachmentData;
@@ -114,7 +114,7 @@ impl DB {
         .context(anyhow!("Failed to define extract_search_data function"))
     }
 
-    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<Hash>>> {
+    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBHash>>> {
         Ok(
             fs::read_dir(&self.path_manager.data_dir)?.filter_map(|item| {
                 let entry = match item {
@@ -127,7 +127,7 @@ impl DB {
                     let file_name = entry_path
                         .file_name()
                         .ok_or(anyhow!("Failed to read file name"))
-                        .map(|value| Hash::from_string(value.to_string_lossy().to_string()));
+                        .map(|value| BLOBHash::from_string(value.to_string_lossy().to_string()));
 
                     return Some(file_name);
                 } else {

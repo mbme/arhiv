@@ -78,7 +78,7 @@ impl<'a> Queries for ArhivConnection<'a> {
     }
 }
 
-impl<'a> BlobQueries for ArhivConnection<'a> {
+impl<'a> BLOBQueries for ArhivConnection<'a> {
     fn get_data_dir(&self) -> &str {
         &self.path_manager.data_dir
     }
@@ -90,7 +90,7 @@ impl<'a> Queries for ArhivTransaction<'a> {
     }
 }
 
-impl<'a> BlobQueries for ArhivTransaction<'a> {
+impl<'a> BLOBQueries for ArhivTransaction<'a> {
     fn get_data_dir(&self) -> &str {
         &self.path_manager.data_dir
     }
@@ -98,7 +98,7 @@ impl<'a> BlobQueries for ArhivTransaction<'a> {
 
 impl<'a> MutableQueries for ArhivTransaction<'a> {}
 
-impl<'a> MutableBlobQueries for ArhivTransaction<'a> {
+impl<'a> MutableBLOBQueries for ArhivTransaction<'a> {
     fn get_fs_tx(&mut self) -> &mut FsTransaction {
         &mut self.fs_tx
     }

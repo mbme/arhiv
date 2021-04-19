@@ -1,14 +1,14 @@
-use crate::entities::Hash;
+use crate::entities::BLOBHash;
 use anyhow::*;
 use rs_utils::file_exists;
 
 pub struct AttachmentData {
-    pub hash: Hash,
+    pub hash: BLOBHash,
     pub path: String,
 }
 
 impl AttachmentData {
-    pub fn new(hash: Hash, path: String) -> Self {
+    pub fn new(hash: BLOBHash, path: String) -> Self {
         AttachmentData { hash, path }
     }
 

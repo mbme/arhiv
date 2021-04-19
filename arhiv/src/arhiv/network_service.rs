@@ -105,7 +105,7 @@ impl NetworkService {
         Ok(response)
     }
 
-    pub fn get_attachment_data_url(&self, hash: &Hash) -> String {
+    pub fn get_attachment_data_url(&self, hash: &BLOBHash) -> String {
         format!("{}/attachment-data/{}", self.prime_url, hash)
     }
 }

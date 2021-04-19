@@ -3,29 +3,29 @@ use anyhow::*;
 use rs_utils::{ensure_file_exists, log, FsTransaction};
 
 use super::AttachmentData;
-use crate::entities::Hash;
+use crate::entities::BLOBHash;
 
-pub trait BlobQueries {
+pub trait BLOBQueries {
     fn get_data_dir(&self) -> &str;
 
-    fn get_attachment_data_path(&self, hash: &Hash) -> String {
+    fn get_attachment_data_path(&self, hash: &BLOBHash) -> String {
         format!("{}/{}", self.get_data_dir(), hash)
     }
 
-    fn get_attachment_data(&self, hash: Hash) -> AttachmentData {
+    fn get_attachment_data(&self, hash: BLOBHash) -> AttachmentData {
         let path = self.get_attachment_data_path(&hash);
 
         AttachmentData::new(hash, path)
     }
 }
 
-pub trait MutableBlobQueries: BlobQueries {
+pub trait MutableBLOBQueries: BLOBQueries {
     fn get_fs_tx(&mut self) -> &mut FsTransaction;
 
-    fn add_attachment_data(&mut self, file_path: &str, copy: bool) -> Result<Hash> {
+    fn add_attachment_data(&mut self, file_path: &str, copy: bool) -> Result<BLOBHash> {
         ensure_file_exists(&file_path)?;
 
-        let hash = Hash::from_file(file_path)?;
+        let hash = BLOBHash::from_file(file_path)?;
 
         let attachment_data = self.get_attachment_data(hash.clone());
 
@@ -56,7 +56,7 @@ pub trait MutableBlobQueries: BlobQueries {
         Ok(hash)
     }
 
-    fn remove_attachment_data(&mut self, hash: &Hash) {
+    fn remove_attachment_data(&mut self, hash: &BLOBHash) {
         let attachment_data_path = self.get_attachment_data_path(hash);
 
         self.get_fs_tx().remove_file(attachment_data_path);

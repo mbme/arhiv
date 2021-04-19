@@ -12,20 +12,19 @@ impl Arhiv {
         backup.check()?;
 
         // 1. vacuum the db so that WAL is written into db
-        self.db.get_writable_connection()?.vacuum()?;
-        log::debug!("vacuum: done");
+        self.db.cleanup()?;
 
         // 2. copy & archive db file
         run_command(
             "zstd",
-            vec![&self.path_manager.db_file, "-o", &backup.backup_db_file],
+            vec![&self.db.get_db_file(), "-o", &backup.backup_db_file],
         )?;
         log::info!("Created arhiv backup {}", &backup.backup_db_file);
 
         // 3. copy all data files if needed
         let mut blob_count = 0;
         let conn = self.db.get_connection()?;
-        for entry in self.path_manager.iter_blobs()? {
+        for entry in self.db.iter_blobs()? {
             let hash = entry?;
 
             // check if backup file exists
@@ -42,7 +41,7 @@ impl Arhiv {
 
             // copy blob
             fs::copy(
-                &self.get_attachment_data(hash.clone()).path,
+                &conn.get_attachment_data(hash.clone()).path,
                 backup.get_blob_path(&hash),
             )?;
             log::debug!("Created blob {} backup", &hash);

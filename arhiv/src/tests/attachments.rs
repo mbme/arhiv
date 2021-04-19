@@ -3,8 +3,8 @@ use crate::{entities::*, server::start_prime_server, Filter, Matcher};
 use anyhow::*;
 use rs_utils::project_relpath;
 
-#[test]
-fn test_attachments() -> Result<()> {
+#[tokio::test]
+async fn test_attachments() -> Result<()> {
     let arhiv = new_prime();
     assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
 
@@ -13,7 +13,7 @@ fn test_attachments() -> Result<()> {
     let attachment = arhiv.add_attachment(src, true)?;
     let hash = attachment.get_hash();
 
-    assert_eq!(arhiv.get_attachment_data(hash.clone()).exists()?, true);
+    assert_eq!(arhiv.get_attachment_data(hash.clone())?.exists()?, true);
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
@@ -34,7 +34,9 @@ fn test_attachments() -> Result<()> {
 
     // delete
     arhiv.delete_document(&attachment.id)?;
-    assert_eq!(arhiv.get_attachment_data(hash.clone()).exists()?, false);
+    arhiv.sync().await?;
+
+    assert_eq!(arhiv.get_attachment_data(hash.clone())?.exists()?, false);
 
     Ok(())
 }

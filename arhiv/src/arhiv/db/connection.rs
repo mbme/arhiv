@@ -1,63 +1,105 @@
-use super::queries::*;
 use anyhow::*;
-use rusqlite::{Connection, Transaction};
+use rusqlite::Connection;
 
-pub struct DBConnection {
+use super::{blob::*, path_manager::PathManager, queries::*};
+use rs_utils::FsTransaction;
+
+pub struct ArhivConnection<'a> {
     conn: Connection,
+    path_manager: &'a PathManager,
 }
 
-impl DBConnection {
-    pub fn new(conn: Connection) -> Self {
-        DBConnection { conn }
+impl<'a> ArhivConnection<'a> {
+    pub fn new(conn: Connection, path_manager: &'a PathManager) -> Self {
+        ArhivConnection { conn, path_manager }
     }
 }
 
-pub struct MutDBConnection {
+pub struct ArhivTransaction<'a> {
     conn: Connection,
+    finished: bool,
+
+    path_manager: &'a PathManager,
+    fs_tx: FsTransaction,
 }
 
-impl MutDBConnection {
-    pub fn new(conn: Connection) -> Self {
-        MutDBConnection { conn }
+impl<'a> ArhivTransaction<'a> {
+    pub fn new(conn: Connection, path_manager: &'a PathManager) -> Result<Self> {
+        conn.execute_batch("BEGIN DEFERRED")?;
+
+        Ok(ArhivTransaction {
+            conn,
+            finished: false,
+            path_manager,
+            fs_tx: FsTransaction::new(),
+        })
     }
 
-    pub fn get_tx(&mut self) -> Result<TxDBConnection> {
-        let tx = self.conn.transaction()?;
+    pub fn commit(mut self) -> Result<()> {
+        ensure!(
+            !self.finished,
+            "must not try to commit finished transaction"
+        );
 
-        Ok(TxDBConnection { tx })
+        self.finished = true;
+
+        self.fs_tx.commit()?;
+        self.conn.execute_batch("COMMIT")?;
+
+        Ok(())
     }
-}
 
-pub struct TxDBConnection<'a> {
-    tx: Transaction<'a>,
-}
+    pub fn rollback(&mut self) -> Result<()> {
+        ensure!(
+            !self.finished,
+            "must not try to rollback finished transaction"
+        );
 
-impl<'a> TxDBConnection<'a> {
-    pub fn commit(self) -> Result<()> {
-        self.tx.commit()?;
+        self.finished = true;
+
+        self.conn.execute_batch("ROLLBACK")?;
 
         Ok(())
     }
 }
 
-impl Queries for DBConnection {
+#[allow(unused_must_use)]
+impl<'a> Drop for ArhivTransaction<'a> {
+    fn drop(&mut self) {
+        if !self.finished {
+            self.rollback();
+        }
+    }
+}
+
+impl<'a> Queries for ArhivConnection<'a> {
     fn get_connection(&self) -> &Connection {
         &self.conn
     }
 }
 
-impl Queries for MutDBConnection {
+impl<'a> BlobQueries for ArhivConnection<'a> {
+    fn get_data_dir(&self) -> &str {
+        &self.path_manager.data_dir
+    }
+}
+
+impl<'a> Queries for ArhivTransaction<'a> {
     fn get_connection(&self) -> &Connection {
         &self.conn
     }
 }
 
-impl MutableQueries for MutDBConnection {}
-
-impl<'a> Queries for TxDBConnection<'a> {
-    fn get_connection(&self) -> &Connection {
-        &self.tx
+impl<'a> BlobQueries for ArhivTransaction<'a> {
+    fn get_data_dir(&self) -> &str {
+        &self.path_manager.data_dir
     }
 }
 
-impl<'a> MutableQueries for TxDBConnection<'a> {}
+impl<'a> MutableQueries for ArhivTransaction<'a> {}
+
+impl<'a> MutableBlobQueries for ArhivTransaction<'a> {
+    fn get_fs_tx(&mut self) -> &mut FsTransaction {
+        &mut self.fs_tx
+    }
+}

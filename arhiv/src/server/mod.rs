@@ -116,7 +116,7 @@ async fn post_attachment_data_handler(
     let hash = Hash::from_string(hash);
     info!("Saving attachment data {}", &hash);
 
-    let attachment_data = arhiv.get_attachment_data(hash);
+    let attachment_data = arhiv.get_attachment_data(hash).unwrap();
 
     if attachment_data
         .exists()
@@ -166,7 +166,7 @@ async fn get_attachment_data_handler(
     let hash = Hash::from_string(hash);
     debug!("Serving attachment data {}", &hash);
 
-    let attachment_data = arhiv.get_attachment_data(hash);
+    let attachment_data = arhiv.get_attachment_data(hash).unwrap();
 
     if !attachment_data
         .exists()
@@ -210,25 +210,27 @@ async fn get_attachment_data_handler(
         .expect("must be able to construct response"))
 }
 
+fn process_changeset(arhiv: Arc<Arhiv>, changeset: Changeset) -> Result<ChangesetResponse> {
+    let base_rev = changeset.base_rev;
+
+    let mut tx = arhiv.db.get_tx()?;
+
+    arhiv.apply_changeset(&mut tx, changeset)?;
+
+    let response = arhiv.generate_changeset_response(&tx, base_rev)?;
+
+    tx.commit()?;
+
+    Ok(response)
+}
+
 async fn post_changeset_handler(
     changeset: Changeset,
     arhiv: Arc<Arhiv>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     info!("Processing changeset {}", &changeset);
 
-    let base_rev = changeset.base_rev;
-
-    if let Err(err) = arhiv.apply_changeset(changeset) {
-        error!("Failed to apply a changeset: {:?}", err);
-
-        return Ok(reply::with_status(
-            format!("failed to apply a changeset: {:?}", err),
-            http::StatusCode::INTERNAL_SERVER_ERROR,
-        )
-        .into_response());
-    }
-
-    match arhiv.generate_changeset_response(base_rev) {
+    match process_changeset(arhiv, changeset) {
         Ok(changeset_response) => {
             info!("Generated {}", &changeset_response);
             return Ok(reply::json(&changeset_response).into_response());

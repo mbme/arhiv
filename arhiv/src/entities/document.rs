@@ -67,6 +67,10 @@ impl std::str::FromStr for Document {
 
 impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[Document {} {}]", self.id, self.rev,)
+        write!(
+            f,
+            "[Document {}/{} {}]",
+            self.document_type, self.id, self.rev,
+        )
     }
 }

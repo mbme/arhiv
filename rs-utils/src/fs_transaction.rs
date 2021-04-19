@@ -11,11 +11,15 @@ enum FsOperation {
 
 pub struct FsTransaction {
     ops: Vec<FsOperation>,
+    finished: bool,
 }
 
 impl FsTransaction {
     pub fn new() -> FsTransaction {
-        FsTransaction { ops: vec![] }
+        FsTransaction {
+            ops: vec![],
+            finished: false,
+        }
     }
 
     pub fn move_file(&mut self, src: String, dest: String) -> Result<()> {
@@ -55,18 +59,28 @@ impl FsTransaction {
         self.ops.push(FsOperation::Remove { src });
     }
 
-    pub fn revert(&mut self) {
+    pub fn rollback(&mut self) -> Result<()> {
+        if self.finished {
+            return Ok(());
+        }
+
+        self.finished = true;
+
         if self.ops.is_empty() {
-            return;
+            return Ok(());
         }
 
         warn!("Reverting {} operations", &self.ops.len());
+
+        let mut failed_count = 0;
+        let total_count = self.ops.len();
 
         for op in &self.ops {
             match op {
                 FsOperation::Move { src, dest } => {
                     if let Err(err) = fs::rename(dest, src) {
                         error!("Failed to revert Move {} to {}: {}", src, dest, err);
+                        failed_count += 1;
                     } else {
                         warn!("Reverted Move {} to {}", src, dest);
                     }
@@ -75,6 +89,7 @@ impl FsTransaction {
                 FsOperation::Copy { src, dest } => {
                     if let Err(err) = fs::remove_file(dest) {
                         error!("Failed to revert Copy {} to {}: {}", src, dest, err);
+                        failed_count += 1;
                     } else {
                         warn!("Reverted Copy {} to {}", src, dest);
                     }
@@ -83,6 +98,7 @@ impl FsTransaction {
                 FsOperation::HardLink { src, dest } => {
                     if let Err(err) = fs::remove_file(dest) {
                         error!("Failed to revert HardLink {} to {}: {}", src, dest, err);
+                        failed_count += 1;
                     } else {
                         warn!("Reverted HardLink {} to {}", src, dest);
                     }
@@ -95,9 +111,26 @@ impl FsTransaction {
         }
 
         self.ops.clear();
+
+        if failed_count > 0 {
+            bail!(
+                "Failed to revert {} operation(s) out of {}",
+                failed_count,
+                total_count
+            )
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn commit(mut self) -> Result<()> {
+    pub fn commit(&mut self) -> Result<()> {
+        ensure!(
+            !self.finished,
+            "must not try to commit finished transaction"
+        );
+
+        self.finished = true;
+
         for op in self.ops.iter() {
             if let FsOperation::Remove { src } = op {
                 if let Err(err) = fs::remove_file(src) {
@@ -112,8 +145,9 @@ impl FsTransaction {
     }
 }
 
+#[allow(unused_must_use)]
 impl Drop for FsTransaction {
     fn drop(&mut self) {
-        self.revert();
+        self.rollback();
     }
 }

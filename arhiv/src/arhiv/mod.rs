@@ -4,29 +4,22 @@ use chrono::Utc;
 use rs_utils::{
     get_file_name,
     log::{debug, info, warn},
-    FsTransaction,
 };
 
-use self::blobs::{AttachmentData, BlobManager};
 use self::db::*;
 pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy};
 use self::network_service::NetworkService;
-use self::path_manager::PathManager;
 use self::status::Status;
 
 mod backup;
-mod blobs;
 mod db;
 mod network_service;
-mod path_manager;
 mod status;
 mod sync;
 
 pub struct Arhiv {
     pub config: Config,
-    db: DB,
-    blob_manager: BlobManager,
-    path_manager: PathManager,
+    pub(crate) db: DB,
 }
 
 impl Arhiv {
@@ -35,11 +28,7 @@ impl Arhiv {
     }
 
     pub fn open(config: Config) -> Result<Arhiv> {
-        let path_manager = PathManager::new(config.get_root_dir());
-        path_manager.assert_dirs_exist()?;
-        path_manager.assert_db_file_exists()?;
-
-        let db = DB::open(&path_manager.db_file)?;
+        let db = DB::open(config.get_root_dir().to_string())?;
 
         // check if config settings are equal to db settings
         {
@@ -73,15 +62,9 @@ impl Arhiv {
             );
         }
 
-        let blob_manager = BlobManager::new(&path_manager.data_dir);
         info!("Open arhiv in {}", config.get_root_dir());
 
-        Ok(Arhiv {
-            config,
-            db,
-            blob_manager,
-            path_manager,
-        })
+        Ok(Arhiv { config, db })
     }
 
     pub fn create(config: Config) -> Result<Arhiv> {
@@ -95,13 +78,9 @@ impl Arhiv {
             config.get_root_dir()
         );
 
-        let path_manager = PathManager::new(config.get_root_dir());
-        path_manager.create_dirs()?;
+        let db = DB::create(config.get_root_dir().to_string())?;
 
-        let db = DB::create(&path_manager.db_file)?;
-
-        let mut conn = db.get_writable_connection()?;
-        let tx = conn.get_tx()?;
+        let tx = db.get_tx()?;
 
         // initial settings
         tx.set_setting(SETTING_ARHIV_ID, config.get_arhiv_id().to_string())?;
@@ -113,16 +92,9 @@ impl Arhiv {
 
         tx.commit()?;
 
-        let blob_manager = BlobManager::new(&path_manager.data_dir);
-
         info!("Created arhiv in {}", config.get_root_dir());
 
-        Ok(Arhiv {
-            config,
-            db,
-            blob_manager,
-            path_manager,
-        })
+        Ok(Arhiv { config, db })
     }
 
     pub(crate) fn get_network_service(&self) -> Result<NetworkService> {
@@ -175,11 +147,10 @@ impl Arhiv {
             "deleted documents must not be updated"
         );
 
-        let mut conn = self.db.get_writable_connection()?;
-        let conn = conn.get_tx()?;
+        let tx = self.db.get_tx()?;
 
         let mut document = {
-            if let Some(mut document) = conn.get_document(&updated_document.id)? {
+            if let Some(mut document) = tx.get_document(&updated_document.id)? {
                 debug!("Updating existing document {}", &updated_document.id);
 
                 document.rev = Revision::STAGING; // make sure document rev is Staging
@@ -204,7 +175,7 @@ impl Arhiv {
         // Validate document references
         for reference in document.refs.iter() {
             // FIXME optimize validating id
-            if conn.get_document(reference)?.is_some() {
+            if tx.get_document(reference)?.is_some() {
                 continue;
             }
             if reference == &document.id {
@@ -219,9 +190,9 @@ impl Arhiv {
             );
         }
 
-        conn.put_document(&document)?;
+        tx.put_document(&document)?;
 
-        conn.commit()?;
+        tx.commit()?;
 
         info!("saved document {}", &document.id);
 
@@ -238,15 +209,14 @@ impl Arhiv {
             "deleted documents must not be updated"
         );
 
-        let mut conn = self.db.get_writable_connection()?;
-        let conn = conn.get_tx()?;
+        let tx = self.db.get_tx()?;
 
         document.delete();
         // attachment data will be removed during sync
 
-        conn.put_document(&document)?;
+        tx.put_document(&document)?;
 
-        conn.commit()?;
+        tx.commit()?;
 
         info!("deleted document {}", &document.id);
 
@@ -256,21 +226,16 @@ impl Arhiv {
     pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Attachment> {
         debug!("Staging attachment {}", &file_path);
 
-        let mut conn = self.db.get_writable_connection()?;
-        let conn = conn.get_tx()?;
-        let mut fs_tx = FsTransaction::new();
+        let mut tx = self.db.get_tx()?;
 
-        let hash = self
-            .blob_manager
-            .add_attachment_data(&mut fs_tx, file_path, copy)?;
+        let hash = tx.add_attachment_data(file_path, copy)?;
         let file_name = get_file_name(file_path).to_string();
 
         let attachment = Attachment::new(file_name, hash);
 
-        conn.put_document(&attachment)?;
+        tx.put_document(&attachment)?;
 
-        conn.commit()?;
-        fs_tx.commit()?;
+        tx.commit()?;
 
         info!("Created attachment {} from {}", &attachment.id, file_path);
 
@@ -281,8 +246,8 @@ impl Arhiv {
         unimplemented!();
     }
 
-    pub(crate) fn get_attachment_data(&self, hash: Hash) -> AttachmentData {
-        self.blob_manager.get_attachment_data(hash)
+    pub(crate) fn get_attachment_data(&self, hash: Hash) -> Result<AttachmentData> {
+        Ok(self.db.get_connection()?.get_attachment_data(hash))
     }
 
     pub(crate) fn get_attachment_data_by_id(&self, id: &Id) -> Result<AttachmentData> {
@@ -290,7 +255,7 @@ impl Arhiv {
 
         let hash = attachment.get_hash();
 
-        let attachment_data = self.get_attachment_data(hash);
+        let attachment_data = self.get_attachment_data(hash)?;
 
         Ok(attachment_data)
     }

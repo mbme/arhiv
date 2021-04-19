@@ -1,4 +1,4 @@
-use std::{rc::Rc, time::Instant};
+use std::{collections::HashSet, rc::Rc};
 
 use super::dto::*;
 use super::utils;
@@ -310,6 +310,58 @@ pub trait Queries {
 
         Ok(result)
     }
+
+    fn delete_unused_local_attachments(&self) -> Result<()> {
+        let last_sync_time = self.get_setting(SETTING_LAST_SYNC_TIME)?;
+
+        // find all documents which
+        // 1. are staged
+        // 2. are of type "attachment"
+        // 3. were created after last sync time (so they are new)
+        // 4. aren't referenced by staged documents
+        let rows_count = self.get_connection()
+            .prepare_cached(
+                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents, json_each(refs) WHERE rev = 0)
+                DELETE FROM documents WHERE rev = 0 AND type = ?1 AND created_at > ?2 AND id NOT IN new_ids_in_use"
+            )?.execute(params![ATTACHMENT_TYPE.to_sql()?, last_sync_time])
+            .context("Failed to delete unused local attachments")?;
+
+        debug!("deleted {} unused local attachments", rows_count);
+
+        Ok(())
+    }
+
+    fn delete_local_staged_changes(&self) -> Result<()> {
+        self.get_connection()
+            .execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
+
+        Ok(())
+    }
+
+    fn get_blob_hashes(&self) -> Result<HashSet<Hash>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare("SELECT json_extract(data, ?1) FROM documents WHERE type = ?2")?;
+
+        let mut rows = stmt
+            .query_map(
+                params![
+                    ATTACHMENT_HASH_SELECTOR.to_sql()?,
+                    ATTACHMENT_TYPE.to_sql()?
+                ],
+                |row| row.get::<_, String>(0),
+            )
+            .context("Failed to get blob hashes")?;
+
+        let mut result = HashSet::new();
+        while let Some(entry) = rows.next() {
+            let hash = Hash::from_string(entry?);
+
+            result.insert(hash);
+        }
+
+        Ok(result)
+    }
 }
 
 pub trait MutableQueries: Queries {
@@ -402,19 +454,6 @@ pub trait MutableQueries: Queries {
             .context(anyhow!("Failed to delete document {}", id))?;
 
         debug!("deleted {} rows from documents", rows_count);
-
-        Ok(())
-    }
-
-    fn vacuum(&self) -> Result<()> {
-        let now = Instant::now();
-
-        self.get_connection().execute("VACUUM", NO_PARAMS)?;
-
-        debug!(
-            "completed VACUUM in {} seconds",
-            now.elapsed().as_secs_f32()
-        );
 
         Ok(())
     }

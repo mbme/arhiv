@@ -56,7 +56,7 @@ fn test_crud() -> Result<()> {
         arhiv.delete_document(&document.id)?;
 
         assert_eq!(
-            arhiv.get_document(&document.id)?.unwrap().is_deleted(),
+            arhiv.get_document(&document.id)?.unwrap().is_tombstone(),
             true
         );
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);

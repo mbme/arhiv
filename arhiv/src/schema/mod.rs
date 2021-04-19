@@ -1,7 +1,7 @@
 mod data_description;
 
 use crate::entities::ATTACHMENT_TYPE;
-use crate::entities::DELETED_TYPE;
+use crate::entities::TOMBSTONE_TYPE;
 pub use data_description::*;
 use lazy_static::*;
 
@@ -10,7 +10,7 @@ lazy_static! {
         version: 1,
         modules: vec![
             DataDescription {
-                document_type: DELETED_TYPE,
+                document_type: TOMBSTONE_TYPE,
                 collection_of: None,
                 fields: vec![],
             },

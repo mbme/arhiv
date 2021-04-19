@@ -143,7 +143,7 @@ impl Arhiv {
         );
 
         ensure!(
-            !updated_document.is_deleted(),
+            !updated_document.is_tombstone(),
             "deleted documents must not be updated"
         );
 
@@ -205,7 +205,7 @@ impl Arhiv {
             .ok_or(anyhow!("can't find document {}", &id))?;
 
         ensure!(
-            !document.is_deleted(),
+            !document.is_tombstone(),
             "deleted documents must not be updated"
         );
 

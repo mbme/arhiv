@@ -6,7 +6,7 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::fmt;
 
-pub const DELETED_TYPE: &'static str = "deleted";
+pub const TOMBSTONE_TYPE: &'static str = "tombstone";
 
 pub type Timestamp = DateTime<Utc>;
 
@@ -44,7 +44,7 @@ impl Document {
     }
 
     pub fn delete(&mut self) {
-        self.document_type = DELETED_TYPE.to_string();
+        self.document_type = TOMBSTONE_TYPE.to_string();
         self.rev = Revision::STAGING;
         self.refs = HashSet::new();
         self.archived = true;
@@ -52,8 +52,8 @@ impl Document {
         self.updated_at = Utc::now();
     }
 
-    pub fn is_deleted(&self) -> bool {
-        self.document_type == DELETED_TYPE
+    pub fn is_tombstone(&self) -> bool {
+        self.document_type == TOMBSTONE_TYPE
     }
 }
 

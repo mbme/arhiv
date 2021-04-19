@@ -60,7 +60,7 @@ impl Arhiv {
             tx.put_document_history(&document, &changeset.base_rev)?;
 
             // erase history of deleted documents
-            if document.is_deleted() {
+            if document.is_tombstone() {
                 tx.erase_document_history(&document.id)?;
             }
 
@@ -120,7 +120,7 @@ impl Arhiv {
             tx.put_document_history(&document_history.document, &document_history.base_rev)?;
 
             // erase history of deleted documents
-            if document.is_deleted() {
+            if document.is_tombstone() {
                 tx.erase_document_history(&document.id)?;
             }
         }

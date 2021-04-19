@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::{convert::From, sync::Arc};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Id(Arc<String>);
+pub struct Id(String);
 
 impl Id {
     pub fn new() -> Self {
@@ -13,11 +12,11 @@ impl Id {
             .collect();
 
         // see https://zelark.github.io/nano-id-cc/
-        Id(Arc::from(nanoid::nanoid!(14, &chars)))
+        Id(nanoid::nanoid!(14, &chars))
     }
 
     pub fn from_string(id: String) -> Self {
-        Id(Arc::new(id))
+        Id(id)
     }
 
     pub fn as_ref(&self) -> &str {

@@ -255,7 +255,7 @@ pub async fn start_ui_server(port: Option<u16>) -> (JoinHandle<()>, SocketAddr) 
         let commander = Arc::new(ArhivCommander::new(
             arhiv.clone(),
             RenderOptions {
-                document_path: "/document".to_string(),
+                document_path: "#/documents".to_string(),
                 attachment_data_path: "/attachment-data".to_string(),
             },
         ));

@@ -194,7 +194,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("saved document {}", &document.id);
+        info!("saved document {}", document);
 
         Ok(())
     }
@@ -218,7 +218,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("deleted document {}", &document.id);
+        info!("deleted document {}", document);
 
         Ok(())
     }

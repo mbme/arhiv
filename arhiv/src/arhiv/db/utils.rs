@@ -18,6 +18,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
     Ok(Document {
         id: row.get("id")?,
         rev: row.get("rev")?,
+        snapshot_id: row.get("snapshot_id")?,
         document_type: row.get("type")?,
         archived: row.get("archived")?,
         created_at: row.get("created_at")?,

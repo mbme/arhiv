@@ -55,6 +55,16 @@ impl Arhiv {
         );
 
         for mut document in changeset.documents {
+            if tx.has_snapshot(&document.snapshot_id)? {
+                log::warn!(
+                    "Got duplicate snapshot {} of document {}, ignoring",
+                    &document.snapshot_id,
+                    &document
+                );
+
+                continue;
+            }
+
             document.rev = new_rev;
 
             tx.put_document_history(&document, &changeset.base_rev)?;

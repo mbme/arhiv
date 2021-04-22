@@ -68,7 +68,7 @@ impl ArhivCommander {
         }
 
         if action == "get" {
-            let id = Id::from_string(params.as_str().context("id must be string")?.to_string());
+            let id = params.as_str().context("id must be string")?.into();
 
             let result = self.arhiv.get_document(&id)?;
 

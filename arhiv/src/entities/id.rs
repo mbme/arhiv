@@ -1,5 +1,7 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::ops::Deref;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Id(String);
@@ -14,13 +16,25 @@ impl Id {
         // see https://zelark.github.io/nano-id-cc/
         Id(nanoid::nanoid!(14, &chars))
     }
+}
 
-    pub fn from_string(id: String) -> Self {
-        Id(id)
+impl Deref for Id {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
+}
 
-    pub fn as_ref(&self) -> &str {
-        self.0.as_ref()
+impl From<&str> for Id {
+    fn from(value: &str) -> Self {
+        Id(value.to_string())
+    }
+}
+
+impl From<String> for Id {
+    fn from(value: String) -> Self {
+        Id(value)
     }
 }
 

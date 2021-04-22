@@ -6,6 +6,7 @@ mod document;
 mod document_history;
 mod id;
 mod revision;
+mod snapshot_id;
 
 pub use attachment::{Attachment, ATTACHMENT_HASH_SELECTOR, ATTACHMENT_TYPE};
 pub use blob_hash::BLOBHash;
@@ -15,3 +16,4 @@ pub use document::{Document, Timestamp, TOMBSTONE_TYPE};
 pub use document_history::DocumentHistory;
 pub use id::Id;
 pub use revision::Revision;
+pub use snapshot_id::SnapshotId;

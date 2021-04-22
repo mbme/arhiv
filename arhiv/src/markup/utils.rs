@@ -4,7 +4,7 @@ const LINK_PREFIX: &'static str = "ref:";
 
 pub fn extract_id(text: &str) -> Option<Id> {
     if text.starts_with(LINK_PREFIX) && text.len() > LINK_PREFIX.len() {
-        let id = Id::from_string(text[LINK_PREFIX.len()..].into());
+        let id = text[LINK_PREFIX.len()..].into();
 
         Some(id)
     } else {

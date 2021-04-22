@@ -1,4 +1,4 @@
-use super::{Id, Revision};
+use super::{Id, Revision, SnapshotId};
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,7 @@ pub struct Document {
     pub id: Id,
     pub rev: Revision,
     pub document_type: String,
+    pub snapshot_id: SnapshotId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub refs: HashSet<Id>,
@@ -30,6 +31,7 @@ impl Document {
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
+            snapshot_id: SnapshotId::new(),
             document_type,
             created_at: now,
             updated_at: now,
@@ -41,15 +43,6 @@ impl Document {
 
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize document to json")
-    }
-
-    pub fn delete(&mut self) {
-        self.document_type = TOMBSTONE_TYPE.to_string();
-        self.rev = Revision::STAGING;
-        self.refs = HashSet::new();
-        self.archived = true;
-        self.data = serde_json::json!({});
-        self.updated_at = Utc::now();
     }
 
     pub fn is_tombstone(&self) -> bool {

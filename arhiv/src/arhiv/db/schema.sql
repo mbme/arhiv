@@ -8,6 +8,7 @@ CREATE TABLE settings (
 CREATE TABLE documents (
   id TEXT NOT NULL,
   rev NUMBER NOT NULL,
+  snapshot_id TEXT NOT NULL UNIQUE,
   type TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
@@ -22,6 +23,7 @@ CREATE TABLE documents_history (
   id TEXT NOT NULL,
   rev NUMBER NOT NULL,
   base_rev NUMBER NOT NULL,
+  snapshot_id TEXT NOT NULL UNIQUE,
   type TEXT NOT NULL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,

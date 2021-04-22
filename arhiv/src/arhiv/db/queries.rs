@@ -66,11 +66,13 @@ pub trait Queries {
     fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
-                "SELECT COUNT(*) FROM documents WHERE rev = 0",
+                "SELECT true FROM documents WHERE rev = 0 LIMIT 1",
                 NO_PARAMS,
-                |row| Ok(row.get_unwrap::<_, u32>(0) > 0),
+                |_row| Ok(true),
             )
+            .optional()
             .context("Failed to check for staged documents")
+            .map(|value| value.unwrap_or(false))
     }
 
     fn get_last_update_time(&self) -> Result<Timestamp> {
@@ -241,8 +243,8 @@ pub trait Queries {
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE
-                 INTO documents(id, rev, type, created_at, updated_at, archived, refs, data)
-                         SELECT id, rev, type, created_at, updated_at, archived, refs, data
+                 INTO documents(id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+                         SELECT id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data
                          FROM documents_history
                          WHERE rev >= ?1
                          GROUP BY id HAVING rev = MAX(rev)",
@@ -362,6 +364,18 @@ pub trait Queries {
 
         Ok(result)
     }
+
+    fn has_snapshot(&self, id: &SnapshotId) -> Result<bool> {
+        self.get_connection()
+            .query_row(
+                "SELECT true FROM documents_history WHERE snapshot_id = ?1",
+                params![id],
+                |_row| Ok(true),
+            )
+            .optional()
+            .context(anyhow!("Failed to check for snapshot {}", &id))
+            .map(|value| value.unwrap_or(false))
+    }
 }
 
 pub trait MutableQueries: Queries {
@@ -385,13 +399,14 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (id, rev, type, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
+            document.snapshot_id,
             document.document_type,
             document.created_at,
             document.updated_at,
@@ -407,14 +422,15 @@ pub trait MutableQueries: Queries {
     fn put_document_history(&self, document: &Document, base_rev: &Revision) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, base_rev, type, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, base_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
             base_rev,
+            document.snapshot_id,
             document.document_type,
             document.created_at,
             document.updated_at,
@@ -475,14 +491,24 @@ impl ToSql for Revision {
 
 impl FromSql for Id {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value
-            .as_str()
-            .map(|value| Id::from_string(value.to_string()))
+        value.as_str().map(Id::from)
     }
 }
 
 impl ToSql for Id {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.as_ref()))
+        Ok(ToSqlOutput::from(self as &str))
+    }
+}
+
+impl FromSql for SnapshotId {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(SnapshotId::from)
+    }
+}
+
+impl ToSql for SnapshotId {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self as &str))
     }
 }

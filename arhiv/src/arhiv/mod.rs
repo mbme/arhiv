@@ -171,6 +171,7 @@ impl Arhiv {
 
         document.archived = updated_document.archived;
         document.refs = updated_document.refs;
+        document.snapshot_id = SnapshotId::new();
 
         // Validate document references
         for reference in document.refs.iter() {
@@ -211,10 +212,17 @@ impl Arhiv {
 
         let tx = self.db.get_tx()?;
 
-        document.delete();
-        // attachment data will be removed during sync
+        document.document_type = TOMBSTONE_TYPE.to_string();
+        document.rev = Revision::STAGING;
+        document.snapshot_id = SnapshotId::new();
+        document.refs.clear();
+        document.archived = true;
+        document.data = serde_json::json!({});
+        document.updated_at = Utc::now();
 
         tx.put_document(&document)?;
+
+        // attachment data will be removed during sync
 
         tx.commit()?;
 

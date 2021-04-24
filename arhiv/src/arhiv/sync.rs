@@ -127,11 +127,6 @@ impl Arhiv {
         tx: &mut ArhivTransaction,
         response: ChangesetResponse,
     ) -> Result<()> {
-        ensure!(
-            !tx.has_staged_documents()?,
-            "there must be no staged changes"
-        );
-
         let db_status = tx.get_db_status()?;
 
         ensure!(
@@ -251,7 +246,7 @@ impl Arhiv {
         let changeset = self.prepare_changeset(&tx)?;
         log::debug!("prepared a changeset {}", changeset);
 
-        self.reset_local_staged_changes(&mut tx)?;
+        tx.delete_local_staged_changes()?;
 
         self.apply_changeset(&mut tx, changeset)?;
 
@@ -302,22 +297,11 @@ impl Arhiv {
 
         let mut tx = self.db.get_tx()?;
 
-        self.reset_local_staged_changes(&mut tx)?;
-
         self.apply_changeset_response(&mut tx, response)?;
 
         tx.commit()?;
 
         log::debug!("sync_remotely: success!");
-
-        Ok(())
-    }
-
-    fn reset_local_staged_changes(&self, tx: &mut ArhivTransaction) -> Result<()> {
-        tx.delete_local_staged_changes()?;
-
-        let current_rev = tx.get_db_rev()?;
-        tx.copy_documents_from_history(&current_rev)?;
 
         Ok(())
     }

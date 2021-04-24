@@ -37,6 +37,8 @@ impl fmt::Display for Status {
             self.root_dir,
         )?;
 
+        writeln!(f, "")?;
+
         writeln!(
             f,
             "  Last update time: {}",
@@ -55,9 +57,12 @@ impl fmt::Display for Status {
                 format_date(self.db_status.last_sync_time)
             }
         )?;
+
+        writeln!(f, "")?;
+
         writeln!(
             f,
-            "   Documents:  {} committed, {} staged ({} updated, {} new)",
+            "   Documents: {} committed, {} staged ({} updated, {} new)",
             self.documents_count.documents_committed,
             self.documents_count.count_staged_documents(),
             self.documents_count.documents_updated,
@@ -65,7 +70,7 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "  Attachments: {} committed, {} staged ({} updated, {} new)",
+            " Attachments: {} committed, {} staged ({} updated, {} new)",
             self.documents_count.attachments_committed,
             self.documents_count.count_staged_attachments(),
             self.documents_count.attachments_updated,
@@ -73,7 +78,7 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "  Tombstones:  {} committed, {} staged ({} updated, {} new)",
+            "  Tombstones: {} committed, {} staged ({} updated, {} new)",
             self.documents_count.tombstones_committed,
             self.documents_count.count_staged_tombstones(),
             self.documents_count.tombstones_updated,
@@ -81,11 +86,9 @@ impl fmt::Display for Status {
         )?;
 
         if self.conflicts_count > 0 {
-            writeln!(
-                f,
-                "\n      WARN:  found {} conflicts\n",
-                self.conflicts_count
-            )?;
+            writeln!(f, "")?;
+            writeln!(f, "        WARN:  found {} conflicts", self.conflicts_count)?;
+            writeln!(f, "")?;
         }
 
         if self.debug_mode {

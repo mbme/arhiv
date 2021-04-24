@@ -11,7 +11,7 @@ impl Arhiv {
         &self,
         tx: &mut ArhivTransaction,
         changeset: Changeset,
-    ) -> Result<()> {
+    ) -> Result<Vec<Document>> {
         log::debug!("applying changeset {}", &changeset);
 
         ensure!(
@@ -42,9 +42,11 @@ impl Arhiv {
             changeset.schema_version,
         );
 
+        let mut conflicts = vec![];
+
         if changeset.is_empty() {
             log::debug!("empty changeset, ignoring");
-            return Ok(());
+            return Ok(conflicts);
         }
 
         let new_rev = db_status.db_rev.inc();
@@ -65,9 +67,32 @@ impl Arhiv {
                 continue;
             }
 
+            match tx.get_last_snapshot(&document.id)? {
+                // on conflict
+                Some(prev_snapshot) if prev_snapshot.rev != document.prev_rev => {
+                    if prev_snapshot.is_tombstone() {
+                        log::warn!("Got update for a tombstone {}, ignoring", &document.id);
+                        continue;
+                    }
+
+                    if document.data != prev_snapshot.data {
+                        log::warn!("Got data conflict on document {}", &document.id);
+                        conflicts.push(document);
+                        continue;
+                    }
+
+                    if document.refs != prev_snapshot.refs {
+                        log::warn!("Got refs conflict on document {}", &document.id);
+                        conflicts.push(document);
+                        continue;
+                    }
+                }
+                _ => {}
+            }
+
             document.rev = new_rev;
 
-            tx.put_document_history(&document, &changeset.base_rev)?;
+            tx.put_document_history(&document)?;
 
             // erase history of deleted documents
             if document.is_tombstone() {
@@ -96,7 +121,7 @@ impl Arhiv {
 
         log::debug!("successfully applied a changeset");
 
-        Ok(())
+        Ok(conflicts)
     }
 
     fn apply_changeset_response(
@@ -124,10 +149,8 @@ impl Arhiv {
             db_status.db_rev,
         );
 
-        for document_history in response.documents_history {
-            let document = &document_history.document;
-
-            tx.put_document_history(&document_history.document, &document_history.base_rev)?;
+        for document in response.new_snapshots {
+            tx.put_document_history(&document)?;
 
             // erase history of deleted documents
             if document.is_tombstone() {
@@ -137,6 +160,19 @@ impl Arhiv {
 
         // copy documents updated since base_rev into documents table
         tx.copy_documents_from_history(&response.base_rev)?;
+
+        if !response.conflicts.is_empty() {
+            log::warn!(
+                "Got {} conflict(s) in changeset response",
+                response.conflicts.len()
+            );
+        }
+
+        // save conflicts in documents table
+        for document in response.conflicts {
+            log::warn!("Conflict in {}", &document);
+            tx.put_document(&document)?;
+        }
 
         tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
 
@@ -149,9 +185,10 @@ impl Arhiv {
         &self,
         tx: &ArhivTransaction,
         base_rev: Revision,
+        conflicts: Vec<Document>,
     ) -> Result<ChangesetResponse> {
         let next_rev = base_rev.inc();
-        let documents_history = tx.get_documents_history_since(&next_rev)?;
+        let new_snapshots = tx.get_new_snapshots_since(&next_rev)?;
 
         let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
         let latest_rev = tx.get_setting(SETTING_DB_REV)?;
@@ -160,7 +197,8 @@ impl Arhiv {
             arhiv_id,
             latest_rev,
             base_rev,
-            documents_history,
+            new_snapshots,
+            conflicts,
         })
     }
 

@@ -215,9 +215,9 @@ fn process_changeset(arhiv: Arc<Arhiv>, changeset: Changeset) -> Result<Changese
 
     let mut tx = arhiv.db.get_tx()?;
 
-    arhiv.apply_changeset(&mut tx, changeset)?;
+    let conflicts = arhiv.apply_changeset(&mut tx, changeset)?;
 
-    let response = arhiv.generate_changeset_response(&tx, base_rev)?;
+    let response = arhiv.generate_changeset_response(&tx, base_rev, conflicts)?;
 
     tx.commit()?;
 

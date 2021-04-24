@@ -3,6 +3,7 @@ import { EmptyObject, Obj } from '@v/utils'
 export interface IDocument {
   readonly id: string
   readonly rev: number
+  readonly prevRev: number
   readonly documentType: string
   readonly createdAt: string
   readonly updatedAt: string

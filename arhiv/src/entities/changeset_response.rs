@@ -2,7 +2,7 @@ use anyhow::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use super::{DocumentHistory, Revision};
+use super::{Document, Revision};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -16,7 +16,9 @@ pub struct ChangesetResponse {
     pub latest_rev: Revision,
 
     // documents_history records with rev > replica_rev
-    pub documents_history: Vec<DocumentHistory>,
+    pub new_snapshots: Vec<Document>,
+
+    pub conflicts: Vec<Document>,
 }
 
 impl ChangesetResponse {
@@ -37,10 +39,11 @@ impl fmt::Display for ChangesetResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[{} ChangesetResponse: rev {}, {} changes since {}]",
+            "[{} ChangesetResponse: rev {}, {} changes and {} conflicts since {}]",
             self.arhiv_id,
             self.latest_rev,
-            self.documents_history.len(),
+            self.new_snapshots.len(),
+            self.conflicts.len(),
             self.base_rev,
         )
     }

@@ -22,24 +22,19 @@ pub struct DbStatus {
     pub last_sync_time: Timestamp,
 }
 
-impl DbStatus {
-    pub fn get_prime_status(&self) -> &str {
-        if self.is_prime {
-            "prime"
-        } else {
-            "replica"
-        }
-    }
-}
-
 #[derive(Serialize, Debug, PartialEq)]
 pub struct DocumentsCount {
     pub documents_committed: u32,
     pub documents_updated: u32,
     pub documents_new: u32,
+
     pub attachments_committed: u32,
     pub attachments_updated: u32,
     pub attachments_new: u32,
+
+    pub tombstones_committed: u32,
+    pub tombstones_updated: u32,
+    pub tombstones_new: u32,
 }
 
 impl DocumentsCount {
@@ -49,6 +44,10 @@ impl DocumentsCount {
 
     pub fn count_staged_attachments(&self) -> u32 {
         self.attachments_updated + self.attachments_new
+    }
+
+    pub fn count_staged_tombstones(&self) -> u32 {
+        self.tombstones_updated + self.tombstones_new
     }
 }
 

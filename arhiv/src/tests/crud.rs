@@ -80,6 +80,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
+                tombstones_committed: 0,
+                tombstones_updated: 0,
+                tombstones_new: 0,
             }
         );
     }
@@ -102,6 +105,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
+                tombstones_committed: 0,
+                tombstones_updated: 0,
+                tombstones_new: 0,
             }
         );
     }
@@ -123,10 +129,34 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
+                tombstones_committed: 0,
+                tombstones_updated: 0,
+                tombstones_new: 0,
             }
         );
 
         assert_eq!(status.documents_count.count_staged_documents(), 2);
+    }
+
+    // delete document
+    arhiv.delete_document(&document.id)?;
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 0,
+                documents_new: 1,
+                attachments_committed: 0,
+                attachments_updated: 0,
+                attachments_new: 0,
+                tombstones_committed: 0,
+                tombstones_updated: 1,
+                tombstones_new: 0,
+            }
+        );
     }
 
     Ok(())

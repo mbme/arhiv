@@ -18,6 +18,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
     Ok(Document {
         id: row.get("id")?,
         rev: row.get("rev")?,
+        prev_rev: row.get("prev_rev")?,
         snapshot_id: row.get("snapshot_id")?,
         document_type: row.get("type")?,
         archived: row.get("archived")?,
@@ -26,13 +27,6 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         refs: extract_refs(row.get("refs")?)?,
         data: row.get("data")?,
     })
-}
-
-pub fn extract_document_history(row: &Row) -> Result<DocumentHistory> {
-    Ok(DocumentHistory::new(
-        extract_document(row)?,
-        row.get("base_rev")?,
-    ))
 }
 
 pub struct Params {

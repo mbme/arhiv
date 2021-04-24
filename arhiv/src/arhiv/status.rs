@@ -7,6 +7,7 @@ use std::fmt;
 pub struct Status {
     pub db_status: DbStatus,
     pub documents_count: DocumentsCount,
+    pub conflicts_count: u32,
 
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
@@ -16,6 +17,7 @@ pub struct Status {
 impl Status {
     pub fn is_sync_required(&self) -> bool {
         self.documents_count.count_staged_documents() > 0
+            || self.documents_count.count_staged_tombstones() > 0
     }
 }
 
@@ -26,7 +28,11 @@ impl fmt::Display for Status {
             "Arhiv {} {}/{} (rev {}) in {}",
             env!("CARGO_PKG_VERSION"),
             self.db_status.arhiv_id,
-            self.db_status.get_prime_status(),
+            if self.db_status.is_prime {
+                "prime"
+            } else {
+                "replica"
+            },
             self.db_status.db_rev,
             self.root_dir,
         )?;
@@ -65,6 +71,22 @@ impl fmt::Display for Status {
             self.documents_count.attachments_updated,
             self.documents_count.attachments_new,
         )?;
+        writeln!(
+            f,
+            "  Tombstones:  {} committed, {} staged ({} updated, {} new)",
+            self.documents_count.tombstones_committed,
+            self.documents_count.count_staged_tombstones(),
+            self.documents_count.tombstones_updated,
+            self.documents_count.tombstones_new,
+        )?;
+
+        if self.conflicts_count > 0 {
+            writeln!(
+                f,
+                "\n      WARN:  found {} conflicts\n",
+                self.conflicts_count
+            )?;
+        }
 
         if self.debug_mode {
             writeln!(f, "  Debug Mode")?;

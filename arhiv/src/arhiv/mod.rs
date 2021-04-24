@@ -1,10 +1,7 @@
 use crate::{config::Config, entities::*, schema::SCHEMA};
 use anyhow::*;
 use chrono::Utc;
-use rs_utils::{
-    get_file_name,
-    log::{debug, info, warn},
-};
+use rs_utils::{get_file_name, log};
 
 use self::db::*;
 pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy};
@@ -62,13 +59,13 @@ impl Arhiv {
             );
         }
 
-        info!("Open arhiv in {}", config.get_root_dir());
+        log::info!("Open arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv { config, db })
     }
 
     pub fn create(config: Config) -> Result<Arhiv> {
-        info!(
+        log::info!(
             "Initializing {} arhiv in {}",
             if config.is_prime() {
                 "prime"
@@ -92,7 +89,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("Created arhiv in {}", config.get_root_dir());
+        log::info!("Created arhiv in {}", config.get_root_dir());
 
         Ok(Arhiv { config, db })
     }
@@ -111,6 +108,7 @@ impl Arhiv {
 
         let db_status = conn.get_db_status()?;
         let documents_count = conn.count_documents()?;
+        let conflicts_count = conn.count_conflicts()?;
         let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {
@@ -119,6 +117,7 @@ impl Arhiv {
             debug_mode,
             root_dir,
             documents_count,
+            conflicts_count,
         })
     }
 
@@ -135,7 +134,7 @@ impl Arhiv {
     }
 
     pub fn stage_document(&self, updated_document: Document) -> Result<()> {
-        debug!("Staging document {}", &updated_document.id);
+        log::debug!("Staging document {}", &updated_document.id);
 
         ensure!(
             !Attachment::is_attachment(&updated_document),
@@ -151,15 +150,21 @@ impl Arhiv {
 
         let mut document = {
             if let Some(mut document) = tx.get_document(&updated_document.id)? {
-                debug!("Updating existing document {}", &updated_document.id);
+                log::debug!("Updating existing document {}", &updated_document.id);
 
-                document.rev = Revision::STAGING; // make sure document rev is Staging
+                if document.rev != Revision::STAGING {
+                    // we're going to modify committed document
+                    // so we need to save its revision as prev_rev of the new document
+                    document.prev_rev = document.rev;
+                }
+
+                document.rev = Revision::STAGING;
                 document.updated_at = Utc::now();
                 document.data = updated_document.data;
 
                 document
             } else {
-                debug!("Creating new document {}", &updated_document.id);
+                log::debug!("Creating new document {}", &updated_document.id);
 
                 let mut new_document =
                     Document::new(updated_document.document_type, updated_document.data);
@@ -180,7 +185,7 @@ impl Arhiv {
                 continue;
             }
             if reference == &document.id {
-                warn!("Document {} references itself, ignoring ref", &document.id);
+                log::warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;
             }
 
@@ -195,7 +200,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("saved document {}", document);
+        log::info!("saved document {}", document);
 
         Ok(())
     }
@@ -226,13 +231,13 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("deleted document {}", document);
+        log::info!("deleted document {}", document);
 
         Ok(())
     }
 
     pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Attachment> {
-        debug!("Staging attachment {}", &file_path);
+        log::debug!("Staging attachment {}", &file_path);
 
         let mut tx = self.db.get_tx()?;
 
@@ -245,7 +250,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        info!("Created attachment {} from {}", &attachment.id, file_path);
+        log::info!("Created attachment {} from {}", &attachment.id, file_path);
 
         Ok(attachment)
     }

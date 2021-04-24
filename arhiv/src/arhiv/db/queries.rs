@@ -4,7 +4,7 @@ use super::dto::*;
 use super::utils;
 use crate::entities::*;
 use anyhow::*;
-use rs_utils::log::debug;
+use rs_utils::log;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::NO_PARAMS;
 use rusqlite::{params, Connection, OptionalExtension};
@@ -14,13 +14,12 @@ pub trait Queries {
     fn get_connection(&self) -> &Connection;
 
     fn get_setting<T: Serialize + DeserializeOwned>(&self, setting: DBSetting<T>) -> Result<T> {
-        let value: String = self
+        let mut stmt = self
             .get_connection()
-            .query_row(
-                "SELECT value FROM settings WHERE key = ?1",
-                vec![setting.0],
-                |row| row.get(0),
-            )
+            .prepare_cached("SELECT value FROM settings WHERE key = ?1")?;
+
+        let value: String = stmt
+            .query_row(vec![setting.0], |row| row.get(0))
             .context(anyhow!("failed to read setting {}", setting.0))?;
 
         serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
@@ -38,29 +37,55 @@ pub trait Queries {
     }
 
     fn count_documents(&self) -> Result<DocumentsCount> {
-        let last_sync_time = self.get_setting(SETTING_LAST_SYNC_TIME)?;
-
+        // count documents
+        // count attachments
+        // count tombstones
         self.get_connection()
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN type != ?1 AND rev > 0                      THEN 1 ELSE 0 END), 0) AS documents_committed,
-                    IFNULL(SUM(CASE WHEN type != ?1 AND rev = 0 AND created_at <= ?2 THEN 1 ELSE 0 END), 0) AS documents_updated,
-                    IFNULL(SUM(CASE WHEN type != ?1 AND rev = 0 AND created_at  > ?2 THEN 1 ELSE 0 END), 0) AS documents_new,
-                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev > 0                      THEN 1 ELSE 0 END), 0) AS attachments_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev = 0 AND created_at <= ?2 THEN 1 ELSE 0 END), 0) AS attachments_updated,
-                    IFNULL(SUM(CASE WHEN type  = ?1 AND rev = 0 AND created_at  > ?2 THEN 1 ELSE 0 END), 0) AS attachments_new
+                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
+
+                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS attachments_committed,
+                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS attachments_updated,
+                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS attachments_new,
+
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS tombstones_committed,
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS tombstones_updated,
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS tombstones_new
                 FROM documents",
-                vec![ATTACHMENT_TYPE.to_sql()?, last_sync_time.to_sql()?],
+                vec![ATTACHMENT_TYPE.to_sql()?, TOMBSTONE_TYPE.to_sql()?],
                 |row| Ok(DocumentsCount {
-                    documents_committed: row.get_unwrap(0),
-                    documents_updated: row.get_unwrap(1),
-                    documents_new: row.get_unwrap(2),
-                    attachments_committed: row.get_unwrap(3),
-                    attachments_updated: row.get_unwrap(4),
-                    attachments_new: row.get_unwrap(5),
+                    documents_committed: row.get(0)?,
+                    documents_updated: row.get(1)?,
+                    documents_new: row.get(2)?,
+
+                    attachments_committed: row.get(3)?,
+                    attachments_updated: row.get(4)?,
+                    attachments_new: row.get(5)?,
+
+                    tombstones_committed: row.get(6)?,
+                    tombstones_updated: row.get(7)?,
+                    tombstones_new: row.get(8)?,
                 }),
             )
             .context("Failed to count documents")
+    }
+
+    fn count_conflicts(&self) -> Result<u32> {
+        // conflict is a
+        // 1. staged document
+        // 2. with prev_rev != max rev of the same document in documents_history table
+        self.get_connection()
+            .query_row(
+                "SELECT COUNT(*) FROM documents
+                    WHERE rev = 0
+                    AND prev_rev != (SELECT MAX(rev) FROM documents_history WHERE id = documents.id)",
+                NO_PARAMS,
+                |row| row.get(0),
+            )
+            .context("failed to count conflicts")
     }
 
     fn has_staged_documents(&self) -> Result<bool> {
@@ -220,7 +245,8 @@ pub trait Queries {
         }
 
         let query = query.join(" ");
-        debug!("list_documents: {}", &query);
+        log::debug!("list_documents: {}", &query);
+
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
         let mut rows = stmt.query_named(&params.get())?;
@@ -243,8 +269,8 @@ pub trait Queries {
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE
-                 INTO documents(id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-                         SELECT id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data
+                 INTO documents(id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+                         SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data
                          FROM documents_history
                          WHERE rev >= ?1
                          GROUP BY id HAVING rev = MAX(rev)",
@@ -258,18 +284,18 @@ pub trait Queries {
         Ok(())
     }
 
-    fn get_documents_history_since(&self, min_rev: &Revision) -> Result<Vec<DocumentHistory>> {
+    fn get_new_snapshots_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents_history WHERE rev >= ?1")?;
 
         let mut rows = stmt
-            .query(params![min_rev])
-            .context(anyhow!("Failed to get documents history since {}", min_rev))?;
+            .query_and_then(params![min_rev], utils::extract_document)
+            .context(anyhow!("Failed to get new snapshots since {}", min_rev))?;
 
         let mut documents = Vec::new();
-        while let Some(row) = rows.next()? {
-            documents.push(utils::extract_document_history(row)?);
+        while let Some(row) = rows.next() {
+            documents.push(row?);
         }
 
         Ok(documents)
@@ -314,21 +340,22 @@ pub trait Queries {
     }
 
     fn delete_unused_local_attachments(&self) -> Result<()> {
-        let last_sync_time = self.get_setting(SETTING_LAST_SYNC_TIME)?;
-
         // find all documents which
-        // 1. are staged
-        // 2. are of type "attachment"
-        // 3. were created after last sync time (so they are new)
+        // 1. are staged (rev = 0)
+        // 2. are new (prev_rev = 0)
+        // 3. are of type "attachment"
         // 4. aren't referenced by staged documents
         let rows_count = self.get_connection()
             .prepare_cached(
                 "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents, json_each(refs) WHERE rev = 0)
-                DELETE FROM documents WHERE rev = 0 AND type = ?1 AND created_at > ?2 AND id NOT IN new_ids_in_use"
-            )?.execute(params![ATTACHMENT_TYPE.to_sql()?, last_sync_time])
+                DELETE FROM documents WHERE rev = 0
+                                        AND prev_rev = 0
+                                        AND type = ?1
+                                        AND id NOT IN new_ids_in_use"
+            )?.execute(params![ATTACHMENT_TYPE.to_sql()?])
             .context("Failed to delete unused local attachments")?;
 
-        debug!("deleted {} unused local attachments", rows_count);
+        log::debug!("deleted {} unused local attachments", rows_count);
 
         Ok(())
     }
@@ -366,15 +393,30 @@ pub trait Queries {
     }
 
     fn has_snapshot(&self, id: &SnapshotId) -> Result<bool> {
-        self.get_connection()
-            .query_row(
-                "SELECT true FROM documents_history WHERE snapshot_id = ?1",
-                params![id],
-                |_row| Ok(true),
-            )
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT true FROM documents_history WHERE snapshot_id = ?1")?;
+
+        stmt.query_row(params![id], |_row| Ok(true))
             .optional()
             .context(anyhow!("Failed to check for snapshot {}", &id))
             .map(|value| value.unwrap_or(false))
+    }
+
+    fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents_history WHERE id = ?1 ORDER BY rev LIMIT 1")?;
+
+        let mut rows = stmt
+            .query_and_then(params![id], utils::extract_document)
+            .context(anyhow!("Failed to get last snapshot of document {}", &id))?;
+
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -399,13 +441,14 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT OR REPLACE INTO documents
-            (id, rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
+            document.prev_rev,
             document.snapshot_id,
             document.document_type,
             document.created_at,
@@ -419,17 +462,17 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn put_document_history(&self, document: &Document, base_rev: &Revision) -> Result<()> {
+    fn put_document_history(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(
             "INSERT INTO documents_history
-            (id, rev, base_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
+            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             document.id,
             document.rev,
-            base_rev,
+            document.prev_rev,
             document.snapshot_id,
             document.document_type,
             document.created_at,
@@ -455,7 +498,7 @@ pub trait MutableQueries: Queries {
             vec![id],
         )?;
 
-        debug!("deleted {} rows from documents_history", rows_count);
+        log::debug!("deleted {} rows from documents_history", rows_count);
 
         Ok(())
     }
@@ -469,7 +512,7 @@ pub trait MutableQueries: Queries {
             .execute(params![id])
             .context(anyhow!("Failed to delete document {}", id))?;
 
-        debug!("deleted {} rows from documents", rows_count);
+        log::debug!("deleted {} rows from documents", rows_count);
 
         Ok(())
     }

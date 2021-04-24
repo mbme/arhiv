@@ -15,6 +15,7 @@ pub type Timestamp = DateTime<Utc>;
 pub struct Document {
     pub id: Id,
     pub rev: Revision,
+    pub prev_rev: Revision,
     pub document_type: String,
     pub snapshot_id: SnapshotId,
     pub created_at: DateTime<Utc>,
@@ -31,6 +32,7 @@ impl Document {
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
+            prev_rev: Revision::STAGING,
             snapshot_id: SnapshotId::new(),
             document_type,
             created_at: now,

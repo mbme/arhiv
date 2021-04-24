@@ -14,6 +14,7 @@ impl MarkupString {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         options.insert(Options::ENABLE_TABLES);
+        options.insert(Options::ENABLE_TASKLISTS);
 
         Parser::new_ext(&self.0, options)
     }

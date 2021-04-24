@@ -117,8 +117,6 @@ impl Arhiv {
         // copy documents updated since base_rev into documents table
         tx.copy_documents_from_history(&changeset.base_rev)?;
 
-        tx.set_setting(SETTING_DB_REV, new_rev)?;
-
         log::debug!("successfully applied a changeset");
 
         Ok(conflicts)
@@ -174,8 +172,6 @@ impl Arhiv {
             tx.put_document(&document)?;
         }
 
-        tx.set_setting(SETTING_DB_REV, response.latest_rev)?;
-
         log::debug!("successfully applied a changeset response");
 
         Ok(())
@@ -191,7 +187,7 @@ impl Arhiv {
         let new_snapshots = tx.get_new_snapshots_since(&next_rev)?;
 
         let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
-        let latest_rev = tx.get_setting(SETTING_DB_REV)?;
+        let latest_rev = tx.get_db_rev()?;
 
         Ok(ChangesetResponse {
             arhiv_id,
@@ -320,7 +316,7 @@ impl Arhiv {
     fn reset_local_staged_changes(&self, tx: &mut ArhivTransaction) -> Result<()> {
         tx.delete_local_staged_changes()?;
 
-        let current_rev = tx.get_setting(SETTING_DB_REV)?;
+        let current_rev = tx.get_db_rev()?;
         tx.copy_documents_from_history(&current_rev)?;
 
         Ok(())

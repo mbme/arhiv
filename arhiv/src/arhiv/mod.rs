@@ -82,7 +82,6 @@ impl Arhiv {
         // initial settings
         tx.set_setting(SETTING_ARHIV_ID, config.get_arhiv_id().to_string())?;
         tx.set_setting(SETTING_IS_PRIME, config.is_prime())?;
-        tx.set_setting(SETTING_DB_REV, Revision::STAGING)?;
         tx.set_setting(SETTING_SCHEMA_VERSION, SCHEMA.version)?;
         tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;

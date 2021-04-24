@@ -31,9 +31,18 @@ pub trait Queries {
             is_prime: self.get_setting(SETTING_IS_PRIME)?,
             schema_version: self.get_setting(SETTING_SCHEMA_VERSION)?,
             db_version: self.get_setting(SETTING_DB_VERSION)?,
-            db_rev: self.get_setting(SETTING_DB_REV)?,
+            db_rev: self.get_db_rev()?,
             last_sync_time: self.get_setting(SETTING_LAST_SYNC_TIME)?,
         })
+    }
+
+    fn get_db_rev(&self) -> Result<Revision> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_history")?;
+
+        stmt.query_row(NO_PARAMS, |row| row.get(0))
+            .context("failed to query for db rev")
     }
 
     fn count_documents(&self) -> Result<DocumentsCount> {

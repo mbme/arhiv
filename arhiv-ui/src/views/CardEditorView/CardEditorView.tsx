@@ -12,27 +12,30 @@ interface IProps {
 export function CardEditorView({ id }: IProps) {
   const router = RouterContext.use()
 
-  const onCancel = () => router.replace({ path: `/documents/${id}` })
-  const onArchive = () => router.push({ path: '/documents' })
-
   return (
     <CardLoader
       id={id}
     >
-      {document => (
-        <>
-          <FrameTitle>
-            {document.documentType} Editor
-          </FrameTitle>
+      {(document) => {
+        const gotoCatalog = () => router.push({ path: `/catalog/${document.documentType}` })
+        const closeEditor = () => router.replace({ path: `/documents/${id}` })
 
-          <CardEditor
-            document={document}
-            onCancel={onCancel}
-            onSave={() => router.replace({ path: `/documents/${document.id}` })}
-            onArchive={onArchive}
-          />
-        </>
-      )}
+        return (
+          <>
+            <FrameTitle>
+              {document.documentType} Editor
+            </FrameTitle>
+
+            <CardEditor
+              document={document}
+              onCancel={closeEditor}
+              onSave={closeEditor}
+              onArchive={gotoCatalog}
+              onDelete={gotoCatalog}
+            />
+          </>
+        )
+      }}
     </CardLoader>
   )
 }

@@ -15,6 +15,7 @@ interface IProps {
   onCancel: Procedure
   onSave: Procedure
   onArchive?: Procedure
+  onDelete?: Procedure
 }
 
 export function CardEditor(props: IProps) {
@@ -23,6 +24,7 @@ export function CardEditor(props: IProps) {
     onCancel,
     onSave,
     onArchive,
+    onDelete,
   } = props
 
   const [preview, showPreview] = React.useState(false)
@@ -48,6 +50,12 @@ export function CardEditor(props: IProps) {
     })
 
     onArchive!()
+  }
+
+  const deleteDocument = async () => {
+    await API.delete(document.id)
+
+    onDelete!()
   }
 
   useActions(() => {
@@ -107,6 +115,15 @@ export function CardEditor(props: IProps) {
           confirmation="Archive"
           prompt={<>Are you sure you want to <b>archive this document?</b></>}
           onConfirmed={archiveDocument}
+        />
+      )}
+
+      {onDelete && !preview && (
+        <ConfirmationButton
+          name="Delete Document"
+          confirmation="Delete"
+          prompt={<>Are you sure you want to <b>delete this document?</b></>}
+          onConfirmed={deleteDocument}
         />
       )}
     </>

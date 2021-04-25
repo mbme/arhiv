@@ -1,13 +1,13 @@
-mod data_description;
+use lazy_static::*;
 
 use crate::entities::ATTACHMENT_TYPE;
 use crate::entities::TOMBSTONE_TYPE;
 pub use data_description::*;
-use lazy_static::*;
+
+mod data_description;
 
 lazy_static! {
     pub static ref SCHEMA: DataSchema = DataSchema {
-        version: 1,
         modules: vec![
             DataDescription {
                 document_type: TOMBSTONE_TYPE,

@@ -7,7 +7,6 @@ use super::{Document, Id, Revision};
 #[serde(rename_all = "camelCase")]
 pub struct Changeset {
     pub arhiv_id: String,
-    pub schema_version: u8,
     pub base_rev: Revision,
     pub documents: Vec<Document>,
 }
@@ -24,7 +23,7 @@ impl Changeset {
     pub fn contains(&self, id: &Id) -> bool {
         self.documents
             .iter()
-            .find(|document| document.id == *id)
+            .find(|document| &document.id == id)
             .is_some()
     }
 }

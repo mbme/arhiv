@@ -29,7 +29,6 @@ pub trait Queries {
         Ok(DbStatus {
             arhiv_id: self.get_setting(SETTING_ARHIV_ID)?,
             is_prime: self.get_setting(SETTING_IS_PRIME)?,
-            schema_version: self.get_setting(SETTING_SCHEMA_VERSION)?,
             db_version: self.get_setting(SETTING_DB_VERSION)?,
             db_rev: self.get_db_rev()?,
             last_sync_time: self.get_setting(SETTING_LAST_SYNC_TIME)?,

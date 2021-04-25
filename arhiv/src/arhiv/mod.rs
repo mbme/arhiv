@@ -1,12 +1,14 @@
-use crate::{config::Config, entities::*, schema::SCHEMA};
 use anyhow::*;
 use chrono::Utc;
+
 use rs_utils::{get_file_name, log};
 
 use self::db::*;
 pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy};
 use self::network_service::NetworkService;
 use self::status::Status;
+use crate::config::Config;
+use crate::entities::*;
 
 mod backup;
 mod db;
@@ -38,12 +40,6 @@ impl Arhiv {
                 "db version {} is different from app db version {}",
                 db_status.db_version,
                 DB::VERSION,
-            );
-            ensure!(
-                db_status.schema_version == SCHEMA.version,
-                "db schema version {} is different from app schema version {}",
-                db_status.schema_version,
-                SCHEMA.version,
             );
             ensure!(
                 db_status.arhiv_id == config.get_arhiv_id(),
@@ -82,7 +78,6 @@ impl Arhiv {
         // initial settings
         tx.set_setting(SETTING_ARHIV_ID, config.get_arhiv_id().to_string())?;
         tx.set_setting(SETTING_IS_PRIME, config.is_prime())?;
-        tx.set_setting(SETTING_SCHEMA_VERSION, SCHEMA.version)?;
         tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
 

@@ -43,10 +43,6 @@ impl Document {
         }
     }
 
-    pub fn serialize(&self) -> String {
-        serde_json::to_string(self).expect("Failed to serialize document to json")
-    }
-
     pub fn is_tombstone(&self) -> bool {
         self.document_type == TOMBSTONE_TYPE
     }

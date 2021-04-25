@@ -35,13 +35,6 @@ impl Arhiv {
             db_status.db_rev,
         );
 
-        ensure!(
-            db_status.schema_version == changeset.schema_version,
-            "db schema version {} is different from changeset version {}",
-            db_status.schema_version,
-            changeset.schema_version,
-        );
-
         let mut conflicts = vec![];
 
         if changeset.is_empty() {
@@ -202,7 +195,6 @@ impl Arhiv {
 
         let changeset = Changeset {
             arhiv_id: self.config.get_arhiv_id().to_string(),
-            schema_version: db_status.schema_version.clone(),
             base_rev: db_status.db_rev,
             documents,
         };

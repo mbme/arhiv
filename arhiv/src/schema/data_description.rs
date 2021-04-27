@@ -180,7 +180,7 @@ impl DataSchema {
 
         data[field.name]
             .as_str()
-            .map(|value| value.to_string())
+            .map(|value| value.to_lowercase())
             .ok_or(anyhow!("failed to extract field {}", field.name))
     }
 }

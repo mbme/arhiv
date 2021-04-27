@@ -1,14 +1,17 @@
-use std::{collections::HashSet, rc::Rc};
+use std::collections::HashSet;
 
-use super::dto::*;
-use super::utils;
-use crate::entities::*;
 use anyhow::*;
-use rs_utils::log;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::NO_PARAMS;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
+
+use rs_utils::log;
+
+use super::dto::*;
+use super::query_builder::QueryBuilder;
+use super::utils;
+use crate::entities::*;
 
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
@@ -123,113 +126,81 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let mut query: Vec<String> = vec!["SELECT documents.*
-             FROM documents_index INNER JOIN documents
-             ON documents.rowid = documents_index.rowid
-             WHERE true"
-            .to_string()];
-        let mut params = utils::Params::new();
+        let mut qb = QueryBuilder::select(
+            "documents.*",
+            "documents_index INNER JOIN documents ON documents.rowid = documents_index.rowid",
+        );
 
         match filter.mode {
             Some(FilterMode::Staged) => {
-                query.push("AND rev = 0".to_string());
+                qb.where_condition("rev = 0");
             }
             Some(FilterMode::Archived) => {
-                query.push("AND archived = true".to_string());
+                qb.where_condition("archived = true");
             }
             None => {
-                query.push("AND archived = false".to_string());
+                qb.where_condition("archived = false");
             }
         }
 
-        let mut with_fts = false;
-        for (i, matcher) in filter.matchers.into_iter().enumerate() {
+        for matcher in filter.matchers {
             match matcher {
-                Matcher::Field { selector, pattern } => {
-                    let matcher_selector_var = format!(":matcher_selector_{}", i);
-                    let matcher_pattern_var = format!(":matcher_pattern_{}", i);
-
-                    query.push(format!(
-                        "AND json_extract(data, {}) = {}",
-                        matcher_selector_var, matcher_pattern_var,
+                Matcher::Field {
+                    ref selector,
+                    ref pattern,
+                } => {
+                    qb.where_condition(format!(
+                        "json_extract(data, {}) = {}",
+                        qb.param(selector),
+                        qb.param(pattern)
                     ));
-
-                    params.insert(&matcher_selector_var, Rc::new(selector));
-                    params.insert(&matcher_pattern_var, Rc::new(pattern));
                 }
-                Matcher::Search { pattern } => {
-                    with_fts = true;
+                Matcher::Search { ref pattern } => {
+                    qb.and_select(format!(
+                        "calculate_search_score(type, data, {}) AS search_score",
+                        qb.param(pattern)
+                    ));
+                    qb.where_condition("search_score > 0");
 
-                    let matcher_pattern_var = format!(":matcher_pattern_{}", i);
-
-                    query.push(format!("AND documents_index MATCH {}", matcher_pattern_var,));
-                    params.insert(&matcher_pattern_var, Rc::new(pattern));
+                    qb.order_by("search_score", false);
                 }
                 Matcher::Type { document_type } => {
-                    let matcher_type_var = format!(":matcher_type_{}", i);
-
-                    query.push(format!("AND type = {}", matcher_type_var));
-
-                    params.insert(&matcher_type_var, Rc::new(document_type));
+                    qb.where_condition(format!("type = {}", qb.param(document_type)));
                 }
             }
         }
 
-        if !filter.order.is_empty() || with_fts {
-            query.push("ORDER BY".to_string());
+        for order in filter.order {
+            match order {
+                OrderBy::UpdatedAt { asc } => {
+                    qb.order_by("updated_at", asc);
+                }
+                OrderBy::Field { ref selector, asc } => {
+                    qb.order_by(format!("json_extract(data, {})", qb.param(selector)), asc);
+                }
+                OrderBy::EnumField {
+                    selector,
+                    asc,
+                    enum_order,
+                } => {
+                    let cases = enum_order
+                        .iter()
+                        .enumerate()
+                        .map(|(j, item)| format!("WHEN {} THEN {}", qb.param(item), j))
+                        .collect::<Vec<String>>()
+                        .join(" ");
 
-            let mut order_query = vec![];
-
-            if with_fts {
-                order_query.push("rank".to_string());
-            }
-
-            for (i, order) in filter.order.into_iter().enumerate() {
-                match order {
-                    OrderBy::UpdatedAt { asc } => {
-                        order_query
-                            .push(format!("updated_at {}", if asc { "ASC" } else { "DESC" }));
-                    }
-                    OrderBy::Field { selector, asc } => {
-                        let selector_var = format!(":order_selector_{}", i);
-
-                        order_query.push(format!(
-                            "json_extract(data, {}) {}",
-                            selector_var,
-                            if asc { "ASC" } else { "DESC" }
-                        ));
-
-                        params.insert(&selector_var, Rc::new(selector))
-                    }
-                    OrderBy::EnumField {
-                        selector,
-                        asc,
-                        enum_order,
-                    } => {
-                        let selector_var = format!(":order_selector_{}", i);
-
-                        // TODO use variables instead of string interp
-                        let cases = enum_order
-                            .iter()
-                            .enumerate()
-                            .map(|(j, item)| format!("WHEN '{}' THEN {}", item, j))
-                            .collect::<Vec<String>>()
-                            .join(" ");
-
-                        order_query.push(format!(
-                            "CASE json_extract(data, {}) {} ELSE {} END {}",
-                            selector_var,
+                    qb.order_by(
+                        format!(
+                            "CASE json_extract(data, {}) {} ELSE {} END",
+                            qb.param(selector),
                             cases,
                             enum_order.len(),
-                            if asc { "ASC" } else { "DESC" }
-                        ));
-
-                        params.insert(&selector_var, Rc::new(selector))
-                    }
+                        ),
+                        asc,
+                    );
                 }
             }
-
-            query.push(order_query.join(", "));
         }
 
         let mut page_size: i32 = -1;
@@ -243,21 +214,20 @@ pub trait Queries {
                     page_size += 1
                 }
 
-                query.push("LIMIT :limit".to_string());
-                params.insert(":limit", Rc::new(page_size));
+                qb.limit(page_size);
 
                 let page_offset = page_offset_opt.unwrap_or(0);
-                query.push("OFFSET :offset".to_string());
-                params.insert(":offset", Rc::new(page_offset));
+
+                qb.offset(page_offset as u32);
             }
         }
 
-        let query = query.join(" ");
+        let (query, params) = qb.build();
         log::debug!("list_documents: {}", &query);
 
-        let mut stmt = self.get_connection().prepare_cached(&query)?;
+        let mut stmt = self.get_connection().prepare(&query)?;
 
-        let mut rows = stmt.query_named(&params.get())?;
+        let mut rows = stmt.query(params)?;
 
         let mut items = Vec::new();
         let mut has_more = false;

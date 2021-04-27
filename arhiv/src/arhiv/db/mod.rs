@@ -6,6 +6,7 @@ use rusqlite::functions::FunctionFlags;
 use rusqlite::{Connection, Error as RusqliteError, OpenFlags, NO_PARAMS};
 
 use rs_utils::log;
+use utils::multi_search;
 
 use crate::entities::BLOBHash;
 use crate::schema::SCHEMA;
@@ -23,6 +24,7 @@ mod connection;
 mod dto;
 mod path_manager;
 mod queries;
+mod query_builder;
 mod utils;
 
 pub struct DB {
@@ -71,6 +73,8 @@ impl DB {
 
         if mutable {
             self.init_extract_search_data(&conn)?;
+        } else {
+            self.init_calculate_search_score(&conn)?;
         }
 
         Ok(conn)
@@ -112,6 +116,20 @@ impl DB {
             },
         )
         .context(anyhow!("Failed to define extract_search_data function"))
+    }
+
+    fn init_calculate_search_score(&self, conn: &Connection) -> Result<()> {
+        conn.create_scalar_function(
+            "calculate_search_score",
+            3,
+            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+            move |ctx| {
+                assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+
+                calculate_search_score(ctx).map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            },
+        )
+        .context(anyhow!("Failed to define calculate_search_score function"))
     }
 
     pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBHash>>> {
@@ -180,4 +198,20 @@ impl DB {
 
         Ok(())
     }
+}
+
+fn calculate_search_score(ctx: &rusqlite::functions::Context) -> Result<u32> {
+    let document_type = ctx.get_raw(0).as_str()?;
+
+    let document_data = ctx.get_raw(1).as_str()?;
+
+    let pattern = ctx.get_raw(2).as_str()?;
+
+    if pattern.is_empty() {
+        return Ok(1);
+    }
+
+    let data = SCHEMA.extract_search_data(document_type, document_data)?;
+
+    Ok(multi_search(pattern, &data))
 }

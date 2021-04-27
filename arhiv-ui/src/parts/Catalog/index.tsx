@@ -8,7 +8,6 @@ import {
   Row,
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
-import { countSubstring } from '@v/utils'
 import { ErrorBlock } from '../ErrorBlock'
 import { Matcher } from '../../api'
 import { useList } from './useList'
@@ -16,29 +15,6 @@ import { CatalogEntries } from './CatalogEntries'
 import { getUIOptions, CatalogOptionsOverrides } from './options'
 
 export { CatalogOptionsOverrides }
-
-function isValidFilter(rawFilter: string): boolean {
-  const filter = rawFilter.trim()
-
-  if (!filter.length) {
-    return true
-  }
-
-  return filter.length >= 3 && countSubstring(filter, '"') % 2 === 0
-}
-
-function normalizeFilter(filter: string): string {
-  if (!filter.trim().length) {
-    return ''
-  }
-
-  return 'NEAR(' + filter
-    .split(' ')
-    .map(item => item.trim())
-    .filter(item => item.length > 0)
-    .map(item => '"' + item + '"')
-    .join(' ')  + ')'
-}
 
 interface IProps {
   documentType: string
@@ -56,8 +32,9 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
     },
   } = useForm()
 
-  const isValid = isValidFilter(filter)
-  const debouncedFilter = useDebounced(normalizeFilter(filter), 600, isValid)
+  const normalizedFilter = filter.trim()
+  const isValid = !normalizedFilter || normalizedFilter.length > 1
+  const debouncedFilter = useDebounced(normalizedFilter, 600, isValid)
 
   const {
     items,

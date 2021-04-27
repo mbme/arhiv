@@ -71,9 +71,7 @@ impl DB {
             },
         )?;
 
-        if mutable {
-            self.init_extract_search_data(&conn)?;
-        } else {
+        if !mutable {
             self.init_calculate_search_score(&conn)?;
         }
 
@@ -90,32 +88,6 @@ impl DB {
         let conn = self.open_connection(true)?;
 
         ArhivTransaction::new(conn, &self.path_manager)
-    }
-
-    fn init_extract_search_data(&self, conn: &Connection) -> Result<()> {
-        conn.create_scalar_function(
-            "extract_search_data",
-            2,
-            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-            move |ctx| {
-                assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
-
-                let document_type = ctx
-                    .get_raw(0)
-                    .as_str()
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                let document_data = ctx
-                    .get_raw(1)
-                    .as_str()
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))?;
-
-                SCHEMA
-                    .extract_search_data(document_type, document_data)
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))
-            },
-        )
-        .context(anyhow!("Failed to define extract_search_data function"))
     }
 
     fn init_calculate_search_score(&self, conn: &Connection) -> Result<()> {

@@ -34,34 +34,3 @@ CREATE TABLE documents_history (
 
   PRIMARY KEY (id, rev)
 );
-
--- FULL TEXT SEARCH
-
-CREATE VIRTUAL TABLE documents_index USING fts5(
-  search_data,
-  content="",
-  tokenize="trigram"
-);
-
-CREATE TRIGGER documents_after_insert AFTER INSERT ON documents
-    BEGIN
-        INSERT INTO documents_index (rowid, search_data)
-        VALUES (new.rowid, extract_search_data(new.type, new.data));
-    END;
-
-CREATE TRIGGER documents_after_delete AFTER DELETE ON documents
-    BEGIN
-        INSERT INTO documents_index (documents_index, rowid, search_data)
-        VALUES ('delete', old.rowid, extract_search_data(old.type, old.data));
-    END;
-
-CREATE TRIGGER documents_after_update AFTER UPDATE ON documents
-    BEGIN
-        INSERT INTO documents_index (documents_index, rowid, search_data)
-        VALUES ('delete', old.rowid, extract_search_data(old.type, old.data));
-
-        INSERT INTO documents_index (rowid, search_data)
-        VALUES (new.rowid, extract_search_data(new.type, new.data));
-    END;
-
-------------------------

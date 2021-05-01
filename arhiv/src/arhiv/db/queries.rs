@@ -126,10 +126,7 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let mut qb = QueryBuilder::select(
-            "documents.*",
-            "documents_index INNER JOIN documents ON documents.rowid = documents_index.rowid",
-        );
+        let mut qb = QueryBuilder::select("*", "documents");
 
         match filter.mode {
             Some(FilterMode::Staged) => {

@@ -190,7 +190,7 @@ async fn test_matcher() -> Result<()> {
 
         let page = arhiv.list_documents(Filter {
             matchers: vec![Matcher::Search {
-                pattern: "Val*".to_string(),
+                pattern: "Val".to_string(),
             }],
             ..Filter::default()
         })?;

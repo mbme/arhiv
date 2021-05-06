@@ -72,7 +72,7 @@ impl DB {
         )?;
 
         if !mutable {
-            self.init_calculate_search_score(&conn)?;
+            self.init_calculate_search_score_fn(&conn)?;
         }
 
         Ok(conn)
@@ -90,7 +90,7 @@ impl DB {
         ArhivTransaction::new(conn, &self.path_manager)
     }
 
-    fn init_calculate_search_score(&self, conn: &Connection) -> Result<()> {
+    fn init_calculate_search_score_fn(&self, conn: &Connection) -> Result<()> {
         conn.create_scalar_function(
             "calculate_search_score",
             3,

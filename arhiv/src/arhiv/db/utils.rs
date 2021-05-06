@@ -1,10 +1,12 @@
-use aho_corasick::AhoCorasick;
-use rs_utils::fill_vec;
 use std::collections::HashSet;
 
-use crate::entities::*;
+use aho_corasick::AhoCorasick;
 use anyhow::*;
 use rusqlite::Row;
+
+use rs_utils::fill_vec;
+
+use crate::entities::*;
 
 fn extract_refs(value: String) -> serde_json::Result<HashSet<Id>> {
     serde_json::from_str::<HashSet<Id>>(&value)

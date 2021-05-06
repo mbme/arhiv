@@ -178,6 +178,7 @@ impl Arhiv {
             if tx.get_document(reference)?.is_some() {
                 continue;
             }
+
             if reference == &document.id {
                 log::warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;

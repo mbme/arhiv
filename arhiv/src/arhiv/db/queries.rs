@@ -41,13 +41,15 @@ pub trait Queries {
     fn get_db_rev(&self) -> Result<Revision> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_history")?;
+            .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots")?;
 
         stmt.query_row(NO_PARAMS, |row| row.get(0))
             .context("failed to query for db rev")
     }
 
     fn count_documents(&self) -> Result<DocumentsCount> {
+        self.create_documents_view()?;
+
         // count documents
         // count attachments
         // count tombstones
@@ -87,12 +89,12 @@ pub trait Queries {
     fn count_conflicts(&self) -> Result<u32> {
         // conflict is a
         // 1. staged document
-        // 2. with prev_rev != max rev of the same document in documents_history table
+        // 2. with prev_rev != max rev of the same document
         self.get_connection()
             .query_row(
-                "SELECT COUNT(*) FROM documents
+                "SELECT COUNT(*) FROM documents_snapshots
                     WHERE rev = 0
-                    AND prev_rev != (SELECT MAX(rev) FROM documents_history WHERE id = documents.id)",
+                    AND prev_rev != (SELECT MAX(rev) FROM documents_snapshots WHERE id = documents_snapshots.id)",
                 NO_PARAMS,
                 |row| row.get(0),
             )
@@ -102,7 +104,7 @@ pub trait Queries {
     fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
-                "SELECT true FROM documents WHERE rev = 0 LIMIT 1",
+                "SELECT true FROM documents_snapshots WHERE rev = 0 LIMIT 1",
                 NO_PARAMS,
                 |_row| Ok(true),
             )
@@ -115,7 +117,7 @@ pub trait Queries {
         let result: Option<Timestamp> = self
             .get_connection() // FIXME check if this ordering actually works
             .query_row(
-                "SELECT updated_at FROM documents ORDER BY updated_at DESC LIMIT 1",
+                "SELECT updated_at FROM documents_snapshots ORDER BY updated_at DESC LIMIT 1",
                 NO_PARAMS,
                 |row| Ok(row.get_unwrap(0)),
             )
@@ -126,7 +128,9 @@ pub trait Queries {
     }
 
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
-        let mut qb = QueryBuilder::select("*", "documents");
+        let mut qb = QueryBuilder::new();
+
+        qb.select("*", "documents");
 
         match filter.mode {
             Some(FilterMode::Staged) => {
@@ -222,6 +226,7 @@ pub trait Queries {
         let (query, params) = qb.build();
         log::debug!("list_documents: {}", &query);
 
+        self.create_documents_view()?;
         let mut stmt = self.get_connection().prepare(&query)?;
 
         let mut rows = stmt.query(params)?;
@@ -240,29 +245,10 @@ pub trait Queries {
         Ok(ListPage { items, has_more })
     }
 
-    fn copy_documents_from_history(&self, min_rev: &Revision) -> Result<()> {
-        self.get_connection()
-            .execute(
-                "INSERT OR REPLACE
-                 INTO documents(id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-                         SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data
-                         FROM documents_history
-                         WHERE rev >= ?1
-                         GROUP BY id HAVING rev = MAX(rev)",
-                vec![min_rev],
-            )
-            .context(anyhow!(
-                "Failed to copy documents from documents_history since rev {}",
-                min_rev
-            ))?;
-
-        Ok(())
-    }
-
     fn get_new_snapshots_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT * FROM documents_history WHERE rev >= ?1")?;
+            .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
 
         let mut rows = stmt
             .query_and_then(params![min_rev], utils::extract_document)
@@ -276,10 +262,37 @@ pub trait Queries {
         Ok(documents)
     }
 
+    fn create_documents_view(&self) -> Result<()> {
+        let query = format!(
+            "CREATE TEMP VIEW IF NOT EXISTS documents AS
+                SELECT a.* FROM documents_snapshots a
+                    INNER JOIN
+                        (SELECT rowid,
+                                ROW_NUMBER() OVER (PARTITION BY id
+                                                    ORDER BY CASE
+                                                                WHEN rev = 0 THEN {}
+                                                                ELSE rev
+                                                            END
+                                                    DESC) rn
+                        FROM documents_snapshots) b
+                    ON a.rowid = b.rowid WHERE b.rn = 1",
+            std::u32::MAX
+        );
+
+        let mut stmt = self.get_connection().prepare_cached(&query)?;
+
+        stmt.execute(NO_PARAMS)
+            .context("failed to create documents view")?;
+
+        Ok(())
+    }
+
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+        self.create_documents_view()?;
+
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT * FROM documents WHERE id = ?1")?;
+            .prepare_cached("SELECT * FROM documents WHERE id = ?1 LIMIT 1")?;
 
         let mut rows = stmt
             .query_and_then(params![id], utils::extract_document)
@@ -293,12 +306,14 @@ pub trait Queries {
     }
 
     fn is_blob_in_use(&self, hash: &BLOBHash) -> Result<bool> {
+        self.create_documents_view()?;
+
         let result = self
             .get_connection()
             .prepare_cached(
                 "SELECT true FROM documents
-             WHERE type = ?1 AND json_extract(data, ?2) = ?3
-             LIMIT 1",
+                WHERE type = ?1 AND json_extract(data, ?2) = ?3
+                LIMIT 1",
             )?
             .query_row(
                 params![
@@ -314,38 +329,13 @@ pub trait Queries {
         Ok(result)
     }
 
-    fn delete_unused_local_attachments(&self) -> Result<()> {
-        // find all documents which
-        // 1. are staged (rev = 0)
-        // 2. are new (prev_rev = 0)
-        // 3. are of type "attachment"
-        // 4. aren't referenced by staged documents
-        let rows_count = self.get_connection()
-            .prepare_cached(
-                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents, json_each(refs) WHERE rev = 0)
-                DELETE FROM documents WHERE rev = 0
-                                        AND prev_rev = 0
-                                        AND type = ?1
-                                        AND id NOT IN new_ids_in_use"
-            )?.execute(params![ATTACHMENT_TYPE.to_sql()?])
-            .context("Failed to delete unused local attachments")?;
-
-        log::debug!("deleted {} unused local attachments", rows_count);
-
-        Ok(())
-    }
-
-    fn delete_local_staged_changes(&self) -> Result<()> {
-        self.get_connection()
-            .execute("DELETE FROM documents WHERE rev = 0", NO_PARAMS)?;
-
-        Ok(())
-    }
-
     fn get_blob_hashes(&self) -> Result<HashSet<BLOBHash>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare("SELECT json_extract(data, ?1) FROM documents WHERE type = ?2")?;
+        self.create_documents_view()?;
+
+        let mut stmt = self.get_connection().prepare(
+            "SELECT json_extract(data, ?1) FROM documents
+             WHERE type = ?2",
+        )?;
 
         let mut rows = stmt
             .query_map(
@@ -370,7 +360,7 @@ pub trait Queries {
     fn has_snapshot(&self, id: &SnapshotId) -> Result<bool> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT true FROM documents_history WHERE snapshot_id = ?1")?;
+            .prepare_cached("SELECT true FROM documents_snapshots WHERE snapshot_id = ?1")?;
 
         stmt.query_row(params![id], |_row| Ok(true))
             .optional()
@@ -379,9 +369,9 @@ pub trait Queries {
     }
 
     fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM documents_history WHERE id = ?1 ORDER BY rev LIMIT 1")?;
+        let mut stmt = self.get_connection().prepare_cached(
+            "SELECT * FROM documents_snapshots WHERE id = ?1 ORDER BY rev DESC LIMIT 1",
+        )?;
 
         let mut rows = stmt
             .query_and_then(params![id], utils::extract_document)
@@ -414,11 +404,16 @@ pub trait MutableQueries: Queries {
     }
 
     fn put_document(&self, document: &Document) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "INSERT OR REPLACE INTO documents
+        let mut stmt = self.get_connection().prepare_cached(&format!(
+            "INSERT {} INTO documents_snapshots
             (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )?;
+            if document.is_staged() {
+                "OR REPLACE"
+            } else {
+                ""
+            },
+        ))?;
 
         stmt.execute(params![
             document.id,
@@ -437,57 +432,43 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn put_document_history(&self, document: &Document) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "INSERT INTO documents_history
-            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )?;
-
-        stmt.execute(params![
-            document.id,
-            document.rev,
-            document.prev_rev,
-            document.snapshot_id,
-            document.document_type,
-            document.created_at,
-            document.updated_at,
-            document.archived,
-            utils::serialize_refs(&document.refs)?,
-            document.data,
-        ])
-        .context(anyhow!(
-            "Failed to put document into history {} rev {}",
-            &document.id,
-            &document.rev
-        ))?;
-
-        Ok(())
-    }
-
     // delete all document versions except the latest one
     fn erase_document_history(&self, id: &Id) -> Result<()> {
         let rows_count = self.get_connection().execute(
-            "DELETE FROM documents_history
-             WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_history WHERE id = ?1)",
+            "DELETE FROM documents_snapshots
+             WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_snapshots WHERE id = ?1)",
             vec![id],
         )?;
 
-        log::debug!("deleted {} rows from documents_history", rows_count);
+        log::debug!("deleted {} rows of history for document {}", rows_count, id);
 
         Ok(())
     }
 
-    fn delete_document(&self, id: &Id) -> Result<()> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("DELETE FROM documents WHERE id = ?")?;
+    fn delete_unused_local_attachments(&self) -> Result<()> {
+        // find all documents which
+        // 1. are staged (rev = 0)
+        // 2. are new (prev_rev = 0)
+        // 3. are of type "attachment"
+        // 4. aren't referenced by staged documents
+        let rows_count = self.get_connection()
+            .prepare_cached(
+                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents_snapshots, json_each(refs) WHERE rev = 0)
+                DELETE FROM documents_snapshots WHERE rev = 0
+                                                AND prev_rev = 0
+                                                AND type = ?1
+                                                AND id NOT IN new_ids_in_use"
+            )?.execute(params![ATTACHMENT_TYPE.to_sql()?])
+            .context("Failed to delete unused local attachments")?;
 
-        let rows_count = stmt
-            .execute(params![id])
-            .context(anyhow!("Failed to delete document {}", id))?;
+        log::debug!("deleted {} unused local attachments", rows_count);
 
-        log::debug!("deleted {} rows from documents", rows_count);
+        Ok(())
+    }
+
+    fn delete_local_staged_changes(&self) -> Result<()> {
+        self.get_connection()
+            .execute("DELETE FROM documents_snapshots WHERE rev = 0", NO_PARAMS)?;
 
         Ok(())
     }

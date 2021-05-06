@@ -24,6 +24,10 @@ pub fn setup_logger() {
     setup_logger_with_level(0);
 }
 
+pub fn setup_debug_logger() {
+    setup_logger_with_level(1);
+}
+
 pub fn setup_server_logger(log_file: PathBuf) {
     fern::Dispatch::new()
         .format(|out, message, record| {

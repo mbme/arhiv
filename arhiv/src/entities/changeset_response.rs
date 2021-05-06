@@ -39,7 +39,7 @@ impl fmt::Display for ChangesetResponse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[{} ChangesetResponse: rev {}, {} changes and {} conflicts since {}]",
+            "[{} ChangesetResponse: rev {}, {} snapshot(s) and {} conflict(s) since {}]",
             self.arhiv_id,
             self.latest_rev,
             self.new_snapshots.len(),

@@ -85,7 +85,7 @@ impl Arhiv {
 
             document.rev = new_rev;
 
-            tx.put_document_history(&document)?;
+            tx.put_document(&document)?;
 
             // erase history of deleted documents
             if document.is_tombstone() {
@@ -106,9 +106,6 @@ impl Arhiv {
                 );
             }
         }
-
-        // copy documents updated since base_rev into documents table
-        tx.copy_documents_from_history(&changeset.base_rev)?;
 
         log::debug!("successfully applied a changeset");
 
@@ -136,16 +133,13 @@ impl Arhiv {
         );
 
         for document in response.new_snapshots {
-            tx.put_document_history(&document)?;
+            tx.put_document(&document)?;
 
             // erase history of deleted documents
             if document.is_tombstone() {
                 tx.erase_document_history(&document.id)?;
             }
         }
-
-        // copy documents updated since base_rev into documents table
-        tx.copy_documents_from_history(&response.base_rev)?;
 
         if !response.conflicts.is_empty() {
             log::warn!(
@@ -289,6 +283,7 @@ impl Arhiv {
 
         let mut tx = self.db.get_tx()?;
 
+        tx.delete_local_staged_changes()?;
         self.apply_changeset_response(&mut tx, response)?;
 
         tx.commit()?;

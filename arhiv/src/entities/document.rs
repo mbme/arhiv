@@ -46,6 +46,10 @@ impl Document {
     pub fn is_tombstone(&self) -> bool {
         self.document_type == TOMBSTONE_TYPE
     }
+
+    pub fn is_staged(&self) -> bool {
+        self.rev == Revision::STAGING
+    }
 }
 
 impl std::str::FromStr for Document {

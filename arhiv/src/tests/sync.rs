@@ -1,8 +1,10 @@
+use anyhow::*;
+use serde_json::json;
+
+use rs_utils::project_relpath;
+
 use super::utils::*;
 use crate::server::start_prime_server;
-use anyhow::*;
-use rs_utils::project_relpath;
-use serde_json::json;
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {
@@ -66,18 +68,19 @@ async fn test_replica_sync() -> Result<()> {
 
     let attachment = replica.add_attachment(src, true)?;
 
-    let mut document = empty_document();
-    document.refs.insert(attachment.id.clone());
-    replica.stage_document(document.clone())?;
+    let id = {
+        let mut document = empty_document();
+        document.refs.insert(attachment.id.clone());
+        replica.stage_document(document.clone())?;
+
+        document.id
+    };
 
     replica.sync().await?;
 
-    assert_eq!(
-        replica.get_document(&document.id)?.unwrap().rev.is_staged(),
-        false
-    );
+    assert_eq!(replica.get_document(&id)?.unwrap().rev.is_staged(), false);
 
-    // Test attachment data
+    // Test attachment data on replica
     {
         let attachment_data = replica.get_attachment_data_by_id(&attachment.id)?;
 
@@ -85,6 +88,7 @@ async fn test_replica_sync() -> Result<()> {
         assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
     }
 
+    // Test attachment data on prime
     {
         let attachment_data = prime.get_attachment_data_by_id(&attachment.id)?;
 
@@ -94,17 +98,17 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test if document is updated correctly
     {
-        let mut document = replica.get_document(&document.id)?.unwrap();
+        let mut document = replica.get_document(&id)?.unwrap();
         document.data = json!({ "test": "1" });
         replica.stage_document(document)?;
+
+        replica.sync().await?;
+
+        assert_eq!(
+            replica.get_document(&id)?.unwrap().data,
+            json!({ "test": "1" }),
+        );
     }
-
-    replica.sync().await?;
-
-    assert_eq!(
-        replica.get_document(&document.id)?.unwrap().data,
-        json!({ "test": "1" }),
-    );
 
     shutdown_sender.send(()).unwrap();
     join_handle.await.unwrap();

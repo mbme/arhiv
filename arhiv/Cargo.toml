@@ -37,7 +37,7 @@ pulldown-cmark = { version = "0.8", default-features = false, features = ["simd"
 warp = "0.3.0"
 mime_guess = "2.0.3"
 
-rusqlite = { version = "0.24.2", features = ["chrono", "serde_json", "functions"] }
+rusqlite = { version = "0.25", features = ["chrono", "serde_json", "functions"] }
 
 rs-utils = { path = "../rs-utils" }
 arhiv-ui = { path = "../arhiv-ui" }

@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use anyhow::*;
 use rusqlite::functions::FunctionFlags;
-use rusqlite::{Connection, Error as RusqliteError, OpenFlags, NO_PARAMS};
+use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 
 use rs_utils::log;
 use utils::multi_search;
@@ -140,7 +140,7 @@ impl DB {
         let now = Instant::now();
 
         let conn = self.open_connection(true)?;
-        conn.execute("VACUUM", NO_PARAMS)?;
+        conn.execute("VACUUM", [])?;
 
         log::debug!(
             "completed VACUUM in {} seconds",

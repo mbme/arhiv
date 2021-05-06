@@ -17,6 +17,10 @@ impl BLOBHash {
     pub fn from_string(hash: String) -> Self {
         BLOBHash(hash)
     }
+
+    pub fn to_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl fmt::Display for BLOBHash {

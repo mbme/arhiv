@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 
 use anyhow::*;
-use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::NO_PARAMS;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{
+    params, params_from_iter,
+    types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
+};
+use rusqlite::{Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
@@ -22,7 +24,7 @@ pub trait Queries {
             .prepare_cached("SELECT value FROM settings WHERE key = ?1")?;
 
         let value: String = stmt
-            .query_row(vec![setting.0], |row| row.get(0))
+            .query_row([setting.0], |row| row.get(0))
             .context(anyhow!("failed to read setting {}", setting.0))?;
 
         serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
@@ -43,7 +45,7 @@ pub trait Queries {
             .get_connection()
             .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots")?;
 
-        stmt.query_row(NO_PARAMS, |row| row.get(0))
+        stmt.query_row([], |row| row.get(0))
             .context("failed to query for db rev")
     }
 
@@ -68,7 +70,7 @@ pub trait Queries {
                     IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS tombstones_updated,
                     IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS tombstones_new
                 FROM documents",
-                vec![ATTACHMENT_TYPE.to_sql()?, TOMBSTONE_TYPE.to_sql()?],
+                [ATTACHMENT_TYPE, TOMBSTONE_TYPE],
                 |row| Ok(DocumentsCount {
                     documents_committed: row.get(0)?,
                     documents_updated: row.get(1)?,
@@ -95,7 +97,7 @@ pub trait Queries {
                 "SELECT COUNT(*) FROM documents_snapshots
                     WHERE rev = 0
                     AND prev_rev != (SELECT MAX(rev) FROM documents_snapshots WHERE id = documents_snapshots.id)",
-                NO_PARAMS,
+                [],
                 |row| row.get(0),
             )
             .context("failed to count conflicts")
@@ -105,7 +107,7 @@ pub trait Queries {
         self.get_connection()
             .query_row(
                 "SELECT true FROM documents_snapshots WHERE rev = 0 LIMIT 1",
-                NO_PARAMS,
+                [],
                 |_row| Ok(true),
             )
             .optional()
@@ -118,7 +120,7 @@ pub trait Queries {
             .get_connection() // FIXME check if this ordering actually works
             .query_row(
                 "SELECT updated_at FROM documents_snapshots ORDER BY updated_at DESC LIMIT 1",
-                NO_PARAMS,
+                [],
                 |row| Ok(row.get_unwrap(0)),
             )
             .optional()
@@ -229,7 +231,7 @@ pub trait Queries {
         self.create_documents_view()?;
         let mut stmt = self.get_connection().prepare(&query)?;
 
-        let mut rows = stmt.query(params)?;
+        let mut rows = stmt.query(params_from_iter(params))?;
 
         let mut items = Vec::new();
         let mut has_more = false;
@@ -251,7 +253,7 @@ pub trait Queries {
             .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
 
         let mut rows = stmt
-            .query_and_then(params![min_rev], utils::extract_document)
+            .query_and_then([min_rev], utils::extract_document)
             .context(anyhow!("Failed to get new snapshots since {}", min_rev))?;
 
         let mut documents = Vec::new();
@@ -281,7 +283,7 @@ pub trait Queries {
 
         let mut stmt = self.get_connection().prepare_cached(&query)?;
 
-        stmt.execute(NO_PARAMS)
+        stmt.execute([])
             .context("failed to create documents view")?;
 
         Ok(())
@@ -295,7 +297,7 @@ pub trait Queries {
             .prepare_cached("SELECT * FROM documents WHERE id = ?1 LIMIT 1")?;
 
         let mut rows = stmt
-            .query_and_then(params![id], utils::extract_document)
+            .query_and_then([id], utils::extract_document)
             .context(anyhow!("Failed to get document {}", &id))?;
 
         if let Some(row) = rows.next() {
@@ -316,11 +318,7 @@ pub trait Queries {
                 LIMIT 1",
             )?
             .query_row(
-                params![
-                    ATTACHMENT_TYPE.to_sql()?,
-                    ATTACHMENT_HASH_SELECTOR.to_sql()?,
-                    hash.to_string(),
-                ],
+                [ATTACHMENT_TYPE, ATTACHMENT_HASH_SELECTOR, hash.to_str()],
                 |_row| Ok(true),
             )
             .optional()?
@@ -338,13 +336,9 @@ pub trait Queries {
         )?;
 
         let mut rows = stmt
-            .query_map(
-                params![
-                    ATTACHMENT_HASH_SELECTOR.to_sql()?,
-                    ATTACHMENT_TYPE.to_sql()?
-                ],
-                |row| row.get::<_, String>(0),
-            )
+            .query_map([ATTACHMENT_HASH_SELECTOR, ATTACHMENT_TYPE], |row| {
+                row.get::<_, String>(0)
+            })
             .context("Failed to get blob hashes")?;
 
         let mut result = HashSet::new();
@@ -362,7 +356,7 @@ pub trait Queries {
             .get_connection()
             .prepare_cached("SELECT true FROM documents_snapshots WHERE snapshot_id = ?1")?;
 
-        stmt.query_row(params![id], |_row| Ok(true))
+        stmt.query_row([id], |_row| Ok(true))
             .optional()
             .context(anyhow!("Failed to check for snapshot {}", &id))
             .map(|value| value.unwrap_or(false))
@@ -374,7 +368,7 @@ pub trait Queries {
         )?;
 
         let mut rows = stmt
-            .query_and_then(params![id], utils::extract_document)
+            .query_and_then([id], utils::extract_document)
             .context(anyhow!("Failed to get last snapshot of document {}", &id))?;
 
         if let Some(row) = rows.next() {
@@ -396,7 +390,7 @@ pub trait MutableQueries: Queries {
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                params![setting.0, value],
+                [setting.0, &value],
             )
             .context(anyhow!("failed to save setting {}", setting.0))?;
 
@@ -437,7 +431,7 @@ pub trait MutableQueries: Queries {
         let rows_count = self.get_connection().execute(
             "DELETE FROM documents_snapshots
              WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_snapshots WHERE id = ?1)",
-            vec![id],
+            [id],
         )?;
 
         log::debug!("deleted {} rows of history for document {}", rows_count, id);
@@ -458,7 +452,7 @@ pub trait MutableQueries: Queries {
                                                 AND prev_rev = 0
                                                 AND type = ?1
                                                 AND id NOT IN new_ids_in_use"
-            )?.execute(params![ATTACHMENT_TYPE.to_sql()?])
+            )?.execute([ATTACHMENT_TYPE])
             .context("Failed to delete unused local attachments")?;
 
         log::debug!("deleted {} unused local attachments", rows_count);
@@ -468,7 +462,7 @@ pub trait MutableQueries: Queries {
 
     fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection()
-            .execute("DELETE FROM documents_snapshots WHERE rev = 0", NO_PARAMS)?;
+            .execute("DELETE FROM documents_snapshots WHERE rev = 0", [])?;
 
         Ok(())
     }

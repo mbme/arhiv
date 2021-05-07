@@ -4,8 +4,8 @@ use anyhow::*;
 use rusqlite::{
     params, params_from_iter,
     types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
+    Connection, OptionalExtension,
 };
-use rusqlite::{Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
@@ -318,7 +318,7 @@ pub trait Queries {
                 LIMIT 1",
             )?
             .query_row(
-                [ATTACHMENT_TYPE, ATTACHMENT_HASH_SELECTOR, hash.to_str()],
+                [ATTACHMENT_TYPE, ATTACHMENT_HASH_SELECTOR, hash.as_ref()],
                 |_row| Ok(true),
             )
             .optional()?

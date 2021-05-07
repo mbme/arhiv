@@ -17,14 +17,16 @@ impl BLOBHash {
     pub fn from_string(hash: String) -> Self {
         BLOBHash(hash)
     }
-
-    pub fn to_str(&self) -> &str {
-        &self.0
-    }
 }
 
 impl fmt::Display for BLOBHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl AsRef<str> for BLOBHash {
+    fn as_ref(&self) -> &str {
+        &self.0
     }
 }

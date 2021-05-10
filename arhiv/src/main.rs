@@ -4,11 +4,12 @@
 use std::{
     env,
     path::Path,
-    process::{Command, Stdio},
+    process::{self, Command, Stdio},
     sync::Arc,
 };
 
 use arhiv::{
+    entities::Id,
     server::{start_prime_server, start_ui_server},
     Arhiv, Config,
 };
@@ -28,6 +29,15 @@ async fn main() {
         .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(SubCommand::with_name("config").about("Print config"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
+        .subcommand(
+            SubCommand::with_name("get")
+                .about("Get document by id")
+                .arg(
+                    Arg::with_name("id")
+                        .required(true)
+                        .help("id of the document"),
+                ),
+        )
         .subcommand(
             SubCommand::with_name("ui")
                 .about("Show arhiv UI")
@@ -107,6 +117,25 @@ async fn main() {
             setup_logger_with_level(matches.occurrences_of("verbose"));
 
             Arhiv::must_open().sync().await.expect("must sync");
+        }
+        ("get", Some(matches)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
+            let id: Id = matches.value_of("id").expect("id must be present").into();
+
+            let arhiv = Arhiv::must_open();
+
+            let document = arhiv
+                .get_document(&id)
+                .expect("must be able to query for a document");
+
+            if let Some(document) = document {
+                serde_json::to_writer_pretty(std::io::stdout(), &document)
+                    .expect("must be able to serialize document");
+            } else {
+                eprintln!("Document with id '{}' not found", &id);
+                process::exit(1);
+            }
         }
         ("ui", Some(matches)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));

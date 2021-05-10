@@ -33,15 +33,3 @@ pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
 
     Ok(output_str)
 }
-
-pub fn fill_vec<V: Copy>(size: usize, initial_value: V) -> Vec<V> {
-    let mut result = Vec::with_capacity(size);
-
-    let mut i = 0;
-    while i < size {
-        result.push(initial_value);
-        i += 1;
-    }
-
-    result
-}

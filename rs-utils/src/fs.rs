@@ -4,6 +4,10 @@ use std::fs;
 use tokio::fs as tokio_fs;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
+pub fn path_exists(path: impl AsRef<str>) -> bool {
+    fs::metadata(path.as_ref()).is_ok()
+}
+
 pub fn file_exists(path: &str) -> Result<bool> {
     match fs::metadata(path) {
         Ok(metadata) if !metadata.is_file() => Err(anyhow!("path isn't a file: {}", path)),
@@ -98,4 +102,33 @@ pub fn locate_dominating_file<S: Into<String>>(file_name: S) -> Result<String> {
             bail!("Can't locate dominating file {}", file_name);
         }
     }
+}
+
+pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
+    let src = src.as_ref();
+    let dest = dest.as_ref();
+
+    let err = {
+        if let Err(err) = fs::rename(src, dest) {
+            err
+        } else {
+            return Ok(());
+        }
+    };
+
+    // check for Invalid cross-device link (os error 18)
+    if err.raw_os_error() != Some(18) {
+        bail!(err);
+    }
+
+    // if error is due to src and dest being on different file systems
+    // then copy src into dest, and remove src
+
+    fs::copy(src, dest)?;
+
+    if let Err(err) = fs::remove_file(src) {
+        log::warn!("Failed to remove source file {}: {}", src, err);
+    }
+
+    Ok(())
 }

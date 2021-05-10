@@ -15,6 +15,7 @@ mod db;
 mod network_service;
 mod status;
 mod sync;
+mod upgrade;
 
 pub struct Arhiv {
     pub config: Config,

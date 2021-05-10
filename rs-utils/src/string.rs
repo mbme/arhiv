@@ -48,6 +48,19 @@ pub fn capitalize<S: Into<String>>(s: S) -> String {
     result
 }
 
+pub fn generate_alpanumeric_string(length: usize) -> String {
+    use rand::distributions::Alphanumeric;
+    use rand::prelude::*;
+
+    let mut rng = thread_rng();
+
+    std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(length)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

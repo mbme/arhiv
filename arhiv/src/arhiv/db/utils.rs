@@ -4,8 +4,6 @@ use aho_corasick::AhoCorasick;
 use anyhow::*;
 use rusqlite::Row;
 
-use rs_utils::fill_vec;
-
 use crate::entities::*;
 
 fn extract_refs(value: String) -> serde_json::Result<HashSet<Id>> {
@@ -38,7 +36,7 @@ struct SearchScore {
 impl SearchScore {
     pub fn new(size: usize) -> Self {
         SearchScore {
-            values: fill_vec(size, 0),
+            values: vec![0, size],
         }
     }
 

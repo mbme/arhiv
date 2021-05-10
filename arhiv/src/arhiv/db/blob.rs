@@ -56,10 +56,12 @@ pub trait MutableBLOBQueries: BLOBQueries {
         Ok(hash)
     }
 
-    fn remove_attachment_data(&mut self, hash: &BLOBHash) {
+    fn remove_attachment_data(&mut self, hash: &BLOBHash) -> Result<()> {
         let attachment_data_path = self.get_attachment_data_path(hash);
 
-        self.get_fs_tx().remove_file(attachment_data_path);
+        self.get_fs_tx().remove_file(attachment_data_path)?;
+
+        Ok(())
     }
 
     // FIXME pub fn get_attachment_data_stream(&self, hash: &hash) -> Result<FileStream>

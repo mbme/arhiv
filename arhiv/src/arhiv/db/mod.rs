@@ -32,7 +32,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub const VERSION: u8 = 1;
+    pub const VERSION: u8 = 2;
 
     pub fn open(root_dir: String) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
@@ -61,7 +61,7 @@ impl DB {
         &self.path_manager.db_file
     }
 
-    fn open_connection(&self, mutable: bool) -> Result<Connection> {
+    pub fn open_connection(&self, mutable: bool) -> Result<Connection> {
         let conn = Connection::open_with_flags(
             &self.path_manager.db_file,
             if mutable {
@@ -71,15 +71,13 @@ impl DB {
             },
         )?;
 
-        if !mutable {
-            self.init_calculate_search_score_fn(&conn)?;
-        }
-
         Ok(conn)
     }
 
     pub fn get_connection(&self) -> Result<ArhivConnection> {
         let conn = self.open_connection(false)?;
+
+        self.init_calculate_search_score_fn(&conn)?;
 
         Ok(ArhivConnection::new(conn, &self.path_manager))
     }
@@ -159,7 +157,7 @@ impl DB {
             let hash = entry?;
 
             if !hashes.contains(&hash) {
-                tx.remove_attachment_data(&hash);
+                tx.remove_attachment_data(&hash)?;
                 removed_blobs += 1;
             }
         }

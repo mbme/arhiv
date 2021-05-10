@@ -1,10 +1,10 @@
-use crate::entities::{Document, Id};
-use anyhow::*;
-use serde::Serialize;
-use serde_json::Map;
-use serde_json::Value;
 use std::collections::HashSet;
 
+use anyhow::*;
+use serde::Serialize;
+use serde_json::{Map, Value};
+
+use crate::entities::{Document, Id};
 use crate::markup::MarkupString;
 
 #[derive(Serialize, Debug, Clone)]

@@ -60,6 +60,9 @@ async fn main() {
                         .required(true),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("upgrade").about("Upgrade arhiv db schema to latest version"),
+        )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -151,13 +154,19 @@ async fn main() {
         ("backup", Some(matches)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));
 
-            let arhiv = Arc::new(Arhiv::must_open());
+            let arhiv = Arhiv::must_open();
 
             let backup_dir = matches
                 .value_of("backup_dir")
                 .expect("backup_dir must be present");
 
             arhiv.backup(backup_dir).expect("must be able to backup");
+        }
+        ("upgrade", Some(matches)) => {
+            setup_logger_with_level(matches.occurrences_of("verbose"));
+
+            let config = Config::must_read().0;
+            Arhiv::upgrade(config.get_root_dir()).expect("must be able to upgrade arhiv db");
         }
         _ => unreachable!(),
     }

@@ -1,35 +1,71 @@
-use rand::distributions::Alphanumeric;
-use rand::prelude::*;
 use std::env;
 use std::fs;
-use std::iter;
+
+use anyhow::*;
+
+use crate::{generate_alpanumeric_string, path_exists};
 
 pub struct TempFile {
     path: String,
 }
 
 impl TempFile {
-    pub fn new(file_name: &str) -> Self {
+    pub fn new() -> Self {
+        TempFile::new_with_details("TempFile-", "")
+    }
+
+    pub fn new_with_details(prefix: impl AsRef<str>, suffix: impl AsRef<str>) -> Self {
         TempFile {
-            path: file_in_temp_dir(file_name),
+            path: generate_temp_path(prefix.as_ref(), suffix.as_ref()),
         }
     }
 
-    pub fn get_path(&self) -> &str {
-        &self.path
+    pub fn write(&self, data: impl AsRef<str>) -> Result<()> {
+        fs::write(&self.path, data.as_ref())?;
+
+        Ok(())
+    }
+
+    pub fn touch_file(&self) -> Result<()> {
+        self.write("")
+    }
+
+    pub fn exists(&self) -> bool {
+        path_exists(&self.path)
+    }
+
+    pub fn contents(&self) -> Result<String> {
+        fs::read_to_string(&self.path).context("failed to read file contents")
     }
 }
 
 impl Drop for TempFile {
     fn drop(&mut self) {
-        fs::remove_file(&self.path).expect("failed to remove file");
+        let metadata = if let Ok(metadata) = fs::metadata(&self.path) {
+            metadata
+        } else {
+            // file doesn't exist or is inaccessible
+            return;
+        };
+
+        if metadata.is_dir() {
+            fs::remove_dir_all(&self.path).expect("failed to remove dir");
+        } else {
+            fs::remove_file(&self.path).expect("failed to remove file");
+        }
     }
 }
 
-pub fn file_in_temp_dir(file_name: &str) -> String {
+impl AsRef<str> for TempFile {
+    fn as_ref(&self) -> &str {
+        &self.path
+    }
+}
+
+fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
     let mut path = env::temp_dir();
 
-    path.push(file_name);
+    path.push(file_name.as_ref());
 
     path.to_str()
         .expect("must be able to convert path to string")
@@ -37,17 +73,7 @@ pub fn file_in_temp_dir(file_name: &str) -> String {
 }
 
 pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
-    let name = generate_random_name(5);
+    let name = generate_alpanumeric_string(8);
 
-    file_in_temp_dir(&format!("{}{}{}", prefix, name, suffix))
-}
-
-fn generate_random_name(length: usize) -> String {
-    let mut rng = thread_rng();
-
-    iter::repeat(())
-        .map(|()| rng.sample(Alphanumeric))
-        .map(char::from)
-        .take(length)
-        .collect()
+    file_in_temp_dir(format!("{}{}{}", prefix, name, suffix))
 }

@@ -337,6 +337,57 @@ select {
   border: 0 none;
 }
 
+/* Tables */
+table {
+  text-align: justify;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 0.5em;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+blockquote {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 1em;
+  padding-top: 0.8em;
+  padding-bottom: 0.8em;
+  padding-right: 0.8em;
+  border-left: 5px solid #1d7484;
+  margin-bottom: 2.5rem;
+  background-color: #f1f1f1;
+}
+
+blockquote p {
+  margin-bottom: 0;
+}
+
+/* Pre and Code */
+pre {
+  background-color: #f1f1f1;
+  display: block;
+  padding: 1em;
+  overflow-x: auto;
+  margin-top: 0px;
+  margin-bottom: 2.5rem;
+}
+
+code {
+  font-size: 0.9em;
+  padding: 0 0.5em;
+  background-color: #f1f1f1;
+  white-space: pre-wrap;
+}
+
+pre > code {
+  padding: 0;
+  background-color: transparent;
+  white-space: pre;
+}
+
 /* Always hide an element with the hidden HTML attribute (from PureCSS). */
 [hidden] {
   display: none !important;

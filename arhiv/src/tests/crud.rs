@@ -1,7 +1,8 @@
-use super::utils::*;
-use crate::{DocumentsCount, Filter};
 use anyhow::*;
 use serde_json::json;
+
+use super::utils::*;
+use crate::{DocumentsCount, Filter};
 
 #[test]
 fn test_crud() -> Result<()> {

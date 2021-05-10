@@ -88,18 +88,31 @@ pub trait Queries {
             .context("Failed to count documents")
     }
 
-    fn count_conflicts(&self) -> Result<u32> {
+    fn create_conflicts_view(&self) -> Result<()> {
         // conflict is a
-        // 1. staged document
+        // 1. staged document (rev = 0)
         // 2. with prev_rev != max rev of the same document
         self.get_connection()
-            .query_row(
-                "SELECT COUNT(*) FROM documents_snapshots
-                    WHERE rev = 0
-                    AND prev_rev != (SELECT MAX(rev) FROM documents_snapshots WHERE id = documents_snapshots.id)",
+            .execute(
+                "CREATE TEMP VIEW IF NOT EXISTS conflicts AS
+                SELECT a.* FROM
+                        documents_snapshots a
+                    INNER JOIN
+                        (SELECT id, MAX(rev) max_rev FROM documents_snapshots GROUP BY id) b
+                    ON a.id = b.id
+                    WHERE a.rev = 0 AND a.prev_rev != b.max_rev",
                 [],
-                |row| row.get(0),
             )
+            .context("failed to create conflicts view")?;
+
+        Ok(())
+    }
+
+    fn count_conflicts(&self) -> Result<u32> {
+        self.create_conflicts_view()?;
+
+        self.get_connection()
+            .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
             .context("failed to count conflicts")
     }
 

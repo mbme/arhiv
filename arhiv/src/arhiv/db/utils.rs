@@ -36,7 +36,7 @@ struct SearchScore {
 impl SearchScore {
     pub fn new(size: usize) -> Self {
         SearchScore {
-            values: vec![0, size],
+            values: vec![0; size],
         }
     }
 

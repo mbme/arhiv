@@ -22,7 +22,7 @@ interface IOptions {
   order: OrderBy[]
 }
 
-export function useList(getOptions: () => IOptions, args: any[] = []): IList<IDocumentExt> {
+export function useList(getOptions: () => IOptions, deps: any[] = []): IList<IDocumentExt> {
   const [filter, setFilter] = React.useState<IFilter>()
 
   const [items, setItems] = React.useState<IDocumentExt[]>()
@@ -46,7 +46,7 @@ export function useList(getOptions: () => IOptions, args: any[] = []): IList<IDo
       matchers: withoutUndefined(matchers),
       order,
     })
-  }, args)
+  }, deps)
 
   React.useEffect(() => {
     if (!filter) {

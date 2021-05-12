@@ -6,7 +6,6 @@ import {
   Row,
   StyleArg,
 } from '@v/web-platform'
-import { RouterContext } from '@v/web-utils'
 import { IDocument } from '../../api'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
@@ -38,14 +37,11 @@ interface IProps {
 }
 
 export function CatalogEntry({ document, preview, showModificationDate, showDataFields }: IProps) {
-  const router = RouterContext.use()
-
   return (
     <Box
       mb="small"
       p="small"
       cursor="pointer"
-      onClick={() => router.push(`/documents/${document.id}`)}
       tabIndex="0"
       $style={$container}
     >

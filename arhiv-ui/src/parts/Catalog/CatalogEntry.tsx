@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChronoFormatter } from '@v/chrono'
 import {
   Box,
+  Link,
   Row,
   StyleArg,
 } from '@v/web-platform'
@@ -48,31 +49,36 @@ export function CatalogEntry({ document, preview, showModificationDate, showData
       tabIndex="0"
       $style={$container}
     >
-      <Box
-        dangerouslySetInnerHTML={{ __html: preview }}
-        $style={$preview}
-      />
+      <Link
+        clean
+        to={`/documents/${document.id}`}
+      >
+        <Box
+          dangerouslySetInnerHTML={{ __html: preview }}
+          $style={$preview}
+        />
 
-      <Row alignX="left">
-        {showModificationDate && (
-          <Box
-            as="small"
-            display="block"
-          >
-            {dateFormat.format(new Date(document.updatedAt))}
-          </Box>
-        )}
-        {showDataFields.map(field => (
-          <Box
-            key={field}
-            as="small"
-            display="block"
-            mr="medium"
-          >
-            {field}: {document.data[field]}
-          </Box>
-        ))}
-      </Row>
+        <Row alignX="left">
+          {showModificationDate && (
+            <Box
+              as="small"
+              display="block"
+            >
+              {dateFormat.format(new Date(document.updatedAt))}
+            </Box>
+          )}
+          {showDataFields.map(field => (
+            <Box
+              key={field}
+              as="small"
+              display="block"
+              mr="medium"
+            >
+              {field}: {document.data[field]}
+            </Box>
+          ))}
+        </Row>
+      </Link>
     </Box>
   )
 }

@@ -38,6 +38,7 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
 
   const {
     items,
+    loading,
     hasMore,
     error,
     loadMore,
@@ -53,13 +54,17 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
 
   const content = error ? (
     <ErrorBlock error={error} />
-  ) : items ? (
-    <CatalogEntries
-      items={items}
-      uiOptions={uiOptions}
-    />
   ) : (
-    <ProgressLocker />
+    <>
+      {loading && (
+        <ProgressLocker />
+      )}
+
+      <CatalogEntries
+        items={items}
+        uiOptions={uiOptions}
+      />
+    </>
   )
 
   return (
@@ -73,6 +78,7 @@ export function Catalog({ documentType, collectionMatcher, options }: IProps) {
             label=""
             name="filter"
             placeholder={`Filter ${documentType}s`}
+            autoComplete="off"
           />
         </Form>
       </Box>

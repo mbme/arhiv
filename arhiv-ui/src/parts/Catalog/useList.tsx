@@ -10,10 +10,19 @@ import {
 } from '../../api'
 
 interface IList<D> {
-  items?: D[]
+  items: D[]
+  loading: boolean
   error?: any
   hasMore: boolean
   loadMore(): void
+}
+
+interface IState {
+  items: IDocumentExt[]
+  loading: boolean
+  appendItems: boolean
+  hasMore: boolean
+  error?: any
 }
 
 interface IOptions {
@@ -25,20 +34,27 @@ interface IOptions {
 export function useList(getOptions: () => IOptions, deps: any[] = []): IList<IDocumentExt> {
   const [filter, setFilter] = React.useState<IFilter>()
 
-  const [items, setItems] = React.useState<IDocumentExt[]>()
-  const [hasMore, setHasMore] = React.useState(false)
-  const [error, setError] = React.useState<any>()
+  const [state, setState] = React.useState<IState>({
+    items: [],
+    loading: false,
+    appendItems: true,
+    hasMore: false,
+    error: undefined,
+  })
+
+  const updateState = (update: Partial<IState>) => setState(currentState => ({ ...currentState, ...update }))
 
   React.useEffect(() => {
-    setItems(undefined)
-    setHasMore(false)
-    setError(undefined)
-
     const {
       matchers,
       pageSize,
       order,
     } = getOptions()
+
+    updateState({
+      appendItems: false,
+      error: undefined,
+    })
 
     setFilter({
       pageOffset: 0,
@@ -55,22 +71,45 @@ export function useList(getOptions: () => IOptions, deps: any[] = []): IList<IDo
 
     let relevant = true
 
+    updateState({ loading: true })
+
     API.list(filter).then((page: IListPage<IDocumentExt>) => {
-      if (relevant) {
-        setItems(currentItems => [...(currentItems || []), ...page.items])
-        setHasMore(page.hasMore)
+      if (!relevant) {
+        return
       }
-    }).catch(setError)
+
+      updateState({
+        items: state.appendItems ? [...state.items, ...page.items] : page.items,
+        hasMore: page.hasMore,
+
+        loading: false,
+      })
+    }).catch((e) => {
+      if (!relevant) {
+        return
+      }
+
+      updateState({
+        items: [],
+        hasMore: false,
+        error: e,
+
+        loading: false,
+      })
+    })
 
     return () => {
       relevant = false
+
+      updateState({ loading: false })
     }
   }, [filter])
 
   return {
-    items,
-    hasMore,
-    error,
+    items: state.items,
+    hasMore: state.hasMore,
+    error: state.error,
+    loading: state.loading,
 
     loadMore() {
       setFilter((currentFilter) => {
@@ -87,6 +126,8 @@ export function useList(getOptions: () => IOptions, deps: any[] = []): IList<IDo
           pageOffset: (currentFilter.pageOffset || 0) + currentFilter.pageSize,
         }
       })
+
+      updateState({ appendItems: true })
     }
   }
 }

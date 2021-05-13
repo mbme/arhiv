@@ -5,6 +5,7 @@ export interface ICatalogOptions {
   pageSize?: number
   order: OrderBy[]
   groupByField?: string
+  openGroups: string[],
   showEntryModificationDate: boolean
   showEntryDataFields: string[]
 }
@@ -13,6 +14,7 @@ const DEFAULT_UI_OPTIONS: ICatalogOptions = {
   pageSize: 12,
   order: [{ UpdatedAt: { asc: false } }],
   groupByField: undefined,
+  openGroups: [],
   showEntryModificationDate: true,
   showEntryDataFields: [],
 }

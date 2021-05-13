@@ -34,6 +34,7 @@ const PROJECT_CATALOG_OPTIONS: CatalogOptionsOverrides = {
 const PROJECT_CARD_CATALOG_OPTIONS: CatalogOptionsOverrides = {
   pageSize: undefined,
   groupByField: 'status',
+  openGroups: ['Inbox', 'InProgress', 'Todo'],
   order: [
     {
       EnumField: {

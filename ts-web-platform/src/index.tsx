@@ -20,6 +20,7 @@ export { Text } from './Text'
 export { Heading } from './Heading'
 export { Label } from './Label'
 export { CodeBlock } from './CodeBlock'
+export { Accordion } from './Accordion'
 export {
   Overlay,
   ProgressLocker,

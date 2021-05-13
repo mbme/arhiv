@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { partitionBy } from '@v/utils'
 import {
+  Accordion,
   Box,
-  Heading,
+  Text,
 } from '@v/web-platform'
 import { CatalogEntry } from './CatalogEntry'
 import { IDocumentExt } from '../../api'
@@ -54,19 +55,32 @@ export function CatalogEntries({ items, uiOptions }: IProps) {
   const fieldName: string = uiOptions.groupByField
 
   const entries = partitionBy(createRule(fieldName), items)
-    .map(group => (
-      <Box
-        key={group[0].document.data[fieldName]}
-        mt="medium"
-        mb="large"
-      >
-        <Heading variant="1">
-          {group[0].document.data[fieldName]} ({group.length})
-        </Heading>
+    .map((group) => {
+      const groupName = group[0].document.data[fieldName]
 
-        {group.map(renderItem)}
-      </Box>
-    ))
+      return (
+        <Box
+          key={group[0].document.data[fieldName]}
+          mt="medium"
+          mb="large"
+        >
+          <Accordion
+            defaultOpen={uiOptions.openGroups.includes(groupName)}
+            summary={(
+              <Text
+                fontSize="large"
+                bold
+                as="span"
+              >
+                {groupName} ({group.length})
+              </Text>
+            )}
+          >
+            {group.map(renderItem)}
+          </Accordion>
+        </Box>
+      )
+    })
 
   return (
     <>

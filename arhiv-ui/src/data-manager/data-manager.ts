@@ -24,7 +24,7 @@ export class DataManager {
     const dataDescription = this.getDataDescription(documentType)
 
     return dataDescription.fields
-      .filter(({ fieldType }) => isObject(fieldType) && 'Ref' in fieldType)
+      .filter(({ fieldType }) => isObject(fieldType) && 'Ref' in fieldType && fieldType.Ref !== 'attachment')
       .map(({ name }) => name)
   }
 }

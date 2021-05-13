@@ -34,7 +34,7 @@ lazy_static! {
                 fields: vec![Field {
                     name: "data",
                     field_type: FieldType::MarkupString {},
-                },],
+                }],
             },
             DataDescription {
                 document_type: "project",
@@ -73,6 +73,69 @@ lazy_static! {
                             "Done",
                             "Cancelled",
                         ]),
+                    },
+                ],
+            },
+            DataDescription {
+                document_type: "book",
+                collection_of: None,
+                fields: vec![
+                    Field {
+                        name: "title",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "authors",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "cover",
+                        field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                    },
+                    Field {
+                        name: "language",
+                        field_type: FieldType::Enum(vec![
+                            "undefined",
+                            "Ukrainian",
+                            "English",
+                            "Russian",
+                        ]),
+                    },
+                    Field {
+                        name: "translators",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "publisher",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "publication_date",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "description",
+                        field_type: FieldType::MarkupString {},
+                    },
+                    Field {
+                        name: "ISBN",
+                        field_type: FieldType::String {},
+                    },
+                    Field {
+                        name: "rating",
+                        field_type: FieldType::Enum(vec![
+                            "Unknown", //
+                            "Very Bad",
+                            "Bad",
+                            "Average",
+                            "Fine",
+                            "Good",
+                            "Great",
+                        ]),
+                    },
+                    Field {
+                        name: "comment",
+                        field_type: FieldType::MarkupString {},
                     },
                 ],
             },

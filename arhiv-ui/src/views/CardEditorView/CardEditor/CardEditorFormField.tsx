@@ -1,15 +1,14 @@
 import * as React from 'react'
 import { Input, Select, Textarea } from '@v/web-platform'
 import { Dict } from '@v/utils'
-import { FieldType } from '../../../api'
+import { IField } from '../../../api'
 
 interface IProps {
-  name: string
-  fieldType: FieldType
+  field: IField
 }
 
-export function CardEditorFormField({ name, fieldType }: IProps) {
-  if ('String' in fieldType) {
+export function CardEditorFormField({ field: { name, fieldType, optional } }: IProps) {
+  if ('String' in fieldType || 'ISBN' in fieldType || 'Hash' in fieldType || 'Date' in fieldType) {
     return (
       <Input
         label={name}
@@ -33,7 +32,7 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
   if ('Ref' in fieldType) {
     return (
       <Input
-        label={name}
+        label={`${name} (Ref to ${fieldType.Ref})`}
         name={name}
         placeholder={name}
       />
@@ -41,7 +40,12 @@ export function CardEditorFormField({ name, fieldType }: IProps) {
   }
 
   if ('Enum' in fieldType) {
-    const options: Dict = {}
+    const options: Dict<string | undefined> = {}
+
+    if (optional) {
+      options[''] = undefined
+    }
+
     for (const value of fieldType.Enum) {
       options[value] = value
     }

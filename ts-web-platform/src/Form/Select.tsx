@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Dict } from '@v/utils'
 import { Box } from '../Box'
 import {
   StyleArg,
@@ -26,7 +27,7 @@ type NativeProps = 'name' | 'defaultValue'
 interface IProps extends Pick<React.HTMLProps<HTMLSelectElement>, NativeProps> {
   name: string
   label: string
-  options: { [key: string]: string }
+  options: Dict<string | undefined>
 }
 
 export const Select = React.forwardRef(

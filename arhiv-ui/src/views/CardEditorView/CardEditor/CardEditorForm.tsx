@@ -25,16 +25,13 @@ export const CardEditorForm = React.forwardRef(
 
     React.useImperativeHandle(ref, () => ({ ...data, ...values }), [values])
 
-    const fields = dataDescription.fields.map(({ name, fieldType }) => {
+    const fields = dataDescription.fields.map((field) => {
       return (
         <Box
-          key={name}
+          key={field.name}
           mb="medium"
         >
-          <CardEditorFormField
-            name={name}
-            fieldType={fieldType}
-          />
+          <CardEditorFormField field={field} />
         </Box>
       )
     })

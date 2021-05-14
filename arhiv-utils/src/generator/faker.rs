@@ -1,13 +1,14 @@
-use anyhow::*;
-use arhiv::Arhiv;
-use arhiv::{entities::*, schema::SCHEMA};
-use rand::prelude::*;
-use rand::thread_rng;
-use rs_utils::project_relpath;
-use serde_json::Map;
 use std::{collections::HashMap, fs};
 
+use anyhow::*;
+use rand::prelude::*;
+use rand::thread_rng;
+use serde_json::Map;
+
 use arhiv::schema::{DocumentData, FieldType};
+use arhiv::Arhiv;
+use arhiv::{entities::*, schema::SCHEMA};
+use rs_utils::project_relpath;
 
 use super::TextGenerator;
 

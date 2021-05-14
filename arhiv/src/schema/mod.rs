@@ -21,28 +21,36 @@ lazy_static! {
                     Field {
                         name: "filename",
                         field_type: FieldType::String {},
+                        optional: false,
                     },
                     Field {
                         name: "hash",
-                        field_type: FieldType::String {},
+                        field_type: FieldType::Hash {},
+                        optional: false,
                     },
                 ],
             },
             DataDescription {
                 document_type: "note",
                 collection_of: None,
-                fields: vec![Field {
-                    name: "data",
-                    field_type: FieldType::MarkupString {},
-                }],
+                fields: vec![ //
+                    Field {
+                        name: "data",
+                        field_type: FieldType::MarkupString {},
+                        optional: false,
+                    },
+                ],
             },
             DataDescription {
                 document_type: "project",
                 collection_of: Some(Collection { item_type: "task" }),
-                fields: vec![Field {
-                    name: "description",
-                    field_type: FieldType::MarkupString {},
-                },],
+                fields: vec![ //
+                    Field {
+                        name: "description",
+                        field_type: FieldType::MarkupString {},
+                        optional: true,
+                    },
+                ],
             },
             DataDescription {
                 document_type: "task",
@@ -51,16 +59,23 @@ lazy_static! {
                     Field {
                         name: "project",
                         field_type: FieldType::Ref("project"),
+                        optional: false,
                     },
                     Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
+                        optional: false,
                     },
                     Field {
                         name: "complexity",
                         field_type: FieldType::Enum(vec![
-                            "Unknown", "Small", "Medium", "Large", "Epic",
+                            "Unknown", //
+                            "Small",
+                            "Medium",
+                            "Large",
+                            "Epic",
                         ]),
+                        optional: false,
                     },
                     Field {
                         name: "status",
@@ -73,6 +88,7 @@ lazy_static! {
                             "Done",
                             "Cancelled",
                         ]),
+                        optional: false,
                     },
                 ],
             },
@@ -83,59 +99,68 @@ lazy_static! {
                     Field {
                         name: "title",
                         field_type: FieldType::String {},
+                        optional: false,
                     },
                     Field {
                         name: "authors",
                         field_type: FieldType::String {},
+                        optional: false,
                     },
                     Field {
                         name: "cover",
                         field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                        optional: true,
                     },
                     Field {
                         name: "language",
                         field_type: FieldType::Enum(vec![
-                            "undefined",
                             "Ukrainian",
                             "English",
                             "Russian",
                         ]),
+                        optional: true,
                     },
                     Field {
                         name: "translators",
                         field_type: FieldType::String {},
+                        optional: true,
                     },
                     Field {
                         name: "publisher",
                         field_type: FieldType::String {},
+                        optional: true,
                     },
                     Field {
                         name: "publication_date",
-                        field_type: FieldType::String {},
+                        field_type: FieldType::Date {},
+                        optional: true,
                     },
                     Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
+                        optional: true,
                     },
                     Field {
                         name: "ISBN",
-                        field_type: FieldType::String {},
+                        field_type: FieldType::ISBN {},
+                        optional: true,
                     },
                     Field {
                         name: "rating",
                         field_type: FieldType::Enum(vec![
-                            "Unknown", //
-                            "Very Bad",
+                            "Very Bad", //
                             "Bad",
                             "Average",
                             "Fine",
                             "Good",
                             "Great",
                         ]),
+                        optional: true,
                     },
                     Field {
                         name: "comment",
                         field_type: FieldType::MarkupString {},
+                        optional: true,
                     },
                 ],
             },

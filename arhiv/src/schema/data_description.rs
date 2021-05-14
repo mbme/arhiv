@@ -25,6 +25,7 @@ pub struct DataDescription {
 pub struct Field {
     pub name: &'static str,
     pub field_type: FieldType,
+    pub optional: bool,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -33,6 +34,9 @@ pub enum FieldType {
     MarkupString {},
     Ref(&'static str),
     Enum(Vec<&'static str>),
+    ISBN {},
+    Hash {},
+    Date {},
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -70,6 +74,10 @@ impl DataSchema {
                 continue;
             }
 
+            if field.optional {
+                continue;
+            }
+
             match &field.field_type {
                 FieldType::String {} | FieldType::MarkupString {} => {
                     result.insert(field.name.to_string(), Value::from(""));
@@ -78,9 +86,8 @@ impl DataSchema {
                     let value = values.get(0).expect("enum must contain values");
                     result.insert(field.name.to_string(), Value::String(value.to_string()));
                 }
-                FieldType::Ref(_) => {
-                    // FIXME check ref document type
-                    bail!("initial value for Ref must be provided");
+                _ => {
+                    bail!("initial value for {:?} must be provided", field);
                 }
             }
         }
@@ -94,27 +101,33 @@ impl DataSchema {
         let data_description = self.get_data_description_by_type(document_type)?;
 
         for field in &data_description.fields {
+            let value = {
+                match (field.optional, data.get(field.name)) {
+                    (true, None) => {
+                        continue;
+                    }
+                    (false, None) => {
+                        bail!("field {} must be present", field.name);
+                    }
+                    (_, Some(value)) => value,
+                }
+            };
+
             match field.field_type {
                 FieldType::MarkupString {} => {
-                    let value: MarkupString = serde_json::from_value(
-                        data.get(field.name)
-                            .expect(&format!("field '{}' must be present", field.name))
-                            .clone(),
-                    )
-                    .expect("field must parse");
+                    let value: MarkupString =
+                        serde_json::from_value(value.clone()).expect("field must parse");
 
                     result.extend(value.extract_refs());
                 }
                 FieldType::Ref(_) => {
                     // FIXME check ref document type
-                    let value: Id = serde_json::from_value(
-                        data.get(field.name).expect("field must be present").clone(),
-                    )
-                    .expect("field must parse");
+                    let value: Id =
+                        serde_json::from_value(value.clone()).expect("field must parse");
 
                     result.insert(value);
                 }
-                FieldType::String {} | FieldType::Enum(_) => {
+                _ => {
                     continue;
                 }
             }

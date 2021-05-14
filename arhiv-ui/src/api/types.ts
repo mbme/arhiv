@@ -64,6 +64,7 @@ export interface ICollection {
 export interface IField {
   readonly name: string
   readonly fieldType: FieldType
+  readonly optional: boolean
 }
 
 export type FieldType =
@@ -71,6 +72,9 @@ export type FieldType =
   | { MarkupString: EmptyObject }
   | { Ref: string }
   | { Enum: string[] }
+  | { ISBN: EmptyObject }
+  | { Hash: EmptyObject }
+  | { Date: EmptyObject }
 
 export interface ICreateDocumentArgs {
   readonly documentType: string

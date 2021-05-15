@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { HotkeysResolverProvider, RouterProvider } from '@v/web-utils'
+import { HotkeysResolverProvider, RouterProvider } from './utils'
 import { StylishProvider } from './core'
 import { OverlayRenderer } from './Modal'
 

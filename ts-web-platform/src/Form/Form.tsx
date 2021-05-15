@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Dict } from '@v/utils'
 import { Cell } from '@v/reactive'
-import { useCell } from '@v/web-utils'
+import { useCell } from '../utils'
 
 type Values = Dict<string | undefined>
 type ValuesCell = Cell<Values>

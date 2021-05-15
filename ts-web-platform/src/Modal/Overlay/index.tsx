@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   useCounter,
-} from '@v/web-utils'
+} from '../../utils'
 import { IOverlay, OverlayRegistry } from './context'
 
 function Overlay(props: IOverlay) {

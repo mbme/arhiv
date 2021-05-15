@@ -1,9 +1,9 @@
+import * as React from 'react'
 import { Cell } from '@v/reactive'
 import { replaceAtMut } from '@v/utils'
-import { useCell } from '@v/web-utils'
-import * as React from 'react'
+import { useCell } from './hooks'
 
-export interface IRegistryItem<T> {
+interface IRegistryItem<T> {
   id: number
   item: T
 }

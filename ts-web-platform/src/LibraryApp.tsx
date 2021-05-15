@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom'
 
 import { Procedure } from '@v/utils'
 import { configureLogger } from '@v/logger'
-import { injectGlobalStyles } from '@v/web-utils'
+import { injectGlobalStyles } from './utils'
 import { globalStyles } from './core/global-styles'
 import { Library } from './Library'
 

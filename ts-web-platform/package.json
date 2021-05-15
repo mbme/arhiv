@@ -3,7 +3,7 @@
   "private": true,
   "license": "MIT",
   "version": "0.0.1",
-  "description": "typescript UI components",
+  "description": "react/typescript UI components",
   "main": "src/index.tsx",
   "sideEffects": false,
   "dependencies": {

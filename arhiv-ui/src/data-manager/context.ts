@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createContext } from '@v/web-utils'
+import { createContext } from '@v/web-platform'
 import { DataManager } from './data-manager'
 
 export const DataManagerContext = createContext<DataManager>()

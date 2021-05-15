@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link as RouterLink } from '@v/web-utils'
+import { Link as RouterLink } from './utils'
 import {
   StyleArg,
   useStyles,

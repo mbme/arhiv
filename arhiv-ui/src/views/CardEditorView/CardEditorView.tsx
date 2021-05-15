@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   RouterContext,
-} from '@v/web-utils'
+} from '@v/web-platform'
 import { CardLoader, FrameTitle } from '../../parts'
 import { CardEditor } from './CardEditor'
 

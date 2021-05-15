@@ -3,7 +3,7 @@ import {
   createStyleElement,
   StylishRenderer,
   createContext,
-} from '@v/web-utils'
+} from '../utils'
 
 export const RendererContext = createContext<StylishRenderer>()
 

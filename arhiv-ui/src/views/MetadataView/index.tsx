@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {  RouterContext } from '@v/web-utils'
+import {  RouterContext } from '@v/web-platform'
 import { CardLoader, FrameTitle, useActions } from '../../parts'
 import { Metadata } from './Metadata'
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return,
  @typescript-eslint/no-unsafe-member-access */
 import { Dict } from '@v/utils'
-import { IStyleObject } from '@v/web-utils'
+import { IStyleObject } from '../utils'
 import { theme } from './theme'
 
 const getThemeProp = (prop: keyof typeof theme) => (val: any) => (theme as any)[prop][val] || val

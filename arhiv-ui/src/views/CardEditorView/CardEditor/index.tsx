@@ -2,10 +2,8 @@ import * as React from 'react'
 import { Procedure } from '@v/utils'
 import {
   Box,
-} from '@v/web-platform'
-import {
   copyTextToClipboard,
-} from '@v/web-utils'
+} from '@v/web-platform'
 import { API, createRef, IDocument } from '@v/arhiv-api'
 import { CardData, ConfirmationButton, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'

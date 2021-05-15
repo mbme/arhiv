@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { withoutUndefined } from '@v/utils'
-import { createRegistry } from '@v/web-platform'
-import { useCounter } from '@v/web-utils'
+import { createRegistry, useCounter } from '@v/web-platform'
 
 export interface IAction {
   onClick(): void,

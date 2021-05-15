@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
   RouterContext,
-} from '@v/web-utils'
+} from '@v/web-platform'
 import { Dict } from '@v/utils'
 import { API } from '@v/arhiv-api'
 import { CardLoader, FrameTitle } from '../../parts'

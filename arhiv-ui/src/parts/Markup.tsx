@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { usePromise } from '@v/web-utils'
 import {
   Box,
   StyleArg,
+  usePromise,
 } from '@v/web-platform'
 import { API } from '@v/arhiv-api'
 

@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { CodeBlock } from '@v/web-platform'
-import { usePromise } from '@v/web-utils'
+import { CodeBlock, usePromise } from '@v/web-platform'
 import { API } from '@v/arhiv-api'
 import { FrameTitle, useActions } from '../parts'
 

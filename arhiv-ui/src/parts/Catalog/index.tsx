@@ -6,8 +6,8 @@ import {
   Box,
   Button,
   Row,
+  useDebounced,
 } from '@v/web-platform'
-import { useDebounced } from '@v/web-utils'
 import { ErrorBlock } from '../ErrorBlock'
 import { Matcher } from '@v/arhiv-api'
 import { useList } from './useList'

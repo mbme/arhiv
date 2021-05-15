@@ -1,5 +1,5 @@
-import { Redirect } from '@v/web-utils'
 import * as React from 'react'
+import { Redirect } from '@v/web-platform'
 import { CardLoader } from '../parts'
 
 interface IProps {

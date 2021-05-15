@@ -1,8 +1,8 @@
 import * as React from 'react'
 import {
   ProgressLocker,
+  usePromise,
 } from '@v/web-platform'
-import { usePromise  } from '@v/web-utils'
 import { API, IDocument } from '@v/arhiv-api'
 import { ErrorBlock, NotFoundBlock } from '../parts'
 

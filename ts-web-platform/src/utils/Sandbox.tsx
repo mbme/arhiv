@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { HotkeysResolverContext } from '@v/web-utils'
 import { noop } from '@v/utils'
+import { HotkeysResolverContext } from './hotkeys'
 
 interface IProps {
   content: string

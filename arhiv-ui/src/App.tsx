@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { pathMatcher as pm } from '@v/utils'
 import {
-  Routes, usePromise,
-} from '@v/web-utils'
-import {
   PlatformProvider,
+  Routes,
+  usePromise,
 } from '@v/web-platform'
 import {
   CatalogOptionsOverrides,

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { isObject, isString } from '@v/utils'
-import { IStyleObject } from '@v/web-utils'
+import { IStyleObject } from '../utils'
 import { RendererContext } from './StylishProvider'
 import { StyleArg, IKeyframeProps } from './types'
 import { stylishTransformer, getAnimation } from './stylish-transformer'

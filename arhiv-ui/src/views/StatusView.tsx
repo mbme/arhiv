@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { CodeBlock } from '@v/web-platform'
 import { usePromise } from '@v/web-utils'
-import { API } from '../api'
+import { API } from '@v/arhiv-api'
 import { FrameTitle, useActions } from '../parts'
 
 export function StatusView() {

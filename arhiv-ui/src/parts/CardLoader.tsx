@@ -3,7 +3,7 @@ import {
   ProgressLocker,
 } from '@v/web-platform'
 import { usePromise  } from '@v/web-utils'
-import { API, IDocument } from '../api'
+import { API, IDocument } from '@v/arhiv-api'
 import { ErrorBlock, NotFoundBlock } from '../parts'
 
 type Props = {

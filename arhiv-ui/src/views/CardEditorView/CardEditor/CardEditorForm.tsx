@@ -3,7 +3,7 @@ import {
   useForm,
   Box,
 } from '@v/web-platform'
-import { IDocumentData } from '../../../api'
+import { IDocumentData } from '@v/arhiv-api'
 import { useDataDescription } from '../../../data-manager'
 import { CardEditorFormField } from './CardEditorFormField'
 

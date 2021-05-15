@@ -6,7 +6,7 @@ import {
   Row,
   StyleArg,
 } from '@v/web-platform'
-import { IDocument } from '../../api'
+import { IDocument } from '@v/arhiv-api'
 
 const dateFormat = new ChronoFormatter('YYYY/MM/DD')
 

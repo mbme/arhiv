@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { FieldType } from '../../api'
+import { FieldType } from '@v/arhiv-api'
 import { Markup } from '../Markup'
 import { Ref } from '../Ref'
 

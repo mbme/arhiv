@@ -3,7 +3,7 @@ import {
   Box,
 } from '@v/web-platform'
 import { ChronoFormatter } from '@v/chrono'
-import { IDocument } from '../../api'
+import { IDocument } from '@v/arhiv-api'
 import { MetaField, Ref } from '../../parts'
 
 const dateFormat = new ChronoFormatter('YYYY-MM-DD HH:mm')

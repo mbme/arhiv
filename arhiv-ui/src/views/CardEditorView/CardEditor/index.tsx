@@ -6,7 +6,7 @@ import {
 import {
   copyTextToClipboard,
 } from '@v/web-utils'
-import { API, createRef, IDocument } from '../../../api'
+import { API, createRef, IDocument } from '@v/arhiv-api'
 import { CardData, ConfirmationButton, useActions } from '../../../parts'
 import { CardEditorForm } from './CardEditorForm'
 

@@ -4,7 +4,7 @@ import {
   Box,
   StyleArg,
 } from '@v/web-platform'
-import { API } from '../api'
+import { API } from '@v/arhiv-api'
 
 const $article: StyleArg = {
   hyphens: 'auto',

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Input, Select, Textarea } from '@v/web-platform'
 import { Dict } from '@v/utils'
-import { IField } from '../../../api'
+import { IField } from '@v/arhiv-api'
 
 interface IProps {
   field: IField

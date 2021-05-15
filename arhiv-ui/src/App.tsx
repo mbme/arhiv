@@ -13,7 +13,7 @@ import {
 } from './parts'
 
 import { DataManager, DataManagerContext } from './data-manager'
-import { API } from './api'
+import { API } from '@v/arhiv-api'
 
 import { CatalogView } from './views/CatalogView'
 import { CardView } from './views/CardView'

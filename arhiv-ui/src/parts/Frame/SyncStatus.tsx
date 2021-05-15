@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box } from '@v/web-platform'
-import { API } from '../../api'
+import { API } from '@v/arhiv-api'
 
 export function SyncStatus() {
   const [isSyncRequired, setSyncRequired] = React.useState(false)

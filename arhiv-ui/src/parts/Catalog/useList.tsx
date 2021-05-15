@@ -7,7 +7,7 @@ import {
   IListPage,
   Matcher,
   OrderBy,
-} from '../../api'
+} from '@v/arhiv-api'
 
 interface IList<D> {
   items: D[]

@@ -1,5 +1,5 @@
 import { merge } from '@v/utils'
-import { OrderBy } from '../../api'
+import { OrderBy } from '@v/arhiv-api'
 
 export interface ICatalogOptions {
   pageSize?: number

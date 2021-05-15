@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, Label, Spacer } from '@v/web-platform'
-import { IDocumentData } from '../../api'
+import { IDocumentData } from '@v/arhiv-api'
 import { useDataDescription } from '../../data-manager'
 import { CardDataField } from './CardDataField'
 

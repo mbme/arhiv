@@ -6,7 +6,7 @@ import {
   Text,
 } from '@v/web-platform'
 import { CatalogEntry } from './CatalogEntry'
-import { IDocumentExt } from '../../api'
+import { IDocumentExt } from '@v/arhiv-api'
 import { ICatalogOptions } from './options'
 
 function createRule(field: string) {

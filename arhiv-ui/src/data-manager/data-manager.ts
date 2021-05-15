@@ -1,5 +1,5 @@
 import { isObject } from '@v/utils'
-import { IDataDescription, IDataSchema } from '../api'
+import { IDataDescription, IDataSchema } from '@v/arhiv-api'
 
 export class DataManager {
   constructor(

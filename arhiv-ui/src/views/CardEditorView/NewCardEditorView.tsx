@@ -3,8 +3,8 @@ import {
   RouterContext,
 } from '@v/web-utils'
 import { Dict } from '@v/utils'
+import { API } from '@v/arhiv-api'
 import { CardLoader, FrameTitle } from '../../parts'
-import { API } from '../../api'
 import { useDataDescription } from '../../data-manager'
 import { CardEditor } from './CardEditor'
 

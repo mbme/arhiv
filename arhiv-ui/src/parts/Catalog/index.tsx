@@ -9,7 +9,7 @@ import {
 } from '@v/web-platform'
 import { useDebounced } from '@v/web-utils'
 import { ErrorBlock } from '../ErrorBlock'
-import { Matcher } from '../../api'
+import { Matcher } from '@v/arhiv-api'
 import { useList } from './useList'
 import { CatalogEntries } from './CatalogEntries'
 import { getUIOptions, CatalogOptionsOverrides } from './options'

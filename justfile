@@ -38,7 +38,10 @@ ui-start-web:
   watchexec --exts ts,tsx just ui-build-web
 
 ui-start-shell:
-  just arhiv ui --open=chromium
+  just arhiv ui --port 8061
+
+ui-start-web2:
+  cd arhiv-ui2; yarn dev
 
 web-platform:
   cd ts-web-platform; yarn start

@@ -7,5 +7,10 @@ export default defineConfig({
   plugins: [
     svelte(),
     WindiCSS(),
-  ]
+  ],
+  server: {
+    proxy: {
+      '/rpc': 'http://localhost:8061/rpc',
+    }
+  }
 })

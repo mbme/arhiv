@@ -1,9 +1,17 @@
 import 'virtual:windi.css'
 
+import { API } from '@v/arhiv-api'
+
 import App from './App.svelte'
 
-const app = new App({
-  target: document.getElementById('app')!
+API.get_schema().then((schema) => {
+  const context = new Map()
+  context.set('schema', schema)
+
+  new App({
+    target: document.getElementById('app')!,
+    context,
+  })
 })
 
-export default app
+// export default app

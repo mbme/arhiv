@@ -42,11 +42,11 @@ export function CatalogEntry({ document, preview, showModificationDate, showData
       mb="small"
       p="small"
       cursor="pointer"
-      tabIndex="0"
       $style={$container}
     >
       <Link
         clean
+        $style={{ display: 'block' }}
         to={`/documents/${document.id}`}
       >
         <Box

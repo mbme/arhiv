@@ -3,8 +3,7 @@ import * as ReactDOM from 'react-dom'
 
 import { Procedure } from '@v/utils'
 import { configureLogger } from '@v/logger'
-import { injectGlobalStyles } from './utils'
-import { globalStyles } from './core/global-styles'
+import { injectGlobalStyles, globalStyles } from './core'
 import { Library } from './Library'
 
 configureLogger({ minLogLevel: 'DEBUG' })

@@ -1,8 +1,9 @@
-export { globalStyles } from './core/global-styles'
 export {
   StyleArg,
   useStyles,
   useAnimation,
+  globalStyles,
+  injectGlobalStyles,
 } from './core'
 
 export { Button } from './Button'

@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { createContext } from '../utils'
 import {
   createStyleElement,
   StylishRenderer,
-  createContext,
-} from '../utils'
+} from './stylish'
 
 export const RendererContext = createContext<StylishRenderer>()
 

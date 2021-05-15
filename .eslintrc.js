@@ -13,11 +13,23 @@ module.exports = {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "tsconfig.json",
-    "sourceType": "module"
+    "sourceType": "module",
+    "extraFileExtensions": [".svelte"]
   },
   "plugins": [
+    "svelte3",
     "@typescript-eslint"
   ],
+  "overrides": [
+    {
+      "files": ["*.svelte"],
+      "processor": "svelte3/svelte3"
+    }
+  ],
+  "settings": {
+    "svelte3/typescript": require('typescript'),
+    "svelte3/ignore-styles": () => true
+  },
   "rules": {
     "@typescript-eslint/no-unused-vars": "off",
     "no-underscore-dangle": "off",

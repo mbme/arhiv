@@ -9,7 +9,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "module": "ESNext",
-    "target": "es2019",
+    "target": "esnext",
 
     "jsx": "react",
     "sourceMap": true,
@@ -29,7 +29,6 @@
   },
   "exclude": [
     "node_modules",
-    "*/**/FLYCHECK_XXY_*",
-    "ui"
+    "*/**/FLYCHECK_XXY_*"
   ]
 }

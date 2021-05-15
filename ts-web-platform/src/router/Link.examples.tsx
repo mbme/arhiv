@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Example } from './Example'
+import { Example } from '../Example'
 import { Link } from './Link'
 
 export function LinkExamples() {

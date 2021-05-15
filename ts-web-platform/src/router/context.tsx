@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createContext } from '../context'
+import { createContext } from '../utils'
 import { WebRouter } from './web-router'
 
 export const RouterContext = createContext<WebRouter>()

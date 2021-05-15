@@ -1,4 +1,4 @@
-import { useCell } from '../hooks'
+import { useCell } from '../utils'
 import { RouterContext } from './context'
 import { ILocation } from './types'
 

@@ -29,7 +29,7 @@ export {
   ConfirmationDialog,
 } from './Modal'
 
-export { Link } from './Link'
+export * from './router'
 export { Image } from './Image'
 export {
   Row,

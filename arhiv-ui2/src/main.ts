@@ -13,5 +13,3 @@ API.get_schema().then((schema) => {
     context,
   })
 })
-
-// export default app

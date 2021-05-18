@@ -71,7 +71,7 @@ pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender
         .expect("config.server_port must be configured");
 
     let (addr, server) =
-        warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
+        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port), async {
             tokio::select! {
                 _ = signal::ctrl_c() => {
                     info!("got Ctrl-C")
@@ -288,13 +288,11 @@ pub async fn start_ui_server(port: Option<u16>) -> (JoinHandle<()>, SocketAddr) 
     let routes = rpc.or(attachment_data).or(index_html).or(static_dir);
 
     // run server
-    let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown(
-        ([127, 0, 0, 1], port.unwrap_or(0)),
-        async {
+    let (addr, server) =
+        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port.unwrap_or(0)), async {
             signal::ctrl_c().await.expect("failed to listen for event");
-            println!("\nGot Ctrl-C, stopping the server");
-        },
-    );
+            info!("\nGot Ctrl-C, stopping the server");
+        });
 
     let join_handle = tokio::task::spawn(server);
     info!("RPC server listening on http://{}", addr);

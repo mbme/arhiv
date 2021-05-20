@@ -17,7 +17,7 @@ use rs_utils::log;
 mod arhiv_ui_static_handler;
 mod rpc_handler;
 
-pub async fn start_ui_server(port: Option<u16>) -> (JoinHandle<()>, SocketAddr) {
+pub async fn start_ui_server(port: Option<u16>, public: bool) -> (JoinHandle<()>, SocketAddr) {
     let arhiv = Arc::new(Arhiv::must_open());
 
     // POST /rpc RpcMessage -> RpcMessageResponse
@@ -57,16 +57,24 @@ pub async fn start_ui_server(port: Option<u16>) -> (JoinHandle<()>, SocketAddr) 
     let routes = rpc.or(attachment_data).or(index_html).or(static_dir);
 
     // run server
-    let (addr, server) =
-        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port.unwrap_or(0)), async {
-            signal::ctrl_c().await.expect("failed to listen for event");
+    let addr = (
+        if public {
+            log::info!("will listen on public interfaces");
+            std::net::Ipv4Addr::UNSPECIFIED // listen on all interfaces
+        } else {
+            std::net::Ipv4Addr::LOCALHOST
+        },
+        port.unwrap_or(0),
+    );
+    let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown(addr, async {
+        signal::ctrl_c().await.expect("failed to listen for event");
 
-            println!("");
-            log::info!("Got Ctrl-C, stopping the server");
-        });
+        println!("");
+        log::info!("Got Ctrl-C, stopping the server");
+    });
 
     let join_handle = tokio::task::spawn(server);
-    log::info!("RPC server listening on http://{}", addr);
+    log::info!("UI server listening on http://{}", addr);
 
     (join_handle, addr)
 }

@@ -53,6 +53,11 @@ async fn main() {
                         ),
                 )
                 .arg(
+                    Arg::with_name("public")
+                        .long("public")
+                        .help("Listen on a public network interface"),
+                )
+                .arg(
                     Arg::with_name("port")
                         .long("port")
                         .takes_value(true)
@@ -144,7 +149,9 @@ async fn main() {
                 .value_of("port")
                 .map(|value| value.parse().expect("port must be valid u16"));
 
-            let (join_handle, addr) = start_ui_server(port).await;
+            let public = matches.is_present("public");
+
+            let (join_handle, addr) = start_ui_server(port, public).await;
 
             if matches.occurrences_of("open") > 0 {
                 let browser = matches

@@ -12,29 +12,26 @@ impl Drop for Arhiv {
     }
 }
 
-fn new_arhiv(config: Config) -> Arc<Arhiv> {
-    let arhiv = Arhiv::create(config).expect("must be able to create temp arhiv");
+fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
+    let arhiv = Arhiv::create(config, "test-arhiv".to_string(), prime)
+        .expect("must be able to create temp arhiv");
 
     Arc::new(arhiv)
 }
 
 pub fn new_prime() -> Arc<Arhiv> {
-    let config = Config::Prime {
-        arhiv_id: "test_arhiv".to_string(),
-        arhiv_root: generate_temp_path("TempArhiv", ""),
-    };
+    let config = Config::new(generate_temp_path("TempArhiv", ""), "");
 
-    new_arhiv(config)
+    new_arhiv(config, true)
 }
 
 pub fn new_replica(port: u16) -> Arc<Arhiv> {
-    let config = Config::Replica {
-        arhiv_id: "test_arhiv".to_string(),
-        arhiv_root: generate_temp_path("TempArhiv", ""),
-        prime_url: format!("http://localhost:{}", port),
-    };
+    let config = Config::new(
+        generate_temp_path("TempArhiv", ""),
+        format!("http://localhost:{}", port),
+    );
 
-    new_arhiv(config)
+    new_arhiv(config, false)
 }
 
 pub fn empty_document() -> Document {

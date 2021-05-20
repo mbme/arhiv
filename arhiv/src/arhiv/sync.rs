@@ -14,11 +14,12 @@ impl Arhiv {
     ) -> Result<Vec<Document>> {
         log::debug!("applying changeset {}", &changeset);
 
+        let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
         ensure!(
-            changeset.arhiv_id == self.config.get_arhiv_id(),
+            changeset.arhiv_id == arhiv_id,
             "changeset arhiv_id {} must be equal to {}",
             changeset.arhiv_id,
-            self.config.get_arhiv_id()
+            arhiv_id,
         );
 
         ensure!(
@@ -188,7 +189,7 @@ impl Arhiv {
         let documents = tx.list_documents(DOCUMENT_FILTER_STAGED)?.items;
 
         let changeset = Changeset {
-            arhiv_id: self.config.get_arhiv_id().to_string(),
+            arhiv_id: tx.get_setting(SETTING_ARHIV_ID)?,
             base_rev: db_status.db_rev,
             documents,
         };
@@ -197,7 +198,7 @@ impl Arhiv {
     }
 
     pub async fn sync(&self) -> Result<()> {
-        let result = if self.config.is_prime() {
+        let result = if self.is_prime()? {
             self.sync_locally()
         } else {
             self.sync_remotely().await

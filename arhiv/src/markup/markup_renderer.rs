@@ -1,6 +1,7 @@
-use crate::{entities::*, Arhiv};
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
+
+use crate::{entities::*, Arhiv};
 use rs_utils::log::warn;
 
 use super::utils::extract_id;
@@ -78,7 +79,11 @@ impl<'a> MarkupRenderer<'a> {
                                 "{}/{}",
                                 &self.options.attachment_data_path, &attachment_data.hash
                             )
-                        } else if self.arhiv.config.is_prime() {
+                        } else if self
+                            .arhiv
+                            .is_prime()
+                            .expect("must be able to check prime status")
+                        {
                             // this is a prime instance, data is missing, so just render Document Link
                             return link_event(
                                 normalized_title,

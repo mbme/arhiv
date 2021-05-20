@@ -10,7 +10,7 @@ remove-arhiv:
   cd arhiv-utils; cargo run --bin remove-arhiv
 
 init-arhiv:
-  cd arhiv; cargo run --bin arhiv init
+  cd arhiv; cargo run --bin arhiv init test-arhiv --prime
 
 arhiv *PARAMS:
   cd arhiv; cargo run --bin arhiv {{PARAMS}}

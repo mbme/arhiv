@@ -3,30 +3,21 @@ use std::fs;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{file_exists, get_config_home, locate_dominating_file, log::debug};
+use rs_utils::{file_exists, get_config_home, locate_dominating_file, log};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum Config {
-    #[serde(rename_all = "camelCase")]
-    Prime {
-        arhiv_id: String,
-        arhiv_root: String,
-    },
+pub struct Config {
+    arhiv_root: String,
 
-    #[serde(rename_all = "camelCase")]
-    Replica {
-        arhiv_id: String,
-        arhiv_root: String,
-
-        prime_url: String,
-    },
+    #[serde(default)]
+    prime_url: String,
 }
 
 impl Config {
     pub fn read() -> Result<(Config, String)> {
         let path = find_config_file("arhiv.json")?;
-        debug!("Found Arhiv config at {}", &path);
+        log::debug!("Found Arhiv config at {}", &path);
 
         let data = fs::read_to_string(&path)?;
 
@@ -39,32 +30,21 @@ impl Config {
         Config::read().expect("must be able to read arhiv config")
     }
 
-    pub fn is_prime(&self) -> bool {
-        match self {
-            Config::Prime { .. } => true,
-            Config::Replica { .. } => false,
-        }
-    }
-
-    pub fn get_arhiv_id(&self) -> &str {
-        match self {
-            Config::Prime { arhiv_id, .. } => arhiv_id,
-            Config::Replica { arhiv_id, .. } => arhiv_id,
-        }
-    }
-
-    pub fn get_root_dir(&self) -> &str {
-        match self {
-            Config::Prime { arhiv_root, .. } => arhiv_root,
-            Config::Replica { arhiv_root, .. } => arhiv_root,
+    pub fn new(arhiv_root: impl Into<String>, prime_url: impl Into<String>) -> Self {
+        Config {
+            arhiv_root: arhiv_root.into(),
+            prime_url: prime_url.into(),
         }
     }
 
     pub fn get_prime_url(&self) -> Result<&str> {
-        match self {
-            Config::Prime { .. } => bail!("can't get config.prime_url on prime"),
-            Config::Replica { prime_url, .. } => Ok(prime_url),
-        }
+        ensure!(!self.prime_url.is_empty(), "prime_url is not set");
+
+        Ok(&self.prime_url)
+    }
+
+    pub fn get_root_dir(&self) -> &str {
+        &self.arhiv_root
     }
 }
 

@@ -24,7 +24,20 @@ async fn main() {
 
     let matches = App::new("arhiv")
         .subcommand(
-            SubCommand::with_name("init").about("Initialize Arhiv instance on local machine"),
+            SubCommand::with_name("init")
+                .about("Initialize Arhiv instance on local machine")
+                .arg(
+                    Arg::with_name("arhiv_id")
+                        .long("arhiv_id")
+                        .required(true)
+                        .index(1)
+                        .help("Arhiv id to use"),
+                )
+                .arg(
+                    Arg::with_name("prime")
+                        .long("prime")
+                        .help("Initialize prime instance"),
+                ),
         )
         .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(SubCommand::with_name("config").about("Print config"))
@@ -104,10 +117,18 @@ async fn main() {
         .get_matches();
 
     match matches.subcommand() {
-        ("init", Some(_)) => {
+        ("init", Some(matches)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));
 
-            Arhiv::create(Config::must_read().0).expect("must be able to create arhiv");
+            let arhiv_id: String = matches
+                .value_of("arhiv_id")
+                .expect("arhiv_id must be present")
+                .to_string();
+
+            let prime = matches.is_present("prime");
+
+            Arhiv::create(Config::must_read().0, arhiv_id, prime)
+                .expect("must be able to create arhiv");
         }
         ("status", Some(_)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));

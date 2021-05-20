@@ -30,29 +30,17 @@ impl Arhiv {
     pub fn open(config: Config) -> Result<Arhiv> {
         let db = DB::open(config.get_root_dir().to_string())?;
 
-        // check if config settings are equal to db settings
+        // check app and db version
         {
             let conn = db.get_connection()?;
 
-            let db_status = conn.get_db_status()?;
+            let db_version = conn.get_setting(SETTING_DB_VERSION)?;
 
             ensure!(
-                db_status.db_version == DB::VERSION,
+                db_version == DB::VERSION,
                 "db version {} is different from app db version {}",
-                db_status.db_version,
+                db_version,
                 DB::VERSION,
-            );
-            ensure!(
-                db_status.arhiv_id == config.get_arhiv_id(),
-                "db arhiv_id {} is different from config.arhiv_id {}",
-                db_status.arhiv_id,
-                config.get_arhiv_id(),
-            );
-            ensure!(
-                db_status.is_prime == config.is_prime(),
-                "db is_prime {} is different from config {}",
-                db_status.is_prime,
-                config.is_prime(),
             );
         }
 
@@ -61,14 +49,11 @@ impl Arhiv {
         Ok(Arhiv { config, db })
     }
 
-    pub fn create(config: Config) -> Result<Arhiv> {
+    pub fn create(config: Config, arhiv_id: String, prime: bool) -> Result<Arhiv> {
         log::info!(
-            "Initializing {} arhiv in {}",
-            if config.is_prime() {
-                "prime"
-            } else {
-                "replica"
-            },
+            "Initializing {} arhiv '{}' in {}",
+            if prime { "prime" } else { "replica" },
+            arhiv_id,
             config.get_root_dir()
         );
 
@@ -77,8 +62,8 @@ impl Arhiv {
         let tx = db.get_tx()?;
 
         // initial settings
-        tx.set_setting(SETTING_ARHIV_ID, config.get_arhiv_id().to_string())?;
-        tx.set_setting(SETTING_IS_PRIME, config.is_prime())?;
+        tx.set_setting(SETTING_ARHIV_ID, arhiv_id)?;
+        tx.set_setting(SETTING_IS_PRIME, prime)?;
         tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
 
@@ -114,6 +99,12 @@ impl Arhiv {
             documents_count,
             conflicts_count,
         })
+    }
+
+    pub fn is_prime(&self) -> Result<bool> {
+        let conn = self.db.get_connection()?;
+
+        conn.get_setting(SETTING_IS_PRIME)
     }
 
     pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {

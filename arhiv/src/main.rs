@@ -36,6 +36,7 @@ async fn main() {
                 .arg(
                     Arg::with_name("prime")
                         .long("prime")
+                        .display_order(1)
                         .help("Initialize prime instance"),
                 ),
         )

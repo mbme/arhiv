@@ -16,7 +16,7 @@ arhiv *PARAMS:
   cd arhiv; cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
-  just arhiv server
+  just arhiv prime-server
 
 reset-arhiv: remove-arhiv init-arhiv
 
@@ -38,7 +38,7 @@ ui-start-web:
   watchexec --exts ts,tsx just ui-build-web
 
 ui-start-shell:
-  just arhiv ui --port 8061
+  just arhiv ui-server --port 8061
 
 ui-start-web2:
   cd arhiv-ui2; yarn dev

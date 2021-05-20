@@ -39,21 +39,24 @@ async fn main() {
                         .help("Initialize prime instance"),
                 ),
         )
-        .subcommand(SubCommand::with_name("status").about("Print current status"))
-        .subcommand(SubCommand::with_name("config").about("Print config"))
         .subcommand(SubCommand::with_name("sync").about("Sync changes"))
         .subcommand(
-            SubCommand::with_name("get")
-                .about("Get document by id")
+            SubCommand::with_name("apply-migrations")
+                .about("Upgrade arhiv db schema to latest version"),
+        )
+        .subcommand(
+            SubCommand::with_name("backup")
+                .about("Backup arhiv data")
                 .arg(
-                    Arg::with_name("id")
-                        .required(true)
-                        .help("id of the document"),
+                    Arg::with_name("backup_dir")
+                        .help("Directory to save backup")
+                        .index(1)
+                        .required(true),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("ui")
-                .about("Show arhiv UI")
+            SubCommand::with_name("ui-server")
+                .about("Run arhiv UI server")
                 .arg(
                     Arg::with_name("open")
                         .long("open")
@@ -79,7 +82,7 @@ async fn main() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("server")
+            SubCommand::with_name("prime-server")
                 .about("Run prime server")
                 .arg(
                     Arg::with_name("port")
@@ -89,18 +92,16 @@ async fn main() {
                         .help("Listen on specific port"),
                 ),
         )
+        .subcommand(SubCommand::with_name("status").about("Print current status"))
+        .subcommand(SubCommand::with_name("config").about("Print config"))
         .subcommand(
-            SubCommand::with_name("backup")
-                .about("Backup arhiv data")
+            SubCommand::with_name("get")
+                .about("Get document by id")
                 .arg(
-                    Arg::with_name("backup_dir")
-                        .help("Directory to save backup")
-                        .index(1)
-                        .required(true),
+                    Arg::with_name("id")
+                        .required(true)
+                        .help("id of the document"),
                 ),
-        )
-        .subcommand(
-            SubCommand::with_name("upgrade").about("Upgrade arhiv db schema to latest version"),
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
@@ -166,7 +167,7 @@ async fn main() {
                 process::exit(1);
             }
         }
-        ("ui", Some(matches)) => {
+        ("ui-server", Some(matches)) => {
             let port: u16 = matches
                 .value_of("port")
                 .map(|value| value.parse().expect("port must be valid u16"))
@@ -191,7 +192,7 @@ async fn main() {
 
             join_handle.await.expect("must join");
         }
-        ("server", Some(matches)) => {
+        ("prime-server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());
 
             if !arhiv
@@ -221,7 +222,7 @@ async fn main() {
 
             arhiv.backup(backup_dir).expect("must be able to backup");
         }
-        ("upgrade", Some(_)) => {
+        ("apply-migrations", Some(_)) => {
             let config = Config::must_read().0;
             Arhiv::upgrade(config.get_root_dir()).expect("must be able to upgrade arhiv db");
         }

@@ -55,7 +55,7 @@ async fn test_download_attachment() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender, addr) = start_prime_server(prime);
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime, 0);
     let replica = new_replica(addr.port());
 
     replica.sync().await?;

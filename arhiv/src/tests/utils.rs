@@ -1,7 +1,9 @@
-use crate::{entities::Document, Arhiv, Config, ListPage};
-use anyhow::*;
-use rs_utils::generate_temp_path;
 use std::{fs, sync::Arc};
+
+use anyhow::*;
+
+use crate::{entities::Document, Arhiv, Config, ListPage};
+use rs_utils::generate_temp_path;
 
 impl Drop for Arhiv {
     // Remove temporary Arhiv in tests
@@ -10,34 +12,29 @@ impl Drop for Arhiv {
     }
 }
 
-fn new_arhiv(prime: bool, server_port: u16) -> Arc<Arhiv> {
-    let config = {
-        if prime {
-            Config::Prime {
-                arhiv_id: "test_arhiv".to_string(),
-                arhiv_root: generate_temp_path("TempArhiv", ""),
-                server_port,
-            }
-        } else {
-            Config::Replica {
-                arhiv_id: "test_arhiv".to_string(),
-                arhiv_root: generate_temp_path("TempArhiv", ""),
-                prime_url: format!("http://localhost:{}", server_port),
-            }
-        }
-    };
-
+fn new_arhiv(config: Config) -> Arc<Arhiv> {
     let arhiv = Arhiv::create(config).expect("must be able to create temp arhiv");
 
     Arc::new(arhiv)
 }
 
 pub fn new_prime() -> Arc<Arhiv> {
-    new_arhiv(true, 0)
+    let config = Config::Prime {
+        arhiv_id: "test_arhiv".to_string(),
+        arhiv_root: generate_temp_path("TempArhiv", ""),
+    };
+
+    new_arhiv(config)
 }
 
 pub fn new_replica(port: u16) -> Arc<Arhiv> {
-    new_arhiv(false, port)
+    let config = Config::Replica {
+        arhiv_id: "test_arhiv".to_string(),
+        arhiv_root: generate_temp_path("TempArhiv", ""),
+        prime_url: format!("http://localhost:{}", port),
+    };
+
+    new_arhiv(config)
 }
 
 pub fn empty_document() -> Document {

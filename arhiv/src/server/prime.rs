@@ -15,7 +15,10 @@ use crate::entities::*;
 use crate::Arhiv;
 use rs_utils::log;
 
-pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
+pub fn start_prime_server(
+    arhiv: Arc<Arhiv>,
+    port: u16,
+) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
     let arhiv_filter = {
         let arhiv = arhiv.clone();
 
@@ -56,11 +59,6 @@ pub fn start_prime_server(arhiv: Arc<Arhiv>) -> (JoinHandle<()>, oneshot::Sender
         .or(post_changeset);
 
     let (shutdown_sender, shutdown_receiver) = oneshot::channel();
-
-    let port = arhiv
-        .config
-        .get_server_port()
-        .expect("config.server_port must be configured");
 
     let (addr, server) =
         warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port), async {

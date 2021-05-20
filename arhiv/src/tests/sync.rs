@@ -61,7 +61,7 @@ async fn test_prime_sync() -> Result<()> {
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
     let prime = new_prime();
-    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.clone());
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.clone(), 0);
     let replica = new_replica(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");

@@ -61,10 +61,21 @@ async fn main() {
                     Arg::with_name("port")
                         .long("port")
                         .takes_value(true)
+                        .default_value("23421")
                         .help("Listen on specific port"),
                 ),
         )
-        .subcommand(SubCommand::with_name("server").about("Run prime server"))
+        .subcommand(
+            SubCommand::with_name("server")
+                .about("Run prime server")
+                .arg(
+                    Arg::with_name("port")
+                        .long("port")
+                        .takes_value(true)
+                        .default_value("23420")
+                        .help("Listen on specific port"),
+                ),
+        )
         .subcommand(
             SubCommand::with_name("backup")
                 .about("Backup arhiv data")
@@ -145,9 +156,10 @@ async fn main() {
         ("ui", Some(matches)) => {
             setup_logger_with_level(matches.occurrences_of("verbose"));
 
-            let port: Option<u16> = matches
+            let port: u16 = matches
                 .value_of("port")
-                .map(|value| value.parse().expect("port must be valid u16"));
+                .map(|value| value.parse().expect("port must be valid u16"))
+                .expect("port is missing");
 
             let public = matches.is_present("public");
 
@@ -168,7 +180,7 @@ async fn main() {
 
             join_handle.await.expect("must join");
         }
-        ("server", Some(_)) => {
+        ("server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());
 
             if !arhiv
@@ -180,10 +192,15 @@ async fn main() {
                 panic!("server must be started on prime instance");
             }
 
+            let port: u16 = matches
+                .value_of("port")
+                .map(|value| value.parse().expect("port must be valid u16"))
+                .expect("port is missing");
+
             let log_file = Path::new(arhiv.config.get_root_dir()).join("arhiv-server.log");
             setup_server_logger(log_file);
 
-            let (join_handle, _, _) = start_prime_server(arhiv);
+            let (join_handle, _, _) = start_prime_server(arhiv, port);
 
             join_handle.await.expect("must join");
         }

@@ -1,7 +1,6 @@
 {
   "prime": {
     "arhivId": "",
-    "arhivRoot": "",
-    "serverPort": 8080
+    "arhivRoot": ""
   }
 }

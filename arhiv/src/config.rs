@@ -12,9 +12,6 @@ pub enum Config {
     Prime {
         arhiv_id: String,
         arhiv_root: String,
-
-        #[serde(default = "default_server_port")]
-        server_port: u16,
     },
 
     #[serde(rename_all = "camelCase")]
@@ -24,10 +21,6 @@ pub enum Config {
 
         prime_url: String,
     },
-}
-
-fn default_server_port() -> u16 {
-    8080
 }
 
 impl Config {
@@ -71,13 +64,6 @@ impl Config {
         match self {
             Config::Prime { .. } => bail!("can't get config.prime_url on prime"),
             Config::Replica { prime_url, .. } => Ok(prime_url),
-        }
-    }
-
-    pub fn get_server_port(&self) -> Result<u16> {
-        match self {
-            Config::Prime { server_port, .. } => Ok(*server_port),
-            Config::Replica { .. } => bail!("can't get config.server_port on replica"),
         }
     }
 }

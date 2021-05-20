@@ -3,7 +3,6 @@
 
 use std::{
     env,
-    path::Path,
     process::{self, Command, Stdio},
     sync::Arc,
 };
@@ -14,7 +13,7 @@ use arhiv::{
     Arhiv, Config,
 };
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use rs_utils::log::{setup_logger_with_level, setup_server_logger};
+use rs_utils::log::setup_logger_with_level;
 
 #[tokio::main]
 async fn main() {
@@ -117,10 +116,10 @@ async fn main() {
         .version(crate_version!())
         .get_matches();
 
+    setup_logger_with_level(matches.occurrences_of("verbose"));
+
     match matches.subcommand() {
         ("init", Some(matches)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let arhiv_id: String = matches
                 .value_of("arhiv_id")
                 .expect("arhiv_id must be present")
@@ -132,8 +131,6 @@ async fn main() {
                 .expect("must be able to create arhiv");
         }
         ("status", Some(_)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let status = Arhiv::must_open()
                 .get_status()
                 .expect("must be able to get status");
@@ -142,8 +139,6 @@ async fn main() {
             // FIXME print number of unused temp attachments
         }
         ("config", Some(_)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let (config, path) = Config::must_read();
             println!("Arhiv config {}:", path);
             println!(
@@ -152,13 +147,9 @@ async fn main() {
             );
         }
         ("sync", Some(_)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             Arhiv::must_open().sync().await.expect("must sync");
         }
         ("get", Some(matches)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let id: Id = matches.value_of("id").expect("id must be present").into();
 
             let arhiv = Arhiv::must_open();
@@ -176,8 +167,6 @@ async fn main() {
             }
         }
         ("ui", Some(matches)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let port: u16 = matches
                 .value_of("port")
                 .map(|value| value.parse().expect("port must be valid u16"))
@@ -219,16 +208,11 @@ async fn main() {
                 .map(|value| value.parse().expect("port must be valid u16"))
                 .expect("port is missing");
 
-            let log_file = Path::new(arhiv.config.get_root_dir()).join("arhiv-server.log");
-            setup_server_logger(log_file);
-
             let (join_handle, _, _) = start_prime_server(arhiv, port);
 
             join_handle.await.expect("must join");
         }
         ("backup", Some(matches)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
             let arhiv = Arhiv::must_open();
 
             let backup_dir = matches
@@ -237,9 +221,7 @@ async fn main() {
 
             arhiv.backup(backup_dir).expect("must be able to backup");
         }
-        ("upgrade", Some(matches)) => {
-            setup_logger_with_level(matches.occurrences_of("verbose"));
-
+        ("upgrade", Some(_)) => {
             let config = Config::must_read().0;
             Arhiv::upgrade(config.get_root_dir()).expect("must be able to upgrade arhiv db");
         }

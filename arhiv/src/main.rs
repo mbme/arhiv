@@ -93,7 +93,15 @@ async fn main() {
                 ),
         )
         .subcommand(SubCommand::with_name("status").about("Print current status"))
-        .subcommand(SubCommand::with_name("config").about("Print config"))
+        .subcommand(
+            SubCommand::with_name("config").about("Print config").arg(
+                Arg::with_name("template")
+                    .short("t")
+                    .long("template")
+                    .display_order(1)
+                    .help("Prints config template"),
+            ),
+        )
         .subcommand(
             SubCommand::with_name("get")
                 .about("Get document by id")
@@ -139,7 +147,12 @@ async fn main() {
             println!("{}", status);
             // FIXME print number of unused temp attachments
         }
-        ("config", Some(_)) => {
+        ("config", Some(matches)) => {
+            if matches.is_present("template") {
+                print!("{}", include_str!("../arhiv.json.template"));
+                return;
+            }
+
             let (config, path) = Config::must_read();
             println!("Arhiv config {}:", path);
             println!(

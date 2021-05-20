@@ -1,7 +1,9 @@
-use anyhow::*;
-use rs_utils::{file_exists, get_config_home, locate_dominating_file, log::debug};
-use serde::{Deserialize, Serialize};
 use std::fs;
+
+use anyhow::*;
+use serde::{Deserialize, Serialize};
+
+use rs_utils::{file_exists, get_config_home, locate_dominating_file, log::debug};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

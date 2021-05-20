@@ -1,10 +1,13 @@
-use crate::commander::ArhivCommander;
+use std::fmt;
+use std::sync::Arc;
+
 use anyhow::*;
-use rs_utils::log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fmt, sync::Arc};
 use warp::{Rejection, Reply};
+
+use crate::commander::ArhivCommander;
+use rs_utils::log::debug;
 
 pub async fn rpc_action_handler(
     commander: Arc<ArhivCommander>,

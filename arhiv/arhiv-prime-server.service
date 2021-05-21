@@ -1,0 +1,12 @@
+[Unit]
+Description=Arhiv Prime server
+
+[Service]
+Type=simple
+StandardOutput=journal
+ExecStart=arhiv prime-server
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

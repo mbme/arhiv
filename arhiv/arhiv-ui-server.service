@@ -1,0 +1,12 @@
+[Unit]
+Description=Arhiv UI server
+
+[Service]
+Type=simple
+StandardOutput=journal
+ExecStart=arhiv ui-server
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

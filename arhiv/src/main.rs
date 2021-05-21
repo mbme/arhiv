@@ -69,7 +69,7 @@ async fn main() {
                         ),
                 )
                 .arg(
-                    Arg::with_name("public")
+                    Arg::with_name("public") // FIXME remove this? attachments won't work
                         .long("public")
                         .help("Listen on a public network interface"),
                 )

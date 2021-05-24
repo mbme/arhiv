@@ -11,7 +11,8 @@
     "ts-web-platform",
     "ts-arhiv-api",
     "arhiv-ui",
-    "arhiv-ui2"
+    "arhiv-ui2",
+    "arhiv-ui3"
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",

@@ -1,0 +1,15 @@
+{
+  "name": "@v/arhiv-ui3",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "arhiv UI",
+  "main": "",
+  "scripts": {
+    "build:css": "windicss './src/**/*.html' --preflight --output public/windi.css"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "windicss": "^3.0.11"
+  }
+}

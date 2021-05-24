@@ -1416,6 +1416,11 @@ windicss@^2.5.14:
   resolved "https://registry.yarnpkg.com/windicss/-/windicss-2.5.14.tgz#41236ccc2517c0947e1adb69e0d5e8aa9bed9c1e"
   integrity sha512-8Lm7U1M5AzJPbiaVSVz7qWdETRzlkv//5LBMICBBAojos1jo09lUGhNZ5rBzHeldB9JmqYMDOGgrrXHExu0EAg==
 
+windicss@^3.0.11:
+  version "3.0.11"
+  resolved "https://registry.yarnpkg.com/windicss/-/windicss-3.0.11.tgz#60269dd598c4690b2b9502b3787d013cf166150e"
+  integrity sha512-lVfVT9z2yTatfge4WU5OjUsO5jiCuf+eFQq3TcVG64WnxPQrQT/ANhOXcuPohetamy4qYfi74EeTbLasGg83NQ==
+
 windicss@^3.0.2:
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/windicss/-/windicss-3.0.5.tgz#0e9af32d22b698aa9c55fd64a73f239a7e046b6d"

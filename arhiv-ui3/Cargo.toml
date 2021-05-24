@@ -1,0 +1,13 @@
+[package]
+name = "arhiv-ui3"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+arhiv = { path = "../arhiv" }
+
+anyhow = "1"
+
+rocket = "0.4"
+askama = { version = "0.10", features = ["with-rocket"] }
+askama_rocket = "0.10"

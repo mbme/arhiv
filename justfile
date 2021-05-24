@@ -43,6 +43,9 @@ ui-start-shell:
 ui-start-web2:
   cd arhiv-ui2; yarn dev
 
+ui-start-web3:
+ cd arhiv-ui3; watchexec -r -d 5000 --exts rs,html -- 'yarn build:css; cargo run'
+
 web-platform:
   cd ts-web-platform; yarn start
 

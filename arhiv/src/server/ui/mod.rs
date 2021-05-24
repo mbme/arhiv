@@ -1,4 +1,3 @@
-use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tokio::signal;
@@ -17,7 +16,7 @@ use rs_utils::log;
 mod arhiv_ui_static_handler;
 mod rpc_handler;
 
-pub async fn start_ui_server(port: u16, public: bool) -> (JoinHandle<()>, SocketAddr) {
+pub fn start_ui_server(port: u16, public: bool) -> JoinHandle<()> {
     let arhiv = Arc::new(Arhiv::must_open());
 
     // POST /rpc RpcMessage -> RpcMessageResponse
@@ -63,15 +62,14 @@ pub async fn start_ui_server(port: u16, public: bool) -> (JoinHandle<()>, Socket
     } else {
         std::net::Ipv4Addr::LOCALHOST
     };
-    let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown((host, port), async {
+    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown((host, port), async {
         signal::ctrl_c().await.expect("failed to listen for event");
 
         println!("");
         log::info!("Got Ctrl-C, stopping the server");
     });
 
-    let join_handle = tokio::task::spawn(server);
-    log::info!("UI server listening on http://{}", addr);
+    log::info!("UI server listening on http://{}:{}", host, port);
 
-    (join_handle, addr)
+    tokio::task::spawn(server)
 }

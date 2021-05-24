@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use anyhow::*;
 use warp::{http, hyper, reply, Reply};
 
 use crate::entities::*;
 use crate::Arhiv;
-use rs_utils::log;
-use rs_utils::read_file_as_stream;
+use rs_utils::{log, read_file_as_stream};
 
 pub async fn get_attachment_data_handler(
     hash: String,

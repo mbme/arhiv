@@ -1,11 +1,7 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use std::{
-    env,
-    process::{self, Command, Stdio},
-    sync::Arc,
-};
+use std::{env, process, sync::Arc};
 
 use arhiv::{
     entities::Id,
@@ -57,17 +53,6 @@ async fn main() {
         .subcommand(
             SubCommand::with_name("ui-server")
                 .about("Run arhiv UI server")
-                .arg(
-                    Arg::with_name("open")
-                        .long("open")
-                        .takes_value(true)
-                        .value_name("BROWSER")
-                        .min_values(0)
-                        .env("BROWSER")
-                        .help(
-                            "Open app using provided browser or fall back to $BROWSER env variable",
-                        ),
-                )
                 .arg(
                     Arg::with_name("public") // FIXME remove this? attachments won't work
                         .long("public")
@@ -188,22 +173,7 @@ async fn main() {
 
             let public = matches.is_present("public");
 
-            let (join_handle, addr) = start_ui_server(port, public).await;
-
-            if matches.occurrences_of("open") > 0 {
-                let browser = matches
-                    .value_of("open")
-                    .expect("either browser must be specified or $BROWSER env var must be set");
-
-                Command::new(&browser)
-                    .arg(format!("http://{}", addr))
-                    .stdout(Stdio::null())
-                    .stderr(Stdio::null())
-                    .spawn()
-                    .expect(&format!("failed to run browser {}", browser));
-            }
-
-            join_handle.await.expect("must join");
+            start_ui_server(port, public).await.expect("must join");
         }
         ("prime-server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());

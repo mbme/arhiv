@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<ul>
+  {% for document_type in document_types %}
+  <li>
+    <a href="/catalogs/{{document_type}}">
+      {{ document_type }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,25 +1,45 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use arhiv::Arhiv;
-
-use index_page::*;
-use rocket::{http::ContentType, response::Content};
-
 #[macro_use]
 extern crate rocket;
 
-mod index_page;
+use rocket::{http::ContentType, response::Content};
 
-#[get("/favicon.svg")]
-fn public_files() -> Content<&'static str> {
-    Content(ContentType::SVG, include_str!("../public/favicon.svg"))
-}
+use arhiv::Arhiv;
+use catalog_index_page::*;
+use catalog_page::*;
+use document_page::*;
+use index_page::*;
+use not_found_page::*;
+
+use crate::utils::TemplateContext;
+
+mod catalog_index_page;
+mod catalog_page;
+mod document_page;
+mod index_page;
+mod not_found_page;
+mod utils;
 
 fn main() {
-    let arhiv = Arhiv::must_open();
-
     rocket::ignite()
-        .manage(arhiv)
-        .mount("/", routes![public_files, render_index_page,])
+        .manage(Arhiv::must_open())
+        .manage(TemplateContext::new())
+        .mount(
+            "/",
+            routes![
+                render_favicon,            // /favicon.svg
+                render_index_page,         // /
+                render_catalog_index_page, // /catalogs
+                render_catalog_page,       // /catalogs/:document_type
+                render_document_page,      // /documents/:id
+            ],
+        )
+        .register(catchers![render_not_found_page])
         .launch();
+}
+
+#[get("/favicon.svg")]
+fn render_favicon() -> Content<&'static str> {
+    Content(ContentType::SVG, include_str!("../public/favicon.svg"))
 }

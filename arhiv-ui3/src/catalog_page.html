@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% macro catalog_entry(document) %}
+<a href="/documents/{{ document.id }}">
+  {{ document.id }}
+</a>
+{% endmacro %}
+
+
+{% block content %}
+
+<h1>{{document_type}} catalog</h1>
+
+<ul>
+  {% for document in page.items %}
+  <li>
+    {% call catalog_entry(document) %}
+  </li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

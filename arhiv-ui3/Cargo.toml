@@ -9,5 +9,5 @@ arhiv = { path = "../arhiv" }
 anyhow = "1"
 
 rocket = "0.4"
-askama = { version = "0.10", features = ["with-rocket"] }
+askama = { version = "0.10", features = ["with-rocket", "serde-json"] }
 askama_rocket = "0.10"

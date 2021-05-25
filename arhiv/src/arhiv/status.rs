@@ -92,6 +92,7 @@ impl fmt::Display for Status {
         }
 
         if self.debug_mode {
+            writeln!(f, "")?;
             writeln!(f, "  Debug Mode")?;
         }
 

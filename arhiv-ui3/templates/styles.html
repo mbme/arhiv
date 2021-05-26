@@ -4,7 +4,10 @@
     min-height: 100vh;
 
     font-size: 18px;
+    color: #333333;
+
     text-rendering: optimizeLegibility;
+    @apply antialiased;
   }
 
   #app {
@@ -14,15 +17,15 @@
   }
 
   a {
-    @apply text-amber-700 border-b-1 border-transparent;
+    @apply text-amber-700 p-0.5;
 
     &:hover {
-      @apply border-current;
+      @apply bg-amber-100;
     }
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-lg font-bold;
+    @apply text-lg font-bold text-gray-900;
   }
 
   h1 {

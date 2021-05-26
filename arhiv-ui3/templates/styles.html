@@ -1,0 +1,45 @@
+<style lang="windi">
+  html, body, #app {
+    height: 100vh;
+    min-height: 100vh;
+
+    font-size: 18px;
+    text-rendering: optimizeLegibility;
+  }
+
+  #app {
+    margin-left: 10vw;
+    width: 90vw;
+    max-width: 800px;
+  }
+
+  a {
+    @apply text-amber-700;
+
+    &:hover {
+      @apply underline;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-lg font-bold;
+  }
+
+  h1 {
+    @apply text-2xl;
+  }
+
+  h2 {
+    @apply text-xl;
+  }
+
+  .markup {
+    h1 {
+      @apply mb-6;
+    }
+
+    h2, h3, h4, h5, h6 {
+      @apply mb-4;
+    }
+  }
+</style>

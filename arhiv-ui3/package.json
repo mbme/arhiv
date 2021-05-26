@@ -6,7 +6,7 @@
   "description": "arhiv UI",
   "main": "",
   "scripts": {
-    "watch:css": "windicss './templates/**/*.html.tera' --preflight --dev --output public/windi.css"
+    "watch:css": "windicss './templates/**/*.html.tera' './templates/styles.html' --config windi.config.js --style --preflight --dev --output public/windi.css"
   },
   "dependencies": {},
   "devDependencies": {

@@ -5,31 +5,14 @@
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-
-    <style>
-      html, body, #app {
-        height: 100vh;
-        min-height: 100vh;
-
-        font-size: 18px;
-        text-rendering: optimizeLegibility;
-      }
-
-      #app {
-        margin-left: 10vw;
-        width: 90vw;
-        max-width: 800px;
-      }
-
-    </style>
-
     <link rel="stylesheet" href="/windi.css">
   </head>
   <body>
-    <div id="app" class="h-screen min-h-screen bg-gray-100 flex flex-col">
-      <nav class="mb-3 text-xxl">
-        <a href="/" class="mr-3">
+    <div id="app" class="h-screen min-h-screen flex flex-col">
+      <nav class="px-4 py-2 mb-4 text-xl">
+        <a href="/" class="mr-4">
           Index
         </a>
 
@@ -38,14 +21,14 @@
         </a>
       </nav>
 
-      <main class="bg-blue-100 mb-3 flex-1">
+      <main class="p-8 flex-auto">
         {% block content %}{% endblock %}
       </main>
 
-      <nav class="text-xl">
+      <nav class="px-4 py-2 mt-4 text-xl">
         {% for document_type in get_nav_document_types() %}
-        <a href="/catalogs/{{document_type}}">
-          {{ document_type }}
+        <a href="/catalogs/{{document_type}}" class="mr-4">
+          {{ document_type }}s
         </a>
         {% endfor %}
       </nav>

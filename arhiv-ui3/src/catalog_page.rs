@@ -2,16 +2,21 @@ use anyhow::*;
 use askama::Template;
 use rocket::State;
 
-use arhiv::{entities::Document, Arhiv, Filter, ListPage, Matcher, OrderBy};
+use arhiv::{entities::*, markup::MarkupRenderer, Arhiv, Filter, ListPage, Matcher, OrderBy};
 
 use crate::utils::TemplateContext;
+
+pub struct CatalogEntry {
+    id: Id,
+    preview: String,
+}
 
 #[derive(Template)]
 #[template(path = "catalog_page.html")]
 pub struct CatalogPage {
     context: TemplateContext,
     document_type: String,
-    page: ListPage<Document>,
+    page: ListPage<CatalogEntry>,
 }
 
 #[get("/catalogs/<document_type>")]
@@ -27,7 +32,14 @@ pub fn render_catalog_page(
     filter.page_size = Some(12);
     filter.order.push(OrderBy::UpdatedAt { asc: false });
 
-    let page = arhiv.list_documents(filter)?;
+    let renderer = MarkupRenderer::new(&arhiv, &context.markup_render_options);
+
+    let page = arhiv.list_documents(filter)?.map(|document| CatalogEntry {
+        preview: renderer
+            .get_preview(&document)
+            .unwrap_or("No preview".to_string()),
+        id: document.id,
+    });
 
     Ok(CatalogPage {
         context: context.clone(),

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% macro catalog_entry(document) %}
-<a href="/documents/{{ document.id }}">
-  {{ document.id }}
+{% macro catalog_entry(entry) %}
+<a href="/documents/{{ entry.id }}" class="mb-3">
+  {{ entry.preview|safe }}
 </a>
 {% endmacro %}
 
@@ -12,9 +12,9 @@
 <h1>{{document_type}} catalog</h1>
 
 <ul>
-  {% for document in page.items %}
+  {% for entry in page.items %}
   <li>
-    {% call catalog_entry(document) %}
+    {% call catalog_entry(entry) %}
   </li>
   {% endfor %}
 </ul>

@@ -1,6 +1,8 @@
+use anyhow::*;
 use pulldown_cmark::LinkType;
 use pulldown_cmark::{html, Event, Tag};
 
+use crate::schema::{FieldType, SCHEMA};
 use crate::{entities::*, Arhiv};
 use rs_utils::log::warn;
 
@@ -12,6 +14,7 @@ pub struct MarkupRenderer<'a> {
     options: &'a RenderOptions,
 }
 
+#[derive(Clone)]
 pub struct RenderOptions {
     pub document_path: String,
     pub attachment_data_path: String,
@@ -121,6 +124,22 @@ impl<'a> MarkupRenderer<'a> {
         html::push_html(&mut html_output, parser);
 
         html_output
+    }
+
+    pub fn get_preview(&self, document: &Document) -> Result<String> {
+        let field = SCHEMA.pick_title_field(&document.document_type)?;
+
+        match field.field_type {
+            FieldType::MarkupString {} => {
+                let text = SCHEMA.get_field_string(document, field.name)?;
+                let markup: MarkupString =
+                    text.lines().take(4).collect::<Vec<_>>().join("\n").into();
+
+                Ok(self.to_html(&markup))
+            }
+            FieldType::String {} => SCHEMA.get_field_string(document, field.name),
+            _ => unimplemented!(),
+        }
     }
 }
 

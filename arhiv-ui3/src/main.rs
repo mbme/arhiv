@@ -12,8 +12,7 @@ use document_editor_page::*;
 use document_page::*;
 use index_page::*;
 use not_found_page::*;
-
-use crate::utils::TemplateContext;
+use utils::TemplateContext;
 
 mod catalog_index_page;
 mod catalog_page;

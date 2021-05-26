@@ -22,8 +22,9 @@
         max-width: 800px;
       }
 
-      {% include "../public/windi.css" %}
     </style>
+
+    <link rel="stylesheet" href="/windi.css">
   </head>
   <body>
     <div id="app" class="h-screen min-h-screen bg-gray-100 flex flex-col">
@@ -42,7 +43,7 @@
       </main>
 
       <nav class="text-xl">
-        {% for document_type in context.nav_document_types %}
+        {% for document_type in get_nav_document_types() %}
         <a href="/catalogs/{{document_type}}">
           {{ document_type }}
         </a>

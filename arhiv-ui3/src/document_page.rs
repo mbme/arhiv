@@ -1,24 +1,12 @@
 use anyhow::*;
-use askama::Template;
 use rocket::State;
+use rocket_contrib::templates::Template;
+use serde_json::json;
 
-use arhiv::{entities::Document, Arhiv};
-
-use crate::utils::TemplateContext;
-
-#[derive(Template)]
-#[template(path = "document_page.html")]
-pub struct DocumentPage {
-    context: TemplateContext,
-    document: Document,
-}
+use arhiv::Arhiv;
 
 #[get("/documents/<id>")]
-pub fn render_document_page(
-    id: String,
-    arhiv: State<Arhiv>,
-    context: State<TemplateContext>,
-) -> Result<Option<DocumentPage>> {
+pub fn document_page(id: String, arhiv: State<Arhiv>) -> Result<Option<Template>> {
     let document = {
         if let Some(document) = arhiv.get_document(&id.into())? {
             document
@@ -27,8 +15,8 @@ pub fn render_document_page(
         }
     };
 
-    Ok(Some(DocumentPage {
-        context: context.clone(),
-        document,
-    }))
+    Ok(Some(Template::render(
+        "document_page",
+        json!({ "document": document }),
+    )))
 }

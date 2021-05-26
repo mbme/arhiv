@@ -1,24 +1,12 @@
 use anyhow::*;
-use askama::Template;
 use rocket::State;
+use rocket_contrib::templates::Template;
+use serde_json::json;
 
-use arhiv::{entities::Document, Arhiv};
-
-use crate::utils::TemplateContext;
-
-#[derive(Template)]
-#[template(path = "document_editor_page.html")]
-pub struct DocumentEditorPage {
-    context: TemplateContext,
-    document: Document,
-}
+use arhiv::Arhiv;
 
 #[get("/documents/<id>/edit")]
-pub fn render_document_editor_page(
-    id: String,
-    arhiv: State<Arhiv>,
-    context: State<TemplateContext>,
-) -> Result<Option<DocumentEditorPage>> {
+pub fn document_editor_page(id: String, arhiv: State<Arhiv>) -> Result<Option<Template>> {
     let document = {
         if let Some(document) = arhiv.get_document(&id.into())? {
             document
@@ -27,8 +15,8 @@ pub fn render_document_editor_page(
         }
     };
 
-    Ok(Some(DocumentEditorPage {
-        context: context.clone(),
-        document,
-    }))
+    Ok(Some(Template::render(
+        "document_editor_page",
+        json!({ "document": document }),
+    )))
 }

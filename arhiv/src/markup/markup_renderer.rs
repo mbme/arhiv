@@ -1,6 +1,6 @@
 use anyhow::*;
-use pulldown_cmark::LinkType;
-use pulldown_cmark::{html, Event, Tag};
+use pulldown_cmark::{html, Event, LinkType, Tag};
+use serde::Serialize;
 
 use crate::schema::{FieldType, SCHEMA};
 use crate::{entities::*, Arhiv};
@@ -14,7 +14,7 @@ pub struct MarkupRenderer<'a> {
     options: &'a RenderOptions,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 pub struct RenderOptions {
     pub document_path: String,
     pub attachment_data_path: String,

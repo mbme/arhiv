@@ -43,8 +43,11 @@ ui-start-shell:
 ui-start-web2:
   cd arhiv-ui2; yarn dev
 
-ui-start-web3:
- cd arhiv-ui3; watchexec -r -d 5000 --exts rs,html -- 'yarn build:css; notify-send "Restarting..." -t 2000; cargo run'
+web3-styles:
+ cd arhiv-ui3; yarn watch:css
+
+web3-server:
+ cd arhiv-ui3; watchexec -r -d 4000 --exts rs -- 'notify-send "Restarting..." -t 2000; cargo run'
 
 web-platform:
   cd ts-web-platform; yarn start

@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "base" %}
 
 {% macro catalog_entry(entry) %}
 <a href="/documents/{{ entry.id }}" class="mb-3">
-  {{ entry.preview|safe }}
+  {{ entry.preview | safe }}
 </a>
-{% endmacro %}
+{% endmacro catalog_entry %}
 
 
 {% block content %}
@@ -14,7 +14,7 @@
 <ul>
   {% for entry in page.items %}
   <li>
-    {% call catalog_entry(entry) %}
+    {{ self::catalog_entry(entry = entry) }}
   </li>
   {% endfor %}
 </ul>

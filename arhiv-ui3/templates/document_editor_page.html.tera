@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "base" %}
 
 {% block content %}
 
 <pre class="whitespace-pre-wrap">
   <code>
-    {{ document|json }}
+    {{ document | json_encode(pretty=true) | safe }}
   </code>
 </pre>
 

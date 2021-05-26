@@ -6,7 +6,6 @@ extern crate rocket;
 use rocket_contrib::{serve::StaticFiles, templates::Template};
 
 use arhiv::Arhiv;
-use catalog_index_page::*;
 use catalog_page::*;
 use document_editor_page::*;
 use document_page::*;
@@ -14,7 +13,6 @@ use index_page::*;
 use not_found_page::*;
 use utils::{get_nav_document_types, TemplateContext};
 
-mod catalog_index_page;
 mod catalog_page;
 mod document_editor_page;
 mod document_page;
@@ -40,7 +38,6 @@ fn main() {
             "/",
             routes![
                 index_page,           // /
-                catalog_index_page,   // /catalogs
                 catalog_page,         // /catalogs/:document_type
                 document_page,        // /documents/:id
                 document_editor_page, // /documents/:id/edit

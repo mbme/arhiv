@@ -11,27 +11,17 @@
   </head>
   <body>
     <div id="app" class="h-screen min-h-screen flex flex-col">
-      <nav class="px-4 py-2 mb-4 text-xl">
-        <a href="/" class="mr-4">
-          Index
-        </a>
+      <nav class="pr-4 py-2 mb-4 text-xl">
+        <a href="/" class="mr-4">[ index ]</a>
 
-        <a href="/catalogs">
-          Catalog
-        </a>
-      </nav>
-
-      <main class="p-8 flex-auto">
-        {% block content %}{% endblock %}
-      </main>
-
-      <nav class="px-4 py-2 mt-4 text-xl">
         {% for document_type in get_nav_document_types() %}
-        <a href="/catalogs/{{document_type}}" class="mr-4">
-          {{ document_type }}s
-        </a>
+        <a href="/catalogs/{{document_type}}" class="mr-4">[ {{ document_type }}s ]</a>
         {% endfor %}
       </nav>
+
+      <main class="pr-8 py-4 flex-auto">
+        {% block content %}{% endblock %}
+      </main>
     </div>
   </body>
 </html>

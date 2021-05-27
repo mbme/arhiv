@@ -1,4 +1,5 @@
 use anyhow::*;
+use chrono::{DateTime, Local};
 use rocket::State;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
@@ -11,7 +12,9 @@ use crate::utils::TemplateContext;
 #[derive(Serialize)]
 struct CatalogEntry {
     id: Id,
+    document_type: String,
     preview: String,
+    updated_at: DateTime<Local>,
 }
 
 #[get("/catalogs/<document_type>")]
@@ -34,6 +37,8 @@ pub fn catalog_page(
             .get_preview(&document)
             .unwrap_or("No preview".to_string()),
         id: document.id,
+        document_type: document.document_type,
+        updated_at: document.updated_at.into(),
     });
 
     Ok(Template::render(

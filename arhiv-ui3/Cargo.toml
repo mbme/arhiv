@@ -13,3 +13,6 @@ serde_json = "1"
 
 rocket = "0.4"
 rocket_contrib = { version = "0.4", features = ["tera_templates"] }
+
+tera = { version = "1", default-features = false, features = ["chrono"]}
+chrono = { version = "0.4", features = ["serde"] }

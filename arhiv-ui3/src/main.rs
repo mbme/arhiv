@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate rocket;
 
+use rocket::{config::Environment, Config};
 use rocket_contrib::{serve::StaticFiles, templates::Template};
 
 use arhiv::Arhiv;
@@ -21,7 +22,12 @@ mod not_found_page;
 mod utils;
 
 fn main() {
-    rocket::ignite()
+    let config = Config::build(Environment::Development)
+        .extra("template_dir", "src/")
+        .finalize()
+        .expect("rocket config must be valid");
+
+    rocket::custom(config)
         .attach(Template::custom(|engines| {
             engines.tera.register_function(
                 "get_nav_document_types",

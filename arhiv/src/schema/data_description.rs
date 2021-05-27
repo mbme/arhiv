@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::entities::{Document, Id};
-use crate::markup::MarkupString;
+use crate::markup::MarkupStr;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
@@ -115,10 +115,9 @@ impl DataSchema {
 
             match field.field_type {
                 FieldType::MarkupString {} => {
-                    let value: MarkupString =
-                        serde_json::from_value(value.clone()).expect("field must parse");
+                    let markup: MarkupStr = value.as_str().expect("field must be string").into();
 
-                    result.extend(value.extract_refs());
+                    result.extend(markup.extract_refs());
                 }
                 FieldType::Ref(_) => {
                     // FIXME check ref document type
@@ -149,21 +148,6 @@ impl DataSchema {
         document.refs = refs;
 
         Ok(())
-    }
-
-    pub fn get_field(&self, document: &Document, field: &str) -> Result<Value> {
-        let value = document
-            .data
-            .get(field)
-            .ok_or(anyhow!("can't find field {}", field))?;
-
-        Ok(value.clone())
-    }
-
-    pub fn get_field_string(&self, document: &Document, field: &str) -> Result<String> {
-        let value = self.get_field(document, field)?;
-
-        serde_json::from_value(value).context("can't use value as String")
     }
 
     pub fn pick_title_field(&self, document_type: &str) -> Result<&Field> {

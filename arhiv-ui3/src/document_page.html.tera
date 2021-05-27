@@ -2,10 +2,20 @@
 
 {% block content %}
 
-<pre class="whitespace-pre-wrap">
-  <code>
-    {{ document | json_encode(pretty=true) | safe }}
-  </code>
-</pre>
+<h3 class="mb-8">id: {{ document.id }}</h3>
+
+<h3 class="mb-8">type: {{ document.documentType }}</h3>
+
+{% for field in fields %}
+<div class="mb-8">
+  <h3>{{ field.name }}</h3>
+
+  {% if field.safe %}
+  {{ field.value | safe }}
+  {% else %}
+  {{ field.value }}
+  {% endif %}
+</div>
+{% endfor %}
 
 {% endblock %}

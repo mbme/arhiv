@@ -7,7 +7,7 @@ use crate::{entities::*, Arhiv};
 use rs_utils::log::warn;
 
 use super::utils::extract_id;
-use super::MarkupString;
+use super::MarkupStr;
 
 pub struct MarkupRenderer<'a> {
     arhiv: &'a Arhiv,
@@ -25,8 +25,8 @@ impl<'a> MarkupRenderer<'a> {
         MarkupRenderer { arhiv, options }
     }
 
-    pub fn to_html(&self, string: &'a MarkupString) -> String {
-        let parser = string.parse().map(|event| -> Event {
+    pub fn to_html(&self, markup: &'a MarkupStr) -> String {
+        let parser = markup.parse().map(|event| -> Event {
             match event {
                 // FIXME handle images
                 Event::Start(Tag::Link(ref link_type, ref destination, ref title)) => {
@@ -131,13 +131,18 @@ impl<'a> MarkupRenderer<'a> {
 
         match field.field_type {
             FieldType::MarkupString {} => {
-                let text = SCHEMA.get_field_string(document, field.name)?;
-                let markup: MarkupString =
-                    text.lines().take(4).collect::<Vec<_>>().join("\n").into();
+                let text = document.get_field_str(field.name)?;
+                let preview = text.lines().take(4).collect::<Vec<_>>().join("\n");
+                let markup: MarkupStr = preview.as_str().into();
 
                 Ok(self.to_html(&markup))
             }
-            FieldType::String {} => SCHEMA.get_field_string(document, field.name),
+
+            FieldType::String {} => {
+                let value = document.get_field_str(field.name)?;
+
+                Ok(value.to_string())
+            }
             _ => unimplemented!(),
         }
     }

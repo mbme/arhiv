@@ -50,6 +50,24 @@ impl Document {
     pub fn is_staged(&self) -> bool {
         self.rev == Revision::STAGING
     }
+
+    pub fn get_field(&self, field: &str) -> Result<&Value> {
+        self.data.get(field).ok_or(anyhow!(
+            "document {}: can't find field {}",
+            self.document_type,
+            field
+        ))
+    }
+
+    pub fn get_field_str<'doc>(&self, field: &str) -> Result<&str> {
+        let value = self.get_field(field)?;
+
+        value.as_str().ok_or(anyhow!(
+            "document {}: can't use field {} as &str",
+            self.document_type,
+            field
+        ))
+    }
 }
 
 impl std::str::FromStr for Document {

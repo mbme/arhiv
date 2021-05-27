@@ -1,6 +1,5 @@
 use arhiv::entities::*;
 use arhiv::markup::create_ref;
-use arhiv::markup::MarkupString;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};
@@ -27,7 +26,7 @@ impl TextGenerator {
             .generate_sentence_constrained(min_words, max_words, false)
     }
 
-    pub fn gen_markup_string(&self, min_paragraphs: u32, max_paragraphs: u32) -> MarkupString {
+    pub fn gen_markup_string(&self, min_paragraphs: u32, max_paragraphs: u32) -> String {
         let mut data: Vec<String> = vec![];
         let mut rng = thread_rng();
         for _ in 0..rng.gen_range(min_paragraphs..max_paragraphs + 1) {
@@ -51,6 +50,6 @@ impl TextGenerator {
             data.push(sentences.join(" "));
         }
 
-        data.join("\n\n").into()
+        data.join("\n\n")
     }
 }

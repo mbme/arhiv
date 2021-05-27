@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     entities::*,
     markup::*,
-    schema::{DocumentData, FieldType, SCHEMA},
+    schema::{DocumentData, SCHEMA},
     Arhiv, Filter,
 };
 use anyhow::*;
@@ -28,22 +28,6 @@ impl ArhivCommander {
         MarkupRenderer::new(&self.arhiv, &self.render_options)
     }
 
-    fn get_preview(&self, document: &Document) -> Result<String> {
-        let field = SCHEMA.pick_title_field(&document.document_type)?;
-
-        match field.field_type {
-            FieldType::MarkupString {} => {
-                let text = SCHEMA.get_field_string(document, field.name)?;
-                let markup: MarkupString =
-                    text.lines().take(4).collect::<Vec<_>>().join("\n").into();
-
-                Ok(self.get_renderer().to_html(&markup))
-            }
-            FieldType::String {} => SCHEMA.get_field_string(document, field.name),
-            _ => unimplemented!(),
-        }
-    }
-
     pub async fn run(&self, action: String, params: Value) -> Result<Value> {
         if action == "get_schema" {
             return Ok(serde_json::to_value(SCHEMA.clone())?);
@@ -59,6 +43,7 @@ impl ArhivCommander {
                 .list_documents(filter)?
                 .map(|document| DocumentExt {
                     preview: self
+                        .get_renderer()
                         .get_preview(&document)
                         .unwrap_or("No preview".to_string()),
                     document,
@@ -123,14 +108,9 @@ impl ArhivCommander {
         }
 
         if action == "render_markup" {
-            let string = MarkupString::from(
-                params
-                    .as_str()
-                    .context("markup must be string")?
-                    .to_string(),
-            );
+            let markup = MarkupStr::from(params.as_str().context("markup must be string")?);
 
-            let result = self.get_renderer().to_html(&string);
+            let result = self.get_renderer().to_html(&markup);
 
             return Ok(serde_json::to_value(result)?);
         }

@@ -7,16 +7,16 @@ use std::convert::From;
 use super::utils::extract_id;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
-pub struct MarkupString(pub String);
+pub struct MarkupStr<'a>(&'a str);
 
-impl MarkupString {
+impl<'a> MarkupStr<'a> {
     pub(crate) fn parse(&self) -> Parser {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         options.insert(Options::ENABLE_TABLES);
         options.insert(Options::ENABLE_TASKLISTS);
 
-        Parser::new_ext(&self.0, options)
+        Parser::new_ext(self.0, options)
     }
 
     pub fn extract_refs(&self) -> HashSet<Id> {
@@ -39,14 +39,8 @@ impl MarkupString {
     }
 }
 
-impl From<String> for MarkupString {
-    fn from(value: String) -> Self {
-        MarkupString(value)
-    }
-}
-
-impl From<&str> for MarkupString {
-    fn from(value: &str) -> Self {
-        MarkupString(value.to_string())
+impl<'a> From<&'a str> for MarkupStr<'a> {
+    fn from(value: &'a str) -> Self {
+        MarkupStr(value)
     }
 }

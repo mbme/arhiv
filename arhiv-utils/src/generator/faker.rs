@@ -91,7 +91,7 @@ impl<'a> Faker<'a> {
                         .unwrap_or((1, 8));
 
                     let title = self.generator.gen_string(1, 5);
-                    let markup = self.generator.gen_markup_string(min, max).0;
+                    let markup = self.generator.gen_markup_string(min, max);
 
                     data.insert(
                         field.name.to_string(),

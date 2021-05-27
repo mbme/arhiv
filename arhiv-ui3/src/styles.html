@@ -25,15 +25,15 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-lg font-bold text-gray-900;
+    @apply text-xl font-black text-gray-900 font-serif tracking-wide;
   }
 
   h1 {
-    @apply text-2xl;
+    @apply text-3xl;
   }
 
   h2 {
-    @apply text-xl;
+    @apply text-2xl;
   }
 
   .markup {
@@ -43,6 +43,34 @@
 
     h2, h3, h4, h5, h6 {
       @apply mb-4;
+    }
+
+    ul, ol {
+      @apply pl-8 mb-4;
+    }
+
+    ul {
+      @apply list-disc;
+    }
+
+    ol {
+      @apply list-decimal;
+    }
+
+    p {
+      @apply mb-4;
+    }
+  }
+
+  .section-heading {
+    @apply uppercase font-mono text-gray-500 text-sm tracking-wider;
+  }
+
+  .clean-link {
+    color: currentColor;
+
+    &:hover {
+      @apply bg-transparent;
     }
   }
 </style>

@@ -5,12 +5,12 @@ use serde::Serialize;
 use serde_json::json;
 
 use arhiv::{
-    markup::{MarkupRenderer, MarkupStr},
+    entities::Document,
+    markup::MarkupStr,
     schema::{FieldType, SCHEMA},
-    Arhiv,
 };
 
-use crate::utils::TemplateContext;
+use crate::utils::AppContext;
 
 #[derive(Serialize)]
 struct Field {
@@ -20,22 +20,30 @@ struct Field {
 }
 
 #[get("/documents/<id>")]
-pub fn document_page(
-    id: String,
-    arhiv: State<Arhiv>,
-    context: State<TemplateContext>,
-) -> Result<Option<Template>> {
+pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Template>> {
     let document = {
-        if let Some(document) = arhiv.get_document(&id.into())? {
+        if let Some(document) = context.arhiv.get_document(&id.into())? {
             document
         } else {
             return Ok(None);
         }
     };
 
-    let renderer = MarkupRenderer::new(&arhiv, &context.markup_render_options);
+    let fields = prepare_fields(&document, &context)?;
 
-    let fields = SCHEMA
+    Ok(Some(Template::render(
+        "document_page",
+        json!({
+            "fields": fields,
+            "document": document,
+        }),
+    )))
+}
+
+fn prepare_fields(document: &Document, context: &AppContext) -> Result<Vec<Field>> {
+    let renderer = context.get_renderer();
+
+    SCHEMA
         .get_data_description_by_type(&document.document_type)?
         .fields
         .iter()
@@ -55,8 +63,9 @@ pub fn document_page(
                 Ok(Field {
                     name: field.name,
                     value: format!(
-                        "<a href=\"{0}/{1}\">{1}</a>",
-                        &context.markup_render_options.document_path, value
+                        "<a href=\"{0}\">{1}</a>",
+                        context.get_document_url(value),
+                        value
                     ),
                     safe: true,
                 })
@@ -71,13 +80,5 @@ pub fn document_page(
                 })
             }
         })
-        .collect::<Result<Vec<_>>>()?;
-
-    Ok(Some(Template::render(
-        "document_page",
-        json!({
-            "fields": fields,
-            "document": document,
-        }),
-    )))
+        .collect::<Result<Vec<_>>>()
 }

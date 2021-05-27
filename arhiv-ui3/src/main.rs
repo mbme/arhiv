@@ -6,13 +6,13 @@ extern crate rocket;
 use rocket::{config::Environment, Config};
 use rocket_contrib::{serve::StaticFiles, templates::Template};
 
-use arhiv::Arhiv;
+use arhiv::markup::RenderOptions;
 use catalog_page::*;
 use document_editor_page::*;
 use document_page::*;
 use index_page::*;
 use not_found_page::*;
-use utils::{get_nav_document_types, TemplateContext};
+use utils::{get_nav_document_types, AppContext};
 
 mod catalog_page;
 mod document_editor_page;
@@ -28,14 +28,6 @@ fn main() {
         .expect("rocket config must be valid");
 
     rocket::custom(config)
-        .attach(Template::custom(|engines| {
-            engines.tera.register_function(
-                "get_nav_document_types",
-                Box::new(|_args| Ok(get_nav_document_types().into())),
-            );
-        }))
-        .manage(Arhiv::must_open())
-        .manage(TemplateContext::new())
         .mount(
             "/",
             StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/public")),
@@ -49,6 +41,16 @@ fn main() {
                 document_editor_page, // /documents/:id/edit
             ],
         )
+        .manage(AppContext::new(RenderOptions {
+            document_path: "/documents".to_string(),
+            attachment_data_path: "/attachment-data".to_string(),
+        }))
+        .attach(Template::custom(|engines| {
+            engines.tera.register_function(
+                "get_nav_document_types",
+                Box::new(|_args| Ok(get_nav_document_types().into())),
+            );
+        }))
         .register(catchers![not_found_page])
         .launch();
 }

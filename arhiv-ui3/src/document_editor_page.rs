@@ -3,12 +3,12 @@ use rocket::State;
 use rocket_contrib::templates::Template;
 use serde_json::json;
 
-use arhiv::Arhiv;
+use crate::utils::AppContext;
 
 #[get("/documents/<id>/edit")]
-pub fn document_editor_page(id: String, arhiv: State<Arhiv>) -> Result<Option<Template>> {
+pub fn document_editor_page(id: String, context: State<AppContext>) -> Result<Option<Template>> {
     let document = {
-        if let Some(document) = arhiv.get_document(&id.into())? {
+        if let Some(document) = context.arhiv.get_document(&id.into())? {
             document
         } else {
             return Ok(None);

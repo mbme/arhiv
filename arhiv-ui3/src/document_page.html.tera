@@ -1,21 +1,29 @@
 {% extends "base" %}
 
+{% macro render_field(name, value, safe=false) %}
+<section class="mb-8">
+  <h5 class="section-heading mb-2">
+    {{ name }}
+  </h5>
+
+  {% if safe %}
+  <div class="markup">
+    {{ value | safe }}
+  </div>
+  {% else %}
+  {{ value }}
+  {% endif %}
+</section>
+{% endmacro render_field %}
+
 {% block content %}
 
-<h3 class="mb-8">id: {{ document.id }}</h3>
+{{ self::render_field(name="id", value=document.id) }}
 
-<h3 class="mb-8">type: {{ document.documentType }}</h3>
+{{ self::render_field(name="type", value=document.documentType) }}
 
 {% for field in fields %}
-<div class="mb-8">
-  <h3>{{ field.name }}</h3>
-
-  {% if field.safe %}
-  {{ field.value | safe }}
-  {% else %}
-  {{ field.value }}
-  {% endif %}
-</div>
+{{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
 {% endfor %}
 
 {% endblock %}

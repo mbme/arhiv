@@ -7,15 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/reset.css">
     <link rel="stylesheet" href="/windi.css">
   </head>
   <body>
     <div id="app" class="h-screen min-h-screen flex flex-col">
-      <nav class="pr-4 py-2 mb-4 text-xl">
-        <a href="/" class="mr-4">[ index ]</a>
+      <nav class="pr-4 py-2 mb-4 uppercase font-mono text-xl tracking-wider text-gray-700 font-semibold">
+        <a href="/" class="mr-4 clean-link hover:border-b-2">index</a>
 
         {% for document_type in get_nav_document_types() %}
-        <a href="/catalogs/{{document_type}}" class="mr-4">[ {{ document_type }}s ]</a>
+        <a
+          href="/catalogs/{{document_type}}"
+          class="mr-4 clean-link hover:border-b-2"
+        >{{ document_type }}s</a>
         {% endfor %}
       </nav>
 

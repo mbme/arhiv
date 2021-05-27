@@ -4,11 +4,12 @@ use rocket_contrib::templates::Template;
 use serde_json::json;
 
 use arhiv::schema::SCHEMA;
-use arhiv::Arhiv;
+
+use crate::utils::AppContext;
 
 #[get("/")]
-pub fn index_page(arhiv: State<Arhiv>) -> Result<Template> {
-    let status = &arhiv.get_status()?;
+pub fn index_page(context: State<AppContext>) -> Result<Template> {
+    let status = context.arhiv.get_status()?;
 
     let document_types: Vec<&str> = SCHEMA
         .modules

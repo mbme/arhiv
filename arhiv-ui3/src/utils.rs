@@ -1,5 +1,9 @@
-use arhiv::{markup::RenderOptions, schema::SCHEMA};
-use serde::Serialize;
+use arhiv::{
+    entities::Id,
+    markup::{MarkupRenderer, RenderOptions},
+    schema::SCHEMA,
+    Arhiv,
+};
 
 const IGNORED_DOCUMENT_TYPES: &[&'static str] = &["tombstone", "attachment", "task"];
 
@@ -12,18 +16,26 @@ pub fn get_nav_document_types() -> Vec<&'static str> {
         .collect()
 }
 
-#[derive(Serialize, Clone)]
-pub struct TemplateContext {
-    pub markup_render_options: RenderOptions,
+pub struct AppContext {
+    pub arhiv: Arhiv,
+    render_options: RenderOptions,
 }
 
-impl TemplateContext {
-    pub fn new() -> Self {
-        TemplateContext {
-            markup_render_options: RenderOptions {
-                document_path: "/documents".to_string(),
-                attachment_data_path: "/attachment-data".to_string(),
-            },
+impl AppContext {
+    pub fn new(render_options: RenderOptions) -> Self {
+        let arhiv = Arhiv::must_open();
+
+        AppContext {
+            arhiv,
+            render_options,
         }
+    }
+
+    pub fn get_renderer(&self) -> MarkupRenderer {
+        MarkupRenderer::new(&self.arhiv, &self.render_options)
+    }
+
+    pub fn get_document_url(&self, id: impl Into<Id>) -> String {
+        format!("{}/{}", self.render_options.document_path, id.into())
     }
 }

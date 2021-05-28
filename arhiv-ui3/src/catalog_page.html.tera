@@ -1,8 +1,8 @@
 {% extends "base" %}
 
 {% macro catalog_entry(entry) %}
-<li class="mb-10 p-4 min-h-6rem">
-  <div class="flex justify-between border-b-2 mb-4 text-gray-400 uppercase font-mono text-sm">
+<li class="px-4 pt-10 pb-11 min-h-6rem border-t-2">
+  <div class="flex justify-between mb-4 text-gray-400 uppercase font-mono text-sm">
     <div>
       {{ entry.document_type }} {{ entry.id }}
     </div>
@@ -16,8 +16,8 @@
     {{ entry.preview | safe }}
   </div>
 
-  <a href="/documents/{{ entry.id }}" class="text-xl">
-    open
+  <a href="/documents/{{ entry.id }}" class="uppercase">
+    read more
   </a>
 </li>
 {% endmacro catalog_entry %}

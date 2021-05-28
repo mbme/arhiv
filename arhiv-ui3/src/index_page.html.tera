@@ -11,7 +11,7 @@
 <h3 class="mb-2 uppercase font-medium tracking-wider">Catalogs by type:</h3>
 <ul>
   {% for document_type in document_types %}
-  <li>
+  <li class="mb-1">
     <a href="/catalogs/{{document_type}}">
       {{ document_type }}
     </a>

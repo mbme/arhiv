@@ -1,7 +1,7 @@
 {% extends "base" %}
 
 {% macro catalog_entry(entry) %}
-<li class="px-4 pt-10 pb-11 min-h-6rem border-t-2">
+<li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed">
   <div class="flex justify-between mb-4 text-gray-400 uppercase font-mono text-sm">
     <div>
       {{ entry.document_type }} {{ entry.id }}

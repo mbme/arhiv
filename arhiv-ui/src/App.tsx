@@ -49,7 +49,7 @@ const PROJECT_CARD_CATALOG_OPTIONS: CatalogOptionsOverrides = {
     },
   ],
   showEntryModificationDate: false,
-  showEntryDataFields: ['complexity', 'status'],
+  showEntryDataFields: ['status'],
 }
 
 export function App() {

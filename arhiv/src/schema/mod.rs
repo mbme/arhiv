@@ -67,17 +67,6 @@ lazy_static! {
                         optional: false,
                     },
                     Field {
-                        name: "complexity",
-                        field_type: FieldType::Enum(vec![
-                            "Unknown", //
-                            "Small",
-                            "Medium",
-                            "Large",
-                            "Epic",
-                        ]),
-                        optional: false,
-                    },
-                    Field {
                         name: "status",
                         field_type: FieldType::Enum(vec![
                             "Inbox",

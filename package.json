@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
-    "lint": "eslint --cache --ext .ts,.tsx,.svelte ts-* arhiv-ui arhiv-ui2",
+    "lint": "eslint --cache --ext .ts,.tsx,.svelte ts-* arhiv-ui",
     "tester": "tester"
   },
   "devDependencies": {

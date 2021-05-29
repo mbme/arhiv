@@ -8,17 +8,6 @@ interface IProps {
 }
 
 export function CardEditorFormField({ field: { name, fieldType, optional } }: IProps) {
-  if ('String' in fieldType || 'ISBN' in fieldType || 'Hash' in fieldType || 'Date' in fieldType) {
-    return (
-      <Input
-        label={name}
-        name={name}
-        placeholder={name}
-        autoComplete="off"
-      />
-    )
-  }
-
   if ('MarkupString' in fieldType) {
     return (
       <Textarea
@@ -59,5 +48,12 @@ export function CardEditorFormField({ field: { name, fieldType, optional } }: IP
     )
   }
 
-  throw new Error(`Unsupported field type ${JSON.stringify(fieldType)}`)
+  return (
+    <Input
+      label={name}
+      name={name}
+      placeholder={name}
+      autoComplete="off"
+    />
+  )
 }

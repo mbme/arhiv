@@ -31,6 +31,7 @@ pub struct Field {
 #[derive(Serialize, Debug, Clone)]
 pub enum FieldType {
     String {},
+    NaturalNumber {},
     MarkupString {},
     Ref(&'static str),
     Enum(Vec<&'static str>),

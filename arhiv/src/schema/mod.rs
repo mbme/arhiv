@@ -125,6 +125,11 @@ lazy_static! {
                         optional: true,
                     },
                     Field {
+                        name: "pages",
+                        field_type: FieldType::NaturalNumber {},
+                        optional: true,
+                    },
+                    Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
                         optional: true,

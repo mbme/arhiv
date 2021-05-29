@@ -69,6 +69,7 @@ export interface IField {
 
 export type FieldType =
   { String: EmptyObject }
+  | { NaturalNumber: EmptyObject }
   | { MarkupString: EmptyObject }
   | { Ref: string }
   | { Enum: string[] }

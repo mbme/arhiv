@@ -107,7 +107,11 @@ impl super::Arhiv {
 
 type Upgrade = fn(&Connection) -> Result<()>;
 
-const UPGRADES: [Upgrade; DB::VERSION as usize] = [upgrade_v0_to_v1, upgrade_v1_to_v2];
+const UPGRADES: [Upgrade; DB::VERSION as usize] = [
+    upgrade_v0_to_v1, //
+    upgrade_v1_to_v2,
+    upgrade_v2_to_v3,
+];
 
 // stub
 fn upgrade_v0_to_v1(_conn: &Connection) -> Result<()> {
@@ -116,7 +120,7 @@ fn upgrade_v0_to_v1(_conn: &Connection) -> Result<()> {
 
 fn upgrade_v1_to_v2(conn: &Connection) -> Result<()> {
     conn.execute_batch(
-        "INSERT INTO settings(key, value) 
+        "INSERT INTO settings(key, value)
                        SELECT key, value FROM old_db.settings;
 
         DELETE FROM settings WHERE key = 'schema_version';
@@ -129,20 +133,20 @@ fn upgrade_v1_to_v2(conn: &Connection) -> Result<()> {
     // migrate documents from documents_history table
     {
         let rows_updated = conn.execute("INSERT INTO documents_snapshots(id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-                                                 SELECT 
-                                                    id, 
-                                                    rev, 
+                                                 SELECT
+                                                    id,
+                                                    rev,
                                                     LEAD(rev, 1, 0) OVER (
-                                                        PARTITION BY id 
+                                                        PARTITION BY id
                                                         ORDER BY rev DESC
                                                         ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) prev_rev,
-                                                    ABS(RANDOM()) snapshot_id, 
-                                                    type, 
-                                                    created_at, 
-                                                    updated_at, 
-                                                    archived, 
-                                                    refs, 
-                                                    data 
+                                                    ABS(RANDOM()) snapshot_id,
+                                                    type,
+                                                    created_at,
+                                                    updated_at,
+                                                    archived,
+                                                    refs,
+                                                    data
                                                  FROM old_db.documents_history", [])
         .context("failed to migrate documents_history table")?;
 
@@ -155,22 +159,44 @@ fn upgrade_v1_to_v2(conn: &Connection) -> Result<()> {
     // copy modified documents from the documents table
     {
         let rows_updated = conn.execute("INSERT INTO documents_snapshots(id, rev, prev_rev, snapshot_id, type, created_at, updated_at, archived, refs, data)
-                                                 SELECT 
-                                                    id, 
-                                                    rev, 
-                                                    (SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots WHERE id = id) prev_rev,      
-                                                    ABS(RANDOM()) snapshot_id, 
-                                                    type, 
-                                                    created_at, 
-                                                    updated_at, 
-                                                    archived, 
-                                                    refs, 
-                                                    data 
+                                                 SELECT
+                                                    id,
+                                                    rev,
+                                                    (SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots WHERE id = id) prev_rev,
+                                                    ABS(RANDOM()) snapshot_id,
+                                                    type,
+                                                    created_at,
+                                                    updated_at,
+                                                    archived,
+                                                    refs,
+                                                    data
                                                 FROM old_db.documents WHERE rev = 0", [])
         .context("failed to migrate documents table")?;
 
         log::info!("Migrated {} rows from documents table", rows_updated);
     }
+
+    Ok(())
+}
+
+fn upgrade_v2_to_v3(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '3' WHERE key = 'db_version';
+       ",
+    )
+    .context("failed to migrate settings")?;
+
+    conn.execute_batch(
+        "INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots SET data = json_remove(data, '$.complexity') WHERE type = 'task';
+       ",
+    )
+    .context("failed to migrate documents_snapshots table")?;
 
     Ok(())
 }

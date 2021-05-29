@@ -18,7 +18,7 @@ pub fn index_page(context: State<AppContext>) -> Result<Template> {
         .collect();
 
     Ok(Template::render(
-        "index_page",
+        "pages/index_page",
         json!({
             "status": status.to_string(),
             "document_types": document_types,

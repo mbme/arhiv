@@ -1,39 +1,12 @@
 {% extends "base" %}
 
-{% macro catalog_entry(entry) %}
-<li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed">
-  <div class="flex justify-between mb-4 text-gray-400 uppercase font-mono text-sm">
-    <div>
-      {{ entry.document_type }} {{ entry.id }}
-    </div>
-
-    <div>
-      {{ entry.updated_at | date }}
-    </div>
-  </div>
-
-  <div class="markup max-h-8rem line-clamp-4 mb-4">
-    {{ entry.preview | safe }}
-  </div>
-
-  <a href="/documents/{{ entry.id }}" class="uppercase">
-    read more
-  </a>
-</li>
-{% endmacro catalog_entry %}
-
-
 {% block content %}
 
-<h1 class="mb-8 uppercase">
+<h3 class="mb-8 uppercase">
   {{document_type}} catalog
-</h1>
+</h3>
 
-<ul>
-  {% for entry in items %}
-  {{ self::catalog_entry(entry = entry) }}
-  {% endfor %}
-</ul>
+{% include "components/catalog" %}
 
 <div class="flex justify-center items-center font-mono uppercase my-16">
   {% if prev_link %}

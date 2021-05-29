@@ -16,7 +16,7 @@ pub fn document_editor_page(id: String, context: State<AppContext>) -> Result<Op
     };
 
     Ok(Some(Template::render(
-        "document_editor_page",
+        "pages/document_editor_page",
         json!({ "document": document }),
     )))
 }

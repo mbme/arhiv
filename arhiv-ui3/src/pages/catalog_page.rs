@@ -7,7 +7,7 @@ use serde_json::json;
 
 use arhiv::{entities::*, Filter, Matcher, OrderBy};
 
-use crate::utils::AppContext;
+use crate::{components::prepare_catalog_values, utils::AppContext};
 
 const PAGE_SIZE: u8 = 14;
 
@@ -35,22 +35,8 @@ pub fn catalog_page(
     filter.page_offset = Some(PAGE_SIZE * page);
     filter.order.push(OrderBy::UpdatedAt { asc: false });
 
-    let renderer = context.get_renderer();
-
     let result = context.arhiv.list_documents(filter)?;
-
-    let items: Vec<_> = result
-        .items
-        .into_iter()
-        .map(|document| CatalogEntry {
-            preview: renderer
-                .get_preview(&document)
-                .unwrap_or("No preview".to_string()),
-            id: document.id,
-            document_type: document.document_type,
-            updated_at: document.updated_at.into(),
-        })
-        .collect();
+    let components_catalog = prepare_catalog_values(&context.get_renderer(), result.items)?;
 
     let prev_link = match page {
         0 => None,
@@ -65,10 +51,10 @@ pub fn catalog_page(
     };
 
     Ok(Template::render(
-        "catalog_page",
+        "pages/catalog_page",
         json!({
             "document_type": document_type,
-            "items": items,
+            "components_catalog": components_catalog,
             "prev_link": prev_link,
             "page": page,
             "next_link": next_link,

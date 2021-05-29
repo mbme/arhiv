@@ -1,0 +1,23 @@
+<ul>
+  {% for entry in components_catalog.items %}
+  <li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed">
+    <div class="flex justify-between mb-4 text-gray-400 uppercase font-mono text-sm">
+      <div>
+        {{ entry.document_type }} {{ entry.id }}
+      </div>
+
+      <div>
+        {{ entry.updated_at | date }}
+      </div>
+    </div>
+
+    <div class="markup max-h-8rem line-clamp-4 mb-4">
+      {{ entry.preview | safe }}
+    </div>
+
+    <a href="/documents/{{ entry.id }}" class="uppercase">
+      read more
+    </a>
+  </li>
+  {% endfor %}
+</ul>

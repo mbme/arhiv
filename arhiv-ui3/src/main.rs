@@ -7,18 +7,11 @@ use rocket::{config::Environment, Config};
 use rocket_contrib::{serve::StaticFiles, templates::Template};
 
 use arhiv::markup::RenderOptions;
-use catalog_page::*;
-use document_editor_page::*;
-use document_page::*;
-use index_page::*;
-use not_found_page::*;
+use pages::*;
 use utils::{get_nav_document_types, AppContext};
 
-mod catalog_page;
-mod document_editor_page;
-mod document_page;
-mod index_page;
-mod not_found_page;
+mod components;
+mod pages;
 mod utils;
 
 fn main() {

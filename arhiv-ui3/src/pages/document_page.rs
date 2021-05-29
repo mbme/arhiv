@@ -32,7 +32,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
     let fields = prepare_fields(&document, &context)?;
 
     Ok(Some(Template::render(
-        "document_page",
+        "pages/document_page",
         json!({
             "fields": fields,
             "document": document,

@@ -50,8 +50,6 @@ pub trait Queries {
     }
 
     fn count_documents(&self) -> Result<DocumentsCount> {
-        self.create_documents_view()?;
-
         // count documents
         // count attachments
         // count tombstones
@@ -88,29 +86,7 @@ pub trait Queries {
             .context("Failed to count documents")
     }
 
-    fn create_conflicts_view(&self) -> Result<()> {
-        // conflict is a
-        // 1. staged document (rev = 0)
-        // 2. with prev_rev != max rev of the same document
-        self.get_connection()
-            .execute(
-                "CREATE TEMP VIEW IF NOT EXISTS conflicts AS
-                SELECT a.* FROM
-                        documents_snapshots a
-                    INNER JOIN
-                        (SELECT id, MAX(rev) max_rev FROM documents_snapshots GROUP BY id) b
-                    ON a.id = b.id
-                    WHERE a.rev = 0 AND a.prev_rev != b.max_rev",
-                [],
-            )
-            .context("failed to create conflicts view")?;
-
-        Ok(())
-    }
-
     fn count_conflicts(&self) -> Result<u32> {
-        self.create_conflicts_view()?;
-
         self.get_connection()
             .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
             .context("failed to count conflicts")
@@ -241,7 +217,6 @@ pub trait Queries {
         let (query, params) = qb.build();
         log::debug!("list_documents: {}", &query);
 
-        self.create_documents_view()?;
         let mut stmt = self.get_connection().prepare(&query)?;
 
         let mut rows = stmt.query(params_from_iter(params))?;
@@ -277,34 +252,7 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn create_documents_view(&self) -> Result<()> {
-        let query = format!(
-            "CREATE TEMP VIEW IF NOT EXISTS documents AS
-                SELECT a.* FROM documents_snapshots a
-                    INNER JOIN
-                        (SELECT rowid,
-                                ROW_NUMBER() OVER (PARTITION BY id
-                                                    ORDER BY CASE
-                                                                WHEN rev = 0 THEN {}
-                                                                ELSE rev
-                                                            END
-                                                    DESC) rn
-                        FROM documents_snapshots) b
-                    ON a.rowid = b.rowid WHERE b.rn = 1",
-            std::u32::MAX
-        );
-
-        let mut stmt = self.get_connection().prepare_cached(&query)?;
-
-        stmt.execute([])
-            .context("failed to create documents view")?;
-
-        Ok(())
-    }
-
     fn get_document(&self, id: &Id) -> Result<Option<Document>> {
-        self.create_documents_view()?;
-
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents WHERE id = ?1 LIMIT 1")?;
@@ -321,8 +269,6 @@ pub trait Queries {
     }
 
     fn is_blob_in_use(&self, hash: &BLOBHash) -> Result<bool> {
-        self.create_documents_view()?;
-
         let result = self
             .get_connection()
             .prepare_cached(
@@ -341,8 +287,6 @@ pub trait Queries {
     }
 
     fn get_blob_hashes(&self) -> Result<HashSet<BLOBHash>> {
-        self.create_documents_view()?;
-
         let mut stmt = self.get_connection().prepare(
             "SELECT json_extract(data, ?1) FROM documents
              WHERE type = ?2",

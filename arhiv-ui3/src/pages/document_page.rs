@@ -47,20 +47,24 @@ fn prepare_fields(document: &Document, context: &AppContext) -> Result<Vec<Field
         .get_data_description_by_type(&document.document_type)?
         .fields
         .iter()
-        .map(|field| match field.field_type {
-            FieldType::MarkupString {} => {
-                let markup: MarkupStr = document.get_field_str(field.name)?.into();
+        .map(|field| {
+            let value = document
+                .data
+                .get(field.name)
+                .map(|value| value.as_str())
+                .flatten();
 
-                Ok(Field {
-                    name: field.name,
-                    value: renderer.to_html(&markup),
-                    safe: true,
-                })
-            }
-            FieldType::Ref(_) => {
-                let value = document.get_field_str(field.name)?;
+            match (&field.field_type, value) {
+                (FieldType::MarkupString {}, _) => {
+                    let markup: MarkupStr = value.unwrap_or("").into();
 
-                Ok(Field {
+                    Ok(Field {
+                        name: field.name,
+                        value: renderer.to_html(&markup),
+                        safe: true,
+                    })
+                }
+                (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
                     value: format!(
                         "<a href=\"{0}\">{1}</a>",
@@ -68,16 +72,12 @@ fn prepare_fields(document: &Document, context: &AppContext) -> Result<Vec<Field
                         value
                     ),
                     safe: true,
-                })
-            }
-            _ => {
-                let value = document.get_field_str(field.name)?.to_string();
-
-                Ok(Field {
+                }),
+                _ => Ok(Field {
                     name: field.name,
-                    value,
+                    value: value.unwrap_or("").to_string(),
                     safe: false,
-                })
+                }),
             }
         })
         .collect::<Result<Vec<_>>>()

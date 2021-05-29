@@ -46,6 +46,12 @@ impl DocumentsCount {
     pub fn count_staged_tombstones(&self) -> u32 {
         self.tombstones_updated + self.tombstones_new
     }
+
+    pub fn count_staged(&self) -> u32 {
+        self.count_staged_documents()
+            + self.count_staged_attachments()
+            + self.count_staged_tombstones()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -41,6 +41,14 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
+            "            Synced: {}",
+            self.documents_count.count_staged() == 0
+        )?;
+
+        writeln!(f, "")?;
+
+        writeln!(
+            f,
             "  Last update time: {}",
             if self.last_update_time == chrono::MIN_DATETIME {
                 "NEVER".to_string()

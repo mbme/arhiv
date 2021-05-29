@@ -18,7 +18,7 @@ fn get_db_version(conn: &Connection) -> Result<u8> {
 }
 
 impl super::Arhiv {
-    pub fn upgrade(root_dir: impl Into<String>) -> Result<()> {
+    pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
         let root_dir = root_dir.into();
 
         let db_version = {
@@ -96,7 +96,11 @@ impl super::Arhiv {
             fs_tx.move_file(new_db.get_db_file(), db.get_db_file())?;
             fs_tx.commit()?;
 
-            log::info!("Upgraded db to version {}", upgrade_version);
+            log::info!(
+                "Upgraded db from version {} to version {}",
+                db_version,
+                upgrade_version
+            );
         }
 
         log::info!("Done");

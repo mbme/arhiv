@@ -207,7 +207,9 @@ async fn main() {
         }
         ("apply-migrations", Some(_)) => {
             let config = Config::must_read().0;
-            Arhiv::upgrade(config.get_root_dir()).expect("must be able to upgrade arhiv db");
+
+            Arhiv::apply_migrations(config.get_root_dir())
+                .expect("must be able to apply migrations to arhiv db");
         }
         _ => unreachable!(),
     }

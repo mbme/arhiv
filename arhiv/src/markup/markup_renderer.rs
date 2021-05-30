@@ -26,9 +26,15 @@ impl<'a> MarkupRenderer<'a> {
     }
 
     pub fn to_html(&self, markup: &'a MarkupStr) -> String {
+        let mut autolink_text: Option<String> = None;
+
         let parser = markup.parse().map(|event| -> Event {
+            // FIXME handle images
             match event {
-                // FIXME handle images
+                // replace default autolink text with normalized title
+                Event::Text(_) if autolink_text.is_some() => {
+                    return Event::Text(autolink_text.take().unwrap().into());
+                }
                 Event::Start(Tag::Link(ref link_type, ref destination, ref title)) => {
                     let id = match extract_id(destination) {
                         Some(id) => id,
@@ -41,6 +47,14 @@ impl<'a> MarkupRenderer<'a> {
                         id.to_string()
                     } else {
                         title.to_string()
+                    };
+
+                    // if autolink, save normalized title to use it in the text node
+                    match link_type {
+                        LinkType::Autolink => {
+                            autolink_text = Some(normalized_title.clone());
+                        }
+                        _ => {}
                     };
 
                     let document = self

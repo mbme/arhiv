@@ -30,7 +30,7 @@
   {{ self::render_field(name="created at", value=document.createdAt|date(format="%Y-%m-%d %H:%M")) }}
   {{ self::render_field(name="updated at", value=document.updatedAt|date(format="%Y-%m-%d %H:%M")) }}
   {{ self::render_field(name="archived", value=document.archived) }}
-  {{ self::render_field(name="refs", value=document.refs) }}
+  {{ self::render_field(name="refs", value=refs|join(sep=", "), safe=true) }}
 </details>
 
 {% for field in fields %}

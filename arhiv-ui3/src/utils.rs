@@ -35,7 +35,7 @@ impl AppContext {
         MarkupRenderer::new(&self.arhiv, &self.render_options)
     }
 
-    pub fn get_document_url(&self, id: impl Into<Id>) -> String {
-        format!("{}/{}", self.render_options.document_path, id.into())
+    pub fn get_document_url(&self, id: &Id) -> String {
+        format!("{}/{}", self.render_options.document_path, id)
     }
 }

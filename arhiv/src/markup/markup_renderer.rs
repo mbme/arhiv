@@ -38,7 +38,7 @@ impl<'a> MarkupRenderer<'a> {
                     };
 
                     let normalized_title: String = if title.is_empty() {
-                        id.to_string().into()
+                        id.to_string()
                     } else {
                         title.to_string()
                     };

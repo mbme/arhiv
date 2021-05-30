@@ -33,6 +33,18 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
     let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
     let fields = prepare_fields(&document, &context, data_description)?;
 
+    let refs = document
+        .refs
+        .iter()
+        .map(|value| {
+            format!(
+                "<a href=\"{0}\">{1}</a>",
+                context.get_document_url(value),
+                value
+            )
+        })
+        .collect::<Vec<_>>();
+
     let children_catalog = if let Some(ref collection) = data_description.collection_of {
         let mut filter = Filter::default();
         filter.matchers.push(Matcher::Type {
@@ -53,6 +65,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
     Ok(Some(Template::render(
         "pages/document_page",
         json!({
+            "refs": refs,
             "fields": fields,
             "document": document,
             "components_catalog": children_catalog,
@@ -91,7 +104,7 @@ fn prepare_fields(
                     name: field.name,
                     value: format!(
                         "<a href=\"{0}\">{1}</a>",
-                        context.get_document_url(value),
+                        context.get_document_url(&value.to_string().into()),
                         value
                     ),
                     safe: true,

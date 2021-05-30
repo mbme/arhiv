@@ -26,4 +26,8 @@
 {{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
 {% endfor %}
 
+{% if components_catalog %}
+{% include "components/catalog" %}
+{% endif %}
+
 {% endblock %}

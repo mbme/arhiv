@@ -7,10 +7,11 @@ use serde_json::json;
 use arhiv::{
     entities::Document,
     markup::MarkupStr,
-    schema::{FieldType, SCHEMA},
+    schema::{DataDescription, FieldType, SCHEMA},
+    Filter, Matcher, OrderBy,
 };
 
-use crate::utils::AppContext;
+use crate::{components::prepare_catalog_values, utils::AppContext};
 
 #[derive(Serialize)]
 struct Field {
@@ -29,22 +30,44 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
         }
     };
 
-    let fields = prepare_fields(&document, &context)?;
+    let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
+    let fields = prepare_fields(&document, &context, data_description)?;
+
+    let children_catalog = if let Some(ref collection) = data_description.collection_of {
+        let mut filter = Filter::default();
+        filter.matchers.push(Matcher::Type {
+            document_type: collection.item_type.to_string(),
+        });
+        filter.page_size = None;
+        filter.page_offset = None;
+        filter.order.push(OrderBy::UpdatedAt { asc: false });
+
+        let result = context.arhiv.list_documents(filter)?;
+        let components_catalog = prepare_catalog_values(&context.get_renderer(), result.items)?;
+
+        Some(components_catalog)
+    } else {
+        None
+    };
 
     Ok(Some(Template::render(
         "pages/document_page",
         json!({
             "fields": fields,
             "document": document,
+            "components_catalog": children_catalog,
         }),
     )))
 }
 
-fn prepare_fields(document: &Document, context: &AppContext) -> Result<Vec<Field>> {
+fn prepare_fields(
+    document: &Document,
+    context: &AppContext,
+    data_description: &DataDescription,
+) -> Result<Vec<Field>> {
     let renderer = context.get_renderer();
 
-    SCHEMA
-        .get_data_description_by_type(&document.document_type)?
+    data_description
         .fields
         .iter()
         .map(|field| {

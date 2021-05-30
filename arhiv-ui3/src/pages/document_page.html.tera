@@ -18,9 +18,20 @@
 
 {% block content %}
 
-{{ self::render_field(name="id", value=document.id) }}
+<details class="mb-10">
+  <summary class="cursor-pointer py-2 mb-8">
+    <h3 class="uppercase text-gray-700 font-mono tracking-wider text-base inline-block">
+      {{document.documentType}} metadata
+    </h3>
+  </summary>
 
-{{ self::render_field(name="type", value=document.documentType) }}
+  {{ self::render_field(name="id", value=document.id) }}
+  {{ self::render_field(name="revision", value=document.rev) }}
+  {{ self::render_field(name="created at", value=document.createdAt|date(format="%Y-%m-%d %H:%M")) }}
+  {{ self::render_field(name="updated at", value=document.updatedAt|date(format="%Y-%m-%d %H:%M")) }}
+  {{ self::render_field(name="archived", value=document.archived) }}
+  {{ self::render_field(name="refs", value=document.refs) }}
+</details>
 
 {% for field in fields %}
 {{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}

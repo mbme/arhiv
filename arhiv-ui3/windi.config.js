@@ -1,4 +1,7 @@
 module.exports = {
+  preflight: {
+    enableAll: true,
+  },
   theme: {
     extend: {
       typography: {
@@ -14,6 +17,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('windicss/plugin/forms'),
     require('windicss/plugin/line-clamp'),
     require('windicss/plugin/typography'),
   ],

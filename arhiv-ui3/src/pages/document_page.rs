@@ -89,11 +89,7 @@ fn prepare_fields(
         .fields
         .iter()
         .map(|field| {
-            let value = document
-                .data
-                .get(field.name)
-                .map(|value| value.as_str())
-                .flatten();
+            let value = document.get_field_str(field.name);
 
             match (&field.field_type, value) {
                 (FieldType::MarkupString {}, _) => {

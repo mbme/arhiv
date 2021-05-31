@@ -145,7 +145,7 @@ impl<'a> MarkupRenderer<'a> {
 
         match field.field_type {
             FieldType::MarkupString {} => {
-                let text = document.get_field_str(field.name)?;
+                let text = document.get_field_str(field.name).unwrap_or_default();
                 let preview = text.lines().take(4).collect::<Vec<_>>().join("\n");
                 let markup: MarkupStr = preview.as_str().into();
 
@@ -153,7 +153,7 @@ impl<'a> MarkupRenderer<'a> {
             }
 
             FieldType::String {} => {
-                let value = document.get_field_str(field.name)?;
+                let value = document.get_field_str(field.name).unwrap_or_default();
 
                 Ok(value.to_string())
             }

@@ -1,10 +1,12 @@
-use super::{Id, Revision, SnapshotId};
+use std::collections::HashSet;
+use std::fmt;
+
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashSet;
-use std::fmt;
+
+use super::{Id, Revision, SnapshotId};
 
 pub const TOMBSTONE_TYPE: &'static str = "tombstone";
 
@@ -51,22 +53,17 @@ impl Document {
         self.rev == Revision::STAGING
     }
 
-    pub fn get_field(&self, field: &str) -> Result<&Value> {
-        self.data.get(field).ok_or(anyhow!(
-            "document {}: can't find field {}",
-            self.document_type,
-            field
-        ))
+    pub fn get_field(&self, field: &str) -> Option<&Value> {
+        self.data.get(field)
     }
 
-    pub fn get_field_str<'doc>(&self, field: &str) -> Result<&str> {
+    pub fn get_field_str<'doc>(&self, field: &str) -> Option<&str> {
         let value = self.get_field(field)?;
 
-        value.as_str().ok_or(anyhow!(
+        Some(value.as_str().expect(&format!(
             "document {}: can't use field {} as &str",
-            self.document_type,
-            field
-        ))
+            self.document_type, field
+        )))
     }
 }
 

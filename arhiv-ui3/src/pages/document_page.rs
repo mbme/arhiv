@@ -75,6 +75,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
             "fields": fields,
             "document": document,
             "children_catalog": children_catalog,
+            "editor_link": context.get_document_editor_url(&document.id),
         }),
     )?))
 }

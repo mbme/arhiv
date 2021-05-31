@@ -1,14 +1,11 @@
 {% extends "base.html.tera" %}
 
-{% block heading %}
-{{document_type}}s catalog
-{% endblock %}
-
 {% block content %}
+<h1>{{document_type}}s catalog</h1>
 
 {{ catalog | safe }}
 
-<div class="flex justify-center items-center font-mono uppercase my-16">
+<div class="flex justify-center items-center font-mono uppercase mt-10 mb-4">
   {% if prev_link %}
   <a href="{{prev_link}}">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">

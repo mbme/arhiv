@@ -19,6 +19,8 @@ pub fn document_editor_page(
 
     Ok(Some(context.render_page(
         "pages/document_editor_page.html.tera",
-        json!({ "document": document }),
+        json!({
+            "document": document, //
+        }),
     )?))
 }

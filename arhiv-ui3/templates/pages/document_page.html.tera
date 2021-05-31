@@ -16,18 +16,21 @@
 </section>
 {% endmacro render_field %}
 
-{% block heading %}
-{{document.documentType}}
-{% endblock %}
-
 {% block content %}
+<div class="flex justify-between mb-8">
+  <h1>
+    {{document.documentType}}
+  </h1>
+
+  <a href="{{editor_link}}">EDIT</a>
+</div>
 
 {% for field in fields %}
 {{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
 
 {% endfor %}
 
-<details class="mb-10">
+<details class="mb-4">
   <summary class="cursor-pointer py-2 mb-8">
     <h3 class="section-heading !text-gray-700 inline-block">
       metadata

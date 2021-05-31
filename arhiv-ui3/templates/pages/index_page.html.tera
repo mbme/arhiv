@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<pre class="mb-8">
+<pre class="mb-8 text-sm">
   <code>
    {{ status }}
   </code>

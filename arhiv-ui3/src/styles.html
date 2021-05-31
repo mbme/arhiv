@@ -1,18 +1,32 @@
 <style lang="windi">
-  html, body, #app {
-    height: 100vh;
+  html, body {
+    height: auto;
     min-height: 100vh;
 
     color: #333333;
+    @apply bg-yellow-100;
 
     text-rendering: optimizeLegibility;
     @apply antialiased;
   }
 
+  body {
+    @apply py-4;
+  }
+
+  #header {
+    margin-left: 10vw;
+
+    @apply px-8 py-2 mb-4 uppercase font-mono text-lg font-medium;
+  }
+
   #app {
     margin-left: 10vw;
+
     width: 90vw;
     max-width: 800px;
+
+    @apply px-8 py-4 bg-white shadow-md;
   }
 
   a {
@@ -56,6 +70,11 @@
   .markup-sm li > input[type=checkbox] {
     margin-top: 0;
     margin-bottom: 0;
+  }
+
+  .markup, .markup-sm {
+    hyphens: auto;
+    overflow-wrap: break-word;
   }
 
   .section-heading {

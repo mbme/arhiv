@@ -1,10 +1,10 @@
 {% extends "base.html.tera" %}
 
-{% block content %}
+{% block heading %}
+{{document_type}}s catalog
+{% endblock %}
 
-<h3 class="mb-8 uppercase">
-  {{document_type}} catalog
-</h3>
+{% block content %}
 
 {{ catalog | safe }}
 

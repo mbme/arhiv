@@ -16,12 +16,21 @@
 </section>
 {% endmacro render_field %}
 
+{% block heading %}
+{{document.documentType}}
+{% endblock %}
+
 {% block content %}
+
+{% for field in fields %}
+{{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
+
+{% endfor %}
 
 <details class="mb-10">
   <summary class="cursor-pointer py-2 mb-8">
-    <h3 class="uppercase text-gray-700 font-mono tracking-wider text-base inline-block">
-      {{document.documentType}} metadata
+    <h3 class="section-heading !text-gray-700 inline-block">
+      metadata
     </h3>
   </summary>
 
@@ -32,10 +41,6 @@
   {{ self::render_field(name="archived", value=document.archived) }}
   {{ self::render_field(name="refs", value=refs|join(sep=", "), safe=true) }}
 </details>
-
-{% for field in fields %}
-{{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
-{% endfor %}
 
 {% if children_catalog %}
 {{ children_catalog | safe }}

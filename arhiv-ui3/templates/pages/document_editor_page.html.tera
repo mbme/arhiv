@@ -1,5 +1,9 @@
 {% extends "base.html.tera" %}
 
+{% block heading %}
+  {{document.documentType}}
+{% endblock %}
+
 {% block content %}
 
 <pre class="whitespace-pre-wrap">

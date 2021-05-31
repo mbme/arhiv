@@ -24,6 +24,10 @@
       </nav>
 
       <main class="pr-8 py-4 flex-auto">
+        <h3 class="section-heading !text-lg mb-10">
+          {% block heading %}{% endblock %}
+        </h3>
+
         {% block content %}{% endblock %}
       </main>
     </div>

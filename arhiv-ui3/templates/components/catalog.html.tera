@@ -1,6 +1,6 @@
 <ul>
   {% for entry in items %}
-  <li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed">
+  <li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed first:border-t-0">
     <div class="flex justify-between mb-4 text-gray-400 font-mono text-sm">
       <div>
         {{ entry.updated_at | date }}

@@ -3,7 +3,6 @@
     height: 100vh;
     min-height: 100vh;
 
-    font-size: 18px;
     color: #333333;
 
     text-rendering: optimizeLegibility;
@@ -24,41 +23,19 @@
     }
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-xl text-gray-800 tracking-wide;
-  }
-
-  h1 {
-    @apply text-3xl;
-  }
-
-  h2 {
-    @apply text-2xl;
-  }
-
   .markup {
+    @apply prose;
+  }
+
+  .markup-sm {
+    @apply prose prose-sm text-sm;
+
     h1 {
-      @apply mb-6 font-serif font-bold;
+      @apply !text-lg;
     }
 
     h2, h3, h4, h5, h6 {
-      @apply mb-4 font-serif font-semibold;
-    }
-
-    ul, ol {
-      @apply pl-8 mb-4;
-    }
-
-    ul {
-      @apply list-disc;
-    }
-
-    ol {
-      @apply list-decimal;
-    }
-
-    p {
-      @apply mb-4;
+      @apply !text-base;
     }
   }
 

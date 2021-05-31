@@ -1,14 +1,13 @@
-use anyhow::Result;
+use anyhow::*;
 use rocket::State;
-use rocket_contrib::templates::Template;
 use serde_json::json;
 
 use arhiv::schema::SCHEMA;
 
-use crate::utils::AppContext;
+use crate::app_context::{AppContext, TemplatePage};
 
 #[get("/")]
-pub fn index_page(context: State<AppContext>) -> Result<Template> {
+pub fn index_page(context: State<AppContext>) -> Result<TemplatePage> {
     let status = context.arhiv.get_status()?;
 
     let document_types: Vec<&str> = SCHEMA
@@ -17,11 +16,11 @@ pub fn index_page(context: State<AppContext>) -> Result<Template> {
         .map(|module| module.document_type)
         .collect();
 
-    Ok(Template::render(
-        "pages/index_page",
+    context.render_page(
+        "pages/index_page.html.tera",
         json!({
             "status": status.to_string(),
             "document_types": document_types,
         }),
-    ))
+    )
 }

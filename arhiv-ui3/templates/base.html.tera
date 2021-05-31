@@ -6,16 +6,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="stylesheet" href="/reset.css">
-    <link rel="stylesheet" href="/windi.css">
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+    <link rel="stylesheet" href="/public/reset.css">
+    <link rel="stylesheet" href="/public/windi.css">
   </head>
   <body>
     <div id="app" class="h-screen min-h-screen flex flex-col">
       <nav class="pr-4 py-2 mb-4 uppercase font-mono text-xl font-semibold">
         <a href="/" class="mr-4 text-gray-500 tracking-wider">index</a>
 
-        {% for document_type in get_nav_document_types() %}
+        {% for document_type in global.nav_document_types %}
         <a
           href="/catalogs/{{document_type}}"
           class="mr-4 text-gray-500 tracking-wider"

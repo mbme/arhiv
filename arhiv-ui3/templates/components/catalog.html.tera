@@ -1,5 +1,5 @@
 <ul>
-  {% for entry in components_catalog.items %}
+  {% for entry in items %}
   <li class="pt-10 pb-11 min-h-6rem border-t-1 border-dashed">
     <div class="flex justify-between mb-4 text-gray-400 font-mono text-sm">
       <div>

@@ -24,10 +24,16 @@ pub struct Arhiv {
 
 impl Arhiv {
     pub fn must_open() -> Arhiv {
-        Arhiv::open(Config::must_read().0).expect("must be able to open arhiv")
+        Arhiv::open_with_config(Config::must_read().0).expect("must be able to open arhiv")
     }
 
-    pub fn open(config: Config) -> Result<Arhiv> {
+    pub fn open() -> Result<Arhiv> {
+        let config = Config::read()?.0;
+
+        Arhiv::open_with_config(config)
+    }
+
+    pub fn open_with_config(config: Config) -> Result<Arhiv> {
         let db = DB::open(config.get_root_dir().to_string())?;
 
         // check app and db version

@@ -25,7 +25,7 @@ impl<'a> MarkupRenderer<'a> {
         MarkupRenderer { arhiv, options }
     }
 
-    pub fn to_html(&self, markup: &'a MarkupStr) -> String {
+    pub fn to_html(&self, markup: &MarkupStr) -> String {
         let mut autolink_text: Option<String> = None;
 
         let parser = markup.parse().map(|event| -> Event {

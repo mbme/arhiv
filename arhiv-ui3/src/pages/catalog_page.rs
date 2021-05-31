@@ -1,13 +1,15 @@
 use anyhow::*;
 use chrono::{DateTime, Local};
 use rocket::{uri, State};
-use rocket_contrib::templates::Template;
 use serde::Serialize;
 use serde_json::json;
 
 use arhiv::{entities::*, Filter, Matcher, OrderBy};
 
-use crate::{components::prepare_catalog_values, utils::AppContext};
+use crate::{
+    app_context::{AppContext, TemplatePage},
+    components::Catalog,
+};
 
 const PAGE_SIZE: u8 = 14;
 
@@ -24,7 +26,7 @@ pub fn catalog_page(
     document_type: String,
     page: Option<u8>,
     context: State<AppContext>,
-) -> Result<Template> {
+) -> Result<TemplatePage> {
     let page = page.unwrap_or(0);
 
     let mut filter = Filter::default();
@@ -36,7 +38,7 @@ pub fn catalog_page(
     filter.order.push(OrderBy::UpdatedAt { asc: false });
 
     let result = context.arhiv.list_documents(filter)?;
-    let components_catalog = prepare_catalog_values(&context.get_renderer(), result.items)?;
+    let catalog = Catalog::new(result.items).render(&context)?;
 
     let prev_link = match page {
         0 => None,
@@ -50,14 +52,14 @@ pub fn catalog_page(
         None
     };
 
-    Ok(Template::render(
-        "pages/catalog_page",
+    context.render_page(
+        "pages/catalog_page.html.tera",
         json!({
             "document_type": document_type,
-            "components_catalog": components_catalog,
+            "catalog": catalog,
             "prev_link": prev_link,
             "page": page,
             "next_link": next_link,
         }),
-    ))
+    )
 }

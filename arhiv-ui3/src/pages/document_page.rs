@@ -1,6 +1,5 @@
 use anyhow::*;
 use rocket::State;
-use rocket_contrib::templates::Template;
 use serde::Serialize;
 use serde_json::json;
 
@@ -11,7 +10,10 @@ use arhiv::{
     Filter, Matcher, OrderBy,
 };
 
-use crate::{components::prepare_catalog_values, utils::AppContext};
+use crate::{
+    app_context::{AppContext, TemplatePage},
+    components::Catalog,
+};
 
 #[derive(Serialize)]
 struct Field {
@@ -21,7 +23,7 @@ struct Field {
 }
 
 #[get("/documents/<id>")]
-pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Template>> {
+pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<TemplatePage>> {
     let document = {
         if let Some(document) = context.arhiv.get_document(&id.into())? {
             document
@@ -50,27 +52,31 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
         filter.matchers.push(Matcher::Type {
             document_type: collection.item_type.to_string(),
         });
+        filter.matchers.push(Matcher::Field {
+            selector: format!("$.{}", document.document_type),
+            pattern: document.id.to_string(),
+        });
         filter.page_size = None;
         filter.page_offset = None;
         filter.order.push(OrderBy::UpdatedAt { asc: false });
 
         let result = context.arhiv.list_documents(filter)?;
-        let components_catalog = prepare_catalog_values(&context.get_renderer(), result.items)?;
+        let catalog = Catalog::new(result.items).render(&context)?;
 
-        Some(components_catalog)
+        Some(catalog)
     } else {
         None
     };
 
-    Ok(Some(Template::render(
-        "pages/document_page",
+    Ok(Some(context.render_page(
+        "pages/document_page.html.tera",
         json!({
             "refs": refs,
             "fields": fields,
             "document": document,
-            "components_catalog": children_catalog,
+            "children_catalog": children_catalog,
         }),
-    )))
+    )?))
 }
 
 fn prepare_fields(
@@ -78,8 +84,6 @@ fn prepare_fields(
     context: &AppContext,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
-    let renderer = context.get_renderer();
-
     data_description
         .fields
         .iter()
@@ -96,7 +100,7 @@ fn prepare_fields(
 
                     Ok(Field {
                         name: field.name,
-                        value: renderer.to_html(&markup),
+                        value: context.render_markup(&markup),
                         safe: true,
                     })
                 }

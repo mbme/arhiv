@@ -1,4 +1,4 @@
-{% extends "base" %}
+{% extends "base.html.tera" %}
 
 {% block content %}
 
@@ -6,7 +6,7 @@
   {{document_type}} catalog
 </h3>
 
-{% include "components/catalog" %}
+{{ catalog | safe }}
 
 <div class="flex justify-center items-center font-mono uppercase my-16">
   {% if prev_link %}

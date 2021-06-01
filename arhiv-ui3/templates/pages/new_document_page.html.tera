@@ -1,0 +1,20 @@
+{% extends "base.html.tera" %}
+
+{% block content %}
+
+{% if editor %}
+{{ editor | safe }}
+{% else %}
+<h3 class="mb-2 section-heading text-lg">Create document of type:</h3>
+<ul>
+  {% for document_type in document_types %}
+  <li class="mb-1">
+    <a href="/new?document_type={{document_type}}">
+      {{ document_type }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

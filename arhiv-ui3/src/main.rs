@@ -30,6 +30,7 @@ fn main() {
                 catalog_page,         // /catalogs/:document_type
                 document_page,        // /documents/:id
                 document_editor_page, // /documents/:id/edit
+                new_document_page,    // /new?<document_type>
             ],
         )
         .manage(

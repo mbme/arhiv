@@ -1,5 +1,6 @@
 use anyhow::*;
 use rocket::{http::ContentType, response::Content};
+use serde::Serialize;
 use serde_json::{json, Value};
 
 use arhiv::{
@@ -29,6 +30,7 @@ pub struct AppContext {
     pub arhiv: Arhiv,
     render_options: RenderOptions,
     templates: Templates,
+    pub document_types: Vec<&'static str>,
 }
 
 impl AppContext {
@@ -37,10 +39,17 @@ impl AppContext {
 
         let global_context = json!({ "nav_document_types": get_nav_document_types() });
 
+        let document_types: Vec<&str> = SCHEMA
+            .modules
+            .iter()
+            .map(|module| module.document_type)
+            .collect();
+
         Ok(AppContext {
             arhiv,
             render_options,
             templates: Templates::new(global_context)?,
+            document_types,
         })
     }
 
@@ -72,7 +81,8 @@ impl AppContext {
         Ok(Content(ContentType::HTML, result))
     }
 
-    pub fn render_template(&self, template_name: &str, context: Value) -> Result<String> {
-        self.templates.render(template_name, context)
+    pub fn render_template(&self, template_name: &str, context: impl Serialize) -> Result<String> {
+        self.templates
+            .render(template_name, serde_json::to_value(context)?)
     }
 }

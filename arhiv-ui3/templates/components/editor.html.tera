@@ -1,0 +1,56 @@
+<form action="" method="post" class="form">
+  {% for field in fields %}
+  <label class="block mb-8">
+    <h5 class="section-heading mb-2">
+      {{ field.label }}
+    </h5>
+
+    {% if 'MarkupString' in field.field_type %}
+    <textarea
+      name="{{field.name}}"
+      class="field"
+      required={{not field.optional}}
+    >{{field.value}}</textarea>
+
+    {% elif 'Enum' in field.field_type %}
+    <select
+      name="{{field.name}}"
+      class="field"
+    >
+      {% if field.optional %}
+      <option value></option>
+      {% endif %}
+
+      {% for option in field.field_type.Enum %}
+      <option
+        value="{{option}}"
+        {% if field.value == option %}
+        selected
+        {% endif %}
+      >{{option}}</option>
+      {% endfor %}
+    </select>
+
+    {% else %}
+    <input
+      type="text"
+      name="{{field.name}}"
+      class="field"
+      required={{not field.optional}}
+      value="{{field.value}}">
+    {% endif %}
+  </label>
+  {% endfor %}
+
+  <div class="flex justify-end mt-12">
+    <button
+      type="button"
+      class="btn mr-8"
+      onclick="arhiv_ui.go_back('{{cancel_url}}')"
+    >
+      Cancel
+    </button>
+
+    <input type="submit" class="btn btn-prime" value="Save">
+  </div>
+</form>

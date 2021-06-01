@@ -14,22 +14,19 @@ html, body {
 }
 
 body {
-  @apply py-4 flex flex-col;
+  @apply pb-4 flex flex-col;
+
+  margin-left: 10vw;
+  width: 90vw;
+  max-width: 800px;
 }
 
 #header {
-  margin-left: 10vw;
-
-  @apply px-8 py-2 mb-4 uppercase font-mono text-lg font-medium;
+  @apply flex items-end pl-8 pr-4 py-4 uppercase font-mono text-lg font-medium;
 }
 
 #app {
-  margin-left: 10vw;
-
-  width: 90vw;
-  max-width: 800px;
-
-  @apply p-8 bg-white shadow-md flex-grow;
+  @apply p-8 bg-white shadow-md flex-grow w-full;
 }
 
 @layer base {
@@ -118,5 +115,10 @@ body {
       @apply text-white bg-blue-500 rounded-md;
       @apply hover:bg-blue-600;
     }
+  }
+
+  .icon-btn {
+    @apply uppercase p-3 flex items-center max-w-max shadow-sm hover:shadow-lg rounded-full;
+    @apply border-2;
   }
 }

@@ -6,10 +6,22 @@
   "description": "arhiv UI",
   "main": "",
   "scripts": {
-    "watch:css": "windicss './templates/**/*.html.tera' './src/styles.html' --config windi.config.js --preflight --style --dev --output public/windi.css"
+    "build:js": "node build.js",
+    "build:css": "TAILWIND_MODE=build postcss ./src/index.css -o public/index.css",
+
+    "watch:js": "node build.js --watch",
+    "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/index.css -o public/index.css"
   },
   "dependencies": {},
   "devDependencies": {
-    "windicss": "^3.0.11"
+    "@tailwindcss/forms": "^0.3.2",
+    "@tailwindcss/line-clamp": "^0.2.1",
+    "@tailwindcss/typography": "^0.4.1",
+    "autoprefixer": "^10.2.6",
+    "esbuild": "^0.12.5",
+    "postcss": "^8.3.0",
+    "postcss-cli": "^8.3.1",
+    "postcss-nesting": "^8.0.1",
+    "tailwindcss": "^2.1.2"
   }
 }

@@ -1,7 +1,9 @@
 module.exports = {
-  preflight: {
-    enableAll: true,
-  },
+  mode: 'jit',
+  purge: [
+    './templates/**/*.html.tera'
+  ],
+  darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
       typography: {
@@ -16,9 +18,12 @@ module.exports = {
       },
     },
   },
+  variants: {
+    extend: {},
+  },
   plugins: [
-    require('windicss/plugin/forms'),
-    require('windicss/plugin/line-clamp'),
-    require('windicss/plugin/typography'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/line-clamp'),
   ],
-};
+}

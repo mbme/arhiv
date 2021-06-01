@@ -32,7 +32,7 @@
 
 <details class="mb-4">
   <summary class="cursor-pointer py-2 mb-8">
-    <h3 class="section-heading !text-gray-700 inline-block">
+    <h3 class="section-heading text-gray-700 inline-block">
       metadata
     </h3>
   </summary>

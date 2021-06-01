@@ -1,21 +1,23 @@
 use anyhow::*;
-use arhiv::{
-    entities::Document,
-    schema::{DataDescription, FieldType, SCHEMA},
-};
 use rocket::State;
 use serde::Serialize;
 use serde_json::json;
 
 use crate::app_context::{AppContext, TemplatePage};
+use arhiv::{
+    entities::*,
+    schema::{DataDescription, FieldType, SCHEMA},
+};
 
 #[get("/documents/<id>/edit")]
 pub fn document_editor_page(
     id: String,
     context: State<AppContext>,
 ) -> Result<Option<TemplatePage>> {
+    let id: Id = id.into();
+
     let document = {
-        if let Some(document) = context.arhiv.get_document(&id.into())? {
+        if let Some(document) = context.arhiv.get_document(&id)? {
             document
         } else {
             return Ok(None);
@@ -30,6 +32,7 @@ pub fn document_editor_page(
         json!({
             "document": document, //
             "fields": fields,
+            "document_url": context.get_document_url(&id),
         }),
     )?))
 }

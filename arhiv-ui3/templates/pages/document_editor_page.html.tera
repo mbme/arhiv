@@ -47,7 +47,17 @@
   </label>
   {% endfor %}
 
-  <input type="submit" class="btn" value="Save">
+  <div class="flex justify-end mt-12">
+    <button
+      type="button"
+      class="btn mr-8"
+      onclick="arhiv_ui.go_back('{{document_url}}')"
+    >
+      Cancel
+    </button>
+
+    <input type="submit" class="btn btn-prime" value="Save">
+  </div>
 </form>
 
 {% endblock %}

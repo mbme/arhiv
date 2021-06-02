@@ -35,5 +35,6 @@ package() {
   install -Dm 644 "v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
 
   install -Dm 755 "arhiv-ui-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-ui-server.service"
-  install -Dm 755 "arhiv-prime-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-prime-server.service"
+
+  install -Dm 755 "arhiv-prime-server@.service" "${pkgdir}/usr/lib/systemd/system/arhiv-prime-server@.service"
 }

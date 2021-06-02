@@ -1,12 +1,13 @@
 [Unit]
-Description=Arhiv Prime server
+Description=Arhiv Prime server of user %I
 
 [Service]
 Type=simple
+User=%I
 StandardOutput=journal
 ExecStart=arhiv prime-server
 Restart=always
 RestartSec=30
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

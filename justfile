@@ -55,5 +55,8 @@ web-platform:
 prod-build-install:
   cd {{invocation_directory()}}; cp PKGBUILD.template PKGBUILD; makepkg -efi; rm -rf pkg; rm *.pkg.tar.zst; rm PKGBUILD
 
-bump-version:
+bump-minor:
   cd {{invocation_directory()}}; cargo release --no-dev-version minor
+
+bump-patch:
+  cd {{invocation_directory()}}; cargo release --no-dev-version patch

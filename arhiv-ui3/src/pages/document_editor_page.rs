@@ -23,12 +23,7 @@ pub fn document_editor_page(
         }
     };
 
-    let editor = Editor::new(
-        &document.document_type,
-        &document.data,
-        Some(format!("/documents/{}", &id)),
-    )?
-    .render(&context)?;
+    let editor = Editor::new(&document)?.render(&context)?;
 
     Ok(Some(context.render_page(
         "pages/document_editor_page.html.tera",

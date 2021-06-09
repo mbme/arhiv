@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 
 use arhiv::{
-    entities::{Document, Id},
+    entities::Document,
     markup::{MarkupRenderer, MarkupStr, RenderOptions},
     schema::SCHEMA,
     Arhiv,

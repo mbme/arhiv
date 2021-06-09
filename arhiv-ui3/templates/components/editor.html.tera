@@ -1,4 +1,10 @@
-<form action="" method="post" class="form">
+<form
+  id="document-editor"
+  class="form"
+  action=""
+  method="post"
+  autocomplete="off"
+>
   {% for field in fields %}
   <label class="block mb-8">
     <h5 class="section-heading mb-2">
@@ -9,7 +15,7 @@
     <textarea
       name="{{field.name}}"
       class="field"
-      required={{not field.optional}}
+      {% if not field.optional %}required{% endif %}
     >{{field.value}}</textarea>
 
     {% elif 'Enum' in field.field_type %}
@@ -36,17 +42,17 @@
       type="text"
       name="{{field.name}}"
       class="field"
-      required={{not field.optional}}
+      {% if not field.optional %}required{% endif %}
       value="{{field.value}}">
     {% endif %}
   </label>
   {% endfor %}
 
-  <div class="flex justify-end mt-12">
+  <div class="flex justify-end py-2 px-4 mt-12 bg-white sticky bottom-0">
     <button
       type="button"
       class="btn mr-8"
-      onclick="arhiv_ui.go_back('{{cancel_url}}')"
+      onclick="arhiv_ui.go_back()"
     >
       Cancel
     </button>
@@ -54,3 +60,33 @@
     <input type="submit" class="btn btn-prime" value="Save">
   </div>
 </form>
+
+<script>
+  const originalDocument = {{document | json_encode() | safe}};
+
+  const form = document.getElementById('document-editor');
+  const initialFormData = new FormData(form);
+
+  function onBeforeUnload(event) {
+    const fd = new FormData(form);
+
+    if (!utils.isEqualFormData(initialFormData, fd)) {
+      event.preventDefault();
+      return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
+    }
+  }
+
+  window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    arhiv_ui.save_document({
+      ...originalDocument,
+      data: utils.formDataToObj(new FormData(form)),
+    }).then(() => {
+      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
+      window.location = `/documents/${originalDocument.id}`;
+    })
+  });
+</script>

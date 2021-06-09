@@ -1,9 +1,11 @@
 use anyhow::*;
 use serde::Serialize;
-use serde_json::Value;
 
 use crate::app_context::AppContext;
-use arhiv::schema::{FieldType, SCHEMA};
+use arhiv::{
+    entities::Document,
+    schema::{FieldType, SCHEMA},
+};
 
 #[derive(Serialize)]
 struct FormField {
@@ -15,24 +17,20 @@ struct FormField {
 }
 
 #[derive(Serialize)]
-pub struct Editor {
+pub struct Editor<'d> {
     fields: Vec<FormField>,
-    cancel_url: Option<String>,
+    document: &'d Document,
 }
 
-impl Editor {
-    pub fn new(document_type: &str, data: &Value, cancel_url: Option<String>) -> Result<Self> {
-        let data_description = SCHEMA.get_data_description_by_type(document_type)?;
+impl<'d> Editor<'d> {
+    pub fn new(document: &'d Document) -> Result<Self> {
+        let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
 
         let fields = data_description
             .fields
             .iter()
             .map(|field| {
-                let value = data
-                    .get(field.name)
-                    .map(|value| value.as_str())
-                    .flatten()
-                    .unwrap_or("");
+                let value = document.get_field_str(field.name).unwrap_or("");
 
                 let mut field = FormField {
                     name: field.name,
@@ -53,7 +51,7 @@ impl Editor {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(Editor { fields, cancel_url })
+        Ok(Editor { fields, document })
     }
 
     pub fn render(self, context: &AppContext) -> Result<String> {

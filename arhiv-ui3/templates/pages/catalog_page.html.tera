@@ -17,9 +17,11 @@
   </a>
   {% endif %}
 
+  {% if page > 0 or next_link %}
   <div class="mx-8">
     Page {{ page }}
   </div>
+  {% endif %}
 
   {% if next_link %}
   <a href="{{next_link}}">

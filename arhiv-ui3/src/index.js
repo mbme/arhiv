@@ -25,24 +25,60 @@ window.arhiv_ui = {
   async delete_document(id) {
     try {
       await call_action({
-        Delete: { id }
+        delete: { id }
       });
       window.location = '/';
     } catch (e) {
       console.error(e);
       alert(e);
+
+      throw e;
     }
   },
 
   async archive_document(id, archive) {
     try {
       await call_action({
-        Archive: { id, archive }
+        archive: { id, archive }
       });
       window.location = `/documents/${id}`;
     } catch (e) {
       console.error(e);
       alert(e);
+
+      throw e;
     }
+  },
+
+  async save_document(document) {
+    try {
+      await call_action({
+        save: { document }
+      });
+    } catch (e) {
+      console.error(e);
+      alert(e);
+
+      throw e;
+    }
+  },
+}
+
+window.utils = {
+  formDataToObj(fd) {
+    const result = {};
+
+    for (const [key, value] of fd.entries()) {
+      result[key] = value;
+    }
+
+    return result;
+  },
+
+  isEqualFormData(fd1, fd2) {
+    const fd1Obj = this.formDataToObj(fd1);
+    const fd2Obj = this.formDataToObj(fd2);
+
+    return JSON.stringify(fd1Obj) === JSON.stringify(fd2Obj);
   },
 }

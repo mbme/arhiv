@@ -6,6 +6,7 @@ use crate::{
     app_context::{AppContext, TemplatePage},
     components::Editor,
 };
+use arhiv::{entities::Document, schema::SCHEMA};
 
 #[get("/new?<document_type>")]
 pub fn new_document_page(
@@ -13,12 +14,11 @@ pub fn new_document_page(
     context: State<AppContext>,
 ) -> Result<TemplatePage> {
     let editor = if let Some(ref document_type) = document_type {
-        Editor::new(
-            document_type, //
-            &json!({}),
-            Some("/".to_string()),
-        )?
-        .render(&context)?
+        let data = SCHEMA.create(document_type.clone())?;
+
+        let document = Document::new(document_type.clone(), data.into());
+
+        Editor::new(&document)?.render(&context)?
     } else {
         "".to_string()
     };

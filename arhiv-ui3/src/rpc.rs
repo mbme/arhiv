@@ -4,12 +4,14 @@ use rocket_contrib::json::Json;
 use serde::Deserialize;
 
 use crate::app_context::AppContext;
-use arhiv::entities::Id;
+use arhiv::entities::{Document, Id};
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum RPCAction {
     Delete { id: Id },
     Archive { id: Id, archive: bool },
+    Save { document: Document },
 }
 
 #[post("/rpc", format = "json", data = "<action>")]
@@ -20,6 +22,9 @@ pub fn rpc_endpoint(action: Json<RPCAction>, context: State<AppContext>) -> Resu
         }
         RPCAction::Archive { id, archive } => {
             context.arhiv.archive_document(&id, archive)?;
+        }
+        RPCAction::Save { document } => {
+            context.arhiv.stage_document(document)?;
         }
     }
 

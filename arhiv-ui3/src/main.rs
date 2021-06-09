@@ -9,11 +9,13 @@ use app_context::AppContext;
 use arhiv::markup::RenderOptions;
 use pages::*;
 use public_assets::*;
+use rpc::*;
 
 mod app_context;
 mod components;
 mod pages;
 mod public_assets;
+mod rpc;
 
 fn main() {
     let config = Config::build(Environment::Development)
@@ -31,6 +33,7 @@ fn main() {
                 document_page,        // /documents/:id
                 document_editor_page, // /documents/:id/edit
                 new_document_page,    // /new?<document_type>
+                rpc_endpoint,         // /rpc
             ],
         )
         .manage(

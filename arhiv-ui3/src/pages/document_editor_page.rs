@@ -26,7 +26,7 @@ pub fn document_editor_page(
     let editor = Editor::new(
         &document.document_type,
         &document.data,
-        Some(context.get_document_url(&id)),
+        Some(format!("/documents/{}", &id)),
     )?
     .render(&context)?;
 

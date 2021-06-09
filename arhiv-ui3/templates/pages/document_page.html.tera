@@ -37,11 +37,28 @@
     </time>
   </div>
 
+
+  {% if not is_tombstone %}
   <div class="flex flex-col">
-    <a href="{{editor_link}}">Edit</a>
-    <a href="{{editor_link}}" class="text-yellow-500">Archive</a>
-    <a href="{{editor_link}}" class="text-red-500">Delete</a>
+    <a href="/documents/{{document.id}}/edit">
+      Edit
+    </a>
+    <a
+      href="/documents/{{document.id}}/archive"
+      class="text-yellow-500">
+      {% if document.archived %}
+      UnArchive
+      {% else %}
+      Archive
+      {% endif %}
+    </a>
+    <a
+      href="/documents/{{document.id}}/delete"
+      class="text-red-500">
+      Delete
+    </a>
   </div>
+  {% endif %}
 </div>
 
 {% for field in fields %}

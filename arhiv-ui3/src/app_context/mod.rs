@@ -53,14 +53,6 @@ impl AppContext {
         })
     }
 
-    pub fn get_document_url(&self, id: &Id) -> String {
-        format!("{}/{}", self.render_options.document_path, id)
-    }
-
-    pub fn get_document_editor_url(&self, id: &Id) -> String {
-        format!("{}/{}/edit", self.render_options.document_path, id)
-    }
-
     pub fn render_markup(&self, string: &MarkupStr) -> String {
         let renderer = MarkupRenderer::new(&self.arhiv, &self.render_options);
 

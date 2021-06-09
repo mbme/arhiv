@@ -38,13 +38,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
     let refs = document
         .refs
         .iter()
-        .map(|value| {
-            format!(
-                "<a href=\"{0}\">{1}</a>",
-                context.get_document_url(value),
-                value
-            )
-        })
+        .map(|value| format!("<a href=\"/documents/{0}\">{0}</a>", value))
         .collect::<Vec<_>>();
 
     let children_catalog = if let Some(ref collection) = data_description.collection_of {
@@ -75,7 +69,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
             "fields": fields,
             "document": document,
             "children_catalog": children_catalog,
-            "editor_link": context.get_document_editor_url(&document.id),
+            "is_tombstone": document.is_tombstone(),
         }),
     )?))
 }
@@ -103,11 +97,7 @@ fn prepare_fields(
                 }
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
-                    value: format!(
-                        "<a href=\"{0}\">{1}</a>",
-                        context.get_document_url(&value.to_string().into()),
-                        value
-                    ),
+                    value: format!("<a href=\"/documents/{0}\">{0}</a>", value),
                     safe: true,
                 }),
                 _ => Ok(Field {

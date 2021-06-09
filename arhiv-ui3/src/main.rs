@@ -27,13 +27,15 @@ fn main() {
         .mount(
             "/",
             routes![
-                public_assets,        // /public
-                index_page,           // /
-                catalog_page,         // /catalogs/:document_type
-                document_page,        // /documents/:id
-                document_editor_page, // /documents/:id/edit
-                new_document_page,    // /new?<document_type>
-                rpc_endpoint,         // /rpc
+                public_assets,                      // /public
+                index_page,                         // /
+                catalog_page,                       // /catalogs/:document_type
+                document_page,                      // /documents/:id
+                document_editor_page,               // /documents/:id/edit
+                delete_document_confirmation_page,  // /documents/:id/delete
+                archive_document_confirmation_page, // /documents/:id/archive
+                new_document_page,                  // /new?<document_type>
+                rpc_endpoint,                       // /rpc
             ],
         )
         .manage(

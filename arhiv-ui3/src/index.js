@@ -22,15 +22,27 @@ window.arhiv_ui = {
     }
   },
 
-  delete_document(id) {
-    return call_action({
-      Delete: { id }
-    });
+  async delete_document(id) {
+    try {
+      await call_action({
+        Delete: { id }
+      });
+      window.location = '/';
+    } catch (e) {
+      console.error(e);
+      alert(e);
+    }
   },
 
-  archive_document(id, archive) {
-    return call_action({
-      Archive: { id, archive }
-    });
+  async archive_document(id, archive) {
+    try {
+      await call_action({
+        Archive: { id, archive }
+      });
+      window.location = `/documents/${id}`;
+    } catch (e) {
+      console.error(e);
+      alert(e);
+    }
   },
 }

@@ -17,10 +17,25 @@
 {% endmacro render_field %}
 
 {% block content %}
-<div class="flex justify-between mb-8">
-  <h1>
-    {{document.documentType}}
-  </h1>
+<div class="flex justify-between mb-10">
+  <div class="">
+    <div class="font-mono font-lg font-medium mb-2">
+      {{document.documentType | upper}} {{document.id}}
+
+      {% if document.archived %}
+      <span class="bg-gray-100 px-2 py-1">
+        ARCHIVED
+      </span>
+      {% endif %}
+    </div>
+
+    <time
+      class="text-xs text-gray-400"
+      datetime="{{document.updatedAt}}"
+    >
+      {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+    </time>
+  </div>
 
   <a href="{{editor_link}}">EDIT</a>
 </div>
@@ -30,20 +45,23 @@
 
 {% endfor %}
 
-<details class="mb-4">
-  <summary class="cursor-pointer py-2 mb-8">
+{% if refs | length > 0 %}
+<details class="mb-4 bg-gray-100">
+  <summary class="cursor-pointer p-2">
     <h3 class="section-heading text-gray-700 inline-block">
-      metadata
+      REFS
     </h3>
   </summary>
 
-  {{ self::render_field(name="id", value=document.id) }}
-  {{ self::render_field(name="revision", value=document.rev) }}
-  {{ self::render_field(name="created at", value=document.createdAt|date(format="%Y-%m-%d %H:%M")) }}
-  {{ self::render_field(name="updated at", value=document.updatedAt|date(format="%Y-%m-%d %H:%M")) }}
-  {{ self::render_field(name="archived", value=document.archived) }}
-  {{ self::render_field(name="refs", value=refs|join(sep=", "), safe=true) }}
+  <div class="px-2 py-4">
+    {% for ref in refs %}
+    <div class="mb-4">
+      {{ref | safe}}
+    </div>
+    {% endfor %}
+  </div>
 </details>
+{% endif %}
 
 {% if children_catalog %}
 {{ children_catalog | safe }}

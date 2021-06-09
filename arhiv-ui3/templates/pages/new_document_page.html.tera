@@ -3,6 +3,9 @@
 {% block content %}
 
 {% if editor %}
+<h1 class="mb-12 text-2xl uppercase">
+  {{document_type}} editor
+</h1>
 {{ editor | safe }}
 {% else %}
 <h3 class="mb-2 section-heading text-lg">Create document of type:</h3>

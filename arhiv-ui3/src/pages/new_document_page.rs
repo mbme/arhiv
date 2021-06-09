@@ -27,6 +27,7 @@ pub fn new_document_page(
         "pages/new_document_page.html.tera",
         json!({
             "editor": editor,
+            "document_type": document_type,
             "document_types": context.document_types,
         }),
     )?)

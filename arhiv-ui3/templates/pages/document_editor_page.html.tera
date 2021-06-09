@@ -1,7 +1,9 @@
 {% extends "base.html.tera" %}
 
 {% block content %}
-<h1 class="mb-12">{{document.documentType}} editor</h1>
+<h1 class="mb-12 text-2xl uppercase">
+  {{document.documentType}} editor
+</h1>
 
 {{editor | safe}}
 

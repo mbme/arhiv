@@ -16,13 +16,25 @@ html, body {
 body {
   @apply pb-4 flex flex-col;
 
-  margin-left: 10vw;
+  margin-left: 9rem;
   width: 90vw;
   max-width: 800px;
 }
 
 #header {
   @apply flex items-end pl-8 pr-4 py-4 uppercase font-mono text-lg font-medium;
+}
+
+#sidebar {
+  @apply flex flex-col pl-8;
+  position: absolute;
+  left: 0;
+  top: 6rem;
+
+  & > a {
+    text-align: right;
+    @apply mb-4 text-xl uppercase text-gray-500;
+  }
 }
 
 #app {

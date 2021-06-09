@@ -8,7 +8,6 @@
   "scripts": {
     "build:js": "node build.js",
     "build:css": "TAILWIND_MODE=build postcss ./src/index.css -o public/index.css",
-
     "watch:js": "node build.js --watch",
     "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/index.css -o public/index.css"
   },

@@ -51,10 +51,7 @@ body {
       @apply text-xl;
     }
 
-    & h3,
-    & h4,
-    & h5,
-    & h6 {
+    & :is(h3, h4, h5, h6) {
       @apply text-lg;
     }
   }
@@ -66,11 +63,7 @@ body {
       @apply text-lg;
     }
 
-    & h2,
-    & h3,
-    & h4,
-    & h5,
-    & h6 {
+    & :is(h2, h3, h4, h5, h6) {
       @apply text-base;
     }
   }

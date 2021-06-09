@@ -239,6 +239,26 @@ impl Arhiv {
         Ok(())
     }
 
+    pub fn archive_document(&self, id: &Id, archive: bool) -> Result<()> {
+        let mut document = self
+            .get_document(id)?
+            .ok_or(anyhow!("can't find document {}", &id))?;
+
+        if document.archived == archive {
+            log::warn!(
+                "document {} is already {}archived",
+                document,
+                if archive { "" } else { "un" }
+            );
+
+            return Ok(());
+        }
+
+        document.archived = archive;
+
+        self.stage_document(document)
+    }
+
     pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Attachment> {
         log::debug!("Staging attachment {}", &file_path);
 

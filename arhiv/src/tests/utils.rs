@@ -8,7 +8,7 @@ use rs_utils::generate_temp_path;
 impl Drop for Arhiv {
     // Remove temporary Arhiv in tests
     fn drop(&mut self) {
-        std::fs::remove_dir_all(self.config.get_root_dir()).expect("must be able to remove arhiv");
+        std::fs::remove_dir_all(&self.config.arhiv_root).expect("must be able to remove arhiv");
     }
 }
 
@@ -20,16 +20,20 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
 }
 
 pub fn new_prime() -> Arc<Arhiv> {
-    let config = Config::new(generate_temp_path("TempArhiv", ""), "");
+    let config = Config {
+        arhiv_root: generate_temp_path("TempArhiv", ""),
+        ..Config::default()
+    };
 
     new_arhiv(config, true)
 }
 
 pub fn new_replica(port: u16) -> Arc<Arhiv> {
-    let config = Config::new(
-        generate_temp_path("TempArhiv", ""),
-        format!("http://localhost:{}", port),
-    );
+    let config = Config {
+        arhiv_root: generate_temp_path("TempArhiv", ""),
+        prime_url: format!("http://localhost:{}", port),
+        ..Config::default()
+    };
 
     new_arhiv(config, false)
 }

@@ -40,16 +40,7 @@ async fn main() {
             SubCommand::with_name("apply-migrations")
                 .about("Upgrade arhiv db schema to latest version"),
         )
-        .subcommand(
-            SubCommand::with_name("backup")
-                .about("Backup arhiv data")
-                .arg(
-                    Arg::with_name("backup_dir")
-                        .help("Directory to save backup")
-                        .index(1)
-                        .required(true),
-                ),
-        )
+        .subcommand(SubCommand::with_name("backup").about("Backup arhiv data"))
         .subcommand(
             SubCommand::with_name("ui-server")
                 .about("Run arhiv UI server")
@@ -124,7 +115,7 @@ async fn main() {
             Arhiv::create(Config::must_read().0, arhiv_id, prime)
                 .expect("must be able to create arhiv");
         }
-        ("status", Some(_)) => {
+        ("status", _) => {
             let status = Arhiv::must_open()
                 .get_status()
                 .expect("must be able to get status");
@@ -145,7 +136,7 @@ async fn main() {
                 serde_json::to_string_pretty(&config).expect("must be able to serialize config")
             );
         }
-        ("sync", Some(_)) => {
+        ("sync", _) => {
             Arhiv::must_open().sync().await.expect("must sync");
         }
         ("get", Some(matches)) => {
@@ -196,19 +187,15 @@ async fn main() {
 
             join_handle.await.expect("must join");
         }
-        ("backup", Some(matches)) => {
+        ("backup", _) => {
             let arhiv = Arhiv::must_open();
 
-            let backup_dir = matches
-                .value_of("backup_dir")
-                .expect("backup_dir must be present");
-
-            arhiv.backup(backup_dir).expect("must be able to backup");
+            arhiv.backup().expect("must be able to backup");
         }
-        ("apply-migrations", Some(_)) => {
+        ("apply-migrations", _) => {
             let config = Config::must_read().0;
 
-            Arhiv::apply_migrations(config.get_root_dir())
+            Arhiv::apply_migrations(config.arhiv_root)
                 .expect("must be able to apply migrations to arhiv db");
         }
         _ => unreachable!(),

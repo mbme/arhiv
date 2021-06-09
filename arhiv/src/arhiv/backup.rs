@@ -7,8 +7,13 @@ use rs_utils::{ensure_dir_exists, file_exists, log, run_command};
 use std::{fs, path::Path};
 
 impl Arhiv {
-    pub fn backup<S: Into<String>>(&self, backup_dir: S) -> Result<()> {
-        let backup = BackupPaths::new(backup_dir.into());
+    pub fn backup(&self) -> Result<()> {
+        let backup_dir = self.config.backup_dir.clone();
+        ensure!(!backup_dir.is_empty(), "config.backup_dir is not set");
+
+        log::debug!("backup_dir: {}", &backup_dir);
+
+        let backup = BackupPaths::new(backup_dir);
         backup.check()?;
 
         // 1. vacuum the db so that WAL is written into db
@@ -49,7 +54,11 @@ impl Arhiv {
             blob_count += 1;
         }
 
-        log::info!("Backed up {} new blobs", blob_count);
+        if blob_count > 0 {
+            log::info!("Backed up {} new blobs", blob_count);
+        } else {
+            log::info!("No new blobs to backup");
+        }
 
         Ok(())
     }

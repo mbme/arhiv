@@ -5,13 +5,16 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{file_exists, get_config_home, locate_dominating_file, log};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    arhiv_root: String,
+    pub arhiv_root: String,
 
     #[serde(default)]
-    prime_url: String,
+    pub backup_dir: String,
+
+    #[serde(default)]
+    pub prime_url: String,
 }
 
 impl Config {
@@ -28,23 +31,6 @@ impl Config {
 
     pub fn must_read() -> (Config, String) {
         Config::read().expect("must be able to read arhiv config")
-    }
-
-    pub fn new(arhiv_root: impl Into<String>, prime_url: impl Into<String>) -> Self {
-        Config {
-            arhiv_root: arhiv_root.into(),
-            prime_url: prime_url.into(),
-        }
-    }
-
-    pub fn get_prime_url(&self) -> Result<&str> {
-        ensure!(!self.prime_url.is_empty(), "prime_url is not set");
-
-        Ok(&self.prime_url)
-    }
-
-    pub fn get_root_dir(&self) -> &str {
-        &self.arhiv_root
     }
 }
 

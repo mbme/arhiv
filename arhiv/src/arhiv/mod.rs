@@ -34,7 +34,7 @@ impl Arhiv {
     }
 
     pub fn open_with_config(config: Config) -> Result<Arhiv> {
-        let db = DB::open(config.get_root_dir().to_string())?;
+        let db = DB::open(config.arhiv_root.to_string())?;
 
         // check app and db version
         {
@@ -50,7 +50,7 @@ impl Arhiv {
             );
         }
 
-        log::info!("Open arhiv in {}", config.get_root_dir());
+        log::debug!("Open arhiv in {}", config.arhiv_root);
 
         Ok(Arhiv { config, db })
     }
@@ -60,10 +60,10 @@ impl Arhiv {
             "Initializing {} arhiv '{}' in {}",
             if prime { "prime" } else { "replica" },
             arhiv_id,
-            config.get_root_dir()
+            config.arhiv_root
         );
 
-        let db = DB::create(config.get_root_dir().to_string())?;
+        let db = DB::create(config.arhiv_root.to_string())?;
 
         let tx = db.get_tx()?;
 
@@ -75,19 +75,23 @@ impl Arhiv {
 
         tx.commit()?;
 
-        log::info!("Created arhiv in {}", config.get_root_dir());
+        log::info!("Created arhiv in {}", config.arhiv_root);
 
         Ok(Arhiv { config, db })
     }
 
     pub(crate) fn get_network_service(&self) -> Result<NetworkService> {
-        let network_service = NetworkService::new(self.config.get_prime_url()?);
+        let prime_url = &self.config.prime_url;
+
+        ensure!(!prime_url.is_empty(), "config.prime_url is not set");
+
+        let network_service = NetworkService::new(prime_url);
 
         Ok(network_service)
     }
 
     pub fn get_status(&self) -> Result<Status> {
-        let root_dir = self.config.get_root_dir().to_string();
+        let root_dir = self.config.arhiv_root.to_string();
         let debug_mode = cfg!(not(feature = "production-mode"));
 
         let conn = self.db.get_connection()?;

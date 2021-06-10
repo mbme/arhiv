@@ -11,6 +11,7 @@
     value="{{pattern}}"
     placeholder="Search..."
     aria-label="Search through documents"
+    onsearch="this.form.submit()"
   />
 </form>
 

@@ -1,3 +1,19 @@
+<form
+  id="catalog-filter"
+  class="form"
+  action=""
+  method="get"
+>
+  <input
+    type="search"
+    name="pattern"
+    class="field w-full"
+    value="{{pattern}}"
+    placeholder="Search..."
+    aria-label="Search through documents"
+  />
+</form>
+
 <ul>
   {% for entry in items %}
   <li class="pt-10 pb-11 min-h-6rem border-t-2 border-dashed first:border-t-0">

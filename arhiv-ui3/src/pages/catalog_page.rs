@@ -26,23 +26,28 @@ pub async fn catalog_page(req: Request<Body>) -> AppResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let context: &AppContext = req.data().unwrap();
 
-    let query_params = get_query_params(req.uri());
+    let mut query_params = get_query_params(req.uri());
 
     let page: u8 = query_params
-        .get("page")
-        .unwrap_or(&"0".to_string())
+        .remove("page")
+        .unwrap_or("0".to_string())
         .parse()?;
+
+    let pattern = query_params.remove("pattern").unwrap_or("".to_string());
 
     let mut filter = Filter::default();
     filter.matchers.push(Matcher::Type {
         document_type: document_type.clone(),
+    });
+    filter.matchers.push(Matcher::Search {
+        pattern: pattern.clone(),
     });
     filter.page_size = Some(PAGE_SIZE);
     filter.page_offset = Some(PAGE_SIZE * page);
     filter.order.push(OrderBy::UpdatedAt { asc: false });
 
     let result = context.arhiv.list_documents(filter)?;
-    let catalog = Catalog::new(result.items).render(&context)?;
+    let catalog = Catalog::new(result.items, pattern).render(&context)?;
 
     let prev_link = match page {
         0 => None,

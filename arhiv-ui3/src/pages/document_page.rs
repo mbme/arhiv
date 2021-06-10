@@ -14,7 +14,7 @@ use arhiv::{
 use crate::{
     app_context::AppContext,
     components::Catalog,
-    http_utils::{not_found, AppResponse},
+    http_utils::{get_query_params, not_found, AppResponse},
 };
 
 #[derive(Serialize)]
@@ -36,6 +36,9 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
         }
     };
 
+    let mut query_params = get_query_params(req.uri());
+    let pattern = query_params.remove("pattern").unwrap_or("".to_string());
+
     let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
     let fields = prepare_fields(&document, &context, data_description)?;
 
@@ -54,12 +57,15 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
             selector: format!("$.{}", document.document_type),
             pattern: document.id.to_string(),
         });
+        filter.matchers.push(Matcher::Search {
+            pattern: pattern.clone(),
+        });
         filter.page_size = None;
         filter.page_offset = None;
         filter.order.push(OrderBy::UpdatedAt { asc: false });
 
         let result = context.arhiv.list_documents(filter)?;
-        let catalog = Catalog::new(result.items).render(&context)?;
+        let catalog = Catalog::new(result.items, pattern).render(&context)?;
 
         Some(catalog)
     } else {

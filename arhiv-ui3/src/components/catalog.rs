@@ -16,11 +16,12 @@ struct CatalogEntry {
 
 pub struct Catalog {
     documents: Vec<Document>,
+    pattern: String,
 }
 
 impl Catalog {
-    pub fn new(documents: Vec<Document>) -> Self {
-        Catalog { documents }
+    pub fn new(documents: Vec<Document>, pattern: String) -> Self {
+        Catalog { documents, pattern }
     }
 
     pub fn render(self, context: &AppContext) -> Result<String> {
@@ -35,6 +36,12 @@ impl Catalog {
             })
             .collect();
 
-        context.render_template("components/catalog.html.tera", json!({ "items": items }))
+        context.render_template(
+            "components/catalog.html.tera",
+            json!({
+                "items": items,
+                "pattern": self.pattern,
+            }),
+        )
     }
 }

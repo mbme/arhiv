@@ -1,5 +1,5 @@
 use anyhow::*;
-use rocket::{http::ContentType, response::Content};
+use hyper::{header, Response};
 use serde::Serialize;
 use serde_json::{json, Value};
 
@@ -10,6 +10,8 @@ use arhiv::{
     Arhiv,
 };
 use templates::Templates;
+
+use crate::http_utils::AppResponse;
 
 mod templates;
 
@@ -23,8 +25,6 @@ fn get_nav_document_types() -> Vec<&'static str> {
         .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
         .collect()
 }
-
-pub type TemplatePage = Content<String>;
 
 pub struct AppContext {
     pub arhiv: Arhiv,
@@ -67,10 +67,17 @@ impl AppContext {
             .unwrap_or("Unable to generate preview".to_string())
     }
 
-    pub fn render_page(&self, template_name: &str, context: Value) -> Result<TemplatePage> {
+    pub fn render_page(&self, template_name: &str, context: Value) -> AppResponse {
         let result = self.templates.render(template_name, context)?;
 
-        Ok(Content(ContentType::HTML, result))
+        Response::builder()
+            .header(header::CONTENT_TYPE, "text/html")
+            // prevent page from caching
+            .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+            .header(header::EXPIRES, "0")
+            // ---
+            .body(result.into())
+            .context("failed to build response")
     }
 
     pub fn render_template(&self, template_name: &str, context: impl Serialize) -> Result<String> {

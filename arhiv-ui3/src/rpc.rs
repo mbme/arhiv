@@ -1,9 +1,8 @@
-use anyhow::*;
-use rocket::{http::Status, State};
-use rocket_contrib::json::Json;
+use hyper::{http::request::Parts, Body, Request, Response};
+use routerify::ext::RequestExt;
 use serde::Deserialize;
 
-use crate::app_context::AppContext;
+use crate::{app_context::AppContext, http_utils::AppResponse};
 use arhiv::entities::{Document, Id};
 
 #[derive(Deserialize)]
@@ -14,9 +13,14 @@ pub enum RPCAction {
     Save { document: Document },
 }
 
-#[post("/rpc", format = "json", data = "<action>")]
-pub fn rpc_endpoint(action: Json<RPCAction>, context: State<AppContext>) -> Result<Status> {
-    match action.into_inner() {
+pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
+    let (parts, body): (Parts, Body) = req.into_parts();
+    let body = hyper::body::to_bytes(body).await?;
+    let action: RPCAction = serde_json::from_slice(&body)?;
+
+    let context = parts.data::<AppContext>().unwrap();
+
+    match action {
         RPCAction::Delete { id } => {
             context.arhiv.delete_document(&id)?;
         }
@@ -28,5 +32,5 @@ pub fn rpc_endpoint(action: Json<RPCAction>, context: State<AppContext>) -> Resu
         }
     }
 
-    Ok(Status::Ok)
+    Ok(Response::new(Body::empty()))
 }

@@ -1,14 +1,15 @@
-use anyhow::*;
 use chrono::{DateTime, Local};
-use rocket::{uri, State};
+use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
 use arhiv::{entities::*, Filter, Matcher, OrderBy};
 
 use crate::{
-    app_context::{AppContext, TemplatePage},
+    app_context::AppContext,
     components::Catalog,
+    http_utils::{get_query_params, update_query_param, AppResponse},
 };
 
 const PAGE_SIZE: u8 = 14;
@@ -21,13 +22,16 @@ struct CatalogEntry {
     updated_at: DateTime<Local>,
 }
 
-#[get("/catalogs/<document_type>?<page>")]
-pub fn catalog_page(
-    document_type: String,
-    page: Option<u8>,
-    context: State<AppContext>,
-) -> Result<TemplatePage> {
-    let page = page.unwrap_or(0);
+pub async fn catalog_page(req: Request<Body>) -> AppResponse {
+    let document_type: &String = req.param("document_type").unwrap();
+    let context: &AppContext = req.data().unwrap();
+
+    let query_params = get_query_params(req.uri());
+
+    let page: u8 = query_params
+        .get("page")
+        .unwrap_or(&"0".to_string())
+        .parse()?;
 
     let mut filter = Filter::default();
     filter.matchers.push(Matcher::Type {
@@ -42,12 +46,20 @@ pub fn catalog_page(
 
     let prev_link = match page {
         0 => None,
-        1 => Some(uri!(catalog_page: &document_type, _).to_string()),
-        _ => Some(uri!(catalog_page: &document_type, page - 1).to_string()),
+        1 => Some(update_query_param(req.uri(), "page", None)),
+        _ => Some(update_query_param(
+            req.uri(),
+            "page",
+            Some((page - 1).to_string()),
+        )),
     };
 
     let next_link = if result.has_more {
-        Some(uri!(catalog_page: &document_type, page + 1).to_string())
+        Some(update_query_param(
+            req.uri(),
+            "page",
+            Some((page + 1).to_string()),
+        ))
     } else {
         None
     };

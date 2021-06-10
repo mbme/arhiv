@@ -1,11 +1,12 @@
-use anyhow::*;
-use rocket::State;
+use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::app_context::{AppContext, TemplatePage};
+use crate::{app_context::AppContext, http_utils::AppResponse};
 
-#[get("/")]
-pub fn index_page(context: State<AppContext>) -> Result<TemplatePage> {
+pub async fn index_page(req: Request<Body>) -> AppResponse {
+    let context: &AppContext = req.data().unwrap();
+
     let status = context.arhiv.get_status()?;
 
     context.render_page(

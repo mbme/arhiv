@@ -1,14 +1,14 @@
 use anyhow::*;
-use rocket::State;
+use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::app_context::{AppContext, TemplatePage};
+use crate::{app_context::AppContext, http_utils::AppResponse};
 
-#[get("/documents/<id>/archive")]
-pub fn archive_document_confirmation_page(
-    id: String,
-    context: State<AppContext>,
-) -> Result<TemplatePage> {
+pub async fn archive_document_confirmation_page(req: Request<Body>) -> AppResponse {
+    let id: &str = req.param("id").unwrap();
+    let context = req.data::<AppContext>().unwrap();
+
     let document = context
         .arhiv
         .get_document(&id.into())?

@@ -1,21 +1,31 @@
-use std::path::Path;
-
-use rocket::{http::ContentType, response::Content};
+use anyhow::*;
+use hyper::{header, Body, Request, Response};
+use routerify::ext::RequestExt;
 use rust_embed::RustEmbed;
+
+use crate::http_utils::{not_found, AppResponse};
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/public"]
 struct PublicAssets;
 
-#[get("/public/<asset>")]
-pub fn public_assets(asset: String) -> Option<Content<Vec<u8>>> {
-    let data: Vec<u8> = PublicAssets::get(&asset)?.into();
+pub async fn public_assets_handler(req: Request<Body>) -> AppResponse {
+    let asset = req.param("fileName").unwrap();
 
-    let content_type = Path::new(&asset)
-        .extension()
-        .map(|ext| ContentType::from_extension(ext.to_str()?))
-        .flatten()
-        .unwrap_or(ContentType::Binary);
+    let data: Vec<u8> = {
+        if let Some(data) = PublicAssets::get(&asset) {
+            data.into()
+        } else {
+            return not_found();
+        }
+    };
 
-    Some(Content(content_type, data))
+    let mime: String = mime_guess::from_path(&asset)
+        .first_or_octet_stream()
+        .to_string();
+
+    Response::builder()
+        .header(header::CONTENT_TYPE, mime)
+        .body(Body::from(data))
+        .context("failed to build response")
 }

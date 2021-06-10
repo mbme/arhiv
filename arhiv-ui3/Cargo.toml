@@ -5,14 +5,18 @@ edition = "2018"
 
 [dependencies]
 arhiv = { path = "../arhiv" }
+rs-utils = { path = "../rs-utils" }
 
 anyhow = "1"
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-rocket = "0.4"
-rocket_contrib = { version = "0.4", features = ["tera_templates"] }
+tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
+hyper = { version = "0.14", features = ["http1", "server"] }
+routerify = "2"
+mime_guess = "2"
+form_urlencoded = "1"
 
 tera = { version = "1", features = ["chrono"]}
 chrono = { version = "0.4", features = ["serde"] }

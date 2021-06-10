@@ -1,9 +1,0 @@
-{% extends "base.html.tera" %}
-
-{% block content %}
-
-<div class="bg-red-100">
-  <h1>PAGE NOT FOUND</h1>
-</div>
-
-{% endblock %}

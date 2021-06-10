@@ -1,5 +1,6 @@
 use anyhow::*;
-use rocket::State;
+use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
@@ -11,8 +12,9 @@ use arhiv::{
 };
 
 use crate::{
-    app_context::{AppContext, TemplatePage},
+    app_context::AppContext,
     components::Catalog,
+    http_utils::{not_found, AppResponse},
 };
 
 #[derive(Serialize)]
@@ -22,13 +24,15 @@ struct Field {
     safe: bool,
 }
 
-#[get("/documents/<id>")]
-pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<TemplatePage>> {
+pub async fn document_page(req: Request<Body>) -> AppResponse {
+    let id: &str = req.param("id").unwrap();
+    let context: &AppContext = req.data().unwrap();
+
     let document = {
         if let Some(document) = context.arhiv.get_document(&id.into())? {
             document
         } else {
-            return Ok(None);
+            return not_found();
         }
     };
 
@@ -62,7 +66,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
         None
     };
 
-    Ok(Some(context.render_page(
+    context.render_page(
         "pages/document_page.html.tera",
         json!({
             "refs": refs,
@@ -71,7 +75,7 @@ pub fn document_page(id: String, context: State<AppContext>) -> Result<Option<Te
             "children_catalog": children_catalog,
             "is_tombstone": document.is_tombstone(),
         }),
-    )?))
+    )
 }
 
 fn prepare_fields(

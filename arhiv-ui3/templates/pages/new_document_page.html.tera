@@ -12,7 +12,7 @@
 <ul>
   {% for document_type in document_types %}
   <li class="mb-1">
-    <a href="/new?document_type={{document_type}}">
+    <a href="/new/{{document_type}}">
       {{ document_type }}
     </a>
   </li>

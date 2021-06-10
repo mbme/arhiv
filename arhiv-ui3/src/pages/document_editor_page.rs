@@ -1,35 +1,35 @@
-use anyhow::*;
-use rocket::State;
+use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde_json::json;
 
 use crate::{
-    app_context::{AppContext, TemplatePage},
+    app_context::AppContext,
     components::Editor,
+    http_utils::{not_found, AppResponse},
 };
 use arhiv::entities::*;
 
-#[get("/documents/<id>/edit")]
-pub fn document_editor_page(
-    id: String,
-    context: State<AppContext>,
-) -> Result<Option<TemplatePage>> {
+pub async fn document_editor_page(req: Request<Body>) -> AppResponse {
+    let id: &str = req.param("id").unwrap();
     let id: Id = id.into();
+
+    let context: &AppContext = req.data().unwrap();
 
     let document = {
         if let Some(document) = context.arhiv.get_document(&id)? {
             document
         } else {
-            return Ok(None);
+            return not_found();
         }
     };
 
     let editor = Editor::new(&document)?.render(&context)?;
 
-    Ok(Some(context.render_page(
+    context.render_page(
         "pages/document_editor_page.html.tera",
         json!({
             "document": document, //
             "editor": editor,
         }),
-    )?))
+    )
 }

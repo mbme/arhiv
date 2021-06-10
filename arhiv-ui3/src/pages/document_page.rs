@@ -49,21 +49,7 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
         .collect::<Vec<_>>();
 
     let children_catalog = if let Some(ref collection) = data_description.collection_of {
-        let mut filter = Filter::default();
-        filter.matchers.push(Matcher::Type {
-            document_type: collection.item_type.to_string(),
-        });
-        filter.matchers.push(Matcher::Field {
-            selector: format!("$.{}", document.document_type),
-            pattern: document.id.to_string(),
-        });
-        filter.matchers.push(Matcher::Search {
-            pattern: pattern.clone(),
-        });
-        filter.page_size = None;
-        filter.page_offset = None;
-        filter.order.push(OrderBy::UpdatedAt { asc: false });
-
+        let filter = children_catalog_filter(&document, collection.item_type, &pattern);
         let result = context.arhiv.list_documents(filter)?;
         let catalog = Catalog::new(result.items, pattern).render(&context)?;
 
@@ -118,4 +104,27 @@ fn prepare_fields(
             }
         })
         .collect::<Result<Vec<_>>>()
+}
+
+fn children_catalog_filter(
+    collection_document: &Document,
+    child_type: impl Into<String>,
+    pattern: impl Into<String>,
+) -> Filter {
+    let mut filter = Filter::default();
+    filter.matchers.push(Matcher::Type {
+        document_type: child_type.into(),
+    });
+    filter.matchers.push(Matcher::Field {
+        selector: format!("$.{}", collection_document.document_type),
+        pattern: collection_document.id.to_string(),
+    });
+    filter.matchers.push(Matcher::Search {
+        pattern: pattern.into(),
+    });
+    filter.page_size = None;
+    filter.page_offset = None;
+    filter.order.push(OrderBy::UpdatedAt { asc: false });
+
+    filter
 }

@@ -9,7 +9,7 @@ use arhiv::{entities::*, Filter, Matcher, OrderBy};
 use crate::{
     app_context::AppContext,
     components::Catalog,
-    http_utils::{get_query_params, update_query_param, AppResponse},
+    http_utils::{update_query_param, AppResponse, RequestQueryExt},
 };
 
 const PAGE_SIZE: u8 = 14;
@@ -26,25 +26,14 @@ pub async fn catalog_page(req: Request<Body>) -> AppResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let context: &AppContext = req.data().unwrap();
 
-    let mut query_params = get_query_params(req.uri());
-
-    let page: u8 = query_params
-        .remove("page")
+    let page: u8 = req
+        .get_query_param("page")
         .unwrap_or("0".to_string())
         .parse()?;
 
-    let pattern = query_params.remove("pattern").unwrap_or("".to_string());
+    let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
-    let mut filter = Filter::default();
-    filter.matchers.push(Matcher::Type {
-        document_type: document_type.clone(),
-    });
-    filter.matchers.push(Matcher::Search {
-        pattern: pattern.clone(),
-    });
-    filter.page_size = Some(PAGE_SIZE);
-    filter.page_offset = Some(PAGE_SIZE * page);
-    filter.order.push(OrderBy::UpdatedAt { asc: false });
+    let filter = catalog_filter(document_type, &pattern, page);
 
     let result = context.arhiv.list_documents(filter)?;
     let catalog = Catalog::new(result.items, pattern).render(&context)?;
@@ -79,4 +68,23 @@ pub async fn catalog_page(req: Request<Body>) -> AppResponse {
             "next_link": next_link,
         }),
     )
+}
+
+fn catalog_filter(
+    document_type: impl Into<String>,
+    pattern: impl Into<String>,
+    page: u8,
+) -> Filter {
+    let mut filter = Filter::default();
+    filter.matchers.push(Matcher::Type {
+        document_type: document_type.into(),
+    });
+    filter.matchers.push(Matcher::Search {
+        pattern: pattern.into(),
+    });
+    filter.page_size = Some(PAGE_SIZE);
+    filter.page_offset = Some(PAGE_SIZE * page);
+    filter.order.push(OrderBy::UpdatedAt { asc: false });
+
+    filter
 }

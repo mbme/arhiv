@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::*;
-use hyper::{Body, Response, StatusCode, Uri};
+use hyper::{Body, Request, Response, StatusCode, Uri};
 
 pub type AppResponse = Result<Response<Body>>;
 
@@ -12,16 +12,36 @@ pub fn not_found() -> AppResponse {
         .context("failed to build response")
 }
 
-pub fn get_query_params(uri: &Uri) -> HashMap<String, String> {
-    uri.query()
-        .map(|v| form_urlencoded::parse(v.as_bytes()).into_owned().collect())
-        .unwrap_or_else(HashMap::new)
+pub trait RequestQueryExt {
+    fn get_query_param(&self, name: impl AsRef<str>) -> Option<String>;
+}
+
+impl RequestQueryExt for Request<Body> {
+    fn get_query_param(&self, name: impl AsRef<str>) -> Option<String> {
+        let name = name.as_ref();
+
+        form_urlencoded::parse(self.uri().query().unwrap_or("").as_bytes()).find_map(
+            |(key, value)| {
+                if key == name {
+                    return Some(value.into());
+                }
+
+                None
+            },
+        )
+    }
+}
+
+fn extract_query_params(uri: &Uri) -> HashMap<String, String> {
+    form_urlencoded::parse(uri.query().unwrap_or("").as_bytes())
+        .into_owned()
+        .collect()
 }
 
 pub fn update_query_param(uri: &Uri, key: impl Into<String>, value: Option<String>) -> String {
     let key = key.into();
 
-    let mut params = get_query_params(uri);
+    let mut params = extract_query_params(uri);
 
     if let Some(value) = value {
         params.insert(key, value);

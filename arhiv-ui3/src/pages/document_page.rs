@@ -14,7 +14,7 @@ use arhiv::{
 use crate::{
     app_context::AppContext,
     components::Catalog,
-    http_utils::{get_query_params, not_found, AppResponse},
+    http_utils::{not_found, AppResponse, RequestQueryExt},
 };
 
 #[derive(Serialize)]
@@ -36,8 +36,7 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
         }
     };
 
-    let mut query_params = get_query_params(req.uri());
-    let pattern = query_params.remove("pattern").unwrap_or("".to_string());
+    let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
     let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
     let fields = prepare_fields(&document, &context, data_description)?;

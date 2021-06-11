@@ -12,7 +12,10 @@ use public_assets::*;
 use rpc::*;
 use rs_utils::log::{self, setup_logger};
 
+use crate::attachment_data::attachment_data_handler;
+
 mod app_context;
+mod attachment_data;
 mod components;
 mod http_utils;
 mod pages;
@@ -41,6 +44,7 @@ async fn main() {
         .get("/documents/:id/edit", document_editor_page)
         .get("/documents/:id/archive", archive_document_confirmation_page)
         .get("/documents/:id/delete", delete_document_confirmation_page)
+        .get("/attachment-data/:hash", attachment_data_handler)
         .post("/rpc", rpc_handler)
         .any(|_| async { not_found() })
         .err_handler_with_info(error_handler)

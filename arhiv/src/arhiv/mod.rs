@@ -282,7 +282,7 @@ impl Arhiv {
         unimplemented!();
     }
 
-    pub(crate) fn get_attachment_data(&self, hash: BLOBHash) -> Result<AttachmentData> {
+    pub fn get_attachment_data(&self, hash: BLOBHash) -> Result<AttachmentData> {
         Ok(self.db.get_connection()?.get_attachment_data(hash))
     }
 

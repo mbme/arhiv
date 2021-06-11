@@ -14,8 +14,8 @@ impl BLOBHash {
         Ok(BLOBHash(hash))
     }
 
-    pub fn from_string(hash: String) -> Self {
-        BLOBHash(hash)
+    pub fn from_string(hash: impl Into<String>) -> Self {
+        BLOBHash(hash.into())
     }
 }
 

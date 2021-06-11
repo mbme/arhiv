@@ -1,6 +1,9 @@
-use hyper::{http::request::Parts, Body, Request, Response};
+use anyhow::{ensure, Context};
+use hyper::{header, http::request::Parts, Body, Request, Response};
 use routerify::ext::RequestExt;
+use rs_utils::run_command;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{app_context::AppContext, http_utils::AppResponse};
 use arhiv::entities::{Document, Id};
@@ -11,6 +14,7 @@ pub enum RPCAction {
     Delete { id: Id },
     Archive { id: Id, archive: bool },
     Save { document: Document },
+    PickAttachment {},
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
@@ -19,6 +23,8 @@ pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
     let action: RPCAction = serde_json::from_slice(&body)?;
 
     let context = parts.data::<AppContext>().unwrap();
+
+    let mut response = Value::Null;
 
     match action {
         RPCAction::Delete { id } => {
@@ -30,7 +36,20 @@ pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
         RPCAction::Save { document } => {
             context.arhiv.stage_document(document)?;
         }
+        RPCAction::PickAttachment {} => {
+            let files = run_command("mb-filepicker", vec![])?;
+            let files: Vec<String> = serde_json::from_str(&files)?;
+            ensure!(files.len() < 2);
+
+            if let Some(file_path) = files.get(0) {
+                let document = context.arhiv.add_attachment(&file_path, false)?;
+                response = Value::String(document.id.to_string());
+            }
+        }
     }
 
-    Ok(Response::new(Body::empty()))
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&response)?))
+        .context("failed to build response")
 }

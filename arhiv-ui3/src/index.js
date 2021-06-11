@@ -11,6 +11,8 @@ async function call_action(action) {
   if (!response.ok) {
     throw new Error(`action failed: ${response.status}`);
   }
+
+  return response.json()
 }
 
 window.arhiv_ui = {
@@ -62,6 +64,21 @@ window.arhiv_ui = {
       throw e;
     }
   },
+
+  async pick_attachment() {
+    try {
+      const id = await call_action({
+        pickAttachment: { }
+      });
+
+      console.log('Selected attachment', id);
+    } catch (e) {
+      console.error(e);
+      alert(e);
+
+      throw e;
+    }
+  }
 }
 
 window.utils = {

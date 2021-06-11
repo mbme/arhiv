@@ -62,10 +62,10 @@ impl DataSchema {
 
     pub fn create_with_initial_values(
         &self,
-        document_type: String,
+        document_type: impl AsRef<str>,
         initial_values: DocumentData,
     ) -> Result<DocumentData> {
-        let description = self.get_data_description_by_type(&document_type)?;
+        let description = self.get_data_description_by_type(document_type.as_ref())?;
 
         let mut result: DocumentData = Map::new();
 

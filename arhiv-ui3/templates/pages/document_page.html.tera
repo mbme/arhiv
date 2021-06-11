@@ -40,6 +40,11 @@
 
   {% if not is_tombstone %}
   <div class="flex flex-col">
+    {% if child_document_type %}
+    <a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
+      Add {{child_document_type}}
+    </a>
+    {% endif %}
     <a href="/documents/{{document.id}}/edit">
       Edit
     </a>
@@ -66,7 +71,7 @@
 
 {% endfor %}
 
-{% if refs | length > 0 %}
+{% if document.refs | length > 0 %}
 <details class="mb-4 bg-gray-100">
   <summary class="cursor-pointer p-2">
     <h3 class="section-heading text-gray-700 inline-block">
@@ -75,9 +80,9 @@
   </summary>
 
   <div class="px-2 py-4">
-    {% for ref in refs %}
+    {% for ref in document.refs %}
     <div class="mb-4">
-      {{ref | safe}}
+      <a href="/documents/{{ref}}">{{ref}}</a>
     </div>
     {% endfor %}
   </div>

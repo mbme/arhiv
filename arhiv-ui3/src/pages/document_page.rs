@@ -41,30 +41,27 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
     let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
     let fields = prepare_fields(&document, &context, data_description)?;
 
-    let refs = document
-        .refs
-        .iter()
-        .map(|value| format!("<a href=\"/documents/{0}\">{0}</a>", value))
-        .collect::<Vec<_>>();
+    let mut children_catalog = None;
+    let mut child_document_type = None;
 
-    let children_catalog = if let Some(ref collection) = data_description.collection_of {
+    if let Some(ref collection) = data_description.collection_of {
         let filter = children_catalog_filter(&document, collection.item_type, &pattern);
         let result = context.arhiv.list_documents(filter)?;
         let catalog = Catalog::new(result.items, pattern).render(&context)?;
 
-        Some(catalog)
-    } else {
-        None
+        children_catalog = Some(catalog);
+
+        child_document_type = Some(collection.item_type);
     };
 
     context.render_page(
         "pages/document_page.html.tera",
         json!({
-            "refs": refs,
             "fields": fields,
             "document": document,
             "children_catalog": children_catalog,
             "is_tombstone": document.is_tombstone(),
+            "child_document_type": child_document_type,
         }),
     )
 }

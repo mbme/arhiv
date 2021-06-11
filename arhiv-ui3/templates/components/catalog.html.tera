@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div class="markup-sm max-h-8rem line-clamp-4 mb-4">
+    <div class="preview markup-sm mb-4">
       {{ entry.preview | safe }}
     </div>
 

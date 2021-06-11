@@ -17,7 +17,7 @@
       </b>
     </div>
 
-    <div class="modal-content markup-sm max-h-8rem line-clamp-4">
+    <div class="modal-content markup-sm preview">
       {{ preview | safe }}
     </div>
 

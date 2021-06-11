@@ -94,6 +94,23 @@ body {
     }
   }
 
+  .preview {
+    @apply line-clamp-4;
+
+    max-height: 10em;
+    position: relative;
+
+    &:after {
+      content: "";
+      position: absolute;
+      top: 80%;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-image: linear-gradient(to bottom, transparent, white);
+    }
+  }
+
   .section-heading {
     @apply uppercase font-mono text-gray-500 text-sm tracking-wider;
   }

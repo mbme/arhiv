@@ -9,7 +9,7 @@ use arhiv::{entities::*, Filter, Matcher, OrderBy};
 use crate::{
     app_context::AppContext,
     components::Catalog,
-    http_utils::{update_query_param, AppResponse, RequestQueryExt},
+    http_utils::{AppResponse, RequestQueryExt},
 };
 
 const PAGE_SIZE: u8 = 14;
@@ -40,20 +40,12 @@ pub async fn catalog_page(req: Request<Body>) -> AppResponse {
 
     let prev_link = match page {
         0 => None,
-        1 => Some(update_query_param(req.uri(), "page", None)),
-        _ => Some(update_query_param(
-            req.uri(),
-            "page",
-            Some((page - 1).to_string()),
-        )),
+        1 => Some(req.get_url_with_updated_query("page", None)),
+        _ => Some(req.get_url_with_updated_query("page", Some((page - 1).to_string()))),
     };
 
     let next_link = if result.has_more {
-        Some(update_query_param(
-            req.uri(),
-            "page",
-            Some((page + 1).to_string()),
-        ))
+        Some(req.get_url_with_updated_query("page", Some((page + 1).to_string())))
     } else {
         None
     };

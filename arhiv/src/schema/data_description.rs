@@ -56,8 +56,8 @@ impl DataSchema {
             .ok_or(anyhow!("Unknown document type {}", document_type))
     }
 
-    pub fn create(&self, document_type: String) -> Result<DocumentData> {
-        self.create_with_initial_values(document_type, Map::new())
+    pub fn create(&self, document_type: impl Into<String>) -> Result<DocumentData> {
+        self.create_with_initial_values(document_type.into(), Map::new())
     }
 
     pub fn create_with_initial_values(

@@ -34,7 +34,7 @@ async fn main() {
         .middleware(Middleware::post_with_info(logger))
         .get("/public/:fileName", public_assets_handler)
         .get("/", index_page)
-        .get("/new", new_document_page)
+        .get("/new", new_document_variants_page)
         .get("/new/:document_type", new_document_page)
         .get("/catalogs/:document_type", catalog_page)
         .get("/documents/:id", document_page)

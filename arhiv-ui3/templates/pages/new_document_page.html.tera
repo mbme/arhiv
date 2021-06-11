@@ -2,22 +2,10 @@
 
 {% block content %}
 
-{% if editor %}
 <h1 class="mb-12 text-2xl uppercase">
   {{document_type}} editor
 </h1>
+
 {{ editor | safe }}
-{% else %}
-<h3 class="mb-2 section-heading text-lg">Create document of type:</h3>
-<ul>
-  {% for document_type in document_types %}
-  <li class="mb-1">
-    <a href="/new/{{document_type}}">
-      {{ document_type }}
-    </a>
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
 
 {% endblock %}

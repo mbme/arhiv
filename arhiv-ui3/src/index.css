@@ -167,14 +167,16 @@ body {
   }
 
   .modal-title {
-    @apply p-6 mb-4 text-lg rounded-t-md;
+    @apply text-lg rounded-t-md;
+    @apply p-2 sm:p-4 md:p-6;
   }
 
   .modal-content {
-    @apply p-6;
+    @apply p-2 sm:p-4 md:p-6;
   }
 
   .modal-buttons {
-    @apply flex justify-end bg-gray-50 rounded-b-md p-6 mt-4;
+    @apply flex justify-end bg-gray-50 rounded-b-md;
+    @apply p-2 sm:p-4 md:p-6;
   }
 }

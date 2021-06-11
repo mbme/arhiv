@@ -1,0 +1,9 @@
+{% extends "base.html.tera" %}
+
+{% block content %}
+<div class="modal-container">
+  <div class="modal">
+    {% block modal %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

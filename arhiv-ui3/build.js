@@ -12,6 +12,8 @@ esbuild.build({
     'chrome90',
     'firefox87',
   ],
+  bundle: true,
+  minify: isProduction,
   sourcemap: true,
 
   define: {

@@ -52,15 +52,12 @@ pub async fn start_ui_server(port: u16) {
 
     let service = RouterService::new(router).unwrap();
 
-    let addr = SocketAddr::from((std::net::Ipv4Addr::LOCALHOST, port));
-
-    let server = Server::bind(&addr)
-        .serve(service)
-        .with_graceful_shutdown(shutdown_signal());
+    let server = Server::bind(&(std::net::Ipv4Addr::LOCALHOST, port).into()).serve(service);
+    let addr = server.local_addr();
 
     log::info!("UI server listening on http://{}", addr);
 
-    if let Err(e) = server.await {
+    if let Err(e) = server.with_graceful_shutdown(shutdown_signal()).await {
         log::error!("UI server error: {}", e);
     }
 }

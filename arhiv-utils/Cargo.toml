@@ -9,5 +9,5 @@ rand = "0.8.2"
 serde_json = "1.0.61"
 tokio = { version = "1.0.2", features = ["macros"] }
 
-arhiv = { path = "../arhiv" }
+arhiv-core = { path = "../arhiv-core" }
 rs-utils = { path = "../rs-utils" }

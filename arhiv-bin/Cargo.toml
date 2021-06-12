@@ -1,0 +1,24 @@
+[package]
+name = "arhiv"
+version = "0.12.0"
+authors = ["mbme"]
+edition = "2018"
+default-run = "arhiv"
+publish = false
+
+[lib]
+doctest = false
+
+[features]
+production-mode = []
+
+[dependencies]
+anyhow = "1.0.38"
+
+clap = { version = "2.33.3", features = ["color"] }
+
+tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
+
+rs-utils = { path = "../rs-utils" }
+arhiv-core = { path = "../arhiv-core" }
+arhiv-ui3 = { path = "../arhiv-ui3" }

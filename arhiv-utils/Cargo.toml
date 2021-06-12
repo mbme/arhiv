@@ -1,7 +1,9 @@
 [package]
 name = "arhiv-utils"
 version = "0.1.0"
+authors = ["mbme"]
 edition = "2018"
+publish = false
 
 [dependencies]
 anyhow = "1.0.38"

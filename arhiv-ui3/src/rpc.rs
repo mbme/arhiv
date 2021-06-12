@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{app_context::AppContext, http_utils::AppResponse};
-use arhiv::entities::{Document, Id};
+use arhiv_core::entities::{Document, Id};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

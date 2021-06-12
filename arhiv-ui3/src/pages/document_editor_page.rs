@@ -7,7 +7,7 @@ use crate::{
     components::Editor,
     http_utils::{not_found, AppResponse},
 };
-use arhiv::entities::*;
+use arhiv_core::entities::*;
 
 pub async fn document_editor_page(req: Request<Body>) -> AppResponse {
     let id: &str = req.param("id").unwrap();

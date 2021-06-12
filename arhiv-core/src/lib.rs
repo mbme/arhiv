@@ -2,7 +2,6 @@
 #![deny(clippy::pedantic)]
 
 mod arhiv;
-mod commander;
 mod config;
 pub mod entities;
 pub mod markup;

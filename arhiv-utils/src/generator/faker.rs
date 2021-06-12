@@ -5,9 +5,9 @@ use rand::prelude::*;
 use rand::thread_rng;
 use serde_json::Map;
 
-use arhiv::schema::{DocumentData, FieldType};
-use arhiv::Arhiv;
-use arhiv::{entities::*, schema::SCHEMA};
+use arhiv_core::schema::{DocumentData, FieldType};
+use arhiv_core::Arhiv;
+use arhiv_core::{entities::*, schema::SCHEMA};
 use rs_utils::project_relpath;
 
 use super::TextGenerator;

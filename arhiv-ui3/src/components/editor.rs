@@ -2,7 +2,7 @@ use anyhow::*;
 use serde::Serialize;
 
 use crate::app_context::AppContext;
-use arhiv::{
+use arhiv_core::{
     entities::Document,
     schema::{FieldType, SCHEMA},
 };

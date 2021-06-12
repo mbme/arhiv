@@ -1,5 +1,5 @@
-use arhiv::entities::*;
-use arhiv::markup::create_ref;
+use arhiv_core::entities::*;
+use arhiv_core::markup::create_ref;
 use rand::prelude::*;
 use rand::thread_rng;
 use rs_utils::{project_relpath, Markov};

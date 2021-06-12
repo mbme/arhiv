@@ -3,12 +3,10 @@
 
 use std::{env, process, sync::Arc};
 
-use arhiv::{
-    entities::Id,
-    server::{start_prime_server, start_ui_server},
-    Arhiv, Config,
-};
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
+
+use arhiv_core::{entities::Id, server::start_prime_server, Arhiv, Config};
+use arhiv_ui3::start_ui_server;
 use rs_utils::log::setup_logger_with_level;
 
 #[tokio::main]
@@ -44,11 +42,6 @@ async fn main() {
         .subcommand(
             SubCommand::with_name("ui-server")
                 .about("Run arhiv UI server")
-                .arg(
-                    Arg::with_name("public") // FIXME remove this? attachments won't work
-                        .long("public")
-                        .help("Listen on a public network interface"),
-                )
                 .arg(
                     Arg::with_name("port")
                         .long("port")
@@ -162,9 +155,7 @@ async fn main() {
                 .map(|value| value.parse().expect("port must be valid u16"))
                 .expect("port is missing");
 
-            let public = matches.is_present("public");
-
-            start_ui_server(port, public).await.expect("must join");
+            start_ui_server(port).await;
         }
         ("prime-server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());

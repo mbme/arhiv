@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use arhiv::{entities::*, Filter, Matcher, OrderBy};
+use arhiv_core::{entities::*, Filter, Matcher, OrderBy};
 
 use crate::{
     app_context::AppContext,

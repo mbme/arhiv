@@ -3,7 +3,7 @@ use hyper::{header, Response};
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use arhiv::{
+use arhiv_core::{
     entities::Document,
     markup::{MarkupRenderer, MarkupStr, RenderOptions},
     schema::SCHEMA,

@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::app_context::AppContext;
-use arhiv::entities::*;
+use arhiv_core::entities::*;
 
 #[derive(Serialize)]
 struct CatalogEntry {

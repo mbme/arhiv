@@ -1,4 +1,4 @@
-use arhiv::Config;
+use arhiv_core::Config;
 use rs_utils::{
     dir_exists,
     log::{info, setup_logger},

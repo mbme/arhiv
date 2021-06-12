@@ -7,7 +7,7 @@ use crate::{
     app_context::AppContext,
     http_utils::{not_found, AppResponse},
 };
-use arhiv::entities::BLOBHash;
+use arhiv_core::entities::BLOBHash;
 
 pub async fn attachment_data_handler(req: Request<Body>) -> AppResponse {
     let hash = req.param("hash").unwrap();

@@ -9,7 +9,7 @@ use crate::{
     components::Editor,
     http_utils::{AppResponse, RequestQueryExt},
 };
-use arhiv::{
+use arhiv_core::{
     entities::Document,
     schema::{DocumentData, SCHEMA},
 };

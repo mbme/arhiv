@@ -1,4 +1,4 @@
-use arhiv::Arhiv;
+use arhiv_core::Arhiv;
 use arhiv_utils::generator::*;
 use rs_utils::log::setup_logger;
 

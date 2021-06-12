@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use arhiv::{
+use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
     schema::{DataDescription, FieldType, SCHEMA},

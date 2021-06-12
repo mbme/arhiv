@@ -1,14 +1,51 @@
 use std::collections::HashMap;
 
 use anyhow::*;
-use hyper::{Body, Request, Response, StatusCode};
+use hyper::{header, Body, Request, Response, StatusCode};
+use routerify::RequestInfo;
+use serde::Serialize;
 
-pub type AppResponse = Result<Response<Body>>;
+pub type ServerResponse = Result<Response<Body>>;
 
-pub fn not_found() -> AppResponse {
+pub fn respond_with_status(status: StatusCode) -> ServerResponse {
     Response::builder()
-        .status(StatusCode::NOT_FOUND)
+        .status(status)
         .body(Body::empty())
+        .context("failed to build response")
+}
+
+pub fn respond_not_found() -> ServerResponse {
+    respond_with_status(StatusCode::NOT_FOUND)
+}
+
+pub async fn not_found_handler(_req: Request<Body>) -> ServerResponse {
+    respond_not_found()
+}
+
+pub async fn logger_middleware(res: Response<Body>, info: RequestInfo) -> Result<Response<Body>> {
+    log::info!(
+        "{} {} -> {}",
+        info.method(),
+        info.uri().path(),
+        res.status()
+    );
+
+    Ok(res)
+}
+
+pub async fn error_handler(err: routerify::RouteError, info: RequestInfo) -> Response<Body> {
+    log::error!("{} {} -> {}", info.method(), info.uri().path(), err);
+
+    Response::builder()
+        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .body(Body::from(format!("Something went wrong: {}", err)))
+        .unwrap()
+}
+
+pub fn json_response(body: impl Serialize) -> ServerResponse {
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&body)?))
         .context("failed to build response")
 }
 

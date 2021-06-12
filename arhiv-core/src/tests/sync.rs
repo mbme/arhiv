@@ -4,7 +4,7 @@ use serde_json::json;
 use rs_utils::project_relpath;
 
 use super::utils::*;
-use crate::server::start_prime_server;
+use crate::prime_server::start_prime_server;
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {

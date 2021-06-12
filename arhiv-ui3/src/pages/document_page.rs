@@ -4,18 +4,14 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::{app_context::AppContext, components::Catalog};
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
     schema::{DataDescription, FieldType, SCHEMA},
     Filter, Matcher, OrderBy,
 };
-
-use crate::{
-    app_context::AppContext,
-    components::Catalog,
-    http_utils::{not_found, AppResponse, RequestQueryExt},
-};
+use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 #[derive(Serialize)]
 struct Field {
@@ -24,7 +20,7 @@ struct Field {
     safe: bool,
 }
 
-pub async fn document_page(req: Request<Body>) -> AppResponse {
+pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
     let context: &AppContext = req.data().unwrap();
 
@@ -32,7 +28,7 @@ pub async fn document_page(req: Request<Body>) -> AppResponse {
         if let Some(document) = context.arhiv.get_document(&id.into())? {
             document
         } else {
-            return not_found();
+            return respond_not_found();
         }
     };
 

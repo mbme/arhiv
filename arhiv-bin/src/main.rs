@@ -5,7 +5,7 @@ use std::{env, process, sync::Arc};
 
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
-use arhiv_core::{entities::Id, server::start_prime_server, Arhiv, Config};
+use arhiv_core::{entities::Id, prime_server::start_prime_server, Arhiv, Config};
 use arhiv_ui3::start_ui_server;
 use rs_utils::log::setup_logger_with_level;
 

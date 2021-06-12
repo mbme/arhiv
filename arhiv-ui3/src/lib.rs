@@ -3,23 +3,23 @@
 
 use std::net::SocketAddr;
 
-use anyhow::*;
-use hyper::{Body, Response, Server, StatusCode};
-use routerify::{Middleware, RequestInfo, Router, RouterService};
+use hyper::Server;
+use routerify::{Middleware, Router, RouterService};
 
 use app_context::AppContext;
 use arhiv_core::markup::RenderOptions;
 use attachment_data::attachment_data_handler;
-use http_utils::not_found;
 use pages::*;
 use public_assets::*;
 use rpc::*;
-use rs_utils::log;
+use rs_utils::{
+    log,
+    server::{error_handler, logger_middleware, not_found_handler},
+};
 
 mod app_context;
 mod attachment_data;
 mod components;
-mod http_utils;
 mod pages;
 mod public_assets;
 mod rpc;
@@ -33,7 +33,7 @@ pub async fn start_ui_server(port: u16) {
 
     let router = Router::builder()
         .data(context)
-        .middleware(Middleware::post_with_info(logger))
+        .middleware(Middleware::post_with_info(logger_middleware))
         .get("/public/:fileName", public_assets_handler)
         .get("/", index_page)
         .get("/new", new_document_variants_page)
@@ -45,7 +45,7 @@ pub async fn start_ui_server(port: u16) {
         .get("/documents/:id/delete", delete_document_confirmation_page)
         .get("/attachment-data/:hash", attachment_data_handler)
         .post("/rpc", rpc_handler)
-        .any(|_| async { not_found() })
+        .any(not_found_handler)
         .err_handler_with_info(error_handler)
         .build()
         .expect("router must work");
@@ -63,26 +63,6 @@ pub async fn start_ui_server(port: u16) {
     if let Err(e) = server.await {
         log::error!("UI server error: {}", e);
     }
-}
-
-async fn logger(res: Response<Body>, info: RequestInfo) -> Result<Response<Body>> {
-    log::info!(
-        "{} {} -> {}",
-        info.method(),
-        info.uri().path(),
-        res.status()
-    );
-
-    Ok(res)
-}
-
-async fn error_handler(err: routerify::RouteError, info: RequestInfo) -> Response<Body> {
-    log::error!("{} {} -> {}", info.method(), info.uri().path(), err);
-
-    Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body(Body::from(format!("Something went wrong: {}", err)))
-        .unwrap()
 }
 
 async fn shutdown_signal() {

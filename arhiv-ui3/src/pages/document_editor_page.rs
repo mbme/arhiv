@@ -2,14 +2,11 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{
-    app_context::AppContext,
-    components::Editor,
-    http_utils::{not_found, AppResponse},
-};
+use crate::{app_context::AppContext, components::Editor};
 use arhiv_core::entities::*;
+use rs_utils::server::{respond_not_found, ServerResponse};
 
-pub async fn document_editor_page(req: Request<Body>) -> AppResponse {
+pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
     let id: Id = id.into();
 
@@ -19,7 +16,7 @@ pub async fn document_editor_page(req: Request<Body>) -> AppResponse {
         if let Some(document) = context.arhiv.get_document(&id)? {
             document
         } else {
-            return not_found();
+            return respond_not_found();
         }
     };
 

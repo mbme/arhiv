@@ -3,20 +3,20 @@ use hyper::{header, Body, Request, Response};
 use routerify::ext::RequestExt;
 use rust_embed::RustEmbed;
 
-use crate::http_utils::{not_found, AppResponse};
+use rs_utils::server::{respond_not_found, ServerResponse};
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/public"]
 struct PublicAssets;
 
-pub async fn public_assets_handler(req: Request<Body>) -> AppResponse {
+pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
     let asset = req.param("fileName").unwrap();
 
     let data: Vec<u8> = {
         if let Some(data) = PublicAssets::get(&asset) {
             data.into()
         } else {
-            return not_found();
+            return respond_not_found();
         }
     };
 

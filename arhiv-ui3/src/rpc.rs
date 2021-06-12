@@ -1,12 +1,15 @@
-use anyhow::{ensure, Context};
-use hyper::{header, http::request::Parts, Body, Request, Response};
+use anyhow::ensure;
+use hyper::{http::request::Parts, Body, Request};
 use routerify::ext::RequestExt;
-use rs_utils::run_command;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{app_context::AppContext, http_utils::AppResponse};
+use crate::app_context::AppContext;
 use arhiv_core::entities::{Document, Id};
+use rs_utils::{
+    run_command,
+    server::{json_response, ServerResponse},
+};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -17,7 +20,7 @@ pub enum RPCAction {
     PickAttachment {},
 }
 
-pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
+pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let body = hyper::body::to_bytes(body).await?;
     let action: RPCAction = serde_json::from_slice(&body)?;
@@ -48,8 +51,5 @@ pub async fn rpc_handler(req: Request<Body>) -> AppResponse {
         }
     }
 
-    Response::builder()
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(serde_json::to_string(&response)?))
-        .context("failed to build response")
+    json_response(response)
 }

@@ -4,13 +4,9 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
+use crate::{app_context::AppContext, components::Catalog};
 use arhiv_core::{entities::*, Filter, Matcher, OrderBy};
-
-use crate::{
-    app_context::AppContext,
-    components::Catalog,
-    http_utils::{AppResponse, RequestQueryExt},
-};
+use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 const PAGE_SIZE: u8 = 14;
 
@@ -22,7 +18,7 @@ struct CatalogEntry {
     updated_at: DateTime<Local>,
 }
 
-pub async fn catalog_page(req: Request<Body>) -> AppResponse {
+pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let context: &AppContext = req.data().unwrap();
 

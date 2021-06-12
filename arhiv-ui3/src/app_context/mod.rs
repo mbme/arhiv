@@ -9,9 +9,8 @@ use arhiv_core::{
     schema::SCHEMA,
     Arhiv,
 };
+use rs_utils::server::ServerResponse;
 use templates::Templates;
-
-use crate::http_utils::AppResponse;
 
 mod templates;
 
@@ -67,7 +66,7 @@ impl AppContext {
             .unwrap_or("Unable to generate preview".to_string())
     }
 
-    pub fn render_page(&self, template_name: &str, context: Value) -> AppResponse {
+    pub fn render_page(&self, template_name: &str, context: Value) -> ServerResponse {
         let result = self.templates.render(template_name, context)?;
 
         Response::builder()

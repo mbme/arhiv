@@ -4,17 +4,14 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::{json, Value};
 
-use crate::{
-    app_context::AppContext,
-    components::Editor,
-    http_utils::{AppResponse, RequestQueryExt},
-};
+use crate::{app_context::AppContext, components::Editor};
 use arhiv_core::{
     entities::Document,
     schema::{DocumentData, SCHEMA},
 };
+use rs_utils::server::{RequestQueryExt, ServerResponse};
 
-pub async fn new_document_page(req: Request<Body>) -> AppResponse {
+pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document_type = req
         .param("document_type")
         .expect("document_type must be present");

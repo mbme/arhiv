@@ -1,6 +1,7 @@
-use super::utils::*;
-use crate::{entities::*, server::start_prime_server, Filter, Matcher};
 use anyhow::*;
+
+use super::utils::*;
+use crate::{entities::*, prime_server::start_prime_server, Filter, Matcher};
 use rs_utils::project_relpath;
 
 #[tokio::test]

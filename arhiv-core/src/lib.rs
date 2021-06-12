@@ -5,8 +5,8 @@ mod arhiv;
 mod config;
 pub mod entities;
 pub mod markup;
+pub mod prime_server;
 pub mod schema;
-pub mod server;
 
 #[cfg(test)]
 mod tests;

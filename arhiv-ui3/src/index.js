@@ -71,7 +71,11 @@ window.arhiv_ui = {
         pickAttachment: { }
       });
 
-      console.log('Selected attachment', id);
+      if (id) {
+        console.log('Selected attachment', id);
+
+        utils.copyTextToClipboard(id);
+      }
     } catch (e) {
       console.error(e);
       alert(e);
@@ -98,4 +102,18 @@ window.utils = {
 
     return JSON.stringify(fd1Obj) === JSON.stringify(fd2Obj);
   },
+
+  copyTextToClipboard(text) {
+    const writeText = () => {
+      navigator.clipboard.writeText(text).catch((e) => {
+        console.error('failed to copy text to clipboard', e);
+      });
+    };
+
+    if (document.hasFocus()) {
+      writeText()
+    } else {
+      window.addEventListener('focus', writeText, { once: true });
+    }
+  }
 }

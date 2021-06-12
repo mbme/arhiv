@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 const esbuild = require('esbuild');
 
 const isProduction = process.env.NODE_ENV === 'production';

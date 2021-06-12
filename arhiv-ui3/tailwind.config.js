@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 module.exports = {
   mode: 'jit',
   purge: [
@@ -26,4 +28,4 @@ module.exports = {
     require('@tailwindcss/forms'),
     require('@tailwindcss/line-clamp'),
   ],
-}
+};

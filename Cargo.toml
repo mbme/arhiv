@@ -1,7 +1,6 @@
 [workspace]
 members = [
   "arhiv",
-  "arhiv-ui",
   "arhiv-ui3",
   "arhiv-utils",
   "rs-utils",

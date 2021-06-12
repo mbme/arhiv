@@ -12,7 +12,7 @@ async function call_action(action) {
     throw new Error(`action failed: ${response.status}`);
   }
 
-  return response.json()
+  return response.json();
 }
 
 window.arhiv_ui = {
@@ -83,9 +83,9 @@ window.arhiv_ui = {
       throw e;
     }
   }
-}
+};
 
-window.utils = {
+const utils = {
   formDataToObj(fd) {
     const result = {};
 
@@ -111,9 +111,11 @@ window.utils = {
     };
 
     if (document.hasFocus()) {
-      writeText()
+      writeText();
     } else {
       window.addEventListener('focus', writeText, { once: true });
     }
   }
-}
+};
+
+window.utils = utils;

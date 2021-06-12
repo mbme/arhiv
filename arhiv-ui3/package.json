@@ -6,6 +6,7 @@
   "description": "arhiv UI",
   "main": "",
   "scripts": {
+    "lint": "eslint .",
     "build:js": "node build.js",
     "build:css": "TAILWIND_MODE=build postcss ./src/index.css -o public/index.css",
     "watch:js": "node build.js --watch",
@@ -20,6 +21,7 @@
     "@tailwindcss/typography": "^0.4.1",
     "autoprefixer": "^10.2.6",
     "esbuild": "^0.12.5",
+    "eslint": "^7.28.0",
     "postcss": "^8.3.0",
     "postcss-cli": "^8.3.1",
     "postcss-nesting": "^8.0.1",

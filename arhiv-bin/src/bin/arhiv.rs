@@ -118,7 +118,7 @@ async fn main() {
         }
         ("config", Some(matches)) => {
             if matches.is_present("template") {
-                print!("{}", include_str!("../arhiv.json.template"));
+                print!("{}", include_str!("../../arhiv.json.template"));
                 return;
             }
 

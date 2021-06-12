@@ -1,5 +1,0 @@
-export { default as OverlayRenderer } from './Overlay/Renderer'
-export { default as Overlay } from './Overlay'
-export { default as ProgressLocker } from './ProgressLocker'
-export { Modal } from './Modal'
-export { ConfirmationDialog } from './ConfirmationDialog'

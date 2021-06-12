@@ -1,9 +1,0 @@
-{
-  "name": "@v/parser-combinator",
-  "private": true,
-  "license": "MIT",
-  "version": "0.0.1",
-  "description": "typescript parser combinator",
-  "main": "src/index.ts",
-  "sideEffects": false
-}

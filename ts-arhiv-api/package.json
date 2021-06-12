@@ -1,9 +1,0 @@
-{
-  "name": "@v/arhiv-api",
-  "private": true,
-  "license": "MIT",
-  "version": "1.0.0",
-  "description": "Arhiv RPC api and types",
-  "main": "src/index.ts",
-  "sideEffects": false
-}

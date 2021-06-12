@@ -1,9 +1,0 @@
-{
-  "name": "@v/reactive",
-  "private": true,
-  "license": "MIT",
-  "version": "0.0.1",
-  "description": "typescript reactive utils",
-  "main": "src/index.ts",
-  "sideEffects": false
-}

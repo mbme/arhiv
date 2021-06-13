@@ -14,6 +14,11 @@ lazy_static! {
     pub static ref TEMPLATES: Templates =
         Templates::new(json!({ //
             "nav_document_types": get_nav_document_types(),
+            "document_types": SCHEMA
+                .modules
+                .iter()
+                .map(|module| module.document_type)
+                .collect::<Vec<_>>(),
         }))
         .expect("failed to init templates");
 }

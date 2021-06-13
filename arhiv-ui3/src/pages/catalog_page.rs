@@ -4,8 +4,8 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{app_context::AppContext, components::Catalog, utils::render_page};
-use arhiv_core::{entities::*, Filter, Matcher, OrderBy};
+use crate::{components::Catalog, utils::render_page};
+use arhiv_core::{entities::*, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 const PAGE_SIZE: u8 = 14;
@@ -20,7 +20,7 @@ struct CatalogEntry {
 
 pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let document_type: &String = req.param("document_type").unwrap();
-    let context: &AppContext = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let page: u8 = req
         .get_query_param("page")
@@ -31,8 +31,8 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
 
     let filter = catalog_filter(document_type, &pattern, page);
 
-    let result = context.arhiv.list_documents(filter)?;
-    let catalog = Catalog::new(result.items, pattern).render(&context)?;
+    let result = arhiv.list_documents(filter)?;
+    let catalog = Catalog::new(result.items, pattern).render(arhiv)?;
 
     let prev_link = match page {
         0 => None,

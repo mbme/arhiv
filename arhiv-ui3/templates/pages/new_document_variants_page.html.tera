@@ -7,7 +7,7 @@
 </h3>
 
 <ul class="flex flex-col">
-  {% for document_type in document_types %}
+  {% for document_type in global.document_types %}
   <li class="mb-4">
     <a
       href="/new/{{document_type}}"

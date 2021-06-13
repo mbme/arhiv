@@ -4,12 +4,12 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{app_context::AppContext, components::Catalog, utils::render_page};
+use crate::{components::Catalog, markup::ArhivMarkupExt, utils::render_page};
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
     schema::{DataDescription, FieldType, SCHEMA},
-    Filter, Matcher, OrderBy,
+    Arhiv, Filter, Matcher, OrderBy,
 };
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
@@ -22,10 +22,10 @@ struct Field {
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
-    let context: &AppContext = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let document = {
-        if let Some(document) = context.arhiv.get_document(&id.into())? {
+        if let Some(document) = arhiv.get_document(&id.into())? {
             document
         } else {
             return respond_not_found();
@@ -35,15 +35,15 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
     let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
-    let fields = prepare_fields(&document, &context, data_description)?;
+    let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
     let mut child_document_type = None;
 
     if let Some(ref collection) = data_description.collection_of {
         let filter = children_catalog_filter(&document, collection.item_type, &pattern);
-        let result = context.arhiv.list_documents(filter)?;
-        let catalog = Catalog::new(result.items, pattern).render(&context)?;
+        let result = arhiv.list_documents(filter)?;
+        let catalog = Catalog::new(result.items, pattern).render(&arhiv)?;
 
         children_catalog = Some(catalog);
 
@@ -64,7 +64,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
 fn prepare_fields(
     document: &Document,
-    context: &AppContext,
+    arhiv: &Arhiv,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
     data_description
@@ -79,7 +79,7 @@ fn prepare_fields(
 
                     Ok(Field {
                         name: field.name,
-                        value: context.render_markup(&markup),
+                        value: arhiv.render_markup(&markup),
                         safe: true,
                     })
                 }

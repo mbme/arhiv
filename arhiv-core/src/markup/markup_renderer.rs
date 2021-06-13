@@ -11,7 +11,7 @@ use super::MarkupStr;
 
 pub struct MarkupRenderer<'a> {
     arhiv: &'a Arhiv,
-    options: &'a RenderOptions,
+    options: RenderOptions,
 }
 
 #[derive(Serialize, Clone)]
@@ -21,7 +21,7 @@ pub struct RenderOptions {
 }
 
 impl<'a> MarkupRenderer<'a> {
-    pub fn new(arhiv: &'a Arhiv, options: &'a RenderOptions) -> Self {
+    pub fn new(arhiv: &'a Arhiv, options: RenderOptions) -> Self {
         MarkupRenderer { arhiv, options }
     }
 

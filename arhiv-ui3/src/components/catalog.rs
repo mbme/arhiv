@@ -3,9 +3,8 @@ use chrono::{DateTime, Local};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::app_context::AppContext;
-use crate::templates::TEMPLATES;
-use arhiv_core::entities::*;
+use crate::{markup::ArhivMarkupExt, templates::TEMPLATES};
+use arhiv_core::{entities::*, Arhiv};
 
 #[derive(Serialize)]
 struct CatalogEntry {
@@ -25,12 +24,12 @@ impl Catalog {
         Catalog { documents, pattern }
     }
 
-    pub fn render(self, context: &AppContext) -> Result<String> {
+    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let items: Vec<_> = self
             .documents
             .into_iter()
             .map(|document| CatalogEntry {
-                preview: context.render_preview(&document),
+                preview: arhiv.render_preview(&document),
                 id: document.id,
                 document_type: document.document_type,
                 updated_at: document.updated_at.into(),

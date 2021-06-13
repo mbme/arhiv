@@ -4,8 +4,7 @@
 use hyper::Server;
 use routerify::{Middleware, Router, RouterService};
 
-use app_context::AppContext;
-use arhiv_core::markup::RenderOptions;
+use arhiv_core::Arhiv;
 use attachment_data::attachment_data_handler;
 use pages::*;
 use public_assets::*;
@@ -15,9 +14,9 @@ use rs_utils::{
     server::{error_handler, logger_middleware, not_found_handler},
 };
 
-mod app_context;
 mod attachment_data;
 mod components;
+mod markup;
 mod pages;
 mod public_assets;
 mod rpc;
@@ -25,14 +24,10 @@ mod templates;
 mod utils;
 
 pub async fn start_ui_server(port: u16) {
-    let context = AppContext::new(RenderOptions {
-        document_path: "/documents".to_string(),
-        attachment_data_path: "/attachment-data".to_string(),
-    })
-    .expect("AppContext must init");
+    let arhiv = Arhiv::must_open();
 
     let router = Router::builder()
-        .data(context)
+        .data(arhiv)
         .middleware(Middleware::post_with_info(logger_middleware))
         .get("/public/:fileName", public_assets_handler)
         .get("/", index_page)

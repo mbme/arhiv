@@ -16,31 +16,33 @@ html, body {
 }
 
 body {
-  @apply pb-4 flex flex-col;
-
-  margin-left: 9rem;
-  width: 90vw;
-  max-width: var(--max-width);
-}
-
-#header {
-  @apply flex items-end pl-8 pr-4 py-4 uppercase font-mono text-lg font-medium;
+  @apply py-4 flex flex-col lg:flex-row mx-1 sm:mx-2 md:mx-4;
 }
 
 #sidebar {
-  @apply flex flex-col pl-8;
-  position: absolute;
-  left: 0;
-  top: 6rem;
+  @apply flex flex-col p-8;
+
+  flex-grow: 1;
+  max-width: 300px;
+
+  @screen lg {
+    position: sticky;
+    top: 2rem;
+    align-self: flex-start; /* needed for sticky to work in flex context */
+  }
 
   & > a {
     text-align: right;
-    @apply mb-4 text-xl uppercase text-gray-500;
+    @apply mb-4 text-xl uppercase text-gray-500 hover:text-blue-700;
   }
 }
 
 #app {
-  @apply p-8 bg-white shadow-md flex-grow w-full;
+  @apply p-4 md:p-6 lg:p-8 bg-white shadow-md;
+
+  width: 100%;
+  min-width: 400px;
+  max-width: var(--max-width);
 }
 
 @layer base {

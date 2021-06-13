@@ -1,13 +1,11 @@
-use std::{
-    collections::{hash_map::DefaultHasher, HashSet},
-    hash::{Hash, Hasher},
-    sync::Mutex,
-};
+use std::{collections::HashSet, sync::Mutex};
 
 use anyhow::*;
 use rust_embed::RustEmbed;
 use serde_json::{json, Value};
 use tera::{Context as TeraContext, Tera};
+
+use crate::utils::get_file_hash;
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/templates"]
@@ -119,14 +117,6 @@ type TemplateFile = (String, String);
 fn get_temlate_files_hashes(files: &Vec<TemplateFile>) -> HashSet<u64> {
     files
         .iter()
-        .map(|file| {
-            // see https://doc.rust-lang.org/std/hash/index.html#examples
-            let mut s = DefaultHasher::new();
-
-            file.0.hash(&mut s);
-            file.1.hash(&mut s);
-
-            s.finish()
-        })
+        .map(|file| get_file_hash(&file.0, &file.1))
         .collect::<HashSet<_>>()
 }

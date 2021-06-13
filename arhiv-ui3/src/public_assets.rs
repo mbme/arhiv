@@ -1,9 +1,11 @@
 use anyhow::*;
-use hyper::{header, Body, Request, Response};
+use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::ext::RequestExt;
 use rust_embed::RustEmbed;
 
-use rs_utils::server::{respond_not_found, ServerResponse};
+use rs_utils::server::{respond_not_found, respond_with_status, ServerResponse};
+
+use crate::utils::get_file_hash;
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/public"]
@@ -20,11 +22,20 @@ pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
         }
     };
 
+    let hash = get_file_hash(asset, &data).to_string();
+
+    if let Some(etag) = req.headers().get(header::IF_NONE_MATCH) {
+        if etag.to_str()? == hash {
+            return respond_with_status(StatusCode::NOT_MODIFIED);
+        }
+    }
+
     let mime: String = mime_guess::from_path(&asset)
         .first_or_octet_stream()
         .to_string();
 
     Response::builder()
+        .header(header::ETAG, hash)
         .header(header::CONTENT_TYPE, mime)
         .body(Body::from(data))
         .context("failed to build response")

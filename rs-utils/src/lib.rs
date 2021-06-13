@@ -3,7 +3,7 @@ pub use crypto::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
-pub use http::server;
+pub use http::*;
 pub use markov::Markov;
 use std::env;
 use std::process::Command;

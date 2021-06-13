@@ -4,6 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::app_context::AppContext;
+use crate::templates::TEMPLATES;
 use arhiv_core::entities::*;
 
 #[derive(Serialize)]
@@ -36,7 +37,7 @@ impl Catalog {
             })
             .collect();
 
-        context.render_template(
+        TEMPLATES.render(
             "components/catalog.html.tera",
             json!({
                 "items": items,

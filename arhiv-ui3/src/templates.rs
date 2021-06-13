@@ -1,11 +1,22 @@
 use std::{collections::HashSet, sync::Mutex};
 
 use anyhow::*;
+use arhiv_core::schema::SCHEMA;
+use lazy_static::*;
 use rust_embed::RustEmbed;
+use serde::Serialize;
 use serde_json::{json, Value};
 use tera::{Context as TeraContext, Tera};
 
 use crate::utils::get_file_hash;
+
+lazy_static! {
+    pub static ref TEMPLATES: Templates =
+        Templates::new(json!({ //
+            "nav_document_types": get_nav_document_types(),
+        }))
+        .expect("failed to init templates");
+}
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/templates"]
@@ -58,8 +69,8 @@ impl Templates {
     }
 
     #[cfg(debug_assertions)]
-    pub fn render(&self, template_name: &str, context: Value) -> Result<String> {
-        let mut context = TeraContext::from_value(context)?;
+    pub fn render(&self, template_name: &str, context: impl Serialize) -> Result<String> {
+        let mut context = TeraContext::from_value(serde_json::to_value(context)?)?;
         context.extend(self.global_context.clone());
 
         let templates = TemplateAssets::list_template_files();
@@ -119,4 +130,15 @@ fn get_temlate_files_hashes(files: &Vec<TemplateFile>) -> HashSet<u64> {
         .iter()
         .map(|file| get_file_hash(&file.0, &file.1))
         .collect::<HashSet<_>>()
+}
+
+const IGNORED_DOCUMENT_TYPES: &[&'static str] = &["tombstone", "attachment", "task"];
+
+fn get_nav_document_types() -> Vec<&'static str> {
+    SCHEMA
+        .modules
+        .iter()
+        .map(|module| module.document_type)
+        .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
+        .collect()
 }

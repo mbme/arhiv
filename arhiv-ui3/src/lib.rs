@@ -21,6 +21,7 @@ mod components;
 mod pages;
 mod public_assets;
 mod rpc;
+mod templates;
 mod utils;
 
 pub async fn start_ui_server(port: u16) {

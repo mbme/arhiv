@@ -2,7 +2,7 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{app_context::AppContext, components::Editor};
+use crate::{app_context::AppContext, components::Editor, utils::render_page};
 use arhiv_core::entities::*;
 use rs_utils::server::{respond_not_found, ServerResponse};
 
@@ -20,9 +20,9 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
-    let editor = Editor::new(&document)?.render(&context)?;
+    let editor = Editor::new(&document)?.render()?;
 
-    context.render_page(
+    render_page(
         "pages/document_editor_page.html.tera",
         json!({
             "document": document, //

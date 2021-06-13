@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{app_context::AppContext, components::Catalog};
+use crate::{app_context::AppContext, components::Catalog, utils::render_page};
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
@@ -50,7 +50,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         child_document_type = Some(collection.item_type);
     };
 
-    context.render_page(
+    render_page(
         "pages/document_page.html.tera",
         json!({
             "fields": fields,

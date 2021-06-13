@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{app_context::AppContext, components::Catalog};
+use crate::{app_context::AppContext, components::Catalog, utils::render_page};
 use arhiv_core::{entities::*, Filter, Matcher, OrderBy};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
@@ -46,7 +46,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         None
     };
 
-    context.render_page(
+    render_page(
         "pages/catalog_page.html.tera",
         json!({
             "document_type": document_type,

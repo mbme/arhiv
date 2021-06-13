@@ -1,7 +1,7 @@
 use anyhow::*;
 use serde::Serialize;
 
-use crate::app_context::AppContext;
+use crate::templates::TEMPLATES;
 use arhiv_core::{
     entities::Document,
     schema::{FieldType, SCHEMA},
@@ -54,7 +54,7 @@ impl<'d> Editor<'d> {
         Ok(Editor { fields, document })
     }
 
-    pub fn render(self, context: &AppContext) -> Result<String> {
-        context.render_template("components/editor.html.tera", self)
+    pub fn render(self) -> Result<String> {
+        TEMPLATES.render("components/editor.html.tera", self)
     }
 }

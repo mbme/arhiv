@@ -33,7 +33,6 @@ pulldown-cmark = { version = "0.8", default-features = false, features = ["simd"
 
 hyper = { version = "0.14", features = ["http1", "server"] }
 routerify = "2"
-mime_guess = "2"
 
 rusqlite = { version = "0.25", features = ["chrono", "serde_json", "functions"] }
 

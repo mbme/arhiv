@@ -4,7 +4,7 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::{json, Value};
 
-use crate::{app_context::AppContext, components::Editor};
+use crate::{components::Editor, utils::render_page};
 use arhiv_core::{
     entities::Document,
     schema::{DocumentData, SCHEMA},
@@ -16,8 +16,6 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .param("document_type")
         .expect("document_type must be present");
 
-    let context: &AppContext = req.data().unwrap();
-
     let params = req.get_query_params();
 
     let data =
@@ -25,9 +23,9 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let document = Document::new(document_type.clone(), data.into());
 
-    let editor = Editor::new(&document)?.render(&context)?;
+    let editor = Editor::new(&document)?.render()?;
 
-    context.render_page(
+    render_page(
         "pages/new_document_page.html.tera",
         json!({
             "editor": editor,

@@ -3,7 +3,10 @@ use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::ext::RequestExt;
 use rust_embed::RustEmbed;
 
-use rs_utils::server::{respond_not_found, respond_with_status, ServerResponse};
+use rs_utils::{
+    get_mime_from_path,
+    server::{respond_not_found, respond_with_status, ServerResponse},
+};
 
 use crate::utils::get_file_hash;
 
@@ -30,9 +33,7 @@ pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
         }
     }
 
-    let mime: String = mime_guess::from_path(&asset)
-        .first_or_octet_stream()
-        .to_string();
+    let mime = get_mime_from_path(&asset);
 
     Response::builder()
         .header(header::ETAG, hash)

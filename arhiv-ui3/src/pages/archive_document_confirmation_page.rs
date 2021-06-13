@@ -3,7 +3,7 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::app_context::AppContext;
+use crate::{app_context::AppContext, utils::render_page};
 use rs_utils::server::ServerResponse;
 
 pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerResponse {
@@ -17,7 +17,7 @@ pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerRes
 
     let preview = context.render_preview(&document);
 
-    context.render_page(
+    render_page(
         "pages/archive_document_confirmation_page.html.tera",
         json!({
             "document": document,

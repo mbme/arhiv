@@ -8,7 +8,7 @@
 
     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
     <link rel="stylesheet" href="/public/index.css">
-    <script defer type="module" src="/public/index.js"></script>
+    <script src="/public/index.js"></script>
   </head>
   <body>
     <nav id="header">

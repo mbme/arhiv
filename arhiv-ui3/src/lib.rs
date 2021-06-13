@@ -1,8 +1,6 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use std::net::SocketAddr;
-
 use hyper::Server;
 use routerify::{Middleware, Router, RouterService};
 

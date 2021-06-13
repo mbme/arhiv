@@ -15,7 +15,7 @@ async function call_action(action) {
   return response.json();
 }
 
-window.arhiv_ui = {
+const arhiv_ui = {
   go_back(fallback = '/') {
     if (history.length > 2) {
       history.back();
@@ -118,4 +118,32 @@ const utils = {
   }
 };
 
+arhiv_ui.initEditorForm = (form, originalDocument) => {
+  const initialFormData = new FormData(form);
+
+  function onBeforeUnload(event) {
+    const fd = new FormData(form);
+
+    if (!utils.isEqualFormData(initialFormData, fd)) {
+      event.preventDefault();
+      return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
+    }
+  }
+
+  window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    arhiv_ui.save_document({
+      ...originalDocument,
+      data: utils.formDataToObj(new FormData(form)),
+    }).then(() => {
+      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
+      window.location = `/documents/${originalDocument.id}`;
+    });
+  });
+};
+
 window.utils = utils;
+window.arhiv_ui = arhiv_ui;

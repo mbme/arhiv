@@ -49,13 +49,13 @@
   {% endfor %}
 
   <div class="flex justify-between py-2 px-4 mt-12 bg-white sticky bottom-0">
-      <button
-        type="button"
-        class="btn"
-        onclick="arhiv_ui.pick_attachment()"
-      >
-        Pick Attachment
-      </button>
+    <button
+      type="button"
+      class="btn"
+      onclick="arhiv_ui.pick_attachment()"
+    >
+      Pick Attachment
+    </button>
 
     <div>
       <button
@@ -72,31 +72,8 @@
 </form>
 
 <script>
-  const originalDocument = {{document | json_encode() | safe}};
-
-  const form = document.getElementById('document-editor');
-  const initialFormData = new FormData(form);
-
-  function onBeforeUnload(event) {
-    const fd = new FormData(form);
-
-    if (!utils.isEqualFormData(initialFormData, fd)) {
-      event.preventDefault();
-      return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
-    }
-  }
-
-  window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    arhiv_ui.save_document({
-      ...originalDocument,
-      data: utils.formDataToObj(new FormData(form)),
-    }).then(() => {
-      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
-      window.location = `/documents/${originalDocument.id}`;
-    })
-  });
+ window.arhiv_ui.initEditorForm(
+   document.getElementById('document-editor'),
+   {{document | json_encode() | safe}},
+ );
 </script>

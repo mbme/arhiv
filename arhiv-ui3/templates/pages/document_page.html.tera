@@ -16,54 +16,74 @@
 </section>
 {% endmacro render_field %}
 
-{% block content %}
-<div class="flex justify-between mb-10">
-  <div class="">
-    <div class="font-mono font-lg font-medium mb-2">
-      {{document.documentType | upper}} {{document.id}}
-
-      {% if document.archived %}
-      <span class="bg-gray-100 px-2 py-1">
-        ARCHIVED
-      </span>
-      {% endif %}
-    </div>
-
-    <time
-      class="text-xs text-gray-400"
-      datetime="{{document.updatedAt}}"
-    >
-      {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
-    </time>
-  </div>
-
-
-  {% if not is_tombstone %}
-  <div class="flex flex-col">
-    {% if child_document_type %}
-    <a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
-      Add {{child_document_type}}
-    </a>
-    {% endif %}
-    <a href="/documents/{{document.id}}/edit">
-      Edit
-    </a>
-    <a
-      href="/documents/{{document.id}}/archive"
-      class="text-yellow-500">
-      {% if document.archived %}
-      UnArchive
-      {% else %}
-      Archive
-      {% endif %}
-    </a>
-    <a
-      href="/documents/{{document.id}}/delete"
-      class="text-red-500">
-      Delete
-    </a>
-  </div>
+{% block toolbar %}
+{% if not is_tombstone %}
+<div class="flex justify-end pb-4">
+  {% if child_document_type %}
+  <a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
+    Add {{child_document_type}}
+  </a>
+  {% else %}
+  <a href="/documents/{{document.id}}/edit">
+    Edit {{document.documentType}}
+  </a>
   {% endif %}
+
+  <details class="ml-6">
+    <summary class="flex justify-end cursor-pointer">
+      <svg class="h-6 w-6">
+        <use xlink:href="#icon-dots-horizontal" />
+      </svg>
+    </summary>
+
+    <div class="flex flex-col items-end space-y-2">
+      {% if child_document_type %}
+      <a href="/documents/{{document.id}}/edit">
+        Edit {{document.documentType}}
+      </a>
+      {% endif %}
+
+      <a
+        href="/documents/{{document.id}}/archive"
+        class="text-yellow-500"
+      >
+        {% if document.archived %}
+        UnArchive
+        {% else %}
+        Archive
+        {% endif %}
+      </a>
+
+      <a
+        href="/documents/{{document.id}}/delete"
+        class="text-red-500"
+      >
+        Delete
+      </a>
+    </div>
+  </details>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="mb-10">
+  <div class="font-mono font-lg font-medium mb-2">
+    {{document.documentType | upper}} {{document.id}}
+
+    {% if document.archived %}
+    <span class="bg-gray-100 px-2 py-1">
+      ARCHIVED
+    </span>
+    {% endif %}
+  </div>
+
+  <time
+    class="text-xs text-gray-400"
+    datetime="{{document.updatedAt}}"
+  >
+    {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+  </time>
 </div>
 
 {% for field in fields %}

@@ -44,11 +44,13 @@ body {
   }
 }
 
-#app {
-  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8 bg-white shadow-md;
-
+main {
   width: 100%;
   max-width: var(--max-width);
+}
+
+#content {
+  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8 bg-white shadow-md;
 }
 
 @layer base {

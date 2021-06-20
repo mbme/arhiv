@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */
+  a, button {
+    touch-action: manipulation;
+  }
+}
+
 html, body {
   height: auto;
   min-height: 100vh;
@@ -16,7 +23,7 @@ html, body {
 }
 
 body {
-  @apply py-4 flex flex-col lg:flex-row mx-1 sm:mx-2 md:mx-4;
+  @apply flex flex-col lg:flex-row pb-4 md:pt-4 px-1 sm:px-2 md:px-4;
 }
 
 #sidebar {
@@ -38,10 +45,9 @@ body {
 }
 
 #app {
-  @apply p-4 md:p-6 lg:p-8 bg-white shadow-md;
+  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8 bg-white shadow-md;
 
   width: 100%;
-  min-width: 400px;
   max-width: var(--max-width);
 }
 

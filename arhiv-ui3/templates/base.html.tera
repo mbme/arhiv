@@ -19,8 +19,8 @@
       {% endfor %}
 
       <a href="/new" class="flex justify-end mt-8">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1 pt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg class="h-6 w-6 mr-1 pt-0.5">
+          <use xlink:href="#icon-plus" />
         </svg>
         Create
       </a>
@@ -29,5 +29,34 @@
     <main id="app">
       {% block content %}{% endblock %}
     </main>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+      <symbol
+        id="icon-plus"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </symbol>
+
+      <symbol
+        id="icon-arrow-left"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+      </symbol>
+
+      <symbol
+        id="icon-arrow-right"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </symbol>
+    </svg>
   </body>
 </html>

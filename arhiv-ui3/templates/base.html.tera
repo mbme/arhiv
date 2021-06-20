@@ -19,7 +19,7 @@
       {% endfor %}
 
       <a href="/new" class="flex justify-end mt-8">
-        <svg class="h-6 w-6 mr-1 pt-0.5">
+        <svg class="h-6 w-6 mr-1">
           <use xlink:href="#icon-plus" />
         </svg>
         Create

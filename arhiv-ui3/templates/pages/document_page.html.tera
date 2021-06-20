@@ -18,51 +18,49 @@
 
 {% block toolbar %}
 {% if not is_tombstone %}
-<div class="flex justify-end pb-4">
-  {% if child_document_type %}
-  <a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
-    Add {{child_document_type}}
-  </a>
-  {% else %}
-  <a href="/documents/{{document.id}}/edit">
-    Edit {{document.documentType}}
-  </a>
-  {% endif %}
+{% if child_document_type %}
+<a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
+  Add {{child_document_type}}
+</a>
+{% else %}
+<a href="/documents/{{document.id}}/edit">
+  Edit {{document.documentType}}
+</a>
+{% endif %}
 
-  <details class="ml-6">
-    <summary class="flex justify-end cursor-pointer">
-      <svg class="h-6 w-6">
-        <use xlink:href="#icon-dots-horizontal" />
-      </svg>
-    </summary>
+<details class="ml-6">
+  <summary class="flex justify-end cursor-pointer">
+    <svg class="h-6 w-6">
+      <use xlink:href="#icon-dots-horizontal" />
+    </svg>
+  </summary>
 
-    <div class="flex flex-col items-end space-y-2">
-      {% if child_document_type %}
-      <a href="/documents/{{document.id}}/edit">
-        Edit {{document.documentType}}
-      </a>
+  <div class="flex flex-col items-end space-y-2">
+    {% if child_document_type %}
+    <a href="/documents/{{document.id}}/edit">
+      Edit {{document.documentType}}
+    </a>
+    {% endif %}
+
+    <a
+      href="/documents/{{document.id}}/archive"
+      class="text-yellow-500"
+    >
+      {% if document.archived %}
+      UnArchive
+      {% else %}
+      Archive
       {% endif %}
+    </a>
 
-      <a
-        href="/documents/{{document.id}}/archive"
-        class="text-yellow-500"
-      >
-        {% if document.archived %}
-        UnArchive
-        {% else %}
-        Archive
-        {% endif %}
-      </a>
-
-      <a
-        href="/documents/{{document.id}}/delete"
-        class="text-red-500"
-      >
-        Delete
-      </a>
-    </div>
-  </details>
-</div>
+    <a
+      href="/documents/{{document.id}}/delete"
+      class="text-red-500"
+    >
+      Delete
+    </a>
+  </div>
+</details>
 {% endif %}
 {% endblock %}
 

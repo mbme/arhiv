@@ -14,7 +14,6 @@ html, body {
   min-height: 100vh;
 
   color: #333333;
-  @apply bg-yellow-100;
 
   text-rendering: optimizeLegibility;
   @apply antialiased;
@@ -23,25 +22,31 @@ html, body {
 }
 
 body {
-  @apply flex flex-col lg:flex-row pb-4 md:pt-4 px-1 sm:px-2 md:px-4;
+  @apply flex flex-col lg:flex-row;
 }
 
 #sidebar {
-  @apply flex flex-col p-8;
+  @apply flex flex-col;
+
+  padding-right: 5rem;
 
   flex-grow: 1;
   max-width: 300px;
 
   @screen lg {
     position: sticky;
-    top: 2rem;
+    top: 8rem;
     align-self: flex-start; /* needed for sticky to work in flex context */
   }
 
   & > a {
     text-align: right;
-    @apply mb-4 text-xl uppercase text-gray-500 hover:text-blue-700;
+    @apply mb-4 uppercase text-gray-500 hover:text-blue-700;
   }
+}
+
+#toolbar {
+  @apply py-4 flex justify-end;
 }
 
 main {
@@ -50,7 +55,7 @@ main {
 }
 
 #content {
-  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8 bg-white shadow-md;
+  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8;
 }
 
 @layer base {

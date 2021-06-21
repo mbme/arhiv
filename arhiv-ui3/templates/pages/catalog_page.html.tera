@@ -7,30 +7,4 @@
 
 {{ catalog | safe }}
 
-<div class="flex justify-center items-center font-mono uppercase mt-10 mb-4">
-  {% if prev_link %}
-  <a href="{{prev_link}}">
-    <svg class="h-6 w-6 inline-block">
-      <use xlink:href="#icon-arrow-left" />
-    </svg>
-    Prev
-  </a>
-  {% endif %}
-
-  {% if page > 0 or next_link %}
-  <div class="mx-8">
-    Page {{ page }}
-  </div>
-  {% endif %}
-
-  {% if next_link %}
-  <a href="{{next_link}}">
-    Next
-    <svg class="h-6 w-6 inline-block">
-      <use xlink:href="#icon-arrow-right" />
-    </svg>
-  </a>
-  {% endif %}
-</div>
-
 {% endblock %}

@@ -9,7 +9,7 @@ use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
     schema::{DataDescription, FieldType, SCHEMA},
-    Arhiv, Filter, Matcher, OrderBy,
+    Arhiv, Matcher,
 };
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
@@ -41,9 +41,12 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let mut child_document_type = None;
 
     if let Some(ref collection) = data_description.collection_of {
-        let filter = children_catalog_filter(&document, collection.item_type, &pattern);
-        let result = arhiv.list_documents(filter)?;
-        let catalog = Catalog::new(result.items, pattern).render(&arhiv)?;
+        let catalog = Catalog::new(collection.item_type, pattern)
+            .with_matcher(Matcher::Field {
+                selector: format!("$.{}", &document.document_type),
+                pattern: document.id.to_string(),
+            })
+            .render(arhiv)?;
 
         children_catalog = Some(catalog);
 
@@ -96,27 +99,4 @@ fn prepare_fields(
             }
         })
         .collect::<Result<Vec<_>>>()
-}
-
-fn children_catalog_filter(
-    collection_document: &Document,
-    child_type: impl Into<String>,
-    pattern: impl Into<String>,
-) -> Filter {
-    let mut filter = Filter::default();
-    filter.matchers.push(Matcher::Type {
-        document_type: child_type.into(),
-    });
-    filter.matchers.push(Matcher::Field {
-        selector: format!("$.{}", collection_document.document_type),
-        pattern: collection_document.id.to_string(),
-    });
-    filter.matchers.push(Matcher::Search {
-        pattern: pattern.into(),
-    });
-    filter.page_size = None;
-    filter.page_offset = None;
-    filter.order.push(OrderBy::UpdatedAt { asc: false });
-
-    filter
 }

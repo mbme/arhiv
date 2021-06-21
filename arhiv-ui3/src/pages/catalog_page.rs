@@ -5,10 +5,8 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{components::Catalog, utils::render_page};
-use arhiv_core::{entities::*, Arhiv, Filter, Matcher, OrderBy};
+use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
-
-const PAGE_SIZE: u8 = 14;
 
 #[derive(Serialize)]
 struct CatalogEntry {
@@ -22,57 +20,17 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let page: u8 = req
-        .get_query_param("page")
-        .unwrap_or("0".to_string())
-        .parse()?;
-
     let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
-    let filter = catalog_filter(document_type, &pattern, page);
-
-    let result = arhiv.list_documents(filter)?;
-    let catalog = Catalog::new(result.items, pattern).render(arhiv)?;
-
-    let prev_link = match page {
-        0 => None,
-        1 => Some(req.get_url_with_updated_query("page", None)),
-        _ => Some(req.get_url_with_updated_query("page", Some((page - 1).to_string()))),
-    };
-
-    let next_link = if result.has_more {
-        Some(req.get_url_with_updated_query("page", Some((page + 1).to_string())))
-    } else {
-        None
-    };
+    let catalog = Catalog::new(document_type, pattern)
+        .with_pagination(&req)?
+        .render(arhiv)?;
 
     render_page(
         "pages/catalog_page.html.tera",
         json!({
             "document_type": document_type,
             "catalog": catalog,
-            "prev_link": prev_link,
-            "page": page,
-            "next_link": next_link,
         }),
     )
-}
-
-fn catalog_filter(
-    document_type: impl Into<String>,
-    pattern: impl Into<String>,
-    page: u8,
-) -> Filter {
-    let mut filter = Filter::default();
-    filter.matchers.push(Matcher::Type {
-        document_type: document_type.into(),
-    });
-    filter.matchers.push(Matcher::Search {
-        pattern: pattern.into(),
-    });
-    filter.page_size = Some(PAGE_SIZE);
-    filter.page_offset = Some(PAGE_SIZE * page);
-    filter.order.push(OrderBy::UpdatedAt { asc: false });
-
-    filter
 }

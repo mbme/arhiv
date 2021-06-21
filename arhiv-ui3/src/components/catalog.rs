@@ -1,10 +1,12 @@
 use anyhow::*;
 use chrono::{DateTime, Local};
+use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
 use crate::{markup::ArhivMarkupExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, Arhiv};
+use arhiv_core::{entities::*, Arhiv, Filter, Matcher, OrderBy};
+use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
 struct CatalogEntry {
@@ -14,19 +16,87 @@ struct CatalogEntry {
     updated_at: DateTime<Local>,
 }
 
+const PAGE_SIZE: u8 = 14;
+
+#[derive(Serialize)]
+pub struct Pagination {
+    page: u8,
+    prev_page_address: Option<String>,
+    next_page_address: Option<String>,
+}
+
 pub struct Catalog {
-    documents: Vec<Document>,
+    filter: Filter,
     pattern: String,
+    pagination: Option<Pagination>,
 }
 
 impl Catalog {
-    pub fn new(documents: Vec<Document>, pattern: String) -> Self {
-        Catalog { documents, pattern }
+    pub fn new(document_type: impl Into<String>, pattern: impl Into<String>) -> Self {
+        let document_type = document_type.into();
+        let pattern = pattern.into();
+
+        let mut filter = Filter::default();
+
+        filter.matchers.push(Matcher::Type { document_type });
+        filter.matchers.push(Matcher::Search {
+            pattern: pattern.clone(),
+        });
+        filter.page_size = None;
+        filter.page_offset = None;
+        filter.order.push(OrderBy::UpdatedAt { asc: false });
+
+        Catalog {
+            filter,
+            pattern,
+            pagination: None,
+        }
     }
 
-    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
-        let items: Vec<_> = self
-            .documents
+    pub fn with_pagination(mut self, req: &Request<Body>) -> Result<Self> {
+        let page: u8 = req
+            .get_query_param("page")
+            .unwrap_or("0".to_string())
+            .parse()?;
+
+        self.filter.page_size = Some(PAGE_SIZE);
+        self.filter.page_offset = Some(PAGE_SIZE * page);
+
+        let prev_page_address = match page {
+            0 => None,
+            1 => Some(req.get_url_with_updated_query("page", None)),
+            _ => Some(req.get_url_with_updated_query("page", Some((page - 1).to_string()))),
+        };
+
+        let next_page_address =
+            Some(req.get_url_with_updated_query("page", Some((page + 1).to_string())));
+
+        self.pagination = Some(Pagination {
+            page,
+            prev_page_address,
+            next_page_address,
+        });
+
+        Ok(self)
+    }
+
+    pub fn with_matcher(mut self, matcher: Matcher) -> Self {
+        self.filter.matchers.push(matcher);
+
+        self
+    }
+
+    pub fn render(mut self, arhiv: &Arhiv) -> Result<String> {
+        let result = arhiv.list_documents(self.filter)?;
+
+        if !result.has_more {
+            if let Some(pagination) = self.pagination.as_mut() {
+                pagination.next_page_address = None;
+            }
+        }
+
+        let items: Vec<_> = result
+            .items
             .into_iter()
             .map(|document| CatalogEntry {
                 preview: arhiv.render_preview(&document),
@@ -41,6 +111,7 @@ impl Catalog {
             json!({
                 "items": items,
                 "pattern": self.pattern,
+                "pagination": self.pagination,
             }),
         )
     }

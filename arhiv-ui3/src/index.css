@@ -13,12 +13,14 @@ html, body {
   height: auto;
   min-height: 100vh;
 
-  color: #333333;
-
   text-rendering: optimizeLegibility;
   @apply antialiased;
 
   --max-width: 800px;
+  --bg-color: #fff;
+
+  background-color: var(--bg-color);
+  color: #333;
 }
 
 body {
@@ -122,7 +124,7 @@ main {
       bottom: 0;
       left: 0;
       width: 100%;
-      background-image: linear-gradient(to bottom, transparent, white);
+      background-image: linear-gradient(to bottom, transparent, var(--bg-color));
     }
   }
 
@@ -177,7 +179,9 @@ main {
   }
 
   .modal {
-    @apply bg-white rounded-md shadow-lg;
+    @apply rounded-md shadow-lg;
+
+    background-color: var(--bg-color);
     max-width: var(--max-width);
   }
 

@@ -182,3 +182,26 @@ impl DataSchema {
             .ok_or(anyhow!("failed to extract field {}", field.name))
     }
 }
+
+impl DataDescription {
+    pub fn get_field(&self, name: impl AsRef<str>) -> Result<&Field> {
+        let name = name.as_ref();
+        self.fields
+            .iter()
+            .find(|field| field.name == name)
+            .ok_or(anyhow!(
+                "can't find field {} in document type {}",
+                name,
+                self.document_type
+            ))
+    }
+}
+
+impl Field {
+    pub fn get_enum_values(&self) -> Result<&Vec<&'static str>> {
+        match self.field_type {
+            FieldType::Enum(ref values) => Ok(values),
+            _ => bail!("field {} isn't enum", self.name),
+        }
+    }
+}

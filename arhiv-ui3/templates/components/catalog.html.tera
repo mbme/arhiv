@@ -1,3 +1,5 @@
+{% import "components/catalog-macros.html.tera" as macros %}
+
 <form
   id="catalog-filter"
   class="form"
@@ -15,25 +17,20 @@
   />
 </form>
 
-<ul>
-  {% for entry in items %}
-  <li class="pt-10 pb-11 min-h-6rem border-t-2 border-dashed first:border-t-0">
-    <div class="flex justify-between mb-4 text-gray-400 font-mono text-sm">
-      <div>
-        {{ entry.updated_at | date }}
-      </div>
-    </div>
+{% if items | length > 0 %}
+{{ macros::render_items(items=items) }}
+{% endif %}
 
-    <div class="preview markup-sm mb-8">
-      {{ entry.preview | safe }}
-    </div>
-
-    <a href="/documents/{{ entry.id }}" class="uppercase">
-      read more
-    </a>
-  </li>
-  {% endfor %}
-</ul>
+{% for group in groups %}
+<div class="my-16">
+  <h2 class="text-2xl font-bold mb-4 border-b-2">
+    {{group.name}} ({{ group.items | length }})
+  </h2>
+  <div class="pl-4">
+    {{ macros::render_items(items=group.items) }}
+  </div>
+</div>
+{% endfor %}
 
 {% if pagination %}
 <div class="flex justify-center items-center font-mono uppercase mt-10 mb-4">

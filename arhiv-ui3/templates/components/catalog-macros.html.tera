@@ -1,0 +1,21 @@
+{% macro render_items(items) %}
+<ul>
+  {% for item in items %}
+  <li class="pt-10 pb-11 min-h-6rem border-t-2 border-dashed first:border-t-0">
+    <div class="flex justify-between mb-4 text-gray-400 font-mono text-sm">
+      <div>
+        {{ item.updated_at | date }}
+      </div>
+    </div>
+
+    <div class="preview markup-sm mb-8">
+      {{ item.preview | safe }}
+    </div>
+
+    <a href="/documents/{{ item.id }}" class="uppercase">
+      read more
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro render_items %}

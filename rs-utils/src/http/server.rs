@@ -34,11 +34,11 @@ pub async fn logger_middleware(res: Response<Body>, info: RequestInfo) -> Result
 }
 
 pub async fn error_handler(err: routerify::RouteError, info: RequestInfo) -> Response<Body> {
-    log::error!("{} {} -> {}", info.method(), info.uri().path(), err);
+    log::error!("{} {} -> {:?}", info.method(), info.uri().path(), err);
 
     Response::builder()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body(Body::from(format!("Something went wrong: {}", err)))
+        .body(Body::from(format!("Something went wrong: {:?}", err)))
         .unwrap()
 }
 

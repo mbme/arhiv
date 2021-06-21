@@ -4,8 +4,8 @@ use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{markup::ArhivMarkupExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, Arhiv, Filter, Matcher, OrderBy};
+use crate::{markup::ArhivMarkupExt, templates::TEMPLATES, ui_config::CatalogConfig};
+use arhiv_core::{entities::*, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
@@ -14,6 +14,12 @@ struct CatalogEntry {
     document_type: String,
     preview: String,
     updated_at: DateTime<Local>,
+}
+
+#[derive(Serialize)]
+struct CatalogGroup {
+    name: String,
+    items: Vec<CatalogEntry>,
 }
 
 const PAGE_SIZE: u8 = 14;
@@ -27,6 +33,7 @@ pub struct Pagination {
 
 pub struct Catalog {
     filter: Filter,
+    document_type: String,
     pattern: String,
     pagination: Option<Pagination>,
 }
@@ -38,7 +45,9 @@ impl Catalog {
 
         let mut filter = Filter::default();
 
-        filter.matchers.push(Matcher::Type { document_type });
+        filter.matchers.push(Matcher::Type {
+            document_type: document_type.clone(),
+        });
         filter.matchers.push(Matcher::Search {
             pattern: pattern.clone(),
         });
@@ -49,6 +58,7 @@ impl Catalog {
         Catalog {
             filter,
             pattern,
+            document_type,
             pagination: None,
         }
     }
@@ -86,7 +96,7 @@ impl Catalog {
         self
     }
 
-    pub fn render(mut self, arhiv: &Arhiv) -> Result<String> {
+    pub fn render(mut self, arhiv: &Arhiv, config: CatalogConfig) -> Result<String> {
         let result = arhiv.list_documents(self.filter)?;
 
         if !result.has_more {
@@ -95,21 +105,56 @@ impl Catalog {
             }
         }
 
-        let items: Vec<_> = result
-            .items
-            .into_iter()
-            .map(|document| CatalogEntry {
-                preview: arhiv.render_preview(&document),
-                id: document.id,
-                document_type: document.document_type,
-                updated_at: document.updated_at.into(),
-            })
-            .collect();
+        let mut items: Vec<CatalogEntry> = vec![];
+        let mut groups: Vec<CatalogGroup> = vec![];
+
+        if let Some(group_by) = config.group_by {
+            groups = SCHEMA
+                .get_data_description_by_type(&self.document_type)?
+                .get_field(group_by.field)?
+                .get_enum_values()?
+                .into_iter()
+                .map(|enum_value| CatalogGroup {
+                    name: enum_value.to_string(),
+                    items: vec![],
+                })
+                .collect();
+
+            for document in result.items.into_iter() {
+                let key = document
+                    .get_field_str(group_by.field)
+                    .ok_or(anyhow!("can't find field"))?;
+
+                let group = groups
+                    .iter_mut()
+                    .find(|group| group.name == key)
+                    .ok_or(anyhow!("can't find group"))?;
+
+                group.items.push(CatalogEntry {
+                    preview: arhiv.render_preview(&document),
+                    id: document.id,
+                    document_type: document.document_type,
+                    updated_at: document.updated_at.into(),
+                });
+            }
+        } else {
+            items = result
+                .items
+                .into_iter()
+                .map(|document| CatalogEntry {
+                    preview: arhiv.render_preview(&document),
+                    id: document.id,
+                    document_type: document.document_type,
+                    updated_at: document.updated_at.into(),
+                })
+                .collect();
+        }
 
         TEMPLATES.render(
             "components/catalog.html.tera",
             json!({
                 "items": items,
+                "groups": groups,
                 "pattern": self.pattern,
                 "pagination": self.pagination,
             }),

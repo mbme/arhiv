@@ -4,7 +4,9 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{components::Catalog, markup::ArhivMarkupExt, utils::render_page};
+use crate::{
+    components::Catalog, markup::ArhivMarkupExt, ui_config::CatalogConfig, utils::render_page,
+};
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
@@ -46,7 +48,10 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                 selector: format!("$.{}", &document.document_type),
                 pattern: document.id.to_string(),
             })
-            .render(arhiv)?;
+            .render(
+                arhiv,
+                CatalogConfig::get_child_config(&document.document_type, &collection.item_type),
+            )?;
 
         children_catalog = Some(catalog);
 

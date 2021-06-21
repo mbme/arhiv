@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{components::Catalog, utils::render_page};
+use crate::{components::Catalog, ui_config::CatalogConfig, utils::render_page};
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
@@ -24,7 +24,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
 
     let catalog = Catalog::new(document_type, pattern)
         .with_pagination(&req)?
-        .render(arhiv)?;
+        .render(arhiv, CatalogConfig::get_config(document_type))?;
 
     render_page(
         "pages/catalog_page.html.tera",

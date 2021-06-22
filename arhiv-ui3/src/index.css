@@ -142,6 +142,7 @@ main {
 
       resize: none;
       min-height: 19rem;
+      overflow-y: hidden;
     }
   }
 

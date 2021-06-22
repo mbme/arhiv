@@ -145,5 +145,24 @@ arhiv_ui.initEditorForm = (form, originalDocument) => {
   });
 };
 
+arhiv_ui.autoGrowTextarea = (textarea) => {
+  const parent = textarea.parentElement;
+
+  const updateHeight = () => {
+    // preserve height between updates
+    parent.style.height = `${parent.scrollHeight}px`;
+
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+
+    parent.style.height = 'auto';
+  };
+
+  updateHeight();
+
+  textarea.addEventListener('input', updateHeight, { passive: true });
+  window.addEventListener('resize', updateHeight, { passive: true });
+};
+
 window.utils = utils;
 window.arhiv_ui = arhiv_ui;

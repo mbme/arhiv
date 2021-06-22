@@ -72,8 +72,13 @@
 </form>
 
 <script>
- window.arhiv_ui.initEditorForm(
-   document.getElementById('document-editor'),
-   {{document | json_encode() | safe}},
- );
+  const editorEl = document.getElementById('document-editor');
+
+  window.arhiv_ui.initEditorForm(
+    editorEl,
+    {{document | json_encode() | safe}},
+  );
+
+  editorEl.querySelectorAll('textarea')
+    .forEach(window.arhiv_ui.autoGrowTextarea);
 </script>

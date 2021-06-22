@@ -73,7 +73,7 @@
 {% block content %}
 
 {% if document.archived %}
-<div class="bg-gray-100 pb-16 py-1">
+<div class="bg-gray-100 mb-12 p-2 font-bold tracking-widest">
   ARCHIVED
 </div>
 {% endif %}

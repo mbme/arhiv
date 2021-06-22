@@ -6,7 +6,7 @@
   autocomplete="off"
 >
   {% for field in fields %}
-  <label class="block mb-8">
+  <label class="block mb-12">
     <h5 class="section-heading mb-2">
       {{ field.label }}
     </h5>

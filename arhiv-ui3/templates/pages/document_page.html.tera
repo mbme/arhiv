@@ -1,7 +1,7 @@
 {% extends "base.html.tera" %}
 
 {% macro render_field(name, value, safe=false) %}
-<section class="mb-8">
+<section class="mb-12">
   <h5 class="section-heading mb-2">
     {{ name }}
   </h5>
@@ -17,80 +17,77 @@
 {% endmacro render_field %}
 
 {% block toolbar %}
-{% if not is_tombstone %}
-{% if child_document_type %}
-<a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
-  Add {{child_document_type}}
-</a>
-{% else %}
-<a href="/documents/{{document.id}}/edit">
-  Edit {{document.documentType}}
-</a>
-{% endif %}
 
-<details class="ml-6">
-  <summary class="flex justify-end cursor-pointer">
-    <svg class="h-6 w-6">
-      <use xlink:href="#icon-dots-horizontal" />
-    </svg>
-  </summary>
+{{ breadcrumbs | safe }}
 
-  <div class="flex flex-col items-end space-y-2">
-    {% if child_document_type %}
-    <a href="/documents/{{document.id}}/edit">
-      Edit {{document.documentType}}
-    </a>
-    {% endif %}
+<div class="flex">
+  {% if not is_tombstone %}
+  {% if child_document_type %}
+  <a href="/new/{{child_document_type}}?{{document.documentType}}={{document.id}}">
+    Add {{child_document_type}}
+  </a>
+  {% else %}
+  <a href="/documents/{{document.id}}/edit">
+    Edit {{document.documentType}}
+  </a>
+  {% endif %}
 
-    <a
-      href="/documents/{{document.id}}/archive"
-      class="text-yellow-500"
-    >
-      {% if document.archived %}
-      UnArchive
-      {% else %}
-      Archive
+  <details class="ml-6">
+    <summary class="flex justify-end cursor-pointer">
+      <svg class="h-6 w-6">
+        <use xlink:href="#icon-dots-horizontal" />
+      </svg>
+    </summary>
+
+    <div class="flex flex-col items-end space-y-2">
+      {% if child_document_type %}
+      <a href="/documents/{{document.id}}/edit">
+        Edit {{document.documentType}}
+      </a>
       {% endif %}
-    </a>
 
-    <a
-      href="/documents/{{document.id}}/delete"
-      class="text-red-500"
-    >
-      Delete
-    </a>
-  </div>
-</details>
-{% endif %}
+      <a
+        href="/documents/{{document.id}}/archive"
+        class="text-yellow-500"
+      >
+        {% if document.archived %}
+        UnArchive
+        {% else %}
+        Archive
+        {% endif %}
+      </a>
+
+      <a
+        href="/documents/{{document.id}}/delete"
+        class="text-red-500"
+      >
+        Delete
+      </a>
+    </div>
+  </details>
+  {% endif %}
+</div>
+
 {% endblock %}
 
 {% block content %}
-<div class="mb-10">
-  <div class="font-mono font-lg font-medium mb-2">
-    {{document.documentType | upper}} {{document.id}}
 
-    {% if document.archived %}
-    <span class="bg-gray-100 px-2 py-1">
-      ARCHIVED
-    </span>
-    {% endif %}
-  </div>
-
-  <time
-    class="text-xs text-gray-400"
-    datetime="{{document.updatedAt}}"
-  >
-    {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
-  </time>
+{% if document.archived %}
+<div class="bg-gray-100 pb-16 py-1">
+  ARCHIVED
 </div>
+{% endif %}
 
 {% for field in fields %}
 {{ self::render_field(name=field.name, value=field.value, safe=field.safe) }}
-
 {% endfor %}
 
+{% if children_catalog %}
+{{ children_catalog | safe }}
+{% endif %}
+
 {% if document.refs | length > 0 %}
-<details class="mb-4 bg-gray-100">
+<details class="mb-12 bg-gray-100">
   <summary class="cursor-pointer p-2">
     <h3 class="section-heading text-gray-700 inline-block">
       REFS
@@ -107,8 +104,11 @@
 </details>
 {% endif %}
 
-{% if children_catalog %}
-{{ children_catalog | safe }}
-{% endif %}
+<div class="text-xs text-gray-400 text-mono text-right">
+  Updated
+  <time datetime="{{document.updatedAt}}">
+    {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+  </time>
+</div>
 
 {% endblock %}

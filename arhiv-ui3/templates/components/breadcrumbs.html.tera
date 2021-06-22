@@ -1,0 +1,18 @@
+<ul class="flex text-xs font-mono">
+  {% for item in items %}
+  <li class="mx-2">
+    {% if loop.first %}
+    //
+    {% else %}
+    /
+    {% endif %}
+  </li>
+  <li>
+    {% if item.url %}
+    <a href="{{item.url}}">{{item.name}}</a>
+    {% else %}
+    {{item.name}}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>

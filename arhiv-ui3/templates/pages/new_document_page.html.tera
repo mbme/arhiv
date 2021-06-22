@@ -1,9 +1,15 @@
 {% extends "base.html.tera" %}
 
+{% block toolbar %}
+
+{{ breadcrumbs | safe }}
+
+{% endblock %}
+
 {% block content %}
 
 <h1 class="mb-12 text-2xl uppercase">
-  {{document_type}} editor
+  new {{document_type}}
 </h1>
 
 {{ editor | safe }}

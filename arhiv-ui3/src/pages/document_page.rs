@@ -5,7 +5,10 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{
-    components::Catalog, markup::ArhivMarkupExt, ui_config::CatalogConfig, utils::render_page,
+    components::{Breadcrumbs, Catalog},
+    markup::ArhivMarkupExt,
+    ui_config::CatalogConfig,
+    utils::render_page,
 };
 use arhiv_core::{
     entities::Document,
@@ -58,13 +61,16 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         child_document_type = Some(collection.item_type);
     };
 
+    let breadcrumbs = Breadcrumbs::new(&document)?.render()?;
+
     render_page(
         "pages/document_page.html.tera",
         json!({
+            "breadcrumbs": breadcrumbs,
             "fields": fields,
             "document": document,
-            "children_catalog": children_catalog,
             "is_tombstone": document.is_tombstone(),
+            "children_catalog": children_catalog,
             "child_document_type": child_document_type,
         }),
     )

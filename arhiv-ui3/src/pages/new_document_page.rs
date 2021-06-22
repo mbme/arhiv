@@ -4,7 +4,10 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::{json, Value};
 
-use crate::{components::Editor, utils::render_page};
+use crate::{
+    components::{Breadcrumbs, Editor},
+    utils::render_page,
+};
 use arhiv_core::{
     entities::Document,
     schema::{DocumentData, SCHEMA},
@@ -24,10 +27,12 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document = Document::new(document_type.clone(), data.into());
 
     let editor = Editor::new(&document)?.render()?;
+    let breadcrumbs = Breadcrumbs::new(&document)?.for_new_document().render()?;
 
     render_page(
         "pages/new_document_page.html.tera",
         json!({
+            "breadcrumbs": breadcrumbs,
             "editor": editor,
             "document_type": document_type,
         }),

@@ -181,6 +181,17 @@ impl DataSchema {
             .map(|value| value.to_lowercase())
             .ok_or(anyhow!("failed to extract field {}", field.name))
     }
+
+    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
+        self.modules
+            .iter()
+            .find_map(|module| match module.collection_of {
+                Some(ref collection_of) if collection_of.item_type == document_type => {
+                    Some(module.document_type)
+                }
+                _ => None,
+            })
+    }
 }
 
 impl DataDescription {

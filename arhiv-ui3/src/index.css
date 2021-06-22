@@ -47,17 +47,17 @@ body {
   }
 }
 
-#toolbar {
-  @apply py-4 flex justify-end;
-}
-
 main {
   width: 100%;
   max-width: var(--max-width);
 }
 
+#toolbar {
+  @apply px-2 py-4 md:px-6 flex justify-between items-center;
+}
+
 #content {
-  @apply py-4 px-2 md:px-4 md:p-6 lg:p-8;
+  @apply py-4 px-2 md:p-6 lg:p-8;
 }
 
 @layer base {
@@ -129,7 +129,7 @@ main {
   }
 
   .section-heading {
-    @apply uppercase font-mono text-gray-500 text-sm tracking-wider;
+    @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
   }
 
   .form {

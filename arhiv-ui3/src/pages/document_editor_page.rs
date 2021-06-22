@@ -2,7 +2,10 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{components::Editor, utils::render_page};
+use crate::{
+    components::{Breadcrumbs, Editor},
+    utils::render_page,
+};
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
@@ -21,11 +24,15 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
     };
 
     let editor = Editor::new(&document)?.render()?;
+    let breadcrumbs = Breadcrumbs::new(&document)?
+        .for_document_editor()
+        .render()?;
 
     render_page(
         "pages/document_editor_page.html.tera",
         json!({
-            "document": document, //
+            "breadcrumbs": breadcrumbs,
+            "document": document,
             "editor": editor,
         }),
     )

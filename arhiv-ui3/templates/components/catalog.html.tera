@@ -29,7 +29,7 @@
   {% endif %}
 >
   <summary class="cursor-pointer">
-    <span class="text-2xl font-bold">
+    <span class="text-2xl font-bold uppercase align-middle">
       {{group.name}}
     </span>
 

@@ -19,6 +19,7 @@ struct CatalogEntry {
 #[derive(Serialize)]
 struct CatalogGroup {
     name: String,
+    open: bool,
     items: Vec<CatalogEntry>,
 }
 
@@ -116,6 +117,7 @@ impl Catalog {
                 .into_iter()
                 .map(|enum_value| CatalogGroup {
                     name: enum_value.to_string(),
+                    open: group_by.open_groups.contains(enum_value),
                     items: vec![],
                 })
                 .collect();

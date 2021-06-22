@@ -22,14 +22,26 @@
 {% endif %}
 
 {% for group in groups %}
-<div class="my-16">
-  <h2 class="text-2xl font-bold mb-4 border-b-2">
-    {{group.name}} ({{ group.items | length }})
-  </h2>
-  <div class="pl-4">
+<details
+  class="my-16"
+  {% if group.open and group.items | length > 0 %}
+  open
+  {% endif %}
+>
+  <summary class="cursor-pointer">
+    <span class="text-2xl font-bold">
+      {{group.name}}
+    </span>
+
+    <span class="text-gray-500">
+      {{ group.items | length }}
+    </span>
+  </summary>
+
+  <div class="pl-8">
     {{ macros::render_items(items=group.items) }}
   </div>
-</div>
+</details>
 {% endfor %}
 
 {% if pagination %}

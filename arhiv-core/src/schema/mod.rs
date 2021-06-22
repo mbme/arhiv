@@ -71,9 +71,9 @@ lazy_static! {
                         field_type: FieldType::Enum(vec![
                             "Inbox",
                             "Todo",
-                            "Later",
                             "InProgress",
                             "Paused",
+                            "Later",
                             "Done",
                             "Cancelled",
                         ]),

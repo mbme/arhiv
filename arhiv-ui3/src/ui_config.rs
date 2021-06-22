@@ -4,13 +4,17 @@ pub struct CatalogConfig {
 
 pub struct CatalogGroupBy {
     pub field: &'static str,
+    pub open_groups: Vec<&'static str>,
 }
 
 impl CatalogConfig {
     pub fn get_config(document_type: impl AsRef<str>) -> Self {
         if document_type.as_ref() == "project/task" {
             return CatalogConfig {
-                group_by: Some(CatalogGroupBy { field: "status" }),
+                group_by: Some(CatalogGroupBy {
+                    field: "status",
+                    open_groups: vec!["Inbox", "InProgress", "Paused"],
+                }),
             };
         }
 

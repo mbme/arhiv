@@ -26,7 +26,7 @@
       </a>
     </aside>
 
-    <main id="app">
+    <main>
       <div id="toolbar">
         {% block toolbar %}{% endblock %}
       </div>

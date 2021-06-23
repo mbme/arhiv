@@ -115,6 +115,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v0_to_v1, //
     upgrade_v1_to_v2,
     upgrade_v2_to_v3,
+    upgrade_v3_to_v4,
 ];
 
 // stub
@@ -199,6 +200,26 @@ fn upgrade_v2_to_v3(conn: &Connection) -> Result<()> {
 
         UPDATE documents_snapshots SET data = json_remove(data, '$.complexity') WHERE type = 'task';
        ",
+    )
+    .context("failed to migrate documents_snapshots table")?;
+
+    Ok(())
+}
+
+fn upgrade_v3_to_v4(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '4' WHERE key = 'db_version';
+        INSERT INTO settings(key, value) VALUES ('schema_version', '1');
+       ",
+    )
+    .context("failed to migrate settings")?;
+
+    conn.execute_batch(
+        "INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots",
     )
     .context("failed to migrate documents_snapshots table")?;
 

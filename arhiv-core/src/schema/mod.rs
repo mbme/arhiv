@@ -8,6 +8,7 @@ mod data_description;
 
 lazy_static! {
     pub static ref SCHEMA: DataSchema = DataSchema {
+        version: 1,
         modules: vec![
             DataDescription {
                 document_type: TOMBSTONE_TYPE,

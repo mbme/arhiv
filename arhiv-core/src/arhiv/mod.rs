@@ -9,6 +9,7 @@ use self::network_service::NetworkService;
 use self::status::Status;
 use crate::config::Config;
 use crate::entities::*;
+use crate::schema::SCHEMA;
 
 mod backup;
 mod db;
@@ -48,6 +49,15 @@ impl Arhiv {
                 db_version,
                 DB::VERSION,
             );
+
+            let schema_version = conn.get_setting(SETTING_SCHEMA_VERSION)?;
+
+            ensure!(
+                schema_version == SCHEMA.version,
+                "schema version {} is different from app schema version {}",
+                schema_version,
+                SCHEMA.version,
+            );
         }
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
@@ -71,6 +81,7 @@ impl Arhiv {
         tx.set_setting(SETTING_ARHIV_ID, arhiv_id)?;
         tx.set_setting(SETTING_IS_PRIME, prime)?;
         tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
+        tx.set_setting(SETTING_SCHEMA_VERSION, SCHEMA.version)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
 
         tx.commit()?;

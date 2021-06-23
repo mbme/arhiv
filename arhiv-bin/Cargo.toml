@@ -6,7 +6,7 @@ edition = "2018"
 publish = false
 
 [features]
-production-mode = []
+production-mode = ["arhiv-core/production-mode"]
 
 [dependencies]
 anyhow = "1.0.38"

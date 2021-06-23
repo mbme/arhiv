@@ -1,14 +1,14 @@
-use std::{collections::HashSet, sync::Mutex};
+#[cfg(debug_assertions)]
+use std::collections::HashSet;
 
 use anyhow::*;
-use arhiv_core::schema::SCHEMA;
 use lazy_static::*;
 use rust_embed::RustEmbed;
 use serde::Serialize;
 use serde_json::{json, Value};
 use tera::{Context as TeraContext, Tera};
 
-use crate::utils::get_file_hash;
+use arhiv_core::schema::SCHEMA;
 
 lazy_static! {
     pub static ref TEMPLATES: Templates =
@@ -31,7 +31,7 @@ pub struct Templates {
     global_context: TeraContext,
 
     #[cfg(debug_assertions)]
-    data: Mutex<(Tera, HashSet<u64>)>,
+    data: std::sync::Mutex<(Tera, HashSet<u64>)>,
 
     #[cfg(not(debug_assertions))]
     tera: Tera,
@@ -54,7 +54,7 @@ impl Templates {
 
         tera.add_raw_templates(templates)?;
 
-        let data = Mutex::new((tera, hashes));
+        let data = std::sync::Mutex::new((tera, hashes));
 
         Ok(Templates {
             data,
@@ -64,7 +64,7 @@ impl Templates {
 
     #[cfg(not(debug_assertions))]
     fn new_impl(mut tera: Tera, global_context: TeraContext) -> Result<Self> {
-        let templates = list_template_files();
+        let templates = TemplateAssets::list_template_files();
         tera.add_raw_templates(templates)?;
 
         Ok(Templates {
@@ -95,8 +95,8 @@ impl Templates {
     }
 
     #[cfg(not(debug_assertions))]
-    pub fn render(&self, template_name: &str, context: Value) -> Result<String> {
-        let mut context = TeraContext::from_value(context)?;
+    pub fn render(&self, template_name: &str, context: impl Serialize) -> Result<String> {
+        let mut context = TeraContext::from_value(serde_json::to_value(context)?)?;
         context.extend(self.global_context.clone());
 
         return self
@@ -130,7 +130,10 @@ impl TemplateAssets {
 
 type TemplateFile = (String, String);
 
+#[cfg(debug_assertions)]
 fn get_temlate_files_hashes(files: &Vec<TemplateFile>) -> HashSet<u64> {
+    use crate::utils::get_file_hash;
+
     files
         .iter()
         .map(|file| get_file_hash(&file.0, &file.1))

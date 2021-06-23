@@ -1,7 +1,9 @@
+use std::fmt;
+
+use serde::Serialize;
+
 use super::db::{DbStatus, DocumentsCount};
 use crate::entities::Timestamp;
-use serde::Serialize;
-use std::fmt;
 
 #[derive(Serialize)]
 pub struct Status {
@@ -25,8 +27,7 @@ impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "Arhiv {} {}/{} (rev {}) in {}",
-            env!("CARGO_PKG_VERSION"),
+            "Arhiv {}/{} (rev {}) in {}",
             self.db_status.arhiv_id,
             if self.db_status.is_prime {
                 "prime"

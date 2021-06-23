@@ -35,7 +35,7 @@ impl BreadcrumbItem {
             })
         } else {
             Ok(BreadcrumbItem {
-                name: format!("{}S", document.document_type.to_uppercase()),
+                name: "CATALOG".to_string(),
                 url: format!("/catalogs/{}", &document.document_type),
             })
         }

@@ -37,6 +37,7 @@ pub struct Catalog {
     document_type: String,
     pattern: String,
     pagination: Option<Pagination>,
+    new_document_query: String,
 }
 
 impl Catalog {
@@ -61,6 +62,7 @@ impl Catalog {
             pattern,
             document_type,
             pagination: None,
+            new_document_query: "".to_string(),
         }
     }
 
@@ -93,6 +95,16 @@ impl Catalog {
 
     pub fn with_matcher(mut self, matcher: Matcher) -> Self {
         self.filter.matchers.push(matcher);
+
+        self
+    }
+
+    pub fn with_new_document_query(mut self, mut query: String) -> Self {
+        if !query.is_empty() {
+            query.insert_str(0, "?");
+        }
+
+        self.new_document_query = query;
 
         self
     }
@@ -159,6 +171,8 @@ impl Catalog {
                 "groups": groups,
                 "pattern": self.pattern,
                 "pagination": self.pagination,
+                "document_type": self.document_type,
+                "new_document_query": self.new_document_query,
             }),
         )
     }

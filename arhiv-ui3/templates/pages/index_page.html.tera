@@ -1,5 +1,12 @@
 {% extends "base.html.tera" %}
 
+{% block toolbar %}
+
+{{ breadcrumbs | safe }}
+
+{% endblock %}
+
+
 {% block content %}
 
 <pre class="mb-8 text-sm">

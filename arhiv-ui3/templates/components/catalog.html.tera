@@ -2,7 +2,7 @@
 
 <form
   id="catalog-filter"
-  class="form"
+  class="form flex space-between items-center"
   action=""
   method="get"
 >
@@ -11,10 +11,16 @@
     name="pattern"
     class="field w-full"
     value="{{pattern}}"
-    placeholder="Search..."
-    aria-label="Search through documents"
+    placeholder="Search {{document_type}}s"
     onsearch="this.form.submit()"
   />
+
+  <a
+    href="/new/{{document_type}}{{new_document_query}}"
+    class="flex-shrink-0 ml-4 uppercase tracking-wide"
+  >
+    new {{document_type}}
+  </a>
 </form>
 
 {% if items | length > 0 %}
@@ -27,7 +33,7 @@
   {% if group.open and group.items | length > 0 %}
   open
   {% endif %}
->
+  >
   <summary class="cursor-pointer">
     <span class="text-2xl font-bold uppercase align-middle">
       {{group.name}}

@@ -57,11 +57,6 @@ lazy_static! {
                 collection_of: None,
                 fields: vec![
                     Field {
-                        name: "project",
-                        field_type: FieldType::Ref("project"),
-                        optional: false,
-                    },
-                    Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
                         optional: false,
@@ -70,13 +65,18 @@ lazy_static! {
                         name: "status",
                         field_type: FieldType::Enum(vec![
                             "Inbox",
-                            "Todo",
                             "InProgress",
                             "Paused",
+                            "Todo",
                             "Later",
                             "Done",
                             "Cancelled",
                         ]),
+                        optional: false,
+                    },
+                    Field {
+                        name: "project",
+                        field_type: FieldType::Ref("project"),
                         optional: false,
                     },
                 ],

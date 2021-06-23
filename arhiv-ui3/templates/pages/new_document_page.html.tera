@@ -8,10 +8,6 @@
 
 {% block content %}
 
-<h1 class="mb-12 text-2xl uppercase">
-  new {{document_type}}
-</h1>
-
 {{ editor | safe }}
 
 {% endblock %}

@@ -54,7 +54,7 @@
       class="btn"
       onclick="arhiv_ui.pick_attachment()"
     >
-      Pick Attachment
+      New Attachment
     </button>
 
     <div>

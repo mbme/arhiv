@@ -16,7 +16,10 @@ use arhiv_core::{
     schema::{DataDescription, FieldType, SCHEMA},
     Arhiv, Matcher,
 };
-use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
+use rs_utils::{
+    query_builder,
+    server::{respond_not_found, RequestQueryExt, ServerResponse},
+};
 
 #[derive(Serialize)]
 struct Field {
@@ -43,7 +46,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
-    let mut child_document_type = None;
 
     if let Some(ref collection) = data_description.collection_of {
         let catalog = Catalog::new(collection.item_type, pattern)
@@ -51,17 +53,20 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                 selector: format!("$.{}", &document.document_type),
                 pattern: document.id.to_string(),
             })
+            .with_new_document_query(
+                query_builder()
+                    .append_pair(&document.document_type, &document.id)
+                    .finish(),
+            )
             .render(
                 arhiv,
                 CatalogConfig::get_child_config(&document.document_type, &collection.item_type),
             )?;
 
         children_catalog = Some(catalog);
-
-        child_document_type = Some(collection.item_type);
     };
 
-    let breadcrumbs = Breadcrumbs::new(&document)?.render()?;
+    let breadcrumbs = Breadcrumbs::Document(&document).render()?;
 
     render_page(
         "pages/document_page.html.tera",
@@ -71,7 +76,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             "document": document,
             "is_tombstone": document.is_tombstone(),
             "children_catalog": children_catalog,
-            "child_document_type": child_document_type,
         }),
     )
 }

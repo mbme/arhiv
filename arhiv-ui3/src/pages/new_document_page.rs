@@ -27,7 +27,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document = Document::new(document_type.clone(), data.into());
 
     let editor = Editor::new(&document)?.render()?;
-    let breadcrumbs = Breadcrumbs::new(&document)?.for_new_document().render()?;
+    let breadcrumbs = Breadcrumbs::NewDocument(&document).render()?;
 
     render_page(
         "pages/new_document_page.html.tera",

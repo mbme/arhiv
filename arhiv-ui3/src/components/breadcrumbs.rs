@@ -11,87 +11,85 @@ struct BreadcrumbItem {
     url: String,
 }
 
-#[derive(PartialEq)]
-enum Mode {
-    Document,
-    NewDocument,
-    EditDocument,
-}
-
-pub struct Breadcrumbs<'doc> {
-    document: &'doc Document,
-    mode: Mode,
-}
-
-impl<'doc> Breadcrumbs<'doc> {
-    pub fn new(document: &'doc Document) -> Result<Self> {
-        Ok(Breadcrumbs {
-            document,
-            mode: Mode::Document,
-        })
+impl BreadcrumbItem {
+    pub fn for_document(document: &Document, link: bool) -> Self {
+        BreadcrumbItem {
+            name: document.document_type.to_uppercase(),
+            url: if link {
+                format!("/documents/{}", &document.id)
+            } else {
+                "".to_string()
+            },
+        }
     }
 
-    pub fn for_document_editor(mut self) -> Self {
-        self.mode = Mode::EditDocument;
-
-        self
-    }
-
-    pub fn for_new_document(mut self) -> Self {
-        self.mode = Mode::NewDocument;
-
-        self
-    }
-
-    pub fn render(self) -> Result<String> {
-        let mut items = vec![];
-
-        if let Some(collection_type) = SCHEMA.get_collection_type(&self.document.document_type) {
-            let collection_id = self
-                .document
+    pub fn for_document_collection(document: &Document) -> Result<Self> {
+        if let Some(collection_type) = SCHEMA.get_collection_type(&document.document_type) {
+            let collection_id = document
                 .get_field_str(collection_type)
                 .ok_or(anyhow!("collection field '{}' missing", collection_type))?;
 
-            items.push(BreadcrumbItem {
-                name: format!("{} {}", collection_type.to_uppercase(), collection_id),
+            Ok(BreadcrumbItem {
+                name: collection_type.to_uppercase(),
                 url: format!("/documents/{}", collection_id),
-            });
-
-            items.push(BreadcrumbItem {
-                name: format!(
-                    "{} {}",
-                    self.document.document_type.to_uppercase(),
-                    &self.document.id
-                ),
-                url: format!("/documents/{}", &self.document.id),
-            });
+            })
         } else {
-            items.push(BreadcrumbItem {
-                name: format!("{}S", self.document.document_type.to_uppercase()),
-                url: format!("/catalogs/{}", &self.document.document_type),
-            });
-
-            items.push(BreadcrumbItem {
-                name: self.document.id.to_string(),
-                url: format!("/documents/{}", &self.document.id),
-            });
+            Ok(BreadcrumbItem {
+                name: format!("{}S", document.document_type.to_uppercase()),
+                url: format!("/catalogs/{}", &document.document_type),
+            })
         }
+    }
 
-        if self.mode == Mode::EditDocument {
-            items.push(BreadcrumbItem {
-                name: "editor".to_uppercase(),
-                url: "".to_string(),
-            });
+    pub fn for_string(s: impl Into<String>) -> Self {
+        BreadcrumbItem {
+            name: s.into().to_uppercase(),
+            url: "".to_string(),
         }
+    }
+}
 
-        if self.mode == Mode::NewDocument {
-            items.pop();
+pub enum Breadcrumbs<'doc> {
+    Index,
+    Catalog(String),
+    Document(&'doc Document),
+    NewDocumentVariants,
+    NewDocument(&'doc Document),
+    DocumentEditor(&'doc Document),
+}
 
-            items.push(BreadcrumbItem {
-                name: format!("NEW {}", self.document.document_type.to_uppercase()),
-                url: "".to_string(),
-            });
-        }
+impl<'doc> Breadcrumbs<'doc> {
+    pub fn render(self) -> Result<String> {
+        let items = match self {
+            Breadcrumbs::Index => {
+                vec![BreadcrumbItem::for_string("index")]
+            }
+            Breadcrumbs::Document(document) => {
+                vec![
+                    BreadcrumbItem::for_document_collection(document)?,
+                    BreadcrumbItem::for_document(document, false),
+                ]
+            }
+            Breadcrumbs::DocumentEditor(document) => {
+                vec![
+                    BreadcrumbItem::for_document_collection(document)?,
+                    BreadcrumbItem::for_document(document, true),
+                    BreadcrumbItem::for_string("editor"),
+                ]
+            }
+            Breadcrumbs::NewDocumentVariants => {
+                vec![BreadcrumbItem::for_string("new document")]
+            }
+            Breadcrumbs::NewDocument(document) => {
+                vec![
+                    BreadcrumbItem::for_document_collection(document)?,
+                    BreadcrumbItem::for_string(format!("new {}", document.document_type)),
+                ]
+            }
+            Breadcrumbs::Catalog(document_type) => {
+                vec![BreadcrumbItem::for_string(format!("{}s", document_type))]
+            }
+        };
 
         TEMPLATES.render(
             "components/breadcrumbs.html.tera",

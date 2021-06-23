@@ -24,9 +24,7 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
     };
 
     let editor = Editor::new(&document)?.render()?;
-    let breadcrumbs = Breadcrumbs::new(&document)?
-        .for_document_editor()
-        .render()?;
+    let breadcrumbs = Breadcrumbs::DocumentEditor(&document).render()?;
 
     render_page(
         "pages/document_editor_page.html.tera",

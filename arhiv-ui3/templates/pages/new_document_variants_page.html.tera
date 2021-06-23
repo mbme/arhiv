@@ -1,5 +1,11 @@
 {% extends "base.html.tera" %}
 
+{% block toolbar %}
+
+{{ breadcrumbs | safe }}
+
+{% endblock %}
+
 {% block content %}
 
 <h3 class="mb-8 section-heading text-lg">

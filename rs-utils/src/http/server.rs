@@ -5,6 +5,8 @@ use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::RequestInfo;
 use serde::Serialize;
 
+use crate::query_builder;
+
 pub type ServerResponse = Result<Response<Body>>;
 
 pub fn respond_with_status(status: StatusCode) -> ServerResponse {
@@ -94,9 +96,7 @@ impl RequestQueryExt for Request<Body> {
             return uri.path().to_string();
         }
 
-        let query = form_urlencoded::Serializer::new(String::new())
-            .extend_pairs(params)
-            .finish();
+        let query = query_builder().extend_pairs(params).finish();
 
         format!("{}?{}", uri.path(), query)
     }

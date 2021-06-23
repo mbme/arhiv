@@ -5,6 +5,7 @@ pub struct CatalogConfig {
 pub struct CatalogGroupBy {
     pub field: &'static str,
     pub open_groups: Vec<&'static str>,
+    pub skip_empty_groups: bool,
 }
 
 impl CatalogConfig {
@@ -14,6 +15,7 @@ impl CatalogConfig {
                 group_by: Some(CatalogGroupBy {
                     field: "status",
                     open_groups: vec!["Inbox", "InProgress", "Paused"],
+                    skip_empty_groups: true,
                 }),
             };
         }

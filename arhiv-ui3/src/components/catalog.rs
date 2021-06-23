@@ -18,7 +18,7 @@ struct CatalogEntry {
 
 #[derive(Serialize)]
 struct CatalogGroup {
-    name: String,
+    name: &'static str,
     open: bool,
     items: Vec<CatalogEntry>,
 }
@@ -128,8 +128,8 @@ impl Catalog {
                 .get_enum_values()?
                 .into_iter()
                 .map(|enum_value| CatalogGroup {
-                    name: enum_value.to_string(),
-                    open: group_by.open_groups.contains(enum_value),
+                    name: enum_value,
+                    open: false,
                     items: vec![],
                 })
                 .collect();
@@ -139,10 +139,12 @@ impl Catalog {
                     .get_field_str(group_by.field)
                     .ok_or(anyhow!("can't find field"))?;
 
-                let group = groups
+                let mut group = groups
                     .iter_mut()
                     .find(|group| group.name == key)
                     .ok_or(anyhow!("can't find group"))?;
+
+                group.open = group_by.open_groups.contains(&group.name);
 
                 group.items.push(CatalogEntry {
                     preview: arhiv.render_preview(&document),
@@ -150,6 +152,19 @@ impl Catalog {
                     document_type: document.document_type,
                     updated_at: document.updated_at.into(),
                 });
+            }
+
+            // skip empty groups if needed
+            if group_by.skip_empty_groups {
+                groups.retain(|group| !group.items.is_empty());
+            }
+
+            // open first non-empty group if no groups open yet
+            if groups.iter().find(|group| group.open).is_none() {
+                groups
+                    .iter_mut()
+                    .find(|group| !group.items.is_empty())
+                    .map(|group| group.open = true);
             }
         } else {
             items = result

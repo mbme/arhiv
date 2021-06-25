@@ -5,7 +5,6 @@ use rs_utils::log;
 use super::db::*;
 use super::Arhiv;
 use crate::entities::*;
-use crate::schema::SCHEMA;
 
 impl Arhiv {
     pub(crate) fn apply_changeset(
@@ -24,10 +23,10 @@ impl Arhiv {
         );
 
         ensure!(
-            changeset.schema_version == SCHEMA.version,
-            "changeset schema_version {} must be equal to {}",
-            changeset.schema_version,
-            SCHEMA.version
+            changeset.db_version == DB::VERSION,
+            "changeset db_version {} must be equal to {}",
+            changeset.db_version,
+            DB::VERSION
         );
 
         ensure!(
@@ -197,7 +196,7 @@ impl Arhiv {
         let documents = tx.list_documents(DOCUMENT_FILTER_STAGED)?.items;
 
         let changeset = Changeset {
-            schema_version: SCHEMA.version,
+            db_version: DB::VERSION,
             arhiv_id: tx.get_setting(SETTING_ARHIV_ID)?,
             base_rev: db_status.db_rev,
             documents,

@@ -6,7 +6,6 @@ use rusqlite::functions::FunctionFlags;
 use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 
 use rs_utils::log;
-use utils::multi_search;
 
 use crate::entities::BLOBHash;
 use crate::schema::SCHEMA;
@@ -25,14 +24,14 @@ mod dto;
 mod path_manager;
 mod queries;
 mod query_builder;
-mod utils;
+pub mod utils;
 
 pub struct DB {
     path_manager: PathManager,
 }
 
 impl DB {
-    pub const VERSION: u8 = 4;
+    pub const VERSION: u8 = 5;
 
     pub fn open(root_dir: String) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
@@ -183,5 +182,5 @@ fn calculate_search_score(ctx: &rusqlite::functions::Context) -> Result<u32> {
 
     let data = SCHEMA.extract_search_data(document_type, document_data)?;
 
-    Ok(multi_search(pattern, &data))
+    Ok(utils::multi_search(pattern, &data))
 }

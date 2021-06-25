@@ -9,7 +9,6 @@ use crate::markup::MarkupStr;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
-    pub version: u8,
     pub modules: Vec<DataDescription>,
 }
 

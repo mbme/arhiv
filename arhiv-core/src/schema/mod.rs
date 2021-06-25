@@ -8,7 +8,6 @@ mod data_description;
 
 lazy_static! {
     pub static ref SCHEMA: DataSchema = DataSchema {
-        version: 1,
         modules: vec![
             DataDescription {
                 document_type: TOMBSTONE_TYPE,
@@ -36,9 +35,14 @@ lazy_static! {
                 collection_of: None,
                 fields: vec![ //
                     Field {
+                        name: "title",
+                        field_type: FieldType::String {},
+                        optional: false
+                    },
+                    Field {
                         name: "data",
                         field_type: FieldType::MarkupString {},
-                        optional: false,
+                        optional: true,
                     },
                 ],
             },
@@ -46,6 +50,11 @@ lazy_static! {
                 document_type: "project",
                 collection_of: Some(Collection { item_type: "task" }),
                 fields: vec![ //
+                    Field {
+                        name: "name",
+                        field_type: FieldType::String {},
+                        optional: false
+                    },
                     Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
@@ -58,9 +67,14 @@ lazy_static! {
                 collection_of: None,
                 fields: vec![
                     Field {
+                        name: "title",
+                        field_type: FieldType::String {},
+                        optional: false
+                    },
+                    Field {
                         name: "description",
                         field_type: FieldType::MarkupString {},
-                        optional: false,
+                        optional: true,
                     },
                     Field {
                         name: "status",

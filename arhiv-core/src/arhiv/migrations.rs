@@ -1,7 +1,8 @@
 use anyhow::*;
 
 use rs_utils::{log, FsTransaction, TempFile};
-use rusqlite::Connection;
+use rusqlite::{functions::FunctionFlags, Connection};
+use serde_json::Value;
 
 use super::db::*;
 
@@ -21,7 +22,7 @@ impl super::Arhiv {
     pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
         let root_dir = root_dir.into();
 
-        let db_version = {
+        let mut db_version = {
             let db = DB::open(root_dir.clone())?;
             let conn = db.open_connection(false)?;
 
@@ -66,7 +67,7 @@ impl super::Arhiv {
                 continue;
             }
 
-            log::debug!("upgrading db to version {}", upgrade_version);
+            log::info!("Upgrading db to version {}...", upgrade_version);
 
             let db = DB::open(root_dir.clone())?;
 
@@ -101,6 +102,8 @@ impl super::Arhiv {
                 db_version,
                 upgrade_version
             );
+
+            db_version = upgrade_version;
         }
 
         log::info!("Done");
@@ -116,6 +119,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v1_to_v2,
     upgrade_v2_to_v3,
     upgrade_v3_to_v4,
+    upgrade_v4_to_v5,
 ];
 
 // stub
@@ -222,6 +226,105 @@ fn upgrade_v3_to_v4(conn: &Connection) -> Result<()> {
                        SELECT * FROM old_db.documents_snapshots",
     )
     .context("failed to migrate documents_snapshots table")?;
+
+    Ok(())
+}
+
+fn upgrade_v4_to_v5(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        DELETE FROM settings WHERE key = 'schema_version';
+
+        UPDATE settings SET value = '5' WHERE key = 'db_version';
+       ",
+    )
+    .context("failed to migrate settings")?;
+
+    conn.execute_batch(
+        "INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots",
+    )
+    .context("failed to migrate documents_snapshots table")?;
+
+    fn update_data(ctx: &rusqlite::functions::Context) -> Result<Value> {
+        let document_type = ctx.get_raw(0).as_str()?;
+
+        let document_data = ctx.get_raw(1).as_str()?;
+        let mut document_data: Value = serde_json::from_str(&document_data)?;
+
+        let (data_field, new_title_field) = match document_type {
+            "note" => ("data", "title"),
+            "project" => ("description", "name"),
+            "task" => ("description", "title"),
+            _ => bail!("unexpected document type {}", document_type),
+        };
+
+        let data = document_data
+            .get(data_field)
+            .ok_or(anyhow!(
+                "can't find field {} in {} data",
+                data_field,
+                document_type
+            ))?
+            .as_str()
+            .ok_or(anyhow!(
+                "field {} in {} data isn't a string",
+                data_field,
+                document_type
+            ))?;
+
+        if data_field == "project" {
+            println!("data:\n{}", data);
+        }
+
+        let mut lines_iter = data.trim_start().lines().into_iter();
+
+        let new_title = lines_iter
+            .next()
+            .unwrap_or("No title")
+            .trim_start_matches("#")
+            .trim()
+            .to_string();
+
+        let new_data = lines_iter.collect::<Vec<_>>().join("\n");
+        let new_data = new_data.trim();
+
+        {
+            let document_data = document_data.as_object_mut().unwrap();
+
+            document_data.insert(new_title_field.to_string(), new_title.into());
+            document_data.insert(data_field.to_string(), new_data.into());
+        }
+
+        Ok(document_data)
+    }
+
+    conn.create_scalar_function(
+        "update_data",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            update_data(ctx).map_err(|e| rusqlite::Error::UserFunctionError(e.into()))
+        },
+    )
+    .context(anyhow!("Failed to define update_data function"))?;
+
+    let rows_updated = conn
+        .execute(
+            "UPDATE documents_snapshots
+                    SET data = update_data(type, data)
+                    WHERE type = ?
+                        OR type = ?
+                        OR type = ?",
+            ["note", "project", "task"],
+        )
+        .context("Failed to update documents")?;
+
+    log::info!("Updated {} document snapshots", rows_updated);
 
     Ok(())
 }

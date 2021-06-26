@@ -25,7 +25,8 @@ use rs_utils::{
 struct Field {
     name: &'static str,
     value: String,
-    safe: bool,
+    is_safe: bool,
+    is_title: bool,
 }
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
@@ -85,11 +86,14 @@ fn prepare_fields(
     arhiv: &Arhiv,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
+    let title_field = SCHEMA.pick_title_field(&document.document_type)?;
+
     data_description
         .fields
         .iter()
         .map(|field| {
             let value = document.get_field_str(field.name);
+            let is_title = field.name == title_field.name;
 
             match (&field.field_type, value) {
                 (FieldType::MarkupString {}, _) => {
@@ -98,18 +102,21 @@ fn prepare_fields(
                     Ok(Field {
                         name: field.name,
                         value: arhiv.render_markup(&markup),
-                        safe: true,
+                        is_safe: true,
+                        is_title,
                     })
                 }
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
                     value: format!("<a href=\"/documents/{0}\">{0}</a>", value),
-                    safe: true,
+                    is_safe: true,
+                    is_title,
                 }),
                 _ => Ok(Field {
                     name: field.name,
                     value: value.unwrap_or("").to_string(),
-                    safe: false,
+                    is_safe: true,
+                    is_title,
                 }),
             }
         })

@@ -2,7 +2,7 @@
 
 <form
   id="catalog-filter"
-  class="form flex space-between items-center"
+  class="form flex space-between items-center mb-12"
   action=""
   method="get"
 >

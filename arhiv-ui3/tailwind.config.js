@@ -8,6 +8,9 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Noto Sans', 'ui-sans-serif', 'system-ui', 'sans'],
+      },
       typography: {
         DEFAULT: {
           css: {

@@ -4,7 +4,7 @@ use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{markup::ArhivMarkupExt, templates::TEMPLATES, ui_config::CatalogConfig};
+use crate::{templates::TEMPLATES, ui_config::CatalogConfig};
 use arhiv_core::{entities::*, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::RequestQueryExt;
 
@@ -12,8 +12,24 @@ use rs_utils::server::RequestQueryExt;
 struct CatalogEntry {
     id: Id,
     document_type: String,
-    preview: String,
+    title: String,
     updated_at: DateTime<Local>,
+}
+
+impl From<Document> for CatalogEntry {
+    fn from(document: Document) -> Self {
+        let title_field = SCHEMA
+            .pick_title_field(&document.document_type)
+            .expect("no title field");
+        let title = document.get_field_str(title_field.name).expect("no title");
+
+        CatalogEntry {
+            title: title.to_string(),
+            id: document.id,
+            document_type: document.document_type,
+            updated_at: document.updated_at.into(),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -146,12 +162,7 @@ impl Catalog {
 
                 group.open = group_by.open_groups.contains(&group.name);
 
-                group.items.push(CatalogEntry {
-                    preview: arhiv.render_preview(&document),
-                    id: document.id,
-                    document_type: document.document_type,
-                    updated_at: document.updated_at.into(),
-                });
+                group.items.push(document.into());
             }
 
             // skip empty groups if needed
@@ -167,16 +178,7 @@ impl Catalog {
                     .map(|group| group.open = true);
             }
         } else {
-            items = result
-                .items
-                .into_iter()
-                .map(|document| CatalogEntry {
-                    preview: arhiv.render_preview(&document),
-                    id: document.id,
-                    document_type: document.document_type,
-                    updated_at: document.updated_at.into(),
-                })
-                .collect();
+            items = result.items.into_iter().map(Into::into).collect();
         }
 
         TEMPLATES.render(

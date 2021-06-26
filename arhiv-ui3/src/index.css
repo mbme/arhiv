@@ -54,7 +54,8 @@ main {
 }
 
 #toolbar {
-  @apply px-2 py-4 md:px-6 flex justify-between items-center;
+  @apply px-2 py-4 md:px-6 lg:px-8;
+  @apply flex justify-between items-center;
   @apply bg-blue-50;
 }
 

@@ -16,7 +16,7 @@ html, body {
   text-rendering: optimizeLegibility;
   @apply antialiased;
 
-  --max-width: 800px;
+  --max-width: 45rem;
   --bg-color: #fff;
 
   @apply bg-yellow-100;
@@ -30,14 +30,16 @@ body {
 #sidebar {
   @apply flex flex-col;
 
+  @apply py-12 lg:pt-32;
+
   padding-right: 5rem;
 
   flex-grow: 1;
-  max-width: 300px;
+  max-width: 19rem;
 
   @screen lg {
     position: sticky;
-    top: 8rem;
+    top: 0;
     align-self: flex-start; /* needed for sticky to work in flex context */
   }
 

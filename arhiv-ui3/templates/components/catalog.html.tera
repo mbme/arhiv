@@ -44,7 +44,7 @@
     </span>
   </summary>
 
-  <div class="pl-8">
+  <div class="pl-4 md:pl-8">
     {{ macros::render_items(items=group.items) }}
   </div>
 </details>

@@ -1,7 +1,7 @@
 {% macro render_items(items) %}
 <ul>
   {% for item in items %}
-  <li class="py-6 min-h-6rem">
+  <li class="py-6 min-h-6rem break-words">
     <a href="/documents/{{ item.id }}" class="clean-link">
       <h2 class="mb-2 font-semibold tracking-wide">
         {{ item.title }}

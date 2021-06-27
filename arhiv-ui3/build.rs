@@ -7,6 +7,7 @@ fn main() {
     }
 
     let exit_status = process::Command::new("yarn")
+        .arg("install") // make sure deps are installed
         .arg("prod:build:js")
         .arg("prod:build:css")
         .status()

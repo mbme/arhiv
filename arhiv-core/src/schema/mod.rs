@@ -24,8 +24,8 @@ lazy_static! {
                         optional: false,
                     },
                     Field {
-                        name: "hash",
-                        field_type: FieldType::Hash {},
+                        name: "sha256",
+                        field_type: FieldType::String {},
                         optional: false,
                     },
                 ],

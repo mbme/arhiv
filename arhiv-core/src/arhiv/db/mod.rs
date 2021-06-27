@@ -7,13 +7,14 @@ use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 
 use rs_utils::log;
 
-use crate::entities::BLOBHash;
+use crate::entities::Id;
 use crate::schema::SCHEMA;
 
 pub use attachment_data::AttachmentData;
 pub use blob::*;
 pub use connection::*;
 pub use dto::*;
+pub use migrations::apply_migrations;
 use path_manager::PathManager;
 pub use queries::*;
 
@@ -21,6 +22,7 @@ mod attachment_data;
 mod blob;
 mod connection;
 mod dto;
+mod migrations;
 mod path_manager;
 mod queries;
 mod query_builder;
@@ -31,7 +33,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub const VERSION: u8 = 5;
+    pub const VERSION: u8 = 6;
 
     pub fn open(root_dir: String) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
@@ -101,7 +103,7 @@ impl DB {
         .context(anyhow!("Failed to define calculate_search_score function"))
     }
 
-    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBHash>>> {
+    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<Id>>> {
         Ok(
             fs::read_dir(&self.path_manager.data_dir)?.filter_map(|item| {
                 let entry = match item {
@@ -114,7 +116,7 @@ impl DB {
                     let file_name = entry_path
                         .file_name()
                         .ok_or(anyhow!("Failed to read file name"))
-                        .map(|value| BLOBHash::from_string(value.to_string_lossy().to_string()));
+                        .map(|value| value.to_string_lossy().to_string().into());
 
                     return Some(file_name);
                 } else {
@@ -149,14 +151,15 @@ impl DB {
 
     fn remove_orphaned_blobs(&self) -> Result<()> {
         let mut tx = self.get_tx()?;
-        let hashes = tx.get_blob_hashes()?;
+
+        let attachment_ids = tx.get_attachment_ids()?;
 
         let mut removed_blobs = 0;
         for entry in self.iter_blobs()? {
-            let hash = entry?;
+            let id = entry?;
 
-            if !hashes.contains(&hash) {
-                tx.remove_attachment_data(&hash)?;
+            if !attachment_ids.contains(&id) {
+                tx.remove_attachment_data(&id)?;
                 removed_blobs += 1;
             }
         }

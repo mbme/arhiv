@@ -12,18 +12,14 @@ async fn test_attachments() -> Result<()> {
     let src = &project_relpath("../resources/k2.jpg");
 
     let attachment = arhiv.add_attachment(src, true)?;
-    let hash = attachment.get_hash();
 
-    assert_eq!(arhiv.get_attachment_data(hash.clone())?.exists()?, true);
+    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
     let mut document = empty_document();
     document.refs.insert(attachment.id.clone());
 
     arhiv.stage_document(document)?;
-    assert_eq!(
-        arhiv.get_attachment_data_by_id(&attachment.id)?.exists()?,
-        true
-    );
+    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
     let page = arhiv.list_documents(Filter {
         matchers: vec![Matcher::Type {
@@ -37,7 +33,7 @@ async fn test_attachments() -> Result<()> {
     arhiv.delete_document(&attachment.id)?;
     arhiv.sync().await?;
 
-    assert_eq!(arhiv.get_attachment_data(hash.clone())?.exists()?, false);
+    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, false);
 
     Ok(())
 }
@@ -61,7 +57,7 @@ async fn test_download_attachment() -> Result<()> {
 
     replica.sync().await?;
 
-    let attachment_data = replica.get_attachment_data_by_id(&attachment.id)?;
+    let attachment_data = replica.get_attachment_data(&attachment.id)?;
     replica
         .get_network_service()?
         .download_attachment_data(&attachment_data)

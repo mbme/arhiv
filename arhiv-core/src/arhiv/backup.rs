@@ -1,10 +1,12 @@
-use super::db::*;
-use super::Arhiv;
-use crate::entities::BLOBHash;
+use std::{fs, path::Path};
 
 use anyhow::*;
+
+use crate::entities::Id;
+
+use super::db::*;
+use super::Arhiv;
 use rs_utils::{ensure_dir_exists, file_exists, log, run_command};
-use std::{fs, path::Path};
 
 impl Arhiv {
     pub fn backup(&self) -> Result<()> {
@@ -30,26 +32,20 @@ impl Arhiv {
         let mut blob_count = 0;
         let conn = self.db.get_connection()?;
         for entry in self.db.iter_blobs()? {
-            let hash = entry?;
+            let id = entry?;
 
             // check if backup file exists
-            if backup.blob_exists(&hash)? {
-                log::trace!("Blob {} backup already exists, skipping", &hash);
-                continue;
-            }
-
-            // check if blob is in use
-            if !conn.is_blob_in_use(&hash)? {
-                log::warn!("Blob {} is unused, skipping", &hash);
+            if backup.blob_exists(&id)? {
+                log::trace!("Blob {} backup already exists, skipping", &id);
                 continue;
             }
 
             // copy blob
             fs::copy(
-                &conn.get_attachment_data(hash.clone()).path,
-                backup.get_blob_path(&hash),
+                &conn.get_attachment_data(&id).path,
+                backup.get_blob_path(&id),
             )?;
-            log::debug!("Created blob {} backup", &hash);
+            log::debug!("Created blob {} backup", &id);
 
             blob_count += 1;
         }
@@ -102,11 +98,11 @@ impl BackupPaths {
         Ok(())
     }
 
-    pub fn get_blob_path(&self, blob_hash: &BLOBHash) -> String {
-        format!("{}/{}", &self.data_dir, blob_hash)
+    pub fn get_blob_path(&self, id: &Id) -> String {
+        format!("{}/{}", &self.data_dir, id)
     }
 
-    pub fn blob_exists(&self, blob_hash: &BLOBHash) -> Result<bool> {
-        file_exists(&self.get_blob_path(blob_hash))
+    pub fn blob_exists(&self, id: &Id) -> Result<bool> {
+        file_exists(&self.get_blob_path(id))
     }
 }

@@ -39,7 +39,7 @@ pub async fn start_ui_server(port: u16) {
         .get("/documents/:id/edit", document_editor_page)
         .get("/documents/:id/archive", archive_document_confirmation_page)
         .get("/documents/:id/delete", delete_document_confirmation_page)
-        .get("/attachment-data/:hash", attachment_data_handler)
+        .get("/attachment-data/:id", attachment_data_handler)
         .post("/rpc", rpc_handler)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)

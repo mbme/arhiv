@@ -1,10 +1,10 @@
 use anyhow::*;
 
 use rs_utils::{log, FsTransaction, TempFile};
-use rusqlite::{functions::FunctionFlags, Connection};
+use rusqlite::{functions::FunctionFlags, Connection, OptionalExtension};
 use serde_json::Value;
 
-use super::db::*;
+use super::*;
 
 fn get_db_version(conn: &Connection) -> Result<u8> {
     let value: String = conn
@@ -18,101 +18,100 @@ fn get_db_version(conn: &Connection) -> Result<u8> {
     serde_json::from_str(&value).context("failed to parse db_version")
 }
 
-impl super::Arhiv {
-    pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
-        let root_dir = root_dir.into();
+pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
+    let root_dir = root_dir.into();
 
-        let mut db_version = {
-            let db = DB::open(root_dir.clone())?;
-            let conn = db.open_connection(false)?;
+    let mut db_version = {
+        let db = DB::open(root_dir.clone())?;
+        let conn = db.open_connection(false)?;
 
-            get_db_version(&conn)?
-        };
+        get_db_version(&conn)?
+    };
 
-        ensure!(
-            db_version <= DB::VERSION,
-            "DB version {} is greater than expected db version {}",
-            db_version,
-            DB::VERSION
+    ensure!(
+        db_version <= DB::VERSION,
+        "DB version {} is greater than expected db version {}",
+        db_version,
+        DB::VERSION
+    );
+
+    ensure!(db_version > 0, "DB version must not be 0",);
+
+    // check if upgrade is needed
+    if db_version == DB::VERSION {
+        log::info!(
+            "DB version {} matches expected db version, nothing to upgrade",
+            db_version
         );
 
-        ensure!(db_version > 0, "DB version must not be 0",);
+        return Ok(());
+    }
 
-        // check if upgrade is needed
-        if db_version == DB::VERSION {
-            log::info!(
-                "DB version {} matches expected db version, nothing to upgrade",
-                db_version
-            );
+    log::info!(
+        "DB version {}, starting upgrade to version {}",
+        db_version,
+        DB::VERSION
+    );
 
-            return Ok(());
+    // while not latest version:
+    //   create temp dir
+    //   run upgrade(old db, new file)
+    //   replace old db with new file
+    //   remove temp dir
+    for (pos, upgrade) in UPGRADES.iter().enumerate() {
+        let upgrade_version: u8 = pos as u8 + 1;
+
+        // skip irrelevant upgrades
+        if db_version >= upgrade_version {
+            continue;
         }
+
+        log::info!("Upgrading db to version {}...", upgrade_version);
+
+        let db = DB::open(root_dir.clone())?;
+
+        let temp_arhiv_dir =
+            TempFile::new_with_details(format!("ArhivUpgrade{}-", upgrade_version), "");
+
+        let mut fs_tx = FsTransaction::new();
+
+        let new_db = DB::create(temp_arhiv_dir.as_ref().to_string())?;
+
+        {
+            let new_conn = new_db.open_connection(true)?;
+
+            new_conn.execute_batch(&format!(
+                "ATTACH DATABASE '{}' AS 'old_db'",
+                db.get_db_file()
+            ))?;
+
+            new_conn.execute_batch("BEGIN DEFERRED")?;
+
+            upgrade(&new_conn, &mut fs_tx, &db.path_manager.data_dir)?;
+
+            new_conn.execute_batch("COMMIT")?;
+
+            new_conn.execute("VACUUM", [])?;
+        }
+
+        fs_tx.move_file(new_db.get_db_file(), db.get_db_file())?;
+        fs_tx.commit()?;
 
         log::info!(
-            "DB version {}, starting upgrade to version {}",
+            "Upgraded db from version {} to version {}",
             db_version,
-            DB::VERSION
+            upgrade_version
         );
 
-        // while not latest version:
-        //   create temp dir
-        //   run upgrade(old db, new file)
-        //   replace old db with new file
-        //   remove temp dir
-        for (pos, upgrade) in UPGRADES.iter().enumerate() {
-            let upgrade_version: u8 = pos as u8 + 1;
-
-            // skip irrelevant upgrades
-            if db_version >= upgrade_version {
-                continue;
-            }
-
-            log::info!("Upgrading db to version {}...", upgrade_version);
-
-            let db = DB::open(root_dir.clone())?;
-
-            let temp_arhiv_dir =
-                TempFile::new_with_details(format!("ArhivUpgrade{}-", upgrade_version), "");
-
-            let new_db = DB::create(temp_arhiv_dir.as_ref().to_string())?;
-
-            {
-                let new_conn = new_db.open_connection(true)?;
-
-                new_conn.execute_batch(&format!(
-                    "ATTACH DATABASE '{}' AS 'old_db'",
-                    db.get_db_file()
-                ))?;
-
-                new_conn.execute_batch("BEGIN DEFERRED")?;
-
-                upgrade(&new_conn)?;
-
-                new_conn.execute_batch("COMMIT")?;
-
-                new_conn.execute("VACUUM", [])?;
-            }
-
-            let mut fs_tx = FsTransaction::new();
-            fs_tx.move_file(new_db.get_db_file(), db.get_db_file())?;
-            fs_tx.commit()?;
-
-            log::info!(
-                "Upgraded db from version {} to version {}",
-                db_version,
-                upgrade_version
-            );
-
-            db_version = upgrade_version;
-        }
-
-        log::info!("Done");
-
-        Ok(())
+        db_version = upgrade_version;
     }
+
+    log::info!("Done");
+
+    Ok(())
 }
 
-type Upgrade = fn(&Connection) -> Result<()>;
+type Upgrade = fn(&Connection, &mut FsTransaction, &str) -> Result<()>;
 
 const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v0_to_v1, //
@@ -120,14 +119,15 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v2_to_v3,
     upgrade_v3_to_v4,
     upgrade_v4_to_v5,
+    upgrade_v5_to_v6,
 ];
 
 // stub
-fn upgrade_v0_to_v1(_conn: &Connection) -> Result<()> {
+fn upgrade_v0_to_v1(_conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     Ok(())
 }
 
-fn upgrade_v1_to_v2(conn: &Connection) -> Result<()> {
+fn upgrade_v1_to_v2(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings(key, value)
                        SELECT key, value FROM old_db.settings;
@@ -188,7 +188,7 @@ fn upgrade_v1_to_v2(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn upgrade_v2_to_v3(conn: &Connection) -> Result<()> {
+fn upgrade_v2_to_v3(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings
                        SELECT * FROM old_db.settings;
@@ -210,7 +210,7 @@ fn upgrade_v2_to_v3(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn upgrade_v3_to_v4(conn: &Connection) -> Result<()> {
+fn upgrade_v3_to_v4(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings
                        SELECT * FROM old_db.settings;
@@ -230,7 +230,7 @@ fn upgrade_v3_to_v4(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn upgrade_v4_to_v5(conn: &Connection) -> Result<()> {
+fn upgrade_v4_to_v5(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings
                        SELECT * FROM old_db.settings;
@@ -325,6 +325,75 @@ fn upgrade_v4_to_v5(conn: &Connection) -> Result<()> {
         .context("Failed to update documents")?;
 
     log::info!("Updated {} document snapshots", rows_updated);
+
+    Ok(())
+}
+
+fn upgrade_v5_to_v6(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '6' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots
+                SET data = json_object(
+                    'filename', json_extract(data, '$.filename'),
+                    'sha256', json_extract(data, '$.hash')
+                )
+                WHERE type = 'attachment';
+       ",
+    )?;
+
+    // rename blobs, use attachment id instead of sha256 blob hash
+    let mut blobs_renamed = 0;
+    for item in fs::read_dir(data_dir)? {
+        let path = item?.path();
+
+        if !path.is_file() {
+            log::warn!(
+                "migrating attachments: {} is not a file, skipping",
+                path.to_str().unwrap_or("")
+            );
+            continue;
+        }
+
+        // read file name, which is a sha256 hash atm.
+        let hash = path
+            .file_name()
+            .map(|filename| filename.to_str())
+            .flatten()
+            .ok_or(anyhow!("Failed to read file name"))?;
+
+        // find attachment id by hash
+        let id: Option<String> = conn
+            .query_row(
+                "SELECT id FROM documents_snapshots 
+                    WHERE type = 'attachment' AND json_extract(data, '$.sha256') = ?",
+                [hash],
+                |row| row.get(0),
+            )
+            .optional()?;
+
+        if let Some(id) = id {
+            // use attachment id as file name
+            fs_tx.move_file(
+                format!("{}/{}", data_dir, hash),
+                format!("{}/{}", data_dir, id),
+            )?;
+            blobs_renamed += 1;
+        } else {
+            log::warn!(
+                "migrating attachments: can't find attachment which owns {}, skipping",
+                hash
+            );
+        }
+    }
+
+    log::info!("migrating attachments: renamed {} blobs", blobs_renamed);
 
     Ok(())
 }

@@ -36,7 +36,6 @@ pub enum FieldType {
     Ref(&'static str),
     Enum(Vec<&'static str>),
     ISBN {},
-    Hash {},
     Date {},
 }
 

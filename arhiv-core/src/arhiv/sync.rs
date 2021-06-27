@@ -102,15 +102,12 @@ impl Arhiv {
 
             // check if attachment data is available
             if Attachment::is_attachment(&document) {
-                let attachment = Attachment::from(document)?;
-                let hash = attachment.get_hash();
-                let attachment_data = tx.get_attachment_data(hash);
+                let attachment_data = tx.get_attachment_data(&document.id);
 
                 ensure!(
                     attachment_data.exists()?,
-                    "Attachment data {} for attachment {} is missing",
-                    &attachment_data.hash,
-                    &attachment.id
+                    "Attachment data {} is missing",
+                    &document.id
                 );
             }
         }
@@ -272,9 +269,7 @@ impl Arhiv {
             .iter()
             .filter(|document| Attachment::is_attachment(document))
         {
-            let attachment = Attachment::from(attachment.clone())?;
-            let hash = attachment.get_hash();
-            let attachment_data = self.get_attachment_data(hash)?;
+            let attachment_data = self.get_attachment_data(&attachment.id)?;
 
             network_service
                 .upload_attachment_data(&attachment_data)

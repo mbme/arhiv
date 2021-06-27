@@ -1,18 +1,18 @@
 use anyhow::*;
 use chrono::Utc;
 
-use rs_utils::{get_file_name, log};
-
 use self::db::*;
-pub use self::db::{DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy};
+pub use self::db::{
+    apply_migrations, DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy,
+};
 use self::network_service::NetworkService;
 use self::status::Status;
 use crate::config::Config;
 use crate::entities::*;
+use rs_utils::log;
 
 mod backup;
 mod db;
-mod migrations;
 mod network_service;
 mod status;
 mod sync;
@@ -262,13 +262,11 @@ impl Arhiv {
     pub fn add_attachment(&self, file_path: &str, copy: bool) -> Result<Attachment> {
         log::debug!("Staging attachment {}", &file_path);
 
+        let attachment = Attachment::new(file_path)?;
+
         let mut tx = self.db.get_tx()?;
 
-        let hash = tx.add_attachment_data(file_path, copy)?;
-        let file_name = get_file_name(file_path).to_string();
-
-        let attachment = Attachment::new(file_name, hash);
-
+        tx.add_attachment_data(&attachment.id, file_path, copy)?;
         tx.put_document(&attachment)?;
 
         tx.commit()?;
@@ -282,27 +280,7 @@ impl Arhiv {
         unimplemented!();
     }
 
-    pub fn get_attachment_data(&self, hash: BLOBHash) -> Result<AttachmentData> {
-        Ok(self.db.get_connection()?.get_attachment_data(hash))
-    }
-
-    pub(crate) fn get_attachment_data_by_id(&self, id: &Id) -> Result<AttachmentData> {
-        let attachment = self.get_attachment(id)?;
-
-        let hash = attachment.get_hash();
-
-        let attachment_data = self.get_attachment_data(hash)?;
-
-        Ok(attachment_data)
-    }
-
-    fn get_attachment(&self, id: &Id) -> Result<Attachment> {
-        let document = self
-            .get_document(&id)?
-            .ok_or(anyhow!("unknown attachment {}", id))?;
-
-        let attachment = Attachment::from(document)?;
-
-        Ok(attachment)
+    pub fn get_attachment_data(&self, id: &Id) -> Result<AttachmentData> {
+        Ok(self.db.get_connection()?.get_attachment_data(id))
     }
 }

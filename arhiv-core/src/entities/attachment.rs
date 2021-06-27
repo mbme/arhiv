@@ -3,10 +3,10 @@ use std::ops::Deref;
 use anyhow::*;
 use serde::{Deserialize, Serialize};
 
-use super::{BLOBHash, Document};
+use super::Document;
+use rs_utils::{get_file_hash_sha256, get_file_name};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
-pub const ATTACHMENT_HASH_SELECTOR: &'static str = "$.hash";
 
 pub struct Attachment(Document);
 
@@ -25,21 +25,24 @@ impl Attachment {
         Ok(Attachment(document))
     }
 
-    pub fn new(filename: String, hash: BLOBHash) -> Self {
+    pub fn new(file_path: &str) -> Result<Self> {
+        let sha256 = get_file_hash_sha256(file_path)?;
+        let filename = get_file_name(file_path).to_string();
+
         let document = Document::new(
             ATTACHMENT_TYPE.to_string(),
-            AttachmentInfo { filename, hash }.into(),
+            AttachmentInfo { filename, sha256 }.into(),
         );
 
-        Attachment(document)
+        Ok(Attachment(document))
     }
 
     fn get_data(&self) -> AttachmentInfo {
         serde_json::from_value(self.0.data.clone()).expect("must be able to deserialize")
     }
 
-    pub fn get_hash(&self) -> BLOBHash {
-        self.get_data().hash
+    pub fn get_hash(&self) -> String {
+        self.get_data().sha256
     }
 
     pub fn get_filename(&self) -> String {
@@ -62,10 +65,9 @@ impl Into<Document> for Attachment {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct AttachmentInfo {
     pub filename: String,
-    pub hash: BLOBHash,
+    pub sha256: String,
 }
 
 impl Into<serde_json::Value> for AttachmentInfo {

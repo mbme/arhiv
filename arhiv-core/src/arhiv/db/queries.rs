@@ -268,41 +268,17 @@ pub trait Queries {
         }
     }
 
-    fn is_blob_in_use(&self, hash: &BLOBHash) -> Result<bool> {
-        let result = self
+    fn get_attachment_ids(&self) -> Result<HashSet<Id>> {
+        let mut stmt = self
             .get_connection()
-            .prepare_cached(
-                "SELECT true FROM documents
-                WHERE type = ?1 AND json_extract(data, ?2) = ?3
-                LIMIT 1",
-            )?
-            .query_row(
-                [ATTACHMENT_TYPE, ATTACHMENT_HASH_SELECTOR, hash.as_ref()],
-                |_row| Ok(true),
-            )
-            .optional()?
-            .unwrap_or(false);
+            .prepare("SELECT id FROM documents WHERE type = ?1")?;
 
-        Ok(result)
-    }
-
-    fn get_blob_hashes(&self) -> Result<HashSet<BLOBHash>> {
-        let mut stmt = self.get_connection().prepare(
-            "SELECT json_extract(data, ?1) FROM documents
-             WHERE type = ?2",
-        )?;
-
-        let mut rows = stmt
-            .query_map([ATTACHMENT_HASH_SELECTOR, ATTACHMENT_TYPE], |row| {
-                row.get::<_, String>(0)
-            })
-            .context("Failed to get blob hashes")?;
+        let mut rows = stmt.query_and_then([ATTACHMENT_TYPE], |row| row.get("id"))?;
 
         let mut result = HashSet::new();
         while let Some(entry) = rows.next() {
-            let hash = BLOBHash::from_string(entry?);
-
-            result.insert(hash);
+            let id: String = entry?;
+            result.insert(id.into());
         }
 
         Ok(result)

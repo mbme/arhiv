@@ -88,14 +88,11 @@ impl<'a> MarkupRenderer<'a> {
                     let attachment_location = {
                         let attachment_data = self
                             .arhiv
-                            .get_attachment_data_by_id(&id)
+                            .get_attachment_data(&id)
                             .expect("must be able to get attachment data");
 
                         if attachment_data.exists().unwrap() {
-                            format!(
-                                "{}/{}",
-                                &self.options.attachment_data_path, &attachment_data.hash
-                            )
+                            format!("{}/{}", &self.options.attachment_data_path, &id)
                         } else if self
                             .arhiv
                             .is_prime()
@@ -110,7 +107,7 @@ impl<'a> MarkupRenderer<'a> {
                             self.arhiv
                                 .get_network_service()
                                 .unwrap()
-                                .get_attachment_data_url(&attachment_data.hash)
+                                .get_attachment_data_url(&id)
                         }
                     };
 

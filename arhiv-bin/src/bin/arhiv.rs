@@ -5,7 +5,7 @@ use std::{env, process, sync::Arc};
 
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
-use arhiv_core::{entities::Id, prime_server::start_prime_server, Arhiv, Config};
+use arhiv_core::{apply_migrations, entities::Id, prime_server::start_prime_server, Arhiv, Config};
 use arhiv_ui3::start_ui_server;
 use rs_utils::log::setup_logger_with_level;
 
@@ -186,7 +186,7 @@ async fn main() {
         ("apply-migrations", _) => {
             let config = Config::must_read().0;
 
-            Arhiv::apply_migrations(config.arhiv_root)
+            apply_migrations(config.arhiv_root)
                 .expect("must be able to apply migrations to arhiv db");
         }
         _ => unreachable!(),

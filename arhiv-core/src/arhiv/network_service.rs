@@ -1,13 +1,14 @@
-use crate::{arhiv::AttachmentData, entities::*};
 use anyhow::*;
 use futures::stream::TryStreamExt;
 use reqwest::{Client, StatusCode};
+use tokio::fs as tokio_fs;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
+
+use crate::{arhiv::AttachmentData, entities::*};
 use rs_utils::{
     log::{debug, error, info},
     read_file_as_stream,
 };
-use tokio::fs as tokio_fs;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 pub struct NetworkService {
     prime_url: String,
@@ -30,10 +31,10 @@ impl NetworkService {
 
         debug!(
             "downloading attachment data {} into {}",
-            &attachment_data.hash, &attachment_data.path
+            &attachment_data.id, &attachment_data.path
         );
 
-        let url = self.get_attachment_data_url(&attachment_data.hash);
+        let url = self.get_attachment_data_url(&attachment_data.id);
 
         let mut stream = reqwest::get(&url)
             .await?
@@ -54,11 +55,11 @@ impl NetworkService {
     }
 
     pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
-        debug!("uploading attachment {}", &attachment_data.hash);
+        debug!("uploading attachment {}", &attachment_data.id);
 
         let file_stream = read_file_as_stream(&attachment_data.path).await?;
 
-        let url = self.get_attachment_data_url(&attachment_data.hash);
+        let url = self.get_attachment_data_url(&attachment_data.id);
 
         let response = Client::new()
             .post(&url)
@@ -68,20 +69,20 @@ impl NetworkService {
 
         match response.status() {
             StatusCode::OK => {
-                info!("uploaded attachment data {}", &attachment_data.hash);
+                info!("uploaded attachment data {}", &attachment_data.id);
                 Ok(())
             }
             StatusCode::CONFLICT => {
                 info!(
                     "skipped uploading attachment data {}: already exists",
-                    &attachment_data.hash
+                    &attachment_data.id
                 );
                 Ok(())
             }
             _ => {
                 error!(
                     "failed to upload attachment data {}: {:?}",
-                    &attachment_data.hash, response
+                    &attachment_data.id, response
                 );
 
                 Err(anyhow!("failed to upload attachment data"))
@@ -105,7 +106,7 @@ impl NetworkService {
         Ok(response)
     }
 
-    pub fn get_attachment_data_url(&self, hash: &BLOBHash) -> String {
-        format!("{}/attachment-data/{}", self.prime_url, hash)
+    pub fn get_attachment_data_url(&self, id: &Id) -> String {
+        format!("{}/attachment-data/{}", self.prime_url, id)
     }
 }

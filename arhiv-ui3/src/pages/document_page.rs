@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{
-    components::{Breadcrumbs, Catalog},
+    components::{Breadcrumb, Catalog, Toolbar},
     markup::ArhivMarkupExt,
     ui_config::UIConfig,
     utils::render_page,
@@ -67,12 +67,23 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         children_catalog = Some(catalog);
     };
 
-    let breadcrumbs = Breadcrumbs::Document(&document).render()?;
+    let mut toolbar = Toolbar::new()
+        .with_breadcrubs(vec![
+            Breadcrumb::for_document_collection(&document)?,
+            Breadcrumb::for_document(&document, false),
+        ])
+        .on_close_document(&document);
+
+    if !data_description.is_internal {
+        toolbar = toolbar.with_action("Edit", format!("/documents/{}/edit", &document.id));
+    }
+
+    let toolbar = toolbar.render()?;
 
     render_page(
         "pages/document_page.html.tera",
         json!({
-            "breadcrumbs": breadcrumbs,
+            "toolbar": toolbar,
             "fields": fields,
             "document": document,
             "is_internal_type": data_description.is_internal,

@@ -2,11 +2,19 @@ use arhiv_core::schema::SCHEMA;
 use hyper::{Body, Request};
 use serde_json::json;
 
-use crate::{components::Breadcrumbs, utils::render_page};
+use crate::{
+    components::{Breadcrumb, Toolbar},
+    utils::render_page,
+};
 use rs_utils::server::ServerResponse;
 
 pub async fn new_document_variants_page(_req: Request<Body>) -> ServerResponse {
-    let breadcrumbs = Breadcrumbs::NewDocumentVariants.render()?;
+    let toolbar = Toolbar::new()
+        .with_breadcrubs(vec![
+            Breadcrumb::for_string("new document"), //
+        ])
+        .on_close("/")
+        .render()?;
 
     let document_types = SCHEMA
         .modules
@@ -18,7 +26,7 @@ pub async fn new_document_variants_page(_req: Request<Body>) -> ServerResponse {
     render_page(
         "pages/new_document_variants_page.html.tera",
         json!({
-            "breadcrumbs": breadcrumbs, //
+            "toolbar": toolbar, //
             "document_types": document_types,
         }),
     )

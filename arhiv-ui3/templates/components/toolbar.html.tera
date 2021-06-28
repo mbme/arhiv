@@ -1,0 +1,36 @@
+<div class="px-2 py-4 md:px-6 lg:px-8 flex justify-between items-center bg-blue-50">
+  <ul class="flex font-mono tracking-wide">
+    {% for breadcrumb in breadcrumbs %}
+    {% if not loop.first %}
+    <li class="mx-2">
+      /
+    </li>
+    {% endif %}
+    <li>
+      {% if breadcrumb.url %}
+      <a href="{{breadcrumb.url}}">
+        {{breadcrumb.name}}
+      </a>
+      {% else %}
+      {{breadcrumb.name}}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="flex">
+    {% if action %}
+    <a href="{{action.1}}" class="mr-8">
+      {{action.0}}
+    </a>
+    {% endif %}
+
+    {% if on_close %}
+    <a href="{{on_close}}" class="clean-link">
+      <svg class="h-6 w-6 text-gray-500 hover:text-gray-800 relative md:left-1 lg:left-2">
+        <use xlink:href="#icon-x" />
+      </svg>
+    </a>
+    {% endif %}
+  </div>
+</div>

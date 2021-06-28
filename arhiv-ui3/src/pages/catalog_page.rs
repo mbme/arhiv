@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{
-    components::{Breadcrumbs, Catalog},
+    components::{Breadcrumb, Catalog, Toolbar},
     ui_config::UIConfig,
     utils::render_page,
 };
@@ -30,12 +30,17 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .with_pagination(&req)?
         .render(arhiv, UIConfig::get_config(document_type).catalog)?;
 
-    let breadcrumbs = Breadcrumbs::Catalog(document_type.to_string()).render()?;
+    let toolbar = Toolbar::new()
+        .with_breadcrubs(vec![
+            Breadcrumb::for_string(format!("{}s", document_type)), //
+        ])
+        .on_close("/")
+        .render()?;
 
     render_page(
         "pages/catalog_page.html.tera",
         json!({
-            "breadcrumbs": breadcrumbs,
+            "toolbar": toolbar,
             "document_type": document_type,
             "catalog": catalog,
         }),

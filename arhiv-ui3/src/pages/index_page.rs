@@ -2,7 +2,10 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{components::Breadcrumbs, utils::render_page};
+use crate::{
+    components::{Breadcrumb, Toolbar},
+    utils::render_page,
+};
 use arhiv_core::{schema::SCHEMA, Arhiv};
 use rs_utils::server::ServerResponse;
 
@@ -10,7 +13,12 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
     let status = arhiv.get_status()?;
-    let breadcrumbs = Breadcrumbs::Index.render()?;
+
+    let toolbar = Toolbar::new()
+        .with_breadcrubs(vec![
+            Breadcrumb::for_string("index"), //
+        ])
+        .render()?;
 
     let document_types = SCHEMA
         .modules
@@ -21,7 +29,7 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
     render_page(
         "pages/index_page.html.tera",
         json!({
-            "breadcrumbs": breadcrumbs,
+            "toolbar": toolbar,
             "status": status.to_string(),
             "document_types": document_types,
         }),

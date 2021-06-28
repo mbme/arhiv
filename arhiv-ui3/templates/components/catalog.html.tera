@@ -18,9 +18,12 @@
   {% if not is_internal_type %}
   <a
     href="/new/{{document_type}}{{new_document_query}}"
-    class="flex-shrink-0 ml-4 uppercase tracking-wide"
+    class="flex-shrink-0 ml-4 uppercase tracking-wide flex items-center"
   >
-    new {{document_type}}
+    <svg class="h-5 w-5 mr-1">
+      <use xlink:href="#icon-document-add" />
+    </svg>
+    {{document_type}}
   </a>
   {% endif %}
 </form>
@@ -37,11 +40,11 @@
   {% endif %}
   >
   <summary class="cursor-pointer">
-    <span class="text-2xl font-bold uppercase align-middle">
+    <span class="text-2xl font-bold uppercase align-middle text-green-700">
       {{group.name}}
     </span>
 
-    <span class="text-gray-500">
+    <span class="text-gray-500 inline-block">
       {{ group.items | length }}
     </span>
   </summary>

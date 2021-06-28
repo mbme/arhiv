@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde_json::json;
 
 use crate::{
-    components::{Breadcrumbs, Editor},
+    components::{Breadcrumb, Editor, Toolbar},
     utils::render_page,
 };
 use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
@@ -31,12 +31,20 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     );
 
     let editor = Editor::new(&document)?.render()?;
-    let breadcrumbs = Breadcrumbs::DocumentEditor(&document).render()?;
+
+    let toolbar = Toolbar::new()
+        .with_breadcrubs(vec![
+            Breadcrumb::for_document_collection(&document)?,
+            Breadcrumb::for_document(&document, true),
+            Breadcrumb::for_string("editor"),
+        ])
+        .on_close(format!("/documents/{}", &document.id))
+        .render()?;
 
     render_page(
         "pages/edit_document_page.html.tera",
         json!({
-            "breadcrumbs": breadcrumbs,
+            "toolbar": toolbar,
             "document": document,
             "editor": editor,
         }),

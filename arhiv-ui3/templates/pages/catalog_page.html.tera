@@ -1,13 +1,11 @@
 {% extends "base.html.tera" %}
 
-{% block toolbar %}
-
-{{ breadcrumbs | safe }}
-
-{% endblock %}
-
 {% block content %}
 
-{{ catalog | safe }}
+{{ toolbar | safe }}
+
+<div id="content">
+  {{ catalog | safe }}
+</div>
 
 {% endblock %}

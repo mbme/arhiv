@@ -1,7 +1,7 @@
-mod breadcrumbs;
 mod catalog;
 mod editor;
+mod toolbar;
 
-pub use breadcrumbs::*;
 pub use catalog::*;
 pub use editor::*;
+pub use toolbar::*;

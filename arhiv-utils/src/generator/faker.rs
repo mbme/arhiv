@@ -65,13 +65,15 @@ impl<'a> Faker<'a> {
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
         let mut data = SCHEMA
-            .create_with_initial_values(document_type.clone(), initial_values)
+            .get_data_description(&document_type)
+            .expect("document type must be valid")
+            .create_with_initial_values(initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
                 document_type
             ));
 
-        let description = SCHEMA.get_data_description_by_type(&document_type).unwrap();
+        let description = SCHEMA.get_data_description(&document_type).unwrap();
 
         let mut rng = thread_rng();
         for field in &description.fields {
@@ -118,7 +120,7 @@ impl<'a> Faker<'a> {
         let document_type = document_type.into();
 
         let data_description = SCHEMA
-            .get_data_description_by_type(&document_type)
+            .get_data_description(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 
         let quantity = self.get_quantity_limit(&document_type);

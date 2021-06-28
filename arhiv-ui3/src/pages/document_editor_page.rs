@@ -26,7 +26,7 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
 
     ensure!(
         !SCHEMA
-            .get_data_description_by_type(&document.document_type)?
+            .get_data_description(&document.document_type)?
             .is_internal
     );
 

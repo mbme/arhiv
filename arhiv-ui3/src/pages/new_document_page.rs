@@ -20,16 +20,13 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .param("document_type")
         .expect("document_type must be present");
 
-    ensure!(
-        !SCHEMA
-            .get_data_description_by_type(document_type)?
-            .is_internal
-    );
+    let data_description = SCHEMA.get_data_description(document_type)?;
+
+    ensure!(!data_description.is_internal);
 
     let params = req.get_query_params();
 
-    let data =
-        SCHEMA.create_with_initial_values(document_type, params_into_document_data(params))?;
+    let data = data_description.create_with_initial_values(params_into_document_data(params))?;
 
     let document = Document::new(document_type.clone(), data.into());
 

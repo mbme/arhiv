@@ -2,12 +2,11 @@ use anyhow::*;
 use pulldown_cmark::{html, Event, LinkType, Tag};
 use serde::Serialize;
 
+use super::utils::extract_id;
+use super::MarkupStr;
 use crate::schema::{FieldType, SCHEMA};
 use crate::{entities::*, Arhiv};
 use rs_utils::log::warn;
-
-use super::utils::extract_id;
-use super::MarkupStr;
 
 pub struct MarkupRenderer<'a> {
     arhiv: &'a Arhiv,
@@ -138,7 +137,9 @@ impl<'a> MarkupRenderer<'a> {
     }
 
     pub fn get_preview(&self, document: &Document) -> Result<String> {
-        let field = SCHEMA.pick_title_field(&document.document_type)?;
+        let field = SCHEMA
+            .get_data_description(&document.document_type)?
+            .pick_title_field()?;
 
         match field.field_type {
             FieldType::MarkupString {} => {

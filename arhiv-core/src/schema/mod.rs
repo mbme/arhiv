@@ -9,6 +9,7 @@ mod data_description;
 lazy_static! {
     pub static ref SCHEMA: DataSchema = DataSchema {
         modules: vec![
+            // ----- INTERNAL
             DataDescription {
                 document_type: TOMBSTONE_TYPE,
                 is_internal: true,
@@ -32,6 +33,7 @@ lazy_static! {
                     },
                 ],
             },
+            // ----
             DataDescription {
                 document_type: "note",
                 is_internal: false,

@@ -19,7 +19,9 @@ struct CatalogEntry {
 impl From<Document> for CatalogEntry {
     fn from(document: Document) -> Self {
         let title_field = SCHEMA
-            .pick_title_field(&document.document_type)
+            .get_data_description(&document.document_type)
+            .expect("document_type must exist")
+            .pick_title_field()
             .expect("no title field");
         let title = document.get_field_str(title_field.name).expect("no title");
 
@@ -137,7 +139,7 @@ impl Catalog {
         let mut items: Vec<CatalogEntry> = vec![];
         let mut groups: Vec<CatalogGroup> = vec![];
 
-        let data_description = SCHEMA.get_data_description_by_type(&self.document_type)?;
+        let data_description = SCHEMA.get_data_description(&self.document_type)?;
 
         if let Some(group_by) = config.group_by {
             groups = data_description

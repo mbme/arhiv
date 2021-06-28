@@ -43,7 +43,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
-    let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
+    let data_description = SCHEMA.get_data_description(&document.document_type)?;
     let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
@@ -86,7 +86,9 @@ fn prepare_fields(
     arhiv: &Arhiv,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
-    let title_field = SCHEMA.pick_title_field(&document.document_type)?;
+    let title_field = SCHEMA
+        .get_data_description(&document.document_type)?
+        .pick_title_field()?;
 
     data_description
         .fields

@@ -48,28 +48,15 @@ pub struct Collection {
 
 pub type DocumentData = Map<String, Value>;
 
-impl DataSchema {
-    pub fn get_data_description_by_type(&self, document_type: &str) -> Result<&DataDescription> {
-        self.modules
-            .iter()
-            .find(|module| module.document_type == document_type)
-            .ok_or(anyhow!("Unknown document type {}", document_type))
+impl DataDescription {
+    pub fn create(&self) -> Result<DocumentData> {
+        self.create_with_initial_values(Map::new())
     }
 
-    pub fn create(&self, document_type: impl Into<String>) -> Result<DocumentData> {
-        self.create_with_initial_values(document_type.into(), Map::new())
-    }
-
-    pub fn create_with_initial_values(
-        &self,
-        document_type: impl AsRef<str>,
-        initial_values: DocumentData,
-    ) -> Result<DocumentData> {
-        let description = self.get_data_description_by_type(document_type.as_ref())?;
-
+    pub fn create_with_initial_values(&self, initial_values: DocumentData) -> Result<DocumentData> {
         let mut result: DocumentData = Map::new();
 
-        for field in &description.fields {
+        for field in &self.fields {
             if let Some(value) = initial_values.get(field.name) {
                 result.insert(field.name.to_string(), (*value).clone());
                 continue;
@@ -96,12 +83,10 @@ impl DataSchema {
         Ok(result)
     }
 
-    fn extract_refs(&self, document_type: &str, data: &DocumentData) -> Result<HashSet<Id>> {
+    fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
         let mut result = HashSet::new();
 
-        let data_description = self.get_data_description_by_type(document_type)?;
-
-        for field in &data_description.fields {
+        for field in &self.fields {
             let value = {
                 match (field.optional, data.get(field.name)) {
                     (true, None) => {
@@ -135,38 +120,22 @@ impl DataSchema {
 
         Ok(result)
     }
-
-    pub fn update_refs(&self, document: &mut Document) -> Result<()> {
-        let data = {
-            match &document.data {
-                Value::Object(data) => data,
-                _ => {
-                    bail!("Document data must be an object");
-                }
-            }
-        };
-        let refs = self.extract_refs(&document.document_type, &data)?;
-        document.refs = refs;
-
-        Ok(())
-    }
-
-    pub fn pick_title_field(&self, document_type: &str) -> Result<&Field> {
-        let description = self.get_data_description_by_type(document_type)?;
-
-        description
-            .fields
+    pub fn pick_title_field(&self) -> Result<&Field> {
+        self.fields
             .iter()
             .find(|field| match field.field_type {
                 FieldType::String {} | FieldType::MarkupString {} => true,
                 _ => false,
             })
-            .ok_or(anyhow!("Failed to pick title field for {}", document_type))
+            .ok_or(anyhow!(
+                "Failed to pick title field for {}",
+                self.document_type
+            ))
     }
 
-    pub fn extract_search_data(&self, document_type: &str, data: &str) -> Result<String> {
+    pub fn extract_search_data(&self, data: &str) -> Result<String> {
         let field = {
-            if let Ok(field) = self.pick_title_field(document_type) {
+            if let Ok(field) = self.pick_title_field() {
                 field
             } else {
                 // else use whole data prop for search index
@@ -182,19 +151,6 @@ impl DataSchema {
             .ok_or(anyhow!("failed to extract field {}", field.name))
     }
 
-    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
-        self.modules
-            .iter()
-            .find_map(|module| match module.collection_of {
-                Some(ref collection_of) if collection_of.item_type == document_type => {
-                    Some(module.document_type)
-                }
-                _ => None,
-            })
-    }
-}
-
-impl DataDescription {
     pub fn get_field(&self, name: impl AsRef<str>) -> Result<&Field> {
         let name = name.as_ref();
         self.fields
@@ -205,6 +161,45 @@ impl DataDescription {
                 name,
                 self.document_type
             ))
+    }
+}
+
+impl DataSchema {
+    pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
+        let document_type = document_type.as_ref();
+
+        self.modules
+            .iter()
+            .find(|module| module.document_type == document_type)
+            .ok_or(anyhow!("Unknown document type {}", document_type))
+    }
+
+    pub fn update_refs(&self, document: &mut Document) -> Result<()> {
+        let data = {
+            match &document.data {
+                Value::Object(data) => data,
+                _ => {
+                    bail!("Document data must be an object");
+                }
+            }
+        };
+
+        document.refs = self
+            .get_data_description(&document.document_type)?
+            .extract_refs(&data)?;
+
+        Ok(())
+    }
+
+    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
+        self.modules
+            .iter()
+            .find_map(|module| match module.collection_of {
+                Some(ref collection_of) if collection_of.item_type == document_type => {
+                    Some(module.document_type)
+                }
+                _ => None,
+            })
     }
 }
 

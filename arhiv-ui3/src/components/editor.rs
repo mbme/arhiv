@@ -24,7 +24,7 @@ pub struct Editor<'d> {
 
 impl<'d> Editor<'d> {
     pub fn new(document: &'d Document) -> Result<Self> {
-        let data_description = SCHEMA.get_data_description_by_type(&document.document_type)?;
+        let data_description = SCHEMA.get_data_description(&document.document_type)?;
 
         let fields = data_description
             .fields

@@ -16,6 +16,7 @@ pub struct DataSchema {
 #[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: &'static str,
+    pub is_internal: bool,
     pub collection_of: Option<Collection>,
     pub fields: Vec<Field>,
 }

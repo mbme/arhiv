@@ -11,11 +11,13 @@ lazy_static! {
         modules: vec![
             DataDescription {
                 document_type: TOMBSTONE_TYPE,
+                is_internal: true,
                 collection_of: None,
                 fields: vec![],
             },
             DataDescription {
                 document_type: ATTACHMENT_TYPE,
+                is_internal: true,
                 collection_of: None,
                 fields: vec![
                     Field {
@@ -32,6 +34,7 @@ lazy_static! {
             },
             DataDescription {
                 document_type: "note",
+                is_internal: false,
                 collection_of: None,
                 fields: vec![ //
                     Field {
@@ -48,6 +51,7 @@ lazy_static! {
             },
             DataDescription {
                 document_type: "project",
+                is_internal: false,
                 collection_of: Some(Collection { item_type: "task" }),
                 fields: vec![ //
                     Field {
@@ -64,6 +68,7 @@ lazy_static! {
             },
             DataDescription {
                 document_type: "task",
+                is_internal: false,
                 collection_of: None,
                 fields: vec![
                     Field {
@@ -98,6 +103,7 @@ lazy_static! {
             },
             DataDescription {
                 document_type: "book",
+                is_internal: false,
                 collection_of: None,
                 fields: vec![
                     Field {

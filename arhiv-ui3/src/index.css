@@ -199,3 +199,10 @@ a:not(.clean-link) {
     @apply p-2 sm:p-4 md:p-6;
   }
 }
+
+@layer utilities {
+  .wrap-text {
+    hyphens: auto;
+    overflow-wrap: break-word;
+  }
+}

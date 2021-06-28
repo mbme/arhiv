@@ -3,7 +3,7 @@ use routerify::ext::RequestExt;
 use serde_json::json;
 
 use crate::{components::Breadcrumbs, utils::render_page};
-use arhiv_core::Arhiv;
+use arhiv_core::{schema::SCHEMA, Arhiv};
 use rs_utils::server::ServerResponse;
 
 pub async fn index_page(req: Request<Body>) -> ServerResponse {
@@ -12,11 +12,18 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
     let status = arhiv.get_status()?;
     let breadcrumbs = Breadcrumbs::Index.render()?;
 
+    let document_types = SCHEMA
+        .modules
+        .iter()
+        .map(|module| module.document_type)
+        .collect::<Vec<_>>();
+
     render_page(
         "pages/index_page.html.tera",
         json!({
             "breadcrumbs": breadcrumbs,
             "status": status.to_string(),
+            "document_types": document_types,
         }),
     )
 }

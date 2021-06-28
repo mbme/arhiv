@@ -137,9 +137,10 @@ impl Catalog {
         let mut items: Vec<CatalogEntry> = vec![];
         let mut groups: Vec<CatalogGroup> = vec![];
 
+        let data_description = SCHEMA.get_data_description_by_type(&self.document_type)?;
+
         if let Some(group_by) = config.group_by {
-            groups = SCHEMA
-                .get_data_description_by_type(&self.document_type)?
+            groups = data_description
                 .get_field(group_by.field)?
                 .get_enum_values()?
                 .into_iter()
@@ -189,6 +190,7 @@ impl Catalog {
                 "pattern": self.pattern,
                 "pagination": self.pagination,
                 "document_type": self.document_type,
+                "is_internal_type": data_description.is_internal,
                 "new_document_query": self.new_document_query,
             }),
         )

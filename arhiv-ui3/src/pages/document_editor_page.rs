@@ -1,3 +1,4 @@
+use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
@@ -6,7 +7,7 @@ use crate::{
     components::{Breadcrumbs, Editor},
     utils::render_page,
 };
-use arhiv_core::{entities::*, Arhiv};
+use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
 pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
@@ -22,6 +23,12 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
             return respond_not_found();
         }
     };
+
+    ensure!(
+        !SCHEMA
+            .get_data_description_by_type(&document.document_type)?
+            .is_internal
+    );
 
     let editor = Editor::new(&document)?.render()?;
     let breadcrumbs = Breadcrumbs::DocumentEditor(&document).render()?;

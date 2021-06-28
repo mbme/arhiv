@@ -15,12 +15,14 @@
     onsearch="this.form.submit()"
   />
 
+  {% if not is_internal_type %}
   <a
     href="/new/{{document_type}}{{new_document_query}}"
     class="flex-shrink-0 ml-4 uppercase tracking-wide"
   >
     new {{document_type}}
   </a>
+  {% endif %}
 </form>
 
 {% if items | length > 0 %}

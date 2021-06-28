@@ -75,7 +75,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             "breadcrumbs": breadcrumbs,
             "fields": fields,
             "document": document,
-            "is_tombstone": document.is_tombstone(),
+            "is_internal_type": data_description.is_internal,
             "children_catalog": children_catalog,
         }),
     )

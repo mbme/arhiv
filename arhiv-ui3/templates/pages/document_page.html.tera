@@ -1,7 +1,7 @@
 {% extends "base.html.tera" %}
 
 {% macro render_field(name, value, is_safe=false, is_title=false) %}
-<section class="mb-12">
+<section class="mb-12 wrap-text">
   <h5 class="section-heading mb-2">
     {{ name }}
   </h5>
@@ -25,7 +25,7 @@
 {{ breadcrumbs | safe }}
 
 <div class="flex">
-  {% if not is_tombstone %}
+  {% if not is_internal_type %}
   <a href="/documents/{{document.id}}/edit">
     edit
   </a>

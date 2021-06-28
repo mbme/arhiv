@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::ensure;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::{json, Value};
@@ -18,6 +19,12 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document_type = req
         .param("document_type")
         .expect("document_type must be present");
+
+    ensure!(
+        !SCHEMA
+            .get_data_description_by_type(document_type)?
+            .is_internal
+    );
 
     let params = req.get_query_params();
 

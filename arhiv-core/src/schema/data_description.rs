@@ -201,6 +201,16 @@ impl DataSchema {
                 _ => None,
             })
     }
+
+    pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
+        let data_description = self.get_data_description(&document.document_type)?;
+
+        let title_field = data_description.pick_title_field()?;
+
+        document
+            .get_field_str(title_field.name)
+            .ok_or(anyhow!("title field missing"))
+    }
 }
 
 impl Field {

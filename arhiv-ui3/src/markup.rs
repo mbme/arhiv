@@ -1,5 +1,4 @@
 use arhiv_core::{
-    entities::Document,
     markup::{MarkupRenderer, MarkupStr, RenderOptions},
     Arhiv,
 };
@@ -13,12 +12,8 @@ pub trait ArhivMarkupExt {
         renderer.to_html(string)
     }
 
-    fn render_preview(&self, document: &Document) -> String {
-        let renderer = self.get_renderer();
-
-        renderer
-            .get_preview(document)
-            .unwrap_or("Unable to generate preview".to_string())
+    fn render_preview(&self, text: &str) -> String {
+        self.get_renderer().get_preview(text)
     }
 }
 

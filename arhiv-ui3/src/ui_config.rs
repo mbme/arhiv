@@ -1,5 +1,7 @@
 pub struct CatalogConfig {
     pub group_by: Option<CatalogGroupBy>,
+    pub preview: Option<&'static str>,
+    pub fields: Vec<&'static str>,
 }
 
 pub struct CatalogGroupBy {
@@ -10,17 +12,33 @@ pub struct CatalogGroupBy {
 
 impl CatalogConfig {
     pub fn get_config(document_type: impl AsRef<str>) -> Self {
-        if document_type.as_ref() == "project/task" {
+        let document_type = document_type.as_ref();
+
+        if document_type == "project/task" {
             return CatalogConfig {
                 group_by: Some(CatalogGroupBy {
                     field: "status",
                     open_groups: vec!["Inbox", "InProgress", "Paused"],
                     skip_empty_groups: true,
                 }),
+                preview: None,
+                fields: vec![],
             };
         }
 
-        CatalogConfig { group_by: None }
+        if document_type == "book" {
+            return CatalogConfig {
+                group_by: None,
+                preview: None,
+                fields: vec!["authors"],
+            };
+        }
+
+        CatalogConfig {
+            group_by: None,
+            preview: None,
+            fields: vec![],
+        }
     }
 
     pub fn get_child_config(

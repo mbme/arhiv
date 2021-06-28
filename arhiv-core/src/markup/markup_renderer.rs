@@ -1,10 +1,8 @@
-use anyhow::*;
 use pulldown_cmark::{html, Event, LinkType, Tag};
 use serde::Serialize;
 
 use super::utils::extract_id;
 use super::MarkupStr;
-use crate::schema::{FieldType, SCHEMA};
 use crate::{entities::*, Arhiv};
 use rs_utils::log::warn;
 
@@ -136,27 +134,11 @@ impl<'a> MarkupRenderer<'a> {
         html_output
     }
 
-    pub fn get_preview(&self, document: &Document) -> Result<String> {
-        let field = SCHEMA
-            .get_data_description(&document.document_type)?
-            .pick_title_field()?;
+    pub fn get_preview(&self, text: &str) -> String {
+        let preview = text.lines().take(4).collect::<Vec<_>>().join("\n");
+        let markup: MarkupStr = preview.as_str().into();
 
-        match field.field_type {
-            FieldType::MarkupString {} => {
-                let text = document.get_field_str(field.name).unwrap_or_default();
-                let preview = text.lines().take(4).collect::<Vec<_>>().join("\n");
-                let markup: MarkupStr = preview.as_str().into();
-
-                Ok(self.to_html(&markup))
-            }
-
-            FieldType::String {} => {
-                let value = document.get_field_str(field.name).unwrap_or_default();
-
-                Ok(value.to_string())
-            }
-            _ => unimplemented!(),
-        }
+        self.to_html(&markup)
     }
 }
 

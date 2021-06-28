@@ -2,23 +2,22 @@
 
 {% block modal %}
 <div class="modal-title bg-yellow-500">
-  Do you really want to
-  <b>
-    {% if document.archived %}
-    UnArchive
-    {% else %}
-    Archive
-    {% endif %}
-    the
-    {{document.documentType | upper}}
-    ?
-  </b>
+  {% if document.archived %}
+  UnArchive
+  {% else %}
+  Archive
+  {% endif %}
+  {{document.documentType}}
 </div>
 
 <div class="modal-content">
-  <div class="markup-sm preview">
-    {{ preview | safe }}
-  </div>
+  Do you really want to
+  {% if document.archived %}
+  unarchive
+  {% else %}
+  archive
+  {% endif %}
+  the {{document.documentType}} <b>{{ title }}</b>?
 </div>
 
 <div class="modal-buttons">

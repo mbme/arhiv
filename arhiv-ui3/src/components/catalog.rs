@@ -1,10 +1,9 @@
 use anyhow::*;
-use chrono::{DateTime, Local};
 use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{templates::TEMPLATES, ui_config::CatalogConfig};
+use crate::{markup::ArhivMarkupExt, templates::TEMPLATES, ui_config::CatalogConfig};
 use arhiv_core::{entities::*, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::RequestQueryExt;
 
@@ -13,24 +12,50 @@ struct CatalogEntry {
     id: Id,
     document_type: String,
     title: String,
-    updated_at: DateTime<Local>,
+    preview: Option<String>,
+    fields: Vec<(&'static str, String)>,
 }
 
-impl From<Document> for CatalogEntry {
-    fn from(document: Document) -> Self {
-        let title_field = SCHEMA
-            .get_data_description(&document.document_type)
-            .expect("document_type must exist")
-            .pick_title_field()
-            .expect("no title field");
-        let title = document.get_field_str(title_field.name).expect("no title");
+impl CatalogEntry {
+    pub fn new(document: Document, arhiv: &Arhiv, config: &CatalogConfig) -> Result<Self> {
+        let data_description = SCHEMA.get_data_description(&document.document_type)?;
 
-        CatalogEntry {
+        let title_field = data_description.pick_title_field()?;
+
+        let title = document
+            .get_field_str(title_field.name)
+            .ok_or(anyhow!("title field missing"))?;
+
+        let mut preview = None;
+
+        if let Some(preview_field) = config.preview {
+            preview = Some(
+                arhiv.render_preview(
+                    document
+                        .get_field_str(preview_field)
+                        .ok_or(anyhow!("preview field missing"))?,
+                ),
+            );
+        }
+
+        let fields = config
+            .fields
+            .iter()
+            .map(|field| {
+                (
+                    *field,
+                    document.get_field_str(field).unwrap_or("").to_string(),
+                )
+            })
+            .collect();
+
+        Ok(CatalogEntry {
             title: title.to_string(),
             id: document.id,
             document_type: document.document_type,
-            updated_at: document.updated_at.into(),
-        }
+            preview,
+            fields,
+        })
     }
 }
 
@@ -141,7 +166,7 @@ impl Catalog {
 
         let data_description = SCHEMA.get_data_description(&self.document_type)?;
 
-        if let Some(group_by) = config.group_by {
+        if let Some(ref group_by) = config.group_by {
             groups = data_description
                 .get_field(group_by.field)?
                 .get_enum_values()?
@@ -165,7 +190,9 @@ impl Catalog {
 
                 group.open = group_by.open_groups.contains(&group.name);
 
-                group.items.push(document.into());
+                group
+                    .items
+                    .push(CatalogEntry::new(document, arhiv, &config)?);
             }
 
             // skip empty groups if needed
@@ -181,7 +208,11 @@ impl Catalog {
                     .map(|group| group.open = true);
             }
         } else {
-            items = result.items.into_iter().map(Into::into).collect();
+            items = result
+                .items
+                .into_iter()
+                .map(|document| CatalogEntry::new(document, arhiv, &config))
+                .collect::<Result<_>>()?;
         }
 
         TEMPLATES.render(

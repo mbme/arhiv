@@ -2,14 +2,12 @@
 
 {% block modal %}
 <div class="modal-title bg-red-500 bg-opacity-75">
-  Do you really want to
-  <b>DELETE the {{document.documentType | upper}}?</b>
+  Delete {{document.documentType}}
 </div>
 
 <div class="modal-content">
-  <div class="markup-sm preview">
-    {{ preview | safe }}
-  </div>
+  Do you really want to
+  <b>DELETE</b> the {{document.documentType}} <b>{{ title }}</b>?
 </div>
 
 <div class="modal-buttons">

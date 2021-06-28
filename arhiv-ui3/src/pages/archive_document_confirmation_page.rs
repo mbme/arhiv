@@ -1,10 +1,10 @@
 use anyhow::*;
-use arhiv_core::Arhiv;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{markup::ArhivMarkupExt, utils::render_page};
+use crate::utils::render_page;
+use arhiv_core::{schema::SCHEMA, Arhiv};
 use rs_utils::server::ServerResponse;
 
 pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerResponse {
@@ -15,13 +15,13 @@ pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerRes
         .get_document(&id.into())?
         .ok_or(anyhow!("document not found"))?;
 
-    let preview = arhiv.render_preview(&document);
+    let title = SCHEMA.get_title(&document)?;
 
     render_page(
         "pages/archive_document_confirmation_page.html.tera",
         json!({
             "document": document,
-            "preview": preview,
+            "title": title,
         }),
     )
 }

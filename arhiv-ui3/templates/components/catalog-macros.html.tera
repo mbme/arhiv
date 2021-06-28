@@ -3,16 +3,27 @@
   {% for item in items %}
   <li class="py-6 min-h-6rem break-words">
     <a href="/documents/{{ item.id }}" class="clean-link">
-      <h2 class="mb-2 font-semibold tracking-wide">
+      <h2 class="mb-2 text-lg tracking-wide font-semibold">
         {{ item.title }}
       </h2>
     </a>
 
-    <div class="flex justify-between text-gray-400 font-mono text-sm">
-      <div>
-        {{ item.updated_at | date }}
-      </div>
+    {% if item.preview %}
+    <div class="markup-sm preview">
+      {{ item.preview | safe }}
     </div>
+    {% endif %}
+
+    {% if item.fields | length > 0 %}
+    <div class="px-4">
+      {% for field in item.fields %}
+      <span class="text-gray-500 text-xs font-mono">
+        {{field.0}}:
+      </span>
+      {{field.1}}
+      {% endfor %}
+    </div>
+    {% endif %}
   </li>
   {% endfor %}
 </ul>

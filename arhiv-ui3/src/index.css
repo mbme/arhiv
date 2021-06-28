@@ -113,7 +113,7 @@ a:not(.clean-link) {
   .preview {
     @apply line-clamp-4;
 
-    max-height: 10em;
+    max-height: 8em;
     position: relative;
 
     &:after {
@@ -186,7 +186,7 @@ a:not(.clean-link) {
   }
 
   .modal-title {
-    @apply text-lg rounded-t-md;
+    @apply text-lg font-bold tracking-wider uppercase rounded-t-md;
     @apply p-2 sm:p-4 md:p-6;
   }
 

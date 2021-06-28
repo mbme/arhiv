@@ -36,7 +36,7 @@ pub async fn start_ui_server(port: u16) {
         .get("/new/:document_type", new_document_page)
         .get("/catalogs/:document_type", catalog_page)
         .get("/documents/:id", document_page)
-        .get("/documents/:id/edit", document_editor_page)
+        .get("/documents/:id/edit", edit_document_page)
         .get("/documents/:id/archive", archive_document_confirmation_page)
         .get("/documents/:id/delete", delete_document_confirmation_page)
         .get("/attachment-data/:id", attachment_data_handler)

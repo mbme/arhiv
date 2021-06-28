@@ -10,7 +10,7 @@ use crate::{
 use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
-pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
+pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
     let id: Id = id.into();
 
@@ -34,7 +34,7 @@ pub async fn document_editor_page(req: Request<Body>) -> ServerResponse {
     let breadcrumbs = Breadcrumbs::DocumentEditor(&document).render()?;
 
     render_page(
-        "pages/document_editor_page.html.tera",
+        "pages/edit_document_page.html.tera",
         json!({
             "breadcrumbs": breadcrumbs,
             "document": document,

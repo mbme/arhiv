@@ -16,12 +16,14 @@
       name="{{field.name}}"
       class="field"
       {% if not field.optional %}required{% endif %}
+      {% if loop.first %}autofocus{% endif %}
     >{{field.value}}</textarea>
 
     {% elif 'Enum' in field.field_type %}
     <select
       name="{{field.name}}"
       class="field"
+      {% if loop.first %}autofocus{% endif %}
     >
       {% if field.optional %}
       <option value></option>
@@ -43,7 +45,9 @@
       name="{{field.name}}"
       class="field"
       {% if not field.optional %}required{% endif %}
-      value="{{field.value}}">
+      {% if loop.first %}autofocus{% endif %}
+      value="{{field.value}}"
+    >
     {% endif %}
   </label>
   {% endfor %}
@@ -80,5 +84,5 @@
   );
 
   editorEl.querySelectorAll('textarea')
-    .forEach(window.arhiv_ui.autoGrowTextarea);
+          .forEach(window.arhiv_ui.autoGrowTextarea);
 </script>

@@ -24,39 +24,11 @@
 
 {{ breadcrumbs | safe }}
 
-<div class="flex">
+<div>
   {% if not is_internal_type %}
   <a href="/documents/{{document.id}}/edit">
-    edit
+    Edit
   </a>
-
-  <details class="ml-6">
-    <summary class="flex justify-end cursor-pointer">
-      <svg class="h-6 w-6">
-        <use xlink:href="#icon-dots-horizontal" />
-      </svg>
-    </summary>
-
-    <div class="flex flex-col items-end space-y-2">
-      <a
-        href="/documents/{{document.id}}/archive"
-        class="text-yellow-500"
-      >
-        {% if document.archived %}
-        UnArchive
-        {% else %}
-        Archive
-        {% endif %}
-      </a>
-
-      <a
-        href="/documents/{{document.id}}/delete"
-        class="text-red-500"
-      >
-        Delete
-      </a>
-    </div>
-  </details>
   {% endif %}
 </div>
 
@@ -96,11 +68,33 @@
 </details>
 {% endif %}
 
-<div class="text-xs text-gray-400 text-mono text-right">
-  Updated
-  <time datetime="{{document.updatedAt}}">
-    {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
-  </time>
+<div class="flex flex-col items-end text-xs text-gray-400 text-mono">
+  <div class="mb-4">
+    Updated
+    <time datetime="{{document.updatedAt}}">
+      {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+    </time>
+  </div>
+
+  {% if not is_internal_type %}
+  <a
+    href="/documents/{{document.id}}/archive"
+    class="mb-2"
+  >
+    {% if document.archived %}
+    Unarchive
+    {% else %}
+    Archive
+    {% endif %}
+  </a>
+
+  <a
+    href="/documents/{{document.id}}/delete"
+    class=""
+  >
+    Delete
+  </a>
+  {% endif %}
 </div>
 
 {% endblock %}

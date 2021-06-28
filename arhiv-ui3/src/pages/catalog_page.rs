@@ -6,7 +6,7 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumbs, Catalog},
-    ui_config::CatalogConfig,
+    ui_config::UIConfig,
     utils::render_page,
 };
 use arhiv_core::{entities::*, Arhiv};
@@ -28,7 +28,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
 
     let catalog = Catalog::new(document_type, pattern)
         .with_pagination(&req)?
-        .render(arhiv, CatalogConfig::get_config(document_type))?;
+        .render(arhiv, UIConfig::get_config(document_type).catalog)?;
 
     let breadcrumbs = Breadcrumbs::Catalog(document_type.to_string()).render()?;
 

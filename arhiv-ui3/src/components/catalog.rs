@@ -3,7 +3,7 @@ use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{markup::ArhivMarkupExt, templates::TEMPLATES, ui_config::CatalogConfig};
+use crate::{markup::ArhivMarkupExt, templates::TEMPLATES};
 use arhiv_core::{entities::*, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::RequestQueryExt;
 
@@ -64,6 +64,28 @@ struct CatalogGroup {
     name: &'static str,
     open: bool,
     items: Vec<CatalogEntry>,
+}
+
+pub struct CatalogConfig {
+    pub group_by: Option<CatalogGroupBy>,
+    pub preview: Option<&'static str>,
+    pub fields: Vec<&'static str>,
+}
+
+impl Default for CatalogConfig {
+    fn default() -> Self {
+        CatalogConfig {
+            group_by: None,
+            preview: None,
+            fields: vec![],
+        }
+    }
+}
+
+pub struct CatalogGroupBy {
+    pub field: &'static str,
+    pub open_groups: Vec<&'static str>,
+    pub skip_empty_groups: bool,
 }
 
 const PAGE_SIZE: u8 = 14;

@@ -7,7 +7,7 @@ use serde_json::json;
 use crate::{
     components::{Breadcrumbs, Catalog},
     markup::ArhivMarkupExt,
-    ui_config::CatalogConfig,
+    ui_config::UIConfig,
     utils::render_page,
 };
 use arhiv_core::{
@@ -61,7 +61,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             )
             .render(
                 arhiv,
-                CatalogConfig::get_child_config(&document.document_type, &collection.item_type),
+                UIConfig::get_child_config(&document.document_type, &collection.item_type).catalog,
             )?;
 
         children_catalog = Some(catalog);

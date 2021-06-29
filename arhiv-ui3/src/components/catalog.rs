@@ -3,8 +3,8 @@ use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{markup::ArhivMarkupExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
+use crate::{markup::MarkupStringExt, templates::TEMPLATES};
+use arhiv_core::{entities::*, markup::MarkupStr, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
 use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
@@ -29,13 +29,12 @@ impl CatalogEntry {
         let mut preview = None;
 
         if let Some(preview_field) = config.preview {
-            preview = Some(
-                arhiv.render_preview(
-                    document
-                        .get_field_str(preview_field)
-                        .ok_or(anyhow!("preview field missing"))?,
-                ),
-            );
+            let markup: MarkupStr = document
+                .get_field_str(preview_field)
+                .ok_or(anyhow!("preview field missing"))?
+                .into();
+
+            preview = Some(markup.preview(4).to_html(arhiv))
         }
 
         let fields = config

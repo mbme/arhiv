@@ -1,22 +1,26 @@
-use crate::entities::*;
-use pulldown_cmark::{Event, Options, Parser, Tag};
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::convert::From;
 
-use super::utils::extract_id;
+use pulldown_cmark::{Event, Options, Parser, Tag};
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct MarkupStr<'a>(&'a str);
+use super::utils::extract_id;
+use crate::entities::*;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum MarkupStr<'a> {
+    Ref(&'a str),
+    Owned(String),
+}
 
 impl<'a> MarkupStr<'a> {
-    pub(crate) fn parse(&self) -> Parser {
+    pub fn parse(&self) -> Parser {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
         options.insert(Options::ENABLE_TABLES);
         options.insert(Options::ENABLE_TASKLISTS);
 
-        Parser::new_ext(self.0, options)
+        Parser::new_ext(self.as_ref(), options)
     }
 
     pub fn extract_refs(&self) -> HashSet<Id> {
@@ -37,10 +41,34 @@ impl<'a> MarkupStr<'a> {
 
         refs
     }
+
+    pub fn preview(&self, lines: usize) -> Self {
+        self.as_ref()
+            .lines()
+            .take(lines)
+            .collect::<Vec<_>>()
+            .join("\n")
+            .into()
+    }
+}
+
+impl<'a> AsRef<str> for MarkupStr<'a> {
+    fn as_ref(&self) -> &str {
+        match self {
+            MarkupStr::Ref(s) => s,
+            MarkupStr::Owned(s) => &s,
+        }
+    }
 }
 
 impl<'a> From<&'a str> for MarkupStr<'a> {
     fn from(value: &'a str) -> Self {
-        MarkupStr(value)
+        MarkupStr::Ref(value)
+    }
+}
+
+impl<'a> From<String> for MarkupStr<'a> {
+    fn from(value: String) -> Self {
+        MarkupStr::Owned(value)
     }
 }

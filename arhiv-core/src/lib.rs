@@ -13,3 +13,5 @@ mod tests;
 
 pub use crate::arhiv::*;
 pub use config::Config;
+
+pub use pulldown_cmark;

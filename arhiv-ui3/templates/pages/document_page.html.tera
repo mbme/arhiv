@@ -39,7 +39,7 @@
   {{ children_catalog | safe }}
   {% endif %}
 
-  {% if document.refs | length > 0 %}
+  {% if refs | length > 0 %}
   <details class="mb-12 bg-gray-100">
     <summary class="cursor-pointer p-2">
       <h3 class="section-heading text-gray-700 inline-block">
@@ -48,9 +48,9 @@
     </summary>
 
     <div class="px-2 py-4">
-      {% for ref in document.refs %}
+      {% for ref in refs %}
       <div class="mb-4">
-        <a href="/documents/{{ref}}">{{ref}}</a>
+        {{ref | safe}}
       </div>
       {% endfor %}
     </div>

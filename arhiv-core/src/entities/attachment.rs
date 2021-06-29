@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{convert::TryInto, ops::Deref};
 
 use anyhow::*;
 use serde::{Deserialize, Serialize};
@@ -48,6 +48,15 @@ impl Attachment {
     pub fn get_filename(&self) -> String {
         self.get_data().filename
     }
+
+    pub fn is_image(&self) -> bool {
+        let filename = self.get_filename().to_lowercase();
+
+        return filename.ends_with(".png")
+            || filename.ends_with(".jpg")
+            || filename.ends_with(".jpeg")
+            || filename.ends_with(".svg");
+    }
 }
 
 impl Deref for Attachment {
@@ -61,6 +70,14 @@ impl Deref for Attachment {
 impl Into<Document> for Attachment {
     fn into(self) -> Document {
         self.0
+    }
+}
+
+impl TryInto<Attachment> for Document {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Attachment, Self::Error> {
+        Attachment::from(self)
     }
 }
 

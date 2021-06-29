@@ -38,6 +38,12 @@ impl From<String> for Id {
     }
 }
 
+impl From<&Id> for Id {
+    fn from(value: &Id) -> Self {
+        value.clone()
+    }
+}
+
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)

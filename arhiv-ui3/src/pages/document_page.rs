@@ -5,8 +5,8 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{
-    components::{Breadcrumb, Catalog, Toolbar},
-    markup::ArhivMarkupExt,
+    components::{Breadcrumb, Catalog, Ref, Toolbar},
+    markup::MarkupStringExt,
     ui_config::UIConfig,
     utils::render_page,
 };
@@ -80,11 +80,18 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let toolbar = toolbar.render()?;
 
+    let refs = document
+        .refs
+        .iter()
+        .map(|id| Ref::new(id).render(arhiv))
+        .collect::<Result<Vec<_>>>()?;
+
     render_page(
         "pages/document_page.html.tera",
         json!({
             "toolbar": toolbar,
             "fields": fields,
+            "refs": refs,
             "document": document,
             "is_internal_type": data_description.is_internal,
             "children_catalog": children_catalog,
@@ -114,14 +121,14 @@ fn prepare_fields(
 
                     Ok(Field {
                         name: field.name,
-                        value: arhiv.render_markup(&markup),
+                        value: markup.to_html(arhiv),
                         is_safe: true,
                         is_title,
                     })
                 }
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
-                    value: format!("<a href=\"/documents/{0}\">{0}</a>", value),
+                    value: Ref::new(value).render_images().render(arhiv)?,
                     is_safe: true,
                     is_title,
                 }),

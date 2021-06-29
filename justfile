@@ -24,7 +24,8 @@ web3:
   cd arhiv-ui3; tmux new-session -s arhiv-ui3 \
      'watchexec -r -d 4000 --exts rs -- "notify-send Restarting... -t 2000; cargo run"' \; \
      split-window -h 'yarn watch:js' \; \
-     split-window 'yarn watch:css'
+     split-window 'yarn watch:css' \; \
+     select-pane -t 0
 
 prod-build-install:
   cd {{invocation_directory()}}; cp PKGBUILD.template PKGBUILD; makepkg -efi; rm -rf pkg; rm *.pkg.tar.zst; rm PKGBUILD

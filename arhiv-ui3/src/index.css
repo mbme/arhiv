@@ -53,11 +53,12 @@ main {
   width: 100%;
   max-width: var(--max-width);
   background-color: var(--bg-color);
-  @apply my-8 shadow;
+
+  @apply my-6 shadow flex flex-col;
 }
 
 #content {
-  @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8;
+  @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8 flex-grow;
 }
 
 a:not(.clean-link) {

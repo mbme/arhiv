@@ -56,33 +56,33 @@
     </div>
   </details>
   {% endif %}
+</div>
 
-  <div class="flex flex-col items-end text-xs text-gray-400 text-mono">
-    <div>
-      Updated
-      <time datetime="{{document.updatedAt}}">
-        {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
-      </time>
-    </div>
-
-    {% if not is_internal_type %}
-    <div class="mt-4">
-      <a href="/documents/{{document.id}}/archive">
-        {% if document.archived %}
-        Unarchive
-        {% else %}
-        Archive
-        {% endif %}
-      </a>
-
-      /
-
-      <a href="/documents/{{document.id}}/delete">
-        Delete
-      </a>
-    </div>
-    {% endif %}
+<div class="flex flex-col items-end text-xs text-gray-400 text-mono pb-8 pr-8">
+  <div>
+    Updated
+    <time datetime="{{document.updatedAt}}">
+      {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+    </time>
   </div>
+
+  {% if not is_internal_type %}
+  <div class="mt-4">
+    <a href="/documents/{{document.id}}/archive">
+      {% if document.archived %}
+      Unarchive
+      {% else %}
+      Archive
+      {% endif %}
+    </a>
+
+    /
+
+    <a href="/documents/{{document.id}}/delete">
+      Delete
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 {% endblock %}

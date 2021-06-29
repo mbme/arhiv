@@ -61,7 +61,8 @@ impl CatalogEntry {
 
 #[derive(Serialize)]
 struct CatalogGroup {
-    name: &'static str,
+    field: &'static str,
+    value: &'static str,
     open: bool,
     items: Vec<CatalogEntry>,
 }
@@ -194,7 +195,8 @@ impl Catalog {
                 .get_enum_values()?
                 .into_iter()
                 .map(|enum_value| CatalogGroup {
-                    name: enum_value,
+                    field: group_by.field,
+                    value: enum_value,
                     open: false,
                     items: vec![],
                 })
@@ -207,10 +209,10 @@ impl Catalog {
 
                 let mut group = groups
                     .iter_mut()
-                    .find(|group| group.name == key)
+                    .find(|group| group.value == key)
                     .ok_or(anyhow!("can't find group"))?;
 
-                group.open = group_by.open_groups.contains(&group.name);
+                group.open = group_by.open_groups.contains(&group.value);
 
                 group
                     .items

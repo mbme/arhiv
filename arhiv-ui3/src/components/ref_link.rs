@@ -1,54 +1,96 @@
 use anyhow::*;
 use serde::Serialize;
-use serde_json::json;
+use serde_json::Value;
 
 use crate::templates::TEMPLATES;
-use arhiv_core::{entities::Id, schema::SCHEMA, Arhiv};
+use arhiv_core::{
+    entities::{Attachment, Id},
+    schema::SCHEMA,
+    Arhiv,
+};
+use rs_utils::log;
 
 #[derive(Serialize)]
-struct RefOptions {
-    render_images: bool,
+#[serde(tag = "mode")]
+enum RefMode<'a> {
+    Ref {
+        id: &'a Id,
+        document_type: &'a str,
+        title: &'a str,
+    },
+    Unknown {
+        id: &'a Id,
+    },
+    Image {
+        id: &'a Id,
+        title: &'a str,
+    },
 }
 
 pub struct Ref {
     id: Id,
-    options: RefOptions,
+    preview_attachments: bool,
 }
 
 impl Ref {
     pub fn new(id: impl Into<Id>) -> Self {
         Ref {
             id: id.into(),
-            options: RefOptions {
-                render_images: false,
-            },
+            preview_attachments: false,
         }
     }
 
-    pub fn render_images(mut self) -> Self {
-        self.options.render_images = true;
+    pub fn preview_attachments(&mut self) -> &mut Self {
+        self.preview_attachments = true;
 
         self
     }
 
-    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
-        let document = arhiv.get_document(&self.id)?;
+    fn get_context(&self, arhiv: &Arhiv) -> Result<Value> {
+        let document = {
+            match arhiv.get_document(&self.id)? {
+                Some(document) => document,
+                None => {
+                    log::warn!("Got broken reference: {}", &self.id);
 
-        let context = if let Some(document) = document {
+                    return serde_json::to_value(RefMode::Unknown { id: &self.id })
+                        .context("failed to serialize");
+                }
+            }
+        };
+
+        if !Attachment::is_attachment(&document) {
             let title = SCHEMA.get_title(&document)?;
 
-            json!({
-                "id": self.id, //
-                "unknown": false,
-                "document_type": document.document_type,
-                "title": title,
+            return serde_json::to_value(RefMode::Ref {
+                id: &document.id,
+                document_type: &document.document_type,
+                title,
             })
-        } else {
-            json!({
-                "id": self.id, //
-                "unknown": true,
+            .context("failed to serialize");
+        }
+
+        let attachment = Attachment::from(document)?;
+        let title = SCHEMA.get_title(&attachment)?;
+
+        if attachment.is_image() {
+            return serde_json::to_value(RefMode::Image {
+                id: &attachment.id,
+                title,
             })
-        };
+            .context("failed to serialize");
+        }
+
+        serde_json::to_value(RefMode::Ref {
+            id: &attachment.id,
+            document_type: &attachment.document_type,
+            title,
+        })
+        .context("failed to serialize")
+    }
+
+    pub fn render(&self, arhiv: &Arhiv) -> Result<String> {
+        let context = self.get_context(&arhiv)?;
 
         TEMPLATES.render("components/ref_link.html.tera", context)
     }

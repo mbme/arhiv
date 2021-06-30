@@ -1,10 +1,10 @@
 use arhiv_core::{
-    entities::Attachment,
     markup::{extract_id, MarkupStr},
-    pulldown_cmark::{html, Event, LinkType, Tag},
+    pulldown_cmark::{html, Event, Tag},
     Arhiv,
 };
-use rs_utils::log::warn;
+
+use crate::components::Ref;
 
 pub trait MarkupStringExt {
     fn to_html(&self, arhiv: &Arhiv) -> String;
@@ -12,16 +12,20 @@ pub trait MarkupStringExt {
 
 impl<'ms> MarkupStringExt for MarkupStr<'ms> {
     fn to_html(&self, arhiv: &Arhiv) -> String {
-        let mut autolink_text: Option<String> = None;
+        let mut matched = false;
 
         let parser = self.parse().map(|event| -> Event {
             // FIXME handle images
             match event {
-                // replace default autolink text with normalized title
-                Event::Text(_) if autolink_text.is_some() => {
-                    return Event::Text(autolink_text.take().unwrap().into());
+                Event::Text(_) if matched => {
+                    // ignore text inside link
+                    return Event::Text("".into());
                 }
-                Event::Start(Tag::Link(ref link_type, ref destination, ref title)) => {
+                Event::End(Tag::Link(_, _, _)) if matched => {
+                    matched = false;
+                    return Event::Text("".into());
+                }
+                Event::Start(Tag::Link(ref _link_type, ref destination, ref _title)) => {
                     let id = match extract_id(destination) {
                         Some(id) => id,
                         None => {
@@ -29,60 +33,14 @@ impl<'ms> MarkupStringExt for MarkupStr<'ms> {
                         }
                     };
 
-                    let normalized_title: String = if title.is_empty() {
-                        id.to_string()
-                    } else {
-                        title.to_string()
-                    };
+                    matched = true;
 
-                    // if autolink, save normalized title to use it in the text node
-                    match link_type {
-                        LinkType::Autolink => {
-                            autolink_text = Some(normalized_title.clone());
-                        }
-                        _ => {}
-                    };
+                    let link = Ref::new(id)
+                        .preview_attachments()
+                        .render(arhiv)
+                        .expect("failed to render ref");
 
-                    let document = arhiv
-                        .get_document(&id)
-                        .expect("must be able to get document");
-
-                    let document = {
-                        match document {
-                            Some(document) => document,
-                            None => {
-                                warn!(
-                                    "Got broken reference: {} ({:?} {} {})",
-                                    &id, link_type, destination, title
-                                );
-
-                                return event;
-                            }
-                        }
-                    };
-
-                    if !Attachment::is_attachment(&document) {
-                        // FIXME extract title
-                        // render Document Link
-                        return link_event(normalized_title, format!("/documents/{}", id));
-                    }
-
-                    let attachment_location = format!("/attachment-data/{}", id);
-
-                    let attachment =
-                        Attachment::from(document).expect("document must be attachment");
-
-                    // render Image
-                    if attachment.is_image() {
-                        return Event::Start(Tag::Image(
-                            LinkType::Inline,
-                            attachment_location.into(),
-                            normalized_title.into(),
-                        ));
-                    }
-
-                    // render Attachment Link
-                    return link_event(attachment_location, normalized_title);
+                    return Event::Html(link.into());
                 }
                 _ => event,
             }
@@ -93,12 +51,4 @@ impl<'ms> MarkupStringExt for MarkupStr<'ms> {
 
         html_output
     }
-}
-
-fn link_event<'a>(title: String, destination: String) -> Event<'a> {
-    Event::Start(Tag::Link(
-        LinkType::Inline,
-        destination.into(),
-        title.into(),
-    ))
 }

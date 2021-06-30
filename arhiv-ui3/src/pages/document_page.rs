@@ -22,11 +22,18 @@ use rs_utils::{
 };
 
 #[derive(Serialize)]
+enum FieldKind {
+    Title,
+    Markup,
+    Ref,
+    String,
+}
+
+#[derive(Serialize)]
 struct Field {
     name: &'static str,
     value: String,
-    is_safe: bool,
-    is_title: bool,
+    kind: FieldKind,
 }
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
@@ -122,21 +129,22 @@ fn prepare_fields(
                     Ok(Field {
                         name: field.name,
                         value: markup.to_html(arhiv),
-                        is_safe: true,
-                        is_title,
+                        kind: FieldKind::Markup,
                     })
                 }
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
-                    value: Ref::new(value).render_images().render(arhiv)?,
-                    is_safe: true,
-                    is_title,
+                    value: Ref::new(value).preview_attachments().render(arhiv)?,
+                    kind: FieldKind::Ref,
                 }),
                 _ => Ok(Field {
                     name: field.name,
                     value: value.unwrap_or("").to_string(),
-                    is_safe: true,
-                    is_title,
+                    kind: if is_title {
+                        FieldKind::Title
+                    } else {
+                        FieldKind::String
+                    },
                 }),
             }
         })

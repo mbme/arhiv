@@ -1,11 +1,11 @@
-{% if unknown %}
+{% if mode == "Unknown" %}
 <a
   href="/documents/{{id}}"
   class="bg-red-400 bg-opacity-50 px-2 py-1 rounded-sm"
 >
   {{ id }}
 </a>
-{% else %}
+{% elif mode == "Ref" %}
 <a
   href="/documents/{{id}}"
   class="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm"
@@ -14,5 +14,16 @@
     {{document_type}}
   </span>
   {{ title }}
+</a>
+{% elif mode == "Image" %}
+<a
+  href="/documents/{{id}}"
+  class="block"
+>
+  <img
+    src="/attachment-data/{{id}}"
+    alt="{{title}}"
+    class="max-h-96"
+  />
 </a>
 {% endif %}

@@ -40,9 +40,6 @@
   {% endif %}
   >
   <summary class="cursor-pointer font-mono text-gray-700">
-    <span class="uppercase text-gray-400 inline-block">
-      {{group.field}}
-    </span>
     <span class="text-2xl font-semibold align-middle">
       {{group.value}}
     </span>

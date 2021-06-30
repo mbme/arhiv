@@ -60,7 +60,6 @@ impl CatalogEntry {
 
 #[derive(Serialize)]
 struct CatalogGroup {
-    field: &'static str,
     value: &'static str,
     open: bool,
     items: Vec<CatalogEntry>,
@@ -194,7 +193,6 @@ impl Catalog {
                 .get_enum_values()?
                 .into_iter()
                 .map(|enum_value| CatalogGroup {
-                    field: group_by.field,
                     value: enum_value,
                     open: false,
                     items: vec![],

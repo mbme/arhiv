@@ -56,8 +56,8 @@
   {% endif %}
 </div>
 
-<div class="flex flex-col items-end text-xs text-gray-400 text-mono pb-8 pr-8">
-  <div>
+<div class="flex flex-col items-end text-gray-400 text-mono pb-8 pr-4 md:pr-6 lg:pr-12">
+  <div class="text-xs">
     Updated
     <time datetime="{{document.updatedAt}}">
       {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
@@ -65,7 +65,7 @@
   </div>
 
   {% if not is_internal_type %}
-  <div class="mt-4">
+  <div class="mt-4 text-sm">
     <a href="/documents/{{document.id}}/archive">
       {% if document.archived %}
       Unarchive

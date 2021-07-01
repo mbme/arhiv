@@ -145,24 +145,32 @@ a:not(.clean-link) {
 
   .btn {
     @apply py-2 px-6 rounded-sm border-2;
-    @apply hover:shadow-lg;
     @apply focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 focus:border-opacity-0;
+    @apply font-semibold tracking-wide cursor-pointer;
 
-    cursor: pointer;
+    @apply text-blue-600 hover:text-blue-700 hover:bg-blue-200 hover:bg-opacity-20;
+
+    &.btn-simple {
+      @apply border-opacity-0;
+      @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
+    }
 
     &.btn-prime {
-      @apply text-white bg-blue-500 rounded-md;
-      @apply hover:bg-blue-600;
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-blue-500 hover:bg-blue-600;
     }
 
     &.btn-warn {
-      @apply text-white bg-yellow-500 rounded-md;
-      @apply hover:bg-yellow-600;
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-yellow-500 hover:bg-yellow-600;
     }
 
     &.btn-danger {
-      @apply text-white bg-red-500 rounded-md;
-      @apply hover:bg-red-600;
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-red-500 hover:bg-red-600;
     }
   }
 
@@ -185,7 +193,7 @@ a:not(.clean-link) {
 
   .modal-title {
     @apply text-lg font-bold tracking-wider uppercase rounded-t-md;
-    @apply p-2 sm:p-4 md:p-6;
+    @apply p-2 sm:p-4 md:px-6;
   }
 
   .modal-content {
@@ -194,7 +202,7 @@ a:not(.clean-link) {
 
   .modal-buttons {
     @apply flex justify-end bg-gray-50 rounded-b-md;
-    @apply p-2 sm:p-4 md:p-6;
+    @apply p-2 sm:p-4 md:px-6;
   }
 }
 

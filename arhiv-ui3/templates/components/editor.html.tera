@@ -55,7 +55,7 @@
   <div class="flex justify-between py-2 mt-12 bg-white sticky bottom-0">
     <button
       type="button"
-      class="btn"
+      class="btn btn-simple"
       onclick="arhiv_ui.pick_attachment()"
     >
       New Attachment
@@ -64,7 +64,7 @@
     <div>
       <button
         type="button"
-        class="btn mr-8"
+        class="btn btn-simple mr-8"
         onclick="arhiv_ui.go_back()"
       >
         Cancel

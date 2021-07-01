@@ -1,5 +1,5 @@
 <div class="px-2 py-4 md:px-6 lg:px-8 flex justify-between items-center bg-blue-50">
-  <ul class="flex font-mono tracking-wide">
+  <ul class="flex font-mono tracking-wide text-gray-600">
     {% for breadcrumb in breadcrumbs %}
     {% if not loop.first %}
     <li class="mx-2">

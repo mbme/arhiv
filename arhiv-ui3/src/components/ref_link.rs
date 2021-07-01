@@ -59,7 +59,7 @@ impl Ref {
             }
         };
 
-        if !Attachment::is_attachment(&document) {
+        if !self.preview_attachments || !Attachment::is_attachment(&document) {
             let title = SCHEMA.get_title(&document)?;
 
             return serde_json::to_value(RefMode::Ref {

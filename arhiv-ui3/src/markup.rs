@@ -35,7 +35,7 @@ impl<'ms> MarkupStringExt for MarkupStr<'ms> {
 
                     matched = true;
 
-                    let link = Ref::new(id)
+                    let link = Ref::from_id(id)
                         .preview_attachments()
                         .render(arhiv)
                         .expect("failed to render ref");

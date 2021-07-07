@@ -44,6 +44,12 @@ impl From<&Id> for Id {
     }
 }
 
+impl From<Id> for String {
+    fn from(value: Id) -> Self {
+        value.0
+    }
+}
+
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)

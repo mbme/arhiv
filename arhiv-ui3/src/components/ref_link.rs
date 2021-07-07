@@ -3,11 +3,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::templates::TEMPLATES;
-use arhiv_core::{
-    entities::{Attachment, Id},
-    schema::SCHEMA,
-    Arhiv,
-};
+use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
 use rs_utils::log;
 
 #[derive(Serialize)]
@@ -28,36 +24,49 @@ enum RefMode<'a> {
     },
 }
 
+enum RefInfo {
+    Id(Id),
+    Document(Document),
+}
+
 pub struct Ref {
-    id: Id,
+    info: RefInfo,
     preview_attachments: bool,
 }
 
 impl Ref {
-    pub fn new(id: impl Into<Id>) -> Self {
+    pub fn from_id(id: impl Into<Id>) -> Self {
         Ref {
-            id: id.into(),
+            info: RefInfo::Id(id.into()),
             preview_attachments: false,
         }
     }
 
-    pub fn preview_attachments(&mut self) -> &mut Self {
+    pub fn from_document(document: Document) -> Self {
+        Ref {
+            info: RefInfo::Document(document),
+            preview_attachments: false,
+        }
+    }
+
+    pub fn preview_attachments(mut self) -> Self {
         self.preview_attachments = true;
 
         self
     }
 
-    fn get_context(&self, arhiv: &Arhiv) -> Result<Value> {
-        let document = {
-            match arhiv.get_document(&self.id)? {
+    fn get_context(self, arhiv: &Arhiv) -> Result<Value> {
+        let document = match self.info {
+            RefInfo::Id(ref id) => match arhiv.get_document(id)? {
                 Some(document) => document,
                 None => {
-                    log::warn!("Got broken reference: {}", &self.id);
+                    log::warn!("Got broken reference: {}", id);
 
-                    return serde_json::to_value(RefMode::Unknown { id: &self.id })
+                    return serde_json::to_value(RefMode::Unknown { id })
                         .context("failed to serialize");
                 }
-            }
+            },
+            RefInfo::Document(document) => document,
         };
 
         if !self.preview_attachments || !Attachment::is_attachment(&document) {
@@ -92,7 +101,7 @@ impl Ref {
         .context("failed to serialize")
     }
 
-    pub fn render(&self, arhiv: &Arhiv) -> Result<String> {
+    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let context = self.get_context(&arhiv)?;
 
         TEMPLATES.render("components/ref_link.html.tera", context)

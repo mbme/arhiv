@@ -11,6 +11,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use rs_utils::log;
 
 use super::dto::*;
+use super::filter::*;
 use super::query_builder::QueryBuilder;
 use super::utils;
 use crate::entities::*;
@@ -158,6 +159,10 @@ pub trait Queries {
                 }
                 Matcher::Type { document_type } => {
                     qb.where_condition(format!("type = {}", qb.param(document_type)));
+                }
+                Matcher::Ref { id } => {
+                    qb.and_from("json_each(refs)");
+                    qb.where_condition(format!("json_each.value = {}", qb.param(id)));
                 }
             }
         }
@@ -308,21 +313,6 @@ pub trait Queries {
         } else {
             Ok(None)
         }
-    }
-
-    fn get_document_backrefs(&self, id: &Id) -> Result<Vec<Id>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT documents.id FROM documents, json_each(refs) WHERE json_each.value = ?1",
-        )?;
-
-        let mut rows = stmt.query_and_then([id], utils::extract_id)?;
-
-        let mut result = vec![];
-        while let Some(entry) = rows.next() {
-            result.push(entry?);
-        }
-
-        Ok(result)
     }
 }
 

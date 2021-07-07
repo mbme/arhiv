@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{markup::MarkupStringExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, markup::MarkupStr, schema::SCHEMA, Arhiv, Filter, Matcher, OrderBy};
+use arhiv_core::{entities::*, markup::MarkupStr, schema::SCHEMA, Arhiv, Filter, Matcher};
 use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
@@ -109,17 +109,11 @@ impl Catalog {
         let document_type = document_type.into();
         let pattern = pattern.into();
 
-        let mut filter = Filter::default();
-
-        filter.matchers.push(Matcher::Type {
-            document_type: document_type.clone(),
-        });
-        filter.matchers.push(Matcher::Search {
-            pattern: pattern.clone(),
-        });
-        filter.page_size = None;
-        filter.page_offset = None;
-        filter.order.push(OrderBy::UpdatedAt { asc: false });
+        let filter = Filter::default()
+            .with_type(&document_type)
+            .search(&pattern)
+            .all_items()
+            .recently_updated_first();
 
         Catalog {
             filter,

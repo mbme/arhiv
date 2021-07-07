@@ -14,7 +14,7 @@ use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
     schema::{DataDescription, FieldType, SCHEMA},
-    Arhiv, Matcher,
+    Arhiv, Filter, Matcher,
 };
 use rs_utils::{
     query_builder,
@@ -90,13 +90,14 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let refs = document
         .refs
         .iter()
-        .map(|id| Ref::new(id).render(arhiv))
+        .map(|id| Ref::from_id(id).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
     let backrefs = arhiv
-        .get_document_backrefs(&document.id)?
+        .list_documents(Filter::backrefs(&document.id))?
+        .items
         .into_iter()
-        .map(|id| Ref::new(id).render(arhiv))
+        .map(|document| Ref::from_document(document).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
     render_page(
@@ -141,7 +142,7 @@ fn prepare_fields(
                 }
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
-                    value: Ref::new(value).preview_attachments().render(arhiv)?,
+                    value: Ref::from_id(value).preview_attachments().render(arhiv)?,
                     kind: FieldKind::Ref,
                 }),
                 _ => Ok(Field {

@@ -11,10 +11,7 @@ fn test_pagination() -> Result<()> {
     arhiv.stage_document(empty_document())?;
     arhiv.stage_document(empty_document())?;
 
-    let page = arhiv.list_documents(Filter {
-        page_size: Some(1),
-        ..Filter::default()
-    })?;
+    let page = arhiv.list_documents(Filter::default().page_size(1))?;
 
     assert_eq!(page.items.len(), 1);
     assert_eq!(page.has_more, true);

@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 pub struct QueryBuilder {
     what: Vec<String>,
-    from: Option<String>,
+    from: Vec<String>,
     where_conditions: Vec<String>,
     order_by_conditions: Vec<String>,
     limit: Option<i32>,
@@ -15,7 +15,7 @@ impl QueryBuilder {
     pub fn new() -> Self {
         QueryBuilder {
             what: vec![],
-            from: None,
+            from: vec![],
             where_conditions: vec![],
             order_by_conditions: vec![],
             limit: None,
@@ -39,7 +39,11 @@ impl QueryBuilder {
 
     pub fn select(&mut self, what: &str, from: &str) {
         self.what.push(what.into());
-        self.from = Some(from.to_string());
+        self.from.push(from.to_string());
+    }
+
+    pub fn and_from(&mut self, from: &str) {
+        self.from.push(from.to_string());
     }
 
     pub fn where_condition<S: Into<String>>(&mut self, condition: S) {
@@ -63,10 +67,12 @@ impl QueryBuilder {
     }
 
     pub fn build(self) -> (String, Vec<String>) {
+        assert!(self.from.len() > 0, "FROM must be specified");
+
         let mut query = format!(
             "SELECT {} FROM {}",
             self.what.join(", "),
-            self.from.expect("FROM must be specified")
+            self.from.join(", "),
         );
 
         if !self.where_conditions.is_empty() {

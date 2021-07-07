@@ -129,12 +129,6 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn get_document_backrefs(&self, id: &Id) -> Result<Vec<Id>> {
-        let conn = self.db.get_connection()?;
-
-        conn.get_document_backrefs(id)
-    }
-
     pub fn stage_document(&self, updated_document: Document) -> Result<()> {
         log::debug!("Staging document {}", &updated_document.id);
 

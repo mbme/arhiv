@@ -98,6 +98,7 @@ impl DataDescription {
 
         Ok(result)
     }
+
     pub fn pick_title_field(&self) -> Result<&Field> {
         self.fields
             .iter()
@@ -139,6 +140,10 @@ impl DataDescription {
                 name,
                 self.document_type
             ))
+    }
+
+    pub fn is_collection(&self) -> bool {
+        self.collection_of.is_some()
     }
 }
 

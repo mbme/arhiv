@@ -29,6 +29,10 @@ pub fn extract_document(row: &Row) -> Result<Document> {
     })
 }
 
+pub fn extract_id(row: &Row) -> Result<Id> {
+    row.get("id").context(anyhow!("failed to extract id"))
+}
+
 struct SearchScore {
     values: Vec<usize>,
 }

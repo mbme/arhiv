@@ -93,12 +93,19 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         .map(|id| Ref::new(id).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
+    let backrefs = arhiv
+        .get_document_backrefs(&document.id)?
+        .into_iter()
+        .map(|id| Ref::new(id).render(arhiv))
+        .collect::<Result<Vec<_>>>()?;
+
     render_page(
         "pages/document_page.html.tera",
         json!({
             "toolbar": toolbar,
             "fields": fields,
             "refs": refs,
+            "backrefs": backrefs,
             "document": document,
             "is_internal_type": data_description.is_internal,
             "children_catalog": children_catalog,

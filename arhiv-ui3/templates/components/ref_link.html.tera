@@ -12,6 +12,7 @@
 >
   <span class="font-mono uppercase text-gray-400">
     {{document_type}}
+    {% if archived %} [ARCHIVED] {% endif %}
   </span>
   {{ title }}
 </a>

@@ -17,6 +17,7 @@ enum RefMode<'a> {
         id: &'a Id,
         document_type: &'a str,
         title: &'a str,
+        archived: bool,
     },
     Unknown {
         id: &'a Id,
@@ -66,6 +67,7 @@ impl Ref {
                 id: &document.id,
                 document_type: &document.document_type,
                 title,
+                archived: document.archived,
             })
             .context("failed to serialize");
         }
@@ -85,6 +87,7 @@ impl Ref {
             id: &attachment.id,
             document_type: &attachment.document_type,
             title,
+            archived: attachment.archived,
         })
         .context("failed to serialize")
     }

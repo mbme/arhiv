@@ -185,9 +185,14 @@ fn calculate_search_score(ctx: &rusqlite::functions::Context) -> Result<u32> {
         return Ok(1);
     }
 
-    let data = SCHEMA
-        .get_data_description(document_type)?
-        .extract_search_data(document_data)?;
+    let result = {
+        if let Ok(data_description) = SCHEMA.get_data_description(document_type) {
+            let data = data_description.extract_search_data(document_data)?;
+            utils::multi_search(pattern, &data)
+        } else {
+            utils::multi_search(pattern, document_data)
+        }
+    };
 
-    Ok(utils::multi_search(pattern, &data))
+    Ok(result)
 }

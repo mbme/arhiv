@@ -149,7 +149,7 @@ impl DataSchema {
         self.modules
             .iter()
             .find(|module| module.document_type == document_type)
-            .ok_or(anyhow!("Unknown document type {}", document_type))
+            .ok_or(anyhow!("Unknown document type: {}", document_type))
     }
 
     pub fn update_refs(&self, document: &mut Document) -> Result<()> {

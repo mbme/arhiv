@@ -67,7 +67,7 @@ impl<'a> Faker<'a> {
         let mut data = SCHEMA
             .get_data_description(&document_type)
             .expect("document type must be valid")
-            .create_with_initial_values(initial_values)
+            .create(initial_values)
             .expect(&format!(
                 "Failed to create data for document_type {}",
                 document_type

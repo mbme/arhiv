@@ -26,7 +26,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let params = req.get_query_params();
 
-    let data = data_description.create_with_initial_values(params_into_document_data(params))?;
+    let data = data_description.create(params_into_document_data(params))?;
 
     let document = Document::new(document_type.clone(), data.into());
 

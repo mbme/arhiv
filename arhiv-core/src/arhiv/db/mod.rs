@@ -97,7 +97,9 @@ impl DB {
             move |ctx| {
                 assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
 
-                calculate_search_score(ctx).map_err(|e| RusqliteError::UserFunctionError(e.into()))
+                calculate_search_score(ctx)
+                    .context("calculate_search_score() failed")
+                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))
             },
         )
         .context(anyhow!("Failed to define calculate_search_score function"))

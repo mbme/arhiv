@@ -49,34 +49,12 @@ pub struct Collection {
 pub type DocumentData = Map<String, Value>;
 
 impl DataDescription {
-    pub fn create(&self) -> Result<DocumentData> {
-        self.create_with_initial_values(Map::new())
-    }
-
-    pub fn create_with_initial_values(&self, initial_values: DocumentData) -> Result<DocumentData> {
+    pub fn create(&self, initial_values: DocumentData) -> Result<DocumentData> {
         let mut result: DocumentData = Map::new();
 
         for field in &self.fields {
             if let Some(value) = initial_values.get(field.name) {
                 result.insert(field.name.to_string(), (*value).clone());
-                continue;
-            }
-
-            if field.optional {
-                continue;
-            }
-
-            match &field.field_type {
-                FieldType::String {} | FieldType::MarkupString {} => {
-                    result.insert(field.name.to_string(), Value::from(""));
-                }
-                FieldType::Enum(values) => {
-                    let value = values.get(0).expect("enum must contain values");
-                    result.insert(field.name.to_string(), Value::String(value.to_string()));
-                }
-                _ => {
-                    bail!("initial value for {:?} must be provided", field);
-                }
             }
         }
 

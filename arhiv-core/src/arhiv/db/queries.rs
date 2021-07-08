@@ -141,9 +141,11 @@ pub trait Queries {
                 Matcher::Field {
                     ref selector,
                     ref pattern,
+                    not,
                 } => {
                     qb.where_condition(format!(
-                        "json_extract(data, {}) = {}",
+                        "{} IFNULL(json_extract(data, {}), '') = {}",
+                        if not { "NOT" } else { "" },
                         qb.param(selector),
                         qb.param(pattern)
                     ));

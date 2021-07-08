@@ -9,6 +9,7 @@ pub enum Matcher {
     Field {
         selector: String,
         pattern: String,
+        not: bool,
     },
     Search {
         pattern: String,
@@ -108,6 +109,12 @@ impl Filter {
         self.matchers.push(Matcher::Search {
             pattern: pattern.into(),
         });
+
+        self
+    }
+
+    pub fn with_matcher(mut self, matcher: Matcher) -> Filter {
+        self.matchers.push(matcher);
 
         self
     }

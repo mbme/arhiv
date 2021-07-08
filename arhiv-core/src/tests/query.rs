@@ -176,6 +176,7 @@ async fn test_matcher() -> Result<()> {
             matchers: vec![Matcher::Field {
                 selector: "$.test".to_string(),
                 pattern: "value".to_string(),
+                not: false,
             }],
             ..Filter::default()
         })?;

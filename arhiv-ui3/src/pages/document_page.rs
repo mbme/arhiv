@@ -60,6 +60,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             .with_matcher(Matcher::Field {
                 selector: format!("$.{}", &document.document_type),
                 pattern: document.id.to_string(),
+                not: false,
             })
             .with_new_document_query(
                 query_builder()
@@ -94,7 +95,20 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         .collect::<Result<Vec<_>>>()?;
 
     let backrefs = arhiv
-        .list_documents(Filter::backrefs(&document.id))?
+        .list_documents({
+            let mut filter = Filter::backrefs(&document.id);
+
+            // ignore collection children
+            if data_description.is_collection() {
+                filter = filter.with_matcher(Matcher::Field {
+                    selector: format!("$.{}", &document.document_type),
+                    pattern: document.id.to_string(),
+                    not: true,
+                });
+            }
+
+            filter
+        })?
         .items
         .into_iter()
         .map(|document| Ref::from_document(document).render(arhiv))

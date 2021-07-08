@@ -7,7 +7,7 @@ use serde_json::json;
 use crate::{
     components::{Breadcrumb, Catalog, Toolbar},
     ui_config::UIConfig,
-    utils::render_page,
+    utils::ArhivPageExt,
 };
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
@@ -37,7 +37,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .on_close("/")
         .render()?;
 
-    render_page(
+    arhiv.render_page(
         "pages/catalog_page.html.tera",
         json!({
             "toolbar": toolbar,

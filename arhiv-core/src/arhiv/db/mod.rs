@@ -1,4 +1,5 @@
 use std::fs;
+use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::*;
@@ -8,7 +9,7 @@ use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 use rs_utils::log;
 
 use crate::entities::Id;
-use crate::schema::SCHEMA;
+use crate::schema::DataSchema;
 
 pub use attachment_data::AttachmentData;
 pub use blob::*;
@@ -30,8 +31,39 @@ mod queries;
 mod query_builder;
 pub mod utils;
 
+enum DocumentSearch {
+    SimpleSearch,
+    SchemaSearch(DataSchema),
+}
+
+impl DocumentSearch {
+    fn search(&self, document_type: &str, document_data: &str, pattern: &str) -> Result<u32> {
+        let score = match self {
+            Self::SimpleSearch => {
+                if document_data.contains(pattern) {
+                    1
+                } else {
+                    0
+                }
+            }
+
+            Self::SchemaSearch(schema) => {
+                if let Ok(data_description) = schema.get_data_description(document_type) {
+                    let data = data_description.extract_search_data(document_data)?;
+                    utils::multi_search(pattern, &data)
+                } else {
+                    utils::multi_search(pattern, document_data)
+                }
+            }
+        };
+
+        Ok(score)
+    }
+}
+
 pub struct DB {
     path_manager: PathManager,
+    document_search: Arc<DocumentSearch>,
 }
 
 impl DB {
@@ -42,7 +74,10 @@ impl DB {
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
-        Ok(DB { path_manager })
+        Ok(DB {
+            path_manager,
+            document_search: Arc::new(DocumentSearch::SimpleSearch),
+        })
     }
 
     pub fn create(root_dir: String) -> Result<DB> {
@@ -57,7 +92,14 @@ impl DB {
         // create tables
         conn.execute_batch(include_str!("./schema.sql"))?;
 
-        Ok(DB { path_manager })
+        Ok(DB {
+            path_manager,
+            document_search: Arc::new(DocumentSearch::SimpleSearch),
+        })
+    }
+
+    pub fn with_schema_search(&mut self, schema: DataSchema) {
+        self.document_search = Arc::new(DocumentSearch::SchemaSearch(schema));
     }
 
     pub fn get_db_file(&self) -> &str {
@@ -92,6 +134,8 @@ impl DB {
     }
 
     fn init_calculate_search_score_fn(&self, conn: &Connection) -> Result<()> {
+        let document_search = self.document_search.clone();
+
         conn.create_scalar_function(
             "calculate_search_score",
             3,
@@ -99,9 +143,20 @@ impl DB {
             move |ctx| {
                 assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
 
-                calculate_search_score(ctx)
-                    .context("calculate_search_score() failed")
-                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+                let document_type = ctx.get_raw(0).as_str().expect("document_type must be str");
+
+                let document_data = ctx.get_raw(1).as_str().expect("document_data must be str");
+
+                let pattern = ctx.get_raw(2).as_str().expect("pattern must be str");
+
+                if pattern.is_empty() {
+                    Ok(1)
+                } else {
+                    document_search
+                        .search(document_type, document_data, pattern)
+                        .context("calculate_search_score() failed")
+                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+                }
             },
         )
         .context(anyhow!("Failed to define calculate_search_score function"))
@@ -174,27 +229,4 @@ impl DB {
 
         Ok(())
     }
-}
-
-fn calculate_search_score(ctx: &rusqlite::functions::Context) -> Result<u32> {
-    let document_type = ctx.get_raw(0).as_str()?;
-
-    let document_data = ctx.get_raw(1).as_str()?;
-
-    let pattern = ctx.get_raw(2).as_str()?;
-
-    if pattern.is_empty() {
-        return Ok(1);
-    }
-
-    let result = {
-        if let Ok(data_description) = SCHEMA.get_data_description(document_type) {
-            let data = data_description.extract_search_data(document_data)?;
-            utils::multi_search(pattern, &data)
-        } else {
-            utils::multi_search(pattern, document_data)
-        }
-    };
-
-    Ok(result)
 }

@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{markup::MarkupStringExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, markup::MarkupStr, schema::SCHEMA, Arhiv, Filter, Matcher};
+use arhiv_core::{entities::*, markup::MarkupStr, Arhiv, Filter, Matcher};
 use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
@@ -18,7 +18,7 @@ struct CatalogEntry {
 
 impl CatalogEntry {
     pub fn new(document: Document, arhiv: &Arhiv, config: &CatalogConfig) -> Result<Self> {
-        let data_description = SCHEMA.get_data_description(&document.document_type)?;
+        let data_description = arhiv.schema.get_data_description(&document.document_type)?;
 
         let title_field = data_description.pick_title_field()?;
 
@@ -179,7 +179,7 @@ impl Catalog {
         let mut items: Vec<CatalogEntry> = vec![];
         let mut groups: Vec<CatalogGroup> = vec![];
 
-        let data_description = SCHEMA.get_data_description(&self.document_type)?;
+        let data_description = arhiv.schema.get_data_description(&self.document_type)?;
 
         if let Some(ref group_by) = config.group_by {
             groups = data_description

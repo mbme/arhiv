@@ -8,7 +8,9 @@ pub use self::db::{
 use self::network_service::NetworkService;
 use self::status::Status;
 use crate::config::Config;
+use crate::data_definitions::get_data_definitions;
 use crate::entities::*;
+use crate::schema::DataSchema;
 use rs_utils::log;
 
 mod backup;
@@ -20,6 +22,7 @@ mod sync;
 pub struct Arhiv {
     pub config: Config,
     pub(crate) db: DB,
+    pub schema: DataSchema,
 }
 
 impl Arhiv {
@@ -34,7 +37,11 @@ impl Arhiv {
     }
 
     pub fn open_with_config(config: Config) -> Result<Arhiv> {
-        let db = DB::open(config.arhiv_root.to_string())?;
+        let mut schema = DataSchema::new();
+        schema.modules.append(&mut get_data_definitions());
+
+        let mut db = DB::open(config.arhiv_root.to_string())?;
+        db.with_schema_search(schema.clone());
 
         // check app and db version
         {
@@ -52,7 +59,7 @@ impl Arhiv {
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
 
-        Ok(Arhiv { config, db })
+        Ok(Arhiv { config, db, schema })
     }
 
     pub fn create(config: Config, arhiv_id: String, prime: bool) -> Result<Arhiv> {
@@ -63,7 +70,11 @@ impl Arhiv {
             config.arhiv_root
         );
 
-        let db = DB::create(config.arhiv_root.to_string())?;
+        let mut schema = DataSchema::new();
+        schema.modules.append(&mut get_data_definitions());
+
+        let mut db = DB::create(config.arhiv_root.to_string())?;
+        db.with_schema_search(schema.clone());
 
         let tx = db.get_tx()?;
 
@@ -77,7 +88,7 @@ impl Arhiv {
 
         log::info!("Created arhiv in {}", config.arhiv_root);
 
-        Ok(Arhiv { config, db })
+        Ok(Arhiv { config, db, schema })
     }
 
     pub(crate) fn get_network_service(&self) -> Result<NetworkService> {
@@ -129,7 +140,7 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document(&self, updated_document: Document) -> Result<()> {
+    pub fn stage_document(&self, mut updated_document: Document) -> Result<()> {
         log::debug!("Staging document {}", &updated_document.id);
 
         ensure!(
@@ -141,6 +152,8 @@ impl Arhiv {
             !updated_document.is_tombstone(),
             "deleted documents must not be updated"
         );
+
+        self.schema.update_refs(&mut updated_document)?;
 
         let tx = self.db.get_tx()?;
 

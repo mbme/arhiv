@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::templates::TEMPLATES;
-use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
+use arhiv_core::{entities::*, Arhiv};
 use rs_utils::log;
 
 #[derive(Serialize)]
@@ -70,7 +70,7 @@ impl Ref {
         };
 
         if !self.preview_attachments || !Attachment::is_attachment(&document) {
-            let title = SCHEMA.get_title(&document)?;
+            let title = arhiv.schema.get_title(&document)?;
 
             return serde_json::to_value(RefMode::Ref {
                 id: &document.id,
@@ -82,7 +82,7 @@ impl Ref {
         }
 
         let attachment = Attachment::from(document)?;
-        let title = SCHEMA.get_title(&attachment)?;
+        let title = arhiv.schema.get_title(&attachment)?;
 
         if attachment.is_image() {
             return serde_json::to_value(RefMode::Image {

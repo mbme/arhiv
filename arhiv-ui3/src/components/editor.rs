@@ -4,7 +4,7 @@ use serde::Serialize;
 use crate::templates::TEMPLATES;
 use arhiv_core::{
     entities::Document,
-    schema::{FieldType, SCHEMA},
+    schema::{DataDescription, FieldType},
 };
 
 #[derive(Serialize)]
@@ -23,9 +23,7 @@ pub struct Editor<'d> {
 }
 
 impl<'d> Editor<'d> {
-    pub fn new(document: &'d Document) -> Result<Self> {
-        let data_description = SCHEMA.get_data_description(&document.document_type)?;
-
+    pub fn new(document: &'d Document, data_description: &DataDescription) -> Result<Self> {
         let fields = data_description
             .fields
             .iter()

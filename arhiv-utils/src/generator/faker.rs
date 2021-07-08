@@ -5,9 +5,9 @@ use rand::prelude::*;
 use rand::thread_rng;
 use serde_json::Map;
 
+use arhiv_core::entities::*;
 use arhiv_core::schema::{DocumentData, FieldType};
 use arhiv_core::Arhiv;
-use arhiv_core::{entities::*, schema::SCHEMA};
 use rs_utils::project_relpath;
 
 use super::TextGenerator;
@@ -64,7 +64,9 @@ impl<'a> Faker<'a> {
     }
 
     fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
-        let mut data = SCHEMA
+        let mut data = self
+            .arhiv
+            .schema
             .get_data_description(&document_type)
             .expect("document type must be valid")
             .create(initial_values)
@@ -73,7 +75,11 @@ impl<'a> Faker<'a> {
                 document_type
             ));
 
-        let description = SCHEMA.get_data_description(&document_type).unwrap();
+        let description = self
+            .arhiv
+            .schema
+            .get_data_description(&document_type)
+            .unwrap();
 
         let mut rng = thread_rng();
         for field in &description.fields {
@@ -108,18 +114,15 @@ impl<'a> Faker<'a> {
             }
         }
 
-        let mut document = Document::new(document_type, data.into());
-        SCHEMA
-            .update_refs(&mut document)
-            .expect("Failed to update refs");
-
-        document
+        Document::new(document_type, data.into())
     }
 
     pub fn create_fakes<S: Into<String>>(&self, document_type: S) {
         let document_type = document_type.into();
 
-        let data_description = SCHEMA
+        let data_description = self
+            .arhiv
+            .schema
             .get_data_description(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 

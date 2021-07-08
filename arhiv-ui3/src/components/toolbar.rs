@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::templates::TEMPLATES;
-use arhiv_core::{entities::Document, schema::SCHEMA};
+use arhiv_core::entities::Document;
 
 #[derive(Serialize)]
 pub struct Breadcrumb {
@@ -23,8 +23,11 @@ impl Breadcrumb {
         }
     }
 
-    pub fn for_document_collection(document: &Document) -> Result<Self> {
-        if let Some(collection_type) = SCHEMA.get_collection_type(&document.document_type) {
+    pub fn for_document_collection(
+        document: &Document,
+        collection_type: Option<&'static str>,
+    ) -> Result<Self> {
+        if let Some(collection_type) = collection_type {
             let collection_id = document
                 .get_field_str(collection_type)
                 .ok_or(anyhow!("collection field '{}' missing", collection_type))?;
@@ -70,9 +73,12 @@ impl Toolbar {
         self
     }
 
-    pub fn on_close_document(mut self, document: &Document) -> Self {
-        let url = if let Some(collection_type) = SCHEMA.get_collection_type(&document.document_type)
-        {
+    pub fn on_close_document(
+        mut self,
+        document: &Document,
+        collection_type: Option<&'static str>,
+    ) -> Self {
+        let url = if let Some(collection_type) = collection_type {
             let collection_id = document
                 .get_field_str(collection_type)
                 .expect(&format!("collection field '{}' missing", collection_type));

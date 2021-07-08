@@ -1,0 +1,60 @@
+use anyhow::*;
+use serde::Serialize;
+use serde_json::Value;
+
+use super::data_description::*;
+use crate::entities::Document;
+
+#[derive(Serialize, Debug, Clone)]
+pub struct DataSchema {
+    pub modules: Vec<DataDescription>,
+}
+
+impl DataSchema {
+    pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
+        let document_type = document_type.as_ref();
+
+        self.modules
+            .iter()
+            .find(|module| module.document_type == document_type)
+            .ok_or(anyhow!("Unknown document type: {}", document_type))
+    }
+
+    pub(crate) fn update_refs(&self, document: &mut Document) -> Result<()> {
+        let data = {
+            match &document.data {
+                Value::Object(data) => data,
+                _ => {
+                    bail!("Document data must be an object");
+                }
+            }
+        };
+
+        document.refs = self
+            .get_data_description(&document.document_type)?
+            .extract_refs(&data)?;
+
+        Ok(())
+    }
+
+    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
+        self.modules
+            .iter()
+            .find_map(|module| match module.collection_of {
+                Some(ref collection_of) if collection_of.item_type == document_type => {
+                    Some(module.document_type)
+                }
+                _ => None,
+            })
+    }
+
+    pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
+        let data_description = self.get_data_description(&document.document_type)?;
+
+        let title_field = data_description.pick_title_field()?;
+
+        document
+            .get_field_str(title_field.name)
+            .ok_or(anyhow!("title field {} is missing", title_field.name))
+    }
+}

@@ -4,13 +4,9 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::entities::{Document, Id};
+use super::field::*;
+use crate::entities::Id;
 use crate::markup::MarkupStr;
-
-#[derive(Serialize, Debug, Clone)]
-pub struct DataSchema {
-    pub modules: Vec<DataDescription>,
-}
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -19,25 +15,6 @@ pub struct DataDescription {
     pub is_internal: bool,
     pub collection_of: Option<Collection>,
     pub fields: Vec<Field>,
-}
-
-#[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Field {
-    pub name: &'static str,
-    pub field_type: FieldType,
-    pub optional: bool,
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub enum FieldType {
-    String {},
-    NaturalNumber {},
-    MarkupString {},
-    Ref(&'static str),
-    Enum(Vec<&'static str>),
-    ISBN {},
-    Date {},
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -61,7 +38,7 @@ impl DataDescription {
         Ok(result)
     }
 
-    fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
+    pub fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
         let mut result = HashSet::new();
 
         for field in &self.fields {
@@ -144,63 +121,5 @@ impl DataDescription {
 
     pub fn is_collection(&self) -> bool {
         self.collection_of.is_some()
-    }
-}
-
-impl DataSchema {
-    pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
-        let document_type = document_type.as_ref();
-
-        self.modules
-            .iter()
-            .find(|module| module.document_type == document_type)
-            .ok_or(anyhow!("Unknown document type: {}", document_type))
-    }
-
-    pub fn update_refs(&self, document: &mut Document) -> Result<()> {
-        let data = {
-            match &document.data {
-                Value::Object(data) => data,
-                _ => {
-                    bail!("Document data must be an object");
-                }
-            }
-        };
-
-        document.refs = self
-            .get_data_description(&document.document_type)?
-            .extract_refs(&data)?;
-
-        Ok(())
-    }
-
-    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
-        self.modules
-            .iter()
-            .find_map(|module| match module.collection_of {
-                Some(ref collection_of) if collection_of.item_type == document_type => {
-                    Some(module.document_type)
-                }
-                _ => None,
-            })
-    }
-
-    pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
-        let data_description = self.get_data_description(&document.document_type)?;
-
-        let title_field = data_description.pick_title_field()?;
-
-        document
-            .get_field_str(title_field.name)
-            .ok_or(anyhow!("title field missing"))
-    }
-}
-
-impl Field {
-    pub fn get_enum_values(&self) -> Result<&Vec<&'static str>> {
-        match self.field_type {
-            FieldType::Enum(ref values) => Ok(values),
-            _ => bail!("field {} isn't enum", self.name),
-        }
     }
 }

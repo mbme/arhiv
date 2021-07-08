@@ -5,17 +5,10 @@ use anyhow::*;
 use lazy_static::*;
 use rust_embed::RustEmbed;
 use serde::Serialize;
-use serde_json::{json, Value};
 use tera::{Context as TeraContext, Tera};
 
-use arhiv_core::schema::SCHEMA;
-
 lazy_static! {
-    pub static ref TEMPLATES: Templates =
-        Templates::new(json!({ //
-            "nav_document_types": get_nav_document_types(),
-        }))
-        .expect("failed to init templates");
+    pub static ref TEMPLATES: Templates = Templates::new().expect("failed to init templates");
 }
 
 #[derive(RustEmbed)]
@@ -23,8 +16,6 @@ lazy_static! {
 struct TemplateAssets;
 
 pub struct Templates {
-    global_context: TeraContext,
-
     #[cfg(debug_assertions)]
     data: std::sync::Mutex<(Tera, HashSet<u64>)>,
 
@@ -33,17 +24,15 @@ pub struct Templates {
 }
 
 impl Templates {
-    pub fn new(global_context: Value) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let mut tera = Tera::default();
         tera.autoescape_on(vec![".html.tera"]);
 
-        let global_context = TeraContext::from_value(json!({ "global": global_context }))?;
-
-        Templates::new_impl(tera, global_context)
+        Templates::new_impl(tera)
     }
 
     #[cfg(debug_assertions)]
-    fn new_impl(mut tera: Tera, global_context: TeraContext) -> Result<Self> {
+    fn new_impl(mut tera: Tera) -> Result<Self> {
         let templates = TemplateAssets::list_template_files();
         let hashes = get_temlate_files_hashes(&templates);
 
@@ -51,27 +40,20 @@ impl Templates {
 
         let data = std::sync::Mutex::new((tera, hashes));
 
-        Ok(Templates {
-            data,
-            global_context,
-        })
+        Ok(Templates { data })
     }
 
     #[cfg(not(debug_assertions))]
-    fn new_impl(mut tera: Tera, global_context: TeraContext) -> Result<Self> {
+    fn new_impl(mut tera: Tera) -> Result<Self> {
         let templates = TemplateAssets::list_template_files();
         tera.add_raw_templates(templates)?;
 
-        Ok(Templates {
-            tera,
-            global_context,
-        })
+        Ok(Templates { tera })
     }
 
     #[cfg(debug_assertions)]
     pub fn render(&self, template_name: &str, context: impl Serialize) -> Result<String> {
-        let mut context = TeraContext::from_value(serde_json::to_value(context)?)?;
-        context.extend(self.global_context.clone());
+        let context = TeraContext::from_value(serde_json::to_value(context)?)?;
 
         let templates = TemplateAssets::list_template_files();
         let hashes = get_temlate_files_hashes(&templates);
@@ -91,8 +73,7 @@ impl Templates {
 
     #[cfg(not(debug_assertions))]
     pub fn render(&self, template_name: &str, context: impl Serialize) -> Result<String> {
-        let mut context = TeraContext::from_value(serde_json::to_value(context)?)?;
-        context.extend(self.global_context.clone());
+        let context = TeraContext::from_value(serde_json::to_value(context)?)?;
 
         return self
             .tera
@@ -133,15 +114,4 @@ fn get_temlate_files_hashes(files: &Vec<TemplateFile>) -> HashSet<u64> {
         .iter()
         .map(|file| get_file_hash(&file.0, &file.1))
         .collect::<HashSet<_>>()
-}
-
-const IGNORED_DOCUMENT_TYPES: &[&'static str] = &["tombstone", "attachment", "task"];
-
-fn get_nav_document_types() -> Vec<&'static str> {
-    SCHEMA
-        .modules
-        .iter()
-        .map(|module| module.document_type)
-        .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
-        .collect()
 }

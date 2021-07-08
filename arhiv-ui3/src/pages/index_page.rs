@@ -4,9 +4,9 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Toolbar},
-    utils::render_page,
+    utils::ArhivPageExt,
 };
-use arhiv_core::{schema::SCHEMA, Arhiv};
+use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
 
 pub async fn index_page(req: Request<Body>) -> ServerResponse {
@@ -20,13 +20,14 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
         ])
         .render()?;
 
-    let document_types = SCHEMA
+    let document_types = arhiv
+        .schema
         .modules
         .iter()
         .map(|module| module.document_type)
         .collect::<Vec<_>>();
 
-    render_page(
+    arhiv.render_page(
         "pages/index_page.html.tera",
         json!({
             "toolbar": toolbar,

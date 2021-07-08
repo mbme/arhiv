@@ -3,8 +3,8 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::utils::render_page;
-use arhiv_core::{schema::SCHEMA, Arhiv};
+use crate::utils::ArhivPageExt;
+use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
 
 pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResponse {
@@ -17,9 +17,9 @@ pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResp
 
     ensure!(!document.is_tombstone(), "document already deleted");
 
-    let title = SCHEMA.get_title(&document)?;
+    let title = arhiv.schema.get_title(&document)?;
 
-    render_page(
+    arhiv.render_page(
         "pages/delete_document_confirmation_page.html.tera",
         json!({
             "document": document,

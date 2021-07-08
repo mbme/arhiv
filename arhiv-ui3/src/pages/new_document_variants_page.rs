@@ -1,14 +1,15 @@
-use arhiv_core::schema::SCHEMA;
 use hyper::{Body, Request};
+use routerify::ext::RequestExt;
 use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Toolbar},
-    utils::render_page,
+    utils::ArhivPageExt,
 };
+use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
 
-pub async fn new_document_variants_page(_req: Request<Body>) -> ServerResponse {
+pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
     let toolbar = Toolbar::new()
         .with_breadcrubs(vec![
             Breadcrumb::for_string("new document"), //
@@ -16,14 +17,17 @@ pub async fn new_document_variants_page(_req: Request<Body>) -> ServerResponse {
         .on_close("/")
         .render()?;
 
-    let document_types = SCHEMA
+    let arhiv: &Arhiv = req.data().unwrap();
+
+    let document_types = arhiv
+        .schema
         .modules
         .iter()
         .filter(|module| !module.is_internal)
         .map(|module| module.document_type)
         .collect::<Vec<_>>();
 
-    render_page(
+    arhiv.render_page(
         "pages/new_document_variants_page.html.tera",
         json!({
             "toolbar": toolbar, //

@@ -5,9 +5,9 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
-    utils::render_page,
+    utils::ArhivPageExt,
 };
-use arhiv_core::{entities::*, schema::SCHEMA, Arhiv};
+use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
@@ -24,24 +24,33 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
+    // deny editing internal types
     ensure!(
-        !SCHEMA
+        !arhiv
+            .schema
             .get_data_description(&document.document_type)?
             .is_internal
     );
 
-    let editor = Editor::new(&document)?.render()?;
+    let editor = Editor::new(
+        &document,
+        arhiv.schema.get_data_description(&document.document_type)?,
+    )?
+    .render()?;
 
     let toolbar = Toolbar::new()
         .with_breadcrubs(vec![
-            Breadcrumb::for_document_collection(&document)?,
+            Breadcrumb::for_document_collection(
+                &document,
+                arhiv.schema.get_collection_type(&document.document_type),
+            )?,
             Breadcrumb::for_document(&document, true),
             Breadcrumb::for_string("editor"),
         ])
         .on_close(format!("/documents/{}", &document.id))
         .render()?;
 
-    render_page(
+    arhiv.render_page(
         "pages/edit_document_page.html.tera",
         json!({
             "toolbar": toolbar,

@@ -8,12 +8,12 @@ use crate::{
     components::{Breadcrumb, Catalog, Ref, Toolbar},
     markup::MarkupStringExt,
     ui_config::UIConfig,
-    utils::render_page,
+    utils::ArhivPageExt,
 };
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
-    schema::{DataDescription, FieldType, SCHEMA},
+    schema::{DataDescription, FieldType},
     Arhiv, Filter, Matcher,
 };
 use rs_utils::{
@@ -50,7 +50,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
-    let data_description = SCHEMA.get_data_description(&document.document_type)?;
+    let data_description = arhiv.schema.get_data_description(&document.document_type)?;
     let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
@@ -75,12 +75,13 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         children_catalog = Some(catalog);
     };
 
+    let collection_type = arhiv.schema.get_collection_type(&document.document_type);
     let mut toolbar = Toolbar::new()
         .with_breadcrubs(vec![
-            Breadcrumb::for_document_collection(&document)?,
+            Breadcrumb::for_document_collection(&document, collection_type)?,
             Breadcrumb::for_document(&document, false),
         ])
-        .on_close_document(&document);
+        .on_close_document(&document, collection_type);
 
     if !data_description.is_internal {
         toolbar = toolbar.with_action("Edit", format!("/documents/{}/edit", &document.id));
@@ -114,7 +115,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         .map(|document| Ref::from_document(document).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
-    render_page(
+    arhiv.render_page(
         "pages/document_page.html.tera",
         json!({
             "toolbar": toolbar,
@@ -133,7 +134,8 @@ fn prepare_fields(
     arhiv: &Arhiv,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
-    let title_field = SCHEMA
+    let title_field = arhiv
+        .schema
         .get_data_description(&document.document_type)?
         .pick_title_field()?;
 

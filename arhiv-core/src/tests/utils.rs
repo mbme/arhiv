@@ -2,7 +2,7 @@ use std::{fs, sync::Arc};
 
 use anyhow::*;
 
-use crate::{entities::Document, Arhiv, Config, ListPage};
+use crate::{entities::Document, schema::DataDescription, Arhiv, Config, ListPage};
 use rs_utils::generate_temp_path;
 
 impl Drop for Arhiv {
@@ -13,8 +13,15 @@ impl Drop for Arhiv {
 }
 
 fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
-    let arhiv = Arhiv::create(config, "test-arhiv".to_string(), prime)
+    let mut arhiv = Arhiv::create(config, "test-arhiv".to_string(), prime)
         .expect("must be able to create temp arhiv");
+
+    arhiv.schema.modules.push(DataDescription {
+        document_type: "test_type",
+        is_internal: false,
+        collection_of: None,
+        fields: vec![],
+    });
 
     Arc::new(arhiv)
 }

@@ -24,11 +24,11 @@ async fn test_modes() -> Result<()> {
     let arhiv = new_prime();
 
     // committed
-    arhiv.stage_document(new_document(json!("1")))?;
+    arhiv.stage_document(new_document(json!({ "value": "1" })))?;
 
     {
         // archived
-        let mut doc = new_document(json!("2"));
+        let mut doc = new_document(json!({ "value": "2" }));
         doc.archived = true;
         arhiv.stage_document(doc)?;
     }
@@ -36,7 +36,7 @@ async fn test_modes() -> Result<()> {
     arhiv.sync().await?;
 
     // staged
-    arhiv.stage_document(new_document(json!("3")))?;
+    arhiv.stage_document(new_document(json!({ "value": "3" })))?;
 
     {
         // test default
@@ -45,7 +45,10 @@ async fn test_modes() -> Result<()> {
             ..Filter::default()
         })?;
 
-        assert_eq!(get_values(page), vec![json!("3"), json!("1"),]);
+        assert_eq!(
+            get_values(page),
+            vec![json!({ "value": "3" }), json!({ "value": "1" }),]
+        );
     }
 
     {
@@ -55,7 +58,7 @@ async fn test_modes() -> Result<()> {
             ..Filter::default()
         })?;
 
-        assert_eq!(get_values(page), vec![json!("2")]);
+        assert_eq!(get_values(page), vec![json!({ "value": "2" })]);
     }
 
     {
@@ -65,7 +68,7 @@ async fn test_modes() -> Result<()> {
             ..Filter::default()
         })?;
 
-        assert_eq!(get_values(page), vec![json!("3")]);
+        assert_eq!(get_values(page), vec![json!({ "value": "3" })]);
     }
 
     Ok(())

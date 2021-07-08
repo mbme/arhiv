@@ -1,10 +1,9 @@
 use anyhow::*;
-
-use rs_utils::{log, FsTransaction, TempFile};
 use rusqlite::{functions::FunctionFlags, Connection, OptionalExtension};
 use serde_json::Value;
 
 use super::*;
+use rs_utils::{log, FsTransaction, TempFile};
 
 fn get_db_version(conn: &Connection) -> Result<u8> {
     let value: String = conn
@@ -371,7 +370,7 @@ fn upgrade_v5_to_v6(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str
         // find attachment id by hash
         let id: Option<String> = conn
             .query_row(
-                "SELECT id FROM documents_snapshots 
+                "SELECT id FROM documents_snapshots
                     WHERE type = 'attachment' AND json_extract(data, '$.sha256') = ?",
                 [hash],
                 |row| row.get(0),

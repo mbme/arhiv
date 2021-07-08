@@ -60,7 +60,6 @@ dependencies = [
  "chrono",
  "futures",
  "hyper",
- "lazy_static",
  "nanoid",
  "pulldown-cmark",
  "reqwest",

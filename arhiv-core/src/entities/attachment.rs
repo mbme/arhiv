@@ -2,6 +2,7 @@ use std::{convert::TryInto, ops::Deref};
 
 use anyhow::*;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use super::Document;
 use rs_utils::{get_file_hash_sha256, get_file_name};
@@ -29,24 +30,24 @@ impl Attachment {
         let sha256 = get_file_hash_sha256(file_path)?;
         let filename = get_file_name(file_path).to_string();
 
-        let document = Document::new(
+        let document = Document::new_with_data(
             ATTACHMENT_TYPE.to_string(),
-            AttachmentInfo { filename, sha256 }.into(),
+            json!({
+                "filename": filename,
+                "sha256": sha256,
+            })
+            .try_into()?,
         );
 
         Ok(Attachment(document))
     }
 
-    fn get_data(&self) -> AttachmentInfo {
-        serde_json::from_value(self.0.data.clone()).expect("must be able to deserialize")
+    pub fn get_hash(&self) -> &str {
+        self.data.get_mandatory_str("sha256")
     }
 
-    pub fn get_hash(&self) -> String {
-        self.get_data().sha256
-    }
-
-    pub fn get_filename(&self) -> String {
-        self.get_data().filename
+    pub fn get_filename(&self) -> &str {
+        self.data.get_mandatory_str("filename")
     }
 
     pub fn is_image(&self) -> bool {

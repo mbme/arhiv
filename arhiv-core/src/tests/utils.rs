@@ -1,8 +1,12 @@
-use std::{fs, sync::Arc};
+use std::{convert::TryInto, fs, sync::Arc};
 
 use anyhow::*;
 
-use crate::{entities::Document, schema::DataDescription, Arhiv, Config, ListPage};
+use crate::{
+    entities::Document,
+    schema::{DataDescription, Field, FieldType},
+    Arhiv, Config, ListPage,
+};
 use rs_utils::generate_temp_path;
 
 impl Drop for Arhiv {
@@ -20,7 +24,11 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
         document_type: "test_type",
         is_internal: false,
         collection_of: None,
-        fields: vec![],
+        fields: vec![Field {
+            name: "ref",
+            field_type: FieldType::Ref("attachment"),
+            optional: true,
+        }],
     });
 
     Arc::new(arhiv)
@@ -46,11 +54,11 @@ pub fn new_replica(port: u16) -> Arc<Arhiv> {
 }
 
 pub fn empty_document() -> Document {
-    Document::new("test_type".to_string(), serde_json::json!({}))
+    Document::new("test_type")
 }
 
 pub fn new_document(value: serde_json::Value) -> Document {
-    Document::new("test_type".to_string(), value)
+    Document::new_with_data("test_type", value.try_into().unwrap())
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
@@ -58,5 +66,8 @@ pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
 }
 
 pub fn get_values(page: ListPage<Document>) -> Vec<serde_json::Value> {
-    page.items.into_iter().map(|item| item.data).collect()
+    page.items
+        .into_iter()
+        .map(|item| item.data.into())
+        .collect()
 }

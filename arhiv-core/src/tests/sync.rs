@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use anyhow::*;
 use serde_json::json;
 
@@ -15,7 +17,7 @@ async fn test_prime_sync() -> Result<()> {
     let attachment = arhiv.add_attachment(src, true)?;
 
     let mut document = empty_document();
-    document.refs.insert(attachment.id.clone());
+    document.data.set("ref", &attachment.id);
 
     arhiv.stage_document(document.clone())?;
 
@@ -44,7 +46,7 @@ async fn test_prime_sync() -> Result<()> {
     // Test if document is updated correctly
     {
         let mut document = arhiv.get_document(&document.id)?.unwrap();
-        document.data = json!({ "test": "other" });
+        document.data = json!({ "test": "other" }).try_into().unwrap();
         arhiv.stage_document(document)?;
     }
 
@@ -52,7 +54,7 @@ async fn test_prime_sync() -> Result<()> {
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().data,
-        json!({ "test": "other" }),
+        json!({ "test": "other" }).try_into().unwrap(),
     );
 
     Ok(())
@@ -70,7 +72,7 @@ async fn test_replica_sync() -> Result<()> {
 
     let id = {
         let mut document = empty_document();
-        document.refs.insert(attachment.id.clone());
+        document.data.set("ref", &attachment.id);
         replica.stage_document(document.clone())?;
 
         document.id
@@ -99,14 +101,14 @@ async fn test_replica_sync() -> Result<()> {
     // Test if document is updated correctly
     {
         let mut document = replica.get_document(&id)?.unwrap();
-        document.data = json!({ "test": "1" });
+        document.data = json!({ "test": "1" }).try_into().unwrap();
         replica.stage_document(document)?;
 
         replica.sync().await?;
 
         assert_eq!(
             replica.get_document(&id)?.unwrap().data,
-            json!({ "test": "1" }),
+            json!({ "test": "1" }).try_into().unwrap(),
         );
     }
 
@@ -125,15 +127,14 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
     let attachment1 = arhiv.add_attachment(src, true)?;
 
     let mut document = empty_document();
-    document.refs.insert(attachment1.id.clone());
+    document.data.set("ref", &attachment1.id);
 
     // stage document with attachment1
     arhiv.stage_document(document.clone())?;
 
     let attachment2 = arhiv.add_attachment(src, true)?;
 
-    document.refs.clear();
-    document.refs.insert(attachment2.id.clone());
+    document.data.set("ref", &attachment2.id);
 
     // stage document with attachment2, attachment1 is now unused
     arhiv.stage_document(document.clone())?;

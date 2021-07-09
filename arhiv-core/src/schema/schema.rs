@@ -1,6 +1,5 @@
 use anyhow::*;
 use serde::Serialize;
-use serde_json::Value;
 
 use super::data_description::*;
 use crate::entities::Document;
@@ -21,18 +20,9 @@ impl DataSchema {
     }
 
     pub(crate) fn update_refs(&self, document: &mut Document) -> Result<()> {
-        let data = {
-            match &document.data {
-                Value::Object(data) => data,
-                _ => {
-                    bail!("Document data must be an object");
-                }
-            }
-        };
-
         document.refs = self
             .get_data_description(&document.document_type)?
-            .extract_refs(&data)?;
+            .extract_refs(&document.data)?;
 
         Ok(())
     }
@@ -54,7 +44,8 @@ impl DataSchema {
         let title_field = data_description.pick_title_field()?;
 
         document
-            .get_field_str(title_field.name)
+            .data
+            .get_str(title_field.name)
             .ok_or(anyhow!("title field {} is missing", title_field.name))
     }
 }

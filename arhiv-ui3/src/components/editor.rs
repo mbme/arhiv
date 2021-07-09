@@ -28,7 +28,7 @@ impl<'d> Editor<'d> {
             .fields
             .iter()
             .map(|field| {
-                let value = document.get_field_str(field.name).unwrap_or("");
+                let value = document.data.get_str(field.name).unwrap_or("");
 
                 let mut field = FormField {
                     name: field.name,

@@ -16,7 +16,7 @@ async fn test_attachments() -> Result<()> {
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
     let mut document = empty_document();
-    document.refs.insert(attachment.id.clone());
+    document.data.set("ref", &attachment.id);
 
     arhiv.stage_document(document)?;
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
@@ -47,7 +47,7 @@ async fn test_download_attachment() -> Result<()> {
     let attachment = prime.add_attachment(src, true)?;
 
     let mut document = empty_document();
-    document.refs.insert(attachment.id.clone());
+    document.data.set("ref", &attachment.id);
     prime.stage_document(document)?;
 
     prime.sync().await?;

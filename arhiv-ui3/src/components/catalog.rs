@@ -23,14 +23,16 @@ impl CatalogEntry {
         let title_field = data_description.pick_title_field()?;
 
         let title = document
-            .get_field_str(title_field.name)
+            .data
+            .get_str(title_field.name)
             .ok_or(anyhow!("title field missing"))?;
 
         let mut preview = None;
 
         if let Some(preview_field) = config.preview {
             let markup: MarkupStr = document
-                .get_field_str(preview_field)
+                .data
+                .get_str(preview_field)
                 .ok_or(anyhow!("preview field missing"))?
                 .into();
 
@@ -43,7 +45,7 @@ impl CatalogEntry {
             .map(|field| {
                 (
                     *field,
-                    document.get_field_str(field).unwrap_or("").to_string(),
+                    document.data.get_str(field).unwrap_or("").to_string(),
                 )
             })
             .collect();
@@ -195,7 +197,8 @@ impl Catalog {
 
             for document in result.items.into_iter() {
                 let key = document
-                    .get_field_str(group_by.field)
+                    .data
+                    .get_str(group_by.field)
                     .ok_or(anyhow!("can't find field"))?;
 
                 let mut group = groups

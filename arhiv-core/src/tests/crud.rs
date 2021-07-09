@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use anyhow::*;
 use serde_json::json;
 
@@ -23,14 +25,14 @@ fn test_crud() -> Result<()> {
     {
         let other_document = arhiv.get_document(&id)?.unwrap();
 
-        assert_eq!(other_document.data, original_data);
+        assert_eq!(other_document.data, original_data.try_into().unwrap());
         assert_eq!(other_document.rev.is_staged(), true);
     }
 
     // UPDATE
     {
         let mut other_document = arhiv.get_document(&id)?.unwrap();
-        other_document.data = json!({ "test": "1" });
+        other_document.data = json!({ "test": "1" }).try_into().unwrap();
         arhiv.stage_document(other_document.clone())?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);

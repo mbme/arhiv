@@ -4,9 +4,8 @@ use std::fmt;
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use super::{Id, Revision, SnapshotId};
+use super::{DocumentData, Id, Revision, SnapshotId};
 
 pub const TOMBSTONE_TYPE: &'static str = "tombstone";
 
@@ -24,11 +23,15 @@ pub struct Document {
     pub updated_at: DateTime<Utc>,
     pub refs: HashSet<Id>,
     pub archived: bool,
-    pub data: Value,
+    pub data: DocumentData,
 }
 
 impl Document {
-    pub fn new(document_type: String, data: Value) -> Document {
+    pub fn new(document_type: impl Into<String>) -> Self {
+        Document::new_with_data(document_type, DocumentData::new())
+    }
+
+    pub fn new_with_data(document_type: impl Into<String>, data: DocumentData) -> Self {
         let now = Utc::now();
 
         Document {
@@ -36,7 +39,7 @@ impl Document {
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
             snapshot_id: SnapshotId::new(),
-            document_type,
+            document_type: document_type.into(),
             created_at: now,
             updated_at: now,
             refs: HashSet::new(),
@@ -51,19 +54,6 @@ impl Document {
 
     pub fn is_staged(&self) -> bool {
         self.rev == Revision::STAGING
-    }
-
-    pub fn get_field(&self, field: &str) -> Option<&Value> {
-        self.data.get(field)
-    }
-
-    pub fn get_field_str<'doc>(&self, field: &str) -> Option<&str> {
-        let value = self.get_field(field)?;
-
-        Some(value.as_str().expect(&format!(
-            "document {}: can't use field {} as &str",
-            self.document_type, field
-        )))
     }
 }
 

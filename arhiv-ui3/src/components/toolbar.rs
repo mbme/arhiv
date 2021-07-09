@@ -29,7 +29,8 @@ impl Breadcrumb {
     ) -> Result<Self> {
         if let Some(collection_type) = collection_type {
             let collection_id = document
-                .get_field_str(collection_type)
+                .data
+                .get_str(collection_type)
                 .ok_or(anyhow!("collection field '{}' missing", collection_type))?;
 
             Ok(Breadcrumb {
@@ -79,9 +80,7 @@ impl Toolbar {
         collection_type: Option<&'static str>,
     ) -> Self {
         let url = if let Some(collection_type) = collection_type {
-            let collection_id = document
-                .get_field_str(collection_type)
-                .expect(&format!("collection field '{}' missing", collection_type));
+            let collection_id = document.data.get_mandatory_str(collection_type);
 
             format!("/documents/{}", collection_id)
         } else {

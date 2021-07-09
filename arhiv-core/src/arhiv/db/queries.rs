@@ -358,7 +358,7 @@ pub trait MutableQueries: Queries {
             document.updated_at,
             document.archived,
             utils::serialize_refs(&document.refs)?,
-            document.data,
+            document.data.to_string(),
         ])
         .context(anyhow!("Failed to put document {}", &document.id))?;
 

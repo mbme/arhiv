@@ -143,7 +143,7 @@ fn prepare_fields(
         .fields
         .iter()
         .map(|field| {
-            let value = document.get_field_str(field.name);
+            let value = document.data.get_str(field.name);
             let is_title = field.name == title_field.name;
 
             match (&field.field_type, value) {

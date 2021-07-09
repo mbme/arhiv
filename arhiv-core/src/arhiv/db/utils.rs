@@ -1,8 +1,9 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, convert::TryInto};
 
 use aho_corasick::AhoCorasick;
 use anyhow::*;
 use rusqlite::Row;
+use serde_json::Value;
 
 use crate::entities::*;
 
@@ -25,7 +26,11 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
         refs: extract_refs(row.get("refs")?)?,
-        data: row.get("data")?,
+        data: {
+            let data: Value = row.get("data")?;
+
+            data.try_into()?
+        },
     })
 }
 

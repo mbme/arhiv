@@ -3,10 +3,9 @@ use std::{collections::HashMap, fs};
 use anyhow::*;
 use rand::prelude::*;
 use rand::thread_rng;
-use serde_json::Map;
 
 use arhiv_core::entities::*;
-use arhiv_core::schema::{DocumentData, FieldType};
+use arhiv_core::schema::FieldType;
 use arhiv_core::Arhiv;
 use rs_utils::project_relpath;
 
@@ -63,18 +62,7 @@ impl<'a> Faker<'a> {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(&self, document_type: String, initial_values: DocumentData) -> Document {
-        let mut data = self
-            .arhiv
-            .schema
-            .get_data_description(&document_type)
-            .expect("document type must be valid")
-            .create(initial_values)
-            .expect(&format!(
-                "Failed to create data for document_type {}",
-                document_type
-            ));
-
+    fn create_fake(&self, document_type: String, mut data: DocumentData) -> Document {
         let description = self
             .arhiv
             .schema
@@ -88,10 +76,7 @@ impl<'a> Faker<'a> {
                     let (min, max) = self
                         .get_field_size_limits(&document_type, &field.name)
                         .unwrap_or((1, 8));
-                    data.insert(
-                        field.name.to_string(),
-                        self.generator.gen_string(min, max).into(),
-                    );
+                    data.set(field.name, self.generator.gen_string(min, max));
                 }
                 FieldType::MarkupString {} => {
                     let (min, max) = self
@@ -101,20 +86,17 @@ impl<'a> Faker<'a> {
                     let title = self.generator.gen_string(1, 5);
                     let markup = self.generator.gen_markup_string(min, max);
 
-                    data.insert(
-                        field.name.to_string(),
-                        format!("# {}\n{}", title, markup).into(),
-                    );
+                    data.set(field.name, format!("# {}\n{}", title, markup));
                 }
                 FieldType::Enum(values) => {
                     let value: &str = values.choose(&mut rng).unwrap();
-                    data.insert(field.name.to_string(), value.into());
+                    data.set(field.name, value);
                 }
                 _ => {}
             }
         }
 
-        Document::new(document_type, data.into())
+        Document::new_with_data(document_type, data)
     }
 
     pub fn create_fakes<S: Into<String>>(&self, document_type: S) {
@@ -130,7 +112,7 @@ impl<'a> Faker<'a> {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let document = self.create_fake(document_type.clone(), Map::new());
+            let document = self.create_fake(document_type.clone(), DocumentData::new());
             let id = document.id.clone();
             self.arhiv
                 .stage_document(document)
@@ -141,9 +123,8 @@ impl<'a> Faker<'a> {
                 let child_quantity = self.get_quantity_limit(&child_document_type);
 
                 for _ in 0..child_quantity {
-                    let mut initial_values = Map::new();
-                    initial_values
-                        .insert(document_type.clone(), serde_json::to_value(&id).unwrap());
+                    let mut initial_values = DocumentData::new();
+                    initial_values.set(&document_type, &id);
                     let child_document =
                         self.create_fake(child_document_type.to_string(), initial_values);
 

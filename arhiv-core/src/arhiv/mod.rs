@@ -176,7 +176,7 @@ impl Arhiv {
                 log::debug!("Creating new document {}", &updated_document.id);
 
                 let mut new_document =
-                    Document::new(updated_document.document_type, updated_document.data);
+                    Document::new_with_data(updated_document.document_type, updated_document.data);
                 new_document.id = updated_document.id;
 
                 new_document
@@ -238,7 +238,7 @@ impl Arhiv {
         document.snapshot_id = SnapshotId::new();
         document.refs.clear();
         document.archived = true;
-        document.data = serde_json::json!({});
+        document.data = DocumentData::new();
         document.updated_at = Utc::now();
 
         tx.put_document(&document)?;

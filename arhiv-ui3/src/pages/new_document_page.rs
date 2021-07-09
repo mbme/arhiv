@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-
 use anyhow::ensure;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
     utils::ArhivPageExt,
 };
-use arhiv_core::{entities::Document, schema::DocumentData, Arhiv};
+use arhiv_core::{entities::Document, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
@@ -25,9 +23,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let params = req.get_query_params();
 
-    let data = data_description.create(params_into_document_data(params))?;
-
-    let document = Document::new(document_type.clone(), data.into());
+    let document = Document::new_with_data(document_type.clone(), params.into());
 
     let editor = Editor::new(
         &document,
@@ -52,11 +48,4 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
             "document_type": document_type,
         }),
     )
-}
-
-fn params_into_document_data(params: HashMap<String, String>) -> DocumentData {
-    params
-        .into_iter()
-        .map(|(key, value)| (key, Value::String(value)))
-        .collect()
 }

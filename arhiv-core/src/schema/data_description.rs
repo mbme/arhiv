@@ -2,10 +2,10 @@ use std::collections::HashSet;
 
 use anyhow::*;
 use serde::Serialize;
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use super::field::*;
-use crate::entities::Id;
+use crate::entities::{DocumentData, Id};
 use crate::markup::MarkupStr;
 
 #[derive(Serialize, Debug, Clone)]
@@ -23,21 +23,7 @@ pub struct Collection {
     pub item_type: &'static str,
 }
 
-pub type DocumentData = Map<String, Value>;
-
 impl DataDescription {
-    pub fn create(&self, initial_values: DocumentData) -> Result<DocumentData> {
-        let mut result: DocumentData = Map::new();
-
-        for field in &self.fields {
-            if let Some(value) = initial_values.get(field.name) {
-                result.insert(field.name.to_string(), (*value).clone());
-            }
-        }
-
-        Ok(result)
-    }
-
     pub fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
         let mut result = HashSet::new();
 

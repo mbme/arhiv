@@ -13,7 +13,7 @@ use crate::{
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
-    schema::{DataDescription, FieldType},
+    schema::{extract_ids_from_reflist, Collection, DataDescription, FieldType},
     Arhiv, Filter, Matcher,
 };
 use rs_utils::{
@@ -25,7 +25,7 @@ use rs_utils::{
 enum FieldKind {
     Title,
     Markup,
-    Ref,
+    Html,
     String,
 }
 
@@ -55,8 +55,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let mut children_catalog = None;
 
-    if let Some(ref collection) = data_description.collection_of {
-        let catalog = Catalog::new(collection.item_type, pattern)
+    if let Collection::Type(item_type) = data_description.collection_of {
+        let catalog = Catalog::new(item_type, pattern)
             .with_matcher(Matcher::Field {
                 selector: format!("$.{}", &document.document_type),
                 pattern: document.id.to_string(),
@@ -69,7 +69,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             )
             .render(
                 arhiv,
-                UIConfig::get_child_config(&document.document_type, &collection.item_type).catalog,
+                UIConfig::get_child_config(&document.document_type, item_type).catalog,
             )?;
 
         children_catalog = Some(catalog);
@@ -159,7 +159,16 @@ fn prepare_fields(
                 (FieldType::Ref(_), Some(value)) => Ok(Field {
                     name: field.name,
                     value: Ref::from_id(value).preview_attachments().render(arhiv)?,
-                    kind: FieldKind::Ref,
+                    kind: FieldKind::Html,
+                }),
+                (FieldType::RefList(_), Some(value)) => Ok(Field {
+                    name: field.name,
+                    value: extract_ids_from_reflist(value)
+                        .into_iter()
+                        .map(|item| Ref::from_id(item).render(arhiv))
+                        .collect::<Result<Vec<_>>>()?
+                        .join("\n"),
+                    kind: FieldKind::Html,
                 }),
                 _ => Ok(Field {
                     name: field.name,

@@ -9,18 +9,17 @@ use crate::entities::{DocumentData, Id};
 use crate::markup::MarkupStr;
 
 #[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct DataDescription {
     pub document_type: &'static str,
     pub is_internal: bool,
-    pub collection_of: Option<Collection>,
+    pub collection_of: Collection,
     pub fields: Vec<Field>,
 }
 
 #[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct Collection {
-    pub item_type: &'static str,
+pub enum Collection {
+    None,
+    Type(&'static str),
 }
 
 impl DataDescription {
@@ -52,6 +51,13 @@ impl DataDescription {
                         serde_json::from_value(value.clone()).expect("field must parse");
 
                     result.insert(value);
+                }
+                FieldType::RefList(_) => {
+                    // FIXME check ref document type
+                    let value: String =
+                        serde_json::from_value(value.clone()).expect("field must parse");
+
+                    result.extend(extract_ids_from_reflist(&value));
                 }
                 _ => {
                     continue;
@@ -106,6 +112,9 @@ impl DataDescription {
     }
 
     pub fn is_collection(&self) -> bool {
-        self.collection_of.is_some()
+        match self.collection_of {
+            Collection::None => false,
+            _ => true,
+        }
     }
 }

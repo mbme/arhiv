@@ -16,13 +16,13 @@ impl DataSchema {
                 DataDescription {
                     document_type: TOMBSTONE_TYPE,
                     is_internal: true,
-                    collection_of: None,
+                    collection_of: Collection::None,
                     fields: vec![],
                 },
                 DataDescription {
                     document_type: ATTACHMENT_TYPE,
                     is_internal: true,
-                    collection_of: None,
+                    collection_of: Collection::None,
                     fields: vec![
                         Field {
                             name: "filename",

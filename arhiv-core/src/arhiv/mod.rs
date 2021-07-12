@@ -8,7 +8,7 @@ pub use self::db::{
 use self::network_service::NetworkService;
 use self::status::Status;
 use crate::config::Config;
-use crate::data_definitions::get_data_definitions;
+use crate::definitions::get_definitions;
 use crate::entities::*;
 use crate::schema::DataSchema;
 use rs_utils::log;
@@ -38,7 +38,7 @@ impl Arhiv {
 
     pub fn open_with_config(config: Config) -> Result<Arhiv> {
         let mut schema = DataSchema::new();
-        schema.modules.append(&mut get_data_definitions());
+        schema.modules.append(&mut get_definitions());
 
         let mut db = DB::open(config.arhiv_root.to_string())?;
         db.with_schema_search(schema.clone());
@@ -71,7 +71,7 @@ impl Arhiv {
         );
 
         let mut schema = DataSchema::new();
-        schema.modules.append(&mut get_data_definitions());
+        schema.modules.append(&mut get_definitions());
 
         let mut db = DB::create(config.arhiv_root.to_string())?;
         db.with_schema_search(schema.clone());

@@ -4,7 +4,7 @@ use anyhow::*;
 
 use crate::{
     entities::Document,
-    schema::{DataDescription, Field, FieldType},
+    schema::{Collection, DataDescription, Field, FieldType},
     Arhiv, Config, ListPage,
 };
 use rs_utils::generate_temp_path;
@@ -23,7 +23,7 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
     arhiv.schema.modules.push(DataDescription {
         document_type: "test_type",
         is_internal: false,
-        collection_of: None,
+        collection_of: Collection::None,
         fields: vec![Field {
             name: "ref",
             field_type: FieldType::Ref("attachment"),

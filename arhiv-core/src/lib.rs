@@ -3,7 +3,7 @@
 
 mod arhiv;
 mod config;
-mod data_definitions;
+mod definitions;
 pub mod entities;
 pub mod markup;
 pub mod prime_server;

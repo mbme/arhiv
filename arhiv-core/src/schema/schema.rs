@@ -31,7 +31,7 @@ impl DataSchema {
         self.modules
             .iter()
             .find_map(|module| match module.collection_of {
-                Some(ref collection_of) if collection_of.item_type == document_type => {
+                Collection::Type(item_type) if item_type == document_type => {
                     Some(module.document_type)
                 }
                 _ => None,

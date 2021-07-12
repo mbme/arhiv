@@ -25,7 +25,7 @@
     <div class="markup">
       {{ field.value | safe }}
     </div>
-    {% elif field.kind == "Ref" %}
+    {% elif field.kind == "Html" %}
     {{ field.value | safe }}
     {% elif field.kind == "String" %}
     {{ field.value }}

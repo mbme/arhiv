@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs};
 
 use anyhow::*;
+use arhiv_core::schema::Collection;
 use rand::prelude::*;
 use rand::thread_rng;
 
@@ -118,8 +119,7 @@ impl<'a> Faker<'a> {
                 .stage_document(document)
                 .expect("must be able to save document");
 
-            if let Some(collection_options) = &data_description.collection_of {
-                let child_document_type = collection_options.item_type.clone();
+            if let Collection::Type(child_document_type) = &data_description.collection_of {
                 let child_quantity = self.get_quantity_limit(&child_document_type);
 
                 for _ in 0..child_quantity {
@@ -137,10 +137,10 @@ impl<'a> Faker<'a> {
             }
         }
 
-        if let Some(collection_options) = &data_description.collection_of {
+        if let Collection::Type(item_type) = &data_description.collection_of {
             println!(
                 "Generated {} {} and {} child {}",
-                quantity, document_type, child_total, collection_options.item_type
+                quantity, document_type, child_total, item_type
             );
         } else {
             println!("Generated {} {}", quantity, document_type);

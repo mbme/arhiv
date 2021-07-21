@@ -1,40 +1,22 @@
 use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
-use serde::Serialize;
 use serde_json::json;
 
-use crate::{
-    components::{Breadcrumb, Catalog, Ref, Toolbar},
-    markup::MarkupStringExt,
-    ui_config::UIConfig,
-    utils::ArhivPageExt,
-};
-use arhiv_core::{
-    entities::Document,
-    markup::MarkupStr,
-    schema::{extract_ids_from_reflist, Collection, DataDescription, FieldType},
-    Arhiv, Filter, Matcher,
-};
+use arhiv_core::{schema::Collection, Arhiv, Filter, Matcher};
 use rs_utils::{
     query_builder,
     server::{respond_not_found, RequestQueryExt, ServerResponse},
 };
 
-#[derive(Serialize)]
-enum FieldKind {
-    Title,
-    Markup,
-    Html,
-    String,
-}
+use crate::{
+    components::{Breadcrumb, Catalog, Ref, Toolbar},
+    ui_config::UIConfig,
+    utils::ArhivPageExt,
+};
+use fields::prepare_fields;
 
-#[derive(Serialize)]
-struct Field {
-    name: &'static str,
-    value: String,
-    kind: FieldKind,
-}
+mod fields;
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -127,59 +109,4 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             "children_catalog": children_catalog,
         }),
     )
-}
-
-fn prepare_fields(
-    document: &Document,
-    arhiv: &Arhiv,
-    data_description: &DataDescription,
-) -> Result<Vec<Field>> {
-    let title_field = arhiv
-        .schema
-        .get_data_description(&document.document_type)?
-        .pick_title_field()?;
-
-    data_description
-        .fields
-        .iter()
-        .map(|field| {
-            let value = document.data.get_str(field.name);
-            let is_title = field.name == title_field.name;
-
-            match (&field.field_type, value) {
-                (FieldType::MarkupString {}, _) => {
-                    let markup: MarkupStr = value.unwrap_or("").into();
-
-                    Ok(Field {
-                        name: field.name,
-                        value: markup.to_html(arhiv),
-                        kind: FieldKind::Markup,
-                    })
-                }
-                (FieldType::Ref(_), Some(value)) => Ok(Field {
-                    name: field.name,
-                    value: Ref::from_id(value).preview_attachments().render(arhiv)?,
-                    kind: FieldKind::Html,
-                }),
-                (FieldType::RefList(_), Some(value)) => Ok(Field {
-                    name: field.name,
-                    value: extract_ids_from_reflist(value)
-                        .into_iter()
-                        .map(|item| Ref::from_id(item).render(arhiv))
-                        .collect::<Result<Vec<_>>>()?
-                        .join("\n"),
-                    kind: FieldKind::Html,
-                }),
-                _ => Ok(Field {
-                    name: field.name,
-                    value: value.unwrap_or("").to_string(),
-                    kind: if is_title {
-                        FieldKind::Title
-                    } else {
-                        FieldKind::String
-                    },
-                }),
-            }
-        })
-        .collect::<Result<Vec<_>>>()
 }

@@ -29,13 +29,13 @@ impl DocumentData {
         Some(
             value
                 .as_str()
-                .expect(&format!("can't use field {} as &str", field)),
+                .expect(&format!("can't use field '{}' as &str", field)),
         )
     }
 
     pub fn get_mandatory_str(&self, field: &str) -> &str {
         self.get_str(field)
-            .expect(&format!("str field {} must be present", field))
+            .expect(&format!("str field '{}' must be present", field))
     }
 
     pub fn to_string(&self) -> String {

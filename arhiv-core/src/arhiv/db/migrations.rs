@@ -119,6 +119,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v3_to_v4,
     upgrade_v4_to_v5,
     upgrade_v5_to_v6,
+    upgrade_v6_to_v7,
 ];
 
 // stub
@@ -393,6 +394,29 @@ fn upgrade_v5_to_v6(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str
     }
 
     log::info!("migrating attachments: renamed {} blobs", blobs_renamed);
+
+    Ok(())
+}
+
+fn upgrade_v6_to_v7(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '7' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots
+                SET data = json_insert(
+                    data,
+                    '$.completed', json('false'),
+                    '$.collections', json('[]')
+                )
+                WHERE type = 'book';
+       ",
+    )?;
 
     Ok(())
 }

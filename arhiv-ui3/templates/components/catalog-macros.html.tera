@@ -1,8 +1,8 @@
-{% macro render_items(items) %}
+{% macro render_items(items, query) %}
 <ul>
   {% for item in items %}
   <li class="py-6 min-h-6rem break-words">
-    <a href="/documents/{{ item.id }}" class="clean-link">
+    <a href="/documents/{{ item.id }}{{query}}" class="clean-link">
       <h2 class="mb-2 text-lg tracking-wide font-semibold text-blue-800">
         {{ item.title }}
       </h2>

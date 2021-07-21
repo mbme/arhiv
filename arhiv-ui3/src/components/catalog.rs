@@ -104,6 +104,7 @@ pub struct Catalog {
     pattern: String,
     pagination: Option<Pagination>,
     new_document_query: String,
+    document_url_query: String,
 }
 
 impl Catalog {
@@ -123,6 +124,7 @@ impl Catalog {
             document_type,
             pagination: None,
             new_document_query: "".to_string(),
+            document_url_query: "".to_string(),
         }
     }
 
@@ -165,6 +167,16 @@ impl Catalog {
         }
 
         self.new_document_query = query;
+
+        self
+    }
+
+    pub fn with_document_url_query(mut self, mut query: String) -> Self {
+        if !query.is_empty() {
+            query.insert_str(0, "?");
+        }
+
+        self.document_url_query = query;
 
         self
     }
@@ -243,6 +255,7 @@ impl Catalog {
                 "document_type": self.document_type,
                 "is_internal_type": data_description.is_internal,
                 "new_document_query": self.new_document_query,
+                "document_url_query": self.document_url_query,
             }),
         )
     }

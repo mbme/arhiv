@@ -44,6 +44,11 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                 pattern: document.id.to_string(),
                 not: false,
             })
+            .with_document_url_query(
+                query_builder()
+                    .append_pair("parent_collection", &document.id)
+                    .finish(),
+            )
             .with_new_document_query(
                 query_builder()
                     .append_pair(&document.document_type, &document.id)
@@ -57,16 +62,15 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         children_catalog = Some(catalog);
     };
 
-    let collection_type = arhiv.schema.get_collection_type(&document.document_type);
-    let mut toolbar = Toolbar::new()
+    let mut toolbar = Toolbar::new(req.get_query_param("parent_collection"))
         .with_breadcrubs(vec![
-            Breadcrumb::for_document_collection(&document, collection_type)?,
-            Breadcrumb::for_document(&document, false),
+            Breadcrumb::Collection(document.document_type.to_string()), //
+            Breadcrumb::Document(&document),
         ])
-        .on_close_document(&document, collection_type);
+        .on_close_document(&document);
 
     if !data_description.is_internal {
-        toolbar = toolbar.with_action("Edit", format!("/documents/{}/edit", &document.id));
+        toolbar = toolbar.with_edit(&document);
     }
 
     let toolbar = toolbar.render()?;

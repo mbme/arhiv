@@ -8,7 +8,7 @@ use crate::{
     utils::ArhivPageExt,
 };
 use arhiv_core::{entities::*, Arhiv};
-use rs_utils::server::{respond_not_found, ServerResponse};
+use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -38,16 +38,13 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     )?
     .render()?;
 
-    let toolbar = Toolbar::new()
+    let toolbar = Toolbar::new(req.get_query_param("parent_collection"))
         .with_breadcrubs(vec![
-            Breadcrumb::for_document_collection(
-                &document,
-                arhiv.schema.get_collection_type(&document.document_type),
-            )?,
-            Breadcrumb::for_document(&document, true),
-            Breadcrumb::for_string("editor"),
+            Breadcrumb::Collection(document.document_type.to_string()), //
+            Breadcrumb::Document(&document),
+            Breadcrumb::String("editor".to_string()),
         ])
-        .on_close(format!("/documents/{}", &document.id))
+        .on_close_document(&document)
         .render()?;
 
     arhiv.render_page(

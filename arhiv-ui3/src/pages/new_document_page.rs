@@ -31,13 +31,12 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     )?
     .render()?;
 
-    let collection_type = arhiv.schema.get_collection_type(&document.document_type);
-    let toolbar = Toolbar::new()
+    let toolbar = Toolbar::new(req.get_query_param("parent_collection"))
         .with_breadcrubs(vec![
-            Breadcrumb::for_document_collection(&document, collection_type)?,
-            Breadcrumb::for_string(format!("new {}", document.document_type)),
+            Breadcrumb::Collection(document.document_type.to_string()),
+            Breadcrumb::String(format!("new {}", document.document_type)),
         ])
-        .on_close_document(&document, collection_type)
+        .on_close_document(&document)
         .render()?;
 
     arhiv.render_page(

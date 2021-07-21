@@ -14,9 +14,9 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
 
     let status = arhiv.get_status()?;
 
-    let toolbar = Toolbar::new()
+    let toolbar = Toolbar::new(None)
         .with_breadcrubs(vec![
-            Breadcrumb::for_string("index"), //
+            Breadcrumb::String("index".to_string()), //
         ])
         .render()?;
 

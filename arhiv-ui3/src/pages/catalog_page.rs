@@ -30,9 +30,9 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .with_pagination(&req)?
         .render(arhiv, UIConfig::get_config(document_type).catalog)?;
 
-    let toolbar = Toolbar::new()
+    let toolbar = Toolbar::new(None)
         .with_breadcrubs(vec![
-            Breadcrumb::for_string(format!("{}s", document_type)), //
+            Breadcrumb::String(format!("{}s", document_type)), //
         ])
         .on_close("/")
         .render()?;

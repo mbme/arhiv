@@ -27,17 +27,6 @@ impl DataSchema {
         Ok(())
     }
 
-    pub fn get_collection_type(&self, document_type: &str) -> Option<&'static str> {
-        self.modules
-            .iter()
-            .find_map(|module| match module.collection_of {
-                Collection::Type(item_type) if item_type == document_type => {
-                    Some(module.document_type)
-                }
-                _ => None,
-            })
-    }
-
     pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
         let data_description = self.get_data_description(&document.document_type)?;
 

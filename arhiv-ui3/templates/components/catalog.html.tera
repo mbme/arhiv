@@ -29,7 +29,7 @@
 </form>
 
 {% if items | length > 0 %}
-{{ macros::render_items(items=items) }}
+{{ macros::render_items(items=items, query=document_url_query) }}
 {% endif %}
 
 {% for group in groups %}
@@ -49,7 +49,7 @@
   </summary>
 
   <div class="pl-4">
-    {{ macros::render_items(items=group.items) }}
+    {{ macros::render_items(items=group.items, query=document_url_query) }}
   </div>
 </details>
 {% endfor %}

@@ -10,9 +10,9 @@ use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
 
 pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
-    let toolbar = Toolbar::new()
+    let toolbar = Toolbar::new(None)
         .with_breadcrubs(vec![
-            Breadcrumb::for_string("new document"), //
+            Breadcrumb::String("new document".to_string()), //
         ])
         .on_close("/")
         .render()?;

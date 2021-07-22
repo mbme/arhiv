@@ -78,7 +78,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "collections",
                     field_type: FieldType::RefList("book collection"),
-                    optional: false,
+                    optional: true,
                 },
                 Field {
                     name: "completed",

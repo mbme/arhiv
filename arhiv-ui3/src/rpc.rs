@@ -6,6 +6,7 @@ use serde_json::Value;
 
 use arhiv_core::{
     entities::{Document, Id},
+    schema::FieldType,
     Arhiv,
 };
 use rs_utils::{
@@ -38,7 +39,22 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         RPCAction::Archive { id, archive } => {
             arhiv.archive_document(&id, archive)?;
         }
-        RPCAction::Save { document } => {
+        RPCAction::Save { mut document } => {
+            let data_description = arhiv.schema.get_data_description(&document.document_type)?;
+
+            for field in &data_description.fields {
+                match field.field_type {
+                    // convert string "true" to boolean
+                    FieldType::Flag {} => {
+                        let raw_value = document.data.get_str(field.name).unwrap_or_default();
+                        let value = raw_value == "true";
+                        document.data.set(field.name, value);
+                    }
+
+                    _ => {}
+                };
+            }
+
             arhiv.stage_document(document)?;
         }
         RPCAction::PickAttachment {} => {

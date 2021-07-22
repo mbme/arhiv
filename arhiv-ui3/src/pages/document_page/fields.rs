@@ -4,7 +4,7 @@ use serde::Serialize;
 use arhiv_core::{
     entities::Document,
     markup::MarkupStr,
-    schema::{DataDescription, FieldType},
+    schema::{extract_ids_from_reflist, DataDescription, FieldType},
     Arhiv,
 };
 
@@ -77,21 +77,21 @@ pub fn prepare_fields(
                     }
                 }
                 FieldType::RefList(_) => {
-                    if let Some(value) = document.data.get(field_description.name) {
-                        let ids: Vec<String> = serde_json::from_value(value.clone())?;
+                    let value = document
+                        .data
+                        .get_str(field_description.name)
+                        .unwrap_or_default();
+                    let ids = extract_ids_from_reflist(value);
 
-                        Ok(Field {
-                            name: field_description.name,
-                            value: ids
-                                .into_iter()
-                                .map(|item| Ref::from_id(item).render(arhiv))
-                                .collect::<Result<Vec<_>>>()?
-                                .join("\n"),
-                            kind: FieldKind::Html,
-                        })
-                    } else {
-                        Ok(Field::empty(field_description.name))
-                    }
+                    Ok(Field {
+                        name: field_description.name,
+                        value: ids
+                            .into_iter()
+                            .map(|item| Ref::from_id(item).render(arhiv))
+                            .collect::<Result<Vec<_>>>()?
+                            .join("\n"),
+                        kind: FieldKind::Html,
+                    })
                 }
                 FieldType::Flag {} => {
                     let value = document

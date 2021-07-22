@@ -39,6 +39,17 @@
       {% endfor %}
     </select>
 
+    {% elif 'Flag' in field.field_type %}
+    <input
+      type="checkbox"
+      name="{{field.name}}"
+      class="field"
+      {% if field.value == "true" %}checked{% endif %}
+      {% if not field.optional %}required{% endif %}
+      {% if loop.first %}autofocus{% endif %}
+      value="true"
+    >
+
     {% else %}
     <input
       type="text"

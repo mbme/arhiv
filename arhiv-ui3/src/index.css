@@ -131,7 +131,11 @@ a:not(.clean-link) {
 
   .form {
     & .field {
-      @apply block w-full;
+      display: block;
+
+      &:not(input[type=checkbox], select) {
+        @apply w-full;
+      }
     }
 
     & textarea {

@@ -28,19 +28,33 @@ impl<'d> Editor<'d> {
             .fields
             .iter()
             .map(|field| {
-                let value = document.data.get_str(field.name).unwrap_or("");
+                let value = match &field.field_type {
+                    FieldType::Flag {} => {
+                        let value = document
+                            .data
+                            .get(field.name)
+                            .and_then(|value| value.as_bool())
+                            .unwrap_or(false);
+
+                        value.to_string()
+                    }
+                    _ => document.data.get_str(field.name).unwrap_or("").to_string(),
+                };
 
                 let mut field = FormField {
                     name: field.name,
                     label: field.name.to_string(),
                     field_type: field.field_type.clone(),
                     optional: field.optional,
-                    value: value.to_string(),
+                    value,
                 };
 
                 match &field.field_type {
                     FieldType::Ref(to) => {
                         field.label = format!("{} (Ref to {})", field.name, to);
+                    }
+                    FieldType::RefList(to) => {
+                        field.label = format!("{} (Refs to {})", field.name, to);
                     }
                     _ => {}
                 }

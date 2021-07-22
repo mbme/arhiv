@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use arhiv_core::{
     entities::{Document, Id},
-    schema::FieldType,
+    schema::{extract_ids_from_reflist, FieldType},
     Arhiv,
 };
 use rs_utils::{
@@ -44,13 +44,18 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
 
             for field in &data_description.fields {
                 match field.field_type {
+                    // convert string list of refs into array of ids
+                    FieldType::RefList(_) => {
+                        let raw_value = document.data.get_str(field.name).unwrap_or_default();
+                        let value = extract_ids_from_reflist(raw_value);
+                        document.data.set(field.name, value);
+                    }
                     // convert string "true" to boolean
                     FieldType::Flag {} => {
                         let raw_value = document.data.get_str(field.name).unwrap_or_default();
                         let value = raw_value == "true";
                         document.data.set(field.name, value);
                     }
-
                     _ => {}
                 };
             }

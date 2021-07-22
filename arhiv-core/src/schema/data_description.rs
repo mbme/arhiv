@@ -54,10 +54,10 @@ impl DataDescription {
                 }
                 FieldType::RefList(_) => {
                     // FIXME check ref document type
-                    let value: String =
+                    let value: Vec<Id> =
                         serde_json::from_value(value.clone()).expect("field must parse");
 
-                    result.extend(extract_ids_from_reflist(&value));
+                    result.extend(value);
                 }
                 _ => {
                     continue;

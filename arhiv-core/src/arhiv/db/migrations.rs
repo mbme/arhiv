@@ -411,8 +411,8 @@ fn upgrade_v6_to_v7(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
         UPDATE documents_snapshots
                 SET data = json_insert(
                     data,
-                    '$.completed', json('false'),
-                    '$.collections', ''
+                    '$.completed', json('true'),
+                    '$.collections', json('[]')
                 )
                 WHERE type = 'book';
        ",

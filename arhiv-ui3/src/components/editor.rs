@@ -38,6 +38,17 @@ impl<'d> Editor<'d> {
 
                         value.to_string()
                     }
+                    FieldType::RefList(_) => {
+                        let value = document.data.get(field.name);
+
+                        if let Some(value) = value {
+                            let refs: Vec<String> = serde_json::from_value(value.clone())?;
+
+                            refs.join(" ")
+                        } else {
+                            "".to_string()
+                        }
+                    }
                     _ => document.data.get_str(field.name).unwrap_or("").to_string(),
                 };
 

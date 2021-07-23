@@ -38,6 +38,12 @@ impl From<String> for Id {
     }
 }
 
+impl From<&String> for Id {
+    fn from(value: &String) -> Self {
+        Id(value.clone())
+    }
+}
+
 impl From<&Id> for Id {
     fn from(value: &Id) -> Self {
         value.clone()

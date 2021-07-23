@@ -41,12 +41,13 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     .render()?;
 
     let toolbar = Toolbar::new(req.get_query_param("parent_collection"))
-        .with_breadcrubs(vec![
-            Breadcrumb::Collection(document.document_type.to_string()),
-            Breadcrumb::String(format!("new {}", document.document_type)),
-        ])
+        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
+        .with_breadcrumb(Breadcrumb::String(format!(
+            "new {}",
+            document.document_type
+        )))
         .on_close_document(&document)
-        .render()?;
+        .render(arhiv)?;
 
     arhiv.render_page(
         "pages/new_document_page.html.tera",

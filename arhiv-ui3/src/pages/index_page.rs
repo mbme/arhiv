@@ -15,10 +15,8 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
     let status = arhiv.get_status()?;
 
     let toolbar = Toolbar::new(None)
-        .with_breadcrubs(vec![
-            Breadcrumb::String("index".to_string()), //
-        ])
-        .render()?;
+        .with_breadcrumb(Breadcrumb::String("index".to_string()))
+        .render(arhiv)?;
 
     let document_types = arhiv
         .schema

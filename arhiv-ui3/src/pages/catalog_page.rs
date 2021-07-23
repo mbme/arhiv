@@ -31,11 +31,9 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .render(arhiv, UIConfig::get_config(document_type).catalog)?;
 
     let toolbar = Toolbar::new(None)
-        .with_breadcrubs(vec![
-            Breadcrumb::String(format!("{}s", document_type)), //
-        ])
+        .with_breadcrumb(Breadcrumb::String(format!("{}s", document_type)))
         .on_close("/")
-        .render()?;
+        .render(arhiv)?;
 
     arhiv.render_page(
         "pages/catalog_page.html.tera",

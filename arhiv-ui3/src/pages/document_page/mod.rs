@@ -63,17 +63,15 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     };
 
     let mut toolbar = Toolbar::new(req.get_query_param("parent_collection"))
-        .with_breadcrubs(vec![
-            Breadcrumb::Collection(document.document_type.to_string()), //
-            Breadcrumb::Document(&document),
-        ])
+        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
+        .with_breadcrumb(Breadcrumb::Document(&document))
         .on_close_document(&document);
 
     if !data_description.is_internal {
         toolbar = toolbar.with_edit(&document);
     }
 
-    let toolbar = toolbar.render()?;
+    let toolbar = toolbar.render(arhiv)?;
 
     let refs = document
         .refs

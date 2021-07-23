@@ -3,7 +3,7 @@ use chrono::Utc;
 
 use self::db::*;
 pub use self::db::{
-    apply_migrations, DocumentsCount, Filter, FilterMode, ListPage, Matcher, OrderBy,
+    apply_migrations, Condition, DocumentsCount, Filter, FilterMode, ListPage, OrderBy,
 };
 use self::network_service::NetworkService;
 use self::status::Status;
@@ -200,7 +200,7 @@ impl Arhiv {
             }
 
             bail!(
-                "Document {} reference unknown entity {}",
+                "Document {} references unknown entity '{}'",
                 &document.id,
                 reference
             );

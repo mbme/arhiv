@@ -1,7 +1,7 @@
 use anyhow::*;
 
 use super::utils::*;
-use crate::{entities::*, prime_server::start_prime_server, Filter, Matcher};
+use crate::{entities::*, prime_server::start_prime_server, Condition, Filter};
 use rs_utils::project_relpath;
 
 #[tokio::test]
@@ -22,7 +22,7 @@ async fn test_attachments() -> Result<()> {
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
     let page = arhiv.list_documents(Filter {
-        matchers: vec![Matcher::Type {
+        matchers: vec![Condition::Type {
             document_type: ATTACHMENT_TYPE.to_string(),
         }],
         ..Filter::default()

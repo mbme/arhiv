@@ -1,13 +1,14 @@
-use std::{collections::HashMap, fs};
+use std::collections::HashMap;
+use std::fs;
 
 use anyhow::*;
-use arhiv_core::schema::Collection;
-use rand::prelude::*;
-use rand::thread_rng;
+use rand::{prelude::*, thread_rng};
 
-use arhiv_core::entities::*;
-use arhiv_core::schema::FieldType;
-use arhiv_core::Arhiv;
+use arhiv_core::{
+    entities::*,
+    schema::{Collection, FieldType},
+    Arhiv,
+};
 use rs_utils::project_relpath;
 
 use super::TextGenerator;
@@ -119,12 +120,17 @@ impl<'a> Faker<'a> {
                 .stage_document(document)
                 .expect("must be able to save document");
 
-            if let Collection::Type(child_document_type) = &data_description.collection_of {
+            if let Collection::Type {
+                document_type: child_document_type,
+                field,
+            } = &data_description.collection_of
+            {
                 let child_quantity = self.get_quantity_limit(&child_document_type);
 
                 for _ in 0..child_quantity {
                     let mut initial_values = DocumentData::new();
-                    initial_values.set(&document_type, &id);
+                    initial_values.set(field.to_string(), &id);
+
                     let child_document =
                         self.create_fake(child_document_type.to_string(), initial_values);
 
@@ -137,7 +143,11 @@ impl<'a> Faker<'a> {
             }
         }
 
-        if let Collection::Type(item_type) = &data_description.collection_of {
+        if let Collection::Type {
+            document_type: item_type,
+            ..
+        } = &data_description.collection_of
+        {
             println!(
                 "Generated {} {} and {} child {}",
                 quantity, document_type, child_total, item_type

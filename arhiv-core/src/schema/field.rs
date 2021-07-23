@@ -19,7 +19,6 @@ pub enum FieldType {
 }
 
 #[derive(Serialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct Field {
     pub name: &'static str,
     pub field_type: FieldType,

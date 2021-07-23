@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::entities::Id;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Matcher {
+pub enum Condition {
     Field {
-        selector: String,
+        field: String,
         pattern: String,
         not: bool,
     },
@@ -15,11 +15,15 @@ pub enum Matcher {
         pattern: String,
     },
     Type {
-        #[serde(rename = "documentType")]
         document_type: String,
     },
     Ref {
         id: Id,
+    },
+    NotCollectionChild {
+        child_document_type: String,
+        child_collection_field: String,
+        collection_id: Id,
     },
 }
 
@@ -32,7 +36,6 @@ pub enum OrderBy {
     EnumField {
         selector: String,
         asc: bool,
-        #[serde(rename = "enumOrder")]
         enum_order: Vec<String>,
     },
     UpdatedAt {
@@ -50,16 +53,17 @@ impl Default for OrderBy {
 pub enum FilterMode {
     Archived,
     Staged,
+    Relevant,
+    All,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Filter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
-    pub matchers: Vec<Matcher>,
+    pub matchers: Vec<Condition>,
     pub order: Vec<OrderBy>,
-    pub mode: Option<FilterMode>,
+    pub mode: FilterMode,
 }
 
 impl Default for Filter {
@@ -69,7 +73,7 @@ impl Default for Filter {
             page_size: Some(20),
             matchers: vec![],
             order: vec![],
-            mode: None,
+            mode: FilterMode::Relevant,
         }
     }
 }
@@ -80,7 +84,7 @@ impl Filter {
             page_offset: None,
             page_size: None,
             matchers: vec![],
-            mode: Some(FilterMode::Staged),
+            mode: FilterMode::Staged,
             order: vec![],
         }
     }
@@ -91,14 +95,14 @@ impl Filter {
         Filter {
             page_offset: None,
             page_size: None,
-            mode: None,
-            matchers: vec![Matcher::Ref { id }],
+            mode: FilterMode::Relevant,
+            matchers: vec![Condition::Ref { id }],
             order: vec![OrderBy::UpdatedAt { asc: false }],
         }
     }
 
     pub fn with_type(mut self, document_type: impl Into<String>) -> Filter {
-        self.matchers.push(Matcher::Type {
+        self.matchers.push(Condition::Type {
             document_type: document_type.into(),
         });
 
@@ -106,14 +110,14 @@ impl Filter {
     }
 
     pub fn search(mut self, pattern: impl Into<String>) -> Filter {
-        self.matchers.push(Matcher::Search {
+        self.matchers.push(Condition::Search {
             pattern: pattern.into(),
         });
 
         self
     }
 
-    pub fn with_matcher(mut self, matcher: Matcher) -> Filter {
+    pub fn with_matcher(mut self, matcher: Condition) -> Filter {
         self.matchers.push(matcher);
 
         self

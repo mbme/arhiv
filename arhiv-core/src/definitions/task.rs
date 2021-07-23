@@ -5,7 +5,10 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
         DataDescription {
             document_type: "project",
             is_internal: false,
-            collection_of: Collection::Type("task"),
+            collection_of: Collection::Type {
+                document_type: "task",
+                field: "project",
+            },
             fields: vec![
                 //
                 Field {

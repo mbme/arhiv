@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::convert::TryInto;
 
 use anyhow::*;
@@ -19,6 +18,11 @@ impl DocumentData {
             serde_json::to_value(value).expect("failed to serialize value"),
         );
     }
+
+    pub fn remove(&mut self, field: impl AsRef<str>) {
+        self.0.remove(field.as_ref());
+    }
+
     pub fn get(&self, field: &str) -> Option<&Value> {
         self.0.get(field)
     }
@@ -57,15 +61,5 @@ impl TryInto<DocumentData> for Value {
             Value::Object(value) => Ok(DocumentData(value)),
             _ => bail!("failed to convert into DocumentData: Value is not an object"),
         }
-    }
-}
-
-impl Into<DocumentData> for HashMap<String, String> {
-    fn into(self) -> DocumentData {
-        DocumentData(
-            self.into_iter()
-                .map(|(key, value)| (key, Value::String(value)))
-                .collect(),
-        )
     }
 }

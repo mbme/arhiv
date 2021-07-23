@@ -54,7 +54,7 @@ async fn test_modes() -> Result<()> {
     {
         // test archived
         let page = arhiv.list_documents(Filter {
-            mode: Some(FilterMode::Archived),
+            mode: FilterMode::Archived,
             ..Filter::default()
         })?;
 
@@ -64,7 +64,7 @@ async fn test_modes() -> Result<()> {
     {
         // test staged
         let page = arhiv.list_documents(Filter {
-            mode: Some(FilterMode::Staged),
+            mode: FilterMode::Staged,
             ..Filter::default()
         })?;
 
@@ -150,7 +150,7 @@ async fn test_matcher() -> Result<()> {
     {
         // test unexpected type
         let page = arhiv.list_documents(Filter {
-            matchers: vec![Matcher::Type {
+            matchers: vec![Condition::Type {
                 document_type: "random".to_string(),
             }],
             ..Filter::default()
@@ -163,7 +163,7 @@ async fn test_matcher() -> Result<()> {
     {
         // test expected type
         let page = arhiv.list_documents(Filter {
-            matchers: vec![Matcher::Type {
+            matchers: vec![Condition::Type {
                 document_type: "test_type".to_string(),
             }],
             ..Filter::default()
@@ -176,8 +176,8 @@ async fn test_matcher() -> Result<()> {
         // test Field
 
         let page = arhiv.list_documents(Filter {
-            matchers: vec![Matcher::Field {
-                selector: "$.test".to_string(),
+            matchers: vec![Condition::Field {
+                field: "test".to_string(),
                 pattern: "value".to_string(),
                 not: false,
             }],
@@ -191,7 +191,7 @@ async fn test_matcher() -> Result<()> {
         // test Search
 
         let page = arhiv.list_documents(Filter {
-            matchers: vec![Matcher::Search {
+            matchers: vec![Condition::Search {
                 pattern: "Val".to_string(),
             }],
             ..Filter::default()

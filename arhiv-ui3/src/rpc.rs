@@ -42,21 +42,40 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         RPCAction::Save { mut document } => {
             let data_description = arhiv.schema.get_data_description(&document.document_type)?;
 
+            // prepare raw fields
             for field in &data_description.fields {
+                let raw_value = document
+                    .data
+                    .get_str(field.name)
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string();
+
                 match field.field_type {
+                    // skip empty string from ref field
+                    FieldType::Ref(_) => {
+                        if raw_value.is_empty() {
+                            document.data.remove(field.name);
+                        } else {
+                            document.data.set(field.name, raw_value);
+                        }
+                    }
+
                     // convert string list of refs into array of ids
                     FieldType::RefList(_) => {
-                        let raw_value = document.data.get_str(field.name).unwrap_or_default();
-                        let value = extract_ids_from_reflist(raw_value);
+                        let value = extract_ids_from_reflist(&raw_value);
                         document.data.set(field.name, value);
                     }
+
                     // convert string "true" to boolean
                     FieldType::Flag {} => {
-                        let raw_value = document.data.get_str(field.name).unwrap_or_default();
                         let value = raw_value == "true";
                         document.data.set(field.name, value);
                     }
-                    _ => {}
+
+                    _ => {
+                        document.data.set(field.name, raw_value);
+                    }
                 };
             }
 

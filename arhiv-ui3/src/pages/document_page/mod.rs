@@ -3,7 +3,7 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::{schema::Collection, Arhiv, Filter, Matcher};
+use arhiv_core::{schema::Collection, Arhiv, Condition, Filter};
 use rs_utils::{
     query_builder,
     server::{respond_not_found, RequestQueryExt, ServerResponse},
@@ -37,10 +37,14 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let mut children_catalog = None;
 
-    if let Collection::Type(item_type) = data_description.collection_of {
+    if let Collection::Type {
+        document_type: item_type,
+        field,
+    } = data_description.collection_of
+    {
         let catalog = Catalog::new(item_type, pattern)
-            .with_matcher(Matcher::Field {
-                selector: format!("$.{}", &document.document_type),
+            .with_matcher(Condition::Field {
+                field: field.to_string(),
                 pattern: document.id.to_string(),
                 not: false,
             })
@@ -49,11 +53,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                     .append_pair("parent_collection", &document.id)
                     .finish(),
             )
-            .with_new_document_query(
-                query_builder()
-                    .append_pair(&document.document_type, &document.id)
-                    .finish(),
-            )
+            .with_new_document_query(query_builder().append_pair(field, &document.id).finish())
             .render(
                 arhiv,
                 UIConfig::get_child_config(&document.document_type, item_type).catalog,
@@ -86,12 +86,16 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             let mut filter = Filter::backrefs(&document.id);
 
             // ignore collection children
-            if data_description.is_collection() {
-                filter = filter.with_matcher(Matcher::Field {
-                    selector: format!("$.{}", &document.document_type),
-                    pattern: document.id.to_string(),
-                    not: true,
-                });
+            if let Collection::Type {
+                document_type,
+                field,
+            } = data_description.collection_of
+            {
+                filter = filter.with_matcher(Condition::NotCollectionChild {
+                    child_document_type: document_type.to_string(),
+                    child_collection_field: field.to_string(),
+                    collection_id: document.id.clone(),
+                })
             }
 
             filter

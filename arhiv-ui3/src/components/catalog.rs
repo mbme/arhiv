@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use crate::{markup::MarkupStringExt, templates::TEMPLATES};
-use arhiv_core::{entities::*, markup::MarkupStr, Arhiv, Filter, Matcher};
+use arhiv_core::{entities::*, markup::MarkupStr, Arhiv, Condition, Filter};
 use rs_utils::server::RequestQueryExt;
 
 #[derive(Serialize)]
@@ -155,7 +155,7 @@ impl Catalog {
         Ok(self)
     }
 
-    pub fn with_matcher(mut self, matcher: Matcher) -> Self {
+    pub fn with_matcher(mut self, matcher: Condition) -> Self {
         self.filter.matchers.push(matcher);
 
         self

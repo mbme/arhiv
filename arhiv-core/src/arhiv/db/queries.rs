@@ -125,32 +125,33 @@ pub trait Queries {
         qb.select("*", "documents");
 
         match filter.mode {
-            Some(FilterMode::Staged) => {
+            FilterMode::Staged => {
                 qb.where_condition("rev = 0");
             }
-            Some(FilterMode::Archived) => {
+            FilterMode::Archived => {
                 qb.where_condition("archived = true");
             }
-            None => {
+            FilterMode::Relevant => {
                 qb.where_condition("archived = false");
             }
+            FilterMode::All => {}
         }
 
         for matcher in filter.matchers {
             match matcher {
-                Matcher::Field {
-                    ref selector,
+                Condition::Field {
+                    ref field,
                     ref pattern,
                     not,
                 } => {
                     qb.where_condition(format!(
-                        "{} IFNULL(json_extract(data, {}), '') = {}",
+                        "{} json_contains(data, {}, {})",
                         if not { "NOT" } else { "" },
-                        qb.param(selector),
+                        qb.param(field),
                         qb.param(pattern)
                     ));
                 }
-                Matcher::Search { ref pattern } => {
+                Condition::Search { ref pattern } => {
                     qb.and_select(format!(
                         "calculate_search_score(type, data, {}) AS search_score",
                         qb.param(pattern)
@@ -159,12 +160,24 @@ pub trait Queries {
 
                     qb.order_by("search_score", false);
                 }
-                Matcher::Type { document_type } => {
-                    qb.where_condition(format!("type = {}", qb.param(document_type)));
+                Condition::Type { document_type } => {
+                    qb.where_condition(format!("documents.type = {}", qb.param(document_type)));
                 }
-                Matcher::Ref { id } => {
+                Condition::Ref { id } => {
                     qb.and_from("json_each(refs)");
                     qb.where_condition(format!("json_each.value = {}", qb.param(id)));
+                }
+                Condition::NotCollectionChild {
+                    child_document_type,
+                    child_collection_field,
+                    collection_id,
+                } => {
+                    qb.where_condition(format!(
+                        "NOT (documents.type = {} AND json_contains(data, {}, {}))",
+                        qb.param(child_document_type),
+                        qb.param(child_collection_field),
+                        qb.param(collection_id),
+                    ));
                 }
             }
         }

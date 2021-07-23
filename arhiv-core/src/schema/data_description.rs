@@ -19,7 +19,10 @@ pub struct DataDescription {
 #[derive(Serialize, Debug, Clone)]
 pub enum Collection {
     None,
-    Type(&'static str),
+    Type {
+        document_type: &'static str,
+        field: &'static str,
+    },
 }
 
 impl DataDescription {
@@ -109,12 +112,5 @@ impl DataDescription {
                 name,
                 self.document_type
             ))
-    }
-
-    pub fn is_collection(&self) -> bool {
-        match self.collection_of {
-            Collection::None => false,
-            _ => true,
-        }
     }
 }

@@ -7,6 +7,7 @@ use rusqlite::functions::FunctionFlags;
 use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 
 use rs_utils::log;
+use serde_json::Value;
 
 use crate::entities::Id;
 use crate::schema::DataSchema;
@@ -123,6 +124,7 @@ impl DB {
         let conn = self.open_connection(false)?;
 
         self.init_calculate_search_score_fn(&conn)?;
+        self.init_json_contains(&conn)?;
 
         Ok(ArhivConnection::new(conn, &self.path_manager))
     }
@@ -159,7 +161,29 @@ impl DB {
                 }
             },
         )
-        .context(anyhow!("Failed to define calculate_search_score function"))
+        .context(anyhow!(
+            "Failed to define function 'calculate_search_score'"
+        ))
+    }
+
+    fn init_json_contains(&self, conn: &Connection) -> Result<()> {
+        conn.create_scalar_function(
+            "json_contains",
+            3,
+            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+            move |ctx| {
+                assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+
+                let data = ctx.get_raw(0).as_str().expect("data must be str");
+                let field = ctx.get_raw(1).as_str().expect("field must be str");
+                let value = ctx.get_raw(2).as_str().expect("value must be str");
+
+                json_contains(data, field, value)
+                    .context("json_contains() failed")
+                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            },
+        )
+        .context(anyhow!("Failed to define function 'json_contains'"))
     }
 
     pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<Id>>> {
@@ -229,4 +253,35 @@ impl DB {
 
         Ok(())
     }
+}
+
+fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {
+    let data: Value = serde_json::from_str(data)?;
+
+    let data = if let Some(data) = data.get(field) {
+        data
+    } else {
+        return Ok(false);
+    };
+
+    if let Some(data) = data.as_str() {
+        return Ok(data == value);
+    }
+
+    if let Some(data) = data.as_array() {
+        let result = data
+            .iter()
+            .find(|item| {
+                if let Some(item) = item.as_str() {
+                    item == value
+                } else {
+                    false
+                }
+            })
+            .is_some();
+
+        return Ok(result);
+    }
+
+    bail!("data must be string or array")
 }

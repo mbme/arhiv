@@ -83,7 +83,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "completed",
                     field_type: FieldType::Flag {},
-                    optional: false,
+                    optional: true,
                 },
                 Field {
                     name: "rating",
@@ -100,7 +100,10 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
         DataDescription {
             document_type: "book collection",
             is_internal: false,
-            collection_of: Collection::Type("book"),
+            collection_of: Collection::Type {
+                document_type: "book",
+                field: "collections",
+            },
             fields: vec![
                 Field {
                     name: "name",

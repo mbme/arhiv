@@ -1,4 +1,6 @@
-use anyhow::ensure;
+use std::collections::HashMap;
+
+use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
@@ -7,7 +9,11 @@ use crate::{
     components::{Breadcrumb, Editor, Toolbar},
     utils::ArhivPageExt,
 };
-use arhiv_core::{entities::Document, Arhiv};
+use arhiv_core::{
+    entities::{Document, DocumentData},
+    schema::{extract_ids_from_reflist, DataDescription},
+    Arhiv,
+};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
@@ -23,7 +29,10 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let params = req.get_query_params();
 
-    let document = Document::new_with_data(document_type.clone(), params.into());
+    let document = Document::new_with_data(
+        document_type.clone(),
+        params_to_document_data(params, data_description)?,
+    );
 
     let editor = Editor::new(
         &document,
@@ -47,4 +56,33 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
             "document_type": document_type,
         }),
     )
+}
+
+fn params_to_document_data(
+    params: HashMap<String, String>,
+    data_description: &DataDescription,
+) -> Result<DocumentData> {
+    let mut data = DocumentData::new();
+
+    for ref field in &data_description.fields {
+        let value = if let Some(value) = params.get(field.name) {
+            value
+        } else {
+            continue;
+        };
+
+        match field.field_type {
+            arhiv_core::schema::FieldType::Flag {} => {
+                data.set(field.name, value == "true");
+            }
+            arhiv_core::schema::FieldType::RefList(_) => {
+                data.set(field.name, extract_ids_from_reflist(value));
+            }
+            _ => {
+                data.set(field.name, value);
+            }
+        }
+    }
+
+    Ok(data)
 }

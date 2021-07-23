@@ -57,7 +57,6 @@ impl DocumentsCount {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ListPage<T> {
     pub items: Vec<T>,
     pub has_more: bool,

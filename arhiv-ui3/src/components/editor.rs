@@ -20,6 +20,7 @@ struct FormField {
 pub struct Editor<'d> {
     fields: Vec<FormField>,
     document: &'d Document,
+    document_query: String,
 }
 
 impl<'d> Editor<'d> {
@@ -74,7 +75,21 @@ impl<'d> Editor<'d> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(Editor { fields, document })
+        Ok(Editor {
+            fields,
+            document,
+            document_query: "".to_string(),
+        })
+    }
+
+    pub fn with_document_query(mut self, mut query: String) -> Self {
+        if !query.is_empty() {
+            query.insert_str(0, "?");
+        }
+
+        self.document_query = query;
+
+        self
     }
 
     pub fn render(self) -> Result<String> {

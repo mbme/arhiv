@@ -14,7 +14,10 @@ use arhiv_core::{
     schema::{extract_ids_from_reflist, DataDescription},
     Arhiv,
 };
-use rs_utils::server::{RequestQueryExt, ServerResponse};
+use rs_utils::{
+    server::{RequestQueryExt, ServerResponse},
+    QueryBuilder,
+};
 
 pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document_type = req
@@ -38,6 +41,14 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         &document,
         arhiv.schema.get_data_description(&document.document_type)?,
     )?
+    .with_document_query(
+        QueryBuilder::new()
+            .maybe_add_param(
+                "parent_collection",
+                req.get_query_param("parent_collection"),
+            )
+            .build(),
+    )
     .render()?;
 
     let toolbar = Toolbar::new(req.get_query_param("parent_collection"))

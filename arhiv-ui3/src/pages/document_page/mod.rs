@@ -5,8 +5,8 @@ use serde_json::json;
 
 use arhiv_core::{schema::Collection, Arhiv, Condition, Filter};
 use rs_utils::{
-    query_builder,
     server::{respond_not_found, RequestQueryExt, ServerResponse},
+    QueryBuilder,
 };
 
 use crate::{
@@ -49,11 +49,16 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                 not: false,
             })
             .with_document_url_query(
-                query_builder()
-                    .append_pair("parent_collection", &document.id)
-                    .finish(),
+                QueryBuilder::new()
+                    .add_param("parent_collection", &document.id)
+                    .build(),
             )
-            .with_new_document_query(query_builder().append_pair(field, &document.id).finish())
+            .with_new_document_query(
+                QueryBuilder::new()
+                    .add_param(field, &document.id)
+                    .add_param("parent_collection", &document.id)
+                    .build(),
+            )
             .render(
                 arhiv,
                 UIConfig::get_child_config(&document.document_type, item_type).catalog,

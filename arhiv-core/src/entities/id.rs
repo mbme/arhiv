@@ -61,3 +61,9 @@ impl fmt::Display for Id {
         write!(f, "{}", self.0)
     }
 }
+
+impl AsRef<str> for Id {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
+    }
+}

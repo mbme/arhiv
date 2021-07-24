@@ -5,7 +5,7 @@ use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::RequestInfo;
 use serde::Serialize;
 
-use crate::query_builder;
+use crate::QueryBuilder;
 
 pub type ServerResponse = Result<Response<Body>>;
 
@@ -96,7 +96,7 @@ impl RequestQueryExt for Request<Body> {
             return uri.path().to_string();
         }
 
-        let query = query_builder().extend_pairs(params).finish();
+        let query = QueryBuilder::from_params(params).build();
 
         format!("{}?{}", uri.path(), query)
     }

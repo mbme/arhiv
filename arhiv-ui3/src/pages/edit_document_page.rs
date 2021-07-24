@@ -8,7 +8,10 @@ use crate::{
     utils::ArhivPageExt,
 };
 use arhiv_core::{entities::*, Arhiv};
-use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
+use rs_utils::{
+    server::{respond_not_found, RequestQueryExt, ServerResponse},
+    QueryBuilder,
+};
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -36,6 +39,14 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         &document,
         arhiv.schema.get_data_description(&document.document_type)?,
     )?
+    .with_document_query(
+        QueryBuilder::new()
+            .maybe_add_param(
+                "parent_collection",
+                req.get_query_param("parent_collection"),
+            )
+            .build(),
+    )
     .render()?;
 
     let toolbar = Toolbar::new(req.get_query_param("parent_collection"))

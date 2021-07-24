@@ -118,7 +118,7 @@ const utils = {
   }
 };
 
-arhiv_ui.initEditorForm = (form, originalDocument) => {
+arhiv_ui.initEditorForm = (form, originalDocument, documentQuery) => {
   const initialFormData = new FormData(form);
 
   function onBeforeUnload(event) {
@@ -140,7 +140,7 @@ arhiv_ui.initEditorForm = (form, originalDocument) => {
       data: utils.formDataToObj(new FormData(form)),
     }).then(() => {
       window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
-      window.location = `/documents/${originalDocument.id}`;
+      window.location = `/documents/${originalDocument.id}${documentQuery}`;
     });
   });
 };

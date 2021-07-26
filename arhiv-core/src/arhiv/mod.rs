@@ -289,10 +289,6 @@ impl Arhiv {
         Ok(attachment)
     }
 
-    pub fn update_attachment_data(&self, _id: &Id, _file_path: &str) -> Result<Attachment> {
-        unimplemented!();
-    }
-
     pub fn get_attachment_data(&self, id: &Id) -> Result<AttachmentData> {
         Ok(self.db.get_connection()?.get_attachment_data(id))
     }

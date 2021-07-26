@@ -33,12 +33,18 @@ async fn main() {
                         .help("Initialize prime instance"),
                 ),
         )
-        .subcommand(SubCommand::with_name("sync").about("Sync changes"))
+        .subcommand(
+            SubCommand::with_name("sync") //
+                .about("Sync changes"),
+        )
         .subcommand(
             SubCommand::with_name("apply-migrations")
                 .about("Upgrade arhiv db schema to latest version"),
         )
-        .subcommand(SubCommand::with_name("backup").about("Backup arhiv data"))
+        .subcommand(
+            SubCommand::with_name("backup") //
+                .about("Backup arhiv data"),
+        )
         .subcommand(
             SubCommand::with_name("ui-server")
                 .about("Run arhiv UI server")
@@ -61,15 +67,20 @@ async fn main() {
                         .help("Listen on specific port"),
                 ),
         )
-        .subcommand(SubCommand::with_name("status").about("Print current status"))
         .subcommand(
-            SubCommand::with_name("config").about("Print config").arg(
-                Arg::with_name("template")
-                    .short("t")
-                    .long("template")
-                    .display_order(1)
-                    .help("Prints config template"),
-            ),
+            SubCommand::with_name("status") //
+                .about("Print current status"),
+        )
+        .subcommand(
+            SubCommand::with_name("config") //
+                .about("Print config")
+                .arg(
+                    Arg::with_name("template")
+                        .short("t")
+                        .long("template")
+                        .display_order(1)
+                        .help("Prints config template"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("get")

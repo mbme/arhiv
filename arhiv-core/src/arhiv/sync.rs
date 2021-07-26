@@ -5,6 +5,7 @@ use rs_utils::log;
 use super::db::*;
 use super::Arhiv;
 use crate::entities::*;
+use crate::prime_server::PrimeServerRPC;
 
 impl Arhiv {
     pub(crate) fn apply_changeset(
@@ -262,7 +263,8 @@ impl Arhiv {
 
         let last_update_time = self.db.get_connection()?.get_last_update_time()?;
 
-        let network_service = self.get_network_service()?;
+        let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
+
         // TODO parallel file upload
         for attachment in changeset
             .documents
@@ -271,12 +273,10 @@ impl Arhiv {
         {
             let attachment_data = self.get_attachment_data(&attachment.id)?;
 
-            network_service
-                .upload_attachment_data(&attachment_data)
-                .await?;
+            prime_rpc.upload_attachment_data(&attachment_data).await?;
         }
 
-        let response: ChangesetResponse = network_service.send_changeset(&changeset).await?;
+        let response: ChangesetResponse = prime_rpc.send_changeset(&changeset).await?;
 
         log::debug!("sync_remotely: got response {}", &response);
 

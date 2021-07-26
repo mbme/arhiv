@@ -3,7 +3,11 @@ use anyhow::*;
 use rs_utils::project_relpath;
 
 use super::utils::*;
-use crate::{entities::*, prime_server::start_prime_server, Condition, Filter};
+use crate::{
+    entities::*,
+    prime_server::{start_prime_server, PrimeServerRPC},
+    Condition, Filter,
+};
 
 #[tokio::test]
 async fn test_attachments() -> Result<()> {
@@ -59,10 +63,8 @@ async fn test_download_attachment() -> Result<()> {
     replica.sync().await?;
 
     let attachment_data = replica.get_attachment_data(&attachment.id)?;
-    replica
-        .get_network_service()?
-        .download_attachment_data(&attachment_data)
-        .await?;
+    let prime_rpc = PrimeServerRPC::new(&replica.config.prime_url)?;
+    prime_rpc.download_attachment_data(&attachment_data).await?;
 
     let dst = &attachment_data.path;
 

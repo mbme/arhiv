@@ -7,15 +7,17 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 use crate::{arhiv::AttachmentData, entities::*};
 use rs_utils::{log, read_file_as_stream};
 
-pub struct NetworkService {
+pub struct PrimeServerRPC {
     prime_url: String,
 }
 
-impl NetworkService {
-    pub fn new<S: Into<String>>(prime_url: S) -> Self {
-        NetworkService {
-            prime_url: prime_url.into(),
-        }
+impl PrimeServerRPC {
+    pub fn new<S: Into<String>>(prime_url: S) -> Result<Self> {
+        let prime_url = prime_url.into();
+
+        ensure!(!prime_url.is_empty(), "prime_url must not  be empty");
+
+        Ok(PrimeServerRPC { prime_url })
     }
 
     pub async fn download_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
@@ -105,7 +107,7 @@ impl NetworkService {
         Ok(response)
     }
 
-    pub fn get_attachment_data_url(&self, id: &Id) -> String {
+    fn get_attachment_data_url(&self, id: &Id) -> String {
         format!("{}/attachment-data/{}", self.prime_url, id)
     }
 }

@@ -3,9 +3,9 @@ use chrono::Utc;
 
 use self::db::*;
 pub use self::db::{
-    apply_migrations, Condition, DocumentsCount, Filter, FilterMode, ListPage, OrderBy,
+    apply_migrations, AttachmentData, Condition, DocumentsCount, Filter, FilterMode, ListPage,
+    OrderBy,
 };
-use self::network_service::NetworkService;
 use self::status::Status;
 use crate::config::Config;
 use crate::definitions::get_schema;
@@ -15,7 +15,6 @@ use rs_utils::log;
 
 mod backup;
 mod db;
-mod network_service;
 mod status;
 mod sync;
 
@@ -87,16 +86,6 @@ impl Arhiv {
         log::info!("Created arhiv in {}", config.arhiv_root);
 
         Ok(Arhiv { config, db, schema })
-    }
-
-    pub(crate) fn get_network_service(&self) -> Result<NetworkService> {
-        let prime_url = &self.config.prime_url;
-
-        ensure!(!prime_url.is_empty(), "config.prime_url is not set");
-
-        let network_service = NetworkService::new(prime_url);
-
-        Ok(network_service)
     }
 
     pub fn get_status(&self) -> Result<Status> {

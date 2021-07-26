@@ -1,6 +1,7 @@
 use anyhow::*;
 use std::env;
 use std::fs;
+use std::os::unix::prelude::MetadataExt;
 use tokio::fs as tokio_fs;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -29,19 +30,23 @@ pub fn dir_exists(path: &str) -> Result<bool> {
 }
 
 pub fn ensure_dir_exists(path: &str) -> Result<()> {
-    if dir_exists(path)? {
-        Ok(())
-    } else {
-        Err(anyhow!("dir doesn't exist {}", path))
-    }
+    ensure!(dir_exists(path)?, "dir doesn't exist {}", path);
+
+    Ok(())
 }
 
 pub fn ensure_file_exists(path: &str) -> Result<()> {
-    if file_exists(path)? {
-        Ok(())
-    } else {
-        Err(anyhow!("file doesn't exist {}", path))
-    }
+    ensure!(file_exists(path)?, "file doesn't exist {}", path);
+
+    Ok(())
+}
+
+/// check if path1 and path2 belong to the same filesystem or not
+pub fn is_same_filesystem(path1: &str, path2: &str) -> Result<bool> {
+    let meta1 = fs::metadata(path1)?;
+    let meta2 = fs::metadata(path2)?;
+
+    Ok(meta1.dev() == meta2.dev())
 }
 
 pub fn get_file_name(path: &str) -> &str {

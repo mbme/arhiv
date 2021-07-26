@@ -1,6 +1,6 @@
 use anyhow::*;
 
-use rs_utils::{ensure_file_exists, log, FsTransaction};
+use rs_utils::{ensure_file_exists, is_same_filesystem, log, FsTransaction};
 
 use super::AttachmentData;
 use crate::entities::Id;
@@ -22,7 +22,7 @@ pub trait BLOBQueries {
 pub trait MutableBLOBQueries: BLOBQueries {
     fn get_fs_tx(&mut self) -> &mut FsTransaction;
 
-    fn add_attachment_data(&mut self, id: &Id, file_path: &str, copy: bool) -> Result<()> {
+    fn add_attachment_data(&mut self, id: &Id, file_path: &str) -> Result<()> {
         ensure_file_exists(&file_path)?;
 
         let attachment_data = self.get_attachment_data(id);
@@ -33,19 +33,16 @@ pub trait MutableBLOBQueries: BLOBQueries {
             id
         );
 
+        let data_dir = self.get_data_dir().to_string();
         let fs_tx = self.get_fs_tx();
-        if copy {
-            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
-        } else {
-            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
-        }
 
-        log::debug!(
-            "{} new attachment data {} from {}",
-            if copy { "Copied" } else { "Hard linked" },
-            id,
-            file_path
-        );
+        if is_same_filesystem(file_path, &data_dir)? {
+            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
+            log::debug!("Hard linked new attachment data {} from {}", id, file_path);
+        } else {
+            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
+            log::debug!("Copied new attachment data {} from {}", id, file_path);
+        }
 
         Ok(())
     }

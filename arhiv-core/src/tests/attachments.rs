@@ -1,8 +1,9 @@
 use anyhow::*;
 
+use rs_utils::project_relpath;
+
 use super::utils::*;
 use crate::{entities::*, prime_server::start_prime_server, Condition, Filter};
-use rs_utils::project_relpath;
 
 #[tokio::test]
 async fn test_attachments() -> Result<()> {
@@ -11,7 +12,7 @@ async fn test_attachments() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = arhiv.add_attachment(src, true)?;
+    let attachment = arhiv.add_attachment(src)?;
 
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
@@ -44,7 +45,7 @@ async fn test_download_attachment() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = prime.add_attachment(src, true)?;
+    let attachment = prime.add_attachment(src)?;
 
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);

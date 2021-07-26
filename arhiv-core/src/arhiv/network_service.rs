@@ -5,10 +5,7 @@ use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use crate::{arhiv::AttachmentData, entities::*};
-use rs_utils::{
-    log::{debug, error, info},
-    read_file_as_stream,
-};
+use rs_utils::{log, read_file_as_stream};
 
 pub struct NetworkService {
     prime_url: String,
@@ -29,9 +26,10 @@ impl NetworkService {
             );
         }
 
-        debug!(
+        log::debug!(
             "downloading attachment data {} into {}",
-            &attachment_data.id, &attachment_data.path
+            &attachment_data.id,
+            &attachment_data.path
         );
 
         let url = self.get_attachment_data_url(&attachment_data.id);
@@ -55,7 +53,7 @@ impl NetworkService {
     }
 
     pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
-        debug!("uploading attachment {}", &attachment_data.id);
+        log::debug!("uploading attachment {}", &attachment_data.id);
 
         let file_stream = read_file_as_stream(&attachment_data.path).await?;
 
@@ -69,20 +67,21 @@ impl NetworkService {
 
         match response.status() {
             StatusCode::OK => {
-                info!("uploaded attachment data {}", &attachment_data.id);
+                log::info!("uploaded attachment data {}", &attachment_data.id);
                 Ok(())
             }
             StatusCode::CONFLICT => {
-                info!(
+                log::info!(
                     "skipped uploading attachment data {}: already exists",
                     &attachment_data.id
                 );
                 Ok(())
             }
             _ => {
-                error!(
+                log::error!(
                     "failed to upload attachment data {}: {:?}",
-                    &attachment_data.id, response
+                    &attachment_data.id,
+                    response
                 );
 
                 Err(anyhow!("failed to upload attachment data"))
@@ -91,7 +90,7 @@ impl NetworkService {
     }
 
     pub async fn send_changeset(&self, changeset: &Changeset) -> Result<ChangesetResponse> {
-        debug!("sending changeset...");
+        log::debug!("sending changeset...");
 
         let response: ChangesetResponse = Client::new()
             .post(&format!("{}/changeset", self.prime_url))

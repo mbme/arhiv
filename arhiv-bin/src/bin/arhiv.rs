@@ -114,6 +114,16 @@ async fn main() {
                         .help("JSON object with document props"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("attach")
+                .about("Add new attachment")
+                .arg(
+                    Arg::with_name("file_path")
+                        .required(true)
+                        .index(1)
+                        .help("Absolute path to file to save"),
+                ),
+        )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -202,6 +212,19 @@ async fn main() {
                 .expect("must be able to stage document");
 
             println!("{}", id);
+        }
+        ("attach", Some(matches)) => {
+            let file_path: &str = matches
+                .value_of("file_path")
+                .expect("file_path must be present");
+
+            let arhiv = Arhiv::must_open();
+
+            let attachment = arhiv
+                .add_attachment(file_path)
+                .expect("must be able to save attachment");
+
+            println!("{}", attachment.id);
         }
         ("ui-server", Some(matches)) => {
             let port: u16 = matches

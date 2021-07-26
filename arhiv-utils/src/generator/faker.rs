@@ -40,7 +40,7 @@ impl<'a> Faker<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Result<Faker> {
         let mut attachment_ids: Vec<Id> = vec![];
         for file_path in list_attachments() {
-            let document = arhiv.add_attachment(&file_path, true)?;
+            let document = arhiv.add_attachment(&file_path)?;
             attachment_ids.push(document.id.clone());
         }
 

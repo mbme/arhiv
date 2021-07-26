@@ -5,7 +5,13 @@ use std::{env, process, sync::Arc};
 
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
-use arhiv_core::{apply_migrations, entities::Id, prime_server::start_prime_server, Arhiv, Config};
+use arhiv_core::{
+    apply_migrations,
+    entities::{Document, DocumentData, Id},
+    get_schema,
+    prime_server::start_prime_server,
+    Arhiv, Config,
+};
 use arhiv_ui3::start_ui_server;
 use rs_utils::log::setup_logger_with_level;
 
@@ -91,6 +97,23 @@ async fn main() {
                         .help("id of the document"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("add")
+                .about("Add new document")
+                .arg(
+                    Arg::with_name("document_type")
+                        .required(true)
+                        .possible_values(&get_schema().get_document_types(true))
+                        .index(1)
+                        .help("One of known document types"),
+                )
+                .arg(
+                    Arg::with_name("data")
+                        .required(true)
+                        .index(2)
+                        .help("JSON object with document props"),
+                ),
+        )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -159,6 +182,26 @@ async fn main() {
                 eprintln!("Document with id '{}' not found", &id);
                 process::exit(1);
             }
+        }
+        ("add", Some(matches)) => {
+            let document_type: &str = matches
+                .value_of("document_type")
+                .expect("document_type must be present");
+
+            let data: &str = matches.value_of("data").expect("data must be present");
+            let data: DocumentData =
+                serde_json::from_str(data).expect("data must be a JSON object");
+
+            let document = Document::new_with_data(document_type, data);
+            let id = document.id.clone();
+
+            let arhiv = Arhiv::must_open();
+
+            arhiv
+                .stage_document(document)
+                .expect("must be able to stage document");
+
+            println!("{}", id);
         }
         ("ui-server", Some(matches)) => {
             let port: u16 = matches

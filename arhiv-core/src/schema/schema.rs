@@ -37,4 +37,18 @@ impl DataSchema {
             .get_str(title_field.name)
             .ok_or(anyhow!("title field {} is missing", title_field.name))
     }
+
+    pub fn get_document_types(&self, skip_internal: bool) -> Vec<&str> {
+        self.modules
+            .iter()
+            .filter(|module| {
+                if skip_internal {
+                    !module.is_internal
+                } else {
+                    true
+                }
+            })
+            .map(|module| module.document_type)
+            .collect()
+    }
 }

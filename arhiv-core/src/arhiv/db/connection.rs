@@ -1,7 +1,7 @@
 use anyhow::*;
 use rusqlite::Connection;
 
-use super::{blob::*, path_manager::PathManager, queries::*};
+use super::{blob_queries::*, path_manager::PathManager, queries::*};
 use rs_utils::FsTransaction;
 
 pub struct ArhivConnection<'a> {

@@ -13,7 +13,7 @@ use crate::entities::Id;
 use crate::schema::DataSchema;
 
 pub use attachment_data::AttachmentData;
-pub use blob::*;
+pub use blob_queries::*;
 pub use connection::*;
 pub use dto::*;
 pub use filter::*;
@@ -22,7 +22,7 @@ use path_manager::PathManager;
 pub use queries::*;
 
 mod attachment_data;
-mod blob;
+mod blob_queries;
 mod connection;
 mod dto;
 mod filter;

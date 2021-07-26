@@ -8,14 +8,8 @@ use crate::entities::Id;
 pub trait BLOBQueries {
     fn get_data_dir(&self) -> &str;
 
-    fn get_attachment_data_path(&self, id: &Id) -> String {
-        format!("{}/{}", self.get_data_dir(), id)
-    }
-
     fn get_attachment_data(&self, id: &Id) -> AttachmentData {
-        let path = self.get_attachment_data_path(&id);
-
-        AttachmentData::new(id.clone(), path)
+        AttachmentData::new(id.clone(), format!("{}/{}", self.get_data_dir(), id))
     }
 }
 
@@ -48,14 +42,14 @@ pub trait MutableBLOBQueries: BLOBQueries {
     }
 
     fn remove_attachment_data(&mut self, id: &Id) -> Result<()> {
-        let attachment_data_path = self.get_attachment_data_path(id);
+        let attachment_data = self.get_attachment_data(id);
 
-        self.get_fs_tx().remove_file(&attachment_data_path)?;
+        self.get_fs_tx().remove_file(&attachment_data.path)?;
 
         log::debug!(
             "Removed attachment data {} from {}",
             id,
-            attachment_data_path
+            attachment_data.path
         );
 
         Ok(())

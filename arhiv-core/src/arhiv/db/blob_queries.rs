@@ -16,7 +16,7 @@ pub trait BLOBQueries {
 pub trait MutableBLOBQueries: BLOBQueries {
     fn get_fs_tx(&mut self) -> &mut FsTransaction;
 
-    fn add_attachment_data(&mut self, id: &Id, file_path: &str) -> Result<()> {
+    fn add_attachment_data(&mut self, id: &Id, file_path: &str, move_file: bool) -> Result<()> {
         ensure_file_exists(&file_path)?;
 
         let attachment_data = self.get_attachment_data(id);
@@ -30,11 +30,14 @@ pub trait MutableBLOBQueries: BLOBQueries {
         let data_dir = self.get_data_dir().to_string();
         let fs_tx = self.get_fs_tx();
 
-        if is_same_filesystem(file_path, &data_dir)? {
-            fs_tx.hard_link_file(file_path.to_string(), attachment_data.path)?;
+        if move_file {
+            fs_tx.move_file(file_path, attachment_data.path)?;
+            log::debug!("Moved new attachment data {} from {}", id, file_path);
+        } else if is_same_filesystem(file_path, &data_dir)? {
+            fs_tx.hard_link_file(file_path, attachment_data.path)?;
             log::debug!("Hard linked new attachment data {} from {}", id, file_path);
         } else {
-            fs_tx.copy_file(file_path.to_string(), attachment_data.path)?;
+            fs_tx.copy_file(file_path, attachment_data.path)?;
             log::debug!("Copied new attachment data {} from {}", id, file_path);
         }
 

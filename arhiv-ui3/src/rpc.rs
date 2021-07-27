@@ -87,7 +87,7 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             ensure!(files.len() < 2);
 
             if let Some(file_path) = files.get(0) {
-                let document = arhiv.add_attachment(&file_path)?;
+                let document = arhiv.add_attachment(&file_path, false)?;
                 response = Value::String(document.id.to_string());
             }
         }

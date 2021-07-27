@@ -16,7 +16,7 @@ async fn test_attachments() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = arhiv.add_attachment(src)?;
+    let attachment = arhiv.add_attachment(src, false)?;
 
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
@@ -49,7 +49,7 @@ async fn test_download_attachment() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = prime.add_attachment(src)?;
+    let attachment = prime.add_attachment(src, false)?;
 
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);

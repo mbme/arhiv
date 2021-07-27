@@ -14,7 +14,7 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = arhiv.add_attachment(src)?;
+    let attachment = arhiv.add_attachment(src, false)?;
 
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);
@@ -68,7 +68,7 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = replica.add_attachment(src)?;
+    let attachment = replica.add_attachment(src, false)?;
 
     let id = {
         let mut document = empty_document();
@@ -124,7 +124,7 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment1 = arhiv.add_attachment(src)?;
+    let attachment1 = arhiv.add_attachment(src, false)?;
 
     let mut document = empty_document();
     document.data.set("ref", &attachment1.id);
@@ -132,7 +132,7 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
     // stage document with attachment1
     arhiv.stage_document(document.clone())?;
 
-    let attachment2 = arhiv.add_attachment(src)?;
+    let attachment2 = arhiv.add_attachment(src, false)?;
 
     document.data.set("ref", &attachment2.id);
 

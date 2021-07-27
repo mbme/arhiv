@@ -116,12 +116,17 @@ async fn main() {
         )
         .subcommand(
             SubCommand::with_name("attach")
-                .about("Add new attachment")
+                .about("Add new attachment. Will hard link or copy file to arhiv.")
                 .arg(
                     Arg::with_name("file_path")
                         .required(true)
                         .index(1)
                         .help("Absolute path to file to save"),
+                )
+                .arg(
+                    Arg::with_name("move_file")
+                        .short("m")
+                        .help("Move file to arhiv"),
                 ),
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -218,10 +223,12 @@ async fn main() {
                 .value_of("file_path")
                 .expect("file_path must be present");
 
+            let move_file: bool = matches.is_present("move_file");
+
             let arhiv = Arhiv::must_open();
 
             let attachment = arhiv
-                .add_attachment(file_path)
+                .add_attachment(file_path, move_file)
                 .expect("must be able to save attachment");
 
             println!("{}", attachment.id);

@@ -259,14 +259,18 @@ impl Arhiv {
         self.stage_document(document)
     }
 
-    pub fn add_attachment(&self, file_path: &str) -> Result<Attachment> {
-        log::debug!("Staging attachment {}", &file_path);
+    pub fn add_attachment(&self, file_path: &str, move_file: bool) -> Result<Attachment> {
+        log::debug!(
+            "Staging attachment {}; move file: {}",
+            &file_path,
+            move_file
+        );
 
         let attachment = Attachment::new(file_path)?;
 
         let mut tx = self.db.get_tx()?;
 
-        tx.add_attachment_data(&attachment.id, file_path)?;
+        tx.add_attachment_data(&attachment.id, file_path, move_file)?;
         tx.put_document(&attachment)?;
 
         tx.commit()?;

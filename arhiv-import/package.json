@@ -5,12 +5,20 @@
   "main": "src/index.js",
   "scripts": {
     "scrape": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compiler-errors": "tsc --noEmit --project tsconfig.json",
+    "_build": "esbuild src/index.ts --outfile=dist/bundle.js --bundle --platform=node --define:process.env.NODE_ENV=\\\"development\\\"",
+    "build": "yarn run _build --define:process.env.NODE_ENV=\\\"development\\\"",
+    "prod:build": "yarn run _build --minify --define:process.env.NODE_ENV=\\\"production\\\"",
+    "lint": "eslint --cache --ext .ts src"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^7.28.0"
+    "@typescript-eslint/eslint-plugin": "^4.28.5",
+    "@typescript-eslint/parser": "^4.28.5",
+    "esbuild": "^0.12.16",
+    "eslint": "^7.28.0",
+    "typescript": "^4.3.5"
   },
   "dependencies": {
     "puppeteer-core": "^10.1.0"

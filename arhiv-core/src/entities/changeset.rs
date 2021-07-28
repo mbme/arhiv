@@ -4,7 +4,7 @@ use std::fmt;
 use super::{Document, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Changeset {
     pub db_version: u8,
     pub arhiv_id: String,

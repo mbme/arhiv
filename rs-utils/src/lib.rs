@@ -1,5 +1,6 @@
 use std::env;
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 use anyhow::*;
 
@@ -38,4 +39,40 @@ pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     let output_str = String::from_utf8(output.stdout)?;
 
     Ok(output_str)
+}
+
+pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String> {
+    let script = script.as_ref();
+
+    let mut child = Command::new("node")
+        .arg("-") // read script from stdin
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    if let Some(mut child_stdin) = child.stdin.take() {
+        child_stdin.write_all(script.as_bytes())?;
+    } else {
+        bail!("failed to run js script: can't write to stdin")
+    }
+
+    let output = child.wait_with_output()?;
+
+    if output.status.success() {
+        let output_str = String::from_utf8(output.stdout)?;
+
+        Ok(output_str)
+    } else {
+        let err_str = String::from_utf8(output.stderr)?;
+
+        log::error!(
+            "failed to run js script: exit code {}\n{}",
+            output.status,
+            err_str
+        );
+
+        bail!("failed to run js script: exit code {}", output.status)
+    }
 }

@@ -1,13 +1,13 @@
-/* eslint-env node */
+import puppeteer from 'puppeteer-core';
 
-const puppeteer = require('puppeteer-core');
-const { extractBookFromYakaboo } = require('./book-yakaboo');
+import type { Obj } from './utils';
+import { extractBookFromYakaboo } from './book-yakaboo';
 
 const SCRAPERS = [
   extractBookFromYakaboo,
 ];
 
-async function scrape(url) {
+async function scrape(url: string): Promise<Obj | undefined> {
   if (!url) {
     throw new Error('url to scrape must be provided');
   }
@@ -26,26 +26,23 @@ async function scrape(url) {
         return result;
       }
     }
+
+    return undefined;
   } finally {
     await browser.close();
   }
 }
 
-async function run(url) {
-  const data = await scrape(url);
-
-  if (!data) {
-    console.error('No scraper for url %s', url);
-    return;
-  }
-
-  console.log(data);
-}
-
 const args = process.argv.slice(2);
 const url = args[0];
 
-run(url).catch((e) => {
+scrape(url).then((data) => {
+  if (!data) {
+    throw new Error(`No scraper for url ${url}`);
+  }
+
+  process.stdout.write(JSON.stringify(data, null, 2));
+}).catch((e) => {
   console.error('Failed to scrape url %s', url, e);
   process.exit(1);
 });

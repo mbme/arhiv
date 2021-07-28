@@ -12,7 +12,7 @@ pub const TOMBSTONE_TYPE: &'static str = "tombstone";
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Document {
     pub id: Id,
     pub rev: Revision,

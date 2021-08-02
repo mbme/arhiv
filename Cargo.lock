@@ -78,11 +78,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
+ "async-trait",
  "dialoguer",
  "rs-utils",
  "serde",
  "serde_json",
  "tokio",
+ "url",
 ]
 
 [[package]]
@@ -113,6 +115,17 @@ dependencies = [
  "rs-utils",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "async-trait"
+version = "0.1.51"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44318e776df68115a881de9a8fd1b9e53368d7a4a5ce4cc48517da3393233a5e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1242,10 +1255,12 @@ dependencies = [
  "chrono",
  "fern",
  "form_urlencoded",
+ "futures",
  "hyper",
  "log",
  "mime_guess",
  "rand",
+ "reqwest",
  "routerify",
  "serde",
  "serde_json",

@@ -2,7 +2,8 @@ use arhiv_core::Arhiv;
 use arhiv_import::run_app;
 use rs_utils::log;
 
-pub fn main() {
+#[tokio::main]
+pub async fn main() {
     log::setup_logger();
 
     let arhiv = Arhiv::must_open();
@@ -12,5 +13,6 @@ pub fn main() {
         &arhiv,
         true,
     )
+    .await
     .expect("failed to import");
 }

@@ -1,7 +1,11 @@
-use std::collections::HashMap;
+use anyhow::*;
+use futures::stream::TryStreamExt;
+use tokio::fs as tokio_fs;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use form_urlencoded::Serializer;
+pub use query_builder::QueryBuilder;
 
+mod query_builder;
 pub mod server;
 
 pub fn get_mime_from_path(path: impl AsRef<str>) -> String {
@@ -10,43 +14,21 @@ pub fn get_mime_from_path(path: impl AsRef<str>) -> String {
         .to_string()
 }
 
-pub struct QueryBuilder<'s> {
-    serializer: Serializer<'s, String>,
-}
+pub async fn download_data_to_file(url: &str, file_path: &str) -> Result<()> {
+    let mut stream = reqwest::get(url)
+        .await?
+        .error_for_status()?
+        .bytes_stream()
+        // Convert the stream into an futures::io::AsyncRead.
+        // We must first convert the reqwest::Error into an futures::io::Error.
+        .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
+        .into_async_read()
+        .compat();
 
-impl<'s> QueryBuilder<'s> {
-    pub fn new() -> Self {
-        QueryBuilder {
-            serializer: Serializer::new(String::new()),
-        }
-    }
+    let mut file = tokio_fs::File::create(file_path).await?;
 
-    pub fn from_params(params: HashMap<String, String>) -> Self {
-        let mut serializer = Serializer::new(String::new());
-        serializer.extend_pairs(params);
+    // Invoke tokio::io::copy to actually perform the download.
+    tokio::io::copy(&mut stream, &mut file).await?;
 
-        QueryBuilder { serializer }
-    }
-
-    pub fn add_param(&mut self, param: impl AsRef<str>, value: impl AsRef<str>) -> &mut Self {
-        self.serializer.append_pair(param.as_ref(), value.as_ref());
-
-        self
-    }
-
-    pub fn maybe_add_param(
-        &mut self,
-        param: impl AsRef<str>,
-        value: Option<impl AsRef<str>>,
-    ) -> &mut Self {
-        if let Some(value) = value {
-            self.serializer.append_pair(param.as_ref(), value.as_ref());
-        }
-
-        self
-    }
-
-    pub fn build(&mut self) -> String {
-        self.serializer.finish()
-    }
+    Ok(())
 }

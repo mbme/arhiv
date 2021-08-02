@@ -84,6 +84,27 @@ pub fn get_config_home() -> Option<String> {
     None
 }
 
+// $XDG_DOWNLOAD_DIR or $HOME/Downloads
+pub fn get_downloads_dir() -> Option<String> {
+    if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {
+        return path
+            .into_string()
+            .expect("XDG_DOWNLOAD_DIR env var must be a valid string")
+            .into();
+    }
+
+    if let Some(path) = env::var_os("HOME") {
+        return format!(
+            "{}/Downloads",
+            path.into_string()
+                .expect("HOME env var must be a valid string")
+        )
+        .into();
+    }
+
+    None
+}
+
 // recursively search from current dir upwards for {file_name}
 pub fn locate_dominating_file<S: Into<String>>(file_name: S) -> Result<String> {
     let file_name = file_name.into();

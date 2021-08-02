@@ -1,7 +1,8 @@
 use anyhow::*;
 use dialoguer::{theme::ColorfulTheme, Confirm};
+use url::Url;
 
-use rs_utils::run_js_script;
+use rs_utils::{download_data_to_file, file_exists, get_downloads_dir, log, run_js_script};
 
 pub fn scrape(url: &str) -> Result<String> {
     let script = include_str!("../dist/bundle.js");
@@ -9,11 +10,27 @@ pub fn scrape(url: &str) -> Result<String> {
     run_js_script(script, vec![url])
 }
 
-pub fn confirm_if_needed(confirm: bool) -> Result<bool> {
-    if !confirm {
-        return Ok(true);
-    }
+pub async fn download_file(src_url: &str) -> Result<String> {
+    let downloads_dir = get_downloads_dir().ok_or(anyhow!("failed to find Downloads dir"))?;
 
+    // extract file name from url
+    let url = Url::parse(src_url)?;
+    let file_name = url
+        .path_segments()
+        .map(|segments| segments.last())
+        .flatten()
+        .ok_or(anyhow!("failed to extract file name from url {}", src_url))?;
+
+    let file = format!("{}/{}", &downloads_dir, file_name);
+    ensure!(!file_exists(&file)?, "file {} already exists", file);
+
+    download_data_to_file(src_url, &file).await?;
+    log::debug!("Downloaded {} to {}", src_url, &file);
+
+    Ok(file)
+}
+
+pub fn ask_confirmation() -> Result<bool> {
     Confirm::with_theme(&ColorfulTheme::default())
         .with_prompt("Do you really want to continue?")
         .default(true)

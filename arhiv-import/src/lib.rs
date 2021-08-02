@@ -1,23 +1,45 @@
 use anyhow::*;
+use async_trait::async_trait;
 
-use arhiv_core::Arhiv;
+use arhiv_core::{entities::Document, Arhiv};
+use rs_utils::log;
 
-use crate::book_yakaboo::import_book_from_yakaboo;
+use crate::{
+    book_yakaboo::YakabooBookImporter,
+    utils::{ask_confirmation, scrape},
+};
 
 mod book_yakaboo;
 mod utils;
 
-type Importer = fn(&str, &Arhiv, bool) -> Result<bool>;
+#[async_trait]
+pub trait Importer {
+    fn can_import(&self, url: &str) -> bool;
 
-pub fn run_app(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
-    let importers: Vec<Importer> = vec![import_book_from_yakaboo];
+    async fn import(&self, data: &str, arhiv: &Arhiv) -> Result<Document>;
+}
+
+pub async fn run_app(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
+    let importers = vec![Box::new(YakabooBookImporter)];
 
     for importer in importers {
-        let imported = importer(url, arhiv, confirm).context("importer failed")?;
+        if !importer.can_import(url) {
+            continue;
+        }
 
-        if imported {
+        let data = scrape(url).context("scrape failed")?;
+        log::info!("Scraped data:\n{}", &data);
+
+        if confirm && !ask_confirmation()? {
             return Ok(());
         }
+
+        let document = importer
+            .import(&data, arhiv)
+            .await
+            .context("importer failed")?;
+
+        log::info!("Imported {}", document);
     }
 
     bail!("don't know how to import document from url '{}'", url)

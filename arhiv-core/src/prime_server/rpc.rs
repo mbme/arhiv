@@ -1,11 +1,8 @@
 use anyhow::*;
-use futures::stream::TryStreamExt;
 use reqwest::{Client, StatusCode};
-use tokio::fs as tokio_fs;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use crate::{arhiv::AttachmentData, entities::*};
-use rs_utils::{log, read_file_as_stream};
+use rs_utils::{download_data_to_file, log, read_file_as_stream};
 
 pub struct PrimeServerRPC {
     prime_url: String,
@@ -36,20 +33,7 @@ impl PrimeServerRPC {
 
         let url = self.get_attachment_data_url(&attachment_data.id);
 
-        let mut stream = reqwest::get(&url)
-            .await?
-            .error_for_status()?
-            .bytes_stream()
-            // Convert the stream into an futures::io::AsyncRead.
-            // We must first convert the reqwest::Error into an futures::io::Error.
-            .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
-            .into_async_read()
-            .compat();
-
-        let mut file = tokio_fs::File::create(&attachment_data.path).await?;
-
-        // Invoke tokio::io::copy to actually perform the download.
-        tokio::io::copy(&mut stream, &mut file).await?;
+        download_data_to_file(&url, &attachment_data.path).await?;
 
         Ok(())
     }

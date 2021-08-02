@@ -79,7 +79,7 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
                 };
             }
 
-            arhiv.stage_document(document)?;
+            arhiv.stage_document(&mut document)?;
         }
         RPCAction::PickAttachment {} => {
             let files = run_command("mb-filepicker", vec![])?;

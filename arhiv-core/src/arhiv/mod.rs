@@ -127,52 +127,54 @@ impl Arhiv {
         conn.get_document(id)
     }
 
-    pub fn stage_document(&self, mut updated_document: Document) -> Result<()> {
-        log::debug!("Staging document {}", &updated_document.id);
+    pub fn stage_document(&self, document: &mut Document) -> Result<()> {
+        log::debug!("Staging document {}", &document.id);
 
         ensure!(
-            !Attachment::is_attachment(&updated_document),
+            !Attachment::is_attachment(&document),
             "attachments must not be modified manually"
         );
 
         ensure!(
-            !updated_document.is_tombstone(),
+            !document.is_tombstone(),
             "deleted documents must not be updated"
         );
 
-        self.schema.update_refs(&mut updated_document)?;
+        self.schema.update_refs(document)?;
 
         let tx = self.db.get_tx()?;
 
-        let mut document = {
-            if let Some(mut document) = tx.get_document(&updated_document.id)? {
-                log::debug!("Updating existing document {}", &updated_document.id);
+        if let Some(prev_document) = tx.get_document(&document.id)? {
+            log::debug!("Updating existing document {}", &document.id);
 
-                if document.rev != Revision::STAGING {
-                    // we're going to modify committed document
-                    // so we need to save its revision as prev_rev of the new document
-                    document.prev_rev = document.rev;
-                }
+            document.rev = Revision::STAGING;
 
-                document.rev = Revision::STAGING;
-                document.updated_at = Utc::now();
-                document.data = updated_document.data;
-
-                document
+            if prev_document.rev == Revision::STAGING {
+                document.prev_rev = prev_document.prev_rev;
             } else {
-                log::debug!("Creating new document {}", &updated_document.id);
-
-                let mut new_document =
-                    Document::new_with_data(updated_document.document_type, updated_document.data);
-                new_document.id = updated_document.id;
-
-                new_document
+                // we're going to modify committed document
+                // so we need to save its revision as prev_rev of the new document
+                document.prev_rev = prev_document.rev;
             }
-        };
 
-        document.archived = updated_document.archived;
-        document.refs = updated_document.refs;
-        document.snapshot_id = SnapshotId::new();
+            document.snapshot_id = SnapshotId::new();
+
+            document.document_type = prev_document.document_type;
+
+            document.created_at = prev_document.created_at;
+            document.updated_at = Utc::now();
+        } else {
+            log::debug!("Creating new document {}", &document.id);
+
+            document.rev = Revision::STAGING;
+            document.prev_rev = Revision::STAGING;
+
+            document.snapshot_id = SnapshotId::new();
+
+            let now = Utc::now();
+            document.created_at = now;
+            document.updated_at = now;
+        }
 
         // Validate document references
         for reference in document.refs.iter() {
@@ -256,7 +258,7 @@ impl Arhiv {
 
         document.archived = archive;
 
-        self.stage_document(document)
+        self.stage_document(&mut document)
     }
 
     pub fn add_attachment(&self, file_path: &str, move_file: bool) -> Result<Attachment> {

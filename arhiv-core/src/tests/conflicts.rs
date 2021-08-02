@@ -6,12 +6,12 @@ use super::utils::*;
 async fn test_conflicts() -> Result<()> {
     let arhiv = new_prime();
 
-    let document = empty_document();
-    arhiv.stage_document(document.clone())?;
+    let mut document = empty_document();
+    arhiv.stage_document(&mut document)?;
     arhiv.sync().await?;
 
     // update the same document
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(&mut document)?;
 
     assert_eq!(arhiv.get_status()?.conflicts_count, 0);
 

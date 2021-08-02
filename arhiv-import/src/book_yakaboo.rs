@@ -50,7 +50,7 @@ impl Importer for YakabooBookImporter {
         book.data.set("publisher", data.publisher);
         book.data.set("pages", data.pages);
 
-        // arhiv.stage_document(book)?;
+        arhiv.stage_document(&mut book)?;
 
         Ok(book)
     }

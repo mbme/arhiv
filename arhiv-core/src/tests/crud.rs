@@ -14,8 +14,8 @@ fn test_crud() -> Result<()> {
 
     // CREATE
     let id = {
-        let document = new_document(original_data.clone());
-        arhiv.stage_document(document.clone())?;
+        let mut document = new_document(original_data.clone());
+        arhiv.stage_document(&mut document)?;
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
 
         document.id
@@ -33,7 +33,7 @@ fn test_crud() -> Result<()> {
     {
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.data = json!({ "test": "1" }).try_into().unwrap();
-        arhiv.stage_document(other_document.clone())?;
+        arhiv.stage_document(&mut other_document)?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
     }
@@ -43,7 +43,7 @@ fn test_crud() -> Result<()> {
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.archived = true;
-        arhiv.stage_document(other_document)?;
+        arhiv.stage_document(&mut other_document)?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().archived, true);
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
@@ -51,8 +51,8 @@ fn test_crud() -> Result<()> {
 
     // DELETE
     {
-        let document = new_document(json!({ "test": "test" }));
-        arhiv.stage_document(document.clone())?;
+        let mut document = new_document(json!({ "test": "test" }));
+        arhiv.stage_document(&mut document)?;
 
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
 
@@ -91,8 +91,8 @@ async fn test_status() -> Result<()> {
     }
 
     // create document
-    let document = new_document(json!({ "test": "test" }));
-    arhiv.stage_document(document.clone())?;
+    let mut document = new_document(json!({ "test": "test" }));
+    arhiv.stage_document(&mut document)?;
 
     // commit document
     arhiv.sync().await?;
@@ -116,10 +116,10 @@ async fn test_status() -> Result<()> {
     }
 
     // update document
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(&mut document)?;
 
     // create another document
-    arhiv.stage_document(new_document(json!({ "test": "test" })))?;
+    arhiv.stage_document(&mut new_document(json!({ "test": "test" })))?;
 
     {
         let status = arhiv.get_status()?;

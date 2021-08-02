@@ -19,7 +19,7 @@ async fn test_prime_sync() -> Result<()> {
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);
 
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(&mut document)?;
 
     assert_eq!(
         arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
@@ -47,7 +47,7 @@ async fn test_prime_sync() -> Result<()> {
     {
         let mut document = arhiv.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" }).try_into().unwrap();
-        arhiv.stage_document(document)?;
+        arhiv.stage_document(&mut document)?;
     }
 
     arhiv.sync().await?;
@@ -73,7 +73,7 @@ async fn test_replica_sync() -> Result<()> {
     let id = {
         let mut document = empty_document();
         document.data.set("ref", &attachment.id);
-        replica.stage_document(document.clone())?;
+        replica.stage_document(&mut document)?;
 
         document.id
     };
@@ -102,7 +102,7 @@ async fn test_replica_sync() -> Result<()> {
     {
         let mut document = replica.get_document(&id)?.unwrap();
         document.data = json!({ "test": "1" }).try_into().unwrap();
-        replica.stage_document(document)?;
+        replica.stage_document(&mut document)?;
 
         replica.sync().await?;
 
@@ -130,14 +130,14 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
     document.data.set("ref", &attachment1.id);
 
     // stage document with attachment1
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(&mut document)?;
 
     let attachment2 = arhiv.add_attachment(src, false)?;
 
     document.data.set("ref", &attachment2.id);
 
     // stage document with attachment2, attachment1 is now unused
-    arhiv.stage_document(document.clone())?;
+    arhiv.stage_document(&mut document)?;
 
     arhiv.sync().await?;
 

@@ -114,10 +114,9 @@ impl<'a> Faker<'a> {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let document = self.create_fake(document_type.clone(), DocumentData::new());
-            let id = document.id.clone();
+            let mut document = self.create_fake(document_type.clone(), DocumentData::new());
             self.arhiv
-                .stage_document(document)
+                .stage_document(&mut document)
                 .expect("must be able to save document");
 
             if let Collection::Type {
@@ -129,13 +128,13 @@ impl<'a> Faker<'a> {
 
                 for _ in 0..child_quantity {
                     let mut initial_values = DocumentData::new();
-                    initial_values.set(field.to_string(), &id);
+                    initial_values.set(field.to_string(), &document.id);
 
-                    let child_document =
+                    let mut child_document =
                         self.create_fake(child_document_type.to_string(), initial_values);
 
                     self.arhiv
-                        .stage_document(child_document)
+                        .stage_document(&mut child_document)
                         .expect("must be able to save child document");
                 }
 

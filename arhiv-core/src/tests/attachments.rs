@@ -23,7 +23,7 @@ async fn test_attachments() -> Result<()> {
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);
 
-    arhiv.stage_document(document)?;
+    arhiv.stage_document(&mut document)?;
     assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
 
     let page = arhiv.list_documents(Filter {
@@ -53,7 +53,7 @@ async fn test_download_attachment() -> Result<()> {
 
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);
-    prime.stage_document(document)?;
+    prime.stage_document(&mut document)?;
 
     prime.sync().await?;
 

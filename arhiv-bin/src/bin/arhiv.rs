@@ -207,16 +207,15 @@ async fn main() {
             let data: DocumentData =
                 serde_json::from_str(data).expect("data must be a JSON object");
 
-            let document = Document::new_with_data(document_type, data);
-            let id = document.id.clone();
+            let mut document = Document::new_with_data(document_type, data);
 
             let arhiv = Arhiv::must_open();
 
             arhiv
-                .stage_document(document)
+                .stage_document(&mut document)
                 .expect("must be able to stage document");
 
-            println!("{}", id);
+            println!("{}", document.id);
         }
         ("attach", Some(matches)) => {
             let file_path: &str = matches

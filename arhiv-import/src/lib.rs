@@ -40,6 +40,8 @@ pub async fn run_app(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
             .context("importer failed")?;
 
         log::info!("Imported {}", document);
+
+        return Ok(());
     }
 
     bail!("don't know how to import document from url '{}'", url)

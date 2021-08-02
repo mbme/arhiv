@@ -13,7 +13,7 @@ use arhiv_core::{
     Arhiv, Config,
 };
 use arhiv_ui3::start_ui_server;
-use rs_utils::log::setup_logger_with_level;
+use rs_utils::{into_absolute_path, log::setup_logger_with_level};
 
 #[tokio::main]
 async fn main() {
@@ -222,12 +222,15 @@ async fn main() {
                 .value_of("file_path")
                 .expect("file_path must be present");
 
+            let file_path =
+                into_absolute_path(file_path).expect("failed to convert path to absolute");
+
             let move_file: bool = matches.is_present("move_file");
 
             let arhiv = Arhiv::must_open();
 
             let attachment = arhiv
-                .add_attachment(file_path, move_file)
+                .add_attachment(&file_path, move_file)
                 .expect("must be able to save attachment");
 
             println!("{}", attachment.id);

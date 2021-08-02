@@ -1,7 +1,8 @@
-use anyhow::*;
 use std::env;
 use std::fs;
 use std::os::unix::prelude::MetadataExt;
+
+use anyhow::*;
 use tokio::fs as tokio_fs;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -157,4 +158,17 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
+    let path = shellexpand::full(path.as_ref()).context("failed to expand path")?;
+
+    let path = fs::canonicalize(path.as_ref()).context("failed to canonicalize path")?;
+
+    path.into_os_string().into_string().map_err(|err| {
+        anyhow!(
+            "failed to convert path to string: {}",
+            err.to_string_lossy()
+        )
+    })
 }

@@ -55,7 +55,9 @@ impl ArhivImport {
                 continue;
             }
 
-            log::info!("Scraping data...");
+            log::info!("Found importer {}", importer.get_name());
+
+            log::info!("Scraping data ...");
             let data = scrape(url).context("scrape failed")?;
             log::info!("Scraped data:\n{}", &data);
 

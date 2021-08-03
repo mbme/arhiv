@@ -7,6 +7,8 @@ use rs_utils::{download_data_to_file, file_exists, get_downloads_dir, log, run_j
 
 #[async_trait]
 pub trait Importer {
+    fn get_name(&self) -> &str;
+
     fn can_import(&self, url: &str) -> bool;
 
     async fn import(&self, data: &str, arhiv: &Arhiv) -> Result<Document>;

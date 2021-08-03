@@ -28,6 +28,10 @@ pub struct YakabooBookImporter;
 
 #[async_trait]
 impl Importer for YakabooBookImporter {
+    fn get_name(&self) -> &str {
+        "YakabooBookImporter"
+    }
+
     fn can_import(&self, url: &str) -> bool {
         url.contains("www.yakaboo.ua/ua/")
     }

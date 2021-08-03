@@ -1,8 +1,17 @@
 use anyhow::*;
+use async_trait::async_trait;
 use dialoguer::{theme::ColorfulTheme, Confirm};
 use url::Url;
 
+use arhiv_core::{entities::Document, Arhiv};
 use rs_utils::{download_data_to_file, file_exists, get_downloads_dir, log, run_js_script};
+
+#[async_trait]
+pub trait Importer {
+    fn can_import(&self, url: &str) -> bool;
+
+    async fn import(&self, data: &str, arhiv: &Arhiv) -> Result<Document>;
+}
 
 pub fn scrape(url: &str) -> Result<String> {
     let script = include_str!("../dist/bundle.js");

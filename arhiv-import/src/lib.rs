@@ -1,26 +1,20 @@
 use anyhow::*;
-use async_trait::async_trait;
 
-use arhiv_core::{entities::Document, Arhiv};
+use arhiv_core::Arhiv;
 use rs_utils::log;
 
 use crate::{
     book_yakaboo::YakabooBookImporter,
-    utils::{ask_confirmation, scrape},
+    utils::{ask_confirmation, scrape, Importer},
 };
 
 mod book_yakaboo;
 mod utils;
 
-#[async_trait]
-pub trait Importer {
-    fn can_import(&self, url: &str) -> bool;
-
-    async fn import(&self, data: &str, arhiv: &Arhiv) -> Result<Document>;
-}
-
-pub async fn run_app(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
-    let importers = vec![Box::new(YakabooBookImporter)];
+pub async fn import_document(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
+    let importers: Vec<Box<dyn Importer>> = vec![
+        Box::new(YakabooBookImporter), //
+    ];
 
     for importer in importers {
         if !importer.can_import(url) {

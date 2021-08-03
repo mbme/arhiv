@@ -5,7 +5,10 @@ use serde::Deserialize;
 use arhiv_core::{entities::Document, Arhiv};
 use rs_utils::log;
 
-use crate::{utils::download_file, Importer};
+use crate::{
+    utils::{download_file, scrape_and_confirm},
+    Importer,
+};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -36,7 +39,8 @@ impl Importer for YakabooBookImporter {
         url.contains("www.yakaboo.ua/ua/")
     }
 
-    async fn import(&self, data: &str, arhiv: &Arhiv) -> Result<Document> {
+    async fn import(&self, url: &str, arhiv: &Arhiv, confirm: bool) -> Result<Document> {
+        let data = scrape_and_confirm(url, confirm)?;
         let data: YakabooData = serde_json::from_str(&data).context("failed to parse data")?;
 
         let cover_file = download_file(&data.cover_src).await?;

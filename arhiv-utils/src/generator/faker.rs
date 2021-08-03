@@ -9,7 +9,7 @@ use arhiv_core::{
     schema::{Collection, FieldType},
     Arhiv,
 };
-use rs_utils::project_relpath;
+use rs_utils::{is_image_filename, project_relpath};
 
 use super::TextGenerator;
 
@@ -21,7 +21,7 @@ fn list_attachments() -> Vec<String> {
         let path = entry.unwrap().path();
         let path = path.to_str().unwrap();
 
-        if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+        if is_image_filename(path) {
             attachments.push(path.to_string());
         }
     }

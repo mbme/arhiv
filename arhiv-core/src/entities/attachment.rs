@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use super::Document;
-use rs_utils::{get_file_hash_sha256, get_file_name};
+use rs_utils::{get_file_hash_sha256, get_file_name, is_image_filename};
 
 pub const ATTACHMENT_TYPE: &'static str = "attachment";
 
@@ -53,10 +53,7 @@ impl Attachment {
     pub fn is_image(&self) -> bool {
         let filename = self.get_filename().to_lowercase();
 
-        return filename.ends_with(".png")
-            || filename.ends_with(".jpg")
-            || filename.ends_with(".jpeg")
-            || filename.ends_with(".svg");
+        is_image_filename(filename)
     }
 }
 

@@ -76,3 +76,12 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
         bail!("failed to run js script: exit code {}", output.status)
     }
 }
+
+pub fn is_image_filename(filename: impl AsRef<str>) -> bool {
+    let filename = filename.as_ref();
+
+    filename.ends_with(".png")
+        || filename.ends_with(".jpg")
+        || filename.ends_with(".jpeg")
+        || filename.ends_with(".svg")
+}

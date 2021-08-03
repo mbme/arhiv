@@ -284,14 +284,12 @@ async fn main() {
 
             importer.confirm(!skip_confirmation);
 
-            let result = importer
+            let id = importer
                 .import(url)
                 .await
                 .expect("failed to import document");
 
-            if let Some(id) = result {
-                println!("{} {}", id, document_url(&id, port));
-            }
+            println!("{} {}", id, document_url(&id, port));
         }
         ("ui-server", _) => {
             start_ui_server().await;

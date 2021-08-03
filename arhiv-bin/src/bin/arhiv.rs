@@ -3,6 +3,7 @@
 
 use std::{env, process, sync::Arc};
 
+use arhiv_import::ArhivImport;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
 use arhiv_core::{
@@ -17,10 +18,6 @@ use rs_utils::{into_absolute_path, log::setup_logger_with_level};
 
 #[tokio::main]
 async fn main() {
-    if cfg!(not(feature = "production-mode")) {
-        println!("DEBUG MODE");
-    }
-
     let matches = App::new("arhiv")
         .subcommand(
             SubCommand::with_name("init")
@@ -129,6 +126,21 @@ async fn main() {
                         .help("Move file to arhiv"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("import")
+                .about("Scrape data and create document")
+                .arg(
+                    Arg::with_name("url") //
+                        .required(true)
+                        .index(1)
+                        .help("url to scrape"),
+                )
+                .arg(
+                    Arg::with_name("skip_confirmation")
+                        .long("skip_confirmation")
+                        .help("Import scraped data without confirmation"),
+                ),
+        )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::DeriveDisplayOrder)
@@ -234,6 +246,21 @@ async fn main() {
                 .expect("must be able to save attachment");
 
             println!("{}", attachment.id);
+        }
+        ("import", Some(matches)) => {
+            let url: &str = matches.value_of("url").expect("url must be present");
+
+            let skip_confirmation: bool = matches.is_present("skip_confirmation");
+
+            let arhiv = Arhiv::must_open();
+            let mut importer = ArhivImport::new(arhiv);
+
+            importer.confirm(!skip_confirmation);
+
+            importer
+                .import(url)
+                .await
+                .expect("failed to import document");
         }
         ("ui-server", Some(matches)) => {
             let port: u16 = matches

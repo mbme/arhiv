@@ -1,6 +1,5 @@
 use anyhow::*;
 use async_trait::async_trait;
-use dialoguer::{theme::ColorfulTheme, Confirm};
 use url::Url;
 
 use arhiv_core::{entities::Document, Arhiv};
@@ -37,12 +36,4 @@ pub async fn download_file(src_url: &str) -> Result<String> {
     log::debug!("Downloaded {} to {}", src_url, &file);
 
     Ok(file)
-}
-
-pub fn ask_confirmation() -> Result<bool> {
-    Confirm::with_theme(&ColorfulTheme::default())
-        .with_prompt("Do you really want to continue?")
-        .default(true)
-        .interact()
-        .context("failed to ask confirmation")
 }

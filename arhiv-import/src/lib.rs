@@ -1,42 +1,78 @@
 use anyhow::*;
+use dialoguer::{theme::ColorfulTheme, Confirm};
 
 use arhiv_core::Arhiv;
 use rs_utils::log;
 
 use crate::{
     book_yakaboo::YakabooBookImporter,
-    utils::{ask_confirmation, scrape, Importer},
+    utils::{scrape, Importer},
 };
 
 mod book_yakaboo;
 mod utils;
 
-pub async fn import_document(url: &str, arhiv: &Arhiv, confirm: bool) -> Result<()> {
-    let importers: Vec<Box<dyn Importer>> = vec![
-        Box::new(YakabooBookImporter), //
-    ];
+pub struct ArhivImport {
+    arhiv: Arhiv,
+    confirm: bool,
+}
 
-    for importer in importers {
-        if !importer.can_import(url) {
-            continue;
+impl ArhivImport {
+    pub fn new(arhiv: Arhiv) -> Self {
+        ArhivImport {
+            arhiv,
+            confirm: true,
+        }
+    }
+
+    pub fn confirm(&mut self, confirm: bool) -> &mut Self {
+        self.confirm = confirm;
+
+        self
+    }
+
+    fn import_confirmed(&self) -> Result<bool> {
+        if !self.confirm {
+            return Ok(true);
         }
 
-        let data = scrape(url).context("scrape failed")?;
-        log::info!("Scraped data:\n{}", &data);
+        Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt("Do you really want to continue?")
+            .default(true)
+            .interact()
+            .context("failed to ask confirmation")
+    }
 
-        if confirm && !ask_confirmation()? {
+    pub async fn import(self, url: &str) -> Result<()> {
+        log::info!("Importing url {}", url);
+
+        let importers: Vec<Box<dyn Importer>> = vec![
+            Box::new(YakabooBookImporter), //
+        ];
+
+        for importer in importers {
+            if !importer.can_import(url) {
+                continue;
+            }
+
+            log::info!("Scraping data...");
+            let data = scrape(url).context("scrape failed")?;
+            log::info!("Scraped data:\n{}", &data);
+
+            if !self.import_confirmed()? {
+                return Ok(());
+            }
+
+            let document = importer
+                .import(&data, &self.arhiv)
+                .await
+                .context("importer failed")?;
+
+            log::info!("Imported {}", document);
+
             return Ok(());
         }
 
-        let document = importer
-            .import(&data, arhiv)
-            .await
-            .context("importer failed")?;
-
-        log::info!("Imported {}", document);
-
-        return Ok(());
+        bail!("don't know how to import document from url '{}'", url)
     }
-
-    bail!("don't know how to import document from url '{}'", url)
 }

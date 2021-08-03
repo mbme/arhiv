@@ -7,15 +7,18 @@ const SCRAPERS = [
   extractBookFromYakaboo,
 ];
 
-async function scrape(url: string): Promise<Obj | undefined> {
+async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {
   if (!url) {
     throw new Error('url to scrape must be provided');
   }
 
-  const browser = await puppeteer.launch({
+  const executablePath = '/usr/bin/chromium'; // FIXME run `which chromium`
+  const browser = await puppeteer.launch(debug ? {
+    executablePath,
     headless: false,
-    executablePath: '/usr/bin/chromium', // FIXME run `which chromium`
-    defaultViewport: null, // use full viewport FIXME disable in prod
+    defaultViewport: null, // use full viewport
+  } : {
+    executablePath,
   });
 
   try {
@@ -36,7 +39,9 @@ async function scrape(url: string): Promise<Obj | undefined> {
 const args = process.argv.slice(2);
 const url = args[0];
 
-scrape(url).then((data) => {
+const isProduction = process.env.NODE_ENV === 'production';
+
+scrape(url, !isProduction).then((data) => {
   if (!data) {
     throw new Error(`No scraper for url ${url}`);
   }

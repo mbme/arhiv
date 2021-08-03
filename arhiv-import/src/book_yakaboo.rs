@@ -16,7 +16,7 @@ struct YakabooData {
     authors: String,
     language: Option<String>,
     publication_date: String,
-    translators: String,
+    translators: Option<String>,
     publisher: String,
     pages: String,
 

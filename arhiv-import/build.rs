@@ -5,6 +5,7 @@ fn main() {
 
     println!("cargo:rerun-if-env-changed=PROFILE");
     println!("cargo:rerun-if-changed=src");
+    println!("cargo:rerun-if-changed=dist");
 
     let install_status = process::Command::new("yarn")
         .arg("install") // make sure deps are installed

@@ -24,8 +24,9 @@ mod templates;
 mod ui_config;
 mod utils;
 
-pub async fn start_ui_server(port: u16) {
+pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
+    let port = arhiv.config.ui_server_port;
 
     let router = Router::builder()
         .data(arhiv)

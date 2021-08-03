@@ -1,7 +1,7 @@
 use anyhow::*;
 use dialoguer::{theme::ColorfulTheme, Confirm};
 
-use arhiv_core::Arhiv;
+use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::log;
 
 use crate::{
@@ -43,7 +43,7 @@ impl ArhivImport {
             .context("failed to ask confirmation")
     }
 
-    pub async fn import(self, url: &str) -> Result<()> {
+    pub async fn import(self, url: &str) -> Result<Option<Id>> {
         log::info!("Importing url {}", url);
 
         let importers: Vec<Box<dyn Importer>> = vec![
@@ -60,7 +60,7 @@ impl ArhivImport {
             log::info!("Scraped data:\n{}", &data);
 
             if !self.import_confirmed()? {
-                return Ok(());
+                return Ok(None);
             }
 
             let document = importer
@@ -70,7 +70,7 @@ impl ArhivImport {
 
             log::info!("Imported {}", document);
 
-            return Ok(());
+            return Ok(Some(document.id));
         }
 
         bail!("don't know how to import document from url '{}'", url)

@@ -1,9 +1,12 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 
-use std::{env, process, sync::Arc};
+use std::{
+    env,
+    process::{self, Command, Stdio},
+    sync::Arc,
+};
 
-use arhiv_import::ArhivImport;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
 use arhiv_core::{
@@ -13,8 +16,12 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config,
 };
+use arhiv_import::ArhivImport;
 use arhiv_ui3::start_ui_server;
-use rs_utils::{into_absolute_path, log::setup_logger_with_level};
+use rs_utils::{
+    into_absolute_path,
+    log::{self, setup_logger_with_level},
+};
 
 #[tokio::main]
 async fn main() {
@@ -49,14 +56,25 @@ async fn main() {
                 .about("Backup arhiv data"),
         )
         .subcommand(
-            SubCommand::with_name("ui-server")
-                .about("Run arhiv UI server")
+            SubCommand::with_name("ui-server") //
+                .about("Run arhiv UI server"),
+        )
+        .subcommand(
+            SubCommand::with_name("ui-open") //
+                .about("Open document in UI")
                 .arg(
-                    Arg::with_name("port")
-                        .long("port")
+                    Arg::with_name("id")
+                        .index(1)
+                        .required(true)
+                        .help("document id to open"),
+                )
+                .arg(
+                    Arg::with_name("browser")
+                        .long("browser")
                         .takes_value(true)
-                        .default_value("23421")
-                        .help("Listen on specific port"),
+                        .min_values(0)
+                        .env("BROWSER")
+                        .help("Open using provided browser or fall back to $BROWSER env variable"),
                 ),
         )
         .subcommand(
@@ -227,7 +245,11 @@ async fn main() {
                 .stage_document(&mut document)
                 .expect("must be able to stage document");
 
-            println!("{}", document.id);
+            println!(
+                "{} {}",
+                document.id,
+                document_url(&document.id, arhiv.config.ui_server_port)
+            );
         }
         ("attach", Some(matches)) => {
             let file_path: &str = matches
@@ -245,7 +267,11 @@ async fn main() {
                 .add_attachment(&file_path, move_file)
                 .expect("must be able to save attachment");
 
-            println!("{}", attachment.id);
+            println!(
+                "{} {}",
+                attachment.id,
+                document_url(&attachment.id, arhiv.config.ui_server_port)
+            );
         }
         ("import", Some(matches)) => {
             let url: &str = matches.value_of("url").expect("url must be present");
@@ -253,22 +279,40 @@ async fn main() {
             let skip_confirmation: bool = matches.is_present("skip_confirmation");
 
             let arhiv = Arhiv::must_open();
+            let port = arhiv.config.ui_server_port;
             let mut importer = ArhivImport::new(arhiv);
 
             importer.confirm(!skip_confirmation);
 
-            importer
+            let result = importer
                 .import(url)
                 .await
                 .expect("failed to import document");
-        }
-        ("ui-server", Some(matches)) => {
-            let port: u16 = matches
-                .value_of("port")
-                .map(|value| value.parse().expect("port must be valid u16"))
-                .expect("port is missing");
 
-            start_ui_server(port).await;
+            if let Some(id) = result {
+                println!("{} {}", id, document_url(&id, port));
+            }
+        }
+        ("ui-server", _) => {
+            start_ui_server().await;
+        }
+        ("ui-open", Some(matches)) => {
+            let id: Id = matches.value_of("id").expect("id must be present").into();
+
+            let port = Config::must_read().0.ui_server_port;
+
+            let browser = matches
+                .value_of("browser")
+                .expect("either browser must be specified or $BROWSER env var must be set");
+
+            log::info!("Opening document {} UI in {}", id, browser);
+
+            Command::new(&browser)
+                .arg(document_url(&id, port))
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .expect(&format!("failed to run browser {}", browser));
         }
         ("prime-server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());
@@ -285,7 +329,7 @@ async fn main() {
             let port: u16 = matches
                 .value_of("port")
                 .map(|value| value.parse().expect("port must be valid u16"))
-                .expect("port is missing");
+                .expect("port is missing or invalid");
 
             let (join_handle, _, _) = start_prime_server(arhiv, port);
 
@@ -304,4 +348,8 @@ async fn main() {
         }
         _ => unreachable!(),
     }
+}
+
+fn document_url(id: &Id, port: u16) -> String {
+    format!("http://localhost:{}/documents/{}", port, id)
 }

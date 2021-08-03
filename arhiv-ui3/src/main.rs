@@ -4,5 +4,5 @@ use rs_utils::log::setup_logger;
 #[tokio::main]
 async fn main() {
     setup_logger();
-    start_ui_server(8000).await;
+    start_ui_server().await;
 }

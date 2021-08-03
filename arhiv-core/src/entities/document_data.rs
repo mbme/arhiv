@@ -24,7 +24,13 @@ impl DocumentData {
     }
 
     pub fn get(&self, field: &str) -> Option<&Value> {
-        self.0.get(field)
+        let value = self.0.get(field)?;
+
+        if value.is_null() {
+            None
+        } else {
+            Some(value)
+        }
     }
 
     pub fn get_str<'doc>(&self, field: &str) -> Option<&str> {

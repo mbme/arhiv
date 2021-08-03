@@ -15,6 +15,13 @@ pub struct Config {
 
     #[serde(default)]
     pub prime_url: String,
+
+    #[serde(default = "default_ui_server_port")]
+    pub ui_server_port: u16,
+}
+
+fn default_ui_server_port() -> u16 {
+    23421
 }
 
 impl Config {

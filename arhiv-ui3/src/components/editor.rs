@@ -12,7 +12,7 @@ struct FormField {
     name: &'static str,
     label: String,
     field_type: FieldType,
-    optional: bool,
+    mandatory: bool,
     value: String,
 }
 
@@ -57,7 +57,7 @@ impl<'d> Editor<'d> {
                     name: field.name,
                     label: field.name.to_string(),
                     field_type: field.field_type.clone(),
-                    optional: field.optional,
+                    mandatory: field.mandatory,
                     value,
                 };
 

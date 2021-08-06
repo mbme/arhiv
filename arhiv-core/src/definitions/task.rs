@@ -14,12 +14,12 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "name",
                     field_type: FieldType::String {},
-                    optional: false,
+                    mandatory: true,
                 },
                 Field {
                     name: "description",
                     field_type: FieldType::MarkupString {},
-                    optional: true,
+                    mandatory: false,
                 },
             ],
         },
@@ -31,12 +31,12 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "title",
                     field_type: FieldType::String {},
-                    optional: false,
+                    mandatory: true,
                 },
                 Field {
                     name: "description",
                     field_type: FieldType::MarkupString {},
-                    optional: true,
+                    mandatory: false,
                 },
                 Field {
                     name: "status",
@@ -49,12 +49,12 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                         "Done",
                         "Cancelled",
                     ]),
-                    optional: false,
+                    mandatory: true,
                 },
                 Field {
                     name: "project",
                     field_type: FieldType::Ref("project"),
-                    optional: false,
+                    mandatory: true,
                 },
             ],
         },

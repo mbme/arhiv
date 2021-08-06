@@ -31,11 +31,11 @@ impl DataDescription {
 
         for field in &self.fields {
             let value = {
-                match (field.optional, data.get(field.name)) {
-                    (true, None) => {
+                match (field.mandatory, data.get(field.name)) {
+                    (false, None) => {
                         continue;
                     }
-                    (false, None) => {
+                    (true, None) => {
                         bail!("field {} must be present", field.name);
                     }
                     (_, Some(value)) => value,

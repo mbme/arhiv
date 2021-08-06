@@ -27,12 +27,12 @@ impl DataSchema {
                         Field {
                             name: "filename",
                             field_type: FieldType::String {},
-                            optional: false,
+                            mandatory: true,
                         },
                         Field {
                             name: "sha256",
                             field_type: FieldType::String {},
-                            optional: false,
+                            mandatory: true,
                         },
                     ],
                 },

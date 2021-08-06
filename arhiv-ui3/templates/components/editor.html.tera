@@ -15,7 +15,7 @@
     <textarea
       name="{{field.name}}"
       class="field"
-      {% if not field.optional %}required{% endif %}
+      {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
     >{{field.value}}</textarea>
 
@@ -25,7 +25,7 @@
       class="field"
       {% if loop.first %}autofocus{% endif %}
     >
-      {% if field.optional %}
+      {% if not field.mandatory %}
       <option value></option>
       {% endif %}
 
@@ -54,7 +54,7 @@
       type="text"
       name="{{field.name}}"
       class="field"
-      {% if not field.optional %}required{% endif %}
+      {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
       value="{{field.value}}"
     >

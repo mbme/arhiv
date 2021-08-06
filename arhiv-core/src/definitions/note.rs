@@ -10,12 +10,12 @@ pub fn get_note_definitions() -> Vec<DataDescription> {
             Field {
                 name: "title",
                 field_type: FieldType::String {},
-                optional: false,
+                mandatory: true,
             },
             Field {
                 name: "data",
                 field_type: FieldType::MarkupString {},
-                optional: true,
+                mandatory: false,
             },
         ],
     }]

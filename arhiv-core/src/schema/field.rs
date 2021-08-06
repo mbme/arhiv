@@ -24,7 +24,7 @@ pub enum FieldType {
 pub struct Field {
     pub name: &'static str,
     pub field_type: FieldType,
-    pub optional: bool,
+    pub mandatory: bool,
 }
 
 impl Field {

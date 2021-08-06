@@ -1,10 +1,12 @@
 import puppeteer from 'puppeteer-core';
 
-import type { Obj } from './utils';
+import type { Importer, Obj } from './utils';
 import { extractBookFromYakaboo } from './book-yakaboo';
+import { extractFilmFromIMDB } from './film-imdb';
 
-const SCRAPERS = [
+const SCRAPERS: Importer[] = [
   extractBookFromYakaboo,
+  extractFilmFromIMDB,
 ];
 
 async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {

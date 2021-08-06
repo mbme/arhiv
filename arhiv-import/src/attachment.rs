@@ -1,7 +1,7 @@
 use anyhow::*;
-use arhiv_core::entities::Document;
 use async_trait::async_trait;
 
+use arhiv_core::{entities::Document, Arhiv};
 use rs_utils::{is_image_filename, log};
 
 use crate::utils::{confirm_if_needed, download_file, extract_file_name_from_url, Importer};
@@ -22,12 +22,7 @@ impl Importer for AttachmentImporter {
         }
     }
 
-    async fn import(
-        &self,
-        url: &str,
-        arhiv: &arhiv_core::Arhiv,
-        confirm: bool,
-    ) -> Result<Document> {
+    async fn import(&self, url: &str, arhiv: &Arhiv, confirm: bool) -> Result<Document> {
         let filename = extract_file_name_from_url(url)?
             .ok_or(anyhow!("failed to extract file name from url"))?;
 

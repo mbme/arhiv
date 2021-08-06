@@ -3,10 +3,14 @@ use anyhow::*;
 use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::log;
 
-use crate::{attachment::AttachmentImporter, book_yakaboo::YakabooBookImporter, utils::Importer};
+use crate::{
+    attachment::AttachmentImporter, book_yakaboo::YakabooBookImporter, film_imdb::IMDBFilmImporter,
+    utils::Importer,
+};
 
 mod attachment;
 mod book_yakaboo;
+mod film_imdb;
 mod utils;
 
 pub struct ArhivImport {
@@ -34,6 +38,7 @@ impl ArhivImport {
         let importers: Vec<Box<dyn Importer>> = vec![
             Box::new(AttachmentImporter), //
             Box::new(YakabooBookImporter),
+            Box::new(IMDBFilmImporter),
         ];
 
         for importer in importers {

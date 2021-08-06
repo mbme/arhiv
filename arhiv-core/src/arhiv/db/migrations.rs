@@ -120,6 +120,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v4_to_v5,
     upgrade_v5_to_v6,
     upgrade_v6_to_v7,
+    upgrade_v7_to_v8,
 ];
 
 // stub
@@ -398,6 +399,7 @@ fn upgrade_v5_to_v6(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str
     Ok(())
 }
 
+/// in books, add "completed" and "collections"
 fn upgrade_v6_to_v7(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings
@@ -415,6 +417,31 @@ fn upgrade_v6_to_v7(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
                     '$.collections', json('[]')
                 )
                 WHERE type = 'book';
+       ",
+    )?;
+
+    Ok(())
+}
+
+/// in films, rename "directors" to "creators"
+fn upgrade_v7_to_v8(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '8' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots
+                SET data = json_patch(
+                    data,
+                    json_object(
+                        'creators', json_extract(data, '$.directors'),
+                        'directors', null)
+                )
+                WHERE type = 'film';
        ",
     )?;
 

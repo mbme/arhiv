@@ -3,12 +3,13 @@ use serde::Serialize;
 
 use crate::entities::Id;
 
+// stringly typed
 #[derive(Serialize, Debug, Clone)]
 pub enum FieldType {
     String {},
     NaturalNumber {},
     MarkupString {},
-    Flag {},
+    Flag {}, // bool
     Ref(&'static str),
     RefList(&'static str),
     Enum(Vec<&'static str>),
@@ -16,6 +17,7 @@ pub enum FieldType {
     Date {},
     Duration {},
     People {},
+    Countries {},
 }
 
 #[derive(Serialize, Debug, Clone)]

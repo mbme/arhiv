@@ -34,7 +34,12 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                     optional: true,
                 },
                 Field {
-                    name: "directors",
+                    name: "countries_of_origin",
+                    field_type: FieldType::Countries {},
+                    optional: true,
+                },
+                Field {
+                    name: "creators",
                     field_type: FieldType::People {},
                     optional: true,
                 },
@@ -48,10 +53,25 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                     field_type: FieldType::Duration {},
                     optional: true,
                 },
+                Field {
+                    name: "is_series",
+                    field_type: FieldType::Flag {},
+                    optional: false,
+                },
                 // ----------- if Series
+                Field {
+                    name: "number_of_seasons",
+                    field_type: FieldType::NaturalNumber {},
+                    optional: true,
+                },
                 Field {
                     name: "number_of_episodes",
                     field_type: FieldType::NaturalNumber {},
+                    optional: true,
+                },
+                Field {
+                    name: "episode_duration",
+                    field_type: FieldType::Duration {},
                     optional: true,
                 },
                 // -----------

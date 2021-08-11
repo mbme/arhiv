@@ -48,6 +48,14 @@ impl DocumentData {
             .expect(&format!("str field '{}' must be present", field))
     }
 
+    pub fn get_bool(&self, field: &str) -> Option<bool> {
+        self.get(field).map(|value| value.as_bool()).flatten()
+    }
+
+    pub fn get_number(&self, field: &str) -> Option<u64> {
+        self.get(field).map(|value| value.as_u64()).flatten()
+    }
+
     pub fn to_string(&self) -> String {
         serde_json::to_string(&self.0).expect("failed to serialize DocumentData")
     }

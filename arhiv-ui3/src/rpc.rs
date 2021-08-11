@@ -1,4 +1,4 @@
-use anyhow::ensure;
+use anyhow::*;
 use hyper::{http::request::Parts, Body, Request};
 use routerify::ext::RequestExt;
 use serde::Deserialize;
@@ -6,7 +6,6 @@ use serde_json::Value;
 
 use arhiv_core::{
     entities::{Document, Id},
-    schema::{extract_ids_from_reflist, FieldType},
     Arhiv,
 };
 use rs_utils::{
@@ -44,39 +43,19 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
 
             // prepare raw fields
             for field in &data_description.fields {
-                let raw_value = document
-                    .data
-                    .get_str(field.name)
-                    .unwrap_or_default()
-                    .trim()
-                    .to_string();
-
-                match field.field_type {
-                    // skip empty string from ref field
-                    FieldType::Ref(_) => {
-                        if raw_value.is_empty() {
-                            document.data.remove(field.name);
-                        } else {
-                            document.data.set(field.name, raw_value);
-                        }
-                    }
-
-                    // convert string list of refs into array of ids
-                    FieldType::RefList(_) => {
-                        let value = extract_ids_from_reflist(&raw_value);
-                        document.data.set(field.name, value);
-                    }
-
-                    // convert string "true" to boolean
-                    FieldType::Flag {} => {
-                        let value = raw_value == "true";
-                        document.data.set(field.name, value);
-                    }
-
-                    _ => {
-                        document.data.set(field.name, raw_value);
+                let raw_value = {
+                    if let Some(value) = document.data.get_str(field.name) {
+                        value
+                    } else {
+                        continue;
                     }
                 };
+
+                let value = field
+                    .from_string(raw_value)
+                    .context("failed to extract value from string")?;
+
+                document.data.set(field.name, value);
             }
 
             arhiv.stage_document(&mut document)?;

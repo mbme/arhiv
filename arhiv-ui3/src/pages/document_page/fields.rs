@@ -96,13 +96,21 @@ pub fn prepare_fields(
                 FieldType::Flag {} => {
                     let value = document
                         .data
-                        .get(field_description.name)
-                        .and_then(|value| value.as_bool())
+                        .get_bool(field_description.name)
                         .unwrap_or(false);
 
                     Ok(Field {
                         name: field_description.name,
                         value: value.to_string(),
+                        kind: FieldKind::String,
+                    })
+                }
+                FieldType::NaturalNumber {} => {
+                    let value = document.data.get_number(field_description.name);
+
+                    Ok(Field {
+                        name: field_description.name,
+                        value: value.map(|value| value.to_string()).unwrap_or_default(),
                         kind: FieldKind::String,
                     })
                 }

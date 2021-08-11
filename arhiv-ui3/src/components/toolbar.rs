@@ -94,7 +94,7 @@ impl<'d> Toolbar<'d> {
                 Breadcrumb::Collection(document_type) => {
                     if let Some(ref collection_id) = parent_collection {
                         let document = arhiv
-                            .get_document(&collection_id.into())?
+                            .get_document(collection_id)?
                             .ok_or(anyhow!("can't find parent collection"))?;
 
                         let name = arhiv.schema.get_title(&document)?;

@@ -27,7 +27,7 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
         fields: vec![Field {
             name: "ref",
             field_type: FieldType::Ref("attachment"),
-            optional: true,
+            mandatory: false,
         }],
     });
 

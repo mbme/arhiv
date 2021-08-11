@@ -12,7 +12,7 @@ pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResp
     let arhiv: &Arhiv = req.data().unwrap();
 
     let document = arhiv
-        .get_document(&id.into())?
+        .get_document(id)?
         .ok_or(anyhow!("document not found"))?;
 
     ensure!(!document.is_tombstone(), "document already deleted");

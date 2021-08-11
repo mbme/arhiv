@@ -21,7 +21,7 @@ struct IMDBData {
     duration: Option<String>,
 
     is_series: String,
-    number_of_episodes: Option<String>,
+    number_of_episodes: Option<u64>,
     episode_duration: Option<String>,
 }
 

@@ -15,7 +15,7 @@ export async function extractBookFromYakaboo(url: string, browser: Browser): Pro
   const page = await browser.newPage();
   await page.goto(url);
 
-  const data: Record<string, string> = {
+  const data: Obj = {
     title: await page.$eval('#product-title h1', node => (node as HTMLHeadingElement).innerText),
     cover_src: await page.$eval('#image', node => (node as HTMLImageElement).src),
   };
@@ -58,7 +58,7 @@ export async function extractBookFromYakaboo(url: string, browser: Browser): Pro
       }
 
       case 'Кількість сторінок': {
-        data['pages'] = value;
+        data['pages'] = Number.parseInt(value, 10);
         break;
       }
 

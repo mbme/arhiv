@@ -23,7 +23,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
     let document = {
-        if let Some(document) = arhiv.get_document(&id.into())? {
+        if let Some(document) = arhiv.get_document(id)? {
             document
         } else {
             return respond_not_found();

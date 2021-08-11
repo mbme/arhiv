@@ -21,7 +21,7 @@ struct YakabooData {
     publication_date: String,
     translators: Option<String>,
     publisher: String,
-    pages: String,
+    pages: u64,
 
     #[serde(rename = "ISBN")]
     isbn: String,

@@ -11,7 +11,7 @@ use crate::{
 };
 use arhiv_core::{
     entities::{Document, DocumentData},
-    schema::{extract_ids_from_reflist, DataDescription},
+    schema::DataDescription,
     Arhiv,
 };
 use rs_utils::{
@@ -77,23 +77,14 @@ fn params_to_document_data(
     let mut data = DocumentData::new();
 
     for ref field in &data_description.fields {
-        let value = if let Some(value) = params.get(field.name) {
+        let raw_value = if let Some(value) = params.get(field.name) {
             value
         } else {
             continue;
         };
 
-        match field.field_type {
-            arhiv_core::schema::FieldType::Flag {} => {
-                data.set(field.name, value == "true");
-            }
-            arhiv_core::schema::FieldType::RefList(_) => {
-                data.set(field.name, extract_ids_from_reflist(value));
-            }
-            _ => {
-                data.set(field.name, value);
-            }
-        }
+        let value = field.from_string(raw_value)?;
+        data.set(field.name, value);
     }
 
     Ok(data)

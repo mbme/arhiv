@@ -19,14 +19,6 @@ impl DataSchema {
             .ok_or(anyhow!("Unknown document type: {}", document_type))
     }
 
-    pub(crate) fn update_refs(&self, document: &mut Document) -> Result<()> {
-        document.refs = self
-            .get_data_description(&document.document_type)?
-            .extract_refs(&document.data)?;
-
-        Ok(())
-    }
-
     pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
         let data_description = self.get_data_description(&document.document_type)?;
 

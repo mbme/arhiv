@@ -6,7 +6,6 @@ use serde_json::Value;
 
 use super::field::*;
 use crate::entities::{DocumentData, Id};
-use crate::markup::MarkupStr;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataDescription {
@@ -30,42 +29,13 @@ impl DataDescription {
         let mut result = HashSet::new();
 
         for field in &self.fields {
-            let value = {
-                match (field.mandatory, data.get(field.name)) {
-                    (false, None) => {
-                        continue;
-                    }
-                    (true, None) => {
-                        bail!("field {} must be present", field.name);
-                    }
-                    (_, Some(value)) => value,
-                }
+            let value = if let Some(value) = data.get(field.name) {
+                value
+            } else {
+                continue;
             };
 
-            match field.field_type {
-                FieldType::MarkupString {} => {
-                    let markup: MarkupStr = value.as_str().expect("field must be string").into();
-
-                    result.extend(markup.extract_refs());
-                }
-                FieldType::Ref(_) => {
-                    // FIXME check ref document type
-                    let value: Id =
-                        serde_json::from_value(value.clone()).expect("field must parse");
-
-                    result.insert(value);
-                }
-                FieldType::RefList(_) => {
-                    // FIXME check ref document type
-                    let value: Vec<Id> =
-                        serde_json::from_value(value.clone()).expect("field must parse");
-
-                    result.extend(value);
-                }
-                _ => {
-                    continue;
-                }
-            }
+            result.extend(field.get_refs(value));
         }
 
         Ok(result)

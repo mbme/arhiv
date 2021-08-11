@@ -7,6 +7,7 @@ pub use self::db::{
     OrderBy,
 };
 use self::status::Status;
+use self::validator::Validator;
 use crate::config::Config;
 use crate::definitions::get_schema;
 use crate::entities::*;
@@ -17,6 +18,7 @@ mod backup;
 mod db;
 mod status;
 mod sync;
+mod validator;
 
 pub struct Arhiv {
     pub config: Config,
@@ -121,10 +123,10 @@ impl Arhiv {
         conn.list_documents(filter)
     }
 
-    pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+    pub fn get_document(&self, id: impl Into<Id>) -> Result<Option<Document>> {
         let conn = self.db.get_connection()?;
 
-        conn.get_document(id)
+        conn.get_document(&id.into())
     }
 
     pub fn stage_document(&self, document: &mut Document) -> Result<()> {
@@ -140,7 +142,13 @@ impl Arhiv {
             "deleted documents must not be updated"
         );
 
-        self.schema.update_refs(document)?;
+        let data_description = self.schema.get_data_description(&document.document_type)?;
+
+        document.refs = data_description.extract_refs(&document.data)?;
+
+        Validator::new(&self)
+            .validate(document)
+            .context("document validation failed")?;
 
         let tx = self.db.get_tx()?;
 
@@ -174,25 +182,6 @@ impl Arhiv {
             let now = Utc::now();
             document.created_at = now;
             document.updated_at = now;
-        }
-
-        // Validate document references
-        for reference in document.refs.iter() {
-            // FIXME optimize validating id
-            if tx.get_document(reference)?.is_some() {
-                continue;
-            }
-
-            if reference == &document.id {
-                log::warn!("Document {} references itself, ignoring ref", &document.id);
-                continue;
-            }
-
-            bail!(
-                "Document {} references unknown entity '{}'",
-                &document.id,
-                reference
-            );
         }
 
         tx.put_document(&document)?;

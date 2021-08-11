@@ -30,15 +30,18 @@ impl<'d> Editor<'d> {
             .iter()
             .map(|field| {
                 let value = match &field.field_type {
-                    FieldType::Flag {} => {
-                        let value = document
-                            .data
-                            .get(field.name)
-                            .and_then(|value| value.as_bool())
-                            .unwrap_or(false);
+                    FieldType::Flag {} => document
+                        .data
+                        .get_bool(field.name)
+                        .unwrap_or(false)
+                        .to_string(),
 
-                        value.to_string()
-                    }
+                    FieldType::NaturalNumber {} => document
+                        .data
+                        .get_number(field.name)
+                        .map(|value| value.to_string())
+                        .unwrap_or_default(),
+
                     FieldType::RefList(_) => {
                         let value = document.data.get(field.name);
 
@@ -50,7 +53,12 @@ impl<'d> Editor<'d> {
                             "".to_string()
                         }
                     }
-                    _ => document.data.get_str(field.name).unwrap_or("").to_string(),
+
+                    _ => document
+                        .data
+                        .get_str(field.name)
+                        .unwrap_or_default()
+                        .to_string(),
                 };
 
                 let mut field = FormField {

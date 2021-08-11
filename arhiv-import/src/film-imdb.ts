@@ -58,7 +58,7 @@ export async function extractFilmFromIMDB(url: string, browser: Browser): Promis
 
   if (isSeries) {
     data['release_date'] = metadata[1];
-    data['number_of_episodes'] = await getText(page, '[data-testid=hero-subnav-bar-series-episode-count]');
+    data['number_of_episodes'] = Number.parseInt(await getText(page, '[data-testid=hero-subnav-bar-series-episode-count]'), 10);
     data['episode_duration'] = metadata[3];
 
     creators.push(...(await getList(creditsEls[0], ':scope ul li a')));

@@ -121,6 +121,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v5_to_v6,
     upgrade_v6_to_v7,
     upgrade_v7_to_v8,
+    upgrade_v8_to_v9,
 ];
 
 // stub
@@ -442,6 +443,30 @@ fn upgrade_v7_to_v8(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
                         'directors', null)
                 )
                 WHERE type = 'film';
+       ",
+    )?;
+
+    Ok(())
+}
+
+/// in books, change "pages" type from string to number
+fn upgrade_v8_to_v9(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '9' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots
+                SET data = json_replace(
+                    data,
+                    '$.pages',
+                    CAST(json_extract(data, '$.pages') AS INTEGER)
+                )
+                WHERE type = 'book' AND json_extract(data, '$.pages') IS NOT NULL;
        ",
     )?;
 

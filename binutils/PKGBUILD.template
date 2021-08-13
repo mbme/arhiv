@@ -14,14 +14,26 @@ pkgver() {
   cargo read-manifest | jq ".version"
 }
 
+prepare() {
+    cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
 build() {
   cd ..
-  cargo build --locked --release --target-dir=target
+
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+
+  cargo build --frozen --release
 }
 
 check() {
   cd ..
-  cargo test --locked --release --target-dir=target
+
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+
+  cargo test --frozen --release
 }
 
 package() {

@@ -40,8 +40,9 @@ async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {
 
 const args = process.argv.slice(2);
 const url = args[0];
+const env = args[1] || process.env.NODE_ENV;
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = env === 'production';
 
 scrape(url, !isProduction).then((data) => {
   if (!data) {

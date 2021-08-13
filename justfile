@@ -35,3 +35,6 @@ bump-minor:
 
 bump-patch:
   cd {{invocation_directory()}}; cargo release --no-dev-version patch
+
+test-importers:
+  cd arhiv-import; cargo test -- --ignored --test-threads 1

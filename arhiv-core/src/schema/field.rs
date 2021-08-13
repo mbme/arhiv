@@ -107,6 +107,18 @@ impl Field {
         };
     }
 
+    pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
+        // FIXME also search in Ref and RefList document titles
+
+        match self.field_type {
+            FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => value
+                .as_str()
+                .map(|value| Some(value.to_lowercase()))
+                .ok_or(anyhow!("failed to extract field {}", self.name)),
+            _ => Ok(None),
+        }
+    }
+
     pub fn validate(&self, value: Option<&Value>) -> Result<()> {
         let value = if let Some(value) = value {
             value

@@ -32,7 +32,9 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
 
-    let data_description = arhiv.schema.get_data_description(&document.document_type)?;
+    let data_description = arhiv
+        .get_schema()
+        .get_data_description(&document.document_type)?;
     let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;

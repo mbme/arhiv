@@ -30,14 +30,16 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     // deny editing internal types
     ensure!(
         !arhiv
-            .schema
+            .get_schema()
             .get_data_description(&document.document_type)?
             .is_internal
     );
 
     let editor = Editor::new(
         &document,
-        arhiv.schema.get_data_description(&document.document_type)?,
+        arhiv
+            .get_schema()
+            .get_data_description(&document.document_type)?,
     )?
     .with_document_query(
         QueryBuilder::new()

@@ -9,7 +9,7 @@ pub use self::db::{
 use self::status::Status;
 use self::validator::Validator;
 use crate::config::Config;
-use crate::definitions::get_schema;
+use crate::definitions::get_standard_schema;
 use crate::entities::*;
 use crate::schema::DataSchema;
 use rs_utils::log;
@@ -21,25 +21,24 @@ mod sync;
 mod validator;
 
 pub struct Arhiv {
-    pub config: Config,
+    config: Config,
+    schema: DataSchema,
     pub(crate) db: DB,
-    pub schema: DataSchema,
 }
 
 impl Arhiv {
     pub fn must_open() -> Arhiv {
-        Arhiv::open_with_config(Config::must_read().0).expect("must be able to open arhiv")
+        Arhiv::open().expect("must be able to open arhiv")
     }
 
     pub fn open() -> Result<Arhiv> {
         let config = Config::read()?.0;
+        let schema = get_standard_schema();
 
-        Arhiv::open_with_config(config)
+        Arhiv::open_with_options(config, schema)
     }
 
-    pub fn open_with_config(config: Config) -> Result<Arhiv> {
-        let schema = get_schema();
-
+    pub fn open_with_options(config: Config, schema: DataSchema) -> Result<Arhiv> {
         let mut db = DB::open(config.arhiv_root.to_string())?;
         db.with_schema_search(schema.clone());
 
@@ -62,15 +61,18 @@ impl Arhiv {
         Ok(Arhiv { config, db, schema })
     }
 
-    pub fn create(config: Config, arhiv_id: String, prime: bool) -> Result<Arhiv> {
+    pub fn create(
+        config: Config,
+        schema: DataSchema,
+        arhiv_id: String,
+        prime: bool,
+    ) -> Result<Arhiv> {
         log::info!(
             "Initializing {} arhiv '{}' in {}",
             if prime { "prime" } else { "replica" },
             arhiv_id,
             config.arhiv_root
         );
-
-        let schema = get_schema();
 
         let mut db = DB::create(config.arhiv_root.to_string())?;
         db.with_schema_search(schema.clone());
@@ -88,6 +90,14 @@ impl Arhiv {
         log::info!("Created arhiv in {}", config.arhiv_root);
 
         Ok(Arhiv { config, db, schema })
+    }
+
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
+
+    pub fn get_schema(&self) -> &DataSchema {
+        &self.schema
     }
 
     pub fn get_status(&self) -> Result<Status> {

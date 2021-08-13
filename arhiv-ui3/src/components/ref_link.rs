@@ -70,7 +70,7 @@ impl Ref {
         };
 
         if !self.preview_attachments || !Attachment::is_attachment(&document) {
-            let title = arhiv.schema.get_title(&document)?;
+            let title = arhiv.get_schema().get_title(&document)?;
 
             return serde_json::to_value(RefMode::Ref {
                 id: &document.id,
@@ -82,7 +82,7 @@ impl Ref {
         }
 
         let attachment = Attachment::from(document)?;
-        let title = arhiv.schema.get_title(&attachment)?;
+        let title = arhiv.get_schema().get_title(&attachment)?;
 
         if attachment.is_image() {
             return serde_json::to_value(RefMode::Image {

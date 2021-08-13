@@ -8,11 +8,6 @@ publish = false
 [features]
 production-mode = ["arhiv-core/production-mode"]
 
-# to generate shell suggestions for cli app
-[build-dependencies]
-clap = "*"
-arhiv-core = { path = "../arhiv-core" }
-
 [dependencies]
 anyhow = "1.0.38"
 

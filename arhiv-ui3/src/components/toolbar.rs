@@ -97,7 +97,7 @@ impl<'d> Toolbar<'d> {
                             .get_document(collection_id)?
                             .ok_or(anyhow!("can't find parent collection"))?;
 
-                        let name = arhiv.schema.get_title(&document)?;
+                        let name = arhiv.get_schema().get_title(&document)?;
 
                         Ok(json!({
                             "name": format!("{} {}", document.document_type.to_uppercase(), name),

@@ -10,6 +10,7 @@ use arhiv_bin::build_app;
 use arhiv_core::{
     apply_migrations,
     entities::{Document, DocumentData, Id},
+    get_standard_schema,
     prime_server::start_prime_server,
     Arhiv, Config,
 };
@@ -35,8 +36,10 @@ async fn main() {
 
             let prime = matches.is_present("prime");
 
-            Arhiv::create(Config::must_read().0, arhiv_id, prime)
-                .expect("must be able to create arhiv");
+            let config = Config::must_read().0;
+            let schema = get_standard_schema();
+
+            Arhiv::create(config, schema, arhiv_id, prime).expect("must be able to create arhiv");
         }
         ("status", _) => {
             let status = Arhiv::must_open()
@@ -99,7 +102,7 @@ async fn main() {
             println!(
                 "{} {}",
                 document.id,
-                document_url(&document.id, arhiv.config.ui_server_port)
+                document_url(&document.id, arhiv.get_config().ui_server_port)
             );
         }
         ("attach", Some(matches)) => {
@@ -121,7 +124,7 @@ async fn main() {
             println!(
                 "{} {}",
                 attachment.id,
-                document_url(&attachment.id, arhiv.config.ui_server_port)
+                document_url(&attachment.id, arhiv.get_config().ui_server_port)
             );
         }
         ("import", Some(matches)) => {
@@ -130,7 +133,7 @@ async fn main() {
             let skip_confirmation: bool = matches.is_present("skip_confirmation");
 
             let arhiv = Arhiv::must_open();
-            let port = arhiv.config.ui_server_port;
+            let port = arhiv.get_config().ui_server_port;
             let mut importer = ArhivImport::new(arhiv);
 
             importer.confirm(!skip_confirmation);

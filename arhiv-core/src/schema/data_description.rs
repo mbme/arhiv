@@ -4,7 +4,7 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
-use super::field::*;
+use super::{field::*, search::MultiSearch};
 use crate::entities::{DocumentData, Id};
 
 #[derive(Serialize, Debug, Clone)]
@@ -54,22 +54,35 @@ impl DataDescription {
             ))
     }
 
-    pub fn extract_search_data(&self, data: &str) -> Result<String> {
-        let field = {
-            if let Ok(field) = self.pick_title_field() {
-                field
+    pub fn search(&self, data: &Value, pattern: &str) -> Result<u32> {
+        let title_field = self.pick_title_field()?;
+
+        let mut final_score = 0;
+        let multi_search = MultiSearch::new(pattern);
+
+        for field in &self.fields {
+            let value = if let Some(value) = data.get(field.name) {
+                value
             } else {
-                // else use whole data prop for search index
-                return Ok(data.to_string());
+                continue;
+            };
+
+            let search_data = if let Some(search_data) = field.extract_search_data(value)? {
+                search_data
+            } else {
+                continue;
+            };
+
+            let mut score = multi_search.search(&search_data);
+
+            if field.name == title_field.name {
+                score *= 3;
             }
-        };
 
-        let data: Value = serde_json::from_str(data)?;
+            final_score += score;
+        }
 
-        data[field.name]
-            .as_str()
-            .map(|value| value.to_lowercase())
-            .ok_or(anyhow!("failed to extract field {}", field.name))
+        Ok(final_score)
     }
 
     pub fn get_field(&self, name: impl AsRef<str>) -> Result<&Field> {

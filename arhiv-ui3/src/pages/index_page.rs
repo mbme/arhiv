@@ -19,7 +19,7 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
         .render(arhiv)?;
 
     let document_types = arhiv
-        .schema
+        .get_schema()
         .modules
         .iter()
         .map(|module| module.document_type)

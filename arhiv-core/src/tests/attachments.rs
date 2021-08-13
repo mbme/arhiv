@@ -63,7 +63,7 @@ async fn test_download_attachment() -> Result<()> {
     replica.sync().await?;
 
     let attachment_data = replica.get_attachment_data(&attachment.id)?;
-    let prime_rpc = PrimeServerRPC::new(&replica.config.prime_url)?;
+    let prime_rpc = PrimeServerRPC::new(&replica.get_config().prime_url)?;
     prime_rpc.download_attachment_data(&attachment_data).await?;
 
     let dst = &attachment_data.path;

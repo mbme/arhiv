@@ -26,7 +26,7 @@ mod utils;
 
 pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
-    let port = arhiv.config.ui_server_port;
+    let port = arhiv.get_config().ui_server_port;
 
     let router = Router::builder()
         .data(arhiv)

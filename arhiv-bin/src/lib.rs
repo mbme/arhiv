@@ -1,6 +1,6 @@
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
-use arhiv_core::get_schema;
+use arhiv_core::get_standard_schema;
 
 pub fn build_app() -> App<'static, 'static> {
     App::new("arhiv")
@@ -97,7 +97,7 @@ pub fn build_app() -> App<'static, 'static> {
                 .arg(
                     Arg::with_name("document_type")
                         .required(true)
-                        .possible_values(&get_schema().get_document_types(true))
+                        .possible_values(&get_standard_schema().get_document_types(true))
                         .index(1)
                         .help("One of known document types"),
                 )

@@ -26,7 +26,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let data_description = arhiv.schema.get_data_description(document_type)?;
+    let data_description = arhiv.get_schema().get_data_description(document_type)?;
 
     ensure!(!data_description.is_internal);
 
@@ -39,7 +39,9 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let editor = Editor::new(
         &document,
-        arhiv.schema.get_data_description(&document.document_type)?,
+        arhiv
+            .get_schema()
+            .get_data_description(&document.document_type)?,
     )?
     .with_document_query(
         QueryBuilder::new()

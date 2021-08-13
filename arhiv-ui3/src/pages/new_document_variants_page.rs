@@ -18,7 +18,7 @@ pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
         .render(arhiv)?;
 
     let document_types = arhiv
-        .schema
+        .get_schema()
         .modules
         .iter()
         .filter(|module| !module.is_internal)

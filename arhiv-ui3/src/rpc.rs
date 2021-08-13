@@ -39,7 +39,9 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             arhiv.archive_document(&id, archive)?;
         }
         RPCAction::Save { mut document } => {
-            let data_description = arhiv.schema.get_data_description(&document.document_type)?;
+            let data_description = arhiv
+                .get_schema()
+                .get_data_description(&document.document_type)?;
 
             // prepare raw fields
             for field in &data_description.fields {

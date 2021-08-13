@@ -17,7 +17,7 @@ pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResp
 
     ensure!(!document.is_tombstone(), "document already deleted");
 
-    let title = arhiv.schema.get_title(&document)?;
+    let title = arhiv.get_schema().get_title(&document)?;
 
     arhiv.render_page(
         "pages/delete_document_confirmation_page.html.tera",

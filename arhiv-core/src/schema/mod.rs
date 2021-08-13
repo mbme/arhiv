@@ -7,6 +7,7 @@ pub use schema::*;
 mod data_description;
 mod field;
 mod schema;
+mod search;
 
 impl DataSchema {
     pub fn new() -> DataSchema {

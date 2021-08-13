@@ -41,7 +41,7 @@ pub fn prepare_fields(
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
     let title_field = arhiv
-        .schema
+        .get_schema()
         .get_data_description(&document.document_type)?
         .pick_title_field()?;
 

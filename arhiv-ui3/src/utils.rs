@@ -29,7 +29,7 @@ const IGNORED_DOCUMENT_TYPES: &[&'static str] = &["tombstone", "attachment", "ta
 
 fn get_global_context(arhiv: &Arhiv) -> Value {
     let nav_document_types: Vec<_> = arhiv
-        .schema
+        .get_schema()
         .modules
         .iter()
         .map(|module| module.document_type)

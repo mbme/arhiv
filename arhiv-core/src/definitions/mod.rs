@@ -7,7 +7,7 @@ mod film;
 mod note;
 mod task;
 
-pub fn get_schema() -> DataSchema {
+pub fn get_standard_schema() -> DataSchema {
     let mut schema = DataSchema::new();
     schema.modules.append(
         &mut vec![

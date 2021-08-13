@@ -15,7 +15,7 @@ pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerRes
         .get_document(id)?
         .ok_or(anyhow!("document not found"))?;
 
-    let title = arhiv.schema.get_title(&document)?;
+    let title = arhiv.get_schema().get_title(&document)?;
 
     arhiv.render_page(
         "pages/archive_document_confirmation_page.html.tera",

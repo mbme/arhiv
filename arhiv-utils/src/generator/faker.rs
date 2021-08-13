@@ -67,7 +67,7 @@ impl<'a> Faker<'a> {
     fn create_fake(&self, document_type: String, mut data: DocumentData) -> Document {
         let description = self
             .arhiv
-            .schema
+            .get_schema()
             .get_data_description(&document_type)
             .unwrap();
 
@@ -106,7 +106,7 @@ impl<'a> Faker<'a> {
 
         let data_description = self
             .arhiv
-            .schema
+            .get_schema()
             .get_data_description(&document_type)
             .expect(&format!("Unknown document_type {}", &document_type));
 

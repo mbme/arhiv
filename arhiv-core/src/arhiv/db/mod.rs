@@ -39,26 +39,24 @@ enum DocumentSearch {
 
 impl DocumentSearch {
     fn search(&self, document_type: &str, document_data: &str, pattern: &str) -> Result<u32> {
-        let score = match self {
+        match self {
             Self::SimpleSearch => {
-                if document_data.contains(pattern) {
+                let score = if document_data.contains(pattern) {
                     1
                 } else {
                     0
-                }
+                };
+
+                Ok(score)
             }
 
             Self::SchemaSearch(schema) => {
-                if let Ok(data_description) = schema.get_data_description(document_type) {
-                    let data = data_description.extract_search_data(document_data)?;
-                    utils::multi_search(pattern, &data)
-                } else {
-                    utils::multi_search(pattern, document_data)
-                }
-            }
-        };
+                let data_description = schema.get_data_description(document_type)?;
+                let data: Value = serde_json::from_str(document_data)?;
 
-        Ok(score)
+                data_description.search(&data, pattern)
+            }
+        }
     }
 }
 
@@ -152,13 +150,18 @@ impl DB {
                 let pattern = ctx.get_raw(2).as_str().expect("pattern must be str");
 
                 if pattern.is_empty() {
-                    Ok(1)
-                } else {
-                    document_search
-                        .search(document_type, document_data, pattern)
-                        .context("calculate_search_score() failed")
-                        .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+                    return Ok(1);
                 }
+
+                let result = document_search.search(document_type, document_data, pattern);
+
+                if let Err(ref err) = result {
+                    log::error!("calculate_search_score() failed: \n{}", err);
+                }
+
+                result
+                    .context("calculate_search_score() failed")
+                    .map_err(|e| RusqliteError::UserFunctionError(e.into()))
             },
         )
         .context(anyhow!(

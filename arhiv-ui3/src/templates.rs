@@ -86,9 +86,11 @@ impl TemplateAssets {
     fn get_template_data(name: impl AsRef<str>) -> Result<String> {
         let name = name.as_ref();
 
-        let data = TemplateAssets::get(name).context(anyhow!("can't find template '{}'", name))?;
+        let embedded_file =
+            TemplateAssets::get(name).context(anyhow!("can't find template '{}'", name))?;
 
-        String::from_utf8(data.into()).context(anyhow!("template '{}' isn't valid utf8", name))
+        String::from_utf8(embedded_file.data.into())
+            .context(anyhow!("template '{}' isn't valid utf8", name))
     }
 
     fn list_template_files() -> Vec<TemplateFile> {

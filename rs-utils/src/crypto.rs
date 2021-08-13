@@ -22,13 +22,16 @@ pub fn get_file_hash_sha256(filepath: &str) -> Result<String> {
 
     let hash = hasher.finalize();
 
-    // convert array of bytes into hex string
-    let mut result = String::with_capacity(2 * hash.len());
-    for byte in hash.into_iter() {
-        write!(result, "{:02X}", byte)?;
+    Ok(bytes_to_hex_string(&hash))
+}
+
+pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
+    let mut result = String::with_capacity(2 * bytes.len());
+    for byte in bytes.into_iter() {
+        write!(result, "{:02X}", byte).expect("failed to write data into String");
     }
 
-    Ok(result)
+    result
 }
 
 pub fn gen_uuid() -> String {

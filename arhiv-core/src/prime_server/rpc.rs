@@ -78,17 +78,20 @@ impl PrimeServerRPC {
     pub async fn send_changeset(&self, changeset: &Changeset) -> Result<ChangesetResponse> {
         log::debug!("sending changeset...");
 
-        let response: ChangesetResponse = Client::new()
+        let response = Client::new()
             .post(&format!("{}/changeset", self.prime_url))
             .json(&changeset)
             .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await?
-            .parse()?;
+            .await?;
 
-        Ok(response)
+        let status = response.status();
+        let body = response.text().await?;
+
+        if status.is_success() {
+            body.parse().context("failed to parse server response")
+        } else {
+            Err(anyhow!("Server responded with error: {}\n{}", status, body))
+        }
     }
 
     fn get_attachment_data_url(&self, id: &Id) -> String {

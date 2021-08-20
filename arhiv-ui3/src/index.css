@@ -54,13 +54,21 @@ body {
 main {
   width: 100%;
   max-width: var(--max-width);
-  background-color: var(--bg-color);
+  @apply my-4 lg:mr-4 flex flex-col;
 
-  @apply my-4 lg:mr-4 shadow flex flex-col;
+  & > article {
+    background-color: var(--bg-color);
+    @apply shadow mb-4;
+  }
 }
 
 #content {
   @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8 flex-grow;
+}
+
+#below-content {
+  background-color: var(--bg-color);
+  @apply shadow;
 }
 
 a:not(.clean-link) {

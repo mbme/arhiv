@@ -1,8 +1,3 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
 use anyhow::*;
 use arhiv_core::Arhiv;
 use hyper::{header, Response};
@@ -12,7 +7,10 @@ use crate::templates::TEMPLATES;
 use rs_utils::{merge_json, server::ServerResponse};
 
 // see https://doc.rust-lang.org/std/hash/index.html#examples
-pub fn get_file_hash(name: impl Hash, data: impl Hash) -> u64 {
+#[cfg(debug_assertions)]
+pub fn get_file_hash(name: impl std::hash::Hash, data: impl std::hash::Hash) -> u64 {
+    use std::{collections::hash_map::DefaultHasher, hash::Hasher};
+
     let mut s = DefaultHasher::new();
 
     name.hash(&mut s);

@@ -45,13 +45,7 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
 
             // prepare raw fields
             for field in &data_description.fields {
-                let raw_value = {
-                    if let Some(value) = document.data.get_str(field.name) {
-                        value
-                    } else {
-                        continue;
-                    }
-                };
+                let raw_value = document.data.get_str(field.name).unwrap_or_default();
 
                 let value = field
                     .from_string(raw_value)

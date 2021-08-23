@@ -92,6 +92,10 @@ impl Field {
 
             // convert string to number
             FieldType::NaturalNumber {} => {
+                if raw_value.is_empty() {
+                    return Ok(Value::Null);
+                }
+
                 let value: u64 = raw_value.parse().context(anyhow!(
                     "failed to parse natural number field {}: {}",
                     self.name,

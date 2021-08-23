@@ -39,7 +39,7 @@ checksum = "595d3cfa7a60d4555cb5067b99f07142a08ea778de5cf993f7b75c7d8fabc486"
 
 [[package]]
 name = "arhiv-bin"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "anyhow",
  "arhiv-core",

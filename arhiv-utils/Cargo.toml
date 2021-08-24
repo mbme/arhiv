@@ -1,6 +1,6 @@
 [package]
 name = "arhiv-utils"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["mbme"]
 edition = "2018"
 publish = false

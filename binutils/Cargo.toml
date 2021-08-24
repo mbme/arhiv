@@ -2,6 +2,7 @@
 name = "binutils"
 version = "0.6.0"
 edition = "2018"
+authors = ["mbme"]
 publish = false
 
 # speed up debug builds

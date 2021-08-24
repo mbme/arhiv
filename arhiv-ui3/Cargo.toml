@@ -1,7 +1,9 @@
 [package]
 name = "arhiv-ui3"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2018"
+authors = ["mbme"]
+publish = false
 
 [dependencies]
 arhiv-core = { path = "../arhiv-core" }

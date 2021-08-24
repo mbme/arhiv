@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "arhiv-core"
-version = "1.0.0"
+version = "0.0.0"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -75,7 +75,7 @@ dependencies = [
 
 [[package]]
 name = "arhiv-import"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
@@ -90,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "arhiv-ui3"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
@@ -108,7 +108,7 @@ dependencies = [
 
 [[package]]
 name = "arhiv-utils"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
@@ -1244,7 +1244,7 @@ dependencies = [
 
 [[package]]
 name = "rs-utils"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",

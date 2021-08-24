@@ -1,8 +1,8 @@
 [package]
 name = "arhiv-core"
-version = "1.0.0"
-authors = ["mbme"]
+version = "0.0.0"
 edition = "2018"
+authors = ["mbme"]
 publish = false
 
 [lib]

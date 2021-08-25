@@ -66,11 +66,6 @@ main {
   @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8 flex-grow;
 }
 
-#below-content {
-  background-color: var(--bg-color);
-  @apply shadow;
-}
-
 a:not(.clean-link) {
   @apply text-blue-700;
 }
@@ -222,5 +217,10 @@ a:not(.clean-link) {
   .wrap-text {
     hyphens: auto;
     overflow-wrap: break-word;
+  }
+
+  .paper {
+    background-color: var(--bg-color);
+    @apply shadow;
   }
 }

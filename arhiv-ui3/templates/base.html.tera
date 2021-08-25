@@ -31,9 +31,7 @@
         {% block content %}{% endblock %}
       </article>
 
-      <div id="below-content">
-        {% block below_content %}{% endblock %}
-      </div>
+      {% block below_content %}{% endblock %}
     </main>
 
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">

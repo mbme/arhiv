@@ -6,7 +6,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
 esbuild.build({
-  entryPoints: ['./src/index.js'],
+  entryPoints: ['./src/scripts/index.ts'],
   outfile: './public/index.js',
 
   target: [

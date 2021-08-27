@@ -30,11 +30,11 @@ web3:
 prod-build-install:
   cd {{invocation_directory()}}; cp PKGBUILD.template PKGBUILD; makepkg -efi; rm -rf pkg; rm *.pkg.tar.zst; rm PKGBUILD
 
-bump-minor:
-  cd {{invocation_directory()}}; cargo release --no-dev-version minor
+arhiv-bump-minor *PARAMS:
+  cd arhiv-bin; cargo release --no-dev-version minor {{PARAMS}}
 
-bump-patch:
-  cd {{invocation_directory()}}; cargo release --no-dev-version patch
+arhiv-bump-patch *PARAMS:
+  cd arhiv-bin; cargo release --no-dev-version patch {{PARAMS}}
 
 test-importers:
   cd arhiv-import; cargo test -- --ignored --test-threads 1

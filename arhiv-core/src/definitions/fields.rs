@@ -3,18 +3,25 @@ use crate::schema::FieldType;
 pub fn language_field() -> FieldType {
     FieldType::Enum(vec![
         "Ukrainian",
+        //
         "English",
         "French",
         "German",
         "Polish",
+        "Russian",
+        "Czech",
         "Spanish",
         "Portuguese",
-        "Russian",
+        "Italian",
+        "Greek",
+        "Latin",
+        //
         "Chinese",
         "Hindi",
         "Bengali",
         "Japanese",
         "Korean",
+        //
         "Turkish",
         "Arabic",
     ])

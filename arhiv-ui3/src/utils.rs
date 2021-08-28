@@ -60,8 +60,10 @@ impl ArhivPageExt for Arhiv {
 
 /// Define a function which returns file content from memory
 /// in release mode and from file system in debug mode.
+/// Example:
+/// embed_file!(pub get_markup -> "./markup.rs");
 macro_rules! embed_file {
-    ($name: ident, $rel_file_path: expr) => {
+    ($vis:vis $name:ident -> $rel_file_path:expr) => {
         fn $name() -> std::borrow::Cow<'static, str> {
             use std::borrow::Cow;
             use std::fs;

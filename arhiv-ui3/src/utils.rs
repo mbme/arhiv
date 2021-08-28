@@ -57,3 +57,32 @@ impl ArhivPageExt for Arhiv {
             .context("failed to build response")
     }
 }
+
+/// Define a function which returns file content from memory
+/// in release mode and from file system in debug mode.
+macro_rules! embed_file {
+    ($name: ident, $rel_file_path: expr) => {
+        fn $name() -> std::borrow::Cow<'static, str> {
+            use std::borrow::Cow;
+            use std::fs;
+            use std::path::Path;
+
+            if cfg!(debug_assertions) {
+                let source_file_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(file!());
+                let source_dir_path = source_file_path
+                    .parent()
+                    .expect("file must have a parent dir");
+                let file_path = source_dir_path
+                    .join($rel_file_path)
+                    .canonicalize()
+                    .expect("failed to canonicalize file path");
+
+                let data = fs::read_to_string(file_path).expect("failed to read file");
+
+                Cow::Owned(data)
+            } else {
+                Cow::Borrowed(include_str!($rel_file_path))
+            }
+        }
+    };
+}

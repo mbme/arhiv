@@ -1,0 +1,21 @@
+{% for group in groups %}
+<details
+  class="my-16"
+  {% if group.open and group.items_count > 0 %}
+  open
+  {% endif %}
+  >
+  <summary class="cursor-pointer font-mono text-gray-700">
+    <span class="text-2xl font-semibold align-middle">
+      {{group.value}}
+    </span>
+    <span class="text-gray-400 inline-block">
+      {{ group.items_count }}
+    </span>
+  </summary>
+
+  <div class="pl-4">
+    {{ group.items | safe }}
+  </div>
+</details>
+{% endfor %}

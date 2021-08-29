@@ -1,3 +1,5 @@
+mod base;
+
 mod archive_document_confirmation_page;
 mod catalog_page;
 mod delete_document_confirmation_page;

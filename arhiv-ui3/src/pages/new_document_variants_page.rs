@@ -4,10 +4,13 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Toolbar},
-    utils::ArhivPageExt,
+    pages::base::render_page,
+    template_fn,
 };
 use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
+
+template_fn!(render_template, "./new_document_variants_page.html.tera");
 
 pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
@@ -25,11 +28,10 @@ pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
         .map(|module| module.document_type)
         .collect::<Vec<_>>();
 
-    arhiv.render_page(
-        "pages/new_document_variants_page.html.tera",
-        json!({
-            "toolbar": toolbar, //
-            "document_types": document_types,
-        }),
-    )
+    let content = render_template(json!({
+        "toolbar": toolbar, //
+        "document_types": document_types,
+    }))?;
+
+    render_page(content, arhiv)
 }

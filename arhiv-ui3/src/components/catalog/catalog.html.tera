@@ -1,0 +1,45 @@
+<form
+  id="catalog-filter"
+  class="form flex space-between items-center mb-12"
+  action=""
+  method="get"
+>
+  <input
+    type="search"
+    name="pattern"
+    class="field w-full"
+    value="{{pattern}}"
+    placeholder="Search {{document_type}}s"
+    onsearch="this.form.submit()"
+  />
+</form>
+
+{{ content | safe }}
+
+{% if pagination %}
+<div class="flex justify-center items-center font-mono uppercase mt-10 mb-4">
+  {% if pagination.prev_page_address %}
+  <a href="{{pagination.prev_page_address}}">
+    <svg class="h-6 w-6 inline-block">
+      <use xlink:href="#icon-arrow-left" />
+    </svg>
+    Prev
+  </a>
+  {% endif %}
+
+  {% if pagination.page > 0 or pagination.next_page_address %}
+  <div class="mx-8">
+    Page {{ pagination.page }}
+  </div>
+  {% endif %}
+
+  {% if pagination.next_page_address %}
+  <a href="{{pagination.next_page_address}}">
+    Next
+    <svg class="h-6 w-6 inline-block">
+      <use xlink:href="#icon-arrow-right" />
+    </svg>
+  </a>
+  {% endif %}
+</div>
+{% endif %}

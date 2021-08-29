@@ -1,0 +1,97 @@
+<article>
+  {{ toolbar | safe }}
+
+  <div id="content">
+    {% if document.archived %}
+    <div class="bg-gray-100 mb-12 p-2 font-bold tracking-widest">
+      ARCHIVED
+    </div>
+    {% endif %}
+
+    {% for field in fields %}
+    <section class="mb-12 wrap-text">
+      <h5 class="section-heading mb-2">
+        {{ field.name }}
+      </h5>
+
+      {% if field.kind == "Title" %}
+      <h1 class="text-2xl font-bold tracking-wide">
+        {{ field.value }}
+      </h1>
+      {% elif field.kind == "Markup" %}
+      <div class="markup">
+        {{ field.value | safe }}
+      </div>
+      {% elif field.kind == "Html" %}
+      {{ field.value | safe }}
+      {% elif field.kind == "String" %}
+      {{ field.value }}
+      {% endif %}
+    </section>
+    {% endfor %}
+
+    {% if children_catalog %}
+    {{ children_catalog | safe }}
+    {% endif %}
+  </div>
+
+  <div class="flex flex-col items-end text-gray-400 text-mono pb-8 pr-4 md:pr-6 lg:pr-12">
+    <div class="text-xs">
+      Updated
+      <time datetime="{{document.updatedAt}}">
+        {{document.updatedAt|date(format="%Y-%m-%d %H:%M")}}
+      </time>
+    </div>
+
+    {% if not is_internal_type %}
+    <div class="mt-4 text-sm">
+      <a href="/documents/{{document.id}}/archive">
+        {% if document.archived %}
+        Unarchive
+        {% else %}
+        Archive
+        {% endif %}
+      </a>
+
+      /
+
+      <a href="/documents/{{document.id}}/delete">
+        Delete
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</article>
+
+{% if backrefs | length > 0 %}
+<div class="p-4">
+  <h5 class="font-mono uppercase text-gray-500 mb-2">
+    Backrefs:
+  </h5>
+  <ul>
+    {% for ref in backrefs %}
+    <li class="space-y-8">
+      {{ref | safe}}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if refs | length > 0 %}
+<details class="paper">
+  <summary class="cursor-pointer p-2">
+    <h3 class="section-heading text-gray-700 inline-block">
+      REFS {{ refs | length }}
+    </h3>
+  </summary>
+
+  <div class="px-2 py-4">
+    {% for ref in refs %}
+    <div class="mb-4">
+      {{ref | safe}}
+    </div>
+    {% endfor %}
+  </div>
+</details>
+{% endif %}

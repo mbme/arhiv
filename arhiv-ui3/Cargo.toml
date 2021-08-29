@@ -22,5 +22,3 @@ tera = { version = "1", features = ["chrono"]}
 chrono = { version = "0.4", features = ["serde"] }
 
 rust-embed= { version = "6", features = ["interpolate-folder-path"]}
-
-lazy_static = "1.4"

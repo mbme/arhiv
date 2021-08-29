@@ -5,13 +5,16 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
-    utils::ArhivPageExt,
+    pages::base::render_page,
+    template_fn,
 };
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::{
     server::{respond_not_found, RequestQueryExt, ServerResponse},
     QueryBuilder,
 };
+
+template_fn!(render_template, "./edit_document_page.html.tera");
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -58,12 +61,11 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         .on_close_document(&document)
         .render(arhiv)?;
 
-    arhiv.render_page(
-        "pages/edit_document_page.html.tera",
-        json!({
-            "toolbar": toolbar,
-            "document": document,
-            "editor": editor,
-        }),
-    )
+    let content = render_template(json!({
+        "toolbar": toolbar,
+        "document": document,
+        "editor": editor,
+    }))?;
+
+    render_page(content, arhiv)
 }

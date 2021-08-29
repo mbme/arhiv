@@ -20,8 +20,9 @@ mod markup;
 mod pages;
 mod public_assets;
 mod rpc;
-mod templates;
 mod ui_config;
+
+#[macro_use]
 mod utils;
 
 pub async fn start_ui_server() {

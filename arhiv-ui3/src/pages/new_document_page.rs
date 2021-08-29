@@ -7,7 +7,8 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
-    utils::ArhivPageExt,
+    pages::base::render_page,
+    template_fn,
 };
 use arhiv_core::{
     entities::{Document, DocumentData},
@@ -18,6 +19,8 @@ use rs_utils::{
     server::{RequestQueryExt, ServerResponse},
     QueryBuilder,
 };
+
+template_fn!(render_template, "./new_document_page.html.tera");
 
 pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document_type = req
@@ -62,14 +65,13 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .on_close_document(&document)
         .render(arhiv)?;
 
-    arhiv.render_page(
-        "pages/new_document_page.html.tera",
-        json!({
-            "toolbar": toolbar,
-            "editor": editor,
-            "document_type": document_type,
-        }),
-    )
+    let content = render_template(json!({
+        "toolbar": toolbar,
+        "editor": editor,
+        "document_type": document_type,
+    }))?;
+
+    render_page(content, arhiv)
 }
 
 fn params_to_document_data(

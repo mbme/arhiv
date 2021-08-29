@@ -6,11 +6,14 @@ use serde_json::json;
 
 use crate::{
     components::{Breadcrumb, Catalog, Toolbar},
+    pages::base::render_page,
+    template_fn,
     ui_config::UIConfig,
-    utils::ArhivPageExt,
 };
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
+
+template_fn!(render_template, "./catalog_page.html.tera");
 
 #[derive(Serialize)]
 struct CatalogEntry {
@@ -35,12 +38,11 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .on_close("/")
         .render(arhiv)?;
 
-    arhiv.render_page(
-        "pages/catalog_page.html.tera",
-        json!({
-            "toolbar": toolbar,
-            "document_type": document_type,
-            "catalog": catalog,
-        }),
-    )
+    let content = render_template(json!({
+        "toolbar": toolbar,
+        "document_type": document_type,
+        "catalog": catalog,
+    }))?;
+
+    render_page(content, arhiv)
 }

@@ -3,7 +3,7 @@
 module.exports = {
   mode: 'jit',
   purge: [
-    './templates/**/*.html.tera'
+    './src/**/*.html.tera',
   ],
   darkMode: false, // or 'media' or 'class'
   theme: {

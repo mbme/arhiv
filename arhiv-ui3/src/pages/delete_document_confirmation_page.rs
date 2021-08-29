@@ -3,9 +3,14 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::utils::ArhivPageExt;
+use crate::{pages::base::render_page, template_fn};
 use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
+
+template_fn!(
+    render_template,
+    "./delete_document_confirmation_page.html.tera"
+);
 
 pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -19,11 +24,10 @@ pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResp
 
     let title = arhiv.get_schema().get_title(&document)?;
 
-    arhiv.render_page(
-        "pages/delete_document_confirmation_page.html.tera",
-        json!({
-            "document": document,
-            "title": title,
-        }),
-    )
+    let content = render_template(json!({
+        "document": document,
+        "title": title,
+    }))?;
+
+    render_page(content, arhiv)
 }

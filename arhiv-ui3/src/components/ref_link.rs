@@ -2,9 +2,11 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::templates::TEMPLATES;
+use crate::template_fn;
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::log;
+
+template_fn!(render_template, "./ref_link.html.tera");
 
 #[derive(Serialize)]
 #[serde(tag = "mode")]
@@ -104,6 +106,6 @@ impl Ref {
     pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let context = self.get_context(&arhiv)?;
 
-        TEMPLATES.render("components/ref_link.html.tera", context)
+        render_template(context)
     }
 }

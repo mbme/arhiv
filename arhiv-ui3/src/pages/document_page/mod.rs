@@ -11,12 +11,15 @@ use rs_utils::{
 
 use crate::{
     components::{Breadcrumb, Catalog, Ref, Toolbar},
+    pages::base::render_page,
+    template_fn,
     ui_config::UIConfig,
-    utils::ArhivPageExt,
 };
 use fields::prepare_fields;
 
 mod fields;
+
+template_fn!(render_template, "./document_page.html.tera");
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: &str = req.param("id").unwrap();
@@ -110,16 +113,15 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         .map(|document| Ref::from_document(document).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
-    arhiv.render_page(
-        "pages/document_page.html.tera",
-        json!({
-            "toolbar": toolbar,
-            "fields": fields,
-            "refs": refs,
-            "backrefs": backrefs,
-            "document": document,
-            "is_internal_type": data_description.is_internal,
-            "children_catalog": children_catalog,
-        }),
-    )
+    let content = render_template(json!({
+        "toolbar": toolbar,
+        "fields": fields,
+        "refs": refs,
+        "backrefs": backrefs,
+        "document": document,
+        "is_internal_type": data_description.is_internal,
+        "children_catalog": children_catalog,
+    }))?;
+
+    render_page(content, arhiv)
 }

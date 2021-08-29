@@ -1,4 +1,4 @@
-use crate::components::{CatalogConfig, CatalogGroupBy};
+use crate::components::catalog::config::{CatalogConfig, CatalogGroupBy};
 
 pub struct UIConfig {
     pub catalog: CatalogConfig,

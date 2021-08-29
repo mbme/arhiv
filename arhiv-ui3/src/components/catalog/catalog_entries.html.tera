@@ -1,4 +1,4 @@
-{% macro render_items(items, query) %}
+{% if items | length > 0 %}
 <ul>
   {% for item in items %}
   <li class="py-6 min-h-6rem break-words">
@@ -27,4 +27,4 @@
   </li>
   {% endfor %}
 </ul>
-{% endmacro render_items %}
+{% endif %}

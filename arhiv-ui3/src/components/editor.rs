@@ -1,11 +1,13 @@
 use anyhow::*;
 use serde::Serialize;
 
-use crate::templates::TEMPLATES;
+use crate::template_fn;
 use arhiv_core::{
     entities::Document,
     schema::{DataDescription, FieldType},
 };
+
+template_fn!(render_template, "./editor.html.tera");
 
 #[derive(Serialize)]
 struct FormField {
@@ -101,6 +103,6 @@ impl<'d> Editor<'d> {
     }
 
     pub fn render(self) -> Result<String> {
-        TEMPLATES.render("components/editor.html.tera", self)
+        render_template(self)
     }
 }

@@ -2,8 +2,21 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::templates::TEMPLATES;
+use crate::template_fn;
 use arhiv_core::{entities::Document, Arhiv};
+
+template_fn!(render_template, "./toolbar.html.tera");
+// {% if not is_internal_type %}
+// <a
+//   href="/new/{{document_type}}{{new_document_query}}"
+//   class="flex-shrink-0 ml-4 uppercase tracking-wide flex items-center"
+// >
+//   <svg class="h-5 w-5 mr-1">
+//     <use xlink:href="#icon-document-add" />
+//   </svg>
+//   {{document_type}}
+// </a>
+// {% endif %}
 
 #[derive(Serialize)]
 pub enum Breadcrumb<'d> {
@@ -117,13 +130,10 @@ impl<'d> Toolbar<'d> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        TEMPLATES.render(
-            "components/toolbar.html.tera",
-            json!({
-                "breadcrumbs": breadcrumbs,
-                "action": self.action,
-                "on_close": self.on_close,
-            }),
-        )
+        render_template(json!({
+            "breadcrumbs": breadcrumbs,
+            "action": self.action,
+            "on_close": self.on_close,
+        }))
     }
 }

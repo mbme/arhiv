@@ -18,13 +18,13 @@ async fn test_attachments() -> Result<()> {
 
     let attachment = arhiv.add_attachment(src, false)?;
 
-    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
+    assert!(arhiv.get_attachment_data(&attachment.id)?.exists()?);
 
     let mut document = empty_document();
     document.data.set("ref", &attachment.id);
 
     arhiv.stage_document(&mut document)?;
-    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, true);
+    assert!(arhiv.get_attachment_data(&attachment.id)?.exists()?);
 
     let page = arhiv.list_documents(Filter {
         matchers: vec![Condition::Type {
@@ -38,7 +38,7 @@ async fn test_attachments() -> Result<()> {
     arhiv.delete_document(&attachment.id)?;
     arhiv.sync().await?;
 
-    assert_eq!(arhiv.get_attachment_data(&attachment.id)?.exists()?, false);
+    assert!(!arhiv.get_attachment_data(&attachment.id)?.exists()?);
 
     Ok(())
 }
@@ -68,7 +68,7 @@ async fn test_download_attachment() -> Result<()> {
 
     let dst = &attachment_data.path;
 
-    assert_eq!(are_equal_files(src, dst)?, true);
+    assert!(are_equal_files(src, dst)?);
 
     shutdown_sender.send(()).unwrap();
     join_handle.await.unwrap();

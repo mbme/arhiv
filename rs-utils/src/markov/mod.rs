@@ -189,6 +189,6 @@ mod tests {
         let (sentence, words) = markov.generate_sentence(true);
 
         assert!(words > 0);
-        assert!(sentence.len() > 0);
+        assert!(!sentence.is_empty());
     }
 }

@@ -17,6 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Check & lint
-      run: cargo clippy --verbose
+      run: cargo clippy --verbose --all-targets --all-features -- -D warnings
     - name: Run tests
       run: cargo test --verbose

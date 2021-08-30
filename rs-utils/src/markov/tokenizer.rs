@@ -265,14 +265,8 @@ mod tests {
             Tokenizer::tokenize("Split   it,or not; dr. go!! test")
                 .tokens
                 .iter()
-                .filter(|item| {
-                    if let TextToken::Whitespace = item {
-                        false
-                    } else {
-                        true
-                    }
-                })
-                .map(|item| item.to_string())
+                .filter(|item| !matches!(item, TextToken::Whitespace))
+                .map(ToString::to_string)
                 .collect::<Vec<String>>(),
             vec!["Split", "it", ",", "or", "not", ";", "dr.", "go", "!!", "test", "."]
         );
@@ -285,7 +279,7 @@ mod tests {
         assert_eq!(
             sentences
                 .into_iter()
-                .map(|sentence| sentence.into_vec())
+                .map(Sentence::into_vec)
                 .collect::<Vec<_>>(),
             vec![
                 vec!["Test", "sentence", "kedr", "..."],

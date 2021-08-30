@@ -26,7 +26,7 @@ fn test_crud() -> Result<()> {
         let other_document = arhiv.get_document(&id)?.unwrap();
 
         assert_eq!(other_document.data, original_data.try_into().unwrap());
-        assert_eq!(other_document.rev.is_staged(), true);
+        assert!(other_document.rev.is_staged());
     }
 
     // UPDATE
@@ -45,7 +45,7 @@ fn test_crud() -> Result<()> {
         other_document.archived = true;
         arhiv.stage_document(&mut other_document)?;
 
-        assert_eq!(arhiv.get_document(&id)?.unwrap().archived, true);
+        assert!(arhiv.get_document(&id)?.unwrap().archived);
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
     }
 
@@ -58,10 +58,7 @@ fn test_crud() -> Result<()> {
 
         arhiv.delete_document(&document.id)?;
 
-        assert_eq!(
-            arhiv.get_document(&document.id)?.unwrap().is_tombstone(),
-            true
-        );
+        assert!(arhiv.get_document(&document.id)?.unwrap().is_tombstone());
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
     }
 

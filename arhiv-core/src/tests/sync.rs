@@ -21,27 +21,18 @@ async fn test_prime_sync() -> Result<()> {
 
     arhiv.stage_document(&mut document)?;
 
-    assert_eq!(
-        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
-        true
-    );
+    assert!(arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
 
     arhiv.sync().await?;
 
-    assert_eq!(
-        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
-        false
-    );
-    assert_eq!(
-        arhiv.get_document(&attachment.id)?.unwrap().rev.is_staged(),
-        false
-    );
+    assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
+    assert!(!arhiv.get_document(&attachment.id)?.unwrap().rev.is_staged());
 
     // Test attachment data
     let attachment_data = arhiv.get_attachment_data(&attachment.id)?;
 
-    assert_eq!(attachment_data.exists()?, true);
-    assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
+    assert!(attachment_data.exists()?);
+    assert!(are_equal_files(src, &attachment_data.path)?);
 
     // Test if document is updated correctly
     {
@@ -80,22 +71,22 @@ async fn test_replica_sync() -> Result<()> {
 
     replica.sync().await?;
 
-    assert_eq!(replica.get_document(&id)?.unwrap().rev.is_staged(), false);
+    assert!(!replica.get_document(&id)?.unwrap().rev.is_staged());
 
     // Test attachment data on replica
     {
         let attachment_data = replica.get_attachment_data(&attachment.id)?;
 
-        assert_eq!(attachment_data.exists()?, true);
-        assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
+        assert!(attachment_data.exists()?);
+        assert!(are_equal_files(src, &attachment_data.path)?);
     }
 
     // Test attachment data on prime
     {
         let attachment_data = prime.get_attachment_data(&attachment.id)?;
 
-        assert_eq!(attachment_data.exists()?, true);
-        assert_eq!(are_equal_files(src, &attachment_data.path)?, true);
+        assert!(attachment_data.exists()?);
+        assert!(are_equal_files(src, &attachment_data.path)?);
     }
 
     // Test if document is updated correctly
@@ -141,23 +132,17 @@ async fn test_sync_removes_unused_local_attachments() -> Result<()> {
 
     arhiv.sync().await?;
 
-    assert_eq!(
-        arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),
-        false
-    );
+    assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),);
 
     // attachment1 should removed
-    assert_eq!(arhiv.get_document(&attachment1.id)?.is_none(), true);
+    assert!(arhiv.get_document(&attachment1.id)?.is_none());
 
     // attachment2 should be committed
-    assert_eq!(
-        arhiv
-            .get_document(&attachment2.id)?
-            .unwrap()
-            .rev
-            .is_staged(),
-        false
-    );
+    assert!(!arhiv
+        .get_document(&attachment2.id)?
+        .unwrap()
+        .rev
+        .is_staged());
 
     Ok(())
 }

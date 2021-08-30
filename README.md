@@ -8,6 +8,7 @@
 # Dev dependencies
 * `watchexec` to run commands in response to file modifications
 * `cargo-release` for release management
+* `cargo-insta` to manage snapshot tests
 * `tmux` for running dev servers in parallel
 
 ## Projects

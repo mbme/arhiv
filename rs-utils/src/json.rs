@@ -52,16 +52,13 @@ mod tests {
             })
         );
 
-        assert_eq!(
-            merge_json(
-                json!({
-                    "test1": 1,
-                }),
-                Value::Null,
-            )
-            .is_err(),
-            true
-        );
+        assert!(merge_json(
+            json!({
+                "test1": 1,
+            }),
+            Value::Null,
+        )
+        .is_err());
 
         Ok(())
     }

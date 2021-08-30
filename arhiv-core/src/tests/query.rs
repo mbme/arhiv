@@ -14,7 +14,7 @@ fn test_pagination() -> Result<()> {
     let page = arhiv.list_documents(Filter::default().page_size(1))?;
 
     assert_eq!(page.items.len(), 1);
-    assert_eq!(page.has_more, true);
+    assert!(page.has_more);
 
     Ok(())
 }

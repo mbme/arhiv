@@ -1,8 +1,10 @@
-use crate::utils::{match_str, send_notification};
 use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
+
 use rs_utils::run_command;
+
+use crate::utils::{match_str, send_notification};
 
 pub struct Microphone {
     id: String,
@@ -43,6 +45,7 @@ impl Microphone {
         Ok(id)
     }
 
+    #[must_use]
     pub fn find() -> Microphone {
         let id = Microphone::get_id().expect("Microphone must be available");
 

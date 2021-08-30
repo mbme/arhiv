@@ -94,7 +94,7 @@ impl<'d> Editor<'d> {
 
     pub fn with_document_query(mut self, mut query: String) -> Self {
         if !query.is_empty() {
-            query.insert_str(0, "?");
+            query.insert(0, '?');
         }
 
         self.document_query = query;

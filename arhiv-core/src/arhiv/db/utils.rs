@@ -6,8 +6,8 @@ use serde_json::Value;
 
 use crate::entities::*;
 
-fn extract_refs(value: String) -> serde_json::Result<HashSet<Id>> {
-    serde_json::from_str::<HashSet<Id>>(&value)
+fn extract_refs(value: &str) -> serde_json::Result<HashSet<Id>> {
+    serde_json::from_str::<HashSet<Id>>(value)
 }
 
 pub fn serialize_refs(refs: &HashSet<Id>) -> serde_json::Result<String> {
@@ -24,7 +24,11 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         archived: row.get("archived")?,
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
-        refs: extract_refs(row.get("refs")?)?,
+        refs: {
+            let value: String = row.get("refs")?;
+
+            extract_refs(&value)?
+        },
         data: {
             let data: Value = row.get("data")?;
 

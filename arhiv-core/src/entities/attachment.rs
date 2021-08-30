@@ -2,16 +2,17 @@ use std::{convert::TryInto, ops::Deref};
 
 use anyhow::*;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 use super::Document;
 use rs_utils::{get_file_hash_sha256, get_file_name, is_image_filename};
 
-pub const ATTACHMENT_TYPE: &'static str = "attachment";
+pub const ATTACHMENT_TYPE: &str = "attachment";
 
 pub struct Attachment(Document);
 
 impl Attachment {
+    #[must_use]
     pub fn is_attachment(document: &Document) -> bool {
         document.document_type == ATTACHMENT_TYPE
     }
@@ -42,14 +43,17 @@ impl Attachment {
         Ok(Attachment(document))
     }
 
+    #[must_use]
     pub fn get_hash(&self) -> &str {
         self.data.get_mandatory_str("sha256")
     }
 
+    #[must_use]
     pub fn get_filename(&self) -> &str {
         self.data.get_mandatory_str("filename")
     }
 
+    #[must_use]
     pub fn is_image(&self) -> bool {
         let filename = self.get_filename().to_lowercase();
 
@@ -65,9 +69,9 @@ impl Deref for Attachment {
     }
 }
 
-impl Into<Document> for Attachment {
-    fn into(self) -> Document {
-        self.0
+impl From<Attachment> for Document {
+    fn from(val: Attachment) -> Self {
+        val.0
     }
 }
 
@@ -85,8 +89,8 @@ struct AttachmentInfo {
     pub sha256: String,
 }
 
-impl Into<serde_json::Value> for AttachmentInfo {
-    fn into(self) -> serde_json::Value {
-        serde_json::to_value(self).expect("must be able to serialize")
+impl From<AttachmentInfo> for Value {
+    fn from(val: AttachmentInfo) -> Self {
+        serde_json::to_value(val).expect("must serialize AttachmentInfo")
     }
 }

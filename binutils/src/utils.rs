@@ -6,6 +6,7 @@ pub fn send_notification(message: &str) {
         .expect("must be able to send notification");
 }
 
+#[must_use]
 pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
     regex.captures(s).map(|captures| {
         captures

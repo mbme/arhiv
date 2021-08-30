@@ -59,15 +59,16 @@ impl Ref {
 
     fn get_context(self, arhiv: &Arhiv) -> Result<Value> {
         let document = match self.info {
-            RefInfo::Id(ref id) => match arhiv.get_document(id)? {
-                Some(document) => document,
-                None => {
+            RefInfo::Id(ref id) => {
+                if let Some(document) = arhiv.get_document(id)? {
+                    document
+                } else {
                     log::warn!("Got broken reference: {}", id);
 
                     return serde_json::to_value(RefMode::Unknown { id })
                         .context("failed to serialize");
                 }
-            },
+            }
             RefInfo::Document(document) => document,
         };
 
@@ -104,7 +105,7 @@ impl Ref {
     }
 
     pub fn render(self, arhiv: &Arhiv) -> Result<String> {
-        let context = self.get_context(&arhiv)?;
+        let context = self.get_context(arhiv)?;
 
         render_template(context)
     }

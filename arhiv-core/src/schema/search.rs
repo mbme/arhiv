@@ -38,17 +38,15 @@ impl SearchScore {
     /// if each pattern is matched at least once
     #[inline]
     fn is_ready(&self) -> bool {
-        self.values.iter().find(|value| **value == 0).is_none()
+        !self.values.iter().any(|value| *value == 0)
     }
 
-    pub fn calculate(self) -> u32 {
+    pub fn calculate(self) -> usize {
         if !self.is_ready() {
             return 0;
         }
 
-        self.values
-            .into_iter()
-            .fold(0, |acc, value| acc + value as u32)
+        self.values.into_iter().sum()
     }
 }
 
@@ -61,7 +59,7 @@ impl MultiSearch {
     pub fn new(pattern: impl AsRef<str>) -> Self {
         let patterns: Vec<_> = pattern
             .as_ref()
-            .split(" ")
+            .split(' ')
             .map(|item| item.trim().to_lowercase())
             .filter(|item| item.len() > 1)
             .collect();
@@ -72,7 +70,7 @@ impl MultiSearch {
         }
     }
 
-    pub fn search(&self, data: &str) -> u32 {
+    pub fn search(&self, data: &str) -> usize {
         if self.patterns_count == 0 {
             return 1;
         }

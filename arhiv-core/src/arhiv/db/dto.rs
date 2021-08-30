@@ -37,18 +37,22 @@ pub struct DocumentsCount {
 }
 
 impl DocumentsCount {
+    #[must_use]
     pub fn count_staged_documents(&self) -> u32 {
         self.documents_updated + self.documents_new
     }
 
+    #[must_use]
     pub fn count_staged_attachments(&self) -> u32 {
         self.attachments_updated + self.attachments_new
     }
 
+    #[must_use]
     pub fn count_staged_tombstones(&self) -> u32 {
         self.tombstones_updated + self.tombstones_new
     }
 
+    #[must_use]
     pub fn count_staged(&self) -> u32 {
         self.count_staged_documents()
             + self.count_staged_attachments()

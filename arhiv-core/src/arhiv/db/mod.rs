@@ -38,7 +38,7 @@ enum DocumentSearch {
 }
 
 impl DocumentSearch {
-    fn search(&self, document_type: &str, document_data: &str, pattern: &str) -> Result<u32> {
+    fn search(&self, document_type: &str, document_data: &str, pattern: &str) -> Result<usize> {
         match self {
             Self::SimpleSearch => {
                 let score = if document_data.contains(pattern) {
@@ -169,6 +169,7 @@ impl DB {
         ))
     }
 
+    #[allow(clippy::unused_self)]
     fn init_json_contains(&self, conn: &Connection) -> Result<()> {
         conn.create_scalar_function(
             "json_contains",
@@ -201,15 +202,15 @@ impl DB {
                 if entry_path.is_file() {
                     let file_name = entry_path
                         .file_name()
-                        .ok_or(anyhow!("Failed to read file name"))
+                        .ok_or_else(|| anyhow!("Failed to read file name"))
                         .map(|value| value.to_string_lossy().to_string().into());
 
                     return Some(file_name);
-                } else {
-                    log::warn!("{} isn't a file", entry_path.to_string_lossy());
-
-                    return None;
                 }
+
+                log::warn!("{} isn't a file", entry_path.to_string_lossy());
+
+                None
             }),
         )
     }
@@ -274,14 +275,7 @@ fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {
     if let Some(data) = data.as_array() {
         let result = data
             .iter()
-            .find(|item| {
-                if let Some(item) = item.as_str() {
-                    item == value
-                } else {
-                    false
-                }
-            })
-            .is_some();
+            .any(|item| item.as_str().map_or(false, |item| item == value));
 
         return Ok(result);
     }

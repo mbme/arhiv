@@ -37,7 +37,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let document = Document::new_with_data(
         document_type.clone(),
-        params_to_document_data(params, data_description)?,
+        params_to_document_data(&params, data_description)?,
     );
 
     let editor = Editor::new(
@@ -75,12 +75,12 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 }
 
 fn params_to_document_data(
-    params: HashMap<String, String>,
+    params: &HashMap<String, String>,
     data_description: &DataDescription,
 ) -> Result<DocumentData> {
     let mut data = DocumentData::new();
 
-    for ref field in &data_description.fields {
+    for field in &data_description.fields {
         let raw_value = if let Some(value) = params.get(field.name) {
             value
         } else {

@@ -1,14 +1,17 @@
-use crate::utils::{match_str, send_notification};
 use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
+
 use rs_utils::{log::info, run_command};
+
+use crate::utils::{match_str, send_notification};
 
 pub struct Touchpad {
     pub id: String,
 }
 
 impl Touchpad {
+    #[must_use]
     pub fn find() -> Self {
         let id = Touchpad::get_touchpad_id().expect("must be able to find touchpad");
 
@@ -45,25 +48,25 @@ impl Touchpad {
         Ok(ids.remove(0))
     }
 
+    #[must_use]
     pub fn is_enabled(&self) -> bool {
         let output = run_command("xinput", vec!["list-props", &self.id])
             .expect("must be able to read touchpad status");
 
         output
             .lines()
-            .find(|line| line.find("Device Enabled").is_some() && line.ends_with("1"))
-            .is_some()
+            .any(|line| line.contains("Device Enabled") && line.ends_with('1'))
     }
 
     pub fn enable(&self, enable: bool) {
         let arg = if enable { "enable" } else { "disable" };
 
         run_command("xinput", vec![arg, &self.id])
-            .expect(&format!("must be able to {} touchpad", arg));
+            .unwrap_or_else(|_| panic!("must be able to {} touchpad", arg));
     }
 
     pub fn disable(&self) {
-        self.enable(false)
+        self.enable(false);
     }
 
     pub fn toggle(&self) {

@@ -119,6 +119,7 @@ pub trait Queries {
         Ok(result.unwrap_or(chrono::MIN_DATETIME))
     }
 
+    #[allow(clippy::too_many_lines)]
     fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
         let mut qb = QueryBuilder::new();
 
@@ -219,11 +220,11 @@ pub trait Queries {
         match (filter.page_size, filter.page_offset) {
             (None, None) => {}
             (page_size_opt, page_offset_opt) => {
-                page_size = page_size_opt.map(|val| val as i32).unwrap_or(-1);
+                page_size = page_size_opt.map_or(-1, |val| val as i32);
 
                 // fetch (page_size + 1) items so that we know that there are more items than page_size
                 if page_size > -1 {
-                    page_size += 1
+                    page_size += 1;
                 }
 
                 qb.limit(page_size);
@@ -255,17 +256,17 @@ pub trait Queries {
         Ok(ListPage { items, has_more })
     }
 
-    fn get_new_snapshots_since(&self, min_rev: &Revision) -> Result<Vec<Document>> {
+    fn get_new_snapshots_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
 
-        let mut rows = stmt
+        let rows = stmt
             .query_and_then([min_rev], utils::extract_document)
             .context(anyhow!("Failed to get new snapshots since {}", min_rev))?;
 
         let mut documents = Vec::new();
-        while let Some(row) = rows.next() {
+        for row in rows {
             documents.push(row?);
         }
 
@@ -293,10 +294,10 @@ pub trait Queries {
             .get_connection()
             .prepare("SELECT id FROM documents WHERE type = ?1")?;
 
-        let mut rows = stmt.query_and_then([ATTACHMENT_TYPE], utils::extract_id)?;
+        let rows = stmt.query_and_then([ATTACHMENT_TYPE], utils::extract_id)?;
 
         let mut result = HashSet::new();
-        while let Some(entry) = rows.next() {
+        for entry in rows {
             result.insert(entry?);
         }
 

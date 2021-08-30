@@ -16,7 +16,7 @@ pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
     let asset = req.param("fileName").unwrap();
 
     let embedded_file = {
-        if let Some(data) = PublicAssets::get(&asset) {
+        if let Some(data) = PublicAssets::get(asset) {
             data
         } else {
             return respond_not_found();

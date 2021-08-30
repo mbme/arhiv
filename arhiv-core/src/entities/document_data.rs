@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::{convert::TryInto, fmt};
 
 use anyhow::*;
 use serde::{Deserialize, Serialize};
@@ -8,6 +8,7 @@ use serde_json::{Map, Value};
 pub struct DocumentData(Map<String, Value>);
 
 impl DocumentData {
+    #[must_use]
     pub fn new() -> Self {
         DocumentData(Map::new())
     }
@@ -23,6 +24,7 @@ impl DocumentData {
         self.0.remove(field.as_ref());
     }
 
+    #[must_use]
     pub fn get(&self, field: &str) -> Option<&Value> {
         let value = self.0.get(field)?;
 
@@ -33,37 +35,53 @@ impl DocumentData {
         }
     }
 
-    pub fn get_str<'doc>(&self, field: &str) -> Option<&str> {
+    #[must_use]
+    pub fn get_str(&self, field: &str) -> Option<&str> {
         let value = self.get(field)?;
 
         Some(
             value
                 .as_str()
-                .expect(&format!("can't use field '{}' as &str", field)),
+                .unwrap_or_else(|| panic!("can't use field '{}' as &str", field)),
         )
     }
 
+    #[must_use]
     pub fn get_mandatory_str(&self, field: &str) -> &str {
         self.get_str(field)
-            .expect(&format!("str field '{}' must be present", field))
+            .unwrap_or_else(|| panic!("str field '{}' must be present", field))
     }
 
+    #[must_use]
     pub fn get_bool(&self, field: &str) -> Option<bool> {
-        self.get(field).map(|value| value.as_bool()).flatten()
+        self.get(field).and_then(serde_json::Value::as_bool)
     }
 
+    #[must_use]
     pub fn get_number(&self, field: &str) -> Option<u64> {
-        self.get(field).map(|value| value.as_u64()).flatten()
-    }
-
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(&self.0).expect("failed to serialize DocumentData")
+        self.get(field).and_then(serde_json::Value::as_u64)
     }
 }
 
-impl Into<Value> for DocumentData {
-    fn into(self) -> Value {
-        Value::Object(self.0)
+impl fmt::Display for DocumentData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_json::to_string(&self.0).expect("failed to serialize DocumentData")
+        )
+    }
+}
+
+impl Default for DocumentData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<DocumentData> for Value {
+    fn from(val: DocumentData) -> Self {
+        Value::Object(val.0)
     }
 }
 

@@ -22,6 +22,7 @@ pub struct ChangesetResponse {
 }
 
 impl ChangesetResponse {
+    #[must_use]
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize ChangesetResponse to json")
     }

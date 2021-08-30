@@ -1,15 +1,15 @@
-use anyhow::*;
 use core::fmt::Write;
-use sha2::{Digest, Sha256};
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{prelude::*, BufReader};
+
+use anyhow::*;
+use sha2::{Digest, Sha256};
 
 pub fn get_file_hash_sha256(filepath: &str) -> Result<String> {
     let mut hasher = Sha256::new();
     let file = File::open(filepath)?;
     let mut reader = BufReader::new(file);
-    let mut buffer = [0; 1 * 1024 * 1024]; // 1Mb cache
+    let mut buffer = [0; 1024 * 1024]; // 1Mb cache
 
     loop {
         let count = reader.read(&mut buffer)?;
@@ -25,15 +25,17 @@ pub fn get_file_hash_sha256(filepath: &str) -> Result<String> {
     Ok(bytes_to_hex_string(&hash))
 }
 
+#[must_use]
 pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
     let mut result = String::with_capacity(2 * bytes.len());
-    for byte in bytes.into_iter() {
+    for byte in bytes {
         write!(result, "{:02X}", byte).expect("failed to write data into String");
     }
 
     result
 }
 
+#[must_use]
 pub fn gen_uuid() -> String {
     uuid::Uuid::new_v4().to_hyphenated().to_string()
 }

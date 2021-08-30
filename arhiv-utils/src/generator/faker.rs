@@ -76,13 +76,13 @@ impl<'a> Faker<'a> {
             match &field.field_type {
                 FieldType::String {} => {
                     let (min, max) = self
-                        .get_field_size_limits(&document_type, &field.name)
+                        .get_field_size_limits(&document_type, field.name)
                         .unwrap_or((1, 8));
                     data.set(field.name, self.generator.gen_string(min, max));
                 }
                 FieldType::MarkupString {} => {
                     let (min, max) = self
-                        .get_field_size_limits(&document_type, &field.name)
+                        .get_field_size_limits(&document_type, field.name)
                         .unwrap_or((1, 8));
 
                     let title = self.generator.gen_string(1, 5);
@@ -108,7 +108,7 @@ impl<'a> Faker<'a> {
             .arhiv
             .get_schema()
             .get_data_description(&document_type)
-            .expect(&format!("Unknown document_type {}", &document_type));
+            .unwrap_or_else(|_| panic!("Unknown document_type {}", &document_type));
 
         let quantity = self.get_quantity_limit(&document_type);
 
@@ -122,9 +122,9 @@ impl<'a> Faker<'a> {
             if let Collection::Type {
                 document_type: child_document_type,
                 field,
-            } = &data_description.collection_of
+            } = data_description.collection_of
             {
-                let child_quantity = self.get_quantity_limit(&child_document_type);
+                let child_quantity = self.get_quantity_limit(child_document_type);
 
                 for _ in 0..child_quantity {
                     let mut initial_values = DocumentData::new();

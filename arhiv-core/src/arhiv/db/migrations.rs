@@ -1,9 +1,12 @@
+use std::ffi::OsStr;
+
 use anyhow::*;
 use rusqlite::{functions::FunctionFlags, Connection, OptionalExtension};
 use serde_json::Value;
 
-use super::*;
 use rs_utils::{log, FsTransaction, TempFile};
+
+use super::*;
 
 fn get_db_version(conn: &Connection) -> Result<u8> {
     let value: String = conn
@@ -125,6 +128,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
 ];
 
 // stub
+#[allow(clippy::unnecessary_wraps)]
 fn upgrade_v0_to_v1(_conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
     Ok(())
 }
@@ -233,6 +237,57 @@ fn upgrade_v3_to_v4(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
 }
 
 fn upgrade_v4_to_v5(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
+    fn update_data(ctx: &rusqlite::functions::Context) -> Result<Value> {
+        let document_type = ctx.get_raw(0).as_str()?;
+
+        let document_data = ctx.get_raw(1).as_str()?;
+        let mut document_data: Value = serde_json::from_str(document_data)?;
+
+        let (data_field, new_title_field) = match document_type {
+            "note" => ("data", "title"),
+            "project" => ("description", "name"),
+            "task" => ("description", "title"),
+            _ => bail!("unexpected document type {}", document_type),
+        };
+
+        let data = document_data
+            .get(data_field)
+            .ok_or_else(|| anyhow!("can't find field {} in {} data", data_field, document_type))?
+            .as_str()
+            .ok_or_else(|| {
+                anyhow!(
+                    "field {} in {} data isn't a string",
+                    data_field,
+                    document_type
+                )
+            })?;
+
+        if data_field == "project" {
+            println!("data:\n{}", data);
+        }
+
+        let mut lines_iter = data.trim_start().lines();
+
+        let new_title = lines_iter
+            .next()
+            .unwrap_or("No title")
+            .trim_start_matches('#')
+            .trim()
+            .to_string();
+
+        let new_data = lines_iter.collect::<Vec<_>>().join("\n");
+        let new_data = new_data.trim();
+
+        {
+            let document_data = document_data.as_object_mut().unwrap();
+
+            document_data.insert(new_title_field.to_string(), new_title.into());
+            document_data.insert(data_field.to_string(), new_data.into());
+        }
+
+        Ok(document_data)
+    }
+
     conn.execute_batch(
         "INSERT INTO settings
                        SELECT * FROM old_db.settings;
@@ -249,59 +304,6 @@ fn upgrade_v4_to_v5(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
                        SELECT * FROM old_db.documents_snapshots",
     )
     .context("failed to migrate documents_snapshots table")?;
-
-    fn update_data(ctx: &rusqlite::functions::Context) -> Result<Value> {
-        let document_type = ctx.get_raw(0).as_str()?;
-
-        let document_data = ctx.get_raw(1).as_str()?;
-        let mut document_data: Value = serde_json::from_str(&document_data)?;
-
-        let (data_field, new_title_field) = match document_type {
-            "note" => ("data", "title"),
-            "project" => ("description", "name"),
-            "task" => ("description", "title"),
-            _ => bail!("unexpected document type {}", document_type),
-        };
-
-        let data = document_data
-            .get(data_field)
-            .ok_or(anyhow!(
-                "can't find field {} in {} data",
-                data_field,
-                document_type
-            ))?
-            .as_str()
-            .ok_or(anyhow!(
-                "field {} in {} data isn't a string",
-                data_field,
-                document_type
-            ))?;
-
-        if data_field == "project" {
-            println!("data:\n{}", data);
-        }
-
-        let mut lines_iter = data.trim_start().lines().into_iter();
-
-        let new_title = lines_iter
-            .next()
-            .unwrap_or("No title")
-            .trim_start_matches("#")
-            .trim()
-            .to_string();
-
-        let new_data = lines_iter.collect::<Vec<_>>().join("\n");
-        let new_data = new_data.trim();
-
-        {
-            let document_data = document_data.as_object_mut().unwrap();
-
-            document_data.insert(new_title_field.to_string(), new_title.into());
-            document_data.insert(data_field.to_string(), new_data.into());
-        }
-
-        Ok(document_data)
-    }
 
     conn.create_scalar_function(
         "update_data",
@@ -366,9 +368,8 @@ fn upgrade_v5_to_v6(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str
         // read file name, which is a sha256 hash atm.
         let hash = path
             .file_name()
-            .map(|filename| filename.to_str())
-            .flatten()
-            .ok_or(anyhow!("Failed to read file name"))?;
+            .and_then(OsStr::to_str)
+            .ok_or_else(|| anyhow!("Failed to read file name"))?;
 
         // find attachment id by hash
         let id: Option<String> = conn

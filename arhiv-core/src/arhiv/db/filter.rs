@@ -79,6 +79,7 @@ impl Default for Filter {
 }
 
 impl Filter {
+    #[must_use]
     pub fn all_staged_documents() -> Filter {
         Filter {
             page_offset: None,
@@ -117,12 +118,14 @@ impl Filter {
         self
     }
 
+    #[must_use]
     pub fn with_matcher(mut self, matcher: Condition) -> Filter {
         self.matchers.push(matcher);
 
         self
     }
 
+    #[must_use]
     pub fn all_items(mut self) -> Filter {
         self.page_size = None;
         self.page_offset = None;
@@ -130,12 +133,14 @@ impl Filter {
         self
     }
 
+    #[must_use]
     pub fn recently_updated_first(mut self) -> Filter {
         self.order.push(OrderBy::UpdatedAt { asc: false });
 
         self
     }
 
+    #[must_use]
     pub fn page_size(mut self, page: u8) -> Filter {
         self.page_size = Some(page);
 

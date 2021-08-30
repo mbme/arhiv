@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct Id(String);
 
 impl Id {
+    #[must_use]
     pub fn new() -> Self {
         // TODO make const fn
         let chars: Vec<char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -15,6 +16,12 @@ impl Id {
 
         // see https://zelark.github.io/nano-id-cc/
         Id(nanoid::nanoid!(14, &chars))
+    }
+}
+
+impl Default for Id {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

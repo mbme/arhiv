@@ -14,6 +14,7 @@ pub enum MarkupStr<'a> {
 }
 
 impl<'a> MarkupStr<'a> {
+    #[must_use]
     pub fn parse(&self) -> Parser {
         let mut options = Options::empty();
         options.insert(Options::ENABLE_STRIKETHROUGH);
@@ -23,25 +24,23 @@ impl<'a> MarkupStr<'a> {
         Parser::new_ext(self.as_ref(), options)
     }
 
+    #[must_use]
     pub fn extract_refs(&self) -> HashSet<Id> {
         let mut refs: HashSet<Id> = HashSet::new();
 
         let parser = self.parse();
         for event in parser {
-            match event {
-                // FIXME handle images
-                Event::Start(Tag::Link(_, ref destination, _)) => {
-                    if let Some(id) = extract_id(destination) {
-                        refs.insert(id);
-                    }
+            if let Event::Start(Tag::Link(_, ref destination, _)) = event {
+                if let Some(id) = extract_id(destination) {
+                    refs.insert(id);
                 }
-                _ => {}
             }
         }
 
         refs
     }
 
+    #[must_use]
     pub fn preview(&self, lines: usize) -> Self {
         self.as_ref()
             .lines()
@@ -56,7 +55,7 @@ impl<'a> AsRef<str> for MarkupStr<'a> {
     fn as_ref(&self) -> &str {
         match self {
             MarkupStr::Ref(s) => s,
-            MarkupStr::Owned(s) => &s,
+            MarkupStr::Owned(s) => s,
         }
     }
 }

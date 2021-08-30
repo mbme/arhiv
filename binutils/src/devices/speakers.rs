@@ -1,8 +1,10 @@
-use crate::utils::{match_str, send_notification};
 use anyhow::*;
 use lazy_static::*;
 use regex::Regex;
+
 use rs_utils::run_command;
+
+use crate::utils::{match_str, send_notification};
 
 pub struct Speakers {
     id: String,
@@ -54,6 +56,7 @@ impl Speakers {
         Ok(id)
     }
 
+    #[must_use]
     pub fn find() -> Speakers {
         let id = Speakers::get_id().expect("Speakers must be available");
 
@@ -86,7 +89,7 @@ impl Speakers {
                 match_str(&VOLUME_RE, line)
             })
             .and_then(|volume| volume.parse().ok())
-            .ok_or(anyhow!("Failed to parse volume"))?;
+            .ok_or_else(|| anyhow!("Failed to parse volume"))?;
 
         Ok(SpeakersStatus { muted, volume })
     }

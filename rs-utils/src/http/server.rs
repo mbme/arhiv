@@ -20,10 +20,12 @@ pub fn respond_not_found() -> ServerResponse {
     respond_with_status(StatusCode::NOT_FOUND)
 }
 
+#[allow(clippy::unused_async)]
 pub async fn not_found_handler(_req: Request<Body>) -> ServerResponse {
     respond_not_found()
 }
 
+#[allow(clippy::unused_async)]
 pub async fn logger_middleware(res: Response<Body>, info: RequestInfo) -> Result<Response<Body>> {
     log::info!(
         "{} {} -> {}",
@@ -35,6 +37,7 @@ pub async fn logger_middleware(res: Response<Body>, info: RequestInfo) -> Result
     Ok(res)
 }
 
+#[allow(clippy::unused_async)]
 pub async fn error_handler(err: routerify::RouteError, info: RequestInfo) -> Response<Body> {
     log::error!("{} {} -> {:?}", info.method(), info.uri().path(), err);
 

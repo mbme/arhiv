@@ -16,5 +16,5 @@ fn main() {
     let bin_name = app.get_bin_name().unwrap().to_string();
 
     app.gen_completions(&bin_name, Shell::Bash, outdir.clone());
-    app.gen_completions(&bin_name, Shell::Zsh, outdir.clone());
+    app.gen_completions(&bin_name, Shell::Zsh, outdir);
 }

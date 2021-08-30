@@ -9,12 +9,12 @@ use crate::template_fn;
 
 template_fn!(render_template, "./base.html.tera");
 
-pub fn render_page(content: String, arhiv: &Arhiv) -> ServerResponse {
+pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
     let nav_document_types = get_nav_document_types(arhiv);
 
     let result = render_template(json!({
         "nav_document_types": nav_document_types,
-        "content": content,
+        "content": content.as_ref(),
     }))?;
 
     Response::builder()
@@ -27,7 +27,7 @@ pub fn render_page(content: String, arhiv: &Arhiv) -> ServerResponse {
         .context("failed to build response")
 }
 
-const IGNORED_DOCUMENT_TYPES: &[&'static str] = &["tombstone", "attachment", "task"];
+const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];
 
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<&'static str> {
     arhiv

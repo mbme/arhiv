@@ -1,8 +1,21 @@
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::module_inception,
+    clippy::wildcard_imports,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless
+)]
+
+use clap::{crate_version, App, Arg};
 
 use binutils::devices::{Microphone, Speakers};
-use clap::{crate_version, App, Arg};
 use rs_utils::log::{error, setup_logger};
 
 fn main() {
@@ -40,7 +53,7 @@ fn main() {
 
     if subcommand == "speakers" {
         let speakers = Speakers::find();
-        match args.and_then(|args| args.subcommand_name()) {
+        match args.and_then(clap::ArgMatches::subcommand_name) {
             Some("status") => {
                 speakers.print_status(notify);
             }
@@ -76,7 +89,7 @@ fn main() {
 
     if subcommand == "mic" {
         let mic = Microphone::find();
-        match args.and_then(|args| args.subcommand_name()) {
+        match args.and_then(clap::ArgMatches::subcommand_name) {
             Some("status") => {
                 mic.print_status(notify);
             }

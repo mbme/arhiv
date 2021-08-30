@@ -23,7 +23,7 @@ impl Arhiv {
         // 2. copy & archive db file
         run_command(
             "zstd",
-            vec![&self.db.get_db_file(), "-o", &backup.backup_db_file],
+            vec![self.db.get_db_file(), "-o", &backup.backup_db_file],
         )?;
         log::info!("Created arhiv backup {}", &backup.backup_db_file);
 

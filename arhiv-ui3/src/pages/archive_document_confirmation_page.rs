@@ -18,7 +18,7 @@ pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerRes
 
     let document = arhiv
         .get_document(id)?
-        .ok_or(anyhow!("document not found"))?;
+        .ok_or_else(|| anyhow!("document not found"))?;
 
     let title = arhiv.get_schema().get_title(&document)?;
 

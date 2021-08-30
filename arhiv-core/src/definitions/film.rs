@@ -1,6 +1,7 @@
 use super::fields::*;
 use crate::{entities::ATTACHMENT_TYPE, schema::*};
 
+#[allow(clippy::too_many_lines)]
 pub fn get_film_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {

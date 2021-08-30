@@ -44,17 +44,16 @@ impl DataDescription {
     pub fn pick_title_field(&self) -> Result<&Field> {
         self.fields
             .iter()
-            .find(|field| match field.field_type {
-                FieldType::String {} | FieldType::MarkupString {} => true,
-                _ => false,
+            .find(|field| {
+                matches!(
+                    field.field_type,
+                    FieldType::String {} | FieldType::MarkupString {}
+                )
             })
-            .ok_or(anyhow!(
-                "Failed to pick title field for {}",
-                self.document_type
-            ))
+            .ok_or_else(|| anyhow!("Failed to pick title field for {}", self.document_type))
     }
 
-    pub fn search(&self, data: &Value, pattern: &str) -> Result<u32> {
+    pub fn search(&self, data: &Value, pattern: &str) -> Result<usize> {
         let title_field = self.pick_title_field()?;
 
         let mut final_score = 0;
@@ -90,10 +89,12 @@ impl DataDescription {
         self.fields
             .iter()
             .find(|field| field.name == name)
-            .ok_or(anyhow!(
-                "can't find field {} in document type {}",
-                name,
-                self.document_type
-            ))
+            .ok_or_else(|| {
+                anyhow!(
+                    "can't find field {} in document type {}",
+                    name,
+                    self.document_type
+                )
+            })
     }
 }

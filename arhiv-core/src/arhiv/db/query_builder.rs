@@ -67,7 +67,7 @@ impl QueryBuilder {
     }
 
     pub fn build(self) -> (String, Vec<String>) {
-        assert!(self.from.len() > 0, "FROM must be specified");
+        assert!(!self.from.is_empty(), "FROM must be specified");
 
         let mut query = format!(
             "SELECT {} FROM {}",

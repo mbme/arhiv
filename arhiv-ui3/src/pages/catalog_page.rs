@@ -27,11 +27,11 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
+    let pattern = req.get_query_param("pattern").unwrap_or_default();
 
     let catalog = Catalog::new(document_type, pattern)
         .with_pagination(&req)?
-        .render(arhiv, UIConfig::get_config(document_type).catalog)?;
+        .render(arhiv, &UIConfig::get_config(document_type).catalog)?;
 
     let toolbar = Toolbar::new(None)
         .with_breadcrumb(Breadcrumb::String(format!("{}s", document_type)))

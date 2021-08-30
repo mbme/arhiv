@@ -13,19 +13,19 @@ pub struct Changeset {
 }
 
 impl Changeset {
+    #[must_use]
     pub fn serialize(&self) -> String {
         serde_json::to_string(self).expect("Failed to serialize Changeset to json")
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.documents.is_empty()
     }
 
+    #[must_use]
     pub fn contains(&self, id: &Id) -> bool {
-        self.documents
-            .iter()
-            .find(|document| &document.id == id)
-            .is_some()
+        self.documents.iter().any(|document| &document.id == id)
     }
 }
 

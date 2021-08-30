@@ -1,3 +1,18 @@
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::module_inception,
+    clippy::wildcard_imports,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless
+)]
+
 use anyhow::*;
 
 use arhiv_core::{entities::Id, Arhiv};
@@ -19,6 +34,7 @@ pub struct ArhivImport {
 }
 
 impl ArhivImport {
+    #[must_use]
     pub fn new(arhiv: Arhiv) -> Self {
         ArhivImport {
             arhiv,
@@ -49,7 +65,7 @@ impl ArhivImport {
             log::info!("Found importer {}", importer.get_name());
 
             let document = importer
-                .import(&url, &self.arhiv, self.confirm)
+                .import(url, &self.arhiv, self.confirm)
                 .await
                 .context("importer failed")?;
 

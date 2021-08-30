@@ -11,7 +11,7 @@ pub fn setup_logger_with_level(log_level: u64) {
                 record.target(),
                 record.level(),
                 message
-            ))
+            ));
         })
         .level(get_level_filter(log_level))
         .level_for("hyper", log::LevelFilter::Info)
@@ -37,7 +37,7 @@ pub fn setup_file_logger(log_file: PathBuf) {
                 record.target(),
                 record.level(),
                 message
-            ))
+            ));
         })
         .level(log::LevelFilter::Debug)
         .level_for("hyper", log::LevelFilter::Info)

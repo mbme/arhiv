@@ -11,7 +11,7 @@ pub fn is_punctuation(s: &str) -> bool {
 
     let first_char = s.chars().next().unwrap();
 
-    return PUNCTUATION.contains(&first_char);
+    PUNCTUATION.contains(&first_char)
 }
 
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl<'a> fmt::Display for TextToken<'a> {
         match self {
             TextToken::Word(s) => write!(f, "{}", s),
             TextToken::Abbr(a) => write!(f, "{}", a),
-            TextToken::Newline => write!(f, "\n"),
+            TextToken::Newline => writeln!(f),
             TextToken::Whitespace => write!(f, " "),
             TextToken::Punctuation(c) => write!(f, "{}", c),
             TextToken::Separator(s) => write!(f, "{}", s),
@@ -102,7 +102,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn normalize(&mut self) {
-        let tokens = std::mem::replace(&mut self.tokens, vec![]);
+        let tokens = std::mem::take(&mut self.tokens);
 
         for (pos, token) in tokens.into_iter().enumerate() {
             if pos == 0 {
@@ -113,16 +113,10 @@ impl<'a> Tokenizer<'a> {
             let last_token = self.last_token().unwrap();
 
             match (&token, last_token) {
-                // skip duplicate punctuation
-                (TextToken::Punctuation(_), TextToken::Punctuation(_)) => {
-                    continue;
-                }
-                // skip duplicate whitespace
-                (TextToken::Whitespace, TextToken::Whitespace) => {
-                    continue;
-                }
-                // skip duplicate newline
-                (TextToken::Newline, TextToken::Newline) => {
+                // skip duplicate punctuation, whitespaces and newline
+                (TextToken::Punctuation(_), TextToken::Punctuation(_))
+                | (TextToken::Whitespace, TextToken::Whitespace)
+                | (TextToken::Newline, TextToken::Newline) => {
                     continue;
                 }
                 // concat sequential separators
@@ -188,11 +182,13 @@ impl<'a> Tokenizer<'a> {
                     separator: separator.to_string(),
                     tokens: tokens
                         .into_iter()
-                        .filter(|token| match token {
-                            TextToken::Newline
-                            | TextToken::Whitespace
-                            | TextToken::Separator(_) => false,
-                            _ => true,
+                        .filter(|token| {
+                            !matches!(
+                                token,
+                                TextToken::Newline
+                                    | TextToken::Whitespace
+                                    | TextToken::Separator(_)
+                            )
                         })
                         .collect(),
                 }

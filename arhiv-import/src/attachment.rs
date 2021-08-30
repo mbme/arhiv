@@ -15,16 +15,15 @@ impl Importer for AttachmentImporter {
     }
 
     fn can_import(&self, url: &str) -> bool {
-        if let Some(file_name) = extract_file_name_from_url(url).ok().flatten() {
-            is_image_filename(file_name)
-        } else {
-            false
-        }
+        extract_file_name_from_url(url)
+            .ok()
+            .flatten()
+            .map_or(false, is_image_filename)
     }
 
     async fn import(&self, url: &str, arhiv: &Arhiv, confirm: bool) -> Result<Document> {
         let filename = extract_file_name_from_url(url)?
-            .ok_or(anyhow!("failed to extract file name from url"))?;
+            .ok_or_else(|| anyhow!("failed to extract file name from url"))?;
 
         log::info!("Going to import file {}", filename);
         confirm_if_needed(confirm)?;

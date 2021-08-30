@@ -7,12 +7,14 @@ pub struct QueryBuilder<'s> {
 }
 
 impl<'s> QueryBuilder<'s> {
+    #[must_use]
     pub fn new() -> Self {
         QueryBuilder {
             serializer: Serializer::new(String::new()),
         }
     }
 
+    #[must_use]
     pub fn from_params(params: HashMap<String, String>) -> Self {
         let mut serializer = Serializer::new(String::new());
         serializer.extend_pairs(params);
@@ -40,5 +42,11 @@ impl<'s> QueryBuilder<'s> {
 
     pub fn build(&mut self) -> String {
         self.serializer.finish()
+    }
+}
+
+impl<'s> Default for QueryBuilder<'s> {
+    fn default() -> Self {
+        Self::new()
     }
 }

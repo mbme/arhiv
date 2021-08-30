@@ -38,7 +38,7 @@ impl fmt::Display for Status {
             self.root_dir,
         )?;
 
-        writeln!(f, "")?;
+        writeln!(f)?;
 
         writeln!(
             f,
@@ -46,7 +46,7 @@ impl fmt::Display for Status {
             self.documents_count.count_staged() == 0
         )?;
 
-        writeln!(f, "")?;
+        writeln!(f)?;
 
         writeln!(
             f,
@@ -67,7 +67,7 @@ impl fmt::Display for Status {
             }
         )?;
 
-        writeln!(f, "")?;
+        writeln!(f)?;
 
         writeln!(
             f,
@@ -95,13 +95,13 @@ impl fmt::Display for Status {
         )?;
 
         if self.conflicts_count > 0 {
-            writeln!(f, "")?;
+            writeln!(f)?;
             writeln!(f, "        WARN:  found {} conflicts", self.conflicts_count)?;
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
 
         if self.debug_mode {
-            writeln!(f, "")?;
+            writeln!(f)?;
             writeln!(f, "  Debug Mode")?;
         }
 

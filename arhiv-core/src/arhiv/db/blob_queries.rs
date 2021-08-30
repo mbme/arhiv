@@ -17,7 +17,7 @@ pub trait MutableBLOBQueries: BLOBQueries {
     fn get_fs_tx(&mut self) -> &mut FsTransaction;
 
     fn add_attachment_data(&mut self, id: &Id, file_path: &str, move_file: bool) -> Result<()> {
-        ensure_file_exists(&file_path)?;
+        ensure_file_exists(file_path)?;
 
         let attachment_data = self.get_attachment_data(id);
 

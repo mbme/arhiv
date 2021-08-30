@@ -17,6 +17,7 @@ pub struct FsTransaction {
 
 // Works for files but not for dirs
 impl FsTransaction {
+    #[must_use]
     pub fn new() -> FsTransaction {
         FsTransaction { ops: vec![] }
     }
@@ -158,19 +159,18 @@ impl FsTransaction {
 
         self.ops.clear();
 
-        if failed_count > 0 {
-            bail!(
-                "Failed to revert {} operation(s) out of {}",
-                failed_count,
-                total_count
-            )
-        } else {
-            Ok(())
-        }
+        ensure!(
+            failed_count == 0,
+            "Failed to revert {} operation(s) out of {}",
+            failed_count,
+            total_count
+        );
+
+        Ok(())
     }
 
     pub fn commit(&mut self) -> Result<()> {
-        for op in self.ops.iter() {
+        for op in &self.ops {
             if let FsOperation::Backup { dest, .. } = op {
                 if let Err(err) = fs::remove_file(dest) {
                     log::error!("Failed to remove Backup {} : {}", dest, err);
@@ -188,6 +188,12 @@ impl FsTransaction {
 impl Drop for FsTransaction {
     fn drop(&mut self) {
         self.rollback();
+    }
+}
+
+impl Default for FsTransaction {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -210,8 +216,8 @@ mod tests {
             fs_tx.move_file(temp1.as_ref(), temp2.as_ref())?;
             fs_tx.commit()?;
 
-            assert_eq!(temp1.exists(), false);
-            assert_eq!(temp2.exists(), true);
+            assert!(!temp1.exists());
+            assert!(temp2.exists());
             assert_eq!(temp2.contents()?, "temp1");
         }
 
@@ -226,12 +232,12 @@ mod tests {
             let mut fs_tx = FsTransaction::new();
             fs_tx.move_file(temp1.as_ref(), temp2.as_ref())?;
 
-            assert_eq!(temp1.exists(), false);
+            assert!(!temp1.exists());
             assert_eq!(temp2.contents()?, "temp1");
 
             fs_tx.rollback()?;
 
-            assert_eq!(temp1.exists(), true);
+            assert!(temp1.exists());
             assert_eq!(temp1.contents()?, "temp1");
             assert_eq!(temp2.contents()?, "temp2");
         }
@@ -252,8 +258,8 @@ mod tests {
             fs_tx.copy_file(temp1.as_ref(), temp2.as_ref())?;
             fs_tx.commit()?;
 
-            assert_eq!(temp1.exists(), true);
-            assert_eq!(temp2.exists(), true);
+            assert!(temp1.exists());
+            assert!(temp2.exists());
             assert_eq!(temp2.contents()?, "temp1");
         }
 
@@ -293,8 +299,8 @@ mod tests {
             fs_tx.hard_link_file(temp1.as_ref(), temp2.as_ref())?;
             fs_tx.commit()?;
 
-            assert_eq!(temp1.exists(), true);
-            assert_eq!(temp2.exists(), true);
+            assert!(temp1.exists());
+            assert!(temp2.exists());
             assert_eq!(temp2.contents()?, "temp1");
         }
 
@@ -332,7 +338,7 @@ mod tests {
             fs_tx.remove_file(temp1.as_ref())?;
             fs_tx.commit()?;
 
-            assert_eq!(temp1.exists(), false);
+            assert!(!temp1.exists());
         }
 
         // revert remove transaction
@@ -343,7 +349,7 @@ mod tests {
             let mut fs_tx = FsTransaction::new();
             fs_tx.remove_file(temp1.as_ref())?;
 
-            assert_eq!(temp1.exists(), false);
+            assert!(!temp1.exists());
 
             fs_tx.rollback()?;
 

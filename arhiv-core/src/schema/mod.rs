@@ -10,6 +10,7 @@ mod schema;
 mod search;
 
 impl DataSchema {
+    #[must_use]
     pub fn new() -> DataSchema {
         DataSchema {
             modules: vec![
@@ -40,5 +41,11 @@ impl DataSchema {
                 // ----
             ],
         }
+    }
+}
+
+impl Default for DataSchema {
+    fn default() -> Self {
+        Self::new()
     }
 }

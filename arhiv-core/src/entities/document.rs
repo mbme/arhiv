@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{DocumentData, Id, Revision, SnapshotId};
 
-pub const TOMBSTONE_TYPE: &'static str = "tombstone";
+pub const TOMBSTONE_TYPE: &str = "tombstone";
 
 pub type Timestamp = DateTime<Utc>;
 
@@ -48,10 +48,12 @@ impl Document {
         }
     }
 
+    #[must_use]
     pub fn is_tombstone(&self) -> bool {
         self.document_type == TOMBSTONE_TYPE
     }
 
+    #[must_use]
     pub fn is_staged(&self) -> bool {
         self.rev == Revision::STAGING
     }

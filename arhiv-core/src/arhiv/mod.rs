@@ -27,6 +27,7 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
+    #[must_use]
     pub fn must_open() -> Arhiv {
         Arhiv::open().expect("must be able to open arhiv")
     }
@@ -58,7 +59,7 @@ impl Arhiv {
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
 
-        Ok(Arhiv { config, db, schema })
+        Ok(Arhiv { config, schema, db })
     }
 
     pub fn create(
@@ -89,13 +90,15 @@ impl Arhiv {
 
         log::info!("Created arhiv in {}", config.arhiv_root);
 
-        Ok(Arhiv { config, db, schema })
+        Ok(Arhiv { config, schema, db })
     }
 
+    #[must_use]
     pub fn get_config(&self) -> &Config {
         &self.config
     }
 
+    #[must_use]
     pub fn get_schema(&self) -> &DataSchema {
         &self.schema
     }
@@ -113,11 +116,11 @@ impl Arhiv {
 
         Ok(Status {
             db_status,
+            documents_count,
+            conflicts_count,
             last_update_time,
             debug_mode,
             root_dir,
-            documents_count,
-            conflicts_count,
         })
     }
 
@@ -143,7 +146,7 @@ impl Arhiv {
         log::debug!("Staging document {}", &document.id);
 
         ensure!(
-            !Attachment::is_attachment(&document),
+            !Attachment::is_attachment(document),
             "attachments must not be modified manually"
         );
 
@@ -156,7 +159,7 @@ impl Arhiv {
 
         document.refs = data_description.extract_refs(&document.data)?;
 
-        Validator::new(&self)
+        Validator::new(self)
             .validate(document)
             .context("document validation failed")?;
 
@@ -194,7 +197,7 @@ impl Arhiv {
             document.updated_at = now;
         }
 
-        tx.put_document(&document)?;
+        tx.put_document(document)?;
 
         tx.commit()?;
 
@@ -206,7 +209,7 @@ impl Arhiv {
     pub fn delete_document(&self, id: &Id) -> Result<()> {
         let mut document = self
             .get_document(id)?
-            .ok_or(anyhow!("can't find document {}", &id))?;
+            .ok_or_else(|| anyhow!("can't find document {}", &id))?;
 
         ensure!(
             !document.is_tombstone(),
@@ -243,7 +246,7 @@ impl Arhiv {
     pub fn archive_document(&self, id: &Id, archive: bool) -> Result<()> {
         let mut document = self
             .get_document(id)?
-            .ok_or(anyhow!("can't find document {}", &id))?;
+            .ok_or_else(|| anyhow!("can't find document {}", &id))?;
 
         if document.archived == archive {
             log::warn!(

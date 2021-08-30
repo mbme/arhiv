@@ -9,8 +9,15 @@ use rs_utils::gen_uuid;
 pub struct SnapshotId(String);
 
 impl SnapshotId {
+    #[must_use]
     pub fn new() -> SnapshotId {
         SnapshotId(gen_uuid())
+    }
+}
+
+impl Default for SnapshotId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

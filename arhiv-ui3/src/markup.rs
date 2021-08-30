@@ -19,11 +19,11 @@ impl<'ms> MarkupStringExt for MarkupStr<'ms> {
             match event {
                 Event::Text(_) if matched => {
                     // ignore text inside link
-                    return Event::Text("".into());
+                    Event::Text("".into())
                 }
                 Event::End(Tag::Link(_, _, _)) if matched => {
                     matched = false;
-                    return Event::Text("".into());
+                    Event::Text("".into())
                 }
                 Event::Start(Tag::Link(ref _link_type, ref destination, ref _title)) => {
                     let id = match extract_id(destination) {
@@ -40,7 +40,7 @@ impl<'ms> MarkupStringExt for MarkupStr<'ms> {
                         .render(arhiv)
                         .expect("failed to render ref");
 
-                    return Event::Html(link.into());
+                    Event::Html(link.into())
                 }
                 _ => event,
             }

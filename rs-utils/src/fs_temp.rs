@@ -10,6 +10,7 @@ pub struct TempFile {
 }
 
 impl TempFile {
+    #[must_use]
     pub fn new() -> Self {
         TempFile::new_with_details("TempFile-", "")
     }
@@ -30,12 +31,19 @@ impl TempFile {
         self.write("")
     }
 
+    #[must_use]
     pub fn exists(&self) -> bool {
         path_exists(&self.path)
     }
 
     pub fn contents(&self) -> Result<String> {
         fs::read_to_string(&self.path).context("failed to read file contents")
+    }
+}
+
+impl Default for TempFile {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -72,6 +80,7 @@ fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
         .to_string()
 }
 
+#[must_use]
 pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
     let name = generate_alpanumeric_string(8);
 

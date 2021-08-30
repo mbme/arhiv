@@ -21,6 +21,7 @@ impl Default for WordStats {
 }
 
 type WordDistribution = Vec<(String, u32)>;
+#[allow(clippy::ptr_arg)]
 fn pick_word(distribution: &WordDistribution) -> String {
     distribution
         .choose_weighted(&mut thread_rng(), |(_, prob)| *prob)
@@ -37,6 +38,7 @@ pub struct Markov {
 }
 
 impl Markov {
+    #[must_use]
     pub fn new(text: &str) -> Self {
         let mut markov = Markov {
             starts: vec![],
@@ -60,7 +62,7 @@ impl Markov {
         for sentence in sentences {
             *separators.entry(sentence.separator).or_insert(0) += 1;
 
-            let last_pos = sentence.tokens.iter().count() - 1;
+            let last_pos = sentence.tokens.len() - 1;
             for (pos, word) in sentence.tokens.iter().enumerate() {
                 let word_stats = words
                     .entry({
@@ -112,6 +114,7 @@ impl Markov {
         }
     }
 
+    #[must_use]
     pub fn generate_sentence(&self, include_separator: bool) -> (String, u32) {
         let mut sentence: Vec<String> = vec![];
 
@@ -125,7 +128,7 @@ impl Markov {
                 break;
             }
 
-            let new_word = pick_word(&distribution);
+            let new_word = pick_word(distribution);
 
             word = new_word.clone();
 
@@ -151,6 +154,7 @@ impl Markov {
         (result, words_count as u32)
     }
 
+    #[must_use]
     pub fn generate_sentence_constrained(
         &self,
         min_words: u32,
@@ -163,7 +167,7 @@ impl Markov {
         loop {
             attempt += 1;
             if attempt > max_attempts {
-                panic!("Failed to generate sentence in {} attempts", max_attempts)
+                panic!("Failed to generate sentence in {} attempts", max_attempts);
             }
 
             let (sentence, words) = self.generate_sentence(include_separator);

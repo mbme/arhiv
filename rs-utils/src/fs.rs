@@ -50,6 +50,7 @@ pub fn is_same_filesystem(path1: &str, path2: &str) -> Result<bool> {
     Ok(meta1.dev() == meta2.dev())
 }
 
+#[must_use]
 pub fn get_file_name(path: &str) -> &str {
     std::path::Path::new(path)
         .file_name()
@@ -64,7 +65,8 @@ pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File
     Ok(FramedRead::new(file, BytesCodec::new()))
 }
 
-// $XDG_CONFIG_HOME or $HOME/.config
+/// `$XDG_CONFIG_HOME` or `$HOME/.config`
+#[must_use]
 pub fn get_config_home() -> Option<String> {
     if let Some(path) = env::var_os("XDG_CONFIG_HOME") {
         return path
@@ -85,7 +87,8 @@ pub fn get_config_home() -> Option<String> {
     None
 }
 
-// $XDG_DOWNLOAD_DIR or $HOME/Downloads
+/// `$XDG_DOWNLOAD_DIR` or `$HOME/Downloads`
+#[must_use]
 pub fn get_downloads_dir() -> Option<String> {
     if let Some(path) = env::var_os("XDG_DOWNLOAD_DIR") {
         return path

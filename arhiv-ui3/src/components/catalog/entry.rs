@@ -25,7 +25,7 @@ impl CatalogEntry {
         let title = document
             .data
             .get_str(title_field.name)
-            .ok_or(anyhow!("title field missing"))?;
+            .ok_or_else(|| anyhow!("title field missing"))?;
 
         let mut preview = None;
 
@@ -33,10 +33,10 @@ impl CatalogEntry {
             let markup: MarkupStr = document
                 .data
                 .get_str(preview_field)
-                .ok_or(anyhow!("preview field missing"))?
+                .ok_or_else(|| anyhow!("preview field missing"))?
                 .into();
 
-            preview = Some(markup.preview(4).to_html(arhiv))
+            preview = Some(markup.preview(4).to_html(arhiv));
         }
 
         let fields = config

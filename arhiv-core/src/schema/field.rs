@@ -37,6 +37,7 @@ impl Field {
         }
     }
 
+    #[must_use]
     pub fn get_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
 
@@ -71,23 +72,23 @@ impl Field {
             FieldType::Ref(_) => {
                 if raw_value.is_empty() {
                     return Ok(Value::Null);
-                } else {
-                    return serde_json::to_value(raw_value).context("failed to serialize");
                 }
+
+                serde_json::to_value(raw_value).context("failed to serialize")
             }
 
             // convert string list of refs into array of ids
             FieldType::RefList(_) => {
-                let value = extract_ids_from_reflist(&raw_value);
+                let value = extract_ids_from_reflist(raw_value);
 
-                return serde_json::to_value(value).context("failed to serialize");
+                serde_json::to_value(value).context("failed to serialize")
             }
 
             // convert string "true" to boolean
             FieldType::Flag {} => {
                 let value = raw_value == "true";
 
-                return serde_json::to_value(value).context("failed to serialize");
+                serde_json::to_value(value).context("failed to serialize")
             }
 
             // convert string to number
@@ -102,13 +103,11 @@ impl Field {
                     raw_value
                 ))?;
 
-                return serde_json::to_value(value).context("failed to serialize");
+                serde_json::to_value(value).context("failed to serialize")
             }
 
-            _ => {
-                return serde_json::to_value(raw_value).context("failed to serialize");
-            }
-        };
+            _ => serde_json::to_value(raw_value).context("failed to serialize"),
+        }
     }
 
     pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
@@ -118,7 +117,7 @@ impl Field {
             FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => value
                 .as_str()
                 .map(|value| Some(value.to_lowercase()))
-                .ok_or(anyhow!("failed to extract field {}", self.name)),
+                .ok_or_else(|| anyhow!("failed to extract field {}", self.name)),
             _ => Ok(None),
         }
     }
@@ -230,9 +229,9 @@ impl Field {
 fn extract_ids_from_reflist(reflist: &str) -> Vec<Id> {
     reflist
         .replace(",", " ")
-        .split(" ")
-        .map(|item| item.trim())
-        .filter(|item| item.len() > 0)
+        .split(' ')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
         .map(Into::into)
         .collect()
 }

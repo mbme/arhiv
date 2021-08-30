@@ -1,4 +1,4 @@
-/// template_fn!(pub get_markup, "./markup.rs");
+/// `template_fn!(pub get_markup, "./markup.rs");`
 #[macro_export]
 macro_rules! template_fn {
     ($vis:vis $name:ident, $rel_file_path:expr) => {

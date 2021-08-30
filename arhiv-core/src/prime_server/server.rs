@@ -5,14 +5,15 @@ use anyhow::*;
 use futures::TryStreamExt;
 use hyper::{body::Buf, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
-use rs_utils::{read_file_as_stream, server::*};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
+use rs_utils::{log, read_file_as_stream, server::*};
+
 use crate::entities::{Changeset, Id};
 use crate::Arhiv;
-use rs_utils::log;
 
+#[must_use]
 pub fn start_prime_server(
     arhiv: Arc<Arhiv>,
     port: u16,
@@ -29,7 +30,7 @@ pub fn start_prime_server(
         .build()
         .expect("router must work");
 
-    let service = RouterService::new(router).unwrap();
+    let service = RouterService::new(router).expect("failed to build RouterService");
 
     let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
@@ -43,7 +44,7 @@ pub fn start_prime_server(
             .with_graceful_shutdown(async {
                 tokio::select! {
                     _ = signal::ctrl_c() => {
-                        log::info!("got Ctrl-C")
+                        log::info!("got Ctrl-C");
                     }
 
                     Ok(_) = shutdown_receiver => {
@@ -60,6 +61,7 @@ pub fn start_prime_server(
     (join_handle, shutdown_sender, addr)
 }
 
+#[allow(clippy::unused_async)]
 async fn status_handler(req: Request<Body>) -> Result<Response<Body>> {
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 

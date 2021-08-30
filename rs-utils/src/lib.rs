@@ -1,3 +1,18 @@
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::module_inception,
+    clippy::wildcard_imports,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless
+)]
+
 use std::env;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -23,6 +38,7 @@ pub mod log;
 mod markov;
 mod string;
 
+#[must_use]
 pub fn project_relpath(subpath: &str) -> String {
     format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
 }
@@ -77,11 +93,12 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     }
 }
 
+#[must_use]
 pub fn is_image_filename(filename: impl AsRef<str>) -> bool {
-    let filename = filename.as_ref();
+    let ext = filename.as_ref().rsplit('.').next().unwrap_or_default();
 
-    filename.ends_with(".png")
-        || filename.ends_with(".jpg")
-        || filename.ends_with(".jpeg")
-        || filename.ends_with(".svg")
+    ext.eq_ignore_ascii_case("png")
+        || ext.eq_ignore_ascii_case("jpg")
+        || ext.eq_ignore_ascii_case("jpeg")
+        || ext.eq_ignore_ascii_case("svg")
 }

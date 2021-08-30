@@ -108,7 +108,7 @@ impl<'d> Toolbar<'d> {
                     if let Some(ref collection_id) = parent_collection {
                         let document = arhiv
                             .get_document(collection_id)?
-                            .ok_or(anyhow!("can't find parent collection"))?;
+                            .ok_or_else(|| anyhow!("can't find parent collection"))?;
 
                         let name = arhiv.get_schema().get_title(&document)?;
 

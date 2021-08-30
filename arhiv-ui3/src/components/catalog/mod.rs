@@ -70,7 +70,7 @@ impl Catalog {
     pub fn with_pagination(mut self, req: &Request<Body>) -> Result<Self> {
         let page: u8 = req
             .get_query_param("page")
-            .unwrap_or("0".to_string())
+            .unwrap_or_else(|| "0".to_string())
             .parse()?;
 
         self.filter.page_size = Some(PAGE_SIZE);
@@ -102,7 +102,7 @@ impl Catalog {
 
     pub fn with_new_document_query(mut self, mut query: String) -> Self {
         if !query.is_empty() {
-            query.insert_str(0, "?");
+            query.insert(0, '?');
         }
 
         self.new_document_query = query;
@@ -112,7 +112,7 @@ impl Catalog {
 
     pub fn with_document_url_query(mut self, mut query: String) -> Self {
         if !query.is_empty() {
-            query.insert_str(0, "?");
+            query.insert(0, '?');
         }
 
         self.document_url_query = query;
@@ -120,7 +120,7 @@ impl Catalog {
         self
     }
 
-    pub fn render(mut self, arhiv: &Arhiv, config: CatalogConfig) -> Result<String> {
+    pub fn render(mut self, arhiv: &Arhiv, config: &CatalogConfig) -> Result<String> {
         let result = arhiv.list_documents(self.filter)?;
 
         if !result.has_more {
@@ -137,18 +137,18 @@ impl Catalog {
                 .get_data_description(&self.document_type)?;
 
             let documents = group_documents(documents, group_by.field)?;
-            let entries = documents_to_entries(documents, arhiv, &config)?;
+            let entries = documents_to_entries(documents, arhiv, config)?;
 
             let group_names = data_description
                 .get_field(group_by.field)?
                 .get_enum_values()?;
 
-            render_groups(group_names, entries, &self.document_url_query, &group_by)?
+            render_groups(group_names, entries, &self.document_url_query, group_by)?
         } else {
             let items = documents
                 .into_iter()
-                .map(|document| CatalogEntry::new(document, arhiv, &config))
-                .collect::<Result<_>>()?;
+                .map(|document| CatalogEntry::new(document, arhiv, config))
+                .collect::<Result<Vec<_>>>()?;
 
             render_entries(&items, &self.document_url_query)?
         };
@@ -162,7 +162,7 @@ impl Catalog {
     }
 }
 
-fn render_entries(entries: &Vec<CatalogEntry>, query: &str) -> Result<String> {
+fn render_entries(entries: &[CatalogEntry], query: &str) -> Result<String> {
     render_entries_template(json!({
         "items": entries,
         "query": query,
@@ -179,10 +179,10 @@ fn group_documents(
         let key = document
             .data
             .get_str(field)
-            .ok_or(anyhow!("can't find field"))?
+            .ok_or_else(|| anyhow!("can't find field"))?
             .to_string();
 
-        let entry = result.entry(key).or_insert(vec![]);
+        let entry = result.entry(key).or_insert_with(Vec::new);
 
         entry.push(document);
     }
@@ -209,13 +209,13 @@ fn documents_to_entries(
 }
 
 fn render_groups(
-    group_names: &Vec<&'static str>,
+    group_names: &[&'static str],
     mut documents: HashMap<String, Vec<CatalogEntry>>,
     query: &str,
     group_by: &CatalogGroupBy,
 ) -> Result<String> {
     let mut groups = group_names
-        .into_iter()
+        .iter()
         .map(|group_name| {
             let entries = documents.remove(*group_name).unwrap_or_default();
             let items_count = entries.len();
@@ -236,11 +236,10 @@ fn render_groups(
     }
 
     // open first non-empty group if no groups open yet
-    if groups.iter().find(|group| group.open).is_none() {
-        groups
-            .iter_mut()
-            .find(|group| !group.items.is_empty())
-            .map(|group| group.open = true);
+    if !groups.iter().any(|group| group.open) {
+        if let Some(group) = groups.iter_mut().find(|group| !group.items.is_empty()) {
+            group.open = true;
+        }
     }
 
     render_groups_template(json!({ "groups": groups }))

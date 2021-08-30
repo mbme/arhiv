@@ -36,6 +36,7 @@ impl Config {
         Ok((config, path))
     }
 
+    #[must_use]
     pub fn must_read() -> (Config, String) {
         Config::read().expect("must be able to read arhiv config")
     }
@@ -47,7 +48,8 @@ fn find_config_file<S: Into<String>>(file_name: S) -> Result<String> {
     let file_name = file_name.into();
 
     if cfg!(feature = "production-mode") {
-        let config_home = get_config_home().ok_or(anyhow!("Failed to find user config dir"))?;
+        let config_home =
+            get_config_home().ok_or_else(|| anyhow!("Failed to find user config dir"))?;
         let config = format!("{}/{}", config_home, file_name);
 
         if file_exists(&config).unwrap_or(false) {

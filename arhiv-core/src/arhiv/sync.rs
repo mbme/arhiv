@@ -1,3 +1,4 @@
+#![allow(clippy::unused_self)]
 use anyhow::*;
 
 use rs_utils::log;
@@ -172,15 +173,15 @@ impl Arhiv {
         conflicts: Vec<Document>,
     ) -> Result<ChangesetResponse> {
         let next_rev = base_rev.inc();
-        let new_snapshots = tx.get_new_snapshots_since(&next_rev)?;
+        let new_snapshots = tx.get_new_snapshots_since(next_rev)?;
 
         let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
         let latest_rev = tx.get_db_rev()?;
 
         Ok(ChangesetResponse {
             arhiv_id,
-            latest_rev,
             base_rev,
+            latest_rev,
             new_snapshots,
             conflicts,
         })

@@ -16,7 +16,7 @@ impl DataSchema {
         self.modules
             .iter()
             .find(|module| module.document_type == document_type)
-            .ok_or(anyhow!("Unknown document type: {}", document_type))
+            .ok_or_else(|| anyhow!("Unknown document type: {}", document_type))
     }
 
     pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
@@ -27,9 +27,10 @@ impl DataSchema {
         document
             .data
             .get_str(title_field.name)
-            .ok_or(anyhow!("title field {} is missing", title_field.name))
+            .ok_or_else(|| anyhow!("title field {} is missing", title_field.name))
     }
 
+    #[must_use]
     pub fn get_document_types(&self, skip_internal: bool) -> Vec<&'static str> {
         self.modules
             .iter()

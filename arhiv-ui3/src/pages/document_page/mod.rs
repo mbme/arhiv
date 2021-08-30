@@ -33,7 +33,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
-    let pattern = req.get_query_param("pattern").unwrap_or("".to_string());
+    let pattern = req.get_query_param("pattern").unwrap_or_default();
 
     let data_description = arhiv
         .get_schema()
@@ -66,7 +66,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             )
             .render(
                 arhiv,
-                UIConfig::get_child_config(&document.document_type, item_type).catalog,
+                &UIConfig::get_child_config(&document.document_type, item_type).catalog,
             )?;
 
         children_catalog = Some(catalog);
@@ -103,7 +103,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                     child_document_type: document_type.to_string(),
                     child_collection_field: field.to_string(),
                     collection_id: document.id.clone(),
-                })
+                });
             }
 
             filter

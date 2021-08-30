@@ -10,6 +10,7 @@ pub struct AttachmentData {
 }
 
 impl AttachmentData {
+    #[must_use]
     pub fn new(id: Id, path: String) -> Self {
         AttachmentData { id, path }
     }

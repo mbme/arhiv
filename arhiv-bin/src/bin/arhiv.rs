@@ -21,6 +21,7 @@ use rs_utils::{
     log::{self, setup_logger_with_level},
 };
 
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() {
     let matches = build_app().get_matches();
@@ -164,7 +165,7 @@ async fn main() {
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .spawn()
-                .expect(&format!("failed to run browser {}", browser));
+                .unwrap_or_else(|_| panic!("failed to run browser {}", browser));
         }
         ("prime-server", Some(matches)) => {
             let arhiv = Arc::new(Arhiv::must_open());

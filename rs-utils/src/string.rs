@@ -1,3 +1,4 @@
+#[must_use]
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
     // if needle is empty then it matches everything
     if needle.is_empty() {
@@ -29,9 +30,10 @@ pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
+#[must_use]
 pub fn capitalize<S: Into<String>>(s: S) -> String {
     let s = s.into();
 
@@ -48,6 +50,7 @@ pub fn capitalize<S: Into<String>>(s: S) -> String {
     result
 }
 
+#[must_use]
 pub fn generate_alpanumeric_string(length: usize) -> String {
     use rand::distributions::Alphanumeric;
     use rand::prelude::*;
@@ -67,14 +70,14 @@ mod tests {
 
     #[test]
     fn test_fuzzy_match() {
-        assert_eq!(fuzzy_match("", ""), true);
-        assert_eq!(fuzzy_match("", "test"), true);
-        assert_eq!(fuzzy_match("test", "test"), true);
-        assert_eq!(fuzzy_match("test", "te"), false);
-        assert_eq!(fuzzy_match("TEST", "teSt"), true);
-        assert_eq!(fuzzy_match("123", "1test2test3"), true);
-        assert_eq!(fuzzy_match("123", "123test2test3"), true);
-        assert_eq!(fuzzy_match("123", "12test2test"), false);
+        assert!(fuzzy_match("", ""));
+        assert!(fuzzy_match("", "test"));
+        assert!(fuzzy_match("test", "test"));
+        assert!(!fuzzy_match("test", "te"));
+        assert!(fuzzy_match("TEST", "teSt"));
+        assert!(fuzzy_match("123", "1test2test3"));
+        assert!(fuzzy_match("123", "123test2test3"));
+        assert!(!fuzzy_match("123", "12test2test"));
     }
 
     #[test]

@@ -1,13 +1,23 @@
 use anyhow::*;
 use serde::Serialize;
 
-use super::config::CatalogConfig;
-use crate::markup::MarkupStringExt;
 use arhiv_core::{entities::*, markup::MarkupStr, Arhiv};
+use serde_json::json;
+
+use super::config::CatalogConfig;
+use crate::{markup::MarkupStringExt, template_fn, urls::document_url};
+
+template_fn!(render_template, "./entries.html.tera");
+
+pub fn render_entries(entries: &[CatalogEntry]) -> Result<String> {
+    render_template(json!({
+        "items": entries,
+    }))
+}
 
 #[derive(Serialize)]
 pub struct CatalogEntry {
-    id: Id,
+    url: String,
     document_type: String,
     title: String,
     preview: Option<String>,
@@ -15,7 +25,12 @@ pub struct CatalogEntry {
 }
 
 impl CatalogEntry {
-    pub fn new(document: Document, arhiv: &Arhiv, config: &CatalogConfig) -> Result<Self> {
+    pub fn new(
+        document: Document,
+        arhiv: &Arhiv,
+        config: &CatalogConfig,
+        parent_collection: &Option<Id>,
+    ) -> Result<Self> {
         let data_description = arhiv
             .get_schema()
             .get_data_description(&document.document_type)?;
@@ -45,14 +60,14 @@ impl CatalogEntry {
             .map(|field| {
                 (
                     *field,
-                    document.data.get_str(field).unwrap_or("").to_string(),
+                    document.data.get_str(field).unwrap_or_default().to_string(),
                 )
             })
             .collect();
 
         Ok(CatalogEntry {
+            url: document_url(&document.id, parent_collection),
             title: title.to_string(),
-            id: document.id,
             document_type: document.document_type,
             preview,
             fields,

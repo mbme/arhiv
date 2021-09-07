@@ -192,7 +192,7 @@ impl Arhiv {
 
         tx.delete_unused_local_attachments()?;
 
-        let documents = tx.list_documents(Filter::all_staged_documents())?.items;
+        let documents = tx.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
             db_version: DB::VERSION,

@@ -3,17 +3,15 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::{schema::Collection, Arhiv, Condition, Filter};
-use rs_utils::{
-    server::{respond_not_found, RequestQueryExt, ServerResponse},
-    QueryBuilder,
-};
+use arhiv_core::{entities::Id, schema::Collection, Arhiv, Condition, Filter};
+use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
     components::{Breadcrumb, Catalog, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
     ui_config::UIConfig,
+    urls::{document_archive_url, document_delete_url},
 };
 use fields::prepare_fields;
 
@@ -22,11 +20,15 @@ mod fields;
 template_fn!(render_template, "./document_page.html.tera");
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
-    let id: &str = req.param("id").unwrap();
+    let id: Id = req.param("id").unwrap().into();
+    let collection_id: Option<Id> = req
+        .param("collection_id")
+        .map(|collection_id| collection_id.into());
+
     let arhiv: &Arhiv = req.data().unwrap();
 
     let document = {
-        if let Some(document) = arhiv.get_document(id)? {
+        if let Some(document) = arhiv.get_document(&id)? {
             document
         } else {
             return respond_not_found();
@@ -42,6 +44,11 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let mut children_catalog = None;
 
+    let mut toolbar = Toolbar::new(collection_id.clone())
+        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
+        .with_breadcrumb(Breadcrumb::Document(&document))
+        .on_close_document(&document);
+
     if let Collection::Type {
         document_type: item_type,
         field,
@@ -53,29 +60,16 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
                 pattern: document.id.to_string(),
                 not: false,
             })
-            .with_document_url_query(
-                QueryBuilder::new()
-                    .add_param("parent_collection", &document.id)
-                    .build(),
-            )
-            .with_new_document_query(
-                QueryBuilder::new()
-                    .add_param(field, &document.id)
-                    .add_param("parent_collection", &document.id)
-                    .build(),
-            )
+            .in_collection(document.id.clone())
             .render(
                 arhiv,
                 &UIConfig::get_child_config(&document.document_type, item_type).catalog,
             )?;
 
         children_catalog = Some(catalog);
-    };
 
-    let mut toolbar = Toolbar::new(req.get_query_param("parent_collection"))
-        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
-        .with_breadcrumb(Breadcrumb::Document(&document))
-        .on_close_document(&document);
+        toolbar = toolbar.with_new_collection_item(item_type, field, &document.id);
+    };
 
     if !data_description.is_internal {
         toolbar = toolbar.with_edit(&document);
@@ -121,6 +115,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "document": document,
         "is_internal_type": data_description.is_internal,
         "children_catalog": children_catalog,
+        "archive_url": document_archive_url(&id, &collection_id),
+        "delete_url": document_delete_url(&id, &collection_id),
     }))?;
 
     render_page(content, arhiv)

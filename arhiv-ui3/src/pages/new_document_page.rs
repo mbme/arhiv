@@ -5,19 +5,17 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
+use arhiv_core::{
+    entities::{Document, DocumentData, Id},
+    schema::DataDescription,
+    Arhiv,
+};
+use rs_utils::server::{RequestQueryExt, ServerResponse};
+
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
     pages::base::render_page,
     template_fn,
-};
-use arhiv_core::{
-    entities::{Document, DocumentData},
-    schema::DataDescription,
-    Arhiv,
-};
-use rs_utils::{
-    server::{RequestQueryExt, ServerResponse},
-    QueryBuilder,
 };
 
 template_fn!(render_template, "./new_document_page.html.tera");
@@ -26,6 +24,10 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     let document_type = req
         .param("document_type")
         .expect("document_type must be present");
+
+    let parent_collection: Option<Id> = req
+        .get_query_param("parent_collection")
+        .map(|parent_collection| parent_collection.into());
 
     let arhiv: &Arhiv = req.data().unwrap();
 
@@ -45,18 +47,11 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         arhiv
             .get_schema()
             .get_data_description(&document.document_type)?,
+        &parent_collection,
     )?
-    .with_document_query(
-        QueryBuilder::new()
-            .maybe_add_param(
-                "parent_collection",
-                req.get_query_param("parent_collection"),
-            )
-            .build(),
-    )
     .render()?;
 
-    let toolbar = Toolbar::new(req.get_query_param("parent_collection"))
+    let toolbar = Toolbar::new(parent_collection)
         .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
         .with_breadcrumb(Breadcrumb::String(format!(
             "new {}",

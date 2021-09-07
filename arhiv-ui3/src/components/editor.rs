@@ -1,9 +1,9 @@
 use anyhow::*;
 use serde::Serialize;
 
-use crate::template_fn;
+use crate::{template_fn, urls::document_url};
 use arhiv_core::{
-    entities::Document,
+    entities::{Document, Id},
     schema::{DataDescription, FieldType},
 };
 
@@ -22,11 +22,15 @@ struct FormField {
 pub struct Editor<'d> {
     fields: Vec<FormField>,
     document: &'d Document,
-    document_query: String,
+    url_on_save: String,
 }
 
 impl<'d> Editor<'d> {
-    pub fn new(document: &'d Document, data_description: &DataDescription) -> Result<Self> {
+    pub fn new(
+        document: &'d Document,
+        data_description: &DataDescription,
+        parent_collection: &Option<Id>,
+    ) -> Result<Self> {
         let fields = data_description
             .fields
             .iter()
@@ -85,21 +89,13 @@ impl<'d> Editor<'d> {
             })
             .collect::<Result<Vec<_>>>()?;
 
+        let url_on_save = document_url(&document.id, parent_collection);
+
         Ok(Editor {
             fields,
             document,
-            document_query: "".to_string(),
+            url_on_save,
         })
-    }
-
-    pub fn with_document_query(mut self, mut query: String) -> Self {
-        if !query.is_empty() {
-            query.insert(0, '?');
-        }
-
-        self.document_query = query;
-
-        self
     }
 
     pub fn render(self) -> Result<String> {

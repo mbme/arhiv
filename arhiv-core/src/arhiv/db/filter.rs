@@ -78,6 +78,12 @@ impl Default for Filter {
     }
 }
 
+impl AsRef<Filter> for Filter {
+    fn as_ref(&self) -> &Filter {
+        self
+    }
+}
+
 impl Filter {
     #[must_use]
     pub fn all_staged_documents() -> Filter {

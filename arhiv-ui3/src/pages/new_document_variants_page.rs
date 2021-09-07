@@ -6,6 +6,7 @@ use crate::{
     components::{Breadcrumb, Toolbar},
     pages::base::render_page,
     template_fn,
+    urls::NewDocumentUrl,
 };
 use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
@@ -25,7 +26,12 @@ pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
         .modules
         .iter()
         .filter(|module| !module.is_internal)
-        .map(|module| module.document_type)
+        .map(|module| {
+            (
+                module.document_type,
+                NewDocumentUrl::Document(module.document_type).build(),
+            )
+        })
         .collect::<Vec<_>>();
 
     let content = render_template(json!({

@@ -5,7 +5,7 @@ use serde_json::json;
 
 use arhiv_core::Arhiv;
 
-use crate::template_fn;
+use crate::{template_fn, urls::catalog_url};
 
 template_fn!(render_template, "./base.html.tera");
 
@@ -29,12 +29,13 @@ pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
 
 const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];
 
-fn get_nav_document_types(arhiv: &Arhiv) -> Vec<&'static str> {
+fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv
         .get_schema()
         .modules
         .iter()
         .map(|module| module.document_type)
         .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
+        .map(|module| (module, catalog_url(module)))
         .collect()
 }

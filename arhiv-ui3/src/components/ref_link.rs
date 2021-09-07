@@ -2,7 +2,7 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::template_fn;
+use crate::{template_fn, urls::document_url};
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::log;
 
@@ -12,17 +12,19 @@ template_fn!(render_template, "./ref_link.html.tera");
 #[serde(tag = "mode")]
 enum RefMode<'a> {
     Ref {
-        id: &'a Id,
         document_type: &'a str,
         title: &'a str,
         archived: bool,
+        url: String,
     },
     Unknown {
         id: &'a Id,
+        url: String,
     },
     Image {
         id: &'a Id,
         title: &'a str,
+        url: String,
     },
 }
 
@@ -65,8 +67,11 @@ impl Ref {
                 } else {
                     log::warn!("Got broken reference: {}", id);
 
-                    return serde_json::to_value(RefMode::Unknown { id })
-                        .context("failed to serialize");
+                    return serde_json::to_value(RefMode::Unknown {
+                        id,
+                        url: document_url(id, &None),
+                    })
+                    .context("failed to serialize");
                 }
             }
             RefInfo::Document(document) => document,
@@ -76,10 +81,10 @@ impl Ref {
             let title = arhiv.get_schema().get_title(&document)?;
 
             return serde_json::to_value(RefMode::Ref {
-                id: &document.id,
                 document_type: &document.document_type,
                 title,
                 archived: document.archived,
+                url: document_url(&document.id, &None),
             })
             .context("failed to serialize");
         }
@@ -91,15 +96,16 @@ impl Ref {
             return serde_json::to_value(RefMode::Image {
                 id: &attachment.id,
                 title,
+                url: document_url(&attachment.id, &None),
             })
             .context("failed to serialize");
         }
 
         serde_json::to_value(RefMode::Ref {
-            id: &attachment.id,
             document_type: &attachment.document_type,
             title,
             archived: attachment.archived,
+            url: document_url(&attachment.id, &None),
         })
         .context("failed to serialize")
     }

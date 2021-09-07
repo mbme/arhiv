@@ -3,22 +3,22 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
+use arhiv_core::{entities::*, Arhiv};
+use rs_utils::server::{respond_not_found, ServerResponse};
+
 use crate::{
     components::{Breadcrumb, Editor, Toolbar},
     pages::base::render_page,
     template_fn,
 };
-use arhiv_core::{entities::*, Arhiv};
-use rs_utils::{
-    server::{respond_not_found, RequestQueryExt, ServerResponse},
-    QueryBuilder,
-};
 
 template_fn!(render_template, "./edit_document_page.html.tera");
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
-    let id: &str = req.param("id").unwrap();
-    let id: Id = id.into();
+    let id: Id = req.param("id").unwrap().into();
+    let parent_collection: Option<Id> = req
+        .param("collection_id")
+        .map(|collection_id| collection_id.into());
 
     let arhiv: &Arhiv = req.data().unwrap();
 
@@ -43,18 +43,11 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         arhiv
             .get_schema()
             .get_data_description(&document.document_type)?,
+        &parent_collection,
     )?
-    .with_document_query(
-        QueryBuilder::new()
-            .maybe_add_param(
-                "parent_collection",
-                req.get_query_param("parent_collection"),
-            )
-            .build(),
-    )
     .render()?;
 
-    let toolbar = Toolbar::new(req.get_query_param("parent_collection"))
+    let toolbar = Toolbar::new(parent_collection)
         .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
         .with_breadcrumb(Breadcrumb::Document(&document))
         .with_breadcrumb(Breadcrumb::String("editor".to_string()))

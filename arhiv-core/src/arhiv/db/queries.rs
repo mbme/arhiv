@@ -120,7 +120,7 @@ pub trait Queries {
     }
 
     #[allow(clippy::too_many_lines)]
-    fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
+    fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
         let mut qb = QueryBuilder::new();
 
         qb.select("*", "documents");
@@ -138,7 +138,7 @@ pub trait Queries {
             FilterMode::All => {}
         }
 
-        for matcher in filter.matchers {
+        for matcher in &filter.matchers {
             match matcher {
                 Condition::Field {
                     ref field,
@@ -147,7 +147,7 @@ pub trait Queries {
                 } => {
                     qb.where_condition(format!(
                         "{} json_contains(data, {}, {})",
-                        if not { "NOT" } else { "" },
+                        if *not { "NOT" } else { "" },
                         qb.param(field),
                         qb.param(pattern)
                     ));
@@ -166,7 +166,7 @@ pub trait Queries {
                 }
                 Condition::Ref { id } => {
                     qb.and_from("json_each(refs)");
-                    qb.where_condition(format!("json_each.value = {}", qb.param(id)));
+                    qb.where_condition(format!("json_each.value = {}", qb.param(id.clone())));
                 }
                 Condition::NotCollectionChild {
                     child_document_type,
@@ -177,19 +177,19 @@ pub trait Queries {
                         "NOT (documents.type = {} AND json_contains(data, {}, {}))",
                         qb.param(child_document_type),
                         qb.param(child_collection_field),
-                        qb.param(collection_id),
+                        qb.param(collection_id.clone()),
                     ));
                 }
             }
         }
 
-        for order in filter.order {
+        for order in &filter.order {
             match order {
                 OrderBy::UpdatedAt { asc } => {
-                    qb.order_by("updated_at", asc);
+                    qb.order_by("updated_at", *asc);
                 }
                 OrderBy::Field { ref selector, asc } => {
-                    qb.order_by(format!("json_extract(data, {})", qb.param(selector)), asc);
+                    qb.order_by(format!("json_extract(data, {})", qb.param(selector)), *asc);
                 }
                 OrderBy::EnumField {
                     selector,
@@ -210,7 +210,7 @@ pub trait Queries {
                             cases,
                             enum_order.len(),
                         ),
-                        asc,
+                        *asc,
                     );
                 }
             }

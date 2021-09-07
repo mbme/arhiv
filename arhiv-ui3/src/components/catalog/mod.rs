@@ -1,32 +1,21 @@
-use std::collections::HashMap;
-
 use anyhow::*;
-use arhiv_core::entities::Document;
 use hyper::{Body, Request};
 use serde::Serialize;
 use serde_json::json;
 
-pub mod config;
-mod entry;
-
-use crate::template_fn;
-use arhiv_core::{Arhiv, Condition, Filter};
+use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
 use rs_utils::server::RequestQueryExt;
 
-use self::config::{CatalogConfig, CatalogGroupBy};
-use self::entry::CatalogEntry;
+use self::config::CatalogConfig;
+use self::entries::{render_entries, CatalogEntry};
+use self::groups::{group_documents, render_groups};
+use crate::template_fn;
+
+pub mod config;
+mod entries;
+mod groups;
 
 template_fn!(render_template, "./catalog.html.tera");
-template_fn!(render_entries_template, "./catalog_entries.html.tera");
-template_fn!(render_groups_template, "./catalog_groups.html.tera");
-
-#[derive(Serialize)]
-struct CatalogGroup {
-    value: &'static str,
-    open: bool,
-    items: String,
-    items_count: usize,
-}
 
 const PAGE_SIZE: u8 = 14;
 
@@ -42,8 +31,7 @@ pub struct Catalog {
     document_type: String,
     pattern: String,
     pagination: Option<Pagination>,
-    new_document_query: String,
-    document_url_query: String,
+    parent_collection: Option<Id>,
 }
 
 impl Catalog {
@@ -62,8 +50,7 @@ impl Catalog {
             pattern,
             document_type,
             pagination: None,
-            new_document_query: "".to_string(),
-            document_url_query: "".to_string(),
+            parent_collection: None,
         }
     }
 
@@ -100,28 +87,14 @@ impl Catalog {
         self
     }
 
-    pub fn with_new_document_query(mut self, mut query: String) -> Self {
-        if !query.is_empty() {
-            query.insert(0, '?');
-        }
-
-        self.new_document_query = query;
-
-        self
-    }
-
-    pub fn with_document_url_query(mut self, mut query: String) -> Self {
-        if !query.is_empty() {
-            query.insert(0, '?');
-        }
-
-        self.document_url_query = query;
+    pub fn in_collection(mut self, collection_id: Id) -> Self {
+        self.parent_collection = Some(collection_id);
 
         self
     }
 
     pub fn render(mut self, arhiv: &Arhiv, config: &CatalogConfig) -> Result<String> {
-        let result = arhiv.list_documents(self.filter)?;
+        let result = arhiv.list_documents(&self.filter)?;
 
         if !result.has_more {
             if let Some(pagination) = self.pagination.as_mut() {
@@ -136,21 +109,26 @@ impl Catalog {
                 .get_schema()
                 .get_data_description(&self.document_type)?;
 
-            let documents = group_documents(documents, group_by.field)?;
-            let entries = documents_to_entries(documents, arhiv, config)?;
-
             let group_names = data_description
                 .get_field(group_by.field)?
                 .get_enum_values()?;
 
-            render_groups(group_names, entries, &self.document_url_query, group_by)?
+            let entries = group_documents(
+                documents,
+                arhiv,
+                config,
+                group_by.field,
+                &self.parent_collection,
+            )?;
+
+            render_groups(group_names, entries, group_by)?
         } else {
             let items = documents
                 .into_iter()
-                .map(|document| CatalogEntry::new(document, arhiv, config))
+                .map(|document| CatalogEntry::new(document, arhiv, config, &self.parent_collection))
                 .collect::<Result<Vec<_>>>()?;
 
-            render_entries(&items, &self.document_url_query)?
+            render_entries(&items)?
         };
 
         render_template(json!({
@@ -160,87 +138,4 @@ impl Catalog {
             "document_type": self.document_type,
         }))
     }
-}
-
-fn render_entries(entries: &[CatalogEntry], query: &str) -> Result<String> {
-    render_entries_template(json!({
-        "items": entries,
-        "query": query,
-    }))
-}
-
-fn group_documents(
-    documents: Vec<Document>,
-    field: &str,
-) -> Result<HashMap<String, Vec<Document>>> {
-    let mut result = HashMap::new();
-
-    for document in documents {
-        let key = document
-            .data
-            .get_str(field)
-            .ok_or_else(|| anyhow!("can't find field"))?
-            .to_string();
-
-        let entry = result.entry(key).or_insert_with(Vec::new);
-
-        entry.push(document);
-    }
-
-    Ok(result)
-}
-
-fn documents_to_entries(
-    documents: HashMap<String, Vec<Document>>,
-    arhiv: &Arhiv,
-    config: &CatalogConfig,
-) -> Result<HashMap<String, Vec<CatalogEntry>>> {
-    documents
-        .into_iter()
-        .map(|(group_name, documents)| {
-            let entries = documents
-                .into_iter()
-                .map(|document| CatalogEntry::new(document, arhiv, config))
-                .collect::<Result<Vec<_>>>()?;
-
-            Ok((group_name, entries))
-        })
-        .collect::<Result<HashMap<_, _>>>()
-}
-
-fn render_groups(
-    group_names: &[&'static str],
-    mut documents: HashMap<String, Vec<CatalogEntry>>,
-    query: &str,
-    group_by: &CatalogGroupBy,
-) -> Result<String> {
-    let mut groups = group_names
-        .iter()
-        .map(|group_name| {
-            let entries = documents.remove(*group_name).unwrap_or_default();
-            let items_count = entries.len();
-            let items = render_entries(&entries, query)?;
-
-            Ok(CatalogGroup {
-                value: group_name,
-                items,
-                items_count,
-                open: group_by.open_groups.contains(group_name),
-            })
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    // skip empty groups if needed
-    if group_by.skip_empty_groups {
-        groups.retain(|group| !group.items.is_empty());
-    }
-
-    // open first non-empty group if no groups open yet
-    if !groups.iter().any(|group| group.open) {
-        if let Some(group) = groups.iter_mut().find(|group| !group.items.is_empty()) {
-            group.open = true;
-        }
-    }
-
-    render_groups_template(json!({ "groups": groups }))
 }

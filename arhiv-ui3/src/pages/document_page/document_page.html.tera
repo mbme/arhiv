@@ -45,7 +45,7 @@
 
     {% if not is_internal_type %}
     <div class="mt-4 text-sm">
-      <a href="/documents/{{document.id}}/archive">
+      <a href="{{archive_url}}">
         {% if document.archived %}
         Unarchive
         {% else %}
@@ -55,7 +55,7 @@
 
       /
 
-      <a href="/documents/{{document.id}}/delete">
+      <a href="{{delete_url}}">
         Delete
       </a>
     </div>

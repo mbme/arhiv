@@ -33,10 +33,16 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .with_pagination(&req)?
         .render(arhiv, &UIConfig::get_config(document_type).catalog)?;
 
-    let toolbar = Toolbar::new(None)
+    let mut toolbar = Toolbar::new(None)
         .with_breadcrumb(Breadcrumb::String(format!("{}s", document_type)))
-        .on_close("/")
-        .render(arhiv)?;
+        .on_close("/");
+
+    let data_description = arhiv.get_schema().get_data_description(document_type)?;
+    if !data_description.is_internal {
+        toolbar = toolbar.with_new_document(document_type);
+    }
+
+    let toolbar = toolbar.render(arhiv)?;
 
     let content = render_template(json!({
         "toolbar": toolbar,

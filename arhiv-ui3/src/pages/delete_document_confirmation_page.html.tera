@@ -13,7 +13,7 @@
       <button
         type="button"
         class="btn mr-8"
-        onclick="arhiv_ui.go_back('/documents/{{document.id}}')"
+        onclick="arhiv_ui.go_back('{{cancel_url}}')"
       >
         Cancel
       </button>
@@ -21,7 +21,7 @@
       <button
         type="button"
         class="btn btn-danger"
-        onclick="arhiv_ui.delete_document('{{document.id}}')"
+        onclick="arhiv_ui.delete_document('{{document.id}}', '{{confirm_url}}')"
       >
         DELETE
       </button>

@@ -2,21 +2,16 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::template_fn;
-use arhiv_core::{entities::Document, Arhiv};
+use crate::{
+    template_fn,
+    urls::{catalog_url, document_editor_url, document_url, parent_collection_url, NewDocumentUrl},
+};
+use arhiv_core::{
+    entities::{Document, Id},
+    Arhiv,
+};
 
 template_fn!(render_template, "./toolbar.html.tera");
-// {% if not is_internal_type %}
-// <a
-//   href="/new/{{document_type}}{{new_document_query}}"
-//   class="flex-shrink-0 ml-4 uppercase tracking-wide flex items-center"
-// >
-//   <svg class="h-5 w-5 mr-1">
-//     <use xlink:href="#icon-document-add" />
-//   </svg>
-//   {{document_type}}
-// </a>
-// {% endif %}
 
 #[derive(Serialize)]
 pub enum Breadcrumb<'d> {
@@ -25,20 +20,27 @@ pub enum Breadcrumb<'d> {
     String(String),
 }
 
+#[derive(Serialize)]
+struct Action {
+    url: String,
+    name: String,
+    icon_id: Option<&'static str>,
+}
+
 pub struct Toolbar<'d> {
-    parent_collection: Option<String>,
+    parent_collection: Option<Id>,
     breadcrumbs: Vec<Breadcrumb<'d>>,
     on_close: Option<String>,
-    action: Option<(String, String)>,
+    actions: Vec<Action>,
 }
 
 impl<'d> Toolbar<'d> {
-    pub fn new(parent_collection: Option<String>) -> Self {
+    pub fn new(parent_collection: Option<Id>) -> Self {
         Toolbar {
             parent_collection,
             breadcrumbs: vec![],
             on_close: None,
-            action: None,
+            actions: vec![],
         }
     }
 
@@ -49,11 +51,7 @@ impl<'d> Toolbar<'d> {
     }
 
     pub fn on_close_document(mut self, document: &Document) -> Self {
-        let url = if let Some(ref collection_id) = self.parent_collection {
-            format!("/documents/{}", collection_id)
-        } else {
-            format!("/catalogs/{}", &document.document_type)
-        };
+        let url = parent_collection_url(&document.document_type, &self.parent_collection);
 
         self.on_close = Some(url);
 
@@ -67,16 +65,37 @@ impl<'d> Toolbar<'d> {
     }
 
     pub fn with_edit(mut self, document: &Document) -> Self {
-        let url = if let Some(ref collection_id) = self.parent_collection {
-            format!(
-                "/documents/{}/edit?parent_collection={}",
-                &document.id, collection_id
-            )
-        } else {
-            format!("/documents/{}/edit", &document.id)
-        };
+        let url = document_editor_url(&document.id, &self.parent_collection);
 
-        self.action = Some(("Edit".into(), url));
+        self.actions.push(Action {
+            name: "Edit".to_string(),
+            url,
+            icon_id: Some("icon-document-edit"),
+        });
+
+        self
+    }
+
+    pub fn with_new_collection_item(mut self, document_type: &str, field: &str, id: &Id) -> Self {
+        let url = NewDocumentUrl::CollectionItem(document_type, field, id).build();
+
+        self.actions.push(Action {
+            name: document_type.to_string(),
+            url,
+            icon_id: Some("icon-document-add"),
+        });
+
+        self
+    }
+
+    pub fn with_new_document(mut self, document_type: &str) -> Self {
+        let url = NewDocumentUrl::Document(document_type).build();
+
+        self.actions.push(Action {
+            name: document_type.to_string(),
+            url,
+            icon_id: Some("icon-document-add"),
+        });
 
         self
     }
@@ -96,7 +115,7 @@ impl<'d> Toolbar<'d> {
                     let url = if is_last {
                         "".to_string()
                     } else {
-                        format!("/documents/{}", &document.id)
+                        document_url(&document.id, &None)
                     };
 
                     Ok(json!({
@@ -114,12 +133,12 @@ impl<'d> Toolbar<'d> {
 
                         Ok(json!({
                             "name": format!("{} {}", document.document_type.to_uppercase(), name),
-                            "url": format!("/documents/{}", collection_id),
+                            "url": document_url(collection_id, &None),
                         }))
                     } else {
                         Ok(json!({
                             "name": "CATALOG",
-                            "url": format!("/catalogs/{}", document_type),
+                            "url": catalog_url(&document_type),
                         }))
                     }
                 }
@@ -132,7 +151,7 @@ impl<'d> Toolbar<'d> {
 
         render_template(json!({
             "breadcrumbs": breadcrumbs,
-            "action": self.action,
+            "actions": self.actions,
             "on_close": self.on_close,
         }))
     }

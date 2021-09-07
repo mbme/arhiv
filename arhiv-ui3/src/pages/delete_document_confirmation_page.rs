@@ -3,9 +3,14 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{pages::base::render_page, template_fn};
-use arhiv_core::Arhiv;
+use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::server::ServerResponse;
+
+use crate::{
+    pages::base::render_page,
+    template_fn,
+    urls::{document_url, parent_collection_url},
+};
 
 template_fn!(
     render_template,
@@ -13,11 +18,15 @@ template_fn!(
 );
 
 pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResponse {
-    let id: &str = req.param("id").unwrap();
+    let id: Id = req.param("id").unwrap().into();
+    let collection_id: Option<Id> = req
+        .param("collection_id")
+        .map(|collection_id| collection_id.into());
+
     let arhiv: &Arhiv = req.data().unwrap();
 
     let document = arhiv
-        .get_document(id)?
+        .get_document(&id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
     ensure!(!document.is_tombstone(), "document already deleted");
@@ -27,6 +36,8 @@ pub async fn delete_document_confirmation_page(req: Request<Body>) -> ServerResp
     let content = render_template(json!({
         "document": document,
         "title": title,
+        "cancel_url": document_url(&id, &collection_id),
+        "confirm_url": parent_collection_url(&document.document_type, &collection_id),
     }))?;
 
     render_page(content, arhiv)

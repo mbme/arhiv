@@ -6,6 +6,7 @@ use crate::{
     components::{Breadcrumb, Toolbar},
     pages::base::render_page,
     template_fn,
+    urls::catalog_url,
 };
 use arhiv_core::Arhiv;
 use rs_utils::server::ServerResponse;
@@ -21,7 +22,7 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
         .get_schema()
         .modules
         .iter()
-        .map(|module| module.document_type)
+        .map(|module| (module.document_type, catalog_url(module.document_type)))
         .collect::<Vec<_>>();
 
     let toolbar = Toolbar::new(None)

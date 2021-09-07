@@ -130,10 +130,10 @@ impl Arhiv {
         conn.get_setting(SETTING_IS_PRIME)
     }
 
-    pub fn list_documents(&self, filter: Filter) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage<Document>> {
         let conn = self.db.get_connection()?;
 
-        conn.list_documents(filter)
+        conn.list_documents(filter.as_ref())
     }
 
     pub fn get_document(&self, id: impl Into<Id>) -> Result<Option<Document>> {

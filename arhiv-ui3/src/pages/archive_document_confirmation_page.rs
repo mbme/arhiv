@@ -3,9 +3,10 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use crate::{pages::base::render_page, template_fn};
-use arhiv_core::Arhiv;
+use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::server::ServerResponse;
+
+use crate::{pages::base::render_page, template_fn, urls::document_url};
 
 template_fn!(
     render_template,
@@ -13,11 +14,15 @@ template_fn!(
 );
 
 pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerResponse {
-    let id: &str = req.param("id").unwrap();
+    let id: Id = req.param("id").unwrap().into();
+    let collection_id: Option<Id> = req
+        .param("collection_id")
+        .map(|collection_id| collection_id.into());
+
     let arhiv: &Arhiv = req.data().unwrap();
 
     let document = arhiv
-        .get_document(id)?
+        .get_document(&id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
     let title = arhiv.get_schema().get_title(&document)?;
@@ -25,6 +30,7 @@ pub async fn archive_document_confirmation_page(req: Request<Body>) -> ServerRes
     let content = render_template(json!({
         "document": document,
         "title": title,
+        "document_url": document_url(&id, &collection_id),
     }))?;
 
     render_page(content, arhiv)

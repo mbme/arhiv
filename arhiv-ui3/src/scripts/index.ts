@@ -32,12 +32,12 @@ class ArhivUI {
     }
   }
 
-  async delete_document(id: string) {
+  async delete_document(id: string, urlOnDelete: string) {
     try {
       await call_action({
         delete: { id }
       });
-      window.location.assign('/');
+      window.location.assign(urlOnDelete);
     } catch (e) {
       console.error(e);
       alert(e);
@@ -46,12 +46,12 @@ class ArhivUI {
     }
   }
 
-  async archive_document(id: string, archive: boolean) {
+  async archive_document(id: string, archive: boolean, url: string) {
     try {
       await call_action({
         archive: { id, archive }
       });
-      window.location.assign(`/documents/${id}`);
+      window.location.assign(url);
     } catch (e) {
       console.error(e);
       alert(e);
@@ -92,7 +92,7 @@ class ArhivUI {
     }
   }
 
-  initEditorForm = (form: HTMLFormElement, originalDocument: Document, documentQuery: string) => {
+  initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {
     const initialFormData = new FormData(form);
 
     function onBeforeUnload(event: BeforeUnloadEvent) {
@@ -117,7 +117,7 @@ class ArhivUI {
         data: formDataToObj(new FormData(form)),
       }).then(() => {
         window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
-        window.location.assign(`/documents/${originalDocument.id}${documentQuery}`);
+        window.location.assign(urlOnSave);
       });
     });
   }

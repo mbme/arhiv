@@ -23,7 +23,7 @@
       <button
         type="button"
         class="btn mr-8"
-        onclick="arhiv_ui.go_back('/documents/{{document.id}}')"
+        onclick="arhiv_ui.go_back('{{document_url}}')"
       >
         Cancel
       </button>
@@ -31,7 +31,7 @@
       <button
         type="button"
         class="btn btn-warn"
-        onclick="arhiv_ui.archive_document('{{document.id}}', {{not document.archived}})"
+        onclick="arhiv_ui.archive_document('{{document.id}}', {{not document.archived}}, '{{document_url}}')"
       >
         {% if document.archived %}
         UnArchive

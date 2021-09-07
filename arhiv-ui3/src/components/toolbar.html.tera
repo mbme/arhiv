@@ -19,11 +19,16 @@
   </ul>
 
   <div class="flex">
-    {% if action %}
-    <a href="{{action.1}}" class="mr-8">
-      {{action.0}}
+    {% for action in actions %}
+    <a href="{{action.url}}" class="flex-shrink-0 mr-6 flex items-center capitalize">
+      {% if action.icon_id %}
+      <svg class="h-5 w-5 mr-1">
+        <use xlink:href="#{{action.icon_id}}" />
+      </svg>
+      {% endif %}
+      {{action.name}}
     </a>
-    {% endif %}
+    {% endfor %}
 
     {% if on_close %}
     <a href="{{on_close}}" class="clean-link">

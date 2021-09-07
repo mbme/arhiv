@@ -91,7 +91,7 @@
   window.arhiv_ui.initEditorForm(
     editorEl,
     {{document | json_encode() | safe}},
-    "{{document_query}}"
+    '{{url_on_save | safe}}'
   );
 
   editorEl.querySelectorAll('textarea')

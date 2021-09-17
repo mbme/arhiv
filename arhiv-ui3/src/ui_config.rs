@@ -1,4 +1,4 @@
-use crate::components::catalog::config::{CatalogConfig, CatalogGroupBy};
+use crate::components::CatalogConfig;
 
 pub struct UIConfig {
     pub catalog: CatalogConfig,
@@ -7,19 +7,6 @@ pub struct UIConfig {
 impl UIConfig {
     pub fn get_config(document_type: impl AsRef<str>) -> Self {
         let document_type = document_type.as_ref();
-
-        if document_type == "project/task" {
-            return UIConfig {
-                catalog: CatalogConfig {
-                    group_by: Some(CatalogGroupBy {
-                        field: "status",
-                        open_groups: vec!["Inbox", "InProgress", "Paused"],
-                        skip_empty_groups: true,
-                    }),
-                    ..CatalogConfig::default()
-                },
-            };
-        }
 
         if document_type == "book" {
             return UIConfig {

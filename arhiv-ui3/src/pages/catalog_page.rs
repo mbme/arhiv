@@ -28,9 +28,13 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
     let pattern = req.get_query_param("pattern").unwrap_or_default();
+    let page: u8 = req
+        .get_query_param("page")
+        .and_then(|page| page.parse().ok())
+        .unwrap_or_default();
 
-    let catalog = Catalog::new(document_type, pattern)
-        .with_pagination(&req)?
+    let (catalog, _) = Catalog::new(document_type, pattern)
+        .on_page(page)
         .render(arhiv, &UIConfig::get_config(document_type).catalog)?;
 
     let mut toolbar = Toolbar::new(None)

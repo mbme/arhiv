@@ -4,15 +4,28 @@ use serde::Serialize;
 use arhiv_core::{entities::*, markup::MarkupStr, Arhiv};
 use serde_json::json;
 
-use super::config::CatalogConfig;
 use crate::{markup::MarkupStringExt, template_fn, urls::document_url};
 
 template_fn!(render_template, "./entries.html.tera");
 
 pub fn render_entries(entries: &[CatalogEntry]) -> Result<String> {
     render_template(json!({
-        "items": entries,
+        "entries": entries,
     }))
+}
+
+pub struct CatalogConfig {
+    pub preview: Option<&'static str>,
+    pub fields: Vec<&'static str>,
+}
+
+impl Default for CatalogConfig {
+    fn default() -> Self {
+        CatalogConfig {
+            preview: None,
+            fields: vec![],
+        }
+    }
 }
 
 #[derive(Serialize)]

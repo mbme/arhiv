@@ -1,12 +1,11 @@
 import { copyTextToClipboard, formDataToObj, isEqualFormData } from './utils';
-import './v-catalog';
 
 type Document = {
   id: string,
   data: Record<string, string | undefined>,
 };
 
-async function call_action(action: Record<string, unknown>): Promise<any> {
+async function call_action(action: Record<string, unknown>): Promise<unknown> {
   const response = await fetch('/rpc', {
     method: 'POST',
     cache: 'no-cache',

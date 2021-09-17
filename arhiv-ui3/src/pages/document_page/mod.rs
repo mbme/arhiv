@@ -54,7 +54,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         field,
     } = data_description.collection_of
     {
-        let catalog = Catalog::new(item_type, pattern)
+        // FIXME pagination
+        let (catalog, _) = Catalog::new(item_type, pattern)
             .with_matcher(Condition::Field {
                 field: field.to_string(),
                 pattern: document.id.to_string(),

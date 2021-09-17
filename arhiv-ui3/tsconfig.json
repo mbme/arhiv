@@ -16,6 +16,9 @@
 
     "skipLibCheck": true,
 
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+
     "downlevelIteration": true,
     "keyofStringsOnly": true,
     "noImplicitReturns": true,

@@ -6,20 +6,27 @@ type Document = {
 };
 
 async function call_action(action: Record<string, unknown>): Promise<unknown> {
-  const response = await fetch('/rpc', {
-    method: 'POST',
-    cache: 'no-cache',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(action),
-  });
+  try {
+    const response = await fetch('/rpc', {
+      method: 'POST',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(action),
+    });
 
-  if (!response.ok) {
-    throw new Error(`action failed: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`action failed: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (e) {
+    console.error(e);
+    alert(e);
+
+    throw e;
   }
-
-  return response.json();
 }
 
 class ArhivUI {
@@ -32,82 +39,46 @@ class ArhivUI {
   }
 
   async delete_document(id: string, urlOnDelete: string) {
-    try {
-      await call_action({
-        delete: { id }
-      });
-      window.location.assign(urlOnDelete);
-    } catch (e) {
-      console.error(e);
-      alert(e);
-
-      throw e;
-    }
+    await call_action({
+      delete: { id }
+    });
+    window.location.assign(urlOnDelete);
   }
 
   async archive_document(id: string, archive: boolean, url: string) {
-    try {
-      await call_action({
-        archive: { id, archive }
-      });
-      window.location.assign(url);
-    } catch (e) {
-      console.error(e);
-      alert(e);
-
-      throw e;
-    }
+    await call_action({
+      archive: { id, archive }
+    });
+    window.location.assign(url);
   }
 
   async save_document(document: Document) {
-    try {
-      await call_action({
-        save: { document }
-      });
-    } catch (e) {
-      console.error(e);
-      alert(e);
-
-      throw e;
-    }
+    await call_action({
+      save: { document }
+    });
   }
 
   async pick_attachment() {
-    try {
-      const id = await call_action({
-        pickAttachment: { }
-      }) as string;
+    const id = await call_action({
+      pickAttachment: { }
+    }) as string;
 
-      if (id) {
-        console.log('Selected attachment', id);
+    if (id) {
+      console.log('Selected attachment', id);
 
-        copyTextToClipboard(id);
-      }
-    } catch (e) {
-      console.error(e);
-      alert(e);
-
-      throw e;
+      copyTextToClipboard(id);
     }
   }
 
   async render_catalog(filter: Obj, parent_collection = '', el: HTMLElement) {
-    try {
-      const catalog = await call_action({
-        renderCatalog: {
-          parent_collection: parent_collection.trim() || undefined,
-          filter,
-        },
-      });
+    const catalog = await call_action({
+      renderCatalog: {
+        parent_collection: parent_collection.trim() || undefined,
+        filter,
+      },
+    });
 
-      replaceEl(el, catalog as string);
-    } catch (e) {
-      console.error(e);
-      alert(e);
-
-      throw e;
-    }
-
+    replaceEl(el, catalog as string);
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {

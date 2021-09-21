@@ -6,7 +6,14 @@ pub fn get_catalog_config(document_type: impl AsRef<str>) -> CatalogConfig {
     if document_type == "book" {
         return CatalogConfig {
             fields: vec!["authors"],
-            ..CatalogConfig::default()
+            preview: None,
+        };
+    }
+
+    if document_type == "task" {
+        return CatalogConfig {
+            fields: vec!["status"],
+            preview: None,
         };
     }
 

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::Id;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Condition {
     Field {
         field: String,
@@ -27,7 +27,7 @@ pub enum Condition {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum OrderBy {
     Field {
         selector: String,
@@ -49,7 +49,7 @@ impl Default for OrderBy {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FilterMode {
     Archived,
     Staged,
@@ -57,7 +57,7 @@ pub enum FilterMode {
     All,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
@@ -151,5 +151,19 @@ impl Filter {
         self.page_size = Some(page);
 
         self
+    }
+
+    #[must_use]
+    pub fn get_next_page(&self) -> Option<Filter> {
+        match (self.page_size, self.page_offset) {
+            (Some(page_size), Some(page_offset)) => {
+                let mut next_page = self.clone();
+
+                next_page.page_offset = Some(page_offset + page_size);
+
+                Some(next_page)
+            }
+            _ => None,
+        }
     }
 }

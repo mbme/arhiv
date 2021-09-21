@@ -8,7 +8,6 @@ use crate::{
     components::{Breadcrumb, Catalog, Toolbar},
     pages::base::render_page,
     template_fn,
-    ui_config::UIConfig,
 };
 use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
@@ -33,9 +32,9 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .and_then(|page| page.parse().ok())
         .unwrap_or_default();
 
-    let (catalog, _) = Catalog::new(document_type, pattern)
+    let catalog = Catalog::new(document_type, pattern)
         .on_page(page)
-        .render(arhiv, &UIConfig::get_config(document_type).catalog)?;
+        .render(arhiv)?;
 
     let mut toolbar = Toolbar::new(None)
         .with_breadcrumb(Breadcrumb::String(format!("{}s", document_type)))

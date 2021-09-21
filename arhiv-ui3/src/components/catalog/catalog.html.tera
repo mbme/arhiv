@@ -31,3 +31,17 @@
   {% endfor %}
 </ul>
 {% endif %}
+
+{% if has_more %}
+<button
+  type="button"
+  class="btn"
+  hx-post="{{url}}"
+  hx-ext="json-enc"
+  hx-vals="{{ next_page_filter | json_encode() }}"
+  hx-target="this"
+  hx-swap="outerHTML"
+>
+  Load more
+</button>
+{% endif %}

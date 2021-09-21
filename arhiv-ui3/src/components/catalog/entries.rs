@@ -2,17 +2,8 @@ use anyhow::*;
 use serde::Serialize;
 
 use arhiv_core::{entities::*, markup::MarkupStr, Arhiv};
-use serde_json::json;
 
-use crate::{markup::MarkupStringExt, template_fn, urls::document_url};
-
-template_fn!(render_template, "./entries.html.tera");
-
-pub fn render_entries(entries: &[CatalogEntry]) -> Result<String> {
-    render_template(json!({
-        "entries": entries,
-    }))
-}
+use crate::{markup::MarkupStringExt, ui_config::get_catalog_config, urls::document_url};
 
 pub struct CatalogConfig {
     pub preview: Option<&'static str>,
@@ -38,12 +29,9 @@ pub struct CatalogEntry {
 }
 
 impl CatalogEntry {
-    pub fn new(
-        document: Document,
-        arhiv: &Arhiv,
-        config: &CatalogConfig,
-        parent_collection: &Option<Id>,
-    ) -> Result<Self> {
+    pub fn new(document: Document, arhiv: &Arhiv, parent_collection: &Option<Id>) -> Result<Self> {
+        let config = get_catalog_config(&document.document_type);
+
         let data_description = arhiv
             .get_schema()
             .get_data_description(&document.document_type)?;

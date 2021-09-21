@@ -1,3 +1,8 @@
+use anyhow::*;
+use hyper::{header, Response};
+
+use rs_utils::server::ServerResponse;
+
 /// `template_fn!(pub get_markup, "./markup.rs");`
 #[macro_export]
 macro_rules! template_fn {
@@ -35,4 +40,15 @@ macro_rules! template_fn {
             }
         }
     };
+}
+
+pub fn render_content(content: String) -> ServerResponse {
+    Response::builder()
+        .header(header::CONTENT_TYPE, "text/html")
+        // prevent page from caching
+        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+        .header(header::EXPIRES, "0")
+        // ---
+        .body(content.into())
+        .context("failed to build response")
 }

@@ -1,11 +1,9 @@
-use anyhow::*;
-use hyper::{header, Response};
-use rs_utils::server::ServerResponse;
 use serde_json::json;
 
 use arhiv_core::Arhiv;
+use rs_utils::server::ServerResponse;
 
-use crate::{template_fn, urls::catalog_url};
+use crate::{template_fn, urls::catalog_url, utils::render_content};
 
 template_fn!(render_template, "./base.html.tera");
 
@@ -17,14 +15,7 @@ pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
         "content": content.as_ref(),
     }))?;
 
-    Response::builder()
-        .header(header::CONTENT_TYPE, "text/html")
-        // prevent page from caching
-        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-        .header(header::EXPIRES, "0")
-        // ---
-        .body(result.into())
-        .context("failed to build response")
+    render_content(result)
 }
 
 const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];

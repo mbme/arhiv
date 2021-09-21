@@ -10,7 +10,6 @@ use crate::{
     components::{Breadcrumb, Catalog, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
-    ui_config::UIConfig,
     urls::{document_archive_url, document_delete_url},
 };
 use fields::prepare_fields;
@@ -54,18 +53,14 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         field,
     } = data_description.collection_of
     {
-        // FIXME pagination
-        let (catalog, _) = Catalog::new(item_type, pattern)
+        let catalog = Catalog::new(item_type, pattern)
             .with_matcher(Condition::Field {
                 field: field.to_string(),
                 pattern: document.id.to_string(),
                 not: false,
             })
-            .in_collection(document.id.clone())
-            .render(
-                arhiv,
-                &UIConfig::get_child_config(&document.document_type, item_type).catalog,
-            )?;
+            .in_collection(Some(document.id.clone()))
+            .render(arhiv)?;
 
         children_catalog = Some(catalog);
 

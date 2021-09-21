@@ -56,3 +56,14 @@ pub fn parent_collection_url(document_type: &str, parent_collection: &Option<Id>
         catalog_url(document_type)
     }
 }
+
+pub fn catalog_fragment_url(parent_collection: &Option<Id>) -> String {
+    let mut url = "/fragments/catalog".to_string();
+
+    if let Some(ref collection_id) = parent_collection {
+        url.push_str("?parent_collection=");
+        url.push_str(collection_id);
+    }
+
+    url
+}

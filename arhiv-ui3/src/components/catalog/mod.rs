@@ -1,13 +1,17 @@
 use anyhow::*;
+use serde_json::json;
 
 use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
 
 pub use self::entries::CatalogConfig;
-use self::entries::{render_entries, CatalogEntry};
+use self::entries::CatalogEntry;
+use crate::{template_fn, urls::catalog_fragment_url};
 
 mod entries;
 
-const PAGE_SIZE: u8 = 14;
+template_fn!(render_template, "./catalog.html.tera");
+
+const PAGE_SIZE: u8 = 20;
 
 pub struct Catalog {
     filter: Filter,
@@ -31,6 +35,13 @@ impl Catalog {
         }
     }
 
+    pub fn from_filter(filter: Filter) -> Self {
+        Catalog {
+            filter,
+            parent_collection: None,
+        }
+    }
+
     pub fn on_page(mut self, page: u8) -> Self {
         self.filter.page_offset = Some(PAGE_SIZE * page);
 
@@ -43,23 +54,26 @@ impl Catalog {
         self
     }
 
-    pub fn in_collection(mut self, collection_id: Id) -> Self {
-        self.parent_collection = Some(collection_id);
+    pub fn in_collection(mut self, parent_collection: Option<Id>) -> Self {
+        self.parent_collection = parent_collection;
 
         self
     }
 
-    pub fn render(self, arhiv: &Arhiv, config: &CatalogConfig) -> Result<(String, bool)> {
+    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let result = arhiv.list_documents(&self.filter)?;
 
-        let items = result
+        let entries = result
             .items
             .into_iter()
-            .map(|document| CatalogEntry::new(document, arhiv, config, &self.parent_collection))
+            .map(|document| CatalogEntry::new(document, arhiv, &self.parent_collection))
             .collect::<Result<Vec<_>>>()?;
 
-        let content = render_entries(&items)?;
-
-        Ok((content, result.has_more))
+        render_template(json!({
+            "entries": entries,
+            "has_more": result.has_more,
+            "url": catalog_fragment_url(&self.parent_collection),
+            "next_page_filter": self.filter.get_next_page(),
+        }))
     }
 }

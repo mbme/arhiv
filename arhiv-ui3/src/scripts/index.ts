@@ -1,3 +1,6 @@
+import 'htmx.org';
+import 'htmx.org/dist/ext/json-enc.js';
+
 import { copyTextToClipboard, formDataToObj, isEqualFormData } from './utils';
 
 type Document = {

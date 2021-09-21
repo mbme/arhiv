@@ -883,6 +883,11 @@ html-tags@^3.1.0:
   resolved "https://registry.yarnpkg.com/html-tags/-/html-tags-3.1.0.tgz#7b5e6f7e665e9fb41f30007ed9e0d41e97fb2140"
   integrity sha512-1qYz89hW3lFDEazhjW0yVAV87lw8lVkrJocr72XmBkMKsoSVJCQx3W8BXsC7hO2qAt8BoVjYjtAcZ9perqGnNg==
 
+htmx.org@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/htmx.org/-/htmx.org-1.5.0.tgz#6f6db59a176bd44459f84f2e23ea60963a597b39"
+  integrity sha512-XMDgFU9jwZx/akLXiBlD6B4HG1hqpMFg1/JxYugQ1idR1sDQDcpyNvX4oYag94067EyjNfTXttpRsbfNOwt4EQ==
+
 ignore@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-4.0.6.tgz#750e3db5862087b4737ebac8207ffd1ef27b25fc"

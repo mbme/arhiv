@@ -6,20 +6,33 @@ use serde_json::Value;
 
 use arhiv_core::{
     entities::{Document, Id},
-    Arhiv,
+    Arhiv, Filter,
 };
 use rs_utils::{
     run_command,
     server::{json_response, ServerResponse},
 };
 
+use crate::components::Catalog;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum RPCAction {
-    Delete { id: Id },
-    Archive { id: Id, archive: bool },
-    Save { document: Document },
+    Delete {
+        id: Id,
+    },
+    Archive {
+        id: Id,
+        archive: bool,
+    },
+    Save {
+        document: Document,
+    },
     PickAttachment {},
+    RenderCatalog {
+        parent_collection: Option<Id>,
+        filter: Filter,
+    },
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
@@ -35,9 +48,11 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         RPCAction::Delete { id } => {
             arhiv.delete_document(&id)?;
         }
+
         RPCAction::Archive { id, archive } => {
             arhiv.archive_document(&id, archive)?;
         }
+
         RPCAction::Save { mut document } => {
             let data_description = arhiv
                 .get_schema()
@@ -56,6 +71,7 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
 
             arhiv.stage_document(&mut document)?;
         }
+
         RPCAction::PickAttachment {} => {
             let files = run_command("mb-filepicker", vec![])?;
             let files: Vec<String> = serde_json::from_str(&files)?;
@@ -65,6 +81,17 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
                 let document = arhiv.add_attachment(file_path, false)?;
                 response = Value::String(document.id.to_string());
             }
+        }
+
+        RPCAction::RenderCatalog {
+            parent_collection,
+            filter,
+        } => {
+            let catalog = Catalog::from_filter(filter)
+                .in_collection(parent_collection)
+                .render(arhiv)?;
+
+            response = Value::String(catalog);
         }
     }
 

@@ -30,3 +30,7 @@ export function copyTextToClipboard(text: string): void {
     window.addEventListener('focus', writeText, { once: true });
   }
 }
+
+export function replaceEl(el: HTMLElement, content: string): void {
+  el.outerHTML = content;
+}

@@ -27,11 +27,8 @@ use rs_utils::{
     server::{error_handler, logger_middleware, not_found_handler},
 };
 
-use crate::fragments::catalog_fragment;
-
 mod attachment_data;
 mod components;
-mod fragments;
 mod markup;
 mod pages;
 mod public_assets;
@@ -78,7 +75,6 @@ pub async fn start_ui_server() {
         //
         .get("/attachment-data/:id", attachment_data_handler)
         .post("/rpc", rpc_handler)
-        .post("/fragments/catalog", catalog_fragment)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
         .build()

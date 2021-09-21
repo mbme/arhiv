@@ -14,9 +14,7 @@
     "prod:build:js": "NODE_ENV=production yarn build:js",
     "prod:build:css": "NODE_ENV=production yarn build:css"
   },
-  "dependencies": {
-    "htmx.org": "^1.5.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.2",
     "@tailwindcss/line-clamp": "^0.2.1",

@@ -5,7 +5,7 @@ use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
 
 pub use self::entries::CatalogConfig;
 use self::entries::CatalogEntry;
-use crate::{template_fn, urls::catalog_fragment_url};
+use crate::template_fn;
 
 mod entries;
 
@@ -72,8 +72,8 @@ impl Catalog {
         render_template(json!({
             "entries": entries,
             "has_more": result.has_more,
-            "url": catalog_fragment_url(&self.parent_collection),
             "next_page_filter": self.filter.get_next_page(),
+            "parent_collection": self.parent_collection,
         }))
     }
 }

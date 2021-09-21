@@ -1,7 +1,4 @@
-import 'htmx.org';
-import 'htmx.org/dist/ext/json-enc.js';
-
-import { copyTextToClipboard, formDataToObj, isEqualFormData } from './utils';
+import { copyTextToClipboard, formDataToObj, isEqualFormData, Obj, replaceEl } from './utils';
 
 type Document = {
   id: string,
@@ -92,6 +89,25 @@ class ArhivUI {
 
       throw e;
     }
+  }
+
+  async render_catalog(filter: Obj, parent_collection = '', el: HTMLElement) {
+    try {
+      const catalog = await call_action({
+        renderCatalog: {
+          parent_collection: parent_collection.trim() || undefined,
+          filter,
+        },
+      });
+
+      replaceEl(el, catalog as string);
+    } catch (e) {
+      console.error(e);
+      alert(e);
+
+      throw e;
+    }
+
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {

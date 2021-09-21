@@ -36,11 +36,7 @@
 <button
   type="button"
   class="btn"
-  hx-post="{{url}}"
-  hx-ext="json-enc"
-  hx-vals="{{ next_page_filter | json_encode() }}"
-  hx-target="this"
-  hx-swap="outerHTML"
+  onclick="arhiv_ui.render_catalog({{ next_page_filter | json_encode() }}, '{{ parent_collection }}', this)"
 >
   Load more
 </button>

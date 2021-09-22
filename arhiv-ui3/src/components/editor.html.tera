@@ -1,9 +1,9 @@
 <form
-  id="document-editor"
   class="form"
   action=""
   method="post"
   autocomplete="off"
+  data-js='window.arhiv_ui.initEditorForm(this, {{document | json_encode()}}, "{{url_on_save | safe}}")'
 >
   {% for field in fields %}
   <label class="block mb-12">
@@ -84,16 +84,3 @@
     </div>
   </div>
 </form>
-
-<script>
-  const editorEl = document.getElementById('document-editor');
-
-  window.arhiv_ui.initEditorForm(
-    editorEl,
-    {{document | json_encode() | safe}},
-    '{{url_on_save | safe}}'
-  );
-
-  editorEl.querySelectorAll('textarea')
-          .forEach(window.arhiv_ui.autoGrowTextarea);
-</script>

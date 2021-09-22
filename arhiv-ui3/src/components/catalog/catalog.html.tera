@@ -1,43 +1,56 @@
-{% if entries | length > 0 %}
-<ul>
-  {% for item in entries %}
-  <li class="py-6 min-h-6rem break-words">
-    <a
-      href="{{item.url}}"
-      class="clean-link"
-    >
-      <h2 class="mb-2 text-lg tracking-wide font-semibold text-blue-800">
-        {{ item.title }}
-      </h2>
-    </a>
+<div>
+  {% if show_search %}
+  <input
+    type="search"
+    name="pattern"
+    class="field w-full mb-8"
+    value="{{pattern}}"
+    placeholder="Search {{document_type}}s"
+    data-js="arhiv_ui.initCatalogSearch(this, '{{document_type}}', '{{parent_collection}}')"
+  />
+  {% endif %}
 
-    {% if item.preview %}
-    <div class="markup-sm preview">
-      {{ item.preview | safe }}
-    </div>
+  <ul>
+    {% for item in entries %}
+    <li class="py-6 min-h-6rem break-words">
+      <a
+        href="{{item.url}}"
+        class="clean-link"
+      >
+        <h2 class="mb-2 text-lg tracking-wide font-semibold text-blue-800">
+          {{ item.title }}
+        </h2>
+      </a>
+
+      {% if item.preview %}
+      <div class="markup-sm preview">
+        {{ item.preview | safe }}
+      </div>
+      {% endif %}
+
+      {% if item.fields | length > 0 %}
+      <div class="px-4">
+        {% for field in item.fields %}
+        <span class="text-gray-500 text-xs font-mono">
+          {{field.0}}:
+        </span>
+        {{field.1}}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+
+    {% if has_more %}
+    <li>
+      <button
+        type="button"
+        class="btn"
+        data-js="arhiv_ui.initCatalogLoadMore(this, {{ next_page_filter | json_encode() }}, '{{ parent_collection }}')"
+      >
+        Load more
+      </button>
+    </li>
     {% endif %}
-
-    {% if item.fields | length > 0 %}
-    <div class="px-4">
-      {% for field in item.fields %}
-      <span class="text-gray-500 text-xs font-mono">
-        {{field.0}}:
-      </span>
-      {{field.1}}
-      {% endfor %}
-    </div>
-    {% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-{% if has_more %}
-<button
-  type="button"
-  class="btn"
-  onclick="arhiv_ui.render_catalog({{ next_page_filter | json_encode() }}, '{{ parent_collection }}', this)"
->
-  Load more
-</button>
-{% endif %}
+  </ul>
+</div>

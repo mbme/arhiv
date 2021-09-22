@@ -33,6 +33,11 @@ pub enum RPCAction {
         parent_collection: Option<Id>,
         filter: Filter,
     },
+    SearchCatalog {
+        parent_collection: Option<Id>,
+        document_type: String,
+        pattern: String,
+    },
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
@@ -89,6 +94,20 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         } => {
             let catalog = Catalog::from_filter(filter)
                 .in_collection(parent_collection)
+                .render(arhiv)?;
+
+            response = Value::String(catalog);
+        }
+
+        RPCAction::SearchCatalog {
+            parent_collection,
+            document_type,
+            pattern,
+        } => {
+            let catalog = Catalog::new()
+                .in_collection(parent_collection)
+                .with_type(document_type)
+                .search(pattern)
                 .render(arhiv)?;
 
             response = Value::String(catalog);

@@ -166,4 +166,26 @@ impl Filter {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn get_pattern(&self) -> Option<&str> {
+        self.matchers.iter().find_map(|matcher| {
+            if let Condition::Search { pattern } = matcher {
+                Some(pattern.as_str())
+            } else {
+                None
+            }
+        })
+    }
+
+    #[must_use]
+    pub fn get_document_type(&self) -> Option<&str> {
+        self.matchers.iter().find_map(|matcher| {
+            if let Condition::Type { document_type } = matcher {
+                Some(document_type.as_str())
+            } else {
+                None
+            }
+        })
+    }
 }

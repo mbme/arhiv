@@ -31,6 +31,52 @@ export function copyTextToClipboard(text: string): void {
   }
 }
 
-export function replaceEl(el: HTMLElement, content: string): void {
-  el.outerHTML = content;
+function selectNodes(content: string, selector: string): NodeListOf<Element> {
+  const domEl = document.createElement('div');
+  domEl.innerHTML = content;
+
+  return domEl.querySelectorAll(selector);
+}
+
+export function replaceEl(el: HTMLElement, content: string, selector: string): void {
+  if (selector.length === 0) {
+    el.outerHTML = content;
+  } else {
+    el.replaceWith(...selectNodes(content, selector));
+  }
+}
+
+export function autoGrowTextarea(textarea: HTMLTextAreaElement): void {
+  const parent = textarea.parentElement;
+  if (!parent) {
+    console.error("Textarea doesn't have a parent element");
+    return;
+  }
+
+  const updateHeight = () => {
+    // preserve height between updates
+    parent.style.height = `${parent.scrollHeight}px`;
+
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+
+    parent.style.height = 'auto';
+  };
+
+  updateHeight();
+
+  textarea.addEventListener('input', updateHeight, { passive: true });
+  window.addEventListener('resize', updateHeight, { passive: true });
+}
+
+export function updateQueryParam(param: string, value: string | undefined): void {
+  const searchParams = new URLSearchParams(window.location.search);
+
+  if (value) {
+    searchParams.set(param, value);
+  } else {
+    searchParams.delete(param);
+  }
+
+  window.history.replaceState({}, '', '?' + searchParams.toString());
 }

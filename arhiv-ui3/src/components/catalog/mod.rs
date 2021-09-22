@@ -16,22 +16,19 @@ const PAGE_SIZE: u8 = 20;
 pub struct Catalog {
     filter: Filter,
     parent_collection: Option<Id>,
+    show_search: bool,
 }
 
 impl Catalog {
-    pub fn new(document_type: impl Into<String>, pattern: impl Into<String>) -> Self {
-        let document_type = document_type.into();
-        let pattern = pattern.into();
-
+    pub fn new() -> Self {
         let filter = Filter::default()
-            .with_type(&document_type)
             .page_size(PAGE_SIZE)
-            .search(&pattern)
             .recently_updated_first();
 
         Catalog {
             filter,
             parent_collection: None,
+            show_search: false,
         }
     }
 
@@ -39,11 +36,24 @@ impl Catalog {
         Catalog {
             filter,
             parent_collection: None,
+            show_search: false,
         }
     }
 
-    pub fn on_page(mut self, page: u8) -> Self {
-        self.filter.page_offset = Some(PAGE_SIZE * page);
+    pub fn with_type(mut self, document_type: impl AsRef<str>) -> Self {
+        self.filter = self.filter.with_type(document_type.as_ref());
+
+        self
+    }
+
+    pub fn search(mut self, pattern: impl AsRef<str>) -> Self {
+        self.filter = self.filter.search(pattern.as_ref());
+
+        self
+    }
+
+    pub fn show_search(mut self, show_search: bool) -> Self {
+        self.show_search = show_search;
 
         self
     }
@@ -70,10 +80,13 @@ impl Catalog {
             .collect::<Result<Vec<_>>>()?;
 
         render_template(json!({
+            "show_search": self.show_search,
+            "parent_collection": self.parent_collection,
+            "pattern": self.filter.get_pattern().unwrap_or_default(),
+            "document_type": self.filter.get_document_type().unwrap_or_default(),
             "entries": entries,
             "has_more": result.has_more,
             "next_page_filter": self.filter.get_next_page(),
-            "parent_collection": self.parent_collection,
         }))
     }
 }

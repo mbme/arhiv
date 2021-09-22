@@ -4,13 +4,14 @@ use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
+use arhiv_core::{entities::*, Arhiv};
+use rs_utils::server::{RequestQueryExt, ServerResponse};
+
 use crate::{
     components::{Breadcrumb, Catalog, Toolbar},
     pages::base::render_page,
     template_fn,
 };
-use arhiv_core::{entities::*, Arhiv};
-use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 template_fn!(render_template, "./catalog_page.html.tera");
 
@@ -27,13 +28,11 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
     let pattern = req.get_query_param("pattern").unwrap_or_default();
-    let page: u8 = req
-        .get_query_param("page")
-        .and_then(|page| page.parse().ok())
-        .unwrap_or_default();
 
-    let catalog = Catalog::new(document_type, pattern)
-        .on_page(page)
+    let catalog = Catalog::new()
+        .show_search(true)
+        .search(pattern)
+        .with_type(document_type)
         .render(arhiv)?;
 
     let mut toolbar = Toolbar::new(None)

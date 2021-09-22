@@ -1,4 +1,13 @@
-import { copyTextToClipboard, formDataToObj, isEqualFormData, Obj, replaceEl } from './utils';
+import {
+  autoGrowTextarea,
+  copyTextToClipboard,
+  formDataToObj,
+  isEqualFormData,
+  Obj,
+  replaceEl,
+  updateQueryParam,
+} from './utils';
+import { initDataJS } from './data-js';
 
 type Document = {
   id: string,
@@ -70,7 +79,7 @@ class ArhivUI {
     }
   }
 
-  async render_catalog(filter: Obj, parent_collection = '', el: HTMLElement) {
+  async render_catalog(filter: Obj, parent_collection = ''): Promise<string> {
     const catalog = await call_action({
       renderCatalog: {
         parent_collection: parent_collection.trim() || undefined,
@@ -78,7 +87,19 @@ class ArhivUI {
       },
     });
 
-    replaceEl(el, catalog as string);
+    return catalog as string;
+  }
+
+  async search_catalog(document_type: string, pattern: string, parent_collection = ''): Promise<string> {
+    const catalog = await call_action({
+      searchCatalog: {
+        parent_collection: parent_collection.trim() || undefined,
+        document_type,
+        pattern,
+      },
+    });
+
+    return catalog as string;
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {
@@ -109,31 +130,38 @@ class ArhivUI {
         window.location.assign(urlOnSave);
       });
     });
+
+    form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   }
 
-  autoGrowTextarea = (textarea: HTMLTextAreaElement) => {
-    const parent = textarea.parentElement;
-    if (!parent) {
-      console.error("Textarea doesn't have a parent element");
-      return;
-    }
+  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parent_collection = '') => {
+    button.addEventListener('click', async () => {
+      const catalog = await window.arhiv_ui.render_catalog(filter, parent_collection);
 
-    const updateHeight = () => {
-      // preserve height between updates
-      parent.style.height = `${parent.scrollHeight}px`;
+      if (!button.parentElement) {
+        throw new Error("button doesn't have a parent");
+      }
 
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-
-      parent.style.height = 'auto';
-    };
-
-    updateHeight();
-
-    textarea.addEventListener('input', updateHeight, { passive: true });
-    window.addEventListener('resize', updateHeight, { passive: true });
+      replaceEl(button.parentElement, catalog, 'ul > li');
+    });
   }
 
+  initCatalogSearch = (input: HTMLInputElement, document_type: string, parent_collection = '') => {
+    input.addEventListener('change', async () => {
+      const pattern = input.value;
+
+      updateQueryParam('pattern', pattern);
+
+      const catalog = await window.arhiv_ui.search_catalog(document_type, pattern, parent_collection);
+
+      const listEl = input.parentElement?.querySelector('ul');
+      if (!listEl) {
+        throw new Error('cannot find list element');
+      }
+
+      replaceEl(listEl, catalog, 'ul');
+    });
+  }
 }
 
 declare global {
@@ -143,3 +171,7 @@ declare global {
 }
 
 window.arhiv_ui = new ArhivUI();
+
+window.addEventListener('DOMContentLoaded', () => {
+  initDataJS(true);
+});

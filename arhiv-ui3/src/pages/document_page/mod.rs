@@ -34,8 +34,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
-    let pattern = req.get_query_param("pattern").unwrap_or_default();
-
     let data_description = arhiv
         .get_schema()
         .get_data_description(&document.document_type)?;
@@ -53,7 +51,12 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         field,
     } = data_description.collection_of
     {
-        let catalog = Catalog::new(item_type, pattern)
+        let pattern = req.get_query_param("pattern").unwrap_or_default();
+
+        let catalog = Catalog::new()
+            .search(pattern)
+            .show_search(true)
+            .with_type(item_type)
             .with_matcher(Condition::Field {
                 field: field.to_string(),
                 pattern: document.id.to_string(),

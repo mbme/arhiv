@@ -1,9 +1,11 @@
 import {
   autoGrowTextarea,
+  call_action,
   copyTextToClipboard,
   formDataToObj,
   isEqualFormData,
   Obj,
+  renderModal,
   replaceEl,
   updateQueryParam,
 } from './utils';
@@ -13,30 +15,6 @@ type Document = {
   id: string,
   data: Record<string, string | undefined>,
 };
-
-async function call_action(action: Record<string, unknown>): Promise<unknown> {
-  try {
-    const response = await fetch('/rpc', {
-      method: 'POST',
-      cache: 'no-cache',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(action),
-    });
-
-    if (!response.ok) {
-      throw new Error(`action failed: ${response.status}`);
-    }
-
-    return response.json();
-  } catch (e) {
-    console.error(e);
-    alert(e);
-
-    throw e;
-  }
-}
 
 class ArhivUI {
   go_back(fallback = '/') {
@@ -51,14 +29,16 @@ class ArhivUI {
     await call_action({
       delete: { id }
     });
+
     window.location.assign(urlOnDelete);
   }
 
-  async archive_document(id: string, archive: boolean, url: string) {
+  async archive_document(id: string, archive: boolean) {
     await call_action({
       archive: { id, archive }
     });
-    window.location.assign(url);
+
+    window.location.reload();
   }
 
   async save_document(document: Document) {
@@ -102,6 +82,25 @@ class ArhivUI {
     return catalog as string;
   }
 
+  async render_archive_document_confirmation_dialog(id: string) {
+    const dialog = await call_action({
+      renderArchiveDocumentConfirmationDialog: { id },
+    });
+
+    renderModal(dialog as string);
+  }
+
+  async render_delete_document_confirmation_dialog(id: string, parent_collection = '') {
+    const dialog = await call_action({
+      renderDeleteDocumentConfirmationDialog: {
+        id,
+        parent_collection: parent_collection || undefined,
+      },
+    });
+
+    renderModal(dialog as string);
+  }
+
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {
     const initialFormData = new FormData(form);
 
@@ -136,7 +135,7 @@ class ArhivUI {
 
   initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parent_collection = '') => {
     button.addEventListener('click', async () => {
-      const catalog = await window.arhiv_ui.render_catalog(filter, parent_collection);
+      const catalog = await this.render_catalog(filter, parent_collection);
 
       if (!button.parentElement) {
         throw new Error("button doesn't have a parent");
@@ -152,7 +151,7 @@ class ArhivUI {
 
       updateQueryParam('pattern', pattern);
 
-      const catalog = await window.arhiv_ui.search_catalog(document_type, pattern, parent_collection);
+      const catalog = await this.search_catalog(document_type, pattern, parent_collection);
 
       const listEl = input.parentElement?.querySelector('ul');
       if (!listEl) {

@@ -10,7 +10,6 @@ use crate::{
     components::{Breadcrumb, Catalog, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
-    urls::{document_archive_url, document_delete_url},
 };
 use fields::prepare_fields;
 
@@ -114,8 +113,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "document": document,
         "is_internal_type": data_description.is_internal,
         "children_catalog": children_catalog,
-        "archive_url": document_archive_url(&id, &collection_id),
-        "delete_url": document_delete_url(&id, &collection_id),
+        "collection_id": collection_id,
     }))?;
 
     render_page(content, arhiv)

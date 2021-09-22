@@ -1,0 +1,6 @@
+mod archive_document_confirmation_dialog;
+mod delete_document_confirmation_dialog;
+mod modal;
+
+pub use archive_document_confirmation_dialog::render_archive_document_confirmation_dialog;
+pub use delete_document_confirmation_dialog::render_delete_document_confirmation_dialog;

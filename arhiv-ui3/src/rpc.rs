@@ -13,7 +13,10 @@ use rs_utils::{
     server::{json_response, ServerResponse},
 };
 
-use crate::components::Catalog;
+use crate::components::{
+    render_archive_document_confirmation_dialog, render_delete_document_confirmation_dialog,
+    Catalog,
+};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,6 +40,13 @@ pub enum RPCAction {
         parent_collection: Option<Id>,
         document_type: String,
         pattern: String,
+    },
+    RenderArchiveDocumentConfirmationDialog {
+        id: Id,
+    },
+    RenderDeleteDocumentConfirmationDialog {
+        id: Id,
+        parent_collection: Option<Id>,
     },
 }
 
@@ -111,6 +121,21 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
                 .render(arhiv)?;
 
             response = Value::String(catalog);
+        }
+
+        RPCAction::RenderArchiveDocumentConfirmationDialog { id } => {
+            let dialog = render_archive_document_confirmation_dialog(id, arhiv)?;
+
+            response = Value::String(dialog);
+        }
+
+        RPCAction::RenderDeleteDocumentConfirmationDialog {
+            id,
+            parent_collection,
+        } => {
+            let dialog = render_delete_document_confirmation_dialog(id, parent_collection, arhiv)?;
+
+            response = Value::String(dialog);
         }
     }
 

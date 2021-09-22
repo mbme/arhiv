@@ -14,7 +14,9 @@
     "prod:build:js": "NODE_ENV=production yarn build:js",
     "prod:build:css": "NODE_ENV=production yarn build:css"
   },
-  "dependencies": {},
+  "dependencies": {
+    "a11y-dialog": "^7.3.0"
+  },
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.2",
     "@tailwindcss/line-clamp": "^0.2.1",

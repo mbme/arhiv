@@ -13,14 +13,6 @@ pub fn document_editor_url(id: &Id, parent_collection: &Option<Id>) -> String {
     document_url(id, parent_collection) + "/edit"
 }
 
-pub fn document_archive_url(id: &Id, parent_collection: &Option<Id>) -> String {
-    document_url(id, parent_collection) + "/archive"
-}
-
-pub fn document_delete_url(id: &Id, parent_collection: &Option<Id>) -> String {
-    document_url(id, parent_collection) + "/delete"
-}
-
 pub enum NewDocumentUrl<'a> {
     Document(&'a str),
     CollectionItem(&'a str, &'a str, &'a Id),

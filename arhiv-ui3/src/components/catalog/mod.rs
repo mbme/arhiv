@@ -4,10 +4,11 @@ use serde_json::json;
 use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
 
 pub use self::entries::CatalogConfig;
-use self::entries::CatalogEntry;
+use self::{entries::CatalogEntry, search::CatalogSearch};
 use crate::template_fn;
 
 mod entries;
+mod search;
 
 template_fn!(render_template, "./catalog.html.tera");
 
@@ -16,7 +17,7 @@ const PAGE_SIZE: u8 = 20;
 pub struct Catalog {
     filter: Filter,
     parent_collection: Option<Id>,
-    show_search: bool,
+    search: Option<CatalogSearch>,
 }
 
 impl Catalog {
@@ -28,7 +29,7 @@ impl Catalog {
         Catalog {
             filter,
             parent_collection: None,
-            show_search: false,
+            search: None,
         }
     }
 
@@ -36,7 +37,7 @@ impl Catalog {
         Catalog {
             filter,
             parent_collection: None,
-            show_search: false,
+            search: None,
         }
     }
 
@@ -52,8 +53,8 @@ impl Catalog {
         self
     }
 
-    pub fn show_search(mut self, show_search: bool) -> Self {
-        self.show_search = show_search;
+    pub fn show_search(mut self, query_param: Option<&'static str>) -> Self {
+        self.search = Some(CatalogSearch { query_param });
 
         self
     }
@@ -73,6 +74,15 @@ impl Catalog {
     pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let result = arhiv.list_documents(&self.filter)?;
 
+        let pattern = self.filter.get_pattern().unwrap_or_default();
+        let document_type = self.filter.get_document_type();
+
+        let search = self
+            .search
+            .as_ref()
+            .map(|search| search.render(pattern, document_type, &self.parent_collection))
+            .transpose()?;
+
         let entries = result
             .items
             .into_iter()
@@ -80,10 +90,8 @@ impl Catalog {
             .collect::<Result<Vec<_>>>()?;
 
         render_template(json!({
-            "show_search": self.show_search,
+            "search": search,
             "parent_collection": self.parent_collection,
-            "pattern": self.filter.get_pattern().unwrap_or_default(),
-            "document_type": self.filter.get_document_type().unwrap_or_default(),
             "entries": entries,
             "has_more": result.has_more,
             "next_page_filter": self.filter.get_next_page(),

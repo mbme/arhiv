@@ -54,7 +54,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
         let catalog = Catalog::new()
             .search(pattern)
-            .show_search(true)
+            .show_search(Some("pattern"))
             .with_type(item_type)
             .with_matcher(Condition::Field {
                 field: field.to_string(),

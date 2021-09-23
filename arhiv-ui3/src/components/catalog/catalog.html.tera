@@ -1,14 +1,5 @@
 <div>
-  {% if show_search %}
-  <input
-    type="search"
-    name="pattern"
-    class="field w-full mb-8"
-    value="{{pattern}}"
-    placeholder="Search {{document_type}}s"
-    data-js="arhiv_ui.initCatalogSearch(this, '{{document_type}}', '{{parent_collection}}')"
-  />
-  {% endif %}
+  {{ search | safe }}
 
   <ul>
     {% for item in entries %}

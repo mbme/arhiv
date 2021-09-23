@@ -70,11 +70,11 @@ class ArhivUI {
     return catalog as string;
   }
 
-  async search_catalog(document_type = '', pattern: string, parentCollection = ''): Promise<string> {
+  async search_catalog(documentType = '', pattern: string, parentCollection = ''): Promise<string> {
     const catalog = await call_action({
       searchCatalog: {
         parent_collection: parentCollection || undefined,
-        document_type: document_type || undefined,
+        document_type: documentType || undefined,
         pattern,
       },
     });
@@ -153,13 +153,15 @@ class ArhivUI {
     });
   }
 
-  initCatalogSearch = (input: HTMLInputElement, document_type = '', parentCollection = '') => {
+  initCatalogSearch = (input: HTMLInputElement, documentType = '', parentCollection = '', queryParam = '') => {
     input.addEventListener('change', async () => {
       const pattern = input.value;
 
-      updateQueryParam('pattern', pattern);
+      if (queryParam) {
+        updateQueryParam('pattern', pattern);
+      }
 
-      const catalog = await this.search_catalog(document_type, pattern, parentCollection);
+      const catalog = await this.search_catalog(documentType, pattern, parentCollection);
 
       const listEl = input.parentElement?.querySelector('ul');
       if (!listEl) {

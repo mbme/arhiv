@@ -30,7 +30,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let pattern = req.get_query_param("pattern").unwrap_or_default();
 
     let catalog = Catalog::new()
-        .show_search(true)
+        .show_search(Some("pattern"))
         .search(pattern)
         .with_type(document_type)
         .render(arhiv)?;

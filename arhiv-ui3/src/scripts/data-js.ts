@@ -19,9 +19,20 @@ function evalDataJS(el: Element): boolean {
   }
 }
 
-export function initDataJS(observeChanges = false): void {
+function processElements(): number {
+  let nodesProcessed = 0;
+
   for (const el of document.querySelectorAll('[data-js]')) {
-    evalDataJS(el);
+    nodesProcessed += evalDataJS(el) ? 1 : 0;
+  }
+
+  return nodesProcessed;
+}
+
+export function initDataJS(observeChanges = false): void {
+  {
+    const nodesProcessed = processElements();
+    console.debug('[data-js]: processed %s nodes on init', nodesProcessed);
   }
 
   if (!observeChanges) {
@@ -29,13 +40,15 @@ export function initDataJS(observeChanges = false): void {
   }
 
   const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          evalDataJS(node as Element);
-        }
-      }
+    const hasNewNodes = mutations.find(mutation => mutation.addedNodes.length > 0);
+
+    if (!hasNewNodes) {
+      return;
     }
+
+    const nodesProcessed = processElements();
+
+    console.debug('[data-js]: processed %s nodes on dom mutation', nodesProcessed);
   });
 
   observer.observe(document.body, {

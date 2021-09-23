@@ -11,12 +11,12 @@ template_fn!(
 );
 
 pub fn render_delete_document_confirmation_dialog(
-    id: Id,
-    parent_collection: Option<Id>,
+    id: &Id,
+    parent_collection: &Option<Id>,
     arhiv: &Arhiv,
 ) -> Result<String> {
     let document = arhiv
-        .get_document(&id)?
+        .get_document(id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
     let document_title = arhiv.get_schema().get_title(&document)?;
@@ -24,7 +24,7 @@ pub fn render_delete_document_confirmation_dialog(
     let content = render_template(json!({
         "document": document,
         "title": document_title,
-        "confirm_url": parent_collection_url(&document.document_type, &parent_collection),
+        "confirm_url": parent_collection_url(&document.document_type, parent_collection),
     }))?;
 
     let modal_title = format!("Delete {}", &document.document_type);

@@ -123,15 +123,15 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             response = Value::String(catalog);
         }
 
-        RPCAction::RenderArchiveDocumentConfirmationDialog { id } => {
+        RPCAction::RenderArchiveDocumentConfirmationDialog { ref id } => {
             let dialog = render_archive_document_confirmation_dialog(id, arhiv)?;
 
             response = Value::String(dialog);
         }
 
         RPCAction::RenderDeleteDocumentConfirmationDialog {
-            id,
-            parent_collection,
+            ref id,
+            ref parent_collection,
         } => {
             let dialog = render_delete_document_confirmation_dialog(id, parent_collection, arhiv)?;
 

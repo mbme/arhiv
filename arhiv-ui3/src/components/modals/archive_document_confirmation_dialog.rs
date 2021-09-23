@@ -10,9 +10,9 @@ template_fn!(
     "./archive_document_confirmation_dialog.html.tera"
 );
 
-pub fn render_archive_document_confirmation_dialog(id: Id, arhiv: &Arhiv) -> Result<String> {
+pub fn render_archive_document_confirmation_dialog(id: &Id, arhiv: &Arhiv) -> Result<String> {
     let document = arhiv
-        .get_document(&id)?
+        .get_document(id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
     let document_title = arhiv.get_schema().get_title(&document)?;

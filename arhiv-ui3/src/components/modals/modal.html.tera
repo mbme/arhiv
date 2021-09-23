@@ -2,7 +2,7 @@
   id="{{dialog_id}}"
   aria-labelledby="{{dialog_id}}-title"
   aria-hidden="true"
-  class="fixed inset-0 z-10 flex flex-col items-center bg-yellow-100 bg-opacity-90 max-h-screen overflow-y-auto pt-6"
+  class="fixed inset-0 z-10 flex flex-col items-center bg-green-100 max-h-screen overflow-y-auto pt-6"
 >
   <div
     data-a11y-dialog-hide

@@ -20,9 +20,9 @@
       {% endif %}
 
       {% if item.fields | length > 0 %}
-      <div class="px-4">
+      <div class="space-x-4 text-xs font-mono">
         {% for field in item.fields %}
-        <span class="text-gray-500 text-xs font-mono">
+        <span class="text-gray-500">
           {{field.0}}:
         </span>
         {{field.1}}

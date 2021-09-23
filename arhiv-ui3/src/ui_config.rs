@@ -5,7 +5,7 @@ pub fn get_catalog_config(document_type: impl AsRef<str>) -> CatalogConfig {
 
     if document_type == "book" {
         return CatalogConfig {
-            fields: vec!["authors"],
+            fields: vec!["authors", "rating"],
             preview: None,
         };
     }
@@ -13,6 +13,13 @@ pub fn get_catalog_config(document_type: impl AsRef<str>) -> CatalogConfig {
     if document_type == "task" {
         return CatalogConfig {
             fields: vec!["status"],
+            preview: None,
+        };
+    }
+
+    if document_type == "film" {
+        return CatalogConfig {
+            fields: vec!["duration", "release_date", "rating"],
             preview: None,
         };
     }

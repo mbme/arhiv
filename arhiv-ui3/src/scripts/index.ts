@@ -62,7 +62,7 @@ class ArhivUI {
   async render_catalog(filter: Obj, parent_collection = ''): Promise<string> {
     const catalog = await call_action({
       renderCatalog: {
-        parent_collection: parent_collection.trim() || undefined,
+        parent_collection: parent_collection || undefined,
         filter,
       },
     });
@@ -70,11 +70,11 @@ class ArhivUI {
     return catalog as string;
   }
 
-  async search_catalog(document_type: string, pattern: string, parent_collection = ''): Promise<string> {
+  async search_catalog(document_type = '', pattern: string, parent_collection = ''): Promise<string> {
     const catalog = await call_action({
       searchCatalog: {
-        parent_collection: parent_collection.trim() || undefined,
-        document_type,
+        parent_collection: parent_collection || undefined,
+        document_type: document_type || undefined,
         pattern,
       },
     });
@@ -96,6 +96,14 @@ class ArhivUI {
         id,
         parent_collection: parent_collection || undefined,
       },
+    });
+
+    renderModal(dialog as string);
+  }
+
+  async render_pick_document_modal() {
+    const dialog = await call_action({
+      renderPickDocumentModal: {},
     });
 
     renderModal(dialog as string);
@@ -145,7 +153,7 @@ class ArhivUI {
     });
   }
 
-  initCatalogSearch = (input: HTMLInputElement, document_type: string, parent_collection = '') => {
+  initCatalogSearch = (input: HTMLInputElement, document_type = '', parent_collection = '') => {
     input.addEventListener('change', async () => {
       const pattern = input.value;
 

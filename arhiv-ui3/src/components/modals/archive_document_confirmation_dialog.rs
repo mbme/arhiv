@@ -32,5 +32,6 @@ pub fn render_archive_document_confirmation_dialog(id: &Id, arhiv: &Arhiv) -> Re
         "archive-document-confirmation-dialog",
         &modal_title,
         &content,
+        true,
     )
 }

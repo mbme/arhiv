@@ -15,7 +15,7 @@ use rs_utils::{
 
 use crate::components::{
     render_archive_document_confirmation_dialog, render_delete_document_confirmation_dialog,
-    Catalog,
+    render_pick_document_modal, Catalog,
 };
 
 #[derive(Deserialize)]
@@ -38,7 +38,7 @@ pub enum RPCAction {
     },
     SearchCatalog {
         parent_collection: Option<Id>,
-        document_type: String,
+        document_type: Option<String>,
         pattern: String,
     },
     RenderArchiveDocumentConfirmationDialog {
@@ -48,6 +48,7 @@ pub enum RPCAction {
         id: Id,
         parent_collection: Option<Id>,
     },
+    RenderPickDocumentModal {},
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
@@ -114,11 +115,15 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             document_type,
             pattern,
         } => {
-            let catalog = Catalog::new()
+            let mut catalog = Catalog::new()
                 .in_collection(parent_collection)
-                .with_type(document_type)
-                .search(pattern)
-                .render(arhiv)?;
+                .search(pattern);
+
+            if let Some(document_type) = document_type {
+                catalog = catalog.with_type(document_type);
+            }
+
+            let catalog = catalog.render(arhiv)?;
 
             response = Value::String(catalog);
         }
@@ -134,6 +139,12 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             ref parent_collection,
         } => {
             let dialog = render_delete_document_confirmation_dialog(id, parent_collection, arhiv)?;
+
+            response = Value::String(dialog);
+        }
+
+        RPCAction::RenderPickDocumentModal {} => {
+            let dialog = render_pick_document_modal(arhiv)?;
 
             response = Value::String(dialog);
         }

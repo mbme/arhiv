@@ -33,5 +33,6 @@ pub fn render_delete_document_confirmation_dialog(
         "delete-document-confirmation-dialog",
         &modal_title,
         &content,
+        true,
     )
 }

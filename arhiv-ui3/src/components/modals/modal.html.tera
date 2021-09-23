@@ -2,16 +2,20 @@
   id="{{dialog_id}}"
   aria-labelledby="{{dialog_id}}-title"
   aria-hidden="true"
-  class="fixed inset-0 z-10 flex flex-col items-center pt-32 bg-yellow-100 bg-opacity-90"
+  class="fixed inset-0 z-10 flex flex-col items-center bg-yellow-100 bg-opacity-90 max-h-screen overflow-y-auto pt-6"
 >
   <div
     data-a11y-dialog-hide
     class="fixed inset-0"
   ></div>
 
+  {% if with_spacer %}
+  <div class="h-1/4 flex-initial">&nbsp;</div>
+  {% endif %}
+
   <div
     role="document"
-    class="z-10 relative rounded-md shadow-lg var-bg-color var-max-width"
+    class="z-10 relative rounded-md shadow-lg var-bg-color w-[var(--content-width)] max-w-full"
   >
     <button
       type="button"

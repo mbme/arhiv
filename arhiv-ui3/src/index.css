@@ -24,7 +24,7 @@ html, body {
   text-rendering: optimizeLegibility;
   @apply antialiased;
 
-  --max-width: 45rem;
+  --content-width: 45rem;
   --bg-color: #fff;
 
   @apply bg-yellow-100;
@@ -57,7 +57,7 @@ body {
 
 main {
   width: 100%;
-  max-width: var(--max-width);
+  max-width: var(--content-width);
   @apply my-4 lg:mr-4 flex flex-col;
 
   & > article {
@@ -213,9 +213,5 @@ a:not(.clean-link) {
 
   .var-bg-color {
     background-color: var(--bg-color);
-  }
-
-  .var-max-width {
-    max-width: var(--max-width);
   }
 }

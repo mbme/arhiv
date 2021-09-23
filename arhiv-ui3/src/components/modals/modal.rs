@@ -5,10 +5,16 @@ use crate::template_fn;
 
 template_fn!(render_template, "./modal.html.tera");
 
-pub fn render_modal(dialog_id: &str, title: &str, content: &str) -> Result<String> {
+pub fn render_modal(
+    dialog_id: &str,
+    title: &str,
+    content: &str,
+    with_spacer: bool,
+) -> Result<String> {
     render_template(json!({
         "dialog_id": dialog_id,
         "title": title,
+        "with_spacer": with_spacer,
         "content": content,
     }))
 }

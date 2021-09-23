@@ -42,10 +42,10 @@
     {% endfor %}
 
     {% if has_more %}
-    <li>
+    <li class="border-t-2 border-dashed py-6">
       <button
         type="button"
-        class="btn"
+        class="text-blue-800 font-semibold block mx-auto"
         data-js="arhiv_ui.initCatalogLoadMore(this, {{ next_page_filter | json_encode() }}, '{{ parent_collection }}')"
       >
         Load more

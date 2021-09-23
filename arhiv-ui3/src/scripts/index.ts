@@ -59,10 +59,10 @@ class ArhivUI {
     }
   }
 
-  async render_catalog(filter: Obj, parent_collection = ''): Promise<string> {
+  async render_catalog(filter: Obj, parentCollection = ''): Promise<string> {
     const catalog = await call_action({
       renderCatalog: {
-        parent_collection: parent_collection || undefined,
+        parent_collection: parentCollection || undefined,
         filter,
       },
     });
@@ -70,10 +70,10 @@ class ArhivUI {
     return catalog as string;
   }
 
-  async search_catalog(document_type = '', pattern: string, parent_collection = ''): Promise<string> {
+  async search_catalog(document_type = '', pattern: string, parentCollection = ''): Promise<string> {
     const catalog = await call_action({
       searchCatalog: {
-        parent_collection: parent_collection || undefined,
+        parent_collection: parentCollection || undefined,
         document_type: document_type || undefined,
         pattern,
       },
@@ -90,11 +90,11 @@ class ArhivUI {
     renderModal(dialog as string);
   }
 
-  async render_delete_document_confirmation_dialog(id: string, parent_collection = '') {
+  async render_delete_document_confirmation_dialog(id: string, parentCollection = '') {
     const dialog = await call_action({
       renderDeleteDocumentConfirmationDialog: {
         id,
-        parent_collection: parent_collection || undefined,
+        parent_collection: parentCollection || undefined,
       },
     });
 
@@ -141,9 +141,9 @@ class ArhivUI {
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   }
 
-  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parent_collection = '') => {
+  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '') => {
     button.addEventListener('click', async () => {
-      const catalog = await this.render_catalog(filter, parent_collection);
+      const catalog = await this.render_catalog(filter, parentCollection);
 
       if (!button.parentElement) {
         throw new Error("button doesn't have a parent");
@@ -153,13 +153,13 @@ class ArhivUI {
     });
   }
 
-  initCatalogSearch = (input: HTMLInputElement, document_type = '', parent_collection = '') => {
+  initCatalogSearch = (input: HTMLInputElement, document_type = '', parentCollection = '') => {
     input.addEventListener('change', async () => {
       const pattern = input.value;
 
       updateQueryParam('pattern', pattern);
 
-      const catalog = await this.search_catalog(document_type, pattern, parent_collection);
+      const catalog = await this.search_catalog(document_type, pattern, parentCollection);
 
       const listEl = input.parentElement?.querySelector('ul');
       if (!listEl) {

@@ -1,7 +1,6 @@
 import {
   autoGrowTextarea,
   call_action,
-  copyTextToClipboard,
   formDataToObj,
   isEqualFormData,
   Obj,
@@ -10,6 +9,7 @@ import {
 } from './utils';
 import { initDataJS } from './data-js';
 import { dispatchCloseModalEvent, renderModal } from './modal';
+import { copyTextToClipboard } from './clipboard';
 
 type Document = {
   id: string,
@@ -57,7 +57,8 @@ class ArhivUI {
     }
 
     console.log('Selected attachment', id);
-    copyTextToClipboard(id);
+
+    return copyTextToClipboard(id, 'attachment id');
   }
 
   async render_catalog(filter: Obj, parentCollection = '', pickerMode: boolean): Promise<string> {
@@ -190,8 +191,10 @@ class ArhivUI {
       }
 
       console.log('Selected document', id);
-      copyTextToClipboard(id);
+
       dispatchCloseModalEvent(container);
+
+      void copyTextToClipboard(id, 'selected document id');
     });
   }
 }

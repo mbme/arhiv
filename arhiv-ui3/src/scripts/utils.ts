@@ -45,20 +45,6 @@ export function isEqualFormData(fd1: FormData, fd2: FormData): boolean {
   return JSON.stringify(fd1Obj) === JSON.stringify(fd2Obj);
 }
 
-export function copyTextToClipboard(text: string): void {
-  const writeText = () => {
-    navigator.clipboard.writeText(text).catch((e) => {
-      console.error('failed to copy text to clipboard', e);
-    });
-  };
-
-  if (document.hasFocus()) {
-    writeText();
-  } else {
-    window.addEventListener('focus', writeText, { once: true });
-  }
-}
-
 function selectNodes(content: string, selector: string): NodeListOf<Element> {
   const domEl = document.createElement('div');
   domEl.innerHTML = content;

@@ -32,6 +32,8 @@
 
     <div id="modal-root"></div>
 
+    <div id="notification-root"></div>
+
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
       <symbol
         id="icon-document-add"

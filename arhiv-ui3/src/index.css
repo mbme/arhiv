@@ -58,6 +58,7 @@ body {
 main {
   width: 100%;
   max-width: var(--content-width);
+  z-index: 1;
   @apply my-4 lg:mr-4 flex flex-col;
 
   & > article {
@@ -197,6 +198,24 @@ a:not(.clean-link) {
   .modal-buttons {
     @apply flex justify-end bg-gray-50 rounded-b-md;
     @apply p-2 sm:p-4 md:px-6;
+  }
+
+  #notification-root {
+    z-index: 1;
+
+    @apply fixed top-4 right-4 w-64 space-y-2;
+  }
+
+  #notification-root > div {
+    @apply rounded-md shadow-lg px-4 py-2 cursor-default;
+  }
+
+  #notification-root > div[data-info] {
+    @apply bg-green-400;
+  }
+
+  #notification-root > div[data-error] {
+    @apply bg-red-400;
   }
 }
 

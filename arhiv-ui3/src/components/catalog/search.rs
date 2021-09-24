@@ -17,6 +17,7 @@ impl CatalogSearch {
         pattern: &str,
         document_type: Option<&str>,
         parent_collection: &Option<Id>,
+        picker_mode: bool,
     ) -> Result<String> {
         let placeholder = format!("Search {}s", document_type.unwrap_or("document"));
 
@@ -26,6 +27,7 @@ impl CatalogSearch {
             "placeholder": placeholder,
             "document_type": document_type,
             "parent_collection": parent_collection,
+            "picker_mode": picker_mode,
         }))
     }
 }

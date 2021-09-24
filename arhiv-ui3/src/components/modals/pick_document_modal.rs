@@ -11,7 +11,10 @@ use crate::{
 template_fn!(render_template, "./pick_document_modal.html.tera");
 
 pub fn render_pick_document_modal(arhiv: &Arhiv) -> Result<String> {
-    let catalog = Catalog::new().show_search(None).render(arhiv)?;
+    let catalog = Catalog::new()
+        .show_search(None)
+        .picker_mode()
+        .render(arhiv)?;
 
     let content = render_template(json!({
         "catalog": catalog,

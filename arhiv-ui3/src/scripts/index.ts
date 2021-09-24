@@ -5,11 +5,11 @@ import {
   formDataToObj,
   isEqualFormData,
   Obj,
-  renderModal,
   replaceEl,
   updateQueryParam,
 } from './utils';
 import { initDataJS } from './data-js';
+import { dispatchCloseModalEvent, renderModal } from './modal';
 
 type Document = {
   id: string,
@@ -52,30 +52,33 @@ class ArhivUI {
       pickAttachment: { }
     }) as string;
 
-    if (id) {
-      console.log('Selected attachment', id);
-
-      copyTextToClipboard(id);
+    if (!id) {
+      return;
     }
+
+    console.log('Selected attachment', id);
+    copyTextToClipboard(id);
   }
 
-  async render_catalog(filter: Obj, parentCollection = ''): Promise<string> {
+  async render_catalog(filter: Obj, parentCollection = '', pickerMode: boolean): Promise<string> {
     const catalog = await call_action({
       renderCatalog: {
         parent_collection: parentCollection || undefined,
         filter,
+        picker_mode: pickerMode,
       },
     });
 
     return catalog as string;
   }
 
-  async search_catalog(documentType = '', pattern: string, parentCollection = ''): Promise<string> {
+  async search_catalog(documentType = '', pattern: string, parentCollection = '', pickerMode: boolean): Promise<string> {
     const catalog = await call_action({
       searchCatalog: {
         parent_collection: parentCollection || undefined,
         document_type: documentType || undefined,
         pattern,
+        picker_mode: pickerMode,
       },
     });
 
@@ -141,9 +144,9 @@ class ArhivUI {
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   }
 
-  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '') => {
+  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '', pickerMode: boolean) => {
     button.addEventListener('click', async () => {
-      const catalog = await this.render_catalog(filter, parentCollection);
+      const catalog = await this.render_catalog(filter, parentCollection, pickerMode);
 
       if (!button.parentElement) {
         throw new Error("button doesn't have a parent");
@@ -153,7 +156,7 @@ class ArhivUI {
     });
   }
 
-  initCatalogSearch = (input: HTMLInputElement, documentType = '', parentCollection = '', queryParam = '') => {
+  initCatalogSearch = (input: HTMLInputElement, documentType = '', parentCollection = '', pickerMode: boolean, queryParam = '') => {
     input.addEventListener('change', async () => {
       const pattern = input.value;
 
@@ -161,7 +164,7 @@ class ArhivUI {
         updateQueryParam('pattern', pattern);
       }
 
-      const catalog = await this.search_catalog(documentType, pattern, parentCollection);
+      const catalog = await this.search_catalog(documentType, pattern, parentCollection, pickerMode);
 
       const listEl = input.parentElement?.querySelector('ul');
       if (!listEl) {
@@ -169,6 +172,26 @@ class ArhivUI {
       }
 
       replaceEl(listEl, catalog, 'ul');
+    });
+  }
+
+  initDocumentPicker = (container: HTMLElement) => {
+    container.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement).closest('li');
+
+      if (!el || !container.contains(el)) {
+        return;
+      }
+
+      const id = el.dataset['id'];
+
+      if (!id) {
+        return;
+      }
+
+      console.log('Selected document', id);
+      copyTextToClipboard(id);
+      dispatchCloseModalEvent(container);
     });
   }
 }

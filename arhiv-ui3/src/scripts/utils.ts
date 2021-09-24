@@ -1,7 +1,5 @@
-import A11yDialog from 'a11y-dialog';
-
 export type Obj = Record<string, string | undefined>;
-type Callback = () => void;
+export type Callback = () => void;
 
 export async function call_action(action: Record<string, unknown>): Promise<unknown> {
   try {
@@ -28,7 +26,7 @@ export async function call_action(action: Record<string, unknown>): Promise<unkn
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
+export const noop = (): void => {};
 
 export function formDataToObj(fd: FormData): Obj {
   const result: Obj = {};
@@ -109,51 +107,4 @@ export function updateQueryParam(param: string, value: string | undefined): void
   }
 
   window.history.replaceState({}, '', '?' + searchParams.toString());
-}
-
-function lockGlobalScroll(): Callback {
-  const documentEl = document.documentElement;
-  const originalStyle = documentEl.style.cssText;
-  const scrollTop = documentEl.scrollTop;
-
-  // preserve scroll position and hide scroll
-  documentEl.style.cssText = `position: fixed; left: 0; right: 0; overflow: hidden; top: -${scrollTop}px`;
-
-  return () => {
-    // restore scroll position
-    documentEl.style.cssText = originalStyle;
-    documentEl.scrollTop = scrollTop;
-  };
-}
-
-export function renderModal(modal: string): void {
-  const rootEl = document.getElementById('modal-root');
-  if (!rootEl) {
-    throw new Error('modal root el not found');
-  }
-
-  const domEl = document.createElement('div');
-  domEl.innerHTML = modal;
-
-  const modalEl = domEl.firstElementChild;
-  if (!modalEl) {
-    throw new Error("modal content doesn't have a child");
-  }
-
-  rootEl.appendChild(modalEl);
-
-  const dialog = new A11yDialog(modalEl);
-
-  let unlockScroll = noop;
-  dialog.on('show', () => {
-    unlockScroll = lockGlobalScroll();
-  });
-
-  dialog.on('hide', () => {
-    unlockScroll();
-
-    modalEl.remove();
-  });
-
-  dialog.show();
 }

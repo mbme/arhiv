@@ -4,7 +4,7 @@ use serde_json::json;
 use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
 
 pub use self::entries::CatalogConfig;
-use self::{entries::CatalogEntry, search::CatalogSearch};
+use self::{entries::CatalogEntries, search::CatalogSearch};
 use crate::template_fn;
 
 mod entries;
@@ -18,6 +18,7 @@ pub struct Catalog {
     filter: Filter,
     parent_collection: Option<Id>,
     search: Option<CatalogSearch>,
+    picker_mode: bool,
 }
 
 impl Catalog {
@@ -30,6 +31,7 @@ impl Catalog {
             filter,
             parent_collection: None,
             search: None,
+            picker_mode: false,
         }
     }
 
@@ -38,6 +40,7 @@ impl Catalog {
             filter,
             parent_collection: None,
             search: None,
+            picker_mode: false,
         }
     }
 
@@ -71,23 +74,38 @@ impl Catalog {
         self
     }
 
+    pub fn picker_mode(mut self) -> Self {
+        self.picker_mode = true;
+
+        self
+    }
+
     pub fn render(self, arhiv: &Arhiv) -> Result<String> {
         let result = arhiv.list_documents(&self.filter)?;
 
         let pattern = self.filter.get_pattern().unwrap_or_default();
         let document_type = self.filter.get_document_type();
 
-        let search = self
-            .search
-            .as_ref()
-            .map(|search| search.render(pattern, document_type, &self.parent_collection))
-            .transpose()?;
+        let search = if let Some(search) = self.search {
+            Some(search.render(
+                pattern,
+                document_type,
+                &self.parent_collection,
+                self.picker_mode,
+            )?)
+        } else {
+            None
+        };
 
-        let entries = result
-            .items
-            .into_iter()
-            .map(|document| CatalogEntry::new(document, arhiv, &self.parent_collection))
-            .collect::<Result<Vec<_>>>()?;
+        let mut entries = CatalogEntries::new();
+        entries.parent_collection = self.parent_collection.clone();
+        if self.picker_mode {
+            entries.show_id = true;
+            entries.show_type = true;
+            entries.title_link = false;
+        }
+
+        let entries = entries.render(&result.items, arhiv)?;
 
         render_template(json!({
             "search": search,
@@ -95,6 +113,7 @@ impl Catalog {
             "entries": entries,
             "has_more": result.has_more,
             "next_page_filter": self.filter.get_next_page(),
+            "picker_mode": self.picker_mode,
         }))
     }
 }

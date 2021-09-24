@@ -20,6 +20,7 @@ use crate::components::{
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub enum RPCAction {
     Delete {
         id: Id,
@@ -34,10 +35,12 @@ pub enum RPCAction {
     PickAttachment {},
     RenderCatalog {
         parent_collection: Option<Id>,
+        picker_mode: bool,
         filter: Filter,
     },
     SearchCatalog {
         parent_collection: Option<Id>,
+        picker_mode: bool,
         document_type: Option<String>,
         pattern: String,
     },
@@ -102,16 +105,22 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         RPCAction::RenderCatalog {
             parent_collection,
             filter,
+            picker_mode,
         } => {
-            let catalog = Catalog::from_filter(filter)
-                .in_collection(parent_collection)
-                .render(arhiv)?;
+            let mut catalog = Catalog::from_filter(filter).in_collection(parent_collection);
+
+            if picker_mode {
+                catalog = catalog.picker_mode();
+            }
+
+            let catalog = catalog.render(arhiv)?;
 
             response = Value::String(catalog);
         }
 
         RPCAction::SearchCatalog {
             parent_collection,
+            picker_mode,
             document_type,
             pattern,
         } => {
@@ -121,6 +130,10 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
 
             if let Some(document_type) = document_type {
                 catalog = catalog.with_type(document_type);
+            }
+
+            if picker_mode {
+                catalog = catalog.picker_mode();
             }
 
             let catalog = catalog.render(arhiv)?;

@@ -1,3 +1,6 @@
-<div class="modal-content">
+<div
+  class="modal-content"
+  data-js="arhiv_ui.initDocumentPicker(this)"
+>
   {{catalog | safe}}
 </div>

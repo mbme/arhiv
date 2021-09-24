@@ -1,0 +1,50 @@
+{% for entry in entries %}
+<li
+  class="min-h-6rem break-words"
+  data-id="{{entry.id}}"
+>
+  <div class="flex space-x-1 font-mono">
+    {% if show_type %}
+    <div class="uppercase text-xs tracking-wider">{{entry.document_type}}</div>
+    {% endif %}
+
+    {% if show_id %}
+    <div class="text-xs text-gray-500">
+      {{entry.id}}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if title_link %}
+  <a
+    href="{{entry.url}}"
+    class="clean-link"
+  >
+    {% endif %}
+
+    <h2 class="text-lg tracking-wide font-semibold text-blue-800 mb-2">
+      {{ entry.title }}
+    </h2>
+
+    {% if title_link %}
+  </a>
+  {% endif %}
+
+  {% if entry.preview %}
+  <div class="markup-sm preview">
+    {{ entry.preview | safe }}
+  </div>
+  {% endif %}
+
+  {% if entry.fields | length > 0 %}
+  <div class="space-x-4 text-xs font-mono">
+    {% for field in entry.fields %}
+    <span class="text-gray-500">
+      {{field.0}}:
+    </span>
+    {{field.1}}
+    {% endfor %}
+  </div>
+  {% endif %}
+</li>
+{% endfor %}

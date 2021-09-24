@@ -1,43 +1,15 @@
 <div>
   {{ search | safe }}
 
-  <ul>
-    {% for item in entries %}
-    <li class="py-6 min-h-6rem break-words">
-      <a
-        href="{{item.url}}"
-        class="clean-link"
-      >
-        <h2 class="mb-2 text-lg tracking-wide font-semibold text-blue-800">
-          {{ item.title }}
-        </h2>
-      </a>
-
-      {% if item.preview %}
-      <div class="markup-sm preview">
-        {{ item.preview | safe }}
-      </div>
-      {% endif %}
-
-      {% if item.fields | length > 0 %}
-      <div class="space-x-4 text-xs font-mono">
-        {% for field in item.fields %}
-        <span class="text-gray-500">
-          {{field.0}}:
-        </span>
-        {{field.1}}
-        {% endfor %}
-      </div>
-      {% endif %}
-    </li>
-    {% endfor %}
+  <ul class="space-y-12">
+    {{ entries | safe }}
 
     {% if has_more %}
     <li class="border-t-2 border-dashed py-6">
       <button
         type="button"
         class="text-blue-800 font-semibold block mx-auto"
-        data-js="arhiv_ui.initCatalogLoadMore(this, {{ next_page_filter | json_encode() }}, '{{ parent_collection }}')"
+        data-js="arhiv_ui.initCatalogLoadMore(this, {{ next_page_filter | json_encode() }}, '{{ parent_collection }}', {{picker_mode}})"
       >
         Load more
       </button>

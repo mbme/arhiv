@@ -57,6 +57,7 @@ impl Importer for YakabooBookImporter {
         book.data.set("translators", data.translators);
         book.data.set("publisher", data.publisher);
         book.data.set("pages", data.pages);
+        book.data.set("ISBN", data.isbn);
 
         arhiv.stage_document(&mut book)?;
 

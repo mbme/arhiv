@@ -1,5 +1,5 @@
 import A11yDialog from 'a11y-dialog';
-import { Callback } from './utils';
+import { Callback, noop } from './utils';
 
 function lockGlobalScroll(): Callback {
   const documentEl = document.documentElement;

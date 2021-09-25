@@ -67,7 +67,7 @@
       <button
         type="button"
         class="btn btn-simple"
-        onclick="arhiv_ui.pick_attachment()"
+        onclick="arhiv_ui.pickAttachment()"
       >
         <svg class="h-5 w-5 inline-block mr-1">
           <use xlink:href="#icon-paper-clip" />
@@ -78,7 +78,7 @@
       <button
         type="button"
         class="btn btn-simple"
-        onclick="arhiv_ui.render_pick_document_modal()"
+        onclick="arhiv_ui.pickDocument()"
       >
         <svg class="h-5 w-5 inline-block mr-1">
           <use xlink:href="#icon-document-search" />
@@ -91,7 +91,7 @@
       <button
         type="button"
         class="btn btn-simple mr-8"
-        onclick="arhiv_ui.go_back()"
+        onclick="arhiv_ui.goBack()"
       >
         Cancel
       </button>

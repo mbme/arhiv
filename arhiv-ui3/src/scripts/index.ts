@@ -17,7 +17,7 @@ type Document = {
 };
 
 class ArhivUI {
-  go_back(fallback = '/') {
+  goBack(fallback = '/') {
     if (history.length > 2) {
       history.back();
     } else {
@@ -25,7 +25,7 @@ class ArhivUI {
     }
   }
 
-  async delete_document(id: string, urlOnDelete: string) {
+  async deleteDocument(id: string, urlOnDelete: string) {
     await callRPCAction({
       delete: { id }
     });
@@ -33,7 +33,7 @@ class ArhivUI {
     window.location.assign(urlOnDelete);
   }
 
-  async archive_document(id: string, archive: boolean) {
+  async archiveDocument(id: string, archive: boolean) {
     await callRPCAction({
       archive: { id, archive }
     });
@@ -41,13 +41,7 @@ class ArhivUI {
     window.location.reload();
   }
 
-  async save_document(document: Document) {
-    await callRPCAction({
-      save: { document }
-    });
-  }
-
-  async pick_attachment() {
+  async pickAttachment() {
     const id: string = await callRPCAction({
       pickAttachment: { }
     });
@@ -61,32 +55,7 @@ class ArhivUI {
     return copyTextToClipboard(id, 'attachment id');
   }
 
-  async render_catalog(filter: Obj, parentCollection = '', pickerMode: boolean): Promise<string> {
-    const catalog: string = await callRPCAction({
-      renderCatalog: {
-        parent_collection: parentCollection || undefined,
-        filter,
-        picker_mode: pickerMode,
-      },
-    });
-
-    return catalog;
-  }
-
-  async search_catalog(documentType = '', pattern: string, parentCollection = '', pickerMode: boolean): Promise<string> {
-    const catalog: string = await callRPCAction({
-      searchCatalog: {
-        parent_collection: parentCollection || undefined,
-        document_type: documentType || undefined,
-        pattern,
-        picker_mode: pickerMode,
-      },
-    });
-
-    return catalog;
-  }
-
-  async render_archive_document_confirmation_dialog(id: string) {
+  async showArchiveDocumentConfirmationDialog(id: string) {
     const dialog: string = await callRPCAction({
       renderArchiveDocumentConfirmationDialog: { id },
     });
@@ -94,7 +63,7 @@ class ArhivUI {
     renderModal(dialog);
   }
 
-  async render_delete_document_confirmation_dialog(id: string, parentCollection = '') {
+  async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {
     const dialog: string = await callRPCAction({
       renderDeleteDocumentConfirmationDialog: {
         id,
@@ -105,7 +74,7 @@ class ArhivUI {
     renderModal(dialog);
   }
 
-  async render_pick_document_modal() {
+  async pickDocument() {
     const dialog: string = await callRPCAction({
       renderPickDocumentModal: {},
     });
@@ -130,16 +99,23 @@ class ArhivUI {
 
     window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
 
-    form.addEventListener('submit', (event: Event) => {
+    form.addEventListener('submit', async (event: Event) => {
       event.preventDefault();
 
-      void this.save_document({
-        ...originalDocument,
-        data: formDataToObj(new FormData(form)),
-      }).then(() => {
-        window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
-        window.location.assign(urlOnSave);
+      const data = formDataToObj(new FormData(form));
+
+      await callRPCAction({
+        save: {
+          document: {
+            ...originalDocument,
+            data,
+          },
+        },
       });
+
+      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
+
+      window.location.assign(urlOnSave);
     });
 
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
@@ -147,7 +123,13 @@ class ArhivUI {
 
   initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '', pickerMode: boolean) => {
     button.addEventListener('click', async () => {
-      const catalog = await this.render_catalog(filter, parentCollection, pickerMode);
+      const catalog: string = await callRPCAction({
+        renderCatalog: {
+          parent_collection: parentCollection || undefined,
+          filter,
+          picker_mode: pickerMode,
+        },
+      });
 
       if (!button.parentElement) {
         throw new Error("button doesn't have a parent");
@@ -165,7 +147,14 @@ class ArhivUI {
         updateQueryParam('pattern', pattern);
       }
 
-      const catalog = await this.search_catalog(documentType, pattern, parentCollection, pickerMode);
+      const catalog: string = await callRPCAction({
+        searchCatalog: {
+          parent_collection: parentCollection || undefined,
+          document_type: documentType || undefined,
+          pattern,
+          picker_mode: pickerMode,
+        },
+      });
 
       const listEl = input.parentElement?.querySelector('ul');
       if (!listEl) {

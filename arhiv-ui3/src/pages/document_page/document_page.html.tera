@@ -48,7 +48,7 @@
       <button
         type="button"
         class="text-yellow-600 font-mono mr-1"
-        onclick="arhiv_ui.render_archive_document_confirmation_dialog('{{document.id}}')"
+        onclick="arhiv_ui.showArchiveDocumentConfirmationDialog('{{document.id}}')"
       >
         {% if document.archived %}
         Unarchive
@@ -62,7 +62,7 @@
       <button
         type="button"
         class="text-red-600 font-mono ml-1"
-        onclick="arhiv_ui.render_delete_document_confirmation_dialog('{{document.id}}', '{{collection_id}}')"
+        onclick="arhiv_ui.showDeleteDocumentConfirmationDialog('{{document.id}}', '{{collection_id}}')"
       >
         Delete
       </button>

@@ -20,7 +20,7 @@
   <button
     type="button"
     class="btn btn-warn"
-    onclick="arhiv_ui.archive_document('{{document.id}}', {{not document.archived}})"
+    onclick="arhiv_ui.archiveDocument('{{document.id}}', {{not document.archived}})"
   >
     {% if document.archived %}
     UnArchive

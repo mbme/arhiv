@@ -15,7 +15,7 @@
   <button
     type="button"
     class="btn btn-danger"
-    onclick="arhiv_ui.delete_document('{{document.id}}', '{{confirm_url}}')"
+    onclick="arhiv_ui.deleteDocument('{{document.id}}', '{{confirm_url}}')"
   >
     DELETE
   </button>

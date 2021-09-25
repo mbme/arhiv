@@ -1,5 +1,5 @@
 <div
-  class="modal-content"
+  class="modal-content document-picker"
   data-js="arhiv_ui.initDocumentPicker(this)"
 >
   {{catalog | safe}}

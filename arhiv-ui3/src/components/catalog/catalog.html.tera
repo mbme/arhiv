@@ -1,7 +1,7 @@
 <div>
   {{ search | safe }}
 
-  <ul class="space-y-12">
+  <ul class="space-y-8">
     {{ entries | safe }}
 
     {% if has_more %}

@@ -1,7 +1,7 @@
 use anyhow::*;
 use serde_json::json;
 
-use arhiv_core::{entities::Id, Arhiv, Condition, Filter};
+use arhiv_core::{entities::Id, schema::Collection, Arhiv, Condition, Filter};
 
 pub use self::entries::CatalogConfig;
 use self::{entries::CatalogEntries, search::CatalogSearch};
@@ -62,12 +62,6 @@ impl Catalog {
         self
     }
 
-    pub fn with_matcher(mut self, matcher: Condition) -> Self {
-        self.filter.matchers.push(matcher);
-
-        self
-    }
-
     pub fn in_collection(mut self, parent_collection: Option<Id>) -> Self {
         self.parent_collection = parent_collection;
 
@@ -80,7 +74,30 @@ impl Catalog {
         self
     }
 
-    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
+    pub fn render(mut self, arhiv: &Arhiv) -> Result<String> {
+        if let Some(ref parent_collection) = self.parent_collection {
+            let collection = arhiv.must_get_document(parent_collection)?;
+            let data_descripton = arhiv
+                .get_schema()
+                .get_data_description(collection.document_type)?;
+
+            match data_descripton.collection_of {
+                Collection::Type {
+                    document_type: _,
+                    field,
+                } => {
+                    self.filter.matchers.push(Condition::Field {
+                        field: field.to_string(),
+                        pattern: collection.id.to_string(),
+                        not: false,
+                    });
+                }
+                _ => {
+                    bail!("parent_collection is not a collection");
+                }
+            };
+        }
+
         let result = arhiv.list_documents(&self.filter)?;
 
         let pattern = self.filter.get_pattern().unwrap_or_default();

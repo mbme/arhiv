@@ -56,11 +56,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             .search(pattern)
             .show_search(Some("pattern"))
             .with_type(item_type)
-            .with_matcher(Condition::Field {
-                field: field.to_string(),
-                pattern: document.id.to_string(),
-                not: false,
-            })
             .in_collection(Some(document.id.clone()))
             .render(arhiv)?;
 

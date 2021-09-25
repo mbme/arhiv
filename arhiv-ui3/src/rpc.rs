@@ -19,7 +19,6 @@ use crate::components::{
 };
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub enum RPCAction {
     Delete {

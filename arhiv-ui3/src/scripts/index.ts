@@ -27,7 +27,7 @@ class ArhivUI {
 
   async deleteDocument(id: string, urlOnDelete: string) {
     await callRPCAction({
-      delete: { id }
+      Delete: { id }
     });
 
     window.location.assign(urlOnDelete);
@@ -35,7 +35,7 @@ class ArhivUI {
 
   async archiveDocument(id: string, archive: boolean) {
     await callRPCAction({
-      archive: { id, archive }
+      Archive: { id, archive }
     });
 
     window.location.reload();
@@ -43,7 +43,7 @@ class ArhivUI {
 
   async pickAttachment() {
     const id: string = await callRPCAction({
-      pickAttachment: { }
+      PickAttachment: { }
     });
 
     if (!id) {
@@ -57,7 +57,7 @@ class ArhivUI {
 
   async showArchiveDocumentConfirmationDialog(id: string) {
     const dialog: string = await callRPCAction({
-      renderArchiveDocumentConfirmationDialog: { id },
+      RenderArchiveDocumentConfirmationDialog: { id },
     });
 
     renderModal(dialog);
@@ -65,7 +65,7 @@ class ArhivUI {
 
   async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {
     const dialog: string = await callRPCAction({
-      renderDeleteDocumentConfirmationDialog: {
+      RenderDeleteDocumentConfirmationDialog: {
         id,
         parent_collection: parentCollection || undefined,
       },
@@ -76,7 +76,7 @@ class ArhivUI {
 
   async pickDocument() {
     const dialog: string = await callRPCAction({
-      renderPickDocumentModal: {},
+      RenderPickDocumentModal: {},
     });
 
     renderModal(dialog);
@@ -105,7 +105,7 @@ class ArhivUI {
       const data = formDataToObj(new FormData(form));
 
       await callRPCAction({
-        save: {
+        Save: {
           document: {
             ...originalDocument,
             data,
@@ -124,7 +124,7 @@ class ArhivUI {
   initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '', pickerMode: boolean) => {
     button.addEventListener('click', async () => {
       const catalog: string = await callRPCAction({
-        renderCatalog: {
+        RenderCatalog: {
           parent_collection: parentCollection || undefined,
           filter,
           picker_mode: pickerMode,
@@ -148,7 +148,7 @@ class ArhivUI {
       }
 
       const catalog: string = await callRPCAction({
-        searchCatalog: {
+        SearchCatalog: {
           parent_collection: parentCollection || undefined,
           document_type: documentType || undefined,
           pattern,

@@ -63,13 +63,29 @@
   {% endfor %}
 
   <div class="flex justify-between py-2 mt-12 bg-white sticky bottom-0">
-    <button
-      type="button"
-      class="btn btn-simple"
-      onclick="arhiv_ui.pick_attachment()"
-    >
-      New Attachment
-    </button>
+    <div>
+      <button
+        type="button"
+        class="btn btn-simple"
+        onclick="arhiv_ui.pick_attachment()"
+      >
+        <svg class="h-5 w-5 inline-block mr-1">
+          <use xlink:href="#icon-paper-clip" />
+        </svg>
+        Attach
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-simple"
+        onclick="arhiv_ui.render_pick_document_modal()"
+      >
+        <svg class="h-5 w-5 inline-block mr-1">
+          <use xlink:href="#icon-document-search" />
+        </svg>
+        Pick document...
+      </button>
+    </div>
 
     <div>
       <button

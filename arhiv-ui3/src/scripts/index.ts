@@ -1,6 +1,6 @@
 import {
   autoGrowTextarea,
-  call_action,
+  callRPCAction,
   formDataToObj,
   isEqualFormData,
   Obj,
@@ -26,7 +26,7 @@ class ArhivUI {
   }
 
   async delete_document(id: string, urlOnDelete: string) {
-    await call_action({
+    await callRPCAction({
       delete: { id }
     });
 
@@ -34,7 +34,7 @@ class ArhivUI {
   }
 
   async archive_document(id: string, archive: boolean) {
-    await call_action({
+    await callRPCAction({
       archive: { id, archive }
     });
 
@@ -42,15 +42,15 @@ class ArhivUI {
   }
 
   async save_document(document: Document) {
-    await call_action({
+    await callRPCAction({
       save: { document }
     });
   }
 
   async pick_attachment() {
-    const id = await call_action({
+    const id: string = await callRPCAction({
       pickAttachment: { }
-    }) as string;
+    });
 
     if (!id) {
       return;
@@ -62,7 +62,7 @@ class ArhivUI {
   }
 
   async render_catalog(filter: Obj, parentCollection = '', pickerMode: boolean): Promise<string> {
-    const catalog = await call_action({
+    const catalog: string = await callRPCAction({
       renderCatalog: {
         parent_collection: parentCollection || undefined,
         filter,
@@ -70,11 +70,11 @@ class ArhivUI {
       },
     });
 
-    return catalog as string;
+    return catalog;
   }
 
   async search_catalog(documentType = '', pattern: string, parentCollection = '', pickerMode: boolean): Promise<string> {
-    const catalog = await call_action({
+    const catalog: string = await callRPCAction({
       searchCatalog: {
         parent_collection: parentCollection || undefined,
         document_type: documentType || undefined,
@@ -83,34 +83,34 @@ class ArhivUI {
       },
     });
 
-    return catalog as string;
+    return catalog;
   }
 
   async render_archive_document_confirmation_dialog(id: string) {
-    const dialog = await call_action({
+    const dialog: string = await callRPCAction({
       renderArchiveDocumentConfirmationDialog: { id },
     });
 
-    renderModal(dialog as string);
+    renderModal(dialog);
   }
 
   async render_delete_document_confirmation_dialog(id: string, parentCollection = '') {
-    const dialog = await call_action({
+    const dialog: string = await callRPCAction({
       renderDeleteDocumentConfirmationDialog: {
         id,
         parent_collection: parentCollection || undefined,
       },
     });
 
-    renderModal(dialog as string);
+    renderModal(dialog);
   }
 
   async render_pick_document_modal() {
-    const dialog = await call_action({
+    const dialog: string = await callRPCAction({
       renderPickDocumentModal: {},
     });
 
-    renderModal(dialog as string);
+    renderModal(dialog);
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {

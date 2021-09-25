@@ -1,7 +1,7 @@
 export type Obj = Record<string, string | undefined>;
 export type Callback = () => void;
 
-export async function call_action(action: Record<string, unknown>): Promise<unknown> {
+export async function callRPCAction<T = unknown>(action: Record<string, unknown>): Promise<T> {
   try {
     const response = await fetch('/rpc', {
       method: 'POST',
@@ -16,7 +16,9 @@ export async function call_action(action: Record<string, unknown>): Promise<unkn
       throw new Error(`action failed: ${response.status}`);
     }
 
-    return response.json();
+    const json = await response.json() as T;
+
+    return json;
   } catch (e) {
     console.error(e);
     alert(e);

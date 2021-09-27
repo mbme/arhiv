@@ -149,7 +149,6 @@ impl Arhiv {
             .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
     }
 
-    #[must_use]
     pub fn get_tx(&self) -> Result<ArhivTransaction<'_>> {
         self.db.get_tx()
     }
@@ -297,6 +296,7 @@ impl Arhiv {
         Ok(attachment)
     }
 
+    #[allow(clippy::unused_self)]
     pub fn tx_add_attachment(
         &self,
         file_path: &str,

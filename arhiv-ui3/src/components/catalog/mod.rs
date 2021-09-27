@@ -92,7 +92,7 @@ impl Catalog {
                         not: false,
                     });
                 }
-                _ => {
+                Collection::None => {
                     bail!("parent_collection is not a collection");
                 }
             };

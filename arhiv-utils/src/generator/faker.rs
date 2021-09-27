@@ -39,10 +39,13 @@ pub struct Faker<'a> {
 impl<'a> Faker<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Result<Faker> {
         let mut attachment_ids: Vec<Id> = vec![];
+
+        let mut tx = arhiv.get_tx()?;
         for file_path in list_attachments() {
-            let document = arhiv.add_attachment(&file_path, false)?;
+            let document = arhiv.tx_add_attachment(&file_path, false, &mut tx)?;
             attachment_ids.push(document.id.clone());
         }
+        tx.commit()?;
 
         let generator = TextGenerator::new(attachment_ids);
 
@@ -112,11 +115,13 @@ impl<'a> Faker<'a> {
 
         let quantity = self.get_quantity_limit(&document_type);
 
+        let mut tx = self.arhiv.get_tx().expect("must open transaction");
+
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
             let mut document = self.create_fake(document_type.clone(), DocumentData::new());
             self.arhiv
-                .stage_document(&mut document)
+                .tx_stage_document(&mut document, &mut tx)
                 .expect("must be able to save document");
 
             if let Collection::Type {
@@ -134,13 +139,15 @@ impl<'a> Faker<'a> {
                         self.create_fake(child_document_type.to_string(), initial_values);
 
                     self.arhiv
-                        .stage_document(&mut child_document)
+                        .tx_stage_document(&mut child_document, &mut tx)
                         .expect("must be able to save child document");
                 }
 
                 child_total += child_quantity as u32;
             }
         }
+
+        tx.commit().expect("must commit");
 
         if let Collection::Type {
             document_type: item_type,

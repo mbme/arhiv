@@ -43,8 +43,10 @@ impl Importer for YakabooBookImporter {
         let data = scrape_and_confirm(url, confirm)?;
         let data: YakabooData = serde_json::from_str(&data).context("failed to parse data")?;
 
+        let mut tx = arhiv.get_tx()?;
+
         let cover_file = download_file(&data.cover_src).await?;
-        let cover_attachment = arhiv.add_attachment(&cover_file, true)?;
+        let cover_attachment = arhiv.tx_add_attachment(&cover_file, true, &mut tx)?;
         log::info!("Imported cover {}", &cover_attachment as &Document);
 
         let mut book = Document::new("book");
@@ -59,7 +61,9 @@ impl Importer for YakabooBookImporter {
         book.data.set("pages", data.pages);
         book.data.set("ISBN", data.isbn);
 
-        arhiv.stage_document(&mut book)?;
+        arhiv.tx_stage_document(&mut book, &mut tx)?;
+
+        tx.commit()?;
 
         Ok(book)
     }

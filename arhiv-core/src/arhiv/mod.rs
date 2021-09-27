@@ -149,7 +149,26 @@ impl Arhiv {
             .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
     }
 
+    #[must_use]
+    pub fn get_tx(&self) -> Result<ArhivTransaction<'_>> {
+        self.db.get_tx()
+    }
+
     pub fn stage_document(&self, document: &mut Document) -> Result<()> {
+        let mut tx = self.get_tx()?;
+
+        self.tx_stage_document(document, &mut tx)?;
+
+        tx.commit()?;
+
+        Ok(())
+    }
+
+    pub fn tx_stage_document(
+        &self,
+        document: &mut Document,
+        tx: &mut ArhivTransaction<'_>,
+    ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
         ensure!(
@@ -169,8 +188,6 @@ impl Arhiv {
         Validator::new(self)
             .validate(document)
             .context("document validation failed")?;
-
-        let tx = self.db.get_tx()?;
 
         if let Some(prev_document) = tx.get_document(&document.id)? {
             log::debug!("Updating existing document {}", &document.id);
@@ -205,8 +222,6 @@ impl Arhiv {
         }
 
         tx.put_document(document)?;
-
-        tx.commit()?;
 
         log::info!("saved document {}", document);
 
@@ -267,10 +282,27 @@ impl Arhiv {
 
         document.archived = archive;
 
-        self.stage_document(&mut document)
+        self.stage_document(&mut document)?;
+
+        Ok(())
     }
 
     pub fn add_attachment(&self, file_path: &str, move_file: bool) -> Result<Attachment> {
+        let mut tx = self.get_tx()?;
+
+        let attachment = self.tx_add_attachment(file_path, move_file, &mut tx)?;
+
+        tx.commit()?;
+
+        Ok(attachment)
+    }
+
+    pub fn tx_add_attachment(
+        &self,
+        file_path: &str,
+        move_file: bool,
+        tx: &mut ArhivTransaction<'_>,
+    ) -> Result<Attachment> {
         log::debug!(
             "Staging attachment {}; move file: {}",
             &file_path,
@@ -279,12 +311,8 @@ impl Arhiv {
 
         let attachment = Attachment::new(file_path)?;
 
-        let mut tx = self.db.get_tx()?;
-
         tx.add_attachment_data(&attachment.id, file_path, move_file)?;
         tx.put_document(&attachment)?;
-
-        tx.commit()?;
 
         log::info!("Created attachment {} from {}", &attachment.id, file_path);
 

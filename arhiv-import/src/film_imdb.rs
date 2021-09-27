@@ -41,8 +41,10 @@ impl Importer for IMDBFilmImporter {
         let data = scrape_and_confirm(url, confirm)?;
         let data: IMDBData = serde_json::from_str(&data).context("failed to parse data")?;
 
+        let mut tx = arhiv.get_tx()?;
+
         let cover_file = download_file(&data.cover_src).await?;
-        let cover_attachment = arhiv.add_attachment(&cover_file, true)?;
+        let cover_attachment = arhiv.tx_add_attachment(&cover_file, true, &mut tx)?;
         log::info!("Imported cover {}", &cover_attachment as &Document);
 
         let mut film = Document::new("film");
@@ -60,7 +62,9 @@ impl Importer for IMDBFilmImporter {
         film.data.set("number_of_episodes", data.number_of_episodes);
         film.data.set("episode_duration", data.episode_duration);
 
-        arhiv.stage_document(&mut film)?;
+        arhiv.tx_stage_document(&mut film, &mut tx)?;
+
+        tx.commit()?;
 
         Ok(film)
     }

@@ -23,9 +23,8 @@ const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv
         .get_schema()
-        .modules
-        .iter()
-        .map(|module| module.document_type)
+        .get_document_types(false)
+        .into_iter()
         .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
         .map(|module| (module, catalog_url(module)))
         .collect()

@@ -20,9 +20,9 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
 
     let document_types = arhiv
         .get_schema()
-        .modules
-        .iter()
-        .map(|module| (module.document_type, catalog_url(module.document_type)))
+        .get_document_types(false)
+        .into_iter()
+        .map(|document_type| (document_type, catalog_url(document_type)))
         .collect::<Vec<_>>();
 
     let toolbar = Toolbar::new(None)

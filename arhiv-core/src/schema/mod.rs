@@ -1,13 +1,19 @@
-use crate::entities::{ATTACHMENT_TYPE, TOMBSTONE_TYPE};
+use anyhow::*;
+use serde::Serialize;
+
+use crate::entities::{Document, ATTACHMENT_TYPE, TOMBSTONE_TYPE};
 
 pub use data_description::*;
 pub use field::*;
-pub use schema::*;
 
 mod data_description;
 mod field;
-mod schema;
 mod search;
+
+#[derive(Serialize, Debug, Clone)]
+pub struct DataSchema {
+    modules: Vec<DataDescription>,
+}
 
 impl DataSchema {
     #[must_use]
@@ -41,6 +47,45 @@ impl DataSchema {
                 // ----
             ],
         }
+    }
+
+    pub fn with_modules(&mut self, modules: &mut Vec<DataDescription>) {
+        self.modules.append(modules);
+    }
+
+    pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
+        let document_type = document_type.as_ref();
+
+        self.modules
+            .iter()
+            .find(|module| module.document_type == document_type)
+            .ok_or_else(|| anyhow!("Unknown document type: {}", document_type))
+    }
+
+    pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
+        let data_description = self.get_data_description(&document.document_type)?;
+
+        let title_field = data_description.pick_title_field()?;
+
+        document
+            .data
+            .get_str(title_field.name)
+            .ok_or_else(|| anyhow!("title field {} is missing", title_field.name))
+    }
+
+    #[must_use]
+    pub fn get_document_types(&self, skip_internal: bool) -> Vec<&'static str> {
+        self.modules
+            .iter()
+            .filter(|module| {
+                if skip_internal {
+                    !module.is_internal
+                } else {
+                    true
+                }
+            })
+            .map(|module| module.document_type)
+            .collect()
     }
 }
 

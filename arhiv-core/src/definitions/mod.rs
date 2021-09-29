@@ -10,7 +10,7 @@ mod task;
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
     let mut schema = DataSchema::new();
-    schema.modules.append(
+    schema.with_modules(
         &mut vec![
             note::get_note_definitions(),
             task::get_task_definitions(),

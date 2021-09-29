@@ -23,13 +23,12 @@ pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
 
     let document_types = arhiv
         .get_schema()
-        .modules
-        .iter()
-        .filter(|module| !module.is_internal)
-        .map(|module| {
+        .get_document_types(true)
+        .into_iter()
+        .map(|document_type| {
             (
-                module.document_type,
-                NewDocumentUrl::Document(module.document_type).build(),
+                document_type,
+                NewDocumentUrl::Document(document_type).build(),
             )
         })
         .collect::<Vec<_>>();

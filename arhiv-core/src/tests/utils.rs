@@ -22,7 +22,7 @@ impl Drop for Arhiv {
 fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
     let mut schema = get_standard_schema();
 
-    schema.modules.push(DataDescription {
+    schema.with_modules(&mut vec![DataDescription {
         document_type: "test_type",
         is_internal: false,
         collection_of: Collection::None,
@@ -38,7 +38,7 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
                 mandatory: false,
             },
         ],
-    });
+    }]);
 
     let arhiv = Arhiv::create(config, schema, "test-arhiv".to_string(), prime)
         .expect("must be able to create temp arhiv");

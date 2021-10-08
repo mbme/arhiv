@@ -1,7 +1,9 @@
+use std::collections::HashSet;
+
 use anyhow::*;
 use serde::Serialize;
 
-use crate::entities::{Document, ATTACHMENT_TYPE, TOMBSTONE_TYPE};
+use crate::entities::{Document, DocumentData, Refs, ATTACHMENT_TYPE, TOMBSTONE_TYPE};
 
 pub use data_description::*;
 pub use field::*;
@@ -51,6 +53,43 @@ impl DataSchema {
 
     pub fn with_modules(&mut self, modules: &mut Vec<DataDescription>) {
         self.modules.append(modules);
+    }
+
+    fn get_collection_ref_fields(&self, document_type: &str) -> HashSet<&str> {
+        self.modules
+            .iter()
+            .filter_map(|module| match module.collection_of {
+                Collection::Type {
+                    document_type: child_type,
+                    field,
+                } if child_type == document_type => Some(field),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn extract_refs(&self, document_type: &str, data: &DocumentData) -> Result<Refs> {
+        let data_description = self.get_data_description(document_type)?;
+
+        let collection_ref_fields = self.get_collection_ref_fields(document_type);
+
+        let mut refs = Refs::new();
+
+        for field in &data_description.fields {
+            let value = if let Some(value) = data.get(field.name) {
+                value
+            } else {
+                continue;
+            };
+
+            if collection_ref_fields.contains(&field.name) {
+                refs.collections.extend(field.get_refs(value));
+            } else {
+                refs.documents.extend(field.get_refs(value));
+            }
+        }
+
+        Ok(refs)
     }
 
     pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {

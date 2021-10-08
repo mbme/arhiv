@@ -1,4 +1,4 @@
-use std::{collections::HashSet, convert::TryInto};
+use std::convert::TryInto;
 
 use anyhow::*;
 use rusqlite::Row;
@@ -6,12 +6,8 @@ use serde_json::Value;
 
 use crate::entities::*;
 
-fn extract_refs(value: &str) -> serde_json::Result<HashSet<Id>> {
-    serde_json::from_str::<HashSet<Id>>(value)
-}
-
-pub fn serialize_refs(refs: &HashSet<Id>) -> serde_json::Result<String> {
-    serde_json::to_string(&refs)
+pub fn serialize_refs(refs: &Refs) -> serde_json::Result<String> {
+    serde_json::to_string(refs)
 }
 
 pub fn extract_document(row: &Row) -> Result<Document> {
@@ -27,7 +23,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         refs: {
             let value: String = row.get("refs")?;
 
-            extract_refs(&value)?
+            serde_json::from_str::<Refs>(&value)?
         },
         data: {
             let data: Value = row.get("data")?;

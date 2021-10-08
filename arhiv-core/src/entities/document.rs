@@ -1,11 +1,10 @@
-use std::collections::HashSet;
 use std::fmt;
 
 use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::{DocumentData, Id, Revision, SnapshotId};
+use super::{DocumentData, Id, Refs, Revision, SnapshotId};
 
 pub const TOMBSTONE_TYPE: &str = "tombstone";
 
@@ -21,7 +20,7 @@ pub struct Document {
     pub snapshot_id: SnapshotId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub refs: HashSet<Id>,
+    pub refs: Refs,
     pub archived: bool,
     pub data: DocumentData,
 }
@@ -42,7 +41,7 @@ impl Document {
             document_type: document_type.into(),
             created_at: now,
             updated_at: now,
-            refs: HashSet::new(),
+            refs: Refs::new(),
             archived: false,
             data,
         }

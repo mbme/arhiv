@@ -3,7 +3,7 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::{entities::Id, schema::Collection, Arhiv, Condition, Filter};
+use arhiv_core::{entities::Id, schema::Collection, Arhiv, Filter};
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
@@ -72,29 +72,13 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let refs = document
         .refs
+        .documents
         .iter()
         .map(|id| Ref::from_id(id).render(arhiv))
         .collect::<Result<Vec<_>>>()?;
 
     let backrefs = arhiv
-        .list_documents({
-            let mut filter = Filter::backrefs(&document.id);
-
-            // ignore collection children
-            if let Collection::Type {
-                document_type,
-                field,
-            } = data_description.collection_of
-            {
-                filter = filter.with_matcher(Condition::NotCollectionChild {
-                    child_document_type: document_type.to_string(),
-                    child_collection_field: field.to_string(),
-                    collection_id: document.id.clone(),
-                });
-            }
-
-            filter
-        })?
+        .list_documents(Filter::backrefs(&document.id))?
         .items
         .into_iter()
         .map(|document| Ref::from_document(document).render(arhiv))

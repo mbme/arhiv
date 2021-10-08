@@ -180,9 +180,9 @@ impl Arhiv {
             "deleted documents must not be updated"
         );
 
-        let data_description = self.schema.get_data_description(&document.document_type)?;
-
-        document.refs = data_description.extract_refs(&document.data)?;
+        document.refs = self
+            .schema
+            .extract_refs(&document.document_type, &document.data)?;
 
         Validator::new(self)
             .validate(document)

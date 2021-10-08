@@ -123,7 +123,7 @@ impl<'a> Validator<'a> {
             }
         }
 
-        for id in &document.refs {
+        for id in document.refs.all() {
             if id == &document.id {
                 log::warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;

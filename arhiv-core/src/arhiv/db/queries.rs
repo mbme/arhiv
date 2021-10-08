@@ -127,13 +127,13 @@ pub trait Queries {
 
         match filter.mode {
             FilterMode::Staged => {
-                qb.where_condition("rev = 0");
+                qb.where_condition("documents.rev = 0");
             }
             FilterMode::Archived => {
-                qb.where_condition("archived = true");
+                qb.where_condition("documents.archived = true");
             }
             FilterMode::Relevant => {
-                qb.where_condition("archived = false");
+                qb.where_condition("documents.archived = false");
             }
             FilterMode::All => {}
         }
@@ -146,7 +146,7 @@ pub trait Queries {
                     not,
                 } => {
                     qb.where_condition(format!(
-                        "{} json_contains(data, {}, {})",
+                        "{} json_contains(documents.data, {}, {})",
                         if *not { "NOT" } else { "" },
                         qb.param(field),
                         qb.param(pattern)
@@ -154,7 +154,7 @@ pub trait Queries {
                 }
                 Condition::Search { ref pattern } => {
                     qb.and_select(format!(
-                        "calculate_search_score(type, data, {}) AS search_score",
+                        "calculate_search_score(documents.type, documents.data, {}) AS search_score",
                         qb.param(pattern)
                     ));
                     qb.where_condition("search_score > 0");
@@ -164,20 +164,15 @@ pub trait Queries {
                 Condition::Type { document_type } => {
                     qb.where_condition(format!("documents.type = {}", qb.param(document_type)));
                 }
-                Condition::Ref { id } => {
-                    qb.and_from("json_each(refs)");
-                    qb.where_condition(format!("json_each.value = {}", qb.param(id.clone())));
+                Condition::DocumentRef { id } => {
+                    qb.and_from("json_each(refs, '$.documents') AS document_refs");
+                    qb.where_condition(format!("document_refs.value = {}", qb.param(id.clone())));
                 }
-                Condition::NotCollectionChild {
-                    child_document_type,
-                    child_collection_field,
-                    collection_id,
-                } => {
+                Condition::CollectionRef { collection_id } => {
+                    qb.and_from("json_each(refs, '$.collections') AS collection_refs");
                     qb.where_condition(format!(
-                        "NOT (documents.type = {} AND json_contains(data, {}, {}))",
-                        qb.param(child_document_type),
-                        qb.param(child_collection_field),
-                        qb.param(collection_id.clone()),
+                        "collection_refs.value = {}",
+                        qb.param(collection_id.clone())
                     ));
                 }
             }
@@ -186,10 +181,13 @@ pub trait Queries {
         for order in &filter.order {
             match order {
                 OrderBy::UpdatedAt { asc } => {
-                    qb.order_by("updated_at", *asc);
+                    qb.order_by("documents.updated_at", *asc);
                 }
                 OrderBy::Field { ref selector, asc } => {
-                    qb.order_by(format!("json_extract(data, {})", qb.param(selector)), *asc);
+                    qb.order_by(
+                        format!("json_extract(documents.data, {})", qb.param(selector)),
+                        *asc,
+                    );
                 }
                 OrderBy::EnumField {
                     selector,
@@ -205,7 +203,7 @@ pub trait Queries {
 
                     qb.order_by(
                         format!(
-                            "CASE json_extract(data, {}) {} ELSE {} END",
+                            "CASE json_extract(documents.data, {}) {} ELSE {} END",
                             qb.param(selector),
                             cases,
                             enum_order.len(),
@@ -400,7 +398,7 @@ pub trait MutableQueries: Queries {
         // 4. aren't referenced by staged documents
         let rows_count = self.get_connection()
             .prepare_cached(
-                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents_snapshots, json_each(refs) WHERE rev = 0)
+                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents_snapshots, json_each(refs, '$.documents') WHERE rev = 0)
                 DELETE FROM documents_snapshots WHERE rev = 0
                                                 AND prev_rev = 0
                                                 AND type = ?1

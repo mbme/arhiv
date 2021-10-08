@@ -13,12 +13,12 @@ CREATE TABLE documents_snapshots (
 
   snapshot_id TEXT    NOT NULL  UNIQUE,
 
-  type        TEXT    NOT NULL,
-  created_at  TEXT    NOT NULL,
-  updated_at  TEXT    NOT NULL,
-  archived    BOOLEAN NOT NULL,
-  refs        TEXT    NOT NULL,
-  data        TEXT    NOT NULL,
+  type            TEXT    NOT NULL,
+  created_at      TEXT    NOT NULL,
+  updated_at      TEXT    NOT NULL,
+  archived        BOOLEAN NOT NULL,
+  refs            TEXT    NOT NULL,
+  data            TEXT    NOT NULL,
 
   PRIMARY KEY (id, rev)
 );

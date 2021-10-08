@@ -1,11 +1,8 @@
-use std::collections::HashSet;
-
 use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
 use super::{field::*, search::MultiSearch};
-use crate::entities::{DocumentData, Id};
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataDescription {
@@ -25,22 +22,6 @@ pub enum Collection {
 }
 
 impl DataDescription {
-    pub fn extract_refs(&self, data: &DocumentData) -> Result<HashSet<Id>> {
-        let mut result = HashSet::new();
-
-        for field in &self.fields {
-            let value = if let Some(value) = data.get(field.name) {
-                value
-            } else {
-                continue;
-            };
-
-            result.extend(field.get_refs(value));
-        }
-
-        Ok(result)
-    }
-
     pub fn pick_title_field(&self) -> Result<&Field> {
         self.fields
             .iter()

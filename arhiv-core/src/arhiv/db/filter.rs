@@ -17,12 +17,10 @@ pub enum Condition {
     Type {
         document_type: String,
     },
-    Ref {
+    DocumentRef {
         id: Id,
     },
-    NotCollectionChild {
-        child_document_type: String,
-        child_collection_field: String,
+    CollectionRef {
         collection_id: Id,
     },
 }
@@ -103,7 +101,7 @@ impl Filter {
             page_offset: None,
             page_size: None,
             mode: FilterMode::Relevant,
-            matchers: vec![Condition::Ref { id }],
+            matchers: vec![Condition::DocumentRef { id }],
             order: vec![OrderBy::UpdatedAt { asc: false }],
         }
     }

@@ -30,7 +30,7 @@ enum RefMode<'a> {
 
 enum RefInfo {
     Id(Id),
-    Document(Document),
+    Document(Box<Document>),
 }
 
 pub struct Ref {
@@ -48,7 +48,7 @@ impl Ref {
 
     pub fn from_document(document: Document) -> Self {
         Ref {
-            info: RefInfo::Document(document),
+            info: RefInfo::Document(Box::new(document)),
             preview_attachments: false,
         }
     }
@@ -74,7 +74,7 @@ impl Ref {
                     .context("failed to serialize");
                 }
             }
-            RefInfo::Document(document) => document,
+            RefInfo::Document(document) => *document,
         };
 
         if !self.preview_attachments || !Attachment::is_attachment(&document) {

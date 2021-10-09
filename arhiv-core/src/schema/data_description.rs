@@ -22,6 +22,7 @@ pub enum Collection {
 }
 
 impl DataDescription {
+    #[must_use]
     pub fn pick_title_field(&self) -> Option<&Field> {
         self.fields.iter().find(|field| {
             matches!(

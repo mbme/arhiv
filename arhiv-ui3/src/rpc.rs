@@ -29,7 +29,7 @@ pub enum RPCAction {
         archive: bool,
     },
     Save {
-        document: Document,
+        document: Box<Document>,
     },
     PickAttachment {},
     RenderCatalog {

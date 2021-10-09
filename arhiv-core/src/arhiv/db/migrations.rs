@@ -477,17 +477,6 @@ fn upgrade_v8_to_v9(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
 
 /// change refs data structure to contain document refs and collection refs; extract those refs from data
 fn upgrade_v9_to_v10(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
-    conn.execute_batch(
-        "INSERT INTO settings
-                       SELECT * FROM old_db.settings;
-
-        UPDATE settings SET value = '10' WHERE key = 'db_version';
-
-        INSERT INTO documents_snapshots
-                       SELECT * FROM old_db.documents_snapshots;
-       ",
-    )?;
-
     fn update_data(ctx: &rusqlite::functions::Context) -> Result<String> {
         use crate::entities::DocumentData;
         use crate::get_standard_schema;
@@ -516,6 +505,17 @@ fn upgrade_v9_to_v10(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &
         },
     )
     .context(anyhow!("Failed to define update_data function"))?;
+
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '10' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+       ",
+    )?;
 
     let rows_updated = conn
         .execute(

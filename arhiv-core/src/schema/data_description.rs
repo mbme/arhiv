@@ -22,20 +22,17 @@ pub enum Collection {
 }
 
 impl DataDescription {
-    pub fn pick_title_field(&self) -> Result<&Field> {
-        self.fields
-            .iter()
-            .find(|field| {
-                matches!(
-                    field.field_type,
-                    FieldType::String {} | FieldType::MarkupString {}
-                )
-            })
-            .ok_or_else(|| anyhow!("Failed to pick title field for {}", self.document_type))
+    pub fn pick_title_field(&self) -> Option<&Field> {
+        self.fields.iter().find(|field| {
+            matches!(
+                field.field_type,
+                FieldType::String {} | FieldType::MarkupString {}
+            )
+        })
     }
 
     pub fn search(&self, data: &Value, pattern: &str) -> Result<usize> {
-        let title_field = self.pick_title_field()?;
+        let title_field = self.pick_title_field();
 
         let mut final_score = 0;
         let multi_search = MultiSearch::new(pattern);
@@ -55,7 +52,8 @@ impl DataDescription {
 
             let mut score = multi_search.search(&search_data);
 
-            if field.name == title_field.name {
+            // increase score if field is a title
+            if title_field.map_or(false, |title_field| title_field.name == field.name) {
                 score *= 3;
             }
 

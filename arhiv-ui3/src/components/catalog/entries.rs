@@ -44,14 +44,7 @@ impl CatalogEntries {
         let document_type = &document.document_type;
         let config = get_catalog_config(document_type);
 
-        let data_description = arhiv.get_schema().get_data_description(document_type)?;
-
-        let title_field = data_description.pick_title_field()?;
-
-        let title = document
-            .data
-            .get_str(title_field.name)
-            .ok_or_else(|| anyhow!("title field missing"))?;
+        let title = arhiv.get_schema().get_title(document)?;
 
         let mut preview = None;
 

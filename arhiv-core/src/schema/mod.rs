@@ -104,7 +104,11 @@ impl DataSchema {
     pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
         let data_description = self.get_data_description(&document.document_type)?;
 
-        let title_field = data_description.pick_title_field()?;
+        let title_field = if let Some(title_field) = data_description.pick_title_field() {
+            title_field
+        } else {
+            return Ok("Untitled");
+        };
 
         document
             .data

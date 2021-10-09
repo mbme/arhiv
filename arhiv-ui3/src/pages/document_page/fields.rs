@@ -40,16 +40,15 @@ pub fn prepare_fields(
     arhiv: &Arhiv,
     data_description: &DataDescription,
 ) -> Result<Vec<Field>> {
-    let title_field = arhiv
-        .get_schema()
-        .get_data_description(&document.document_type)?
-        .pick_title_field()?;
+    let title_field = data_description.pick_title_field();
 
     data_description
         .fields
         .iter()
         .map(|field_description| {
-            let is_title = field_description.name == title_field.name;
+            let is_title = title_field.map_or(false, |title_field| {
+                title_field.name == field_description.name
+            });
 
             match &field_description.field_type {
                 FieldType::MarkupString {} => {

@@ -249,7 +249,6 @@ impl Arhiv {
         document.rev = Revision::STAGING;
         document.snapshot_id = SnapshotId::new();
         document.refs.clear();
-        document.archived = true;
         document.data = DocumentData::new();
         document.updated_at = Utc::now();
 
@@ -260,28 +259,6 @@ impl Arhiv {
         tx.commit()?;
 
         log::info!("deleted document {}", document);
-
-        Ok(())
-    }
-
-    pub fn archive_document(&self, id: &Id, archive: bool) -> Result<()> {
-        let mut document = self
-            .get_document(id)?
-            .ok_or_else(|| anyhow!("can't find document {}", &id))?;
-
-        if document.archived == archive {
-            log::warn!(
-                "document {} is already {}archived",
-                document,
-                if archive { "" } else { "un" }
-            );
-
-            return Ok(());
-        }
-
-        document.archived = archive;
-
-        self.stage_document(&mut document)?;
 
         Ok(())
     }

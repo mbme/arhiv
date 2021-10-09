@@ -38,28 +38,17 @@ fn test_crud() -> Result<()> {
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
     }
 
-    // ARCHIVE
-    {
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
-        let mut other_document = arhiv.get_document(&id)?.unwrap();
-        other_document.archived = true;
-        arhiv.stage_document(&mut other_document)?;
-
-        assert!(arhiv.get_document(&id)?.unwrap().archived);
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
-    }
-
     // DELETE
     {
         let mut document = new_document(json!({ "test": "test" }));
         arhiv.stage_document(&mut document)?;
 
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
 
         arhiv.delete_document(&document.id)?;
 
         assert!(arhiv.get_document(&document.id)?.unwrap().is_tombstone());
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
+        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
     }
 
     Ok(())

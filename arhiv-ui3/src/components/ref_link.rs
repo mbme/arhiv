@@ -14,7 +14,6 @@ enum RefMode<'a> {
     Ref {
         document_type: &'a str,
         title: &'a str,
-        archived: bool,
         url: String,
     },
     Unknown {
@@ -83,7 +82,6 @@ impl Ref {
             return serde_json::to_value(RefMode::Ref {
                 document_type: &document.document_type,
                 title,
-                archived: document.archived,
                 url: document_url(&document.id, &None),
             })
             .context("failed to serialize");
@@ -104,7 +102,6 @@ impl Ref {
         serde_json::to_value(RefMode::Ref {
             document_type: &attachment.document_type,
             title,
-            archived: attachment.archived,
             url: document_url(&attachment.id, &None),
         })
         .context("failed to serialize")

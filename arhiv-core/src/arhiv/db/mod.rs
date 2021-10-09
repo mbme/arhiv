@@ -66,7 +66,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub const VERSION: u8 = 10;
+    pub const VERSION: u8 = 11;
 
     pub fn open(root_dir: String) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);

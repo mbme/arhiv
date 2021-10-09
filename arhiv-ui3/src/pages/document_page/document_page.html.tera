@@ -2,12 +2,6 @@
   {{ toolbar | safe }}
 
   <div id="content">
-    {% if document.archived %}
-    <div class="bg-gray-100 mb-12 p-2 font-bold tracking-widest">
-      ARCHIVED
-    </div>
-    {% endif %}
-
     {% for field in fields %}
     <section class="mb-12 wrap-text">
       <h5 class="section-heading mb-2">
@@ -45,20 +39,6 @@
 
     {% if not is_internal_type %}
     <div class="mt-4 text-sm">
-      <button
-        type="button"
-        class="text-yellow-600 font-mono mr-1"
-        onclick="arhiv_ui.showArchiveDocumentConfirmationDialog('{{document.id}}')"
-      >
-        {% if document.archived %}
-        Unarchive
-        {% else %}
-        Archive
-        {% endif %}
-      </button>
-
-      /
-
       <button
         type="button"
         class="text-red-600 font-mono ml-1"

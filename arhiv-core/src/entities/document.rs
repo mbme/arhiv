@@ -21,7 +21,6 @@ pub struct Document {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub refs: Refs,
-    pub archived: bool,
     pub data: DocumentData,
 }
 
@@ -42,7 +41,6 @@ impl Document {
             created_at: now,
             updated_at: now,
             refs: Refs::new(),
-            archived: false,
             data,
         }
     }

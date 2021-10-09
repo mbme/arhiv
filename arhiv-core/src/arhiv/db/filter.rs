@@ -49,9 +49,7 @@ impl Default for OrderBy {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FilterMode {
-    Archived,
     Staged,
-    Relevant,
     All,
 }
 
@@ -71,7 +69,7 @@ impl Default for Filter {
             page_size: Some(20),
             matchers: vec![],
             order: vec![],
-            mode: FilterMode::Relevant,
+            mode: FilterMode::All,
         }
     }
 }
@@ -100,7 +98,7 @@ impl Filter {
         Filter {
             page_offset: None,
             page_size: None,
-            mode: FilterMode::Relevant,
+            mode: FilterMode::All,
             matchers: vec![Condition::DocumentRef { id }],
             order: vec![OrderBy::UpdatedAt { asc: false }],
         }

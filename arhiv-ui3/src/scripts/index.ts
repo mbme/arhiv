@@ -33,14 +33,6 @@ class ArhivUI {
     window.location.assign(urlOnDelete);
   }
 
-  async archiveDocument(id: string, archive: boolean) {
-    await callRPCAction({
-      Archive: { id, archive }
-    });
-
-    window.location.reload();
-  }
-
   async pickAttachment() {
     const id: string = await callRPCAction({
       PickAttachment: { }
@@ -53,14 +45,6 @@ class ArhivUI {
     console.log('Selected attachment', id);
 
     return copyTextToClipboard(id, 'attachment id');
-  }
-
-  async showArchiveDocumentConfirmationDialog(id: string) {
-    const dialog: string = await callRPCAction({
-      RenderArchiveDocumentConfirmationDialog: { id },
-    });
-
-    renderModal(dialog);
   }
 
   async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {

@@ -26,13 +26,6 @@ async fn test_modes() -> Result<()> {
     // committed
     arhiv.stage_document(&mut new_document(json!({ "value": "1" })))?;
 
-    {
-        // archived
-        let mut doc = new_document(json!({ "value": "2" }));
-        doc.archived = true;
-        arhiv.stage_document(&mut doc)?;
-    }
-
     arhiv.sync().await?;
 
     // staged
@@ -49,16 +42,6 @@ async fn test_modes() -> Result<()> {
             get_values(page),
             vec![json!({ "value": "3" }), json!({ "value": "1" }),]
         );
-    }
-
-    {
-        // test archived
-        let page = arhiv.list_documents(Filter {
-            mode: FilterMode::Archived,
-            ..Filter::default()
-        })?;
-
-        assert_eq!(get_values(page), vec![json!({ "value": "2" })]);
     }
 
     {

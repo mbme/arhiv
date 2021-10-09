@@ -16,7 +16,6 @@ CREATE TABLE documents_snapshots (
   type            TEXT    NOT NULL,
   created_at      TEXT    NOT NULL,
   updated_at      TEXT    NOT NULL,
-  archived        BOOLEAN NOT NULL,
   refs            TEXT    NOT NULL,
   data            TEXT    NOT NULL,
 

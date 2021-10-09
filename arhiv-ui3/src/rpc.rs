@@ -14,8 +14,7 @@ use rs_utils::{
 };
 
 use crate::components::{
-    render_archive_document_confirmation_dialog, render_delete_document_confirmation_dialog,
-    render_pick_document_modal, Catalog,
+    render_delete_document_confirmation_dialog, render_pick_document_modal, Catalog,
 };
 
 #[derive(Deserialize)]
@@ -23,10 +22,6 @@ use crate::components::{
 pub enum RPCAction {
     Delete {
         id: Id,
-    },
-    Archive {
-        id: Id,
-        archive: bool,
     },
     Save {
         document: Box<Document>,
@@ -42,9 +37,6 @@ pub enum RPCAction {
         picker_mode: bool,
         document_type: Option<String>,
         pattern: String,
-    },
-    RenderArchiveDocumentConfirmationDialog {
-        id: Id,
     },
     RenderDeleteDocumentConfirmationDialog {
         id: Id,
@@ -65,10 +57,6 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
     match action {
         RPCAction::Delete { id } => {
             arhiv.delete_document(&id)?;
-        }
-
-        RPCAction::Archive { id, archive } => {
-            arhiv.archive_document(&id, archive)?;
         }
 
         RPCAction::Save { mut document } => {
@@ -138,12 +126,6 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             let catalog = catalog.render(arhiv)?;
 
             response = Value::String(catalog);
-        }
-
-        RPCAction::RenderArchiveDocumentConfirmationDialog { ref id } => {
-            let dialog = render_archive_document_confirmation_dialog(id, arhiv)?;
-
-            response = Value::String(dialog);
         }
 
         RPCAction::RenderDeleteDocumentConfirmationDialog {

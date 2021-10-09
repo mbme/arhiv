@@ -6,6 +6,8 @@ use serde_json::Value;
 
 use rs_utils::{log, FsTransaction, TempFile};
 
+use crate::get_standard_schema;
+
 use super::*;
 
 fn get_db_version(conn: &Connection) -> Result<u8> {
@@ -23,8 +25,10 @@ fn get_db_version(conn: &Connection) -> Result<u8> {
 pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
     let root_dir = root_dir.into();
 
+    let schema = get_standard_schema();
+
     let mut db_version = {
-        let db = DB::open(root_dir.clone())?;
+        let db = DB::open(root_dir.clone(), schema.clone())?;
         let conn = db.open_connection(false)?;
 
         get_db_version(&conn)?
@@ -70,14 +74,14 @@ pub fn apply_migrations(root_dir: impl Into<String>) -> Result<()> {
 
         log::info!("Upgrading db to version {}...", upgrade_version);
 
-        let db = DB::open(root_dir.clone())?;
+        let db = DB::open(root_dir.clone(), schema.clone())?;
 
         let temp_arhiv_dir =
             TempFile::new_with_details(format!("ArhivUpgrade{}-", upgrade_version), "");
 
         let mut fs_tx = FsTransaction::new();
 
-        let new_db = DB::create(temp_arhiv_dir.as_ref().to_string())?;
+        let new_db = DB::create(temp_arhiv_dir.as_ref().to_string(), schema.clone())?;
 
         {
             let new_conn = new_db.open_connection(true)?;
@@ -126,7 +130,6 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v7_to_v8,
     upgrade_v8_to_v9,
     upgrade_v9_to_v10,
-    upgrade_v10_to_v11,
 ];
 
 // stub
@@ -476,37 +479,8 @@ fn upgrade_v8_to_v9(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
     Ok(())
 }
 
-/// change refs data structure to contain document refs and collection refs; extract those refs from data
+/// remove `archived` and `refs` columns
 fn upgrade_v9_to_v10(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
-    fn update_data(ctx: &rusqlite::functions::Context) -> Result<String> {
-        use crate::entities::DocumentData;
-        use crate::get_standard_schema;
-
-        let schema = get_standard_schema();
-
-        let document_type = ctx.get_raw(0).as_str()?;
-
-        let document_data = ctx.get_raw(1).as_str()?;
-
-        let document_data: DocumentData = serde_json::from_str(document_data)?;
-
-        let refs = schema.extract_refs(document_type, &document_data)?;
-
-        serde_json::to_string(&refs).context("must serialize refs")
-    }
-
-    conn.create_scalar_function(
-        "update_data",
-        2,
-        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-        move |ctx| {
-            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
-
-            update_data(ctx).map_err(|e| rusqlite::Error::UserFunctionError(e.into()))
-        },
-    )
-    .context(anyhow!("Failed to define update_data function"))?;
-
     conn.execute_batch(
         "INSERT INTO settings
                        SELECT * FROM old_db.settings;
@@ -514,37 +488,7 @@ fn upgrade_v9_to_v10(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &
         UPDATE settings SET value = '10' WHERE key = 'db_version';
 
         INSERT INTO documents_snapshots
-                       SELECT * FROM old_db.documents_snapshots;
-       ",
-    )?;
-
-    let rows_updated = conn
-        .execute(
-            "UPDATE documents_snapshots
-                    SET refs = update_data(type, data)",
-            [],
-        )
-        .context("Failed to update documents")?;
-
-    log::info!("Updated {} document snapshots", rows_updated);
-
-    Ok(())
-}
-
-/// remove column `archived`
-fn upgrade_v10_to_v11(
-    conn: &Connection,
-    _fs_tx: &mut FsTransaction,
-    _data_dir: &str,
-) -> Result<()> {
-    conn.execute_batch(
-        "INSERT INTO settings
-                       SELECT * FROM old_db.settings;
-
-        UPDATE settings SET value = '11' WHERE key = 'db_version';
-
-        INSERT INTO documents_snapshots
-                       SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, refs, data
+                       SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
                        FROM old_db.documents_snapshots;
        ",
     )?;

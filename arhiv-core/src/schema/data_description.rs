@@ -1,6 +1,7 @@
 use anyhow::*;
 use serde::Serialize;
-use serde_json::Value;
+
+use crate::entities::DocumentData;
 
 use super::{field::*, search::MultiSearch};
 
@@ -32,7 +33,7 @@ impl DataDescription {
         })
     }
 
-    pub fn search(&self, data: &Value, pattern: &str) -> Result<usize> {
+    pub fn search(&self, data: &DocumentData, pattern: &str) -> Result<usize> {
         let title_field = self.pick_title_field();
 
         let mut final_score = 0;

@@ -33,9 +33,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
-    let data_description = arhiv
-        .get_schema()
-        .get_data_description(&document.document_type)?;
+    let schema = arhiv.get_schema();
+    let data_description = schema.get_data_description(&document.document_type)?;
     let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
@@ -71,7 +70,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let toolbar = toolbar.render(arhiv)?;
 
     let refs = document
-        .refs
+        .extract_refs(schema)?
         .documents
         .iter()
         .map(|id| Ref::from_id(id).render(arhiv))

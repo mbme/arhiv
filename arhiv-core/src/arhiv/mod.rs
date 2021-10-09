@@ -40,8 +40,7 @@ impl Arhiv {
     }
 
     pub fn open_with_options(config: Config, schema: DataSchema) -> Result<Arhiv> {
-        let mut db = DB::open(config.arhiv_root.to_string())?;
-        db.with_schema_search(schema.clone());
+        let db = DB::open(config.arhiv_root.to_string(), schema.clone())?;
 
         // check app and db version
         {
@@ -75,8 +74,7 @@ impl Arhiv {
             config.arhiv_root
         );
 
-        let mut db = DB::create(config.arhiv_root.to_string())?;
-        db.with_schema_search(schema.clone());
+        let db = DB::create(config.arhiv_root.to_string(), schema.clone())?;
 
         let tx = db.get_tx()?;
 
@@ -180,10 +178,6 @@ impl Arhiv {
             "deleted documents must not be updated"
         );
 
-        document.refs = self
-            .schema
-            .extract_refs(&document.document_type, &document.data)?;
-
         Validator::new(self)
             .validate(document)
             .context("document validation failed")?;
@@ -248,7 +242,6 @@ impl Arhiv {
         document.document_type = TOMBSTONE_TYPE.to_string();
         document.rev = Revision::STAGING;
         document.snapshot_id = SnapshotId::new();
-        document.refs.clear();
         document.data = DocumentData::new();
         document.updated_at = Utc::now();
 

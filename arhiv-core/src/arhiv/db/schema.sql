@@ -16,8 +16,10 @@ CREATE TABLE documents_snapshots (
   type            TEXT    NOT NULL,
   created_at      TEXT    NOT NULL,
   updated_at      TEXT    NOT NULL,
-  refs            TEXT    NOT NULL,
   data            TEXT    NOT NULL,
+
+  -- extract refs from data
+  refs TEXT GENERATED ALWAYS AS (extract_refs(type, data)) STORED,
 
   PRIMARY KEY (id, rev)
 );

@@ -345,8 +345,8 @@ pub trait MutableQueries: Queries {
     fn put_document(&self, document: &Document) -> Result<()> {
         let mut stmt = self.get_connection().prepare_cached(&format!(
             "INSERT {} INTO documents_snapshots
-            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, refs, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             if document.is_staged() {
                 "OR REPLACE"
             } else {
@@ -362,7 +362,6 @@ pub trait MutableQueries: Queries {
             document.document_type,
             document.created_at,
             document.updated_at,
-            utils::serialize_refs(&document.refs)?,
             document.data.to_string(),
         ])
         .context(anyhow!("Failed to put document {}", &document.id))?;

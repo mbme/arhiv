@@ -6,10 +6,6 @@ use serde_json::Value;
 
 use crate::entities::*;
 
-pub fn serialize_refs(refs: &Refs) -> serde_json::Result<String> {
-    serde_json::to_string(refs)
-}
-
 pub fn extract_document(row: &Row) -> Result<Document> {
     Ok(Document {
         id: row.get("id")?,
@@ -19,11 +15,6 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         document_type: row.get("type")?,
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
-        refs: {
-            let value: String = row.get("refs")?;
-
-            serde_json::from_str::<Refs>(&value)?
-        },
         data: {
             let data: Value = row.get("data")?;
 

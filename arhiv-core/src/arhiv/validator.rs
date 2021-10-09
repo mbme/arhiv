@@ -123,7 +123,7 @@ impl<'a> Validator<'a> {
             }
         }
 
-        for id in document.refs.all() {
+        for id in document.extract_refs(&self.arhiv.schema)?.all() {
             if id == &document.id {
                 log::warn!("Document {} references itself, ignoring ref", &document.id);
                 continue;

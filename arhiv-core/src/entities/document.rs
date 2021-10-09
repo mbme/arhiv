@@ -4,6 +4,8 @@ use anyhow::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::schema::DataSchema;
+
 use super::{DocumentData, Id, Refs, Revision, SnapshotId};
 
 pub const TOMBSTONE_TYPE: &str = "tombstone";
@@ -20,7 +22,6 @@ pub struct Document {
     pub snapshot_id: SnapshotId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub refs: Refs,
     pub data: DocumentData,
 }
 
@@ -40,7 +41,6 @@ impl Document {
             document_type: document_type.into(),
             created_at: now,
             updated_at: now,
-            refs: Refs::new(),
             data,
         }
     }
@@ -53,6 +53,10 @@ impl Document {
     #[must_use]
     pub fn is_staged(&self) -> bool {
         self.rev == Revision::STAGING
+    }
+
+    pub fn extract_refs(&self, schema: &DataSchema) -> Result<Refs> {
+        schema.extract_refs(&self.document_type, &self.data)
     }
 }
 

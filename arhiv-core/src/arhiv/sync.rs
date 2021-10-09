@@ -83,12 +83,6 @@ impl Arhiv {
                         conflicts.push(document);
                         continue;
                     }
-
-                    if document.refs != prev_snapshot.refs {
-                        log::warn!("Got refs conflict on document {}", &document.id);
-                        conflicts.push(document);
-                        continue;
-                    }
                 }
                 _ => {}
             }

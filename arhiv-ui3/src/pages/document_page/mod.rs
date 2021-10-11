@@ -55,7 +55,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             .search(pattern)
             .show_search(Some("pattern"))
             .with_type(item_type)
-            .in_collection(Some(document.id.clone()))
+            .in_collection(document.id.clone())
             .render(arhiv)?;
 
         children_catalog = Some(catalog);

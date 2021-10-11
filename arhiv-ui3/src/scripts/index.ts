@@ -105,11 +105,10 @@ class ArhivUI {
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   }
 
-  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, parentCollection = '', pickerMode: boolean) => {
+  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, pickerMode: boolean) => {
     button.addEventListener('click', async () => {
       const catalog: string = await callRPCAction({
         RenderCatalog: {
-          parent_collection: parentCollection || undefined,
           filter,
           picker_mode: pickerMode,
         },

@@ -125,49 +125,43 @@ pub trait Queries {
 
         qb.select("*", "documents");
 
-        match filter.mode {
-            FilterMode::Staged => {
-                qb.where_condition("documents.rev = 0");
-            }
-            FilterMode::All => {}
+        if let Some(true) = filter.conditions.only_staged {
+            qb.where_condition("documents.rev = 0");
         }
 
-        for matcher in &filter.matchers {
-            match matcher {
-                Condition::Field {
-                    ref field,
-                    ref pattern,
-                } => {
-                    qb.where_condition(format!(
-                        "json_contains(documents.data, {}, {})",
-                        qb.param(field),
-                        qb.param(pattern)
-                    ));
-                }
-                Condition::Search { ref pattern } => {
-                    qb.and_select(format!(
-                        "calculate_search_score(documents.type, documents.data, {}) AS search_score",
-                        qb.param(pattern)
-                    ));
-                    qb.where_condition("search_score > 0");
+        if let Some((ref field, ref pattern)) = filter.conditions.field {
+            qb.where_condition(format!(
+                "json_contains(documents.data, {}, {})",
+                qb.param(field),
+                qb.param(pattern)
+            ));
+        }
 
-                    qb.order_by("search_score", false);
-                }
-                Condition::Type { document_type } => {
-                    qb.where_condition(format!("documents.type = {}", qb.param(document_type)));
-                }
-                Condition::DocumentRef { id } => {
-                    qb.and_from("json_each(refs, '$.documents') AS document_refs");
-                    qb.where_condition(format!("document_refs.value = {}", qb.param(id.clone())));
-                }
-                Condition::CollectionRef { collection_id } => {
-                    qb.and_from("json_each(refs, '$.collections') AS collection_refs");
-                    qb.where_condition(format!(
-                        "collection_refs.value = {}",
-                        qb.param(collection_id.clone())
-                    ));
-                }
-            }
+        if let Some(ref pattern) = filter.conditions.search {
+            qb.and_select(format!(
+                "calculate_search_score(documents.type, documents.data, {}) AS search_score",
+                qb.param(pattern)
+            ));
+            qb.where_condition("search_score > 0");
+
+            qb.order_by("search_score", false);
+        }
+
+        if let Some(ref document_type) = filter.conditions.document_type {
+            qb.where_condition(format!("documents.type = {}", qb.param(document_type)));
+        }
+
+        if let Some(ref id) = filter.conditions.document_ref {
+            qb.and_from("json_each(refs, '$.documents') AS document_refs");
+            qb.where_condition(format!("document_refs.value = {}", qb.param(id.clone())));
+        }
+
+        if let Some(ref collection_id) = filter.conditions.collection_ref {
+            qb.and_from("json_each(refs, '$.collections') AS collection_refs");
+            qb.where_condition(format!(
+                "collection_refs.value = {}",
+                qb.param(collection_id.clone())
+            ));
         }
 
         for order in &filter.order {

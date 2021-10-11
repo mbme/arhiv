@@ -3,8 +3,7 @@ use chrono::Utc;
 
 use self::db::*;
 pub use self::db::{
-    apply_migrations, AttachmentData, Condition, DocumentsCount, Filter, FilterMode, ListPage,
-    OrderBy,
+    apply_migrations, AttachmentData, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
 };
 use self::status::Status;
 use self::validator::Validator;

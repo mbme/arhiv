@@ -5,12 +5,26 @@ use serde::{Deserialize, Serialize};
 use crate::entities::Id;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Condition {
-    Field { field: String, pattern: String },
-    Search { pattern: String },
-    Type { document_type: String },
-    DocumentRef { id: Id },
-    CollectionRef { collection_id: Id },
+pub struct Conditions {
+    pub field: Option<(String, String)>, // field, pattern
+    pub search: Option<String>,          // pattern
+    pub document_type: Option<String>,   // document_type
+    pub document_ref: Option<Id>,
+    pub collection_ref: Option<Id>,
+    pub only_staged: Option<bool>,
+}
+
+impl Default for Conditions {
+    fn default() -> Self {
+        Conditions {
+            field: None,
+            search: None,
+            document_type: None,
+            document_ref: None,
+            collection_ref: None,
+            only_staged: None,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,18 +50,11 @@ impl Default for OrderBy {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum FilterMode {
-    Staged,
-    All,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Filter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,
-    pub matchers: Vec<Condition>,
+    pub conditions: Conditions,
     pub order: Vec<OrderBy>,
-    pub mode: FilterMode,
 }
 
 impl Default for Filter {
@@ -55,9 +62,8 @@ impl Default for Filter {
         Filter {
             page_offset: Some(0),
             page_size: Some(20),
-            matchers: vec![],
+            conditions: Conditions::default(),
             order: vec![],
-            mode: FilterMode::All,
         }
     }
 }
@@ -74,43 +80,65 @@ impl Filter {
         Filter {
             page_offset: None,
             page_size: None,
-            matchers: vec![],
-            mode: FilterMode::Staged,
+            conditions: Conditions {
+                only_staged: Some(true),
+                ..Conditions::default()
+            },
             order: vec![],
         }
     }
 
+    #[must_use]
     pub fn backrefs(id: impl Into<Id>) -> Filter {
-        let id = id.into();
-
         Filter {
             page_offset: None,
             page_size: None,
-            mode: FilterMode::All,
-            matchers: vec![Condition::DocumentRef { id }],
+            conditions: Conditions {
+                document_ref: Some(id.into()),
+                ..Conditions::default()
+            },
             order: vec![OrderBy::UpdatedAt { asc: false }],
         }
     }
 
-    pub fn with_type(mut self, document_type: impl Into<String>) -> Filter {
-        self.matchers.push(Condition::Type {
-            document_type: document_type.into(),
-        });
-
-        self
-    }
-
-    pub fn search(mut self, pattern: impl Into<String>) -> Filter {
-        self.matchers.push(Condition::Search {
-            pattern: pattern.into(),
-        });
+    #[must_use]
+    pub fn with_document_type(mut self, document_type: impl Into<String>) -> Filter {
+        self.conditions.document_type = Some(document_type.into());
 
         self
     }
 
     #[must_use]
-    pub fn with_matcher(mut self, matcher: Condition) -> Filter {
-        self.matchers.push(matcher);
+    pub fn where_field(mut self, field: impl Into<String>, value: impl Into<String>) -> Filter {
+        self.conditions.field = Some((field.into(), value.into()));
+
+        self
+    }
+
+    #[must_use]
+    pub fn search(mut self, pattern: impl Into<String>) -> Filter {
+        self.conditions.search = Some(pattern.into());
+
+        self
+    }
+
+    #[must_use]
+    pub fn with_document_ref(mut self, id: Id) -> Filter {
+        self.conditions.document_ref = Some(id);
+
+        self
+    }
+
+    #[must_use]
+    pub fn with_collection_ref(mut self, collection_id: Id) -> Filter {
+        self.conditions.collection_ref = Some(collection_id);
+
+        self
+    }
+
+    #[must_use]
+    pub fn only_staged(mut self) -> Filter {
+        self.conditions.only_staged = Some(true);
 
         self
     }
@@ -153,23 +181,16 @@ impl Filter {
 
     #[must_use]
     pub fn get_pattern(&self) -> Option<&str> {
-        self.matchers.iter().find_map(|matcher| {
-            if let Condition::Search { pattern } = matcher {
-                Some(pattern.as_str())
-            } else {
-                None
-            }
-        })
+        self.conditions.search.as_deref()
     }
 
     #[must_use]
     pub fn get_document_type(&self) -> Option<&str> {
-        self.matchers.iter().find_map(|matcher| {
-            if let Condition::Type { document_type } = matcher {
-                Some(document_type.as_str())
-            } else {
-                None
-            }
-        })
+        self.conditions.document_type.as_deref()
+    }
+
+    #[must_use]
+    pub fn get_parent_collection(&self) -> Option<Id> {
+        self.conditions.collection_ref.clone()
     }
 }

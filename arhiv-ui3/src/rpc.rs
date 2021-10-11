@@ -28,7 +28,6 @@ pub enum RPCAction {
     },
     PickAttachment {},
     RenderCatalog {
-        parent_collection: Option<Id>,
         picker_mode: bool,
         filter: Filter,
     },
@@ -90,11 +89,10 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
         }
 
         RPCAction::RenderCatalog {
-            parent_collection,
             filter,
             picker_mode,
         } => {
-            let mut catalog = Catalog::from_filter(filter).in_collection(parent_collection);
+            let mut catalog = Catalog::from_filter(filter);
 
             if picker_mode {
                 catalog = catalog.picker_mode();
@@ -111,9 +109,11 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             document_type,
             pattern,
         } => {
-            let mut catalog = Catalog::new()
-                .in_collection(parent_collection)
-                .search(pattern);
+            let mut catalog = Catalog::new().search(pattern);
+
+            if let Some(parent_collection) = parent_collection {
+                catalog = catalog.in_collection(parent_collection);
+            }
 
             if let Some(document_type) = document_type {
                 catalog = catalog.with_type(document_type);

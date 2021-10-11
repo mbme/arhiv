@@ -6,7 +6,7 @@ use super::utils::*;
 use crate::{
     entities::*,
     prime_server::{start_prime_server, PrimeServerRPC},
-    Condition, Filter,
+    Filter,
 };
 
 #[tokio::test]
@@ -26,12 +26,7 @@ async fn test_attachments() -> Result<()> {
     arhiv.stage_document(&mut document)?;
     assert!(arhiv.get_attachment_data(&attachment.id)?.exists()?);
 
-    let page = arhiv.list_documents(Filter {
-        matchers: vec![Condition::Type {
-            document_type: ATTACHMENT_TYPE.to_string(),
-        }],
-        ..Filter::default()
-    })?;
+    let page = arhiv.list_documents(Filter::default().with_document_type(ATTACHMENT_TYPE))?;
     assert_eq!(page.items.len(), 1);
 
     // delete

@@ -46,10 +46,7 @@ async fn test_modes() -> Result<()> {
 
     {
         // test staged
-        let page = arhiv.list_documents(Filter {
-            mode: FilterMode::Staged,
-            ..Filter::default()
-        })?;
+        let page = arhiv.list_documents(Filter::default().only_staged())?;
 
         assert_eq!(get_values(page), vec![json!({ "value": "3" })]);
     }
@@ -132,12 +129,7 @@ async fn test_matcher() -> Result<()> {
 
     {
         // test unexpected type
-        let page = arhiv.list_documents(Filter {
-            matchers: vec![Condition::Type {
-                document_type: "random".to_string(),
-            }],
-            ..Filter::default()
-        })?;
+        let page = arhiv.list_documents(Filter::default().with_document_type("random"))?;
 
         let empty: Vec<serde_json::Value> = vec![];
         assert_eq!(get_values(page), empty);
@@ -145,39 +137,21 @@ async fn test_matcher() -> Result<()> {
 
     {
         // test expected type
-        let page = arhiv.list_documents(Filter {
-            matchers: vec![Condition::Type {
-                document_type: "test_type".to_string(),
-            }],
-            ..Filter::default()
-        })?;
+        let page = arhiv.list_documents(Filter::default().with_document_type("test_type"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // test Field
-
-        let page = arhiv.list_documents(Filter {
-            matchers: vec![Condition::Field {
-                field: "test".to_string(),
-                pattern: "value".to_string(),
-            }],
-            ..Filter::default()
-        })?;
+        let page = arhiv.list_documents(Filter::default().where_field("test", "value"))?;
 
         assert_eq!(get_values(page).len(), 1);
     }
 
     {
         // test Search
-
-        let page = arhiv.list_documents(Filter {
-            matchers: vec![Condition::Search {
-                pattern: "Val".to_string(),
-            }],
-            ..Filter::default()
-        })?;
+        let page = arhiv.list_documents(Filter::default().search("Val"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }

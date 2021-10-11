@@ -137,11 +137,9 @@ pub trait Queries {
                 Condition::Field {
                     ref field,
                     ref pattern,
-                    not,
                 } => {
                     qb.where_condition(format!(
-                        "{} json_contains(documents.data, {}, {})",
-                        if *not { "NOT" } else { "" },
+                        "json_contains(documents.data, {}, {})",
                         qb.param(field),
                         qb.param(pattern)
                     ));

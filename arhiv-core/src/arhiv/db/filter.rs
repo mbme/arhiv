@@ -6,23 +6,11 @@ use crate::entities::Id;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Condition {
-    Field {
-        field: String,
-        pattern: String,
-        not: bool,
-    },
-    Search {
-        pattern: String,
-    },
-    Type {
-        document_type: String,
-    },
-    DocumentRef {
-        id: Id,
-    },
-    CollectionRef {
-        collection_id: Id,
-    },
+    Field { field: String, pattern: String },
+    Search { pattern: String },
+    Type { document_type: String },
+    DocumentRef { id: Id },
+    CollectionRef { collection_id: Id },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

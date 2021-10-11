@@ -162,7 +162,6 @@ async fn test_matcher() -> Result<()> {
             matchers: vec![Condition::Field {
                 field: "test".to_string(),
                 pattern: "value".to_string(),
-                not: false,
             }],
             ..Filter::default()
         })?;

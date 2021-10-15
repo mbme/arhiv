@@ -1,0 +1,21 @@
+{% for field in fields %}
+<section class="mb-12 wrap-text">
+  <h5 class="section-heading mb-2">
+    {{ field.name }}
+  </h5>
+
+  {% if field.kind == "Title" %}
+  <h1 class="text-2xl font-bold tracking-wide">
+    {{ field.value }}
+  </h1>
+  {% elif field.kind == "Markup" %}
+  <div class="markup">
+    {{ field.value | safe }}
+  </div>
+  {% elif field.kind == "Html" %}
+  {{ field.value | safe }}
+  {% elif field.kind == "String" %}
+  {{ field.value }}
+  {% endif %}
+</section>
+{% endfor %}

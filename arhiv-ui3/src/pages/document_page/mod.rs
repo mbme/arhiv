@@ -7,13 +7,10 @@ use arhiv_core::{entities::Id, schema::Collection, Arhiv, Filter};
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
-    components::{Breadcrumb, Catalog, Ref, Toolbar},
+    components::{Breadcrumb, Catalog, DocumentDataViewer, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
 };
-use fields::prepare_fields;
-
-mod fields;
 
 template_fn!(render_template, "./document_page.html.tera");
 
@@ -35,7 +32,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let schema = arhiv.get_schema();
     let data_description = schema.get_data_description(&document.document_type)?;
-    let fields = prepare_fields(&document, arhiv, data_description)?;
 
     let mut children_catalog = None;
 
@@ -69,6 +65,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let toolbar = toolbar.render(arhiv)?;
 
+    let viewer = DocumentDataViewer::new(&document).render(arhiv)?;
+
     let refs = document
         .extract_refs(schema)?
         .documents
@@ -85,7 +83,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let content = render_template(json!({
         "toolbar": toolbar,
-        "fields": fields,
+        "viewer": viewer,
         "refs": refs,
         "backrefs": backrefs,
         "document": document,

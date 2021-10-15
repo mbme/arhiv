@@ -7,7 +7,7 @@ use arhiv_core::{
     schema::{DataDescription, FieldType},
 };
 
-template_fn!(render_template, "./editor.html.tera");
+template_fn!(render_template, "./document_data_editor.html.tera");
 
 #[derive(Serialize)]
 struct FormField {

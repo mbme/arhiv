@@ -13,7 +13,7 @@ use arhiv_core::{
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 use crate::{
-    components::{Breadcrumb, Editor, Toolbar},
+    components::{Breadcrumb, DocumentDataEditor, Toolbar},
     pages::base::render_page,
     template_fn,
 };
@@ -42,7 +42,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         params_to_document_data(&params, data_description)?,
     );
 
-    let editor = Editor::new(
+    let editor = DocumentDataEditor::new(
         &document,
         arhiv
             .get_schema()

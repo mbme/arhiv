@@ -19,13 +19,13 @@ struct FormField {
 }
 
 #[derive(Serialize)]
-pub struct Editor<'d> {
+pub struct DocumentDataEditor<'d> {
     fields: Vec<FormField>,
     document: &'d Document,
     url_on_save: String,
 }
 
-impl<'d> Editor<'d> {
+impl<'d> DocumentDataEditor<'d> {
     pub fn new(
         document: &'d Document,
         data_description: &DataDescription,
@@ -91,7 +91,7 @@ impl<'d> Editor<'d> {
 
         let url_on_save = document_url(&document.id, parent_collection);
 
-        Ok(Editor {
+        Ok(DocumentDataEditor {
             fields,
             document,
             url_on_save,

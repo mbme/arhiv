@@ -7,7 +7,7 @@ use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
 use crate::{
-    components::{Breadcrumb, Editor, Toolbar},
+    components::{Breadcrumb, DocumentDataEditor, Toolbar},
     pages::base::render_page,
     template_fn,
 };
@@ -38,7 +38,7 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
             .is_internal
     );
 
-    let editor = Editor::new(
+    let editor = DocumentDataEditor::new(
         &document,
         arhiv
             .get_schema()

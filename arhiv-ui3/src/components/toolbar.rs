@@ -8,7 +8,6 @@ use crate::{
 };
 use arhiv_core::{
     entities::{Document, Id},
-    schema::Collection,
     Arhiv,
 };
 
@@ -88,24 +87,13 @@ impl Action {
         }
     }
 
-    pub fn new_collection_item(document: &Document, arhiv: &Arhiv) -> Result<Self> {
-        if let Collection::Type {
-            document_type: item_type,
-            field,
-        } = arhiv
-            .get_schema()
-            .get_data_description(&document.document_type)?
-            .collection_of
-        {
-            let url = NewDocumentUrl::CollectionItem(item_type, field, &document.id).build();
+    pub fn new_collection_item(item_type: &str, field: &str, id: &Id) -> Self {
+        let url = NewDocumentUrl::CollectionItem(item_type, field, id).build();
 
-            Ok(Action {
-                name: item_type.to_string(),
-                url,
-                icon_id: Some("icon-document-add"),
-            })
-        } else {
-            bail!("document must be a collection")
+        Action {
+            name: item_type.to_string(),
+            url,
+            icon_id: Some("icon-document-add"),
         }
     }
 }

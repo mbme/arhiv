@@ -50,7 +50,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     if let Collection::Type {
         document_type: item_type,
-        field: _field,
+        field,
     } = data_description.collection_of
     {
         let pattern = req.get_query_param("pattern").unwrap_or_default();
@@ -64,7 +64,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
         children_catalog = Some(catalog);
 
-        toolbar = toolbar.with_action(Action::new_collection_item(&document, arhiv)?);
+        toolbar = toolbar.with_action(Action::new_collection_item(item_type, field, &document.id));
     };
 
     if !data_description.is_internal {

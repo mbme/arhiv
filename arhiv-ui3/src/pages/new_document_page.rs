@@ -16,6 +16,7 @@ use crate::{
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     pages::base::render_page,
     template_fn,
+    urls::parent_collection_url,
 };
 
 template_fn!(render_template, "./new_document_page.html.tera");
@@ -51,14 +52,21 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     )?
     .render()?;
 
-    let toolbar = Toolbar::new(parent_collection)
-        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
-        .with_breadcrumb(Breadcrumb::String(format!(
+    let toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::for_collection(
+            &document,
+            &parent_collection,
+            arhiv,
+        )?)
+        .with_breadcrumb(Breadcrumb::string(format!(
             "new {}",
             document.document_type
         )))
-        .on_close_document(&document)
-        .render(arhiv)?;
+        .on_close(parent_collection_url(
+            &document.document_type,
+            &parent_collection,
+        ))
+        .render()?;
 
     let content = render_template(json!({
         "toolbar": toolbar,

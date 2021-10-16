@@ -8,7 +8,7 @@ use arhiv_core::{entities::*, Arhiv};
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
 use crate::{
-    components::{Breadcrumb, Catalog, Toolbar},
+    components::{Action, Breadcrumb, Catalog, Toolbar},
     pages::base::render_page,
     template_fn,
 };
@@ -35,16 +35,16 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .with_type(document_type)
         .render(arhiv)?;
 
-    let mut toolbar = Toolbar::new(None)
-        .with_breadcrumb(Breadcrumb::String(format!("{}s", document_type)))
+    let mut toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
         .on_close("/");
 
     let data_description = arhiv.get_schema().get_data_description(document_type)?;
     if !data_description.is_internal {
-        toolbar = toolbar.with_new_document(document_type);
+        toolbar = toolbar.with_action(Action::new_document(document_type));
     }
 
-    let toolbar = toolbar.render(arhiv)?;
+    let toolbar = toolbar.render()?;
 
     let content = render_template(json!({
         "toolbar": toolbar,

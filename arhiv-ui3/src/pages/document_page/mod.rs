@@ -7,9 +7,10 @@ use arhiv_core::{entities::Id, schema::Collection, Arhiv, Filter};
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
-    components::{Breadcrumb, Catalog, DocumentDataViewer, Ref, Toolbar},
+    components::{Action, Breadcrumb, Catalog, DocumentDataViewer, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
+    urls::parent_collection_url,
 };
 
 template_fn!(render_template, "./document_page.html.tera");
@@ -35,14 +36,21 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let mut children_catalog = None;
 
-    let mut toolbar = Toolbar::new(collection_id.clone())
-        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
-        .with_breadcrumb(Breadcrumb::Document(&document))
-        .on_close_document(&document);
+    let mut toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::for_collection(
+            &document,
+            &collection_id,
+            arhiv,
+        )?)
+        .with_breadcrumb(Breadcrumb::for_document(&document))
+        .on_close(parent_collection_url(
+            &document.document_type,
+            &collection_id,
+        ));
 
     if let Collection::Type {
         document_type: item_type,
-        field,
+        field: _field,
     } = data_description.collection_of
     {
         let pattern = req.get_query_param("pattern").unwrap_or_default();
@@ -56,14 +64,14 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
         children_catalog = Some(catalog);
 
-        toolbar = toolbar.with_new_collection_item(item_type, field, &document.id);
+        toolbar = toolbar.with_action(Action::new_collection_item(&document, arhiv)?);
     };
 
     if !data_description.is_internal {
-        toolbar = toolbar.with_edit(&document);
+        toolbar = toolbar.with_action(Action::edit(&document, &collection_id));
     }
 
-    let toolbar = toolbar.render(arhiv)?;
+    let toolbar = toolbar.render()?;
 
     let viewer = DocumentDataViewer::new(&document).render(arhiv)?;
 

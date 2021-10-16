@@ -16,10 +16,10 @@ template_fn!(render_template, "./new_document_variants_page.html.tera");
 pub async fn new_document_variants_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let toolbar = Toolbar::new(None)
-        .with_breadcrumb(Breadcrumb::String("new document".to_string()))
+    let toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::string("new document"))
         .on_close("/")
-        .render(arhiv)?;
+        .render()?;
 
     let document_types = arhiv
         .get_schema()

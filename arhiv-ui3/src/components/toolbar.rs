@@ -4,56 +4,129 @@ use serde_json::json;
 
 use crate::{
     template_fn,
-    urls::{catalog_url, document_editor_url, document_url, parent_collection_url, NewDocumentUrl},
+    urls::{catalog_url, document_editor_url, document_url, NewDocumentUrl},
 };
 use arhiv_core::{
     entities::{Document, Id},
+    schema::Collection,
     Arhiv,
 };
 
 template_fn!(render_template, "./toolbar.html.tera");
 
 #[derive(Serialize)]
-pub enum Breadcrumb<'d> {
-    Document(&'d Document),
-    Collection(String),
-    String(String),
+pub struct Breadcrumb {
+    url: String,
+    name: String,
+}
+
+impl Breadcrumb {
+    pub fn for_document(document: &Document) -> Self {
+        Breadcrumb {
+            url: document_url(&document.id, &None),
+            name: document.document_type.to_uppercase(),
+        }
+    }
+
+    pub fn for_collection(
+        document: &Document,
+        collection_id: &Option<Id>,
+        arhiv: &Arhiv,
+    ) -> Result<Self> {
+        if let Some(ref collection_id) = collection_id {
+            let document = arhiv
+                .get_document(collection_id)?
+                .ok_or_else(|| anyhow!("can't find parent collection"))?;
+
+            let name = arhiv.get_schema().get_title(&document)?;
+
+            Ok(Breadcrumb {
+                name: format!("{} {}", document.document_type.to_uppercase(), name),
+                url: document_url(collection_id, &None),
+            })
+        } else {
+            Ok(Breadcrumb {
+                name: "CATALOG".to_string(),
+                url: catalog_url(&document.document_type),
+            })
+        }
+    }
+
+    pub fn string(name: impl Into<String>) -> Self {
+        Breadcrumb {
+            name: name.into(),
+            url: "".to_string(),
+        }
+    }
 }
 
 #[derive(Serialize)]
-struct Action {
+pub struct Action {
     url: String,
     name: String,
     icon_id: Option<&'static str>,
 }
 
-pub struct Toolbar<'d> {
-    parent_collection: Option<Id>,
-    breadcrumbs: Vec<Breadcrumb<'d>>,
+impl Action {
+    pub fn edit(document: &Document, parent_id: &Option<Id>) -> Self {
+        let url = document_editor_url(&document.id, parent_id);
+
+        Action {
+            name: "Edit".to_string(),
+            url,
+            icon_id: Some("icon-document-edit"),
+        }
+    }
+
+    pub fn new_document(document_type: &str) -> Self {
+        let url = NewDocumentUrl::Document(document_type).build();
+
+        Action {
+            name: document_type.to_string(),
+            url,
+            icon_id: Some("icon-document-add"),
+        }
+    }
+
+    pub fn new_collection_item(document: &Document, arhiv: &Arhiv) -> Result<Self> {
+        if let Collection::Type {
+            document_type: item_type,
+            field,
+        } = arhiv
+            .get_schema()
+            .get_data_description(&document.document_type)?
+            .collection_of
+        {
+            let url = NewDocumentUrl::CollectionItem(item_type, field, &document.id).build();
+
+            Ok(Action {
+                name: item_type.to_string(),
+                url,
+                icon_id: Some("icon-document-add"),
+            })
+        } else {
+            bail!("document must be a collection")
+        }
+    }
+}
+
+pub struct Toolbar {
+    breadcrumbs: Vec<Breadcrumb>,
     on_close: Option<String>,
     actions: Vec<Action>,
 }
 
-impl<'d> Toolbar<'d> {
-    pub fn new(parent_collection: Option<Id>) -> Self {
+impl Toolbar {
+    pub fn new() -> Self {
         Toolbar {
-            parent_collection,
             breadcrumbs: vec![],
             on_close: None,
             actions: vec![],
         }
     }
 
-    pub fn with_breadcrumb(mut self, breadcrumb: Breadcrumb<'d>) -> Self {
+    pub fn with_breadcrumb(mut self, breadcrumb: Breadcrumb) -> Self {
         self.breadcrumbs.push(breadcrumb);
-
-        self
-    }
-
-    pub fn on_close_document(mut self, document: &Document) -> Self {
-        let url = parent_collection_url(&document.document_type, &self.parent_collection);
-
-        self.on_close = Some(url);
 
         self
     }
@@ -64,93 +137,15 @@ impl<'d> Toolbar<'d> {
         self
     }
 
-    pub fn with_edit(mut self, document: &Document) -> Self {
-        let url = document_editor_url(&document.id, &self.parent_collection);
-
-        self.actions.push(Action {
-            name: "Edit".to_string(),
-            url,
-            icon_id: Some("icon-document-edit"),
-        });
+    pub fn with_action(mut self, action: Action) -> Self {
+        self.actions.push(action);
 
         self
     }
 
-    pub fn with_new_collection_item(mut self, document_type: &str, field: &str, id: &Id) -> Self {
-        let url = NewDocumentUrl::CollectionItem(document_type, field, id).build();
-
-        self.actions.push(Action {
-            name: document_type.to_string(),
-            url,
-            icon_id: Some("icon-document-add"),
-        });
-
-        self
-    }
-
-    pub fn with_new_document(mut self, document_type: &str) -> Self {
-        let url = NewDocumentUrl::Document(document_type).build();
-
-        self.actions.push(Action {
-            name: document_type.to_string(),
-            url,
-            icon_id: Some("icon-document-add"),
-        });
-
-        self
-    }
-
-    pub fn render(self, arhiv: &Arhiv) -> Result<String> {
-        let breadcrumbs_count = self.breadcrumbs.len();
-        let parent_collection = self.parent_collection;
-
-        let breadcrumbs = self
-            .breadcrumbs
-            .into_iter()
-            .enumerate()
-            .map(|(pos, item)| match item {
-                Breadcrumb::Document(document) => {
-                    let is_last = pos == breadcrumbs_count - 1;
-
-                    let url = if is_last {
-                        "".to_string()
-                    } else {
-                        document_url(&document.id, &None)
-                    };
-
-                    Ok(json!({
-                        "name": document.document_type.to_uppercase(),
-                        "url": url,
-                    }))
-                }
-                Breadcrumb::Collection(document_type) => {
-                    if let Some(ref collection_id) = parent_collection {
-                        let document = arhiv
-                            .get_document(collection_id)?
-                            .ok_or_else(|| anyhow!("can't find parent collection"))?;
-
-                        let name = arhiv.get_schema().get_title(&document)?;
-
-                        Ok(json!({
-                            "name": format!("{} {}", document.document_type.to_uppercase(), name),
-                            "url": document_url(collection_id, &None),
-                        }))
-                    } else {
-                        Ok(json!({
-                            "name": "CATALOG",
-                            "url": catalog_url(&document_type),
-                        }))
-                    }
-                }
-                Breadcrumb::String(name) => Ok(json!({
-                    "name": name.to_uppercase(),
-                    "url": "",
-                })),
-            })
-            .collect::<Result<Vec<_>>>()?;
-
+    pub fn render(self) -> Result<String> {
         render_template(json!({
-            "breadcrumbs": breadcrumbs,
+            "breadcrumbs": self.breadcrumbs,
             "actions": self.actions,
             "on_close": self.on_close,
         }))

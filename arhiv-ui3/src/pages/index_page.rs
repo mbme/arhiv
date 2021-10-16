@@ -25,9 +25,9 @@ pub async fn index_page(req: Request<Body>) -> ServerResponse {
         .map(|document_type| (document_type, catalog_url(document_type)))
         .collect::<Vec<_>>();
 
-    let toolbar = Toolbar::new(None)
-        .with_breadcrumb(Breadcrumb::String("index".to_string()))
-        .render(arhiv)?;
+    let toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::string("index"))
+        .render()?;
 
     let content = render_template(json!({
         "toolbar": toolbar,

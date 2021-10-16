@@ -10,6 +10,7 @@ use crate::{
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     pages::base::render_page,
     template_fn,
+    urls::document_url,
 };
 
 template_fn!(render_template, "./edit_document_page.html.tera");
@@ -47,12 +48,16 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     )?
     .render()?;
 
-    let toolbar = Toolbar::new(parent_collection)
-        .with_breadcrumb(Breadcrumb::Collection(document.document_type.to_string()))
-        .with_breadcrumb(Breadcrumb::Document(&document))
-        .with_breadcrumb(Breadcrumb::String("editor".to_string()))
-        .on_close_document(&document)
-        .render(arhiv)?;
+    let toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::for_collection(
+            &document,
+            &parent_collection,
+            arhiv,
+        )?)
+        .with_breadcrumb(Breadcrumb::for_document(&document))
+        .with_breadcrumb(Breadcrumb::string("editor"))
+        .on_close(document_url(&document.id, &parent_collection))
+        .render()?;
 
     let content = render_template(json!({
         "toolbar": toolbar,

@@ -1,6 +1,6 @@
 {% for entry in entries %}
 <li
-  class="catalog-entry p-2 -mx-2 min-h-6rem break-words cursor-default rounded-sm hover:bg-blue-50"
+  class="catalog-entry p-4 -mx-2 min-h-6rem break-words cursor-default rounded-sm hover:bg-blue-50 even:bg-gray-50"
   data-id="{{entry.id}}"
 >
   <div class="flex space-x-1 font-mono">

@@ -15,7 +15,7 @@
 
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 
-use arhiv_core::get_standard_schema;
+use arhiv_core::definitions::get_standard_schema;
 
 #[allow(clippy::too_many_lines)]
 #[must_use]

@@ -1,11 +1,14 @@
 use super::fields::*;
 use crate::{entities::ATTACHMENT_TYPE, schema::*};
 
+pub const BOOK_TYPE: &str = "book";
+pub const BOOK_COLLECTION_TYPE: &str = "book collection";
+
 #[allow(clippy::too_many_lines)]
 pub fn get_book_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
-            document_type: "book",
+            document_type: BOOK_TYPE,
             is_internal: false,
             collection_of: Collection::None,
             fields: vec![
@@ -26,12 +29,12 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "language",
-                    field_type: language_field(),
+                    field_type: LANGUAGE_FIELD,
                     mandatory: false,
                 },
                 Field {
                     name: "original_language",
-                    field_type: language_field(),
+                    field_type: LANGUAGE_FIELD,
                     mandatory: false,
                 },
                 Field {
@@ -78,7 +81,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "collections",
-                    field_type: FieldType::RefList("book collection"),
+                    field_type: FieldType::RefList(BOOK_COLLECTION_TYPE),
                     mandatory: false,
                 },
                 Field {
@@ -88,7 +91,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "rating",
-                    field_type: rating_field(),
+                    field_type: RATING_FIELD,
                     mandatory: false,
                 },
                 Field {
@@ -99,10 +102,10 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
             ],
         },
         DataDescription {
-            document_type: "book collection",
+            document_type: BOOK_COLLECTION_TYPE,
             is_internal: false,
             collection_of: Collection::Type {
-                document_type: "book",
+                document_type: BOOK_TYPE,
                 field: "collections",
             },
             fields: vec![

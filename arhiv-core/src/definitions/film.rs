@@ -1,11 +1,14 @@
 use super::fields::*;
 use crate::{entities::ATTACHMENT_TYPE, schema::*};
 
+pub const FILM_TYPE: &str = "film";
+pub const FILM_COLLECTION_TYPE: &str = "film collection";
+
 #[allow(clippy::too_many_lines)]
 pub fn get_film_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
-            document_type: "film",
+            document_type: FILM_TYPE,
             is_internal: false,
             collection_of: Collection::None,
             fields: vec![
@@ -26,12 +29,12 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "language",
-                    field_type: language_field(),
+                    field_type: LANGUAGE_FIELD,
                     mandatory: false,
                 },
                 Field {
                     name: "original_language",
-                    field_type: language_field(),
+                    field_type: LANGUAGE_FIELD,
                     mandatory: false,
                 },
                 Field {
@@ -83,7 +86,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "collections",
-                    field_type: FieldType::RefList("film collection"),
+                    field_type: FieldType::RefList(FILM_COLLECTION_TYPE),
                     mandatory: false,
                 },
                 Field {
@@ -93,7 +96,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "rating",
-                    field_type: rating_field(),
+                    field_type: RATING_FIELD,
                     mandatory: false,
                 },
                 Field {
@@ -104,10 +107,10 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
             ],
         },
         DataDescription {
-            document_type: "film collection",
+            document_type: FILM_COLLECTION_TYPE,
             is_internal: false,
             collection_of: Collection::Type {
-                document_type: "film",
+                document_type: FILM_TYPE,
                 field: "collections",
             },
             fields: vec![

@@ -117,7 +117,13 @@ impl Filter {
 
     #[must_use]
     pub fn search(mut self, pattern: impl Into<String>) -> Filter {
-        self.conditions.search = Some(pattern.into());
+        let pattern = pattern.into();
+
+        self.conditions.search = if pattern.trim().is_empty() {
+            None
+        } else {
+            Some(pattern)
+        };
 
         self
     }
@@ -130,8 +136,8 @@ impl Filter {
     }
 
     #[must_use]
-    pub fn with_collection_ref(mut self, collection_id: Id) -> Filter {
-        self.conditions.collection_ref = Some(collection_id);
+    pub fn with_collection_ref(mut self, collection_id: impl Into<Id>) -> Filter {
+        self.conditions.collection_ref = Some(collection_id.into());
 
         self
     }

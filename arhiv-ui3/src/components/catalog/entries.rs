@@ -81,7 +81,7 @@ impl CatalogEntries {
         }))
     }
 
-    pub fn render(&self, documents: &[Document], arhiv: &Arhiv) -> Result<String> {
+    pub fn render(&self, documents: &[&Document], arhiv: &Arhiv) -> Result<String> {
         let entries = documents
             .iter()
             .map(|document| self.prepare_entry_data(document, arhiv))

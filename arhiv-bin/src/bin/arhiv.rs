@@ -9,8 +9,8 @@ use std::{
 use arhiv_bin::build_app;
 use arhiv_core::{
     apply_migrations,
+    definitions::get_standard_schema,
     entities::{Document, DocumentData, Id},
-    get_standard_schema,
     prime_server::start_prime_server,
     Arhiv, Config,
 };

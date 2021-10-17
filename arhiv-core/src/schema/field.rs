@@ -8,18 +8,18 @@ use crate::{entities::Id, markup::MarkupStr};
 
 #[derive(Serialize, Debug, Clone)]
 pub enum FieldType {
-    String {},               // string
-    MarkupString {},         // string
-    Flag {},                 // bool
-    NaturalNumber {},        // u64
-    Ref(&'static str),       // string
-    RefList(&'static str),   // string[]
-    Enum(Vec<&'static str>), // string
-    ISBN {},                 // string
-    Date {},                 // string
-    Duration {},             // string
-    People {},               // string
-    Countries {},            // string
+    String {},                     // string
+    MarkupString {},               // string
+    Flag {},                       // bool
+    NaturalNumber {},              // u64
+    Ref(&'static str),             // string
+    RefList(&'static str),         // string[]
+    Enum(&'static [&'static str]), // string
+    ISBN {},                       // string
+    Date {},                       // string
+    Duration {},                   // string
+    People {},                     // string
+    Countries {},                  // string
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -30,13 +30,6 @@ pub struct Field {
 }
 
 impl Field {
-    pub fn get_enum_values(&self) -> Result<&Vec<&'static str>> {
-        match self.field_type {
-            FieldType::Enum(ref values) => Ok(values),
-            _ => bail!("field {} isn't enum", self.name),
-        }
-    }
-
     #[must_use]
     pub fn get_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
@@ -111,7 +104,7 @@ impl Field {
     }
 
     pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
-        // FIXME also search in Ref and RefList document titles
+        // TODO also search in Ref and RefList document titles
 
         match self.field_type {
             FieldType::String {} | FieldType::MarkupString {} | FieldType::People {} => value
@@ -198,7 +191,7 @@ impl Field {
                 }
             }
 
-            FieldType::Enum(ref options) => {
+            FieldType::Enum(options) => {
                 if is_empty_string {
                     return Ok(());
                 }

@@ -3,8 +3,9 @@ use serde_json::json;
 
 use arhiv_core::{entities::Id, Arhiv, Filter};
 
-pub use self::entries::CatalogConfig;
-use self::{entries::CatalogEntries, search::CatalogSearch};
+pub use self::entries::{CatalogConfig, CatalogEntries};
+
+use self::search::CatalogSearch;
 use crate::template_fn;
 
 mod entries;
@@ -53,7 +54,7 @@ impl Catalog {
         self
     }
 
-    pub fn in_collection(mut self, parent_collection: Id) -> Self {
+    pub fn in_collection(mut self, parent_collection: impl Into<Id>) -> Self {
         self.filter = self.filter.with_collection_ref(parent_collection);
 
         self
@@ -92,7 +93,8 @@ impl Catalog {
             entries.title_link = false;
         }
 
-        let entries = entries.render(&result.items, arhiv)?;
+        let items = result.items.iter().collect::<Vec<_>>();
+        let entries = entries.render(&items, arhiv)?;
 
         render_template(json!({
             "search": search,

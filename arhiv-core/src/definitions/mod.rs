@@ -1,5 +1,10 @@
 use crate::schema::DataSchema;
 
+pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
+pub use film::{FILM_COLLECTION_TYPE, FILM_TYPE};
+pub use note::NOTE_TYPE;
+pub use task::{PROJECT_TYPE, TASK_STATUS, TASK_TYPE};
+
 mod fields;
 
 mod book;

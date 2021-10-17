@@ -15,7 +15,7 @@
 
 mod arhiv;
 mod config;
-mod definitions;
+pub mod definitions;
 pub mod entities;
 pub mod markup;
 pub mod prime_server;
@@ -27,5 +27,4 @@ mod tests;
 pub use crate::arhiv::*;
 pub use config::Config;
 
-pub use definitions::get_standard_schema;
 pub use pulldown_cmark;

@@ -4,6 +4,7 @@ use routerify::ext::RequestExt;
 use serde_json::json;
 
 use arhiv_core::{
+    definitions::PROJECT_TYPE,
     entities::{Document, Id},
     schema::Collection,
     Arhiv, Filter,
@@ -11,11 +12,17 @@ use arhiv_core::{
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
-    components::{Action, Breadcrumb, Catalog, DocumentDataViewer, Ref, Toolbar},
+    components::{Action, Breadcrumb, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
     urls::parent_collection_url,
 };
+
+use self::document_view::render_document_view;
+use self::project_view::render_project_view;
+
+mod document_view;
+mod project_view;
 
 template_fn!(render_template, "./document_page.html.tera");
 
@@ -24,6 +31,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let collection_id: Option<Id> = req
         .param("collection_id")
         .map(|collection_id| collection_id.into());
+    let pattern = req.get_query_param("pattern").unwrap_or_default();
 
     let arhiv: &Arhiv = req.data().unwrap();
 
@@ -38,28 +46,13 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let schema = arhiv.get_schema();
     let data_description = schema.get_data_description(&document.document_type)?;
 
-    let mut children_catalog = None;
-
     let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
-    if let Collection::Type {
-        document_type: item_type,
-        field: _,
-    } = data_description.collection_of
-    {
-        let pattern = req.get_query_param("pattern").unwrap_or_default();
-
-        let catalog = Catalog::new()
-            .search(pattern)
-            .show_search(Some("pattern"))
-            .with_type(item_type)
-            .in_collection(document.id.clone())
-            .render(arhiv)?;
-
-        children_catalog = Some(catalog);
+    let content = if document.document_type == PROJECT_TYPE {
+        render_project_view(&document, arhiv, &pattern)?
+    } else {
+        render_document_view(&document, arhiv, &pattern)?
     };
-
-    let viewer = DocumentDataViewer::new(&document).render(arhiv)?;
 
     let refs = document
         .extract_refs(schema)?
@@ -77,12 +70,11 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let content = render_template(json!({
         "toolbar": toolbar,
-        "viewer": viewer,
+        "content": content,
         "refs": refs,
         "backrefs": backrefs,
         "document": document,
         "is_internal_type": data_description.is_internal,
-        "children_catalog": children_catalog,
         "collection_id": collection_id,
     }))?;
 
@@ -95,15 +87,11 @@ fn render_document_page_toolbar(
     arhiv: &Arhiv,
 ) -> Result<String> {
     let mut toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::for_collection(
-            &document,
-            &collection_id,
-            arhiv,
-        )?)
-        .with_breadcrumb(Breadcrumb::for_document(&document))
+        .with_breadcrumb(Breadcrumb::for_collection(document, collection_id, arhiv)?)
+        .with_breadcrumb(Breadcrumb::for_document(document))
         .on_close(parent_collection_url(
             &document.document_type,
-            &collection_id,
+            collection_id,
         ));
 
     let data_description = arhiv
@@ -119,7 +107,7 @@ fn render_document_page_toolbar(
     };
 
     if !data_description.is_internal {
-        toolbar = toolbar.with_action(Action::edit(&document, &collection_id));
+        toolbar = toolbar.with_action(Action::edit(document, collection_id));
     }
 
     toolbar.render()

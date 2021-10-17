@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use rs_utils::{log, FsTransaction, TempFile};
 
-use crate::get_standard_schema;
+use crate::definitions::get_standard_schema;
 
 use super::*;
 

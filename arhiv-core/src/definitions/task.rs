@@ -1,9 +1,23 @@
 use crate::schema::*;
 
+pub const PROJECT_TYPE: &str = "project";
+
+pub const TASK_TYPE: &str = "task";
+
+pub const TASK_STATUS: &[&str] = &[
+    "Inbox",
+    "InProgress",
+    "Paused",
+    "Todo",
+    "Later",
+    "Done",
+    "Cancelled",
+];
+
 pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
-            document_type: "project",
+            document_type: PROJECT_TYPE,
             is_internal: false,
             collection_of: Collection::Type {
                 document_type: "task",
@@ -24,7 +38,7 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
             ],
         },
         DataDescription {
-            document_type: "task",
+            document_type: TASK_TYPE,
             is_internal: false,
             collection_of: Collection::None,
             fields: vec![
@@ -40,20 +54,12 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "status",
-                    field_type: FieldType::Enum(vec![
-                        "Inbox",
-                        "InProgress",
-                        "Paused",
-                        "Todo",
-                        "Later",
-                        "Done",
-                        "Cancelled",
-                    ]),
+                    field_type: FieldType::Enum(TASK_STATUS),
                     mandatory: true,
                 },
                 Field {
                     name: "project",
-                    field_type: FieldType::Ref("project"),
+                    field_type: FieldType::Ref(PROJECT_TYPE),
                     mandatory: true,
                 },
             ],

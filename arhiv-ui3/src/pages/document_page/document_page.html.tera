@@ -2,11 +2,7 @@
   {{ toolbar | safe }}
 
   <div id="content">
-    {{ viewer | safe }}
-
-    {% if children_catalog %}
-    {{ children_catalog | safe }}
-    {% endif %}
+    {{ content | safe }}
   </div>
 
   <div class="flex flex-col items-end text-gray-400 text-mono pb-8 pr-4 md:pr-6 lg:pr-12">

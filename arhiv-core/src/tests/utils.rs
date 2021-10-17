@@ -4,8 +4,8 @@ use anyhow::*;
 use serde_json::Value;
 
 use crate::{
+    definitions::get_standard_schema,
     entities::Document,
-    get_standard_schema,
     schema::{Collection, DataDescription, Field, FieldType},
     Arhiv, Config, ListPage,
 };

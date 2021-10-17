@@ -3,7 +3,11 @@ use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::{entities::Id, schema::Collection, Arhiv, Filter};
+use arhiv_core::{
+    entities::{Document, Id},
+    schema::Collection,
+    Arhiv, Filter,
+};
 use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
 
 use crate::{
@@ -36,21 +40,11 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let mut children_catalog = None;
 
-    let mut toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::for_collection(
-            &document,
-            &collection_id,
-            arhiv,
-        )?)
-        .with_breadcrumb(Breadcrumb::for_document(&document))
-        .on_close(parent_collection_url(
-            &document.document_type,
-            &collection_id,
-        ));
+    let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
     if let Collection::Type {
         document_type: item_type,
-        field,
+        field: _,
     } = data_description.collection_of
     {
         let pattern = req.get_query_param("pattern").unwrap_or_default();
@@ -63,15 +57,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
             .render(arhiv)?;
 
         children_catalog = Some(catalog);
-
-        toolbar = toolbar.with_action(Action::new_collection_item(item_type, field, &document.id));
     };
-
-    if !data_description.is_internal {
-        toolbar = toolbar.with_action(Action::edit(&document, &collection_id));
-    }
-
-    let toolbar = toolbar.render()?;
 
     let viewer = DocumentDataViewer::new(&document).render(arhiv)?;
 
@@ -101,4 +87,40 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     }))?;
 
     render_page(content, arhiv)
+}
+
+fn render_document_page_toolbar(
+    document: &Document,
+    collection_id: &Option<Id>,
+    arhiv: &Arhiv,
+) -> Result<String> {
+    let mut toolbar = Toolbar::new()
+        .with_breadcrumb(Breadcrumb::for_collection(
+            &document,
+            &collection_id,
+            arhiv,
+        )?)
+        .with_breadcrumb(Breadcrumb::for_document(&document))
+        .on_close(parent_collection_url(
+            &document.document_type,
+            &collection_id,
+        ));
+
+    let data_description = arhiv
+        .get_schema()
+        .get_data_description(&document.document_type)?;
+
+    if let Collection::Type {
+        document_type: item_type,
+        field,
+    } = data_description.collection_of
+    {
+        toolbar = toolbar.with_action(Action::new_collection_item(item_type, field, &document.id));
+    };
+
+    if !data_description.is_internal {
+        toolbar = toolbar.with_action(Action::edit(&document, &collection_id));
+    }
+
+    toolbar.render()
 }

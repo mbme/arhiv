@@ -2,13 +2,14 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{
-    template_fn,
-    urls::{catalog_url, document_editor_url, document_url, NewDocumentUrl},
-};
 use arhiv_core::{
     entities::{Document, Id},
     Arhiv,
+};
+
+use crate::{
+    template_fn,
+    urls::{catalog_url, document_editor_url, document_url, NewDocumentUrl},
 };
 
 template_fn!(render_template, "./toolbar.html.tera");

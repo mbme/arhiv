@@ -26,7 +26,7 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) ->
     let mut entries = CatalogEntries::new();
     entries.parent_collection = Some(document.id.clone());
 
-    let groups = TASK_STATUS
+    let mut groups = TASK_STATUS
         .iter()
         .map(|task_status| -> Result<CatalogGroup> {
             let items = result
@@ -45,6 +45,11 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) ->
             })
         })
         .collect::<Result<Vec<_>>>()?;
+
+    // always open first non-empty group
+    if let Some(group) = groups.iter_mut().find(|group| group.items_count > 0) {
+        group.open = true;
+    }
 
     let groups = render_template(json!({ "groups": groups }))?;
     content.push_str(&groups);

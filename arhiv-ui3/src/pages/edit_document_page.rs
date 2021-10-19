@@ -1,4 +1,3 @@
-use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
@@ -30,14 +29,6 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
             return respond_not_found();
         }
     };
-
-    // deny editing internal types
-    ensure!(
-        !arhiv
-            .get_schema()
-            .get_data_description(&document.document_type)?
-            .is_internal
-    );
 
     let editor = DocumentDataEditor::new(
         &document,

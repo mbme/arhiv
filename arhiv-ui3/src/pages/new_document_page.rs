@@ -32,9 +32,10 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
 
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let data_description = arhiv.get_schema().get_data_description(document_type)?;
+    let schema = arhiv.get_schema();
+    let data_description = schema.get_data_description(document_type)?;
 
-    ensure!(!data_description.is_internal);
+    ensure!(!schema.is_internal_type(document_type));
 
     let params = req.get_query_params();
 

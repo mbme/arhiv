@@ -13,7 +13,7 @@
       </time>
     </div>
 
-    {% if not is_internal_type %}
+    {% if not is_tombstone %}
     <div class="mt-4 text-sm">
       <button
         type="button"

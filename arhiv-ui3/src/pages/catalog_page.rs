@@ -39,8 +39,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
         .on_close("/");
 
-    let data_description = arhiv.get_schema().get_data_description(document_type)?;
-    if !data_description.is_internal {
+    if !arhiv.get_schema().is_internal_type(document_type) {
         toolbar = toolbar.with_action(Action::new_document(document_type));
     }
 

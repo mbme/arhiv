@@ -16,6 +16,7 @@ struct FormField {
     field_type: FieldType,
     mandatory: bool,
     value: String,
+    editable: bool,
 }
 
 #[derive(Serialize)]
@@ -73,6 +74,7 @@ impl<'d> DocumentDataEditor<'d> {
                     field_type: field.field_type.clone(),
                     mandatory: field.mandatory,
                     value,
+                    editable: true,
                 };
 
                 match &field.field_type {
@@ -81,6 +83,9 @@ impl<'d> DocumentDataEditor<'d> {
                     }
                     FieldType::RefList(to) => {
                         field.label = format!("{} (Refs to {})", field.name, to);
+                    }
+                    FieldType::ReadonlyString {} => {
+                        field.editable = false;
                     }
                     _ => {}
                 }

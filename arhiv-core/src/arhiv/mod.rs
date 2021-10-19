@@ -168,20 +168,17 @@ impl Arhiv {
         log::debug!("Staging document {}", &document.id);
 
         ensure!(
-            !Attachment::is_attachment(document),
-            "attachments must not be modified manually"
-        );
-
-        ensure!(
             !document.is_tombstone(),
             "deleted documents must not be updated"
         );
 
+        let prev_document = tx.get_document(&document.id)?;
+
         Validator::new(self)
-            .validate(document)
+            .validate(document, &prev_document)
             .context("document validation failed")?;
 
-        if let Some(prev_document) = tx.get_document(&document.id)? {
+        if let Some(prev_document) = prev_document {
             log::debug!("Updating existing document {}", &document.id);
 
             document.rev = Revision::STAGING;

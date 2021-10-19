@@ -73,7 +73,7 @@ impl<'a> Validator<'a> {
         Ok(())
     }
 
-    pub fn validate(mut self, document: &Document) -> Result<()> {
+    pub fn validate(mut self, document: &Document, prev_document: &Option<Document>) -> Result<()> {
         let data_description = self
             .arhiv
             .schema
@@ -81,7 +81,10 @@ impl<'a> Validator<'a> {
 
         for field in &data_description.fields {
             let value = document.data.get(field.name);
-            self.track_err(field.validate(value));
+            let prev_value = prev_document
+                .as_ref()
+                .and_then(|prev_document| prev_document.data.get(field.name));
+            self.track_err(field.validate(value, prev_value));
         }
 
         // check document types of refs

@@ -44,7 +44,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     };
 
     let schema = arhiv.get_schema();
-    let data_description = schema.get_data_description(&document.document_type)?;
 
     let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
@@ -74,7 +73,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "refs": refs,
         "backrefs": backrefs,
         "document": document,
-        "is_internal_type": data_description.is_internal,
+        "is_tombstone": document.is_tombstone(),
         "collection_id": collection_id,
     }))?;
 
@@ -94,9 +93,8 @@ fn render_document_page_toolbar(
             collection_id,
         ));
 
-    let data_description = arhiv
-        .get_schema()
-        .get_data_description(&document.document_type)?;
+    let schema = arhiv.get_schema();
+    let data_description = schema.get_data_description(&document.document_type)?;
 
     if let Collection::Type {
         document_type: item_type,
@@ -106,7 +104,7 @@ fn render_document_page_toolbar(
         toolbar = toolbar.with_action(Action::new_collection_item(item_type, field, &document.id));
     };
 
-    if !data_description.is_internal {
+    if data_description.is_editable() {
         toolbar = toolbar.with_action(Action::edit(document, collection_id));
     }
 

@@ -18,7 +18,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: PROJECT_TYPE,
-            is_internal: false,
             collection_of: Collection::Type {
                 document_type: "task",
                 field: "project",
@@ -39,7 +38,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: TASK_TYPE,
-            is_internal: false,
             collection_of: Collection::None,
             fields: vec![
                 Field {

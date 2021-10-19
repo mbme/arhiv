@@ -9,6 +9,7 @@ use crate::{entities::Id, markup::MarkupStr};
 #[derive(Serialize, Debug, Clone)]
 pub enum FieldType {
     String {},                     // string
+    ReadonlyString {},             // string
     MarkupString {},               // string
     Flag {},                       // bool
     NaturalNumber {},              // u64
@@ -115,7 +116,16 @@ impl Field {
         }
     }
 
-    pub fn validate(&self, value: Option<&Value>) -> Result<()> {
+    pub fn validate(&self, value: Option<&Value>, prev_value: Option<&Value>) -> Result<()> {
+        if matches!(self.field_type, FieldType::ReadonlyString {}) && value != prev_value {
+            bail!(
+                "value of readonly field '{}' changed from '{:?}' to '{:?}'",
+                self.name,
+                prev_value,
+                value,
+            );
+        }
+
         let value = if let Some(value) = value {
             value
         } else {
@@ -136,6 +146,7 @@ impl Field {
         match self.field_type {
             FieldType::String {}
             | FieldType::MarkupString {}
+            | FieldType::ReadonlyString {}
             | FieldType::Ref(_)
             | FieldType::ISBN {}
             | FieldType::Date {}

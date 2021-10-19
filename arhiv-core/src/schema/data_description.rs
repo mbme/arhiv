@@ -8,7 +8,6 @@ use super::{field::*, search::MultiSearch};
 #[derive(Serialize, Debug, Clone)]
 pub struct DataDescription {
     pub document_type: &'static str,
-    pub is_internal: bool,
     pub collection_of: Collection,
     pub fields: Vec<Field>,
 }
@@ -77,5 +76,12 @@ impl DataDescription {
                     self.document_type
                 )
             })
+    }
+
+    #[must_use]
+    pub fn is_editable(&self) -> bool {
+        self.fields
+            .iter()
+            .any(|field| !matches!(field.field_type, FieldType::ReadonlyString {}))
     }
 }

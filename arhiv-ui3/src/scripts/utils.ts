@@ -13,7 +13,8 @@ export async function callRPCAction<T = unknown>(action: Record<string, unknown>
     });
 
     if (!response.ok) {
-      throw new Error(`action failed: ${response.status}`);
+      const message = await response.text();
+      throw new Error(`action failed: ${response.status}\n${message}`);
     }
 
     const json = await response.json() as T;

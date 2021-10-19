@@ -15,39 +15,41 @@ mod search;
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
     modules: Vec<DataDescription>,
+    internal_document_types: Vec<&'static str>,
 }
 
 impl DataSchema {
     #[must_use]
     pub fn new() -> DataSchema {
+        let modules = vec![
+            // ----- INTERNAL
+            DataDescription {
+                document_type: TOMBSTONE_TYPE,
+                collection_of: Collection::None,
+                fields: vec![],
+            },
+            DataDescription {
+                document_type: ATTACHMENT_TYPE,
+                collection_of: Collection::None,
+                fields: vec![
+                    Field {
+                        name: "filename",
+                        field_type: FieldType::String {},
+                        mandatory: true,
+                    },
+                    Field {
+                        name: "sha256",
+                        field_type: FieldType::ReadonlyString {},
+                        mandatory: true,
+                    },
+                ],
+            },
+            // ----
+        ];
+
         DataSchema {
-            modules: vec![
-                // ----- INTERNAL
-                DataDescription {
-                    document_type: TOMBSTONE_TYPE,
-                    is_internal: true,
-                    collection_of: Collection::None,
-                    fields: vec![],
-                },
-                DataDescription {
-                    document_type: ATTACHMENT_TYPE,
-                    is_internal: true,
-                    collection_of: Collection::None,
-                    fields: vec![
-                        Field {
-                            name: "filename",
-                            field_type: FieldType::String {},
-                            mandatory: true,
-                        },
-                        Field {
-                            name: "sha256",
-                            field_type: FieldType::String {},
-                            mandatory: true,
-                        },
-                    ],
-                },
-                // ----
-            ],
+            internal_document_types: modules.iter().map(|module| module.document_type).collect(),
+            modules,
         }
     }
 
@@ -122,13 +124,18 @@ impl DataSchema {
             .iter()
             .filter(|module| {
                 if skip_internal {
-                    !module.is_internal
+                    !self.is_internal_type(module.document_type)
                 } else {
                     true
                 }
             })
             .map(|module| module.document_type)
             .collect()
+    }
+
+    #[must_use]
+    pub fn is_internal_type(&self, document_type: &str) -> bool {
+        self.internal_document_types.contains(&document_type)
     }
 }
 

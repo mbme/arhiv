@@ -144,6 +144,10 @@ a:not(.clean-link) {
       &:not(input[type=checkbox], select) {
         @apply w-full;
       }
+
+      &[readonly] {
+        @apply bg-gray-100;
+      }
     }
 
     & textarea {

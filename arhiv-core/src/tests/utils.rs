@@ -24,7 +24,6 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
 
     schema.with_modules(&mut vec![DataDescription {
         document_type: "test_type",
-        is_internal: false,
         collection_of: Collection::None,
         fields: vec![
             Field {

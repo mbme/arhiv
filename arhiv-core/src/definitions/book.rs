@@ -9,7 +9,6 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: BOOK_TYPE,
-            is_internal: false,
             collection_of: Collection::None,
             fields: vec![
                 Field {
@@ -103,7 +102,6 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: BOOK_COLLECTION_TYPE,
-            is_internal: false,
             collection_of: Collection::Type {
                 document_type: BOOK_TYPE,
                 field: "collections",

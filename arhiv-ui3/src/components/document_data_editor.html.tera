@@ -9,6 +9,7 @@
   <label class="block mb-12">
     <h5 class="section-heading mb-2">
       {{ field.label }}
+      {% if not field.editable %}(readonly){% endif %}
     </h5>
 
     {% if 'MarkupString' in field.field_type %}
@@ -54,6 +55,7 @@
       type="text"
       name="{{field.name}}"
       class="field"
+      {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
       value="{{field.value}}"

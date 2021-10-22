@@ -2,7 +2,7 @@
 name = "arhiv-utils"
 version = "0.0.0"
 authors = ["mbme"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dependencies]

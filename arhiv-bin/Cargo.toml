@@ -2,7 +2,7 @@
 name = "arhiv-bin"
 version = "0.27.1"
 authors = ["mbme"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [features]

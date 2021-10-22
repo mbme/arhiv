@@ -2,7 +2,7 @@
 name = "app-shell"
 version = "0.1.0"
 authors = ["mbme"]
-edition = "2018"
+edition = "2021"
 
 # speed up debug builds
 [profile.dev]

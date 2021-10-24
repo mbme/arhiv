@@ -27,7 +27,7 @@ pub async fn not_found_handler(_req: Request<Body>) -> ServerResponse {
 
 #[allow(clippy::unused_async)]
 pub async fn logger_middleware(res: Response<Body>, info: RequestInfo) -> Result<Response<Body>> {
-    log::info!(
+    log::debug!(
         "{} {} -> {}",
         info.method(),
         info.uri().path(),

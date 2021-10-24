@@ -4,8 +4,7 @@ use serde_json::json;
 use arhiv_core::{entities::Id, Arhiv, Filter};
 
 pub use self::entries::{CatalogConfig, CatalogEntries};
-
-use self::search::CatalogSearch;
+pub use self::search::CatalogSearch;
 use crate::template_fn;
 
 mod entries;

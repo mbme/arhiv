@@ -139,12 +139,12 @@ class ArhivUI {
         },
       });
 
-      const listEl = input.parentElement?.querySelector('ul');
-      if (!listEl) {
+      const el = input.parentElement?.querySelector('.catalog-entries');
+      if (!el) {
         throw new Error('cannot find list element');
       }
 
-      replaceEl(listEl, catalog, 'ul');
+      replaceEl(el as HTMLElement, catalog, '.catalog-entries');
     });
   }
 

@@ -1,15 +1,19 @@
 use anyhow::*;
 use serde::Serialize;
-
-use arhiv_core::{definitions::TASK_STATUS, entities::Document, Arhiv, Filter};
 use serde_json::json;
 
+use arhiv_core::{
+    definitions::{TASK_STATUS, TASK_TYPE},
+    entities::Document,
+    Arhiv, Filter,
+};
+
 use crate::{
-    components::{CatalogEntries, DocumentDataViewer},
+    components::{CatalogEntries, CatalogSearch, DocumentDataViewer},
     template_fn,
 };
 
-template_fn!(render_template, "./task_group.html.tera");
+template_fn!(render_template, "./project_view.html.tera");
 
 const OPEN_GROUPS: &[&str] = &["Inbox", "InProgress", "Paused"];
 
@@ -17,9 +21,21 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) ->
     let mut content = DocumentDataViewer::new(document).render(arhiv)?;
 
     let filter = Filter::default()
+        .with_document_type(TASK_TYPE)
         .with_collection_ref(&document.id)
         .search(pattern)
+        .recently_updated_first()
         .all_items();
+
+    let search = CatalogSearch {
+        query_param: Some("pattern"),
+    }
+    .render(
+        pattern,
+        Some(TASK_TYPE),
+        &filter.get_parent_collection(),
+        false,
+    )?;
 
     let result = arhiv.list_documents(&filter)?;
 
@@ -51,7 +67,10 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) ->
         group.open = true;
     }
 
-    let groups = render_template(json!({ "groups": groups }))?;
+    let groups = render_template(json!({
+        "search": search,
+        "groups": groups,
+    }))?;
     content.push_str(&groups);
 
     Ok(content)

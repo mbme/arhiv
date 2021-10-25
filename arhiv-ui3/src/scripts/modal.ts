@@ -1,5 +1,5 @@
 import A11yDialog from 'a11y-dialog';
-import { Callback, noop } from './utils';
+import { Callback, fetchHTML, noop } from './utils';
 
 function lockGlobalScroll(): Callback {
   const documentEl = document.documentElement;
@@ -18,7 +18,7 @@ function lockGlobalScroll(): Callback {
 
 const CLOSE_MODAL_EVENT = 'close-modal';
 
-export function renderModal(modal: string): void {
+function renderModal(modal: string): void {
   const rootEl = document.getElementById('modal-root');
   if (!rootEl) {
     throw new Error('modal root el not found');
@@ -52,6 +52,12 @@ export function renderModal(modal: string): void {
   });
 
   dialog.show();
+}
+
+export async function showModal(url: string): Promise<void> {
+  const content = await fetchHTML(url);
+
+  renderModal(content);
 }
 
 export function dispatchCloseModalEvent(modalChild: HTMLElement): void {

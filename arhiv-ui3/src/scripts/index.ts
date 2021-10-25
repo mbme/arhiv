@@ -1,7 +1,6 @@
 import {
   autoGrowTextarea,
   callRPCAction,
-  fetchHTML,
   formDataToObj,
   isEqualFormData,
   Obj,
@@ -9,7 +8,7 @@ import {
   updateQueryParam,
 } from './utils';
 import { initDataJS } from './data-js';
-import { dispatchCloseModalEvent, renderModal } from './modal';
+import { dispatchCloseModalEvent, showModal } from './modal';
 import { copyTextToClipboard } from './clipboard';
 
 type Document = {
@@ -49,17 +48,14 @@ class ArhivUI {
   }
 
   async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {
-    const url = parentCollection ? `/modals/collections/${parentCollection}/documents/${id}/delete` : `/modals/documents/${id}/delete`;
-
-    const dialog = await fetchHTML(url);
-
-    renderModal(dialog);
+    await showModal(
+      parentCollection
+        ? `/modals/collections/${parentCollection}/documents/${id}/delete`
+        : `/modals/documents/${id}/delete`);
   }
 
   async pickDocument() {
-    const dialog = await fetchHTML('/modals/pick-document');
-
-    renderModal(dialog);
+    await showModal('/modals/pick-document');
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {

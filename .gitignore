@@ -5,6 +5,7 @@ dist/
 arhiv.json
 .eslintcache
 *.tsbuildinfo
+cargo-timing*
 
 *.pkg.tar.zst
 

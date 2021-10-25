@@ -38,3 +38,9 @@ arhiv-bump-patch *PARAMS:
 
 test-importers:
   cd arhiv-import; cargo test -- --ignored --test-threads 1
+
+build-timings:
+  cd {{invocation_directory()}}; cargo +nightly build -Ztimings
+
+clear-timings:
+  cd {{invocation_directory()}}; rm cargo-timing*

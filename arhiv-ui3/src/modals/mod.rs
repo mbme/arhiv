@@ -3,4 +3,5 @@ mod modal;
 mod pick_document_modal;
 
 pub use delete_document_confirmation_dialog::render_delete_document_confirmation_dialog;
+pub use modal::render_modal;
 pub use pick_document_modal::render_pick_document_modal;

@@ -1,6 +1,7 @@
 import {
   autoGrowTextarea,
   callRPCAction,
+  fetchHTML,
   formDataToObj,
   isEqualFormData,
   Obj,
@@ -48,20 +49,15 @@ class ArhivUI {
   }
 
   async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {
-    const dialog: string = await callRPCAction({
-      RenderDeleteDocumentConfirmationDialog: {
-        id,
-        parent_collection: parentCollection || undefined,
-      },
-    });
+    const url = parentCollection ? `/modals/collections/${parentCollection}/documents/${id}/delete` : `/modals/documents/${id}/delete`;
+
+    const dialog = await fetchHTML(url);
 
     renderModal(dialog);
   }
 
   async pickDocument() {
-    const dialog: string = await callRPCAction({
-      RenderPickDocumentModal: {},
-    });
+    const dialog = await fetchHTML('/modals/pick-document');
 
     renderModal(dialog);
   }

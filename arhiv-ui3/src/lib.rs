@@ -27,9 +27,12 @@ use rs_utils::{
     server::{error_handler, logger_middleware, not_found_handler},
 };
 
+use crate::modals::{render_delete_document_confirmation_dialog, render_pick_document_modal};
+
 mod attachment_data;
 mod components;
 mod markup;
+mod modals;
 mod pages;
 mod public_assets;
 mod rpc;
@@ -48,8 +51,10 @@ pub async fn start_ui_server() {
         .middleware(Middleware::post_with_info(logger_middleware))
         .get("/public/:fileName", public_assets_handler)
         .get("/", index_page)
+        //
         .get("/new", new_document_variants_page)
         .get("/new/:document_type", new_document_page)
+        //
         .get("/catalogs/:document_type", catalog_page)
         //
         .get("/documents/:id", document_page)
@@ -62,9 +67,23 @@ pub async fn start_ui_server() {
         )
         //
         .get("/attachment-data/:id", attachment_data_handler)
+        //
+        .get(
+            "/modals/collections/:collection_id/documents/:id/delete",
+            render_delete_document_confirmation_dialog,
+        )
+        .get(
+            "/modals/documents/:id/delete",
+            render_delete_document_confirmation_dialog,
+        )
+        //
+        .get("/modals/pick-document", render_pick_document_modal)
+        //
         .post("/rpc", rpc_handler)
+        //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
+        //
         .build()
         .expect("router must work");
 

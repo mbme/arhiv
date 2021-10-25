@@ -28,6 +28,25 @@ export async function callRPCAction<T = unknown>(action: Record<string, unknown>
   }
 }
 
+export async function fetchHTML(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+
+    const message = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`failed to fetch HTML: ${response.status}\n${message}`);
+    }
+
+    return message;
+  } catch (e) {
+    console.error(e);
+    alert(e);
+
+    throw e;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 

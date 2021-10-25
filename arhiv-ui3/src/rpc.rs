@@ -13,9 +13,7 @@ use rs_utils::{
     server::{json_response, ServerResponse},
 };
 
-use crate::components::{
-    render_delete_document_confirmation_dialog, render_pick_document_modal, Catalog,
-};
+use crate::components::Catalog;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -37,11 +35,6 @@ pub enum RPCAction {
         document_type: Option<String>,
         pattern: String,
     },
-    RenderDeleteDocumentConfirmationDialog {
-        id: Id,
-        parent_collection: Option<Id>,
-    },
-    RenderPickDocumentModal {},
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
@@ -126,21 +119,6 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
             let catalog = catalog.render(arhiv)?;
 
             response = Value::String(catalog);
-        }
-
-        RPCAction::RenderDeleteDocumentConfirmationDialog {
-            ref id,
-            ref parent_collection,
-        } => {
-            let dialog = render_delete_document_confirmation_dialog(id, parent_collection, arhiv)?;
-
-            response = Value::String(dialog);
-        }
-
-        RPCAction::RenderPickDocumentModal {} => {
-            let dialog = render_pick_document_modal(arhiv)?;
-
-            response = Value::String(dialog);
         }
     }
 

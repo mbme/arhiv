@@ -57,11 +57,13 @@ pub struct Filter {
     pub order: Vec<OrderBy>,
 }
 
+const DEFAULT_PAGE_SIZE: u8 = 20;
+
 impl Default for Filter {
     fn default() -> Self {
         Filter {
             page_offset: Some(0),
-            page_size: Some(20),
+            page_size: Some(DEFAULT_PAGE_SIZE),
             conditions: Conditions::default(),
             order: vec![],
         }
@@ -129,6 +131,16 @@ impl Filter {
     }
 
     #[must_use]
+    pub fn on_page(mut self, page: u8) -> Filter {
+        let page_size = self.page_size.unwrap_or(DEFAULT_PAGE_SIZE);
+
+        self.page_size = Some(page_size);
+        self.page_offset = Some(page * page_size);
+
+        self
+    }
+
+    #[must_use]
     pub fn with_document_ref(mut self, id: Id) -> Filter {
         self.conditions.document_ref = Some(id);
 
@@ -172,17 +184,11 @@ impl Filter {
     }
 
     #[must_use]
-    pub fn get_next_page(&self) -> Option<Filter> {
-        match (self.page_size, self.page_offset) {
-            (Some(page_size), Some(page_offset)) => {
-                let mut next_page = self.clone();
+    pub fn get_current_page(&self) -> u8 {
+        let page_offset = self.page_offset.unwrap_or(0);
 
-                next_page.page_offset = Some(page_offset + page_size);
-
-                Some(next_page)
-            }
-            _ => None,
-        }
+        self.page_size
+            .map_or(0, |page_size| page_offset / page_size)
     }
 
     #[must_use]

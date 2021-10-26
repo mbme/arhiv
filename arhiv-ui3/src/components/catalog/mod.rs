@@ -1,42 +1,44 @@
 use anyhow::*;
+use rs_utils::server::Url;
 use serde_json::json;
 
 use arhiv_core::{entities::Id, Arhiv, Filter};
 
 pub use self::entries::{CatalogConfig, CatalogEntries};
-pub use self::search::CatalogSearch;
+pub use self::search_input::render_search_input;
 use crate::template_fn;
 
 mod entries;
-mod search;
+mod search_input;
 
 template_fn!(render_template, "./catalog.html.tera");
 
 const PAGE_SIZE: u8 = 20;
 
 pub struct Catalog {
+    url: Url,
     filter: Filter,
-    search: Option<CatalogSearch>,
     picker_mode: bool,
 }
 
 impl Catalog {
-    pub fn new() -> Self {
-        let filter = Filter::default()
+    pub fn new(url: Url) -> Self {
+        let mut filter = Filter::default()
             .page_size(PAGE_SIZE)
             .recently_updated_first();
 
-        Catalog {
-            filter,
-            search: None,
-            picker_mode: false,
+        if let Some(pattern) = url.get_query_param("pattern") {
+            filter = filter.search(pattern);
         }
-    }
 
-    pub fn from_filter(filter: Filter) -> Self {
+        if let Some(page) = url.get_query_param("page") {
+            let page: u8 = page.parse().expect("page must be u8");
+            filter = filter.on_page(page);
+        }
+
         Catalog {
+            url,
             filter,
-            search: None,
             picker_mode: false,
         }
     }
@@ -47,20 +49,8 @@ impl Catalog {
         self
     }
 
-    pub fn search(mut self, pattern: impl AsRef<str>) -> Self {
-        self.filter = self.filter.search(pattern.as_ref());
-
-        self
-    }
-
     pub fn in_collection(mut self, parent_collection: impl Into<Id>) -> Self {
         self.filter = self.filter.with_collection_ref(parent_collection);
-
-        self
-    }
-
-    pub fn show_search(mut self, query_param: Option<&'static str>) -> Self {
-        self.search = Some(CatalogSearch { query_param });
 
         self
     }
@@ -78,11 +68,16 @@ impl Catalog {
         let document_type = self.filter.get_document_type();
         let parent_collection = self.filter.get_parent_collection();
 
-        let search = if let Some(search) = self.search {
-            Some(search.render(pattern, document_type, &parent_collection, self.picker_mode)?)
-        } else {
-            None
-        };
+        let next_page_url = result.has_more.then(|| {
+            let mut url = self.url.clone();
+
+            let next_page = self.filter.get_current_page() + 1;
+            url.set_query_param("page", Some(next_page.to_string()));
+
+            url.render()
+        });
+
+        let search_input = render_search_input(pattern, document_type, &self.url.render())?;
 
         let mut entries = CatalogEntries::new();
         entries.parent_collection = parent_collection;
@@ -96,11 +91,9 @@ impl Catalog {
         let entries = entries.render(&items, arhiv)?;
 
         render_template(json!({
-            "search": search,
+            "search_input": search_input,
             "entries": entries,
-            "has_more": result.has_more,
-            "next_page_filter": self.filter.get_next_page(),
-            "picker_mode": self.picker_mode,
+            "next_page_url": next_page_url,
         }))
     }
 }

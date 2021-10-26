@@ -27,13 +27,9 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let document_type: &String = req.param("document_type").unwrap();
     let arhiv: &Arhiv = req.data().unwrap();
 
-    let pattern = req.get_query_param("pattern").unwrap_or_default();
+    let url = req.get_url();
 
-    let catalog = Catalog::new()
-        .show_search(Some("pattern"))
-        .search(pattern)
-        .with_type(document_type)
-        .render(arhiv)?;
+    let catalog = Catalog::new(url).with_type(document_type).render(arhiv)?;
 
     let mut toolbar = Toolbar::new()
         .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
@@ -47,7 +43,6 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
 
     let content = render_template(json!({
         "toolbar": toolbar,
-        "document_type": document_type,
         "catalog": catalog,
     }))?;
 

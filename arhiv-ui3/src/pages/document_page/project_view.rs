@@ -7,9 +7,10 @@ use arhiv_core::{
     entities::Document,
     Arhiv, Filter,
 };
+use rs_utils::server::Url;
 
 use crate::{
-    components::{CatalogEntries, CatalogSearch, DocumentDataViewer},
+    components::{render_search_input, CatalogEntries, DocumentDataViewer},
     template_fn,
 };
 
@@ -17,25 +18,22 @@ template_fn!(render_template, "./project_view.html.tera");
 
 const OPEN_GROUPS: &[&str] = &["Inbox", "InProgress", "Paused"];
 
-pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) -> Result<String> {
+pub fn render_project_view(document: &Document, arhiv: &Arhiv, url: Url) -> Result<String> {
     let mut content = DocumentDataViewer::new(document).render(arhiv)?;
+
+    let pattern = url
+        .get_query_param("pattern")
+        .unwrap_or_default()
+        .to_string();
 
     let filter = Filter::default()
         .with_document_type(TASK_TYPE)
         .with_collection_ref(&document.id)
-        .search(pattern)
+        .search(&pattern)
         .recently_updated_first()
         .all_items();
 
-    let search = CatalogSearch {
-        query_param: Some("pattern"),
-    }
-    .render(
-        pattern,
-        Some(TASK_TYPE),
-        &filter.get_parent_collection(),
-        false,
-    )?;
+    let search_input = render_search_input(&pattern, Some(TASK_TYPE), &url.render())?;
 
     let result = arhiv.list_documents(&filter)?;
 
@@ -68,7 +66,7 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, pattern: &str) ->
     }
 
     let groups = render_template(json!({
-        "search": search,
+        "search_input": search_input,
         "groups": groups,
     }))?;
     content.push_str(&groups);

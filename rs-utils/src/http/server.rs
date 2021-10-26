@@ -54,7 +54,44 @@ pub fn json_response(body: impl Serialize) -> ServerResponse {
         .context("failed to build response")
 }
 
+#[derive(Clone)]
+pub struct Url {
+    path: String,
+    pub query_params: HashMap<String, String>,
+}
+
+impl Url {
+    pub fn get_query_param(&self, name: impl AsRef<str>) -> Option<&str> {
+        self.query_params
+            .get(name.as_ref())
+            .map(|value| value.as_ref())
+    }
+
+    pub fn set_query_param(&mut self, key: impl Into<String>, value: Option<String>) {
+        let key = key.into();
+
+        if let Some(value) = value {
+            self.query_params.insert(key, value);
+        } else {
+            self.query_params.remove(&key);
+        }
+    }
+
+    #[must_use]
+    pub fn render(self) -> String {
+        let query = QueryBuilder::from_params(self.query_params).build();
+
+        if query.is_empty() {
+            self.path
+        } else {
+            format!("{}?{}", self.path, query)
+        }
+    }
+}
+
 pub trait RequestQueryExt {
+    fn get_url(&self) -> Url;
+
     fn get_query_params(&self) -> HashMap<String, String>;
 
     fn get_query_param(&self, name: impl AsRef<str>) -> Option<String>;
@@ -63,6 +100,16 @@ pub trait RequestQueryExt {
 }
 
 impl RequestQueryExt for Request<Body> {
+    fn get_url(&self) -> Url {
+        let path = self.uri().path().to_string();
+
+        let query_params = form_urlencoded::parse(self.uri().query().unwrap_or("").as_bytes())
+            .into_owned()
+            .collect();
+
+        Url { path, query_params }
+    }
+
     fn get_query_params(&self) -> HashMap<String, String> {
         form_urlencoded::parse(self.uri().query().unwrap_or("").as_bytes())
             .into_owned()

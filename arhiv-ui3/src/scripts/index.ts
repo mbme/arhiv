@@ -1,11 +1,10 @@
 import {
   autoGrowTextarea,
   callRPCAction,
+  fetchHTML,
   formDataToObj,
   isEqualFormData,
-  Obj,
   replaceEl,
-  updateQueryParam,
 } from './utils';
 import { initDataJS } from './data-js';
 import { dispatchCloseModalEvent, showModal } from './modal';
@@ -97,39 +96,26 @@ class ArhivUI {
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   }
 
-  initCatalogLoadMore = (button: HTMLButtonElement, filter: Obj, pickerMode: boolean) => {
+  initCatalogLoadMore = (button: HTMLButtonElement, nextPageUrl: string) => {
     button.addEventListener('click', async () => {
-      const catalog: string = await callRPCAction({
-        RenderCatalog: {
-          filter,
-          picker_mode: pickerMode,
-        },
-      });
-
       if (!button.parentElement) {
         throw new Error("button doesn't have a parent");
       }
 
-      replaceEl(button.parentElement, catalog, 'ul > li');
+      const catalog = await fetchHTML(nextPageUrl);
+
+      replaceEl(button.parentElement, catalog, 'ul.catalog-entries > li');
     });
   }
 
-  initCatalogSearch = (input: HTMLInputElement, documentType = '', parentCollection = '', pickerMode: boolean, queryParam = '') => {
+  initCatalogSearch = (input: HTMLInputElement, urlS: string) => {
     input.addEventListener('change', async () => {
       const pattern = input.value;
 
-      if (queryParam) {
-        updateQueryParam('pattern', pattern);
-      }
+      const url = new URL(location.origin + urlS);
+      url.searchParams.set('pattern', pattern);
 
-      const catalog: string = await callRPCAction({
-        SearchCatalog: {
-          parent_collection: parentCollection || undefined,
-          document_type: documentType || undefined,
-          pattern,
-          picker_mode: pickerMode,
-        },
-      });
+      const catalog = await fetchHTML(url.toString());
 
       const el = input.parentElement?.querySelector('.catalog-entries');
       if (!el) {

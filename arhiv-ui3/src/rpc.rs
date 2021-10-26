@@ -6,35 +6,19 @@ use serde_json::Value;
 
 use arhiv_core::{
     entities::{Document, Id},
-    Arhiv, Filter,
+    Arhiv,
 };
 use rs_utils::{
     run_command,
     server::{json_response, ServerResponse},
 };
 
-use crate::components::Catalog;
-
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum RPCAction {
-    Delete {
-        id: Id,
-    },
-    Save {
-        document: Box<Document>,
-    },
+    Delete { id: Id },
+    Save { document: Box<Document> },
     PickAttachment {},
-    RenderCatalog {
-        picker_mode: bool,
-        filter: Filter,
-    },
-    SearchCatalog {
-        parent_collection: Option<Id>,
-        picker_mode: bool,
-        document_type: Option<String>,
-        pattern: String,
-    },
 }
 
 pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
@@ -79,47 +63,45 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
                 let document = arhiv.add_attachment(file_path, false)?;
                 response = Value::String(document.id.to_string());
             }
-        }
+        } // RPCAction::RenderCatalog {
+          //     filter,
+          //     picker_mode,
+          // } => {
+          //     let mut catalog = Catalog::from_filter(filter);
 
-        RPCAction::RenderCatalog {
-            filter,
-            picker_mode,
-        } => {
-            let mut catalog = Catalog::from_filter(filter);
+          //     if picker_mode {
+          //         catalog = catalog.picker_mode();
+          //     }
 
-            if picker_mode {
-                catalog = catalog.picker_mode();
-            }
+          //     let catalog = catalog.render(arhiv)?;
 
-            let catalog = catalog.render(arhiv)?;
+          //     response = Value::String(catalog);
+          // }
 
-            response = Value::String(catalog);
-        }
+          // RPCAction::SearchCatalog {
+          //     parent_collection,
+          //     picker_mode,
+          //     document_type,
+          //     pattern,
+          // } => {
+          //     let mut catalog = Catalog::new().search(pattern);
 
-        RPCAction::SearchCatalog {
-            parent_collection,
-            picker_mode,
-            document_type,
-            pattern,
-        } => {
-            let mut catalog = Catalog::new().search(pattern);
+          //     if let Some(parent_collection) = parent_collection {
+          //         catalog = catalog.in_collection(parent_collection);
+          //     }
 
-            if let Some(parent_collection) = parent_collection {
-                catalog = catalog.in_collection(parent_collection);
-            }
+          //     if let Some(document_type) = document_type {
+          //         catalog = catalog.with_type(document_type);
+          //     }
 
-            if let Some(document_type) = document_type {
-                catalog = catalog.with_type(document_type);
-            }
+          //     if picker_mode {
+          //         catalog = catalog.picker_mode();
+          //     }
 
-            if picker_mode {
-                catalog = catalog.picker_mode();
-            }
+          //     let catalog = catalog.render(arhiv)?;
 
-            let catalog = catalog.render(arhiv)?;
-
-            response = Value::String(catalog);
-        }
+          //     response = Value::String(catalog);
+          // }
     }
 
     json_response(response)

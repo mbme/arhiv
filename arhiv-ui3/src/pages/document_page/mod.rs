@@ -31,7 +31,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let collection_id: Option<Id> = req
         .param("collection_id")
         .map(|collection_id| collection_id.into());
-    let pattern = req.get_query_param("pattern").unwrap_or_default();
+    let url = req.get_url();
 
     let arhiv: &Arhiv = req.data().unwrap();
 
@@ -48,9 +48,9 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
     let content = if document.document_type == PROJECT_TYPE {
-        render_project_view(&document, arhiv, &pattern)?
+        render_project_view(&document, arhiv, url)?
     } else {
-        render_document_view(&document, arhiv, &pattern)?
+        render_document_view(&document, arhiv, url)?
     };
 
     let refs = document

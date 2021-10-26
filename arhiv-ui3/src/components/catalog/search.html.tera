@@ -1,8 +1,0 @@
-<input
-  type="search"
-  name="pattern"
-  class="field w-full mb-8"
-  value="{{pattern}}"
-  placeholder="{{placeholder}}"
-  data-js="arhiv_ui.initCatalogSearch(this, '{{document_type}}', '{{parent_collection}}', {{picker_mode}}, '{{query_param}}')"
-/>

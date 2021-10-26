@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use anyhow::*;
 use rusqlite::Row;
 use serde_json::Value;

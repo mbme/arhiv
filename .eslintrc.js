@@ -1,16 +1,21 @@
 /* eslint-env node */
 
 module.exports = {
-  'env': {
+  plugins: ['@typescript-eslint'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+  ],
+  env: {
     'browser': true,
     'es2021': true
   },
-  'extends': 'eslint:recommended',
-  'parserOptions': {
+  parserOptions: {
     'ecmaVersion': 12,
     'sourceType': 'module'
   },
-  'rules': {
+  rules: {
     'indent': [
       'error',
       2,

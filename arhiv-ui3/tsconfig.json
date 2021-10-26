@@ -1,37 +1,3 @@
 {
-  "compilerOptions": {
-    "incremental": true,
-    "esModuleInterop": true,
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable"
-    ],
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "module": "ESNext",
-    "target": "esnext",
-
-    "sourceMap": true,
-
-    "skipLibCheck": true,
-
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-
-    "downlevelIteration": true,
-    "keyofStringsOnly": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "strict": true,
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "exclude": [
-    "node_modules",
-    "*/**/FLYCHECK_XXY_*"
-  ]
+  "extends": "../tsconfig.json"
 }

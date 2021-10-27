@@ -1,19 +1,9 @@
-<div>
+<div class="catalog">
   {{ search_input | safe }}
 
   <ul class="catalog-entries">
     {{ entries | safe }}
-
-    {% if next_page_url %}
-    <li class="border-t-2 border-dashed py-6">
-      <button
-        type="button"
-        class="text-blue-800 font-semibold block mx-auto"
-        data-js="arhiv_ui.initCatalogLoadMore(this, '{{ next_page_url }}')"
-      >
-        Load more
-      </button>
-    </li>
-    {% endif %}
   </ul>
+
+  {{ pagination | safe }}
 </div>

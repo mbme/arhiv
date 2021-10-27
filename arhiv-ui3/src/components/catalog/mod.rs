@@ -5,10 +5,12 @@ use serde_json::json;
 use arhiv_core::{entities::Id, Arhiv, Filter};
 
 pub use self::entries::{CatalogConfig, CatalogEntries};
+use self::pagination::render_pagination;
 pub use self::search_input::render_search_input;
 use crate::template_fn;
 
 mod entries;
+mod pagination;
 mod search_input;
 
 template_fn!(render_template, "./catalog.html.tera");
@@ -67,15 +69,9 @@ impl Catalog {
         let pattern = self.filter.get_pattern().unwrap_or_default();
         let document_type = self.filter.get_document_type();
         let parent_collection = self.filter.get_parent_collection();
+        let current_page = self.filter.get_current_page();
 
-        let next_page_url = result.has_more.then(|| {
-            let mut url = self.url.clone();
-
-            let next_page = self.filter.get_current_page() + 1;
-            url.set_query_param("page", Some(next_page.to_string()));
-
-            url.render()
-        });
+        let pagination = render_pagination(self.url.clone(), current_page, result.has_more)?;
 
         let search_input = render_search_input(pattern, document_type, &self.url.render())?;
 
@@ -93,7 +89,7 @@ impl Catalog {
         render_template(json!({
             "search_input": search_input,
             "entries": entries,
-            "next_page_url": next_page_url,
+            "pagination": pagination,
         }))
     }
 }

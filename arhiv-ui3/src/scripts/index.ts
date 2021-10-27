@@ -94,19 +94,25 @@ class ArhivUI {
     });
 
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
-  }
+  };
 
-  initCatalogLoadMore = (button: HTMLButtonElement, nextPageUrl: string) => {
-    button.addEventListener('click', async () => {
-      if (!button.parentElement) {
-        throw new Error("button doesn't have a parent");
+  initCatalogLoadMore = (anchor: HTMLAnchorElement) => {
+    anchor.addEventListener('click', async (e: MouseEvent) => {
+      e.preventDefault();
+
+      const url = anchor.href;
+
+      const newPage = await fetchHTML(url);
+
+      // find first parent .catalog
+      const catalog = anchor.closest('.catalog');
+      if (!catalog) {
+        throw new Error('cannot find parent catalog element');
       }
 
-      const catalog = await fetchHTML(nextPageUrl);
-
-      replaceEl(button.parentElement, catalog, 'ul.catalog-entries > li');
+      replaceEl(catalog as HTMLElement, newPage, '.catalog');
     });
-  }
+  };
 
   initCatalogSearch = (input: HTMLInputElement, urlS: string) => {
     input.addEventListener('change', async () => {
@@ -114,17 +120,19 @@ class ArhivUI {
 
       const url = new URL(location.origin + urlS);
       url.searchParams.set('pattern', pattern);
+      url.searchParams.delete('page'); // reset page on search
 
-      const catalog = await fetchHTML(url.toString());
+      const newPage = await fetchHTML(url.toString());
 
-      const el = input.parentElement?.querySelector('.catalog-entries');
-      if (!el) {
-        throw new Error('cannot find list element');
+      // find first parent .catalog
+      const catalog = input.closest('.catalog');
+      if (!catalog) {
+        throw new Error('cannot find parent catalog element');
       }
 
-      replaceEl(el as HTMLElement, catalog, '.catalog-entries');
+      replaceEl(catalog as HTMLElement, newPage, '.catalog');
     });
-  }
+  };
 
   initDocumentPicker = (container: HTMLElement) => {
     container.addEventListener('click', (e) => {
@@ -146,7 +154,7 @@ class ArhivUI {
 
       void copyTextToClipboard(id, 'selected document id');
     });
-  }
+  };
 }
 
 declare global {

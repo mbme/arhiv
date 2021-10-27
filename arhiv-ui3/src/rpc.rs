@@ -63,45 +63,7 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
                 let document = arhiv.add_attachment(file_path, false)?;
                 response = Value::String(document.id.to_string());
             }
-        } // RPCAction::RenderCatalog {
-          //     filter,
-          //     picker_mode,
-          // } => {
-          //     let mut catalog = Catalog::from_filter(filter);
-
-          //     if picker_mode {
-          //         catalog = catalog.picker_mode();
-          //     }
-
-          //     let catalog = catalog.render(arhiv)?;
-
-          //     response = Value::String(catalog);
-          // }
-
-          // RPCAction::SearchCatalog {
-          //     parent_collection,
-          //     picker_mode,
-          //     document_type,
-          //     pattern,
-          // } => {
-          //     let mut catalog = Catalog::new().search(pattern);
-
-          //     if let Some(parent_collection) = parent_collection {
-          //         catalog = catalog.in_collection(parent_collection);
-          //     }
-
-          //     if let Some(document_type) = document_type {
-          //         catalog = catalog.with_type(document_type);
-          //     }
-
-          //     if picker_mode {
-          //         catalog = catalog.picker_mode();
-          //     }
-
-          //     let catalog = catalog.render(arhiv)?;
-
-          //     response = Value::String(catalog);
-          // }
+        }
     }
 
     json_response(response)

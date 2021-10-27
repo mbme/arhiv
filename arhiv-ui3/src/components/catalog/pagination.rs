@@ -7,7 +7,7 @@ use crate::template_fn;
 
 template_fn!(render_template, "./pagination.html.tera");
 
-pub fn render_pagination(url: Url, page: u8, has_more: bool) -> Result<String> {
+pub fn render_pagination(url: &Url, page: u8, has_more: bool) -> Result<String> {
     let prev_page_url = (page > 0).then(|| {
         let mut url = url.clone();
 

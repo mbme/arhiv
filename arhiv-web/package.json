@@ -1,0 +1,29 @@
+{
+  "name": "arhiv-web",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.0",
+  "description": "arhiv UI",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.11",
+    "@tsconfig/svelte": "^2.0.1",
+    "autoprefixer": "^10.3.7",
+    "eslint": "^8.1.0",
+    "eslint-plugin-svelte3": "^3.2.1",
+    "postcss": "^8.3.11",
+    "postcss-nesting": "^8.0.1",
+    "svelte": "^3.37.0",
+    "svelte-preprocess": "^4.7.2",
+    "tailwindcss": "^2.2.17",
+    "tslib": "^2.2.0",
+    "typescript": "^4.3.2",
+    "vite": "^2.6.4"
+  }
+}

@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */
+  a, button {
+    touch-action: manipulation;
+  }
+
+  [aria-hidden='true'] {
+    display: none;
+  }
+}
+
+html {
+  overflow-y: scroll;
+}
+
+html, body {
+  height: auto;
+  min-height: 100vh;
+
+  text-rendering: optimizeLegibility;
+  @apply antialiased;
+
+  --content-width: 45rem;
+  --bg-color: #fff;
+
+  @apply bg-yellow-100;
+  color: #333;
+}
+
+body {
+  @apply flex flex-col lg:flex-row;
+}
+
+#sidebar {
+  @apply flex flex-col;
+
+  @apply px-8 py-12 lg:pt-32;
+
+  flex-grow: 1;
+  max-width: 19rem;
+
+  @screen lg {
+    position: sticky;
+    top: 0;
+    align-self: flex-start; /* needed for sticky to work in flex context */
+  }
+
+  & > a {
+    text-align: right;
+    @apply mb-4 uppercase tracking-wider text-gray-500 hover:text-blue-700;
+  }
+}
+
+main {
+  width: 100%;
+  max-width: var(--content-width);
+  z-index: 1;
+  @apply my-4 lg:mr-4 flex flex-col;
+
+  & > article {
+    background-color: var(--bg-color);
+    @apply shadow mb-4;
+  }
+}
+
+#content {
+  @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8 flex-grow;
+}
+
+a:not(.clean-link) {
+  @apply text-blue-700;
+}
+
+@layer components {
+  .markup {
+    @apply prose;
+
+    & h1 {
+      @apply text-2xl;
+    }
+
+    & h2 {
+      @apply text-xl;
+    }
+
+    & :is(h3, h4, h5, h6) {
+      @apply text-lg;
+    }
+  }
+
+  .markup-sm {
+    @apply prose prose-sm text-sm;
+
+    & h1 {
+      @apply text-lg;
+    }
+
+    & :is(h2, h3, h4, h5, h6) {
+      @apply text-base;
+    }
+  }
+
+  .markup,
+  .markup-sm {
+    hyphens: auto;
+    overflow-wrap: break-word;
+
+    /* task lists */
+    & li > input[type=checkbox] {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+
+  .preview {
+    @apply line-clamp-4;
+
+    max-height: 8em;
+    position: relative;
+
+    &:after {
+      content: "";
+      position: absolute;
+      top: 80%;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-image: linear-gradient(to bottom, transparent, var(--bg-color));
+    }
+  }
+
+  .section-heading {
+    @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
+  }
+
+  .form {
+    & .field {
+      display: block;
+
+      &:not(input[type=checkbox], select) {
+        @apply w-full;
+      }
+
+      &[readonly] {
+        @apply bg-gray-100;
+      }
+    }
+
+    & textarea {
+      @apply p-2;
+
+      resize: none;
+      min-height: 19rem;
+      overflow-y: hidden;
+    }
+  }
+
+  .btn {
+    @apply py-2 px-6 rounded-sm border-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 focus:border-opacity-0;
+    @apply font-semibold tracking-wide cursor-pointer;
+
+    @apply text-blue-600 hover:text-blue-700 hover:bg-blue-200 hover:bg-opacity-20;
+
+    &.btn-simple {
+      @apply border-opacity-0;
+      @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
+    }
+
+    &.btn-prime {
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-blue-500 hover:bg-blue-600;
+    }
+
+    &.btn-warn {
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-yellow-500 hover:bg-yellow-600;
+    }
+
+    &.btn-danger {
+      @apply text-white rounded-md hover:shadow-lg;
+
+      @apply bg-red-500 hover:bg-red-600;
+    }
+  }
+
+  .icon-btn {
+    @apply uppercase p-3 flex items-center max-w-max shadow-sm hover:shadow-lg rounded-full;
+    @apply border-2;
+  }
+
+  .modal-content {
+    @apply p-2 sm:p-4 md:p-6;
+  }
+
+  .modal-buttons {
+    @apply flex justify-end bg-gray-50 rounded-b-md;
+    @apply p-2 sm:p-4 md:px-6;
+  }
+
+  #notification-root {
+    z-index: 1;
+
+    @apply fixed top-4 right-4 w-64 space-y-2;
+  }
+
+  #notification-root > div {
+    @apply rounded-md shadow-lg px-4 py-2 cursor-default;
+  }
+
+  #notification-root > div[data-info] {
+    @apply bg-green-400;
+  }
+
+  #notification-root > div[data-error] {
+    @apply bg-red-400;
+  }
+
+  .document-picker .catalog-entry {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .wrap-text {
+    hyphens: auto;
+    overflow-wrap: break-word;
+  }
+
+  .paper {
+    background-color: var(--bg-color);
+    @apply shadow;
+  }
+
+  .var-bg-color {
+    background-color: var(--bg-color);
+  }
+}

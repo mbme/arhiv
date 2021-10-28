@@ -1,14 +1,14 @@
-use maud::{html, Render};
+use maud::{html, Markup};
 
 pub fn render_search_input(
     pattern: &str,
     document_type: Option<&str>,
     url: &str,
     update_query: bool,
-) -> String {
+) -> Markup {
     let placeholder = format!("Search {}s", document_type.unwrap_or("document"));
 
-    let html = html! {
+    html! {
         input
             .catalog-search-input
             type="search"
@@ -17,7 +17,5 @@ pub fn render_search_input(
             placeholder=(placeholder)
 
             data-js={"arhiv_ui.initCatalogSearch(this, '" (url) "', " (update_query) ")"};
-    };
-
-    html.render().into_string()
+    }
 }

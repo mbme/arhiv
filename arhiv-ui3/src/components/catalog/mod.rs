@@ -1,4 +1,5 @@
 use anyhow::*;
+use maud::Render;
 use rs_utils::server::Url;
 use serde_json::json;
 
@@ -78,7 +79,9 @@ impl Catalog {
             document_type,
             &self.url.render(),
             !self.picker_mode,
-        );
+        )
+        .render()
+        .into_string();
 
         let mut entries = CatalogEntries::new();
         entries.parent_collection = parent_collection;

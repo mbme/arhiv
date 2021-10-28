@@ -78,7 +78,7 @@ impl Catalog {
             document_type,
             &self.url.render(),
             !self.picker_mode,
-        )?;
+        );
 
         let mut entries = CatalogEntries::new();
         entries.parent_collection = parent_collection;

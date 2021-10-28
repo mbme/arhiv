@@ -138,10 +138,10 @@ a:not(.clean-link) {
   }
 
   .form {
-    & .field {
+    & :is(input, select, textarea) {
       display: block;
 
-      &:not(input[type=checkbox], select) {
+      &:not(input[type=checkbox], input[type=button], input[type=submit], select) {
         @apply w-full;
       }
 
@@ -241,4 +241,8 @@ a:not(.clean-link) {
   .var-bg-color {
     background-color: var(--bg-color);
   }
+}
+
+.catalog-search-input {
+  @apply w-full mb-8;
 }

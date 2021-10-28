@@ -20,5 +20,6 @@ routerify = "2"
 
 tera = { version = "1", features = ["chrono"]}
 chrono = { version = "0.4", features = ["serde"] }
+maud = "0.22.3"
 
 rust-embed= { version = "6", features = ["interpolate-folder-path"]}

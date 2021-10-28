@@ -1,22 +1,23 @@
-use anyhow::*;
-use serde_json::json;
-
-use crate::template_fn;
-
-template_fn!(render_template, "./search_input.html.tera");
+use maud::{html, Render};
 
 pub fn render_search_input(
     pattern: &str,
     document_type: Option<&str>,
     url: &str,
     update_query: bool,
-) -> Result<String> {
+) -> String {
     let placeholder = format!("Search {}s", document_type.unwrap_or("document"));
 
-    render_template(json!({
-        "pattern": pattern,
-        "update_query": update_query,
-        "placeholder": placeholder,
-        "url": url,
-    }))
+    let html = html! {
+        input
+            .catalog-search-input
+            type="search"
+            name="pattern"
+            value=(pattern)
+            placeholder=(placeholder)
+
+            data-js={"arhiv_ui.initCatalogSearch(this, '" (url) "', " (update_query) ")"};
+    };
+
+    html.render().into_string()
 }

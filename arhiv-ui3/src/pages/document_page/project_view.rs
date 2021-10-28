@@ -33,7 +33,7 @@ pub fn render_project_view(document: &Document, arhiv: &Arhiv, url: Url) -> Resu
         .recently_updated_first()
         .all_items();
 
-    let search_input = render_search_input(&pattern, Some(TASK_TYPE), &url.render(), true)?;
+    let search_input = render_search_input(&pattern, Some(TASK_TYPE), &url.render(), true);
 
     let result = arhiv.list_documents(&filter)?;
 

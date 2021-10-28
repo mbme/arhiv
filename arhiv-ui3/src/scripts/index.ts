@@ -5,6 +5,7 @@ import {
   formDataToObj,
   isEqualFormData,
   replaceEl,
+  updateQueryParam,
 } from './utils';
 import { initDataJS } from './data-js';
 import { dispatchCloseModalEvent, showModal } from './modal';
@@ -114,9 +115,13 @@ class ArhivUI {
     });
   };
 
-  initCatalogSearch = (input: HTMLInputElement, urlS: string) => {
+  initCatalogSearch = (input: HTMLInputElement, urlS: string, updateQuery: boolean) => {
     input.addEventListener('change', async () => {
-      const pattern = input.value;
+      const pattern = input.value.trim();
+
+      if (updateQuery) {
+        updateQueryParam('pattern', pattern);
+      }
 
       const url = new URL(location.origin + urlS);
       url.searchParams.set('pattern', pattern);

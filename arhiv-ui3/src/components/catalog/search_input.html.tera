@@ -5,5 +5,5 @@
   value="{{pattern}}"
   placeholder="{{placeholder}}"
 
-  data-js="arhiv_ui.initCatalogSearch(this, '{{url}}')"
+  data-js="arhiv_ui.initCatalogSearch(this, '{{url}}', {{update_query}})"
 />

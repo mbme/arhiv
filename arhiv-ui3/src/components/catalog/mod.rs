@@ -73,7 +73,12 @@ impl Catalog {
 
         let pagination = render_pagination(&self.url, current_page, result.has_more)?;
 
-        let search_input = render_search_input(pattern, document_type, &self.url.render())?;
+        let search_input = render_search_input(
+            pattern,
+            document_type,
+            &self.url.render(),
+            !self.picker_mode,
+        )?;
 
         let mut entries = CatalogEntries::new();
         entries.parent_collection = parent_collection;

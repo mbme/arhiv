@@ -9,11 +9,13 @@ pub fn render_search_input(
     pattern: &str,
     document_type: Option<&str>,
     url: &str,
+    update_query: bool,
 ) -> Result<String> {
     let placeholder = format!("Search {}s", document_type.unwrap_or("document"));
 
     render_template(json!({
         "pattern": pattern,
+        "update_query": update_query,
         "placeholder": placeholder,
         "url": url,
     }))

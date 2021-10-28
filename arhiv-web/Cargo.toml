@@ -16,7 +16,6 @@ serde_json = "1"
 
 tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
 hyper = { version = "0.14", features = ["http1", "server"] }
-
-chrono = { version = "0.4", features = ["serde"] }
+routerify = "2"
 
 rust-embed= { version = "6", features = ["interpolate-folder-path"]}

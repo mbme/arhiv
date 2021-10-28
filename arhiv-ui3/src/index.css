@@ -242,7 +242,3 @@ a:not(.clean-link) {
     background-color: var(--bg-color);
   }
 }
-
-.catalog-search-input {
-  @apply w-full mb-8;
-}

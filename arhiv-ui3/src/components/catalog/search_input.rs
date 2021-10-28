@@ -10,7 +10,7 @@ pub fn render_search_input(
 
     html! {
         input
-            .catalog-search-input
+            class="w-full mb-8"
             type="search"
             name="pattern"
             value=(pattern)

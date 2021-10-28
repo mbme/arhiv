@@ -72,7 +72,9 @@ impl Catalog {
         let parent_collection = self.filter.get_parent_collection();
         let current_page = self.filter.get_current_page();
 
-        let pagination = render_pagination(&self.url, current_page, result.has_more)?;
+        let pagination = render_pagination(&self.url, current_page, result.has_more)
+            .render()
+            .into_string();
 
         let search_input = render_search_input(
             pattern,

@@ -1,13 +1,8 @@
-use anyhow::*;
-use serde_json::json;
+use maud::{html, Markup};
 
 use rs_utils::server::Url;
 
-use crate::template_fn;
-
-template_fn!(render_template, "./pagination.html.tera");
-
-pub fn render_pagination(url: &Url, page: u8, has_more: bool) -> Result<String> {
+pub fn render_pagination(url: &Url, page: u8, has_more: bool) -> Markup {
     let prev_page_url = (page > 0).then(|| {
         let mut url = url.clone();
 
@@ -30,9 +25,41 @@ pub fn render_pagination(url: &Url, page: u8, has_more: bool) -> Result<String> 
         url.render()
     });
 
-    render_template(json!({
-        "prev_page_url": prev_page_url,
-        "page": page,
-        "next_page_url": next_page_url,
-    }))
+    html! {
+        div
+            class="my-6 flex justify-center items-center" {
+                @if prev_page_url.is_some() {
+                    a
+                        href=(prev_page_url.unwrap())
+                        class="mr-4 uppercase"
+                        data-js="arhiv_ui.initCatalogLoadMore(this)" {
+                            svg class="h-5 w-5 inline-block align-text-top mr-1" {
+                                use xlink:href="#icon-narrow-left";
+                            }
+
+                            "prev"
+                        }
+                }
+
+                @if next_page_url.is_some() || page > 0 {
+                    div class="uppercase mono" {
+                        "page " (page)
+                    }
+                }
+
+                @if next_page_url.is_some() {
+                    a
+                        href=(next_page_url.unwrap())
+                        class="ml-4 uppercase"
+                        data-js="arhiv_ui.initCatalogLoadMore(this)" {
+                            "next"
+
+                            svg class="h-5 w-5 inline-block align-text-top ml-1" {
+                                use xlink:href="#icon-narrow-right";
+                            }
+                        }
+
+                }
+            }
+    }
 }

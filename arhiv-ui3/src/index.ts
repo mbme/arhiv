@@ -6,10 +6,12 @@ import {
   isEqualFormData,
   replaceEl,
   updateQueryParam,
-} from './utils';
-import { initDataJS } from './data-js';
-import { dispatchCloseModalEvent, showModal } from './modal';
-import { copyTextToClipboard } from './clipboard';
+} from './scripts/utils';
+import { initDataJS } from './scripts/data-js';
+import { dispatchCloseModalEvent, showModal } from './scripts/modal';
+import { copyTextToClipboard } from './scripts/clipboard';
+
+import 'unpoly';
 
 type Document = {
   id: string,
@@ -95,24 +97,6 @@ class ArhivUI {
     });
 
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
-  };
-
-  initCatalogLoadMore = (anchor: HTMLAnchorElement) => {
-    anchor.addEventListener('click', async (e: MouseEvent) => {
-      e.preventDefault();
-
-      const url = anchor.href;
-
-      const newPage = await fetchHTML(url);
-
-      // find first parent .catalog
-      const catalog = anchor.closest('.catalog');
-      if (!catalog) {
-        throw new Error('cannot find parent catalog element');
-      }
-
-      replaceEl(catalog as HTMLElement, newPage, '.catalog');
-    });
   };
 
   initCatalogSearch = (input: HTMLInputElement, urlS: string, updateQuery: boolean) => {

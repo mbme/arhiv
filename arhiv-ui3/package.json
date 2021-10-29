@@ -15,7 +15,8 @@
     "prod:build:css": "NODE_ENV=production yarn build:css"
   },
   "dependencies": {
-    "a11y-dialog": "^7.3.0"
+    "a11y-dialog": "^7.3.0",
+    "unpoly": "^2.4.1"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.2",

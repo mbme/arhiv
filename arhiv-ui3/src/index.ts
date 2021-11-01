@@ -1,11 +1,8 @@
 import {
   autoGrowTextarea,
   callRPCAction,
-  fetchHTML,
   formDataToObj,
   isEqualFormData,
-  replaceEl,
-  updateQueryParam,
 } from './scripts/utils';
 import { initDataJS } from './scripts/data-js';
 import { dispatchCloseModalEvent, showModal } from './scripts/modal';
@@ -97,30 +94,6 @@ class ArhivUI {
     });
 
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
-  };
-
-  initCatalogSearch = (input: HTMLInputElement, urlS: string, updateQuery: boolean) => {
-    input.addEventListener('change', async () => {
-      const pattern = input.value.trim();
-
-      if (updateQuery) {
-        updateQueryParam('pattern', pattern);
-      }
-
-      const url = new URL(location.origin + urlS);
-      url.searchParams.set('pattern', pattern);
-      url.searchParams.delete('page'); // reset page on search
-
-      const newPage = await fetchHTML(url.toString());
-
-      // find first parent .catalog
-      const catalog = input.closest('.catalog');
-      if (!catalog) {
-        throw new Error('cannot find parent catalog element');
-      }
-
-      replaceEl(catalog as HTMLElement, newPage, '.catalog');
-    });
   };
 
   initDocumentPicker = (container: HTMLElement) => {

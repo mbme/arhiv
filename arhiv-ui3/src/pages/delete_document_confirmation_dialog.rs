@@ -6,15 +6,18 @@ use serde_json::json;
 use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::server::ServerResponse;
 
-use super::render_modal;
-use crate::{template_fn, urls::parent_collection_url};
+use crate::{
+    pages::base::render_modal,
+    template_fn,
+    urls::{document_url, parent_collection_url},
+};
 
 template_fn!(
     render_template,
     "./delete_document_confirmation_dialog.html.tera"
 );
 
-pub async fn render_delete_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
+pub async fn delete_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
     let collection_id: Option<Id> = req
         .param("collection_id")
@@ -30,15 +33,9 @@ pub async fn render_delete_document_confirmation_dialog(req: Request<Body>) -> S
     let content = render_template(json!({
         "document": document,
         "title": document_title,
+        "cancel_url": document_url(&document.id, &collection_id),
         "confirm_url": parent_collection_url(&document.document_type, &collection_id),
     }))?;
 
-    let modal_title = format!("Delete {}", &document.document_type);
-
-    render_modal(
-        "delete-document-confirmation-dialog",
-        &modal_title,
-        &content,
-        true,
-    )
+    render_modal(content)
 }

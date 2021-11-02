@@ -12,26 +12,15 @@
     <script src="/public/index.js"></script>
   </head>
   <body>
+    {% if sidebar %}
     <nav id="sidebar">
-      <a href="/">index</a>
-
-      {% for document_type in nav_document_types %}
-      <a href="{{document_type.1}}">{{ document_type.0 }}s</a>
-      {% endfor %}
-
-      <a href="/new" class="flex justify-end items-center mt-8">
-        <svg class="h-5 w-5 mr-1">
-          <use xlink:href="#icon-document-add" />
-        </svg>
-        New...
-      </a>
+      {{ sidebar | safe }}
     </nav>
+    {% endif %}
 
     <main>
       {{ content | safe }}
     </main>
-
-    <div id="modal-root"></div>
 
     <div id="notification-root"></div>
 

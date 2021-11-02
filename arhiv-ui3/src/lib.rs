@@ -27,12 +27,9 @@ use rs_utils::{
     server::{error_handler, logger_middleware, not_found_handler},
 };
 
-use crate::modals::{render_delete_document_confirmation_dialog, render_pick_document_modal};
-
 mod attachment_data;
 mod components;
 mod markup;
-mod modals;
 mod pages;
 mod public_assets;
 mod rpc;
@@ -61,23 +58,19 @@ pub async fn start_ui_server() {
         .get("/collections/:collection_id/documents/:id", document_page)
         //
         .get("/documents/:id/edit", edit_document_page)
+        .get("/documents/:id/delete", delete_document_confirmation_dialog)
         .get(
             "/collections/:collection_id/documents/:id/edit",
             edit_document_page,
         )
+        .get(
+            "/collections/:collection_id/documents/:id/delete",
+            delete_document_confirmation_dialog,
+        )
         //
         .get("/attachment-data/:id", attachment_data_handler)
         //
-        .get(
-            "/modals/collections/:collection_id/documents/:id/delete",
-            render_delete_document_confirmation_dialog,
-        )
-        .get(
-            "/modals/documents/:id/delete",
-            render_delete_document_confirmation_dialog,
-        )
-        //
-        .get("/modals/pick-document", render_pick_document_modal)
+        .get("/modals/pick-document", pick_document_modal)
         //
         .post("/rpc", rpc_handler)
         //

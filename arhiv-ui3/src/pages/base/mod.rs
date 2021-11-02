@@ -1,3 +1,4 @@
+use anyhow::*;
 use serde_json::json;
 
 use arhiv_core::Arhiv;
@@ -8,10 +9,16 @@ use crate::{template_fn, urls::catalog_url, utils::render_content};
 template_fn!(render_template, "./base.html.tera");
 
 pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
-    let nav_document_types = get_nav_document_types(arhiv);
-
     let result = render_template(json!({
-        "nav_document_types": nav_document_types,
+        "sidebar": render_sidebar(arhiv)?,
+        "content": content.as_ref(),
+    }))?;
+
+    render_content(result)
+}
+
+pub fn render_modal(content: impl AsRef<str>) -> ServerResponse {
+    let result = render_template(json!({
         "content": content.as_ref(),
     }))?;
 
@@ -28,4 +35,14 @@ fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
         .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
         .map(|module| (module, catalog_url(module)))
         .collect()
+}
+
+template_fn!(render_sidebar_template, "./sidebar.html.tera");
+
+fn render_sidebar(arhiv: &Arhiv) -> Result<String> {
+    let nav_document_types = get_nav_document_types(arhiv);
+
+    render_sidebar_template(json!({
+        "nav_document_types": nav_document_types,
+    }))
 }

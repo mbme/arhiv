@@ -1,6 +1,0 @@
-<div
-  class="modal-content document-picker"
-  data-js="arhiv_ui.initDocumentPicker(this)"
->
-  {{ catalog | safe }}
-</div>

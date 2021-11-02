@@ -5,12 +5,11 @@ use serde_json::json;
 use arhiv_core::Arhiv;
 use rs_utils::server::{RequestQueryExt, ServerResponse};
 
-use super::render_modal;
-use crate::{components::Catalog, template_fn};
+use crate::{components::Catalog, pages::base::render_modal, template_fn};
 
 template_fn!(render_template, "./pick_document_modal.html.tera");
 
-pub async fn render_pick_document_modal(req: Request<Body>) -> ServerResponse {
+pub async fn pick_document_modal(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = req.data().unwrap();
 
     let url = req.get_url();
@@ -21,5 +20,5 @@ pub async fn render_pick_document_modal(req: Request<Body>) -> ServerResponse {
         "catalog": catalog,
     }))?;
 
-    render_modal("pick-document-modal", "Pick document", &content, false)
+    render_modal(content)
 }

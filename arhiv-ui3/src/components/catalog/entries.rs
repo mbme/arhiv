@@ -27,7 +27,6 @@ pub struct CatalogEntries {
     pub parent_collection: Option<Id>,
     pub show_type: bool,
     pub show_id: bool,
-    pub title_link: bool,
 }
 
 impl CatalogEntries {
@@ -36,7 +35,6 @@ impl CatalogEntries {
             parent_collection: None,
             show_type: false,
             show_id: false,
-            title_link: true,
         }
     }
 
@@ -91,7 +89,6 @@ impl CatalogEntries {
             "entries": entries,
             "show_type": self.show_type,
             "show_id": self.show_id,
-            "title_link": self.title_link,
         }))
     }
 }

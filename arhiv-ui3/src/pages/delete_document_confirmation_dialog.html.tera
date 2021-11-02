@@ -1,0 +1,27 @@
+<div class="modal">
+  <div class="modal-title bg-red-500 bg-opacity-75">
+    Delete {{document.documentType}}
+  </div>
+
+  <div class="modal-content">
+    Do you really want to
+    <b>DELETE</b> the {{document.documentType}} <b>{{ title }}</b>?
+  </div>
+
+  <div class="modal-buttons">
+    <a
+      class="btn mr-8"
+      href="{{cancel_url}}"
+    >
+      Cancel
+    </a>
+
+    <button
+      type="button"
+      class="btn btn-danger"
+      onclick="arhiv_ui.delete_document('{{document.id}}', '{{confirm_url}}')"
+    >
+      DELETE
+    </button>
+  </div>
+</div>

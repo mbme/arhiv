@@ -85,7 +85,6 @@ impl Catalog {
         if self.picker_mode {
             entries.show_id = true;
             entries.show_type = true;
-            entries.title_link = false;
         }
 
         let items = result.items.iter().collect::<Vec<_>>();

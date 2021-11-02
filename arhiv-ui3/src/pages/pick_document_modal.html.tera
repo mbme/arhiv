@@ -1,0 +1,5 @@
+<div class="modal">
+  <div class="modal-content document-picker">
+    {{ catalog | safe }}
+  </div>
+</div>

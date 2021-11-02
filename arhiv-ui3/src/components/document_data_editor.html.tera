@@ -77,16 +77,20 @@
         Attach
       </button>
 
-      <button
-        type="button"
+      <a
         class="btn btn-simple"
-        onclick="arhiv_ui.pickDocument()"
+        up-layer="new"
+        up-size="full"
+        up-history="false"
+        up-accept-event="catalog:entry:click"
+        up-on-accepted="arhiv_ui.copyTextToClipboard(value.id, 'selected document id')"
+        href="/modals/pick-document"
       >
         <svg class="h-5 w-5 inline-block mr-1">
           <use xlink:href="#icon-document-search" />
         </svg>
         Pick document...
-      </button>
+      </a>
     </div>
 
     <div>

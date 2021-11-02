@@ -15,13 +15,14 @@
 
     {% if not is_tombstone %}
     <div class="mt-4 text-sm">
-      <button
-        type="button"
-        class="text-red-600 font-mono ml-1"
-        onclick="arhiv_ui.showDeleteDocumentConfirmationDialog('{{document.id}}', '{{collection_id}}')"
+      <a
+        href="{{delete_document_url}}"
+        class="clean-link text-red-600 font-mono ml-1"
+        up-layer="new"
+        up-target=".modal"
       >
         Delete
-      </button>
+      </a>
     </div>
     {% endif %}
   </div>

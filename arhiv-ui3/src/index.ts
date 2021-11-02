@@ -1,3 +1,5 @@
+import 'unpoly';
+
 import {
   autoGrowTextarea,
   callRPCAction,
@@ -5,10 +7,8 @@ import {
   isEqualFormData,
 } from './scripts/utils';
 import { initDataJS } from './scripts/data-js';
-import { dispatchCloseModalEvent, showModal } from './scripts/modal';
-import { copyTextToClipboard } from './scripts/clipboard';
-
-import 'unpoly';
+import { renderNotification } from './scripts/notification';
+import { copyText } from './scripts/clipboard';
 
 type Document = {
   id: string,
@@ -43,18 +43,7 @@ class ArhivUI {
 
     console.log('Selected attachment', id);
 
-    return copyTextToClipboard(id, 'attachment id');
-  }
-
-  async showDeleteDocumentConfirmationDialog(id: string, parentCollection = '') {
-    await showModal(
-      parentCollection
-        ? `/modals/collections/${parentCollection}/documents/${id}/delete`
-        : `/modals/documents/${id}/delete`);
-  }
-
-  async pickDocument() {
-    await showModal('/modals/pick-document');
+    return this.copyTextToClipboard(id, 'attachment id');
   }
 
   initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {
@@ -96,26 +85,14 @@ class ArhivUI {
     form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   };
 
-  initDocumentPicker = (container: HTMLElement) => {
-    container.addEventListener('click', (e) => {
-      const el = (e.target as HTMLElement).closest('li');
-
-      if (!el || !container.contains(el)) {
-        return;
-      }
-
-      const id = el.dataset['id'];
-
-      if (!id) {
-        return;
-      }
-
-      console.log('Selected document', id);
-
-      dispatchCloseModalEvent(container);
-
-      void copyTextToClipboard(id, 'selected document id');
-    });
+  copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
+    try {
+      await copyText(text);
+      renderNotification(`Copied ${textName} to the clipboard!`);
+    } catch (e) {
+      console.error(`Failed to copy ${textName} to the clipboard`, e);
+      renderNotification(`Failed to copy ${textName} to the clipboard!`, 'error');
+    }
   };
 }
 

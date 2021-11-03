@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use anyhow::*;
 use hyper::{header, Response};
 
+use arhiv_core::{entities::DocumentData, schema::DataDescription};
 use rs_utils::server::ServerResponse;
 
 /// `template_fn!(pub get_markup, "./markup.rs");`
@@ -51,4 +54,24 @@ pub fn render_content(content: String) -> ServerResponse {
         // ---
         .body(content.into())
         .context("failed to build response")
+}
+
+pub fn fields_to_document_data(
+    fields: &HashMap<String, String>,
+    data_description: &DataDescription,
+) -> Result<DocumentData> {
+    let mut data = DocumentData::new();
+
+    for field in &data_description.fields {
+        let raw_value = if let Some(value) = fields.get(field.name) {
+            value
+        } else {
+            continue;
+        };
+
+        let value = field.from_string(raw_value)?;
+        data.set(field.name, value);
+    }
+
+    Ok(data)
 }

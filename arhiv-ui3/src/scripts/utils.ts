@@ -50,7 +50,7 @@ export async function fetchHTML(url: string): Promise<string> {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 
-export function formDataToObj(fd: FormData): Obj {
+function formDataToObj(fd: FormData): Obj {
   const result: Obj = {};
 
   for (const [key, value] of fd.entries()) {

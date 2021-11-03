@@ -3,17 +3,11 @@ import 'unpoly';
 import {
   autoGrowTextarea,
   callRPCAction,
-  formDataToObj,
   isEqualFormData,
 } from './scripts/utils';
 import { initDataJS } from './scripts/data-js';
 import { renderNotification } from './scripts/notification';
 import { copyText } from './scripts/clipboard';
-
-type Document = {
-  id: string,
-  data: Record<string, string | undefined>,
-};
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -46,11 +40,16 @@ class ArhivUI {
     return this.copyTextToClipboard(id, 'attachment id');
   }
 
-  initEditorForm = (form: HTMLFormElement, originalDocument: Document, urlOnSave: string) => {
+  preserveUnsavedChanges = (form: HTMLFormElement) => {
+    let submitted = false;
     const initialFormData = new FormData(form);
 
     function onBeforeUnload(event: BeforeUnloadEvent) {
       const fd = new FormData(form);
+
+      if (submitted) {
+        return;
+      }
 
       if (isEqualFormData(initialFormData, fd)) {
         return;
@@ -63,27 +62,12 @@ class ArhivUI {
 
     window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
 
-    form.addEventListener('submit', async (event: Event) => {
-      event.preventDefault();
-
-      const data = formDataToObj(new FormData(form));
-
-      await callRPCAction({
-        Save: {
-          document: {
-            ...originalDocument,
-            data,
-          },
-        },
-      });
-
-      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
-
-      window.location.assign(urlOnSave);
+    form.addEventListener('submit', () => {
+      submitted = true;
     });
-
-    form.querySelectorAll('textarea').forEach(autoGrowTextarea);
   };
+
+  autoGrowTextarea = autoGrowTextarea;
 
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
     try {

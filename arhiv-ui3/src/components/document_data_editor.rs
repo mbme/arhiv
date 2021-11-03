@@ -1,11 +1,12 @@
 use anyhow::*;
 use serde::Serialize;
 
-use crate::{template_fn, urls::document_url};
 use arhiv_core::{
-    entities::{Document, Id},
+    entities::Document,
     schema::{DataDescription, FieldType},
 };
+
+use crate::template_fn;
 
 template_fn!(render_template, "./document_data_editor.html.tera");
 
@@ -20,18 +21,12 @@ struct FormField {
 }
 
 #[derive(Serialize)]
-pub struct DocumentDataEditor<'d> {
+pub struct DocumentDataEditor {
     fields: Vec<FormField>,
-    document: &'d Document,
-    url_on_save: String,
 }
 
-impl<'d> DocumentDataEditor<'d> {
-    pub fn new(
-        document: &'d Document,
-        data_description: &DataDescription,
-        parent_collection: &Option<Id>,
-    ) -> Result<Self> {
+impl DocumentDataEditor {
+    pub fn new(document: &Document, data_description: &DataDescription) -> Result<Self> {
         let fields = data_description
             .fields
             .iter()
@@ -94,13 +89,7 @@ impl<'d> DocumentDataEditor<'d> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let url_on_save = document_url(&document.id, parent_collection);
-
-        Ok(DocumentDataEditor {
-            fields,
-            document,
-            url_on_save,
-        })
+        Ok(DocumentDataEditor { fields })
     }
 
     pub fn render(self) -> Result<String> {

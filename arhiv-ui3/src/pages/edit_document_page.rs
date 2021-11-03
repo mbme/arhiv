@@ -35,7 +35,6 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         arhiv
             .get_schema()
             .get_data_description(&document.document_type)?,
-        &parent_collection,
     )?
     .render()?;
 

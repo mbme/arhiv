@@ -4,10 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Deserialize;
 use serde_json::Value;
 
-use arhiv_core::{
-    entities::{Document, Id},
-    Arhiv,
-};
+use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::{
     run_command,
     server::{json_response, ServerResponse},
@@ -17,7 +14,6 @@ use rs_utils::{
 #[serde(deny_unknown_fields)]
 pub enum RPCAction {
     Delete { id: Id },
-    Save { document: Box<Document> },
     PickAttachment {},
 }
 
@@ -33,25 +29,6 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
     match action {
         RPCAction::Delete { id } => {
             arhiv.delete_document(&id)?;
-        }
-
-        RPCAction::Save { mut document } => {
-            let data_description = arhiv
-                .get_schema()
-                .get_data_description(&document.document_type)?;
-
-            // prepare raw fields
-            for field in &data_description.fields {
-                let raw_value = document.data.get_str(field.name).unwrap_or_default();
-
-                let value = field
-                    .from_string(raw_value)
-                    .context("failed to extract value from string")?;
-
-                document.data.set(field.name, value);
-            }
-
-            arhiv.stage_document(&mut document)?;
         }
 
         RPCAction::PickAttachment {} => {

@@ -5,6 +5,10 @@
   autocomplete="off"
   data-js="arhiv_ui.preserveUnsavedChanges(this)"
 >
+  <!-- Prevent implicit submission of the form -->
+  <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+  <!-- ... -->
+
   {% for field in fields %}
   <label class="block mb-12">
     <h5 class="section-heading mb-2">
@@ -103,7 +107,12 @@
         Cancel
       </button>
 
-      <input type="submit" class="btn btn-prime" value="Save">
+      <button
+        type="submit"
+        class="btn btn-prime"
+      >
+        Save
+      </button>
     </div>
   </div>
 </form>

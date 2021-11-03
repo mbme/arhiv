@@ -36,7 +36,7 @@ pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
         .on_close("/");
 
     if !arhiv.get_schema().is_internal_type(document_type) {
-        toolbar = toolbar.with_action(Action::new_document(document_type));
+        toolbar = toolbar.with_action(Action::new_document(document_type, &None));
     }
 
     let toolbar = toolbar.render()?;

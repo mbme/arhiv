@@ -9,7 +9,7 @@ use arhiv_core::{
 
 use crate::{
     template_fn,
-    urls::{catalog_url, document_editor_url, document_url, NewDocumentUrl},
+    urls::{catalog_url, document_editor_url, document_url, new_document_url},
 };
 
 template_fn!(render_template, "./toolbar.html.tera");
@@ -78,22 +78,10 @@ impl Action {
         }
     }
 
-    pub fn new_document(document_type: &str) -> Self {
-        let url = NewDocumentUrl::Document(document_type).build();
-
+    pub fn new_document(document_type: &str, parent_collection: &Option<Id>) -> Self {
         Action {
             name: document_type.to_string(),
-            url,
-            icon_id: Some("icon-document-add"),
-        }
-    }
-
-    pub fn new_collection_item(item_type: &str, field: &str, id: &Id) -> Self {
-        let url = NewDocumentUrl::CollectionItem(item_type, field, id).build();
-
-        Action {
-            name: item_type.to_string(),
-            url,
+            url: new_document_url(document_type, parent_collection),
             icon_id: Some("icon-document-add"),
         }
     }

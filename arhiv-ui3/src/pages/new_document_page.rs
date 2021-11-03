@@ -1,16 +1,14 @@
-use std::collections::HashMap;
-
 use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
 use arhiv_core::{
-    entities::{Document, DocumentData, Id},
-    schema::DataDescription,
+    entities::{Document, Id},
+    schema::Collection,
     Arhiv,
 };
-use rs_utils::server::{RequestQueryExt, ServerResponse};
+use rs_utils::server::ServerResponse;
 
 use crate::{
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
@@ -27,22 +25,36 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .expect("document_type must be present");
 
     let parent_collection: Option<Id> = req
-        .get_query_param("parent_collection")
-        .map(|parent_collection| parent_collection.into());
+        .param("collection_id")
+        .map(|collection_id| collection_id.into());
 
     let arhiv: &Arhiv = req.data().unwrap();
 
     let schema = arhiv.get_schema();
-    let data_description = schema.get_data_description(document_type)?;
 
     ensure!(!schema.is_internal_type(document_type));
 
-    let params = req.get_query_params();
+    let mut document = Document::new(document_type.clone());
 
-    let document = Document::new_with_data(
-        document_type.clone(),
-        params_to_document_data(&params, data_description)?,
-    );
+    if let Some(ref parent_collection) = parent_collection {
+        let collection = arhiv.must_get_document(parent_collection)?;
+        let data_description = schema.get_data_description(&collection.document_type)?;
+
+        if let Collection::Type {
+            document_type: item_type,
+            field,
+        } = data_description.collection_of
+        {
+            ensure!(
+                item_type == document_type,
+                "collection_id is not a collection of {}",
+                document_type
+            );
+            document.data.set(field, parent_collection);
+        } else {
+            bail!("collection_id is not a collection");
+        };
+    }
 
     let editor = DocumentDataEditor::new(
         &document,
@@ -76,24 +88,4 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
     }))?;
 
     render_page(content, arhiv)
-}
-
-fn params_to_document_data(
-    params: &HashMap<String, String>,
-    data_description: &DataDescription,
-) -> Result<DocumentData> {
-    let mut data = DocumentData::new();
-
-    for field in &data_description.fields {
-        let raw_value = if let Some(value) = params.get(field.name) {
-            value
-        } else {
-            continue;
-        };
-
-        let value = field.from_string(raw_value)?;
-        data.set(field.name, value);
-    }
-
-    Ok(data)
 }

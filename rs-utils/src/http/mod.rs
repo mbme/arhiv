@@ -3,9 +3,6 @@ use futures::stream::TryStreamExt;
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-pub use query_builder::QueryBuilder;
-
-mod query_builder;
 pub mod server;
 
 pub fn get_mime_from_path(path: impl AsRef<str>) -> String {

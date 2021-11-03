@@ -99,10 +99,10 @@ fn render_document_page_toolbar(
 
     if let Collection::Type {
         document_type: item_type,
-        field,
+        field: _,
     } = data_description.collection_of
     {
-        toolbar = toolbar.with_action(Action::new_collection_item(item_type, field, &document.id));
+        toolbar = toolbar.with_action(Action::new_document(item_type, &Some(document.id.clone())));
     };
 
     if data_description.is_editable() {

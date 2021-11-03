@@ -51,14 +51,18 @@ pub async fn start_ui_server() {
         //
         .get("/new", new_document_variants_page)
         .get("/new/:document_type", new_document_page)
+        .get(
+            "/collections/:collection_id/new/:document_type",
+            new_document_page,
+        )
         //
         .get("/catalogs/:document_type", catalog_page)
         //
         .get("/documents/:id", document_page)
-        .get("/collections/:collection_id/documents/:id", document_page)
-        //
         .get("/documents/:id/edit", edit_document_page)
         .get("/documents/:id/delete", delete_document_confirmation_dialog)
+        //
+        .get("/collections/:collection_id/documents/:id", document_page)
         .get(
             "/collections/:collection_id/documents/:id/edit",
             edit_document_page,

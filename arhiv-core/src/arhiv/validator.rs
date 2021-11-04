@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use anyhow::*;
 
@@ -12,7 +12,7 @@ use crate::{
 
 pub struct Validator<'a> {
     arhiv: &'a Arhiv,
-    valid_ids: HashSet<Id>,
+    valid_ids: HashMap<Id, String>,
     errors: Vec<Error>,
 }
 
@@ -20,15 +20,30 @@ impl<'a> Validator<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Self {
         Validator {
             arhiv,
-            valid_ids: HashSet::new(),
+            valid_ids: HashMap::new(),
             errors: vec![],
         }
     }
 
-    fn validate_ref(&mut self, id: &Id, document_type: Option<&str>) -> Result<()> {
-        if self.valid_ids.contains(id) && document_type.is_none() {
-            return Ok(());
-        }
+    fn validate_ref(&mut self, id: &Id, expected_document_type: Option<&str>) -> Result<()> {
+        match (self.valid_ids.get(id), expected_document_type) {
+            (Some(_document_type), None) => {
+                return Ok(());
+            }
+            (Some(document_type), Some(expected_document_type)) => {
+                if document_type == expected_document_type {
+                    return Ok(());
+                }
+
+                bail!(
+                    "document '{}' expected to be '{}' but has type '{}'",
+                    id,
+                    expected_document_type,
+                    document_type
+                );
+            }
+            _ => {}
+        };
 
         let document = if let Some(document) = self.arhiv.get_document(id)? {
             document
@@ -36,9 +51,10 @@ impl<'a> Validator<'a> {
             bail!("unknown document '{}'", id);
         };
 
-        self.valid_ids.insert(document.id);
+        self.valid_ids
+            .insert(document.id, document.document_type.clone());
 
-        if let Some(document_type) = document_type {
+        if let Some(document_type) = expected_document_type {
             ensure!(
                 document.document_type == document_type,
                 "document '{}' expected to be '{}' but has type '{}'",
@@ -84,7 +100,35 @@ impl<'a> Validator<'a> {
             let prev_value = prev_document
                 .as_ref()
                 .and_then(|prev_document| prev_document.data.get(field.name));
-            self.track_err(field.validate(value, prev_value));
+
+            let validation_result = field.validate(value, prev_value);
+
+            if validation_result.is_err() {
+                self.track_err(validation_result);
+                continue;
+            }
+
+            let refs = {
+                if let Some(value) = value {
+                    field.get_refs(value)
+                } else {
+                    continue;
+                }
+            };
+
+            // check field refs
+            for id in refs {
+                if id == document.id {
+                    log::warn!("Document {} references itself", &document.id);
+                    continue;
+                }
+
+                let validation_result = self
+                    .validate_ref(&id, None)
+                    .context("refs validation failed");
+
+                self.track_err(validation_result);
+            }
         }
 
         // check document types of refs
@@ -124,19 +168,6 @@ impl<'a> Validator<'a> {
 
                 _ => {}
             }
-        }
-
-        for id in document.extract_refs(&self.arhiv.schema)?.all() {
-            if id == &document.id {
-                log::warn!("Document {} references itself, ignoring ref", &document.id);
-                continue;
-            }
-
-            let validation_result = self
-                .validate_ref(id, None)
-                .context("refs validation failed");
-
-            self.track_err(validation_result);
         }
 
         self.build_validation_result()

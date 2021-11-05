@@ -228,6 +228,16 @@ impl Field {
 
         Ok(())
     }
+
+    #[must_use]
+    pub fn get_expected_ref_type(&self) -> Option<&str> {
+        match self.field_type {
+            FieldType::Ref(document_type) | FieldType::RefList(document_type) => {
+                Some(document_type)
+            }
+            _ => None,
+        }
+    }
 }
 
 fn extract_ids_from_reflist(reflist: &str) -> Vec<Id> {

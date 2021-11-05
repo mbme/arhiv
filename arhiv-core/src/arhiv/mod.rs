@@ -174,9 +174,13 @@ impl Arhiv {
 
         let prev_document = tx.get_document(&document.id)?;
 
-        Validator::new(self)
-            .validate(document, &prev_document)
-            .context("document validation failed")?;
+        let data_description = self.schema.get_data_description(&document.document_type)?;
+
+        Validator::new(self).validate(
+            &document.data,
+            prev_document.as_ref().map(|document| &document.data),
+            data_description,
+        )?;
 
         if let Some(prev_document) = prev_document {
             log::debug!("Updating existing document {}", &document.id);

@@ -1,32 +1,63 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use anyhow::*;
 
-use rs_utils::log;
-
 use crate::{
-    entities::{Document, Id},
-    schema::FieldType,
+    entities::{DocumentData, Id},
+    schema::{DataDescription, Field},
     Arhiv,
 };
 
+#[derive(Debug)]
+pub struct ValidationError {
+    pub errors: HashMap<String, Vec<Error>>,
+}
+
+impl std::error::Error for ValidationError {}
+
+impl ValidationError {
+    pub fn count_errors(&self) -> usize {
+        self.errors
+            .values()
+            .fold(0, |total, field_errors| total + field_errors.len())
+    }
+}
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Document validation error")?;
+
+        for (field, errors) in &self.errors {
+            writeln!(f, "  field '{}': {} errors", field, errors.len())?;
+            for error in errors {
+                writeln!(f, "                {}", error)?;
+            }
+        }
+
+        writeln!(f, "{} errors in total", self.count_errors())?;
+
+        Ok(())
+    }
+}
+
 pub struct Validator<'a> {
     arhiv: &'a Arhiv,
-    valid_ids: HashMap<Id, String>,
-    errors: Vec<Error>,
+    valid_refs: HashMap<Id, String>,
+    errors: HashMap<String, Vec<Error>>,
 }
 
 impl<'a> Validator<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Self {
         Validator {
             arhiv,
-            valid_ids: HashMap::new(),
-            errors: vec![],
+            valid_refs: HashMap::new(),
+            errors: HashMap::new(),
         }
     }
 
     fn validate_ref(&mut self, id: &Id, expected_document_type: Option<&str>) -> Result<()> {
-        match (self.valid_ids.get(id), expected_document_type) {
+        match (self.valid_refs.get(id), expected_document_type) {
             (Some(_document_type), None) => {
                 return Ok(());
             }
@@ -51,7 +82,7 @@ impl<'a> Validator<'a> {
             bail!("unknown document '{}'", id);
         };
 
-        self.valid_ids
+        self.valid_refs
             .insert(document.id, document.document_type.clone());
 
         if let Some(document_type) = expected_document_type {
@@ -67,44 +98,32 @@ impl<'a> Validator<'a> {
         Ok(())
     }
 
-    fn track_err<T>(&mut self, result: Result<T>) {
+    fn track_err<T>(&mut self, field: &Field, result: Result<T>) {
         if let Err(err) = result {
-            self.errors.push(err);
+            self.errors
+                .entry(field.name.to_string())
+                .or_default()
+                .push(err);
         }
     }
 
-    fn build_validation_result(self) -> Result<()> {
-        if !self.errors.is_empty() {
-            bail!(
-                "invalid document: {} errors\n{}",
-                self.errors.len(),
-                self.errors
-                    .into_iter()
-                    .map(|err| err.to_string())
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            );
-        }
-
-        Ok(())
-    }
-
-    pub fn validate(mut self, document: &Document, prev_document: &Option<Document>) -> Result<()> {
-        let data_description = self
-            .arhiv
-            .schema
-            .get_data_description(&document.document_type)?;
-
+    pub fn validate(
+        mut self,
+        data: &DocumentData,
+        prev_data: Option<&DocumentData>,
+        data_description: &DataDescription,
+    ) -> std::result::Result<(), ValidationError> {
         for field in &data_description.fields {
-            let value = document.data.get(field.name);
-            let prev_value = prev_document
+            // first, validate field value
+            let value = data.get(field.name);
+            let prev_value = prev_data
                 .as_ref()
-                .and_then(|prev_document| prev_document.data.get(field.name));
+                .and_then(|prev_data| prev_data.get(field.name));
 
             let validation_result = field.validate(value, prev_value);
 
             if validation_result.is_err() {
-                self.track_err(validation_result);
+                self.track_err(field, validation_result);
                 continue;
             }
 
@@ -116,60 +135,24 @@ impl<'a> Validator<'a> {
                 }
             };
 
-            // check field refs
+            let expected_document_type = field.get_expected_ref_type();
+
+            // then check field refs
             for id in refs {
-                if id == document.id {
-                    log::warn!("Document {} references itself", &document.id);
-                    continue;
-                }
-
                 let validation_result = self
-                    .validate_ref(&id, None)
-                    .context("refs validation failed");
+                    .validate_ref(&id, expected_document_type)
+                    .context("ref validation failed");
 
-                self.track_err(validation_result);
+                self.track_err(field, validation_result);
             }
         }
 
-        // check document types of refs
-        for field in &data_description.fields {
-            match field.field_type {
-                FieldType::Ref(document_type) => {
-                    let id: Id = if let Some(id) = document.data.get_str(field.name) {
-                        id.into()
-                    } else {
-                        continue;
-                    };
-
-                    let validation_result = self
-                        .validate_ref(&id, Some(document_type))
-                        .context(anyhow!("field '{}' validation failed", field.name));
-
-                    self.track_err(validation_result);
-                }
-
-                FieldType::RefList(document_type) => {
-                    let value = if let Some(value) = document.data.get(field.name) {
-                        value
-                    } else {
-                        continue;
-                    };
-
-                    let ids: Vec<Id> = serde_json::from_value(value.clone())?;
-
-                    for id in ids {
-                        let validation_result = self
-                            .validate_ref(&id, Some(document_type))
-                            .context(anyhow!("field '{}' validation failed", field.name));
-
-                        self.track_err(validation_result);
-                    }
-                }
-
-                _ => {}
-            }
+        if self.errors.is_empty() {
+            Ok(())
+        } else {
+            Err(ValidationError {
+                errors: self.errors,
+            })
         }
-
-        self.build_validation_result()
     }
 }

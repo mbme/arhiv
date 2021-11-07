@@ -13,9 +13,11 @@
   <label
     class="block mb-12 {% if field.errors | length > 0 %} has-errors {% endif %}"
   >
-    <h5 class="section-heading mb-2">
+    <h5 class="section-heading mb-2 relative">
       {{ field.label }}
-      {% if not field.editable %}(readonly){% endif %}
+      {% if not field.editable %}(readonly)
+      {% elif field.mandatory %}<span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
+      {% endif %}
     </h5>
 
     {% if 'MarkupString' in field.field_type %}
@@ -72,7 +74,7 @@
     {% for error in field.errors %}
     <div class="text-red-500 text-xs pl-1 my-2">
       {{ error }}
-		</div>
+    </div>
     {% endfor %}
   </label>
   {% endfor %}

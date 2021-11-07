@@ -2,12 +2,13 @@ use std::{env, process};
 
 // build web app in release mode
 fn main() {
+    println!("cargo:rerun-if-env-changed=PROFILE");
+    println!("cargo:rerun-if-changed=src");
+    println!("cargo:rerun-if-changed=public");
+
     if env::var("PROFILE").unwrap() != "release" {
         return;
     }
-
-    println!("cargo:rerun-if-env-changed=PROFILE");
-    println!("cargo:rerun-if-changed=src");
 
     let install_status = process::Command::new("yarn")
         .arg("install") // make sure deps are installed
@@ -22,8 +23,7 @@ fn main() {
     }
 
     let build_status = process::Command::new("yarn")
-        .arg("prod:build:js")
-        .arg("prod:build:css")
+        .arg("prod:build")
         .status()
         .expect("failed to build web app");
 

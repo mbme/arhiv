@@ -12,7 +12,8 @@
     "watch:js": "node build.js --watch",
     "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/index.css -o public/index.css",
     "prod:build:js": "NODE_ENV=production yarn build:js",
-    "prod:build:css": "NODE_ENV=production yarn build:css"
+    "prod:build:css": "NODE_ENV=production yarn build:css",
+    "prod:build": "yarn run prod:build:js && yarn run prod:build:css"
   },
   "dependencies": {
     "unpoly": "^2.4.1"

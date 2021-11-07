@@ -82,7 +82,7 @@ impl<'a> Validator<'a> {
         let document = if let Some(document) = self.arhiv.get_document(id)? {
             document
         } else {
-            bail!("unknown document '{}'", id);
+            bail!("unknown document ref '{}'", id);
         };
 
         self.valid_refs
@@ -142,9 +142,7 @@ impl<'a> Validator<'a> {
 
             // then check field refs
             for id in refs {
-                let validation_result = self
-                    .validate_ref(&id, expected_document_type)
-                    .context("ref validation failed");
+                let validation_result = self.validate_ref(&id, expected_document_type);
 
                 self.track_err(field, validation_result);
             }

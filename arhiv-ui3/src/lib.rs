@@ -21,7 +21,6 @@ use arhiv_core::Arhiv;
 use attachment_data::attachment_data_handler;
 use pages::*;
 use public_assets::*;
-use rpc::*;
 use rs_utils::{
     log,
     server::{error_handler, logger_middleware, not_found_handler},
@@ -32,7 +31,6 @@ mod components;
 mod markup;
 mod pages;
 mod public_assets;
-mod rpc;
 mod ui_config;
 mod urls;
 
@@ -96,7 +94,7 @@ pub async fn start_ui_server() {
         //
         .get("/modals/pick-document", pick_document_modal)
         //
-        .post("/rpc", rpc_handler)
+        .post("/rpc/pick-attachment", pick_attachment_handler)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)

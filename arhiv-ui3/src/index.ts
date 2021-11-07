@@ -2,7 +2,6 @@ import 'unpoly';
 
 import {
   autoGrowTextarea,
-  callRPCAction,
   isEqualFormData,
 } from './scripts/utils';
 import { initDataJS } from './scripts/data-js';
@@ -19,17 +18,23 @@ class ArhivUI {
   }
 
   async pickAttachment() {
-    const id: string = await callRPCAction({
-      PickAttachment: { }
+    const response = await fetch('/rpc/pick-attachment', {
+      method: 'POST',
+      cache: 'no-cache',
     });
+    const message = await response.text();
 
-    if (!id) {
+    if (!response.ok) {
+      throw new Error(`failed to pick attachment: ${response.status}\n${message}`);
+    }
+
+    if (!message) {
       return;
     }
 
-    console.log('Selected attachment', id);
+    console.log('Selected attachment', message);
 
-    return this.copyTextToClipboard(id, 'attachment id');
+    return this.copyTextToClipboard(message, 'attachment id');
   }
 
   preserveUnsavedChanges = (form: HTMLFormElement) => {

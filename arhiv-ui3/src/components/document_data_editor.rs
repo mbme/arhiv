@@ -2,8 +2,9 @@ use anyhow::*;
 use serde::Serialize;
 
 use arhiv_core::{
-    entities::Document,
+    entities::DocumentData,
     schema::{DataDescription, FieldType},
+    FieldValidationErrors,
 };
 
 use crate::template_fn;
@@ -18,6 +19,7 @@ struct FormField {
     mandatory: bool,
     value: String,
     editable: bool,
+    errors: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -26,26 +28,21 @@ pub struct DocumentDataEditor {
 }
 
 impl DocumentDataEditor {
-    pub fn new(document: &Document, data_description: &DataDescription) -> Result<Self> {
+    pub fn new(data: &DocumentData, data_description: &DataDescription) -> Result<Self> {
         let fields = data_description
             .fields
             .iter()
             .map(|field| {
                 let value = match &field.field_type {
-                    FieldType::Flag {} => document
-                        .data
-                        .get_bool(field.name)
-                        .unwrap_or(false)
-                        .to_string(),
+                    FieldType::Flag {} => data.get_bool(field.name).unwrap_or(false).to_string(),
 
-                    FieldType::NaturalNumber {} => document
-                        .data
+                    FieldType::NaturalNumber {} => data
                         .get_number(field.name)
                         .map(|value| value.to_string())
                         .unwrap_or_default(),
 
                     FieldType::RefList(_) => {
-                        let value = document.data.get(field.name);
+                        let value = data.get(field.name);
 
                         if let Some(value) = value {
                             let refs: Vec<String> = serde_json::from_value(value.clone())?;
@@ -56,11 +53,7 @@ impl DocumentDataEditor {
                         }
                     }
 
-                    _ => document
-                        .data
-                        .get_str(field.name)
-                        .unwrap_or_default()
-                        .to_string(),
+                    _ => data.get_str(field.name).unwrap_or_default().to_string(),
                 };
 
                 let mut field = FormField {
@@ -70,6 +63,7 @@ impl DocumentDataEditor {
                     mandatory: field.mandatory,
                     value,
                     editable: true,
+                    errors: vec![],
                 };
 
                 match &field.field_type {
@@ -90,6 +84,27 @@ impl DocumentDataEditor {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(DocumentDataEditor { fields })
+    }
+
+    pub fn with_errors(mut self, errors: &Option<FieldValidationErrors>) -> Self {
+        let errors = if let Some(errors) = errors {
+            errors
+        } else {
+            return self;
+        };
+
+        for field in &mut self.fields {
+            let mut errors: Vec<String> = errors
+                .get(field.name)
+                .unwrap_or(&Vec::new())
+                .iter()
+                .map(ToString::to_string)
+                .collect();
+
+            field.errors.append(&mut errors);
+        }
+
+        self
     }
 
     pub fn render(self) -> Result<String> {

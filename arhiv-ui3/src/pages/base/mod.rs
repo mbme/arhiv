@@ -1,4 +1,5 @@
 use anyhow::*;
+use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::Arhiv;
@@ -8,13 +9,21 @@ use crate::{template_fn, urls::catalog_url, utils::render_content};
 
 template_fn!(render_template, "./base.html.tera");
 
-pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
+pub fn render_page_with_status(
+    status: StatusCode,
+    content: impl AsRef<str>,
+    arhiv: &Arhiv,
+) -> ServerResponse {
     let result = render_template(json!({
         "sidebar": render_sidebar(arhiv)?,
         "content": content.as_ref(),
     }))?;
 
-    render_content(result)
+    render_content(status, result)
+}
+
+pub fn render_page(content: impl AsRef<str>, arhiv: &Arhiv) -> ServerResponse {
+    render_page_with_status(StatusCode::OK, content, arhiv)
 }
 
 pub fn render_modal(content: impl AsRef<str>) -> ServerResponse {
@@ -22,7 +31,7 @@ pub fn render_modal(content: impl AsRef<str>) -> ServerResponse {
         "content": content.as_ref(),
     }))?;
 
-    render_content(result)
+    render_content(StatusCode::OK, result)
 }
 
 const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];

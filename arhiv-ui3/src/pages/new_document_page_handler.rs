@@ -1,15 +1,16 @@
-use hyper::{http::request::Parts, Body, Request};
+use hyper::{http::request::Parts, Body, Request, StatusCode};
 use routerify::ext::RequestExt;
 
 use arhiv_core::{
     entities::{Document, Id},
-    Arhiv,
+    Arhiv, Validator,
 };
 use rs_utils::server::{parse_urlencoded, respond_see_other, ServerResponse};
 
+use super::{base::render_page_with_status, render_new_document_page_content};
 use crate::{urls::document_url, utils::fields_to_document_data};
 
-pub async fn create_document_handler(req: Request<Body>) -> ServerResponse {
+pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let document_type: &str = parts.param("document_type").unwrap();
@@ -25,6 +26,19 @@ pub async fn create_document_handler(req: Request<Body>) -> ServerResponse {
     let data = fields_to_document_data(&fields, data_description)?;
 
     let mut document = Document::new_with_data(document_type, data);
+
+    let validation_result = Validator::new(arhiv).validate(&document.data, None, data_description);
+    if let Err(error) = validation_result {
+        let content = render_new_document_page_content(
+            &document,
+            &Some(error.errors),
+            &parent_collection,
+            arhiv,
+        )?;
+
+        return render_page_with_status(StatusCode::UNPROCESSABLE_ENTITY, content, arhiv);
+    }
+
     arhiv.stage_document(&mut document)?;
 
     respond_see_other(document_url(&document.id, &parent_collection))

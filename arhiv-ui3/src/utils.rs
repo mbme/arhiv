@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::*;
-use hyper::{header, Response};
+use hyper::{header, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};
 use rs_utils::server::ServerResponse;
@@ -45,8 +45,9 @@ macro_rules! template_fn {
     };
 }
 
-pub fn render_content(content: String) -> ServerResponse {
+pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
     Response::builder()
+        .status(status)
         .header(header::CONTENT_TYPE, "text/html")
         // prevent page from caching
         .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")

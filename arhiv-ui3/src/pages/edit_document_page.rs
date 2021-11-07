@@ -1,8 +1,9 @@
+use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::{entities::*, Arhiv};
+use arhiv_core::{entities::*, Arhiv, FieldValidationErrors};
 use rs_utils::server::{respond_not_found, ServerResponse};
 
 use crate::{
@@ -30,30 +31,39 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
+    let content = render_edit_document_page_content(&document, &None, &parent_collection, arhiv)?;
+
+    render_page(content, arhiv)
+}
+
+pub fn render_edit_document_page_content(
+    document: &Document,
+    errors: &Option<FieldValidationErrors>,
+    parent_collection: &Option<Id>,
+    arhiv: &Arhiv,
+) -> Result<String> {
     let editor = DocumentDataEditor::new(
-        &document,
+        &document.data,
         arhiv
             .get_schema()
             .get_data_description(&document.document_type)?,
     )?
+    .with_errors(errors)
     .render()?;
 
     let toolbar = Toolbar::new()
         .with_breadcrumb(Breadcrumb::for_collection(
-            &document,
-            &parent_collection,
+            &document.document_type,
+            parent_collection,
             arhiv,
         )?)
-        .with_breadcrumb(Breadcrumb::for_document(&document))
+        .with_breadcrumb(Breadcrumb::for_document(document))
         .with_breadcrumb(Breadcrumb::string("editor"))
-        .on_close(document_url(&document.id, &parent_collection))
+        .on_close(document_url(&document.id, parent_collection))
         .render()?;
 
-    let content = render_template(json!({
+    render_template(json!({
         "toolbar": toolbar,
-        "document": document,
         "editor": editor,
-    }))?;
-
-    render_page(content, arhiv)
+    }))
 }

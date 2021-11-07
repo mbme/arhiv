@@ -6,7 +6,7 @@ pub use self::db::{
     apply_migrations, AttachmentData, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
 };
 use self::status::Status;
-use self::validator::Validator;
+pub use self::validator::{FieldValidationErrors, Validator};
 use crate::config::Config;
 use crate::definitions::get_standard_schema;
 use crate::entities::*;

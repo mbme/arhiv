@@ -150,6 +150,16 @@ a:not(.clean-link) {
       }
     }
 
+    & .has-errors {
+      & .field {
+        @apply border-red-500;
+      }
+
+      & h5 {
+        @apply text-red-500;
+      }
+    }
+
     & textarea {
       @apply p-2;
 

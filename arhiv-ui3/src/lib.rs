@@ -51,27 +51,23 @@ pub async fn start_ui_server() {
         //
         .get("/new", new_document_variants_page)
         .get("/new/:document_type", new_document_page)
-        .post("/new/:document_type", create_document_handler)
+        .post("/new/:document_type", new_document_page_handler)
         .get(
             "/collections/:collection_id/new/:document_type",
             new_document_page,
         )
         .post(
             "/collections/:collection_id/new/:document_type",
-            create_document_handler,
+            new_document_page_handler,
         )
         //
         .get("/catalogs/:document_type", catalog_page)
         //
         .get("/documents/:id", document_page)
         .get("/collections/:collection_id/documents/:id", document_page)
-        .post(
-            "/collections/:collection_id/documents/:id",
-            save_document_handler,
-        )
         //
         .get("/documents/:id/edit", edit_document_page)
-        .post("/documents/:id/edit", save_document_handler)
+        .post("/documents/:id/edit", edit_document_page_handler)
         .get("/documents/:id/delete", delete_document_confirmation_dialog)
         //
         .get("/collections/:collection_id/documents/:id", document_page)
@@ -81,7 +77,7 @@ pub async fn start_ui_server() {
         )
         .post(
             "/collections/:collection_id/documents/:id/edit",
-            save_document_handler,
+            edit_document_page_handler,
         )
         .get(
             "/collections/:collection_id/documents/:id/delete",

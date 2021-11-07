@@ -9,9 +9,11 @@ use crate::{
     Arhiv,
 };
 
+pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
+
 #[derive(Debug)]
 pub struct ValidationError {
-    pub errors: HashMap<String, Vec<Error>>,
+    pub errors: FieldValidationErrors,
 }
 
 impl std::error::Error for ValidationError {}
@@ -48,6 +50,7 @@ pub struct Validator<'a> {
 }
 
 impl<'a> Validator<'a> {
+    #[must_use]
     pub fn new(arhiv: &'a Arhiv) -> Self {
         Validator {
             arhiv,

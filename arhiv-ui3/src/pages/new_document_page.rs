@@ -6,7 +6,7 @@ use serde_json::json;
 use arhiv_core::{
     entities::{Document, Id},
     schema::Collection,
-    Arhiv,
+    Arhiv, FieldValidationErrors,
 };
 use rs_utils::server::ServerResponse;
 
@@ -56,18 +56,30 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         };
     }
 
+    let content = render_new_document_page_content(&document, &None, &parent_collection, arhiv)?;
+
+    render_page(content, arhiv)
+}
+
+pub fn render_new_document_page_content(
+    document: &Document,
+    errors: &Option<FieldValidationErrors>,
+    parent_collection: &Option<Id>,
+    arhiv: &Arhiv,
+) -> Result<String> {
     let editor = DocumentDataEditor::new(
-        &document,
+        &document.data,
         arhiv
             .get_schema()
             .get_data_description(&document.document_type)?,
     )?
+    .with_errors(errors)
     .render()?;
 
     let toolbar = Toolbar::new()
         .with_breadcrumb(Breadcrumb::for_collection(
-            &document,
-            &parent_collection,
+            &document.document_type,
+            parent_collection,
             arhiv,
         )?)
         .with_breadcrumb(Breadcrumb::string(format!(
@@ -76,15 +88,12 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         )))
         .on_close(parent_collection_url(
             &document.document_type,
-            &parent_collection,
+            parent_collection,
         ))
         .render()?;
 
-    let content = render_template(json!({
+    render_template(json!({
         "toolbar": toolbar,
         "editor": editor,
-        "document_type": document_type,
-    }))?;
-
-    render_page(content, arhiv)
+    }))
 }

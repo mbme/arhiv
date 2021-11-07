@@ -29,7 +29,7 @@ impl Breadcrumb {
     }
 
     pub fn for_collection(
-        document: &Document,
+        document_type: &str,
         collection_id: &Option<Id>,
         arhiv: &Arhiv,
     ) -> Result<Self> {
@@ -47,7 +47,7 @@ impl Breadcrumb {
         } else {
             Ok(Breadcrumb {
                 name: "CATALOG".to_string(),
-                url: catalog_url(&document.document_type),
+                url: catalog_url(document_type),
             })
         }
     }

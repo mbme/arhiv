@@ -87,7 +87,11 @@ fn render_document_page_toolbar(
     arhiv: &Arhiv,
 ) -> Result<String> {
     let mut toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::for_collection(document, collection_id, arhiv)?)
+        .with_breadcrumb(Breadcrumb::for_collection(
+            &document.document_type,
+            collection_id,
+            arhiv,
+        )?)
         .with_breadcrumb(Breadcrumb::for_document(document))
         .on_close(parent_collection_url(
             &document.document_type,

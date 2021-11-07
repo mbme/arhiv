@@ -109,13 +109,12 @@
     </div>
 
     <div>
-      <button
-        type="button"
+      <a
         class="btn btn-simple mr-8"
-        onclick="arhiv_ui.goBack()"
+        href="{{cancel_url}}"
       >
         Cancel
-      </button>
+      </a>
 
       <button
         type="submit"

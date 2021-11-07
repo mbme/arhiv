@@ -49,7 +49,7 @@ pub fn render_edit_document_page_content(
             .get_data_description(&document.document_type)?,
     )?
     .with_errors(errors)
-    .render()?;
+    .render(document_url(&document.id, parent_collection))?;
 
     let toolbar = Toolbar::new()
         .with_breadcrumb(Breadcrumb::for_collection(

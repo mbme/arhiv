@@ -6,6 +6,7 @@ use arhiv_core::{
     schema::{DataDescription, FieldType},
     FieldValidationErrors,
 };
+use serde_json::json;
 
 use crate::template_fn;
 
@@ -22,7 +23,6 @@ struct FormField {
     errors: Vec<String>,
 }
 
-#[derive(Serialize)]
 pub struct DocumentDataEditor {
     fields: Vec<FormField>,
 }
@@ -107,7 +107,10 @@ impl DocumentDataEditor {
         self
     }
 
-    pub fn render(self) -> Result<String> {
-        render_template(self)
+    pub fn render(self, cancel_url: impl AsRef<str>) -> Result<String> {
+        render_template(json!({
+            "fields": self.fields,
+            "cancel_url": cancel_url.as_ref(),
+        }))
     }
 }

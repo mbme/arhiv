@@ -4,7 +4,7 @@ use routerify::ext::RequestExt;
 use serde::Deserialize;
 use serde_json::Value;
 
-use arhiv_core::{entities::Id, Arhiv};
+use arhiv_core::Arhiv;
 use rs_utils::{
     run_command,
     server::{json_response, ServerResponse},
@@ -13,7 +13,6 @@ use rs_utils::{
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum RPCAction {
-    Delete { id: Id },
     PickAttachment {},
 }
 
@@ -27,10 +26,6 @@ pub async fn rpc_handler(req: Request<Body>) -> ServerResponse {
     let mut response = Value::Null;
 
     match action {
-        RPCAction::Delete { id } => {
-            arhiv.delete_document(&id)?;
-        }
-
         RPCAction::PickAttachment {} => {
             let files = run_command("mb-filepicker", vec![])?;
             let files: Vec<String> = serde_json::from_str(&files)?;

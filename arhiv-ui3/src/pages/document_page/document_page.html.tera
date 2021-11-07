@@ -18,8 +18,6 @@
       <a
         href="{{delete_document_url}}"
         class="clean-link text-red-600 font-mono ml-1"
-        up-layer="new"
-        up-target=".modal"
       >
         Delete
       </a>

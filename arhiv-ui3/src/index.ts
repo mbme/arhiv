@@ -18,14 +18,6 @@ class ArhivUI {
     }
   }
 
-  async deleteDocument(id: string, urlOnDelete: string) {
-    await callRPCAction({
-      Delete: { id }
-    });
-
-    window.location.assign(urlOnDelete);
-  }
-
   async pickAttachment() {
     const id: string = await callRPCAction({
       PickAttachment: { }

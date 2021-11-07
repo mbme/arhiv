@@ -26,6 +26,14 @@ pub fn respond_see_other(uri: impl Into<String>) -> ServerResponse {
         .context("failed to build response")
 }
 
+pub fn respond_moved_permanently(uri: impl Into<String>) -> ServerResponse {
+    Response::builder()
+        .status(StatusCode::MOVED_PERMANENTLY)
+        .header(header::LOCATION, uri.into())
+        .body(Body::empty())
+        .context("failed to build response")
+}
+
 #[must_use]
 pub fn parse_urlencoded(data: &[u8]) -> HashMap<String, String> {
     form_urlencoded::parse(data).into_owned().collect()

@@ -1,27 +1,50 @@
 <div class="modal">
-  <div class="modal-title bg-red-500 bg-opacity-75">
-    Delete {{document.documentType}}
-  </div>
+  <form
+    class="form"
+    action=""
+    method="post"
+    autocomplete="off"
+  >
+    <!-- Prevent implicit submission of the form -->
+    <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+    <!-- ... -->
 
-  <div class="modal-content">
-    Do you really want to
-    <b>DELETE</b> the {{document.documentType}} <b>{{ title }}</b>?
-  </div>
+    <div class="modal-title bg-red-500 bg-opacity-75">
+      Delete {{document_type}}
+    </div>
 
-  <div class="modal-buttons">
-    <a
-      class="btn mr-8"
-      href="{{cancel_url}}"
-    >
-      Cancel
-    </a>
+    <div class="modal-content">
+      Do you really want to
+      <b>DELETE</b> the {{document_type}} <b>{{ title }}</b>?
 
-    <button
-      type="button"
-      class="btn btn-danger"
-      onclick="arhiv_ui.delete_document('{{document.id}}', '{{confirm_url}}')"
-    >
-      DELETE
-    </button>
-  </div>
+      <label class="block mt-8">
+        Type <b>{{confirmation_text}}</b> to confirm
+
+        <input
+          type="text"
+          name="confirmation_text"
+          class="field mt-2"
+          required
+          pattern="{{confirmation_text}}"
+          value=""
+        >
+      </label>
+    </div>
+
+    <div class="modal-buttons">
+      <a
+        class="btn btn-simple mr-8"
+        href="{{cancel_url}}"
+      >
+        Cancel
+      </a>
+
+      <button
+        type="submit"
+        class="btn btn-danger"
+      >
+        DELETE
+      </button>
+    </div>
+  </form>
 </div>

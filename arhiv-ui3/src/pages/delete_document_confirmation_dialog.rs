@@ -4,13 +4,9 @@ use routerify::ext::RequestExt;
 use serde_json::json;
 
 use arhiv_core::{entities::Id, Arhiv};
-use rs_utils::server::ServerResponse;
+use rs_utils::server::{respond_moved_permanently, ServerResponse};
 
-use crate::{
-    pages::base::render_modal,
-    template_fn,
-    urls::{document_url, parent_collection_url},
-};
+use crate::{pages::base::render_modal, template_fn, urls::document_url};
 
 template_fn!(
     render_template,
@@ -28,14 +24,22 @@ pub async fn delete_document_confirmation_dialog(req: Request<Body>) -> ServerRe
         .get_document(id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
+    if document.is_tombstone() {
+        return respond_moved_permanently(document_url(&document.id, &None));
+    }
+
     let document_title = arhiv.get_schema().get_title(&document)?;
 
     let content = render_template(json!({
-        "document": document,
+        "document_type": document.document_type,
         "title": document_title,
+        "confirmation_text": get_confirmation_text(&document.document_type),
         "cancel_url": document_url(&document.id, &collection_id),
-        "confirm_url": parent_collection_url(&document.document_type, &collection_id),
     }))?;
 
     render_modal(content)
+}
+
+pub fn get_confirmation_text(document_type: &str) -> String {
+    format!("delete {}", document_type)
 }

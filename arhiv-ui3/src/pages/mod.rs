@@ -2,6 +2,7 @@ mod base;
 
 mod catalog_page;
 mod delete_document_confirmation_dialog;
+mod delete_document_confirmation_dialog_handler;
 mod document_page;
 mod edit_document_page;
 mod edit_document_page_handler;
@@ -13,6 +14,7 @@ mod pick_document_modal;
 
 pub use catalog_page::*;
 pub use delete_document_confirmation_dialog::*;
+pub use delete_document_confirmation_dialog_handler::*;
 pub use document_page::*;
 pub use edit_document_page::*;
 pub use edit_document_page_handler::*;

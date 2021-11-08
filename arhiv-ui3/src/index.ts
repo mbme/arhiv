@@ -69,10 +69,10 @@ class ArhivUI {
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
     try {
       await copyText(text);
-      renderNotification(`Copied ${textName} to the clipboard!`);
+      renderNotification(`Copied ${textName} to clipboard!`);
     } catch (e) {
-      console.error(`Failed to copy ${textName} to the clipboard`, e);
-      renderNotification(`Failed to copy ${textName} to the clipboard!`, 'error');
+      console.error(`Failed to copy ${textName} to clipboard`, e);
+      renderNotification(`Failed to copy ${textName} to clipboard!`, 'error');
     }
   };
 }

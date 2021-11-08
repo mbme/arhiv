@@ -2,6 +2,23 @@
   {{ toolbar | safe }}
 
   <div id="content">
+    <section class="mb-12">
+      <h5 class="section-heading mb-2">
+        id
+      </h5>
+
+      <div
+        class="font-mono tracking-wide cursor-pointer text-lg hover:text-blue-500 group"
+        title="Copy document id to clipboard"
+        onclick="arhiv_ui.copyTextToClipboard('{{document.id}}', 'document id')"
+      >
+        {{ document.id }}
+        <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible">
+          <use xlink:href="#icon-clipboard-copy" />
+        </svg>
+      </div>
+    </section>
+
     {{ content | safe }}
   </div>
 

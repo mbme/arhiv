@@ -10,7 +10,7 @@
     />
     <label
       for="field-visibility-toggle"
-      class="text-sm font-mono cursor-pointer float-right text-gray-400"
+      class="text-sm font-mono cursor-pointer float-right text-gray-400 hover:text-blue-500"
     >
       <span data-action-show>
         show empty fields
@@ -23,7 +23,7 @@
     <section class="mb-12">
       <button
         type="button"
-        class="font-mono tracking-wide cursor-pointer text-sm hover:text-blue-500 focus:text-blue-500 group"
+        class="font-mono tracking-wide cursor-pointer text-sm text-gray-400 hover:text-blue-500 focus:text-blue-500 group"
         title="Copy document id to clipboard"
         onclick="arhiv_ui.copyTextToClipboard('{{document.id}}', 'document id')"
       >

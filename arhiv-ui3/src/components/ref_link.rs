@@ -13,7 +13,7 @@ template_fn!(render_template, "./ref_link.html.tera");
 enum RefMode<'a> {
     Ref {
         document_type: &'a str,
-        title: &'a str,
+        title: String,
         url: String,
     },
     Unknown {
@@ -22,7 +22,7 @@ enum RefMode<'a> {
     },
     Image {
         id: &'a Id,
-        title: &'a str,
+        title: String,
         url: String,
     },
 }

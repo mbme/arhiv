@@ -103,18 +103,19 @@ impl DataSchema {
             .ok_or_else(|| anyhow!("Unknown document type: {}", document_type))
     }
 
-    pub fn get_title<'doc>(&self, document: &'doc Document) -> Result<&'doc str> {
+    pub fn get_title(&self, document: &Document) -> Result<String> {
         let data_description = self.get_data_description(&document.document_type)?;
 
         let title_field = if let Some(title_field) = data_description.pick_title_field() {
             title_field
         } else {
-            return Ok("Untitled");
+            return Ok(format!("{} {}", document.document_type, document.id));
         };
 
         document
             .data
             .get_str(title_field.name)
+            .map(ToString::to_string)
             .ok_or_else(|| anyhow!("title field {} is missing", title_field.name))
     }
 

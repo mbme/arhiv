@@ -1,5 +1,8 @@
 {% for field in fields %}
-<section class="mb-12 wrap-text">
+<section
+  class="mb-12 wrap-text"
+  {% if field.value | length == 0 %}data-field-is-empty{% endif %}
+>
   <h5 class="section-heading mb-2">
     {{ field.name }}
   </h5>

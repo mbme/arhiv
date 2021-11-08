@@ -260,3 +260,34 @@ a:not(.clean-link) {
     background-color: var(--bg-color);
   }
 }
+
+#field-visibility-toggle {
+  /* toggle labels */
+  & ~ label[for=field-visibility-toggle]  {
+    & [data-action-show] {
+      display: none;
+    }
+
+    & [data-action-hide] {
+      display: inline;
+    }
+  }
+  &:checked ~ label[for=field-visibility-toggle]  {
+    & [data-action-show] {
+      display: inline;
+    }
+
+    & [data-action-hide] {
+      display: none;
+    }
+  }
+
+  /* toggle fields visibility */
+  & ~ section[data-field-is-empty] {
+    display: block;
+  }
+
+  &:checked ~ section[data-field-is-empty] {
+    display: none;
+  }
+}

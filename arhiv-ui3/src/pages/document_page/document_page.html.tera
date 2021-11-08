@@ -2,6 +2,24 @@
   {{ toolbar | safe }}
 
   <div id="content">
+    <input
+      id="field-visibility-toggle"
+      class="hidden"
+      type="checkbox"
+      checked
+    />
+    <label
+      for="field-visibility-toggle"
+      class="text-sm font-mono cursor-pointer float-right text-gray-400"
+    >
+      <span data-action-show>
+        show empty fields
+      </span>
+      <span data-action-hide>
+        hide empty fields
+      </span>
+    </label>
+
     <section class="mb-12">
       <button
         type="button"

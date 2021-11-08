@@ -78,6 +78,23 @@ export function autoGrowTextarea(textarea: HTMLTextAreaElement): void {
   window.addEventListener('resize', updateHeight, { passive: true });
 }
 
+export function keepSessionState(el: HTMLElement, key: string): void {
+  const sessionKey = `state-${el.tagName}-${key}-${location.pathname}`;
+  const savedState = sessionStorage.getItem(sessionKey);
+
+  if (el instanceof HTMLDetailsElement) {
+    if (savedState) {
+      el.open = savedState === 'true';
+    }
+
+    el.addEventListener('toggle', () => sessionStorage.setItem(sessionKey, el.open.toString()));
+
+    return;
+  }
+
+  throw new Error(`unsupported element "${el.tagName}"`);
+}
+
 export function updateQueryParam(param: string, value: string | undefined): void {
   const searchParams = new URLSearchParams(window.location.search);
 

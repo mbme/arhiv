@@ -3,6 +3,7 @@ import 'unpoly';
 import {
   autoGrowTextarea,
   isEqualFormData,
+  keepSessionState,
 } from './scripts/utils';
 import { initDataJS } from './scripts/data-js';
 import { renderNotification } from './scripts/notification';
@@ -65,6 +66,8 @@ class ArhivUI {
   };
 
   autoGrowTextarea = autoGrowTextarea;
+
+  keepSessionState = keepSessionState;
 
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
     try {

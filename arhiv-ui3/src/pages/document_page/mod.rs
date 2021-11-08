@@ -76,6 +76,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "is_tombstone": document.is_tombstone(),
         "delete_document_url": delete_document_url(&document.id, &collection_id),
         "collection_id": collection_id,
+        "updated_at": document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
     }))?;
 
     render_page(content, arhiv)

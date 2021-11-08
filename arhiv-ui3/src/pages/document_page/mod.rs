@@ -5,7 +5,7 @@ use serde_json::json;
 
 use arhiv_core::{
     definitions::PROJECT_TYPE,
-    entities::{Document, Id},
+    entities::{Document, Id, TOMBSTONE_TYPE},
     schema::Collection,
     Arhiv, Filter,
 };
@@ -25,6 +25,7 @@ mod document_view;
 mod project_view;
 
 template_fn!(render_template, "./document_page.html.tera");
+template_fn!(render_tombstone_template, "./tombstone_view.html.tera");
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
@@ -49,6 +50,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let content = if document.document_type == PROJECT_TYPE {
         render_project_view(&document, arhiv, url)?
+    } else if document.document_type == TOMBSTONE_TYPE {
+        render_tombstone_template(json!({}))?
     } else {
         render_document_view(&document, arhiv, url)?
     };

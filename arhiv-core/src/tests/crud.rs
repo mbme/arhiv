@@ -43,7 +43,7 @@ fn test_crud() -> Result<()> {
 
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
 
-        arhiv.delete_document(&document.id)?;
+        arhiv.erase_document(&document.id)?;
 
         assert!(arhiv.get_document(&document.id)?.unwrap().is_tombstone());
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
@@ -126,7 +126,7 @@ async fn test_status() -> Result<()> {
     }
 
     // delete document
-    arhiv.delete_document(&document.id)?;
+    arhiv.erase_document(&document.id)?;
 
     {
         let status = arhiv.get_status()?;

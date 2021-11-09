@@ -33,6 +33,6 @@ pub fn parent_collection_url(document_type: &str, parent_collection: &Option<Id>
     }
 }
 
-pub fn delete_document_url(id: &Id, parent_collection: &Option<Id>) -> String {
-    document_url(id, parent_collection) + "/delete"
+pub fn erase_document_url(id: &Id, parent_collection: &Option<Id>) -> String {
+    document_url(id, parent_collection) + "/erase"
 }

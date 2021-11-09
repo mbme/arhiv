@@ -369,7 +369,7 @@ pub trait MutableQueries: Queries {
             [id],
         )?;
 
-        log::debug!("deleted {} rows of history for document {}", rows_count, id);
+        log::debug!("erased {} rows of history for document {}", rows_count, id);
 
         Ok(())
     }

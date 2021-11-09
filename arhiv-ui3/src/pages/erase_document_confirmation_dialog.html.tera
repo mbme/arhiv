@@ -10,12 +10,11 @@
     <!-- ... -->
 
     <div class="modal-title bg-red-500 bg-opacity-75">
-      Delete {{document_type}}
+      Erase {{document_type}}
     </div>
 
     <div class="modal-content">
-      Do you really want to
-      <b>DELETE</b> the {{document_type}} <b>{{ title }}</b>?
+      Do you really want to erase the {{document_type}} <b>{{ title }}</b> and its history?
 
       <label class="block mt-8">
         Type <b>{{confirmation_text}}</b> to confirm
@@ -43,7 +42,7 @@
         type="submit"
         class="btn btn-danger"
       >
-        DELETE
+        ERASE
       </button>
     </div>
   </form>

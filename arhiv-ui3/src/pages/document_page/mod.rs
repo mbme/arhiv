@@ -15,7 +15,7 @@ use crate::{
     components::{Action, Breadcrumb, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
-    urls::{delete_document_url, parent_collection_url},
+    urls::{erase_document_url, parent_collection_url},
 };
 
 use self::document_view::render_document_view;
@@ -77,7 +77,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "backrefs": backrefs,
         "document": document,
         "is_tombstone": document.is_tombstone(),
-        "delete_document_url": delete_document_url(&document.id, &collection_id),
+        "erase_document_url": erase_document_url(&document.id, &collection_id),
         "collection_id": collection_id,
         "updated_at": document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
     }))?;

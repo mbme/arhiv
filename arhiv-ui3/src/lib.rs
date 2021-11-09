@@ -66,10 +66,10 @@ pub async fn start_ui_server() {
         //
         .get("/documents/:id/edit", edit_document_page)
         .post("/documents/:id/edit", edit_document_page_handler)
-        .get("/documents/:id/delete", delete_document_confirmation_dialog)
+        .get("/documents/:id/erase", erase_document_confirmation_dialog)
         .post(
-            "/documents/:id/delete",
-            delete_document_confirmation_dialog_handler,
+            "/documents/:id/erase",
+            erase_document_confirmation_dialog_handler,
         )
         //
         .get("/collections/:collection_id/documents/:id", document_page)
@@ -82,12 +82,12 @@ pub async fn start_ui_server() {
             edit_document_page_handler,
         )
         .get(
-            "/collections/:collection_id/documents/:id/delete",
-            delete_document_confirmation_dialog,
+            "/collections/:collection_id/documents/:id/erase",
+            erase_document_confirmation_dialog,
         )
         .post(
-            "/collections/:collection_id/documents/:id/delete",
-            delete_document_confirmation_dialog_handler,
+            "/collections/:collection_id/documents/:id/erase",
+            erase_document_confirmation_dialog_handler,
         )
         //
         .get("/attachment-data/:id", attachment_data_handler)

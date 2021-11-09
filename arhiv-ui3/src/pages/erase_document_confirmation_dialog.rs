@@ -10,10 +10,10 @@ use crate::{pages::base::render_modal, template_fn, urls::document_url};
 
 template_fn!(
     render_template,
-    "./delete_document_confirmation_dialog.html.tera"
+    "./erase_document_confirmation_dialog.html.tera"
 );
 
-pub async fn delete_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
+pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
     let collection_id: Option<Id> = req
         .param("collection_id")
@@ -41,5 +41,5 @@ pub async fn delete_document_confirmation_dialog(req: Request<Body>) -> ServerRe
 }
 
 pub fn get_confirmation_text(document_type: &str) -> String {
-    format!("delete {}", document_type)
+    format!("erase {}", document_type)
 }

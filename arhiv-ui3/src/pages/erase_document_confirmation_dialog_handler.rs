@@ -7,7 +7,7 @@ use rs_utils::server::{parse_urlencoded, respond_see_other, ServerResponse};
 
 use crate::{pages::get_confirmation_text, urls::parent_collection_url};
 
-pub async fn delete_document_confirmation_dialog_handler(req: Request<Body>) -> ServerResponse {
+pub async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let id: Id = parts.param("id").unwrap().into();
@@ -32,7 +32,7 @@ pub async fn delete_document_confirmation_dialog_handler(req: Request<Body>) -> 
         "confirmation text is wrong"
     );
 
-    arhiv.delete_document(&id)?;
+    arhiv.erase_document(&id)?;
 
     respond_see_other(parent_collection_url(
         &document.document_type,

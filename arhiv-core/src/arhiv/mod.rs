@@ -169,7 +169,7 @@ impl Arhiv {
 
         ensure!(
             !document.is_tombstone(),
-            "deleted documents must not be updated"
+            "erased documents must not be updated"
         );
 
         let prev_document = tx.get_document(&document.id)?;
@@ -221,14 +221,14 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn delete_document(&self, id: &Id) -> Result<()> {
+    pub fn erase_document(&self, id: &Id) -> Result<()> {
         let mut document = self
             .get_document(id)?
             .ok_or_else(|| anyhow!("can't find document {}", &id))?;
 
         ensure!(
             !document.is_tombstone(),
-            "deleted documents must not be updated"
+            "erased documents must not be updated"
         );
 
         let tx = self.db.get_tx()?;
@@ -251,7 +251,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        log::info!("deleted document {}", document);
+        log::info!("erased document {}", document);
 
         Ok(())
     }

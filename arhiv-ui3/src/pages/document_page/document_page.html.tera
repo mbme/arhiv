@@ -48,10 +48,10 @@
     {% if not is_tombstone %}
     <div class="mt-4 text-sm">
       <a
-        href="{{delete_document_url}}"
+        href="{{erase_document_url}}"
         class="clean-link text-red-600 font-mono ml-1"
       >
-        Delete
+        Erase
       </a>
     </div>
     {% endif %}

@@ -30,7 +30,7 @@ async fn test_attachments() -> Result<()> {
     assert_eq!(page.items.len(), 1);
 
     // delete
-    arhiv.delete_document(&attachment.id)?;
+    arhiv.erase_document(&attachment.id)?;
     arhiv.sync().await?;
 
     assert!(!arhiv.get_attachment_data(&attachment.id)?.exists()?);

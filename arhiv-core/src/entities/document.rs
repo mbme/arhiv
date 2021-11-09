@@ -8,7 +8,7 @@ use crate::schema::DataSchema;
 
 use super::{DocumentData, Id, Refs, Revision, SnapshotId};
 
-pub const TOMBSTONE_TYPE: &str = "tombstone";
+pub const ERASED_DOCUMENT_TYPE: &str = "tombstone";
 
 pub type Timestamp = DateTime<Utc>;
 
@@ -46,8 +46,8 @@ impl Document {
     }
 
     #[must_use]
-    pub fn is_tombstone(&self) -> bool {
-        self.document_type == TOMBSTONE_TYPE
+    pub fn is_erased(&self) -> bool {
+        self.document_type == ERASED_DOCUMENT_TYPE
     }
 
     #[must_use]

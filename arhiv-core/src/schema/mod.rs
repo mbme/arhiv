@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::*;
 use serde::Serialize;
 
-use crate::entities::{Document, DocumentData, Refs, ATTACHMENT_TYPE, TOMBSTONE_TYPE};
+use crate::entities::{Document, DocumentData, Refs, ATTACHMENT_TYPE, ERASED_DOCUMENT_TYPE};
 
 pub use data_description::*;
 pub use field::*;
@@ -24,7 +24,7 @@ impl DataSchema {
         let modules = vec![
             // ----- INTERNAL
             DataDescription {
-                document_type: TOMBSTONE_TYPE,
+                document_type: ERASED_DOCUMENT_TYPE,
                 collection_of: Collection::None,
                 fields: vec![],
             },

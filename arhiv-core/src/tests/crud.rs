@@ -45,7 +45,7 @@ fn test_crud() -> Result<()> {
 
         arhiv.erase_document(&document.id)?;
 
-        assert!(arhiv.get_document(&document.id)?.unwrap().is_tombstone());
+        assert!(arhiv.get_document(&document.id)?.unwrap().is_erased());
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
     }
 
@@ -67,9 +67,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
-                tombstones_committed: 0,
-                tombstones_updated: 0,
-                tombstones_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_updated: 0,
+                erased_documents_new: 0,
             }
         );
     }
@@ -92,9 +92,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
-                tombstones_committed: 0,
-                tombstones_updated: 0,
-                tombstones_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_updated: 0,
+                erased_documents_new: 0,
             }
         );
     }
@@ -116,9 +116,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
-                tombstones_committed: 0,
-                tombstones_updated: 0,
-                tombstones_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_updated: 0,
+                erased_documents_new: 0,
             }
         );
 
@@ -139,9 +139,9 @@ async fn test_status() -> Result<()> {
                 attachments_committed: 0,
                 attachments_updated: 0,
                 attachments_new: 0,
-                tombstones_committed: 0,
-                tombstones_updated: 1,
-                tombstones_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_updated: 1,
+                erased_documents_new: 0,
             }
         );
     }

@@ -53,7 +53,7 @@ pub trait Queries {
     fn count_documents(&self) -> Result<DocumentsCount> {
         // count documents
         // count attachments
-        // count tombstones
+        // count erased documents
         self.get_connection()
             .query_row(
                 "SELECT
@@ -65,11 +65,11 @@ pub trait Queries {
                     IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS attachments_updated,
                     IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS attachments_new,
 
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS tombstones_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS tombstones_updated,
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS tombstones_new
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS erased_documents_updated,
+                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS erased_documents_new
                 FROM documents",
-                [ATTACHMENT_TYPE, TOMBSTONE_TYPE],
+                [ATTACHMENT_TYPE, ERASED_DOCUMENT_TYPE],
                 |row| Ok(DocumentsCount {
                     documents_committed: row.get(0)?,
                     documents_updated: row.get(1)?,
@@ -79,9 +79,9 @@ pub trait Queries {
                     attachments_updated: row.get(4)?,
                     attachments_new: row.get(5)?,
 
-                    tombstones_committed: row.get(6)?,
-                    tombstones_updated: row.get(7)?,
-                    tombstones_new: row.get(8)?,
+                    erased_documents_committed: row.get(6)?,
+                    erased_documents_updated: row.get(7)?,
+                    erased_documents_new: row.get(8)?,
                 }),
             )
             .context("Failed to count documents")

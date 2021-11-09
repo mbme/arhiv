@@ -45,7 +45,7 @@
       </time>
     </div>
 
-    {% if not is_tombstone %}
+    {% if erase_document_url %}
     <div class="mt-4 text-sm">
       <a
         href="{{erase_document_url}}"

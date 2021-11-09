@@ -73,8 +73,11 @@ impl Arhiv {
             match tx.get_last_snapshot(&document.id)? {
                 // on conflict
                 Some(prev_snapshot) if prev_snapshot.rev != document.prev_rev => {
-                    if prev_snapshot.is_tombstone() {
-                        log::warn!("Got update for a tombstone {}, ignoring", &document.id);
+                    if prev_snapshot.is_erased() {
+                        log::warn!(
+                            "Got an update for erased document {}, ignoring",
+                            &document.id
+                        );
                         continue;
                     }
 
@@ -91,8 +94,8 @@ impl Arhiv {
 
             tx.put_document(&document)?;
 
-            // erase history of deleted documents
-            if document.is_tombstone() {
+            // erase history of erased documents
+            if document.is_erased() {
                 tx.erase_document_history(&document.id)?;
             }
 
@@ -136,8 +139,8 @@ impl Arhiv {
         for document in response.new_snapshots {
             tx.put_document(&document)?;
 
-            // erase history of deleted documents
-            if document.is_tombstone() {
+            // erase history of erased documents
+            if document.is_erased() {
                 tx.erase_document_history(&document.id)?;
             }
         }

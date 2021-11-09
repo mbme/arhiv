@@ -4,7 +4,7 @@ use serde_json::json;
 
 use arhiv_core::{
     definitions::TASK_TYPE,
-    entities::{ATTACHMENT_TYPE, TOMBSTONE_TYPE},
+    entities::{ATTACHMENT_TYPE, ERASED_DOCUMENT_TYPE},
     Arhiv,
 };
 use rs_utils::server::ServerResponse;
@@ -38,7 +38,7 @@ pub fn render_modal(content: impl AsRef<str>) -> ServerResponse {
     render_content(StatusCode::OK, result)
 }
 
-const IGNORED_DOCUMENT_TYPES: &[&str] = &[TOMBSTONE_TYPE, ATTACHMENT_TYPE, TASK_TYPE];
+const IGNORED_DOCUMENT_TYPES: &[&str] = &[ERASED_DOCUMENT_TYPE, ATTACHMENT_TYPE, TASK_TYPE];
 
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv

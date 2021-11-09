@@ -19,7 +19,7 @@ pub struct Status {
 impl Status {
     pub fn is_sync_required(&self) -> bool {
         self.documents_count.count_staged_documents() > 0
-            || self.documents_count.count_staged_tombstones() > 0
+            || self.documents_count.count_staged_erased_documents() > 0
     }
 }
 
@@ -87,11 +87,11 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "  Tombstones: {} committed, {} staged ({} updated, {} new)",
-            self.documents_count.tombstones_committed,
-            self.documents_count.count_staged_tombstones(),
-            self.documents_count.tombstones_updated,
-            self.documents_count.tombstones_new,
+            "  Erased documents: {} committed, {} staged ({} updated, {} new)",
+            self.documents_count.erased_documents_committed,
+            self.documents_count.count_staged_erased_documents(),
+            self.documents_count.erased_documents_updated,
+            self.documents_count.erased_documents_new,
         )?;
 
         if self.conflicts_count > 0 {

@@ -24,7 +24,7 @@ pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerRes
         .get_document(id)?
         .ok_or_else(|| anyhow!("document not found"))?;
 
-    if document.is_tombstone() {
+    if document.is_erased() {
         return respond_moved_permanently(document_url(&document.id, &None));
     }
 

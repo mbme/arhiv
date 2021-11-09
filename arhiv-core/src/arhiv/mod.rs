@@ -168,7 +168,7 @@ impl Arhiv {
         log::debug!("Staging document {}", &document.id);
 
         ensure!(
-            !document.is_tombstone(),
+            !document.is_erased(),
             "erased documents must not be updated"
         );
 
@@ -227,7 +227,7 @@ impl Arhiv {
             .ok_or_else(|| anyhow!("can't find document {}", &id))?;
 
         ensure!(
-            !document.is_tombstone(),
+            !document.is_erased(),
             "erased documents must not be updated"
         );
 
@@ -239,7 +239,7 @@ impl Arhiv {
             document.prev_rev = document.rev;
         }
 
-        document.document_type = TOMBSTONE_TYPE.to_string();
+        document.document_type = ERASED_DOCUMENT_TYPE.to_string();
         document.rev = Revision::STAGING;
         document.snapshot_id = SnapshotId::new();
         document.data = DocumentData::new();

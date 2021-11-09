@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use anyhow::*;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
@@ -5,7 +7,7 @@ use serde_json::json;
 
 use arhiv_core::{
     definitions::PROJECT_TYPE,
-    entities::{Document, Id, TOMBSTONE_TYPE},
+    entities::{Document, Id, ERASED_DOCUMENT_TYPE},
     schema::Collection,
     Arhiv, Filter,
 };
@@ -25,7 +27,10 @@ mod document_view;
 mod project_view;
 
 template_fn!(render_template, "./document_page.html.tera");
-template_fn!(render_tombstone_template, "./tombstone_view.html.tera");
+template_fn!(
+    render_erased_document_template,
+    "./erased_document_view.html.tera"
+);
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
@@ -50,8 +55,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
 
     let content = if document.document_type == PROJECT_TYPE {
         render_project_view(&document, arhiv, url)?
-    } else if document.document_type == TOMBSTONE_TYPE {
-        render_tombstone_template(json!({}))?
+    } else if document.document_type == ERASED_DOCUMENT_TYPE {
+        render_erased_document_template(json!({}))?
     } else {
         render_document_view(&document, arhiv, url)?
     };
@@ -76,8 +81,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         "refs": refs,
         "backrefs": backrefs,
         "document": document,
-        "is_tombstone": document.is_tombstone(),
-        "erase_document_url": erase_document_url(&document.id, &collection_id),
+        "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, &collection_id)),
         "collection_id": collection_id,
         "updated_at": document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
     }))?;

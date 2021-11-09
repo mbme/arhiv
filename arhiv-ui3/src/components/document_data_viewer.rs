@@ -138,7 +138,10 @@ impl<'d> DocumentDataViewer<'d> {
             })
             .collect::<Result<Vec<_>>>()?;
 
+        let has_empty_fields = fields.iter().find(|field| field.value.is_empty());
+
         render_template(json!({
+            "show_empty_fields_toggle": has_empty_fields,
             "fields": fields,
         }))
     }

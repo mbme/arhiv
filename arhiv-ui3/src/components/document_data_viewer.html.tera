@@ -1,3 +1,23 @@
+{% if show_empty_fields_toggle %}
+<input
+  id="field-visibility-toggle"
+  class="hidden"
+  type="checkbox"
+  checked
+/>
+<label
+  for="field-visibility-toggle"
+  class="text-sm font-mono cursor-pointer float-right text-gray-400 hover:text-blue-500"
+>
+  <span data-action-show>
+    show empty fields
+  </span>
+  <span data-action-hide>
+    hide empty fields
+  </span>
+</label>
+{% endif %}
+
 {% for field in fields %}
 <section
   class="mb-12 wrap-text"

@@ -8,7 +8,7 @@ use crate::schema::DataSchema;
 
 use super::{DocumentData, Id, Refs, Revision, SnapshotId};
 
-pub const ERASED_DOCUMENT_TYPE: &str = "tombstone";
+pub const ERASED_DOCUMENT_TYPE: &str = "";
 
 pub type Timestamp = DateTime<Utc>;
 

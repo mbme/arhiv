@@ -1,5 +1,9 @@
 use arhiv_core::entities::Id;
 
+pub fn index_url() -> String {
+    "/".to_string()
+}
+
 pub fn document_url(id: &Id, parent_collection: &Option<Id>) -> String {
     if let Some(collection_id) = parent_collection {
         format!("/collections/{}/documents/{}", collection_id, id)

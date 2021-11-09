@@ -123,6 +123,7 @@ impl DataSchema {
     pub fn get_document_types(&self, skip_internal: bool) -> Vec<&'static str> {
         self.modules
             .iter()
+            .filter(|module| !module.document_type.is_empty())
             .filter(|module| {
                 if skip_internal {
                     !self.is_internal_type(module.document_type)

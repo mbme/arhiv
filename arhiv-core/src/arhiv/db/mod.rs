@@ -38,7 +38,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub const VERSION: u8 = 10;
+    pub const VERSION: u8 = 11;
 
     pub fn open(root_dir: String, schema: DataSchema) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
@@ -286,13 +286,7 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
 
         let refs = schema.extract_refs(document_type, &document_data)?;
 
-        let result = serde_json::to_string(&refs).context("failed to serialize refs");
-
-        if let Err(ref err) = result {
-            log::error!("extract_refs() failed: \n{}", err);
-        }
-
-        result
+        serde_json::to_string(&refs).context("failed to serialize refs")
     };
 
     conn.create_scalar_function(
@@ -302,9 +296,13 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
         move |ctx| {
             assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
 
-            extract_refs(ctx)
-                .context("extract_refs() failed")
-                .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            let result = extract_refs(ctx);
+
+            if let Err(ref err) = result {
+                log::error!("extract_refs() failed: \n{:?}", err);
+            }
+
+            result.map_err(|e| RusqliteError::UserFunctionError(e.into()))
         },
     )
     .context("Failed to define function 'extract_refs'")

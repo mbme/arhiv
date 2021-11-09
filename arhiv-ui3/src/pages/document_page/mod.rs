@@ -17,7 +17,7 @@ use crate::{
     components::{Action, Breadcrumb, Ref, Toolbar},
     pages::base::render_page,
     template_fn,
-    urls::{erase_document_url, parent_collection_url},
+    urls::{erase_document_url, index_url, parent_collection_url},
 };
 
 use self::document_view::render_document_view;
@@ -94,17 +94,25 @@ fn render_document_page_toolbar(
     collection_id: &Option<Id>,
     arhiv: &Arhiv,
 ) -> Result<String> {
-    let mut toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::for_collection(
-            &document.document_type,
-            collection_id,
-            arhiv,
-        )?)
-        .with_breadcrumb(Breadcrumb::for_document(document))
-        .on_close(parent_collection_url(
-            &document.document_type,
-            collection_id,
-        ));
+    let mut toolbar = Toolbar::new();
+
+    if document.is_erased() {
+        toolbar = toolbar
+            .with_breadcrumb(Breadcrumb::string("ERASED DOCUMENT"))
+            .on_close(index_url());
+    } else {
+        toolbar = toolbar
+            .with_breadcrumb(Breadcrumb::for_collection(
+                &document.document_type,
+                collection_id,
+                arhiv,
+            )?)
+            .with_breadcrumb(Breadcrumb::for_document(document))
+            .on_close(parent_collection_url(
+                &document.document_type,
+                collection_id,
+            ));
+    }
 
     let schema = arhiv.get_schema();
     let data_description = schema.get_data_description(&document.document_type)?;

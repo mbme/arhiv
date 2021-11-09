@@ -130,6 +130,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v7_to_v8,
     upgrade_v8_to_v9,
     upgrade_v9_to_v10,
+    upgrade_v10_to_v11,
 ];
 
 // stub
@@ -489,6 +490,29 @@ fn upgrade_v9_to_v10(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &
 
         INSERT INTO documents_snapshots
                        SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
+                       FROM old_db.documents_snapshots;
+       ",
+    )?;
+
+    Ok(())
+}
+
+/// change document type for deleted documents from "tombstone" to "" (empty string)
+fn upgrade_v10_to_v11(
+    conn: &Connection,
+    _fs_tx: &mut FsTransaction,
+    _data_dir: &str,
+) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '11' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots(id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data)
+                       SELECT id, rev, prev_rev, snapshot_id,
+                        (CASE type WHEN 'tombstone' THEN '' ELSE type END),
+                        created_at, updated_at, data
                        FROM old_db.documents_snapshots;
        ",
     )?;

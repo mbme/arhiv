@@ -5,6 +5,13 @@
 >
   {{ id }}
 </a>
+{% elif mode == "Erased" %}
+<a
+  href="{{url}}"
+  class="bg-yellow-300 bg-opacity-50 px-2 py-1 rounded-sm !line-through"
+>
+  {{ id }}
+</a>
 {% elif mode == "Ref" %}
 <a
   href="{{url}}"

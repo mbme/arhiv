@@ -16,6 +16,10 @@ enum RefMode<'a> {
         title: String,
         url: String,
     },
+    Erased {
+        id: &'a Id,
+        url: String,
+    },
     Unknown {
         id: &'a Id,
         url: String,
@@ -75,6 +79,14 @@ impl Ref {
             }
             RefInfo::Document(document) => *document,
         };
+
+        if document.is_erased() {
+            return serde_json::to_value(RefMode::Erased {
+                id: &document.id,
+                url: document_url(&document.id, &None),
+            })
+            .context("failed to serialize");
+        }
 
         if !self.preview_attachments || !Attachment::is_attachment(&document) {
             let title = arhiv.get_schema().get_title(&document)?;

@@ -2,7 +2,11 @@ use anyhow::*;
 use hyper::StatusCode;
 use serde_json::json;
 
-use arhiv_core::Arhiv;
+use arhiv_core::{
+    definitions::TASK_TYPE,
+    entities::{ATTACHMENT_TYPE, TOMBSTONE_TYPE},
+    Arhiv,
+};
 use rs_utils::server::ServerResponse;
 
 use crate::{template_fn, urls::catalog_url, utils::render_content};
@@ -34,7 +38,7 @@ pub fn render_modal(content: impl AsRef<str>) -> ServerResponse {
     render_content(StatusCode::OK, result)
 }
 
-const IGNORED_DOCUMENT_TYPES: &[&str] = &["tombstone", "attachment", "task"];
+const IGNORED_DOCUMENT_TYPES: &[&str] = &[TOMBSTONE_TYPE, ATTACHMENT_TYPE, TASK_TYPE];
 
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv

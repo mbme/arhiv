@@ -224,6 +224,13 @@
     "@typescript-eslint/types" "5.2.0"
     eslint-visitor-keys "^3.0.0"
 
+a11y-dialog@^7.3.0:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/a11y-dialog/-/a11y-dialog-7.3.0.tgz#8f5de726ebc8d1e29977ee57cc49a4f2e54bc59f"
+  integrity sha512-xrpSBbOOtGHT+gXcTk9uXfvfFx1xd3LebBhjpjd5xedzeM2FPqNeT6BvLjB+ej8oEH2fCpDHKn5JIlmiNyV5bA==
+  dependencies:
+    focusable-selectors "^0.3.1"
+
 acorn-jsx@^5.3.1:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.3.2.tgz#7ed5bb55908b3b2f1bc55c6af1653bada7f07937"
@@ -1001,6 +1008,11 @@ flatted@^3.1.0:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/flatted/-/flatted-3.2.2.tgz#64bfed5cb68fe3ca78b3eb214ad97b63bedce561"
   integrity sha512-JaTY/wtrcSyvXJl4IMFHPKyFur1sE9AUqc0QnhOaJ0CxHtAoIV8pYDzeEfAaNEtGkOfq4gr3LBFmdXW5mOQFnA==
+
+focusable-selectors@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/focusable-selectors/-/focusable-selectors-0.3.1.tgz#7eacbca8dc6cc8d7f7563e5f5cc3699b91e20aaa"
+  integrity sha512-5JLtr0e1YJIfmnVlpLiG+av07dd0Xkf/KfswsXcei5KmLfdwOysTQsjF058ynXniujb1fvev7nql1x+CkC5ikw==
 
 fraction.js@^4.1.1:
   version "4.1.1"

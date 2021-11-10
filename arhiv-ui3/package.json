@@ -16,6 +16,7 @@
     "prod:build": "yarn run prod:build:js && yarn run prod:build:css"
   },
   "dependencies": {
+    "a11y-dialog": "^7.3.0",
     "unpoly": "^2.4.1"
   },
   "devDependencies": {

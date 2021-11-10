@@ -86,6 +86,8 @@ declare global {
   }
 }
 
+history.scrollRestoration = 'auto';
+
 window.arhiv_ui = new ArhivUI();
 
 window.addEventListener('DOMContentLoaded', () => {

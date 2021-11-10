@@ -6,8 +6,9 @@ use anyhow::*;
 use crate::{
     entities::{DocumentData, Id},
     schema::{DataDescription, Field},
-    Arhiv,
 };
+
+use super::db::{ArhivTransaction, Queries};
 
 pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
 
@@ -43,23 +44,19 @@ impl fmt::Display for ValidationError {
     }
 }
 
-pub struct Validator<'a> {
-    arhiv: &'a Arhiv,
+#[derive(Default)]
+pub struct Validator {
     valid_refs: HashMap<Id, String>,
     errors: HashMap<String, Vec<Error>>,
 }
 
-impl<'a> Validator<'a> {
-    #[must_use]
-    pub fn new(arhiv: &'a Arhiv) -> Self {
-        Validator {
-            arhiv,
-            valid_refs: HashMap::new(),
-            errors: HashMap::new(),
-        }
-    }
-
-    fn validate_ref(&mut self, id: &Id, expected_document_type: Option<&str>) -> Result<()> {
+impl Validator {
+    fn validate_ref(
+        &mut self,
+        id: &Id,
+        expected_document_type: Option<&str>,
+        tx: &mut ArhivTransaction<'_>,
+    ) -> Result<()> {
         match (self.valid_refs.get(id), expected_document_type) {
             (Some(_document_type), None) => {
                 return Ok(());
@@ -79,7 +76,7 @@ impl<'a> Validator<'a> {
             _ => {}
         };
 
-        let document = if let Some(document) = self.arhiv.get_document(id)? {
+        let document = if let Some(document) = tx.get_document(id)? {
             document
         } else {
             bail!("unknown document ref '{}'", id);
@@ -115,6 +112,7 @@ impl<'a> Validator<'a> {
         data: &DocumentData,
         prev_data: Option<&DocumentData>,
         data_description: &DataDescription,
+        tx: &mut ArhivTransaction<'_>,
     ) -> std::result::Result<(), ValidationError> {
         for field in &data_description.fields {
             // first, validate field value
@@ -142,7 +140,7 @@ impl<'a> Validator<'a> {
 
             // then check field refs
             for id in refs {
-                let validation_result = self.validate_ref(&id, expected_document_type);
+                let validation_result = self.validate_ref(&id, expected_document_type, tx);
 
                 self.track_err(field, validation_result);
             }

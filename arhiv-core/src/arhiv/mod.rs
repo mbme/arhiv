@@ -176,10 +176,11 @@ impl Arhiv {
 
         let data_description = self.schema.get_data_description(&document.document_type)?;
 
-        Validator::new(self).validate(
+        Validator::default().validate(
             &document.data,
             prev_document.as_ref().map(|document| &document.data),
             data_description,
+            tx,
         )?;
 
         if let Some(prev_document) = prev_document {

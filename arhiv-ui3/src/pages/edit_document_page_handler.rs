@@ -29,8 +29,12 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     let prev_data = document.data;
     document.data = fields_to_document_data(&fields, data_description)?;
 
-    let validation_result =
-        Validator::new(arhiv).validate(&document.data, Some(&prev_data), data_description);
+    let validation_result = Validator::default().validate(
+        &document.data,
+        Some(&prev_data),
+        data_description,
+        &mut arhiv.get_tx()?,
+    );
 
     if let Err(error) = validation_result {
         let content = render_edit_document_page_content(

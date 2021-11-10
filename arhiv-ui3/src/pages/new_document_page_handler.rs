@@ -27,7 +27,8 @@ pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
 
     let mut document = Document::new_with_data(document_type, data);
 
-    let validation_result = Validator::new(arhiv).validate(&document.data, None, data_description);
+    let validation_result =
+        Validator::default().validate(&document.data, None, data_description, &mut arhiv.get_tx()?);
     if let Err(error) = validation_result {
         let content = render_new_document_page_content(
             &document,

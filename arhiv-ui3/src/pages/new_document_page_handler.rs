@@ -5,10 +5,10 @@ use arhiv_core::{
     entities::{Document, Id},
     Arhiv, Validator,
 };
-use rs_utils::server::{parse_urlencoded, respond_see_other, ServerResponse};
+use rs_utils::server::{respond_see_other, ServerResponse};
 
 use super::{base::render_page_with_status, render_new_document_page_content};
-use crate::{urls::document_url, utils::fields_to_document_data};
+use crate::{urls::document_url, utils::extract_document_data};
 
 pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
@@ -21,9 +21,7 @@ pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arhiv = parts.data().unwrap();
     let data_description = arhiv.get_schema().get_data_description(document_type)?;
 
-    let body = hyper::body::to_bytes(body).await?;
-    let fields = parse_urlencoded(&body);
-    let data = fields_to_document_data(&fields, data_description)?;
+    let data = extract_document_data(body, data_description).await?;
 
     let mut document = Document::new_with_data(document_type, data);
 

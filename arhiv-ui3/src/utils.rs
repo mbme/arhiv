@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use anyhow::*;
-use hyper::{header, Response, StatusCode};
+use hyper::{header, Body, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};
-use rs_utils::server::ServerResponse;
+use rs_utils::server::{parse_urlencoded, ServerResponse};
 
 /// `template_fn!(pub get_markup, "./markup.rs");`
 #[macro_export]
@@ -57,7 +57,7 @@ pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
         .context("failed to build response")
 }
 
-pub fn fields_to_document_data(
+fn fields_to_document_data(
     fields: &HashMap<String, String>,
     data_description: &DataDescription,
 ) -> Result<DocumentData> {
@@ -75,4 +75,14 @@ pub fn fields_to_document_data(
     }
 
     Ok(data)
+}
+
+pub async fn extract_document_data(
+    body: Body,
+    data_description: &DataDescription,
+) -> Result<DocumentData> {
+    let body = hyper::body::to_bytes(body).await?;
+    let fields = parse_urlencoded(&body);
+
+    fields_to_document_data(&fields, data_description)
 }

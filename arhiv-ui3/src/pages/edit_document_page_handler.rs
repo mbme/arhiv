@@ -2,10 +2,10 @@ use hyper::{http::request::Parts, Body, Request, StatusCode};
 use routerify::ext::RequestExt;
 
 use arhiv_core::{entities::Id, Arhiv, Validator};
-use rs_utils::server::{parse_urlencoded, respond_see_other, ServerResponse};
+use rs_utils::server::{respond_see_other, ServerResponse};
 
 use super::{base::render_page_with_status, render_edit_document_page_content};
-use crate::{urls::document_url, utils::fields_to_document_data};
+use crate::{urls::document_url, utils::extract_document_data};
 
 pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
@@ -23,11 +23,8 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
         .get_schema()
         .get_data_description(&document.document_type)?;
 
-    let body = hyper::body::to_bytes(body).await?;
-    let fields = parse_urlencoded(&body);
-
     let prev_data = document.data;
-    document.data = fields_to_document_data(&fields, data_description)?;
+    document.data = extract_document_data(body, data_description).await?;
 
     let validation_result = Validator::default().validate(
         &document.data,

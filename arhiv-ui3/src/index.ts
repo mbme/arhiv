@@ -91,5 +91,12 @@ history.scrollRestoration = 'auto';
 window.arhiv_ui = new ArhivUI();
 
 window.addEventListener('DOMContentLoaded', () => {
-  init_V_JS(true);
+  init_V_JS(true, {
+    'v-js': (el, value) => {
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      const fn = window.Function(`"use strict"; ${value}`);
+
+      fn.apply(el);
+    },
+  });
 });

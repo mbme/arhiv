@@ -1,4 +1,4 @@
-export type Obj = Record<string, string | undefined>;
+export type Obj<T = string> = Record<string, T | undefined>;
 export type Callback = () => void;
 
 export async function fetchHTML(url: string): Promise<string> {
@@ -22,6 +22,8 @@ export async function fetchHTML(url: string): Promise<string> {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
+
+export const sum = (a: number, b: number) => a + b;
 
 function formDataToObj(fd: FormData): Obj {
   const result: Obj = {};

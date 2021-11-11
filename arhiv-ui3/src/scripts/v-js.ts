@@ -1,44 +1,75 @@
-const processedElements = new WeakSet<Element>();
+import { sum } from './utils';
 
-function evalDataJS(el: Element): boolean {
-  const script = el.getAttribute('v-js');
-  if (script === null) {
-    return false;
+export type DirectiveName = `v-${string}`;
+export type Directive = (el: Element, arg: string) => void;
+export type Directives = Record<DirectiveName, Directive>;
+
+class DirectivesProcessor {
+  private _registries: Record<DirectiveName, WeakSet<Element>>;
+
+  constructor(
+    private _directives: Directives,
+  ) {
+    this._registries = {};
+    for (const directiveName of Object.keys(_directives)) {
+      this._registries[directiveName as DirectiveName] = new WeakSet();
+    }
   }
 
-  if (processedElements.has(el)) {
-    return false;
+  processElements(): Record<DirectiveName, number> {
+    const result: Record<DirectiveName, number> = {};
+
+    for (const directiveName of Object.keys(this._directives)) {
+      const processed = this._processDirective(directiveName as DirectiveName);
+      result[directiveName as DirectiveName] = processed;
+    }
+
+    return result;
   }
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    const fn = window.Function(`"use strict"; ${script}`);
+  private _processDirective(directiveName: DirectiveName): number {
+    const directive = this._directives[directiveName];
+    const registry = this._registries[directiveName];
 
-    fn.apply(el);
+    let directivesProcessed = 0;
 
-    processedElements.add(el);
+    for (const el of document.querySelectorAll(`[${directiveName}]`)) {
+      if (registry.has(el)) {
+        continue;
+      }
 
-    return true;
-  } catch (e) {
-    console.error('Failed to execute the "v-js" attribute: %s\n script: %s\n', e, script, el);
-    return false;
+      const attr = el.attributes.getNamedItem(directiveName);
+      if (!attr) {
+        throw new Error(`element doesn't have attribute "${directiveName}"`);
+      }
+
+      const value = attr.value;
+
+      try {
+        directive(el, value);
+
+        directivesProcessed += 1;
+
+        registry.add(el);
+      } catch (e) {
+        console.error('Failed to execute directive "%s": %s\n script: %s\n', directiveName, e, value, el);
+      }
+    }
+
+    return directivesProcessed;
   }
 }
 
-function processElements(): number {
-  let nodesProcessed = 0;
+export function init_V_JS(observeChanges = false, directives: Directives): void {
+  console.log('[v]: registered %s directives', Object.keys(directives).length);
 
-  for (const el of document.querySelectorAll('[v-js]')) {
-    nodesProcessed += evalDataJS(el) ? 1 : 0;
-  }
+  const processor = new DirectivesProcessor(directives);
 
-  return nodesProcessed;
-}
-
-export function init_V_JS(observeChanges = false): void {
   {
-    const nodesProcessed = processElements();
-    console.debug('[v-js]: processed %s nodes on init', nodesProcessed);
+    const result = processor.processElements();
+    const total = Object.values(result).reduce(sum, 0);
+
+    console.debug('[v]: processed %s directives on init %o', total, result);
   }
 
   if (!observeChanges) {
@@ -52,9 +83,10 @@ export function init_V_JS(observeChanges = false): void {
       return;
     }
 
-    const nodesProcessed = processElements();
+    const result = processor.processElements();
+    const total = Object.values(result).reduce(sum, 0);
 
-    console.debug('[v-js]: processed %s nodes on dom mutation', nodesProcessed);
+    console.debug('[v]: processed %s directives on dom mutation %o', total, result);
   });
 
   observer.observe(document.body, {

@@ -65,8 +65,6 @@ class ArhivUI {
     });
   };
 
-  autoGrowTextarea = autoGrowTextarea;
-
   keepSessionState = keepSessionState;
 
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
@@ -97,6 +95,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const fn = window.Function(`"use strict"; ${value}`);
 
       fn.apply(el);
+    },
+    'v-auto-grow': (el) => {
+      if (!(el instanceof HTMLTextAreaElement)) {
+        throw new Error('v-auto-grow must be applied to textarea');
+      }
+
+      autoGrowTextarea(el);
     },
   });
 });

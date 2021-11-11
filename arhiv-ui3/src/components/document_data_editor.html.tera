@@ -26,7 +26,7 @@
       class="field"
       {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
-      v-js="arhiv_ui.autoGrowTextarea(this)"
+      v-auto-grow
     >{{field.value}}</textarea>
 
     {% elif 'Enum' in field.field_type %}

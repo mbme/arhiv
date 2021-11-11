@@ -38,8 +38,6 @@ class ArhivUI {
     return this.copyTextToClipboard(message, 'attachment id');
   }
 
-  keepSessionState = keepSessionState;
-
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
     try {
       await copyText(text);
@@ -82,6 +80,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       preserveUnsavedChanges(el);
-    }
+    },
+    'v-keep-state': (el, value) => {
+      if (!(el instanceof HTMLElement)) {
+        throw new Error('v-keep-state must be applied to html elements');
+      }
+
+      keepSessionState(el, value);
+    },
   });
 });

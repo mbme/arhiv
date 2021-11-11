@@ -3,7 +3,7 @@
   action=""
   method="post"
   autocomplete="off"
-  data-js="arhiv_ui.preserveUnsavedChanges(this)"
+  v-js="arhiv_ui.preserveUnsavedChanges(this)"
 >
   <!-- Prevent implicit submission of the form -->
   <button type="submit" disabled style="display: none" aria-hidden="true"></button>
@@ -26,7 +26,7 @@
       class="field"
       {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
-      data-js="arhiv_ui.autoGrowTextarea(this)"
+      v-js="arhiv_ui.autoGrowTextarea(this)"
     >{{field.value}}</textarea>
 
     {% elif 'Enum' in field.field_type %}

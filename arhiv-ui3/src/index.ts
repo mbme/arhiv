@@ -5,7 +5,7 @@ import {
   isEqualFormData,
   keepSessionState,
 } from './scripts/utils';
-import { initDataJS } from './scripts/data-js';
+import { init_V_JS } from './scripts/v-js';
 import { renderNotification } from './scripts/notification';
 import { copyText } from './scripts/clipboard';
 
@@ -91,5 +91,5 @@ history.scrollRestoration = 'auto';
 window.arhiv_ui = new ArhivUI();
 
 window.addEventListener('DOMContentLoaded', () => {
-  initDataJS(true);
+  init_V_JS(true);
 });

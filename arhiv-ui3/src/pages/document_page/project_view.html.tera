@@ -14,7 +14,7 @@
       hidden
       {% endif %}
 
-      data-js="arhiv_ui.keepSessionState(this, '{{group.value}}')"
+      v-js="arhiv_ui.keepSessionState(this, '{{group.value}}')"
     >
       <summary class="cursor-pointer font-mono text-gray-700">
         <span class="text-2xl font-semibold align-middle">

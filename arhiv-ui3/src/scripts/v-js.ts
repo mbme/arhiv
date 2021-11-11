@@ -1,7 +1,7 @@
 const processedElements = new WeakSet<Element>();
 
 function evalDataJS(el: Element): boolean {
-  const script = el.getAttribute('data-js');
+  const script = el.getAttribute('v-js');
   if (script === null) {
     return false;
   }
@@ -20,7 +20,7 @@ function evalDataJS(el: Element): boolean {
 
     return true;
   } catch (e) {
-    console.error('Failed to execute the "data-js" attribute: %s\n script: %s\n', e, script, el);
+    console.error('Failed to execute the "v-js" attribute: %s\n script: %s\n', e, script, el);
     return false;
   }
 }
@@ -28,17 +28,17 @@ function evalDataJS(el: Element): boolean {
 function processElements(): number {
   let nodesProcessed = 0;
 
-  for (const el of document.querySelectorAll('[data-js]')) {
+  for (const el of document.querySelectorAll('[v-js]')) {
     nodesProcessed += evalDataJS(el) ? 1 : 0;
   }
 
   return nodesProcessed;
 }
 
-export function initDataJS(observeChanges = false): void {
+export function init_V_JS(observeChanges = false): void {
   {
     const nodesProcessed = processElements();
-    console.debug('[data-js]: processed %s nodes on init', nodesProcessed);
+    console.debug('[v-js]: processed %s nodes on init', nodesProcessed);
   }
 
   if (!observeChanges) {
@@ -54,7 +54,7 @@ export function initDataJS(observeChanges = false): void {
 
     const nodesProcessed = processElements();
 
-    console.debug('[data-js]: processed %s nodes on dom mutation', nodesProcessed);
+    console.debug('[v-js]: processed %s nodes on dom mutation', nodesProcessed);
   });
 
   observer.observe(document.body, {

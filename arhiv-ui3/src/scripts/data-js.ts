@@ -1,6 +1,12 @@
+const processedElements = new WeakSet<Element>();
+
 function evalDataJS(el: Element): boolean {
   const script = el.getAttribute('data-js');
   if (script === null) {
+    return false;
+  }
+
+  if (processedElements.has(el)) {
     return false;
   }
 
@@ -10,7 +16,7 @@ function evalDataJS(el: Element): boolean {
 
     fn.apply(el);
 
-    el.removeAttribute('data-js');
+    processedElements.add(el);
 
     return true;
   } catch (e) {

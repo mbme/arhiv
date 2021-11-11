@@ -1,13 +1,10 @@
 import 'unpoly';
 
-import {
-  autoGrowTextarea,
-  keepSessionState,
-  preserveUnsavedChanges,
-} from './scripts/utils';
+import { keepSessionState } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
 import { renderNotification } from './scripts/notification';
 import { copyText } from './scripts/clipboard';
+import { autoGrowTextarea, preserveUnsavedChanges } from './scripts/forms';
 
 class ArhivUI {
   goBack(fallback = '/') {

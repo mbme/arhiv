@@ -3,7 +3,7 @@
   action=""
   method="post"
   autocomplete="off"
-  v-js="arhiv_ui.preserveUnsavedChanges(this)"
+  v-preserve-unsaved-changes
 >
   <!-- Prevent implicit submission of the form -->
   <button type="submit" disabled style="display: none" aria-hidden="true"></button>

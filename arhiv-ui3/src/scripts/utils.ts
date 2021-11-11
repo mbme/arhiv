@@ -35,7 +35,7 @@ function formDataToObj(fd: FormData): Obj {
   return result;
 }
 
-export function isEqualFormData(fd1: FormData, fd2: FormData): boolean {
+function isEqualFormData(fd1: FormData, fd2: FormData): boolean {
   const fd1Obj = formDataToObj(fd1);
   const fd2Obj = formDataToObj(fd2);
 
@@ -107,4 +107,31 @@ export function updateQueryParam(param: string, value: string | undefined): void
   }
 
   window.history.replaceState({}, '', '?' + searchParams.toString());
+}
+
+export function preserveUnsavedChanges(form: HTMLFormElement): void {
+  let submitted = false;
+  const initialFormData = new FormData(form);
+
+  function onBeforeUnload(event: BeforeUnloadEvent) {
+    const fd = new FormData(form);
+
+    if (submitted) {
+      return;
+    }
+
+    if (isEqualFormData(initialFormData, fd)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
+  }
+
+  window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
+
+  form.addEventListener('submit', () => {
+    submitted = true;
+  });
 }

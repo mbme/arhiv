@@ -2,8 +2,8 @@ import 'unpoly';
 
 import {
   autoGrowTextarea,
-  isEqualFormData,
   keepSessionState,
+  preserveUnsavedChanges,
 } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
 import { renderNotification } from './scripts/notification';
@@ -37,33 +37,6 @@ class ArhivUI {
 
     return this.copyTextToClipboard(message, 'attachment id');
   }
-
-  preserveUnsavedChanges = (form: HTMLFormElement) => {
-    let submitted = false;
-    const initialFormData = new FormData(form);
-
-    function onBeforeUnload(event: BeforeUnloadEvent) {
-      const fd = new FormData(form);
-
-      if (submitted) {
-        return;
-      }
-
-      if (isEqualFormData(initialFormData, fd)) {
-        return;
-      }
-
-      event.preventDefault();
-
-      return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
-    }
-
-    window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
-
-    form.addEventListener('submit', () => {
-      submitted = true;
-    });
-  };
 
   keepSessionState = keepSessionState;
 
@@ -103,5 +76,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
       autoGrowTextarea(el);
     },
+    'v-preserve-unsaved-changes': (el) => {
+      if (!(el instanceof HTMLFormElement)) {
+        throw new Error('v-preserve-unsaved-changes must be applied to form');
+      }
+
+      preserveUnsavedChanges(el);
+    }
   });
 });

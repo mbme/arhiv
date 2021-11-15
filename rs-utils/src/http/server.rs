@@ -98,6 +98,11 @@ impl Url {
     }
 
     #[must_use]
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    #[must_use]
     pub fn render(self) -> String {
         let query = form_urlencoded::Serializer::new(String::new())
             .extend_pairs(self.query_params)

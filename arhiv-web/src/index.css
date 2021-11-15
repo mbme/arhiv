@@ -221,10 +221,6 @@ a:not(.clean-link) {
   #notification-root > div[data-error] {
     @apply bg-red-400;
   }
-
-  .document-picker .catalog-entry {
-    cursor: pointer;
-  }
 }
 
 @layer utilities {

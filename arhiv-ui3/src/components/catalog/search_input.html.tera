@@ -1,5 +1,7 @@
 <form
-  up-target="main"
+  action="{{url}}"
+  method="get"
+  data-component="search-input"
 >
   <input
     type="search"

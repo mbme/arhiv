@@ -6,11 +6,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
 esbuild.build({
-  outdir: './public',
-  entryPoints: {
-    index: './src/index.ts',
-    unpoly: 'unpoly/unpoly.css',
-  },
+  entryPoints: ['./src/index.ts'],
+  outfile: './public/index.js',
 
   target: [
     'es2020',

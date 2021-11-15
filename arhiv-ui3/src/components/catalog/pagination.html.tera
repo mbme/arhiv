@@ -3,7 +3,7 @@
   <a
     href="{{prev_page_url}}"
     class="mr-4 uppercase"
-    up-target="main"
+    data-component="pagination"
   >
     <svg class="h-5 w-5 inline-block align-text-top mr-1">
       <use xlink:href="#icon-narrow-left" />
@@ -22,7 +22,7 @@
   <a
     href="{{next_page_url}}"
     class="ml-4 uppercase"
-    up-target="main"
+    data-component="pagination"
   >
     next
     <svg class="h-5 w-5 inline-block align-text-top ml-1">

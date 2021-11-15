@@ -205,11 +205,20 @@ a:not(.clean-link) {
     @apply border-2;
   }
 
+  #modal-root {
+    z-index: 1;
+
+    & > div {
+      @apply fixed z-10 inset-0 overflow-y-auto;
+      @apply bg-yellow-100;
+    }
+  }
+
   .modal {
     @apply mx-auto mt-16 rounded-md shadow-lg;
 
     background-color: var(--bg-color);
-    max-width: var(--max-width);
+    max-width: var(--content-width);
   }
 
   .modal-title {
@@ -230,18 +239,18 @@ a:not(.clean-link) {
     z-index: 1;
 
     @apply fixed top-4 right-4 w-64 space-y-2;
-  }
 
-  #notification-root > div {
-    @apply rounded-md shadow-lg px-4 py-2 cursor-default;
-  }
+    & > div {
+      @apply rounded-md shadow-lg px-4 py-2 cursor-default;
+    }
 
-  #notification-root > div[data-info] {
-    @apply bg-green-400;
-  }
+    & > div[data-info] {
+      @apply bg-green-400;
+    }
 
-  #notification-root > div[data-error] {
-    @apply bg-red-400;
+    & > div[data-error] {
+      @apply bg-red-400;
+    }
   }
 }
 

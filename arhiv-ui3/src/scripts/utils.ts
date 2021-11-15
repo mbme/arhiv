@@ -25,6 +25,12 @@ export async function fetchHTML(url: string): Promise<string> {
   }
 }
 
+export async function fetchAndReplace(url: string, el: HTMLElement, selector = ''): Promise<void> {
+  const content = await fetchHTML(url);
+
+  replaceEl(el, content, selector);
+}
+
 function selectNodes(content: string, selector: string): NodeListOf<Element> {
   const domEl = document.createElement('div');
   domEl.innerHTML = content;
@@ -32,7 +38,7 @@ function selectNodes(content: string, selector: string): NodeListOf<Element> {
   return domEl.querySelectorAll(selector);
 }
 
-export function replaceEl(el: HTMLElement, content: string, selector: string): void {
+export function replaceEl(el: HTMLElement, content: string, selector = ''): void {
   if (selector.length === 0) {
     el.outerHTML = content;
   } else {
@@ -67,4 +73,19 @@ export function updateQueryParam(param: string, value: string | undefined): void
   }
 
   window.history.replaceState({}, '', '?' + searchParams.toString());
+}
+
+export function lockGlobalScroll(): Callback {
+  const documentEl = document.documentElement;
+  const originalStyle = documentEl.style.cssText;
+  const scrollTop = documentEl.scrollTop;
+
+  // preserve scroll position and hide scroll
+  documentEl.style.cssText = `position: fixed; left: 0; right: 0; overflow: hidden; top: -${scrollTop}px`;
+
+  return () => {
+    // restore scroll position
+    documentEl.style.cssText = originalStyle;
+    documentEl.scrollTop = scrollTop;
+  };
 }

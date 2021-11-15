@@ -1,18 +1,24 @@
-import { Obj } from './utils';
-
-function formDataToObj(fd: FormData): Obj {
-  const result: Obj = {};
+export function formDataToObject(fd: FormData): Record<string, string> {
+  const result: Record<string, string> = {};
 
   for (const [key, value] of fd.entries()) {
-    result[key] = value.toString();
+    if (value instanceof File) {
+      throw new Error('unsupported: FormData contains a File');
+    }
+
+    if (result.hasOwnProperty(key)) {
+      throw new Error(`unsupported: FormData contains duplicate key "${key}"`);
+    }
+
+    result[key] = value;
   }
 
   return result;
 }
 
 function isEqualFormData(fd1: FormData, fd2: FormData): boolean {
-  const fd1Obj = formDataToObj(fd1);
-  const fd2Obj = formDataToObj(fd2);
+  const fd1Obj = formDataToObject(fd1);
+  const fd2Obj = formDataToObject(fd2);
 
   return JSON.stringify(fd1Obj) === JSON.stringify(fd2Obj);
 }

@@ -1,10 +1,10 @@
-import 'unpoly';
-
 import { keepSessionState } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
 import { renderNotification } from './scripts/notification';
 import { copyText } from './scripts/clipboard';
 import { autoGrowTextarea, preserveUnsavedChanges } from './scripts/forms';
+import { initPickDocumentModal } from './pages/pick_document_modal';
+import { showModal } from './scripts/modal';
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -14,6 +14,8 @@ class ArhivUI {
       window.location.assign(fallback);
     }
   }
+
+  initPickDocumentModal = initPickDocumentModal;
 
   async pickAttachment() {
     const response = await fetch('/rpc/pick-attachment', {
@@ -52,8 +54,6 @@ declare global {
   }
 }
 
-history.scrollRestoration = 'auto';
-
 window.arhiv_ui = new ArhivUI();
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -84,6 +84,14 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       keepSessionState(el, value);
+    },
+
+    'v-layer': (el, value) => {
+      if (!(el instanceof HTMLButtonElement)) {
+        throw new Error('v-layer must be applied to button');
+      }
+
+      el.addEventListener('click', () => void showModal(value));
     },
   });
 });

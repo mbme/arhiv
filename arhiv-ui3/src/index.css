@@ -238,14 +238,14 @@ a:not(.clean-link) {
   #notification-root {
     z-index: 1;
 
-    @apply fixed top-4 right-4 w-64 space-y-2;
+    @apply fixed bottom-4 left-4 w-96 space-y-2;
 
     & > div {
-      @apply rounded-md shadow-lg px-4 py-2 cursor-default;
+      @apply rounded-sm shadow-lg px-6 py-4 cursor-default text-lg;
     }
 
     & > div[data-info] {
-      @apply bg-green-400;
+      @apply bg-black bg-opacity-80 text-white;
     }
 
     & > div[data-error] {

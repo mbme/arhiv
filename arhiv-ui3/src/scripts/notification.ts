@@ -1,6 +1,9 @@
-const NOTIFICATION_TIMEOUT_MS = 3400;
-
 type NotificationType = 'info' | 'error';
+
+const NOTIFICATION_TIMEOUT_MS: Record<NotificationType, number> = {
+  'info': 3400,
+  'error': 10000,
+};
 
 export function renderNotification(message: string, notificationType: NotificationType = 'info'): void {
   const rootEl = document.getElementById('notification-root');
@@ -19,5 +22,5 @@ export function renderNotification(message: string, notificationType: Notificati
 
   setTimeout(() => {
     domEl.remove();
-  }, NOTIFICATION_TIMEOUT_MS);
+  }, NOTIFICATION_TIMEOUT_MS[notificationType]);
 }

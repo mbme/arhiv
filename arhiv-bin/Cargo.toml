@@ -1,6 +1,6 @@
 [package]
 name = "arhiv-bin"
-version = "0.32.2"
+version = "0.33.0"
 authors = ["mbme"]
 edition = "2021"
 publish = false

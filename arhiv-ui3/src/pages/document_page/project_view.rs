@@ -18,7 +18,7 @@ template_fn!(render_template, "./project_view.html.tera");
 
 const OPEN_GROUPS: &[&str] = &["Inbox", "InProgress", "Paused"];
 
-pub fn render_project_view(document: &Document, arhiv: &Arhiv, url: Url) -> Result<String> {
+pub fn render_project_view(document: &Document, arhiv: &Arhiv, url: &Url) -> Result<String> {
     let mut content = DocumentDataViewer::new(document).render(arhiv)?;
 
     let pattern = url

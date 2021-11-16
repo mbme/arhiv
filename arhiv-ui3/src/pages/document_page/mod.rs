@@ -54,7 +54,7 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
     let content = if document.document_type == PROJECT_TYPE {
-        render_project_view(&document, arhiv, url)?
+        render_project_view(&document, arhiv, &url)?
     } else if document.document_type == ERASED_DOCUMENT_TYPE {
         render_erased_document_template(json!({}))?
     } else {

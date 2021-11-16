@@ -21,6 +21,6 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "puppeteer-core": "^10.1.0"
+    "puppeteer-core": "^11.0.0"
   }
 }

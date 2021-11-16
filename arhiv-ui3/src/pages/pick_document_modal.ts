@@ -1,4 +1,4 @@
-import { formDataToObject } from '../scripts/forms';
+import { submitFormAndReplace } from '../scripts/forms';
 import { dispatchCloseModalEvent, scrollModalToTop } from '../scripts/modal';
 import { fetchAndReplace } from '../scripts/utils';
 
@@ -47,15 +47,7 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
   searchForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    // FIXME extract this into a helper function to submit form like browser does
-    const fd = new FormData(searchForm);
-    const data = formDataToObject(fd);
-    const qs = new URLSearchParams(data);
-
-    const url = new URL(searchForm.action);
-    url.search = qs.toString();
-
-    void fetchAndReplace(url.toString(), modalEl);
+    void submitFormAndReplace(searchForm, modalEl);
     scrollModalToTop(modalEl);
   });
 }

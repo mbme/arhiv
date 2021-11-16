@@ -1,3 +1,5 @@
+import { fetchHTML, replaceEl } from './utils';
+
 export function formDataToObject(fd: FormData): Record<string, string> {
   const result: Record<string, string> = {};
 
@@ -71,4 +73,26 @@ export function preserveUnsavedChanges(form: HTMLFormElement): void {
   form.addEventListener('submit', () => {
     submitted = true;
   });
+}
+
+export function submitForm(form: HTMLFormElement): Promise<string> {
+  const fd = new FormData(form);
+  const data = formDataToObject(fd);
+
+  if (form.method !== 'get') {
+    throw new Error('unimplemented: only GET method supported yet');
+  }
+
+  const qs = new URLSearchParams(data);
+
+  const url = new URL(form.action);
+  url.search = qs.toString();
+
+  return fetchHTML(url.toString());
+}
+
+export async function submitFormAndReplace(form: HTMLFormElement, targetEl: HTMLElement): Promise<void> {
+  const content = await submitForm(form);
+
+  replaceEl(targetEl, content);
 }

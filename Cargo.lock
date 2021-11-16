@@ -119,21 +119,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arhiv-web"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arhiv-core",
- "hyper",
- "routerify",
- "rs-utils",
- "rust-embed",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"

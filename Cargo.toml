@@ -5,11 +5,11 @@ members = [
   "arhiv-import",
   "arhiv-bin",
   "arhiv-utils",
+  "binutils",
   "rs-utils",
 ]
 
 exclude = [
-  "binutils",
   "app-shell"
 ]
 

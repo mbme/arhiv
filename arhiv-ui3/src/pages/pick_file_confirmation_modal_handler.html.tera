@@ -1,6 +1,6 @@
 <div
   class="modal"
-  v-js="arhiv_ui.copyTextToClipboard('{{id}}', 'attachment id')"
+  v-js="arhiv_ui.copyTextAndNotify('{{id}}', 'attachment id')"
 >
   <div class="modal-title">
     Create attachment

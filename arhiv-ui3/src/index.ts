@@ -1,7 +1,6 @@
 import { keepSessionState } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
-import { renderNotification } from './scripts/notification';
-import { copyText } from './scripts/clipboard';
+import { copyTextAndNotify } from './scripts/clipboard';
 import { autoGrowTextarea, modalLink, modalSubmit, preserveUnsavedChanges } from './scripts/forms';
 import { dispatchCloseModalEvent, showModal } from './scripts/modal';
 
@@ -18,15 +17,7 @@ class ArhivUI {
 
   initPickDocumentModal = initPickDocumentModal;
 
-  copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
-    try {
-      await copyText(text);
-      renderNotification(`Copied ${textName} to clipboard!`);
-    } catch (e) {
-      console.error(`Failed to copy ${textName} to clipboard`, e);
-      renderNotification(`Failed to copy ${textName} to clipboard!`, 'error');
-    }
-  };
+  copyTextAndNotify = copyTextAndNotify;
 }
 
 declare global {

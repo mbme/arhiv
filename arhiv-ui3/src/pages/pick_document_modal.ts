@@ -1,3 +1,4 @@
+import { copyTextAndNotify } from '../scripts/clipboard';
 import { modalLink, modalSubmit } from '../scripts/forms';
 import { dispatchCloseModalEvent } from '../scripts/modal';
 
@@ -18,7 +19,7 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
 
       console.log('selected document %s', id);
 
-      void window.arhiv_ui.copyTextToClipboard(id, 'selected document id');
+      void copyTextAndNotify(id, 'selected document id');
       dispatchCloseModalEvent(modalEl);
     });
   });

@@ -7,7 +7,7 @@
         type="button"
         class="font-mono tracking-wide cursor-pointer text-sm text-gray-400 hover:text-blue-500 focus:text-blue-500 group"
         title="Copy document id to clipboard"
-        onclick="arhiv_ui.copyTextToClipboard('{{document.id}}', 'document id')"
+        onclick="arhiv_ui.copyTextAndNotify('{{document.id}}', 'document id')"
       >
         ID: {{ document.id }}
         <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">

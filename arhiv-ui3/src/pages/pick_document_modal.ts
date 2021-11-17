@@ -1,6 +1,5 @@
-import { submitFormAndReplace } from '../scripts/forms';
-import { dispatchCloseModalEvent, scrollModalToTop } from '../scripts/modal';
-import { fetchAndReplace } from '../scripts/utils';
+import { modalLink, modalSubmit } from '../scripts/forms';
+import { dispatchCloseModalEvent } from '../scripts/modal';
 
 export function initPickDocumentModal(modalEl: HTMLElement): void {
   modalEl.querySelectorAll('[data-component=catalog-entry]').forEach((el) => {
@@ -24,32 +23,12 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
     });
   });
 
-  modalEl.querySelectorAll('a[data-component=pagination]').forEach((el) => {
-    if (!(el instanceof HTMLAnchorElement)) {
-      throw new Error('pagination must be anchor');
-    }
-
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-
-      void fetchAndReplace(el.href, modalEl);
-      scrollModalToTop(modalEl);
-    });
-  });
+  modalEl.querySelectorAll('a[data-component=pagination]').forEach(modalLink);
 
   const searchForm = modalEl.querySelector('form[data-component=search-input]');
   if (!searchForm) {
     throw new Error('search form is missing');
   }
 
-  if (!(searchForm instanceof HTMLFormElement)) {
-    throw new Error('search form must be form');
-  }
-
-  searchForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    void submitFormAndReplace(searchForm, modalEl);
-    scrollModalToTop(modalEl);
-  });
+  modalSubmit(searchForm);
 }

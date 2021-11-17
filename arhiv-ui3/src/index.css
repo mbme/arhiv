@@ -215,7 +215,7 @@ a:not(.clean-link) {
   }
 
   .modal {
-    @apply mx-auto mt-16 rounded-md shadow-lg;
+    @apply mx-auto mt-16 mb-8 rounded-md shadow-lg;
 
     background-color: var(--bg-color);
     max-width: var(--content-width);

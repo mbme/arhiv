@@ -1,7 +1,4 @@
-<div
-  class="modal"
-  v-js="arhiv_ui.initPickFileConfirmationModal(this)"
->
+<div class="modal">
   <div class="modal-title">
     Create attachment
   </div>
@@ -23,7 +20,7 @@
     <form
       action="{{handler_url}}"
       method="post"
-      data-component="confirmation"
+      v-modal-submit
     >
       <input
         type="text"

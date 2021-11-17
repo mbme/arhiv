@@ -36,6 +36,9 @@ arhiv-bump-minor *PARAMS:
 arhiv-bump-patch *PARAMS:
   cd arhiv-bin; cargo release --no-dev-version patch {{PARAMS}}
 
+binutils-bump-minor *PARAMS:
+  cd binutils; cargo release --no-dev-version minor {{PARAMS}}
+
 test-importers:
   cd arhiv-import; cargo test -- --ignored --test-threads 1
 

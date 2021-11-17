@@ -84,7 +84,7 @@
       <button
         type="button"
         class="btn btn-simple"
-        onclick="arhiv_ui.pickAttachment()"
+        v-layer="/modals/pick-file"
       >
         <svg class="h-5 w-5 inline-block mr-1">
           <use xlink:href="#icon-paper-clip" />

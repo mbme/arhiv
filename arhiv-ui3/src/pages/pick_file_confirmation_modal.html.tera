@@ -1,0 +1,43 @@
+<div
+  class="modal"
+  v-js="arhiv_ui.initPickFileConfirmationModal(this)"
+>
+  <div class="modal-title">
+    Create attachment
+  </div>
+
+  <div class="modal-content">
+    Do you really want to create attachment from the file <code>{{file_path}}</code> of size <b>{{size | filesizeformat }}</b>?
+  </div>
+
+  <div class="modal-buttons">
+    <button
+      type="button"
+      class="btn btn-simple mr-8"
+      v-modal-close
+    >
+      Cancel
+    </button>
+
+
+    <form
+      action="{{handler_url}}"
+      method="post"
+      data-component="confirmation"
+    >
+      <input
+        type="text"
+        class="hidden"
+        name="file_path"
+        value="{{file_path}}"
+      />
+
+      <button
+        type="submit"
+        class="btn btn-prime"
+      >
+        Create attachment
+      </button>
+    </form>
+  </div>
+</div>

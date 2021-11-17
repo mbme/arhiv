@@ -1,0 +1,52 @@
+<div
+  class="modal"
+  v-js="arhiv_ui.initPickFileModal(this)"
+>
+  <div class="modal-content">
+    <div class="flex justify-between mb-6 mx-4">
+      <div class="font-mono text-lg font-bold">
+        {{ dir }}
+      </div>
+
+      <a
+        href="{{toggle_hidden_url}}"
+        class="clean-link text-gray-400 text-sm flex"
+        data-component="toggle-hidden"
+        title="{% if show_hidden %}Hide{% else %}Show{% endif %} hidden files"
+      >
+        <svg class="h-5 w-5 mr-2">
+          {% if show_hidden %}
+          <use xlink:href="#icon-eye" />
+          {% else %}
+          <use xlink:href="#icon-eye-off" />
+          {% endif %}
+        </svg>
+        Toggle hidden
+      </a>
+    </div>
+
+    {% for entry in entries %}
+    <a
+      href="{{entry.url}}"
+      data-component="entry"
+      class="clean-link block w-full p-4 flex font-mono odd:bg-gray-50 focus:text-blue-700 hover:text-blue-700"
+    >
+      {% if entry.is_dir %}
+      <svg class="h-6 w-6 mr-2 mb-1">
+        <use xlink:href="#icon-folder" />
+      </svg>
+      {% else %}
+      <div class="w-6">&nbsp;</div>
+      {% endif %}
+      {{entry.name}}
+
+      {% if entry.size %}
+      <div class="flex-grow">&nbsp;</div>
+      <div class="text-sm text-gray-500">
+        {{ entry.size | filesizeformat }}
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</div>

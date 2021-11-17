@@ -65,6 +65,14 @@ pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File
     Ok(FramedRead::new(file, BytesCodec::new()))
 }
 
+#[must_use]
+pub fn get_home_dir() -> Option<String> {
+    env::var_os("HOME").map(|path| {
+        path.into_string()
+            .expect("HOME env var must be a valid string")
+    })
+}
+
 /// `$XDG_CONFIG_HOME` or `$HOME/.config`
 #[must_use]
 pub fn get_config_home() -> Option<String> {

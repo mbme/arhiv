@@ -1,0 +1,22 @@
+<div
+  class="modal"
+  v-js="arhiv_ui.copyTextToClipboard('{{id}}', 'attachment id')"
+>
+  <div class="modal-title">
+    Create attachment
+  </div>
+
+  <div class="modal-content">
+    Created {{ attachment_ref | safe }} from the file <code>{{file_path}}</code>
+  </div>
+
+  <div class="modal-buttons">
+    <button
+      type="button"
+      class="btn btn-prime mr-8"
+      v-modal-close
+    >
+      Ok
+    </button>
+  </div>
+</div>

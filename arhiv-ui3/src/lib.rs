@@ -93,8 +93,15 @@ pub async fn start_ui_server() {
         .get("/attachment-data/:id", attachment_data_handler)
         //
         .get("/modals/pick-document", pick_document_modal)
-        //
-        .post("/rpc/pick-attachment", pick_attachment_handler)
+        .get("/modals/pick-file", pick_file_modal)
+        .get(
+            "/modals/pick-file-confirmation",
+            pick_file_confirmation_modal,
+        )
+        .post(
+            "/modals/pick-file-confirmation",
+            pick_file_confirmation_modal_handler,
+        )
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)

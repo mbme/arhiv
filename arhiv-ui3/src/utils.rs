@@ -57,8 +57,10 @@ pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
         .context("failed to build response")
 }
 
+type Fields = HashMap<String, String>;
+
 fn fields_to_document_data(
-    fields: &HashMap<String, String>,
+    fields: &Fields,
     data_description: &DataDescription,
 ) -> Result<DocumentData> {
     let mut data = DocumentData::new();
@@ -77,12 +79,17 @@ fn fields_to_document_data(
     Ok(data)
 }
 
+pub async fn extract_fields(body: Body) -> Result<Fields> {
+    let body = hyper::body::to_bytes(body).await?;
+
+    Ok(parse_urlencoded(&body))
+}
+
 pub async fn extract_document_data(
     body: Body,
     data_description: &DataDescription,
 ) -> Result<DocumentData> {
-    let body = hyper::body::to_bytes(body).await?;
-    let fields = parse_urlencoded(&body);
+    let fields = extract_fields(body).await?;
 
     fields_to_document_data(&fields, data_description)
 }

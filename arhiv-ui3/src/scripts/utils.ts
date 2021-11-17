@@ -6,14 +6,17 @@ export const noop = (): void => {};
 
 export const sum = (a: number, b: number) => a + b;
 
-export async function fetchHTML(url: string): Promise<string> {
+export async function fetchText(url: string, body?: XMLHttpRequestBodyInit): Promise<string> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: body ? 'POST' : 'GET',
+      body,
+    });
 
     const message = await response.text();
 
     if (!response.ok) {
-      throw new Error(`failed to fetch HTML: ${response.status}\n${message}`);
+      throw new Error(`failed to fetch text: ${response.status}\n${message}`);
     }
 
     return message;
@@ -26,7 +29,7 @@ export async function fetchHTML(url: string): Promise<string> {
 }
 
 export async function fetchAndReplace(url: string, el: HTMLElement, selector = ''): Promise<void> {
-  const content = await fetchHTML(url);
+  const content = await fetchText(url);
 
   replaceEl(el, content, selector);
 }

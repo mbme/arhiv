@@ -17,6 +17,8 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
         throw new Error('catalog-entry must have an id');
       }
 
+      console.log('selected document %s', id);
+
       void window.arhiv_ui.copyTextToClipboard(id, 'selected document id');
       dispatchCloseModalEvent(modalEl);
     });

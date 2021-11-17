@@ -81,6 +81,13 @@ pub struct Url {
 }
 
 impl Url {
+    pub fn new(path: impl Into<String>) -> Self {
+        Url {
+            path: path.into(),
+            query_params: HashMap::default(),
+        }
+    }
+
     pub fn get_query_param(&self, name: impl AsRef<str>) -> Option<&str> {
         self.query_params
             .get(name.as_ref())

@@ -1,5 +1,5 @@
 import A11yDialog from 'a11y-dialog';
-import { fetchHTML, lockGlobalScroll, noop } from './utils';
+import { fetchText, lockGlobalScroll, noop } from './utils';
 
 const CLOSE_MODAL_EVENT = 'close-modal';
 
@@ -10,7 +10,7 @@ function renderModal(modalContent: string): void {
   }
 
   const modalEl = document.createElement('div');
-  modalEl.dataset.modal = '';
+  modalEl.dataset.modal = ''; // marker attribute [data-modal]
   modalEl.innerHTML = modalContent;
 
   rootEl.appendChild(modalEl);
@@ -36,12 +36,12 @@ function renderModal(modalContent: string): void {
 }
 
 export async function showModal(url: string): Promise<void> {
-  const content = await fetchHTML(url);
+  const content = await fetchText(url);
 
   renderModal(content);
 }
 
-export function dispatchCloseModalEvent(modalChild: HTMLElement): void {
+export function dispatchCloseModalEvent(modalChild: Element): void {
   const event = new CustomEvent(CLOSE_MODAL_EVENT, {
     bubbles: true,
   });

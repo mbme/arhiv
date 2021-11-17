@@ -209,7 +209,7 @@ a:not(.clean-link) {
     z-index: 1;
 
     & > div {
-      @apply fixed z-10 inset-0 overflow-y-auto;
+      @apply fixed z-10 inset-0 overflow-y-scroll;
       @apply bg-yellow-100;
     }
   }
@@ -222,17 +222,18 @@ a:not(.clean-link) {
   }
 
   .modal-title {
-    @apply text-lg font-bold tracking-wider uppercase rounded-t-md;
+    @apply text-lg font-bold tracking-wider uppercase bg-gray-50 rounded-t-md;
     @apply p-2 sm:p-4 md:px-6;
   }
 
   .modal-content {
+    overflow-wrap: break-word;
     @apply p-2 sm:p-4 md:p-6;
   }
 
   .modal-buttons {
     @apply flex justify-end bg-gray-50 rounded-b-md;
-    @apply p-2 sm:p-4 md:px-6;
+    @apply p-2 sm:p-4 md:p-6;
   }
 
   #notification-root {

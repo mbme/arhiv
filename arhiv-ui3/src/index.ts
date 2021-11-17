@@ -3,8 +3,11 @@ import { init_V_JS } from './scripts/v-js';
 import { renderNotification } from './scripts/notification';
 import { copyText } from './scripts/clipboard';
 import { autoGrowTextarea, preserveUnsavedChanges } from './scripts/forms';
+import { dispatchCloseModalEvent, showModal } from './scripts/modal';
+
 import { initPickDocumentModal } from './pages/pick_document_modal';
-import { showModal } from './scripts/modal';
+import { initPickFileModal } from './pages/pick_file_modal';
+import { initPickFileConfirmationModal } from './pages/pick_file_confirmation_modal';
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -16,26 +19,8 @@ class ArhivUI {
   }
 
   initPickDocumentModal = initPickDocumentModal;
-
-  async pickAttachment() {
-    const response = await fetch('/rpc/pick-attachment', {
-      method: 'POST',
-      cache: 'no-cache',
-    });
-    const message = await response.text();
-
-    if (!response.ok) {
-      throw new Error(`failed to pick attachment: ${response.status}\n${message}`);
-    }
-
-    if (!message) {
-      return;
-    }
-
-    console.log('Selected attachment', message);
-
-    return this.copyTextToClipboard(message, 'attachment id');
-  }
+  initPickFileModal = initPickFileModal;
+  initPickFileConfirmationModal = initPickFileConfirmationModal;
 
   copyTextToClipboard = async (text: string, textName: string): Promise<void> => {
     try {
@@ -92,6 +77,10 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       el.addEventListener('click', () => void showModal(value));
+    },
+
+    'v-modal-close': (el) => {
+      el.addEventListener('click', () => dispatchCloseModalEvent(el));
     },
   });
 });

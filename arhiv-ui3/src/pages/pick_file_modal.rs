@@ -66,6 +66,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
             name: "..".to_string(),
             url: pick_file_modal_fragment_url(path, show_hidden),
             size: None,
+            links_to: None,
         });
     }
 
@@ -89,19 +90,34 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
             .context("Failed to convert file path to string")?
             .to_string();
 
-        let metadata = entry.metadata()?;
+        let file_type = entry.file_type()?;
+        let metadata = fs::metadata(&path)?;
 
-        let url = if metadata.is_dir() {
+        let is_dir = metadata.is_dir();
+        let size = metadata.is_file().then(|| metadata.len());
+        let mut links_to = None;
+
+        if file_type.is_symlink() {
+            let link_path = fs::canonicalize(&path)?
+                .to_str()
+                .context("Failed to convert link path to string")?
+                .to_string();
+
+            links_to = Some(link_path);
+        }
+
+        let url = if is_dir {
             pick_file_modal_fragment_url(path, show_hidden)
         } else {
             pick_file_confirmation_modal_fragment_url(path)
         };
 
         result.push(Entry {
-            is_dir: metadata.is_dir(),
+            is_dir,
             name,
             url,
-            size: metadata.is_file().then(|| metadata.len()),
+            size,
+            links_to,
         });
     }
 
@@ -122,6 +138,6 @@ struct Entry {
     name: String,
     url: String,
     size: Option<u64>,
-    // type: file, dir, symlink
-    // can read
+    links_to: Option<String>,
+    // FIXME can read
 }

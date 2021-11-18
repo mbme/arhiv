@@ -61,7 +61,7 @@ class DirectivesProcessor {
 }
 
 export function init_V_JS(observeChanges = false, directives: Directives): void {
-  console.log('[v]: registered %s directives', Object.keys(directives).length);
+  console.debug('[v]: registered %s directives', Object.keys(directives).length);
 
   const processor = new DirectivesProcessor(directives);
 

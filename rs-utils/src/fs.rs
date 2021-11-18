@@ -185,6 +185,7 @@ pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
     })
 }
 
+#[must_use]
 pub fn is_readable(metadata: &Metadata) -> bool {
     let mode = metadata.mode();
 

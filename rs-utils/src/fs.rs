@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::fs::Metadata;
 use std::os::unix::prelude::MetadataExt;
 
 use anyhow::*;
@@ -182,4 +183,19 @@ pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
             err.to_string_lossy()
         )
     })
+}
+
+pub fn is_readable(metadata: &Metadata) -> bool {
+    let mode = metadata.mode();
+
+    // TODO check also user / group (uid/gid)
+
+    let user_has_read_access = mode & 0o400 != 0;
+    let user_has_exec_access = mode & 0o100 != 0;
+
+    if metadata.is_dir() {
+        return user_has_read_access && user_has_exec_access;
+    }
+
+    user_has_read_access
 }

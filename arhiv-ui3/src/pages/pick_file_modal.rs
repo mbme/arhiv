@@ -6,7 +6,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use rs_utils::{
-    ensure_dir_exists, get_home_dir,
+    ensure_dir_exists, get_home_dir, is_readable,
     server::{RequestQueryExt, ServerResponse},
 };
 
@@ -61,12 +61,15 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
             .context("Failed to convert file path to string")?
             .to_string();
 
+        let metadata = fs::metadata(&path)?;
+
         result.push(Entry {
             is_dir: true,
             name: "..".to_string(),
             url: pick_file_modal_fragment_url(path, show_hidden),
             size: None,
             links_to: None,
+            is_readable: is_readable(&metadata),
         });
     }
 
@@ -93,6 +96,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
         let file_type = entry.file_type()?;
         let metadata = fs::metadata(&path)?;
 
+        let is_readable = is_readable(&metadata);
         let is_dir = metadata.is_dir();
         let size = metadata.is_file().then(|| metadata.len());
         let mut links_to = None;
@@ -118,6 +122,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
             url,
             size,
             links_to,
+            is_readable,
         });
     }
 
@@ -139,5 +144,5 @@ struct Entry {
     url: String,
     size: Option<u64>,
     links_to: Option<String>,
-    // FIXME can read
+    is_readable: bool,
 }

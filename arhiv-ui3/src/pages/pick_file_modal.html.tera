@@ -24,9 +24,11 @@
 
     {% for entry in entries %}
     <a
+      {% if entry.is_readable %}
       href="{{entry.url}}"
       v-modal-link
-      class="clean-link block break-all p-4 flex items-center text-sm font-mono odd:bg-gray-50 focus:text-blue-700 hover:text-blue-700"
+      {% endif %}
+      class="clean-link block break-all p-4 flex items-center text-sm font-mono odd:bg-gray-50 {% if entry.is_readable %} focus:text-blue-700 hover:text-blue-700 {% else %} text-red-700 cursor-default {% endif %}"
     >
       {% if entry.is_dir %}
       <svg class="h-5 w-5 flex-shrink-0 mr-2 mb-1">

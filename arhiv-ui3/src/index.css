@@ -227,8 +227,7 @@ a:not(.clean-link) {
   }
 
   .modal-content {
-    overflow-wrap: break-word;
-    @apply p-2 sm:p-4 md:p-6;
+    @apply p-2 sm:p-4 md:p-6 break-words;
   }
 
   .modal-buttons {

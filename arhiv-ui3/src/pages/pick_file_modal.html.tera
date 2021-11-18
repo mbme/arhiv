@@ -26,23 +26,25 @@
     <a
       href="{{entry.url}}"
       v-modal-link
-      class="clean-link block w-full p-4 flex font-mono odd:bg-gray-50 focus:text-blue-700 hover:text-blue-700"
+      class="clean-link block break-all p-4 flex items-center text-sm font-mono odd:bg-gray-50 focus:text-blue-700 hover:text-blue-700"
     >
       {% if entry.is_dir %}
-      <svg class="h-6 w-6 mr-2 mb-1">
+      <svg class="h-5 w-5 flex-shrink-0 mr-2 mb-1">
         <use xlink:href="#icon-folder" />
       </svg>
       {% else %}
-      <div class="w-6">&nbsp;</div>
+      <div class="w-5 flex-shrink-0">&nbsp;</div>
       {% endif %}
-      {{entry.name}}
 
-      {% if entry.size %}
-      <div class="flex-grow">&nbsp;</div>
-      <div class="text-sm text-gray-500">
-        {{ entry.size | filesizeformat }}
+      <div>
+        {{entry.name}}
+
+        {% if entry.size %}
+        <div class="text-gray-500">
+          {{ entry.size | filesizeformat }}
+        </div>
+        {% endif %}
       </div>
-      {% endif %}
     </a>
     {% endfor %}
   </div>

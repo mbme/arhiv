@@ -1,22 +1,19 @@
-<article>
-  {{ toolbar | safe }}
+{{ toolbar | safe }}
+<article id="content">
+  <h3 class="mb-8 section-heading text-lg">
+    Create document of type:
+  </h3>
 
-  <div id="content">
-    <h3 class="mb-8 section-heading text-lg">
-      Create document of type:
-    </h3>
-
-    <ul class="flex flex-col">
-      {% for document_type in document_types %}
-      <li class="mb-4">
-        <a
-          href="{{document_type.1}}"
-          class="inline-block uppercase tracking-wider bg-yellow-100 hover:bg-yellow-50 px-6 py-2 w-full sm:w-1/2"
-        >
-          {{ document_type.0 }}
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
+  <ul class="flex flex-col">
+    {% for document_type in document_types %}
+    <li class="mb-4">
+      <a
+        href="{{document_type.1}}"
+        class="inline-block uppercase tracking-wider bg-yellow-100 hover:bg-yellow-50 px-6 py-2 w-full sm:w-1/2"
+      >
+        {{ document_type.0 }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
 </article>

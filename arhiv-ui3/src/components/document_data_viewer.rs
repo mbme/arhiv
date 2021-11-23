@@ -141,6 +141,9 @@ impl<'d> DocumentDataViewer<'d> {
         let has_empty_fields = fields.iter().find(|field| field.value.is_empty());
 
         render_template(json!({
+            "id": self.document.id,
+            "document_type": self.document.document_type,
+            "updated_at": self.document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
             "show_empty_fields_toggle": has_empty_fields,
             "fields": fields,
         }))

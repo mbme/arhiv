@@ -1,34 +1,47 @@
-{% if show_empty_fields_toggle %}
-<input
-  id="field-visibility-toggle"
-  class="hidden"
-  type="checkbox"
-  checked
-/>
-<label
-  for="field-visibility-toggle"
-  class="text-sm font-mono cursor-pointer float-right text-gray-400 hover:text-blue-500"
->
-  <span data-action-show>
-    show empty fields
-  </span>
-  <span data-action-hide>
-    hide empty fields
-  </span>
-</label>
-{% endif %}
+<table id="document-head">
+  <tr>
+    <td class="section-heading">id:</td>
+    <td>
+      <button
+        type="button"
+        class="block font-mono tracking-wide cursor-pointer hover:text-blue-500 focus:text-blue-500 group"
+        title="Copy document id to clipboard"
+        onclick="arhiv_ui.copyTextAndNotify('{{id}}', 'document id')"
+      >
+        {{ id }}
+        <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
+          <use xlink:href="#icon-clipboard-copy" />
+        </svg>
+      </button>
+    </td>
+  </tr>
+  <tr>
+    <td class="section-heading">type:</td>
+    <td class="capitalize">
+      {{document_type}}
+    </td>
+  </tr>
+  <tr>
+    <td class="section-heading">modified:</td>
+    <td>
+      <time>
+        {{updated_at}}
+      </time>
+    </td>
+  </tr>
+</table>
 
 {% for field in fields %}
 <section
-  class="mb-12 wrap-text"
-  {% if field.value | length == 0 %}data-field-is-empty{% endif %}
+  class="mb-16"
+  {% if field.value | length == 0 %}hidden{% endif %}
 >
-  <h5 class="section-heading mb-2">
+  <h5 class="section-heading mb-4">
     {{ field.name }}
   </h5>
 
   {% if field.kind == "Title" %}
-  <h1 class="text-2xl font-bold tracking-wide">
+  <h1 class="text-3xl font-bold tracking-wide text-indigo-900">
     {{ field.value }}
   </h1>
   {% elif field.kind == "Markup" %}

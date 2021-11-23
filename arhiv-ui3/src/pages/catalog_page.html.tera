@@ -1,7 +1,5 @@
-<article>
-  {{ toolbar | safe }}
+{{ toolbar | safe }}
 
-  <div id="content">
-    {{ catalog | safe }}
-  </div>
+<article id="content">
+  {{ catalog | safe }}
 </article>

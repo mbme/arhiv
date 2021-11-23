@@ -1,21 +1,20 @@
-<article>
-  {{ toolbar | safe }}
-  <div id="content">
-    <pre class="mb-8 text-sm">
-      <code>
-   {{ status }}
-      </code>
-    </pre>
+{{ toolbar | safe }}
 
-    <h3 class="mb-2 section-heading text-lg">Catalogs by type:</h3>
-    <ul>
-      {% for document_type in document_types %}
-      <li class="mb-1">
-        <a href="{{document_type.1}}">
-          {{ document_type.0 }}
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
+<article id="content">
+  <pre class="mb-8 text-sm">
+    <code>
+      {{ status }}
+    </code>
+  </pre>
+
+  <h3 class="mb-2 section-heading text-lg">Catalogs by type:</h3>
+  <ul>
+    {% for document_type in document_types %}
+    <li class="mb-1">
+      <a href="{{document_type.1}}">
+        {{ document_type.0 }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
 </article>

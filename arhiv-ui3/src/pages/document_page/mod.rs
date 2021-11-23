@@ -49,8 +49,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
         }
     };
 
-    let schema = arhiv.get_schema();
-
     let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
 
     let content = if document.document_type == PROJECT_TYPE {
@@ -60,13 +58,6 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     } else {
         render_document_view(&document, arhiv, url)?
     };
-
-    let refs = document
-        .extract_refs(schema)?
-        .documents
-        .iter()
-        .map(|id| Ref::from_id(id).render(arhiv))
-        .collect::<Result<Vec<_>>>()?;
 
     let backrefs = arhiv
         .list_documents(Filter::backrefs(&document.id))?
@@ -78,12 +69,8 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let content = render_template(json!({
         "toolbar": toolbar,
         "content": content,
-        "refs": refs,
         "backrefs": backrefs,
-        "document": document,
         "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, &collection_id)),
-        "collection_id": collection_id,
-        "updated_at": document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
     }))?;
 
     render_page(content, arhiv)

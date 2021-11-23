@@ -24,7 +24,7 @@ html, body {
   text-rendering: optimizeLegibility;
   @apply antialiased;
 
-  --content-width: 45rem;
+  --content-width: 46rem;
   --bg-color: #fff;
 
   @apply bg-yellow-100;
@@ -59,20 +59,33 @@ main {
   width: 100%;
   max-width: var(--content-width);
   z-index: 1;
-  @apply my-4 lg:mr-4 flex flex-col;
-
-  & > article {
-    background-color: var(--bg-color);
-    @apply shadow mb-4;
-  }
+  @apply my-4 flex flex-col;
 }
 
 #content {
-  @apply py-4 px-2 md:p-6 lg:px-12 lg:py-8 flex-grow;
+  background-color: var(--bg-color);
+  @apply py-4 px-2 md:p-6 lg:py-12 lg:px-16 flex-grow shadow mb-4;
 }
 
 a:not(.clean-link) {
   @apply text-blue-700;
+}
+
+#document-head {
+  @apply mb-10 ml-auto relative text-sm;
+  top: -0.5rem;
+  right: -2.5rem;
+
+  & td {
+    @apply pb-1 tracking-wide;
+  }
+
+  & td:first-child {
+    text-align: right;
+    padding-right: 0.6rem;
+    padding-bottom: 0;
+    vertical-align: middle;
+  }
 }
 
 @layer components {
@@ -267,36 +280,5 @@ a:not(.clean-link) {
 
   .var-bg-color {
     background-color: var(--bg-color);
-  }
-}
-
-#field-visibility-toggle {
-  /* toggle labels */
-  & ~ label[for=field-visibility-toggle]  {
-    & [data-action-show] {
-      display: none;
-    }
-
-    & [data-action-hide] {
-      display: inline;
-    }
-  }
-  &:checked ~ label[for=field-visibility-toggle]  {
-    & [data-action-show] {
-      display: inline;
-    }
-
-    & [data-action-hide] {
-      display: none;
-    }
-  }
-
-  /* toggle fields visibility */
-  & ~ section[data-field-is-empty] {
-    display: block;
-  }
-
-  &:checked ~ section[data-field-is-empty] {
-    display: none;
   }
 }

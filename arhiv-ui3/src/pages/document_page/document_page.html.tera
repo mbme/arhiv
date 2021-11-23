@@ -1,43 +1,18 @@
-<article>
-  {{ toolbar | safe }}
+{{ toolbar | safe }}
 
-  <div id="content">
-    <section class="mb-12">
-      <button
-        type="button"
-        class="font-mono tracking-wide cursor-pointer text-sm text-gray-400 hover:text-blue-500 focus:text-blue-500 group"
-        title="Copy document id to clipboard"
-        onclick="arhiv_ui.copyTextAndNotify('{{document.id}}', 'document id')"
-      >
-        ID: {{ document.id }}
-        <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
-          <use xlink:href="#icon-clipboard-copy" />
-        </svg>
-      </button>
-    </section>
+<article id="content">
+  {{ content | safe }}
 
-    {{ content | safe }}
+  {% if erase_document_url %}
+  <div class="flex justify-end text-sm">
+    <a
+      href="{{erase_document_url}}"
+      class="clean-link text-red-600 font-mono ml-1"
+    >
+      Erase
+    </a>
   </div>
-
-  <div class="flex flex-col items-end text-gray-400 text-mono pb-8 pr-4 md:pr-6 lg:pr-12">
-    <div class="text-xs">
-      Updated
-      <time>
-        {{updated_at}}
-      </time>
-    </div>
-
-    {% if erase_document_url %}
-    <div class="mt-4 text-sm">
-      <a
-        href="{{erase_document_url}}"
-        class="clean-link text-red-600 font-mono ml-1"
-      >
-        Erase
-      </a>
-    </div>
-    {% endif %}
-  </div>
+  {% endif %}
 </article>
 
 {% if backrefs | length > 0 %}
@@ -53,22 +28,4 @@
     {% endfor %}
   </ul>
 </div>
-{% endif %}
-
-{% if refs | length > 0 %}
-<details class="paper">
-  <summary class="cursor-pointer p-2">
-    <h3 class="section-heading text-gray-700 inline-block">
-      REFS {{ refs | length }}
-    </h3>
-  </summary>
-
-  <div class="px-2 py-4">
-    {% for ref in refs %}
-    <div class="mb-4">
-      {{ref | safe}}
-    </div>
-    {% endfor %}
-  </div>
-</details>
 {% endif %}

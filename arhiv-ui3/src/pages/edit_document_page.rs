@@ -17,9 +17,7 @@ template_fn!(render_template, "./edit_document_page.html.tera");
 
 pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
-    let parent_collection: Option<Id> = req
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
 
     let arhiv: &Arhiv = req.data().unwrap();
 

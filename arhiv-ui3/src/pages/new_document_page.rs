@@ -24,9 +24,7 @@ pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .param("document_type")
         .expect("document_type must be present");
 
-    let parent_collection: Option<Id> = req
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
 
     let arhiv: &Arhiv = req.data().unwrap();
 

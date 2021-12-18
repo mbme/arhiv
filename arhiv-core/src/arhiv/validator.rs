@@ -51,7 +51,6 @@ pub struct Validator {
 
 impl Validator {
     fn validate_ref(
-        &mut self,
         id: &Id,
         expected_document_type: Option<&str>,
         tx: &mut ArhivTransaction<'_>,
@@ -143,7 +142,7 @@ impl Validator {
 
             // then check field refs
             for id in refs {
-                let validation_result = self.validate_ref(&id, expected_document_type, tx);
+                let validation_result = Validator::validate_ref(&id, expected_document_type, tx);
 
                 self.track_err(field, validation_result);
             }

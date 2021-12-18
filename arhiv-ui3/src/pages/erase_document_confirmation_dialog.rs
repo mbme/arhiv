@@ -15,9 +15,7 @@ template_fn!(
 
 pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
-    let collection_id: Option<Id> = req
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let collection_id: Option<Id> = req.param("collection_id").map(Into::into);
 
     let arhiv: &Arhiv = req.data().unwrap();
     let document = arhiv

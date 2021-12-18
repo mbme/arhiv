@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::Id;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Conditions {
     pub field: Option<(String, String)>, // field, pattern
     pub search: Option<String>,          // pattern
@@ -12,19 +12,6 @@ pub struct Conditions {
     pub document_ref: Option<Id>,
     pub collection_ref: Option<Id>,
     pub only_staged: Option<bool>,
-}
-
-impl Default for Conditions {
-    fn default() -> Self {
-        Conditions {
-            field: None,
-            search: None,
-            document_type: None,
-            document_ref: None,
-            collection_ref: None,
-            only_staged: None,
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

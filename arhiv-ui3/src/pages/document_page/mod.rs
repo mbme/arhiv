@@ -34,9 +34,7 @@ template_fn!(
 
 pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let id: Id = req.param("id").unwrap().into();
-    let collection_id: Option<Id> = req
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let collection_id: Option<Id> = req.param("collection_id").map(Into::into);
     let url = req.get_url();
 
     let arhiv: &Arhiv = req.data().unwrap();

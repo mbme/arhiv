@@ -89,9 +89,7 @@ impl Url {
     }
 
     pub fn get_query_param(&self, name: impl AsRef<str>) -> Option<&str> {
-        self.query_params
-            .get(name.as_ref())
-            .map(|value| value.as_ref())
+        self.query_params.get(name.as_ref()).map(AsRef::as_ref)
     }
 
     pub fn set_query_param(&mut self, key: impl Into<String>, value: Option<String>) {

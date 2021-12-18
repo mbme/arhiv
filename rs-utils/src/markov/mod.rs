@@ -1,23 +1,17 @@
-use crate::capitalize;
-use rand::prelude::*;
 use std::collections::HashMap;
+
+use rand::prelude::*;
+
+use crate::capitalize;
 use tokenizer::{is_punctuation, Tokenizer};
 
 mod tokenizer;
 
+#[derive(Default)]
 struct WordStats {
     start: u32,
     end: u32,
     next: HashMap<String, u32>,
-}
-impl Default for WordStats {
-    fn default() -> Self {
-        WordStats {
-            start: 0,
-            end: 0,
-            next: HashMap::new(),
-        }
-    }
 }
 
 type WordDistribution = Vec<(String, u32)>;

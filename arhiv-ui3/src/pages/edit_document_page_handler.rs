@@ -11,9 +11,7 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let id: Id = parts.param("id").unwrap().into();
-    let parent_collection: Option<Id> = parts
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let parent_collection: Option<Id> = parts.param("collection_id").map(Into::into);
 
     let arhiv: &Arhiv = parts.data().unwrap();
 

@@ -7,18 +7,10 @@ use crate::{
     markup::MarkupStringExt, template_fn, ui_config::get_catalog_config, urls::document_url,
 };
 
+#[derive(Default)]
 pub struct CatalogConfig {
     pub preview: Option<&'static str>,
     pub fields: Vec<&'static str>,
-}
-
-impl Default for CatalogConfig {
-    fn default() -> Self {
-        CatalogConfig {
-            preview: None,
-            fields: vec![],
-        }
-    }
 }
 
 template_fn!(render_template, "./entries.html.tera");

@@ -14,9 +14,7 @@ pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let document_type: &str = parts.param("document_type").unwrap();
-    let parent_collection: Option<Id> = parts
-        .param("collection_id")
-        .map(|collection_id| collection_id.into());
+    let parent_collection: Option<Id> = parts.param("collection_id").map(Into::into);
 
     let arhiv: &Arhiv = parts.data().unwrap();
     let data_description = arhiv.get_schema().get_data_description(document_type)?;

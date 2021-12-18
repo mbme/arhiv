@@ -26,14 +26,13 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     let prev_data = document.data;
     document.data = extract_document_data(body, data_description).await?;
 
-    let validation_result = Validator::default().validate(
-        &document.data,
-        Some(&prev_data),
-        data_description,
-        &mut arhiv.get_tx()?,
-    );
+    let mut tx = arhiv.get_tx()?;
+    let validation_result =
+        Validator::default().validate(&document.data, Some(&prev_data), data_description, &mut tx);
 
     if let Err(error) = validation_result {
+        tx.commit()?;
+
         let content = render_edit_document_page_content(
             &document,
             &Some(error.errors),
@@ -44,7 +43,9 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
         return render_page_with_status(StatusCode::UNPROCESSABLE_ENTITY, content, arhiv);
     }
 
-    arhiv.stage_document(&mut document)?;
+    arhiv.tx_stage_document(&mut document, &mut tx)?;
+
+    tx.commit()?;
 
     respond_see_other(document_url(&id, &parent_collection))
 }

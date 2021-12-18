@@ -25,9 +25,13 @@ pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
 
     let mut document = Document::new_with_data(document_type, data);
 
+    let mut tx = arhiv.get_tx()?;
     let validation_result =
-        Validator::default().validate(&document.data, None, data_description, &mut arhiv.get_tx()?);
+        Validator::default().validate(&document.data, None, data_description, &mut tx);
+
     if let Err(error) = validation_result {
+        tx.commit()?;
+
         let content = render_new_document_page_content(
             &document,
             &Some(error.errors),
@@ -38,7 +42,9 @@ pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
         return render_page_with_status(StatusCode::UNPROCESSABLE_ENTITY, content, arhiv);
     }
 
-    arhiv.stage_document(&mut document)?;
+    arhiv.tx_stage_document(&mut document, &mut tx)?;
+
+    tx.commit()?;
 
     respond_see_other(document_url(&document.id, &parent_collection))
 }

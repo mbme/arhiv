@@ -46,7 +46,6 @@ impl fmt::Display for ValidationError {
 
 #[derive(Default)]
 pub struct Validator {
-    valid_refs: HashMap<Id, String>,
     errors: HashMap<String, Vec<Error>>,
 }
 
@@ -57,33 +56,11 @@ impl Validator {
         expected_document_type: Option<&str>,
         tx: &mut ArhivTransaction<'_>,
     ) -> Result<()> {
-        match (self.valid_refs.get(id), expected_document_type) {
-            (Some(_document_type), None) => {
-                return Ok(());
-            }
-            (Some(document_type), Some(expected_document_type)) => {
-                if document_type == expected_document_type {
-                    return Ok(());
-                }
-
-                bail!(
-                    "document '{}' expected to be '{}' but has type '{}'",
-                    id,
-                    expected_document_type,
-                    document_type
-                );
-            }
-            _ => {}
-        };
-
         let document = if let Some(document) = tx.get_document(id)? {
             document
         } else {
             bail!("unknown document ref '{}'", id);
         };
-
-        self.valid_refs
-            .insert(document.id, document.document_type.clone());
 
         if let Some(document_type) = expected_document_type {
             ensure!(

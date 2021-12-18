@@ -54,6 +54,7 @@ fn test_crud() -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 #[tokio::test]
 async fn test_status() -> Result<()> {
     let arhiv = new_prime();

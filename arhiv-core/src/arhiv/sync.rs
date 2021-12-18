@@ -99,14 +99,14 @@ impl Arhiv {
                 tx.erase_document_history(&document.id)?;
             }
 
-            // check if attachment data is available
-            if Attachment::is_attachment(&document) {
-                let attachment_data = tx.get_attachment_data(&document.id);
+            for blob_id in document.extract_refs(&self.schema)?.blobs {
+                let blob = tx.get_blob(&blob_id);
 
                 ensure!(
-                    attachment_data.exists()?,
-                    "Attachment data {} is missing",
-                    &document.id
+                    blob.exists()?,
+                    "Document {} references unknown blob {}",
+                    &document.id,
+                    &blob_id,
                 );
             }
         }
@@ -187,13 +187,11 @@ impl Arhiv {
     fn prepare_changeset(&self, tx: &ArhivTransaction) -> Result<Changeset> {
         let db_status = tx.get_db_status()?;
 
-        tx.delete_unused_local_attachments()?;
-
         let documents = tx.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
             db_version: DB::VERSION,
-            arhiv_id: tx.get_setting(SETTING_ARHIV_ID)?,
+            arhiv_id: db_status.arhiv_id,
             base_rev: db_status.db_rev,
             documents,
         };
@@ -249,29 +247,30 @@ impl Arhiv {
     async fn sync_remotely(&self) -> Result<()> {
         log::info!("Initiating remote sync");
 
-        let changeset = {
+        let (changeset, new_blob_ids) = {
             let tx = self.db.get_tx()?;
             let changeset = self.prepare_changeset(&tx)?;
+            let new_blob_ids = tx.get_new_blob_ids()?;
 
             tx.commit()?;
 
-            changeset
+            (changeset, new_blob_ids)
         };
-        log::debug!("sync_remotely: starting {}", &changeset);
+        log::debug!(
+            "sync_remotely: starting {}, {} new blobs",
+            &changeset,
+            new_blob_ids.len()
+        );
 
         let last_update_time = self.db.get_connection()?.get_last_update_time()?;
 
         let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
 
         // TODO parallel file upload
-        for attachment in changeset
-            .documents
-            .iter()
-            .filter(|document| Attachment::is_attachment(document))
-        {
-            let attachment_data = self.get_attachment_data(&attachment.id)?;
+        for blob_id in new_blob_ids {
+            let blob = self.get_blob(&blob_id)?;
 
-            prime_rpc.upload_attachment_data(&attachment_data).await?;
+            prime_rpc.upload_blob(&blob).await?;
         }
 
         let response: ChangesetResponse = prime_rpc.send_changeset(&changeset).await?;

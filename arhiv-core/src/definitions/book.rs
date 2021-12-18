@@ -1,5 +1,6 @@
 use super::fields::*;
-use crate::{entities::ATTACHMENT_TYPE, schema::*};
+use super::ATTACHMENT_TYPE;
+use crate::schema::*;
 
 pub const BOOK_TYPE: &str = "book";
 pub const BOOK_COLLECTION_TYPE: &str = "book collection";

@@ -3,11 +3,12 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
 use anyhow::*;
-use sha2::{Digest, Sha256};
+use base64::{decode_config, encode_config, URL_SAFE};
 
-pub fn get_file_hash_sha256(filepath: &str) -> Result<String> {
-    let mut hasher = Sha256::new();
-    let file = File::open(filepath)?;
+pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
+    let mut hasher = blake3::Hasher::new();
+
+    let file = File::open(file_path).context("failed to open file")?;
     let mut reader = BufReader::new(file);
     let mut buffer = [0; 1024 * 1024]; // 1Mb cache
 
@@ -22,7 +23,17 @@ pub fn get_file_hash_sha256(filepath: &str) -> Result<String> {
 
     let hash = hasher.finalize();
 
-    Ok(bytes_to_hex_string(&hash))
+    Ok(hash.as_bytes().to_vec())
+}
+
+#[must_use]
+pub fn to_url_safe_base64(bytes: &[u8]) -> String {
+    encode_config(bytes, URL_SAFE)
+}
+
+#[must_use]
+pub fn is_valid_base64(value: &str) -> bool {
+    decode_config(value, URL_SAFE).is_ok()
 }
 
 #[must_use]
@@ -46,12 +57,12 @@ mod tests {
     use crate::project_relpath;
 
     #[test]
-    fn test_get_file_hash_sha256() -> Result<()> {
+    fn test_get_file_hash_blake3() -> Result<()> {
         let src = &project_relpath("../resources/k2.jpg");
 
         assert_eq!(
-            get_file_hash_sha256(src)?,
-            "1D26F4EC397E08292746D325A46D2F7A048F2840455C679EA19A85ECFA5470C9"
+            bytes_to_hex_string(&get_file_hash_blake3(src)?),
+            "33853BF0E88A13956014F28000EA7E6A8D362178E79ADAF3098F3F0B29D60301"
         );
 
         Ok(())

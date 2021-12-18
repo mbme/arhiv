@@ -1,4 +1,4 @@
-mod attachments;
+mod blobs;
 mod conflicts;
 mod crud;
 mod query;

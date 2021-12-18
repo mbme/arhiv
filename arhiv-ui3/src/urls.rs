@@ -1,4 +1,4 @@
-use arhiv_core::entities::Id;
+use arhiv_core::entities::{BLOBId, Id};
 use rs_utils::server::Url;
 
 pub fn index_url() -> String {
@@ -59,4 +59,8 @@ pub fn pick_file_confirmation_modal_fragment_url(file: impl Into<String>) -> Str
 
 pub fn pick_file_confirmation_handler_url() -> String {
     "/modals/pick-file-confirmation".to_string()
+}
+
+pub fn blob_url(blob_id: &BLOBId) -> String {
+    format!("/blobs/{}", blob_id)
 }

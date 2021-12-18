@@ -9,7 +9,7 @@ use std::{
 use arhiv_bin::build_app;
 use arhiv_core::{
     apply_migrations,
-    definitions::get_standard_schema,
+    definitions::{get_standard_schema, Attachment},
     entities::{Document, DocumentData, Id},
     prime_server::start_prime_server,
     Arhiv, Config,
@@ -118,15 +118,10 @@ async fn main() {
 
             let arhiv = Arhiv::must_open();
 
-            let attachment = arhiv
-                .add_attachment(&file_path, move_file)
-                .expect("must be able to save attachment");
+            let attachment = Attachment::create(&file_path, move_file, &arhiv)
+                .expect("must be able to create attachment");
 
-            println!(
-                "{} {}",
-                attachment.id,
-                document_url(&attachment.id, arhiv.get_config().ui_server_port)
-            );
+            println!("{}", &attachment.id);
         }
         ("import", Some(matches)) => {
             let url: &str = matches.value_of("url").expect("url must be present");

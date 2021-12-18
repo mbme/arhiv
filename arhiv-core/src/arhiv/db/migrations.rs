@@ -1,10 +1,13 @@
-use std::ffi::OsStr;
+use std::{
+    collections::{HashMap, HashSet},
+    ffi::OsStr,
+};
 
 use anyhow::*;
 use rusqlite::{functions::FunctionFlags, Connection, OptionalExtension};
 use serde_json::Value;
 
-use rs_utils::{log, FsTransaction, TempFile};
+use rs_utils::{get_mime_type, log, FsTransaction, TempFile};
 
 use crate::definitions::get_standard_schema;
 
@@ -131,6 +134,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v8_to_v9,
     upgrade_v9_to_v10,
     upgrade_v10_to_v11,
+    upgrade_v11_to_v12,
 ];
 
 // stub
@@ -267,10 +271,6 @@ fn upgrade_v4_to_v5(conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &s
                     document_type
                 )
             })?;
-
-        if data_field == "project" {
-            println!("data:\n{}", data);
-        }
 
         let mut lines_iter = data.trim_start().lines();
 
@@ -516,6 +516,108 @@ fn upgrade_v10_to_v11(
                        FROM old_db.documents_snapshots;
        ",
     )?;
+
+    Ok(())
+}
+
+fn upgrade_v11_to_v12(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '12' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
+                       FROM old_db.documents_snapshots;
+       ",
+    )?;
+
+    // get a list of all attachments
+    let attachment_ids: HashSet<String> = {
+        let mut stmt = conn.prepare("SELECT id FROM old_db.documents WHERE type = 'attachment'")?;
+        let mut rows = stmt.query([])?;
+
+        let mut result = HashSet::new();
+        while let Some(row) = rows.next()? {
+            result.insert(row.get(0)?);
+        }
+
+        result
+    };
+
+    // rename blobs
+    // keep a map of attachment_id => blob_id
+    // keep a map of attachment_id => media_type
+    // NOTE: all attachments data must exist locally
+    let mut attachments: HashMap<String, String> = HashMap::new();
+    let mut attachments_media_types: HashMap<String, String> = HashMap::new();
+    for attachment_id in &attachment_ids {
+        let file_path = format!("{}/{}", data_dir, attachment_id);
+        let blob_id = BLOBId::from_file(&file_path)
+            .context(format!("failed to calculate blob id for {}", &file_path))?;
+
+        let media_type = get_mime_type(&file_path)?;
+
+        fs_tx.move_file(
+            file_path,
+            format!("{}/{}", data_dir, blob_id.get_file_name()),
+        )?;
+
+        attachments.insert(attachment_id.clone(), blob_id.to_string());
+        attachments_media_types.insert(attachment_id.clone(), media_type);
+    }
+
+    // iter through attachments
+    // Update each attachment:
+    // * remove data field sha256
+    // * add data field blob with blob_id
+    // * add data field media_type with media type
+
+    let update_data = |ctx: &rusqlite::functions::Context| -> Result<Value> {
+        let document_id = ctx.get_raw(0).as_str()?;
+
+        let document_data = ctx.get_raw(1).as_str()?;
+        let mut document_data: Value = serde_json::from_str(document_data)?;
+        {
+            let document_data = document_data.as_object_mut().unwrap();
+
+            let media_type = attachments_media_types
+                .get(document_id)
+                .unwrap()
+                .to_string();
+            let blob_id = attachments.get(document_id).unwrap().to_string();
+
+            document_data.remove("sha256");
+            document_data.insert("blob".to_string(), blob_id.into());
+            document_data.insert("media_type".to_string(), media_type.into());
+        }
+
+        Ok(document_data)
+    };
+
+    conn.create_scalar_function(
+        "update_data",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            update_data(ctx).map_err(|e| rusqlite::Error::UserFunctionError(e.into()))
+        },
+    )
+    .context(anyhow!("Failed to define update_data function"))?;
+
+    let rows_updated = conn
+        .execute(
+            "UPDATE documents_snapshots
+                    SET data = update_data(id, data)
+                    WHERE type = ?",
+            ["attachment"],
+        )
+        .context("Failed to update documents")?;
+
+    log::info!("Updated {} document snapshots", rows_updated);
 
     Ok(())
 }

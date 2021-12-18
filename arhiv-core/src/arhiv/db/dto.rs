@@ -27,10 +27,6 @@ pub struct DocumentsCount {
     pub documents_updated: u32,
     pub documents_new: u32,
 
-    pub attachments_committed: u32,
-    pub attachments_updated: u32,
-    pub attachments_new: u32,
-
     pub erased_documents_committed: u32,
     pub erased_documents_updated: u32,
     pub erased_documents_new: u32,
@@ -43,21 +39,20 @@ impl DocumentsCount {
     }
 
     #[must_use]
-    pub fn count_staged_attachments(&self) -> u32 {
-        self.attachments_updated + self.attachments_new
-    }
-
-    #[must_use]
     pub fn count_staged_erased_documents(&self) -> u32 {
         self.erased_documents_updated + self.erased_documents_new
     }
 
     #[must_use]
     pub fn count_staged(&self) -> u32 {
-        self.count_staged_documents()
-            + self.count_staged_attachments()
-            + self.count_staged_erased_documents()
+        self.count_staged_documents() + self.count_staged_erased_documents()
     }
+}
+
+#[derive(Serialize, Debug, PartialEq)]
+pub struct BLOBSCount {
+    pub blobs_committed: u32,
+    pub blobs_staged: u32,
 }
 
 #[derive(Debug, Serialize)]

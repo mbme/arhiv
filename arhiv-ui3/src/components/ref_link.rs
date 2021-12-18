@@ -2,9 +2,13 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{template_fn, urls::document_url};
-use arhiv_core::{entities::*, Arhiv};
+use arhiv_core::{definitions::Attachment, entities::*, Arhiv};
 use rs_utils::log;
+
+use crate::{
+    template_fn,
+    urls::{blob_url, document_url},
+};
 
 template_fn!(render_template, "./ref_link.html.tera");
 
@@ -25,9 +29,9 @@ enum RefMode<'a> {
         url: String,
     },
     Image {
-        id: &'a Id,
         title: String,
-        url: String,
+        document_url: String,
+        blob_url: String,
     },
 }
 
@@ -99,14 +103,14 @@ impl Ref {
             .context("failed to serialize");
         }
 
-        let attachment = Attachment::from(document)?;
+        let attachment: Attachment = document.try_into()?;
         let title = arhiv.get_schema().get_title(&attachment)?;
 
         if attachment.is_image() {
             return serde_json::to_value(RefMode::Image {
-                id: &attachment.id,
                 title,
-                url: document_url(&attachment.id, &None),
+                document_url: document_url(&attachment.id, &None),
+                blob_url: blob_url(&attachment.get_blob_id()),
             })
             .context("failed to serialize");
         }

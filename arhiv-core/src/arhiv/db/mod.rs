@@ -9,10 +9,9 @@ use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 use rs_utils::log;
 use serde_json::Value;
 
-use crate::entities::{DocumentData, Id};
+use crate::entities::{BLOBId, DocumentData};
 use crate::schema::DataSchema;
 
-pub use attachment_data::AttachmentData;
 pub use blob_queries::*;
 pub use connection::*;
 pub use dto::*;
@@ -21,7 +20,6 @@ pub use migrations::apply_migrations;
 use path_manager::PathManager;
 pub use queries::*;
 
-mod attachment_data;
 mod blob_queries;
 mod connection;
 mod dto;
@@ -38,7 +36,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub const VERSION: u8 = 11;
+    pub const VERSION: u8 = 12;
 
     pub fn open(root_dir: String, schema: DataSchema) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
@@ -108,7 +106,7 @@ impl DB {
         ArhivTransaction::new(conn, &self.path_manager)
     }
 
-    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<Id>>> {
+    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBId>>> {
         Ok(
             fs::read_dir(&self.path_manager.data_dir)?.filter_map(|item| {
                 let entry = match item {
@@ -121,7 +119,8 @@ impl DB {
                     let file_name = entry_path
                         .file_name()
                         .ok_or_else(|| anyhow!("Failed to read file name"))
-                        .map(|value| value.to_string_lossy().to_string().into());
+                        .map(|value| value.to_string_lossy().to_string())
+                        .and_then(|value| BLOBId::from_file_name(&value));
 
                     return Some(file_name);
                 }
@@ -157,14 +156,19 @@ impl DB {
     fn remove_orphaned_blobs(&self) -> Result<()> {
         let mut tx = self.get_tx()?;
 
-        let attachment_ids = tx.get_attachment_ids()?;
+        ensure!(
+            !tx.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
+        let used_blob_ids = tx.get_used_blob_ids()?;
 
         let mut removed_blobs = 0;
         for entry in self.iter_blobs()? {
             let id = entry?;
 
-            if !attachment_ids.contains(&id) {
-                tx.remove_attachment_data(&id)?;
+            if !used_blob_ids.contains(&id) {
+                tx.remove_blob(&id)?;
                 removed_blobs += 1;
             }
         }

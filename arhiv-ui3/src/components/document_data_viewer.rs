@@ -1,8 +1,8 @@
 use anyhow::*;
 use serde::Serialize;
+use serde_json::json;
 
 use arhiv_core::{entities::Document, markup::MarkupStr, schema::FieldType, Arhiv};
-use serde_json::json;
 
 use crate::{components::Ref, markup::MarkupStringExt, template_fn};
 

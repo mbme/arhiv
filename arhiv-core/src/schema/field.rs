@@ -4,7 +4,10 @@ use anyhow::*;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{entities::Id, markup::MarkupStr};
+use crate::{
+    entities::{BLOBId, Id},
+    markup::MarkupStr,
+};
 
 #[derive(Serialize, Debug, Clone)]
 pub enum FieldType {
@@ -15,6 +18,7 @@ pub enum FieldType {
     NaturalNumber {},              // u64
     Ref(&'static str),             // string
     RefList(&'static str),         // string[]
+    BLOBId,                        // string
     Enum(&'static [&'static str]), // string
     ISBN {},                       // string
     Date {},                       // string
@@ -32,7 +36,7 @@ pub struct Field {
 
 impl Field {
     #[must_use]
-    pub fn get_refs(&self, value: &Value) -> HashSet<Id> {
+    pub fn extract_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
 
         match self.field_type {
@@ -53,6 +57,19 @@ impl Field {
                 result.extend(value);
             }
             _ => {}
+        }
+
+        result
+    }
+
+    #[must_use]
+    pub fn extract_blob_ids(&self, value: &Value) -> HashSet<BLOBId> {
+        let mut result = HashSet::new();
+
+        if matches!(self.field_type, FieldType::BLOBId) {
+            let value: BLOBId = serde_json::from_value(value.clone()).expect("field must parse");
+
+            result.insert(value);
         }
 
         result
@@ -116,6 +133,7 @@ impl Field {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn validate(&self, value: Option<&Value>, prev_value: Option<&Value>) -> Result<()> {
         if matches!(self.field_type, FieldType::ReadonlyString {}) && value != prev_value {
             bail!(
@@ -223,6 +241,27 @@ impl Field {
                         options.join(", ")
                     );
                 }
+            }
+
+            FieldType::BLOBId => {
+                if is_empty_string {
+                    return Ok(());
+                }
+
+                if !value.is_string() {
+                    bail!(
+                        "field '{}' expected to be a string, got: {}",
+                        self.name,
+                        value
+                    );
+                }
+
+                let blob_id = value.as_str().unwrap_or_default();
+
+                BLOBId::is_valid_blob_id(blob_id).context(anyhow!(
+                    "field '{}' expected to be a valid BLOB id",
+                    self.name
+                ))?;
             }
         }
 

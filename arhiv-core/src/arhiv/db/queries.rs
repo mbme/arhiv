@@ -52,36 +52,27 @@ pub trait Queries {
 
     fn count_documents(&self) -> Result<DocumentsCount> {
         // count documents
-        // count attachments
         // count erased documents
         self.get_connection()
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
-                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
-                    IFNULL(SUM(CASE WHEN type != ?1 AND type != ?2 AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
+                    IFNULL(SUM(CASE WHEN type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN type != ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
 
-                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS attachments_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS attachments_updated,
-                    IFNULL(SUM(CASE WHEN type  = ?1                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS attachments_new,
-
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS erased_documents_updated,
-                    IFNULL(SUM(CASE WHEN type  = ?2                AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS erased_documents_new
+                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
+                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS erased_documents_updated,
+                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS erased_documents_new
                 FROM documents",
-                [ATTACHMENT_TYPE, ERASED_DOCUMENT_TYPE],
+                [ERASED_DOCUMENT_TYPE],
                 |row| Ok(DocumentsCount {
                     documents_committed: row.get(0)?,
                     documents_updated: row.get(1)?,
                     documents_new: row.get(2)?,
 
-                    attachments_committed: row.get(3)?,
-                    attachments_updated: row.get(4)?,
-                    attachments_new: row.get(5)?,
-
-                    erased_documents_committed: row.get(6)?,
-                    erased_documents_updated: row.get(7)?,
-                    erased_documents_new: row.get(8)?,
+                    erased_documents_committed: row.get(3)?,
+                    erased_documents_updated: row.get(4)?,
+                    erased_documents_new: row.get(5)?,
                 }),
             )
             .context("Failed to count documents")
@@ -273,12 +264,12 @@ pub trait Queries {
         }
     }
 
-    fn get_attachment_ids(&self) -> Result<HashSet<Id>> {
+    fn get_new_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let mut stmt = self
             .get_connection()
-            .prepare("SELECT id FROM documents WHERE type = ?1")?;
+            .prepare("SELECT blob_id FROM new_blob_ids")?;
 
-        let rows = stmt.query_and_then([ATTACHMENT_TYPE], utils::extract_id)?;
+        let rows = stmt.query_and_then([], utils::extract_blob_id)?;
 
         let mut result = HashSet::new();
         for entry in rows {
@@ -286,6 +277,52 @@ pub trait Queries {
         }
 
         Ok(result)
+    }
+
+    fn get_used_blob_ids(&self) -> Result<HashSet<BLOBId>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare("SELECT blob_id FROM used_blob_ids")?;
+
+        let rows = stmt.query_and_then([], utils::extract_blob_id)?;
+
+        let mut result = HashSet::new();
+        for entry in rows {
+            result.insert(entry?);
+        }
+
+        Ok(result)
+    }
+
+    fn count_blobs(&self) -> Result<BLOBSCount> {
+        let committed_blobs_count: u32 = self
+            .get_connection()
+            .query_row("SELECT COUNT(*) FROM committed_blob_ids", [], |row| {
+                row.get(0)
+            })
+            .context("failed to count used blob ids")?;
+
+        let new_blobs_count: u32 = self
+            .get_connection()
+            .query_row("SELECT COUNT(*) FROM new_blob_ids", [], |row| row.get(0))
+            .context("failed to count new blob ids")?;
+
+        Ok(BLOBSCount {
+            blobs_committed: committed_blobs_count,
+            blobs_staged: new_blobs_count,
+        })
+    }
+
+    fn is_known_blob_id(&self, blob_id: &BLOBId) -> Result<bool> {
+        self.get_connection()
+            .query_row(
+                "SELECT true FROM used_blob_ids WHERE blob_id = ?1 LIMIT 1",
+                params![blob_id],
+                |_row| Ok(true),
+            )
+            .optional()
+            .context("Failed to check if BLOB id is known")
+            .map(|value| value.unwrap_or(false))
     }
 
     fn has_snapshot(&self, id: &SnapshotId) -> Result<bool> {
@@ -374,27 +411,6 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn delete_unused_local_attachments(&self) -> Result<()> {
-        // find all documents which
-        // 1. are staged (rev = 0)
-        // 2. are new (prev_rev = 0)
-        // 3. are of type "attachment"
-        // 4. aren't referenced by staged documents
-        let rows_count = self.get_connection()
-            .prepare_cached(
-                "WITH new_ids_in_use AS (SELECT DISTINCT json_each.value FROM documents_snapshots, json_each(refs, '$.documents') WHERE rev = 0)
-                DELETE FROM documents_snapshots WHERE rev = 0
-                                                AND prev_rev = 0
-                                                AND type = ?1
-                                                AND id NOT IN new_ids_in_use"
-            )?.execute([ATTACHMENT_TYPE])
-            .context("Failed to delete unused local attachments")?;
-
-        log::debug!("deleted {} unused local attachments", rows_count);
-
-        Ok(())
-    }
-
     fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection()
             .execute("DELETE FROM documents_snapshots WHERE rev = 0", [])?;
@@ -436,6 +452,18 @@ impl FromSql for SnapshotId {
 }
 
 impl ToSql for SnapshotId {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self as &str))
+    }
+}
+
+impl FromSql for BLOBId {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(BLOBId::from_string)
+    }
+}
+
+impl ToSql for BLOBId {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self as &str))
     }

@@ -1,4 +1,5 @@
-mod attachment;
+mod blob;
+mod blob_id;
 mod changeset;
 mod changeset_response;
 mod document;
@@ -8,7 +9,8 @@ mod refs;
 mod revision;
 mod snapshot_id;
 
-pub use attachment::{Attachment, ATTACHMENT_TYPE};
+pub use blob::BLOB;
+pub use blob_id::BLOBId;
 pub use changeset::Changeset;
 pub use changeset_response::ChangesetResponse;
 pub use document::{Document, Timestamp, ERASED_DOCUMENT_TYPE};

@@ -3,7 +3,7 @@ use hyper::{http::request::Parts, Body, Request, StatusCode};
 use routerify::ext::RequestExt;
 use serde_json::json;
 
-use arhiv_core::Arhiv;
+use arhiv_core::{definitions::Attachment, Arhiv};
 use rs_utils::server::ServerResponse;
 
 use crate::{
@@ -27,7 +27,7 @@ pub async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerR
         .get("file_path")
         .ok_or_else(|| anyhow!("file_path field must be present"))?;
 
-    let attachment = arhiv.add_attachment(file_path, false)?;
+    let attachment = Attachment::create(file_path, false, arhiv)?;
     let id = attachment.id.to_string();
 
     let attachment_ref = Ref::from_document(attachment.into()).render(arhiv)?;

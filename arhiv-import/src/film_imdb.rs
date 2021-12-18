@@ -2,10 +2,10 @@ use anyhow::*;
 use async_trait::async_trait;
 use serde::Deserialize;
 
-use arhiv_core::{entities::Document, Arhiv};
+use arhiv_core::{definitions::Attachment, entities::Document, Arhiv};
 use rs_utils::log;
 
-use crate::utils::{download_file, scrape_and_confirm, Importer};
+use crate::utils::{scrape_and_confirm, Importer};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -43,9 +43,8 @@ impl Importer for IMDBFilmImporter {
 
         let mut tx = arhiv.get_tx()?;
 
-        let cover_file = download_file(&data.cover_src).await?;
-        let cover_attachment = arhiv.tx_add_attachment(&cover_file, true, &mut tx)?;
-        log::info!("Imported cover {}", &cover_attachment as &Document);
+        let cover_attachment = Attachment::download_tx(&data.cover_src, arhiv, &mut tx).await?;
+        log::info!("Imported cover {}", cover_attachment.id);
 
         let mut film = Document::new("film");
         film.data.set("title", data.title);

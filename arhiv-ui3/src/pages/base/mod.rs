@@ -2,7 +2,10 @@ use anyhow::*;
 use hyper::StatusCode;
 use serde_json::json;
 
-use arhiv_core::{definitions::TASK_TYPE, entities::ATTACHMENT_TYPE, Arhiv};
+use arhiv_core::{
+    definitions::{ATTACHMENT_TYPE, TASK_TYPE},
+    Arhiv,
+};
 use rs_utils::server::ServerResponse;
 
 use crate::{template_fn, urls::catalog_url, utils::render_content};

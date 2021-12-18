@@ -18,19 +18,15 @@ use hyper::Server;
 use routerify::{Middleware, Router, RouterService};
 
 use arhiv_core::Arhiv;
-use attachment_data::attachment_data_handler;
 use pages::*;
-use public_assets::*;
 use rs_utils::{
     log,
     server::{error_handler, logger_middleware, not_found_handler},
 };
 
-mod attachment_data;
 mod components;
 mod markup;
 mod pages;
-mod public_assets;
 mod ui_config;
 mod urls;
 
@@ -90,7 +86,7 @@ pub async fn start_ui_server() {
             erase_document_confirmation_dialog_handler,
         )
         //
-        .get("/attachment-data/:id", attachment_data_handler)
+        .get("/blobs/:blob_id", blob_handler)
         //
         .get("/modals/pick-document", pick_document_modal)
         .get("/modals/pick-file", pick_file_modal)

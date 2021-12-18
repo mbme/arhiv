@@ -5,6 +5,7 @@ use anyhow::*;
 use rand::{prelude::*, thread_rng};
 
 use arhiv_core::{
+    definitions::Attachment,
     entities::*,
     schema::{Collection, FieldType},
     Arhiv,
@@ -42,8 +43,9 @@ impl<'a> Faker<'a> {
 
         let mut tx = arhiv.get_tx()?;
         for file_path in list_attachments() {
-            let document = arhiv.tx_add_attachment(&file_path, false, &mut tx)?;
-            attachment_ids.push(document.id.clone());
+            let attachment = Attachment::create_tx(&file_path, false, arhiv, &mut tx)?;
+
+            attachment_ids.push(attachment.id.clone());
         }
         tx.commit()?;
 

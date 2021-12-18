@@ -1,8 +1,10 @@
 use anyhow::*;
 use serde_json::json;
 
+use rs_utils::project_relpath;
+
 use super::utils::*;
-use crate::{DocumentsCount, Filter};
+use crate::{BLOBSCount, DocumentsCount, Filter};
 
 #[test]
 fn test_crud() -> Result<()> {
@@ -64,19 +66,38 @@ async fn test_status() -> Result<()> {
                 documents_committed: 0,
                 documents_updated: 0,
                 documents_new: 0,
-                attachments_committed: 0,
-                attachments_updated: 0,
-                attachments_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_updated: 0,
                 erased_documents_new: 0,
             }
         );
+        assert_eq!(
+            status.blobs_count,
+            BLOBSCount {
+                blobs_committed: 0,
+                blobs_staged: 0,
+            }
+        );
     }
 
-    // create document
-    let mut document = new_document(json!({ "test": "test" }));
+    // create document with blob
+    let blob_id = arhiv.add_blob(&project_relpath("../resources/k2.jpg"), false)?;
+    let mut document = new_document(json!({
+        "test": "test",
+        "blob": blob_id,
+    }));
     arhiv.stage_document(&mut document)?;
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.blobs_count,
+            BLOBSCount {
+                blobs_committed: 0,
+                blobs_staged: 1,
+            }
+        );
+    }
 
     // commit document
     arhiv.sync().await?;
@@ -89,12 +110,17 @@ async fn test_status() -> Result<()> {
                 documents_committed: 1,
                 documents_updated: 0,
                 documents_new: 0,
-                attachments_committed: 0,
-                attachments_updated: 0,
-                attachments_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_updated: 0,
                 erased_documents_new: 0,
+            }
+        );
+
+        assert_eq!(
+            status.blobs_count,
+            BLOBSCount {
+                blobs_committed: 1,
+                blobs_staged: 0,
             }
         );
     }
@@ -113,9 +139,6 @@ async fn test_status() -> Result<()> {
                 documents_committed: 0,
                 documents_updated: 1,
                 documents_new: 1,
-                attachments_committed: 0,
-                attachments_updated: 0,
-                attachments_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_updated: 0,
                 erased_documents_new: 0,
@@ -136,12 +159,42 @@ async fn test_status() -> Result<()> {
                 documents_committed: 0,
                 documents_updated: 0,
                 documents_new: 1,
-                attachments_committed: 0,
-                attachments_updated: 0,
-                attachments_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_updated: 1,
                 erased_documents_new: 0,
+            }
+        );
+
+        assert_eq!(
+            status.blobs_count,
+            BLOBSCount {
+                blobs_committed: 1,
+                blobs_staged: 0,
+            }
+        );
+    }
+
+    arhiv.sync().await?;
+
+    {
+        let status = arhiv.get_status()?;
+        assert_eq!(
+            status.documents_count,
+            DocumentsCount {
+                documents_committed: 1,
+                documents_updated: 0,
+                documents_new: 0,
+                erased_documents_committed: 1,
+                erased_documents_updated: 0,
+                erased_documents_new: 0,
+            }
+        );
+
+        assert_eq!(
+            status.blobs_count,
+            BLOBSCount {
+                blobs_committed: 0,
+                blobs_staged: 0,
             }
         );
     }

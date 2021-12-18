@@ -12,10 +12,10 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = arhiv.add_attachment(src, false)?;
+    let blob_id = arhiv.add_blob(src, false)?;
 
     let mut document = empty_document();
-    document.data.set("ref", &attachment.id);
+    document.data.set("blob", &blob_id);
 
     arhiv.stage_document(&mut document)?;
 
@@ -24,13 +24,12 @@ async fn test_prime_sync() -> Result<()> {
     arhiv.sync().await?;
 
     assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
-    assert!(!arhiv.get_document(&attachment.id)?.unwrap().rev.is_staged());
 
-    // Test attachment data
-    let attachment_data = arhiv.get_attachment_data(&attachment.id)?;
+    // Test blob
+    let blob = arhiv.get_blob(&blob_id)?;
 
-    assert!(attachment_data.exists()?);
-    assert!(are_equal_files(src, &attachment_data.path)?);
+    assert!(blob.exists()?);
+    assert!(are_equal_files(src, &blob.file_path)?);
 
     // Test if document is updated correctly
     {
@@ -57,11 +56,11 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = replica.add_attachment(src, false)?;
+    let blob_id = replica.add_blob(src, false)?;
 
     let id = {
         let mut document = empty_document();
-        document.data.set("ref", &attachment.id);
+        document.data.set("blob", &blob_id);
         replica.stage_document(&mut document)?;
 
         document.id
@@ -71,20 +70,20 @@ async fn test_replica_sync() -> Result<()> {
 
     assert!(!replica.get_document(&id)?.unwrap().rev.is_staged());
 
-    // Test attachment data on replica
+    // Test blob on replica
     {
-        let attachment_data = replica.get_attachment_data(&attachment.id)?;
+        let blob = replica.get_blob(&blob_id)?;
 
-        assert!(attachment_data.exists()?);
-        assert!(are_equal_files(src, &attachment_data.path)?);
+        assert!(blob.exists()?);
+        assert!(are_equal_files(src, &blob.file_path)?);
     }
 
-    // Test attachment data on prime
+    // Test blob on prime
     {
-        let attachment_data = prime.get_attachment_data(&attachment.id)?;
+        let blob = prime.get_blob(&blob_id)?;
 
-        assert!(attachment_data.exists()?);
-        assert!(are_equal_files(src, &attachment_data.path)?);
+        assert!(blob.exists()?);
+        assert!(are_equal_files(src, &blob.file_path)?);
     }
 
     // Test if document is updated correctly
@@ -108,39 +107,33 @@ async fn test_replica_sync() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_sync_removes_unused_local_attachments() -> Result<()> {
+async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     let arhiv = new_prime();
 
-    let src = &project_relpath("../resources/k2.jpg");
-
-    let attachment1 = arhiv.add_attachment(src, false)?;
+    let blob_id1 = arhiv.add_blob(&project_relpath("../resources/k2.jpg"), false)?;
 
     let mut document = empty_document();
-    document.data.set("ref", &attachment1.id);
+    document.data.set("blob", &blob_id1);
 
-    // stage document with attachment1
+    // stage document with blob1
     arhiv.stage_document(&mut document)?;
 
-    let attachment2 = arhiv.add_attachment(src, false)?;
+    let blob_id2 = arhiv.add_blob(&project_relpath("../resources/text.txt"), false)?;
 
-    document.data.set("ref", &attachment2.id);
+    document.data.set("blob", &blob_id2);
 
-    // stage document with attachment2, attachment1 is now unused
+    // stage document with blob2, blob1 is now unused
     arhiv.stage_document(&mut document)?;
 
     arhiv.sync().await?;
 
     assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),);
 
-    // attachment1 should removed
-    assert!(arhiv.get_document(&attachment1.id)?.is_none());
+    // blob1 should removed
+    assert!(!arhiv.get_blob(&blob_id1)?.exists()?);
 
-    // attachment2 should be committed
-    assert!(!arhiv
-        .get_document(&attachment2.id)?
-        .unwrap()
-        .rev
-        .is_staged());
+    // blob2 should be present
+    assert!(arhiv.get_blob(&blob_id2)?.exists()?);
 
     Ok(())
 }

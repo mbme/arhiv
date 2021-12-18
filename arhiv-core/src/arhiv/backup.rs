@@ -2,10 +2,11 @@ use std::{fs, path::Path};
 
 use anyhow::*;
 
+use rs_utils::{ensure_dir_exists, file_exists, log, run_command};
+
 use super::db::*;
 use super::Arhiv;
-use crate::entities::Id;
-use rs_utils::{ensure_dir_exists, file_exists, log, run_command};
+use crate::entities::BLOBId;
 
 impl Arhiv {
     pub fn backup(&self) -> Result<()> {
@@ -40,10 +41,7 @@ impl Arhiv {
             }
 
             // copy blob
-            fs::copy(
-                &conn.get_attachment_data(&id).path,
-                backup.get_blob_path(&id),
-            )?;
+            fs::copy(&conn.get_blob(&id).file_path, backup.get_blob_path(&id))?;
             log::debug!("Created blob {} backup", &id);
 
             blob_count += 1;
@@ -97,11 +95,11 @@ impl BackupPaths {
         Ok(())
     }
 
-    pub fn get_blob_path(&self, id: &Id) -> String {
+    pub fn get_blob_path(&self, id: &BLOBId) -> String {
         format!("{}/{}", &self.data_dir, id)
     }
 
-    pub fn blob_exists(&self, id: &Id) -> Result<bool> {
+    pub fn blob_exists(&self, id: &BLOBId) -> Result<bool> {
         file_exists(&self.get_blob_path(id))
     }
 }

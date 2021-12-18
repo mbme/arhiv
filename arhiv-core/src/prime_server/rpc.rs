@@ -1,8 +1,9 @@
 use anyhow::*;
 use reqwest::{Client, StatusCode};
 
-use crate::{arhiv::AttachmentData, entities::*};
 use rs_utils::{download_data_to_file, log, read_file_as_stream};
+
+use crate::entities::*;
 
 pub struct PrimeServerRPC {
     prime_url: String,
@@ -17,33 +18,29 @@ impl PrimeServerRPC {
         Ok(PrimeServerRPC { prime_url })
     }
 
-    pub async fn download_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
-        if attachment_data.exists()? {
+    pub async fn download_blob(&self, blob: &BLOB) -> Result<()> {
+        if blob.exists()? {
             bail!(
-                "can't download attachment data: file {} already exists",
-                attachment_data.path
+                "can't download BLOB: file {} already exists",
+                blob.file_path
             );
         }
 
-        log::debug!(
-            "downloading attachment data {} into {}",
-            &attachment_data.id,
-            &attachment_data.path
-        );
+        log::debug!("downloading BLOB {} into {}", &blob.id, &blob.file_path);
 
-        let url = self.get_attachment_data_url(&attachment_data.id);
+        let url = self.get_blob_url(&blob.id);
 
-        download_data_to_file(&url, &attachment_data.path).await?;
+        download_data_to_file(&url, &blob.file_path).await?;
 
         Ok(())
     }
 
-    pub async fn upload_attachment_data(&self, attachment_data: &AttachmentData) -> Result<()> {
-        log::debug!("uploading attachment {}", &attachment_data.id);
+    pub async fn upload_blob(&self, blob: &BLOB) -> Result<()> {
+        log::debug!("uploading BLOB {}", &blob.id);
 
-        let file_stream = read_file_as_stream(&attachment_data.path).await?;
+        let file_stream = read_file_as_stream(&blob.file_path).await?;
 
-        let url = self.get_attachment_data_url(&attachment_data.id);
+        let url = self.get_blob_url(&blob.id);
 
         let response = Client::new()
             .post(&url)
@@ -53,24 +50,17 @@ impl PrimeServerRPC {
 
         match response.status() {
             StatusCode::OK => {
-                log::info!("uploaded attachment data {}", &attachment_data.id);
+                log::info!("uploaded BLOB {}", &blob.id);
                 Ok(())
             }
             StatusCode::CONFLICT => {
-                log::info!(
-                    "skipped uploading attachment data {}: already exists",
-                    &attachment_data.id
-                );
+                log::info!("skipped uploading BLOB {}: already exists", &blob.id);
                 Ok(())
             }
             _ => {
-                log::error!(
-                    "failed to upload attachment data {}: {:?}",
-                    &attachment_data.id,
-                    response
-                );
+                log::error!("failed to upload BLOB {}: {:?}", &blob.id, response);
 
-                Err(anyhow!("failed to upload attachment data"))
+                Err(anyhow!("failed to upload BLOB"))
             }
         }
     }
@@ -94,7 +84,7 @@ impl PrimeServerRPC {
         }
     }
 
-    fn get_attachment_data_url(&self, id: &Id) -> String {
-        format!("{}/attachment-data/{}", self.prime_url, id)
+    fn get_blob_url(&self, blob_id: &BLOBId) -> String {
+        format!("{}/blobs/{}", self.prime_url, blob_id)
     }
 }

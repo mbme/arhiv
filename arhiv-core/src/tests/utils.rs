@@ -27,8 +27,8 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
         collection_of: Collection::None,
         fields: vec![
             Field {
-                name: "ref",
-                field_type: FieldType::Ref("attachment"),
+                name: "blob",
+                field_type: FieldType::BLOBId,
                 mandatory: false,
             },
             Field {

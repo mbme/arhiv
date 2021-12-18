@@ -1,10 +1,10 @@
 use anyhow::*;
 use async_trait::async_trait;
 
-use arhiv_core::{entities::Document, Arhiv};
-use rs_utils::{is_image_filename, log};
+use arhiv_core::{definitions::Attachment, entities::Document, Arhiv};
+use rs_utils::{extract_file_name_from_url, is_image_filename, log};
 
-use crate::utils::{confirm_if_needed, download_file, extract_file_name_from_url, Importer};
+use crate::utils::{confirm_if_needed, Importer};
 
 pub struct AttachmentImporter;
 
@@ -28,8 +28,7 @@ impl Importer for AttachmentImporter {
         log::info!("Going to import file {}", filename);
         confirm_if_needed(confirm)?;
 
-        let file = download_file(url).await?;
-        let attachment = arhiv.add_attachment(&file, true)?;
+        let attachment = Attachment::download(url, arhiv).await?;
 
         Ok(attachment.into())
     }

@@ -21,6 +21,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
     })
 }
 
-pub fn extract_id(row: &Row) -> Result<Id> {
-    row.get("id").context(anyhow!("failed to extract id"))
+pub fn extract_blob_id(row: &Row) -> Result<BLOBId> {
+    row.get("blob_id")
+        .context(anyhow!("failed to extract blob_id"))
 }

@@ -1,9 +1,12 @@
 use anyhow::*;
 use chrono::Utc;
 
+use rs_utils::log;
+
 use self::db::*;
 pub use self::db::{
-    apply_migrations, AttachmentData, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
+    apply_migrations, ArhivTransaction, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage,
+    OrderBy,
 };
 use self::status::Status;
 pub use self::validator::{FieldValidationErrors, Validator};
@@ -11,7 +14,6 @@ use crate::config::Config;
 use crate::definitions::get_standard_schema;
 use crate::entities::*;
 use crate::schema::DataSchema;
-use rs_utils::log;
 
 mod backup;
 mod db;
@@ -108,12 +110,14 @@ impl Arhiv {
 
         let db_status = conn.get_db_status()?;
         let documents_count = conn.count_documents()?;
+        let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.count_conflicts()?;
         let last_update_time = conn.get_last_update_time()?;
 
         Ok(Status {
             db_status,
             documents_count,
+            blobs_count,
             conflicts_count,
             last_update_time,
             debug_mode,
@@ -248,8 +252,6 @@ impl Arhiv {
 
         tx.put_document(&document)?;
 
-        // attachment data will be removed during sync
-
         tx.commit()?;
 
         log::info!("erased document {}", document);
@@ -257,40 +259,27 @@ impl Arhiv {
         Ok(())
     }
 
-    pub fn add_attachment(&self, file_path: &str, move_file: bool) -> Result<Attachment> {
+    pub fn add_blob(&self, file_path: &str, move_file: bool) -> Result<BLOBId> {
         let mut tx = self.get_tx()?;
 
-        let attachment = self.tx_add_attachment(file_path, move_file, &mut tx)?;
+        let id = tx.add_blob(file_path, move_file)?;
 
         tx.commit()?;
 
-        Ok(attachment)
+        Ok(id)
     }
 
     #[allow(clippy::unused_self)]
-    pub fn tx_add_attachment(
+    pub fn tx_add_blob(
         &self,
         file_path: &str,
         move_file: bool,
         tx: &mut ArhivTransaction<'_>,
-    ) -> Result<Attachment> {
-        log::debug!(
-            "Staging attachment {}; move file: {}",
-            &file_path,
-            move_file
-        );
-
-        let attachment = Attachment::new(file_path)?;
-
-        tx.add_attachment_data(&attachment.id, file_path, move_file)?;
-        tx.put_document(&attachment)?;
-
-        log::info!("Created attachment {} from {}", &attachment.id, file_path);
-
-        Ok(attachment)
+    ) -> Result<BLOBId> {
+        tx.add_blob(file_path, move_file)
     }
 
-    pub fn get_attachment_data(&self, id: &Id) -> Result<AttachmentData> {
-        Ok(self.db.get_connection()?.get_attachment_data(id))
+    pub fn get_blob(&self, id: &BLOBId) -> Result<BLOB> {
+        Ok(self.db.get_connection()?.get_blob(id))
     }
 }

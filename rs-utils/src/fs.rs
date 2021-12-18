@@ -200,3 +200,20 @@ pub fn is_readable(metadata: &Metadata) -> bool {
 
     user_has_read_access
 }
+
+pub fn get_mime_type(file_path: impl AsRef<str>) -> Result<String> {
+    let file_path = file_path.as_ref();
+
+    if let Some(kind) = infer::get_from_path(file_path)? {
+        return Ok(kind.mime_type().to_string());
+    }
+
+    Ok("application/octet-stream".to_string())
+}
+
+#[must_use]
+pub fn get_mime_from_path(path: impl AsRef<str>) -> String {
+    mime_guess::from_path(path.as_ref())
+        .first_or_octet_stream()
+        .to_string()
+}

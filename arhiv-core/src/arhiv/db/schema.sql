@@ -47,3 +47,31 @@ CREATE VIEW conflicts AS
           (SELECT id, MAX(rev) max_rev FROM documents_snapshots GROUP BY id) b
       ON a.id = b.id
       WHERE a.rev = 0 AND a.prev_rev != b.max_rev;
+
+CREATE VIEW committed_documents AS
+  SELECT a.*
+    FROM documents_snapshots a
+    WHERE a.rev > 0
+    GROUP BY id HAVING MAX(rev);
+
+CREATE VIEW staged_documents AS
+  SELECT a.*
+    FROM documents_snapshots a
+    WHERE a.rev = 0;
+
+CREATE VIEW committed_blob_ids AS
+  SELECT DISTINCT blob_refs.value AS blob_id
+    FROM committed_documents AS cd, json_each(cd.refs, '$.blobs') AS blob_refs;
+
+CREATE VIEW staged_blob_ids AS
+  SELECT DISTINCT blob_refs.value AS blob_id
+    FROM staged_documents AS sd, json_each(sd.refs, '$.blobs') AS blob_refs;
+
+CREATE VIEW new_blob_ids AS
+  SELECT blob_id FROM staged_blob_ids
+  EXCEPT
+    SELECT blob_id FROM committed_blob_ids;
+
+CREATE VIEW used_blob_ids AS
+  SELECT DISTINCT blob_refs.value AS blob_id
+    FROM documents AS d, json_each(d.refs, '$.blobs') AS blob_refs;

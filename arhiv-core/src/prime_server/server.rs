@@ -10,7 +10,7 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use rs_utils::{log, read_file_as_stream, server::*};
 
-use crate::entities::{Changeset, Id};
+use crate::entities::{BLOBId, Changeset};
 use crate::Arhiv;
 
 #[must_use]
@@ -22,8 +22,8 @@ pub fn start_prime_server(
         .data(arhiv)
         .middleware(Middleware::post_with_info(logger_middleware))
         .get("/status", status_handler)
-        .get("/attachment-data/:id", get_attachment_data_handler)
-        .post("/attachment-data/:id", post_attachment_data_handler)
+        .get("/blobs/:blob_id", get_blob_handler)
+        .post("/blobs/:blob_id", post_blob_handler)
         .post("/changeset", post_changeset_handler)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -70,16 +70,17 @@ async fn status_handler(req: Request<Body>) -> Result<Response<Body>> {
     json_response(status)
 }
 
-async fn post_attachment_data_handler(req: Request<Body>) -> Result<Response<Body>> {
-    let id: Id = req.param("id").unwrap().as_str().into();
+async fn post_blob_handler(req: Request<Body>) -> Result<Response<Body>> {
+    let blob_id = req.param("blob_id").unwrap().as_str();
+    let blob_id = BLOBId::from_string(blob_id);
 
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let arhiv: &Arc<Arhiv> = parts.data().unwrap();
 
-    let attachment_data = arhiv.get_attachment_data(&id)?;
+    let blob = arhiv.get_blob(&blob_id)?;
 
-    if attachment_data.exists()? {
+    if blob.exists()? {
         return respond_with_status(StatusCode::CONFLICT);
     }
 
@@ -91,13 +92,13 @@ async fn post_attachment_data_handler(req: Request<Body>) -> Result<Response<Bod
         .into_async_read()
         .compat();
 
-    let mut file = tokio::fs::File::create(&attachment_data.path)
+    let mut file = tokio::fs::File::create(&blob.file_path)
         .await
         .expect("must be able to create file");
 
     // Invoke tokio::io::copy to actually write file to disk
     if let Err(err) = tokio::io::copy(&mut stream, &mut file).await {
-        log::error!("Failed to save attachment data {}: {}", &id, &err);
+        log::error!("Failed to save blob {}: {}", &blob_id, &err);
 
         return respond_with_status(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -105,12 +106,13 @@ async fn post_attachment_data_handler(req: Request<Body>) -> Result<Response<Bod
     respond_with_status(StatusCode::OK)
 }
 
-async fn get_attachment_data_handler(req: Request<Body>) -> Result<Response<Body>> {
-    let id: Id = req.param("id").unwrap().as_str().into();
+async fn get_blob_handler(req: Request<Body>) -> Result<Response<Body>> {
+    let blob_id = req.param("blob_id").unwrap().as_str();
+    let blob_id = BLOBId::from_string(blob_id);
 
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
-    respond_with_attachment_data(arhiv, &id).await
+    respond_with_blob(arhiv, &blob_id).await
 }
 
 async fn post_changeset_handler(req: Request<Body>) -> Result<Response<Body>> {
@@ -133,14 +135,14 @@ async fn post_changeset_handler(req: Request<Body>) -> Result<Response<Body>> {
     json_response(response)
 }
 
-pub async fn respond_with_attachment_data(arhiv: &Arhiv, id: &Id) -> ServerResponse {
-    let attachment_data = arhiv.get_attachment_data(id)?;
+pub async fn respond_with_blob(arhiv: &Arhiv, blob_id: &BLOBId) -> ServerResponse {
+    let blob = arhiv.get_blob(blob_id)?;
 
-    if !attachment_data.exists()? {
+    if !blob.exists()? {
         return respond_not_found();
     }
 
-    let file = read_file_as_stream(&attachment_data.path).await?;
+    let file = read_file_as_stream(&blob.file_path).await?;
 
     Response::builder()
         .header(

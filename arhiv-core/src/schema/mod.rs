@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::*;
 use serde::Serialize;
 
-use crate::entities::{Document, DocumentData, Refs, ATTACHMENT_TYPE, ERASED_DOCUMENT_TYPE};
+use crate::entities::{Document, DocumentData, Refs, ERASED_DOCUMENT_TYPE};
 
 pub use data_description::*;
 pub use field::*;
@@ -27,22 +27,6 @@ impl DataSchema {
                 document_type: ERASED_DOCUMENT_TYPE,
                 collection_of: Collection::None,
                 fields: vec![],
-            },
-            DataDescription {
-                document_type: ATTACHMENT_TYPE,
-                collection_of: Collection::None,
-                fields: vec![
-                    Field {
-                        name: "filename",
-                        field_type: FieldType::String {},
-                        mandatory: true,
-                    },
-                    Field {
-                        name: "sha256",
-                        field_type: FieldType::ReadonlyString {},
-                        mandatory: true,
-                    },
-                ],
             },
             // ----
         ];
@@ -75,7 +59,7 @@ impl DataSchema {
 
         let collection_ref_fields = self.get_collection_ref_fields(document_type);
 
-        let mut refs = Refs::new();
+        let mut refs = Refs::default();
 
         for field in &data_description.fields {
             let value = if let Some(value) = data.get(field.name) {
@@ -85,10 +69,12 @@ impl DataSchema {
             };
 
             if collection_ref_fields.contains(&field.name) {
-                refs.collections.extend(field.get_refs(value));
+                refs.collections.extend(field.extract_refs(value));
             } else {
-                refs.documents.extend(field.get_refs(value));
+                refs.documents.extend(field.extract_refs(value));
             }
+
+            refs.blobs.extend(field.extract_blob_ids(value));
         }
 
         Ok(refs)

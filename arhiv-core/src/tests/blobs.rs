@@ -4,50 +4,46 @@ use rs_utils::project_relpath;
 
 use super::utils::*;
 use crate::{
-    entities::*,
     prime_server::{start_prime_server, PrimeServerRPC},
     Filter,
 };
 
 #[tokio::test]
-async fn test_attachments() -> Result<()> {
+async fn test_blobs() -> Result<()> {
     let arhiv = new_prime();
     assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = arhiv.add_attachment(src, false)?;
+    let blob_id = arhiv.add_blob(src, false)?;
 
-    assert!(arhiv.get_attachment_data(&attachment.id)?.exists()?);
+    assert!(arhiv.get_blob(&blob_id)?.exists()?);
 
     let mut document = empty_document();
-    document.data.set("ref", &attachment.id);
+    document.data.set("blob", &blob_id);
 
     arhiv.stage_document(&mut document)?;
-    assert!(arhiv.get_attachment_data(&attachment.id)?.exists()?);
-
-    let page = arhiv.list_documents(Filter::default().with_document_type(ATTACHMENT_TYPE))?;
-    assert_eq!(page.items.len(), 1);
+    assert!(arhiv.get_blob(&blob_id)?.exists()?);
 
     // delete
-    arhiv.erase_document(&attachment.id)?;
+    arhiv.erase_document(&document.id)?;
     arhiv.sync().await?;
 
-    assert!(!arhiv.get_attachment_data(&attachment.id)?.exists()?);
+    assert!(!arhiv.get_blob(&blob_id)?.exists()?);
 
     Ok(())
 }
 
 #[tokio::test]
-async fn test_download_attachment() -> Result<()> {
+async fn test_download_blob() -> Result<()> {
     let prime = new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
 
-    let attachment = prime.add_attachment(src, false)?;
+    let blob_id = prime.add_blob(src, false)?;
 
     let mut document = empty_document();
-    document.data.set("ref", &attachment.id);
+    document.data.set("blob", &blob_id);
     prime.stage_document(&mut document)?;
 
     prime.sync().await?;
@@ -57,11 +53,11 @@ async fn test_download_attachment() -> Result<()> {
 
     replica.sync().await?;
 
-    let attachment_data = replica.get_attachment_data(&attachment.id)?;
+    let blob = replica.get_blob(&blob_id)?;
     let prime_rpc = PrimeServerRPC::new(&replica.get_config().prime_url)?;
-    prime_rpc.download_attachment_data(&attachment_data).await?;
+    prime_rpc.download_blob(&blob).await?;
 
-    let dst = &attachment_data.path;
+    let dst = &blob.file_path;
 
     assert!(are_equal_files(src, dst)?);
 

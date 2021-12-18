@@ -24,11 +24,11 @@
 </a>
 {% elif mode == "Image" %}
 <a
-  href="{{url}}"
+  href="{{document_url}}"
   class="block"
 >
   <img
-    src="/attachment-data/{{id}}"
+    src="{{blob_url}}"
     alt="{{title}}"
     class="max-h-96"
   />

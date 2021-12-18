@@ -2,14 +2,11 @@ use anyhow::*;
 use futures::stream::TryStreamExt;
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
+use url::Url;
+
+use crate::{file_exists, get_downloads_dir};
 
 pub mod server;
-
-pub fn get_mime_from_path(path: impl AsRef<str>) -> String {
-    mime_guess::from_path(path.as_ref())
-        .first_or_octet_stream()
-        .to_string()
-}
 
 pub async fn download_data_to_file(url: &str, file_path: &str) -> Result<()> {
     let mut stream = reqwest::get(url)
@@ -28,4 +25,31 @@ pub async fn download_data_to_file(url: &str, file_path: &str) -> Result<()> {
     tokio::io::copy(&mut stream, &mut file).await?;
 
     Ok(())
+}
+
+pub fn extract_file_name_from_url(url: &str) -> Result<Option<String>> {
+    let url = Url::parse(url)?;
+
+    let file_name = url
+        .path_segments()
+        .and_then(Iterator::last)
+        .map(ToString::to_string);
+
+    Ok(file_name)
+}
+
+pub async fn download_file(src_url: &str) -> Result<String> {
+    let downloads_dir =
+        get_downloads_dir().ok_or_else(|| anyhow!("failed to find Downloads dir"))?;
+
+    let file_name = extract_file_name_from_url(src_url)?
+        .ok_or_else(|| anyhow!("failed to extract file name from url {}", src_url))?;
+
+    let file = format!("{}/{}", &downloads_dir, file_name);
+    ensure!(!file_exists(&file)?, "file {} already exists", file);
+
+    download_data_to_file(src_url, &file).await?;
+    log::debug!("Downloaded {} to {}", src_url, &file);
+
+    Ok(file)
 }

@@ -4,11 +4,11 @@ use std::fmt;
 use anyhow::*;
 
 use crate::{
-    entities::{DocumentData, Id},
+    entities::{BLOBId, DocumentData, Id},
     schema::{DataDescription, Field},
 };
 
-use super::db::{ArhivTransaction, Queries};
+use super::db::{ArhivTransaction, BLOBQueries, Queries};
 
 pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
 
@@ -98,6 +98,21 @@ impl Validator {
         Ok(())
     }
 
+    fn validate_blob_id(blob_id: &BLOBId, tx: &mut ArhivTransaction<'_>) -> Result<()> {
+        let is_known_blob_id = tx.is_known_blob_id(blob_id)?;
+
+        if is_known_blob_id {
+            return Ok(());
+        }
+
+        // should be known OR MUST exist
+        let blob = tx.get_blob(blob_id);
+
+        ensure!(blob.exists()?, "new blob {} doesn't exist", blob_id);
+
+        Ok(())
+    }
+
     fn track_err<T>(&mut self, field: &Field, result: Result<T>) {
         if let Err(err) = result {
             self.errors
@@ -128,9 +143,20 @@ impl Validator {
                 continue;
             }
 
+            // check blob ids
+            if let Some(value) = value {
+                let blob_ids = field.extract_blob_ids(value);
+
+                for blob_id in blob_ids {
+                    let validation_result = Validator::validate_blob_id(&blob_id, tx);
+
+                    self.track_err(field, validation_result);
+                }
+            }
+
             let refs = {
                 if let Some(value) = value {
-                    field.get_refs(value)
+                    field.extract_refs(value)
                 } else {
                     continue;
                 }

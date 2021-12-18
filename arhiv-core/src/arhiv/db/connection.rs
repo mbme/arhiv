@@ -1,8 +1,9 @@
 use anyhow::*;
 use rusqlite::Connection;
 
+use rs_utils::{log, FsTransaction};
+
 use super::{blob_queries::*, path_manager::PathManager, queries::*};
-use rs_utils::FsTransaction;
 
 pub struct ArhivConnection<'a> {
     conn: Connection,
@@ -67,7 +68,9 @@ impl<'a> ArhivTransaction<'a> {
 impl<'a> Drop for ArhivTransaction<'a> {
     fn drop(&mut self) {
         if !self.finished {
+            log::error!("Transaction wasn't committed, rolling back");
             self.rollback();
+            panic!("Transaction wasn't committed, rolled back");
         }
     }
 }

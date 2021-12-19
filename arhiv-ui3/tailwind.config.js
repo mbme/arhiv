@@ -1,11 +1,9 @@
 /* eslint-env node */
 
 module.exports = {
-  mode: 'jit',
-  purge: [
+  content: [
     './src/**/*.html.tera',
   ],
-  darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
       fontFamily: {

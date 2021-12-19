@@ -1,6 +1,6 @@
 use crate::schema::FieldType;
 
-pub const LANGUAGES: &[&str] = &[
+const LANGUAGES: &[&str] = &[
     "Ukrainian",
     //
     "English",
@@ -27,12 +27,12 @@ pub const LANGUAGES: &[&str] = &[
 
 pub const LANGUAGE_FIELD: FieldType = FieldType::Enum(LANGUAGES);
 
-pub const RATINGS: &[&str] = &[
-    "Very Bad", //
-    "Bad",      //
-    "Average",  //
-    "Fine",     //
-    "Good",     //
+const RATINGS: &[&str] = &[
+    "Bad",     //
+    "Mixed",   //
+    "Average", //
+    "Fine",    //
+    "Good",    //
     "Great",
 ];
 

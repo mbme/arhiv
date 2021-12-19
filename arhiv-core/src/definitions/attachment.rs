@@ -3,7 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use anyhow::*;
+use anyhow::{ensure, Error, Result};
 use serde_json::json;
 
 use rs_utils::{download_file, get_file_name, get_mime_type};

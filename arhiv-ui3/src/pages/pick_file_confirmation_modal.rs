@@ -1,6 +1,6 @@
 use std::fs;
 
-use anyhow::*;
+use anyhow::anyhow;
 use hyper::{Body, Request, StatusCode};
 use serde_json::json;
 

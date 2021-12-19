@@ -3,7 +3,7 @@ use std::{
     ffi::OsStr,
 };
 
-use anyhow::*;
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use rusqlite::{functions::FunctionFlags, Connection, OptionalExtension};
 use serde_json::Value;
 
@@ -577,7 +577,7 @@ fn upgrade_v11_to_v12(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &s
     // * add data field blob with blob_id
     // * add data field media_type with media type
 
-    let update_data = |ctx: &rusqlite::functions::Context| -> Result<Value> {
+    let update_data = move |ctx: &rusqlite::functions::Context| -> Result<Value> {
         let document_id = ctx.get_raw(0).as_str()?;
 
         let document_data = ctx.get_raw(1).as_str()?;
@@ -642,7 +642,8 @@ fn upgrade_v12_to_v13(conn: &Connection, _fs_tx: &mut FsTransaction, data_dir: &
 
     // iter through attachments
     //  add data field size to each attachment
-    let update_data = |ctx: &rusqlite::functions::Context| -> Result<Value> {
+    let data_dir = data_dir.to_string();
+    let update_data = move |ctx: &rusqlite::functions::Context| -> Result<Value> {
         let document_data = ctx.get_raw(0).as_str()?;
         let mut document_data: Value = serde_json::from_str(document_data)?;
         {

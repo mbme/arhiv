@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{ensure, Result};
 use rusqlite::Connection;
 
 use rs_utils::{log, FsTransaction};

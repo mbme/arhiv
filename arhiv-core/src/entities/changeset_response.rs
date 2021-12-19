@@ -1,6 +1,7 @@
-use anyhow::*;
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use anyhow::{anyhow, Context, Result};
+use serde::{Deserialize, Serialize};
 
 use super::{Document, Revision};
 

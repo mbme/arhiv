@@ -2,7 +2,7 @@ use core::fmt::Write;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use anyhow::*;
+use anyhow::{Context, Result};
 use base64::{decode_config, encode_config, URL_SAFE};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {

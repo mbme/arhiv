@@ -1,4 +1,3 @@
-use anyhow::*;
 use serde_json::json;
 
 use crate::schema::*;
@@ -6,7 +5,7 @@ use crate::schema::*;
 use super::utils::*;
 
 #[test]
-fn test_validation_mandatory() -> Result<()> {
+fn test_validation_mandatory() {
     let arhiv = new_prime_with_schema(DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
@@ -25,12 +24,10 @@ fn test_validation_mandatory() -> Result<()> {
     let mut document = new_document(json!({ "test": "test" }));
     let result = arhiv.stage_document(&mut document);
     assert!(result.is_ok());
-
-    Ok(())
 }
 
 #[test]
-fn test_validation_readonly() -> Result<()> {
+fn test_validation_readonly() {
     let arhiv = new_prime_with_schema(DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
@@ -47,7 +44,7 @@ fn test_validation_readonly() -> Result<()> {
         let result = arhiv.stage_document(&mut document);
         assert!(result.is_ok());
 
-        document.data = json!({ "test": None::<String> }).try_into()?;
+        document.data = json!({ "test": None::<String> }).try_into().unwrap();
         let result = arhiv.stage_document(&mut document);
         assert!(result.is_err());
     }
@@ -57,14 +54,12 @@ fn test_validation_readonly() -> Result<()> {
         let result = arhiv.stage_document(&mut document);
         assert!(result.is_ok());
 
-        document.data = json!({ "test": "test" }).try_into()?;
+        document.data = json!({ "test": "test" }).try_into().unwrap();
         let result = arhiv.stage_document(&mut document);
         assert!(result.is_err());
 
-        document.data = json!({ "test": None::<String> }).try_into()?;
+        document.data = json!({ "test": None::<String> }).try_into().unwrap();
         let result = arhiv.stage_document(&mut document);
         assert!(result.is_ok());
     }
-
-    Ok(())
 }

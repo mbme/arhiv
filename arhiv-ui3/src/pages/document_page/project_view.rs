@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 use serde::Serialize;
 use serde_json::json;
 

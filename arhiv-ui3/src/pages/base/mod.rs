@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 use hyper::StatusCode;
 use serde_json::json;
 

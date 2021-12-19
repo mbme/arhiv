@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::*;
+use anyhow::{Context, Result};
 use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::RequestInfo;
 use serde::Serialize;

@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 
 use rs_utils::project_relpath;
 

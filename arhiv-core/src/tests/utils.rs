@@ -1,6 +1,6 @@
 use std::{fs, sync::Arc};
 
-use anyhow::*;
+use anyhow::Result;
 use serde_json::Value;
 
 use rs_utils::generate_temp_path;

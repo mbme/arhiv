@@ -2,7 +2,7 @@ use std::fs;
 use std::sync::Arc;
 use std::time::Instant;
 
-use anyhow::*;
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use rusqlite::functions::{Context as FunctionContext, FunctionFlags};
 use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
 

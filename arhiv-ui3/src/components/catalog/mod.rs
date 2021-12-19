@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 use rs_utils::server::Url;
 use serde_json::json;
 

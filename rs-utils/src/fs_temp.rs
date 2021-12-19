@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-use anyhow::*;
+use anyhow::{Context, Result};
 
 use crate::{generate_alpanumeric_string, path_exists};
 

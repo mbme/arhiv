@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::*;
+use anyhow::{bail, Error, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 

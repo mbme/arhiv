@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use anyhow::*;
+use anyhow::{anyhow, bail, ensure, Error, Result};
 
 use crate::{
     entities::{BLOBId, DocumentData, Id},

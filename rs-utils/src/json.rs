@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{bail, Result};
 use serde_json::{Map, Value};
 
 pub fn merge_json(o1: Value, o2: Value) -> Result<Value> {

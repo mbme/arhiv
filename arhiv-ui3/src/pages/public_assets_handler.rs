@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Context;
 use hyper::{header, Body, Request, Response, StatusCode};
 use routerify::ext::RequestExt;
 use rust_embed::RustEmbed;

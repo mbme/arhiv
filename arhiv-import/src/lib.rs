@@ -14,7 +14,7 @@
     clippy::non_ascii_literal
 )]
 
-use anyhow::*;
+use anyhow::{bail, Context, Result};
 
 use arhiv_core::{entities::Id, Arhiv};
 use rs_utils::log;

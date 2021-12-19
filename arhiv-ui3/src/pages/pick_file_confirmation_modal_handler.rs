@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::anyhow;
 use hyper::{http::request::Parts, Body, Request, StatusCode};
 use routerify::ext::RequestExt;
 use serde_json::json;

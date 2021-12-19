@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
 
-use anyhow::*;
+use anyhow::Result;
 use rand::{prelude::*, thread_rng};
 
 use arhiv_core::{

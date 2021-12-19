@@ -1,6 +1,6 @@
 use std::fs;
 
-use anyhow::*;
+use anyhow::{anyhow, bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{file_exists, get_config_home, locate_dominating_file, log};

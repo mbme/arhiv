@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, env, fs, ops::Not, path::Path};
 
-use anyhow::*;
+use anyhow::{Context, Result};
 use hyper::{Body, Request, StatusCode};
 use serde::Serialize;
 use serde_json::json;

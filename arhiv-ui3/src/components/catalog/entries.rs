@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 
 use arhiv_core::{entities::*, markup::MarkupStr, Arhiv};

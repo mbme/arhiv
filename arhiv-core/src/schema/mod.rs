@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use anyhow::*;
+use anyhow::{anyhow, Result};
 use serde::Serialize;
 
 use crate::entities::{Document, DocumentData, Refs, ERASED_DOCUMENT_TYPE};

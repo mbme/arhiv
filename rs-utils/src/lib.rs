@@ -17,7 +17,7 @@ use std::env;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use anyhow::*;
+use anyhow::{bail, Result};
 
 pub use crypto::*;
 pub use fs::*;

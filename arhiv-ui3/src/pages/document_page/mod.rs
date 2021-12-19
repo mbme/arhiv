@@ -1,6 +1,6 @@
 use std::ops::Not;
 
-use anyhow::*;
+use anyhow::Result;
 use hyper::{Body, Request};
 use routerify::ext::RequestExt;
 use serde_json::json;

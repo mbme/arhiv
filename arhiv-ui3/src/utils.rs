@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::*;
+use anyhow::{Context, Result};
 use hyper::{header, Body, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};

@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 
 use arhiv_core::{entities::Document, schema::Collection, Arhiv};
 use rs_utils::server::Url;

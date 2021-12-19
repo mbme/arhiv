@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::Result;
 use serde_json::json;
 
 use rs_utils::project_relpath;

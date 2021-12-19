@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use dialoguer::{theme::ColorfulTheme, Confirm};
 
@@ -50,7 +50,7 @@ pub fn scrape_and_confirm(url: &str, confirm: bool) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::*;
+    use anyhow::{Context, Result};
     use serde_json::Value;
 
     use super::scrape;

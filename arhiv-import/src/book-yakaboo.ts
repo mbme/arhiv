@@ -15,8 +15,9 @@ export async function extractBookFromYakaboo(url: string, browser: Browser): Pro
   const page = await browser.newPage();
   await page.goto(url);
 
+  const title = await page.$eval('#product-title h1', node => (node as HTMLHeadingElement).innerText);
   const data: Obj = {
-    title: await page.$eval('#product-title h1', node => (node as HTMLHeadingElement).innerText),
+    title: title.substring('Книга '.length), // remove the prefix that Yakaboo adds to all titles
     cover_src: await page.$eval('#image', node => (node as HTMLImageElement).src),
   };
 

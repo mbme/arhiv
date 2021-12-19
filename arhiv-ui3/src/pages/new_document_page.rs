@@ -14,7 +14,7 @@ use crate::{
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     pages::base::render_page,
     template_fn,
-    urls::{document_url, parent_collection_url},
+    urls::parent_collection_url,
 };
 
 template_fn!(render_template, "./new_document_page.html.tera");
@@ -65,6 +65,8 @@ pub fn render_new_document_page_content(
     parent_collection: &Option<Id>,
     arhiv: &Arhiv,
 ) -> Result<String> {
+    let cancel_url = parent_collection_url(&document.document_type, parent_collection);
+
     let editor = DocumentDataEditor::new(
         &document.data,
         arhiv
@@ -72,7 +74,7 @@ pub fn render_new_document_page_content(
             .get_data_description(&document.document_type)?,
     )?
     .with_errors(errors)
-    .render(document_url(&document.id, parent_collection))?;
+    .render(cancel_url)?;
 
     let toolbar = Toolbar::new()
         .with_breadcrumb(Breadcrumb::for_collection(

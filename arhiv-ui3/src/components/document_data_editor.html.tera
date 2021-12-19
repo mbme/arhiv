@@ -15,15 +15,15 @@
   >
     <h5 class="section-heading mb-2 relative">
       {{ field.label }}
-      {% if not field.editable %}(readonly)
-      {% elif field.mandatory %}<span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
-      {% endif %}
+      {% if not field.editable %}(readonly){% endif %}
+      {% if field.mandatory %}<span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>{% endif %}
     </h5>
 
     {% if 'MarkupString' in field.field_type %}
     <textarea
       name="{{field.name}}"
       class="field"
+      {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
       v-auto-grow
@@ -33,6 +33,7 @@
     <select
       name="{{field.name}}"
       class="field"
+      {% if not field.editable %}readonly{% endif %}
       {% if loop.first %}autofocus{% endif %}
     >
       {% if not field.mandatory %}
@@ -55,6 +56,7 @@
       name="{{field.name}}"
       class="field"
       {% if field.value == "true" %}checked{% endif %}
+      {% if not field.editable %}readonly{% endif %}
       {% if loop.first %}autofocus{% endif %}
       value="true"
     >

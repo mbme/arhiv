@@ -106,13 +106,28 @@ impl Validator {
         tx: &mut ArhivTransaction<'_>,
     ) -> std::result::Result<(), ValidationError> {
         for field in &data_description.fields {
-            // first, validate field value
             let value = data.get(field.name);
-            let prev_value = prev_data
-                .as_ref()
-                .and_then(|prev_data| prev_data.get(field.name));
 
-            let validation_result = field.validate(value, prev_value);
+            // ensure readonly field didn't change
+            if let Some(prev_data) = prev_data {
+                let prev_value = prev_data.get(field.name);
+
+                if field.readonly && value != prev_value {
+                    self.track_err::<()>(
+                        field,
+                        Err(anyhow!(
+                            "value of readonly field '{}' changed from '{:?}' to '{:?}'",
+                            field.name,
+                            prev_value,
+                            value,
+                        )),
+                    );
+                    continue;
+                }
+            }
+
+            // validate field value
+            let validation_result = field.validate(value);
 
             if validation_result.is_err() {
                 self.track_err(field, validation_result);

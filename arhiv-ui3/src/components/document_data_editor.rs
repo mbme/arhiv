@@ -62,7 +62,7 @@ impl DocumentDataEditor {
                     field_type: field.field_type.clone(),
                     mandatory: field.mandatory,
                     value,
-                    editable: true,
+                    editable: !field.readonly,
                     errors: vec![],
                 };
 
@@ -72,9 +72,6 @@ impl DocumentDataEditor {
                     }
                     FieldType::RefList(to) => {
                         field.label = format!("{} (Refs to {})", field.name, to);
-                    }
-                    FieldType::ReadonlyString {} => {
-                        field.editable = false;
                     }
                     _ => {}
                 }

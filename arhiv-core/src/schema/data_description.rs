@@ -80,8 +80,6 @@ impl DataDescription {
 
     #[must_use]
     pub fn is_editable(&self) -> bool {
-        self.fields
-            .iter()
-            .any(|field| !matches!(field.field_type, FieldType::ReadonlyString {}))
+        self.fields.iter().any(|field| !field.readonly)
     }
 }

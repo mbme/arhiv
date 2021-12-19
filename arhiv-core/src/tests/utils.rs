@@ -3,13 +3,14 @@ use std::{fs, sync::Arc};
 use anyhow::*;
 use serde_json::Value;
 
+use rs_utils::generate_temp_path;
+
 use crate::{
     definitions::get_standard_schema,
     entities::Document,
     schema::{Collection, DataDescription, Field, FieldType},
     Arhiv, Config, ListPage,
 };
-use rs_utils::generate_temp_path;
 
 impl Drop for Arhiv {
     // Remove temporary Arhiv in tests
@@ -19,25 +20,10 @@ impl Drop for Arhiv {
     }
 }
 
-fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
+fn new_arhiv(config: Config, prime: bool, data_description: DataDescription) -> Arc<Arhiv> {
     let mut schema = get_standard_schema();
 
-    schema.with_modules(&mut vec![DataDescription {
-        document_type: "test_type",
-        collection_of: Collection::None,
-        fields: vec![
-            Field {
-                name: "blob",
-                field_type: FieldType::BLOBId,
-                mandatory: false,
-            },
-            Field {
-                name: "test",
-                field_type: FieldType::String {},
-                mandatory: false,
-            },
-        ],
-    }]);
+    schema.with_modules(&mut vec![data_description]);
 
     let arhiv = Arhiv::create(config, schema, "test-arhiv".to_string(), prime)
         .expect("must be able to create temp arhiv");
@@ -46,12 +32,33 @@ fn new_arhiv(config: Config, prime: bool) -> Arc<Arhiv> {
 }
 
 pub fn new_prime() -> Arc<Arhiv> {
+    new_prime_with_schema(DataDescription {
+        document_type: "test_type",
+        collection_of: Collection::None,
+        fields: vec![
+            Field {
+                name: "blob",
+                field_type: FieldType::BLOBId,
+                mandatory: false,
+                readonly: false,
+            },
+            Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+            },
+        ],
+    })
+}
+
+pub fn new_prime_with_schema(data_description: DataDescription) -> Arc<Arhiv> {
     let config = Config {
         arhiv_root: generate_temp_path("TempArhiv", ""),
         ..Config::default()
     };
 
-    new_arhiv(config, true)
+    new_arhiv(config, true, data_description)
 }
 
 pub fn new_replica(port: u16) -> Arc<Arhiv> {
@@ -61,7 +68,26 @@ pub fn new_replica(port: u16) -> Arc<Arhiv> {
         ..Config::default()
     };
 
-    new_arhiv(config, false)
+    let data_description = DataDescription {
+        document_type: "test_type",
+        collection_of: Collection::None,
+        fields: vec![
+            Field {
+                name: "blob",
+                field_type: FieldType::BLOBId,
+                mandatory: false,
+                readonly: false,
+            },
+            Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+            },
+        ],
+    };
+
+    new_arhiv(config, false, data_description)
 }
 
 pub fn empty_document() -> Document {

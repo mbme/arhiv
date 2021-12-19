@@ -68,9 +68,8 @@ impl<'a> ArhivTransaction<'a> {
 impl<'a> Drop for ArhivTransaction<'a> {
     fn drop(&mut self) {
         if !self.finished {
-            log::error!("Transaction wasn't committed, rolling back");
+            log::warn!("Transaction wasn't committed, rolling back");
             self.rollback();
-            panic!("Transaction wasn't committed, rolled back");
         }
     }
 }

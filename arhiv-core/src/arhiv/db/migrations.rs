@@ -135,6 +135,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v9_to_v10,
     upgrade_v10_to_v11,
     upgrade_v11_to_v12,
+    upgrade_v12_to_v13,
 ];
 
 // stub
@@ -520,6 +521,8 @@ fn upgrade_v10_to_v11(
     Ok(())
 }
 
+// use blake3 for blob hash, update attachment fields
+// NOTE: all attachments data must exist locally
 fn upgrade_v11_to_v12(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
     conn.execute_batch(
         "INSERT INTO settings
@@ -549,7 +552,6 @@ fn upgrade_v11_to_v12(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &s
     // rename blobs
     // keep a map of attachment_id => blob_id
     // keep a map of attachment_id => media_type
-    // NOTE: all attachments data must exist locally
     let mut attachments: HashMap<String, String> = HashMap::new();
     let mut attachments_media_types: HashMap<String, String> = HashMap::new();
     for attachment_id in &attachment_ids {
@@ -616,6 +618,67 @@ fn upgrade_v11_to_v12(conn: &Connection, fs_tx: &mut FsTransaction, data_dir: &s
             ["attachment"],
         )
         .context("Failed to update documents")?;
+
+    log::info!("Updated {} document snapshots", rows_updated);
+
+    Ok(())
+}
+
+// add size to attachments
+// NOTE: all attachments data must exist locally
+fn upgrade_v12_to_v13(conn: &Connection, _fs_tx: &mut FsTransaction, data_dir: &str) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '13' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
+                       FROM old_db.documents_snapshots;
+       ",
+    )?;
+
+    // iter through attachments
+    //  add data field size to each attachment
+    let update_data = |ctx: &rusqlite::functions::Context| -> Result<Value> {
+        let document_data = ctx.get_raw(0).as_str()?;
+        let mut document_data: Value = serde_json::from_str(document_data)?;
+        {
+            let document_data = document_data.as_object_mut().unwrap();
+            let blob_id = document_data.get("blob").unwrap().as_str().unwrap();
+            let blob_id = BLOBId::from_string(blob_id);
+
+            let blob_file_path = format!("{}/{}", data_dir, blob_id.get_file_name());
+
+            let size = fs::metadata(blob_file_path)?.len();
+
+            document_data.insert("size".to_string(), size.into());
+        }
+
+        Ok(document_data)
+    };
+
+    conn.create_scalar_function(
+        "update_data",
+        1,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 1, "called with unexpected number of arguments");
+
+            update_data(ctx).map_err(|e| rusqlite::Error::UserFunctionError(e.into()))
+        },
+    )
+    .context(anyhow!("Failed to define update_data function"))?;
+
+    let rows_updated = conn
+        .execute(
+            "UPDATE documents_snapshots
+                    SET data = update_data(data)
+                    WHERE type = ?",
+            ["attachment"],
+        )
+        .context("Failed to update documents snapshots")?;
 
     log::info!("Updated {} document snapshots", rows_updated);
 

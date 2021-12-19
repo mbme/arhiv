@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    fs,
+    ops::{Deref, DerefMut},
+};
 
 use anyhow::*;
 use serde_json::json;
@@ -16,6 +19,7 @@ pub const ATTACHMENT_TYPE: &str = "attachment";
 const FIELD_FILENAME: &str = "filename";
 const FIELD_MEDIA_TYPE: &str = "media_type";
 const FIELD_BLOB: &str = "blob";
+const FIELD_SIZE: &str = "size";
 
 pub fn get_attachment_definitions() -> Vec<DataDescription> {
     vec![DataDescription {
@@ -37,6 +41,11 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 field_type: FieldType::BLOBId,
                 mandatory: true,
             },
+            Field {
+                name: FIELD_SIZE, // in bytes
+                field_type: FieldType::NaturalNumber {},
+                mandatory: true,
+            },
         ],
     }]
 }
@@ -50,13 +59,14 @@ impl Attachment {
     }
 
     #[must_use]
-    pub fn new(filename: &str, media_type: &str, blob_id: &BLOBId) -> Self {
+    pub fn new(filename: &str, media_type: &str, blob_id: &BLOBId, size: u64) -> Self {
         let document = Document::new_with_data(
             ATTACHMENT_TYPE.to_string(),
             json!({
                 FIELD_FILENAME: filename,
                 FIELD_MEDIA_TYPE: media_type,
                 FIELD_BLOB: blob_id,
+                FIELD_SIZE: size,
             })
             .try_into()
             .expect("failed to serialize data"),
@@ -85,8 +95,9 @@ impl Attachment {
 
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
+        let size = fs::metadata(file_path)?.len();
 
-        let mut attachment = Attachment::new(&filename, &media_type, &blob_id);
+        let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
 
         arhiv.tx_stage_document(&mut attachment, tx)?;
 

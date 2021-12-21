@@ -1,6 +1,6 @@
-use anyhow::Result;
+use anyhow::{ensure, Result};
 
-use rs_utils::{is_same_filesystem, log, FsTransaction};
+use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
 use crate::entities::{BLOBId, BLOB};
 
@@ -16,6 +16,11 @@ pub trait MutableBLOBQueries: BLOBQueries {
     fn get_fs_tx(&mut self) -> &mut FsTransaction;
 
     fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
+        ensure!(
+            file_exists(file_path)?,
+            "BLOB source must exist and must be a file"
+        );
+
         let blob_id = BLOBId::from_file(file_path)?;
 
         let blob = self.get_blob(&blob_id);

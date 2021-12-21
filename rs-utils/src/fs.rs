@@ -11,8 +11,9 @@ pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
 }
 
+/// This won't follow symlinks
 pub fn file_exists(path: &str) -> Result<bool> {
-    match fs::metadata(path) {
+    match fs::symlink_metadata(path) {
         Ok(metadata) if !metadata.is_file() => Err(anyhow!("path isn't a file: {}", path)),
 
         Ok(_) => Ok(true),
@@ -21,8 +22,9 @@ pub fn file_exists(path: &str) -> Result<bool> {
     }
 }
 
+/// This won't follow symlinks
 pub fn dir_exists(path: &str) -> Result<bool> {
-    match fs::metadata(path) {
+    match fs::symlink_metadata(path) {
         Ok(metadata) if !metadata.is_dir() => Err(anyhow!("path isn't a directory: {}", path)),
 
         Ok(_) => Ok(true),

@@ -1,17 +1,13 @@
 use anyhow::Result;
 
-use rs_utils::project_relpath;
+use rs_utils::{generate_temp_path, project_relpath};
 
 use super::utils::*;
-use crate::{
-    prime_server::{start_prime_server, PrimeServerRPC},
-    Filter,
-};
+use crate::prime_server::{start_prime_server, PrimeServerRPC};
 
 #[tokio::test]
 async fn test_blobs() -> Result<()> {
     let arhiv = new_prime();
-    assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 0);
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -63,6 +59,38 @@ async fn test_download_blob() -> Result<()> {
 
     shutdown_sender.send(()).unwrap();
     join_handle.await.unwrap();
+
+    Ok(())
+}
+
+#[test]
+fn test_add_blob_soft_links_and_dirs() -> Result<()> {
+    let arhiv = new_prime();
+
+    let temp_dir = generate_temp_path("test_add_blob_soft_links_and_dirs", "");
+    std::fs::create_dir(&temp_dir)?;
+
+    let resource_file = project_relpath("../resources/k2.jpg");
+    let resource_file_link = format!("{}/resource_file_link", temp_dir);
+    std::os::unix::fs::symlink(&resource_file, &resource_file_link)?;
+
+    {
+        let result = arhiv.add_blob(&resource_file_link, false);
+        assert!(result.is_err());
+    }
+
+    let resource_dir = project_relpath("../resources");
+    let resource_dir_link = format!("{}/resource_dir_link", temp_dir);
+    std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
+
+    {
+        let result = arhiv.add_blob(&resource_dir, false);
+        assert!(result.is_err());
+    }
+    {
+        let result = arhiv.add_blob(&resource_dir_link, false);
+        assert!(result.is_err());
+    }
 
     Ok(())
 }

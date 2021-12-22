@@ -1,14 +1,14 @@
 use std::{env, process};
 
+// build app in release mode
 fn main() {
-    let is_release = env::var("PROFILE").unwrap_or_default() == "release";
+    if env::var("PROFILE").unwrap() != "release" {
+        return;
+    }
 
-    println!("cargo:rerun-if-env-changed=PROFILE");
-    println!("cargo:rerun-if-changed=src");
-    println!("cargo:rerun-if-changed=dist");
-
+    // make sure deps are installed
     let install_status = process::Command::new("yarn")
-        .arg("install") // make sure deps are installed
+        .arg("install")
         .status()
         .expect("failed to install yarn deps");
     if !install_status.success() {
@@ -19,17 +19,11 @@ fn main() {
         process::exit(1);
     }
 
+    // run build
     let build_status = process::Command::new("yarn")
-        .arg({
-            if is_release {
-                "prod:build"
-            } else {
-                "build"
-            }
-        })
+        .arg("prod:build")
         .status()
         .expect("failed to run build");
-
     if !build_status.success() {
         println!("cargo:warning=yarn build exit status is {}", build_status);
         process::exit(2);

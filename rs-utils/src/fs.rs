@@ -7,6 +7,8 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use tokio::fs as tokio_fs;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
+use crate::{bytes_to_hex_string, get_file_hash_blake3, get_string_hash_blake3};
+
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
 }
@@ -218,4 +220,42 @@ pub fn get_mime_from_path(path: impl AsRef<str>) -> String {
     mime_guess::from_path(path.as_ref())
         .first_or_octet_stream()
         .to_string()
+}
+
+pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
+    let mut items: Vec<(String, String)> = Vec::new();
+
+    for entry in fs::read_dir(path.as_ref())? {
+        let entry = entry?;
+
+        let name = entry
+            .file_name()
+            .to_str()
+            .context("Failed to convert file path to string")?
+            .to_string();
+
+        let path = entry
+            .path()
+            .to_str()
+            .context("Failed to convert file path to string")?
+            .to_string();
+
+        let hash = if fs::metadata(&path)?.is_dir() {
+            get_dir_checksum(&path)?
+        } else {
+            bytes_to_hex_string(&get_file_hash_blake3(&path)?)
+        };
+
+        items.push((name, hash));
+    }
+
+    // sort by name
+    items.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let result: String = items
+        .into_iter()
+        .flat_map(|item| vec![item.0, item.1])
+        .collect();
+
+    Ok(get_string_hash_blake3(&result))
 }

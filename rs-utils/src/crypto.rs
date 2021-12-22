@@ -27,6 +27,17 @@ pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
 }
 
 #[must_use]
+pub fn get_string_hash_blake3(data: &str) -> String {
+    let mut hasher = blake3::Hasher::new();
+
+    hasher.update(data.as_bytes());
+
+    let hash = hasher.finalize();
+
+    hash.to_string()
+}
+
+#[must_use]
 pub fn to_url_safe_base64(bytes: &[u8]) -> String {
     encode_config(bytes, URL_SAFE)
 }
@@ -66,5 +77,13 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn test_get_string_hash_blake3() {
+        assert_eq!(
+            get_string_hash_blake3("test"),
+            "4878ca0425c739fa427f7eda20fe845f6b2e46ba5fe2a14df5b1e32f50603215"
+        );
     }
 }

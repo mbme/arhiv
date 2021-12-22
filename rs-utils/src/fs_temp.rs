@@ -1,3 +1,4 @@
+use core::fmt;
 use std::env;
 use std::fs;
 
@@ -19,6 +20,12 @@ impl TempFile {
         TempFile {
             path: generate_temp_path(prefix.as_ref(), suffix.as_ref()),
         }
+    }
+
+    pub fn mkdir(&self) -> Result<()> {
+        std::fs::create_dir(&self.path)?;
+
+        Ok(())
     }
 
     pub fn write(&self, data: impl AsRef<str>) -> Result<()> {
@@ -49,7 +56,7 @@ impl Default for TempFile {
 
 impl Drop for TempFile {
     fn drop(&mut self) {
-        let metadata = if let Ok(metadata) = fs::metadata(&self.path) {
+        let metadata = if let Ok(metadata) = fs::symlink_metadata(&self.path) {
             metadata
         } else {
             // file doesn't exist or is inaccessible
@@ -67,6 +74,12 @@ impl Drop for TempFile {
 impl AsRef<str> for TempFile {
     fn as_ref(&self) -> &str {
         &self.path
+    }
+}
+
+impl fmt::Display for TempFile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", &self.path)
     }
 }
 

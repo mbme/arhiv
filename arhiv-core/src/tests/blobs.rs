@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use rs_utils::{generate_temp_path, project_relpath};
+use rs_utils::{project_relpath, TempFile};
 
 use super::utils::*;
 use crate::prime_server::{start_prime_server, PrimeServerRPC};
@@ -67,8 +67,8 @@ async fn test_download_blob() -> Result<()> {
 fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     let arhiv = new_prime();
 
-    let temp_dir = generate_temp_path("test_add_blob_soft_links_and_dirs", "");
-    std::fs::create_dir(&temp_dir)?;
+    let temp_dir = TempFile::new_with_details("test_add_blob_soft_links_and_dirs", "");
+    temp_dir.mkdir()?;
 
     let resource_file = project_relpath("../resources/k2.jpg");
     let resource_file_link = format!("{}/resource_file_link", temp_dir);
@@ -80,7 +80,7 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     }
 
     let resource_dir = project_relpath("../resources");
-    let resource_dir_link = format!("{}/resource_dir_link", temp_dir);
+    let resource_dir_link = format!("{}/resource_dir_link", &temp_dir);
     std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
 
     {

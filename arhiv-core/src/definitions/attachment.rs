@@ -95,11 +95,11 @@ impl Attachment {
         arhiv: &Arhiv,
         tx: &mut ArhivTransaction,
     ) -> Result<Self> {
-        let blob_id = arhiv.tx_add_blob(file_path, move_file, tx)?;
-
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
         let size = fs::metadata(file_path)?.len();
+
+        let blob_id = arhiv.tx_add_blob(file_path, move_file, tx)?;
 
         let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
 

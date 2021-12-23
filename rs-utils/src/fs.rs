@@ -208,7 +208,7 @@ pub fn is_readable(metadata: &Metadata) -> bool {
 pub fn get_mime_type(file_path: impl AsRef<str>) -> Result<String> {
     let file_path = file_path.as_ref();
 
-    if let Some(kind) = infer::get_from_path(file_path)? {
+    if let Some(kind) = infer::get_from_path(file_path).context("failed to infer mime type")? {
         return Ok(kind.mime_type().to_string());
     }
 
@@ -258,4 +258,27 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
         .collect();
 
     Ok(get_string_hash_blake3(&result))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::project_relpath;
+
+    use super::*;
+
+    #[test]
+    fn test_get_mime_type() {
+        assert_eq!(
+            get_mime_type(project_relpath("../resources/text.txt")).unwrap(),
+            "application/octet-stream"
+        );
+        assert_eq!(
+            get_mime_type(project_relpath("../resources/k2.jpg")).unwrap(),
+            "image/jpeg"
+        );
+        assert_eq!(
+            get_mime_type(project_relpath("../resources/favicon-16x16.png")).unwrap(),
+            "image/png"
+        );
+    }
 }

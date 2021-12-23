@@ -54,6 +54,7 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
     }]
 }
 
+#[derive(Debug)]
 pub struct Attachment(Document);
 
 impl Attachment {

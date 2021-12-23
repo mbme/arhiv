@@ -248,22 +248,17 @@ impl Arhiv {
     async fn sync_remotely(&self) -> Result<()> {
         log::info!("Initiating remote sync");
 
-        let (changeset, new_blob_ids) = {
-            let tx = self.db.get_tx()?;
-            let changeset = Arhiv::prepare_changeset(&tx)?;
-            let new_blob_ids = tx.get_new_blob_ids()?;
+        let mut tx = self.db.get_tx()?;
 
-            tx.commit()?;
-
-            (changeset, new_blob_ids)
-        };
+        let changeset = Arhiv::prepare_changeset(&tx)?;
+        let new_blob_ids = tx.get_new_blob_ids()?;
         log::debug!(
             "sync_remotely: starting {}, {} new blobs",
             &changeset,
             new_blob_ids.len()
         );
 
-        let last_update_time = self.db.get_connection()?.get_last_update_time()?;
+        let last_update_time = tx.get_last_update_time()?;
 
         let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
 
@@ -282,8 +277,6 @@ impl Arhiv {
             last_update_time == self.db.get_connection()?.get_last_update_time()?,
             "last_update_time must not change",
         );
-
-        let mut tx = self.db.get_tx()?;
 
         tx.delete_local_staged_changes()?;
         self.apply_changeset_response(&mut tx, response)?;

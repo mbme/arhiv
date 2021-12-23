@@ -53,7 +53,7 @@ impl Validator {
     fn validate_ref(
         id: &Id,
         expected_document_type: Option<&str>,
-        tx: &mut ArhivTransaction<'_>,
+        tx: &mut ArhivTransaction,
     ) -> Result<()> {
         let document = if let Some(document) = tx.get_document(id)? {
             document
@@ -74,7 +74,7 @@ impl Validator {
         Ok(())
     }
 
-    fn validate_blob_id(blob_id: &BLOBId, tx: &mut ArhivTransaction<'_>) -> Result<()> {
+    fn validate_blob_id(blob_id: &BLOBId, tx: &mut ArhivTransaction) -> Result<()> {
         let is_known_blob_id = tx.is_known_blob_id(blob_id)?;
 
         if is_known_blob_id {
@@ -103,7 +103,7 @@ impl Validator {
         data: &DocumentData,
         prev_data: Option<&DocumentData>,
         data_description: &DataDescription,
-        tx: &mut ArhivTransaction<'_>,
+        tx: &mut ArhivTransaction,
     ) -> std::result::Result<(), ValidationError> {
         for field in &data_description.fields {
             let value = data.get(field.name);

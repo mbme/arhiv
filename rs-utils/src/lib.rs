@@ -14,7 +14,6 @@
 )]
 
 use std::env;
-use std::io::Write;
 use std::process::{Command, Stdio};
 
 use anyhow::{bail, Result};
@@ -60,19 +59,14 @@ pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
 pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String> {
     let script = script.as_ref();
 
-    let mut child = Command::new("node")
-        .arg("-") // read script from stdin
+    let child = Command::new("node")
+        .arg("-e") // read script from stdin
+        .arg(script)
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-
-    if let Some(mut child_stdin) = child.stdin.take() {
-        child_stdin.write_all(script.as_bytes())?;
-    } else {
-        bail!("failed to run js script: can't write to stdin")
-    }
 
     let output = child.wait_with_output()?;
 

@@ -93,7 +93,7 @@ impl Attachment {
         file_path: &str,
         move_file: bool,
         arhiv: &Arhiv,
-        tx: &mut ArhivTransaction<'_>,
+        tx: &mut ArhivTransaction,
     ) -> Result<Self> {
         let blob_id = arhiv.tx_add_blob(file_path, move_file, tx)?;
 
@@ -118,11 +118,7 @@ impl Attachment {
         Ok(attachment)
     }
 
-    pub async fn download_tx(
-        url: &str,
-        arhiv: &Arhiv,
-        tx: &mut ArhivTransaction<'_>,
-    ) -> Result<Self> {
+    pub async fn download_tx(url: &str, arhiv: &Arhiv, tx: &mut ArhivTransaction) -> Result<Self> {
         let file_path = download_file(url).await?;
 
         Attachment::create_tx(&file_path, true, arhiv, tx)

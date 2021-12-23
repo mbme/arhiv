@@ -3,35 +3,35 @@ use rusqlite::Connection;
 
 use rs_utils::{log, FsTransaction};
 
-use super::{blob_queries::*, path_manager::PathManager, queries::*};
+use super::{blob_queries::*, queries::*};
 
-pub struct ArhivConnection<'a> {
+pub struct ArhivConnection {
     conn: Connection,
-    path_manager: &'a PathManager,
+    data_dir: String,
 }
 
-impl<'a> ArhivConnection<'a> {
-    pub fn new(conn: Connection, path_manager: &'a PathManager) -> Self {
-        ArhivConnection { conn, path_manager }
+impl<'a> ArhivConnection {
+    pub fn new(conn: Connection, data_dir: String) -> Self {
+        ArhivConnection { conn, data_dir }
     }
 }
 
-pub struct ArhivTransaction<'a> {
+pub struct ArhivTransaction {
     conn: Connection,
     finished: bool,
 
-    path_manager: &'a PathManager,
+    data_dir: String,
     fs_tx: FsTransaction,
 }
 
-impl<'a> ArhivTransaction<'a> {
-    pub fn new(conn: Connection, path_manager: &'a PathManager) -> Result<Self> {
+impl ArhivTransaction {
+    pub fn new(conn: Connection, data_dir: String) -> Result<Self> {
         conn.execute_batch("BEGIN DEFERRED")?;
 
         Ok(ArhivTransaction {
             conn,
             finished: false,
-            path_manager,
+            data_dir,
             fs_tx: FsTransaction::new(),
         })
     }
@@ -64,43 +64,47 @@ impl<'a> ArhivTransaction<'a> {
     }
 }
 
-#[allow(unused_must_use)]
-impl<'a> Drop for ArhivTransaction<'a> {
+impl Drop for ArhivTransaction {
     fn drop(&mut self) {
-        if !self.finished {
-            log::warn!("Transaction wasn't committed, rolling back");
-            self.rollback();
+        if self.finished {
+            return;
+        }
+
+        log::warn!("Transaction wasn't committed, rolling back");
+
+        if let Err(err) = self.rollback() {
+            log::error!("Transaction rollback failed: {}", err);
         }
     }
 }
 
-impl<'a> Queries for ArhivConnection<'a> {
+impl Queries for ArhivConnection {
     fn get_connection(&self) -> &Connection {
         &self.conn
     }
 }
 
-impl<'a> BLOBQueries for ArhivConnection<'a> {
+impl BLOBQueries for ArhivConnection {
     fn get_data_dir(&self) -> &str {
-        &self.path_manager.data_dir
+        &self.data_dir
     }
 }
 
-impl<'a> Queries for ArhivTransaction<'a> {
+impl Queries for ArhivTransaction {
     fn get_connection(&self) -> &Connection {
         &self.conn
     }
 }
 
-impl<'a> BLOBQueries for ArhivTransaction<'a> {
+impl BLOBQueries for ArhivTransaction {
     fn get_data_dir(&self) -> &str {
-        &self.path_manager.data_dir
+        &self.data_dir
     }
 }
 
-impl<'a> MutableQueries for ArhivTransaction<'a> {}
+impl MutableQueries for ArhivTransaction {}
 
-impl<'a> MutableBLOBQueries for ArhivTransaction<'a> {
+impl MutableBLOBQueries for ArhivTransaction {
     fn get_fs_tx(&mut self) -> &mut FsTransaction {
         &mut self.fs_tx
     }

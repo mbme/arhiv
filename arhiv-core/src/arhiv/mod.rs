@@ -150,7 +150,7 @@ impl Arhiv {
             .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
     }
 
-    pub fn get_tx(&self) -> Result<ArhivTransaction<'_>> {
+    pub fn get_tx(&self) -> Result<ArhivTransaction> {
         self.db.get_tx()
     }
 
@@ -167,7 +167,7 @@ impl Arhiv {
     pub fn tx_stage_document(
         &self,
         document: &mut Document,
-        tx: &mut ArhivTransaction<'_>,
+        tx: &mut ArhivTransaction,
     ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
@@ -274,7 +274,7 @@ impl Arhiv {
         &self,
         file_path: &str,
         move_file: bool,
-        tx: &mut ArhivTransaction<'_>,
+        tx: &mut ArhivTransaction,
     ) -> Result<BLOBId> {
         tx.add_blob(file_path, move_file)
     }

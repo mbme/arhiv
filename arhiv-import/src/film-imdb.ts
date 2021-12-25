@@ -1,4 +1,5 @@
 import { Browser, ElementHandle, Page } from 'puppeteer-core';
+import { ActionChannel } from './ActionChannel';
 
 import type { Obj } from './utils';
 import { uniqArr } from './utils';
@@ -13,10 +14,9 @@ async function getList(el: ElementHandle<HTMLElement> | Page, selector: string) 
   return uniqArr(items);
 }
 
-
-export async function extractFilmFromIMDB(url: string, browser: Browser): Promise<Obj | undefined> {
+export async function extractFilmFromIMDB(url: string, browser: Browser, channel: ActionChannel): Promise<boolean> {
   if (!url.includes('imdb.com/title/')) {
-    return undefined;
+    return false;
   }
 
   const page = await browser.newPage();
@@ -29,11 +29,13 @@ export async function extractFilmFromIMDB(url: string, browser: Browser): Promis
 
   const data: Obj = {
     title: await getText(page, 'h1[data-testid=hero-title-block__title]'),
-    cover_src: await page.$eval('[data-testid=hero-media__poster] img', node => (node as HTMLImageElement).src),
     original_language: await getText(page, '[data-testid=title-details-languages] ul li a'),
     countries_of_origin: await getList(page, '[data-testid=title-details-origin] ul li a').then(items => items.join(', ')),
-    is_series: isSeries.toString(),
+    is_series: isSeries,
   };
+
+  const cover_src  = await page.$eval('[data-testid=hero-media__poster] img', node => (node as HTMLImageElement).src);
+  data.cover = await channel.createAttachment(cover_src);
 
   let description = '';
   const summaryEl = await page.$('[data-testid=storyline-plot-summary]');
@@ -80,5 +82,7 @@ export async function extractFilmFromIMDB(url: string, browser: Browser): Promis
   data['creators'] = uniqArr(creators).join(', ');
   data['cast'] = uniqArr(cast).join(', ');
 
-  return data;
+  await channel.createDocument('film', data);
+
+  return true;
 }

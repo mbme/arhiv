@@ -39,7 +39,7 @@ pub fn start_prime_server(
     let addr = server.local_addr();
 
     // Spawn the server into a runtime
-    let join_handle = tokio::task::spawn(async move {
+    let join_handle = tokio::spawn(async move {
         server
             .with_graceful_shutdown(async {
                 tokio::select! {

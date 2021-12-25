@@ -4,11 +4,11 @@ use serde_json::json;
 use rs_utils::project_relpath;
 
 use super::utils::*;
-use crate::{BLOBSCount, DocumentsCount, Filter};
+use crate::{test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
 
 #[test]
 fn test_crud() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let original_data = json!({ "test": "test" });
 
@@ -57,7 +57,7 @@ fn test_crud() -> Result<()> {
 #[allow(clippy::too_many_lines)]
 #[tokio::test]
 async fn test_status() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     {
         let status = arhiv.get_status()?;

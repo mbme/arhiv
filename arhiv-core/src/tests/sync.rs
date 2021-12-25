@@ -4,11 +4,11 @@ use serde_json::json;
 use rs_utils::project_relpath;
 
 use super::utils::*;
-use crate::prime_server::start_prime_server;
+use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -50,9 +50,9 @@ async fn test_prime_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_replica_sync() -> Result<()> {
-    let prime = new_prime();
-    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.clone(), 0);
-    let replica = new_replica(addr.port());
+    let prime = TestArhiv::new_prime();
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.0.clone(), 0);
+    let replica = TestArhiv::new_replica(addr.port());
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -108,7 +108,7 @@ async fn test_replica_sync() -> Result<()> {
 
 #[tokio::test]
 async fn test_sync_removes_unused_local_blobs() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let blob_id1 = arhiv.add_blob(&project_relpath("../resources/k2.jpg"), false)?;
 

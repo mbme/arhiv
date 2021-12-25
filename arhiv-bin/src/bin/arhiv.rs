@@ -14,7 +14,7 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config,
 };
-use arhiv_import::ArhivImport;
+use arhiv_import::scrape;
 use arhiv_ui3::start_ui_server;
 use rs_utils::{
     into_absolute_path,
@@ -130,16 +130,19 @@ async fn main() {
 
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
-            let mut importer = ArhivImport::new(arhiv);
 
-            importer.confirm(!skip_confirmation);
-
-            let id = importer
-                .import(url)
+            let documents = scrape(&arhiv, url, false, !skip_confirmation)
                 .await
                 .expect("failed to import document");
 
-            println!("{} {}", id, document_url(&id, port));
+            for document in documents {
+                println!(
+                    "{} {} {}",
+                    document.document_type,
+                    document.id,
+                    document_url(&document.id, port)
+                );
+            }
         }
         ("ui-server", _) => {
             start_ui_server().await;

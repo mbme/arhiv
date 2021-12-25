@@ -20,6 +20,7 @@ pub mod entities;
 pub mod markup;
 pub mod prime_server;
 pub mod schema;
+pub mod test_arhiv;
 
 #[cfg(test)]
 mod tests;

@@ -1,7 +1,8 @@
 use std::env;
 
 use arhiv_core::Arhiv;
-use arhiv_import::ArhivImport;
+
+use arhiv_import::scrape;
 use rs_utils::log;
 
 #[tokio::main]
@@ -13,7 +14,7 @@ pub async fn main() {
 
     let arhiv = Arhiv::must_open();
 
-    let importer = ArhivImport::new(arhiv);
-
-    importer.import(url).await.expect("failed to import");
+    scrape(&arhiv, url, false, true)
+        .await
+        .expect("failed to run importers");
 }

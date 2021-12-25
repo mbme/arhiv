@@ -2,11 +2,11 @@ use anyhow::Result;
 use serde_json::json;
 
 use super::utils::*;
-use crate::*;
+use crate::{test_arhiv::TestArhiv, Filter, OrderBy};
 
 #[test]
 fn test_pagination() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     arhiv.stage_document(&mut empty_document())?;
     arhiv.stage_document(&mut empty_document())?;
@@ -21,7 +21,7 @@ fn test_pagination() -> Result<()> {
 
 #[tokio::test]
 async fn test_modes() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     // committed
     arhiv.stage_document(&mut new_document(json!({ "value": "1" })))?;
@@ -56,7 +56,7 @@ async fn test_modes() -> Result<()> {
 
 #[test]
 fn test_order_by_enum_field() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     arhiv.stage_document(&mut new_document(json!({ "enum": "low" })))?;
     arhiv.stage_document(&mut new_document(json!({ "enum": "high" })))?;
@@ -87,7 +87,7 @@ fn test_order_by_enum_field() -> Result<()> {
 
 #[test]
 fn test_multiple_order_by() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     arhiv.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
     arhiv.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
@@ -123,7 +123,7 @@ fn test_multiple_order_by() -> Result<()> {
 
 #[tokio::test]
 async fn test_matcher() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
     arhiv.stage_document(&mut new_document(json!({ "test": "value" })))?;
     arhiv.stage_document(&mut new_document(json!({ "test": "value1" })))?;
 

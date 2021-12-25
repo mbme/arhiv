@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use crate::{generate_alpanumeric_string, path_exists};
 
 pub struct TempFile {
-    path: String,
+    pub path: String,
 }
 
 impl TempFile {

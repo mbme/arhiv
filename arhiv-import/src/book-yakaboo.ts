@@ -1,4 +1,5 @@
 import { Browser } from 'puppeteer-core';
+import { ActionChannel } from './ActionChannel';
 import type { Obj } from './utils';
 
 const LANGUAGE_TRANSLATIONS: Obj = {
@@ -7,19 +8,21 @@ const LANGUAGE_TRANSLATIONS: Obj = {
   'Російська': 'Russian',
 };
 
-export async function extractBookFromYakaboo(url: string, browser: Browser): Promise<Obj | undefined> {
+export async function extractBookFromYakaboo(url: string, browser: Browser, channel: ActionChannel): Promise<boolean> {
   if (!url.includes('www.yakaboo.ua/ua/')) {
-    return undefined;
+    return false;
   }
 
   const page = await browser.newPage();
   await page.goto(url);
 
+  const data: Obj = {};
+
+  const cover_src = await page.$eval('#image', node => (node as HTMLImageElement).src);
+  data.cover = await channel.createAttachment(cover_src);
+
   const title = await page.$eval('#product-title h1', node => (node as HTMLHeadingElement).innerText);
-  const data: Obj = {
-    title: title.substring('Книга '.length), // remove the prefix that Yakaboo adds to all titles
-    cover_src: await page.$eval('#image', node => (node as HTMLImageElement).src),
-  };
+  data.title = title.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
 
   await page.$eval("a[href='#tab-description']", node => (node as HTMLAnchorElement).click());
   data['description'] = await page.$eval('.description-shadow', node => (node as HTMLElement).innerText);
@@ -72,5 +75,7 @@ export async function extractBookFromYakaboo(url: string, browser: Browser): Pro
     }
   }
 
-  return data;
+  await channel.createDocument('book', data);
+
+  return true;
 }

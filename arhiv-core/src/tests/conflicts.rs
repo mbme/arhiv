@@ -1,10 +1,12 @@
 use anyhow::Result;
 
+use crate::test_arhiv::TestArhiv;
+
 use super::utils::*;
 
 #[tokio::test]
 async fn test_conflicts() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let mut document = empty_document();
     arhiv.stage_document(&mut document)?;

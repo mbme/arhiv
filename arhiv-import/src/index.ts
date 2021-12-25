@@ -1,15 +1,18 @@
 import puppeteer from 'puppeteer-core';
 
-import type { Importer, Obj } from './utils';
+import { ActionChannel } from './ActionChannel';
+import type { Importer } from './utils';
 import { extractBookFromYakaboo } from './book-yakaboo';
 import { extractFilmFromIMDB } from './film-imdb';
+
+const channel = new ActionChannel();
 
 const SCRAPERS: Importer[] = [
   extractBookFromYakaboo,
   extractFilmFromIMDB,
 ];
 
-async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {
+async function scrape(url: string, debug: boolean): Promise<void> {
   if (!url) {
     throw new Error('url to scrape must be provided');
   }
@@ -25,14 +28,14 @@ async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {
 
   try {
     for (const scraper of SCRAPERS) {
-      const result = await scraper(url, browser);
+      const success = await scraper(url, browser, channel);
 
-      if (result) {
-        return result;
+      if (success) {
+        return;
       }
     }
 
-    return undefined;
+    throw new Error('No matching scraper');
   } finally {
     await browser.close();
   }
@@ -40,17 +43,14 @@ async function scrape(url: string, debug: boolean): Promise<Obj | undefined> {
 
 const args = process.argv.slice(2);
 const url = args[0];
-const env = args[1] || process.env.NODE_ENV;
+const debug = args[1] === 'true';
 
-const isProduction = env === 'production';
-
-scrape(url, !isProduction).then((data) => {
-  if (!data) {
-    throw new Error(`No scraper for url ${url}`);
-  }
-
-  process.stdout.write(JSON.stringify(data, null, 2));
-}).catch((e) => {
-  console.error('Failed to scrape url %s', url, e);
-  process.exit(1);
-});
+scrape(url, debug).then(
+  () => {
+    channel.close();
+  },
+  (e) => {
+    console.error('Failed to scrape url %s', url, e);
+    process.exit(1);
+  },
+);

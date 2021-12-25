@@ -1,0 +1,45 @@
+import * as readline from 'readline';
+import { once } from 'node:events';
+
+type ImporterAction = {
+  type: 'CreateAttachment',
+  url: string,
+} | {
+  type: 'CreateDocument',
+  document_type: string,
+  data: Record<string, unknown>,
+}
+
+export class ActionChannel {
+  private _rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  private async runAction(action: ImporterAction): Promise<string> {
+    console.log(JSON.stringify(action));
+
+    const [value] = await once(this._rl, 'line') as string[];
+
+    return value;
+  }
+
+  createAttachment(url: string) {
+    return this.runAction({
+      type: 'CreateAttachment',
+      url,
+    });
+  }
+
+  createDocument(document_type: string, data: Record<string, unknown>) {
+    return this.runAction({
+      type: 'CreateDocument',
+      document_type,
+      data,
+    });
+  }
+
+  close() {
+    this._rl.close();
+  }
+}

@@ -3,11 +3,14 @@ use anyhow::Result;
 use rs_utils::{project_relpath, TempFile};
 
 use super::utils::*;
-use crate::prime_server::{start_prime_server, PrimeServerRPC};
+use crate::{
+    prime_server::{start_prime_server, PrimeServerRPC},
+    test_arhiv::TestArhiv,
+};
 
 #[tokio::test]
 async fn test_blobs() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -32,7 +35,7 @@ async fn test_blobs() -> Result<()> {
 
 #[tokio::test]
 async fn test_download_blob() -> Result<()> {
-    let prime = new_prime();
+    let prime = TestArhiv::new_prime();
 
     let src = &project_relpath("../resources/k2.jpg");
 
@@ -44,8 +47,8 @@ async fn test_download_blob() -> Result<()> {
 
     prime.sync().await?;
 
-    let (join_handle, shutdown_sender, addr) = start_prime_server(prime, 0);
-    let replica = new_replica(addr.port());
+    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.0.clone(), 0);
+    let replica = TestArhiv::new_replica(addr.port());
 
     replica.sync().await?;
 
@@ -65,7 +68,7 @@ async fn test_download_blob() -> Result<()> {
 
 #[test]
 fn test_add_blob_soft_links_and_dirs() -> Result<()> {
-    let arhiv = new_prime();
+    let arhiv = TestArhiv::new_prime();
 
     let temp_dir = TempFile::new_with_details("test_add_blob_soft_links_and_dirs", "");
     temp_dir.mkdir()?;

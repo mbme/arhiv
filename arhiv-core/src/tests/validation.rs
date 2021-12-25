@@ -1,12 +1,12 @@
 use serde_json::json;
 
-use crate::schema::*;
+use crate::{schema::*, test_arhiv::TestArhiv};
 
 use super::utils::*;
 
 #[test]
 fn test_validation_mandatory() {
-    let arhiv = new_prime_with_schema(DataDescription {
+    let arhiv = TestArhiv::new_prime_with_schema(vec![DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
         fields: vec![Field {
@@ -15,7 +15,7 @@ fn test_validation_mandatory() {
             mandatory: true,
             readonly: false,
         }],
-    });
+    }]);
 
     let mut document = new_document(json!({}));
     let result = arhiv.stage_document(&mut document);
@@ -28,7 +28,7 @@ fn test_validation_mandatory() {
 
 #[test]
 fn test_validation_readonly() {
-    let arhiv = new_prime_with_schema(DataDescription {
+    let arhiv = TestArhiv::new_prime_with_schema(vec![DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
         fields: vec![Field {
@@ -37,7 +37,7 @@ fn test_validation_readonly() {
             mandatory: false,
             readonly: true,
         }],
-    });
+    }]);
 
     {
         let mut document = new_document(json!({ "test": "test" }));

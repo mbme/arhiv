@@ -212,10 +212,7 @@ mod tests {
         let document = documents
             .into_iter()
             .find(|document| document.document_type == expected_document_type)
-            .ok_or(anyhow!(
-                "can't find document with type {}",
-                expected_document_type
-            ))?;
+            .ok_or_else(|| anyhow!("can't find document with type {}", expected_document_type))?;
 
         Ok(document.data.into())
     }

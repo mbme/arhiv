@@ -6,7 +6,7 @@ use std::{
 use anyhow::{ensure, Error, Result};
 use serde_json::json;
 
-use rs_utils::{download_file, get_file_name, get_mime_type};
+use rs_utils::{get_file_name, get_mime_type};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -107,22 +107,6 @@ impl Attachment {
         arhiv.tx_stage_document(&mut attachment, tx)?;
 
         Ok(attachment)
-    }
-
-    pub async fn download(url: &str, arhiv: &Arhiv) -> Result<Self> {
-        let mut tx = arhiv.get_tx()?;
-
-        let attachment = Attachment::download_tx(url, arhiv, &mut tx).await?;
-
-        tx.commit()?;
-
-        Ok(attachment)
-    }
-
-    pub async fn download_tx(url: &str, arhiv: &Arhiv, tx: &mut ArhivTransaction) -> Result<Self> {
-        let file_path = download_file(url).await?;
-
-        Attachment::create_tx(&file_path, true, arhiv, tx)
     }
 
     #[must_use]

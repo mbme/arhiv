@@ -30,7 +30,7 @@ use arhiv_core::{
     entities::{Document, DocumentData},
     Arhiv,
 };
-use rs_utils::{log, TempFile};
+use rs_utils::{download_file, log, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
@@ -127,7 +127,9 @@ pub async fn scrape(arhiv: &Arhiv, url: &str, debug: bool, confirm: bool) -> Res
 
         match action {
             ImporterAction::CreateAttachment { url } => {
-                let attachment = Attachment::download_tx(&url, arhiv, &mut tx).await?;
+                let file_path = download_file(&url).await?;
+
+                let attachment = Attachment::create_tx(&file_path, true, arhiv, &mut tx)?;
 
                 stdin
                     .write_all(&format!("{}\n", attachment.id).into_bytes())

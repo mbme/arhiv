@@ -264,7 +264,7 @@ pub fn create_file_if_not_exist(file_path: impl Into<PathBuf>) -> Result<()> {
     let file_path = file_path.into();
 
     if !file_path.exists() {
-        fs::File::create(&file_path).context("failed to create file")?;
+        fs::File::create(&file_path).context(anyhow!("failed to create file {:?}", file_path))?;
     }
 
     Ok(())

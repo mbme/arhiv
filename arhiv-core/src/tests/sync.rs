@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::json;
 
-use rs_utils::project_relpath;
+use rs_utils::workspace_relpath;
 
 use super::utils::*;
 use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
@@ -10,7 +10,7 @@ use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
 async fn test_prime_sync() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let src = &project_relpath("../resources/k2.jpg");
+    let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = arhiv.add_blob(src, false)?;
 
@@ -54,7 +54,7 @@ async fn test_replica_sync() -> Result<()> {
     let (join_handle, shutdown_sender, addr) = start_prime_server(prime.0.clone(), 0);
     let replica = TestArhiv::new_replica(addr.port());
 
-    let src = &project_relpath("../resources/k2.jpg");
+    let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = replica.add_blob(src, false)?;
 
@@ -110,7 +110,7 @@ async fn test_replica_sync() -> Result<()> {
 async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let blob_id1 = arhiv.add_blob(&project_relpath("../resources/k2.jpg"), false)?;
+    let blob_id1 = arhiv.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
 
     let mut document = empty_document();
     document.data.set("blob", &blob_id1);
@@ -118,7 +118,7 @@ async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     // stage document with blob1
     arhiv.stage_document(&mut document)?;
 
-    let blob_id2 = arhiv.add_blob(&project_relpath("../resources/text.txt"), false)?;
+    let blob_id2 = arhiv.add_blob(&workspace_relpath("resources/text.txt"), false)?;
 
     document.data.set("blob", &blob_id2);
 

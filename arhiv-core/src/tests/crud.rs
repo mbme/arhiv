@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::json;
 
-use rs_utils::project_relpath;
+use rs_utils::workspace_relpath;
 
 use super::utils::*;
 use crate::{test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
@@ -82,7 +82,7 @@ async fn test_status() -> Result<()> {
     }
 
     // create document with blob
-    let blob_id = arhiv.add_blob(&project_relpath("../resources/k2.jpg"), false)?;
+    let blob_id = arhiv.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
     let mut document = new_document(json!({
         "test": "test",
         "blob": blob_id,

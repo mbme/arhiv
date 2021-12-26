@@ -23,7 +23,7 @@ impl TempFile {
     }
 
     pub fn mkdir(&self) -> Result<()> {
-        std::fs::create_dir(&self.path)?;
+        fs::create_dir(&self.path)?;
 
         Ok(())
     }
@@ -34,8 +34,10 @@ impl TempFile {
         Ok(())
     }
 
-    pub fn touch_file(&self) -> Result<()> {
-        self.write("")
+    pub fn create_file(&self) -> Result<()> {
+        fs::File::create(&self.path).context("failed to create file")?;
+
+        Ok(())
     }
 
     #[must_use]

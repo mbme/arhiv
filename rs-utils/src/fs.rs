@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
-use std::fs::Metadata;
 use std::os::unix::prelude::MetadataExt;
+use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use tokio::fs as tokio_fs;
@@ -190,7 +190,7 @@ pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
 }
 
 #[must_use]
-pub fn is_readable(metadata: &Metadata) -> bool {
+pub fn is_readable(metadata: &fs::Metadata) -> bool {
     let mode = metadata.mode();
 
     // TODO check also user / group (uid/gid)
@@ -260,24 +260,59 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
     Ok(get_string_hash_blake3(&result))
 }
 
+pub fn create_file_if_not_exist(file_path: impl Into<PathBuf>) -> Result<()> {
+    let file_path = file_path.into();
+
+    if !file_path.exists() {
+        fs::File::create(&file_path).context("failed to create file")?;
+    }
+
+    Ok(())
+}
+
+#[must_use]
+pub fn workspace_relpath(subpath: &str) -> String {
+    // Here CARGO_MANIFEST_DIR is /typed-v/rs-utils/
+    format!("{}/../{}", env!("CARGO_MANIFEST_DIR"), subpath)
+}
+
+#[must_use]
+pub fn current_dir_relpath(subpath: &str) -> PathBuf {
+    let mut resource = env::current_dir().expect("invalid current directory");
+
+    resource.push(subpath);
+
+    resource
+}
+
+#[must_use]
+pub fn is_image_filename(filename: impl AsRef<str>) -> bool {
+    let ext = filename.as_ref().rsplit('.').next().unwrap_or_default();
+
+    ext.eq_ignore_ascii_case("png")
+        || ext.eq_ignore_ascii_case("jpg")
+        || ext.eq_ignore_ascii_case("jpeg")
+        || ext.eq_ignore_ascii_case("svg")
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::project_relpath;
+    use crate::workspace_relpath;
 
     use super::*;
 
     #[test]
     fn test_get_mime_type() {
         assert_eq!(
-            get_mime_type(project_relpath("../resources/text.txt")).unwrap(),
+            get_mime_type(workspace_relpath("resources/text.txt")).unwrap(),
             "application/octet-stream"
         );
         assert_eq!(
-            get_mime_type(project_relpath("../resources/k2.jpg")).unwrap(),
+            get_mime_type(workspace_relpath("resources/k2.jpg")).unwrap(),
             "image/jpeg"
         );
         assert_eq!(
-            get_mime_type(project_relpath("../resources/favicon-16x16.png")).unwrap(),
+            get_mime_type(workspace_relpath("resources/favicon-16x16.png")).unwrap(),
             "image/png"
         );
     }

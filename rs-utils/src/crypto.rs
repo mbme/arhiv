@@ -65,11 +65,11 @@ pub fn gen_uuid() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::project_relpath;
+    use crate::workspace_relpath;
 
     #[test]
     fn test_get_file_hash_blake3() -> Result<()> {
-        let src = &project_relpath("../resources/k2.jpg");
+        let src = &workspace_relpath("resources/k2.jpg");
 
         assert_eq!(
             bytes_to_hex_string(&get_file_hash_blake3(src)?),

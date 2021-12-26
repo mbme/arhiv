@@ -13,8 +13,8 @@
     clippy::cast_lossless
 )]
 
-use std::env;
 use std::io::Write;
+use std::process;
 use std::process::{Command, Stdio};
 
 use anyhow::{bail, Result};
@@ -37,11 +37,6 @@ mod json;
 pub mod log;
 mod markov;
 mod string;
-
-#[must_use]
-pub fn project_relpath(subpath: &str) -> String {
-    format!("{}/{}", env!("CARGO_MANIFEST_DIR"), subpath)
-}
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     let output = Command::new(command).args(args).output()?;
@@ -93,12 +88,17 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     }
 }
 
-#[must_use]
-pub fn is_image_filename(filename: impl AsRef<str>) -> bool {
-    let ext = filename.as_ref().rsplit('.').next().unwrap_or_default();
+pub fn run_yarn(command: &str) {
+    let command_status = Command::new("yarn")
+        .arg(command)
+        .status()
+        .expect("failed to run yarn command");
 
-    ext.eq_ignore_ascii_case("png")
-        || ext.eq_ignore_ascii_case("jpg")
-        || ext.eq_ignore_ascii_case("jpeg")
-        || ext.eq_ignore_ascii_case("svg")
+    if !command_status.success() {
+        println!(
+            "cargo:warning=yarn {} exit status is {}",
+            command, command_status
+        );
+        process::exit(1);
+    }
 }

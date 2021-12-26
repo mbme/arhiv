@@ -3,7 +3,7 @@ use std::fs;
 use rand::{prelude::*, thread_rng};
 
 use arhiv_core::{entities::*, markup::create_ref};
-use rs_utils::{project_relpath, Markov};
+use rs_utils::{workspace_relpath, Markov};
 
 pub struct TextGenerator {
     markov: Markov,
@@ -13,7 +13,7 @@ pub struct TextGenerator {
 impl TextGenerator {
     #[must_use]
     pub fn new(attachment_ids: Vec<Id>) -> Self {
-        let text = fs::read_to_string(project_relpath("../resources/text.txt")).unwrap();
+        let text = fs::read_to_string(workspace_relpath("resources/text.txt")).unwrap();
         let markov = Markov::new(&text);
 
         TextGenerator {

@@ -20,3 +20,6 @@ dialoguer = "0.9.0"
 
 [dev-dependencies]
 insta = { version = "1", features = ["redactions", "backtrace"] }
+
+[build-dependencies]
+rs-utils = { path = "../rs-utils" }

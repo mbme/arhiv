@@ -10,14 +10,14 @@ use arhiv_core::{
     schema::{Collection, FieldType},
     Arhiv,
 };
-use rs_utils::{is_image_filename, project_relpath};
+use rs_utils::{is_image_filename, workspace_relpath};
 
 use super::TextGenerator;
 
 fn list_attachments() -> Vec<String> {
     let mut attachments: Vec<String> = vec![];
 
-    let dir = project_relpath("../resources");
+    let dir = workspace_relpath("resources");
     for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         let path = path.to_str().unwrap();

@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use rs_utils::{project_relpath, TempFile};
+use rs_utils::{workspace_relpath, TempFile};
 
 use super::utils::*;
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
 async fn test_blobs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let src = &project_relpath("../resources/k2.jpg");
+    let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = arhiv.add_blob(src, false)?;
 
@@ -37,7 +37,7 @@ async fn test_blobs() -> Result<()> {
 async fn test_download_blob() -> Result<()> {
     let prime = TestArhiv::new_prime();
 
-    let src = &project_relpath("../resources/k2.jpg");
+    let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = prime.add_blob(src, false)?;
 
@@ -73,7 +73,7 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     let temp_dir = TempFile::new_with_details("test_add_blob_soft_links_and_dirs", "");
     temp_dir.mkdir()?;
 
-    let resource_file = project_relpath("../resources/k2.jpg");
+    let resource_file = workspace_relpath("resources/k2.jpg");
     let resource_file_link = format!("{}/resource_file_link", temp_dir);
     std::os::unix::fs::symlink(&resource_file, &resource_file_link)?;
 
@@ -82,7 +82,7 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
         assert!(result.is_err());
     }
 
-    let resource_dir = project_relpath("../resources");
+    let resource_dir = workspace_relpath("resources");
     let resource_dir_link = format!("{}/resource_dir_link", &temp_dir);
     std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
 

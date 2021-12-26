@@ -1,6 +1,6 @@
-use std::{env, path::Path};
+use std::env;
 
-use rs_utils::{create_file_if_not_exist, run_yarn};
+use rs_utils::{create_dir_if_not_exist, create_file_if_not_exist, current_dir_relpath, run_yarn};
 
 fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
@@ -15,7 +15,8 @@ fn main() {
     }
 
     // in dev mode create file if missing so that CI doesn't fail
-    let file_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist/bundle.js");
-
-    create_file_if_not_exist(file_path).expect("failed to create file if not exist");
+    create_dir_if_not_exist(current_dir_relpath("dist"))
+        .expect("failed to create dir if not exist");
+    create_file_if_not_exist(current_dir_relpath("dist/bundle.js"))
+        .expect("failed to create file if not exist");
 }

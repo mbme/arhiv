@@ -260,6 +260,16 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
     Ok(get_string_hash_blake3(&result))
 }
 
+pub fn create_dir_if_not_exist(dir_path: impl Into<PathBuf>) -> Result<()> {
+    let dir_path = dir_path.into();
+
+    if !dir_path.exists() {
+        fs::create_dir(&dir_path).context(anyhow!("failed to create dir {:?}", dir_path))?;
+    }
+
+    Ok(())
+}
+
 pub fn create_file_if_not_exist(file_path: impl Into<PathBuf>) -> Result<()> {
     let file_path = file_path.into();
 

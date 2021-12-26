@@ -42,6 +42,11 @@ pub async fn download_file(src_url: &str) -> Result<String> {
     let downloads_dir =
         get_downloads_dir().ok_or_else(|| anyhow!("failed to find Downloads dir"))?;
 
+    // TODO add ".download" suffix while downloading
+    // TOOD support (pausing/)restoring download, support HTTP Ranges
+
+    // TODO also read filename from the Content-Disposition header
+    // Content-Disposition: attachment; filename="filename.jpg"
     let file_name = extract_file_name_from_url(src_url)?
         .ok_or_else(|| anyhow!("failed to extract file name from url {}", src_url))?;
 

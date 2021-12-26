@@ -47,6 +47,7 @@ enum ImporterAction {
 fn get_script_temp_file() -> Result<TempFile> {
     let script = include_str!("../dist/bundle.js");
 
+    // TODO use "shared memory file" shm_open
     let temp_file = TempFile::new_with_details("arhiv-import-script-", ".js");
 
     temp_file.write(script)?;
@@ -127,6 +128,7 @@ pub async fn scrape(arhiv: &Arhiv, url: &str, debug: bool, confirm: bool) -> Res
 
         match action {
             ImporterAction::CreateAttachment { url } => {
+                // TODO remove downloaded file
                 let file_path = download_file(&url).await?;
 
                 let attachment = Attachment::create_tx(&file_path, true, arhiv, &mut tx)?;

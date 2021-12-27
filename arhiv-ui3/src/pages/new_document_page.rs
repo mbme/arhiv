@@ -50,7 +50,7 @@ impl App {
 
         let content = self.render_new_document_page_content(&document, parent_collection, &None)?;
 
-        Ok(AppResponse::content(content))
+        Ok(AppResponse::page(content))
     }
 
     pub fn render_new_document_page_content(

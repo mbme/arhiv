@@ -43,6 +43,6 @@ impl App {
             "catalog": catalog,
         }))?;
 
-        Ok(AppResponse::content(content))
+        Ok(AppResponse::page(content))
     }
 }

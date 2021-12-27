@@ -13,8 +13,6 @@ use rs_utils::server::{
 
 use crate::{template_fn, urls::catalog_url, utils::render_content};
 
-const IGNORED_DOCUMENT_TYPES: &[&str] = &[ATTACHMENT_TYPE, TASK_TYPE];
-
 template_fn!(render_template, "./base.html.tera");
 
 pub struct App {
@@ -47,7 +45,7 @@ impl App {
 
     pub fn render(&self, response: AppResponse) -> ServerResponse {
         match response {
-            AppResponse::Content { content, status } => {
+            AppResponse::Page { content, status } => {
                 self.render_page_with_status(status, &content, true)
             }
             AppResponse::Dialog { content } => {
@@ -62,7 +60,7 @@ impl App {
 }
 
 pub enum AppResponse {
-    Content { content: String, status: StatusCode },
+    Page { content: String, status: StatusCode },
     Dialog { content: String },
     Fragment { content: String },
     Status { status: StatusCode },
@@ -71,11 +69,15 @@ pub enum AppResponse {
 }
 
 impl AppResponse {
-    pub fn content(content: String) -> Self {
-        AppResponse::Content {
+    pub fn page(content: String) -> Self {
+        AppResponse::Page {
             content,
             status: StatusCode::OK,
         }
+    }
+
+    pub fn page_with_status(content: String, status: StatusCode) -> Self {
+        AppResponse::Page { content, status }
     }
 
     pub fn dialog(content: String) -> Self {
@@ -90,6 +92,8 @@ impl AppResponse {
         AppResponse::Status { status }
     }
 }
+
+const IGNORED_DOCUMENT_TYPES: &[&str] = &[ATTACHMENT_TYPE, TASK_TYPE];
 
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv

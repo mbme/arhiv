@@ -71,7 +71,7 @@ impl App {
             "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, collection_id)),
         }))?;
 
-        Ok(AppResponse::content(content))
+        Ok(AppResponse::page(content))
     }
 }
 

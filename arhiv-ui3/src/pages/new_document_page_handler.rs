@@ -41,10 +41,10 @@ impl App {
                 &Some(error.errors),
             )?;
 
-            return Ok(AppResponse::Content {
+            return Ok(AppResponse::page_with_status(
                 content,
-                status: StatusCode::UNPROCESSABLE_ENTITY,
-            });
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
 
         self.arhiv.tx_stage_document(&mut document, &mut tx)?;

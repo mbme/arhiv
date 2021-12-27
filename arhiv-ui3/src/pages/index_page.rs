@@ -32,6 +32,6 @@ impl App {
             "document_types": document_types,
         }))?;
 
-        Ok(AppResponse::content(content))
+        Ok(AppResponse::page(content))
     }
 }

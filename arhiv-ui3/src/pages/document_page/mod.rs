@@ -1,8 +1,7 @@
 use std::ops::Not;
 
 use anyhow::Result;
-use hyper::{Body, Request};
-use routerify::ext::RequestExt;
+use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::{
@@ -11,11 +10,11 @@ use arhiv_core::{
     schema::Collection,
     Arhiv, Filter,
 };
-use rs_utils::server::{respond_not_found, RequestQueryExt, ServerResponse};
+use rs_utils::server::Url;
 
 use crate::{
+    app::{App, AppResponse},
     components::{Action, Breadcrumb, Ref, Toolbar},
-    pages::base::render_page,
     template_fn,
     urls::{erase_document_url, index_url, parent_collection_url},
 };
@@ -32,46 +31,48 @@ template_fn!(
     "./erased_document_view.html.tera"
 );
 
-pub async fn document_page(req: Request<Body>) -> ServerResponse {
-    let id: Id = req.param("id").unwrap().into();
-    let collection_id: Option<Id> = req.param("collection_id").map(Into::into);
-    let url = req.get_url();
+impl App {
+    pub fn document_page(
+        &self,
+        id: &Id,
+        collection_id: &Option<Id>,
+        url: Url,
+    ) -> Result<AppResponse> {
+        let document = {
+            if let Some(document) = self.arhiv.get_document(id)? {
+                document
+            } else {
+                return Ok(AppResponse::status(StatusCode::NOT_FOUND));
+            }
+        };
 
-    let arhiv: &Arhiv = req.data().unwrap();
+        let toolbar = render_document_page_toolbar(&document, collection_id, &self.arhiv)?;
 
-    let document = {
-        if let Some(document) = arhiv.get_document(&id)? {
-            document
+        let content = if document.document_type == PROJECT_TYPE {
+            render_project_view(&document, &self.arhiv, &url)?
+        } else if document.document_type == ERASED_DOCUMENT_TYPE {
+            render_erased_document_template(json!({}))?
         } else {
-            return respond_not_found();
-        }
-    };
+            render_document_view(&document, &self.arhiv, url)?
+        };
 
-    let toolbar = render_document_page_toolbar(&document, &collection_id, arhiv)?;
+        let backrefs = self
+            .arhiv
+            .list_documents(Filter::backrefs(&document.id))?
+            .items
+            .into_iter()
+            .map(|document| Ref::from_document(document).render(&self.arhiv))
+            .collect::<Result<Vec<_>>>()?;
 
-    let content = if document.document_type == PROJECT_TYPE {
-        render_project_view(&document, arhiv, &url)?
-    } else if document.document_type == ERASED_DOCUMENT_TYPE {
-        render_erased_document_template(json!({}))?
-    } else {
-        render_document_view(&document, arhiv, url)?
-    };
+        let content = render_template(json!({
+            "toolbar": toolbar,
+            "content": content,
+            "backrefs": backrefs,
+            "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, collection_id)),
+        }))?;
 
-    let backrefs = arhiv
-        .list_documents(Filter::backrefs(&document.id))?
-        .items
-        .into_iter()
-        .map(|document| Ref::from_document(document).render(arhiv))
-        .collect::<Result<Vec<_>>>()?;
-
-    let content = render_template(json!({
-        "toolbar": toolbar,
-        "content": content,
-        "backrefs": backrefs,
-        "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, &collection_id)),
-    }))?;
-
-    render_page(content, arhiv)
+        Ok(AppResponse::content(content))
+    }
 }
 
 fn render_document_page_toolbar(

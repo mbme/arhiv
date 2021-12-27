@@ -1,43 +1,74 @@
-use anyhow::anyhow;
-use hyper::{Body, Request};
-use routerify::ext::RequestExt;
+use anyhow::{anyhow, ensure, Result};
 use serde_json::json;
 
-use arhiv_core::{entities::Id, Arhiv};
-use rs_utils::server::{respond_moved_permanently, ServerResponse};
+use arhiv_core::entities::Id;
 
-use crate::{pages::base::render_modal, template_fn, urls::document_url};
+use crate::{
+    app::{App, AppResponse},
+    template_fn,
+    urls::{document_url, parent_collection_url},
+    utils::Fields,
+};
 
 template_fn!(
     render_template,
     "./erase_document_confirmation_dialog.html.tera"
 );
 
-pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
-    let id: Id = req.param("id").unwrap().into();
-    let collection_id: Option<Id> = req.param("collection_id").map(Into::into);
+impl App {
+    pub fn erase_document_confirmation_dialog(
+        &self,
+        id: &Id,
+        parent_collection: &Option<Id>,
+    ) -> Result<AppResponse> {
+        let document = self
+            .arhiv
+            .get_document(id)?
+            .ok_or_else(|| anyhow!("document not found"))?;
 
-    let arhiv: &Arhiv = req.data().unwrap();
-    let document = arhiv
-        .get_document(id)?
-        .ok_or_else(|| anyhow!("document not found"))?;
+        if document.is_erased() {
+            let location = document_url(&document.id, &None);
+            return Ok(AppResponse::MovedPermanently { location });
+        }
 
-    if document.is_erased() {
-        return respond_moved_permanently(document_url(&document.id, &None));
+        let document_title = self.arhiv.get_schema().get_title(&document)?;
+
+        let content = render_template(json!({
+            "document_type": document.document_type,
+            "title": document_title,
+            "confirmation_text": get_confirmation_text(&document.document_type),
+            "cancel_url": document_url(&document.id, parent_collection),
+        }))?;
+
+        Ok(AppResponse::dialog(content))
     }
 
-    let document_title = arhiv.get_schema().get_title(&document)?;
+    pub fn erase_document_confirmation_dialog_handler(
+        &self,
+        id: &Id,
+        parent_collection: &Option<Id>,
+        fields: &Fields,
+    ) -> Result<AppResponse> {
+        let document = self.arhiv.must_get_document(id)?;
 
-    let content = render_template(json!({
-        "document_type": document.document_type,
-        "title": document_title,
-        "confirmation_text": get_confirmation_text(&document.document_type),
-        "cancel_url": document_url(&document.id, &collection_id),
-    }))?;
+        let confirmation_text = fields
+            .get("confirmation_text")
+            .map(String::as_str)
+            .unwrap_or_default();
 
-    render_modal(content)
+        ensure!(
+            confirmation_text == get_confirmation_text(&document.document_type),
+            "confirmation text is wrong"
+        );
+
+        self.arhiv.erase_document(id)?;
+
+        let location = parent_collection_url(&document.document_type, parent_collection);
+
+        Ok(AppResponse::SeeOther { location })
+    }
 }
 
-pub fn get_confirmation_text(document_type: &str) -> String {
+fn get_confirmation_text(document_type: &str) -> String {
     format!("erase {}", document_type)
 }

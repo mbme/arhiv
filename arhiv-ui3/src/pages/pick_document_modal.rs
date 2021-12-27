@@ -1,24 +1,24 @@
-use hyper::{Body, Request, StatusCode};
-use routerify::ext::RequestExt;
+use anyhow::Result;
 use serde_json::json;
 
-use arhiv_core::Arhiv;
-use rs_utils::server::{RequestQueryExt, ServerResponse};
+use rs_utils::server::Url;
 
-use crate::{components::Catalog, template_fn, utils::render_content};
+use crate::{
+    app::{App, AppResponse},
+    components::Catalog,
+    template_fn,
+};
 
 template_fn!(render_template, "./pick_document_modal.html.tera");
 
-pub async fn pick_document_modal(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arhiv = req.data().unwrap();
+impl App {
+    pub fn pick_document_modal(&self, url: Url) -> Result<AppResponse> {
+        let catalog = Catalog::new(url).picker_mode().render(&self.arhiv)?;
 
-    let url = req.get_url();
+        let content = render_template(json!({
+            "catalog": catalog,
+        }))?;
 
-    let catalog = Catalog::new(url).picker_mode().render(arhiv)?;
-
-    let content = render_template(json!({
-        "catalog": catalog,
-    }))?;
-
-    render_content(StatusCode::OK, content)
+        Ok(AppResponse::fragment(content))
+    }
 }

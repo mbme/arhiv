@@ -1,55 +1,51 @@
 use std::{cmp::Ordering, env, fs, ops::Not, path::Path};
 
 use anyhow::{Context, Result};
-use hyper::{Body, Request, StatusCode};
 use serde::Serialize;
 use serde_json::json;
 
-use rs_utils::{
-    ensure_dir_exists, get_home_dir, is_readable,
-    server::{RequestQueryExt, ServerResponse},
-};
+use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, server::Url};
 
 use crate::{
+    app::{App, AppResponse},
     template_fn,
     urls::{pick_file_confirmation_modal_fragment_url, pick_file_modal_fragment_url},
-    utils::render_content,
 };
 
 const DEFAULT_DIR: &str = "/";
 
 template_fn!(render_template, "./pick_file_modal.html.tera");
 
-pub async fn pick_file_modal(req: Request<Body>) -> ServerResponse {
-    let mut url = req.get_url();
+impl App {
+    pub fn pick_file_modal(mut url: Url) -> Result<AppResponse> {
+        let show_hidden = url.get_query_param("show-hidden").is_some();
+        let dir: String = url.get_query_param("dir").map_or_else(
+            || get_home_dir().unwrap_or_else(|| DEFAULT_DIR.to_string()),
+            ToString::to_string,
+        );
 
-    let show_hidden = url.get_query_param("show-hidden").is_some();
-    let dir: String = url.get_query_param("dir").map_or_else(
-        || get_home_dir().unwrap_or_else(|| DEFAULT_DIR.to_string()),
-        ToString::to_string,
-    );
+        ensure_dir_exists(&dir)?;
 
-    ensure_dir_exists(&dir)?;
+        let dir = fs::canonicalize(dir)?;
 
-    let dir = fs::canonicalize(dir)?;
+        let mut entries = list_entries(&dir, show_hidden)?;
+        sort_entries(&mut entries);
 
-    let mut entries = list_entries(&dir, show_hidden)?;
-    sort_entries(&mut entries);
+        let toggle_hidden_url = {
+            url.set_query_param("show-hidden", show_hidden.not().then(|| "".to_string()));
 
-    let toggle_hidden_url = {
-        url.set_query_param("show-hidden", show_hidden.not().then(|| "".to_string()));
+            url.render()
+        };
 
-        url.render()
-    };
+        let content = render_template(json!({
+            "show_hidden": show_hidden,
+            "toggle_hidden_url": toggle_hidden_url,
+            "dir": dir,
+            "entries": entries,
+        }))?;
 
-    let content = render_template(json!({
-        "show_hidden": show_hidden,
-        "toggle_hidden_url": toggle_hidden_url,
-        "dir": dir,
-        "entries": entries,
-    }))?;
-
-    render_content(StatusCode::OK, content)
+        Ok(AppResponse::fragment(content))
+    }
 }
 
 fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {

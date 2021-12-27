@@ -1,99 +1,94 @@
 use anyhow::{bail, ensure, Result};
-use hyper::{Body, Request};
-use routerify::ext::RequestExt;
 use serde_json::json;
 
 use arhiv_core::{
     entities::{Document, Id},
     schema::Collection,
-    Arhiv, FieldValidationErrors,
+    FieldValidationErrors,
 };
-use rs_utils::server::ServerResponse;
 
 use crate::{
+    app::{App, AppResponse},
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
-    pages::base::render_page,
     template_fn,
     urls::parent_collection_url,
 };
 
 template_fn!(render_template, "./new_document_page.html.tera");
 
-pub async fn new_document_page(req: Request<Body>) -> ServerResponse {
-    let document_type = req
-        .param("document_type")
-        .expect("document_type must be present");
+impl App {
+    pub fn new_document_page(
+        &self,
+        document_type: &str,
+        parent_collection: &Option<Id>,
+    ) -> Result<AppResponse> {
+        let schema = self.arhiv.get_schema();
 
-    let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
+        ensure!(!schema.is_internal_type(document_type));
 
-    let arhiv: &Arhiv = req.data().unwrap();
+        let mut document = Document::new(document_type);
 
-    let schema = arhiv.get_schema();
+        if let Some(ref parent_collection) = parent_collection {
+            let collection = self.arhiv.must_get_document(parent_collection)?;
+            let data_description = schema.get_data_description(&collection.document_type)?;
 
-    ensure!(!schema.is_internal_type(document_type));
+            if let Collection::Type {
+                document_type: item_type,
+                field,
+            } = data_description.collection_of
+            {
+                ensure!(
+                    item_type == document_type,
+                    "collection_id is not a collection of {}",
+                    document_type
+                );
+                document.data.set(field, parent_collection);
+            } else {
+                bail!("collection_id is not a collection");
+            };
+        }
 
-    let mut document = Document::new(document_type.clone());
+        let content = self.render_new_document_page_content(&document, parent_collection, &None)?;
 
-    if let Some(ref parent_collection) = parent_collection {
-        let collection = arhiv.must_get_document(parent_collection)?;
-        let data_description = schema.get_data_description(&collection.document_type)?;
-
-        if let Collection::Type {
-            document_type: item_type,
-            field,
-        } = data_description.collection_of
-        {
-            ensure!(
-                item_type == document_type,
-                "collection_id is not a collection of {}",
-                document_type
-            );
-            document.data.set(field, parent_collection);
-        } else {
-            bail!("collection_id is not a collection");
-        };
+        Ok(AppResponse::content(content))
     }
 
-    let content = render_new_document_page_content(&document, &None, &parent_collection, arhiv)?;
+    pub fn render_new_document_page_content(
+        &self,
+        document: &Document,
+        parent_collection: &Option<Id>,
+        errors: &Option<FieldValidationErrors>,
+    ) -> Result<String> {
+        let cancel_url = parent_collection_url(&document.document_type, parent_collection);
 
-    render_page(content, arhiv)
-}
+        let editor = DocumentDataEditor::new(
+            &document.data,
+            self.arhiv
+                .get_schema()
+                .get_data_description(&document.document_type)?,
+        )?
+        .with_errors(errors)
+        .render(cancel_url)?;
 
-pub fn render_new_document_page_content(
-    document: &Document,
-    errors: &Option<FieldValidationErrors>,
-    parent_collection: &Option<Id>,
-    arhiv: &Arhiv,
-) -> Result<String> {
-    let cancel_url = parent_collection_url(&document.document_type, parent_collection);
+        let toolbar = Toolbar::new()
+            .with_breadcrumb(Breadcrumb::for_collection(
+                &document.document_type,
+                parent_collection,
+                &self.arhiv,
+            )?)
+            .with_breadcrumb(Breadcrumb::string(format!(
+                "new {}",
+                document.document_type
+            )))
+            .on_close(parent_collection_url(
+                &document.document_type,
+                parent_collection,
+            ))
+            .render()?;
 
-    let editor = DocumentDataEditor::new(
-        &document.data,
-        arhiv
-            .get_schema()
-            .get_data_description(&document.document_type)?,
-    )?
-    .with_errors(errors)
-    .render(cancel_url)?;
-
-    let toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::for_collection(
-            &document.document_type,
-            parent_collection,
-            arhiv,
-        )?)
-        .with_breadcrumb(Breadcrumb::string(format!(
-            "new {}",
-            document.document_type
-        )))
-        .on_close(parent_collection_url(
-            &document.document_type,
-            parent_collection,
-        ))
-        .render()?;
-
-    render_template(json!({
-        "toolbar": toolbar,
-        "editor": editor,
-    }))
+        render_template(json!({
+            "toolbar": toolbar,
+            "editor": editor,
+        }))
+    }
 }

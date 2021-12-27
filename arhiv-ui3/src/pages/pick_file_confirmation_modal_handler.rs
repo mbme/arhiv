@@ -1,15 +1,13 @@
-use anyhow::anyhow;
-use hyper::{http::request::Parts, Body, Request, StatusCode};
-use routerify::ext::RequestExt;
+use anyhow::{anyhow, Result};
 use serde_json::json;
 
-use arhiv_core::{definitions::Attachment, Arhiv};
-use rs_utils::server::ServerResponse;
+use arhiv_core::definitions::Attachment;
 
 use crate::{
+    app::{App, AppResponse},
     components::Ref,
     template_fn,
-    utils::{extract_fields, render_content},
+    utils::Fields,
 };
 
 template_fn!(
@@ -17,26 +15,26 @@ template_fn!(
     "./pick_file_confirmation_modal_handler.html.tera"
 );
 
-pub async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerResponse {
-    let (parts, body): (Parts, Body) = req.into_parts();
+impl App {
+    pub async fn pick_file_confirmation_modal_handler(
+        &self,
+        fields: Fields,
+    ) -> Result<AppResponse> {
+        let file_path = fields
+            .get("file_path")
+            .ok_or_else(|| anyhow!("file_path field must be present"))?;
 
-    let arhiv: &Arhiv = parts.data().unwrap();
+        let attachment = Attachment::create(file_path, false, &self.arhiv)?;
+        let id = attachment.id.to_string();
 
-    let fields = extract_fields(body).await?;
-    let file_path = fields
-        .get("file_path")
-        .ok_or_else(|| anyhow!("file_path field must be present"))?;
+        let attachment_ref = Ref::from_document(attachment.into()).render(&self.arhiv)?;
 
-    let attachment = Attachment::create(file_path, false, arhiv)?;
-    let id = attachment.id.to_string();
+        let content = render_template(json!({
+            "id": id,
+            "file_path": file_path,
+            "attachment_ref": attachment_ref,
+        }))?;
 
-    let attachment_ref = Ref::from_document(attachment.into()).render(arhiv)?;
-
-    let content = render_template(json!({
-        "id": id,
-        "file_path": file_path,
-        "attachment_ref": attachment_ref,
-    }))?;
-
-    render_content(StatusCode::OK, content)
+        Ok(AppResponse::fragment(content))
+    }
 }

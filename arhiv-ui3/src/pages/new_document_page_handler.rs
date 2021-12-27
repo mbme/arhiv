@@ -1,48 +1,58 @@
-use hyper::{http::request::Parts, Body, Request, StatusCode};
-use routerify::ext::RequestExt;
+use anyhow::Result;
+use hyper::StatusCode;
 
 use arhiv_core::{
     entities::{Document, Id},
-    Arhiv, Validator,
+    Validator,
 };
-use rs_utils::server::{respond_see_other, ServerResponse};
 
-use super::{base::render_page_with_status, render_new_document_page_content};
-use crate::{urls::document_url, utils::extract_document_data};
+use crate::{
+    app::{App, AppResponse},
+    urls::document_url,
+    utils::{fields_to_document_data, Fields},
+};
 
-pub async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
-    let (parts, body): (Parts, Body) = req.into_parts();
+impl App {
+    pub fn new_document_page_handler(
+        &self,
+        document_type: &str,
+        parent_collection: &Option<Id>,
+        fields: &Fields,
+    ) -> Result<AppResponse> {
+        let data_description = self
+            .arhiv
+            .get_schema()
+            .get_data_description(document_type)?;
 
-    let document_type: &str = parts.param("document_type").unwrap();
-    let parent_collection: Option<Id> = parts.param("collection_id").map(Into::into);
+        let data = fields_to_document_data(fields, data_description)?;
 
-    let arhiv: &Arhiv = parts.data().unwrap();
-    let data_description = arhiv.get_schema().get_data_description(document_type)?;
+        let mut document = Document::new_with_data(document_type, data);
 
-    let data = extract_document_data(body, data_description).await?;
+        let mut tx = self.arhiv.get_tx()?;
+        let validation_result =
+            Validator::default().validate(&document.data, None, data_description, &mut tx);
 
-    let mut document = Document::new_with_data(document_type, data);
+        if let Err(error) = validation_result {
+            tx.commit()?;
 
-    let mut tx = arhiv.get_tx()?;
-    let validation_result =
-        Validator::default().validate(&document.data, None, data_description, &mut tx);
+            let content = self.render_new_document_page_content(
+                &document,
+                parent_collection,
+                &Some(error.errors),
+            )?;
 
-    if let Err(error) = validation_result {
+            return Ok(AppResponse::Content {
+                content,
+                status: StatusCode::UNPROCESSABLE_ENTITY,
+            });
+        }
+
+        self.arhiv.tx_stage_document(&mut document, &mut tx)?;
+
         tx.commit()?;
 
-        let content = render_new_document_page_content(
-            &document,
-            &Some(error.errors),
-            &parent_collection,
-            arhiv,
-        )?;
+        let location = document_url(&document.id, parent_collection);
 
-        return render_page_with_status(StatusCode::UNPROCESSABLE_ENTITY, content, arhiv);
+        Ok(AppResponse::SeeOther { location })
     }
-
-    arhiv.tx_stage_document(&mut document, &mut tx)?;
-
-    tx.commit()?;
-
-    respond_see_other(document_url(&document.id, &parent_collection))
 }

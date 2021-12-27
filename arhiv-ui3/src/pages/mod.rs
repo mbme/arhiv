@@ -1,12 +1,7 @@
-mod base;
-
-mod blob_handler;
 mod catalog_page;
 mod document_page;
 mod edit_document_page;
-mod edit_document_page_handler;
 mod erase_document_confirmation_dialog;
-mod erase_document_confirmation_dialog_handler;
 mod index_page;
 mod new_document_page;
 mod new_document_page_handler;
@@ -15,15 +10,11 @@ mod pick_document_modal;
 mod pick_file_confirmation_modal;
 mod pick_file_confirmation_modal_handler;
 mod pick_file_modal;
-mod public_assets_handler;
 
-pub use blob_handler::*;
 pub use catalog_page::*;
 pub use document_page::*;
 pub use edit_document_page::*;
-pub use edit_document_page_handler::*;
 pub use erase_document_confirmation_dialog::*;
-pub use erase_document_confirmation_dialog_handler::*;
 pub use index_page::*;
 pub use new_document_page::*;
 pub use new_document_page_handler::*;
@@ -32,4 +23,3 @@ pub use pick_document_modal::*;
 pub use pick_file_confirmation_modal::*;
 pub use pick_file_confirmation_modal_handler::*;
 pub use pick_file_modal::*;
-pub use public_assets_handler::*;

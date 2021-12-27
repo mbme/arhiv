@@ -1,15 +1,14 @@
+use anyhow::Result;
 use chrono::{DateTime, Local};
-use hyper::{Body, Request};
-use routerify::ext::RequestExt;
 use serde::Serialize;
 use serde_json::json;
 
-use arhiv_core::{entities::*, Arhiv};
-use rs_utils::server::{RequestQueryExt, ServerResponse};
+use arhiv_core::entities::*;
+use rs_utils::server::Url;
 
 use crate::{
+    app::{App, AppResponse},
     components::{Action, Breadcrumb, Catalog, Toolbar},
-    pages::base::render_page,
     template_fn,
 };
 
@@ -23,28 +22,27 @@ struct CatalogEntry {
     updated_at: DateTime<Local>,
 }
 
-pub async fn catalog_page(req: Request<Body>) -> ServerResponse {
-    let document_type: &String = req.param("document_type").unwrap();
-    let arhiv: &Arhiv = req.data().unwrap();
+impl App {
+    pub fn catalog_page(&self, document_type: &str, url: Url) -> Result<AppResponse> {
+        let catalog = Catalog::new(url)
+            .with_type(document_type)
+            .render(&self.arhiv)?;
 
-    let url = req.get_url();
+        let mut toolbar = Toolbar::new()
+            .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
+            .on_close("/");
 
-    let catalog = Catalog::new(url).with_type(document_type).render(arhiv)?;
+        if !self.arhiv.get_schema().is_internal_type(document_type) {
+            toolbar = toolbar.with_action(Action::new_document(document_type, &None));
+        }
 
-    let mut toolbar = Toolbar::new()
-        .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
-        .on_close("/");
+        let toolbar = toolbar.render()?;
 
-    if !arhiv.get_schema().is_internal_type(document_type) {
-        toolbar = toolbar.with_action(Action::new_document(document_type, &None));
+        let content = render_template(json!({
+            "toolbar": toolbar,
+            "catalog": catalog,
+        }))?;
+
+        Ok(AppResponse::content(content))
     }
-
-    let toolbar = toolbar.render()?;
-
-    let content = render_template(json!({
-        "toolbar": toolbar,
-        "catalog": catalog,
-    }))?;
-
-    render_page(content, arhiv)
 }

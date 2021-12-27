@@ -15,18 +15,18 @@
 #![allow(clippy::unused_async)]
 
 use hyper::Server;
-use routerify::{Middleware, Router, RouterService};
 
 use arhiv_core::Arhiv;
-use pages::*;
-use rs_utils::{
-    log,
-    server::{error_handler, logger_middleware, not_found_handler},
-};
+use rs_utils::log;
 
+use crate::{app::App, routes::build_router_service};
+
+mod app;
 mod components;
 mod markup;
 mod pages;
+mod public_assets_handler;
+mod routes;
 mod ui_config;
 mod urls;
 
@@ -36,76 +36,9 @@ mod utils;
 pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
     let port = arhiv.get_config().ui_server_port;
+    let app = App::new(arhiv);
 
-    let router = Router::builder()
-        .data(arhiv)
-        .middleware(Middleware::post_with_info(logger_middleware))
-        .get("/public/:fileName", public_assets_handler)
-        .get("/", index_page)
-        //
-        .get("/new", new_document_variants_page)
-        .get("/new/:document_type", new_document_page)
-        .post("/new/:document_type", new_document_page_handler)
-        .get(
-            "/collections/:collection_id/new/:document_type",
-            new_document_page,
-        )
-        .post(
-            "/collections/:collection_id/new/:document_type",
-            new_document_page_handler,
-        )
-        //
-        .get("/catalogs/:document_type", catalog_page)
-        //
-        .get("/documents/:id", document_page)
-        .get("/collections/:collection_id/documents/:id", document_page)
-        //
-        .get("/documents/:id/edit", edit_document_page)
-        .post("/documents/:id/edit", edit_document_page_handler)
-        .get("/documents/:id/erase", erase_document_confirmation_dialog)
-        .post(
-            "/documents/:id/erase",
-            erase_document_confirmation_dialog_handler,
-        )
-        //
-        .get("/collections/:collection_id/documents/:id", document_page)
-        .get(
-            "/collections/:collection_id/documents/:id/edit",
-            edit_document_page,
-        )
-        .post(
-            "/collections/:collection_id/documents/:id/edit",
-            edit_document_page_handler,
-        )
-        .get(
-            "/collections/:collection_id/documents/:id/erase",
-            erase_document_confirmation_dialog,
-        )
-        .post(
-            "/collections/:collection_id/documents/:id/erase",
-            erase_document_confirmation_dialog_handler,
-        )
-        //
-        .get("/blobs/:blob_id", blob_handler)
-        //
-        .get("/modals/pick-document", pick_document_modal)
-        .get("/modals/pick-file", pick_file_modal)
-        .get(
-            "/modals/pick-file-confirmation",
-            pick_file_confirmation_modal,
-        )
-        .post(
-            "/modals/pick-file-confirmation",
-            pick_file_confirmation_modal_handler,
-        )
-        //
-        .any(not_found_handler)
-        .err_handler_with_info(error_handler)
-        //
-        .build()
-        .expect("router must work");
-
-    let service = RouterService::new(router).unwrap();
+    let service = build_router_service(app).expect("router must work");
 
     let server = Server::bind(&(std::net::Ipv4Addr::LOCALHOST, port).into()).serve(service);
     let addr = server.local_addr();

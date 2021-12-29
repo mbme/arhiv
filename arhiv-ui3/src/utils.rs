@@ -66,13 +66,10 @@ pub fn fields_to_document_data(
     let mut data = DocumentData::new();
 
     for field in &data_description.fields {
-        let raw_value = if let Some(value) = fields.get(field.name) {
-            value
-        } else {
-            continue;
-        };
+        let raw_value = fields.get(field.name).map(String::as_str);
 
-        let value = field.from_string(raw_value)?;
+        let value = field.from_raw_value(raw_value)?;
+
         data.set(field.name, value);
     }
 

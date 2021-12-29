@@ -75,35 +75,38 @@ impl Field {
         result
     }
 
-    pub fn from_string(&self, raw_value: &str) -> Result<Value> {
-        let raw_value = raw_value.trim();
-
+    pub fn from_raw_value(&self, raw_value: Option<&str>) -> Result<Value> {
         match self.field_type {
             // skip empty string from ref field
             FieldType::Ref(_) => {
-                if raw_value.is_empty() {
+                let value = raw_value.unwrap_or_default().trim();
+
+                if value.is_empty() {
                     return Ok(Value::Null);
                 }
-
-                serde_json::to_value(raw_value).context("failed to serialize")
-            }
-
-            // convert string list of refs into array of ids
-            FieldType::RefList(_) => {
-                let value = extract_ids_from_reflist(raw_value);
 
                 serde_json::to_value(value).context("failed to serialize")
             }
 
-            // convert string "true" to boolean
+            // convert string list of refs into array of ids
+            FieldType::RefList(_) => {
+                let value = extract_ids_from_reflist(raw_value.unwrap_or_default());
+
+                serde_json::to_value(value).context("failed to serialize")
+            }
+
+            // convert string "true" to boolean, default to false
+            // (since browsers do not send values of unchecked radio inputs)
             FieldType::Flag {} => {
-                let value = raw_value == "true";
+                let value = raw_value.unwrap_or_default() == "true";
 
                 serde_json::to_value(value).context("failed to serialize")
             }
 
             // convert string to number
             FieldType::NaturalNumber {} => {
+                let raw_value = raw_value.unwrap_or_default().trim();
+
                 if raw_value.is_empty() {
                     return Ok(Value::Null);
                 }

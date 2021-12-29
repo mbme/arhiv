@@ -1,5 +1,4 @@
-import { Browser } from 'puppeteer-core';
-import { ActionChannel } from './ActionChannel';
+import { Context } from './context';
 import type { Obj } from './utils';
 
 const LANGUAGE_TRANSLATIONS: Obj = {
@@ -8,18 +7,17 @@ const LANGUAGE_TRANSLATIONS: Obj = {
   'Російська': 'Russian',
 };
 
-export async function extractBookFromYakaboo(url: string, browser: Browser, channel: ActionChannel): Promise<boolean> {
+export async function extractBookFromYakaboo(url: string, context: Context): Promise<boolean> {
   if (!url.includes('www.yakaboo.ua/ua/')) {
     return false;
   }
 
-  const page = await browser.newPage();
-  await page.goto(url);
+  const page = await context.newPage(url);
 
   const data: Obj = {};
 
   const cover_src = await page.$eval('#image', node => (node as HTMLImageElement).src);
-  data.cover = await channel.createAttachment(cover_src);
+  data.cover = await context.channel.createAttachment(cover_src);
 
   const title = await page.$eval('#product-title h1', node => (node as HTMLHeadingElement).innerText);
   data.title = title.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
@@ -75,7 +73,9 @@ export async function extractBookFromYakaboo(url: string, browser: Browser, chan
     }
   }
 
-  await channel.createDocument('book', data);
+  await context.channel.createDocument('book', data);
+
+  await page.close();
 
   return true;
 }

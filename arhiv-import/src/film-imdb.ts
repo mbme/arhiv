@@ -13,6 +13,8 @@ async function getList(el: ElementHandle<HTMLElement> | Page, selector: string) 
   return uniqArr(items);
 }
 
+// In general, its hard to scrape data from IMDB because page structure / information order
+// often changes based on content type (movie/series/short series etc.)
 export async function extractFilmFromIMDB(url: string, context: Context): Promise<boolean> {
   if (!url.includes('imdb.com/title/')) {
     return false;

@@ -31,7 +31,19 @@ impl App {
         let content =
             self.render_edit_document_page_content(&document, parent_collection, &None)?;
 
-        Ok(AppResponse::page(content))
+        let title = self.get_title(&document)?;
+
+        Ok(AppResponse::page(title, content))
+    }
+
+    fn get_title(&self, document: &Document) -> Result<String> {
+        let title = format!(
+            "Edit {} {}",
+            document.document_type,
+            self.arhiv.get_schema().get_title(document)?
+        );
+
+        Ok(title)
     }
 
     fn render_edit_document_page_content(
@@ -99,7 +111,10 @@ impl App {
                 &Some(error.errors),
             )?;
 
+            let title = self.get_title(&document)?;
+
             return Ok(AppResponse::page_with_status(
+                title,
                 content,
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));

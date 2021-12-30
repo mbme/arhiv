@@ -43,6 +43,8 @@ impl App {
             "catalog": catalog,
         }))?;
 
-        Ok(AppResponse::page(content))
+        let title = format!("{}s catalog", document_type);
+
+        Ok(AppResponse::page(title, content))
     }
 }

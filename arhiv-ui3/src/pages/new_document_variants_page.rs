@@ -30,6 +30,9 @@ impl App {
             "document_types": document_types,
         }))?;
 
-        Ok(AppResponse::page(content))
+        Ok(AppResponse::page(
+            "New document variants".to_string(),
+            content,
+        ))
     }
 }

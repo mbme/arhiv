@@ -1,17 +1,19 @@
 use anyhow::{bail, ensure, Result};
+use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::{
     entities::{Document, Id},
     schema::Collection,
-    FieldValidationErrors,
+    FieldValidationErrors, Validator,
 };
 
 use crate::{
     app::{App, AppResponse},
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     template_fn,
-    urls::parent_collection_url,
+    urls::{document_url, parent_collection_url},
+    utils::{fields_to_document_data, Fields},
 };
 
 template_fn!(render_template, "./new_document_page.html.tera");
@@ -50,7 +52,9 @@ impl App {
 
         let content = self.render_new_document_page_content(&document, parent_collection, &None)?;
 
-        Ok(AppResponse::page(content))
+        let title = format!("New {}", document_type);
+
+        Ok(AppResponse::page(title, content))
     }
 
     pub fn render_new_document_page_content(
@@ -90,5 +94,51 @@ impl App {
             "toolbar": toolbar,
             "editor": editor,
         }))
+    }
+
+    pub fn new_document_page_handler(
+        &self,
+        document_type: &str,
+        parent_collection: &Option<Id>,
+        fields: &Fields,
+    ) -> Result<AppResponse> {
+        let data_description = self
+            .arhiv
+            .get_schema()
+            .get_data_description(document_type)?;
+
+        let data = fields_to_document_data(fields, data_description)?;
+
+        let mut document = Document::new_with_data(document_type, data);
+
+        let mut tx = self.arhiv.get_tx()?;
+        let validation_result =
+            Validator::default().validate(&document.data, None, data_description, &mut tx);
+
+        if let Err(error) = validation_result {
+            tx.commit()?;
+
+            let content = self.render_new_document_page_content(
+                &document,
+                parent_collection,
+                &Some(error.errors),
+            )?;
+
+            let title = format!("New {}", document_type);
+
+            return Ok(AppResponse::page_with_status(
+                title,
+                content,
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+
+        self.arhiv.tx_stage_document(&mut document, &mut tx)?;
+
+        tx.commit()?;
+
+        let location = document_url(&document.id, parent_collection);
+
+        Ok(AppResponse::SeeOther { location })
     }
 }

@@ -40,7 +40,9 @@ impl App {
             "cancel_url": document_url(&document.id, parent_collection),
         }))?;
 
-        Ok(AppResponse::dialog(content))
+        let title = format!("Erase {}?", &document.document_type);
+
+        Ok(AppResponse::dialog(title, content))
     }
 
     pub fn erase_document_confirmation_dialog_handler(

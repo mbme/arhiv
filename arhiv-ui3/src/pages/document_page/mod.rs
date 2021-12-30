@@ -71,7 +71,13 @@ impl App {
             "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, collection_id)),
         }))?;
 
-        Ok(AppResponse::page(content))
+        let title = format!(
+            "{} {}",
+            document.document_type,
+            self.arhiv.get_schema().get_title(&document)?
+        );
+
+        Ok(AppResponse::page(title, content))
     }
 }
 

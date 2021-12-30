@@ -137,6 +137,7 @@ const UPGRADES: [Upgrade; DB::VERSION as usize] = [
     upgrade_v11_to_v12,
     upgrade_v12_to_v13,
     upgrade_v13_to_v14,
+    upgrade_v14_to_v15,
 ];
 
 // stub
@@ -706,6 +707,31 @@ fn upgrade_v13_to_v14(
         UPDATE documents_snapshots
                 SET data = json_replace(data, '$.rating', 'Bad')
                 WHERE (type = 'book' OR type = 'film') AND json_extract(data, '$.rating') = 'Very Bad';
+       ",
+    )?;
+
+    Ok(())
+}
+
+/// in books delete field ISBN
+fn upgrade_v14_to_v15(
+    conn: &Connection,
+    _fs_tx: &mut FsTransaction,
+    _data_dir: &str,
+) -> Result<()> {
+    conn.execute_batch(
+        "INSERT INTO settings
+                       SELECT * FROM old_db.settings;
+
+        UPDATE settings SET value = '15' WHERE key = 'db_version';
+
+        INSERT INTO documents_snapshots
+                       SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
+                       FROM old_db.documents_snapshots;
+
+        UPDATE documents_snapshots
+                SET data = json_remove(data, '$.ISBN')
+                WHERE type = 'book';
        ",
     )?;
 

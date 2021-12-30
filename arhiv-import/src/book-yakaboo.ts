@@ -64,11 +64,6 @@ export async function extractBookFromYakaboo(url: string, context: Context): Pro
         break;
       }
 
-      case 'ISBN': {
-        data['ISBN'] = value;
-        break;
-      }
-
       default: break;
     }
   }

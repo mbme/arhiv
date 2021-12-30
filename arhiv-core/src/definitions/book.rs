@@ -66,12 +66,6 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                     mandatory: false,
                     readonly: false,
                 },
-                Field {
-                    name: "ISBN",
-                    field_type: FieldType::ISBN {},
-                    mandatory: false,
-                    readonly: false,
-                },
                 // for audiobooks
                 Field {
                     name: "narrators",

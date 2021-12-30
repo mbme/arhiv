@@ -19,7 +19,6 @@ pub enum FieldType {
     RefList(&'static str),         // string[]
     BLOBId,                        // string
     Enum(&'static [&'static str]), // string
-    ISBN {},                       // string
     Date {},                       // string
     Duration {},                   // string
     People {},                     // string
@@ -159,7 +158,6 @@ impl Field {
             FieldType::String {}
             | FieldType::MarkupString {}
             | FieldType::Ref(_)
-            | FieldType::ISBN {}
             | FieldType::Date {}
             | FieldType::Duration {}
             | FieldType::People {}

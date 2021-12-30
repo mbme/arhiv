@@ -69,7 +69,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "is_series",
                     field_type: FieldType::Flag {},
-                    mandatory: true,
+                    mandatory: false,
                     readonly: false,
                 },
                 // ----------- if Series

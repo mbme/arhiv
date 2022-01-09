@@ -4,6 +4,7 @@ use std::fs;
 
 use anyhow::{Context, Result};
 
+use crate::path_to_string;
 use crate::{generate_alpanumeric_string, path_exists};
 
 pub struct TempFile {
@@ -90,9 +91,7 @@ fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
 
     path.push(file_name.as_ref());
 
-    path.to_str()
-        .expect("must be able to convert path to string")
-        .to_string()
+    path_to_string(path).expect("must be able to convert path to string")
 }
 
 #[must_use]

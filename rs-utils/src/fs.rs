@@ -13,6 +13,16 @@ pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
 }
 
+pub fn path_to_string(path: impl Into<PathBuf>) -> Result<String> {
+    let result = path
+        .into()
+        .to_str()
+        .context("Failed to convert file path to string")?
+        .to_string();
+
+    Ok(result)
+}
+
 /// This won't follow symlinks
 pub fn file_exists(path: &str) -> Result<bool> {
     match fs::symlink_metadata(path) {
@@ -181,12 +191,7 @@ pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
 
     let path = fs::canonicalize(path.as_ref()).context("failed to canonicalize path")?;
 
-    path.into_os_string().into_string().map_err(|err| {
-        anyhow!(
-            "failed to convert path to string: {}",
-            err.to_string_lossy()
-        )
-    })
+    path_to_string(path)
 }
 
 #[must_use]
@@ -228,17 +233,9 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
     for entry in fs::read_dir(path.as_ref())? {
         let entry = entry?;
 
-        let name = entry
-            .file_name()
-            .to_str()
-            .context("Failed to convert file path to string")?
-            .to_string();
+        let name = path_to_string(entry.file_name())?;
 
-        let path = entry
-            .path()
-            .to_str()
-            .context("Failed to convert file path to string")?
-            .to_string();
+        let path = path_to_string(entry.path())?;
 
         let hash = if fs::metadata(&path)?.is_dir() {
             get_dir_checksum(&path)?

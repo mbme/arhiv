@@ -1,10 +1,10 @@
 use std::{cmp::Ordering, env, fs, ops::Not, path::Path};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::Serialize;
 use serde_json::json;
 
-use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, server::Url};
+use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string, server::Url};
 
 use crate::{
     app::{App, AppResponse},
@@ -52,10 +52,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
     let mut result = vec![];
 
     if let Some(parent) = dir.parent() {
-        let path = parent
-            .to_str()
-            .context("Failed to convert file path to string")?
-            .to_string();
+        let path = path_to_string(parent)?;
 
         let metadata = fs::metadata(&path)?;
 
@@ -69,25 +66,17 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
         });
     }
 
-    for entry in std::fs::read_dir(dir)? {
+    for entry in fs::read_dir(dir)? {
         let entry = entry?;
 
-        let name = entry
-            .file_name()
-            .to_str()
-            .context("Failed to convert file name to string")?
-            .to_string();
+        let name = path_to_string(entry.file_name())?;
 
         // skip hidden files
         if !show_hidden && name.starts_with('.') {
             continue;
         }
 
-        let path = entry
-            .path()
-            .to_str()
-            .context("Failed to convert file path to string")?
-            .to_string();
+        let path = path_to_string(entry.path())?;
 
         let file_type = entry.file_type()?;
         let metadata = fs::metadata(&path)?;
@@ -98,10 +87,8 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
         let mut links_to = None;
 
         if file_type.is_symlink() {
-            let link_path = fs::canonicalize(&path)?
-                .to_str()
-                .context("Failed to convert link path to string")?
-                .to_string();
+            let link_path = fs::canonicalize(&path)?;
+            let link_path = path_to_string(link_path)?;
 
             links_to = Some(link_path);
         }

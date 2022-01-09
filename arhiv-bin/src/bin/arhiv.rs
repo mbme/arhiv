@@ -19,6 +19,7 @@ use arhiv_ui3::start_ui_server;
 use rs_utils::{
     into_absolute_path,
     log::{self, setup_logger_with_level},
+    EnvCapabilities,
 };
 
 #[allow(clippy::too_many_lines)]
@@ -131,7 +132,8 @@ async fn main() {
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
 
-            let documents = scrape(&arhiv, url, false, !skip_confirmation)
+            let capabilities = EnvCapabilities::must_check();
+            let documents = scrape(&arhiv, &capabilities, url, false, !skip_confirmation)
                 .await
                 .expect("failed to import document");
 

@@ -6,14 +6,17 @@ export class Context {
 
   private _browser?: Browser;
 
-  constructor(private _debug: boolean) {}
+  constructor(
+    private _chromeBinPath: string,
+    private _debug: boolean,
+  ) {}
 
   private async getBrowser(): Promise<Browser> {
     if (this._browser) {
       return this._browser;
     }
 
-    const executablePath = '/usr/bin/chromium'; // FIXME run `which chromium`
+    const executablePath = this._chromeBinPath;
 
     this._browser = await puppeteer.launch(this._debug ? {
       executablePath,

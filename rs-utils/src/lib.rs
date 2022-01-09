@@ -20,6 +20,7 @@ use std::process::{Command, Stdio};
 use anyhow::{bail, Result};
 
 pub use crypto::*;
+pub use env_capabilities::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
@@ -29,6 +30,7 @@ pub use markov::Markov;
 pub use string::*;
 
 mod crypto;
+mod env_capabilities;
 mod fs;
 mod fs_temp;
 mod fs_transaction;

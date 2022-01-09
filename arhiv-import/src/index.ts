@@ -6,10 +6,11 @@ import { extractImage } from './attachment-image';
 type Importer = (url: string, context: Context) => Promise<boolean>;
 
 const args = process.argv.slice(2);
-const url = args[0];
-const debug = args[1] === 'true';
+const chromeBinPath = args[0];
+const url = args[1];
+const debug = args[2] === 'true';
 
-const context = new Context(debug);
+const context = new Context(chromeBinPath, debug);
 
 const SCRAPERS: Importer[] = [
   extractBookFromYakaboo,

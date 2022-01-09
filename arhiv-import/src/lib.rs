@@ -30,7 +30,7 @@ use arhiv_core::{
     entities::{Document, DocumentData},
     Arhiv,
 };
-use rs_utils::{download_file, log, TempFile};
+use rs_utils::{download_file, log, EnvCapabilities, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
@@ -55,15 +55,28 @@ fn get_script_temp_file() -> Result<TempFile> {
     Ok(temp_file)
 }
 
-pub async fn scrape(arhiv: &Arhiv, url: &str, debug: bool, confirm: bool) -> Result<Vec<Document>> {
+pub async fn scrape(
+    arhiv: &Arhiv,
+    capabilities: &EnvCapabilities,
+    url: &str,
+    debug: bool,
+    confirm: bool,
+) -> Result<Vec<Document>> {
+    ensure!(capabilities.nodejs, "NodeJS must be available");
+    let chrome_bin_path = capabilities
+        .chrome
+        .as_ref()
+        .context("Chromium or Chrome must be available")?;
+
     log::info!("Scraping data from '{}'", url);
 
     let script_temp_file = get_script_temp_file()?;
 
     let mut child = Command::new("node")
         .arg("--title")
-        .arg("arhiv-import-scraper")
+        .arg("arhiv-scraper")
         .arg(&script_temp_file.path)
+        .arg(chrome_bin_path)
         .arg(url)
         .arg(debug.to_string())
         .stdin(Stdio::piped())
@@ -197,6 +210,7 @@ mod tests {
     use serde_json::Value;
 
     use arhiv_core::test_arhiv::TestArhiv;
+    use rs_utils::EnvCapabilities;
 
     use super::scrape;
 
@@ -207,7 +221,9 @@ mod tests {
     ) -> Result<Value> {
         let arhiv = TestArhiv::new_prime();
 
-        let documents = scrape(&arhiv, url, false, false).await?;
+        let capabilities = EnvCapabilities::must_check();
+
+        let documents = scrape(&arhiv, &capabilities, url, false, false).await?;
 
         assert_eq!(documents.len(), expected_documents_count);
 

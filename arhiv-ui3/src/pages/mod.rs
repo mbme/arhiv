@@ -7,7 +7,6 @@ mod new_document_page;
 mod new_document_variants_page;
 mod pick_document_modal;
 mod pick_file_confirmation_modal;
-mod pick_file_confirmation_modal_handler;
 mod pick_file_modal;
 
 pub use catalog_page::*;
@@ -19,5 +18,4 @@ pub use new_document_page::*;
 pub use new_document_variants_page::*;
 pub use pick_document_modal::*;
 pub use pick_file_confirmation_modal::*;
-pub use pick_file_confirmation_modal_handler::*;
 pub use pick_file_modal::*;

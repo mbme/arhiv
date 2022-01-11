@@ -1,11 +1,11 @@
 import { copyTextAndNotify } from '../scripts/clipboard';
-import { modalLink, modalSubmit } from '../scripts/forms';
+import { isFormElement, initDynamicLink, initDynamicForm, isAnchorElement } from '../scripts/forms';
 import { dispatchCloseModalEvent } from '../scripts/modal';
 
 export function initPickDocumentModal(modalEl: HTMLElement): void {
   modalEl.querySelectorAll('[data-component=catalog-entry]').forEach((el) => {
     if (!(el instanceof HTMLElement)) {
-      return;
+      throw new Error('must be applied to HTML element');
     }
 
     el.addEventListener('click', (e) => {
@@ -24,12 +24,18 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
     });
   });
 
-  modalEl.querySelectorAll('a[data-component=pagination]').forEach(modalLink);
+  modalEl.querySelectorAll('a[data-component=pagination]').forEach((el) => {
+    if (!isAnchorElement(el)) {
+      throw new Error('must be applied to link');
+    }
+
+    initDynamicLink(el, modalEl);
+  });
 
   const searchForm = modalEl.querySelector('form[data-component=search-input]');
-  if (!searchForm) {
-    throw new Error('search form is missing');
+  if (!isFormElement(searchForm)) {
+    throw new Error('search form must be present');
   }
 
-  modalSubmit(searchForm);
+  initDynamicForm(searchForm, modalEl);
 }

@@ -1,4 +1,3 @@
-import { getModalContainer } from './modal';
 import { fetchText, replaceEl } from './utils';
 
 export function formDataToObject(fd: FormData): Record<string, string> {
@@ -103,36 +102,32 @@ export async function submitFormAndReplace(form: HTMLFormElement, targetEl: HTML
   replaceEl(targetEl, content);
 }
 
-export function modalSubmit(formEl: Element): void {
-  if (!(formEl instanceof HTMLFormElement)) {
-    throw new Error('must be applied to form');
-  }
+export function isFormElement(el: Element | null): el is HTMLFormElement {
+  return (el instanceof HTMLFormElement);
+}
 
-  const modalEl = getModalContainer(formEl);
-
+export function initDynamicForm(formEl: HTMLFormElement, containerEl: HTMLElement): void {
   formEl.addEventListener('submit', (e) => {
     e.preventDefault();
 
     void submitForm(formEl).then(content => {
-      modalEl.innerHTML = content;
-      modalEl.scrollTop = 0;
+      containerEl.innerHTML = content;
+      containerEl.scrollTop = 0;
     });
   });
 }
 
-export function modalLink(linkEl: Element): void {
-  if (!(linkEl instanceof HTMLAnchorElement)) {
-    throw new Error('must be applied to anchor');
-  }
+export function isAnchorElement(el: Element | null): el is HTMLAnchorElement {
+  return (el instanceof HTMLAnchorElement);
+}
 
-  const modalEl = getModalContainer(linkEl);
-
+export function initDynamicLink(linkEl: HTMLAnchorElement, containerEl: HTMLElement): void {
   linkEl.addEventListener('click', (e) => {
     e.preventDefault();
 
     void fetchText(linkEl.href).then((content) => {
-      modalEl.innerHTML = content;
-      modalEl.scrollTop = 0;
+      containerEl.innerHTML = content;
+      containerEl.scrollTop = 0;
     });
   });
 }

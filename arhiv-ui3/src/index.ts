@@ -1,8 +1,8 @@
 import { keepSessionState } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
 import { copyTextAndNotify } from './scripts/clipboard';
-import { autoGrowTextarea, modalLink, modalSubmit, preserveUnsavedChanges } from './scripts/forms';
-import { dispatchCloseModalEvent, showModal } from './scripts/modal';
+import { autoGrowTextarea, isFormElement, initDynamicLink, initDynamicForm, preserveUnsavedChanges, isAnchorElement } from './scripts/forms';
+import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts/modal';
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
 
@@ -71,11 +71,23 @@ window.addEventListener('DOMContentLoaded', () => {
     },
 
     'v-modal-submit': (formEl) => {
-      modalSubmit(formEl);
+      if (!isFormElement(formEl)) {
+        throw new Error('must be applied to form');
+      }
+
+      const modalEl = getModalContainer(formEl);
+
+      initDynamicForm(formEl, modalEl);
     },
 
     'v-modal-link': (linkEl) => {
-      modalLink(linkEl);
+      if (!isAnchorElement(linkEl)) {
+        throw new Error('must be applied to link');
+      }
+
+      const modalEl = getModalContainer(linkEl);
+
+      initDynamicLink(linkEl, modalEl);
     },
   });
 });

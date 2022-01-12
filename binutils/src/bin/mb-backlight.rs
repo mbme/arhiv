@@ -23,8 +23,8 @@ fn main() {
 
     let app = App::new("mb-backlight")
         .arg(
-            Arg::with_name("notify")
-                .short("n")
+            Arg::new("notify")
+                .short('n')
                 .help("Send notification with current backlight state"),
         )
         .subcommand(App::new("status").about("Print current state of backlight"))

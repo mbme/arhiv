@@ -16,15 +16,15 @@
 use clap::{crate_version, App, Arg};
 
 use binutils::devices::{Microphone, Speakers};
-use rs_utils::log::{error, setup_logger};
+use rs_utils::log;
 
 fn main() {
-    setup_logger();
+    log::setup_logger();
 
     let app = App::new("mb-audio")
         .arg(
-            Arg::with_name("notify")
-                .short("n")
+            Arg::new("notify")
+                .short('n')
                 .help("Send notification with current state"),
         )
         .subcommand(
@@ -49,11 +49,11 @@ fn main() {
 
     let matches = app.get_matches();
     let notify = matches.is_present("notify");
-    let (subcommand, args) = matches.subcommand();
+    let (subcommand, args) = matches.subcommand().expect("subcommand must be provided");
 
     if subcommand == "speakers" {
         let speakers = Speakers::find();
-        match args.and_then(clap::ArgMatches::subcommand_name) {
+        match args.subcommand_name() {
             Some("status") => {
                 speakers.print_status(notify);
             }
@@ -78,10 +78,10 @@ fn main() {
                 speakers.print_status(notify);
             }
             Some(command) => {
-                error!("Unexpected command: {}", command);
+                log::error!("Unexpected command: {}", command);
             }
             None => {
-                error!("Command is missing");
+                log::error!("Command is missing");
             }
         }
         return;
@@ -89,7 +89,7 @@ fn main() {
 
     if subcommand == "mic" {
         let mic = Microphone::find();
-        match args.and_then(clap::ArgMatches::subcommand_name) {
+        match args.subcommand_name() {
             Some("status") => {
                 mic.print_status(notify);
             }
@@ -106,14 +106,14 @@ fn main() {
                 mic.print_status(notify);
             }
             Some(command) => {
-                error!("Unexpected command: {}", command);
+                log::error!("Unexpected command: {}", command);
             }
             None => {
-                error!("Command is missing");
+                log::error!("Command is missing");
             }
         }
         return;
     }
 
-    error!("Unknown subcommand {}", subcommand);
+    log::error!("Unknown subcommand {}", subcommand);
 }

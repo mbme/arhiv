@@ -13,59 +13,56 @@
     clippy::cast_lossless
 )]
 
-use clap::{crate_version, App, AppSettings, Arg, SubCommand};
+use clap::{crate_version, App, AppSettings, Arg};
 
 use arhiv_core::definitions::get_standard_schema;
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
-pub fn build_app() -> App<'static, 'static> {
+pub fn build_app() -> App<'static> {
     App::new("arhiv")
         .bin_name("arhiv")
         .subcommand(
-            SubCommand::with_name("init")
+            App::new("init")
                 .about("Initialize Arhiv instance on local machine")
                 .arg(
-                    Arg::with_name("arhiv_id")
+                    Arg::new("arhiv_id")
                         .long("arhiv_id")
                         .required(true)
                         .index(1)
                         .help("Arhiv id to use"),
                 )
                 .arg(
-                    Arg::with_name("prime")
+                    Arg::new("prime")
                         .long("prime")
                         .display_order(1)
                         .help("Initialize prime instance"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("sync") //
+            App::new("sync") //
                 .about("Sync changes"),
         )
+        .subcommand(App::new("apply-migrations").about("Upgrade arhiv db schema to latest version"))
         .subcommand(
-            SubCommand::with_name("apply-migrations")
-                .about("Upgrade arhiv db schema to latest version"),
-        )
-        .subcommand(
-            SubCommand::with_name("backup") //
+            App::new("backup") //
                 .about("Backup arhiv data"),
         )
         .subcommand(
-            SubCommand::with_name("ui-server") //
+            App::new("ui-server") //
                 .about("Run arhiv UI server"),
         )
         .subcommand(
-            SubCommand::with_name("ui-open") //
+            App::new("ui-open") //
                 .about("Open document in UI")
                 .arg(
-                    Arg::with_name("id")
+                    Arg::new("id")
                         .index(1)
                         .required(true)
                         .help("document id to open"),
                 )
                 .arg(
-                    Arg::with_name("browser")
+                    Arg::new("browser")
                         .long("browser")
                         .takes_value(true)
                         .min_values(0)
@@ -74,95 +71,79 @@ pub fn build_app() -> App<'static, 'static> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("prime-server")
-                .about("Run prime server")
-                .arg(
-                    Arg::with_name("port")
-                        .long("port")
-                        .takes_value(true)
-                        .default_value("23420")
-                        .help("Listen on specific port"),
-                ),
+            App::new("prime-server").about("Run prime server").arg(
+                Arg::new("port")
+                    .long("port")
+                    .takes_value(true)
+                    .default_value("23420")
+                    .help("Listen on specific port"),
+            ),
         )
         .subcommand(
-            SubCommand::with_name("status") //
+            App::new("status") //
                 .about("Print current status"),
         )
         .subcommand(
-            SubCommand::with_name("config") //
+            App::new("config") //
                 .about("Print config")
                 .arg(
-                    Arg::with_name("template")
-                        .short("t")
+                    Arg::new("template")
+                        .short('t')
                         .long("template")
                         .display_order(1)
                         .help("Prints config template"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("get")
+            App::new("get")
                 .about("Get document by id")
-                .arg(
-                    Arg::with_name("id")
-                        .required(true)
-                        .help("id of the document"),
-                ),
+                .arg(Arg::new("id").required(true).help("id of the document")),
         )
         .subcommand(
-            SubCommand::with_name("add")
+            App::new("add")
                 .about("Add new document")
                 .arg(
-                    Arg::with_name("document_type")
+                    Arg::new("document_type")
                         .required(true)
-                        .possible_values(&get_standard_schema().get_document_types(true))
+                        .possible_values(get_standard_schema().get_document_types(true))
                         .index(1)
                         .help("One of known document types"),
                 )
                 .arg(
-                    Arg::with_name("data")
+                    Arg::new("data")
                         .required(true)
                         .index(2)
                         .help("JSON object with document props"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("attach")
+            App::new("attach")
                 .about("Add new attachment. Will hard link or copy file to arhiv.")
                 .arg(
-                    Arg::with_name("file_path")
+                    Arg::new("file_path")
                         .required(true)
                         .index(1)
                         .help("Absolute path to file to save"),
                 )
-                .arg(
-                    Arg::with_name("move_file")
-                        .short("m")
-                        .help("Move file to arhiv"),
-                ),
+                .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
         )
         .subcommand(
-            SubCommand::with_name("import")
+            App::new("scrape")
                 .about("Scrape data and create document")
                 .arg(
-                    Arg::with_name("url") //
+                    Arg::new("url") //
                         .required(true)
                         .index(1)
                         .help("url to scrape"),
-                )
-                .arg(
-                    Arg::with_name("skip_confirmation")
-                        .long("skip_confirmation")
-                        .help("Import scraped data without confirmation"),
                 ),
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .setting(AppSettings::DisableHelpSubcommand)
-        .setting(AppSettings::DeriveDisplayOrder)
-        .setting(AppSettings::VersionlessSubcommands)
+        .global_setting(AppSettings::DisableHelpSubcommand)
+        .global_setting(AppSettings::DeriveDisplayOrder)
         .arg(
-            Arg::with_name("verbose")
-                .short("v")
-                .multiple(true)
+            Arg::new("verbose")
+                .short('v')
+                .multiple_occurrences(true)
                 .global(true)
                 .help("Increases logging verbosity each use for up to 2 times"),
         )

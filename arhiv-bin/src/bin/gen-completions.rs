@@ -1,6 +1,6 @@
 use std::env;
 
-use clap::Shell;
+use clap_complete::{generate_to, Shell};
 
 use arhiv_bin::build_app;
 
@@ -15,6 +15,9 @@ fn main() {
 
     let bin_name = app.get_bin_name().unwrap().to_string();
 
-    app.gen_completions(&bin_name, Shell::Bash, outdir.clone());
-    app.gen_completions(&bin_name, Shell::Zsh, outdir);
+    generate_to(Shell::Bash, &mut app, &bin_name, &outdir)
+        .expect("failed to generate Bash completions");
+
+    generate_to(Shell::Zsh, &mut app, &bin_name, &outdir)
+        .expect("failed to generate Zsh completions");
 }

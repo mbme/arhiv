@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.38"
-clap = { version = "2.33.3", features = ["color"] }
+clap = { version = "3.0", features = ["color"] }
 regex = "1.4.3"
 lazy_static = "1.4.0"
 

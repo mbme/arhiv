@@ -29,8 +29,8 @@ async fn main() {
 
     setup_logger_with_level(matches.occurrences_of("verbose"));
 
-    match matches.subcommand() {
-        ("init", Some(matches)) => {
+    match matches.subcommand().expect("subcommand must be provided") {
+        ("init", matches) => {
             let arhiv_id: String = matches
                 .value_of("arhiv_id")
                 .expect("arhiv_id must be present")
@@ -51,7 +51,7 @@ async fn main() {
             println!("{}", status);
             // FIXME print number of unused temp attachments
         }
-        ("config", Some(matches)) => {
+        ("config", matches) => {
             if matches.is_present("template") {
                 print!("{}", include_str!("../../arhiv.json.template"));
                 return;
@@ -67,7 +67,7 @@ async fn main() {
         ("sync", _) => {
             Arhiv::must_open().sync().await.expect("must sync");
         }
-        ("get", Some(matches)) => {
+        ("get", matches) => {
             let id: Id = matches.value_of("id").expect("id must be present").into();
 
             let arhiv = Arhiv::must_open();
@@ -84,7 +84,7 @@ async fn main() {
                 process::exit(1);
             }
         }
-        ("add", Some(matches)) => {
+        ("add", matches) => {
             let document_type: &str = matches
                 .value_of("document_type")
                 .expect("document_type must be present");
@@ -107,7 +107,7 @@ async fn main() {
                 document_url(&document.id, arhiv.get_config().ui_server_port)
             );
         }
-        ("attach", Some(matches)) => {
+        ("attach", matches) => {
             let file_path: &str = matches
                 .value_of("file_path")
                 .expect("file_path must be present");
@@ -124,7 +124,7 @@ async fn main() {
 
             println!("{}", &attachment.id);
         }
-        ("scrape", Some(matches)) => {
+        ("scrape", matches) => {
             let url: &str = matches.value_of("url").expect("url must be present");
 
             let arhiv = Arhiv::must_open();
@@ -147,7 +147,7 @@ async fn main() {
         ("ui-server", _) => {
             start_ui_server().await;
         }
-        ("ui-open", Some(matches)) => {
+        ("ui-open", matches) => {
             let id: Id = matches.value_of("id").expect("id must be present").into();
 
             let port = Config::must_read().0.ui_server_port;
@@ -165,7 +165,7 @@ async fn main() {
                 .spawn()
                 .unwrap_or_else(|_| panic!("failed to run browser {}", browser));
         }
-        ("prime-server", Some(matches)) => {
+        ("prime-server", matches) => {
             let arhiv = Arc::new(Arhiv::must_open());
 
             if !arhiv

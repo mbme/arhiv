@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::{json, Value};
 
-use arhiv_import::scrape;
+use arhiv_scraper::scrape;
 use rs_utils::EnvCapabilities;
 
 use crate::{

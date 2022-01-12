@@ -8,6 +8,6 @@
   "private": true,
   "workspaces": [
     "arhiv-ui3",
-    "arhiv-import"
+    "arhiv-scraper"
   ]
 }

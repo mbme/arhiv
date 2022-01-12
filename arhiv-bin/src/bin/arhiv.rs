@@ -14,7 +14,7 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config,
 };
-use arhiv_import::scrape;
+use arhiv_scraper::scrape;
 use arhiv_ui3::start_ui_server;
 use rs_utils::{
     into_absolute_path,
@@ -124,7 +124,7 @@ async fn main() {
 
             println!("{}", &attachment.id);
         }
-        ("import", Some(matches)) => {
+        ("scrape", Some(matches)) => {
             let url: &str = matches.value_of("url").expect("url must be present");
 
             let arhiv = Arhiv::must_open();
@@ -133,7 +133,7 @@ async fn main() {
             let capabilities = EnvCapabilities::must_check();
             let documents = scrape(&arhiv, &capabilities, url, false)
                 .await
-                .expect("failed to import document");
+                .expect("failed to scrape");
 
             for document in documents {
                 println!(

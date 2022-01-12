@@ -1,5 +1,5 @@
 [package]
-name = "arhiv-import"
+name = "arhiv-scraper"
 version = "0.0.0"
 edition = "2021"
 authors = ["mbme"]

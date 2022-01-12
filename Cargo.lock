@@ -58,7 +58,7 @@ version = "0.41.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "arhiv-import",
+ "arhiv-scraper",
  "arhiv-ui3",
  "clap",
  "rs-utils",
@@ -89,7 +89,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "arhiv-import"
+name = "arhiv-scraper"
 version = "0.0.0"
 dependencies = [
  "anyhow",
@@ -107,7 +107,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "arhiv-import",
+ "arhiv-scraper",
  "chrono",
  "hyper",
  "routerify",

@@ -33,7 +33,7 @@ use rs_utils::{download_file, log, EnvCapabilities, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
-enum ImporterAction {
+enum ScraperAction {
     CreateAttachment {
         url: String,
     },
@@ -47,7 +47,7 @@ fn get_script_temp_file() -> Result<TempFile> {
     let script = include_str!("../dist/bundle.js");
 
     // TODO use "shared memory file" shm_open
-    let temp_file = TempFile::new_with_details("arhiv-import-script-", ".js");
+    let temp_file = TempFile::new_with_details("arhiv-scrape-script-", ".js");
 
     temp_file.write(script)?;
 
@@ -106,7 +106,7 @@ pub async fn scrape(
             .await
             .context("failed to read next line")?
         {
-            log::warn!("importers: {}", line);
+            log::warn!("scraper: {}", line);
         }
 
         Ok::<(), Error>(())
@@ -134,11 +134,11 @@ pub async fn scrape(
 
     let mut reader = BufReader::new(stdout).lines();
     while let Some(line) = reader.next_line().await? {
-        let action: ImporterAction =
-            serde_json::from_str(&line).context("Failed to parse ImporterAction")?;
+        let action: ScraperAction =
+            serde_json::from_str(&line).context("Failed to parse ScraperAction")?;
 
         match action {
-            ImporterAction::CreateAttachment { url } => {
+            ScraperAction::CreateAttachment { url } => {
                 // TODO remove downloaded file
                 let file_path = download_file(&url).await?;
 
@@ -151,7 +151,7 @@ pub async fn scrape(
 
                 documents.push(attachment.into());
             }
-            ImporterAction::CreateDocument {
+            ScraperAction::CreateDocument {
                 document_type,
                 data,
             } => {

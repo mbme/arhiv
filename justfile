@@ -39,8 +39,8 @@ arhiv-bump-patch *PARAMS:
 binutils-bump-minor *PARAMS:
   cd binutils; cargo release --no-dev-version minor {{PARAMS}}
 
-test-importers:
-  cd arhiv-import; cargo test -- --ignored --test-threads 1
+test-scrapers:
+  cd arhiv-scraper; cargo test -- --ignored --test-threads 1
 
 build-timings:
   cd {{invocation_directory()}}; cargo +nightly build -Ztimings

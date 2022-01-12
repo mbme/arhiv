@@ -21,4 +21,4 @@ tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
 rs-utils = { path = "../rs-utils" }
 arhiv-core = { path = "../arhiv-core" }
 arhiv-ui3 = { path = "../arhiv-ui3" }
-arhiv-import = { path = "../arhiv-import" }
+arhiv-scraper = { path = "../arhiv-scraper" }

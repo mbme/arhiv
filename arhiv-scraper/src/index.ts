@@ -3,7 +3,7 @@ import { extractBookFromYakaboo } from './book-yakaboo';
 import { extractFilmFromIMDB } from './film-imdb';
 import { extractImage } from './attachment-image';
 
-type Importer = (url: string, context: Context) => Promise<boolean>;
+type Scraper = (url: string, context: Context) => Promise<boolean>;
 
 const args = process.argv.slice(2);
 const chromeBinPath = args[0];
@@ -12,7 +12,7 @@ const debug = args[2] === 'true';
 
 const context = new Context(chromeBinPath, debug);
 
-const SCRAPERS: Importer[] = [
+const SCRAPERS: Scraper[] = [
   extractBookFromYakaboo,
   extractFilmFromIMDB,
   extractImage,

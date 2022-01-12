@@ -27,10 +27,10 @@ tokio-util = { version = "0.6.1", features = ["compat"] }
 
 reqwest = { version = "0.11", features = ["json", "stream"] }
 nanoid = "0.4.0"
-pulldown-cmark = { version = "0.8", default-features = false, features = ["simd"] }
+pulldown-cmark = { version = "0.9", default-features = false, features = ["simd"] }
 
-hyper = { version = "0.14", features = ["http1", "server"] }
-routerify = "2"
+hyper = { version = "0.14", features = ["http1", "server", "stream"] }
+routerify = "3"
 
 rusqlite = { version = "0.26", features = ["chrono", "serde_json", "functions"] }
 

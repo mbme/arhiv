@@ -16,7 +16,7 @@ pub async fn main() {
 
     let capabilities = EnvCapabilities::must_check();
 
-    scrape(&arhiv, &capabilities, url, false, true)
+    scrape(&arhiv, &capabilities, url, false)
         .await
         .expect("failed to run importers");
 }

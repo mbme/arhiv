@@ -29,7 +29,7 @@ impl App {
 
         let capabilities = EnvCapabilities::must_check();
 
-        let content = match scrape(&self.arhiv, &capabilities, url, false, false).await {
+        let content = match scrape(&self.arhiv, &capabilities, url, false).await {
             Ok(documents) => {
                 let refs = documents
                     .into_iter()

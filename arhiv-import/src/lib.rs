@@ -16,8 +16,7 @@
 
 use std::process::Stdio;
 
-use anyhow::{bail, ensure, Context, Error, Result};
-use dialoguer::{theme::ColorfulTheme, Confirm};
+use anyhow::{ensure, Context, Error, Result};
 use serde::Deserialize;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -60,7 +59,6 @@ pub async fn scrape(
     capabilities: &EnvCapabilities,
     url: &str,
     debug: bool,
-    confirm: bool,
 ) -> Result<Vec<Document>> {
     ensure!(capabilities.nodejs, "NodeJS must be available");
     let chrome_bin_path = capabilities
@@ -160,7 +158,6 @@ pub async fn scrape(
                 let mut document = Document::new_with_data(document_type, data);
 
                 log::info!("Scraped document:\n{}", &document);
-                confirm_if_needed(confirm).await?;
 
                 arhiv.tx_stage_document(&mut document, &mut tx)?;
 
@@ -183,27 +180,6 @@ pub async fn scrape(
     Ok(documents)
 }
 
-async fn confirm_if_needed(confirm: bool) -> Result<()> {
-    if !confirm {
-        return Ok(());
-    }
-
-    let proceed = tokio::task::spawn_blocking(|| {
-        Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt("Do you really want to continue?")
-            .default(true)
-            .interact()
-            .context("failed to ask confirmation")
-    })
-    .await??;
-
-    if proceed {
-        return Ok(());
-    }
-
-    bail!("confirmation failed")
-}
-
 #[cfg(test)]
 mod tests {
     use anyhow::{anyhow, Result};
@@ -223,7 +199,7 @@ mod tests {
 
         let capabilities = EnvCapabilities::must_check();
 
-        let documents = scrape(&arhiv, &capabilities, url, false, false).await?;
+        let documents = scrape(&arhiv, &capabilities, url, false).await?;
 
         assert_eq!(documents.len(), expected_documents_count);
 

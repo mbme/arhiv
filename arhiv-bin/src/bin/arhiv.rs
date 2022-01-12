@@ -127,13 +127,11 @@ async fn main() {
         ("import", Some(matches)) => {
             let url: &str = matches.value_of("url").expect("url must be present");
 
-            let skip_confirmation: bool = matches.is_present("skip_confirmation");
-
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
 
             let capabilities = EnvCapabilities::must_check();
-            let documents = scrape(&arhiv, &capabilities, url, false, !skip_confirmation)
+            let documents = scrape(&arhiv, &capabilities, url, false)
                 .await
                 .expect("failed to import document");
 

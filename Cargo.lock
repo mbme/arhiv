@@ -108,6 +108,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
+ "arhiv-import",
  "chrono",
  "hyper",
  "routerify",

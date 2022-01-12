@@ -76,6 +76,9 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
             pick_file_confirmation_modal_handler,
         )
         //
+        .get("/modals/scrape", scrape_modal)
+        .post("/modals/scrape", scrape_modal_handler)
+        //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
         //
@@ -253,6 +256,26 @@ pub async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerR
     let fields = extract_fields(body).await?;
 
     let response = app.pick_file_confirmation_modal_handler(fields).await?;
+
+    app.render(response)
+}
+
+pub async fn scrape_modal(req: Request<Body>) -> ServerResponse {
+    let app: &App = req.data().unwrap();
+
+    let response = App::scrape_modal()?;
+
+    app.render(response)
+}
+
+pub async fn scrape_modal_handler(req: Request<Body>) -> ServerResponse {
+    let (parts, body): (Parts, Body) = req.into_parts();
+    let app: &App = parts.data().unwrap();
+
+    let body = hyper::body::to_bytes(body).await?;
+    let fields = parse_urlencoded(&body);
+
+    let response = app.scrape_modal_handler(&fields).await?;
 
     app.render(response)
 }

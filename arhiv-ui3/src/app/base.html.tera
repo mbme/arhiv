@@ -25,6 +25,14 @@
         </svg>
         New...
       </a>
+
+      <button
+        type="button"
+        class="btn btn-link"
+        v-layer="/modals/scrape"
+      >
+        Scrape url
+      </button>
       {% endif %}
     </nav>
 

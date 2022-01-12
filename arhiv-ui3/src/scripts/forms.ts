@@ -107,14 +107,25 @@ export function isFormElement(el: Element | null): el is HTMLFormElement {
 }
 
 export function initDynamicForm(formEl: HTMLFormElement, containerEl: Element): void {
+  let inProgress = false;
+
   formEl.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    if (inProgress) {
+      console.warn('Submit already in progress, ignoring');
+      return;
+    }
+
+    inProgress = true;
 
     submitForm(formEl).then(content => {
       containerEl.innerHTML = content;
       containerEl.scrollTop = 0;
     }, (err) => {
       console.error('Failed to submit form', err);
+    }).finally(() => {
+      inProgress = false;
     });
   });
 }

@@ -214,6 +214,7 @@ a:not(.clean-link) {
     }
 
     &.btn-link {
+      font-weight: inherit;
       @apply p-0 border-0 hover:bg-inherit;
     }
   }

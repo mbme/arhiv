@@ -28,7 +28,7 @@ export async function fetchText(url: string, body?: XMLHttpRequestBodyInit): Pro
   }
 }
 
-export async function fetchAndReplace(url: string, el: HTMLElement, selector = ''): Promise<void> {
+export async function fetchAndReplace(url: string, el: Element, selector = ''): Promise<void> {
   const content = await fetchText(url);
 
   replaceEl(el, content, selector);
@@ -41,7 +41,7 @@ function selectNodes(content: string, selector: string): NodeListOf<Element> {
   return domEl.querySelectorAll(selector);
 }
 
-export function replaceEl(el: HTMLElement, content: string, selector = ''): void {
+export function replaceEl(el: Element, content: string, selector = ''): void {
   if (selector.length === 0) {
     el.outerHTML = content;
   } else {

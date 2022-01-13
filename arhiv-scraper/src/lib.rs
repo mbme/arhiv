@@ -19,7 +19,7 @@ use std::process::Stdio;
 use anyhow::{ensure, Context, Error, Result};
 use serde::Deserialize;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     process::Command,
     try_join,
 };
@@ -93,23 +93,17 @@ pub async fn scrape(
         .take()
         .context("child did not have a handle to stdout")?;
 
-    let stderr = child
+    let mut stderr = child
         .stderr
         .take()
         .context("child did not have a handle to stderr")?;
 
     let stderr_handle = tokio::spawn(async move {
-        let mut reader = BufReader::new(stderr).lines();
+        let mut buffer = String::new();
 
-        while let Some(line) = reader
-            .next_line()
-            .await
-            .context("failed to read next line")?
-        {
-            log::warn!("scraper: {}", line);
-        }
+        stderr.read_to_string(&mut buffer).await?;
 
-        Ok::<(), Error>(())
+        Ok::<String, Error>(buffer)
     });
 
     let child_handle = tokio::spawn(async move {
@@ -172,8 +166,9 @@ pub async fn scrape(
     }
 
     let (stderr_result, child_result) = try_join!(stderr_handle, child_handle)?;
-    stderr_result.context("stderr failed")?;
-    child_result.context("child process failed")?;
+    let stderr_logs = stderr_result.context("stderr failed")?;
+
+    child_result.with_context(|| format!("child process failed:\n{}", stderr_logs))?;
 
     tx.commit()?;
 
@@ -232,6 +227,23 @@ mod tests {
     #[tokio::test]
     async fn test_scrape_imdb_film() -> Result<()> {
         let result = scrape_and_extract("https://www.imdb.com/title/tt0133093/", "film", 2).await?;
+
+        insta::assert_json_snapshot!(result, {
+            ".cover" => "[cover_attachment_id]",
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[tokio::test]
+    async fn test_scrape_steam_game() -> Result<()> {
+        let result = scrape_and_extract(
+            "https://store.steampowered.com/app/814380/Sekiro_Shadows_Die_Twice__GOTY_Edition/",
+            "game",
+            2,
+        )
+        .await?;
 
         insta::assert_json_snapshot!(result, {
             ".cover" => "[cover_attachment_id]",

@@ -1,28 +1,18 @@
-import { ElementHandle, Page } from 'puppeteer-core';
 import { Context } from './context';
-import type { Obj } from './utils';
+import { getListStr, getListValues, getText, Obj } from './utils';
 import { uniqArr } from './utils';
-
-function getText(el: ElementHandle<HTMLElement> | Page, selector: string) {
-  return el.$eval(selector, node => (node as HTMLElement).innerText);
-}
-
-async function getList(el: ElementHandle<HTMLElement> | Page, selector: string) {
-  const items = await el.$$eval(selector, nodes => nodes.map(node => (node as HTMLElement).innerText.trim()).filter(item => item.length > 0));
-
-  return uniqArr(items);
-}
 
 // In general, its hard to scrape data from IMDB because page structure / information order
 // often changes based on content type (movie/series/short series etc.)
 export async function extractFilmFromIMDB(url: string, context: Context): Promise<boolean> {
+  // https://www.imdb.com/title/tt0133093/
   if (!url.includes('imdb.com/title/')) {
     return false;
   }
 
   const page = await context.newPage(url);
 
-  const metadata = await getList(page, '[data-testid=hero-title-block__metadata] li');
+  const metadata = await getListValues(page, '[data-testid=hero-title-block__metadata] li');
 
   const isSeries = metadata[0].toLowerCase().includes('series');
   const isMiniSeries = isSeries && metadata[0].toLowerCase().includes('mini');
@@ -30,7 +20,7 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
   const data: Obj = {
     title: await getText(page, 'h1[data-testid=hero-title-block__title]'),
     original_language: await getText(page, '[data-testid=title-details-languages] ul li a'),
-    countries_of_origin: await getList(page, '[data-testid=title-details-origin] ul li a').then(items => items.join(', ')),
+    countries_of_origin: await getListStr(page, '[data-testid=title-details-origin] ul li a'),
     is_series: isSeries,
   };
 
@@ -63,8 +53,8 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
     data['number_of_episodes'] = Number.parseInt(await getText(page, '[data-testid=hero-subnav-bar-series-episode-count]'), 10);
     data['episode_duration'] = metadata[3];
 
-    creators.push(...(await getList(creditsEls[0], ':scope ul li a')));
-    cast.push(...(await getList(creditsEls[1], ':scope ul li a')));
+    creators.push(...(await getListValues(creditsEls[0], ':scope ul li a')));
+    cast.push(...(await getListValues(creditsEls[1], ':scope ul li a')));
 
     if (isMiniSeries) { // IMDB often shows total duration for miniseries instead of episode duration
       data['episode_duration'] = undefined;
@@ -73,10 +63,10 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
     data['release_date'] = metadata[0];
     data['duration'] = metadata[2];
 
-    creators.push(...(await getList(creditsEls[0], ':scope ul li a')));
-    creators.push(...(await getList(creditsEls[1], ':scope ul li a')));
+    creators.push(...(await getListValues(creditsEls[0], ':scope ul li a')));
+    creators.push(...(await getListValues(creditsEls[1], ':scope ul li a')));
 
-    cast.push(...(await getList(creditsEls[2], ':scope ul li a')));
+    cast.push(...(await getListValues(creditsEls[2], ':scope ul li a')));
   }
 
   data['creators'] = uniqArr(creators).join(', ');

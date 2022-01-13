@@ -1,6 +1,7 @@
 import { Context } from './context';
 import { extractBookFromYakaboo } from './book-yakaboo';
 import { extractFilmFromIMDB } from './film-imdb';
+import { extractGameFromSteam } from './game-steam';
 import { extractImage } from './attachment-image';
 
 type Scraper = (url: string, context: Context) => Promise<boolean>;
@@ -15,6 +16,7 @@ const context = new Context(chromeBinPath, debug);
 const SCRAPERS: Scraper[] = [
   extractBookFromYakaboo,
   extractFilmFromIMDB,
+  extractGameFromSteam,
   extractImage,
 ];
 

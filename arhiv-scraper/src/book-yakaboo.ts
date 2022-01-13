@@ -8,6 +8,7 @@ const LANGUAGE_TRANSLATIONS: Obj = {
 };
 
 export async function extractBookFromYakaboo(url: string, context: Context): Promise<boolean> {
+  // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
   if (!url.includes('www.yakaboo.ua/ua/')) {
     return false;
   }

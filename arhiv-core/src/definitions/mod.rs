@@ -16,9 +16,12 @@ mod game;
 mod note;
 mod task;
 
+const SCHEMA_VERSION: u8 = 1;
+
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
-    let mut schema = DataSchema::new();
+    let mut schema = DataSchema::new(SCHEMA_VERSION);
+
     schema.with_modules(
         &mut vec![
             attachment::get_attachment_definitions(),

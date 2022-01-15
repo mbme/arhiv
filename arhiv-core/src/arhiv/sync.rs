@@ -24,10 +24,10 @@ impl Arhiv {
         );
 
         ensure!(
-            changeset.db_version == DB::VERSION,
-            "changeset db_version {} must be equal to {}",
-            changeset.db_version,
-            DB::VERSION
+            changeset.schema_version == self.schema.version,
+            "changeset schema_version {} must be equal to {}",
+            changeset.schema_version,
+            self.schema.version,
         );
 
         ensure!(
@@ -185,13 +185,13 @@ impl Arhiv {
         })
     }
 
-    fn prepare_changeset(tx: &ArhivTransaction) -> Result<Changeset> {
+    fn prepare_changeset(&self, tx: &ArhivTransaction) -> Result<Changeset> {
         let db_status = tx.get_db_status()?;
 
         let documents = tx.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            db_version: DB::VERSION,
+            schema_version: self.schema.version,
             arhiv_id: db_status.arhiv_id,
             base_rev: db_status.db_rev,
             documents,
@@ -233,7 +233,7 @@ impl Arhiv {
 
         let mut tx = self.db.get_tx()?;
 
-        let changeset = Arhiv::prepare_changeset(&tx)?;
+        let changeset = self.prepare_changeset(&tx)?;
         log::debug!("prepared a changeset {}", changeset);
 
         tx.delete_local_staged_changes()?;
@@ -250,7 +250,7 @@ impl Arhiv {
 
         let mut tx = self.db.get_tx()?;
 
-        let changeset = Arhiv::prepare_changeset(&tx)?;
+        let changeset = self.prepare_changeset(&tx)?;
         let new_blob_ids = tx.get_new_blob_ids()?;
         log::debug!(
             "sync_remotely: starting {}, {} new blobs",

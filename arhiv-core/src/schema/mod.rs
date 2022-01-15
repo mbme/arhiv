@@ -14,13 +14,14 @@ mod search;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
+    pub version: u8,
     modules: Vec<DataDescription>,
     internal_document_types: Vec<&'static str>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new() -> DataSchema {
+    pub fn new(version: u8) -> DataSchema {
         let modules = vec![
             // ----- INTERNAL
             DataDescription {
@@ -32,6 +33,7 @@ impl DataSchema {
         ];
 
         DataSchema {
+            version,
             internal_document_types: modules.iter().map(|module| module.document_type).collect(),
             modules,
         }
@@ -124,11 +126,5 @@ impl DataSchema {
     #[must_use]
     pub fn is_internal_type(&self, document_type: &str) -> bool {
         self.internal_document_types.contains(&document_type)
-    }
-}
-
-impl Default for DataSchema {
-    fn default() -> Self {
-        Self::new()
     }
 }

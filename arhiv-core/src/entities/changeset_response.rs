@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::{Document, Revision};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
 pub struct ChangesetResponse {
     pub arhiv_id: String,
 

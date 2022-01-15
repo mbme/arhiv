@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::{Document, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
 pub struct Changeset {
     pub schema_version: u8,
     pub arhiv_id: String,

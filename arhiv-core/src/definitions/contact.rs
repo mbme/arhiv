@@ -1,0 +1,75 @@
+use super::fields::*;
+use super::ATTACHMENT_TYPE;
+use crate::schema::*;
+
+pub const CONTACT_TYPE: &str = "contact";
+pub const CONTACT_COLLECTION_TYPE: &str = "contact collection";
+
+#[allow(clippy::too_many_lines)]
+pub fn get_contact_definitions() -> Vec<DataDescription> {
+    vec![
+        DataDescription {
+            document_type: CONTACT_TYPE,
+            collection_of: Collection::None,
+            fields: vec![
+                Field {
+                    name: "name",
+                    field_type: FieldType::String {},
+                    mandatory: true,
+                    readonly: false,
+                },
+                Field {
+                    name: "cover",
+                    field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "date_of_birth",
+                    field_type: FieldType::Date {},
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "primary_language",
+                    field_type: LANGUAGE_FIELD,
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "collections",
+                    field_type: FieldType::RefList(CONTACT_COLLECTION_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "comment",
+                    field_type: FieldType::MarkupString {},
+                    mandatory: false,
+                    readonly: false,
+                },
+            ],
+        },
+        DataDescription {
+            document_type: CONTACT_COLLECTION_TYPE,
+            collection_of: Collection::Type {
+                document_type: CONTACT_TYPE,
+                field: "collections",
+            },
+            fields: vec![
+                Field {
+                    name: "name",
+                    field_type: FieldType::String {},
+                    mandatory: true,
+                    readonly: false,
+                },
+                Field {
+                    name: "description",
+                    field_type: FieldType::MarkupString {},
+                    mandatory: false,
+                    readonly: false,
+                },
+            ],
+        },
+    ]
+}

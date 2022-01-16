@@ -15,6 +15,7 @@ mod film;
 mod game;
 mod note;
 mod task;
+mod track;
 
 const SCHEMA_VERSION: u8 = 1;
 
@@ -30,6 +31,7 @@ pub fn get_standard_schema() -> DataSchema {
             book::get_book_definitions(),
             film::get_film_definitions(),
             game::get_game_definitions(),
+            track::get_track_definitions(),
         ]
         .concat(),
     );

@@ -43,6 +43,18 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                     readonly: false,
                 },
                 Field {
+                    name: "addresses",
+                    field_type: FieldType::MarkupString {},
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "contacts",
+                    field_type: FieldType::MarkupString {},
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
                     name: "info",
                     field_type: FieldType::MarkupString {},
                     mandatory: false,

@@ -201,16 +201,39 @@ impl Arhiv {
             document.rev = Revision::STAGING;
 
             if prev_document.rev == Revision::STAGING {
-                document.prev_rev = prev_document.prev_rev;
+                ensure!(
+                    document.prev_rev == prev_document.prev_rev,
+                    "document prev_rev {} is different from the staged document prev_rev {}",
+                    document.prev_rev,
+                    prev_document.prev_rev
+                );
             } else {
                 // we're going to modify committed document
                 // so we need to save its revision as prev_rev of the new document
                 document.prev_rev = prev_document.rev;
             }
 
-            document.document_type = prev_document.document_type;
+            ensure!(
+                document.document_type == prev_document.document_type,
+                "document type '{}' is different from the type '{}' of existing document",
+                document.document_type,
+                prev_document.document_type
+            );
 
-            document.created_at = prev_document.created_at;
+            ensure!(
+                document.created_at == prev_document.created_at,
+                "document created_at '{}' is different from the created_at '{}' of existing document",
+                document.created_at,
+                prev_document.created_at
+            );
+
+            ensure!(
+                document.updated_at == prev_document.updated_at,
+                "document updated_at '{}' is different from the updated_at '{}' of existing document",
+                document.updated_at,
+                prev_document.updated_at
+            );
+
             document.updated_at = Utc::now();
         } else {
             log::debug!("Creating new document {}", &document.id);

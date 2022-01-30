@@ -138,7 +138,12 @@ pub fn apply_migrations(root_dir: impl Into<String>) -> Result<bool> {
 
             new_conn.execute_batch("BEGIN DEFERRED")?;
 
-            migration.apply(&new_conn, &mut fs_tx, &db_pm.data_dir)?;
+            migration
+                .apply(&new_conn, &mut fs_tx, &db_pm.data_dir)
+                .context("failed to apply migration")?;
+            migration
+                .test(&new_conn, &db_pm.data_dir)
+                .context("migration test failed")?;
 
             new_conn.execute_batch("COMMIT")?;
 

@@ -17,7 +17,7 @@ impl<'a> ArhivConnection {
 }
 
 pub struct ArhivTransaction {
-    conn: Connection,
+    pub(crate) conn: Connection,
     finished: bool,
 
     data_dir: String,

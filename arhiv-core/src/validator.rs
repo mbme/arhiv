@@ -8,7 +8,7 @@ use crate::{
     schema::{DataDescription, Field},
 };
 
-use super::db::{ArhivTransaction, BLOBQueries, Queries};
+use crate::db::{ArhivTransaction, BLOBQueries, Queries};
 
 pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
 

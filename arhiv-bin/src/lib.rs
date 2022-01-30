@@ -43,7 +43,6 @@ pub fn build_app() -> App<'static> {
             App::new("sync") //
                 .about("Sync changes"),
         )
-        .subcommand(App::new("apply-migrations").about("Upgrade arhiv db schema to latest version"))
         .subcommand(
             App::new("backup") //
                 .about("Backup arhiv data"),

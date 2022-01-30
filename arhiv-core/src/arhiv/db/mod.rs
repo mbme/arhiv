@@ -3,41 +3,40 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use rusqlite::functions::{Context as FunctionContext, FunctionFlags};
-use rusqlite::{Connection, Error as RusqliteError, OpenFlags};
-
-use rs_utils::log;
+use rusqlite::{
+    functions::{Context as FunctionContext, FunctionFlags},
+    Connection, Error as RusqliteError, OpenFlags,
+};
 use serde_json::Value;
 
-use crate::entities::{BLOBId, DocumentData};
-use crate::schema::DataSchema;
+use rs_utils::log;
+
+use crate::{
+    entities::{BLOBId, DocumentData},
+    path_manager::PathManager,
+    schema::DataSchema,
+};
 
 pub use blob_queries::*;
 pub use connection::*;
 pub use dto::*;
 pub use filter::*;
-pub use migrations::apply_migrations;
-use path_manager::PathManager;
 pub use queries::*;
 
 mod blob_queries;
 mod connection;
 mod dto;
 mod filter;
-mod migrations;
-mod path_manager;
 mod queries;
 mod query_builder;
 pub mod utils;
 
 pub struct DB {
-    path_manager: PathManager,
+    pub(super) path_manager: PathManager,
     schema: Arc<DataSchema>,
 }
 
 impl DB {
-    pub const VERSION: u8 = 15;
-
     pub fn open(root_dir: String, schema: DataSchema) -> Result<DB> {
         let path_manager = PathManager::new(root_dir);
         path_manager.assert_dirs_exist()?;
@@ -49,35 +48,7 @@ impl DB {
         })
     }
 
-    pub fn create(root_dir: String, schema: DataSchema) -> Result<DB> {
-        let path_manager = PathManager::new(root_dir);
-        path_manager.create_dirs()?;
-
-        let db = DB {
-            path_manager,
-            schema: Arc::new(schema),
-        };
-
-        let conn = Connection::open_with_flags(
-            &db.path_manager.db_file,
-            OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE,
-        )?;
-        init_extract_refs_fn(&conn, db.schema.clone())?;
-
-        // turn WAL only once as it's permanent pragma
-        conn.execute_batch("PRAGMA journal_mode=WAL;")?;
-
-        // create tables
-        conn.execute_batch(include_str!("./schema.sql"))?;
-
-        Ok(db)
-    }
-
-    pub(crate) fn get_db_file(&self) -> &str {
-        &self.path_manager.db_file
-    }
-
-    pub(crate) fn open_connection(&self, mutable: bool) -> Result<Connection> {
+    fn open_connection(&self, mutable: bool) -> Result<Connection> {
         let conn = Connection::open_with_flags(
             &self.path_manager.db_file,
             if mutable {
@@ -85,7 +56,11 @@ impl DB {
             } else {
                 OpenFlags::SQLITE_OPEN_READ_ONLY
             },
-        )?;
+        )
+        .context("failed to open connection")?;
+
+        conn.pragma_update(None, "foreign_keys", true)
+            .context("failed to enable foreign keys support")?;
 
         init_extract_refs_fn(&conn, self.schema.clone())?;
         init_calculate_search_score_fn(&conn, self.schema.clone())?;
@@ -179,6 +154,32 @@ impl DB {
         tx.commit()?;
 
         log::debug!("Removed {} orphaned blobs", removed_blobs);
+
+        Ok(())
+    }
+
+    pub(super) fn compute_data(&self) -> Result<()> {
+        let now = Instant::now();
+
+        let conn = self.open_connection(true)?;
+
+        let rows_count = conn.execute(
+            "INSERT INTO documents_refs(id, rev, refs)
+               SELECT id, rev, extract_refs(type, data)
+               FROM documents_snapshots ds
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev
+               )",
+            [],
+        )?;
+
+        if rows_count > 0 {
+            log::info!(
+                "computed {} rows in {} seconds",
+                rows_count,
+                now.elapsed().as_secs_f32()
+            );
+        }
 
         Ok(())
     }

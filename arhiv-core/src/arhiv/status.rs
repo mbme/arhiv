@@ -8,6 +8,7 @@ use crate::entities::Timestamp;
 #[derive(Serialize)]
 pub struct Status {
     pub db_status: DbStatus,
+    pub db_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: u32,
@@ -38,6 +39,10 @@ impl fmt::Display for Status {
             self.db_status.db_rev,
             self.root_dir,
         )?;
+
+        writeln!(f)?;
+
+        writeln!(f, "        DB version: {}", self.db_version)?;
 
         writeln!(f)?;
 

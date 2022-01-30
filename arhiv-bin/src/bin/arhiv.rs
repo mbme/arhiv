@@ -8,7 +8,6 @@ use std::{
 
 use arhiv_bin::build_app;
 use arhiv_core::{
-    apply_migrations,
     definitions::{get_standard_schema, Attachment},
     entities::{Document, DocumentData, Id},
     prime_server::start_prime_server,
@@ -190,12 +189,6 @@ async fn main() {
             let arhiv = Arhiv::must_open();
 
             arhiv.backup().expect("must be able to backup");
-        }
-        ("apply-migrations", _) => {
-            let config = Config::must_read().0;
-
-            apply_migrations(config.arhiv_root)
-                .expect("must be able to apply migrations to arhiv db");
         }
         _ => unreachable!(),
     }

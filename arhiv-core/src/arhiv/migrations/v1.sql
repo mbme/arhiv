@@ -1,3 +1,5 @@
+PRAGMA journal_mode=WAL; -- persistent pragma https://sqlite.org/wal.html#persistence_of_wal_mode
+
 CREATE TABLE settings (
   key TEXT NOT NULL,
   value TEXT,
@@ -18,14 +20,28 @@ CREATE TABLE documents_snapshots (
   updated_at      TEXT    NOT NULL,
   data            TEXT    NOT NULL,
 
-  -- extract refs from data
-  refs TEXT GENERATED ALWAYS AS (extract_refs(type, data)) STORED,
-
   PRIMARY KEY (id, rev)
 );
 
+-- additional computed data
+CREATE TABLE documents_refs (
+  id          TEXT    NOT NULL,
+  rev         INTEGER NOT NULL,
+
+  refs        TEXT NOT NULL,
+
+  FOREIGN KEY (id, rev) REFERENCES documents_snapshots(id, rev) ON DELETE CASCADE
+);
+
+CREATE VIEW documents_snapshots_and_refs AS
+  SELECT a.rowid, a.*, b.refs
+    FROM documents_snapshots a
+    INNER JOIN documents_refs b
+      ON a.id = b.id
+      AND a.rev = b.rev;
+
 CREATE VIEW documents AS
-  SELECT a.* FROM documents_snapshots a
+  SELECT a.* FROM documents_snapshots_and_refs a
     INNER JOIN
         (SELECT rowid,
                 ROW_NUMBER() OVER (PARTITION BY id
@@ -50,13 +66,13 @@ CREATE VIEW conflicts AS
 
 CREATE VIEW committed_documents AS
   SELECT a.*
-    FROM documents_snapshots a
+  FROM documents_snapshots_and_refs a
     WHERE a.rev > 0
-    GROUP BY id HAVING MAX(rev);
+    GROUP BY a.id HAVING MAX(a.rev);
 
 CREATE VIEW staged_documents AS
   SELECT a.*
-    FROM documents_snapshots a
+    FROM documents_snapshots_and_refs a
     WHERE a.rev = 0;
 
 CREATE VIEW committed_blob_ids AS

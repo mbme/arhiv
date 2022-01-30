@@ -8,14 +8,14 @@ pub struct DBSetting<T: Serialize + DeserializeOwned>(pub &'static str, PhantomD
 
 pub const SETTING_ARHIV_ID: DBSetting<String> = DBSetting("arhiv_id", PhantomData);
 pub const SETTING_IS_PRIME: DBSetting<bool> = DBSetting("is_prime", PhantomData);
-pub const SETTING_DB_VERSION: DBSetting<u8> = DBSetting("db_version", PhantomData);
+pub const SETTING_SCHEMA_VERSION: DBSetting<u8> = DBSetting("schema_version", PhantomData);
 pub const SETTING_LAST_SYNC_TIME: DBSetting<Timestamp> = DBSetting("last_sync_time", PhantomData);
 
 #[derive(Serialize, Deserialize)]
 pub struct DbStatus {
     pub arhiv_id: String,
     pub is_prime: bool,
-    pub db_version: u8,
+    pub schema_version: u8,
 
     pub db_rev: Revision,
     pub last_sync_time: Timestamp,

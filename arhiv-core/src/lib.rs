@@ -18,14 +18,20 @@ mod config;
 pub mod definitions;
 pub mod entities;
 pub mod markup;
+mod path_manager;
 pub mod prime_server;
 pub mod schema;
 pub mod test_arhiv;
+mod validator;
 
 #[cfg(test)]
 mod tests;
 
+pub use crate::arhiv::db::{
+    ArhivTransaction, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
+};
 pub use crate::arhiv::*;
 pub use config::Config;
+pub use validator::{FieldValidationErrors, Validator};
 
 pub use pulldown_cmark;

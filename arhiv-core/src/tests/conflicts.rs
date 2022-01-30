@@ -19,11 +19,14 @@ async fn test_conflicts() -> Result<()> {
 
     // set wrong prev_rev
     {
-        let conn = arhiv.db.open_connection(true)?;
-        conn.execute(
+        let tx = arhiv.get_tx()?;
+
+        tx.conn.execute(
             "UPDATE documents_snapshots SET prev_rev = 0 WHERE rev = 0",
             [],
         )?;
+
+        tx.commit()?;
     }
 
     assert_eq!(arhiv.get_status()?.conflicts_count, 1);

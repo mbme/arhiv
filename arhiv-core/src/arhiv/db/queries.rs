@@ -10,11 +10,11 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
 
-use super::dto::*;
-use super::filter::*;
-use super::query_builder::QueryBuilder;
-use super::utils;
-use crate::entities::*;
+use crate::entities::{
+    BLOBId, Document, Id, Revision, SnapshotId, Timestamp, ERASED_DOCUMENT_TYPE,
+};
+
+use super::{dto::*, filter::*, query_builder::QueryBuilder, utils};
 
 pub trait Queries {
     fn get_connection(&self) -> &Connection;
@@ -35,7 +35,7 @@ pub trait Queries {
         Ok(DbStatus {
             arhiv_id: self.get_setting(SETTING_ARHIV_ID)?,
             is_prime: self.get_setting(SETTING_IS_PRIME)?,
-            db_version: self.get_setting(SETTING_DB_VERSION)?,
+            schema_version: self.get_setting(SETTING_SCHEMA_VERSION)?,
             db_rev: self.get_db_rev()?,
             last_sync_time: self.get_setting(SETTING_LAST_SYNC_TIME)?,
         })
@@ -372,28 +372,44 @@ pub trait MutableQueries: Queries {
     }
 
     fn put_document(&self, document: &Document) -> Result<()> {
-        let mut stmt = self.get_connection().prepare_cached(&format!(
-            "INSERT {} INTO documents_snapshots
-            (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            if document.is_staged() {
-                "OR REPLACE"
-            } else {
-                ""
-            },
-        ))?;
+        {
+            let mut stmt = self.get_connection().prepare_cached(&format!(
+                "INSERT {} INTO documents_snapshots
+                    (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                if document.is_staged() {
+                    "OR REPLACE"
+                } else {
+                    ""
+                },
+            ))?;
 
-        stmt.execute(params![
-            document.id,
-            document.rev,
-            document.prev_rev,
-            document.snapshot_id,
-            document.document_type,
-            document.created_at,
-            document.updated_at,
-            document.data.to_string(),
-        ])
-        .context(anyhow!("Failed to put document {}", &document.id))?;
+            stmt.execute(params![
+                document.id,
+                document.rev,
+                document.prev_rev,
+                document.snapshot_id,
+                document.document_type,
+                document.created_at,
+                document.updated_at,
+                document.data.to_string(),
+            ])
+            .context(anyhow!("Failed to put document {}", &document.id))?;
+        }
+
+        {
+            let mut stmt = self.get_connection().prepare_cached(
+                "INSERT OR REPLACE INTO documents_refs (id, rev, refs) VALUES (?, ?, extract_refs(?, ?))"
+            )?;
+
+            stmt.execute(params![
+                document.id,
+                document.rev,
+                document.document_type,
+                document.data.to_string(),
+            ])
+            .context(anyhow!("Failed to put document refs {}", &document.id))?;
+        }
 
         Ok(())
     }

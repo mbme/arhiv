@@ -1,25 +1,24 @@
-use anyhow::{anyhow, ensure, Result};
+mod backup;
+pub(crate) mod db;
+mod migrations;
+mod status;
+mod sync;
+
+use anyhow::{anyhow, ensure, Context, Result};
 use chrono::Utc;
 
 use rs_utils::log;
 
-use self::db::*;
-pub use self::db::{
-    apply_migrations, ArhivTransaction, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage,
-    OrderBy,
+use crate::{
+    config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema, Validator,
 };
-use self::status::Status;
-pub use self::validator::{FieldValidationErrors, Validator};
-use crate::config::Config;
-use crate::definitions::get_standard_schema;
-use crate::entities::*;
-use crate::schema::DataSchema;
 
-mod backup;
-mod db;
-mod status;
-mod sync;
-mod validator;
+use self::db::{
+    ArhivTransaction, BLOBQueries, Filter, ListPage, MutableBLOBQueries, MutableQueries, Queries,
+    DB, SETTING_ARHIV_ID, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+};
+use self::migrations::{apply_migrations, create_db, get_db_version};
+use self::status::Status;
 
 pub struct Arhiv {
     config: Config,
@@ -43,19 +42,22 @@ impl Arhiv {
     pub fn open_with_options(config: Config, schema: DataSchema) -> Result<Arhiv> {
         let db = DB::open(config.arhiv_root.to_string(), schema.clone())?;
 
-        // check app and db version
-        {
-            let conn = db.get_connection()?;
+        // ensure DB schema is up to date
+        apply_migrations(&config.arhiv_root).context("failed to apply migrations to arhiv db")?;
 
-            let db_version = conn.get_setting(SETTING_DB_VERSION)?;
+        {
+            let schema_version = db.get_connection()?.get_setting(SETTING_SCHEMA_VERSION)?;
 
             ensure!(
-                db_version == DB::VERSION,
-                "db version {} is different from app db version {}",
-                db_version,
-                DB::VERSION,
+                schema_version == schema.version,
+                "schema version {} is different from latest schema version {}",
+                schema_version,
+                schema.version,
             );
         }
+
+        // ensure computed data is up to date
+        db.compute_data().context("failed to compute data")?;
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
 
@@ -75,19 +77,23 @@ impl Arhiv {
             config.arhiv_root
         );
 
-        let db = DB::create(config.arhiv_root.to_string(), schema.clone())?;
+        create_db(&config.arhiv_root)?;
+        log::info!("Created arhiv in {}", config.arhiv_root);
 
+        let schema_version = schema.version;
+
+        let db = DB::open(config.arhiv_root.to_string(), schema.clone())?;
+
+        // TODO remove created arhiv if settings tx fails
         let tx = db.get_tx()?;
 
         // initial settings
         tx.set_setting(SETTING_ARHIV_ID, arhiv_id)?;
         tx.set_setting(SETTING_IS_PRIME, prime)?;
-        tx.set_setting(SETTING_DB_VERSION, DB::VERSION)?;
+        tx.set_setting(SETTING_SCHEMA_VERSION, schema_version)?;
         tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
 
         tx.commit()?;
-
-        log::info!("Created arhiv in {}", config.arhiv_root);
 
         Ok(Arhiv { config, schema, db })
     }
@@ -109,6 +115,7 @@ impl Arhiv {
         let conn = self.db.get_connection()?;
 
         let db_status = conn.get_db_status()?;
+        let db_version = get_db_version(conn.get_connection())?;
         let documents_count = conn.count_documents()?;
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.count_conflicts()?;
@@ -116,6 +123,7 @@ impl Arhiv {
 
         Ok(Status {
             db_status,
+            db_version,
             documents_count,
             blobs_count,
             conflicts_count,

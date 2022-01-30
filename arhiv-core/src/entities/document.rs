@@ -13,7 +13,7 @@ pub const ERASED_DOCUMENT_TYPE: &str = "";
 pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
 pub struct Document {
     pub id: Id,
     pub rev: Revision,

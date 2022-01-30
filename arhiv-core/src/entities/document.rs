@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::schema::DataSchema;
 
-use super::{DocumentData, Id, Refs, Revision, SnapshotId};
+use super::{DocumentData, Id, Refs, Revision};
 
 pub const ERASED_DOCUMENT_TYPE: &str = "";
 
@@ -19,7 +19,6 @@ pub struct Document {
     pub rev: Revision,
     pub prev_rev: Revision,
     pub document_type: String,
-    pub snapshot_id: SnapshotId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub data: DocumentData,
@@ -37,7 +36,6 @@ impl Document {
             id: Id::new(),
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
-            snapshot_id: SnapshotId::new(),
             document_type: document_type.into(),
             created_at: now,
             updated_at: now,

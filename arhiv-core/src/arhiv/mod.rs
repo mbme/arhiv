@@ -208,8 +208,6 @@ impl Arhiv {
                 document.prev_rev = prev_document.rev;
             }
 
-            document.snapshot_id = SnapshotId::new();
-
             document.document_type = prev_document.document_type;
 
             document.created_at = prev_document.created_at;
@@ -219,8 +217,6 @@ impl Arhiv {
 
             document.rev = Revision::STAGING;
             document.prev_rev = Revision::STAGING;
-
-            document.snapshot_id = SnapshotId::new();
 
             let now = Utc::now();
             document.created_at = now;
@@ -249,7 +245,6 @@ impl Arhiv {
         document.document_type = ERASED_DOCUMENT_TYPE.to_string();
         document.rev = Revision::STAGING;
         document.prev_rev = Revision::STAGING;
-        document.snapshot_id = SnapshotId::new();
         document.data = DocumentData::new();
         document.updated_at = Utc::now();
 

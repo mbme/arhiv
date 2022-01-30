@@ -7,7 +7,6 @@ mod document_data;
 mod id;
 mod refs;
 mod revision;
-mod snapshot_id;
 
 pub use blob::BLOB;
 pub use blob_id::BLOBId;
@@ -18,4 +17,3 @@ pub use document_data::DocumentData;
 pub use id::Id;
 pub use refs::Refs;
 pub use revision::Revision;
-pub use snapshot_id::SnapshotId;

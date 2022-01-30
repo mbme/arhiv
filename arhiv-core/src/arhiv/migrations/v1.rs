@@ -28,7 +28,7 @@ impl Migration for MigrationV1 {
             DELETE FROM settings WHERE key = 'db_version';
 
             INSERT INTO documents_snapshots
-                        SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
+                        SELECT id, rev, prev_rev, type, created_at, updated_at, data
                         FROM old_db.documents_snapshots;
 
             -- erased documents must have prev_rev 0

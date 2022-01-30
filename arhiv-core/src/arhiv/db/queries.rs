@@ -10,9 +10,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
 
-use crate::entities::{
-    BLOBId, Document, Id, Revision, SnapshotId, Timestamp, ERASED_DOCUMENT_TYPE,
-};
+use crate::entities::{BLOBId, Document, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE};
 
 use super::{dto::*, filter::*, query_builder::QueryBuilder, utils};
 
@@ -341,12 +339,12 @@ pub trait Queries {
             .map(|value| value.unwrap_or(false))
     }
 
-    fn has_snapshot(&self, id: &SnapshotId) -> Result<bool> {
+    fn has_snapshot(&self, id: &Id, rev: Revision) -> Result<bool> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT true FROM documents_snapshots WHERE snapshot_id = ?1")?;
+            .prepare_cached("SELECT true FROM documents_snapshots WHERE id = ?1 AND rev = ?2")?;
 
-        stmt.query_row([id], |_row| Ok(true))
+        stmt.query_row(params![id, rev], |_row| Ok(true))
             .optional()
             .context(anyhow!("Failed to check for snapshot {}", &id))
             .map(|value| value.unwrap_or(false))
@@ -391,8 +389,8 @@ pub trait MutableQueries: Queries {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (id, rev, prev_rev, type, created_at, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
                 if document.is_staged() {
                     "OR REPLACE"
                 } else {
@@ -404,7 +402,6 @@ pub trait MutableQueries: Queries {
                 document.id,
                 document.rev,
                 document.prev_rev,
-                document.snapshot_id,
                 document.document_type,
                 document.created_at,
                 document.updated_at,
@@ -472,18 +469,6 @@ impl FromSql for Id {
 }
 
 impl ToSql for Id {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self as &str))
-    }
-}
-
-impl FromSql for SnapshotId {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(SnapshotId::from)
-    }
-}
-
-impl ToSql for SnapshotId {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self as &str))
     }

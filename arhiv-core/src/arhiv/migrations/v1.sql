@@ -13,8 +13,6 @@ CREATE TABLE documents_snapshots (
   rev         INTEGER NOT NULL,
   prev_rev    INTEGER NOT NULL,
 
-  snapshot_id TEXT    NOT NULL  UNIQUE,
-
   type            TEXT    NOT NULL,
   created_at      TEXT    NOT NULL,
   updated_at      TEXT    NOT NULL,

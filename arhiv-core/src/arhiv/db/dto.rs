@@ -29,6 +29,8 @@ pub struct DocumentsCount {
 
     pub erased_documents_committed: u32,
     pub erased_documents_staged: u32,
+
+    pub snapshots: u32,
 }
 
 impl DocumentsCount {

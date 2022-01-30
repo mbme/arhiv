@@ -94,6 +94,11 @@ impl fmt::Display for Status {
             self.documents_count.erased_documents_committed,
             self.documents_count.erased_documents_staged,
         )?;
+        writeln!(
+            f, //
+            "        Snapshots: {}",
+            self.documents_count.snapshots
+        )?;
 
         if self.conflicts_count > 0 {
             writeln!(f)?;

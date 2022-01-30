@@ -53,7 +53,15 @@ pub trait Queries {
     fn count_documents(&self) -> Result<DocumentsCount> {
         // count documents
         // count erased documents
-        self.get_connection()
+        let conn = self.get_connection();
+
+        let (
+            documents_committed,
+            documents_updated,
+            documents_new,
+            erased_documents_committed,
+            erased_documents_staged,
+        ): (u32, u32, u32, u32, u32) = conn
             .query_row(
                 "SELECT
                     IFNULL(SUM(CASE WHEN type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
@@ -64,16 +72,26 @@ pub trait Queries {
                     IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
                 FROM documents",
                 [ERASED_DOCUMENT_TYPE],
-                |row| Ok(DocumentsCount {
-                    documents_committed: row.get(0)?,
-                    documents_updated: row.get(1)?,
-                    documents_new: row.get(2)?,
-
-                    erased_documents_committed: row.get(3)?,
-                    erased_documents_staged: row.get(4)?,
-                }),
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
             )
-            .context("Failed to count documents")
+            .context("Failed to count documents")?;
+
+        let snapshots: u32 = conn
+            .query_row("SELECT COUNT(*) FROM documents_snapshots", [], |row| {
+                row.get(0)
+            })
+            .context("Failed to count documents_snapshots")?;
+
+        Ok(DocumentsCount {
+            documents_committed,
+            documents_updated,
+            documents_new,
+
+            erased_documents_committed,
+            erased_documents_staged,
+
+            snapshots,
+        })
     }
 
     fn count_conflicts(&self) -> Result<u32> {

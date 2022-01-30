@@ -73,6 +73,7 @@ async fn test_status() -> Result<()> {
                 documents_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_staged: 0,
+                snapshots: 0,
             }
         );
         assert_eq!(
@@ -116,6 +117,7 @@ async fn test_status() -> Result<()> {
                 documents_new: 0,
                 erased_documents_committed: 0,
                 erased_documents_staged: 0,
+                snapshots: 1,
             }
         );
 
@@ -144,6 +146,7 @@ async fn test_status() -> Result<()> {
                 documents_new: 1,
                 erased_documents_committed: 0,
                 erased_documents_staged: 0,
+                snapshots: 3,
             }
         );
 
@@ -163,6 +166,7 @@ async fn test_status() -> Result<()> {
                 documents_new: 1,
                 erased_documents_committed: 0,
                 erased_documents_staged: 1,
+                snapshots: 3,
             }
         );
 
@@ -187,6 +191,7 @@ async fn test_status() -> Result<()> {
                 documents_new: 0,
                 erased_documents_committed: 1,
                 erased_documents_staged: 0,
+                snapshots: 2,
             }
         );
 

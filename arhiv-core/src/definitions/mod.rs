@@ -24,10 +24,9 @@ const SCHEMA_VERSION: u8 = 1;
 
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
-    let mut schema = DataSchema::new(SCHEMA_VERSION);
-
-    schema.with_modules(
-        &mut vec![
+    DataSchema::new(
+        SCHEMA_VERSION,
+        vec![
             attachment::get_attachment_definitions(),
             note::get_note_definitions(),
             task::get_task_definitions(),
@@ -38,7 +37,5 @@ pub fn get_standard_schema() -> DataSchema {
             contact::get_contact_definitions(),
         ]
         .concat(),
-    );
-
-    schema
+    )
 }

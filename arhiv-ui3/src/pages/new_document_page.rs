@@ -3,7 +3,7 @@ use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::{
-    entities::{Document, Id},
+    entities::{Document, Id, ERASED_DOCUMENT_TYPE},
     schema::Collection,
     FieldValidationErrors, Validator,
 };
@@ -26,7 +26,7 @@ impl App {
     ) -> Result<AppResponse> {
         let schema = self.arhiv.get_schema();
 
-        ensure!(!schema.is_internal_type(document_type));
+        ensure!(document_type != ERASED_DOCUMENT_TYPE);
 
         let mut document = Document::new(document_type);
 

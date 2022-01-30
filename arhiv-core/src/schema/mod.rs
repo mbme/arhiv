@@ -12,35 +12,22 @@ mod data_description;
 mod field;
 mod search;
 
+const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
+    document_type: ERASED_DOCUMENT_TYPE,
+    collection_of: Collection::None,
+    fields: vec![],
+};
+
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
     pub version: u8,
     modules: Vec<DataDescription>,
-    internal_document_types: Vec<&'static str>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(version: u8) -> DataSchema {
-        let modules = vec![
-            // ----- INTERNAL
-            DataDescription {
-                document_type: ERASED_DOCUMENT_TYPE,
-                collection_of: Collection::None,
-                fields: vec![],
-            },
-            // ----
-        ];
-
-        DataSchema {
-            version,
-            internal_document_types: modules.iter().map(|module| module.document_type).collect(),
-            modules,
-        }
-    }
-
-    pub fn with_modules(&mut self, modules: &mut Vec<DataDescription>) {
-        self.modules.append(modules);
+    pub fn new(version: u8, modules: Vec<DataDescription>) -> Self {
+        DataSchema { version, modules }
     }
 
     fn get_collection_ref_fields(&self, document_type: &str) -> HashSet<&str> {
@@ -85,6 +72,10 @@ impl DataSchema {
     pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
         let document_type = document_type.as_ref();
 
+        if document_type == ERASED_DOCUMENT_TYPE {
+            return Ok(ERASED_DOCUMENT_DATA_DESCRIPTION);
+        }
+
         self.modules
             .iter()
             .find(|module| module.document_type == document_type)
@@ -108,23 +99,10 @@ impl DataSchema {
     }
 
     #[must_use]
-    pub fn get_document_types(&self, skip_internal: bool) -> Vec<&'static str> {
+    pub fn get_document_types(&self) -> Vec<&'static str> {
         self.modules
             .iter()
-            .filter(|module| !module.document_type.is_empty())
-            .filter(|module| {
-                if skip_internal {
-                    !self.is_internal_type(module.document_type)
-                } else {
-                    true
-                }
-            })
             .map(|module| module.document_type)
             .collect()
-    }
-
-    #[must_use]
-    pub fn is_internal_type(&self, document_type: &str) -> bool {
-        self.internal_document_types.contains(&document_type)
     }
 }

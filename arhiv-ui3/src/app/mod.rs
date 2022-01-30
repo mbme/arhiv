@@ -123,7 +123,7 @@ const IGNORED_DOCUMENT_TYPES: &[&str] = &[ATTACHMENT_TYPE, TASK_TYPE];
 fn get_nav_document_types(arhiv: &Arhiv) -> Vec<(&'static str, String)> {
     arhiv
         .get_schema()
-        .get_document_types(false)
+        .get_document_types()
         .into_iter()
         .filter(|document_type| !IGNORED_DOCUMENT_TYPES.contains(document_type))
         .map(|module| (module, catalog_url(module)))

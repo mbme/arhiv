@@ -20,7 +20,7 @@ impl App {
         let document_types = self
             .arhiv
             .get_schema()
-            .get_document_types(true)
+            .get_document_types()
             .into_iter()
             .map(|document_type| (document_type, new_document_url(document_type, &None)))
             .collect::<Vec<_>>();

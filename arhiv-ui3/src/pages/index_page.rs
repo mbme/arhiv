@@ -17,7 +17,7 @@ impl App {
         let document_types = self
             .arhiv
             .get_schema()
-            .get_document_types(false)
+            .get_document_types()
             .into_iter()
             .map(|document_type| (document_type, catalog_url(document_type)))
             .collect::<Vec<_>>();

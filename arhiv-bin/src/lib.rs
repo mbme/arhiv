@@ -104,7 +104,7 @@ pub fn build_app() -> App<'static> {
                 .arg(
                     Arg::new("document_type")
                         .required(true)
-                        .possible_values(get_standard_schema().get_document_types(true))
+                        .possible_values(get_standard_schema().get_document_types())
                         .index(1)
                         .help("One of known document types"),
                 )

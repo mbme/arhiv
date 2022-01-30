@@ -32,7 +32,7 @@ impl App {
             .with_breadcrumb(Breadcrumb::string(format!("{}s", document_type)))
             .on_close("/");
 
-        if !self.arhiv.get_schema().is_internal_type(document_type) {
+        if document_type != ERASED_DOCUMENT_TYPE {
             toolbar = toolbar.with_action(Action::new_document(document_type, &None));
         }
 

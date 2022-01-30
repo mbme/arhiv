@@ -2,7 +2,7 @@ use std::default::Default;
 
 use serde::{Deserialize, Serialize};
 
-use crate::entities::Id;
+use crate::entities::{Id, ERASED_DOCUMENT_TYPE};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Conditions {
@@ -84,6 +84,19 @@ impl Filter {
             page_size: None,
             conditions: Conditions {
                 document_ref: Some(id.into()),
+                ..Conditions::default()
+            },
+            order: vec![OrderBy::UpdatedAt { asc: false }],
+        }
+    }
+
+    #[must_use]
+    pub fn all_erased_documents() -> Filter {
+        Filter {
+            page_offset: None,
+            page_size: None,
+            conditions: Conditions {
+                document_type: Some(ERASED_DOCUMENT_TYPE.to_string()),
                 ..Conditions::default()
             },
             order: vec![OrderBy::UpdatedAt { asc: false }],

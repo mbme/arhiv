@@ -5,6 +5,10 @@ pub fn index_url() -> String {
     "/".to_string()
 }
 
+pub fn erased_documents_list_url() -> String {
+    "/erased".to_string()
+}
+
 pub fn document_url(id: &Id, parent_collection: &Option<Id>) -> String {
     if let Some(collection_id) = parent_collection {
         format!("/collections/{}/documents/{}", collection_id, id)

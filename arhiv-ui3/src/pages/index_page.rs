@@ -5,7 +5,7 @@ use crate::{
     app::{App, AppResponse},
     components::{Breadcrumb, Toolbar},
     template_fn,
-    urls::catalog_url,
+    urls::{catalog_url, erased_documents_list_url},
 };
 
 template_fn!(render_template, "./index_page.html.tera");
@@ -30,6 +30,7 @@ impl App {
             "toolbar": toolbar,
             "status": status.to_string(),
             "document_types": document_types,
+            "erased_documents_list_url": erased_documents_list_url(),
         }))?;
 
         Ok(AppResponse::page("Index".to_string(), content))

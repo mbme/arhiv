@@ -1,0 +1,15 @@
+{{ toolbar | safe }}
+
+<article id="content">
+  <div class="font-mono mb-8">
+    {{ erased_documents | length }} erased documents:
+  </div>
+
+  <ul class="space-y-4">
+    {% for ref in erased_documents %}
+    <li>
+      {{ref | safe}}
+    </li>
+    {% endfor %}
+  </ul>
+</article>

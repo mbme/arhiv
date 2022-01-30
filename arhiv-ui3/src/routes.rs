@@ -33,6 +33,7 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         )
         //
         .get("/catalogs/:document_type", catalog_page)
+        .get("/erased", erased_documents_list_page)
         //
         .get("/documents/:id", document_page)
         .get("/collections/:collection_id/documents/:id", document_page)
@@ -145,6 +146,14 @@ async fn catalog_page(req: Request<Body>) -> ServerResponse {
     let url = req.get_url();
 
     let response = app.catalog_page(document_type, url)?;
+
+    app.render(response)
+}
+
+async fn erased_documents_list_page(req: Request<Body>) -> ServerResponse {
+    let app: &App = req.data().unwrap();
+
+    let response = app.erased_documents_list_page()?;
 
     app.render(response)
 }

@@ -20,9 +20,9 @@
   <h5 class="font-mono uppercase text-gray-500 mb-2">
     Backrefs:
   </h5>
-  <ul>
+  <ul class="space-y-8">
     {% for ref in backrefs %}
-    <li class="space-y-8">
+    <li>
       {{ref | safe}}
     </li>
     {% endfor %}

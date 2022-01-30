@@ -8,7 +8,8 @@
   </pre>
 
   <h3 class="mb-2 section-heading text-lg">Catalogs by type:</h3>
-  <ul>
+
+  <ul class="mb-8">
     {% for document_type in document_types %}
     <li class="mb-1">
       <a href="{{document_type.1}}">
@@ -17,4 +18,11 @@
     </li>
     {% endfor %}
   </ul>
+
+  <a
+    class="clean-link text-red-600 uppercase font-mono text-l"
+    href="{{erased_documents_list_url}}"
+  >
+    Erased documents
+  </a>
 </article>

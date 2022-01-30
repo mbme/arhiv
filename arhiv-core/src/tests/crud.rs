@@ -4,7 +4,7 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
+use crate::{entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
 
 #[test]
 fn test_crud() -> Result<()> {
@@ -47,7 +47,11 @@ fn test_crud() -> Result<()> {
 
         arhiv.erase_document(&document.id)?;
 
-        assert!(arhiv.get_document(&document.id)?.unwrap().is_erased());
+        let erased_document = arhiv.get_document(&document.id)?.unwrap();
+
+        assert!(erased_document.is_erased());
+        assert_eq!(erased_document.prev_rev, Revision::STAGING);
+
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
     }
 
@@ -68,8 +72,7 @@ async fn test_status() -> Result<()> {
                 documents_updated: 0,
                 documents_new: 0,
                 erased_documents_committed: 0,
-                erased_documents_updated: 0,
-                erased_documents_new: 0,
+                erased_documents_staged: 0,
             }
         );
         assert_eq!(
@@ -112,8 +115,7 @@ async fn test_status() -> Result<()> {
                 documents_updated: 0,
                 documents_new: 0,
                 erased_documents_committed: 0,
-                erased_documents_updated: 0,
-                erased_documents_new: 0,
+                erased_documents_staged: 0,
             }
         );
 
@@ -141,8 +143,7 @@ async fn test_status() -> Result<()> {
                 documents_updated: 1,
                 documents_new: 1,
                 erased_documents_committed: 0,
-                erased_documents_updated: 0,
-                erased_documents_new: 0,
+                erased_documents_staged: 0,
             }
         );
 
@@ -161,8 +162,7 @@ async fn test_status() -> Result<()> {
                 documents_updated: 0,
                 documents_new: 1,
                 erased_documents_committed: 0,
-                erased_documents_updated: 1,
-                erased_documents_new: 0,
+                erased_documents_staged: 1,
             }
         );
 
@@ -186,8 +186,7 @@ async fn test_status() -> Result<()> {
                 documents_updated: 0,
                 documents_new: 0,
                 erased_documents_committed: 1,
-                erased_documents_updated: 0,
-                erased_documents_new: 0,
+                erased_documents_staged: 0,
             }
         );
 

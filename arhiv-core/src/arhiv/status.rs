@@ -21,7 +21,7 @@ pub struct Status {
 impl Status {
     pub fn is_sync_required(&self) -> bool {
         self.documents_count.count_staged_documents() > 0
-            || self.documents_count.count_staged_erased_documents() > 0
+            || self.documents_count.erased_documents_staged > 0
     }
 }
 
@@ -77,7 +77,7 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
-            "   Documents: {} committed, {} staged ({} updated, {} new)",
+            "        Documents: {} committed, {} staged ({} updated, {} new)",
             self.documents_count.documents_committed,
             self.documents_count.count_staged_documents(),
             self.documents_count.documents_updated,
@@ -85,16 +85,14 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "       BLOBS: {} committed, {} staged",
+            "            BLOBS: {} committed, {} staged",
             self.blobs_count.blobs_committed, self.blobs_count.blobs_staged,
         )?;
         writeln!(
             f,
-            "  Erased documents: {} committed, {} staged ({} updated, {} new)",
+            " Erased Documents: {} committed, {} staged",
             self.documents_count.erased_documents_committed,
-            self.documents_count.count_staged_erased_documents(),
-            self.documents_count.erased_documents_updated,
-            self.documents_count.erased_documents_new,
+            self.documents_count.erased_documents_staged,
         )?;
 
         if self.conflicts_count > 0 {

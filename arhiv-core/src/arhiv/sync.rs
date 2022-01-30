@@ -69,6 +69,17 @@ impl Arhiv {
                 continue;
             }
 
+            if document.is_erased() {
+                document.rev = new_rev;
+
+                tx.put_document(&document)?;
+
+                // erase history of erased documents
+                tx.erase_document_history(&document.id)?;
+
+                continue;
+            }
+
             match tx.get_last_snapshot(&document.id)? {
                 // on conflict
                 Some(prev_snapshot) if prev_snapshot.rev != document.prev_rev => {
@@ -92,11 +103,6 @@ impl Arhiv {
             document.rev = new_rev;
 
             tx.put_document(&document)?;
-
-            // erase history of erased documents
-            if document.is_erased() {
-                tx.erase_document_history(&document.id)?;
-            }
 
             for blob_id in document.extract_refs(&self.schema)?.blobs {
                 let blob = tx.get_blob(&blob_id);

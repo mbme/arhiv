@@ -246,14 +246,9 @@ impl Arhiv {
 
         let tx = self.db.get_tx()?;
 
-        if document.rev != Revision::STAGING {
-            // we're going to modify committed document
-            // so we need to save its revision as prev_rev of the new document
-            document.prev_rev = document.rev;
-        }
-
         document.document_type = ERASED_DOCUMENT_TYPE.to_string();
         document.rev = Revision::STAGING;
+        document.prev_rev = Revision::STAGING;
         document.snapshot_id = SnapshotId::new();
         document.data = DocumentData::new();
         document.updated_at = Utc::now();

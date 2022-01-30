@@ -61,8 +61,7 @@ pub trait Queries {
                     IFNULL(SUM(CASE WHEN type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
 
                     IFNULL(SUM(CASE WHEN type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS erased_documents_updated,
-                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS erased_documents_new
+                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
                 FROM documents",
                 [ERASED_DOCUMENT_TYPE],
                 |row| Ok(DocumentsCount {
@@ -71,8 +70,7 @@ pub trait Queries {
                     documents_new: row.get(2)?,
 
                     erased_documents_committed: row.get(3)?,
-                    erased_documents_updated: row.get(4)?,
-                    erased_documents_new: row.get(5)?,
+                    erased_documents_staged: row.get(4)?,
                 }),
             )
             .context("Failed to count documents")

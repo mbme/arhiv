@@ -32,6 +32,9 @@ impl Migration for MigrationV1 {
             INSERT INTO documents_snapshots
                         SELECT id, rev, prev_rev, snapshot_id, type, created_at, updated_at, data
                         FROM old_db.documents_snapshots;
+
+            -- erased documents must have prev_rev 0
+            UPDATE documents_snapshots SET prev_rev = 0 WHERE type = '';
        ",
         )?;
 

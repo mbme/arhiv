@@ -28,8 +28,7 @@ pub struct DocumentsCount {
     pub documents_new: u32,
 
     pub erased_documents_committed: u32,
-    pub erased_documents_updated: u32,
-    pub erased_documents_new: u32,
+    pub erased_documents_staged: u32,
 }
 
 impl DocumentsCount {
@@ -39,13 +38,8 @@ impl DocumentsCount {
     }
 
     #[must_use]
-    pub fn count_staged_erased_documents(&self) -> u32 {
-        self.erased_documents_updated + self.erased_documents_new
-    }
-
-    #[must_use]
     pub fn count_staged(&self) -> u32 {
-        self.count_staged_documents() + self.count_staged_erased_documents()
+        self.count_staged_documents() + self.erased_documents_staged
     }
 }
 

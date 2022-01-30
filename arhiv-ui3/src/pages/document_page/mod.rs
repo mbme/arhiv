@@ -58,7 +58,7 @@ impl App {
 
         let backrefs = self
             .arhiv
-            .list_documents(Filter::backrefs(&document.id))?
+            .list_documents(Filter::all_backrefs(&document.id))?
             .items
             .into_iter()
             .map(|document| Ref::from_document(document).render(&self.arhiv))

@@ -78,7 +78,7 @@ impl Filter {
     }
 
     #[must_use]
-    pub fn backrefs(id: impl Into<Id>) -> Filter {
+    pub fn all_backrefs(id: impl Into<Id>) -> Filter {
         Filter {
             page_offset: None,
             page_size: None,

@@ -9,6 +9,7 @@ use crate::entities::Timestamp;
 pub struct Status {
     pub db_status: DbStatus,
     pub db_version: u8,
+    pub schema_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: u32,
@@ -42,13 +43,14 @@ impl fmt::Display for Status {
 
         writeln!(f)?;
 
-        writeln!(f, "        DB version: {}", self.db_version)?;
+        writeln!(f, "       DB version: {}", self.db_version)?;
+        writeln!(f, "   Schema version: {}", self.schema_version)?;
 
         writeln!(f)?;
 
         writeln!(
             f,
-            "            Synced: {}",
+            "           Synced: {}",
             self.documents_count.count_staged() == 0
         )?;
 
@@ -56,7 +58,7 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
-            "  Last update time: {}",
+            " Last update time: {}",
             if self.last_update_time == chrono::MIN_DATETIME {
                 "NEVER".to_string()
             } else {
@@ -65,7 +67,7 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "    Last sync time: {}",
+            "   Last sync time: {}",
             if self.db_status.last_sync_time == chrono::MIN_DATETIME {
                 "NEVER".to_string()
             } else {

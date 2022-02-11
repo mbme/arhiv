@@ -3,7 +3,7 @@ use rusqlite::Connection;
 
 use rs_utils::FsTransaction;
 
-pub trait Migration {
+pub trait DBMigration {
     fn get_version(&self) -> u8;
 
     fn get_schema(&self) -> &str;

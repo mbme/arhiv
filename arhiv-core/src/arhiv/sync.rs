@@ -15,6 +15,8 @@ impl Arhiv {
     ) -> Result<Vec<Document>> {
         log::debug!("applying changeset {}", &changeset);
 
+        let schema = self.get_schema();
+
         let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
         ensure!(
             changeset.arhiv_id == arhiv_id,
@@ -24,10 +26,10 @@ impl Arhiv {
         );
 
         ensure!(
-            changeset.schema_version == self.schema.version,
+            changeset.schema_version == schema.get_version(),
             "changeset schema_version {} must be equal to {}",
             changeset.schema_version,
-            self.schema.version,
+            schema.get_version(),
         );
 
         ensure!(
@@ -100,7 +102,7 @@ impl Arhiv {
 
             tx.put_document(&document)?;
 
-            for blob_id in document.extract_refs(&self.schema)?.blobs {
+            for blob_id in document.extract_refs(schema)?.blobs {
                 let blob = tx.get_blob(&blob_id);
 
                 ensure!(
@@ -193,7 +195,7 @@ impl Arhiv {
         let documents = tx.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            schema_version: self.schema.version,
+            schema_version: self.get_schema().get_version(),
             arhiv_id: db_status.arhiv_id,
             base_rev: db_status.db_rev,
             documents,

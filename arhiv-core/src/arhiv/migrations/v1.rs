@@ -3,11 +3,11 @@ use rusqlite::Connection;
 
 use rs_utils::FsTransaction;
 
-use super::migration::{get_rows_count, Migration};
+use super::migration::{get_rows_count, DBMigration};
 
 pub struct MigrationV1;
 
-impl Migration for MigrationV1 {
+impl DBMigration for MigrationV1 {
     fn get_version(&self) -> u8 {
         1
     }
@@ -22,7 +22,7 @@ impl Migration for MigrationV1 {
                        SELECT * FROM old_db.settings;
 
             -- store schema version in settings
-            INSERT INTO settings(key, value) VALUES ('schema_version', '1');
+            INSERT INTO settings(key, value) VALUES ('schema_version', '0');
 
             -- remove db version from settings
             DELETE FROM settings WHERE key = 'db_version';

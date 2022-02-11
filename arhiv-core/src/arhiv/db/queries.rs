@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Instant};
 
 use anyhow::{anyhow, Context, Result};
 use rusqlite::{
@@ -443,6 +443,25 @@ pub trait MutableQueries: Queries {
     fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection()
             .execute("DELETE FROM documents_snapshots WHERE rev = 0", [])?;
+
+        Ok(())
+    }
+
+    fn apply_migrations(&self) -> Result<()> {
+        let now = Instant::now();
+
+        let rows_count = self.get_connection().execute(
+            "UPDATE documents_snapshots
+                SET data = apply_migrations(type, data)
+                WHERE data <> apply_migrations(type, data)",
+            [],
+        )?;
+
+        log::info!(
+            "Migrated {} rows in {} seconds",
+            rows_count,
+            now.elapsed().as_secs_f32()
+        );
 
         Ok(())
     }

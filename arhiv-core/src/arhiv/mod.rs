@@ -17,12 +17,11 @@ use self::db::{
     ArhivTransaction, BLOBQueries, Filter, ListPage, MutableBLOBQueries, MutableQueries, Queries,
     DB, SETTING_ARHIV_ID, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
 };
-use self::migrations::{apply_migrations, create_db, get_db_version};
+use self::migrations::{apply_db_migrations, create_db, get_db_version};
 use self::status::Status;
 
 pub struct Arhiv {
     config: Config,
-    schema: DataSchema,
     pub(crate) db: DB,
 }
 
@@ -40,19 +39,23 @@ impl Arhiv {
     }
 
     pub fn open_with_options(config: Config, schema: DataSchema) -> Result<Arhiv> {
-        let db = DB::open(config.arhiv_root.to_string(), schema.clone())?;
-
         // ensure DB schema is up to date
-        apply_migrations(&config.arhiv_root).context("failed to apply migrations to arhiv db")?;
+        apply_db_migrations(&config.arhiv_root)
+            .context("failed to apply migrations to arhiv db")?;
+
+        let db = DB::open(config.arhiv_root.to_string(), schema)?;
+
+        // ensure document schema is up to date
+        db.apply_migrations()?;
 
         {
             let schema_version = db.get_connection()?.get_setting(SETTING_SCHEMA_VERSION)?;
 
             ensure!(
-                schema_version == schema.version,
+                schema_version == db.schema.get_version(),
                 "schema version {} is different from latest schema version {}",
                 schema_version,
-                schema.version,
+                db.schema.get_version(),
             );
         }
 
@@ -61,7 +64,7 @@ impl Arhiv {
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
 
-        Ok(Arhiv { config, schema, db })
+        Ok(Arhiv { config, db })
     }
 
     pub fn create(
@@ -80,9 +83,9 @@ impl Arhiv {
         create_db(&config.arhiv_root)?;
         log::info!("Created arhiv in {}", config.arhiv_root);
 
-        let schema_version = schema.version;
+        let schema_version = schema.get_version();
 
-        let db = DB::open(config.arhiv_root.to_string(), schema.clone())?;
+        let db = DB::open(config.arhiv_root.to_string(), schema)?;
 
         // TODO remove created arhiv if settings tx fails
         let tx = db.get_tx()?;
@@ -95,7 +98,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        Ok(Arhiv { config, schema, db })
+        Ok(Arhiv { config, db })
     }
 
     #[must_use]
@@ -105,7 +108,7 @@ impl Arhiv {
 
     #[must_use]
     pub fn get_schema(&self) -> &DataSchema {
-        &self.schema
+        &self.db.schema
     }
 
     pub fn get_status(&self) -> Result<Status> {
@@ -116,6 +119,7 @@ impl Arhiv {
 
         let db_status = conn.get_db_status()?;
         let db_version = get_db_version(conn.get_connection())?;
+        let schema_version = conn.get_setting(SETTING_SCHEMA_VERSION)?;
         let documents_count = conn.count_documents()?;
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.count_conflicts()?;
@@ -124,6 +128,7 @@ impl Arhiv {
         Ok(Status {
             db_status,
             db_version,
+            schema_version,
             documents_count,
             blobs_count,
             conflicts_count,
@@ -186,7 +191,9 @@ impl Arhiv {
 
         let prev_document = tx.get_document(&document.id)?;
 
-        let data_description = self.schema.get_data_description(&document.document_type)?;
+        let data_description = self
+            .get_schema()
+            .get_data_description(&document.document_type)?;
 
         Validator::default().validate(
             &document.data,

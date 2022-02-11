@@ -20,12 +20,9 @@ mod note;
 mod task;
 mod track;
 
-const SCHEMA_VERSION: u8 = 1;
-
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
     DataSchema::new(
-        SCHEMA_VERSION,
         vec![
             attachment::get_attachment_definitions(),
             note::get_note_definitions(),
@@ -37,5 +34,6 @@ pub fn get_standard_schema() -> DataSchema {
             contact::get_contact_definitions(),
         ]
         .concat(),
+        vec![],
     )
 }

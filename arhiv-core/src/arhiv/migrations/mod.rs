@@ -8,7 +8,7 @@ use rs_utils::{log, FsTransaction, TempFile};
 
 use crate::path_manager::PathManager;
 
-use self::migration::Migration;
+use self::migration::DBMigration;
 use self::v1::MigrationV1;
 
 fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
@@ -34,7 +34,7 @@ pub fn get_db_version(conn: &Connection) -> Result<u8> {
 }
 
 pub fn create_db(root_dir: impl Into<String>) -> Result<()> {
-    let latest_migration = get_migrations()
+    let latest_migration = get_db_migrations()
         .into_iter()
         .reduce(|latest_migration, migration| {
             if migration.get_version() > latest_migration.get_version() {
@@ -48,7 +48,7 @@ pub fn create_db(root_dir: impl Into<String>) -> Result<()> {
     create_db_with_schema(root_dir, &*latest_migration)
 }
 
-fn create_db_with_schema(root_dir: impl Into<String>, migration: &dyn Migration) -> Result<()> {
+fn create_db_with_schema(root_dir: impl Into<String>, migration: &dyn DBMigration) -> Result<()> {
     let new_db_pm = PathManager::new(root_dir.into());
     new_db_pm.create_dirs()?;
 
@@ -63,14 +63,14 @@ fn create_db_with_schema(root_dir: impl Into<String>, migration: &dyn Migration)
     Ok(())
 }
 
-fn get_migrations() -> Vec<Box<dyn Migration>> {
+fn get_db_migrations() -> Vec<Box<dyn DBMigration>> {
     vec![
         //
         Box::new(MigrationV1),
     ]
 }
 
-pub fn apply_migrations(root_dir: impl Into<String>) -> Result<bool> {
+pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
     let root_dir = root_dir.into();
 
     let db_pm = PathManager::new(root_dir);
@@ -81,7 +81,7 @@ pub fn apply_migrations(root_dir: impl Into<String>) -> Result<bool> {
         get_db_version(&conn)?
     };
 
-    let migrations = get_migrations();
+    let migrations = get_db_migrations();
     let max_db_version = migrations.iter().fold(0, |max_db_version, migration| {
         migration.get_version().max(max_db_version)
     });

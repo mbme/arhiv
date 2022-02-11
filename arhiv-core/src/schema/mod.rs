@@ -1,7 +1,10 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    panic::{RefUnwindSafe, UnwindSafe},
+    sync::Arc,
+};
 
 use anyhow::{anyhow, Result};
-use serde::Serialize;
 
 use crate::entities::{Document, DocumentData, Refs, ERASED_DOCUMENT_TYPE};
 
@@ -18,16 +21,23 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     fields: vec![],
 };
 
-#[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
-    pub version: u8,
     modules: Vec<DataDescription>,
+    migrations: Vec<Arc<dyn SchemaMigration>>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(version: u8, modules: Vec<DataDescription>) -> Self {
-        DataSchema { version, modules }
+    pub fn new(
+        modules: Vec<DataDescription>,
+        mut migrations: Vec<Arc<dyn SchemaMigration>>,
+    ) -> Self {
+        migrations.sort_by_key(|migration| migration.get_version());
+
+        DataSchema {
+            modules,
+            migrations,
+        }
     }
 
     fn get_collection_ref_fields(&self, document_type: &str) -> HashSet<&str> {
@@ -105,4 +115,22 @@ impl DataSchema {
             .map(|module| module.document_type)
             .collect()
     }
+
+    #[must_use]
+    pub fn get_version(&self) -> u8 {
+        self.migrations.iter().fold(0, |latest_version, migration| {
+            migration.get_version().max(latest_version)
+        })
+    }
+
+    #[must_use]
+    pub fn get_migrations(&self) -> &Vec<Arc<dyn SchemaMigration>> {
+        &self.migrations
+    }
+}
+
+pub trait SchemaMigration: Send + Sync + UnwindSafe + RefUnwindSafe {
+    fn get_version(&self) -> u8;
+
+    fn update(&self, document_type: &str, data: &mut DocumentData) -> Result<()>;
 }

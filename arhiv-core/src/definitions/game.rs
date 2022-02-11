@@ -55,8 +55,8 @@ pub fn get_game_definitions() -> Vec<DataDescription> {
                     readonly: false,
                 },
                 Field {
-                    name: "completed",
-                    field_type: FieldType::Flag {},
+                    name: "status",
+                    field_type: STATUS_FIELD,
                     mandatory: false,
                     readonly: false,
                 },

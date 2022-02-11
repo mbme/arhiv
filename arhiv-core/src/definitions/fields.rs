@@ -37,3 +37,7 @@ const RATINGS: &[&str] = &[
 ];
 
 pub const RATING_FIELD: FieldType = FieldType::Enum(RATINGS);
+
+const STATUSES: &[&str] = &["InProgress", "OnHold", "Completed", "Dropped"];
+
+pub const STATUS_FIELD: FieldType = FieldType::Enum(STATUSES);

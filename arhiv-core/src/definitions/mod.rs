@@ -1,4 +1,11 @@
-use crate::schema::DataSchema;
+use std::sync::Arc;
+
+use anyhow::Result;
+
+use crate::{
+    entities::DocumentData,
+    schema::{DataSchema, SchemaMigration},
+};
 
 pub use attachment::{Attachment, ATTACHMENT_TYPE};
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
@@ -34,6 +41,29 @@ pub fn get_standard_schema() -> DataSchema {
             contact::get_contact_definitions(),
         ]
         .concat(),
-        vec![],
+        vec![
+            //
+            Arc::new(Schema1),
+        ],
     )
+}
+
+struct Schema1;
+
+impl SchemaMigration for Schema1 {
+    fn get_version(&self) -> u8 {
+        1
+    }
+
+    fn update(&self, _document_type: &str, data: &mut DocumentData) -> Result<()> {
+        // replace "completed" with "status"
+        if let Some(completed) = data.get_bool("completed") {
+            if completed {
+                data.set("status", "Completed");
+            }
+            data.remove("completed");
+        }
+
+        Ok(())
+    }
 }

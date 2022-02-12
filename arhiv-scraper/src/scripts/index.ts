@@ -1,8 +1,10 @@
+import process from 'node:process';
 import { Context } from './context';
 import { extractBookFromYakaboo } from './book-yakaboo';
 import { extractFilmFromIMDB } from './film-imdb';
 import { extractGameFromSteam } from './game-steam';
 import { extractImage } from './attachment-image';
+import { extractFilmFromMyanimelist } from './film-myanimelist';
 
 type Scraper = (url: string, context: Context) => Promise<boolean>;
 
@@ -16,6 +18,7 @@ const context = new Context(chromeBinPath, debug);
 const SCRAPERS: Scraper[] = [
   extractBookFromYakaboo,
   extractFilmFromIMDB,
+  extractFilmFromMyanimelist,
   extractGameFromSteam,
   extractImage,
 ];
@@ -46,6 +49,13 @@ async function run(url: string) {
     await context.close();
   }
 }
+
+function handle(signal: string): void {
+  console.error(`Received ${signal}`);
+}
+
+process.on('SIGINT', handle);
+process.on('SIGTERM', handle);
 
 run(url).catch(
   (e) => {

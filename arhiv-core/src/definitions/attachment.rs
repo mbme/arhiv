@@ -3,7 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use anyhow::{ensure, Error, Result};
+use anyhow::{ensure, Context, Error, Result};
 use serde_json::json;
 
 use rs_utils::{get_file_name, get_mime_type};
@@ -104,7 +104,9 @@ impl Attachment {
 
         let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
 
-        arhiv.tx_stage_document(&mut attachment, tx)?;
+        arhiv
+            .tx_stage_document(&mut attachment, tx)
+            .context("failed to create attachment")?;
 
         Ok(attachment)
     }

@@ -42,8 +42,8 @@ binutils-bump-minor *PARAMS:
 binutils-bump-patch *PARAMS:
   cd binutils; cargo release --no-dev-version patch {{PARAMS}}
 
-test-scrapers:
-  cd arhiv-scraper; cargo test -- --ignored --test-threads 1
+test-scrapers *PARAMS:
+  cd arhiv-scraper; cargo test -- --ignored --test-threads 1 {{PARAMS}}
 
 build-timings:
   cd {{invocation_directory()}}; cargo +nightly build -Ztimings

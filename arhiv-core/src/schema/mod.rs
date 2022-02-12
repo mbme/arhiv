@@ -89,7 +89,20 @@ impl DataSchema {
         self.modules
             .iter()
             .find(|module| module.document_type == document_type)
-            .ok_or_else(|| anyhow!("Unknown document type: {}", document_type))
+            .ok_or_else(|| {
+                let types = self
+                    .modules
+                    .iter()
+                    .map(|module| module.document_type)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                anyhow!(
+                    "Unknown document type {}, must be one of [{}]",
+                    document_type,
+                    types
+                )
+            })
     }
 
     pub fn get_title(&self, document: &Document) -> Result<String> {

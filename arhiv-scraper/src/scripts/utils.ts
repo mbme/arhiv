@@ -1,6 +1,7 @@
 import { ElementHandle, Page } from 'puppeteer-core';
 
-export type Obj = Record<string, string | number | boolean | null | undefined>;
+type ObjValue = string | number | boolean | null | undefined;
+export type Obj<TValue = ObjValue> = Record<string, TValue>;
 
 export function uniqArr<T>(arr: T[]): T[] {
   const result: T[] = [];
@@ -36,4 +37,12 @@ export function getImageSrc(el: ElementHandle<HTMLElement> | Page, selector: str
 
 export function removeEl(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<void> {
   return el.$eval(selector, node => node.remove());
+}
+
+export async function getTable(el: ElementHandle<HTMLElement> | Page, rowSelector: string, split = ':'): Promise<Obj<string | undefined>> {
+  const items = await getListValues(el, rowSelector);
+
+  const table = Object.fromEntries(items.map(item => item.split(split).map(value => value.trim()) as [string, string | undefined]));
+
+  return table;
 }

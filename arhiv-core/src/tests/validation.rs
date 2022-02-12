@@ -6,16 +6,19 @@ use super::utils::*;
 
 #[test]
 fn test_validation_mandatory() {
-    let arhiv = TestArhiv::new_prime_with_schema(vec![DataDescription {
-        document_type: "test_type",
-        collection_of: Collection::None,
-        fields: vec![Field {
-            name: "test",
-            field_type: FieldType::String {},
-            mandatory: true,
-            readonly: false,
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        vec![DataDescription {
+            document_type: "test_type",
+            collection_of: Collection::None,
+            fields: vec![Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: true,
+                readonly: false,
+            }],
         }],
-    }]);
+        vec![],
+    ));
 
     let mut document = new_document(json!({}));
     let result = arhiv.stage_document(&mut document);
@@ -28,16 +31,19 @@ fn test_validation_mandatory() {
 
 #[test]
 fn test_validation_readonly() {
-    let arhiv = TestArhiv::new_prime_with_schema(vec![DataDescription {
-        document_type: "test_type",
-        collection_of: Collection::None,
-        fields: vec![Field {
-            name: "test",
-            field_type: FieldType::String {},
-            mandatory: false,
-            readonly: true,
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        vec![DataDescription {
+            document_type: "test_type",
+            collection_of: Collection::None,
+            fields: vec![Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: true,
+            }],
         }],
-    }]);
+        vec![],
+    ));
 
     {
         let mut document = new_document(json!({ "test": "test" }));

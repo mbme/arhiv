@@ -1,8 +1,8 @@
 use std::env;
 
 use arhiv_core::Arhiv;
-use rs_utils::{log, EnvCapabilities};
-use arhiv_scraper::scrape;
+use arhiv_scraper::Scraper;
+use rs_utils::log;
 
 #[tokio::main]
 pub async fn main() {
@@ -13,9 +13,12 @@ pub async fn main() {
 
     let arhiv = Arhiv::must_open();
 
-    let capabilities = EnvCapabilities::must_check();
+    let mut scraper = Scraper::new(&arhiv).unwrap();
+    scraper.debug();
 
-    scrape(&arhiv, &capabilities, url, false)
-        .await
-        .expect("failed to run scrapers");
+    let documents = scraper.scrape(url).await.expect("failed to run scrapers");
+
+    for document in documents {
+        println!("{:#?}", document);
+    }
 }

@@ -1,7 +1,7 @@
 import * as readline from 'readline';
 import { once } from 'node:events';
 
-type ImporterAction = {
+type ScraperAction = {
   type: 'CreateAttachment',
   url: string,
 } | {
@@ -16,10 +16,14 @@ export class ActionChannel {
     output: process.stdout
   });
 
-  private async runAction(action: ImporterAction): Promise<string> {
+  private async runAction(action: ScraperAction): Promise<string> {
     console.log(JSON.stringify(action));
 
     const [value] = await once(this._rl, 'line') as string[];
+
+    if (value === 'error') {
+      throw new Error(`scraper action ${action.type} failed`);
+    }
 
     return value;
   }

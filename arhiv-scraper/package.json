@@ -2,12 +2,12 @@
   "name": "arhiv-scraper",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "src/scripts/index.js",
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
-    "_build": "esbuild src/index.ts --outfile=dist/bundle.js --bundle --platform=node --define:process.env.NODE_ENV=\\\"development\\\"",
+    "_build": "esbuild src/scripts/index.ts --outfile=dist/bundle.js --color=false --bundle --platform=node --define:process.env.NODE_ENV=\\\"development\\\"",
     "build": "yarn run _build --define:process.env.NODE_ENV=\\\"development\\\"",
-    "watch": "yarn run _build --define:process.env.NODE_ENV=\\\"development\\\" --watch",
+    "watch": "yarn run build --watch",
     "prod:build": "yarn run _build --minify --define:process.env.NODE_ENV=\\\"production\\\"",
     "lint": "eslint --cache --ext .ts src"
   },

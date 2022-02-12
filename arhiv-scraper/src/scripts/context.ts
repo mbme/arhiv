@@ -1,5 +1,5 @@
 import { default as puppeteer, Browser, Page } from 'puppeteer-core';
-import { ActionChannel } from './ActionChannel';
+import { ActionChannel } from './action-channel';
 
 export class Context {
   readonly channel = new ActionChannel();
@@ -33,14 +33,37 @@ export class Context {
     const browser = await this.getBrowser();
 
     const page = await browser.newPage();
-    await page.goto(url);
+
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      switch (request.resourceType()) {
+        case 'image':
+        case 'font':
+        case 'manifest':
+        case 'signedexchange':
+        case 'cspviolationreport':
+        case 'ping': {
+          void request.abort();
+          break;
+        }
+
+        default: {
+          void request.continue();
+          break;
+        }
+      }
+    });
+
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+    });
 
     return page;
   }
 
   async close(): Promise<void> {
-    this.channel.close();
     await this._browser?.close();
+    this.channel.close();
   }
 }
 

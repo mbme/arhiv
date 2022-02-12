@@ -1,5 +1,6 @@
 ---
 source: arhiv-scraper/src/lib.rs
+assertion_line: 75
 expression: result
 
 ---
@@ -10,7 +11,6 @@ expression: result
   "creators": "Lana Wachowski, Lilly Wachowski",
   "description": "Thomas A. Anderson is a man living two lives. By day he is an average computer programmer and by night a hacker known as Neo. Neo has always questioned his reality, but the truth is far beyond his imagination. Neo finds himself targeted by the police when he is contacted by Morpheus, a legendary computer hacker branded a terrorist by the government. As a rebel against the machines, Neo must confront the agents: super-powerful computer programs devoted to stopping Neo and the entire human rebellion.",
   "duration": "2h 16m",
-  "is_series": false,
   "original_language": "English",
   "release_date": "1999",
   "title": "The Matrix"

@@ -4,7 +4,7 @@ use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 use url::Url;
 
-use crate::{file_exists, get_downloads_dir};
+use crate::file_exists;
 
 pub mod server;
 
@@ -38,10 +38,10 @@ pub fn extract_file_name_from_url(url: &str) -> Result<Option<String>> {
     Ok(file_name)
 }
 
-pub async fn download_file(src_url: &str) -> Result<String> {
-    let downloads_dir =
-        get_downloads_dir().ok_or_else(|| anyhow!("failed to find Downloads dir"))?;
-
+pub async fn download_file(downloads_dir: &str, src_url: &str) -> Result<String> {
+    // TODO download into "Downloads" dir
+    // let downloads_dir =
+    //     get_downloads_dir().ok_or_else(|| anyhow!("failed to find Downloads dir"))?;
     // TODO add ".download" suffix while downloading
     // TOOD support (pausing/)restoring download, support HTTP Ranges
 
@@ -50,7 +50,7 @@ pub async fn download_file(src_url: &str) -> Result<String> {
     let file_name = extract_file_name_from_url(src_url)?
         .ok_or_else(|| anyhow!("failed to extract file name from url {}", src_url))?;
 
-    let file = format!("{}/{}", &downloads_dir, file_name);
+    let file = format!("{}/{}", downloads_dir, file_name);
     ensure!(!file_exists(&file)?, "file {} already exists", file);
 
     download_data_to_file(src_url, &file).await?;

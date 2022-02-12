@@ -13,20 +13,21 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config,
 };
-use arhiv_scraper::scrape;
+use arhiv_scraper::Scraper;
 use arhiv_ui3::start_ui_server;
-use rs_utils::{
-    into_absolute_path,
-    log::{self, setup_logger_with_level},
-    EnvCapabilities,
-};
+use rs_utils::{into_absolute_path, log};
 
 #[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() {
     let matches = build_app().get_matches();
 
-    setup_logger_with_level(matches.occurrences_of("verbose"));
+    let verbose_count = matches.occurrences_of("verbose");
+    match verbose_count {
+        0 => log::setup_logger(),
+        1 => log::setup_debug_logger(),
+        _ => log::setup_trace_logger(),
+    };
 
     match matches.subcommand().expect("subcommand must be provided") {
         ("init", matches) => {
@@ -129,10 +130,8 @@ async fn main() {
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
 
-            let capabilities = EnvCapabilities::must_check();
-            let documents = scrape(&arhiv, &capabilities, url, false)
-                .await
-                .expect("failed to scrape");
+            let scraper = Scraper::new(&arhiv).expect("failed to create scraper");
+            let documents = scraper.scrape(url).await.expect("failed to scrape");
 
             for document in documents {
                 println!(

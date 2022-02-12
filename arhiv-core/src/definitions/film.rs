@@ -67,31 +67,17 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                     readonly: false,
                 },
                 Field {
-                    name: "is_series",
-                    field_type: FieldType::Flag {},
-                    mandatory: false,
-                    readonly: false,
-                },
-                // ----------- if Series
-                Field {
-                    name: "number_of_seasons",
+                    name: "seasons",
                     field_type: FieldType::NaturalNumber {},
                     mandatory: false,
                     readonly: false,
                 },
                 Field {
-                    name: "number_of_episodes",
+                    name: "episodes",
                     field_type: FieldType::NaturalNumber {},
                     mandatory: false,
                     readonly: false,
                 },
-                Field {
-                    name: "episode_duration",
-                    field_type: FieldType::Duration {},
-                    mandatory: false,
-                    readonly: false,
-                },
-                // -----------
                 Field {
                     name: "description",
                     field_type: FieldType::MarkupString {},

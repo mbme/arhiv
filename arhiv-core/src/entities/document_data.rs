@@ -24,6 +24,15 @@ impl DocumentData {
         self.0.remove(field.as_ref());
     }
 
+    pub fn rename(&mut self, field: impl AsRef<str>, new_field: impl AsRef<str>) {
+        let field = field.as_ref();
+        let new_field = new_field.as_ref();
+
+        if let Some(value) = self.0.remove(field) {
+            self.set(new_field, value);
+        }
+    }
+
     #[must_use]
     pub fn get(&self, field: &str) -> Option<&Value> {
         let value = self.0.get(field)?;

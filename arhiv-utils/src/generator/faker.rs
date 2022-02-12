@@ -113,7 +113,7 @@ impl<'a> Faker<'a> {
             .arhiv
             .get_schema()
             .get_data_description(&document_type)
-            .unwrap_or_else(|_| panic!("Unknown document_type {}", &document_type));
+            .expect("Unknown document type");
 
         let quantity = self.get_quantity_limit(&document_type);
 

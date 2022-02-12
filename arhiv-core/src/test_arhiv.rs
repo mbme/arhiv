@@ -10,9 +10,7 @@ use crate::{
 pub struct TestArhiv(pub Arc<Arhiv>);
 
 impl TestArhiv {
-    fn new(config: Config, prime: bool, modules: Vec<DataDescription>) -> Self {
-        let schema = DataSchema::new(modules, vec![]);
-
+    fn new(config: Config, prime: bool, schema: DataSchema) -> Self {
         let arhiv = Arhiv::create(config, schema, "test-arhiv".to_string(), prime)
             .expect("must be able to create temp arhiv");
 
@@ -20,48 +18,18 @@ impl TestArhiv {
     }
 
     #[must_use]
-    pub fn new_prime_with_schema(modules: Vec<DataDescription>) -> Self {
+    pub fn new_prime_with_schema(schema: DataSchema) -> Self {
         let config = Config {
             arhiv_root: generate_temp_path("TempArhiv", ""),
             ..Config::default()
         };
 
-        TestArhiv::new(config, true, modules)
+        TestArhiv::new(config, true, schema)
     }
 
     #[must_use]
     pub fn new_prime() -> Self {
-        TestArhiv::new_prime_with_schema(vec![DataDescription {
-            document_type: "test_type",
-            collection_of: Collection::None,
-            fields: vec![
-                Field {
-                    name: "blob",
-                    field_type: FieldType::BLOBId,
-                    mandatory: false,
-                    readonly: false,
-                },
-                Field {
-                    name: "test",
-                    field_type: FieldType::String {},
-                    mandatory: false,
-                    readonly: false,
-                },
-            ],
-        }])
-    }
-
-    #[must_use]
-    pub fn new_replica(port: u16) -> Self {
-        let config = Config {
-            arhiv_root: generate_temp_path("TempArhiv", ""),
-            prime_url: format!("http://localhost:{}", port),
-            ..Config::default()
-        };
-
-        TestArhiv::new(
-            config,
-            false,
+        TestArhiv::new_prime_with_schema(DataSchema::new(
             vec![DataDescription {
                 document_type: "test_type",
                 collection_of: Collection::None,
@@ -80,7 +48,41 @@ impl TestArhiv {
                     },
                 ],
             }],
-        )
+            vec![],
+        ))
+    }
+
+    #[must_use]
+    pub fn new_replica(port: u16) -> Self {
+        let config = Config {
+            arhiv_root: generate_temp_path("TempArhiv", ""),
+            prime_url: format!("http://localhost:{}", port),
+            ..Config::default()
+        };
+
+        let schema = DataSchema::new(
+            vec![DataDescription {
+                document_type: "test_type",
+                collection_of: Collection::None,
+                fields: vec![
+                    Field {
+                        name: "blob",
+                        field_type: FieldType::BLOBId,
+                        mandatory: false,
+                        readonly: false,
+                    },
+                    Field {
+                        name: "test",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                    },
+                ],
+            }],
+            vec![],
+        );
+
+        TestArhiv::new(config, false, schema)
     }
 }
 

@@ -1,0 +1,19 @@
+---
+source: arhiv-scraper/src/lib.rs
+assertion_line: 84
+expression: result
+
+---
+{
+  "cast": "Kyle MacLachlan, Michael Ontkean, Mädchen Amick",
+  "countries_of_origin": "United States",
+  "cover": "[cover_attachment_id]",
+  "creators": "Mark Frost, David Lynch",
+  "description": "The body of a young girl (Laura Palmer) is washed up on a beach near the small Washington state town of Twin Peaks. FBI Special Agent Dale Cooper is called in to investigate her strange demise only to uncover a web of mystery that ultimately leads him deep into the heart of the surrounding woodland and his very own soul.",
+  "duration": "47m",
+  "episodes": 30,
+  "original_language": "English",
+  "release_date": "1990–1991",
+  "seasons": 2,
+  "title": "Twin Peaks"
+}

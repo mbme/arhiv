@@ -13,15 +13,18 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
   const page = await context.newPage(url);
 
   const metadata = await getListValues(page, '[data-testid=hero-title-block__metadata] li');
+  if (metadata.length === 3) {
+    metadata.unshift('');
+  }
 
-  const isSeries = metadata[0].toLowerCase().includes('series');
-  const isMiniSeries = isSeries && metadata[0].toLowerCase().includes('mini');
+  const filmType = metadata[0].toLowerCase();
+  const isSeries = filmType.includes('series');
+  const isMiniSeries = isSeries && filmType.includes('mini');
 
   const data: Obj = {
     title: await getText(page, 'h1[data-testid=hero-title-block__title]'),
     original_language: await getText(page, '[data-testid=title-details-languages] ul li a'),
     countries_of_origin: await getListStr(page, '[data-testid=title-details-origin] ul li a'),
-    is_series: isSeries,
   };
 
   const cover_src  = await page.$eval('[data-testid=hero-media__poster] img', node => (node as HTMLImageElement).src);
@@ -41,40 +44,48 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
 
     description = await getText(summaryEl, 'div');
   }
-  data['description'] = description;
-
+  data.description = description;
+  data.release_date = metadata[1];
+  data.duration = metadata[3];
 
   const creators = [];
   const cast = [];
   const creditsEls = await page.$$('[data-testid=title-pc-principal-credit]');
 
   if (isSeries) {
-    data['release_date'] = metadata[1];
-    data['number_of_episodes'] = Number.parseInt(await getText(page, '[data-testid=hero-subnav-bar-series-episode-count]'), 10);
-    data['episode_duration'] = metadata[3];
+    data.seasons = Number.parseInt(await getText(page, '[data-testid=episodes-browse-episodes] >:nth-child(2) >:nth-child(2)'), 10);
+    data.episodes = Number.parseInt(await getText(page, '[data-testid=episodes-header] .ipc-title__subtext'), 10);
 
     creators.push(...(await getListValues(creditsEls[0], ':scope ul li a')));
     cast.push(...(await getListValues(creditsEls[1], ':scope ul li a')));
-
-    if (isMiniSeries) { // IMDB often shows total duration for miniseries instead of episode duration
-      data['episode_duration'] = undefined;
-    }
   } else {
-    data['release_date'] = metadata[0];
-    data['duration'] = metadata[2];
-
     creators.push(...(await getListValues(creditsEls[0], ':scope ul li a')));
     creators.push(...(await getListValues(creditsEls[1], ':scope ul li a')));
 
     cast.push(...(await getListValues(creditsEls[2], ':scope ul li a')));
   }
 
-  data['creators'] = uniqArr(creators).join(', ');
-  data['cast'] = uniqArr(cast).join(', ');
+  data.creators = uniqArr(creators).join(', ');
+  data.cast = uniqArr(cast).join(', ');
+
+  if (isMiniSeries) { // IMDB often shows total duration for miniseries instead of episode duration
+    data.duration = undefined;
+  }
+
+  const chips = (await getListValues(page, '.ipc-chip__text')).map(item => item.toLowerCase());
+
+  const isAnime = chips.includes('anime');
+  if (isAnime) {
+    data.creators = undefined;
+    data.cast = undefined;
+  }
+
+  const isAnimation = chips.includes('animation');
+  if (isAnimation) {
+    data.cast = undefined;
+  }
 
   await context.channel.createDocument('film', data);
-
-  await page.close();
 
   return true;
 }

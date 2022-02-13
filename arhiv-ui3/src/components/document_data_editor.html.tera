@@ -6,7 +6,7 @@
   v-preserve-unsaved-changes
 >
   <!-- Prevent implicit submission of the form -->
-  <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+  <button type="submit" disabled style="display: none" hidden aria-hidden="true"></button>
   <!-- ... -->
 
   {% for field in fields %}
@@ -26,7 +26,7 @@
       {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
       {% if loop.first %}autofocus{% endif %}
-      v-auto-grow
+      v-editor
     >{{field.value}}</textarea>
 
     {% elif 'Enum' in field.field_type %}

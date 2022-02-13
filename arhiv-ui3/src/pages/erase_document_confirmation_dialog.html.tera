@@ -6,7 +6,7 @@
     autocomplete="off"
   >
     <!-- Prevent implicit submission of the form -->
-    <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+    <button type="submit" disabled style="display: none" hidden aria-hidden="true"></button>
     <!-- ... -->
 
     <div class="modal-title bg-red-500 bg-opacity-75">

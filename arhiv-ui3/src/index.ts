@@ -12,6 +12,7 @@ import {
 import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts/modal';
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
+import { initEditor } from './scripts/editor';
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -49,6 +50,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       autoGrowTextarea(el);
+    },
+    'v-editor': (el) => {
+      if (!(el instanceof HTMLTextAreaElement)) {
+        throw new Error('v-editor must be applied to textarea');
+      }
+
+      initEditor(el);
     },
     'v-preserve-unsaved-changes': (el) => {
       if (!(el instanceof HTMLFormElement)) {

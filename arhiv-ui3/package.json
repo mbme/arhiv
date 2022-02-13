@@ -17,6 +17,18 @@
     "fmt": "prettier --write src/"
   },
   "dependencies": {
+    "@codemirror/closebrackets": "^0.19.0",
+    "@codemirror/commands": "^0.19.8",
+    "@codemirror/gutter": "^0.19.9",
+    "@codemirror/highlight": "^0.19.7",
+    "@codemirror/history": "^0.19.2",
+    "@codemirror/lang-markdown": "^0.19.6",
+    "@codemirror/language": "^0.19.7",
+    "@codemirror/matchbrackets": "^0.19.4",
+    "@codemirror/rectangular-selection": "^0.19.1",
+    "@codemirror/search": "^0.19.6",
+    "@codemirror/state": "^0.19.7",
+    "@codemirror/view": "^0.19.42",
     "a11y-dialog": "^7.3.0"
   },
   "devDependencies": {

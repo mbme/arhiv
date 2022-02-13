@@ -11,6 +11,7 @@
     "arhiv-scraper"
   ],
   "scripts": {
+    "check-fmt": "prettier --check .",
     "fmt": "prettier --write ."
   },
   "devDependencies": {

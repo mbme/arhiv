@@ -1,9 +1,11 @@
-use anyhow::{ensure, Result};
+use anyhow::Result;
 use rusqlite::Connection;
 
 use rs_utils::FsTransaction;
 
-use super::migration::{get_rows_count, DBMigration};
+use crate::arhiv::migrations::migration::ensure_snapshots_count_stay_the_same;
+
+use super::migration::{ensure_settings_count_stay_the_same, DBMigration};
 
 pub struct MigrationV1;
 
@@ -40,21 +42,8 @@ impl DBMigration for MigrationV1 {
     }
 
     fn test(&self, conn: &Connection, _data_dir: &str) -> Result<()> {
-        let old_documents_snapshots_count = get_rows_count(conn, "old_db.documents_snapshots")?;
-        let new_documents_snapshots_count = get_rows_count(conn, "documents_snapshots")?;
-
-        ensure!(
-            old_documents_snapshots_count == new_documents_snapshots_count,
-            "snapshots count must stay the same"
-        );
-
-        let old_settings_count = get_rows_count(conn, "old_db.settings")?;
-        let new_settings_count = get_rows_count(conn, "settings")?;
-
-        ensure!(
-            new_settings_count == old_settings_count,
-            "settings count must stay the same"
-        );
+        ensure_snapshots_count_stay_the_same(conn)?;
+        ensure_settings_count_stay_the_same(conn)?;
 
         Ok(())
     }

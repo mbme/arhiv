@@ -56,6 +56,14 @@ impl Document {
     pub fn extract_refs(&self, schema: &DataSchema) -> Result<Refs> {
         schema.extract_refs(&self.document_type, &self.data)
     }
+
+    pub(crate) fn erase(&mut self) {
+        self.document_type = ERASED_DOCUMENT_TYPE.to_string();
+        self.rev = Revision::STAGING;
+        self.prev_rev = Revision::STAGING;
+        self.data = DocumentData::new();
+        self.updated_at = Utc::now();
+    }
 }
 
 impl std::str::FromStr for Document {

@@ -270,13 +270,9 @@ impl Arhiv {
             "erased documents must not be updated"
         );
 
-        let tx = self.db.get_tx()?;
+        document.erase();
 
-        document.document_type = ERASED_DOCUMENT_TYPE.to_string();
-        document.rev = Revision::STAGING;
-        document.prev_rev = Revision::STAGING;
-        document.data = DocumentData::new();
-        document.updated_at = Utc::now();
+        let tx = self.db.get_tx()?;
 
         tx.put_document(&document)?;
 

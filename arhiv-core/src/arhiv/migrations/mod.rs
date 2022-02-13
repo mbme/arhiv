@@ -1,5 +1,6 @@
 mod migration;
 mod v1;
+mod v2;
 
 use anyhow::{ensure, Context, Result};
 use rusqlite::{Connection, OpenFlags};
@@ -10,6 +11,7 @@ use crate::path_manager::PathManager;
 
 use self::migration::DBMigration;
 use self::v1::MigrationV1;
+use self::v2::MigrationV2;
 
 fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
     let conn = Connection::open_with_flags(
@@ -67,6 +69,7 @@ fn get_db_migrations() -> Vec<Box<dyn DBMigration>> {
     vec![
         //
         Box::new(MigrationV1),
+        Box::new(MigrationV2),
     ]
 }
 

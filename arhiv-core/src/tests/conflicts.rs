@@ -33,3 +33,19 @@ async fn test_conflicts() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_deleted_document_isnt_conflict() -> Result<()> {
+    let arhiv = TestArhiv::new_prime();
+
+    let mut document = empty_document();
+    arhiv.stage_document(&mut document)?;
+    arhiv.sync().await?;
+
+    // update the same document
+    arhiv.erase_document(&document.id)?;
+
+    assert_eq!(arhiv.get_status()?.conflicts_count, 0);
+
+    Ok(())
+}

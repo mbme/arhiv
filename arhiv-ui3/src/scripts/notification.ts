@@ -5,7 +5,10 @@ const NOTIFICATION_TIMEOUT_MS: Record<NotificationType, number> = {
   'error': 10000,
 };
 
-export function renderNotification(message: string, notificationType: NotificationType = 'info'): void {
+export function renderNotification(
+  message: string,
+  notificationType: NotificationType = 'info'
+): void {
   const rootEl = document.getElementById('notification-root');
   if (!rootEl) {
     throw new Error('notification root el not found');

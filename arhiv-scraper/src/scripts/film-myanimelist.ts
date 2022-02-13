@@ -12,7 +12,7 @@ export async function extractFilmFromMyanimelist(url: string, context: Context):
   const data: Obj = {};
 
   const engTitle = await getText(page, '.title-english').catch(() => '');
-  data.title = engTitle || await getText(page, '.title-name');
+  data.title = engTitle || (await getText(page, '.title-name'));
 
   const cover_src = await getImageSrc(page, '.leftside img');
   data.cover = await context.channel.createAttachment(cover_src);

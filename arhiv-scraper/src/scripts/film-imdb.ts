@@ -27,7 +27,10 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
     countries_of_origin: await getListStr(page, '[data-testid=title-details-origin] ul li a'),
   };
 
-  const cover_src  = await page.$eval('[data-testid=hero-media__poster] img', node => (node as HTMLImageElement).src);
+  const cover_src = await page.$eval(
+    '[data-testid=hero-media__poster] img',
+    (node) => (node as HTMLImageElement).src
+  );
   data.cover = await context.channel.createAttachment(cover_src);
 
   let description = '';
@@ -39,7 +42,7 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
         return;
       }
 
-      return nodes[0].evaluate(node => node.remove());
+      return nodes[0].evaluate((node) => node.remove());
     });
 
     description = await getText(summaryEl, 'div');
@@ -53,8 +56,14 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
   const creditsEls = await page.$$('[data-testid=title-pc-principal-credit]');
 
   if (isSeries) {
-    data.seasons = Number.parseInt(await getText(page, '[data-testid=episodes-browse-episodes] >:nth-child(2) >:nth-child(2)'), 10);
-    data.episodes = Number.parseInt(await getText(page, '[data-testid=episodes-header] .ipc-title__subtext'), 10);
+    data.seasons = Number.parseInt(
+      await getText(page, '[data-testid=episodes-browse-episodes] >:nth-child(2) >:nth-child(2)'),
+      10
+    );
+    data.episodes = Number.parseInt(
+      await getText(page, '[data-testid=episodes-header] .ipc-title__subtext'),
+      10
+    );
 
     creators.push(...(await getListValues(creditsEls[0], ':scope ul li a')));
     cast.push(...(await getListValues(creditsEls[1], ':scope ul li a')));
@@ -68,11 +77,12 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
   data.creators = uniqArr(creators).join(', ');
   data.cast = uniqArr(cast).join(', ');
 
-  if (isMiniSeries) { // IMDB often shows total duration for miniseries instead of episode duration
+  if (isMiniSeries) {
+    // IMDB often shows total duration for miniseries instead of episode duration
     data.duration = undefined;
   }
 
-  const chips = (await getListValues(page, '.ipc-chip__text')).map(item => item.toLowerCase());
+  const chips = (await getListValues(page, '.ipc-chip__text')).map((item) => item.toLowerCase());
 
   const isAnime = chips.includes('anime');
   if (isAnime) {

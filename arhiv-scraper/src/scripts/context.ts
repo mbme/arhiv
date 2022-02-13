@@ -6,10 +6,7 @@ export class Context {
 
   private _browser?: Browser;
 
-  constructor(
-    private _chromeBinPath: string,
-    private _debug: boolean,
-  ) {}
+  constructor(private _chromeBinPath: string, private _debug: boolean) {}
 
   private async getBrowser(): Promise<Browser> {
     if (this._browser) {
@@ -18,13 +15,17 @@ export class Context {
 
     const executablePath = this._chromeBinPath;
 
-    this._browser = await puppeteer.launch(this._debug ? {
-      executablePath,
-      headless: false,
-      defaultViewport: null, // use full viewport
-    } : {
-      executablePath,
-    });
+    this._browser = await puppeteer.launch(
+      this._debug
+        ? {
+            executablePath,
+            headless: false,
+            defaultViewport: null, // use full viewport
+          }
+        : {
+            executablePath,
+          }
+    );
 
     return this._browser;
   }

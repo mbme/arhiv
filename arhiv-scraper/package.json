@@ -9,17 +9,13 @@
     "build": "yarn run _build --define:process.env.NODE_ENV=\\\"development\\\"",
     "watch": "yarn run build --watch",
     "prod:build": "yarn run _build --minify --define:process.env.NODE_ENV=\\\"production\\\"",
-    "lint": "eslint --cache --ext .ts src"
+    "lint": "eslint --cache --ext .ts src/",
+    "fmt": "prettier --write src/"
   },
   "author": "mbme",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^17.0.4",
-    "@typescript-eslint/eslint-plugin": "^5.2.0",
-    "@typescript-eslint/parser": "^5.2.0",
-    "esbuild": "^0.14.5",
-    "eslint": "^8.1.0",
-    "typescript": "^4.3.5"
+    "esbuild": "^0.14.5"
   },
   "dependencies": {
     "puppeteer-core": "^13.0.0"

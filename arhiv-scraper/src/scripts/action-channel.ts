@@ -1,25 +1,27 @@
 import * as readline from 'readline';
 import { once } from 'node:events';
 
-type ScraperAction = {
-  type: 'CreateAttachment',
-  url: string,
-} | {
-  type: 'CreateDocument',
-  document_type: string,
-  data: Record<string, unknown>,
-}
+type ScraperAction =
+  | {
+      type: 'CreateAttachment';
+      url: string;
+    }
+  | {
+      type: 'CreateDocument';
+      document_type: string;
+      data: Record<string, unknown>;
+    };
 
 export class ActionChannel {
   private _rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
   private async runAction(action: ScraperAction): Promise<string> {
     console.log(JSON.stringify(action));
 
-    const [value] = await once(this._rl, 'line') as string[];
+    const [value] = (await once(this._rl, 'line')) as string[];
 
     if (value === 'error') {
       throw new Error(`scraper action ${action.type} failed`);

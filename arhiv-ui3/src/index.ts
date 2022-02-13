@@ -1,7 +1,14 @@
 import { keepSessionState } from './scripts/utils';
 import { init_V_JS } from './scripts/v-js';
 import { copyTextAndNotify } from './scripts/clipboard';
-import { autoGrowTextarea, isFormElement, initDynamicLink, initDynamicForm, preserveUnsavedChanges, isAnchorElement } from './scripts/forms';
+import {
+  autoGrowTextarea,
+  isFormElement,
+  initDynamicLink,
+  initDynamicForm,
+  preserveUnsavedChanges,
+  isAnchorElement,
+} from './scripts/forms';
 import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts/modal';
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
@@ -22,7 +29,7 @@ class ArhivUI {
 
 declare global {
   interface Window {
-    arhiv_ui: ArhivUI
+    arhiv_ui: ArhivUI;
   }
 }
 

@@ -18,7 +18,7 @@ export function copyText(text: string): Promise<void> {
   });
 }
 
-export async function copyTextAndNotify(text: string, textName: string): Promise<void>  {
+export async function copyTextAndNotify(text: string, textName: string): Promise<void> {
   try {
     await copyText(text);
     renderNotification(`Copied ${textName} to clipboard!`);

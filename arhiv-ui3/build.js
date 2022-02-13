@@ -9,11 +9,7 @@ esbuild.build({
   entryPoints: ['./src/index.ts'],
   outfile: './public/index.js',
 
-  target: [
-    'es2020',
-    'chrome90',
-    'firefox87',
-  ],
+  target: ['es2020', 'chrome90', 'firefox87'],
   bundle: true,
   minify: isProduction,
   sourcemap: true,

@@ -2,11 +2,7 @@
   "compilerOptions": {
     "incremental": true,
     "esModuleInterop": true,
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable"
-    ],
+    "lib": ["esnext", "dom", "dom.iterable"],
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "module": "ESNext",
@@ -30,8 +26,5 @@
     "preserveConstEnums": true,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "node_modules",
-    "*/**/FLYCHECK_XXY_*"
-  ]
+  "exclude": ["node_modules", "*/**/FLYCHECK_XXY_*"]
 }

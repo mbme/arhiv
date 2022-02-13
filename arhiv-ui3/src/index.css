@@ -4,7 +4,8 @@
 
 @layer base {
   /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */
-  a, button {
+  a,
+  button {
     touch-action: manipulation;
   }
 
@@ -17,7 +18,8 @@ html {
   overflow-y: scroll;
 }
 
-html, body {
+html,
+body {
   height: auto;
   min-height: 100vh;
 
@@ -124,7 +126,7 @@ a:not(.clean-link) {
     overflow-wrap: break-word;
 
     /* task lists */
-    & li > input[type=checkbox] {
+    & li > input[type='checkbox'] {
       margin-top: 0;
       margin-bottom: 0;
     }
@@ -137,7 +139,7 @@ a:not(.clean-link) {
     position: relative;
 
     &:after {
-      content: "";
+      content: '';
       position: absolute;
       top: 80%;
       bottom: 0;
@@ -155,7 +157,7 @@ a:not(.clean-link) {
     & .field {
       display: block;
 
-      &:not(input[type=checkbox], select) {
+      &:not(input[type='checkbox'], select) {
         @apply w-full;
       }
 

@@ -11,10 +11,7 @@ async function passAgeCheck(page: Page): Promise<void> {
     (yearSelect as HTMLSelectElement).value = '1986';
   });
 
-  await Promise.all([
-    page.waitForNavigation(),
-    page.click('#view_product_page_btn'),
-  ]);
+  await Promise.all([page.waitForNavigation(), page.click('#view_product_page_btn')]);
 }
 
 export async function extractGameFromSteam(url: string, context: Context): Promise<boolean> {

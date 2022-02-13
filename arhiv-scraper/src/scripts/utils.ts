@@ -16,33 +16,52 @@ export function uniqArr<T>(arr: T[]): T[] {
 }
 
 export function getText(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<string> {
-  return el.$eval(selector, node => (node as HTMLElement).innerText);
+  return el.$eval(selector, (node) => (node as HTMLElement).innerText);
 }
 
-export async function getListValues(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<string[]> {
-  const items = await el.$$eval(selector, nodes => nodes.map(node => (node as HTMLElement).innerText.trim()).filter(item => item.length > 0));
+export async function getListValues(
+  el: ElementHandle<HTMLElement> | Page,
+  selector: string
+): Promise<string[]> {
+  const items = await el.$$eval(selector, (nodes) =>
+    nodes.map((node) => (node as HTMLElement).innerText.trim()).filter((item) => item.length > 0)
+  );
 
   return uniqArr(items);
 }
 
-export async function getListStr(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<string> {
+export async function getListStr(
+  el: ElementHandle<HTMLElement> | Page,
+  selector: string
+): Promise<string> {
   const values = await getListValues(el, selector);
 
   return values.join(', ');
 }
 
-export function getImageSrc(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<string> {
-  return  el.$eval(selector, node => (node as HTMLImageElement).src);
+export function getImageSrc(
+  el: ElementHandle<HTMLElement> | Page,
+  selector: string
+): Promise<string> {
+  return el.$eval(selector, (node) => (node as HTMLImageElement).src);
 }
 
 export function removeEl(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<void> {
-  return el.$eval(selector, node => node.remove());
+  return el.$eval(selector, (node) => node.remove());
 }
 
-export async function getTable(el: ElementHandle<HTMLElement> | Page, rowSelector: string, split = ':'): Promise<Obj<string | undefined>> {
+export async function getTable(
+  el: ElementHandle<HTMLElement> | Page,
+  rowSelector: string,
+  split = ':'
+): Promise<Obj<string | undefined>> {
   const items = await getListValues(el, rowSelector);
 
-  const table = Object.fromEntries(items.map(item => item.split(split).map(value => value.trim()) as [string, string | undefined]));
+  const table = Object.fromEntries(
+    items.map(
+      (item) => item.split(split).map((value) => value.trim()) as [string, string | undefined]
+    )
+  );
 
   return table;
 }

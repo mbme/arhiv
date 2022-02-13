@@ -57,9 +57,7 @@ function handle(signal: string): void {
 process.on('SIGINT', handle);
 process.on('SIGTERM', handle);
 
-run(url).catch(
-  (e) => {
-    console.error('Failed to run: ', e);
-    process.exit(1);
-  },
-);
+run(url).catch((e) => {
+  console.error('Failed to run: ', e);
+  process.exit(1);
+});

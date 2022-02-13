@@ -65,7 +65,7 @@ export function preserveUnsavedChanges(form: HTMLFormElement): void {
 
     event.preventDefault();
 
-    return event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?';
+    return (event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?');
   }
 
   window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
@@ -96,14 +96,17 @@ export function submitForm(form: HTMLFormElement): Promise<string> {
   return fetchText(form.action, qs);
 }
 
-export async function submitFormAndReplace(form: HTMLFormElement, targetEl: HTMLElement): Promise<void> {
+export async function submitFormAndReplace(
+  form: HTMLFormElement,
+  targetEl: HTMLElement
+): Promise<void> {
   const content = await submitForm(form);
 
   replaceEl(targetEl, content);
 }
 
 export function isFormElement(el: Element | null): el is HTMLFormElement {
-  return (el instanceof HTMLFormElement);
+  return el instanceof HTMLFormElement;
 }
 
 export function initDynamicForm(formEl: HTMLFormElement, containerEl: Element): void {
@@ -119,19 +122,24 @@ export function initDynamicForm(formEl: HTMLFormElement, containerEl: Element): 
 
     inProgress = true;
 
-    submitForm(formEl).then(content => {
-      containerEl.innerHTML = content;
-      containerEl.scrollTop = 0;
-    }, (err) => {
-      console.error('Failed to submit form', err);
-    }).finally(() => {
-      inProgress = false;
-    });
+    submitForm(formEl)
+      .then(
+        (content) => {
+          containerEl.innerHTML = content;
+          containerEl.scrollTop = 0;
+        },
+        (err) => {
+          console.error('Failed to submit form', err);
+        }
+      )
+      .finally(() => {
+        inProgress = false;
+      });
   });
 }
 
 export function isAnchorElement(el: Element | null): el is HTMLAnchorElement {
-  return (el instanceof HTMLAnchorElement);
+  return el instanceof HTMLAnchorElement;
 }
 
 export function initDynamicLink(linkEl: HTMLAnchorElement, containerEl: HTMLElement): void {

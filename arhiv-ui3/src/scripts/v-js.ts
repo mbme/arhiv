@@ -7,9 +7,7 @@ export type Directives = Record<DirectiveName, Directive>;
 class DirectivesProcessor {
   private _registries: Record<DirectiveName, WeakSet<Element>>;
 
-  constructor(
-    private _directives: Directives,
-  ) {
+  constructor(private _directives: Directives) {
     this._registries = {};
     for (const directiveName of Object.keys(_directives)) {
       this._registries[directiveName as DirectiveName] = new WeakSet();
@@ -52,7 +50,13 @@ class DirectivesProcessor {
 
         registry.add(el);
       } catch (e) {
-        console.error('Failed to execute directive "%s": %s\n script: %s\n', directiveName, e, value, el);
+        console.error(
+          'Failed to execute directive "%s": %s\n script: %s\n',
+          directiveName,
+          e,
+          value,
+          el
+        );
       }
     }
 
@@ -77,7 +81,7 @@ export function init_V_JS(observeChanges = false, directives: Directives): void 
   }
 
   const observer = new MutationObserver((mutations) => {
-    const hasNewNodes = mutations.find(mutation => mutation.addedNodes.length > 0);
+    const hasNewNodes = mutations.find((mutation) => mutation.addedNodes.length > 0);
 
     if (!hasNewNodes) {
       return;

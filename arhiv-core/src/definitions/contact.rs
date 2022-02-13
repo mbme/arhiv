@@ -25,7 +25,19 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                     readonly: false,
                 },
                 Field {
+                    name: "is_company",
+                    field_type: FieldType::Flag {},
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
                     name: "date_of_birth",
+                    field_type: FieldType::Date {},
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "date_of_death",
                     field_type: FieldType::Date {},
                     mandatory: false,
                     readonly: false,

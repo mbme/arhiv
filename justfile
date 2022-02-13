@@ -52,4 +52,8 @@ clear-timings:
   cd {{invocation_directory()}}; rm cargo-timing*
 
 check:
-  cargo clippy --verbose --all-targets --all-features -- -D warnings
+  cargo clippy --all-targets --all-features -- -D warnings
+  cargo test
+  yarn run check-fmt
+  yarn workspace arhiv-ui3 run lint
+  yarn workspace arhiv-scraper run lint

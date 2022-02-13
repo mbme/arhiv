@@ -20,6 +20,9 @@ pub use scraper::Scraper;
 
 #[cfg(test)]
 mod tests {
+    // disable rule due to false positives in insta::assert_json_snapshot!()
+    #![allow(clippy::semicolon_if_nothing_returned)]
+
     use anyhow::{anyhow, Context, Result};
     use serde_json::Value;
 

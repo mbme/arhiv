@@ -27,6 +27,6 @@ jobs:
       - name: Check JS & TS formatting
         run: yarn run check-fmt
       - name: Lint Arhiv UI
-        run yarn workspace arhiv-ui3 run lint
+        run: yarn workspace arhiv-ui3 run lint
       - name: Lint Arhiv Scraper
-        run yarn workspace arhiv-scraper run lint
+        run: yarn workspace arhiv-scraper run lint

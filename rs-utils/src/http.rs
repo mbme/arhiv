@@ -155,7 +155,7 @@ mod tests {
 
         assert_eq!(
             parse_content_range_header("bytes 10-20000/300000").unwrap(),
-            (10, 20000, 300000)
+            (10, 20000, 300_000)
         );
 
         assert!(parse_content_range_header("bytes 1-2/*").is_err());

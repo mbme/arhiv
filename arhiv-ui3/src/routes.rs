@@ -6,7 +6,7 @@ use arhiv_core::{
     entities::{BLOBId, Id},
     prime_server::respond_with_blob,
 };
-use rs_utils::server::{
+use rs_utils::http_server::{
     error_handler, logger_middleware, not_found_handler, parse_urlencoded, RequestQueryExt,
     ServerResponse,
 };

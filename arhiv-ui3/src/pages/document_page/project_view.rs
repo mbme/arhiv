@@ -7,7 +7,7 @@ use arhiv_core::{
     entities::Document,
     Arhiv, Filter,
 };
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 use crate::{
     components::{render_search_input, CatalogEntries, DocumentDataViewer},

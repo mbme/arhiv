@@ -10,7 +10,7 @@ use arhiv_core::{
     schema::Collection,
     Arhiv, Filter,
 };
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 use crate::{
     app::{App, AppResponse},

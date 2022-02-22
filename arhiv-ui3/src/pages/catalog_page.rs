@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 
 use arhiv_core::entities::*;
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 use crate::{
     app::{App, AppResponse},

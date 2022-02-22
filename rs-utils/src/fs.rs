@@ -1,7 +1,9 @@
-use std::env;
-use std::fs;
-use std::os::unix::prelude::MetadataExt;
-use std::path::PathBuf;
+use std::{
+    env, fs,
+    io::ErrorKind,
+    os::unix::prelude::MetadataExt,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use tokio::fs as tokio_fs;
@@ -67,11 +69,24 @@ pub fn is_same_filesystem(path1: &str, path2: &str) -> Result<bool> {
 
 #[must_use]
 pub fn get_file_name(path: &str) -> &str {
-    std::path::Path::new(path)
+    Path::new(path)
         .file_name()
         .expect("file must have name")
         .to_str()
         .expect("file name must be valid string")
+}
+
+pub fn get_file_size(path: &str) -> Result<u64> {
+    let metadata = fs::metadata(path).context("failed to read file metadata")?;
+
+    Ok(metadata.len())
+}
+
+#[must_use]
+pub fn get_file_extension(path: &str) -> Option<String> {
+    let extension = Path::new(path).extension()?.to_str()?.to_string();
+
+    Some(extension)
 }
 
 pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File, BytesCodec>> {
@@ -161,23 +176,22 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     let src = src.as_ref();
     let dest = dest.as_ref();
 
-    let err = {
-        if let Err(err) = fs::rename(src, dest) {
-            err
-        } else {
+    match fs::rename(src, dest) {
+        Err(err) if err.raw_os_error() == Some(18) => {
+            // check for Invalid cross-device link (os error 18)
+        }
+        Err(err) => {
+            return Err(err).context("failed to rename file");
+        }
+        Ok(_) => {
             return Ok(());
         }
     };
 
-    // check for Invalid cross-device link (os error 18)
-    if err.raw_os_error() != Some(18) {
-        bail!(err);
-    }
-
     // if error is due to src and dest being on different file systems
     // then copy src into dest, and remove src
 
-    fs::copy(src, dest)?;
+    fs::copy(src, dest).context("failed to copy file data")?;
 
     if let Err(err) = fs::remove_file(src) {
         log::warn!("Failed to remove source file {}: {}", src, err);
@@ -218,6 +232,21 @@ pub fn get_mime_type(file_path: impl AsRef<str>) -> Result<String> {
     }
 
     Ok("application/octet-stream".to_string())
+}
+
+pub fn infer_extension_by_file_mime_type(file_path: &str) -> Result<Option<String>> {
+    if let Some(kind) = infer::get_from_path(file_path).context("failed to infer mime type")? {
+        return Ok(Some(kind.extension().to_string()));
+    }
+
+    Ok(None)
+}
+
+#[must_use]
+pub fn get_extension_for_mime_string(mime: &str) -> Option<String> {
+    let extensions = mime_guess::get_mime_extensions_str(mime).unwrap_or_default();
+
+    Some((*extensions.first()?).to_string())
 }
 
 #[must_use]
@@ -272,6 +301,18 @@ pub fn create_file_if_not_exist(file_path: impl Into<PathBuf>) -> Result<()> {
 
     if !file_path.exists() {
         fs::File::create(&file_path).context(anyhow!("failed to create file {:?}", file_path))?;
+    }
+
+    Ok(())
+}
+
+pub fn remove_file_if_exists(file_path: &str) -> Result<()> {
+    match fs::remove_file(file_path) {
+        Err(err) if err.kind() == ErrorKind::NotFound => {}
+        Err(err) => {
+            return Err(err).context("failed to remove file");
+        }
+        Ok(_) => {}
     }
 
     Ok(())

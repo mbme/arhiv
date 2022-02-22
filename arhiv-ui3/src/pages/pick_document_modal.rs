@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::json;
 
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 use crate::{
     app::{App, AppResponse},

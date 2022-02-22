@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde::Serialize;
 use serde_json::json;
 
-use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string, server::Url};
+use rs_utils::{ensure_dir_exists, get_home_dir, http_server::Url, is_readable, path_to_string};
 
 use crate::{
     app::{App, AppResponse},

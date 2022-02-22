@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use reqwest::{Client, StatusCode};
 
-use rs_utils::{download_data_to_file, log, read_file_as_stream};
+use rs_utils::{log, read_file_as_stream, Download};
 
 use crate::entities::*;
 
@@ -30,7 +30,11 @@ impl PrimeServerRPC {
 
         let url = self.get_blob_url(&blob.id);
 
-        download_data_to_file(&url, &blob.file_path).await?;
+        let mut download = Download::new_with_path(&url, &blob.file_path)?;
+        download.keep_completed_file(true);
+        download.keep_download_file(true);
+
+        download.start().await?;
 
         Ok(())
     }

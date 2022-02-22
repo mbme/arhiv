@@ -1,6 +1,8 @@
 use core::fmt::Write;
-use std::fs::File;
-use std::io::{prelude::*, BufReader};
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+};
 
 use anyhow::{Context, Result};
 use base64::{decode_config, encode_config, URL_SAFE};
@@ -55,11 +57,6 @@ pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
     }
 
     result
-}
-
-#[must_use]
-pub fn gen_uuid() -> String {
-    uuid::Uuid::new_v4().to_hyphenated().to_string()
 }
 
 #[cfg(test)]

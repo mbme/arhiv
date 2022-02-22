@@ -13,7 +13,7 @@ use arhiv_core::{
     entities::{Document, DocumentData},
     Arhiv, ArhivTransaction,
 };
-use rs_utils::{download_file, log, EnvCapabilities, TempFile};
+use rs_utils::{log, Download, EnvCapabilities, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
@@ -164,12 +164,10 @@ impl<'a> Scraper<'a> {
 
         match action {
             ScraperAction::CreateAttachment { url } => {
-                let temp_dir = TempFile::new();
-                temp_dir.mkdir()?;
+                let download_result = Download::new(&url)?.start().await?;
 
-                let file_path = download_file(&temp_dir.path, &url).await?;
-
-                let attachment = Attachment::create_tx(&file_path, true, self.arhiv, tx)?;
+                let attachment =
+                    Attachment::from_download_result(&download_result, self.arhiv, tx)?;
 
                 Ok(attachment.into())
             }

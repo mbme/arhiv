@@ -9,7 +9,9 @@ use arhiv_core::{
 };
 use rs_utils::{
     capitalize,
-    server::{respond_moved_permanently, respond_see_other, respond_with_status, ServerResponse},
+    http_server::{
+        respond_moved_permanently, respond_see_other, respond_with_status, ServerResponse,
+    },
 };
 
 use crate::{template_fn, urls::catalog_url, utils::render_content};

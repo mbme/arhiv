@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use hyper::{header, Body, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};
-use rs_utils::server::{parse_urlencoded, ServerResponse};
+use rs_utils::http_server::{parse_urlencoded, ServerResponse};
 
 /// `template_fn!(pub get_markup, "./markup.rs");`
 #[macro_export]

@@ -20,21 +20,23 @@ use std::process::{Command, Stdio};
 use anyhow::{bail, Result};
 
 pub use crypto::*;
+pub use download::*;
 pub use env_capabilities::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
-pub use http::*;
 pub use json::*;
 pub use markov::Markov;
 pub use string::*;
 
 mod crypto;
+mod download;
 mod env_capabilities;
 mod fs;
 mod fs_temp;
 mod fs_transaction;
 mod http;
+pub mod http_server;
 mod json;
 pub mod log;
 mod markov;

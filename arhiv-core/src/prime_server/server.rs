@@ -8,7 +8,7 @@ use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use rs_utils::{log, read_file_as_stream, server::*};
+use rs_utils::{http_server::*, log, read_file_as_stream};
 
 use crate::entities::{BLOBId, Changeset};
 use crate::Arhiv;

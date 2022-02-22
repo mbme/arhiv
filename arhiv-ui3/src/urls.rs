@@ -1,5 +1,5 @@
 use arhiv_core::entities::{BLOBId, Id};
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 pub fn index_url() -> String {
     "/".to_string()

@@ -5,7 +5,7 @@ use rust_embed::RustEmbed;
 
 use rs_utils::{
     bytes_to_hex_string, get_mime_from_path,
-    server::{respond_not_found, respond_with_status, ServerResponse},
+    http_server::{respond_not_found, respond_with_status, ServerResponse},
 };
 
 #[derive(RustEmbed)]

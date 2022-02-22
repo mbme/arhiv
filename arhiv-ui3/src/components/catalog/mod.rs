@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 use serde_json::json;
 
 use arhiv_core::{entities::Id, Arhiv, Filter};

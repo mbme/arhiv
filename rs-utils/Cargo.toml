@@ -16,7 +16,6 @@ tokio-util = { version = "0.7", features = ["compat", "codec"] }
 
 blake3 = "1.2.0"
 base64 = "0.13.0"
-uuid = { version = "0.8.2", features = ["v4"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 rand = "0.8.2"
 
@@ -29,6 +28,8 @@ mime_guess = "2"
 infer = "0.6"
 form_urlencoded = "1"
 url = "2.2.2"
+regex = "1.5.4"
+lazy_static = "1.4.0"
 
 futures = "0.3"
 reqwest = { version = "0.11", features = ["json", "stream"] }

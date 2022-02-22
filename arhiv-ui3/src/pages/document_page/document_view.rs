@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use arhiv_core::{entities::Document, schema::Collection, Arhiv};
-use rs_utils::server::Url;
+use rs_utils::http_server::Url;
 
 use crate::components::{Catalog, DocumentDataViewer};
 

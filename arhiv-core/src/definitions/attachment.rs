@@ -1,12 +1,9 @@
-use std::{
-    fs,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 use anyhow::{ensure, Context, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_mime_type};
+use rs_utils::{get_file_name, get_file_size, get_mime_type, DownloadResult};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -98,11 +95,35 @@ impl Attachment {
     ) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
-        let size = fs::metadata(file_path)?.len();
+        let size = get_file_size(file_path)?;
 
         let blob_id = arhiv.tx_add_blob(file_path, move_file, tx)?;
 
         let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
+
+        arhiv
+            .tx_stage_document(&mut attachment, tx)
+            .context("failed to create attachment")?;
+
+        Ok(attachment)
+    }
+
+    pub fn from_download_result(
+        download_result: &DownloadResult,
+        arhiv: &Arhiv,
+        tx: &mut ArhivTransaction,
+    ) -> Result<Attachment> {
+        let media_type = get_mime_type(&download_result.file_path)?;
+        let size = get_file_size(&download_result.file_path)?;
+
+        let blob_id = arhiv.tx_add_blob(&download_result.file_path, true, tx)?;
+
+        let mut attachment = Attachment::new(
+            &download_result.original_file_name,
+            &media_type,
+            &blob_id,
+            size,
+        );
 
         arhiv
             .tx_stage_document(&mut attachment, tx)

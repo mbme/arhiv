@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use serde_json::json;
 
 use arhiv_core::definitions::Attachment;
-use rs_utils::{ensure_file_exists, server::Url};
+use rs_utils::{ensure_file_exists, http_server::Url};
 
 use crate::{
     app::{App, AppResponse},

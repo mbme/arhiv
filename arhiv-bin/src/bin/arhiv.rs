@@ -97,9 +97,12 @@ async fn main() {
 
             let arhiv = Arhiv::must_open();
 
-            arhiv
-                .stage_document(&mut document)
+            let tx = arhiv.get_tx().expect("must open tx");
+
+            tx.stage_document(&mut document)
                 .expect("must be able to stage document");
+
+            tx.commit().expect("must commit");
 
             println!(
                 "{} {}",

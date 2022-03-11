@@ -20,13 +20,19 @@ fn test_validation_mandatory() {
         vec![],
     ));
 
-    let mut document = new_document(json!({}));
-    let result = arhiv.stage_document(&mut document);
-    assert!(result.is_err());
+    {
+        let tx = arhiv.get_tx().unwrap();
+        let mut document = new_document(json!({}));
+        let result = tx.stage_document(&mut document);
+        assert!(result.is_err());
+    }
 
-    let mut document = new_document(json!({ "test": "test" }));
-    let result = arhiv.stage_document(&mut document);
-    assert!(result.is_ok());
+    {
+        let tx = arhiv.get_tx().unwrap();
+        let mut document = new_document(json!({ "test": "test" }));
+        let result = tx.stage_document(&mut document);
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
@@ -46,26 +52,30 @@ fn test_validation_readonly() {
     ));
 
     {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut document = new_document(json!({ "test": "test" }));
-        let result = arhiv.stage_document(&mut document);
+        let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
 
         document.data = json!({ "test": None::<String> }).try_into().unwrap();
-        let result = arhiv.stage_document(&mut document);
+        let result = tx.stage_document(&mut document);
         assert!(result.is_err());
     }
 
     {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut document = new_document(json!({}));
-        let result = arhiv.stage_document(&mut document);
+        let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
 
         document.data = json!({ "test": "test" }).try_into().unwrap();
-        let result = arhiv.stage_document(&mut document);
+        let result = tx.stage_document(&mut document);
         assert!(result.is_err());
 
         document.data = json!({ "test": None::<String> }).try_into().unwrap();
-        let result = arhiv.stage_document(&mut document);
+        let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
     }
 }

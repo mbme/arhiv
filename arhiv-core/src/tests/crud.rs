@@ -4,7 +4,10 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
+use crate::{
+    db::MutableBLOBQueries, entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount,
+    Filter,
+};
 
 #[test]
 fn test_crud() -> Result<()> {
@@ -14,8 +17,12 @@ fn test_crud() -> Result<()> {
 
     // CREATE
     let id = {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut document = new_document(original_data.clone());
-        arhiv.stage_document(&mut document)?;
+        tx.stage_document(&mut document)?;
+        tx.commit()?;
+
         assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
 
         document.id
@@ -31,23 +38,36 @@ fn test_crud() -> Result<()> {
 
     // UPDATE
     {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.data = json!({ "test": "1" }).try_into().unwrap();
-        arhiv.stage_document(&mut other_document)?;
+        tx.stage_document(&mut other_document)?;
+        tx.commit()?;
 
         assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
     }
 
     // DELETE
-    {
+    let document_id = {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut document = new_document(json!({ "test": "test" }));
-        arhiv.stage_document(&mut document)?;
+        tx.stage_document(&mut document)?;
+        tx.commit()?;
 
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
+        document.id
+    };
 
-        arhiv.erase_document(&document.id)?;
+    assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
 
-        let erased_document = arhiv.get_document(&document.id)?.unwrap();
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.erase_document(&document_id)?;
+        tx.commit()?;
+
+        let erased_document = arhiv.get_document(&document_id)?.unwrap();
 
         assert!(erased_document.is_erased());
         assert_eq!(erased_document.prev_rev, Revision::STAGING);
@@ -86,12 +106,20 @@ async fn test_status() -> Result<()> {
     }
 
     // create document with blob
-    let blob_id = arhiv.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
-    let mut document = new_document(json!({
-        "test": "test",
-        "blob": blob_id,
-    }));
-    arhiv.stage_document(&mut document)?;
+    let mut document = {
+        let mut tx = arhiv.get_tx().unwrap();
+
+        let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
+        let mut document = new_document(json!({
+            "test": "test",
+            "blob": blob_id,
+        }));
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
+
+        document
+    };
 
     {
         let status = arhiv.get_status()?;
@@ -130,11 +158,17 @@ async fn test_status() -> Result<()> {
         );
     }
 
-    // update document
-    arhiv.stage_document(&mut document)?;
+    {
+        let tx = arhiv.get_tx().unwrap();
 
-    // create another document
-    arhiv.stage_document(&mut new_document(json!({ "test": "test" })))?;
+        // update document
+        tx.stage_document(&mut document)?;
+
+        // create another document
+        tx.stage_document(&mut new_document(json!({ "test": "test" })))?;
+
+        tx.commit()?;
+    }
 
     {
         let status = arhiv.get_status()?;
@@ -154,7 +188,13 @@ async fn test_status() -> Result<()> {
     }
 
     // delete document
-    arhiv.erase_document(&document.id)?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.erase_document(&document.id)?;
+
+        tx.commit()?;
+    }
 
     {
         let status = arhiv.get_status()?;

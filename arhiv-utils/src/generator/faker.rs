@@ -43,7 +43,7 @@ impl<'a> Faker<'a> {
 
         let mut tx = arhiv.get_tx()?;
         for file_path in list_attachments() {
-            let attachment = Attachment::create_tx(&file_path, false, arhiv, &mut tx)?;
+            let attachment = Attachment::create_tx(&file_path, false, &mut tx)?;
 
             attachment_ids.push(attachment.id.clone());
         }
@@ -117,13 +117,13 @@ impl<'a> Faker<'a> {
 
         let quantity = self.get_quantity_limit(&document_type);
 
-        let mut tx = self.arhiv.get_tx().expect("must open transaction");
+        let tx = self.arhiv.get_tx().expect("must open transaction");
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
             let mut document = self.create_fake(document_type.clone(), DocumentData::new());
-            self.arhiv
-                .tx_stage_document(&mut document, &mut tx)
+
+            tx.stage_document(&mut document)
                 .expect("must be able to save document");
 
             if let Collection::Type {
@@ -140,8 +140,7 @@ impl<'a> Faker<'a> {
                     let mut child_document =
                         self.create_fake(child_document_type.to_string(), initial_values);
 
-                    self.arhiv
-                        .tx_stage_document(&mut child_document, &mut tx)
+                    tx.stage_document(&mut child_document)
                         .expect("must be able to save child document");
                 }
 

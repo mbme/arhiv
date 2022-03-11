@@ -6,6 +6,7 @@ use serde_json::json;
 use rs_utils::{get_file_name, get_file_size, get_mime_type, DownloadResult};
 
 use crate::{
+    db::MutableBLOBQueries,
     entities::{BLOBId, Document},
     schema::*,
     Arhiv, ArhivTransaction,
@@ -80,29 +81,23 @@ impl Attachment {
     pub fn create(file_path: &str, move_file: bool, arhiv: &Arhiv) -> Result<Self> {
         let mut tx = arhiv.get_tx()?;
 
-        let attachment = Attachment::create_tx(file_path, move_file, arhiv, &mut tx)?;
+        let attachment = Attachment::create_tx(file_path, move_file, &mut tx)?;
 
         tx.commit()?;
 
         Ok(attachment)
     }
 
-    pub fn create_tx(
-        file_path: &str,
-        move_file: bool,
-        arhiv: &Arhiv,
-        tx: &mut ArhivTransaction,
-    ) -> Result<Self> {
+    pub fn create_tx(file_path: &str, move_file: bool, tx: &mut ArhivTransaction) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
         let size = get_file_size(file_path)?;
 
-        let blob_id = arhiv.tx_add_blob(file_path, move_file, tx)?;
+        let blob_id = tx.add_blob(file_path, move_file)?;
 
         let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
 
-        arhiv
-            .tx_stage_document(&mut attachment, tx)
+        tx.stage_document(&mut attachment)
             .context("failed to create attachment")?;
 
         Ok(attachment)
@@ -110,13 +105,12 @@ impl Attachment {
 
     pub fn from_download_result(
         download_result: &DownloadResult,
-        arhiv: &Arhiv,
         tx: &mut ArhivTransaction,
     ) -> Result<Attachment> {
         let media_type = get_mime_type(&download_result.file_path)?;
         let size = get_file_size(&download_result.file_path)?;
 
-        let blob_id = arhiv.tx_add_blob(&download_result.file_path, true, tx)?;
+        let blob_id = tx.add_blob(&download_result.file_path, true)?;
 
         let mut attachment = Attachment::new(
             &download_result.original_file_name,
@@ -125,8 +119,7 @@ impl Attachment {
             size,
         );
 
-        arhiv
-            .tx_stage_document(&mut attachment, tx)
+        tx.stage_document(&mut attachment)
             .context("failed to create attachment")?;
 
         Ok(attachment)

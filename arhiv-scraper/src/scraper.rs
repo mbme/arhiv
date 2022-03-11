@@ -166,8 +166,7 @@ impl<'a> Scraper<'a> {
             ScraperAction::CreateAttachment { url } => {
                 let download_result = Download::new(&url)?.start().await?;
 
-                let attachment =
-                    Attachment::from_download_result(&download_result, self.arhiv, tx)?;
+                let attachment = Attachment::from_download_result(&download_result, tx)?;
 
                 Ok(attachment.into())
             }
@@ -177,7 +176,7 @@ impl<'a> Scraper<'a> {
             } => {
                 let mut document = Document::new_with_data(document_type, data);
 
-                self.arhiv.tx_stage_document(&mut document, tx)?;
+                tx.stage_document(&mut document)?;
 
                 Ok(document)
             }

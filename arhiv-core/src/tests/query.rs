@@ -8,8 +8,14 @@ use crate::{test_arhiv::TestArhiv, Filter, OrderBy};
 fn test_pagination() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    arhiv.stage_document(&mut empty_document())?;
-    arhiv.stage_document(&mut empty_document())?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.stage_document(&mut empty_document())?;
+        tx.stage_document(&mut empty_document())?;
+
+        tx.commit()?;
+    }
 
     let page = arhiv.list_documents(Filter::default().page_size(1))?;
 
@@ -24,12 +30,20 @@ async fn test_modes() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     // committed
-    arhiv.stage_document(&mut new_document(json!({ "value": "1" })))?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+        tx.stage_document(&mut new_document(json!({ "value": "1" })))?;
+        tx.commit()?;
+    }
 
     arhiv.sync().await?;
 
     // staged
-    arhiv.stage_document(&mut new_document(json!({ "value": "3" })))?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+        tx.stage_document(&mut new_document(json!({ "value": "3" })))?;
+        tx.commit()?;
+    }
 
     {
         // test default
@@ -58,10 +72,16 @@ async fn test_modes() -> Result<()> {
 fn test_order_by_enum_field() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    arhiv.stage_document(&mut new_document(json!({ "enum": "low" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "enum": "high" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "enum": "other" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "enum": "medium" })))?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
+        tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
+        tx.stage_document(&mut new_document(json!({ "enum": "other" })))?;
+        tx.stage_document(&mut new_document(json!({ "enum": "medium" })))?;
+
+        tx.commit()?;
+    }
 
     let page = arhiv.list_documents(Filter {
         order: vec![OrderBy::EnumField {
@@ -89,10 +109,16 @@ fn test_order_by_enum_field() -> Result<()> {
 fn test_multiple_order_by() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    arhiv.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "prop": "a", "other": "2" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "prop": "b", "other": "1" })))?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
+        tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
+        tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "2" })))?;
+        tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "1" })))?;
+
+        tx.commit()?;
+    }
 
     let page = arhiv.list_documents(Filter {
         order: vec![
@@ -124,8 +150,15 @@ fn test_multiple_order_by() -> Result<()> {
 #[tokio::test]
 async fn test_matcher() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
-    arhiv.stage_document(&mut new_document(json!({ "test": "value" })))?;
-    arhiv.stage_document(&mut new_document(json!({ "test": "value1" })))?;
+
+    {
+        let tx = arhiv.get_tx().unwrap();
+
+        tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
+
+        tx.commit()?;
+    }
 
     {
         // test unexpected type

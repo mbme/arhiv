@@ -5,17 +5,14 @@ mod status;
 mod sync;
 
 use anyhow::{anyhow, ensure, Context, Result};
-use chrono::Utc;
 
 use rs_utils::log;
 
-use crate::{
-    config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema, Validator,
-};
+use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
 use self::db::{
-    ArhivTransaction, BLOBQueries, Filter, ListPage, MutableBLOBQueries, MutableQueries, Queries,
-    DB, SETTING_ARHIV_ID, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+    ArhivTransaction, BLOBQueries, Filter, ListPage, MutableQueries, Queries, DB, SETTING_ARHIV_ID,
+    SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
 };
 use self::migrations::{apply_db_migrations, create_db, get_db_version};
 use self::status::Status;
@@ -165,142 +162,6 @@ impl Arhiv {
 
     pub fn get_tx(&self) -> Result<ArhivTransaction> {
         self.db.get_tx()
-    }
-
-    pub fn stage_document(&self, document: &mut Document) -> Result<()> {
-        let mut tx = self.get_tx()?;
-
-        self.tx_stage_document(document, &mut tx)?;
-
-        tx.commit()?;
-
-        Ok(())
-    }
-
-    pub fn tx_stage_document(
-        &self,
-        document: &mut Document,
-        tx: &mut ArhivTransaction,
-    ) -> Result<()> {
-        log::debug!("Staging document {}", &document.id);
-
-        ensure!(
-            !document.is_erased(),
-            "erased documents must not be updated"
-        );
-
-        let prev_document = tx.get_document(&document.id)?;
-
-        let data_description = self
-            .get_schema()
-            .get_data_description(&document.document_type)?;
-
-        Validator::default().validate(
-            &document.data,
-            prev_document.as_ref().map(|document| &document.data),
-            data_description,
-            tx,
-        )?;
-
-        if let Some(prev_document) = prev_document {
-            log::debug!("Updating existing document {}", &document.id);
-
-            document.rev = Revision::STAGING;
-
-            if prev_document.rev == Revision::STAGING {
-                ensure!(
-                    document.prev_rev == prev_document.prev_rev,
-                    "document prev_rev {} is different from the staged document prev_rev {}",
-                    document.prev_rev,
-                    prev_document.prev_rev
-                );
-            } else {
-                // we're going to modify committed document
-                // so we need to save its revision as prev_rev of the new document
-                document.prev_rev = prev_document.rev;
-            }
-
-            ensure!(
-                document.document_type == prev_document.document_type,
-                "document type '{}' is different from the type '{}' of existing document",
-                document.document_type,
-                prev_document.document_type
-            );
-
-            ensure!(
-                document.created_at == prev_document.created_at,
-                "document created_at '{}' is different from the created_at '{}' of existing document",
-                document.created_at,
-                prev_document.created_at
-            );
-
-            ensure!(
-                document.updated_at == prev_document.updated_at,
-                "document updated_at '{}' is different from the updated_at '{}' of existing document",
-                document.updated_at,
-                prev_document.updated_at
-            );
-
-            document.updated_at = Utc::now();
-        } else {
-            log::debug!("Creating new document {}", &document.id);
-
-            document.rev = Revision::STAGING;
-            document.prev_rev = Revision::STAGING;
-
-            let now = Utc::now();
-            document.created_at = now;
-            document.updated_at = now;
-        }
-
-        tx.put_document(document)?;
-
-        log::info!("saved document {}", document);
-
-        Ok(())
-    }
-
-    pub fn erase_document(&self, id: &Id) -> Result<()> {
-        let mut document = self
-            .get_document(id)?
-            .ok_or_else(|| anyhow!("can't find document {}", &id))?;
-
-        ensure!(
-            !document.is_erased(),
-            "erased documents must not be updated"
-        );
-
-        document.erase();
-
-        let tx = self.db.get_tx()?;
-
-        tx.put_document(&document)?;
-
-        tx.commit()?;
-
-        log::info!("erased document {}", document);
-
-        Ok(())
-    }
-
-    pub fn add_blob(&self, file_path: &str, move_file: bool) -> Result<BLOBId> {
-        let mut tx = self.get_tx()?;
-
-        let id = tx.add_blob(file_path, move_file)?;
-
-        tx.commit()?;
-
-        Ok(id)
-    }
-
-    #[allow(clippy::unused_self)]
-    pub fn tx_add_blob(
-        &self,
-        file_path: &str,
-        move_file: bool,
-        tx: &mut ArhivTransaction,
-    ) -> Result<BLOBId> {
-        tx.add_blob(file_path, move_file)
     }
 
     pub fn get_blob(&self, id: &BLOBId) -> Result<BLOB> {

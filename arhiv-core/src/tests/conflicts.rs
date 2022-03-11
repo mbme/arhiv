@@ -8,12 +8,25 @@ use super::utils::*;
 async fn test_conflicts() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let mut document = empty_document();
-    arhiv.stage_document(&mut document)?;
+    let mut document = {
+        let tx = arhiv.get_tx().unwrap();
+
+        let mut document = empty_document();
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
+
+        document
+    };
+
     arhiv.sync().await?;
 
     // update the same document
-    arhiv.stage_document(&mut document)?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+        tx.stage_document(&mut document)?;
+        tx.commit()?;
+    }
 
     assert_eq!(arhiv.get_status()?.conflicts_count, 0);
 
@@ -38,12 +51,25 @@ async fn test_conflicts() -> Result<()> {
 async fn test_deleted_document_isnt_conflict() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let mut document = empty_document();
-    arhiv.stage_document(&mut document)?;
+    let document = {
+        let tx = arhiv.get_tx().unwrap();
+
+        let mut document = empty_document();
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
+
+        document
+    };
+
     arhiv.sync().await?;
 
     // update the same document
-    arhiv.erase_document(&document.id)?;
+    {
+        let tx = arhiv.get_tx().unwrap();
+        tx.erase_document(&document.id)?;
+        tx.commit()?;
+    }
 
     assert_eq!(arhiv.get_status()?.conflicts_count, 0);
 

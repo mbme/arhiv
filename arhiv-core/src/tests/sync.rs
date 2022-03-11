@@ -4,7 +4,7 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
+use crate::{db::MutableBLOBQueries, prime_server::start_prime_server, test_arhiv::TestArhiv};
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {
@@ -12,12 +12,15 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let blob_id = arhiv.add_blob(src, false)?;
+    let mut tx = arhiv.get_tx().unwrap();
+
+    let blob_id = tx.add_blob(src, false)?;
 
     let mut document = empty_document();
     document.data.set("blob", &blob_id);
 
-    arhiv.stage_document(&mut document)?;
+    tx.stage_document(&mut document)?;
+    tx.commit()?;
 
     assert!(arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
 
@@ -33,9 +36,13 @@ async fn test_prime_sync() -> Result<()> {
 
     // Test if document is updated correctly
     {
+        let tx = arhiv.get_tx().unwrap();
+
         let mut document = arhiv.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" }).try_into().unwrap();
-        arhiv.stage_document(&mut document)?;
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
     }
 
     arhiv.sync().await?;
@@ -56,15 +63,18 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let blob_id = replica.add_blob(src, false)?;
+    let mut tx = replica.get_tx().unwrap();
+
+    let blob_id = tx.add_blob(src, false)?;
 
     let id = {
         let mut document = empty_document();
         document.data.set("blob", &blob_id);
-        replica.stage_document(&mut document)?;
+        tx.stage_document(&mut document)?;
 
         document.id
     };
+    tx.commit()?;
 
     replica.sync().await?;
 
@@ -90,7 +100,10 @@ async fn test_replica_sync() -> Result<()> {
     {
         let mut document = replica.get_document(&id)?.unwrap();
         document.data = json!({ "test": "1" }).try_into().unwrap();
-        replica.stage_document(&mut document)?;
+
+        let tx = replica.get_tx().unwrap();
+        tx.stage_document(&mut document)?;
+        tx.commit()?;
 
         replica.sync().await?;
 
@@ -110,20 +123,24 @@ async fn test_replica_sync() -> Result<()> {
 async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let blob_id1 = arhiv.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
+    let mut tx = arhiv.get_tx().unwrap();
+
+    let blob_id1 = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
 
     let mut document = empty_document();
     document.data.set("blob", &blob_id1);
 
     // stage document with blob1
-    arhiv.stage_document(&mut document)?;
+    tx.stage_document(&mut document)?;
 
-    let blob_id2 = arhiv.add_blob(&workspace_relpath("resources/text.txt"), false)?;
+    let blob_id2 = tx.add_blob(&workspace_relpath("resources/text.txt"), false)?;
 
     document.data.set("blob", &blob_id2);
 
     // stage document with blob2, blob1 is now unused
-    arhiv.stage_document(&mut document)?;
+    tx.stage_document(&mut document)?;
+
+    tx.commit()?;
 
     arhiv.sync().await?;
 

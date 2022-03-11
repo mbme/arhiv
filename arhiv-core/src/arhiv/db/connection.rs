@@ -1,7 +1,16 @@
-use anyhow::{ensure, Result};
+use std::sync::Arc;
+
+use anyhow::{anyhow, ensure, Result};
+use chrono::Utc;
 use rusqlite::Connection;
 
 use rs_utils::{log, FsTransaction};
+
+use crate::{
+    entities::{Document, Id, Revision},
+    schema::DataSchema,
+    Validator,
+};
 
 use super::{blob_queries::*, queries::*};
 
@@ -18,6 +27,7 @@ impl<'a> ArhivConnection {
 
 pub struct ArhivTransaction {
     pub(crate) conn: Connection,
+    schema: Arc<DataSchema>,
     finished: bool,
 
     data_dir: String,
@@ -25,11 +35,12 @@ pub struct ArhivTransaction {
 }
 
 impl ArhivTransaction {
-    pub fn new(conn: Connection, data_dir: String) -> Result<Self> {
+    pub fn new(conn: Connection, data_dir: String, schema: Arc<DataSchema>) -> Result<Self> {
         conn.execute_batch("BEGIN DEFERRED")?;
 
         Ok(ArhivTransaction {
             conn,
+            schema,
             finished: false,
             data_dir,
             fs_tx: FsTransaction::new(),
@@ -59,6 +70,103 @@ impl ArhivTransaction {
         self.finished = true;
 
         self.conn.execute_batch("ROLLBACK")?;
+
+        Ok(())
+    }
+
+    pub fn stage_document(&self, document: &mut Document) -> Result<()> {
+        log::debug!("Staging document {}", &document.id);
+
+        ensure!(
+            !document.is_erased(),
+            "erased documents must not be updated"
+        );
+
+        let prev_document = self.get_document(&document.id)?;
+
+        let schema = self.schema.clone();
+        let data_description = schema.get_data_description(&document.document_type)?;
+
+        Validator::default().validate(
+            &document.data,
+            prev_document.as_ref().map(|document| &document.data),
+            data_description,
+            self,
+        )?;
+
+        if let Some(prev_document) = prev_document {
+            log::debug!("Updating existing document {}", &document.id);
+
+            document.rev = Revision::STAGING;
+
+            if prev_document.rev == Revision::STAGING {
+                ensure!(
+                    document.prev_rev == prev_document.prev_rev,
+                    "document prev_rev {} is different from the staged document prev_rev {}",
+                    document.prev_rev,
+                    prev_document.prev_rev
+                );
+            } else {
+                // we're going to modify committed document
+                // so we need to save its revision as prev_rev of the new document
+                document.prev_rev = prev_document.rev;
+            }
+
+            ensure!(
+                document.document_type == prev_document.document_type,
+                "document type '{}' is different from the type '{}' of existing document",
+                document.document_type,
+                prev_document.document_type
+            );
+
+            ensure!(
+                document.created_at == prev_document.created_at,
+                "document created_at '{}' is different from the created_at '{}' of existing document",
+                document.created_at,
+                prev_document.created_at
+            );
+
+            ensure!(
+                document.updated_at == prev_document.updated_at,
+                "document updated_at '{}' is different from the updated_at '{}' of existing document",
+                document.updated_at,
+                prev_document.updated_at
+            );
+
+            document.updated_at = Utc::now();
+        } else {
+            log::debug!("Creating new document {}", &document.id);
+
+            document.rev = Revision::STAGING;
+            document.prev_rev = Revision::STAGING;
+
+            let now = Utc::now();
+            document.created_at = now;
+            document.updated_at = now;
+        }
+
+        self.put_document(document)?;
+
+        log::info!("saved document {}", document);
+
+        Ok(())
+    }
+
+    pub fn erase_document(&self, id: &Id) -> Result<()> {
+        let mut document = self
+            .get_document(id)?
+            .ok_or_else(|| anyhow!("can't find document {}", &id))?;
+
+        ensure!(
+            !document.is_erased(),
+            "erased documents must not be updated"
+        );
+
+        document.erase();
+
+        self.put_document(&document)?;
+
+        log::info!("erased document {}", document);
 
         Ok(())
     }

@@ -63,7 +63,9 @@ impl App {
             "confirmation text is wrong"
         );
 
-        self.arhiv.erase_document(id)?;
+        let tx = self.arhiv.get_tx()?;
+        tx.erase_document(id)?;
+        tx.commit()?;
 
         let location = parent_collection_url(&document.document_type, parent_collection);
 

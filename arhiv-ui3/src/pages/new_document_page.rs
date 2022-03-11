@@ -111,9 +111,9 @@ impl App {
 
         let mut document = Document::new_with_data(document_type, data);
 
-        let mut tx = self.arhiv.get_tx()?;
+        let tx = self.arhiv.get_tx()?;
         let validation_result =
-            Validator::default().validate(&document.data, None, data_description, &mut tx);
+            Validator::default().validate(&document.data, None, data_description, &tx);
 
         if let Err(error) = validation_result {
             tx.commit()?;
@@ -133,7 +133,7 @@ impl App {
             ));
         }
 
-        self.arhiv.tx_stage_document(&mut document, &mut tx)?;
+        tx.stage_document(&mut document)?;
 
         tx.commit()?;
 

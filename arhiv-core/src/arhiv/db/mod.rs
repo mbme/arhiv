@@ -81,7 +81,11 @@ impl DB {
     pub fn get_tx(&self) -> Result<ArhivTransaction> {
         let conn = self.open_connection(true)?;
 
-        ArhivTransaction::new(conn, self.path_manager.data_dir.clone())
+        ArhivTransaction::new(
+            conn,
+            self.path_manager.data_dir.clone(),
+            self.schema.clone(),
+        )
     }
 
     pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBId>>> {

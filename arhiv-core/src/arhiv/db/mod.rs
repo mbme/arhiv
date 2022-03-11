@@ -1,8 +1,7 @@
-use std::fs;
 use std::sync::Arc;
 use std::time::Instant;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
     Connection, Error as RusqliteError, OpenFlags,
@@ -11,11 +10,7 @@ use serde_json::Value;
 
 use rs_utils::log;
 
-use crate::{
-    entities::{BLOBId, DocumentData},
-    path_manager::PathManager,
-    schema::DataSchema,
-};
+use crate::{entities::DocumentData, path_manager::PathManager, schema::DataSchema};
 
 pub use blob_queries::*;
 pub use connection::*;
@@ -88,32 +83,6 @@ impl DB {
         )
     }
 
-    pub fn iter_blobs(&self) -> Result<impl Iterator<Item = Result<BLOBId>>> {
-        Ok(
-            fs::read_dir(&self.path_manager.data_dir)?.filter_map(|item| {
-                let entry = match item {
-                    Ok(entry) => entry,
-                    Err(err) => return Some(Err(err).context("Failed to read data entry")),
-                };
-
-                let entry_path = entry.path();
-                if entry_path.is_file() {
-                    let file_name = entry_path
-                        .file_name()
-                        .ok_or_else(|| anyhow!("Failed to read file name"))
-                        .map(|value| value.to_string_lossy().to_string())
-                        .and_then(|value| BLOBId::from_file_name(&value));
-
-                    return Some(file_name);
-                }
-
-                log::warn!("{} isn't a file", entry_path.to_string_lossy());
-
-                None
-            }),
-        )
-    }
-
     pub fn cleanup(&self) -> Result<()> {
         self.remove_orphaned_blobs()?;
         self.vacuum()?;
@@ -146,11 +115,9 @@ impl DB {
         let used_blob_ids = tx.get_used_blob_ids()?;
 
         let mut removed_blobs = 0;
-        for entry in self.iter_blobs()? {
-            let id = entry?;
-
-            if !used_blob_ids.contains(&id) {
-                tx.remove_blob(&id)?;
+        for blob_id in tx.list_local_blobs()? {
+            if !used_blob_ids.contains(&blob_id) {
+                tx.remove_blob(&blob_id)?;
                 removed_blobs += 1;
             }
         }

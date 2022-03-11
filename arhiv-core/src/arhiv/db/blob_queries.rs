@@ -1,4 +1,6 @@
-use anyhow::{ensure, Result};
+use std::{collections::HashSet, fs};
+
+use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
@@ -9,6 +11,30 @@ pub trait BLOBQueries {
 
     fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
         BLOB::new(blob_id.clone(), self.get_data_dir())
+    }
+
+    fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
+        let items = fs::read_dir(self.get_data_dir())?
+            .map(|item| {
+                let entry = item.context("Failed to read data entry")?;
+
+                let entry_path = entry.path();
+
+                ensure!(
+                    entry_path.is_file(),
+                    "{} isn't a file",
+                    entry_path.to_string_lossy()
+                );
+
+                entry_path
+                    .file_name()
+                    .ok_or_else(|| anyhow!("Failed to read file name"))
+                    .map(|value| value.to_string_lossy().to_string())
+                    .and_then(|value| BLOBId::from_file_name(&value))
+            })
+            .collect::<Result<HashSet<_>>>()?;
+
+        Ok(items)
     }
 }
 

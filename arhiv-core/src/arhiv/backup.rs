@@ -40,18 +40,19 @@ impl Arhiv {
         // 3. copy all data files if needed
         let mut blob_count = 0;
         let conn = self.db.get_connection()?;
-        for entry in self.db.iter_blobs()? {
-            let id = entry?;
-
+        for blob_id in conn.list_local_blobs()? {
             // check if backup file exists
-            if backup.blob_exists(&id)? {
-                log::trace!("Blob {} backup already exists, skipping", &id);
+            if backup.blob_exists(&blob_id)? {
+                log::trace!("Blob {} backup already exists, skipping", &blob_id);
                 continue;
             }
 
             // copy blob
-            fs::copy(&conn.get_blob(&id).file_path, backup.get_blob_path(&id))?;
-            log::debug!("Created blob {} backup", &id);
+            fs::copy(
+                &conn.get_blob(&blob_id).file_path,
+                backup.get_blob_path(&blob_id),
+            )?;
+            log::debug!("Created blob {} backup", &blob_id);
 
             blob_count += 1;
         }

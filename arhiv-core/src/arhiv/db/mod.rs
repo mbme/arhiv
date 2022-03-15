@@ -1,7 +1,6 @@
-use std::sync::Arc;
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{bail, Context, Result};
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
     Connection, Error as RusqliteError, OpenFlags,
@@ -83,14 +82,7 @@ impl DB {
         )
     }
 
-    pub fn cleanup(&self) -> Result<()> {
-        self.remove_orphaned_blobs()?;
-        self.vacuum()?;
-
-        Ok(())
-    }
-
-    fn vacuum(&self) -> Result<()> {
+    pub fn vacuum(&self) -> Result<()> {
         let now = Instant::now();
 
         let conn = self.open_connection(true)?;
@@ -100,31 +92,6 @@ impl DB {
             "completed VACUUM in {} seconds",
             now.elapsed().as_secs_f32()
         );
-
-        Ok(())
-    }
-
-    fn remove_orphaned_blobs(&self) -> Result<()> {
-        let mut tx = self.get_tx()?;
-
-        ensure!(
-            !tx.has_staged_documents()?,
-            "there must be no staged changes"
-        );
-
-        let used_blob_ids = tx.get_used_blob_ids()?;
-
-        let mut removed_blobs = 0;
-        for blob_id in tx.list_local_blobs()? {
-            if !used_blob_ids.contains(&blob_id) {
-                tx.remove_blob(&blob_id)?;
-                removed_blobs += 1;
-            }
-        }
-
-        tx.commit()?;
-
-        log::debug!("Removed {} orphaned blobs", removed_blobs);
 
         Ok(())
     }

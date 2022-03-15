@@ -227,7 +227,13 @@ impl Arhiv {
         }
 
         // cleanup the db
-        self.db.cleanup()?;
+        {
+            let mut tx = self.db.get_tx()?;
+            tx.remove_orphaned_blobs()?;
+            tx.commit()?;
+
+            self.db.vacuum()?;
+        }
 
         Ok(())
     }

@@ -22,7 +22,7 @@ impl Arhiv {
         backup.check()?;
 
         // 1. vacuum the db so that WAL is written into db
-        self.db.cleanup()?;
+        self.db.vacuum()?;
 
         // 2. copy & archive db file
         run_command(

@@ -170,6 +170,27 @@ impl ArhivTransaction {
 
         Ok(())
     }
+
+    pub fn remove_orphaned_blobs(&mut self) -> Result<()> {
+        ensure!(
+            !self.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
+        let used_blob_ids = self.get_used_blob_ids()?;
+
+        let mut removed_blobs = 0;
+        for blob_id in self.list_local_blobs()? {
+            if !used_blob_ids.contains(&blob_id) {
+                self.remove_blob(&blob_id)?;
+                removed_blobs += 1;
+            }
+        }
+
+        log::debug!("Removed {} orphaned blobs", removed_blobs);
+
+        Ok(())
+    }
 }
 
 impl Drop for ArhivTransaction {

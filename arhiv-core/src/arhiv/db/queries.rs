@@ -1,6 +1,10 @@
-use std::{collections::HashSet, time::Instant};
+use std::{collections::HashSet, sync::Arc, time::Instant};
 
 use anyhow::{anyhow, Context, Result};
+use rusqlite::{
+    functions::{Context as FunctionContext, FunctionFlags},
+    Error as RusqliteError,
+};
 use rusqlite::{
     params, params_from_iter,
     types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
@@ -10,7 +14,10 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
 
-use crate::entities::{BLOBId, Document, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE};
+use crate::{
+    entities::{BLOBId, Document, DocumentData, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE},
+    schema::DataSchema,
+};
 
 use super::{dto::*, filter::*, query_builder::QueryBuilder, utils};
 
@@ -447,7 +454,91 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn apply_migrations(&self) -> Result<()> {
+    fn compute_data(&self) -> Result<()> {
+        let now = Instant::now();
+
+        let rows_count = self.get_connection().execute(
+            "INSERT INTO documents_refs(id, rev, refs)
+               SELECT id, rev, extract_refs(type, data)
+               FROM documents_snapshots ds
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev
+               )",
+            [],
+        )?;
+
+        if rows_count > 0 {
+            log::info!(
+                "computed {} rows in {} seconds",
+                rows_count,
+                now.elapsed().as_secs_f32()
+            );
+        }
+
+        Ok(())
+    }
+
+    fn apply_migrations(&self, schema: &DataSchema) -> Result<()> {
+        let schema_version = self.get_setting(SETTING_SCHEMA_VERSION)?;
+
+        let migrations: Vec<_> = schema
+            .get_migrations()
+            .iter()
+            .filter(|migration| migration.get_version() > schema_version)
+            .cloned()
+            .collect();
+
+        if migrations.is_empty() {
+            log::debug!("no schema migrations to apply");
+
+            return Ok(());
+        }
+
+        log::info!("{} schema migrations to apply", migrations.len());
+
+        let new_schema_version = schema.get_version();
+
+        let conn = self.get_connection();
+
+        let migrations = Arc::new(migrations);
+        let apply_migrations = move |ctx: &FunctionContext| -> Result<String> {
+            let document_type = ctx
+                .get_raw(0)
+                .as_str()
+                .context("document_type must be str")?;
+
+            let document_data = ctx
+                .get_raw(1)
+                .as_str()
+                .context("document_data must be str")?;
+
+            let mut document_data: DocumentData = serde_json::from_str(document_data)?;
+
+            for migration in migrations.as_ref() {
+                migration.update(document_type, &mut document_data)?;
+            }
+
+            serde_json::to_string(&document_data).context("failed to serialize document_data")
+        };
+
+        conn.create_scalar_function(
+            "apply_migrations",
+            2,
+            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+            move |ctx| {
+                assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+                let result = apply_migrations(ctx);
+
+                if let Err(ref err) = result {
+                    log::error!("apply_migrations() failed: \n{:?}", err);
+                }
+
+                result.map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            },
+        )
+        .context("Failed to define function 'apply_migrations'")?;
+
         let now = Instant::now();
 
         let rows_count = self.get_connection().execute(
@@ -461,6 +552,14 @@ pub trait MutableQueries: Queries {
             "Migrated {} rows in {} seconds",
             rows_count,
             now.elapsed().as_secs_f32()
+        );
+
+        self.set_setting(SETTING_SCHEMA_VERSION, new_schema_version)?;
+
+        log::info!(
+            "Finished schema migration from version {} to {}",
+            schema_version,
+            new_schema_version
         );
 
         Ok(())

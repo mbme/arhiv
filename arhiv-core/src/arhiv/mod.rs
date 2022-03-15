@@ -42,11 +42,13 @@ impl Arhiv {
 
         let db = DB::open(config.arhiv_root.to_string(), schema)?;
 
+        let tx = db.get_tx()?;
+
         // ensure document schema is up to date
-        db.apply_migrations()?;
+        tx.apply_migrations(&db.schema)?;
 
         {
-            let schema_version = db.get_connection()?.get_setting(SETTING_SCHEMA_VERSION)?;
+            let schema_version = tx.get_setting(SETTING_SCHEMA_VERSION)?;
 
             ensure!(
                 schema_version == db.schema.get_version(),
@@ -57,7 +59,9 @@ impl Arhiv {
         }
 
         // ensure computed data is up to date
-        db.compute_data().context("failed to compute data")?;
+        tx.compute_data().context("failed to compute data")?;
+
+        tx.commit()?;
 
         log::debug!("Open arhiv in {}", config.arhiv_root);
 

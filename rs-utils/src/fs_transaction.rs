@@ -15,6 +15,7 @@ pub struct FsTransaction {
     ops: Vec<FsOperation>,
 }
 
+// TODO make sure few transactions work in parallel on the same files
 // Works for files but not for dirs
 impl FsTransaction {
     #[must_use]

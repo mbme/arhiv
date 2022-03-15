@@ -2,6 +2,7 @@ use std::{sync::Arc, time::Instant};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use chrono::Utc;
+use fslock::LockFile;
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
     Connection, Error as RusqliteError,
@@ -12,6 +13,7 @@ use rs_utils::{log, FsTransaction};
 use crate::{
     db::SETTING_SCHEMA_VERSION,
     entities::{Document, DocumentData, Id, Revision},
+    path_manager::PathManager,
     schema::DataSchema,
     Validator,
 };
@@ -31,23 +33,33 @@ impl<'a> ArhivConnection {
 
 pub struct ArhivTransaction {
     pub(crate) conn: Connection,
+
     schema: Arc<DataSchema>,
+    path_manager: Arc<PathManager>,
+
     finished: bool,
 
-    data_dir: String,
     fs_tx: FsTransaction,
+    lock_file: LockFile,
 }
 
 impl ArhivTransaction {
-    pub fn new(conn: Connection, data_dir: String, schema: Arc<DataSchema>) -> Result<Self> {
+    pub fn new(
+        conn: Connection,
+        path_manager: Arc<PathManager>,
+        schema: Arc<DataSchema>,
+    ) -> Result<Self> {
         conn.execute_batch("BEGIN DEFERRED")?;
+
+        let lock_file = LockFile::open(&path_manager.lock_file)?;
 
         Ok(ArhivTransaction {
             conn,
             schema,
             finished: false,
-            data_dir,
+            path_manager,
             fs_tx: FsTransaction::new(),
+            lock_file,
         })
     }
 
@@ -287,6 +299,12 @@ impl ArhivTransaction {
 
 impl Drop for ArhivTransaction {
     fn drop(&mut self) {
+        if self.lock_file.owns_lock() {
+            if let Err(err) = self.lock_file.unlock() {
+                log::error!("Failed to unlock arhiv lock file: {}", err);
+            }
+        }
+
         if self.finished {
             return;
         }
@@ -319,14 +337,20 @@ impl Queries for ArhivTransaction {
 
 impl BLOBQueries for ArhivTransaction {
     fn get_data_dir(&self) -> &str {
-        &self.data_dir
+        &self.path_manager.data_dir
     }
 }
 
 impl MutableQueries for ArhivTransaction {}
 
 impl MutableBLOBQueries for ArhivTransaction {
-    fn get_fs_tx(&mut self) -> &mut FsTransaction {
-        &mut self.fs_tx
+    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
+        if !self.lock_file.owns_lock() {
+            self.lock_file
+                .lock()
+                .context("failed to lock on arhiv lock file")?;
+        }
+
+        Ok(&mut self.fs_tx)
     }
 }

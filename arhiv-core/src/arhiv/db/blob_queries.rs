@@ -39,7 +39,7 @@ pub trait BLOBQueries {
 }
 
 pub trait MutableBLOBQueries: BLOBQueries {
-    fn get_fs_tx(&mut self) -> &mut FsTransaction;
+    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction>;
 
     fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
         ensure!(
@@ -58,7 +58,7 @@ pub trait MutableBLOBQueries: BLOBQueries {
         }
 
         let data_dir = self.get_data_dir().to_string();
-        let fs_tx = self.get_fs_tx();
+        let fs_tx = self.get_fs_tx()?;
 
         if move_file {
             fs_tx.move_file(file_path, blob.file_path)?;
@@ -79,7 +79,7 @@ pub trait MutableBLOBQueries: BLOBQueries {
     fn remove_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
         let blob = self.get_blob(blob_id);
 
-        self.get_fs_tx().remove_file(&blob.file_path)?;
+        self.get_fs_tx()?.remove_file(&blob.file_path)?;
 
         log::debug!("Removed blob {} from {}", blob_id, blob.file_path);
 

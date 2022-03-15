@@ -9,17 +9,20 @@ pub struct PathManager {
     root_dir: String,
     pub data_dir: String,
     pub db_file: String,
+    pub lock_file: String,
 }
 
 impl PathManager {
     pub fn new(root_dir: String) -> PathManager {
         let data_dir = format!("{}/data", &root_dir);
         let db_file = format!("{}/arhiv.sqlite", &root_dir);
+        let lock_file = format!("{}/arhiv.lock", &root_dir);
 
         PathManager {
             root_dir,
             data_dir,
             db_file,
+            lock_file,
         }
     }
 

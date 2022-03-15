@@ -35,3 +35,5 @@ routerify = "3"
 rusqlite = { version = "0.26", features = ["chrono", "serde_json", "functions"] }
 
 rs-utils = { path = "../rs-utils" }
+
+fslock = "0.2.1"

@@ -26,7 +26,7 @@ mod query_builder;
 pub mod utils;
 
 pub struct DB {
-    pub(super) path_manager: PathManager,
+    pub(super) path_manager: Arc<PathManager>,
     pub(super) schema: Arc<DataSchema>,
 }
 
@@ -37,7 +37,7 @@ impl DB {
         path_manager.assert_db_file_exists()?;
 
         Ok(DB {
-            path_manager,
+            path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
         })
     }
@@ -75,11 +75,7 @@ impl DB {
     pub fn get_tx(&self) -> Result<ArhivTransaction> {
         let conn = self.open_connection(true)?;
 
-        ArhivTransaction::new(
-            conn,
-            self.path_manager.data_dir.clone(),
-            self.schema.clone(),
-        )
+        ArhivTransaction::new(conn, self.path_manager.clone(), self.schema.clone())
     }
 
     pub fn vacuum(&self) -> Result<()> {

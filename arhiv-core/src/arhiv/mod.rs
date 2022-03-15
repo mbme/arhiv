@@ -45,7 +45,7 @@ impl Arhiv {
         let tx = db.get_tx()?;
 
         // ensure document schema is up to date
-        tx.apply_migrations(&db.schema)?;
+        tx.apply_migrations()?;
 
         {
             let schema_version = tx.get_setting(SETTING_SCHEMA_VERSION)?;

@@ -1,13 +1,17 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use chrono::Utc;
-use rusqlite::Connection;
+use rusqlite::{
+    functions::{Context as FunctionContext, FunctionFlags},
+    Connection, Error as RusqliteError,
+};
 
 use rs_utils::{log, FsTransaction};
 
 use crate::{
-    entities::{Document, Id, Revision},
+    db::SETTING_SCHEMA_VERSION,
+    entities::{Document, DocumentData, Id, Revision},
     schema::DataSchema,
     Validator,
 };
@@ -188,6 +192,94 @@ impl ArhivTransaction {
         }
 
         log::debug!("Removed {} orphaned blobs", removed_blobs);
+
+        Ok(())
+    }
+
+    pub(crate) fn apply_migrations(&self) -> Result<()> {
+        let schema_version = self.get_setting(SETTING_SCHEMA_VERSION)?;
+
+        let migrations: Vec<_> = self
+            .schema
+            .get_migrations()
+            .iter()
+            .filter(|migration| migration.get_version() > schema_version)
+            .cloned()
+            .collect();
+
+        if migrations.is_empty() {
+            log::debug!("no schema migrations to apply");
+
+            return Ok(());
+        }
+
+        log::info!("{} schema migrations to apply", migrations.len());
+
+        let new_schema_version = self.schema.get_version();
+
+        let conn = self.get_connection();
+
+        let migrations = Arc::new(migrations);
+        let apply_migrations = move |ctx: &FunctionContext| -> Result<String> {
+            let document_type = ctx
+                .get_raw(0)
+                .as_str()
+                .context("document_type must be str")?;
+
+            let document_data = ctx
+                .get_raw(1)
+                .as_str()
+                .context("document_data must be str")?;
+
+            let mut document_data: DocumentData = serde_json::from_str(document_data)?;
+
+            for migration in migrations.as_ref() {
+                migration.update(document_type, &mut document_data)?;
+            }
+
+            serde_json::to_string(&document_data).context("failed to serialize document_data")
+        };
+
+        conn.create_scalar_function(
+            "apply_migrations",
+            2,
+            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+            move |ctx| {
+                assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+                let result = apply_migrations(ctx);
+
+                if let Err(ref err) = result {
+                    log::error!("apply_migrations() failed: \n{:?}", err);
+                }
+
+                result.map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            },
+        )
+        .context("Failed to define function 'apply_migrations'")?;
+
+        let now = Instant::now();
+
+        let rows_count = self.get_connection().execute(
+            "UPDATE documents_snapshots
+                SET data = apply_migrations(type, data)
+                WHERE data <> apply_migrations(type, data)",
+            [],
+        )?;
+
+        log::info!(
+            "Migrated {} rows in {} seconds",
+            rows_count,
+            now.elapsed().as_secs_f32()
+        );
+
+        self.set_setting(SETTING_SCHEMA_VERSION, new_schema_version)?;
+
+        log::info!(
+            "Finished schema migration from version {} to {}",
+            schema_version,
+            new_schema_version
+        );
 
         Ok(())
     }

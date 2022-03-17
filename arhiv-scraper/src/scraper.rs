@@ -11,7 +11,7 @@ use tokio::{
 use arhiv_core::{
     definitions::Attachment,
     entities::{Document, DocumentData},
-    Arhiv, ArhivTransaction,
+    Arhiv, ArhivConnection,
 };
 use rs_utils::{log, Download, EnvCapabilities, TempFile};
 
@@ -158,7 +158,7 @@ impl<'a> Scraper<'a> {
         Ok(documents)
     }
 
-    async fn execute_action(&self, action: &str, tx: &mut ArhivTransaction) -> Result<Document> {
+    async fn execute_action(&self, action: &str, tx: &mut ArhivConnection) -> Result<Document> {
         let action: ScraperAction =
             serde_json::from_str(action).context("Failed to parse ScraperAction")?;
 

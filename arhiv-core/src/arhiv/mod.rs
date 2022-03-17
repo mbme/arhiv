@@ -11,7 +11,7 @@ use rs_utils::log;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
 use self::db::{
-    ArhivTransaction, BLOBQueries, Filter, ListPage, MutableQueries, Queries, DB, SETTING_ARHIV_ID,
+    ArhivConnection, BLOBQueries, Filter, ListPage, MutableQueries, Queries, DB, SETTING_ARHIV_ID,
     SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
 };
 use self::migrations::{apply_db_migrations, create_db, get_db_version};
@@ -164,7 +164,7 @@ impl Arhiv {
             .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
     }
 
-    pub fn get_tx(&self) -> Result<ArhivTransaction> {
+    pub fn get_tx(&self) -> Result<ArhivConnection> {
         self.db.get_tx()
     }
 

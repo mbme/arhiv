@@ -10,7 +10,7 @@ use crate::prime_server::PrimeServerRPC;
 impl Arhiv {
     pub(crate) fn apply_changeset(
         &self,
-        tx: &mut ArhivTransaction,
+        tx: &mut ArhivConnection,
         changeset: Changeset,
     ) -> Result<Vec<Document>> {
         log::debug!("applying changeset {}", &changeset);
@@ -122,7 +122,7 @@ impl Arhiv {
     #[allow(clippy::unused_self)]
     fn apply_changeset_response(
         &self,
-        tx: &mut ArhivTransaction,
+        tx: &mut ArhivConnection,
         response: ChangesetResponse,
     ) -> Result<()> {
         let db_status = tx.get_db_status()?;
@@ -170,7 +170,7 @@ impl Arhiv {
     #[allow(clippy::unused_self)]
     pub(crate) fn generate_changeset_response(
         &self,
-        tx: &ArhivTransaction,
+        tx: &ArhivConnection,
         base_rev: Revision,
         conflicts: Vec<Document>,
     ) -> Result<ChangesetResponse> {
@@ -189,7 +189,7 @@ impl Arhiv {
         })
     }
 
-    fn prepare_changeset(&self, tx: &ArhivTransaction) -> Result<Changeset> {
+    fn prepare_changeset(&self, tx: &ArhivConnection) -> Result<Changeset> {
         let db_status = tx.get_db_status()?;
 
         let documents = tx.list_documents(&Filter::all_staged_documents())?.items;

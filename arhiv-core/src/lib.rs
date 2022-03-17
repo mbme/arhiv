@@ -28,7 +28,7 @@ mod validator;
 mod tests;
 
 pub use crate::arhiv::db::{
-    ArhivTransaction, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
+    ArhivConnection, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
 };
 pub use crate::arhiv::*;
 pub use config::Config;

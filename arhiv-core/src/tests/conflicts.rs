@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::test_arhiv::TestArhiv;
+use crate::{db::Queries, test_arhiv::TestArhiv};
 
 use super::utils::*;
 
@@ -34,7 +34,7 @@ async fn test_conflicts() -> Result<()> {
     {
         let tx = arhiv.get_tx()?;
 
-        tx.conn.execute(
+        tx.get_connection().execute(
             "UPDATE documents_snapshots SET prev_rev = 0 WHERE rev = 0",
             [],
         )?;

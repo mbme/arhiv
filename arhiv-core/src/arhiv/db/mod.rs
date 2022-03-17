@@ -66,16 +66,13 @@ impl DB {
     pub fn get_connection(&self) -> Result<ArhivConnection> {
         let conn = self.open_connection(false)?;
 
-        Ok(ArhivConnection::new(
-            conn,
-            self.path_manager.data_dir.clone(),
-        ))
+        Ok(ArhivConnection::new(conn, self.path_manager.clone()))
     }
 
-    pub fn get_tx(&self) -> Result<ArhivTransaction> {
+    pub fn get_tx(&self) -> Result<ArhivConnection> {
         let conn = self.open_connection(true)?;
 
-        ArhivTransaction::new(conn, self.path_manager.clone(), self.schema.clone())
+        ArhivConnection::new_tx(conn, self.path_manager.clone(), self.schema.clone())
     }
 
     pub fn vacuum(&self) -> Result<()> {

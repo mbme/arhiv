@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Instant};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use chrono::Utc;
 use fslock::LockFile;
 use rusqlite::{
@@ -20,31 +20,29 @@ use crate::{
 
 use super::{blob_queries::*, queries::*};
 
-pub struct ArhivConnection {
-    conn: Connection,
-    data_dir: String,
+pub enum ArhivConnection {
+    ReadOnly {
+        conn: Connection,
+        path_manager: Arc<PathManager>,
+    },
+    Transaction {
+        conn: Connection,
+        path_manager: Arc<PathManager>,
+        schema: Arc<DataSchema>,
+
+        fs_tx: FsTransaction,
+        lock_file: LockFile,
+
+        finished: bool,
+    },
 }
 
-impl<'a> ArhivConnection {
-    pub fn new(conn: Connection, data_dir: String) -> Self {
-        ArhivConnection { conn, data_dir }
+impl ArhivConnection {
+    pub fn new(conn: Connection, path_manager: Arc<PathManager>) -> Self {
+        ArhivConnection::ReadOnly { conn, path_manager }
     }
-}
 
-pub struct ArhivTransaction {
-    pub(crate) conn: Connection,
-
-    schema: Arc<DataSchema>,
-    path_manager: Arc<PathManager>,
-
-    finished: bool,
-
-    fs_tx: FsTransaction,
-    lock_file: LockFile,
-}
-
-impl ArhivTransaction {
-    pub fn new(
+    pub fn new_tx(
         conn: Connection,
         path_manager: Arc<PathManager>,
         schema: Arc<DataSchema>,
@@ -53,7 +51,7 @@ impl ArhivTransaction {
 
         let lock_file = LockFile::open(&path_manager.lock_file)?;
 
-        Ok(ArhivTransaction {
+        Ok(ArhivConnection::Transaction {
             conn,
             schema,
             finished: false,
@@ -63,31 +61,46 @@ impl ArhivTransaction {
         })
     }
 
-    pub fn commit(mut self) -> Result<()> {
-        ensure!(
-            !self.finished,
-            "must not try to commit finished transaction"
-        );
+    fn complete_tx(&mut self, commit: bool) -> Result<()> {
+        match self {
+            ArhivConnection::Transaction {
+                finished,
+                fs_tx,
+                conn,
+                ..
+            } => {
+                ensure!(!*finished, "transaction must not be completed");
 
-        self.finished = true;
+                *finished = true;
 
-        self.fs_tx.commit()?;
-        self.conn.execute_batch("COMMIT")?;
+                if commit {
+                    fs_tx.commit()?;
+                    conn.execute_batch("COMMIT")?;
+                } else {
+                    fs_tx.rollback()?;
+                    conn.execute_batch("ROLLBACK")?;
+                }
+            }
+
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        };
 
         Ok(())
     }
 
+    pub fn commit(mut self) -> Result<()> {
+        self.complete_tx(true)
+    }
+
     pub fn rollback(&mut self) -> Result<()> {
-        ensure!(
-            !self.finished,
-            "must not try to rollback finished transaction"
-        );
+        self.complete_tx(false)
+    }
 
-        self.finished = true;
-
-        self.conn.execute_batch("ROLLBACK")?;
-
-        Ok(())
+    fn get_schema(&self) -> Result<Arc<DataSchema>> {
+        match self {
+            ArhivConnection::Transaction { schema, .. } => Ok(schema.clone()),
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
     }
 
     pub fn stage_document(&self, document: &mut Document) -> Result<()> {
@@ -100,7 +113,7 @@ impl ArhivTransaction {
 
         let prev_document = self.get_document(&document.id)?;
 
-        let schema = self.schema.clone();
+        let schema = self.get_schema()?;
         let data_description = schema.get_data_description(&document.document_type)?;
 
         Validator::default().validate(
@@ -211,8 +224,8 @@ impl ArhivTransaction {
     pub(crate) fn apply_migrations(&self) -> Result<()> {
         let schema_version = self.get_setting(SETTING_SCHEMA_VERSION)?;
 
-        let migrations: Vec<_> = self
-            .schema
+        let schema = self.get_schema()?;
+        let migrations: Vec<_> = schema
             .get_migrations()
             .iter()
             .filter(|migration| migration.get_version() > schema_version)
@@ -227,7 +240,7 @@ impl ArhivTransaction {
 
         log::info!("{} schema migrations to apply", migrations.len());
 
-        let new_schema_version = self.schema.get_version();
+        let new_schema_version = schema.get_version();
 
         let conn = self.get_connection();
 
@@ -297,60 +310,74 @@ impl ArhivTransaction {
     }
 }
 
-impl Drop for ArhivTransaction {
+impl Drop for ArhivConnection {
     fn drop(&mut self) {
-        if self.lock_file.owns_lock() {
-            if let Err(err) = self.lock_file.unlock() {
-                log::error!("Failed to unlock arhiv lock file: {}", err);
+        match self {
+            ArhivConnection::Transaction {
+                lock_file,
+                finished,
+                ..
+            } => {
+                if lock_file.owns_lock() {
+                    if let Err(err) = lock_file.unlock() {
+                        log::error!("Failed to unlock arhiv lock file: {}", err);
+                    }
+                }
+
+                if *finished {
+                    return;
+                }
+
+                log::warn!("Transaction wasn't committed, rolling back");
+
+                if let Err(err) = self.rollback() {
+                    log::error!("Transaction rollback failed: {}", err);
+                }
             }
-        }
 
-        if self.finished {
-            return;
-        }
-
-        log::warn!("Transaction wasn't committed, rolling back");
-
-        if let Err(err) = self.rollback() {
-            log::error!("Transaction rollback failed: {}", err);
-        }
+            ArhivConnection::ReadOnly { .. } => {}
+        };
     }
 }
 
 impl Queries for ArhivConnection {
     fn get_connection(&self) -> &Connection {
-        &self.conn
+        match self {
+            ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
+                conn
+            }
+        }
     }
 }
 
 impl BLOBQueries for ArhivConnection {
     fn get_data_dir(&self) -> &str {
-        &self.data_dir
-    }
-}
-
-impl Queries for ArhivTransaction {
-    fn get_connection(&self) -> &Connection {
-        &self.conn
-    }
-}
-
-impl BLOBQueries for ArhivTransaction {
-    fn get_data_dir(&self) -> &str {
-        &self.path_manager.data_dir
-    }
-}
-
-impl MutableQueries for ArhivTransaction {}
-
-impl MutableBLOBQueries for ArhivTransaction {
-    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
-        if !self.lock_file.owns_lock() {
-            self.lock_file
-                .lock()
-                .context("failed to lock on arhiv lock file")?;
+        match self {
+            ArhivConnection::ReadOnly { path_manager, .. }
+            | ArhivConnection::Transaction { path_manager, .. } => &path_manager.data_dir,
         }
+    }
+}
 
-        Ok(&mut self.fs_tx)
+impl MutableQueries for ArhivConnection {}
+
+impl MutableBLOBQueries for ArhivConnection {
+    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
+        match self {
+            ArhivConnection::Transaction {
+                lock_file,
+                ref mut fs_tx,
+                ..
+            } => {
+                if !lock_file.owns_lock() {
+                    lock_file
+                        .lock()
+                        .context("failed to lock on arhiv lock file")?;
+                }
+
+                Ok(fs_tx)
+            }
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
     }
 }

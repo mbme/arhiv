@@ -9,7 +9,7 @@ use crate::{
     db::MutableBLOBQueries,
     entities::{BLOBId, Document},
     schema::*,
-    Arhiv, ArhivTransaction,
+    Arhiv, ArhivConnection,
 };
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
@@ -88,7 +88,7 @@ impl Attachment {
         Ok(attachment)
     }
 
-    pub fn create_tx(file_path: &str, move_file: bool, tx: &mut ArhivTransaction) -> Result<Self> {
+    pub fn create_tx(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
         let size = get_file_size(file_path)?;
@@ -105,7 +105,7 @@ impl Attachment {
 
     pub fn from_download_result(
         download_result: &DownloadResult,
-        tx: &mut ArhivTransaction,
+        tx: &mut ArhivConnection,
     ) -> Result<Attachment> {
         let media_type = get_mime_type(&download_result.file_path)?;
         let size = get_file_size(&download_result.file_path)?;

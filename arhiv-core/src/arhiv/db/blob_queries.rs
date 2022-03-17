@@ -11,11 +11,11 @@ use crate::{
 
 impl ArhivConnection {
     pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
-        BLOB::new(blob_id.clone(), self.get_data_dir())
+        BLOB::new(blob_id.clone(), &self.get_path_manager().data_dir)
     }
 
     pub(crate) fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
-        let items = fs::read_dir(self.get_data_dir())?
+        let items = fs::read_dir(&self.get_path_manager().data_dir)?
             .map(|item| {
                 let entry = item.context("Failed to read data entry")?;
 
@@ -54,7 +54,7 @@ impl ArhivConnection {
             return Ok(blob_id);
         }
 
-        let data_dir = self.get_data_dir().to_string();
+        let data_dir = self.get_path_manager().data_dir.clone();
         let fs_tx = self.get_fs_tx()?;
 
         if move_file {

@@ -14,7 +14,7 @@ use self::db::{
     ArhivConnection, Filter, ListPage, DB, SETTING_ARHIV_ID, SETTING_IS_PRIME,
     SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
 };
-use self::migrations::{apply_db_migrations, create_db, get_db_version};
+use self::migrations::{apply_db_migrations, create_db};
 use self::status::Status;
 
 pub struct Arhiv {
@@ -113,30 +113,9 @@ impl Arhiv {
     }
 
     pub fn get_status(&self) -> Result<Status> {
-        let root_dir = self.config.arhiv_root.to_string();
-        let debug_mode = cfg!(not(feature = "production-mode"));
-
         let conn = self.db.get_connection()?;
 
-        let db_status = conn.get_db_status()?;
-        let db_version = get_db_version(conn.get_connection())?;
-        let schema_version = conn.get_setting(&SETTING_SCHEMA_VERSION)?;
-        let documents_count = conn.count_documents()?;
-        let blobs_count = conn.count_blobs()?;
-        let conflicts_count = conn.count_conflicts()?;
-        let last_update_time = conn.get_last_update_time()?;
-
-        Ok(Status {
-            db_status,
-            db_version,
-            schema_version,
-            documents_count,
-            blobs_count,
-            conflicts_count,
-            last_update_time,
-            debug_mode,
-            root_dir,
-        })
+        conn.get_status()
     }
 
     pub fn is_prime(&self) -> Result<bool> {

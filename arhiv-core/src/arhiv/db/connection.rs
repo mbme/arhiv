@@ -94,10 +94,17 @@ impl ArhivConnection {
         self.complete_tx(false)
     }
 
-    fn get_schema(&self) -> Result<Arc<DataSchema>> {
+    pub(crate) fn get_schema(&self) -> Result<Arc<DataSchema>> {
         match self {
             ArhivConnection::Transaction { schema, .. } => Ok(schema.clone()),
             ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
+    }
+
+    pub(crate) fn get_path_manager(&self) -> &PathManager {
+        match self {
+            ArhivConnection::ReadOnly { path_manager, .. }
+            | ArhivConnection::Transaction { path_manager, .. } => path_manager,
         }
     }
 
@@ -106,13 +113,6 @@ impl ArhivConnection {
             ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
                 conn
             }
-        }
-    }
-
-    pub(crate) fn get_data_dir(&self) -> &str {
-        match self {
-            ArhivConnection::ReadOnly { path_manager, .. }
-            | ArhivConnection::Transaction { path_manager, .. } => &path_manager.data_dir,
         }
     }
 

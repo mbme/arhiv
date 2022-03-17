@@ -6,7 +6,7 @@ use anyhow::{ensure, Result};
 use rs_utils::{ensure_dir_exists, ensure_file_exists};
 
 pub struct PathManager {
-    root_dir: String,
+    pub root_dir: String,
     pub data_dir: String,
     pub db_file: String,
     pub lock_file: String,

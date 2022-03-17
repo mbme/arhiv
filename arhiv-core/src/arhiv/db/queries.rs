@@ -11,6 +11,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use rs_utils::log;
 
 use crate::{
+    arhiv::{migrations::get_db_version, status::Status},
     entities::{BLOBId, Document, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE},
     ArhivConnection,
 };
@@ -471,6 +472,31 @@ impl ArhivConnection {
         }
 
         Ok(())
+    }
+
+    pub fn get_status(&self) -> Result<Status> {
+        let root_dir = self.get_path_manager().root_dir.clone();
+        let debug_mode = cfg!(not(feature = "production-mode"));
+
+        let db_status = self.get_db_status()?;
+        let db_version = get_db_version(self.get_connection())?;
+        let schema_version = self.get_setting(&SETTING_SCHEMA_VERSION)?;
+        let documents_count = self.count_documents()?;
+        let blobs_count = self.count_blobs()?;
+        let conflicts_count = self.count_conflicts()?;
+        let last_update_time = self.get_last_update_time()?;
+
+        Ok(Status {
+            db_status,
+            db_version,
+            schema_version,
+            documents_count,
+            blobs_count,
+            conflicts_count,
+            last_update_time,
+            debug_mode,
+            root_dir,
+        })
     }
 }
 

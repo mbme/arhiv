@@ -11,8 +11,8 @@ use rs_utils::log;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
 use self::db::{
-    ArhivConnection, BLOBQueries, Filter, ListPage, MutableQueries, Queries, DB, SETTING_ARHIV_ID,
-    SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+    ArhivConnection, Filter, ListPage, DB, SETTING_ARHIV_ID, SETTING_IS_PRIME,
+    SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
 };
 use self::migrations::{apply_db_migrations, create_db, get_db_version};
 use self::status::Status;
@@ -48,7 +48,7 @@ impl Arhiv {
         tx.apply_migrations()?;
 
         {
-            let schema_version = tx.get_setting(SETTING_SCHEMA_VERSION)?;
+            let schema_version = tx.get_setting(&SETTING_SCHEMA_VERSION)?;
 
             ensure!(
                 schema_version == db.schema.get_version(),
@@ -71,7 +71,7 @@ impl Arhiv {
     pub fn create(
         config: Config,
         schema: DataSchema,
-        arhiv_id: String,
+        arhiv_id: &str,
         prime: bool,
     ) -> Result<Arhiv> {
         log::info!(
@@ -92,10 +92,10 @@ impl Arhiv {
         let tx = db.get_tx()?;
 
         // initial settings
-        tx.set_setting(SETTING_ARHIV_ID, arhiv_id)?;
-        tx.set_setting(SETTING_IS_PRIME, prime)?;
-        tx.set_setting(SETTING_SCHEMA_VERSION, schema_version)?;
-        tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::MIN_DATETIME)?;
+        tx.set_setting(&SETTING_ARHIV_ID, &arhiv_id.to_string())?;
+        tx.set_setting(&SETTING_IS_PRIME, &prime)?;
+        tx.set_setting(&SETTING_SCHEMA_VERSION, &schema_version)?;
+        tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::MIN_DATETIME)?;
 
         tx.commit()?;
 
@@ -120,7 +120,7 @@ impl Arhiv {
 
         let db_status = conn.get_db_status()?;
         let db_version = get_db_version(conn.get_connection())?;
-        let schema_version = conn.get_setting(SETTING_SCHEMA_VERSION)?;
+        let schema_version = conn.get_setting(&SETTING_SCHEMA_VERSION)?;
         let documents_count = conn.count_documents()?;
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.count_conflicts()?;
@@ -142,7 +142,7 @@ impl Arhiv {
     pub fn is_prime(&self) -> Result<bool> {
         let conn = self.db.get_connection()?;
 
-        conn.get_setting(SETTING_IS_PRIME)
+        conn.get_setting(&SETTING_IS_PRIME)
     }
 
     pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage<Document>> {

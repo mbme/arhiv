@@ -4,7 +4,6 @@ use rs_utils::{workspace_relpath, TempFile};
 
 use super::utils::*;
 use crate::{
-    db::MutableBLOBQueries,
     prime_server::{start_prime_server, PrimeServerRPC},
     test_arhiv::TestArhiv,
 };

@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{db::Queries, test_arhiv::TestArhiv};
+use crate::test_arhiv::TestArhiv;
 
 use super::utils::*;
 

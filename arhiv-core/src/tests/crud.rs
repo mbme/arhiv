@@ -4,10 +4,7 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{
-    db::MutableBLOBQueries, entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount,
-    Filter,
-};
+use crate::{entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
 
 #[test]
 fn test_crud() -> Result<()> {

@@ -6,7 +6,6 @@ use serde_json::json;
 use rs_utils::{get_file_name, get_file_size, get_mime_type, DownloadResult};
 
 use crate::{
-    db::MutableBLOBQueries,
     entities::{BLOBId, Document},
     schema::*,
     Arhiv, ArhivConnection,

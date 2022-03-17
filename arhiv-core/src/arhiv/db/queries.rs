@@ -4,20 +4,24 @@ use anyhow::{anyhow, Context, Result};
 use rusqlite::{
     params, params_from_iter,
     types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
-    Connection, OptionalExtension,
+    OptionalExtension,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::log;
 
-use crate::entities::{BLOBId, Document, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE};
+use crate::{
+    entities::{BLOBId, Document, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE},
+    ArhivConnection,
+};
 
 use super::{dto::*, filter::*, query_builder::QueryBuilder, utils};
 
-pub trait Queries {
-    fn get_connection(&self) -> &Connection;
-
-    fn get_setting<T: Serialize + DeserializeOwned>(&self, setting: DBSetting<T>) -> Result<T> {
+impl ArhivConnection {
+    pub(crate) fn get_setting<T: Serialize + DeserializeOwned>(
+        &self,
+        setting: &DBSetting<T>,
+    ) -> Result<T> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT value FROM settings WHERE key = ?1")?;
@@ -29,17 +33,17 @@ pub trait Queries {
         serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
     }
 
-    fn get_db_status(&self) -> Result<DbStatus> {
+    pub(crate) fn get_db_status(&self) -> Result<DbStatus> {
         Ok(DbStatus {
-            arhiv_id: self.get_setting(SETTING_ARHIV_ID)?,
-            is_prime: self.get_setting(SETTING_IS_PRIME)?,
-            schema_version: self.get_setting(SETTING_SCHEMA_VERSION)?,
+            arhiv_id: self.get_setting(&SETTING_ARHIV_ID)?,
+            is_prime: self.get_setting(&SETTING_IS_PRIME)?,
+            schema_version: self.get_setting(&SETTING_SCHEMA_VERSION)?,
             db_rev: self.get_db_rev()?,
-            last_sync_time: self.get_setting(SETTING_LAST_SYNC_TIME)?,
+            last_sync_time: self.get_setting(&SETTING_LAST_SYNC_TIME)?,
         })
     }
 
-    fn get_db_rev(&self) -> Result<Revision> {
+    pub(crate) fn get_db_rev(&self) -> Result<Revision> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots")?;
@@ -48,7 +52,7 @@ pub trait Queries {
             .context("failed to query for db rev")
     }
 
-    fn count_documents(&self) -> Result<DocumentsCount> {
+    pub(crate) fn count_documents(&self) -> Result<DocumentsCount> {
         // count documents
         // count erased documents
         let conn = self.get_connection();
@@ -92,13 +96,13 @@ pub trait Queries {
         })
     }
 
-    fn count_conflicts(&self) -> Result<u32> {
+    pub(crate) fn count_conflicts(&self) -> Result<u32> {
         self.get_connection()
             .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
             .context("failed to count conflicts")
     }
 
-    fn has_staged_documents(&self) -> Result<bool> {
+    pub(crate) fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
                 "SELECT true FROM documents_snapshots WHERE rev = 0 LIMIT 1",
@@ -110,7 +114,7 @@ pub trait Queries {
             .map(|value| value.unwrap_or(false))
     }
 
-    fn get_last_update_time(&self) -> Result<Timestamp> {
+    pub(crate) fn get_last_update_time(&self) -> Result<Timestamp> {
         let result: Option<Timestamp> = self
             .get_connection() // FIXME check if this ordering actually works
             .query_row(
@@ -125,7 +129,7 @@ pub trait Queries {
     }
 
     #[allow(clippy::too_many_lines)]
-    fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
+    pub(crate) fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
         let mut qb = QueryBuilder::new();
 
         qb.select("*", "documents");
@@ -245,7 +249,7 @@ pub trait Queries {
         Ok(ListPage { items, has_more })
     }
 
-    fn get_new_snapshots_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
+    pub(crate) fn get_new_snapshots_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
@@ -262,7 +266,7 @@ pub trait Queries {
         Ok(documents)
     }
 
-    fn get_document(&self, id: &Id) -> Result<Option<Document>> {
+    pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents WHERE id = ?1 LIMIT 1")?;
@@ -278,7 +282,7 @@ pub trait Queries {
         }
     }
 
-    fn get_new_blob_ids(&self) -> Result<HashSet<BLOBId>> {
+    pub(crate) fn get_new_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let mut stmt = self
             .get_connection()
             .prepare("SELECT blob_id FROM new_blob_ids")?;
@@ -293,7 +297,7 @@ pub trait Queries {
         Ok(result)
     }
 
-    fn get_used_blob_ids(&self) -> Result<HashSet<BLOBId>> {
+    pub(crate) fn get_used_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let mut stmt = self
             .get_connection()
             .prepare("SELECT blob_id FROM used_blob_ids")?;
@@ -308,7 +312,7 @@ pub trait Queries {
         Ok(result)
     }
 
-    fn count_blobs(&self) -> Result<BLOBSCount> {
+    pub(crate) fn count_blobs(&self) -> Result<BLOBSCount> {
         let committed_blobs_count: u32 = self
             .get_connection()
             .query_row("SELECT COUNT(*) FROM committed_blob_ids", [], |row| {
@@ -327,7 +331,7 @@ pub trait Queries {
         })
     }
 
-    fn is_known_blob_id(&self, blob_id: &BLOBId) -> Result<bool> {
+    pub(crate) fn is_known_blob_id(&self, blob_id: &BLOBId) -> Result<bool> {
         self.get_connection()
             .query_row(
                 "SELECT true FROM used_blob_ids WHERE blob_id = ?1 LIMIT 1",
@@ -339,7 +343,7 @@ pub trait Queries {
             .map(|value| value.unwrap_or(false))
     }
 
-    fn has_snapshot(&self, id: &Id, rev: Revision) -> Result<bool> {
+    pub(crate) fn has_snapshot(&self, id: &Id, rev: Revision) -> Result<bool> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT true FROM documents_snapshots WHERE id = ?1 AND rev = ?2")?;
@@ -350,7 +354,7 @@ pub trait Queries {
             .map(|value| value.unwrap_or(false))
     }
 
-    fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
+    pub(crate) fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
         let mut stmt = self.get_connection().prepare_cached(
             "SELECT * FROM documents_snapshots WHERE id = ?1 ORDER BY rev DESC LIMIT 1",
         )?;
@@ -365,13 +369,11 @@ pub trait Queries {
             Ok(None)
         }
     }
-}
 
-pub trait MutableQueries: Queries {
-    fn set_setting<T: Serialize + DeserializeOwned>(
+    pub(crate) fn set_setting<T: Serialize + DeserializeOwned>(
         &self,
-        setting: DBSetting<T>,
-        value: T,
+        setting: &DBSetting<T>,
+        value: &T,
     ) -> Result<()> {
         let value = serde_json::to_string(&value)?;
 
@@ -385,7 +387,7 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn put_document(&self, document: &Document) -> Result<()> {
+    pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
@@ -428,7 +430,7 @@ pub trait MutableQueries: Queries {
     }
 
     // delete all document versions except the latest one
-    fn erase_document_history(&self, id: &Id) -> Result<()> {
+    pub(crate) fn erase_document_history(&self, id: &Id) -> Result<()> {
         let rows_count = self.get_connection().execute(
             "DELETE FROM documents_snapshots
              WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_snapshots WHERE id = ?1)",
@@ -440,14 +442,14 @@ pub trait MutableQueries: Queries {
         Ok(())
     }
 
-    fn delete_local_staged_changes(&self) -> Result<()> {
+    pub(crate) fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection()
             .execute("DELETE FROM documents_snapshots WHERE rev = 0", [])?;
 
         Ok(())
     }
 
-    fn compute_data(&self) -> Result<()> {
+    pub(crate) fn compute_data(&self) -> Result<()> {
         let now = Instant::now();
 
         let rows_count = self.get_connection().execute(

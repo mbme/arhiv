@@ -31,10 +31,9 @@ async fn main() {
 
     match matches.subcommand().expect("subcommand must be provided") {
         ("init", matches) => {
-            let arhiv_id: String = matches
+            let arhiv_id = matches
                 .value_of("arhiv_id")
-                .expect("arhiv_id must be present")
-                .to_string();
+                .expect("arhiv_id must be present");
 
             let prime = matches.is_present("prime");
 

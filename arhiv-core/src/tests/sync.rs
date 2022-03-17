@@ -4,7 +4,7 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{db::MutableBLOBQueries, prime_server::start_prime_server, test_arhiv::TestArhiv};
+use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
 
 #[tokio::test]
 async fn test_prime_sync() -> Result<()> {

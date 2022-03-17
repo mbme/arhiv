@@ -17,7 +17,7 @@ impl Arhiv {
 
         let schema = self.get_schema();
 
-        let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
+        let arhiv_id = tx.get_setting(&SETTING_ARHIV_ID)?;
         ensure!(
             changeset.arhiv_id == arhiv_id,
             "changeset arhiv_id {} must be equal to {}",
@@ -177,7 +177,7 @@ impl Arhiv {
         let next_rev = base_rev.inc();
         let new_snapshots = tx.get_new_snapshots_since(next_rev)?;
 
-        let arhiv_id = tx.get_setting(SETTING_ARHIV_ID)?;
+        let arhiv_id = tx.get_setting(&SETTING_ARHIV_ID)?;
         let latest_rev = tx.get_db_rev()?;
 
         Ok(ChangesetResponse {
@@ -222,7 +222,7 @@ impl Arhiv {
         // update last sync time
         {
             let tx = self.db.get_tx()?;
-            tx.set_setting(SETTING_LAST_SYNC_TIME, chrono::Utc::now())?;
+            tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::Utc::now())?;
             tx.commit()?;
         }
 

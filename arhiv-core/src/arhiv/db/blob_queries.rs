@@ -2,18 +2,19 @@ use std::{collections::HashSet, fs};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
-use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
+use rs_utils::{file_exists, is_same_filesystem, log};
 
-use crate::entities::{BLOBId, BLOB};
+use crate::{
+    entities::{BLOBId, BLOB},
+    ArhivConnection,
+};
 
-pub trait BLOBQueries {
-    fn get_data_dir(&self) -> &str;
-
-    fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
+impl ArhivConnection {
+    pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
         BLOB::new(blob_id.clone(), self.get_data_dir())
     }
 
-    fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
+    pub(crate) fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
         let items = fs::read_dir(self.get_data_dir())?
             .map(|item| {
                 let entry = item.context("Failed to read data entry")?;
@@ -36,12 +37,8 @@ pub trait BLOBQueries {
 
         Ok(items)
     }
-}
 
-pub trait MutableBLOBQueries: BLOBQueries {
-    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction>;
-
-    fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
+    pub(crate) fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
         ensure!(
             file_exists(file_path)?,
             "BLOB source must exist and must be a file"
@@ -76,7 +73,7 @@ pub trait MutableBLOBQueries: BLOBQueries {
         Ok(blob_id)
     }
 
-    fn remove_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
+    pub(crate) fn remove_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
         let blob = self.get_blob(blob_id);
 
         self.get_fs_tx()?.remove_file(&blob.file_path)?;

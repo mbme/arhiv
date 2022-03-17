@@ -4,7 +4,6 @@ use anyhow::{bail, ensure, Context, Result};
 
 use rs_utils::{ensure_dir_exists, file_exists, log, run_command, EnvCapabilities};
 
-use super::db::*;
 use super::Arhiv;
 use crate::entities::BLOBId;
 

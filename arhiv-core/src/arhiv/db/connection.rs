@@ -18,8 +18,6 @@ use crate::{
     Validator,
 };
 
-use super::{blob_queries::*, queries::*};
-
 pub enum ArhivConnection {
     ReadOnly {
         conn: Connection,
@@ -99,6 +97,40 @@ impl ArhivConnection {
     fn get_schema(&self) -> Result<Arc<DataSchema>> {
         match self {
             ArhivConnection::Transaction { schema, .. } => Ok(schema.clone()),
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
+    }
+
+    pub(crate) fn get_connection(&self) -> &Connection {
+        match self {
+            ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
+                conn
+            }
+        }
+    }
+
+    pub(crate) fn get_data_dir(&self) -> &str {
+        match self {
+            ArhivConnection::ReadOnly { path_manager, .. }
+            | ArhivConnection::Transaction { path_manager, .. } => &path_manager.data_dir,
+        }
+    }
+
+    pub(crate) fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
+        match self {
+            ArhivConnection::Transaction {
+                lock_file,
+                ref mut fs_tx,
+                ..
+            } => {
+                if !lock_file.owns_lock() {
+                    lock_file
+                        .lock()
+                        .context("failed to lock on arhiv lock file")?;
+                }
+
+                Ok(fs_tx)
+            }
             ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
         }
     }
@@ -222,7 +254,7 @@ impl ArhivConnection {
     }
 
     pub(crate) fn apply_migrations(&self) -> Result<()> {
-        let schema_version = self.get_setting(SETTING_SCHEMA_VERSION)?;
+        let schema_version = self.get_setting(&SETTING_SCHEMA_VERSION)?;
 
         let schema = self.get_schema()?;
         let migrations: Vec<_> = schema
@@ -298,7 +330,7 @@ impl ArhivConnection {
             now.elapsed().as_secs_f32()
         );
 
-        self.set_setting(SETTING_SCHEMA_VERSION, new_schema_version)?;
+        self.set_setting(&SETTING_SCHEMA_VERSION, &new_schema_version)?;
 
         log::info!(
             "Finished schema migration from version {} to {}",
@@ -337,47 +369,5 @@ impl Drop for ArhivConnection {
 
             ArhivConnection::ReadOnly { .. } => {}
         };
-    }
-}
-
-impl Queries for ArhivConnection {
-    fn get_connection(&self) -> &Connection {
-        match self {
-            ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
-                conn
-            }
-        }
-    }
-}
-
-impl BLOBQueries for ArhivConnection {
-    fn get_data_dir(&self) -> &str {
-        match self {
-            ArhivConnection::ReadOnly { path_manager, .. }
-            | ArhivConnection::Transaction { path_manager, .. } => &path_manager.data_dir,
-        }
-    }
-}
-
-impl MutableQueries for ArhivConnection {}
-
-impl MutableBLOBQueries for ArhivConnection {
-    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
-        match self {
-            ArhivConnection::Transaction {
-                lock_file,
-                ref mut fs_tx,
-                ..
-            } => {
-                if !lock_file.owns_lock() {
-                    lock_file
-                        .lock()
-                        .context("failed to lock on arhiv lock file")?;
-                }
-
-                Ok(fs_tx)
-            }
-            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
-        }
     }
 }

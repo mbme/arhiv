@@ -33,7 +33,7 @@ pub enum ArhivConnection {
         fs_tx: FsTransaction,
         lock_file: LockFile,
 
-        finished: bool,
+        completed: bool,
     },
 }
 
@@ -54,7 +54,7 @@ impl ArhivConnection {
         Ok(ArhivConnection::Transaction {
             conn,
             schema,
-            finished: false,
+            completed: false,
             path_manager,
             fs_tx: FsTransaction::new(),
             lock_file,
@@ -64,14 +64,14 @@ impl ArhivConnection {
     fn complete_tx(&mut self, commit: bool) -> Result<()> {
         match self {
             ArhivConnection::Transaction {
-                finished,
+                completed,
                 fs_tx,
                 conn,
                 ..
             } => {
-                ensure!(!*finished, "transaction must not be completed");
+                ensure!(!*completed, "transaction must not be completed");
 
-                *finished = true;
+                *completed = true;
 
                 if commit {
                     fs_tx.commit()?;
@@ -315,7 +315,7 @@ impl Drop for ArhivConnection {
         match self {
             ArhivConnection::Transaction {
                 lock_file,
-                finished,
+                completed,
                 ..
             } => {
                 if lock_file.owns_lock() {
@@ -324,7 +324,7 @@ impl Drop for ArhivConnection {
                     }
                 }
 
-                if *finished {
+                if *completed {
                     return;
                 }
 

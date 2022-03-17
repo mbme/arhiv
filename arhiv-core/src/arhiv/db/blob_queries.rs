@@ -83,6 +83,27 @@ impl ArhivConnection {
         Ok(())
     }
 
+    pub(crate) fn remove_orphaned_blobs(&mut self) -> Result<()> {
+        ensure!(
+            !self.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
+        let used_blob_ids = self.get_used_blob_ids()?;
+
+        let mut removed_blobs = 0;
+        for blob_id in self.list_local_blobs()? {
+            if !used_blob_ids.contains(&blob_id) {
+                self.remove_blob(&blob_id)?;
+                removed_blobs += 1;
+            }
+        }
+
+        log::debug!("Removed {} orphaned blobs", removed_blobs);
+
+        Ok(())
+    }
+
     // FIXME pub fn get_blob_stream(&self, hash: &hash) -> Result<FileStream>
     // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
 }

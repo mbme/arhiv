@@ -124,7 +124,7 @@ async fn post_changeset_handler(req: Request<Body>) -> Result<Response<Body>> {
 
     let base_rev = changeset.base_rev;
 
-    let mut tx = arhiv.db.get_tx()?;
+    let mut tx = arhiv.get_tx()?;
 
     let conflicts = arhiv.apply_changeset(&mut tx, changeset)?;
 

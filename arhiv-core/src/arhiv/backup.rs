@@ -21,14 +21,14 @@ impl Arhiv {
         backup.check()?;
 
         // 1. vacuum the db so that WAL is written into db
-        self.db.vacuum()?;
+        self.vacuum()?;
 
         // 2. copy & archive db file
         run_command(
             "zstd",
             vec![
                 "--compress",
-                &self.db.path_manager.db_file,
+                &self.path_manager.db_file,
                 "-o",
                 &backup.backup_db_file,
             ],
@@ -38,7 +38,7 @@ impl Arhiv {
 
         // 3. copy all data files if needed
         let mut blob_count = 0;
-        let conn = self.db.get_connection()?;
+        let conn = self.get_connection()?;
         for blob_id in conn.list_local_blobs()? {
             // check if backup file exists
             if backup.blob_exists(&blob_id)? {

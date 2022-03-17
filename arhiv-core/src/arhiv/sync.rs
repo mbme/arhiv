@@ -221,18 +221,18 @@ impl Arhiv {
 
         // update last sync time
         {
-            let tx = self.db.get_tx()?;
+            let tx = self.get_tx()?;
             tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::Utc::now())?;
             tx.commit()?;
         }
 
         // cleanup the db
         {
-            let mut tx = self.db.get_tx()?;
+            let mut tx = self.get_tx()?;
             tx.remove_orphaned_blobs()?;
             tx.commit()?;
 
-            self.db.vacuum()?;
+            self.vacuum()?;
         }
 
         Ok(())
@@ -241,7 +241,7 @@ impl Arhiv {
     fn sync_locally(&self) -> Result<()> {
         log::info!("Initiating local sync");
 
-        let mut tx = self.db.get_tx()?;
+        let mut tx = self.get_tx()?;
 
         let changeset = self.prepare_changeset(&tx)?;
         log::debug!("prepared a changeset {}", changeset);
@@ -258,7 +258,7 @@ impl Arhiv {
     async fn sync_remotely(&self) -> Result<()> {
         log::info!("Initiating remote sync");
 
-        let mut tx = self.db.get_tx()?;
+        let mut tx = self.get_tx()?;
 
         let changeset = self.prepare_changeset(&tx)?;
         let new_blob_ids = tx.get_new_blob_ids()?;
@@ -284,7 +284,7 @@ impl Arhiv {
         log::debug!("sync_remotely: got response {}", &response);
 
         ensure!(
-            last_update_time == self.db.get_connection()?.get_last_update_time()?,
+            last_update_time == self.get_connection()?.get_last_update_time()?,
             "last_update_time must not change",
         );
 

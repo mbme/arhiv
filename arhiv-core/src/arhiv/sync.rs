@@ -2,10 +2,11 @@ use anyhow::{ensure, Result};
 
 use rs_utils::log;
 
-use super::db::*;
-use super::Arhiv;
-use crate::entities::*;
+use crate::entities::{Changeset, ChangesetResponse, Document, Revision};
 use crate::prime_server::PrimeServerRPC;
+
+use super::db::{ArhivConnection, Filter, SETTING_ARHIV_ID, SETTING_LAST_SYNC_TIME};
+use super::Arhiv;
 
 impl Arhiv {
     pub(crate) fn apply_changeset(

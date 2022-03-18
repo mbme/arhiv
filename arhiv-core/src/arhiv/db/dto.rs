@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::entities::*;
+use crate::entities::{Revision, Timestamp};
 
 pub struct DBSetting<T: Serialize + DeserializeOwned>(pub &'static str, PhantomData<T>);
 

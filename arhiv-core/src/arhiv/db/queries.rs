@@ -15,10 +15,19 @@ use rs_utils::log;
 use crate::{
     arhiv::{migrations::get_db_version, status::Status},
     entities::{BLOBId, Document, DocumentData, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE},
-    ArhivConnection, Validator,
+    Validator,
 };
 
-use super::{dto::*, filter::*, query_builder::QueryBuilder, utils};
+use super::{
+    connection::ArhivConnection,
+    dto::{
+        BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID,
+        SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+    },
+    filter::{Filter, OrderBy},
+    query_builder::QueryBuilder,
+    utils,
+};
 
 impl ArhivConnection {
     pub(crate) fn get_setting<T: Serialize + DeserializeOwned>(

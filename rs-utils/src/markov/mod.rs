@@ -160,9 +160,12 @@ impl Markov {
 
         loop {
             attempt += 1;
-            if attempt > max_attempts {
-                panic!("Failed to generate sentence in {} attempts", max_attempts);
-            }
+
+            assert!(
+                attempt <= max_attempts,
+                "Failed to generate sentence in {} attempts",
+                max_attempts
+            );
 
             let (sentence, words) = self.generate_sentence(include_separator);
             if words >= min_words && words <= max_words {

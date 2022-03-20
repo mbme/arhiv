@@ -7,28 +7,12 @@ use rusqlite::{Connection, OpenFlags};
 
 use rs_utils::{log, FsTransaction, TempFile};
 
+use crate::db::open_connection;
 use crate::path_manager::PathManager;
 
 use self::migration::DBMigration;
 use self::v1::MigrationV1;
 use self::v2::MigrationV2;
-
-fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
-    let conn = Connection::open_with_flags(
-        db_file,
-        if mutable {
-            OpenFlags::SQLITE_OPEN_READ_WRITE
-        } else {
-            OpenFlags::SQLITE_OPEN_READ_ONLY
-        },
-    )
-    .context("failed to open connection")?;
-
-    conn.pragma_update(None, "foreign_keys", true)
-        .context("failed to enable foreign keys support")?;
-
-    Ok(conn)
-}
 
 pub fn get_db_version(conn: &Connection) -> Result<u8> {
     conn.pragma_query_value(None, "user_version", |row| row.get(0))

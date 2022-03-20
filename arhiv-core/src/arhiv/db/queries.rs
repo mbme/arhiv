@@ -19,14 +19,13 @@ use crate::{
 };
 
 use super::{
-    connection::ArhivConnection,
     dto::{
         BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID,
         SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
     },
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
-    utils,
+    utils, ArhivConnection,
 };
 
 impl ArhivConnection {
@@ -520,7 +519,7 @@ impl ArhivConnection {
 
         let prev_document = self.get_document(&document.id)?;
 
-        let schema = self.get_schema()?;
+        let schema = self.get_schema();
         let data_description = schema.get_data_description(&document.document_type)?;
 
         Validator::default().validate(
@@ -610,7 +609,7 @@ impl ArhivConnection {
     pub(crate) fn apply_migrations(&self) -> Result<()> {
         let schema_version = self.get_setting(&SETTING_SCHEMA_VERSION)?;
 
-        let schema = self.get_schema()?;
+        let schema = self.get_schema();
         let migrations: Vec<_> = schema
             .get_migrations()
             .iter()

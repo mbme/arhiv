@@ -272,7 +272,7 @@ impl Field {
 
 fn extract_ids_from_reflist(reflist: &str) -> Vec<Id> {
     reflist
-        .replace(",", " ")
+        .replace(',', " ")
         .split(' ')
         .map(str::trim)
         .filter(|item| !item.is_empty())

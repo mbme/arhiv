@@ -228,12 +228,12 @@ impl Arhiv {
         }
 
         // cleanup the db
+        self.vacuum()?;
+
         {
             let mut tx = self.get_tx()?;
             tx.remove_orphaned_blobs()?;
             tx.commit()?;
-
-            self.vacuum()?;
         }
 
         Ok(())

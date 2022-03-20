@@ -6,7 +6,7 @@ use rs_utils::{file_exists, is_same_filesystem, log};
 
 use crate::entities::{BLOBId, BLOB};
 
-use super::connection::ArhivConnection;
+use super::ArhivConnection;
 
 impl ArhivConnection {
     pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> BLOB {

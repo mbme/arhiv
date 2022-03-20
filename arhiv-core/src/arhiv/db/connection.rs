@@ -1,157 +1,183 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
-use anyhow::{bail, ensure, Context, Result};
-use fslock::LockFile;
-use rusqlite::Connection;
+use anyhow::{bail, Context, Result};
+use rusqlite::{
+    functions::{Context as FunctionContext, FunctionFlags},
+    Connection, Error as RusqliteError, OpenFlags,
+};
+use serde_json::Value;
 
-use rs_utils::{log, FsTransaction};
+use rs_utils::log;
 
-use crate::{path_manager::PathManager, schema::DataSchema};
+use crate::{entities::DocumentData, schema::DataSchema};
 
-pub enum ArhivConnection {
-    ReadOnly {
-        conn: Connection,
-        path_manager: Arc<PathManager>,
-    },
-    Transaction {
-        conn: Connection,
-        path_manager: Arc<PathManager>,
-        schema: Arc<DataSchema>,
+pub fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
+    let conn = Connection::open_with_flags(
+        db_file,
+        if mutable {
+            OpenFlags::SQLITE_OPEN_READ_WRITE
+        } else {
+            OpenFlags::SQLITE_OPEN_READ_ONLY
+        },
+    )
+    .context("failed to open connection")?;
 
-        fs_tx: FsTransaction,
-        lock_file: LockFile,
+    conn.pragma_update(None, "foreign_keys", true)
+        .context("failed to enable foreign keys support")?;
 
-        completed: bool,
-    },
+    Ok(conn)
 }
 
-impl ArhivConnection {
-    pub fn new(conn: Connection, path_manager: Arc<PathManager>) -> Self {
-        ArhivConnection::ReadOnly { conn, path_manager }
-    }
+pub fn init_functions(conn: &Connection, schema: &Arc<DataSchema>) -> Result<()> {
+    init_extract_refs_fn(conn, schema.clone())?;
+    init_calculate_search_score_fn(conn, schema.clone())?;
+    init_json_contains(conn)?;
 
-    pub fn new_tx(
-        conn: Connection,
-        path_manager: Arc<PathManager>,
-        schema: Arc<DataSchema>,
-    ) -> Result<Self> {
-        conn.execute_batch("BEGIN DEFERRED")?;
-
-        let lock_file = LockFile::open(&path_manager.lock_file)?;
-
-        Ok(ArhivConnection::Transaction {
-            conn,
-            schema,
-            completed: false,
-            path_manager,
-            fs_tx: FsTransaction::new(),
-            lock_file,
-        })
-    }
-
-    fn complete_tx(&mut self, commit: bool) -> Result<()> {
-        match self {
-            ArhivConnection::Transaction {
-                completed,
-                fs_tx,
-                conn,
-                ..
-            } => {
-                ensure!(!*completed, "transaction must not be completed");
-
-                *completed = true;
-
-                if commit {
-                    fs_tx.commit()?;
-                    conn.execute_batch("COMMIT")?;
-                } else {
-                    fs_tx.rollback()?;
-                    conn.execute_batch("ROLLBACK")?;
-                }
-            }
-
-            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
-        };
-
-        Ok(())
-    }
-
-    pub fn commit(mut self) -> Result<()> {
-        self.complete_tx(true)
-    }
-
-    pub fn rollback(&mut self) -> Result<()> {
-        self.complete_tx(false)
-    }
-
-    pub(crate) fn get_schema(&self) -> Result<Arc<DataSchema>> {
-        match self {
-            ArhivConnection::Transaction { schema, .. } => Ok(schema.clone()),
-            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
-        }
-    }
-
-    pub(crate) fn get_path_manager(&self) -> &PathManager {
-        match self {
-            ArhivConnection::ReadOnly { path_manager, .. }
-            | ArhivConnection::Transaction { path_manager, .. } => path_manager,
-        }
-    }
-
-    pub(crate) fn get_connection(&self) -> &Connection {
-        match self {
-            ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
-                conn
-            }
-        }
-    }
-
-    pub(crate) fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
-        match self {
-            ArhivConnection::Transaction {
-                lock_file,
-                ref mut fs_tx,
-                ..
-            } => {
-                if !lock_file.owns_lock() {
-                    lock_file
-                        .lock()
-                        .context("failed to lock on arhiv lock file")?;
-                }
-
-                Ok(fs_tx)
-            }
-            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
-        }
-    }
+    Ok(())
 }
 
-impl Drop for ArhivConnection {
-    fn drop(&mut self) {
-        match self {
-            ArhivConnection::Transaction {
-                lock_file,
-                completed,
-                ..
-            } => {
-                if lock_file.owns_lock() {
-                    if let Err(err) = lock_file.unlock() {
-                        log::error!("Failed to unlock arhiv lock file: {}", err);
-                    }
-                }
+fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()> {
+    // WARN: schema MUST be an Arc and MUST be moved into the closure in order for sqlite to work correctly
 
-                if *completed {
-                    return;
-                }
+    let calculate_search_score = move |ctx: &FunctionContext| -> Result<usize> {
+        let document_type = ctx
+            .get_raw(0)
+            .as_str()
+            .context("document_type must be str")?;
 
-                log::warn!("Transaction wasn't committed, rolling back");
+        let document_data = ctx
+            .get_raw(1)
+            .as_str()
+            .context("document_data must be str")?;
 
-                if let Err(err) = self.rollback() {
-                    log::error!("Transaction rollback failed: {}", err);
-                }
+        let pattern = ctx.get_raw(2).as_str().context("pattern must be str")?;
+
+        if pattern.is_empty() {
+            return Ok(1);
+        }
+
+        let data_description = schema.get_data_description(document_type)?;
+        let document_data: DocumentData = serde_json::from_str(document_data)?;
+
+        let result = data_description.search(&document_data, pattern);
+
+        if let Err(ref err) = result {
+            log::error!("calculate_search_score() failed: \n{}", err);
+        }
+
+        result
+    };
+
+    conn.create_scalar_function(
+        "calculate_search_score",
+        3,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+
+            calculate_search_score(ctx)
+                .context("calculate_search_score() failed")
+                .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+        },
+    )
+    .context("Failed to define function 'calculate_search_score'")
+}
+
+fn init_json_contains(conn: &Connection) -> Result<()> {
+    conn.create_scalar_function(
+        "json_contains",
+        3,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+
+            let data = ctx.get_raw(0).as_str().expect("data must be str");
+            let field = ctx.get_raw(1).as_str().expect("field must be str");
+            let value = ctx.get_raw(2).as_str().expect("value must be str");
+
+            json_contains(data, field, value)
+                .context("json_contains() failed")
+                .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+        },
+    )
+    .context("Failed to define function 'json_contains'")
+}
+
+fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()> {
+    // WARN: schema MUST be an Arc and MUST be moved into the closure in order for sqlite to work correctly
+
+    let extract_refs = move |ctx: &FunctionContext| -> Result<String> {
+        let document_type = ctx
+            .get_raw(0)
+            .as_str()
+            .context("document_type must be str")?;
+
+        let document_data = ctx
+            .get_raw(1)
+            .as_str()
+            .context("document_data must be str")?;
+
+        let document_data: DocumentData = serde_json::from_str(document_data)?;
+
+        let refs = schema.extract_refs(document_type, &document_data)?;
+
+        serde_json::to_string(&refs).context("failed to serialize refs")
+    };
+
+    conn.create_scalar_function(
+        "extract_refs",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            let result = extract_refs(ctx);
+
+            if let Err(ref err) = result {
+                log::error!("extract_refs() failed: \n{:?}", err);
             }
 
-            ArhivConnection::ReadOnly { .. } => {}
-        };
+            result.map_err(|e| RusqliteError::UserFunctionError(e.into()))
+        },
+    )
+    .context("Failed to define function 'extract_refs'")
+}
+
+fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {
+    let data: Value = serde_json::from_str(data)?;
+
+    let data = if let Some(data) = data.get(field) {
+        data
+    } else {
+        return Ok(false);
+    };
+
+    if let Some(data) = data.as_str() {
+        return Ok(data == value);
     }
+
+    if let Some(data) = data.as_array() {
+        let result = data
+            .iter()
+            .any(|item| item.as_str().map_or(false, |item| item == value));
+
+        return Ok(result);
+    }
+
+    bail!("data must be string or array")
+}
+
+pub fn vacuum(db_file: &str) -> Result<()> {
+    let conn = open_connection(db_file, true)?;
+
+    let now = Instant::now();
+
+    conn.execute("VACUUM", [])?;
+
+    log::debug!(
+        "completed VACUUM in {} seconds",
+        now.elapsed().as_secs_f32()
+    );
+
+    Ok(())
 }

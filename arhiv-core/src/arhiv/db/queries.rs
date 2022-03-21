@@ -4,9 +4,7 @@ use anyhow::{anyhow, ensure, Context, Result};
 use chrono::Utc;
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
-    params, params_from_iter,
-    types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
-    Error as RusqliteError, OptionalExtension,
+    params, params_from_iter, Error as RusqliteError, OptionalExtension,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -692,43 +690,5 @@ impl ArhivConnection {
         );
 
         Ok(())
-    }
-}
-
-impl FromSql for Revision {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value
-            .as_i64()
-            .map(|value| Revision::from_value(value as u32))
-    }
-}
-
-impl ToSql for Revision {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.0))
-    }
-}
-
-impl FromSql for Id {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(Id::from)
-    }
-}
-
-impl ToSql for Id {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self as &str))
-    }
-}
-
-impl FromSql for BLOBId {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(BLOBId::from_string)
-    }
-}
-
-impl ToSql for BLOBId {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self as &str))
     }
 }

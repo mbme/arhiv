@@ -3,13 +3,17 @@ use std::{sync::Arc, time::Instant};
 use anyhow::{bail, Context, Result};
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
+    types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
     Connection, Error as RusqliteError, OpenFlags,
 };
 use serde_json::Value;
 
 use rs_utils::log;
 
-use crate::{entities::DocumentData, schema::DataSchema};
+use crate::{
+    entities::{BLOBId, DocumentData, Id, Revision},
+    schema::DataSchema,
+};
 
 pub fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
     let conn = Connection::open_with_flags(
@@ -180,4 +184,42 @@ pub fn vacuum(db_file: &str) -> Result<()> {
     );
 
     Ok(())
+}
+
+impl FromSql for Revision {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value
+            .as_i64()
+            .map(|value| Revision::from_value(value as u32))
+    }
+}
+
+impl ToSql for Revision {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self.0))
+    }
+}
+
+impl FromSql for Id {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(Id::from)
+    }
+}
+
+impl ToSql for Id {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self as &str))
+    }
+}
+
+impl FromSql for BLOBId {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(BLOBId::from_string)
+    }
+}
+
+impl ToSql for BLOBId {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self as &str))
+    }
 }

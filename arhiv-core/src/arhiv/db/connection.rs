@@ -1,32 +1,163 @@
-use std::{collections::HashSet, sync::Arc, time::Instant};
+use std::{collections::HashSet, fs, sync::Arc, time::Instant};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use chrono::Utc;
+use fslock::LockFile;
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
-    params, params_from_iter, Error as RusqliteError, OptionalExtension,
+    params, params_from_iter, Connection, Error as RusqliteError, OptionalExtension,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
-use rs_utils::log;
+use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
 use crate::{
     arhiv::{migrations::get_db_version, status::Status},
-    entities::{BLOBId, Document, DocumentData, Id, Revision, Timestamp, ERASED_DOCUMENT_TYPE},
+    entities::{
+        BLOBId, Document, DocumentData, Id, Revision, Timestamp, BLOB, ERASED_DOCUMENT_TYPE,
+    },
+    path_manager::PathManager,
+    schema::DataSchema,
     Validator,
 };
 
 use super::{
+    db::{init_functions, open_connection},
     dto::{
         BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID,
         SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
     },
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
-    utils, ArhivConnection,
+    utils,
 };
 
+pub enum ArhivConnection {
+    ReadOnly {
+        conn: Connection,
+        path_manager: Arc<PathManager>,
+        schema: Arc<DataSchema>,
+    },
+    Transaction {
+        conn: Connection,
+        path_manager: Arc<PathManager>,
+        schema: Arc<DataSchema>,
+
+        fs_tx: FsTransaction,
+        lock_file: LockFile,
+
+        completed: bool,
+    },
+}
+
 impl ArhivConnection {
+    pub fn new(path_manager: Arc<PathManager>, schema: Arc<DataSchema>) -> Result<Self> {
+        let conn = open_connection(&path_manager.db_file, false)?;
+
+        init_functions(&conn, &schema)?;
+
+        Ok(ArhivConnection::ReadOnly {
+            conn,
+            path_manager,
+            schema,
+        })
+    }
+
+    pub fn new_tx(path_manager: Arc<PathManager>, schema: Arc<DataSchema>) -> Result<Self> {
+        let conn = open_connection(&path_manager.db_file, true)?;
+
+        init_functions(&conn, &schema)?;
+
+        conn.execute_batch("BEGIN DEFERRED")?;
+
+        let lock_file = LockFile::open(&path_manager.lock_file)?;
+
+        Ok(ArhivConnection::Transaction {
+            conn,
+            schema,
+            completed: false,
+            path_manager,
+            fs_tx: FsTransaction::new(),
+            lock_file,
+        })
+    }
+
+    fn complete_tx(&mut self, commit: bool) -> Result<()> {
+        match self {
+            ArhivConnection::Transaction {
+                completed,
+                fs_tx,
+                conn,
+                ..
+            } => {
+                ensure!(!*completed, "transaction must not be completed");
+
+                *completed = true;
+
+                if commit {
+                    fs_tx.commit()?;
+                    conn.execute_batch("COMMIT")?;
+                } else {
+                    fs_tx.rollback()?;
+                    conn.execute_batch("ROLLBACK")?;
+                }
+            }
+
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        };
+
+        Ok(())
+    }
+
+    pub fn commit(mut self) -> Result<()> {
+        self.complete_tx(true)
+    }
+
+    pub fn rollback(&mut self) -> Result<()> {
+        self.complete_tx(false)
+    }
+
+    fn get_schema(&self) -> Arc<DataSchema> {
+        match self {
+            ArhivConnection::Transaction { schema, .. }
+            | ArhivConnection::ReadOnly { schema, .. } => schema.clone(),
+        }
+    }
+
+    fn get_path_manager(&self) -> &PathManager {
+        match self {
+            ArhivConnection::ReadOnly { path_manager, .. }
+            | ArhivConnection::Transaction { path_manager, .. } => path_manager,
+        }
+    }
+
+    pub(crate) fn get_connection(&self) -> &Connection {
+        match self {
+            ArhivConnection::ReadOnly { conn, .. } | ArhivConnection::Transaction { conn, .. } => {
+                conn
+            }
+        }
+    }
+
+    fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
+        match self {
+            ArhivConnection::Transaction {
+                lock_file,
+                ref mut fs_tx,
+                ..
+            } => {
+                if !lock_file.owns_lock() {
+                    lock_file
+                        .lock()
+                        .context("failed to lock on arhiv lock file")?;
+                }
+
+                Ok(fs_tx)
+            }
+            ArhivConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
+    }
+
     pub(crate) fn get_setting<T: Serialize + DeserializeOwned>(
         &self,
         setting: &DBSetting<T>,
@@ -42,7 +173,7 @@ impl ArhivConnection {
         serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
     }
 
-    pub(crate) fn get_db_status(&self) -> Result<DbStatus> {
+    pub fn get_db_status(&self) -> Result<DbStatus> {
         Ok(DbStatus {
             arhiv_id: self.get_setting(&SETTING_ARHIV_ID)?,
             is_prime: self.get_setting(&SETTING_IS_PRIME)?,
@@ -61,7 +192,7 @@ impl ArhivConnection {
             .context("failed to query for db rev")
     }
 
-    pub(crate) fn count_documents(&self) -> Result<DocumentsCount> {
+    fn count_documents(&self) -> Result<DocumentsCount> {
         // count documents
         // count erased documents
         let conn = self.get_connection();
@@ -105,7 +236,7 @@ impl ArhivConnection {
         })
     }
 
-    pub(crate) fn count_conflicts(&self) -> Result<u32> {
+    fn count_conflicts(&self) -> Result<u32> {
         self.get_connection()
             .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
             .context("failed to count conflicts")
@@ -306,7 +437,7 @@ impl ArhivConnection {
         Ok(result)
     }
 
-    pub(crate) fn get_used_blob_ids(&self) -> Result<HashSet<BLOBId>> {
+    fn get_used_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let mut stmt = self
             .get_connection()
             .prepare("SELECT blob_id FROM used_blob_ids")?;
@@ -321,7 +452,7 @@ impl ArhivConnection {
         Ok(result)
     }
 
-    pub(crate) fn count_blobs(&self) -> Result<BLOBSCount> {
+    fn count_blobs(&self) -> Result<BLOBSCount> {
         let committed_blobs_count: u32 = self
             .get_connection()
             .query_row("SELECT COUNT(*) FROM committed_blob_ids", [], |row| {
@@ -690,5 +821,132 @@ impl ArhivConnection {
         );
 
         Ok(())
+    }
+
+    pub(crate) fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
+        BLOB::new(blob_id.clone(), &self.get_path_manager().data_dir)
+    }
+
+    pub(crate) fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
+        let items = fs::read_dir(&self.get_path_manager().data_dir)?
+            .map(|item| {
+                let entry = item.context("Failed to read data entry")?;
+
+                let entry_path = entry.path();
+
+                ensure!(
+                    entry_path.is_file(),
+                    "{} isn't a file",
+                    entry_path.to_string_lossy()
+                );
+
+                entry_path
+                    .file_name()
+                    .ok_or_else(|| anyhow!("Failed to read file name"))
+                    .map(|value| value.to_string_lossy().to_string())
+                    .and_then(|value| BLOBId::from_file_name(&value))
+            })
+            .collect::<Result<HashSet<_>>>()?;
+
+        Ok(items)
+    }
+
+    pub(crate) fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
+        ensure!(
+            file_exists(file_path)?,
+            "BLOB source must exist and must be a file"
+        );
+
+        let blob_id = BLOBId::from_file(file_path)?;
+
+        let blob = self.get_blob(&blob_id);
+
+        if blob.exists()? {
+            log::debug!("blob {} already exists", blob_id);
+
+            return Ok(blob_id);
+        }
+
+        let data_dir = self.get_path_manager().data_dir.clone();
+        let fs_tx = self.get_fs_tx()?;
+
+        if move_file {
+            fs_tx.move_file(file_path, blob.file_path)?;
+            log::debug!("Moved new blob {} from {}", blob_id, file_path);
+        } else if is_same_filesystem(file_path, &data_dir)? {
+            fs_tx.hard_link_file(file_path, blob.file_path)?;
+            log::debug!("Hard linked new blob {} from {}", blob_id, file_path);
+        } else {
+            fs_tx.copy_file(file_path, blob.file_path)?;
+            log::debug!("Copied new blob {} from {}", blob_id, file_path);
+        }
+
+        log::info!("Created blob {} from {}", &blob_id, file_path);
+
+        Ok(blob_id)
+    }
+
+    fn remove_blob(&mut self, blob_id: &BLOBId) -> Result<()> {
+        let blob = self.get_blob(blob_id);
+
+        self.get_fs_tx()?.remove_file(&blob.file_path)?;
+
+        log::debug!("Removed blob {} from {}", blob_id, blob.file_path);
+
+        Ok(())
+    }
+
+    pub(crate) fn remove_orphaned_blobs(&mut self) -> Result<()> {
+        ensure!(
+            !self.has_staged_documents()?,
+            "there must be no staged changes"
+        );
+
+        let used_blob_ids = self.get_used_blob_ids()?;
+
+        let mut removed_blobs = 0;
+        for blob_id in self.list_local_blobs()? {
+            if !used_blob_ids.contains(&blob_id) {
+                self.remove_blob(&blob_id)?;
+                removed_blobs += 1;
+            }
+        }
+
+        log::debug!("Removed {} orphaned blobs", removed_blobs);
+
+        Ok(())
+    }
+
+    // FIXME pub fn get_blob_stream(&self, hash: &hash) -> Result<FileStream>
+    // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
+}
+
+impl Drop for ArhivConnection {
+    fn drop(&mut self) {
+        match self {
+            ArhivConnection::Transaction {
+                lock_file,
+                completed,
+                ..
+            } => {
+                if lock_file.owns_lock() {
+                    if let Err(err) = lock_file.unlock() {
+                        log::error!("Failed to unlock arhiv lock file: {}", err);
+                    }
+                }
+
+                if *completed {
+                    return;
+                }
+
+                log::warn!("Transaction wasn't committed, rolling back");
+
+                if let Err(err) = self.rollback() {
+                    log::error!("Transaction rollback failed: {}", err);
+                }
+            }
+
+            ArhivConnection::ReadOnly { .. } => {}
+        };
     }
 }

@@ -47,8 +47,10 @@ impl DocumentsCount {
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct BLOBSCount {
-    pub blobs_committed: u32,
     pub blobs_staged: u32,
+    pub local_blobs_count: u32,
+    pub local_used_blobs_count: u32,
+    pub total_blobs_count: u32,
 }
 
 #[derive(Debug, Serialize)]

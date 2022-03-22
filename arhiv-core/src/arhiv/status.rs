@@ -87,11 +87,6 @@ impl fmt::Display for Status {
         )?;
         writeln!(
             f,
-            "            BLOBS: {} committed, {} staged",
-            self.blobs_count.blobs_committed, self.blobs_count.blobs_staged,
-        )?;
-        writeln!(
-            f,
             " Erased Documents: {} committed, {} staged",
             self.documents_count.erased_documents_committed,
             self.documents_count.erased_documents_staged,
@@ -100,6 +95,17 @@ impl fmt::Display for Status {
             f, //
             "        Snapshots: {}",
             self.documents_count.snapshots
+        )?;
+
+        writeln!(f)?;
+
+        writeln!(
+            f,
+            "            BLOBs: {} total ({} new), {} local ({} unused)",
+            self.blobs_count.total_blobs_count,
+            self.blobs_count.blobs_staged,
+            self.blobs_count.local_blobs_count,
+            self.blobs_count.local_blobs_count - self.blobs_count.local_used_blobs_count,
         )?;
 
         if self.conflicts_count > 0 {

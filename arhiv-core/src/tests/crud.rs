@@ -96,8 +96,10 @@ async fn test_status() -> Result<()> {
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
-                blobs_committed: 0,
                 blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 0,
+                local_used_blobs_count: 0,
             }
         );
     }
@@ -123,8 +125,10 @@ async fn test_status() -> Result<()> {
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
-                blobs_committed: 0,
                 blobs_staged: 1,
+                total_blobs_count: 1,
+                local_blobs_count: 1,
+                local_used_blobs_count: 1,
             }
         );
     }
@@ -149,8 +153,10 @@ async fn test_status() -> Result<()> {
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
-                blobs_committed: 1,
                 blobs_staged: 0,
+                total_blobs_count: 1,
+                local_blobs_count: 1,
+                local_used_blobs_count: 1,
             }
         );
     }
@@ -210,8 +216,10 @@ async fn test_status() -> Result<()> {
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
-                blobs_committed: 1,
                 blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 1,
+                local_used_blobs_count: 0,
             }
         );
     }
@@ -235,8 +243,10 @@ async fn test_status() -> Result<()> {
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
-                blobs_committed: 0,
                 blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 0,
+                local_used_blobs_count: 0,
             }
         );
     }

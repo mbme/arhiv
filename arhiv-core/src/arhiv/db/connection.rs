@@ -453,21 +453,23 @@ impl ArhivConnection {
     }
 
     fn count_blobs(&self) -> Result<BLOBSCount> {
-        let committed_blobs_count: u32 = self
-            .get_connection()
-            .query_row("SELECT COUNT(*) FROM committed_blob_ids", [], |row| {
-                row.get(0)
-            })
-            .context("failed to count used blob ids")?;
-
         let new_blobs_count: u32 = self
             .get_connection()
             .query_row("SELECT COUNT(*) FROM new_blob_ids", [], |row| row.get(0))
             .context("failed to count new blob ids")?;
 
+        let used_blob_ids = self.get_used_blob_ids()?;
+        let local_blob_ids = self.get_local_blob_ids()?;
+
+        let local_used_blob_ids = local_blob_ids
+            .intersection(&used_blob_ids)
+            .collect::<HashSet<_>>();
+
         Ok(BLOBSCount {
-            blobs_committed: committed_blobs_count,
             blobs_staged: new_blobs_count,
+            local_blobs_count: local_blob_ids.len() as u32,
+            local_used_blobs_count: local_used_blob_ids.len() as u32,
+            total_blobs_count: used_blob_ids.len() as u32,
         })
     }
 
@@ -827,7 +829,7 @@ impl ArhivConnection {
         BLOB::new(blob_id.clone(), &self.get_path_manager().data_dir)
     }
 
-    pub(crate) fn list_local_blobs(&self) -> Result<HashSet<BLOBId>> {
+    pub(crate) fn get_local_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let items = fs::read_dir(&self.get_path_manager().data_dir)?
             .map(|item| {
                 let entry = item.context("Failed to read data entry")?;
@@ -905,7 +907,7 @@ impl ArhivConnection {
         let used_blob_ids = self.get_used_blob_ids()?;
 
         let mut removed_blobs = 0;
-        for blob_id in self.list_local_blobs()? {
+        for blob_id in self.get_local_blob_ids()? {
             if !used_blob_ids.contains(&blob_id) {
                 self.remove_blob(&blob_id)?;
                 removed_blobs += 1;

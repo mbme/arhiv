@@ -39,7 +39,7 @@ impl Arhiv {
         // 3. copy all data files if needed
         let mut blob_count = 0;
         let conn = self.get_connection()?;
-        for blob_id in conn.list_local_blobs()? {
+        for blob_id in conn.get_local_blob_ids()? {
             // check if backup file exists
             if backup.blob_exists(&blob_id)? {
                 log::trace!("Blob {} backup already exists, skipping", &blob_id);

@@ -7,7 +7,7 @@ use rusqlite::{Connection, OpenFlags};
 
 use rs_utils::{log, FsTransaction, TempFile};
 
-use crate::db::open_connection;
+use crate::arhiv::db::open_connection;
 use crate::path_manager::PathManager;
 
 use self::migration::DBMigration;

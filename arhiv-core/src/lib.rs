@@ -30,7 +30,7 @@ mod tests;
 pub use crate::arhiv::db::{
     ArhivConnection, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
 };
-pub use crate::arhiv::*;
+pub use crate::arhiv::Arhiv;
 pub use config::Config;
 pub use validator::{FieldValidationErrors, Validator};
 

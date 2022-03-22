@@ -4,11 +4,10 @@ use std::fmt;
 use anyhow::{anyhow, bail, ensure, Error, Result};
 
 use crate::{
+    arhiv::db::ArhivConnection,
     entities::{BLOBId, DocumentData, Id},
     schema::{DataDescription, Field},
 };
-
-use crate::db::ArhivConnection;
 
 pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
 

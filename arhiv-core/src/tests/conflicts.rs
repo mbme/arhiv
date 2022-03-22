@@ -9,7 +9,7 @@ async fn test_conflicts() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     let mut document = {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut document = empty_document();
         tx.stage_document(&mut document)?;
@@ -23,7 +23,7 @@ async fn test_conflicts() -> Result<()> {
 
     // update the same document
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.stage_document(&mut document)?;
         tx.commit()?;
     }
@@ -52,7 +52,7 @@ async fn test_deleted_document_isnt_conflict() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     let document = {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut document = empty_document();
         tx.stage_document(&mut document)?;
@@ -66,7 +66,7 @@ async fn test_deleted_document_isnt_conflict() -> Result<()> {
 
     // update the same document
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.erase_document(&document.id)?;
         tx.commit()?;
     }

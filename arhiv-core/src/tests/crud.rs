@@ -14,7 +14,7 @@ fn test_crud() -> Result<()> {
 
     // CREATE
     let id = {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut document = new_document(original_data.clone());
         tx.stage_document(&mut document)?;
@@ -35,7 +35,7 @@ fn test_crud() -> Result<()> {
 
     // UPDATE
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut other_document = arhiv.get_document(&id)?.unwrap();
         other_document.data = json!({ "test": "1" }).try_into().unwrap();
@@ -47,7 +47,7 @@ fn test_crud() -> Result<()> {
 
     // DELETE
     let document_id = {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut document = new_document(json!({ "test": "test" }));
         tx.stage_document(&mut document)?;
@@ -59,7 +59,7 @@ fn test_crud() -> Result<()> {
     assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.erase_document(&document_id)?;
         tx.commit()?;
@@ -106,7 +106,7 @@ async fn test_status() -> Result<()> {
 
     // create document with blob
     let mut document = {
-        let mut tx = arhiv.get_tx().unwrap();
+        let mut tx = arhiv.get_tx()?;
 
         let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
         let mut document = new_document(json!({
@@ -162,7 +162,7 @@ async fn test_status() -> Result<()> {
     }
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         // update document
         tx.stage_document(&mut document)?;
@@ -192,7 +192,7 @@ async fn test_status() -> Result<()> {
 
     // delete document
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.erase_document(&document.id)?;
 

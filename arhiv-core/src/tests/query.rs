@@ -9,7 +9,7 @@ fn test_pagination() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.stage_document(&mut empty_document())?;
         tx.stage_document(&mut empty_document())?;
@@ -31,7 +31,7 @@ async fn test_modes() -> Result<()> {
 
     // committed
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "value": "1" })))?;
         tx.commit()?;
     }
@@ -40,7 +40,7 @@ async fn test_modes() -> Result<()> {
 
     // staged
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "value": "3" })))?;
         tx.commit()?;
     }
@@ -73,7 +73,7 @@ fn test_order_by_enum_field() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
         tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
@@ -110,7 +110,7 @@ fn test_multiple_order_by() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
         tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
@@ -152,7 +152,7 @@ async fn test_matcher() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
         tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;

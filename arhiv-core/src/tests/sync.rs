@@ -12,7 +12,7 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let mut tx = arhiv.get_tx().unwrap();
+    let mut tx = arhiv.get_tx()?;
 
     let blob_id = tx.add_blob(src, false)?;
 
@@ -36,7 +36,7 @@ async fn test_prime_sync() -> Result<()> {
 
     // Test if document is updated correctly
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
 
         let mut document = arhiv.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" }).try_into().unwrap();
@@ -63,7 +63,7 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let mut tx = replica.get_tx().unwrap();
+    let mut tx = replica.get_tx()?;
 
     let blob_id = tx.add_blob(src, false)?;
 
@@ -101,7 +101,7 @@ async fn test_replica_sync() -> Result<()> {
         let mut document = replica.get_document(&id)?.unwrap();
         document.data = json!({ "test": "1" }).try_into().unwrap();
 
-        let tx = replica.get_tx().unwrap();
+        let tx = replica.get_tx()?;
         tx.stage_document(&mut document)?;
         tx.commit()?;
 
@@ -123,7 +123,7 @@ async fn test_replica_sync() -> Result<()> {
 async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let mut tx = arhiv.get_tx().unwrap();
+    let mut tx = arhiv.get_tx()?;
 
     let blob_id1 = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
 

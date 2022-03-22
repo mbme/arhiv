@@ -15,7 +15,7 @@ async fn test_blobs() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = {
-        let mut tx = arhiv.get_tx().unwrap();
+        let mut tx = arhiv.get_tx()?;
 
         let blob_id = tx.add_blob(src, false)?;
         tx.commit()?;
@@ -29,7 +29,7 @@ async fn test_blobs() -> Result<()> {
     document.data.set("blob", &blob_id);
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.stage_document(&mut document)?;
         tx.commit()?;
     }
@@ -37,7 +37,7 @@ async fn test_blobs() -> Result<()> {
 
     // delete
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.get_tx()?;
         tx.erase_document(&document.id)?;
         tx.commit()?;
     }
@@ -56,7 +56,7 @@ async fn test_download_blob() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = {
-        let mut tx = prime.get_tx().unwrap();
+        let mut tx = prime.get_tx()?;
 
         let blob_id = tx.add_blob(src, false)?;
 
@@ -102,7 +102,7 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     std::os::unix::fs::symlink(&resource_file, &resource_file_link)?;
 
     {
-        let mut tx = arhiv.get_tx().unwrap();
+        let mut tx = arhiv.get_tx()?;
         let result = tx.add_blob(&resource_file_link, false);
         assert!(result.is_err());
     }
@@ -112,13 +112,13 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
 
     {
-        let mut tx = arhiv.get_tx().unwrap();
+        let mut tx = arhiv.get_tx()?;
         let result = tx.add_blob(&resource_dir, false);
         assert!(result.is_err());
     }
 
     {
-        let mut tx = arhiv.get_tx().unwrap();
+        let mut tx = arhiv.get_tx()?;
         let result = tx.add_blob(&resource_dir_link, false);
         assert!(result.is_err());
     }

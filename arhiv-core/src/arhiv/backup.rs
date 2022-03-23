@@ -20,8 +20,8 @@ impl Arhiv {
         let backup = BackupPaths::new(backup_dir);
         backup.check()?;
 
-        // 1. vacuum the db so that WAL is written into db
-        self.vacuum()?;
+        // 1. cleanup the db
+        self.cleanup()?;
 
         // 2. copy & archive db file
         run_command(

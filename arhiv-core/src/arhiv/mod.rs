@@ -120,8 +120,21 @@ impl Arhiv {
         Ok(arhiv)
     }
 
-    fn vacuum(&self) -> Result<()> {
-        vacuum(&self.path_manager.db_file)
+    fn cleanup(&self) -> Result<()> {
+        log::debug!("Initiating cleanup...");
+
+        vacuum(&self.path_manager.db_file)?;
+
+        {
+            let mut tx = self.get_tx()?;
+            tx.remove_orphaned_blobs()?;
+            tx.commit()?;
+            log::debug!("");
+        }
+
+        log::debug!("Cleanup completed");
+
+        Ok(())
     }
 
     fn get_connection(&self) -> Result<ArhivConnection> {

@@ -14,7 +14,8 @@ use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 use crate::{
     arhiv::{migrations::get_db_version, status::Status},
     entities::{
-        BLOBId, Document, DocumentData, Id, Revision, Timestamp, BLOB, ERASED_DOCUMENT_TYPE,
+        BLOBId, Changeset, ChangesetResponse, Document, DocumentData, Id, Revision, Timestamp,
+        BLOB, ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
     schema::DataSchema,
@@ -821,6 +822,85 @@ impl ArhivConnection {
             schema_version,
             new_schema_version
         );
+
+        Ok(())
+    }
+
+    pub(crate) fn generate_changeset(&self) -> Result<Changeset> {
+        let db_status = self.get_db_status()?;
+
+        let documents = self.list_documents(&Filter::all_staged_documents())?.items;
+
+        let changeset = Changeset {
+            schema_version: self.get_schema().get_version(),
+            arhiv_id: db_status.arhiv_id,
+            base_rev: db_status.db_rev,
+            documents,
+        };
+
+        Ok(changeset)
+    }
+
+    pub(crate) fn generate_changeset_response(
+        &self,
+        base_rev: Revision,
+        conflicts: Vec<Document>,
+    ) -> Result<ChangesetResponse> {
+        let next_rev = base_rev.inc();
+
+        let new_snapshots = self.get_new_snapshots_since(next_rev)?;
+
+        let arhiv_id = self.get_setting(&SETTING_ARHIV_ID)?;
+        let latest_rev = self.get_db_rev()?;
+
+        Ok(ChangesetResponse {
+            arhiv_id,
+            base_rev,
+            latest_rev,
+            new_snapshots,
+            conflicts,
+        })
+    }
+
+    pub(crate) fn apply_changeset_response(&mut self, response: ChangesetResponse) -> Result<()> {
+        let db_status = self.get_db_status()?;
+
+        ensure!(
+            response.arhiv_id == db_status.arhiv_id,
+            "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
+            response.arhiv_id,
+            db_status.arhiv_id,
+        );
+        ensure!(
+            response.base_rev == db_status.db_rev,
+            "base_rev {} isn't equal to current rev {}",
+            response.base_rev,
+            db_status.db_rev,
+        );
+
+        for document in response.new_snapshots {
+            self.put_document(&document)?;
+
+            // erase history of erased documents
+            if document.is_erased() {
+                self.erase_document_history(&document.id)?;
+            }
+        }
+
+        if !response.conflicts.is_empty() {
+            log::warn!(
+                "Got {} conflict(s) in changeset response",
+                response.conflicts.len()
+            );
+        }
+
+        // save conflicts in documents table
+        for document in response.conflicts {
+            log::warn!("Conflict in {}", &document);
+            self.put_document(&document)?;
+        }
+
+        log::debug!("successfully applied a changeset response");
 
         Ok(())
     }

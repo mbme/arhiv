@@ -2,10 +2,10 @@ use anyhow::{ensure, Result};
 
 use rs_utils::log;
 
-use crate::entities::{Changeset, ChangesetResponse, Document, Revision};
+use crate::entities::{Changeset, ChangesetResponse, Document};
 use crate::prime_server::PrimeServerRPC;
 
-use super::db::{ArhivConnection, Filter, SETTING_ARHIV_ID, SETTING_LAST_SYNC_TIME};
+use super::db::{ArhivConnection, SETTING_ARHIV_ID, SETTING_LAST_SYNC_TIME};
 use super::Arhiv;
 
 impl Arhiv {
@@ -120,91 +120,6 @@ impl Arhiv {
         Ok(conflicts)
     }
 
-    #[allow(clippy::unused_self)]
-    fn apply_changeset_response(
-        &self,
-        tx: &mut ArhivConnection,
-        response: ChangesetResponse,
-    ) -> Result<()> {
-        let db_status = tx.get_db_status()?;
-
-        ensure!(
-            response.arhiv_id == db_status.arhiv_id,
-            "changeset response arhiv_id {} isn't equal to current arhiv_id {}",
-            response.arhiv_id,
-            db_status.arhiv_id,
-        );
-        ensure!(
-            response.base_rev == db_status.db_rev,
-            "base_rev {} isn't equal to current rev {}",
-            response.base_rev,
-            db_status.db_rev,
-        );
-
-        for document in response.new_snapshots {
-            tx.put_document(&document)?;
-
-            // erase history of erased documents
-            if document.is_erased() {
-                tx.erase_document_history(&document.id)?;
-            }
-        }
-
-        if !response.conflicts.is_empty() {
-            log::warn!(
-                "Got {} conflict(s) in changeset response",
-                response.conflicts.len()
-            );
-        }
-
-        // save conflicts in documents table
-        for document in response.conflicts {
-            log::warn!("Conflict in {}", &document);
-            tx.put_document(&document)?;
-        }
-
-        log::debug!("successfully applied a changeset response");
-
-        Ok(())
-    }
-
-    #[allow(clippy::unused_self)]
-    pub(crate) fn generate_changeset_response(
-        &self,
-        tx: &ArhivConnection,
-        base_rev: Revision,
-        conflicts: Vec<Document>,
-    ) -> Result<ChangesetResponse> {
-        let next_rev = base_rev.inc();
-        let new_snapshots = tx.get_new_snapshots_since(next_rev)?;
-
-        let arhiv_id = tx.get_setting(&SETTING_ARHIV_ID)?;
-        let latest_rev = tx.get_db_rev()?;
-
-        Ok(ChangesetResponse {
-            arhiv_id,
-            base_rev,
-            latest_rev,
-            new_snapshots,
-            conflicts,
-        })
-    }
-
-    fn prepare_changeset(&self, tx: &ArhivConnection) -> Result<Changeset> {
-        let db_status = tx.get_db_status()?;
-
-        let documents = tx.list_documents(&Filter::all_staged_documents())?.items;
-
-        let changeset = Changeset {
-            schema_version: self.get_schema().get_version(),
-            arhiv_id: db_status.arhiv_id,
-            base_rev: db_status.db_rev,
-            documents,
-        };
-
-        Ok(changeset)
-    }
-
     pub async fn sync(&self) -> Result<()> {
         let result = if self.is_prime()? {
             self.sync_locally()
@@ -237,7 +152,7 @@ impl Arhiv {
 
         let mut tx = self.get_tx()?;
 
-        let changeset = self.prepare_changeset(&tx)?;
+        let changeset = tx.generate_changeset()?;
         log::debug!("prepared a changeset {}", changeset);
 
         tx.delete_local_staged_changes()?;
@@ -254,7 +169,7 @@ impl Arhiv {
 
         let mut tx = self.get_tx()?;
 
-        let changeset = self.prepare_changeset(&tx)?;
+        let changeset = tx.generate_changeset()?;
         let new_blob_ids = tx.get_new_blob_ids()?;
         log::debug!(
             "sync_remotely: starting {}, {} new blobs",
@@ -283,7 +198,7 @@ impl Arhiv {
         );
 
         tx.delete_local_staged_changes()?;
-        self.apply_changeset_response(&mut tx, response)?;
+        tx.apply_changeset_response(response)?;
 
         tx.commit()?;
 

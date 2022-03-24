@@ -3,10 +3,7 @@ use anyhow::Result;
 use rs_utils::{workspace_relpath, TempFile};
 
 use super::utils::*;
-use crate::{
-    prime_server::{start_prime_server, PrimeServerRPC},
-    test_arhiv::TestArhiv,
-};
+use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
 
 #[tokio::test]
 async fn test_blobs() -> Result<()> {
@@ -50,7 +47,7 @@ async fn test_blobs() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_download_blob() -> Result<()> {
+async fn test_download_blob_during_sync() -> Result<()> {
     let prime = TestArhiv::new_prime();
 
     let src = &workspace_relpath("resources/k2.jpg");
@@ -77,8 +74,6 @@ async fn test_download_blob() -> Result<()> {
     replica.sync().await?;
 
     let blob = replica.get_blob(&blob_id)?;
-    let prime_rpc = PrimeServerRPC::new(&replica.get_config().prime_url)?;
-    prime_rpc.download_blob(&blob).await?;
 
     let dst = &blob.file_path;
 

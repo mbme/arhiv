@@ -133,6 +133,10 @@ impl Arhiv {
             return result;
         }
 
+        if !self.is_prime()? {
+            self.download_missing_blobs().await?;
+        }
+
         log::info!("sync succeeded");
 
         // update last sync time
@@ -203,6 +207,27 @@ impl Arhiv {
         tx.commit()?;
 
         log::debug!("sync_remotely: success!");
+
+        Ok(())
+    }
+
+    async fn download_missing_blobs(&self) -> Result<()> {
+        let missing_blob_ids = self.get_connection()?.get_missing_blob_ids()?;
+
+        log::debug!("There are {} missing local BLOBs", missing_blob_ids.len());
+
+        if missing_blob_ids.is_empty() {
+            return Ok(());
+        }
+
+        let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
+
+        // TODO parallel file download
+        for blob_id in missing_blob_ids {
+            let blob = self.get_blob(&blob_id)?;
+
+            prime_rpc.download_blob(&blob).await?;
+        }
 
         Ok(())
     }

@@ -933,6 +933,18 @@ impl ArhivConnection {
         Ok(items)
     }
 
+    pub(crate) fn get_missing_blob_ids(&self) -> Result<HashSet<BLOBId>> {
+        let used_blob_ids = self.get_used_blob_ids()?;
+        let local_blob_ids = self.get_local_blob_ids()?;
+
+        let missing_blob_ids = used_blob_ids
+            .into_iter()
+            .filter(|blob_id| !local_blob_ids.contains(blob_id))
+            .collect();
+
+        Ok(missing_blob_ids)
+    }
+
     pub(crate) fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
         ensure!(
             file_exists(file_path)?,

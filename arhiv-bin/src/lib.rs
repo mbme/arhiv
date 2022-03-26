@@ -13,9 +13,13 @@
     clippy::cast_lossless
 )]
 
+mod import;
+
 use clap::{crate_version, App, AppSettings, Arg};
 
 use arhiv_core::definitions::get_standard_schema;
+
+pub use import::import_document_from_file;
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
@@ -128,13 +132,31 @@ pub fn build_app() -> App<'static> {
         )
         .subcommand(
             App::new("scrape")
-                .about("Scrape data and create document")
+                .about("Scrape remote resource and create document")
                 .arg(
                     Arg::new("url") //
                         .required(true)
                         .index(1)
                         .help("url to scrape"),
                 ),
+        )
+        .subcommand(
+            App::new("import")
+                .about("Import file and create document. Will hard link or copy file to arhiv.")
+                .arg(
+                    Arg::new("document_type")
+                        .required(true)
+                        .possible_values(get_standard_schema().get_document_types())
+                        .index(1)
+                        .help("One of known document types"),
+                )
+                .arg(
+                    Arg::new("file_path") //
+                        .required(true)
+                        .index(2)
+                        .help("File to import"),
+                )
+                .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .global_setting(AppSettings::DisableHelpSubcommand)

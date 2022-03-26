@@ -145,6 +145,11 @@ impl Attachment {
     pub fn is_image(&self) -> bool {
         self.get_media_type().starts_with("image/")
     }
+
+    #[must_use]
+    pub fn is_audio(&self) -> bool {
+        self.get_media_type().starts_with("audio/")
+    }
 }
 
 impl Deref for Attachment {

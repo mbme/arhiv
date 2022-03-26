@@ -89,6 +89,14 @@ pub fn get_file_extension(path: &str) -> Option<String> {
     Some(extension)
 }
 
+pub fn remove_file_extension(path: &str) -> Result<String> {
+    let filename = Path::new(path)
+        .file_stem()
+        .context("failed to remove file extension")?;
+
+    path_to_string(filename)
+}
+
 pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File, BytesCodec>> {
     let file = tokio_fs::File::open(path).await?;
 

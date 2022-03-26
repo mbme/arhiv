@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use arhiv_bin::build_app;
+use arhiv_bin::{build_app, import_document_from_file};
 use arhiv_core::{
     definitions::{get_standard_schema, Attachment},
     entities::{Document, DocumentData, Id},
@@ -103,11 +103,8 @@ async fn main() {
 
             tx.commit().expect("must commit");
 
-            println!(
-                "{} {}",
-                document.id,
-                document_url(&document.id, arhiv.get_config().ui_server_port)
-            );
+            let port = arhiv.get_config().ui_server_port;
+            print_document(&document, port);
         }
         ("attach", matches) => {
             let file_path: &str = matches
@@ -124,7 +121,8 @@ async fn main() {
             let attachment = Attachment::create(&file_path, move_file, &arhiv)
                 .expect("must be able to create attachment");
 
-            println!("{}", &attachment.id);
+            let port = arhiv.get_config().ui_server_port;
+            print_document(&attachment, port);
         }
         ("scrape", matches) => {
             let url: &str = matches.value_of("url").expect("url must be present");
@@ -136,13 +134,30 @@ async fn main() {
             let documents = scraper.scrape(url).await.expect("failed to scrape");
 
             for document in documents {
-                println!(
-                    "{} {} {}",
-                    document.document_type,
-                    document.id,
-                    document_url(&document.id, port)
-                );
+                print_document(&document, port);
             }
+        }
+        ("import", matches) => {
+            let document_type: &str = matches
+                .value_of("document_type")
+                .expect("document_type must be provided");
+
+            let file_path: &str = matches
+                .value_of("file_path")
+                .expect("file_path must be provided");
+
+            let move_file: bool = matches.is_present("move_file");
+
+            let arhiv = Arhiv::must_open();
+            let port = arhiv.get_config().ui_server_port;
+
+            let file_path =
+                into_absolute_path(file_path).expect("failed to convert path into absolute path");
+
+            let document = import_document_from_file(&arhiv, document_type, &file_path, move_file)
+                .expect("failed to import file");
+
+            print_document(&document, port);
         }
         ("ui-server", _) => {
             start_ui_server().await;
@@ -197,4 +212,13 @@ async fn main() {
 
 fn document_url(id: &Id, port: u16) -> String {
     format!("http://localhost:{}/documents/{}", port, id)
+}
+
+fn print_document(document: &Document, port: u16) {
+    println!(
+        "{} {} {}",
+        document.document_type,
+        document.id,
+        document_url(&document.id, port)
+    );
 }

@@ -7,7 +7,7 @@ use clap::{crate_version, App, AppSettings, Arg};
 use clap_complete::{generate_to, Shell};
 
 use arhiv_core::{
-    definitions::{get_standard_schema, Attachment},
+    definitions::get_standard_schema,
     entities::{Document, DocumentData, Id},
     prime_server::start_prime_server,
     Arhiv, Config,
@@ -115,17 +115,6 @@ fn build_app() -> App<'static> {
                         .index(2)
                         .help("JSON object with document props"),
                 ),
-        )
-        .subcommand(
-            App::new("attach")
-                .about("Add new attachment. Will hard link or copy file to arhiv.")
-                .arg(
-                    Arg::new("file_path")
-                        .required(true)
-                        .index(1)
-                        .help("Absolute path to file to save"),
-                )
-                .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
         )
         .subcommand(
             App::new("scrape")
@@ -256,24 +245,6 @@ pub async fn arhiv_cli() {
 
             let port = arhiv.get_config().ui_server_port;
             print_document(&document, port);
-        }
-        ("attach", matches) => {
-            let file_path: &str = matches
-                .value_of("file_path")
-                .expect("file_path must be present");
-
-            let file_path =
-                into_absolute_path(file_path).expect("failed to convert path to absolute");
-
-            let move_file: bool = matches.is_present("move_file");
-
-            let arhiv = Arhiv::must_open();
-
-            let attachment = Attachment::create(&file_path, move_file, &arhiv)
-                .expect("must be able to create attachment");
-
-            let port = arhiv.get_config().ui_server_port;
-            print_document(&attachment, port);
         }
         ("scrape", matches) => {
             let url: &str = matches.value_of("url").expect("url must be present");

@@ -1,7 +1,7 @@
 use anyhow::{bail, ensure, Context, Result};
 
 use arhiv_core::{
-    definitions::{Attachment, TRACK_TYPE},
+    definitions::{Attachment, ATTACHMENT_TYPE, TRACK_TYPE},
     entities::{Document, DocumentData},
     Arhiv,
 };
@@ -17,6 +17,11 @@ pub fn import_document_from_file(
 
     match document_type {
         TRACK_TYPE => import_track(arhiv, file_path, move_file),
+        ATTACHMENT_TYPE => {
+            let attachment = Attachment::create(file_path, move_file, arhiv)?;
+
+            Ok(attachment.into())
+        }
         other => bail!("Don't know how to import document of type '{}'", other),
     }
 }

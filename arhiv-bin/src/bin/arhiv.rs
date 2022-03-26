@@ -142,22 +142,28 @@ async fn main() {
                 .value_of("document_type")
                 .expect("document_type must be provided");
 
-            let file_path: &str = matches
-                .value_of("file_path")
-                .expect("file_path must be provided");
+            let file_paths: Vec<&str> = matches
+                .values_of("file_path")
+                .expect("file_path must be provided")
+                .collect();
 
             let move_file: bool = matches.is_present("move_file");
 
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
 
-            let file_path =
-                into_absolute_path(file_path).expect("failed to convert path into absolute path");
+            println!("Importing {} files", file_paths.len());
 
-            let document = import_document_from_file(&arhiv, document_type, &file_path, move_file)
-                .expect("failed to import file");
+            for file_path in file_paths {
+                let file_path = into_absolute_path(file_path)
+                    .expect("failed to convert path into absolute path");
 
-            print_document(&document, port);
+                let document =
+                    import_document_from_file(&arhiv, document_type, &file_path, move_file)
+                        .expect("failed to import file");
+
+                print_document(&document, port);
+            }
         }
         ("ui-server", _) => {
             start_ui_server().await;
@@ -216,7 +222,7 @@ fn document_url(id: &Id, port: u16) -> String {
 
 fn print_document(document: &Document, port: u16) {
     println!(
-        "{} {} {}",
+        "[{} {}] {}",
         document.document_type,
         document.id,
         document_url(&document.id, port)

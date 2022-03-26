@@ -142,7 +142,7 @@ pub fn build_app() -> App<'static> {
         )
         .subcommand(
             App::new("import")
-                .about("Import file and create document. Will hard link or copy file to arhiv.")
+                .about("Import files and create documents. Will hard link or copy files to Arhiv.")
                 .arg(
                     Arg::new("document_type")
                         .required(true)
@@ -154,7 +154,8 @@ pub fn build_app() -> App<'static> {
                     Arg::new("file_path") //
                         .required(true)
                         .index(2)
-                        .help("File to import"),
+                        .multiple_values(true)
+                        .help("Files to import"),
                 )
                 .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
         )

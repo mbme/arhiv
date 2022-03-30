@@ -9,6 +9,7 @@ mod new_document_variants_page;
 mod pick_document_modal;
 mod pick_file_confirmation_modal;
 mod pick_file_modal;
+mod player_app_page;
 mod scrape_modal;
 
 pub use catalog_page::*;
@@ -22,4 +23,5 @@ pub use new_document_variants_page::*;
 pub use pick_document_modal::*;
 pub use pick_file_confirmation_modal::*;
 pub use pick_file_modal::*;
+pub use player_app_page::*;
 pub use scrape_modal::*;

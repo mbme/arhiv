@@ -29,10 +29,11 @@
     "@codemirror/search": "^0.19.6",
     "@codemirror/state": "^0.19.7",
     "@codemirror/view": "^0.19.42",
-    "a11y-dialog": "^7.3.0"
+    "a11y-dialog": "^7.3.0",
+    "preact": "^10.6.6"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/forms": "^0.5.0",
     "@tailwindcss/line-clamp": "^0.3.0",
     "@tailwindcss/typography": "^0.5.0",
     "autoprefixer": "^10.2.6",

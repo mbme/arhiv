@@ -1,0 +1,19 @@
+<article id="content" v-js="arhiv_ui.initPlayerApp(this)">
+  <div class="sticky top-0 mb-8 bg-stone-100 shadow-lg">
+    <v-audio-player id="player" autoplay></v-audio-player>
+  </div>
+
+  <ul id="track-list" class="divide-y divide-solid">
+    {% for track in tracks %}
+    <li
+      class="flex justify-between p-4 cursor-pointer hover:bg-slate-100"
+      data-artist="{{track.artist}}"
+      data-title="{{track.title}}"
+      data-track-id="{{track.track_id}}"
+    >
+      <div>{{track.artist}} - {{track.title}}</div>
+      <a href="{{track.url}}" target="_blank">open</a>
+    </li>
+    {% endfor %}
+  </ul>
+</article>

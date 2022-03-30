@@ -120,6 +120,32 @@ a:not(.clean-link) {
   }
 }
 
+v-audio-player {
+  display: block;
+
+  & button[disabled] {
+    @apply text-gray-300;
+  }
+
+  & input[type='range'] {
+    @apply block h-2 bg-blue-100 appearance-none cursor-pointer rounded-md;
+
+    &[disabled] {
+      @apply cursor-default;
+    }
+  }
+}
+
+#track-list li {
+  & a {
+    visibility: hidden;
+  }
+
+  &:hover a {
+    visibility: visible;
+  }
+}
+
 @layer components {
   .markup {
     @apply prose;

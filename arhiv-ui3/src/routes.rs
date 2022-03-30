@@ -11,7 +11,11 @@ use rs_utils::http_server::{
     ServerResponse,
 };
 
-use crate::{app::App, public_assets_handler::public_assets_handler, utils::extract_fields};
+use crate::{
+    app::App,
+    public_assets_handler::public_assets_handler,
+    utils::{extract_fields, is_json_request},
+};
 
 pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
     let router = Router::builder()
@@ -79,6 +83,8 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/modals/scrape", scrape_modal)
         .post("/modals/scrape", scrape_modal_handler)
+        //
+        .get("/apps/player", player_app)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -165,7 +171,11 @@ pub async fn document_page(req: Request<Body>) -> ServerResponse {
     let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
     let url = req.get_url();
 
-    let response = app.document_page(&id, &parent_collection, url)?;
+    let response = if is_json_request(&req) {
+        app.document_api(&id)?
+    } else {
+        app.document_page(&id, &parent_collection, url)?
+    };
 
     app.render(response)
 }
@@ -285,6 +295,14 @@ pub async fn scrape_modal_handler(req: Request<Body>) -> ServerResponse {
     let fields = parse_urlencoded(&body);
 
     let response = app.scrape_modal_handler(&fields).await?;
+
+    app.render(response)
+}
+
+pub async fn player_app(req: Request<Body>) -> ServerResponse {
+    let app: &App = req.data().unwrap();
+
+    let response = app.player_app_page()?;
 
     app.render(response)
 }

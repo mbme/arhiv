@@ -5,7 +5,7 @@ const esbuild = require('esbuild');
 const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
-esbuild.build({
+void esbuild.build({
   entryPoints: ['./src/index.ts'],
   outfile: './public/index.js',
 
@@ -13,6 +13,12 @@ esbuild.build({
   bundle: true,
   minify: isProduction,
   sourcemap: true,
+
+  inject: ['./preact-shim.js'],
+
+  loader: {
+    '.html': 'text',
+  },
 
   define: {
     'process.env.NODE_ENV': isProduction ? '"production"' : '"development"',

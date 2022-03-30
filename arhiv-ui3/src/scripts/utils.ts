@@ -6,10 +6,15 @@ export const noop = (): void => {};
 
 export const sum = (a: number, b: number) => a + b;
 
-export async function fetchText(url: string, body?: XMLHttpRequestBodyInit): Promise<string> {
+export async function fetchText(
+  url: string,
+  body?: XMLHttpRequestBodyInit,
+  headers?: HeadersInit
+): Promise<string> {
   try {
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET',
+      headers,
       body,
     });
 
@@ -26,6 +31,14 @@ export async function fetchText(url: string, body?: XMLHttpRequestBodyInit): Pro
 
     throw e;
   }
+}
+
+export async function fetchJSON<T>(url: string): Promise<T> {
+  const result = await fetchText(url, undefined, {
+    Accept: 'application/json',
+  });
+
+  return JSON.parse(result) as T;
 }
 
 export async function fetchAndReplace(url: string, el: Element, selector = ''): Promise<void> {

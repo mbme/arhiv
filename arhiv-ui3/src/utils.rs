@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use hyper::{header, Body, Response, StatusCode};
+use hyper::{header, Body, Request, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};
 use rs_utils::http_server::{parse_urlencoded, ServerResponse};
@@ -45,16 +45,28 @@ macro_rules! template_fn {
     };
 }
 
-pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
+fn build_response(status: StatusCode, content_type: &str, content: String) -> ServerResponse {
     Response::builder()
         .status(status)
-        .header(header::CONTENT_TYPE, "text/html")
+        .header(header::CONTENT_TYPE, content_type)
         // prevent page from caching
         .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
         .header(header::EXPIRES, "0")
         // ---
         .body(content.into())
         .context("failed to build response")
+}
+
+pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
+    build_response(status, "text/html", content)
+}
+
+pub fn render_json(status: StatusCode, content: String) -> ServerResponse {
+    build_response(status, "application/json", content)
+}
+
+pub fn is_json_request(req: &Request<Body>) -> bool {
+    matches!(req.headers().get(header::ACCEPT), Some(accept) if accept == "application/json")
 }
 
 pub type Fields = HashMap<String, String>;

@@ -12,7 +12,9 @@ import {
 import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts/modal';
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
+import { initPlayerApp } from './pages/player_app_page';
 import { initEditor } from './scripts/editor';
+import './scripts/v-audio-player';
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -24,6 +26,8 @@ class ArhivUI {
   }
 
   initPickDocumentModal = initPickDocumentModal;
+
+  initPlayerApp = initPlayerApp;
 
   copyTextAndNotify = copyTextAndNotify;
 }

@@ -1,7 +1,7 @@
 /* eslint-env node */
 
 module.exports = {
-  content: ['./src/**/*.html.tera'],
+  content: ['./src/**/*.html.tera', './src/**/*.tsx'],
   theme: {
     extend: {
       fontFamily: {

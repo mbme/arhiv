@@ -4,10 +4,10 @@
     <title>{{ title }}</title>
 
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
-    <link rel="stylesheet" href="/public/index.css">
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+    <link rel="stylesheet" href="/public/index.css" />
     <script src="/public/index.js"></script>
   </head>
   <body>
@@ -26,19 +26,13 @@
         New...
       </a>
 
-      <button
-        type="button"
-        class="btn btn-link"
-        v-layer="/modals/scrape"
-      >
-        Scrape url
-      </button>
+      <button type="button" class="btn btn-link" v-layer="/modals/scrape">Scrape url</button>
+
+      <a href="/apps/player" class="flex justify-end items-center mt-4">PLAYER</a>
       {% endif %}
     </nav>
 
-    <main>
-      {{ content | safe }}
-    </main>
+    <main>{{ content | safe }}</main>
 
     <div id="modal-root"></div>
 

@@ -15,6 +15,72 @@ export function initPlayerApp(rootEl: HTMLElement): void {
     throw new Error("couldn't find #track-list");
   }
 
+  let activeTrackEl: HTMLElement | undefined = undefined;
+
+  function play(trackEl?: HTMLElement) {
+    activeTrackEl?.classList.remove('is-active');
+
+    activeTrackEl = trackEl;
+    activeTrackEl?.classList.add('is-active');
+
+    if (!trackEl) {
+      player.stop();
+      return;
+    }
+
+    const trackId = trackEl.dataset.trackId || '';
+    const artist = trackEl.dataset.artist || '';
+    const title = trackEl.dataset.title || '';
+
+    fetchJSON<Attachment>(`/documents/${trackId}`)
+      .then((document) => {
+        const blobId = document.data.blob;
+
+        player.setTrack(artist, title, `/blobs/${blobId}`);
+      })
+      .catch((e) => {
+        console.error('Failed to play track %s - %s', artist, title, e);
+      });
+  }
+
+  const listTrackEls = () => Array.from(list.children) as HTMLElement[];
+
+  player.onNextTrack = () => {
+    const trackEls = listTrackEls();
+
+    if (trackEls.length === 0) {
+      play(undefined);
+      return;
+    }
+
+    const pos = activeTrackEl ? trackEls.indexOf(activeTrackEl) : -1;
+
+    let nextPos = pos + 1;
+    if (nextPos >= trackEls.length) {
+      nextPos = 0;
+    }
+
+    play(trackEls[nextPos]);
+  };
+
+  player.onPrevTrack = () => {
+    const trackEls = listTrackEls();
+
+    if (trackEls.length === 0) {
+      play(undefined);
+      return;
+    }
+
+    const pos = activeTrackEl ? trackEls.indexOf(activeTrackEl) : -1;
+
+    let prevPos = pos - 1;
+    if (prevPos < 0) {
+      prevPos = trackEls.length - 1;
+    }
+
+    play(trackEls[prevPos]);
+  };
+
   list.addEventListener('click', (e) => {
     if (!e.target) {
       return;
@@ -26,24 +92,8 @@ export function initPlayerApp(rootEl: HTMLElement): void {
       return;
     }
 
-    const li: HTMLElement | null = target.closest('#track-list > li');
-    if (!li) {
-      return;
-    }
+    const trackEl: HTMLElement | null = target.closest('#track-list > li');
 
-    const trackId = li.dataset.trackId || '';
-
-    const artist = li.dataset.artist || '';
-    const title = li.dataset.title || '';
-
-    fetchJSON<Attachment>(`/documents/${trackId}`)
-      .then((document) => {
-        const blobId = document.data.blob;
-
-        player.setTrack(artist, title, `/blobs/${blobId}`);
-      })
-      .catch((e) => {
-        console.error('Failed to play track %s - %s', artist, title, e);
-      });
+    play(trackEl || undefined);
   });
 }

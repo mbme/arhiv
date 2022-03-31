@@ -1,9 +1,31 @@
 import { render } from 'preact';
+import { Callback } from '../utils';
 import { AudioPlayer } from './audio-player';
 
 export class AudioPlayerElement extends HTMLElement {
   static get observedAttributes() {
     return ['data-artist', 'data-title', 'url', 'autoplay'];
+  }
+
+  private nextTrack?: Callback;
+  private prevTrack?: Callback;
+
+  set onNextTrack(nextTrack: Callback | undefined) {
+    this.nextTrack = nextTrack;
+    this.render();
+  }
+
+  get onNextTrack() {
+    return this.nextTrack;
+  }
+
+  set onPrevTrack(prevTrack: Callback | undefined) {
+    this.prevTrack = prevTrack;
+    this.render();
+  }
+
+  get onPrevTrack() {
+    return this.prevTrack;
   }
 
   connectedCallback() {
@@ -20,13 +42,29 @@ export class AudioPlayerElement extends HTMLElement {
     this.setAttribute('url', url);
   }
 
+  stop() {
+    this.setAttribute('data-artist', '');
+    this.setAttribute('data-title', '');
+    this.setAttribute('url', '');
+  }
+
   private render() {
     const artist = this.getAttribute('data-artist') || '';
     const title = this.getAttribute('data-title') || '';
     const url = this.getAttribute('url') || '';
     const autoplay = this.hasAttribute('autoplay');
 
-    render(<AudioPlayer artist={artist} title={title} url={url} autoplay={autoplay} />, this);
+    render(
+      <AudioPlayer
+        artist={artist}
+        title={title}
+        url={url}
+        autoplay={autoplay}
+        nextTrack={this.nextTrack}
+        prevTrack={this.prevTrack}
+      />,
+      this
+    );
   }
 }
 

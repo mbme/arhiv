@@ -1,3 +1,4 @@
+import { Callback } from '../utils';
 import { useAudio } from './useAudio';
 
 function formatTime(timeS: number): string {
@@ -19,9 +20,11 @@ type Props = {
   artist?: string;
   url?: string;
   autoplay?: boolean;
+  nextTrack?: Callback;
+  prevTrack?: Callback;
 };
 
-export function AudioPlayer({ title, artist, url, autoplay }: Props) {
+export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack }: Props) {
   const {
     currentTimeS, //
     durationS,
@@ -71,11 +74,13 @@ export function AudioPlayer({ title, artist, url, autoplay }: Props) {
       <div className="flex justify-between mb-1">
         <div></div>
         <div className="flex gap-6 text-gray-600">
-          <button type="button" disabled title="Rewind">
-            <svg className="h-10 w-10">
-              <use xlinkHref="#icon-rewind" />
-            </svg>
-          </button>
+          {prevTrack && (
+            <button type="button" title="Previous track" onClick={prevTrack}>
+              <svg className="h-10 w-10">
+                <use xlinkHref="#icon-rewind" />
+              </svg>
+            </button>
+          )}
 
           <button
             type="button"
@@ -88,11 +93,13 @@ export function AudioPlayer({ title, artist, url, autoplay }: Props) {
             </svg>
           </button>
 
-          <button type="button" disabled title="Fast forward">
-            <svg className="h-10 w-10">
-              <use xlinkHref="#icon-fast-forward" />
-            </svg>
-          </button>
+          {nextTrack && (
+            <button type="button" title="Next track" onClick={nextTrack}>
+              <svg className="h-10 w-10">
+                <use xlinkHref="#icon-fast-forward" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <div className="flex gap-4 items-center">

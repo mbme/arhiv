@@ -144,6 +144,10 @@ v-audio-player {
   &:hover a {
     visibility: visible;
   }
+
+  &.is-active {
+    @apply bg-zinc-100;
+  }
 }
 
 @layer components {

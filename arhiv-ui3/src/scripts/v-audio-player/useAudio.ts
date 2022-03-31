@@ -11,6 +11,20 @@ export type AudioState = {
   muted: boolean;
 };
 
+const SESSION_STATE_KEY = 'v-audio-player-volume-state';
+
+type AudioVolumeState = {
+  volume: number;
+  muted: boolean;
+};
+
+function getVolumeState(): AudioVolumeState {
+  const volumeStateStr = sessionStorage.getItem(SESSION_STATE_KEY);
+  return volumeStateStr
+    ? (JSON.parse(volumeStateStr) as AudioVolumeState)
+    : { volume: 0.5, muted: false };
+}
+
 export function useAudio(url?: string, autoplay = false): AudioState {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(Infinity);
@@ -22,6 +36,11 @@ export function useAudio(url?: string, autoplay = false): AudioState {
     const audio = new Audio();
     audio.preload = 'metadata';
     audio.autoplay = autoplay;
+
+    const volumeState = getVolumeState();
+
+    audio.volume = volumeState.volume;
+    audio.muted = volumeState.muted;
 
     return audio;
   });
@@ -59,6 +78,12 @@ export function useAudio(url?: string, autoplay = false): AudioState {
     const onVolumeChange = () => {
       setVolume(audio.volume);
       setMuted(audio.muted);
+
+      const volumeState: AudioVolumeState = {
+        volume: audio.volume,
+        muted: audio.muted,
+      };
+      sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(volumeState));
     };
 
     // metadata might be loaded before we installed the 'loadedmetadata' event handler

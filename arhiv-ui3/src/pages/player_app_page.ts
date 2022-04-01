@@ -81,6 +81,25 @@ export function initPlayerApp(rootEl: HTMLElement): void {
     play(trackEls[prevPos]);
   };
 
+  player.onTrackEnded = () => {
+    const trackEls = listTrackEls();
+
+    if (trackEls.length === 0) {
+      play(undefined);
+      return;
+    }
+
+    const pos = activeTrackEl ? trackEls.indexOf(activeTrackEl) : -1;
+    if (pos === trackEls.length - 1) {
+      play(undefined);
+      return;
+    }
+
+    const nextPos = pos + 1;
+
+    play(trackEls[nextPos]);
+  };
+
   list.addEventListener('click', (e) => {
     if (!e.target) {
       return;

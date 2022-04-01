@@ -9,6 +9,7 @@ export class AudioPlayerElement extends HTMLElement {
 
   private nextTrack?: Callback;
   private prevTrack?: Callback;
+  private trackEnded?: Callback;
 
   set onNextTrack(nextTrack: Callback | undefined) {
     this.nextTrack = nextTrack;
@@ -26,6 +27,15 @@ export class AudioPlayerElement extends HTMLElement {
 
   get onPrevTrack() {
     return this.prevTrack;
+  }
+
+  set onTrackEnded(ended: Callback | undefined) {
+    this.trackEnded = ended;
+    this.render();
+  }
+
+  get onTrackEnded() {
+    return this.trackEnded;
   }
 
   connectedCallback() {
@@ -63,6 +73,7 @@ export class AudioPlayerElement extends HTMLElement {
         nextTrack={this.nextTrack}
         prevTrack={this.prevTrack}
         onStop={this.stop}
+        onTrackEnded={this.trackEnded}
       />,
       this
     );

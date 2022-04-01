@@ -24,9 +24,19 @@ type Props = {
   nextTrack?: Callback;
   prevTrack?: Callback;
   onStop?: Callback;
+  onTrackEnded?: Callback;
 };
 
-export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack, onStop }: Props) {
+export function AudioPlayer({
+  title,
+  artist,
+  url,
+  autoplay = false,
+  nextTrack,
+  prevTrack,
+  onStop,
+  onTrackEnded,
+}: Props) {
   const {
     currentTimeS, //
     durationS,
@@ -34,7 +44,10 @@ export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack
     volume,
     muted,
     audio,
-  } = useAudio(url, autoplay);
+  } = useAudio(url, {
+    autoplay,
+    onTrackEnded,
+  });
 
   useMediaSession(audio, {
     artist,

@@ -22,10 +22,7 @@ const SEEK_OFFSET_S = 7;
 
 export function useMediaSession(audio: HTMLAudioElement, options: Options) {
   const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
+  optionsRef.current = options;
 
   useEffect(() => {
     const mediaSession = getMediaSession();

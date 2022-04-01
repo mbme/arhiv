@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { Callback } from '../utils';
 
 export type AudioPlayerState = 'initial' | 'ready' | 'playing' | 'paused';
 
@@ -25,17 +26,29 @@ function getVolumeState(): AudioVolumeState {
     : { volume: 0.5, muted: false };
 }
 
-export function useAudio(url?: string, autoplay = false): AudioState {
+type Options = {
+  autoplay: boolean;
+  onTrackEnded?: Callback;
+};
+
+const DEFAULT_OPTIONS: Options = {
+  autoplay: false,
+};
+
+export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): AudioState {
   const [currentTimeS, setCurrentTimeS] = useState(0);
   const [duration, setDuration] = useState(Infinity);
   const [playerState, setPlayerState] = useState<AudioPlayerState>('initial');
   const [volume, setVolume] = useState(0);
   const [muted, setMuted] = useState(false);
 
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const [audio] = useState(() => {
     const audio = new Audio();
     audio.preload = 'metadata';
-    audio.autoplay = autoplay;
+    audio.autoplay = options.autoplay;
 
     const volumeState = getVolumeState();
 
@@ -51,8 +64,8 @@ export function useAudio(url?: string, autoplay = false): AudioState {
   }, [url]);
 
   useEffect(() => {
-    audio.autoplay = autoplay;
-  }, [autoplay]);
+    audio.autoplay = options.autoplay;
+  }, [options.autoplay]);
 
   useEffect(() => {
     setVolume(audio.volume);
@@ -85,6 +98,9 @@ export function useAudio(url?: string, autoplay = false): AudioState {
       };
       sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(volumeState));
     };
+    const onEnded = () => {
+      optionsRef.current?.onTrackEnded?.();
+    };
 
     // metadata might be loaded before we installed the 'loadedmetadata' event handler
     if (audio.readyState === 1 /* HAVE METADATA */) {
@@ -94,6 +110,7 @@ export function useAudio(url?: string, autoplay = false): AudioState {
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
     audio.addEventListener('timeupdate', onTimeupdate);
     audio.addEventListener('durationchange', onDurationChange);
     audio.addEventListener('volumechange', onVolumeChange);
@@ -102,6 +119,7 @@ export function useAudio(url?: string, autoplay = false): AudioState {
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('timeupdate', onTimeupdate);
       audio.removeEventListener('durationchange', onDurationChange);
       audio.removeEventListener('volumechange', onVolumeChange);

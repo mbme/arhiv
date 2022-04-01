@@ -59,11 +59,13 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
   });
 
   useEffect(() => {
+    console.info('audio: src changed to "%s"', url);
     audio.src = url || '';
     setPlayerState('initial');
   }, [url]);
 
   useEffect(() => {
+    console.info('audio: autoplay=%s', options.autoplay);
     audio.autoplay = options.autoplay;
   }, [options.autoplay]);
 
@@ -75,18 +77,37 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
       setCurrentTimeS(audio.currentTime);
       setDuration(audio.duration);
       setPlayerState((currentState) => (currentState === 'initial' ? 'ready' : currentState));
+      console.debug('audio: loaded metadata');
+    };
+    const onLoadedData = () => {
+      console.debug('audio: loaded data');
+    };
+    const onCanPlay = () => {
+      console.debug('audio: can play');
+    };
+    const onCanPlayThrough = () => {
+      console.debug('audio: can play through');
+    };
+    const onWaiting = () => {
+      console.info('audio: waiting');
+    };
+    const onStalled = () => {
+      console.warn('audio: stalled');
     };
     const onPlay = () => {
       setPlayerState('playing');
+      console.debug('audio: playing');
     };
     const onPause = () => {
       setPlayerState('paused');
+      console.debug('audio: paused');
     };
     const onTimeupdate = () => {
       setCurrentTimeS(audio.currentTime);
     };
     const onDurationChange = () => {
       setDuration(audio.duration);
+      console.debug('audio: duration changed');
     };
     const onVolumeChange = () => {
       setVolume(audio.volume);
@@ -100,6 +121,20 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
     };
     const onEnded = () => {
       optionsRef.current?.onTrackEnded?.();
+      console.debug('audio: track ended');
+    };
+    const onError = () => {
+      if (!audio.error) {
+        console.error('audio: got error event, but there is no error on audio element');
+        return;
+      }
+
+      // ignore errors due to empty src attribute
+      if (audio.error.code === 4) {
+        return;
+      }
+
+      console.error('audio error:', audio.error);
     };
 
     // metadata might be loaded before we installed the 'loadedmetadata' event handler
@@ -108,21 +143,33 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
     }
 
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('loadeddata', onLoadedData);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('canplaythrough', onCanPlayThrough);
+    audio.addEventListener('waiting', onWaiting);
+    audio.addEventListener('stalled', onStalled);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('timeupdate', onTimeupdate);
     audio.addEventListener('durationchange', onDurationChange);
     audio.addEventListener('volumechange', onVolumeChange);
+    audio.addEventListener('error', onError);
 
     return () => {
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('loadeddata', onLoadedData);
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('canplaythrough', onCanPlayThrough);
+      audio.removeEventListener('waiting', onWaiting);
+      audio.removeEventListener('stalled', onStalled);
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('timeupdate', onTimeupdate);
       audio.removeEventListener('durationchange', onDurationChange);
       audio.removeEventListener('volumechange', onVolumeChange);
+      audio.removeEventListener('error', onError);
     };
   }, [audio]);
 

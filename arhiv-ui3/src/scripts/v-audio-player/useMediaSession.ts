@@ -66,7 +66,13 @@ export function useMediaSession(audio: HTMLAudioElement, options: Options) {
     });
 
     mediaSession.setActionHandler('seekto', (e) => {
-      audio.currentTime = e.seekTime || 0;
+      const seekTime = e.seekTime || 0;
+
+      if (e.fastSeek && 'fastSeek' in audio) {
+        audio.fastSeek(seekTime);
+      } else {
+        audio.currentTime = seekTime;
+      }
     });
 
     const updatePositionState = () => {

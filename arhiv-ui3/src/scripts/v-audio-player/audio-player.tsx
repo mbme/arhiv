@@ -59,9 +59,13 @@ export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack
   };
 
   const onDurationRangeInput = (input: HTMLInputElement) => {
-    const position = Number.parseInt(input.value, 10);
+    const seekTime = Number.parseInt(input.value, 10);
 
-    audio.currentTime = position;
+    if ('fastSeek' in audio) {
+      audio.fastSeek(seekTime);
+    } else {
+      audio.currentTime = seekTime;
+    }
   };
 
   const onVolumeRangeInput = (input: HTMLInputElement) => {

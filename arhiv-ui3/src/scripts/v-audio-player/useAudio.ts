@@ -26,7 +26,7 @@ function getVolumeState(): AudioVolumeState {
 }
 
 export function useAudio(url?: string, autoplay = false): AudioState {
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTimeS, setCurrentTimeS] = useState(0);
   const [duration, setDuration] = useState(Infinity);
   const [playerState, setPlayerState] = useState<AudioPlayerState>('initial');
   const [volume, setVolume] = useState(0);
@@ -59,7 +59,7 @@ export function useAudio(url?: string, autoplay = false): AudioState {
     setMuted(audio.muted);
 
     const onLoadedMetadata = () => {
-      setCurrentTime(audio.currentTime);
+      setCurrentTimeS(audio.currentTime);
       setDuration(audio.duration);
       setPlayerState((currentState) => (currentState === 'initial' ? 'ready' : currentState));
     };
@@ -70,7 +70,7 @@ export function useAudio(url?: string, autoplay = false): AudioState {
       setPlayerState('paused');
     };
     const onTimeupdate = () => {
-      setCurrentTime(audio.currentTime);
+      setCurrentTimeS(audio.currentTime);
     };
     const onDurationChange = () => {
       setDuration(audio.duration);
@@ -109,7 +109,7 @@ export function useAudio(url?: string, autoplay = false): AudioState {
   }, [audio]);
 
   return {
-    currentTimeS: Math.round(currentTime),
+    currentTimeS: Math.round(currentTimeS),
     durationS: Math.round(duration),
     playerState,
     volume,

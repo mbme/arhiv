@@ -1,5 +1,6 @@
 import { Callback } from '../utils';
 import { useAudio } from './useAudio';
+import { useMediaSession } from './useMediaSession';
 
 function formatTime(timeS: number): string {
   if (timeS === Infinity) {
@@ -22,9 +23,10 @@ type Props = {
   autoplay?: boolean;
   nextTrack?: Callback;
   prevTrack?: Callback;
+  onStop?: Callback;
 };
 
-export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack }: Props) {
+export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack, onStop }: Props) {
   const {
     currentTimeS, //
     durationS,
@@ -33,6 +35,14 @@ export function AudioPlayer({ title, artist, url, autoplay, nextTrack, prevTrack
     muted,
     audio,
   } = useAudio(url, autoplay);
+
+  useMediaSession(audio, {
+    artist,
+    title,
+    nextTrack,
+    prevTrack,
+    onStop,
+  });
 
   const play = () => {
     audio.play().catch((e) => {

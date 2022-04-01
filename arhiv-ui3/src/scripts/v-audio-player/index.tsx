@@ -42,11 +42,11 @@ export class AudioPlayerElement extends HTMLElement {
     this.setAttribute('url', url);
   }
 
-  stop() {
+  stop = () => {
     this.setAttribute('data-artist', '');
     this.setAttribute('data-title', '');
     this.setAttribute('url', '');
-  }
+  };
 
   private render() {
     const artist = this.getAttribute('data-artist') || '';
@@ -62,6 +62,7 @@ export class AudioPlayerElement extends HTMLElement {
         autoplay={autoplay}
         nextTrack={this.nextTrack}
         prevTrack={this.prevTrack}
+        onStop={this.stop}
       />,
       this
     );

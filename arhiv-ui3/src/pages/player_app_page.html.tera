@@ -11,7 +11,12 @@
       data-title="{{track.title}}"
       data-track-id="{{track.track_id}}"
     >
-      <div>{{track.artist}} - {{track.title}}</div>
+      <div>
+        <span class="mr-4 text-slate-400 w-6 text-center font-mono inline-block"
+          >{{loop.index}}</span
+        >
+        {{track.artist}} - {{track.title}}
+      </div>
       <a href="{{track.url}}" target="_blank">open</a>
     </li>
     {% endfor %}

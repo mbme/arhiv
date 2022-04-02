@@ -146,7 +146,7 @@ v-audio-player {
   }
 
   &.is-active {
-    @apply bg-zinc-100;
+    @apply bg-lime-100;
   }
 }
 

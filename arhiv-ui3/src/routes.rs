@@ -238,7 +238,7 @@ pub async fn blob_handler(req: Request<Body>) -> ServerResponse {
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);
 
-    respond_with_blob(&app.arhiv, &blob_id).await
+    respond_with_blob(&app.arhiv, &blob_id, req.headers()).await
 }
 
 pub async fn pick_document_modal(req: Request<Body>) -> ServerResponse {

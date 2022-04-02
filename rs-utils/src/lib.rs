@@ -25,6 +25,7 @@ pub use env_capabilities::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
+pub use http::*;
 pub use json::*;
 pub use markov::Markov;
 pub use string::*;

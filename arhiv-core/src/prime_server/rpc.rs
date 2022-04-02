@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use reqwest::{Client, StatusCode};
 
-use rs_utils::{log, read_file_as_stream, Download};
+use rs_utils::{create_body_from_file, log, Download};
 
 use crate::entities::*;
 
@@ -42,15 +42,11 @@ impl PrimeServerRPC {
     pub async fn upload_blob(&self, blob: &BLOB) -> Result<()> {
         log::debug!("uploading BLOB {}", &blob.id);
 
-        let file_stream = read_file_as_stream(&blob.file_path).await?;
+        let body = create_body_from_file(&blob.file_path, 0, None).await?;
 
         let url = self.get_blob_url(&blob.id);
 
-        let response = Client::new()
-            .post(&url)
-            .body(reqwest::Body::wrap_stream(file_stream))
-            .send()
-            .await?;
+        let response = Client::new().post(&url).body(body).send().await?;
 
         match response.status() {
             StatusCode::OK => {

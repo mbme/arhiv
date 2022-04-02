@@ -1,14 +1,15 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use anyhow::{Context, Result};
+use anyhow::Context;
 use futures::TryStreamExt;
+use hyper::HeaderMap;
 use hyper::{body::Buf, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use rs_utils::{http_server::*, log, read_file_as_stream};
+use rs_utils::{create_body_from_file, http_server::*, log, parse_range_header};
 
 use crate::entities::{BLOBId, Changeset};
 use crate::Arhiv;
@@ -62,7 +63,7 @@ pub fn start_prime_server(
 }
 
 #[allow(clippy::unused_async)]
-async fn status_handler(req: Request<Body>) -> Result<Response<Body>> {
+async fn status_handler(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
     let status = arhiv.get_status()?;
@@ -70,7 +71,7 @@ async fn status_handler(req: Request<Body>) -> Result<Response<Body>> {
     json_response(status)
 }
 
-async fn post_blob_handler(req: Request<Body>) -> Result<Response<Body>> {
+async fn post_blob_handler(req: Request<Body>) -> ServerResponse {
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);
 
@@ -106,16 +107,16 @@ async fn post_blob_handler(req: Request<Body>) -> Result<Response<Body>> {
     respond_with_status(StatusCode::OK)
 }
 
-async fn get_blob_handler(req: Request<Body>) -> Result<Response<Body>> {
+async fn get_blob_handler(req: Request<Body>) -> ServerResponse {
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);
 
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
-    respond_with_blob(arhiv, &blob_id).await
+    respond_with_blob(arhiv, &blob_id, req.headers()).await
 }
 
-async fn post_changeset_handler(req: Request<Body>) -> Result<Response<Body>> {
+async fn post_changeset_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let body = hyper::body::to_bytes(body).await?;
     let changeset: Changeset = serde_json::from_slice(&body)?;
@@ -135,21 +136,71 @@ async fn post_changeset_handler(req: Request<Body>) -> Result<Response<Body>> {
     json_response(response)
 }
 
-pub async fn respond_with_blob(arhiv: &Arhiv, blob_id: &BLOBId) -> ServerResponse {
+pub async fn respond_with_blob(
+    arhiv: &Arhiv,
+    blob_id: &BLOBId,
+    headers: &HeaderMap,
+) -> ServerResponse {
     let blob = arhiv.get_blob(blob_id)?;
 
     if !blob.exists()? {
         return respond_not_found();
     }
 
-    let file = read_file_as_stream(&blob.file_path).await?;
+    let range_header = headers
+        .get(hyper::header::RANGE)
+        .map(|header| header.to_str())
+        .transpose()
+        .context("failed to convert HTTP Range header to string")?
+        .map(|header| parse_range_header(header))
+        .transpose()
+        .context("failed to parse HTTP Range header")?;
 
-    Response::builder()
+    let size = blob.get_size()?;
+
+    let response_builder = Response::builder()
         .header(
             // max caching
             hyper::header::CACHE_CONTROL,
             "immutable, private, max-age=31536000",
         )
-        .body(Body::wrap_stream(file))
-        .context("failed to build response")
+        .header(hyper::header::CONTENT_TYPE, blob.get_media_type()?)
+        .header(hyper::header::ACCEPT_RANGES, "bytes");
+
+    if let Some((start_pos, end_pos)) = range_header {
+        let end_pos = end_pos.unwrap_or(size - 1);
+
+        if start_pos >= size || start_pos >= end_pos || end_pos >= size {
+            log::warn!(
+                "blob {}: range {}-{} out of {} not satisfiable",
+                blob_id,
+                start_pos,
+                end_pos,
+                size
+            );
+            return respond_with_status(StatusCode::RANGE_NOT_SATISFIABLE);
+        }
+
+        let range_size = end_pos + 1 - start_pos;
+
+        let body = create_body_from_file(&blob.file_path, start_pos, Some(range_size)).await?;
+
+        response_builder
+            .status(StatusCode::PARTIAL_CONTENT)
+            .header(hyper::header::CONTENT_LENGTH, range_size)
+            .header(
+                hyper::header::CONTENT_RANGE,
+                format!("bytes {}-{}/{}", start_pos, end_pos, size),
+            )
+            .body(body)
+            .context("failed to build BLOB response")
+    } else {
+        let body = create_body_from_file(&blob.file_path, 0, None).await?;
+
+        response_builder
+            .status(StatusCode::OK)
+            .header(hyper::header::CONTENT_LENGTH, size)
+            .body(body)
+            .context("failed to build BLOB response")
+    }
 }

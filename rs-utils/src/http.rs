@@ -1,6 +1,12 @@
 use anyhow::{bail, ensure, Context, Result};
+use hyper::Body;
 use lazy_static::lazy_static;
 use regex::Regex;
+use tokio::{
+    fs as tokio_fs,
+    io::{AsyncReadExt, AsyncSeekExt},
+};
+use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
 pub fn extract_file_name_from_url(url: &Url) -> String {
@@ -126,8 +132,74 @@ pub fn parse_content_range_header(header: &str) -> Result<(u64, u64, u64)> {
     Ok((start, end, total_size))
 }
 
+pub fn parse_range_header(header: &str) -> Result<(u64, Option<u64>)> {
+    lazy_static! {
+        static ref RE: Regex =
+            Regex::new(r"^bytes=(\d+)-(\d+)?$").expect("failed to create Range regex");
+    }
+
+    let captures = RE
+        .captures(header)
+        .with_context(|| format!("Unsupported Range header: {}", header))?;
+
+    let start: u64 = captures
+        .get(1)
+        .context("failed to capture range start group")?
+        .as_str()
+        .parse()
+        .context("failed to parse range start group")?;
+
+    let end = captures
+        .get(2)
+        .map(|capture| capture.as_str().parse::<u64>())
+        .transpose()
+        .context("failed to parse range end group")?;
+
+    Ok((start, end))
+}
+
+pub async fn create_body_from_file(path: &str, start_pos: u64, limit: Option<u64>) -> Result<Body> {
+    let mut file = tokio_fs::File::open(path).await?;
+
+    let size = file.metadata().await?.len();
+    ensure!(
+        start_pos < size - 1,
+        "start_pos must be less than file size {} - 1",
+        size,
+    );
+
+    file.seek(std::io::SeekFrom::Start(start_pos)).await?;
+
+    let body = if let Some(limit) = limit {
+        ensure!(limit > 0, "limit {} must be greater than 0", limit);
+
+        ensure!(
+            start_pos + limit <= size,
+            "start_pos {} + limit {} must be <= file size {}",
+            start_pos,
+            limit,
+            size
+        );
+
+        let stream = FramedRead::new(file.take(limit), BytesCodec::new());
+
+        Body::wrap_stream(stream)
+    } else {
+        let stream = FramedRead::new(file, BytesCodec::new());
+        Body::wrap_stream(stream)
+    };
+
+    Ok(body)
+}
+
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
+    use hyper::body::to_bytes;
+
+    use crate::workspace_relpath;
+
     use super::*;
 
     #[test]
@@ -206,5 +278,59 @@ mod tests {
             parse_content_type_header("TEXT/HTML").unwrap(),
             ("text/html".to_string(), None, None)
         );
+    }
+
+    #[test]
+    fn test_parse_range_header() {
+        assert_eq!(parse_range_header("bytes=0-100").unwrap(), (0, Some(100)));
+        assert_eq!(parse_range_header("bytes=0-").unwrap(), (0, None));
+    }
+
+    #[tokio::test]
+    async fn test_create_body_from_file() -> Result<()> {
+        let file_path = workspace_relpath("resources/k2.jpg");
+        let orig_data = fs::read(&file_path)?;
+
+        {
+            let body = create_body_from_file(&file_path, 0, None).await?;
+            let data = to_bytes(body).await?;
+
+            assert_eq!(&orig_data, &data);
+        }
+
+        {
+            let body = create_body_from_file(&file_path, 10, None).await?;
+            let data = to_bytes(body).await?;
+
+            assert_eq!(&orig_data[10..], &data);
+        }
+
+        {
+            let body = create_body_from_file(&file_path, 10, Some(10)).await?;
+            let data = to_bytes(body).await?;
+
+            assert_eq!(data.len(), 10);
+            assert_eq!(&orig_data[10..20], &data);
+        }
+
+        {
+            let result = create_body_from_file(&file_path, 2000000000, None).await;
+
+            assert!(result.is_err());
+        }
+
+        {
+            let result = create_body_from_file(&file_path, 0, Some(0)).await;
+
+            assert!(result.is_err());
+        }
+
+        {
+            let result = create_body_from_file(&file_path, 0, Some(200000000000)).await;
+
+            assert!(result.is_err());
+        }
+
+        Ok(())
     }
 }

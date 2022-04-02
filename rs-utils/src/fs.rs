@@ -6,8 +6,6 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use tokio::fs as tokio_fs;
-use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::{bytes_to_hex_string, get_file_hash_blake3, get_string_hash_blake3};
 
@@ -95,12 +93,6 @@ pub fn remove_file_extension(path: &str) -> Result<String> {
         .context("failed to remove file extension")?;
 
     path_to_string(filename)
-}
-
-pub async fn read_file_as_stream(path: &str) -> Result<FramedRead<tokio_fs::File, BytesCodec>> {
-    let file = tokio_fs::File::open(path).await?;
-
-    Ok(FramedRead::new(file, BytesCodec::new()))
 }
 
 #[must_use]

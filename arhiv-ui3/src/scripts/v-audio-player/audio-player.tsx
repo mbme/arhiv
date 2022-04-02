@@ -74,6 +74,8 @@ export function AudioPlayer({
   const onDurationRangeInput = (input: HTMLInputElement) => {
     const seekTime = Number.parseInt(input.value, 10);
 
+    console.info('player: seeking to', seekTime);
+
     if ('fastSeek' in audio) {
       audio.fastSeek(seekTime);
     } else {

@@ -105,3 +105,9 @@ export function lockGlobalScroll(): Callback {
     documentEl.scrollTop = scrollTop;
   };
 }
+
+export function pickRandomElement<T>(arr: T[]): T {
+  const pos = Math.floor(Math.random() * arr.length);
+
+  return arr[pos];
+}

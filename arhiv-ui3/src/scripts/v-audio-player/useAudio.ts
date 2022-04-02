@@ -59,13 +59,13 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
   });
 
   useEffect(() => {
-    console.info('audio: src changed to "%s"', url);
+    console.debug('audio: src changed to "%s"', url);
     audio.src = url || '';
     setPlayerState('initial');
   }, [url]);
 
   useEffect(() => {
-    console.info('audio: autoplay=%s', options.autoplay);
+    console.debug('audio: autoplay=%s', options.autoplay);
     audio.autoplay = options.autoplay;
   }, [options.autoplay]);
 

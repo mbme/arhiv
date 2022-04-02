@@ -102,11 +102,11 @@ export function AudioPlayer({
 
       <div className="flex justify-between mb-1">
         <div></div>
-        <div className="flex gap-6 text-gray-600">
+        <div className="flex gap-6">
           {prevTrack && (
             <button type="button" title="Previous track" onClick={prevTrack}>
               <svg className="h-10 w-10">
-                <use xlinkHref="#icon-rewind" />
+                <use xlinkHref="#icon-skip-previous" />
               </svg>
             </button>
           )}
@@ -125,16 +125,20 @@ export function AudioPlayer({
           {nextTrack && (
             <button type="button" title="Next track" onClick={nextTrack}>
               <svg className="h-10 w-10">
-                <use xlinkHref="#icon-fast-forward" />
+                <use xlinkHref="#icon-skip-next" />
               </svg>
             </button>
           )}
         </div>
 
         <div className="flex gap-4 items-center">
-          <button type="button" title={muted ? 'Umute volume' : 'Mute volume'}>
-            <svg className="h-6 w-6 text-gray-500" onClick={toggleMute}>
-              <use xlinkHref={muted ? '#icon-volume-off' : '#icon-volume-up'} />
+          <button
+            type="button"
+            title={muted ? 'Umute volume' : 'Mute volume'}
+            className="text-gray-500"
+          >
+            <svg className="h-8 w-8" onClick={toggleMute}>
+              <use xlinkHref={muted ? '#icon-volume-off' : '#icon-volume-high'} />
             </svg>
           </button>
 

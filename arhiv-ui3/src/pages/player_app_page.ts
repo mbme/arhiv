@@ -1,4 +1,4 @@
-import { fetchJSON } from '../scripts/utils';
+import { fetchJSON, pickRandomElement } from '../scripts/utils';
 import { AudioPlayerElement } from '../scripts/v-audio-player';
 
 type Attachment = {
@@ -9,6 +9,7 @@ type Attachment = {
 
 export function initPlayerApp(rootEl: HTMLElement): void {
   const player = rootEl.querySelector('#player') as AudioPlayerElement;
+  const shuffleTracks = rootEl.querySelector('#shuffle-tracks') as HTMLInputElement;
 
   const list = rootEl.querySelector<HTMLUListElement>('#track-list');
   if (!list) {
@@ -37,6 +38,8 @@ export function initPlayerApp(rootEl: HTMLElement): void {
     const artist = trackEl.dataset.artist || '';
     const title = trackEl.dataset.title || '';
 
+    console.info('Play track %s - %s', artist, title);
+
     fetchJSON<Attachment>(`/api/documents/${trackId}`)
       .then((document) => {
         const blobId = document.data.blob;
@@ -55,6 +58,11 @@ export function initPlayerApp(rootEl: HTMLElement): void {
 
     if (trackEls.length === 0) {
       play(undefined);
+      return;
+    }
+
+    if (shuffleTracks.checked) {
+      play(pickRandomElement(trackEls));
       return;
     }
 

@@ -123,8 +123,12 @@ a:not(.clean-link) {
 v-audio-player {
   display: block;
 
-  & button[disabled] {
-    @apply text-gray-300;
+  & button {
+    @apply text-gray-600 hover:text-sky-800;
+
+    &[disabled] {
+      @apply text-gray-300 hover:text-gray-300;
+    }
   }
 
   & input[type='range'] {

@@ -149,10 +149,10 @@ pub async fn respond_with_blob(
 
     let range_header = headers
         .get(hyper::header::RANGE)
-        .map(|header| header.to_str())
+        .map(hyper::header::HeaderValue::to_str)
         .transpose()
         .context("failed to convert HTTP Range header to string")?
-        .map(|header| parse_range_header(header))
+        .map(parse_range_header)
         .transpose()
         .context("failed to parse HTTP Range header")?;
 

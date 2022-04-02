@@ -9,6 +9,7 @@ use tokio::{
 use tokio_util::codec::{BytesCodec, FramedRead};
 use url::Url;
 
+#[must_use]
 pub fn extract_file_name_from_url(url: &Url) -> String {
     let file_name = url
         .path_segments()
@@ -314,7 +315,7 @@ mod tests {
         }
 
         {
-            let result = create_body_from_file(&file_path, 2000000000, None).await;
+            let result = create_body_from_file(&file_path, 2_000_000_000, None).await;
 
             assert!(result.is_err());
         }
@@ -326,7 +327,7 @@ mod tests {
         }
 
         {
-            let result = create_body_from_file(&file_path, 0, Some(200000000000)).await;
+            let result = create_body_from_file(&file_path, 0, Some(2_000_000_000)).await;
 
             assert!(result.is_err());
         }

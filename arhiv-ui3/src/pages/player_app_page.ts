@@ -21,7 +21,12 @@ export function initPlayerApp(rootEl: HTMLElement): void {
     activeTrackEl?.classList.remove('is-active');
 
     activeTrackEl = trackEl;
-    activeTrackEl?.classList.add('is-active');
+    if (activeTrackEl) {
+      activeTrackEl.classList.add('is-active');
+      activeTrackEl.scrollIntoView({
+        block: 'center',
+      });
+    }
 
     if (!trackEl) {
       player.stop();

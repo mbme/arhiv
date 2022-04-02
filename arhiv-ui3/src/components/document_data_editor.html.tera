@@ -21,13 +21,16 @@
 
     {% if 'MarkupString' in field.field_type %}
     <textarea
+      id="{{field.name}}"
       name="{{field.name}}"
-      class="field"
+      hidden
       {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
-      {% if loop.first %}autofocus{% endif %}
-      v-editor
     >{{field.value}}</textarea>
+    <v-editor
+      for="{{field.name}}"
+      {% if loop.first %}autofocus{% endif %}
+    />
 
     {% elif 'Enum' in field.field_type %}
     <select

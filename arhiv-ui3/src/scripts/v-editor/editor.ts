@@ -17,12 +17,7 @@ import { rectangularSelection } from '@codemirror/rectangular-selection';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { classHighlightStyle, defaultHighlightStyle } from '@codemirror/highlight';
 
-export function initEditor(textareaEl: HTMLTextAreaElement): EditorView {
-  const parentEl = textareaEl.parentElement;
-  if (!parentEl) {
-    throw new Error('textarea must have a parent element');
-  }
-
+export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement): EditorView {
   const handlers = EditorView.domEventHandlers({
     'blur': (_event, view) => {
       textareaEl.value = view.state.doc.toString();
@@ -30,6 +25,7 @@ export function initEditor(textareaEl: HTMLTextAreaElement): EditorView {
   });
 
   const editor = new EditorView({
+    parent,
     state: EditorState.create({
       doc: textareaEl.value,
       extensions: [
@@ -60,8 +56,6 @@ export function initEditor(textareaEl: HTMLTextAreaElement): EditorView {
       ],
     }),
   });
-
-  parentEl.insertBefore(editor.dom, textareaEl);
 
   textareaEl.setAttribute('hidden', 'true');
 

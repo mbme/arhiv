@@ -13,8 +13,8 @@ import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
 import { initPlayerApp } from './pages/player_app_page';
-import { initEditor } from './scripts/editor';
 import './scripts/v-audio-player';
+import './scripts/v-editor';
 
 class ArhivUI {
   goBack(fallback = '/') {
@@ -54,13 +54,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       autoGrowTextarea(el);
-    },
-    'v-editor': (el) => {
-      if (!(el instanceof HTMLTextAreaElement)) {
-        throw new Error('v-editor must be applied to textarea');
-      }
-
-      initEditor(el);
     },
     'v-preserve-unsaved-changes': (el) => {
       if (!(el instanceof HTMLFormElement)) {

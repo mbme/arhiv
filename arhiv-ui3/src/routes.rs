@@ -11,11 +11,7 @@ use rs_utils::http_server::{
     ServerResponse,
 };
 
-use crate::{
-    app::App,
-    public_assets_handler::public_assets_handler,
-    utils::{extract_fields, is_json_request},
-};
+use crate::{app::App, public_assets_handler::public_assets_handler, utils::extract_fields};
 
 pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
     let router = Router::builder()
@@ -84,7 +80,9 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         .get("/modals/scrape", scrape_modal)
         .post("/modals/scrape", scrape_modal_handler)
         //
-        .get("/apps/player", player_app)
+        .get("/apps/player", app_player)
+        //
+        .get("/api/documents/:id", api_get_document)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -164,23 +162,19 @@ async fn erased_documents_list_page(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn document_page(req: Request<Body>) -> ServerResponse {
+async fn document_page(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let id: Id = req.param("id").unwrap().into();
     let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
     let url = req.get_url();
 
-    let response = if is_json_request(&req) {
-        app.document_api(&id)?
-    } else {
-        app.document_page(&id, &parent_collection, url)?
-    };
+    let response = app.document_page(&id, &parent_collection, url)?;
 
     app.render(response)
 }
 
-pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
+async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let id: Id = req.param("id").unwrap().into();
@@ -191,7 +185,7 @@ pub async fn edit_document_page(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
+async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -205,7 +199,7 @@ pub async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
+async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let id: Id = req.param("id").unwrap().into();
@@ -216,7 +210,7 @@ pub async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerRes
     app.render(response)
 }
 
-pub async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> ServerResponse {
+async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -232,7 +226,7 @@ pub async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> S
     app.render(response)
 }
 
-pub async fn blob_handler(req: Request<Body>) -> ServerResponse {
+async fn blob_handler(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let blob_id = req.param("blob_id").unwrap().as_str();
@@ -241,7 +235,7 @@ pub async fn blob_handler(req: Request<Body>) -> ServerResponse {
     respond_with_blob(&app.arhiv, &blob_id, req.headers()).await
 }
 
-pub async fn pick_document_modal(req: Request<Body>) -> ServerResponse {
+async fn pick_document_modal(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
     let url = req.get_url();
 
@@ -250,7 +244,7 @@ pub async fn pick_document_modal(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn pick_file_modal(req: Request<Body>) -> ServerResponse {
+async fn pick_file_modal(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
     let url = req.get_url();
 
@@ -259,7 +253,7 @@ pub async fn pick_file_modal(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn pick_file_confirmation_modal(req: Request<Body>) -> ServerResponse {
+async fn pick_file_confirmation_modal(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let url = req.get_url();
@@ -269,7 +263,7 @@ pub async fn pick_file_confirmation_modal(req: Request<Body>) -> ServerResponse 
     app.render(response)
 }
 
-pub async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerResponse {
+async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
     let fields = extract_fields(body).await?;
@@ -279,7 +273,7 @@ pub async fn pick_file_confirmation_modal_handler(req: Request<Body>) -> ServerR
     app.render(response)
 }
 
-pub async fn scrape_modal(req: Request<Body>) -> ServerResponse {
+async fn scrape_modal(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = App::scrape_modal()?;
@@ -287,7 +281,7 @@ pub async fn scrape_modal(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn scrape_modal_handler(req: Request<Body>) -> ServerResponse {
+async fn scrape_modal_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -299,10 +293,20 @@ pub async fn scrape_modal_handler(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-pub async fn player_app(req: Request<Body>) -> ServerResponse {
+async fn app_player(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = app.player_app_page()?;
+
+    app.render(response)
+}
+
+async fn api_get_document(req: Request<Body>) -> ServerResponse {
+    let app: &App = req.data().unwrap();
+
+    let id: Id = req.param("id").unwrap().into();
+
+    let response = app.document_api(&id)?;
 
     app.render(response)
 }

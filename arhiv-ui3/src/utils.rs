@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use hyper::{header, Body, Request, Response, StatusCode};
+use hyper::{header, Body, Response, StatusCode};
 
 use arhiv_core::{entities::DocumentData, schema::DataDescription};
 use rs_utils::http_server::{parse_urlencoded, ServerResponse};
@@ -63,10 +63,6 @@ pub fn render_content(status: StatusCode, content: String) -> ServerResponse {
 
 pub fn render_json(status: StatusCode, content: String) -> ServerResponse {
     build_response(status, "application/json", content)
-}
-
-pub fn is_json_request(req: &Request<Body>) -> bool {
-    matches!(req.headers().get(header::ACCEPT), Some(accept) if accept == "application/json")
 }
 
 pub type Fields = HashMap<String, String>;

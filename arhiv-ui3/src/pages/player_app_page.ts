@@ -32,7 +32,7 @@ export function initPlayerApp(rootEl: HTMLElement): void {
     const artist = trackEl.dataset.artist || '';
     const title = trackEl.dataset.title || '';
 
-    fetchJSON<Attachment>(`/documents/${trackId}`)
+    fetchJSON<Attachment>(`/api/documents/${trackId}`)
       .then((document) => {
         const blobId = document.data.blob;
 

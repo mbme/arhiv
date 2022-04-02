@@ -13,7 +13,7 @@
     clippy::cast_lossless
 )]
 
-use clap::{crate_version, App, Arg};
+use clap::{crate_version, Arg, Command};
 
 use binutils::devices::{Microphone, Speakers};
 use rs_utils::log;
@@ -21,29 +21,29 @@ use rs_utils::log;
 fn main() {
     log::setup_logger();
 
-    let app = App::new("mb-audio")
+    let app = Command::new("mb-audio")
         .arg(
             Arg::new("notify")
                 .short('n')
                 .help("Send notification with current state"),
         )
         .subcommand(
-            App::new("speakers")
+            Command::new("speakers")
                 .about("Control speakers")
-                .subcommand(App::new("status").about("Print current volume"))
-                .subcommand(App::new("mute").about("Mute speakers"))
-                .subcommand(App::new("unmute").about("Unmute speakers"))
-                .subcommand(App::new("toggle").about("Toggle mute"))
-                .subcommand(App::new("up").about("Increase volume"))
-                .subcommand(App::new("down").about("Decrease volume")),
+                .subcommand(Command::new("status").about("Print current volume"))
+                .subcommand(Command::new("mute").about("Mute speakers"))
+                .subcommand(Command::new("unmute").about("Unmute speakers"))
+                .subcommand(Command::new("toggle").about("Toggle mute"))
+                .subcommand(Command::new("up").about("Increase volume"))
+                .subcommand(Command::new("down").about("Decrease volume")),
         )
         .subcommand(
-            App::new("mic")
+            Command::new("mic")
                 .about("Control microphone")
-                .subcommand(App::new("status").about("Print current state"))
-                .subcommand(App::new("mute").about("Mute microphone"))
-                .subcommand(App::new("unmute").about("Unmute microphone"))
-                .subcommand(App::new("toggle").about("Toggle mute")),
+                .subcommand(Command::new("status").about("Print current state"))
+                .subcommand(Command::new("mute").about("Mute microphone"))
+                .subcommand(Command::new("unmute").about("Unmute microphone"))
+                .subcommand(Command::new("toggle").about("Toggle mute")),
         )
         .version(crate_version!());
 

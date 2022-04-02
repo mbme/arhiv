@@ -1,9 +1,6 @@
-use std::{
-    process::{self, Command, Stdio},
-    sync::Arc,
-};
+use std::{process, sync::Arc};
 
-use clap::{crate_version, App, AppSettings, Arg};
+use clap::{crate_version, AppSettings, Arg, Command};
 use clap_complete::{generate_to, Shell};
 
 use arhiv_core::{
@@ -20,11 +17,11 @@ use crate::import::import_document_from_file;
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
-fn build_app() -> App<'static> {
-    App::new("arhiv")
+fn build_app() -> Command<'static> {
+    Command::new("arhiv")
         .bin_name("arhiv")
         .subcommand(
-            App::new("init")
+            Command::new("init")
                 .about("Initialize Arhiv instance on local machine")
                 .arg(
                     Arg::new("arhiv_id")
@@ -41,19 +38,19 @@ fn build_app() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("sync") //
+            Command::new("sync") //
                 .about("Sync changes"),
         )
         .subcommand(
-            App::new("backup") //
+            Command::new("backup") //
                 .about("Backup arhiv data"),
         )
         .subcommand(
-            App::new("ui-server") //
+            Command::new("ui-server") //
                 .about("Run arhiv UI server"),
         )
         .subcommand(
-            App::new("ui-open") //
+            Command::new("ui-open") //
                 .about("Open document in UI")
                 .arg(
                     Arg::new("id")
@@ -71,7 +68,7 @@ fn build_app() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("prime-server").about("Run prime server").arg(
+            Command::new("prime-server").about("Run prime server").arg(
                 Arg::new("port")
                     .long("port")
                     .takes_value(true)
@@ -80,11 +77,11 @@ fn build_app() -> App<'static> {
             ),
         )
         .subcommand(
-            App::new("status") //
+            Command::new("status") //
                 .about("Print current status"),
         )
         .subcommand(
-            App::new("config") //
+            Command::new("config") //
                 .about("Print config")
                 .arg(
                     Arg::new("template")
@@ -95,12 +92,12 @@ fn build_app() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("get")
+            Command::new("get")
                 .about("Get document by id")
                 .arg(Arg::new("id").required(true).help("id of the document")),
         )
         .subcommand(
-            App::new("add")
+            Command::new("add")
                 .about("Add new document")
                 .arg(
                     Arg::new("document_type")
@@ -117,7 +114,7 @@ fn build_app() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("scrape")
+            Command::new("scrape")
                 .about("Scrape remote resource and create document")
                 .arg(
                     Arg::new("url") //
@@ -127,7 +124,7 @@ fn build_app() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("import")
+            Command::new("import")
                 .about("Import files and create documents. Will hard link or copy files to Arhiv.")
                 .arg(
                     Arg::new("document_type")
@@ -145,8 +142,9 @@ fn build_app() -> App<'static> {
                 )
                 .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
         )
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .global_setting(AppSettings::DisableHelpSubcommand)
+        .disable_help_subcommand(true)
+        .subcommand_required(true)
+        .arg_required_else_help(true)
         .global_setting(AppSettings::DeriveDisplayOrder)
         .arg(
             Arg::new("verbose")
@@ -301,10 +299,10 @@ pub async fn arhiv_cli() {
 
             log::info!("Opening document {} UI in {}", id, browser);
 
-            Command::new(&browser)
+            process::Command::new(&browser)
                 .arg(document_url(&id, port))
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stdout(process::Stdio::null())
+                .stderr(process::Stdio::null())
                 .spawn()
                 .unwrap_or_else(|_| panic!("failed to run browser {}", browser));
         }

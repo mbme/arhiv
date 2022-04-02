@@ -14,23 +14,23 @@
 )]
 
 use binutils::devices::Touchpad;
-use clap::{crate_version, App, Arg};
+use clap::{crate_version, Arg, Command};
 
 use rs_utils::log::{error, info, setup_logger};
 
 fn main() {
     setup_logger();
 
-    let app = App::new("mb-touchpad")
+    let app = Command::new("mb-touchpad")
         .arg(
             Arg::new("notify")
                 .short('n')
                 .help("Send notification with current touchpad state"),
         )
-        .subcommand(App::new("status").about("Print current state of touchpad"))
-        .subcommand(App::new("on").about("Enable touchpad"))
-        .subcommand(App::new("off").about("Disable touchpad"))
-        .subcommand(App::new("toggle").about("Toggle touchpad"))
+        .subcommand(Command::new("status").about("Print current state of touchpad"))
+        .subcommand(Command::new("on").about("Enable touchpad"))
+        .subcommand(Command::new("off").about("Disable touchpad"))
+        .subcommand(Command::new("toggle").about("Toggle touchpad"))
         .version(crate_version!());
 
     let matches = app.get_matches();

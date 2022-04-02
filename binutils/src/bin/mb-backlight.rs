@@ -13,7 +13,7 @@
     clippy::cast_lossless
 )]
 
-use clap::{crate_version, App, Arg};
+use clap::{crate_version, Arg, Command};
 
 use binutils::devices::Backlight;
 use rs_utils::log::setup_logger;
@@ -21,15 +21,15 @@ use rs_utils::log::setup_logger;
 fn main() {
     setup_logger();
 
-    let app = App::new("mb-backlight")
+    let app = Command::new("mb-backlight")
         .arg(
             Arg::new("notify")
                 .short('n')
                 .help("Send notification with current backlight state"),
         )
-        .subcommand(App::new("status").about("Print current state of backlight"))
-        .subcommand(App::new("inc").about("Increase backlight"))
-        .subcommand(App::new("dec").about("Decrease backlight"))
+        .subcommand(Command::new("status").about("Print current state of backlight"))
+        .subcommand(Command::new("inc").about("Increase backlight"))
+        .subcommand(Command::new("dec").about("Decrease backlight"))
         .version(crate_version!());
 
     let matches = app.get_matches();

@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use serde_json::Value;
 use which::which_all;
 
 use crate::{path_to_string, run_command};
@@ -42,6 +43,44 @@ impl ZStd {
             .context("failed to run zstd")?;
 
         Ok(())
+    }
+}
+
+/// part of ffmpeg
+pub struct FFProbe(String);
+
+impl FFProbe {
+    pub fn check() -> Result<Self> {
+        find_bin("ffprobe")?
+            .map(Self)
+            .context("ffprobe must be available")
+    }
+
+    fn get_stats(&self, file_path: &str) -> Result<Value> {
+        let stats = run_command(
+            &self.0,
+            vec![
+                "-loglevel",
+                "0",
+                "-print_format",
+                "json",
+                "-show_format",
+                file_path,
+            ],
+        )
+        .context("failed to run ffprobe")?;
+
+        serde_json::from_str(&stats).context("failed to parse ffprobe output as JSON")
+    }
+
+    pub fn get_duration(&self, file_path: &str) -> Result<f32> {
+        let stats = self.get_stats(file_path)?;
+
+        stats["format"]["duration"]
+            .as_str()
+            .context(".format.duration must be present")?
+            .parse()
+            .context("failed to parse duration")
     }
 }
 

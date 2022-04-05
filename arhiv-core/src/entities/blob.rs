@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use rs_utils::{file_exists, get_file_size, get_mime_type};
+use rs_utils::{file_exists, get_file_size, get_media_type};
 
 use crate::entities::BLOBId;
 
@@ -27,6 +27,6 @@ impl BLOB {
     }
 
     pub fn get_media_type(&self) -> Result<String> {
-        get_mime_type(&self.file_path)
+        get_media_type(&self.file_path)
     }
 }

@@ -224,10 +224,10 @@ pub fn is_readable(metadata: &fs::Metadata) -> bool {
     user_has_read_access
 }
 
-pub fn get_mime_type(file_path: impl AsRef<str>) -> Result<String> {
+pub fn get_media_type(file_path: impl AsRef<str>) -> Result<String> {
     let file_path = file_path.as_ref();
 
-    if let Some(kind) = infer::get_from_path(file_path).context("failed to infer mime type")? {
+    if let Some(kind) = infer::get_from_path(file_path).context("failed to infer media type")? {
         return Ok(kind.mime_type().to_string());
     }
 
@@ -350,17 +350,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_mime_type() {
+    fn test_get_media_type() {
         assert_eq!(
-            get_mime_type(workspace_relpath("resources/text.txt")).unwrap(),
+            get_media_type(workspace_relpath("resources/text.txt")).unwrap(),
             "application/octet-stream"
         );
         assert_eq!(
-            get_mime_type(workspace_relpath("resources/k2.jpg")).unwrap(),
+            get_media_type(workspace_relpath("resources/k2.jpg")).unwrap(),
             "image/jpeg"
         );
         assert_eq!(
-            get_mime_type(workspace_relpath("resources/favicon-16x16.png")).unwrap(),
+            get_media_type(workspace_relpath("resources/favicon-16x16.png")).unwrap(),
             "image/png"
         );
     }

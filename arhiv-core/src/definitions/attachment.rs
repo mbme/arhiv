@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use anyhow::{ensure, Context, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_file_size, get_mime_type, DownloadResult};
+use rs_utils::{get_file_name, get_file_size, get_media_type, DownloadResult};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -79,7 +79,7 @@ impl Attachment {
 
     pub fn create(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
-        let media_type = get_mime_type(file_path)?;
+        let media_type = get_media_type(file_path)?;
         let size = get_file_size(file_path)?;
 
         let blob_id = tx.add_blob(file_path, move_file)?;
@@ -96,7 +96,7 @@ impl Attachment {
         download_result: &DownloadResult,
         tx: &mut ArhivConnection,
     ) -> Result<Attachment> {
-        let media_type = get_mime_type(&download_result.file_path)?;
+        let media_type = get_media_type(&download_result.file_path)?;
         let size = get_file_size(&download_result.file_path)?;
 
         let blob_id = tx.add_blob(&download_result.file_path, true)?;

@@ -77,7 +77,7 @@ impl Attachment {
         Attachment(document)
     }
 
-    pub fn create_tx(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
+    pub fn create(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
         let media_type = get_mime_type(file_path)?;
         let size = get_file_size(file_path)?;

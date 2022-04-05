@@ -43,7 +43,7 @@ impl<'a> Faker<'a> {
 
         let mut tx = arhiv.get_tx()?;
         for file_path in list_attachments() {
-            let attachment = Attachment::create_tx(&file_path, false, &mut tx)?;
+            let attachment = Attachment::create(&file_path, false, &mut tx)?;
 
             attachment_ids.push(attachment.id.clone());
         }

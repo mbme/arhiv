@@ -19,7 +19,7 @@ pub fn import_document_from_file(
         TRACK_TYPE => import_track(arhiv, file_path, move_file),
         ATTACHMENT_TYPE => {
             let mut tx = arhiv.get_tx()?;
-            let attachment = Attachment::create_tx(file_path, move_file, &mut tx)?;
+            let attachment = Attachment::create(file_path, move_file, &mut tx)?;
             tx.commit()?;
 
             Ok(attachment.into())
@@ -31,7 +31,7 @@ pub fn import_document_from_file(
 fn import_track(arhiv: &Arhiv, file_path: &str, move_file: bool) -> Result<Document> {
     let mut tx = arhiv.get_tx()?;
 
-    let attachment = Attachment::create_tx(file_path, move_file, &mut tx)?;
+    let attachment = Attachment::create(file_path, move_file, &mut tx)?;
 
     ensure!(
         attachment.is_audio(),

@@ -69,7 +69,7 @@ impl<'a> Faker<'a> {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(&self, document_type: String, mut data: DocumentData) -> Document {
+    fn create_fake(&self, document_type: &str, mut data: DocumentData) -> Document {
         let description = self
             .arhiv
             .get_schema()
@@ -81,13 +81,13 @@ impl<'a> Faker<'a> {
             match &field.field_type {
                 FieldType::String {} => {
                     let (min, max) = self
-                        .get_field_size_limits(&document_type, field.name)
+                        .get_field_size_limits(document_type, field.name)
                         .unwrap_or((1, 8));
                     data.set(field.name, self.generator.gen_string(min, max));
                 }
                 FieldType::MarkupString {} => {
                     let (min, max) = self
-                        .get_field_size_limits(&document_type, field.name)
+                        .get_field_size_limits(document_type, field.name)
                         .unwrap_or((1, 8));
 
                     let title = self.generator.gen_string(1, 5);
@@ -121,7 +121,7 @@ impl<'a> Faker<'a> {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let mut document = self.create_fake(document_type.clone(), DocumentData::new());
+            let mut document = self.create_fake(&document_type, DocumentData::new());
 
             tx.stage_document(&mut document)
                 .expect("must be able to save document");
@@ -137,8 +137,7 @@ impl<'a> Faker<'a> {
                     let mut initial_values = DocumentData::new();
                     initial_values.set(field.to_string(), &document.id);
 
-                    let mut child_document =
-                        self.create_fake(child_document_type.to_string(), initial_values);
+                    let mut child_document = self.create_fake(child_document_type, initial_values);
 
                     tx.stage_document(&mut child_document)
                         .expect("must be able to save child document");

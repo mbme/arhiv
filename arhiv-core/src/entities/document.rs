@@ -25,18 +25,20 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(document_type: impl Into<String>) -> Self {
+    #[must_use]
+    pub fn new(document_type: &str) -> Self {
         Document::new_with_data(document_type, DocumentData::new())
     }
 
-    pub fn new_with_data(document_type: impl Into<String>, data: DocumentData) -> Self {
+    #[must_use]
+    pub fn new_with_data(document_type: &str, data: DocumentData) -> Self {
         let now = Utc::now();
 
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
-            document_type: document_type.into(),
+            document_type: document_type.to_string(),
             created_at: now,
             updated_at: now,
             data,

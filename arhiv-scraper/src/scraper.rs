@@ -171,7 +171,7 @@ impl<'a> Scraper<'a> {
                 document_type,
                 data,
             } => {
-                let mut document = Document::new_with_data(document_type, data);
+                let mut document = Document::new_with_data(&document_type, data);
 
                 tx.stage_document(&mut document)?;
 

@@ -63,7 +63,7 @@ impl Attachment {
     #[must_use]
     pub fn new(filename: &str, media_type: &str, blob_id: &BLOBId, size: u64) -> Self {
         let document = Document::new_with_data(
-            ATTACHMENT_TYPE.to_string(),
+            ATTACHMENT_TYPE,
             json!({
                 FIELD_FILENAME: filename,
                 FIELD_MEDIA_TYPE: media_type,

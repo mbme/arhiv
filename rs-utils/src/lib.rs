@@ -17,11 +17,10 @@ use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 
 pub use crypto::*;
 pub use download::*;
-pub use env_capabilities::*;
 pub use fs::*;
 pub use fs_temp::*;
 pub use fs_transaction::FsTransaction;
@@ -29,10 +28,10 @@ pub use http::*;
 pub use json::*;
 pub use markov::Markov;
 pub use string::*;
+pub use tools::*;
 
 mod crypto;
 mod download;
-mod env_capabilities;
 mod fs;
 mod fs_temp;
 mod fs_transaction;
@@ -42,17 +41,22 @@ mod json;
 pub mod log;
 mod markov;
 mod string;
+mod tools;
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
-    let output = Command::new(command).args(args).output()?;
+    let output = Command::new(command)
+        .args(args)
+        .output()
+        .context("failed to execute command")?;
 
     if !output.status.success() {
         let err_str = String::from_utf8(output.stderr)?;
         log::error!("command failed:\n{}\n{}", output.status, err_str);
-        bail!("Command executed with failing error code");
+        bail!("Command '{}' executed with failing error code", command);
     }
 
-    let output_str = String::from_utf8(output.stdout)?;
+    let output_str =
+        String::from_utf8(output.stdout).context("failed to convert stdout to string")?;
 
     Ok(output_str)
 }

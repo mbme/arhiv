@@ -1,16 +1,15 @@
 use std::{fs, path::Path};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, log, run_command, EnvCapabilities};
+use rs_utils::{ensure_dir_exists, file_exists, log, ZStd};
 
 use super::Arhiv;
 use crate::entities::BLOBId;
 
 impl Arhiv {
     pub fn backup(&self) -> Result<()> {
-        let capabilities = EnvCapabilities::check()?;
-        ensure!(capabilities.zstd, "zstd must be available");
+        let zstd = ZStd::check()?;
 
         let backup_dir = self.config.backup_dir.clone();
         ensure!(!backup_dir.is_empty(), "config.backup_dir is not set");
@@ -23,17 +22,8 @@ impl Arhiv {
         // 1. cleanup the db
         self.cleanup()?;
 
-        // 2. copy & archive db file
-        run_command(
-            "zstd",
-            vec![
-                "--compress",
-                &self.path_manager.db_file,
-                "-o",
-                &backup.backup_db_file,
-            ],
-        )
-        .context("failed to run zstd")?;
+        // 2. copy & compress db file
+        zstd.compress(&self.path_manager.db_file, &backup.backup_db_file)?;
         log::info!("Created arhiv backup {}", &backup.backup_db_file);
 
         // 3. copy all data files if needed

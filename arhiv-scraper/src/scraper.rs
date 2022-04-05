@@ -13,7 +13,7 @@ use arhiv_core::{
     entities::{Document, DocumentData},
     Arhiv, ArhivConnection,
 };
-use rs_utils::{log, Download, EnvCapabilities, TempFile};
+use rs_utils::{log, Chromium, Download, NodeJS, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(tag = "type")]
@@ -46,16 +46,13 @@ pub struct Scraper<'a> {
 
 impl<'a> Scraper<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Result<Self> {
-        let capabilities = EnvCapabilities::check()?;
+        NodeJS::check()?;
 
-        ensure!(capabilities.nodejs, "NodeJS must be available");
-        let chrome_bin_path = capabilities
-            .chrome
-            .context("Chromium or Chrome must be available")?;
+        let chromium = Chromium::check()?;
 
         Ok(Scraper {
             arhiv,
-            chrome_bin_path,
+            chrome_bin_path: chromium.get_bin_path().to_string(),
             debug: false,
         })
     }

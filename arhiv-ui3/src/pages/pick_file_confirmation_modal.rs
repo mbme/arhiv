@@ -52,7 +52,10 @@ impl App {
             .get("file_path")
             .ok_or_else(|| anyhow!("file_path field must be present"))?;
 
-        let attachment = Attachment::create(file_path, false, &self.arhiv)?;
+        let mut tx = self.arhiv.get_tx()?;
+        let attachment = Attachment::create_tx(file_path, false, &mut tx)?;
+        tx.commit()?;
+
         let id = attachment.id.to_string();
 
         let attachment_ref = Ref::from_document(attachment.into()).render(&self.arhiv)?;

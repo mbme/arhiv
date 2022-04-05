@@ -8,7 +8,7 @@ use rs_utils::{get_file_name, get_file_size, get_mime_type, DownloadResult};
 use crate::{
     entities::{BLOBId, Document},
     schema::*,
-    Arhiv, ArhivConnection,
+    ArhivConnection,
 };
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
@@ -75,16 +75,6 @@ impl Attachment {
         );
 
         Attachment(document)
-    }
-
-    pub fn create(file_path: &str, move_file: bool, arhiv: &Arhiv) -> Result<Self> {
-        let mut tx = arhiv.get_tx()?;
-
-        let attachment = Attachment::create_tx(file_path, move_file, &mut tx)?;
-
-        tx.commit()?;
-
-        Ok(attachment)
     }
 
     pub fn create_tx(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {

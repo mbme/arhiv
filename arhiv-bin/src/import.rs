@@ -18,7 +18,9 @@ pub fn import_document_from_file(
     match document_type {
         TRACK_TYPE => import_track(arhiv, file_path, move_file),
         ATTACHMENT_TYPE => {
-            let attachment = Attachment::create(file_path, move_file, arhiv)?;
+            let mut tx = arhiv.get_tx()?;
+            let attachment = Attachment::create_tx(file_path, move_file, &mut tx)?;
+            tx.commit()?;
 
             Ok(attachment.into())
         }

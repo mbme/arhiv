@@ -207,12 +207,12 @@ impl ArhivConnection {
         ): (u32, u32, u32, u32, u32) = conn
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
-                    IFNULL(SUM(CASE WHEN type != ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
-                    IFNULL(SUM(CASE WHEN type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
 
-                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
-                    IFNULL(SUM(CASE WHEN type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
                 FROM documents",
                 [ERASED_DOCUMENT_TYPE],
                 |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
@@ -289,7 +289,7 @@ impl ArhivConnection {
 
         if let Some(ref pattern) = filter.conditions.search {
             qb.and_select(format!(
-                "calculate_search_score(documents.type, documents.data, {}) AS search_score",
+                "calculate_search_score(documents.document_type, documents.data, {}) AS search_score",
                 qb.param(pattern)
             ));
             qb.where_condition("search_score > 0");
@@ -298,7 +298,10 @@ impl ArhivConnection {
         }
 
         if let Some(ref document_type) = filter.conditions.document_type {
-            qb.where_condition(format!("documents.type = {}", qb.param(document_type)));
+            qb.where_condition(format!(
+                "documents.document_type = {}",
+                qb.param(document_type)
+            ));
         }
 
         if let Some(ref id) = filter.conditions.document_ref {
@@ -534,7 +537,7 @@ impl ArhivConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, prev_rev, type, created_at, updated_at, data)
+                    (id, rev, prev_rev, document_type, created_at, updated_at, data)
                     VALUES (?, ?, ?, ?, ?, ?, ?)",
                 if document.is_staged() {
                     "OR REPLACE"
@@ -597,7 +600,7 @@ impl ArhivConnection {
 
         let rows_count = self.get_connection().execute(
             "INSERT INTO documents_refs(id, rev, refs)
-               SELECT id, rev, extract_refs(type, data)
+               SELECT id, rev, extract_refs(document_type, data)
                FROM documents_snapshots ds
                WHERE NOT EXISTS (
                  SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev
@@ -804,8 +807,8 @@ impl ArhivConnection {
 
         let rows_count = self.get_connection().execute(
             "UPDATE documents_snapshots
-                SET data = apply_migrations(type, data)
-                WHERE data <> apply_migrations(type, data)",
+                SET data = apply_migrations(document_type, data)
+                WHERE data <> apply_migrations(document_type, data)",
             [],
         )?;
 

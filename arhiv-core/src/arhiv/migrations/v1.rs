@@ -24,7 +24,7 @@ impl DBMigration for MigrationV1 {
                        SELECT * FROM old_db.settings;
 
             -- store schema version in settings
-            INSERT INTO settings(key, value) VALUES ('schema_version', '0');
+            INSERT INTO settings(key, value) VALUES ('data_version', '0');
 
             -- remove db version from settings
             DELETE FROM settings WHERE key = 'db_version';

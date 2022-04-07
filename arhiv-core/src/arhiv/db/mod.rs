@@ -1,8 +1,8 @@
 pub use connection::ArhivConnection;
 pub use db::{init_functions, open_connection, vacuum};
 pub use dto::{
-    BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID, SETTING_IS_PRIME,
-    SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+    BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID,
+    SETTING_DATA_VERSION, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME,
 };
 pub use filter::{Conditions, Filter, OrderBy};
 

@@ -8,8 +8,8 @@ use crate::path_manager::PathManager;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
 use self::db::{
-    vacuum, ArhivConnection, Filter, ListPage, SETTING_ARHIV_ID, SETTING_IS_PRIME,
-    SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+    vacuum, ArhivConnection, Filter, ListPage, SETTING_ARHIV_ID, SETTING_DATA_VERSION,
+    SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME,
 };
 use self::migrations::{apply_db_migrations, create_db};
 use self::status::Status;
@@ -60,12 +60,12 @@ impl Arhiv {
         tx.apply_migrations()?;
 
         {
-            let schema_version = tx.get_setting(&SETTING_SCHEMA_VERSION)?;
+            let data_version = tx.get_setting(&SETTING_DATA_VERSION)?;
 
             ensure!(
-                schema_version == arhiv.schema.get_version(),
-                "schema version {} is different from latest schema version {}",
-                schema_version,
+                data_version == arhiv.schema.get_version(),
+                "data_version {} is different from latest schema version {}",
+                data_version,
                 arhiv.schema.get_version(),
             );
         }
@@ -96,7 +96,7 @@ impl Arhiv {
         create_db(&config.arhiv_root)?;
         log::info!("Created arhiv in {}", config.arhiv_root);
 
-        let schema_version = schema.get_version();
+        let data_version = schema.get_version();
 
         let path_manager = PathManager::new(config.arhiv_root.to_string());
 
@@ -112,7 +112,7 @@ impl Arhiv {
         // initial settings
         tx.set_setting(&SETTING_ARHIV_ID, &arhiv_id.to_string())?;
         tx.set_setting(&SETTING_IS_PRIME, &prime)?;
-        tx.set_setting(&SETTING_SCHEMA_VERSION, &schema_version)?;
+        tx.set_setting(&SETTING_DATA_VERSION, &data_version)?;
         tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::MIN_DATETIME)?;
 
         tx.commit()?;

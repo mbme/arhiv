@@ -26,7 +26,7 @@ use super::{
     db::{init_functions, open_connection},
     dto::{
         BLOBSCount, DBSetting, DbStatus, DocumentsCount, ListPage, SETTING_ARHIV_ID,
-        SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME, SETTING_SCHEMA_VERSION,
+        SETTING_DATA_VERSION, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME,
     },
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
@@ -178,7 +178,7 @@ impl ArhivConnection {
         Ok(DbStatus {
             arhiv_id: self.get_setting(&SETTING_ARHIV_ID)?,
             is_prime: self.get_setting(&SETTING_IS_PRIME)?,
-            schema_version: self.get_setting(&SETTING_SCHEMA_VERSION)?,
+            data_version: self.get_setting(&SETTING_DATA_VERSION)?,
             db_rev: self.get_db_rev()?,
             last_sync_time: self.get_setting(&SETTING_LAST_SYNC_TIME)?,
         })
@@ -625,7 +625,7 @@ impl ArhivConnection {
 
         let db_status = self.get_db_status()?;
         let db_version = get_db_version(self.get_connection())?;
-        let schema_version = self.get_setting(&SETTING_SCHEMA_VERSION)?;
+        let data_version = self.get_setting(&SETTING_DATA_VERSION)?;
         let documents_count = self.count_documents()?;
         let blobs_count = self.count_blobs()?;
         let conflicts_count = self.count_conflicts()?;
@@ -634,7 +634,7 @@ impl ArhivConnection {
         Ok(Status {
             db_status,
             db_version,
-            schema_version,
+            data_version,
             documents_count,
             blobs_count,
             conflicts_count,
@@ -742,13 +742,13 @@ impl ArhivConnection {
     }
 
     pub(crate) fn apply_migrations(&self) -> Result<()> {
-        let schema_version = self.get_setting(&SETTING_SCHEMA_VERSION)?;
+        let data_version = self.get_setting(&SETTING_DATA_VERSION)?;
 
         let schema = self.get_schema();
         let migrations: Vec<_> = schema
             .get_migrations()
             .iter()
-            .filter(|migration| migration.get_version() > schema_version)
+            .filter(|migration| migration.get_version() > data_version)
             .cloned()
             .collect();
 
@@ -760,7 +760,7 @@ impl ArhivConnection {
 
         log::info!("{} schema migrations to apply", migrations.len());
 
-        let new_schema_version = schema.get_version();
+        let new_data_version = schema.get_version();
 
         let conn = self.get_connection();
 
@@ -818,12 +818,12 @@ impl ArhivConnection {
             now.elapsed().as_secs_f32()
         );
 
-        self.set_setting(&SETTING_SCHEMA_VERSION, &new_schema_version)?;
+        self.set_setting(&SETTING_DATA_VERSION, &new_data_version)?;
 
         log::info!(
-            "Finished schema migration from version {} to {}",
-            schema_version,
-            new_schema_version
+            "Finished data migration from version {} to {}",
+            data_version,
+            new_data_version
         );
 
         Ok(())
@@ -835,7 +835,7 @@ impl ArhivConnection {
         let documents = self.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            schema_version: self.get_schema().get_version(),
+            data_version: self.get_schema().get_version(),
             arhiv_id: db_status.arhiv_id,
             base_rev: db_status.db_rev,
             documents,

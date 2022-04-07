@@ -27,9 +27,9 @@ impl Arhiv {
         );
 
         ensure!(
-            changeset.schema_version == schema.get_version(),
-            "changeset schema_version {} must be equal to {}",
-            changeset.schema_version,
+            changeset.data_version == schema.get_version(),
+            "changeset data_version {} must be equal to {}",
+            changeset.data_version,
             schema.get_version(),
         );
 

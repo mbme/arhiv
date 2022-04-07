@@ -7,7 +7,7 @@ use super::{Document, Id, Revision};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Changeset {
-    pub schema_version: u8,
+    pub data_version: u8,
     pub arhiv_id: String,
     pub base_rev: Revision,
     pub documents: Vec<Document>,
@@ -36,7 +36,7 @@ impl fmt::Display for Changeset {
             f,
             "[{} (schema version {}) Changeset: {} documents since {}]",
             self.arhiv_id,
-            self.schema_version,
+            self.data_version,
             self.documents.len(),
             self.base_rev,
         )

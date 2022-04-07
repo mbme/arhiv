@@ -9,7 +9,7 @@ use crate::entities::Timestamp;
 pub struct Status {
     pub db_status: DbStatus,
     pub db_version: u8,
-    pub schema_version: u8,
+    pub data_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: u32,
@@ -44,7 +44,7 @@ impl fmt::Display for Status {
         writeln!(f)?;
 
         writeln!(f, "       DB version: {}", self.db_version)?;
-        writeln!(f, "   Schema version: {}", self.schema_version)?;
+        writeln!(f, "   Schema version: {}", self.data_version)?;
 
         writeln!(f)?;
 

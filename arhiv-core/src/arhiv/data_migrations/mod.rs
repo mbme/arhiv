@@ -17,7 +17,7 @@ pub trait DataMigration: Send + Sync + UnwindSafe + RefUnwindSafe {
 pub fn get_migrations() -> Vec<Arc<dyn DataMigration>> {
     vec![
         //
-        Arc::new(Schema1),
+        Arc::new(DataSchema1),
     ]
 }
 
@@ -30,9 +30,9 @@ pub fn get_version() -> u8 {
         })
 }
 
-struct Schema1;
+struct DataSchema1;
 
-impl DataMigration for Schema1 {
+impl DataMigration for DataSchema1 {
     fn get_version(&self) -> u8 {
         1
     }

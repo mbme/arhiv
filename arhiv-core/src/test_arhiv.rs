@@ -29,27 +29,24 @@ impl TestArhiv {
 
     #[must_use]
     pub fn new_prime() -> Self {
-        TestArhiv::new_prime_with_schema(DataSchema::new(
-            vec![DataDescription {
-                document_type: "test_type",
-                collection_of: Collection::None,
-                fields: vec![
-                    Field {
-                        name: "blob",
-                        field_type: FieldType::BLOBId,
-                        mandatory: false,
-                        readonly: false,
-                    },
-                    Field {
-                        name: "test",
-                        field_type: FieldType::String {},
-                        mandatory: false,
-                        readonly: false,
-                    },
-                ],
-            }],
-            vec![],
-        ))
+        TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
+            document_type: "test_type",
+            collection_of: Collection::None,
+            fields: vec![
+                Field {
+                    name: "blob",
+                    field_type: FieldType::BLOBId,
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "test",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                },
+            ],
+        }]))
     }
 
     #[must_use]
@@ -60,27 +57,24 @@ impl TestArhiv {
             ..Config::default()
         };
 
-        let schema = DataSchema::new(
-            vec![DataDescription {
-                document_type: "test_type",
-                collection_of: Collection::None,
-                fields: vec![
-                    Field {
-                        name: "blob",
-                        field_type: FieldType::BLOBId,
-                        mandatory: false,
-                        readonly: false,
-                    },
-                    Field {
-                        name: "test",
-                        field_type: FieldType::String {},
-                        mandatory: false,
-                        readonly: false,
-                    },
-                ],
-            }],
-            vec![],
-        );
+        let schema = DataSchema::new(vec![DataDescription {
+            document_type: "test_type",
+            collection_of: Collection::None,
+            fields: vec![
+                Field {
+                    name: "blob",
+                    field_type: FieldType::BLOBId,
+                    mandatory: false,
+                    readonly: false,
+                },
+                Field {
+                    name: "test",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                },
+            ],
+        }]);
 
         TestArhiv::new(config, false, schema)
     }

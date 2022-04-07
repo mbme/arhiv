@@ -1,11 +1,4 @@
-use std::sync::Arc;
-
-use anyhow::Result;
-
-use crate::{
-    entities::DocumentData,
-    schema::{DataSchema, SchemaMigration},
-};
+use crate::schema::DataSchema;
 
 pub use attachment::{Attachment, ATTACHMENT_TYPE};
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
@@ -41,41 +34,5 @@ pub fn get_standard_schema() -> DataSchema {
             contact::get_contact_definitions(),
         ]
         .concat(),
-        vec![
-            //
-            Arc::new(Schema1),
-        ],
     )
-}
-
-struct Schema1;
-
-impl SchemaMigration for Schema1 {
-    fn get_version(&self) -> u8 {
-        1
-    }
-
-    fn update(&self, document_type: &str, data: &mut DocumentData) -> Result<()> {
-        // replace "completed" with "status"
-        if let Some(completed) = data.get_bool("completed") {
-            if completed {
-                data.set("status", "Completed");
-            }
-            data.remove("completed");
-        }
-
-        // in film
-        // remove is_series
-        // rename episode_duration -> duration
-        // rename number_of_episodes -> episodes
-        // rename number_of_seasons -> seasons
-        if document_type == "film" {
-            data.remove("is_series");
-            data.rename("episode_duration", "duration");
-            data.rename("number_of_episodes", "episodes");
-            data.rename("number_of_seasons", "seasons");
-        }
-
-        Ok(())
-    }
 }

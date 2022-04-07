@@ -4,6 +4,7 @@ use anyhow::{anyhow, ensure, Context, Result};
 
 use rs_utils::log;
 
+use crate::arhiv::data_migrations::{get_migrations, get_version};
 use crate::path_manager::PathManager;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
@@ -15,6 +16,7 @@ use self::db_migrations::{apply_db_migrations, create_db};
 use self::status::Status;
 
 mod backup;
+mod data_migrations;
 pub(crate) mod db;
 mod db_migrations;
 mod status;
@@ -56,18 +58,23 @@ impl Arhiv {
 
         let tx = arhiv.get_tx()?;
 
-        // ensure document schema is up to date
-        tx.apply_migrations()?;
-
+        // ensure data is up to date
         {
             let data_version = tx.get_setting(&SETTING_DATA_VERSION)?;
+            let latest_data_version = get_version();
 
             ensure!(
-                data_version == arhiv.schema.get_version(),
-                "data_version {} is different from latest schema version {}",
+                data_version <= latest_data_version,
+                "data_version {} is bigger than latest data version {}",
                 data_version,
-                arhiv.schema.get_version(),
+                latest_data_version
             );
+
+            if data_version < latest_data_version {
+                tx.apply_migrations(get_migrations())?;
+
+                tx.set_setting(&SETTING_DATA_VERSION, &get_version())?;
+            }
         }
 
         // ensure computed data is up to date
@@ -96,8 +103,6 @@ impl Arhiv {
         create_db(&config.arhiv_root)?;
         log::info!("Created arhiv in {}", config.arhiv_root);
 
-        let data_version = schema.get_version();
-
         let path_manager = PathManager::new(config.arhiv_root.to_string());
 
         let arhiv = Arhiv {
@@ -112,7 +117,7 @@ impl Arhiv {
         // initial settings
         tx.set_setting(&SETTING_ARHIV_ID, &arhiv_id.to_string())?;
         tx.set_setting(&SETTING_IS_PRIME, &prime)?;
-        tx.set_setting(&SETTING_DATA_VERSION, &data_version)?;
+        tx.set_setting(&SETTING_DATA_VERSION, &get_version())?;
         tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::MIN_DATETIME)?;
 
         tx.commit()?;

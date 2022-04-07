@@ -1,8 +1,4 @@
-use std::{
-    collections::HashSet,
-    panic::{RefUnwindSafe, UnwindSafe},
-    sync::Arc,
-};
+use std::collections::HashSet;
 
 use anyhow::{anyhow, Result};
 
@@ -23,21 +19,12 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
 
 pub struct DataSchema {
     modules: Vec<DataDescription>,
-    migrations: Vec<Arc<dyn SchemaMigration>>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(
-        modules: Vec<DataDescription>,
-        mut migrations: Vec<Arc<dyn SchemaMigration>>,
-    ) -> Self {
-        migrations.sort_by_key(|migration| migration.get_version());
-
-        DataSchema {
-            modules,
-            migrations,
-        }
+    pub fn new(modules: Vec<DataDescription>) -> Self {
+        DataSchema { modules }
     }
 
     fn get_collection_ref_fields(&self, document_type: &str) -> HashSet<&str> {
@@ -128,22 +115,4 @@ impl DataSchema {
             .map(|module| module.document_type)
             .collect()
     }
-
-    #[must_use]
-    pub fn get_version(&self) -> u8 {
-        self.migrations.iter().fold(0, |latest_version, migration| {
-            migration.get_version().max(latest_version)
-        })
-    }
-
-    #[must_use]
-    pub fn get_migrations(&self) -> &Vec<Arc<dyn SchemaMigration>> {
-        &self.migrations
-    }
-}
-
-pub trait SchemaMigration: Send + Sync + UnwindSafe + RefUnwindSafe {
-    fn get_version(&self) -> u8;
-
-    fn update(&self, document_type: &str, data: &mut DocumentData) -> Result<()>;
 }

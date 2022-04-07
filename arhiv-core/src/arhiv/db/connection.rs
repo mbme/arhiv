@@ -12,7 +12,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
 use crate::{
-    arhiv::{db_migrations::get_db_version, status::Status},
+    arhiv::{data_migrations::DataMigration, db_migrations::get_db_version, status::Status},
     entities::{
         BLOBId, Changeset, ChangesetResponse, Document, DocumentData, Id, Revision, Timestamp,
         BLOB, ERASED_DOCUMENT_TYPE,
@@ -741,15 +741,12 @@ impl ArhivConnection {
         Ok(())
     }
 
-    pub(crate) fn apply_migrations(&self) -> Result<()> {
+    pub(crate) fn apply_migrations(&self, migrations: Vec<Arc<dyn DataMigration>>) -> Result<()> {
         let data_version = self.get_setting(&SETTING_DATA_VERSION)?;
 
-        let schema = self.get_schema();
-        let migrations: Vec<_> = schema
-            .get_migrations()
-            .iter()
+        let migrations: Vec<_> = migrations
+            .into_iter()
             .filter(|migration| migration.get_version() > data_version)
-            .cloned()
             .collect();
 
         if migrations.is_empty() {
@@ -759,8 +756,6 @@ impl ArhivConnection {
         }
 
         log::info!("{} schema migrations to apply", migrations.len());
-
-        let new_data_version = schema.get_version();
 
         let conn = self.get_connection();
 
@@ -818,13 +813,7 @@ impl ArhivConnection {
             now.elapsed().as_secs_f32()
         );
 
-        self.set_setting(&SETTING_DATA_VERSION, &new_data_version)?;
-
-        log::info!(
-            "Finished data migration from version {} to {}",
-            data_version,
-            new_data_version
-        );
+        log::info!("Finished data migration");
 
         Ok(())
     }
@@ -835,7 +824,7 @@ impl ArhivConnection {
         let documents = self.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            data_version: self.get_schema().get_version(),
+            data_version: self.get_setting(&SETTING_DATA_VERSION)?,
             arhiv_id: db_status.arhiv_id,
             base_rev: db_status.db_rev,
             documents,

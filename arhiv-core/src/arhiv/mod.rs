@@ -11,12 +11,12 @@ use self::db::{
     vacuum, ArhivConnection, Filter, ListPage, SETTING_ARHIV_ID, SETTING_DATA_VERSION,
     SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME,
 };
-use self::migrations::{apply_db_migrations, create_db};
+use self::db_migrations::{apply_db_migrations, create_db};
 use self::status::Status;
 
 mod backup;
 pub(crate) mod db;
-mod migrations;
+mod db_migrations;
 mod status;
 mod sync;
 

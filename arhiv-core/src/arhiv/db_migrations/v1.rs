@@ -3,9 +3,9 @@ use rusqlite::Connection;
 
 use rs_utils::FsTransaction;
 
-use crate::arhiv::migrations::migration::ensure_snapshots_count_stay_the_same;
-
-use super::migration::{ensure_settings_count_stay_the_same, DBMigration};
+use super::migration::{
+    ensure_settings_count_stay_the_same, ensure_snapshots_count_stay_the_same, DBMigration,
+};
 
 pub struct MigrationV1;
 

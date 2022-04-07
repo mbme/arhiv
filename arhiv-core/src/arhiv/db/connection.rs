@@ -12,7 +12,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
 use crate::{
-    arhiv::{migrations::get_db_version, status::Status},
+    arhiv::{db_migrations::get_db_version, status::Status},
     entities::{
         BLOBId, Changeset, ChangesetResponse, Document, DocumentData, Id, Revision, Timestamp,
         BLOB, ERASED_DOCUMENT_TYPE,

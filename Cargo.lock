@@ -54,6 +54,7 @@ dependencies = [
  "fslock",
  "futures",
  "hyper",
+ "lazy_static",
  "nanoid",
  "pulldown-cmark",
  "reqwest",

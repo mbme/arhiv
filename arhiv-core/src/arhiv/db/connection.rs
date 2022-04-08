@@ -3,19 +3,16 @@ use std::{collections::HashSet, fs, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use chrono::Utc;
 use fslock::LockFile;
-use rusqlite::{
-    functions::{Context as FunctionContext, FunctionFlags},
-    params, params_from_iter, Connection, Error as RusqliteError, OptionalExtension,
-};
+use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
 
 use crate::{
-    arhiv::{data_migrations::DataMigration, db_migrations::get_db_version, status::Status},
+    arhiv::{db_migrations::get_db_version, status::Status},
     entities::{
-        BLOBId, Changeset, ChangesetResponse, Document, DocumentData, Id, Revision, Timestamp,
-        BLOB, ERASED_DOCUMENT_TYPE,
+        BLOBId, Changeset, ChangesetResponse, Document, Id, Revision, Timestamp, BLOB,
+        ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
     schema::DataSchema,
@@ -737,83 +734,6 @@ impl ArhivConnection {
         self.put_document(&document)?;
 
         log::info!("erased document {}", document);
-
-        Ok(())
-    }
-
-    pub(crate) fn apply_migrations(&self, migrations: Vec<Arc<dyn DataMigration>>) -> Result<()> {
-        let data_version = self.get_setting(&SETTING_DATA_VERSION)?;
-
-        let migrations: Vec<_> = migrations
-            .into_iter()
-            .filter(|migration| migration.get_version() > data_version)
-            .collect();
-
-        if migrations.is_empty() {
-            log::debug!("no schema migrations to apply");
-
-            return Ok(());
-        }
-
-        log::info!("{} schema migrations to apply", migrations.len());
-
-        let conn = self.get_connection();
-
-        let migrations = Arc::new(migrations);
-        let apply_migrations = move |ctx: &FunctionContext| -> Result<String> {
-            let document_type = ctx
-                .get_raw(0)
-                .as_str()
-                .context("document_type must be str")?;
-
-            let document_data = ctx
-                .get_raw(1)
-                .as_str()
-                .context("document_data must be str")?;
-
-            let mut document_data: DocumentData = serde_json::from_str(document_data)?;
-
-            for migration in migrations.as_ref() {
-                migration.update(document_type, &mut document_data)?;
-            }
-
-            serde_json::to_string(&document_data).context("failed to serialize document_data")
-        };
-
-        conn.create_scalar_function(
-            "apply_migrations",
-            2,
-            FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
-            move |ctx| {
-                assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
-
-                let result = apply_migrations(ctx);
-
-                if let Err(ref err) = result {
-                    log::error!("apply_migrations() failed: \n{:?}", err);
-                }
-
-                result.map_err(|e| RusqliteError::UserFunctionError(e.into()))
-            },
-        )
-        .context("Failed to define function 'apply_migrations'")?;
-
-        let now = Instant::now();
-
-        let rows_count = self.get_connection().execute(
-            "UPDATE documents_snapshots
-                SET data = apply_migrations(document_type, data)
-                WHERE data <> apply_migrations(document_type, data)",
-            [],
-        )?;
-
-        log::info!(
-            "Migrated {} rows in {} seconds",
-            rows_count,
-            now.elapsed().as_secs_f32()
-        );
-
-        log::info!("Finished data migration");
 
         Ok(())
     }

@@ -1,63 +1,91 @@
-use std::{
-    panic::{RefUnwindSafe, UnwindSafe},
-    sync::Arc,
-};
+mod migration;
+mod v1;
 
-use anyhow::Result;
+use std::time::Instant;
 
-use crate::entities::DocumentData;
+use anyhow::{ensure, Context, Result};
+use lazy_static::lazy_static;
+use rs_utils::log;
 
-pub trait DataMigration: Send + Sync + UnwindSafe + RefUnwindSafe {
-    fn get_version(&self) -> u8;
+use crate::ArhivConnection;
 
-    fn update(&self, document_type: &str, data: &mut DocumentData) -> Result<()>;
-}
+use super::db::{extract_document, SETTING_DATA_VERSION};
 
-#[must_use]
-pub fn get_migrations() -> Vec<Arc<dyn DataMigration>> {
-    vec![
-        //
-        Arc::new(DataSchema1),
-    ]
-}
+use self::migration::DataMigration;
+use self::v1::DataSchema1;
 
-#[must_use]
-pub fn get_version() -> u8 {
-    get_migrations()
+lazy_static! {
+    static ref MIGRATIONS: Vec<Box<dyn DataMigration>> = vec![ //
+        Box::new(DataSchema1),
+    ];
+
+    static ref DATA_VERSION: u8 = MIGRATIONS
         .iter()
         .fold(0, |latest_version, migration| {
             migration.get_version().max(latest_version)
-        })
+        });
 }
 
-struct DataSchema1;
+#[must_use]
+pub fn get_latest_data_version() -> u8 {
+    *DATA_VERSION
+}
 
-impl DataMigration for DataSchema1 {
-    fn get_version(&self) -> u8 {
-        1
+pub(crate) fn apply_data_migrations(conn: &ArhivConnection) -> Result<()> {
+    let data_version = conn.get_setting(&SETTING_DATA_VERSION)?;
+    let latest_data_version = get_latest_data_version();
+
+    ensure!(
+        data_version <= latest_data_version,
+        "data_version {} is bigger than latest data version {}",
+        data_version,
+        latest_data_version
+    );
+
+    let migrations = MIGRATIONS
+        .iter()
+        .filter(|migration| migration.get_version() > data_version)
+        .collect::<Vec<_>>();
+
+    if migrations.is_empty() {
+        log::debug!("no schema migrations to apply");
+
+        return Ok(());
     }
 
-    fn update(&self, document_type: &str, data: &mut DocumentData) -> Result<()> {
-        // replace "completed" with "status"
-        if let Some(completed) = data.get_bool("completed") {
-            if completed {
-                data.set("status", "Completed");
-            }
-            data.remove("completed");
+    log::info!("{} schema migrations to apply", migrations.len());
+
+    let mut stmt = conn
+        .get_connection()
+        .prepare("SELECT * FROM documents_snapshots")?;
+
+    let rows = stmt
+        .query_and_then([], extract_document)
+        .context("failed to query documents snapshots")?;
+
+    let now = Instant::now();
+    let mut rows_count = 0;
+    for row in rows {
+        let mut document = row?;
+
+        for migration in &migrations {
+            migration.update(&mut document)?;
         }
 
-        // in film
-        // remove is_series
-        // rename episode_duration -> duration
-        // rename number_of_episodes -> episodes
-        // rename number_of_seasons -> seasons
-        if document_type == "film" {
-            data.remove("is_series");
-            data.rename("episode_duration", "duration");
-            data.rename("number_of_episodes", "episodes");
-            data.rename("number_of_seasons", "seasons");
-        }
+        conn.put_document(&document)?;
 
-        Ok(())
+        rows_count += 1;
     }
+
+    conn.set_setting(&SETTING_DATA_VERSION, &latest_data_version)?;
+
+    log::info!(
+        "Migrated {} rows in {} seconds",
+        rows_count,
+        now.elapsed().as_secs_f32()
+    );
+
+    log::info!("Finished data migration");
+
+    Ok(())
 }

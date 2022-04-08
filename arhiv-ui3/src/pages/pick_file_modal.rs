@@ -112,7 +112,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
     Ok(result)
 }
 
-fn sort_entries(entries: &mut Vec<Entry>) {
+fn sort_entries(entries: &mut [Entry]) {
     entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
         (true, false) => Ordering::Less,
         (false, true) => Ordering::Greater,

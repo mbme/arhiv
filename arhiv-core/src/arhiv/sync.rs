@@ -2,7 +2,6 @@ use anyhow::{ensure, Result};
 
 use rs_utils::log;
 
-use crate::arhiv::data_migrations::get_version;
 use crate::entities::{Changeset, ChangesetResponse, Document};
 use crate::prime_server::PrimeServerRPC;
 
@@ -27,12 +26,11 @@ impl Arhiv {
             arhiv_id,
         );
 
-        let data_version = get_version();
         ensure!(
-            changeset.data_version == data_version,
+            changeset.data_version == self.data_version,
             "changeset data_version {} must be equal to {}",
             changeset.data_version,
-            data_version,
+            self.data_version,
         );
 
         ensure!(

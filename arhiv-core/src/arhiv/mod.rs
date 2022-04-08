@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use rs_utils::log;
 
-use crate::arhiv::data_migrations::{get_migrations, get_version};
 use crate::path_manager::PathManager;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
 
+use self::data_migrations::{apply_data_migrations, get_latest_data_version};
 use self::db::{
     vacuum, ArhivConnection, Filter, ListPage, SETTING_ARHIV_ID, SETTING_DATA_VERSION,
     SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME,
@@ -26,6 +26,7 @@ pub struct Arhiv {
     config: Config,
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
+    data_version: u8,
 }
 
 impl Arhiv {
@@ -54,28 +55,13 @@ impl Arhiv {
             config,
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
+            data_version: get_latest_data_version(),
         };
 
         let tx = arhiv.get_tx()?;
 
         // ensure data is up to date
-        {
-            let data_version = tx.get_setting(&SETTING_DATA_VERSION)?;
-            let latest_data_version = get_version();
-
-            ensure!(
-                data_version <= latest_data_version,
-                "data_version {} is bigger than latest data version {}",
-                data_version,
-                latest_data_version
-            );
-
-            if data_version < latest_data_version {
-                tx.apply_migrations(get_migrations())?;
-
-                tx.set_setting(&SETTING_DATA_VERSION, &get_version())?;
-            }
-        }
+        apply_data_migrations(&tx).context("failed to apply data migrations to arhiv db")?;
 
         // ensure computed data is up to date
         tx.compute_data().context("failed to compute data")?;
@@ -109,6 +95,7 @@ impl Arhiv {
             config,
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
+            data_version: get_latest_data_version(),
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -117,7 +104,7 @@ impl Arhiv {
         // initial settings
         tx.set_setting(&SETTING_ARHIV_ID, &arhiv_id.to_string())?;
         tx.set_setting(&SETTING_IS_PRIME, &prime)?;
-        tx.set_setting(&SETTING_DATA_VERSION, &get_version())?;
+        tx.set_setting(&SETTING_DATA_VERSION, &arhiv.data_version)?;
         tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::MIN_DATETIME)?;
 
         tx.commit()?;

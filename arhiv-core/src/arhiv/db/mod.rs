@@ -6,6 +6,8 @@ pub use dto::{
 };
 pub use filter::{Conditions, Filter, OrderBy};
 
+pub(crate) use utils::extract_document;
+
 mod connection;
 mod db;
 mod dto;

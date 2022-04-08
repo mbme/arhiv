@@ -56,7 +56,7 @@ fn import_track(arhiv: &Arhiv, file_path: &str, move_file: bool) -> Result<Docum
     data.set("title", title);
     data.set("track", &attachment.id);
 
-    let mut document = Document::new_with_data(TRACK_TYPE, data);
+    let mut document = Document::new_with_data(TRACK_TYPE, "", data);
 
     tx.stage_document(&mut document)?;
 

@@ -22,13 +22,14 @@ impl App {
     pub fn new_document_page(
         &self,
         document_type: &str,
+        subtype: &str,
         parent_collection: &Option<Id>,
     ) -> Result<AppResponse> {
         let schema = self.arhiv.get_schema();
 
         ensure!(document_type != ERASED_DOCUMENT_TYPE);
 
-        let mut document = Document::new(document_type);
+        let mut document = Document::new(document_type, subtype);
 
         if let Some(ref parent_collection) = parent_collection {
             let collection = self.arhiv.must_get_document(parent_collection)?;
@@ -99,6 +100,7 @@ impl App {
     pub fn new_document_page_handler(
         &self,
         document_type: &str,
+        subtype: &str,
         parent_collection: &Option<Id>,
         fields: &Fields,
     ) -> Result<AppResponse> {
@@ -109,7 +111,7 @@ impl App {
 
         let data = fields_to_document_data(fields, data_description)?;
 
-        let mut document = Document::new_with_data(document_type, data);
+        let mut document = Document::new_with_data(document_type, subtype, data);
 
         let tx = self.arhiv.get_tx()?;
         let validation_result =

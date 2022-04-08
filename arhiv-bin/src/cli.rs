@@ -106,6 +106,7 @@ fn build_app() -> Command<'static> {
                         .index(1)
                         .help("One of known document types"),
                 )
+                .arg(Arg::new("subtype").help("Document subtype"))
                 .arg(
                     Arg::new("data")
                         .required(true)
@@ -225,12 +226,13 @@ pub async fn arhiv_cli() {
             let document_type: &str = matches
                 .value_of("document_type")
                 .expect("document_type must be present");
+            let subtype: &str = matches.value_of("subtype").unwrap_or_default();
 
             let data: &str = matches.value_of("data").expect("data must be present");
             let data: DocumentData =
                 serde_json::from_str(data).expect("data must be a JSON object");
 
-            let mut document = Document::new_with_data(document_type, data);
+            let mut document = Document::new_with_data(document_type, subtype, data);
 
             let arhiv = Arhiv::must_open();
 

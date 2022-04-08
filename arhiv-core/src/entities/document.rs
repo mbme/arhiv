@@ -19,6 +19,7 @@ pub struct Document {
     pub rev: Revision,
     pub prev_rev: Revision,
     pub document_type: String,
+    pub subtype: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub data: DocumentData,
@@ -26,12 +27,12 @@ pub struct Document {
 
 impl Document {
     #[must_use]
-    pub fn new(document_type: &str) -> Self {
-        Document::new_with_data(document_type, DocumentData::new())
+    pub fn new(document_type: &str, subtype: &str) -> Self {
+        Document::new_with_data(document_type, subtype, DocumentData::new())
     }
 
     #[must_use]
-    pub fn new_with_data(document_type: &str, data: DocumentData) -> Self {
+    pub fn new_with_data(document_type: &str, subtype: &str, data: DocumentData) -> Self {
         let now = Utc::now();
 
         Document {
@@ -39,6 +40,7 @@ impl Document {
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
             document_type: document_type.to_string(),
+            subtype: subtype.to_string(),
             created_at: now,
             updated_at: now,
             data,
@@ -80,8 +82,8 @@ impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[Document {}/{} {}]",
-            self.document_type, self.id, self.rev,
+            "[Document {}/{} {} {}]",
+            self.document_type, self.subtype, self.id, self.rev,
         )
     }
 }

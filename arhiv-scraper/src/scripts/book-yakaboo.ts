@@ -47,7 +47,7 @@ export async function extractBookFromYakaboo(url: string, context: Context): Pro
   data.publisher = table['Видавництво'];
   data.pages = Number.parseInt(table['Кількість сторінок'] || '', 10);
 
-  await context.channel.createDocument('book', data);
+  await context.channel.createDocument('book', '', data);
 
   return true;
 }

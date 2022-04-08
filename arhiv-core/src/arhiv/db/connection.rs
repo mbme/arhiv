@@ -534,8 +534,8 @@ impl ArhivConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, prev_rev, document_type, created_at, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (id, rev, prev_rev, document_type, subtype, created_at, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 if document.is_staged() {
                     "OR REPLACE"
                 } else {
@@ -548,6 +548,7 @@ impl ArhivConnection {
                 document.rev,
                 document.prev_rev,
                 document.document_type,
+                document.subtype,
                 document.created_at,
                 document.updated_at,
                 document.data.to_string(),

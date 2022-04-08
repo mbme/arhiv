@@ -35,7 +35,7 @@ export async function extractGameFromSteam(url: string, context: Context): Promi
   await removeEl(page, '#game_area_description h2'); // remove "About this game"
   data.description = await getText(page, '#game_area_description');
 
-  await context.channel.createDocument('game', data);
+  await context.channel.createDocument('game', '', data);
 
   return true;
 }

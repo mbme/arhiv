@@ -31,7 +31,7 @@ export async function extractFilmFromMyanimelist(url: string, context: Context):
     throw new Error("Can't import an anime: it has a prequel. Start with the first season.");
   }
 
-  await context.channel.createDocument('film', data);
+  await context.channel.createDocument('film', '', data);
 
   return true;
 }

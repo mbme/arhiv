@@ -95,7 +95,7 @@ export async function extractFilmFromIMDB(url: string, context: Context): Promis
     data.cast = undefined;
   }
 
-  await context.channel.createDocument('film', data);
+  await context.channel.createDocument('film', '', data);
 
   return true;
 }

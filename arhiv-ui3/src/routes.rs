@@ -119,14 +119,26 @@ async fn new_document_page(req: Request<Body>) -> ServerResponse {
         .param("document_type")
         .expect("document_type must be present");
 
+    let subtype = req
+        .get_url()
+        .get_query_param("subtype")
+        .unwrap_or_default()
+        .to_string();
+
     let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
 
-    let response = app.new_document_page(document_type, &parent_collection)?;
+    let response = app.new_document_page(document_type, &subtype, &parent_collection)?;
 
     app.render(response)
 }
 
 async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
+    let subtype = req
+        .get_url()
+        .get_query_param("subtype")
+        .unwrap_or_default()
+        .to_string();
+
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -138,7 +150,8 @@ async fn new_document_page_handler(req: Request<Body>) -> ServerResponse {
 
     let fields = extract_fields(body).await?;
 
-    let response = app.new_document_page_handler(document_type, &parent_collection, &fields)?;
+    let response =
+        app.new_document_page_handler(document_type, &subtype, &parent_collection, &fields)?;
 
     app.render(response)
 }

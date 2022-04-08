@@ -18,8 +18,8 @@ async fn main() {
         .field_size_limits
         .insert(("task".to_string(), "description".to_string()), (0, 1));
 
-    faker.create_fakes("note");
-    faker.create_fakes("project");
+    faker.create_fakes("note", "");
+    faker.create_fakes("project", "");
 
     arhiv.sync().await.expect("must be able to sync");
 

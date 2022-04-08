@@ -23,6 +23,7 @@ enum ScraperAction {
     },
     CreateDocument {
         document_type: String,
+        subtype: String,
         data: DocumentData,
     },
 }
@@ -169,9 +170,10 @@ impl<'a> Scraper<'a> {
             }
             ScraperAction::CreateDocument {
                 document_type,
+                subtype,
                 data,
             } => {
-                let mut document = Document::new_with_data(&document_type, data);
+                let mut document = Document::new_with_data(&document_type, &subtype, data);
 
                 tx.stage_document(&mut document)?;
 

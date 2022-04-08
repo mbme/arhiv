@@ -69,7 +69,7 @@ impl<'a> Faker<'a> {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(&self, document_type: &str, mut data: DocumentData) -> Document {
+    fn create_fake(&self, document_type: &str, subtype: &str, mut data: DocumentData) -> Document {
         let description = self
             .arhiv
             .get_schema()
@@ -103,10 +103,10 @@ impl<'a> Faker<'a> {
             }
         }
 
-        Document::new_with_data(document_type, data)
+        Document::new_with_data(document_type, subtype, data)
     }
 
-    pub fn create_fakes<S: Into<String>>(&self, document_type: S) {
+    pub fn create_fakes<S: Into<String>>(&self, document_type: S, subtype: &str) {
         let document_type = document_type.into();
 
         let data_description = self
@@ -121,7 +121,7 @@ impl<'a> Faker<'a> {
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let mut document = self.create_fake(&document_type, DocumentData::new());
+            let mut document = self.create_fake(&document_type, subtype, DocumentData::new());
 
             tx.stage_document(&mut document)
                 .expect("must be able to save document");
@@ -137,7 +137,8 @@ impl<'a> Faker<'a> {
                     let mut initial_values = DocumentData::new();
                     initial_values.set(field.to_string(), &document.id);
 
-                    let mut child_document = self.create_fake(child_document_type, initial_values);
+                    let mut child_document =
+                        self.create_fake(child_document_type, "", initial_values);
 
                     tx.stage_document(&mut child_document)
                         .expect("must be able to save child document");

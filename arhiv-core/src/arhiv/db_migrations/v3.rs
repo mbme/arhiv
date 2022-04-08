@@ -26,8 +26,8 @@ impl DBMigration for MigrationV3 {
             -- rename schema_version setting into data_version
             UPDATE settings SET key = 'data_version' WHERE key = 'schema_version';
 
-            INSERT INTO documents_snapshots(id, rev, prev_rev, document_type, created_at, updated_at, data)
-                       SELECT id, rev, prev_rev, type, created_at, updated_at, data FROM old_db.documents_snapshots;
+            INSERT INTO documents_snapshots(id, rev, prev_rev, document_type, subtype, created_at, updated_at, data)
+                       SELECT id, rev, prev_rev, type, '', created_at, updated_at, data FROM old_db.documents_snapshots;
        ",
         )?;
 

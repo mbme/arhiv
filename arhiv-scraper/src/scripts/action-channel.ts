@@ -9,6 +9,7 @@ type ScraperAction =
   | {
       type: 'CreateDocument';
       document_type: string;
+      subtype: string;
       data: Record<string, unknown>;
     };
 
@@ -37,10 +38,11 @@ export class ActionChannel {
     });
   }
 
-  createDocument(document_type: string, data: Record<string, unknown>) {
+  createDocument(document_type: string, subtype: string, data: Record<string, unknown>) {
     return this.runAction({
       type: 'CreateDocument',
       document_type,
+      subtype,
       data,
     });
   }

@@ -10,6 +10,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         rev: row.get("rev")?,
         prev_rev: row.get("prev_rev")?,
         document_type: row.get("document_type")?,
+        subtype: row.get("subtype")?,
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
         data: {

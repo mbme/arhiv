@@ -31,6 +31,7 @@ pub struct Field {
     pub field_type: FieldType,
     pub mandatory: bool,
     pub readonly: bool,
+    pub for_subtypes: &'static [&'static str],
 }
 
 impl Field {

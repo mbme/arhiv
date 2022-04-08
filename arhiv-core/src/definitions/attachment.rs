@@ -28,26 +28,31 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: true,
+                for_subtypes: &[],
             },
             Field {
                 name: FIELD_MEDIA_TYPE,
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: true,
+                for_subtypes: &[],
             },
             Field {
                 name: FIELD_BLOB,
                 field_type: FieldType::BLOBId,
                 mandatory: true,
                 readonly: true,
+                for_subtypes: &[],
             },
             Field {
                 name: FIELD_SIZE, // in bytes
                 field_type: FieldType::NaturalNumber {},
                 mandatory: true,
                 readonly: true,
+                for_subtypes: &[],
             },
         ],
+        subtypes: &[],
     }]
 }
 

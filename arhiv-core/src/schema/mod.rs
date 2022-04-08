@@ -15,6 +15,7 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     document_type: ERASED_DOCUMENT_TYPE,
     collection_of: Collection::None,
     fields: vec![],
+    subtypes: &[],
 };
 
 pub struct DataSchema {

@@ -8,6 +8,7 @@ use super::{field::*, search::MultiSearch};
 #[derive(Serialize, Debug, Clone)]
 pub struct DataDescription {
     pub document_type: &'static str,
+    pub subtypes: &'static [&'static str],
     pub collection_of: Collection,
     pub fields: Vec<Field>,
 }

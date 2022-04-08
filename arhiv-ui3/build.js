@@ -15,6 +15,8 @@ void esbuild.build({
   sourcemap: true,
 
   inject: ['./preact-shim.js'],
+  jsxFactory: 'h',
+  jsxFragment: 'Fragment',
 
   loader: {
     '.html': 'text',

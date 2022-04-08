@@ -6,6 +6,7 @@
   "description": "arhiv UI",
   "main": "",
   "scripts": {
+    "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "build:js": "node build.js",
     "build:css": "TAILWIND_MODE=build postcss ./src/index.css -o public/index.css",
     "watch:js": "node build.js --watch",

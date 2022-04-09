@@ -3,7 +3,7 @@ use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::{
-    entities::{Document, Id, ERASED_DOCUMENT_TYPE},
+    entities::{Document, DocumentData, Id, ERASED_DOCUMENT_TYPE},
     schema::Collection,
     FieldValidationErrors, Validator,
 };
@@ -29,7 +29,7 @@ impl App {
 
         ensure!(document_type != ERASED_DOCUMENT_TYPE);
 
-        let mut document = Document::new(document_type, subtype);
+        let mut data = DocumentData::new();
 
         if let Some(ref parent_collection) = parent_collection {
             let collection = self.arhiv.must_get_document(parent_collection)?;
@@ -45,50 +45,52 @@ impl App {
                     "collection_id is not a collection of {}",
                     document_type
                 );
-                document.data.set(field, parent_collection);
+                data.set(field, parent_collection);
             } else {
                 bail!("collection_id is not a collection");
             };
         }
 
-        let content = self.render_new_document_page_content(&document, parent_collection, &None)?;
+        let content = self.render_new_document_page_content(
+            document_type,
+            subtype,
+            &data,
+            parent_collection,
+            &None,
+        )?;
 
         let title = format!("New {}", document_type);
 
         Ok(AppResponse::page(title, content))
     }
 
-    pub fn render_new_document_page_content(
+    fn render_new_document_page_content(
         &self,
-        document: &Document,
+        document_type: &str,
+        _subtype: &str,
+        data: &DocumentData,
         parent_collection: &Option<Id>,
         errors: &Option<FieldValidationErrors>,
     ) -> Result<String> {
-        let cancel_url = parent_collection_url(&document.document_type, parent_collection);
+        let cancel_url = parent_collection_url(document_type, parent_collection);
 
         let editor = DocumentDataEditor::new(
-            &document.data,
+            data,
             self.arhiv
                 .get_schema()
-                .get_data_description(&document.document_type)?,
+                .get_data_description(document_type)?,
         )?
         .with_errors(errors)
         .render(cancel_url)?;
 
         let toolbar = Toolbar::new()
             .with_breadcrumb(Breadcrumb::for_collection(
-                &document.document_type,
+                document_type,
                 parent_collection,
                 &self.arhiv,
             )?)
-            .with_breadcrumb(Breadcrumb::string(format!(
-                "new {}",
-                document.document_type
-            )))
-            .on_close(parent_collection_url(
-                &document.document_type,
-                parent_collection,
-            ))
+            .with_breadcrumb(Breadcrumb::string(format!("new {}", document_type)))
+            .on_close(parent_collection_url(document_type, parent_collection))
             .render()?;
 
         render_template(json!({
@@ -121,7 +123,9 @@ impl App {
             tx.commit()?;
 
             let content = self.render_new_document_page_content(
-                &document,
+                document_type,
+                subtype,
+                &document.data,
                 parent_collection,
                 &Some(error.errors),
             )?;

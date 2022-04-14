@@ -82,9 +82,9 @@ fn test_order_by_enum_field() -> Result<()> {
             field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
             mandatory: false,
             readonly: false,
-            for_subtypes: &[""],
+            for_subtypes: None,
         }],
-        subtypes: &[""],
+        subtypes: None,
     }]));
 
     {
@@ -131,17 +131,17 @@ fn test_multiple_order_by() -> Result<()> {
                 field_type: FieldType::String {},
                 mandatory: false,
                 readonly: false,
-                for_subtypes: &[""],
+                for_subtypes: None,
             },
             Field {
                 name: "other",
                 field_type: FieldType::String {},
                 mandatory: false,
                 readonly: false,
-                for_subtypes: &[""],
+                for_subtypes: None,
             },
         ],
-        subtypes: &[""],
+        subtypes: None,
     }]));
 
     {

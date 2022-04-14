@@ -8,7 +8,7 @@ use super::{field::*, search::MultiSearch};
 #[derive(Serialize, Debug, Clone)]
 pub struct DataDescription {
     pub document_type: &'static str,
-    pub subtypes: &'static [&'static str],
+    pub subtypes: Option<&'static [&'static str]>,
     pub collection_of: Collection,
     pub fields: Vec<Field>,
 }
@@ -78,7 +78,7 @@ impl DataDescription {
 
     #[must_use]
     pub fn is_supported_subtype(&self, subtype: &str) -> bool {
-        self.subtypes.contains(&subtype)
+        self.subtypes.unwrap_or(&[""]).contains(&subtype)
     }
 
     pub fn iter_fields(&self, subtype: &str) -> impl Iterator<Item = &Field> {

@@ -166,7 +166,7 @@ impl<'c> Validator<'c> {
         for field in &data_description.fields {
             let value = document.data.get(field.name);
 
-            if value.is_some() && !field.for_subtypes.contains(&document.subtype.as_str()) {
+            if value.is_some() && !field.for_subtype(&document.subtype) {
                 self.track_err::<()>(
                     field,
                     Err(anyhow!(

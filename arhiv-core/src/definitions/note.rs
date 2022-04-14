@@ -13,16 +13,16 @@ pub fn get_note_definitions() -> Vec<DataDescription> {
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: false,
-                for_subtypes: &[],
+                for_subtypes: None,
             },
             Field {
                 name: "data",
                 field_type: FieldType::MarkupString {},
                 mandatory: false,
                 readonly: false,
-                for_subtypes: &[],
+                for_subtypes: None,
             },
         ],
-        subtypes: &[],
+        subtypes: None,
     }]
 }

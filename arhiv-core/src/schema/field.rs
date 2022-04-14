@@ -31,7 +31,7 @@ pub struct Field {
     pub field_type: FieldType,
     pub mandatory: bool,
     pub readonly: bool,
-    pub for_subtypes: &'static [&'static str],
+    pub for_subtypes: Option<&'static [&'static str]>,
 }
 
 impl Field {
@@ -272,7 +272,7 @@ impl Field {
 
     #[must_use]
     pub fn for_subtype(&self, subtype: &str) -> bool {
-        self.for_subtypes.contains(&subtype)
+        self.for_subtypes.unwrap_or(&[""]).contains(&subtype)
     }
 }
 

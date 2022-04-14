@@ -73,7 +73,7 @@ impl<'a> Faker<'a> {
         let description = self
             .arhiv
             .get_schema()
-            .get_data_description(&document_type)
+            .get_data_description(document_type)
             .unwrap();
 
         let mut rng = thread_rng();

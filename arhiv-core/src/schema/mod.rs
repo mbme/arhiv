@@ -67,9 +67,7 @@ impl DataSchema {
         Ok(refs)
     }
 
-    pub fn get_data_description(&self, document_type: impl AsRef<str>) -> Result<&DataDescription> {
-        let document_type = document_type.as_ref();
-
+    pub fn get_data_description(&self, document_type: &str) -> Result<&DataDescription> {
         if document_type == ERASED_DOCUMENT_TYPE {
             return Ok(ERASED_DOCUMENT_DATA_DESCRIPTION);
         }

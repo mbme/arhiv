@@ -2,7 +2,11 @@ use anyhow::Result;
 use serde_json::json;
 
 use super::utils::*;
-use crate::{test_arhiv::TestArhiv, Filter, OrderBy};
+use crate::{
+    schema::{Collection, DataDescription, DataSchema, Field, FieldType},
+    test_arhiv::TestArhiv,
+    Filter, OrderBy,
+};
 
 #[test]
 fn test_pagination() -> Result<()> {
@@ -32,7 +36,7 @@ async fn test_modes() -> Result<()> {
     // committed
     {
         let tx = arhiv.get_tx()?;
-        tx.stage_document(&mut new_document(json!({ "value": "1" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "1" })))?;
         tx.commit()?;
     }
 
@@ -41,7 +45,7 @@ async fn test_modes() -> Result<()> {
     // staged
     {
         let tx = arhiv.get_tx()?;
-        tx.stage_document(&mut new_document(json!({ "value": "3" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "3" })))?;
         tx.commit()?;
     }
 
@@ -54,7 +58,7 @@ async fn test_modes() -> Result<()> {
 
         assert_eq!(
             get_values(page),
-            vec![json!({ "value": "3" }), json!({ "value": "1" }),]
+            vec![json!({ "test": "3" }), json!({ "test": "1" }),]
         );
     }
 
@@ -62,7 +66,7 @@ async fn test_modes() -> Result<()> {
         // test staged
         let page = arhiv.list_documents(Filter::default().only_staged())?;
 
-        assert_eq!(get_values(page), vec![json!({ "value": "3" })]);
+        assert_eq!(get_values(page), vec![json!({ "test": "3" })]);
     }
 
     Ok(())
@@ -70,7 +74,18 @@ async fn test_modes() -> Result<()> {
 
 #[test]
 fn test_order_by_enum_field() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
+        document_type: "test_type",
+        collection_of: Collection::None,
+        fields: vec![Field {
+            name: "enum",
+            field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
+            mandatory: false,
+            readonly: false,
+            for_subtypes: &[""],
+        }],
+        subtypes: &[""],
+    }]));
 
     {
         let tx = arhiv.get_tx()?;
@@ -107,7 +122,27 @@ fn test_order_by_enum_field() -> Result<()> {
 
 #[test]
 fn test_multiple_order_by() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
+        document_type: "test_type",
+        collection_of: Collection::None,
+        fields: vec![
+            Field {
+                name: "prop",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: &[""],
+            },
+            Field {
+                name: "other",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: &[""],
+            },
+        ],
+        subtypes: &[""],
+    }]));
 
     {
         let tx = arhiv.get_tx()?;

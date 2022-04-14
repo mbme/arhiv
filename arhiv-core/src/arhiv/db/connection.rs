@@ -115,7 +115,7 @@ impl ArhivConnection {
         self.complete_tx(false)
     }
 
-    fn get_schema(&self) -> Arc<DataSchema> {
+    pub(crate) fn get_schema(&self) -> Arc<DataSchema> {
         match self {
             ArhivConnection::Transaction { schema, .. }
             | ArhivConnection::ReadOnly { schema, .. } => schema.clone(),
@@ -652,14 +652,9 @@ impl ArhivConnection {
 
         let prev_document = self.get_document(&document.id)?;
 
-        let schema = self.get_schema();
-        let data_description = schema.get_data_description(&document.document_type)?;
-
-        Validator::default().validate(
-            &document.data,
+        Validator::new(self).validate(
+            document,
             prev_document.as_ref().map(|document| &document.data),
-            data_description,
-            self,
         )?;
 
         if let Some(prev_document) = prev_document {

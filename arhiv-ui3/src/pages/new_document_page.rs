@@ -5,14 +5,14 @@ use serde_json::json;
 use arhiv_core::{
     entities::{Document, DocumentData, Id, ERASED_DOCUMENT_TYPE},
     schema::Collection,
-    FieldValidationErrors, Validator,
+    ValidationError, Validator,
 };
 
 use crate::{
     app::{App, AppResponse},
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     template_fn,
-    urls::{document_url, parent_collection_url},
+    urls::{document_url, new_document_url, parent_collection_url},
     utils::{fields_to_document_data, Fields},
 };
 
@@ -56,7 +56,7 @@ impl App {
             subtype,
             &data,
             parent_collection,
-            &None,
+            None,
         )?;
 
         let title = format!("New {}", document_type);
@@ -70,18 +70,19 @@ impl App {
         _subtype: &str,
         data: &DocumentData,
         parent_collection: &Option<Id>,
-        errors: &Option<FieldValidationErrors>,
+        error: Option<ValidationError>,
     ) -> Result<String> {
-        let cancel_url = parent_collection_url(document_type, parent_collection);
-
         let editor = DocumentDataEditor::new(
             data,
             self.arhiv
                 .get_schema()
                 .get_data_description(document_type)?,
         )?
-        .with_errors(errors)
-        .render(cancel_url)?;
+        .with_validation_error(error)
+        .render(
+            &new_document_url(document_type, parent_collection),
+            &parent_collection_url(document_type, parent_collection),
+        )?;
 
         let toolbar = Toolbar::new()
             .with_breadcrumb(Breadcrumb::for_collection(
@@ -116,8 +117,7 @@ impl App {
         let mut document = Document::new_with_data(document_type, subtype, data);
 
         let tx = self.arhiv.get_tx()?;
-        let validation_result =
-            Validator::default().validate(&document.data, None, data_description, &tx);
+        let validation_result = Validator::new(&tx).validate(&document, None);
 
         if let Err(error) = validation_result {
             tx.commit()?;
@@ -127,7 +127,7 @@ impl App {
                 subtype,
                 &document.data,
                 parent_collection,
-                &Some(error.errors),
+                Some(error),
             )?;
 
             let title = format!("New {}", document_type);

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::Serialize;
 
 use crate::entities::DocumentData;
@@ -65,22 +65,27 @@ impl DataDescription {
         Ok(final_score)
     }
 
-    pub fn get_field(&self, name: impl AsRef<str>) -> Result<&Field> {
+    pub fn get_field(&self, name: impl AsRef<str>) -> Option<&Field> {
         let name = name.as_ref();
-        self.fields
-            .iter()
-            .find(|field| field.name == name)
-            .ok_or_else(|| {
-                anyhow!(
-                    "can't find field {} in document type {}",
-                    name,
-                    self.document_type
-                )
-            })
+
+        self.fields.iter().find(|field| field.name == name)
     }
 
     #[must_use]
     pub fn is_editable(&self) -> bool {
         self.fields.iter().any(|field| !field.readonly)
+    }
+
+    #[must_use]
+    pub fn is_supported_subtype(&self, subtype: &str) -> bool {
+        self.subtypes.contains(&subtype)
+    }
+
+    pub fn iter_fields(&self, subtype: &str) -> impl Iterator<Item = &Field> {
+        let subtype = subtype.to_string();
+
+        self.fields
+            .iter()
+            .filter(move |field| field.for_subtype(&subtype))
     }
 }

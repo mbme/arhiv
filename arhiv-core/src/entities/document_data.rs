@@ -70,6 +70,10 @@ impl DocumentData {
     pub fn get_number(&self, field: &str) -> Option<u64> {
         self.get(field).and_then(serde_json::Value::as_u64)
     }
+
+    pub fn iter_fields(&self) -> impl Iterator<Item = (&String, &Value)> {
+        self.0.iter()
+    }
 }
 
 impl fmt::Display for DocumentData {

@@ -2,13 +2,13 @@ use anyhow::Result;
 use hyper::StatusCode;
 use serde_json::json;
 
-use arhiv_core::{entities::*, FieldValidationErrors, Validator};
+use arhiv_core::{entities::*, ValidationError, Validator};
 
 use crate::{
     app::{App, AppResponse},
     components::{Breadcrumb, DocumentDataEditor, Toolbar},
     template_fn,
-    urls::document_url,
+    urls::{document_editor_url, document_url},
     utils::{fields_to_document_data, Fields},
 };
 
@@ -28,8 +28,7 @@ impl App {
             }
         };
 
-        let content =
-            self.render_edit_document_page_content(&document, parent_collection, &None)?;
+        let content = self.render_edit_document_page_content(&document, parent_collection, None)?;
 
         let title = self.get_title(&document)?;
 
@@ -50,7 +49,7 @@ impl App {
         &self,
         document: &Document,
         parent_collection: &Option<Id>,
-        errors: &Option<FieldValidationErrors>,
+        error: Option<ValidationError>,
     ) -> Result<String> {
         let editor = DocumentDataEditor::new(
             &document.data,
@@ -58,8 +57,11 @@ impl App {
                 .get_schema()
                 .get_data_description(&document.document_type)?,
         )?
-        .with_errors(errors)
-        .render(document_url(&document.id, parent_collection))?;
+        .with_validation_error(error)
+        .render(
+            &document_editor_url(&document.id, parent_collection),
+            &document_url(&document.id, parent_collection),
+        )?;
 
         let toolbar = Toolbar::new()
             .with_breadcrumb(Breadcrumb::for_collection(
@@ -95,17 +97,13 @@ impl App {
         document.data = fields_to_document_data(fields, data_description)?;
 
         let tx = self.arhiv.get_tx()?;
-        let validation_result =
-            Validator::default().validate(&document.data, Some(&prev_data), data_description, &tx);
+        let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
 
         if let Err(error) = validation_result {
             tx.commit()?;
 
-            let content = self.render_edit_document_page_content(
-                &document,
-                parent_collection,
-                &Some(error.errors),
-            )?;
+            let content =
+                self.render_edit_document_page_content(&document, parent_collection, Some(error))?;
 
             let title = self.get_title(&document)?;
 

@@ -32,6 +32,6 @@ pub use crate::arhiv::db::{
 };
 pub use crate::arhiv::Arhiv;
 pub use config::Config;
-pub use validator::{FieldValidationErrors, Validator};
+pub use validator::{FieldValidationErrors, ValidationError, Validator};
 
 pub use pulldown_cmark;

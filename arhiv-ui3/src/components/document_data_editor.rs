@@ -4,7 +4,7 @@ use serde::Serialize;
 use arhiv_core::{
     entities::DocumentData,
     schema::{DataDescription, FieldType},
-    FieldValidationErrors,
+    ValidationError,
 };
 use serde_json::json;
 
@@ -25,6 +25,7 @@ struct FormField {
 
 pub struct DocumentDataEditor {
     fields: Vec<FormField>,
+    errors: Vec<String>,
 }
 
 impl DocumentDataEditor {
@@ -80,34 +81,41 @@ impl DocumentDataEditor {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(DocumentDataEditor { fields })
+        Ok(DocumentDataEditor {
+            fields,
+            errors: vec![],
+        })
     }
 
-    pub fn with_errors(mut self, errors: &Option<FieldValidationErrors>) -> Self {
-        let errors = if let Some(errors) = errors {
-            errors
-        } else {
-            return self;
+    pub fn with_validation_error(mut self, error: Option<ValidationError>) -> Self {
+        match error {
+            Some(ValidationError::DocumentError { mut errors }) => {
+                self.errors.append(&mut errors);
+            }
+            Some(ValidationError::FieldError { errors }) => {
+                for field in &mut self.fields {
+                    let mut errors: Vec<String> = errors
+                        .get(field.name)
+                        .unwrap_or(&Vec::new())
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect();
+
+                    field.errors.append(&mut errors);
+                }
+            }
+            None => {}
         };
-
-        for field in &mut self.fields {
-            let mut errors: Vec<String> = errors
-                .get(field.name)
-                .unwrap_or(&Vec::new())
-                .iter()
-                .map(ToString::to_string)
-                .collect();
-
-            field.errors.append(&mut errors);
-        }
 
         self
     }
 
-    pub fn render(self, cancel_url: impl AsRef<str>) -> Result<String> {
+    pub fn render(self, action_url: &str, cancel_url: &str) -> Result<String> {
         render_template(json!({
+            "errors": self.errors,
             "fields": self.fields,
-            "cancel_url": cancel_url.as_ref(),
+            "action_url": action_url,
+            "cancel_url": cancel_url,
         }))
     }
 }

@@ -1,6 +1,6 @@
 <form
   class="form"
-  action=""
+  action="{{action_url}}"
   method="post"
   autocomplete="off"
   v-preserve-unsaved-changes
@@ -8,6 +8,18 @@
   <!-- Prevent implicit submission of the form -->
   <button type="submit" disabled style="display: none" hidden aria-hidden="true"></button>
   <!-- ... -->
+
+  {% for error in errors %}
+  <div class="text-red-500 text-xl pl-1 my-2">
+    {{ error }}
+  </div>
+  {% endfor %}
+
+  {% for error in errors %}
+  <div class="text-red-500 text-xl pl-1 my-2">
+    {{ error }}
+  </div>
+  {% endfor %}
 
   {% for field in fields %}
   <label

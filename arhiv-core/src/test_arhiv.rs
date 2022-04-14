@@ -38,17 +38,17 @@ impl TestArhiv {
                     field_type: FieldType::BLOBId,
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: &[],
+                    for_subtypes: &[""],
                 },
                 Field {
                     name: "test",
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: &[],
+                    for_subtypes: &[""],
                 },
             ],
-            subtypes: &[],
+            subtypes: &[""],
         }]))
     }
 
@@ -69,17 +69,17 @@ impl TestArhiv {
                     field_type: FieldType::BLOBId,
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: &[],
+                    for_subtypes: &[""],
                 },
                 Field {
                     name: "test",
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: &[],
+                    for_subtypes: &[""],
                 },
             ],
-            subtypes: &[],
+            subtypes: &[""],
         }]);
 
         TestArhiv::new(config, false, schema)

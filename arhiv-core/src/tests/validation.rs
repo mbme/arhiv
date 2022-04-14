@@ -14,9 +14,9 @@ fn test_validation_mandatory() {
             field_type: FieldType::String {},
             mandatory: true,
             readonly: false,
-            for_subtypes: &[],
+            for_subtypes: &[""],
         }],
-        subtypes: &[],
+        subtypes: &[""],
     }]));
 
     {
@@ -44,9 +44,9 @@ fn test_validation_readonly() {
             field_type: FieldType::String {},
             mandatory: false,
             readonly: true,
-            for_subtypes: &[],
+            for_subtypes: &[""],
         }],
-        subtypes: &[],
+        subtypes: &[""],
     }]));
 
     {

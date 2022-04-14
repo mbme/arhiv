@@ -269,6 +269,11 @@ impl Field {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn for_subtype(&self, subtype: &str) -> bool {
+        self.for_subtypes.contains(&subtype)
+    }
 }
 
 fn extract_ids_from_reflist(reflist: &str) -> Vec<Id> {

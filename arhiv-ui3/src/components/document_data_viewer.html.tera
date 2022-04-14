@@ -19,6 +19,9 @@
     <td class="section-heading">type:</td>
     <td class="capitalize">
       {{document_type}}
+      {% if subtype %}
+      / {{ subtype }}
+      {% endif%}
     </td>
   </tr>
   <tr>

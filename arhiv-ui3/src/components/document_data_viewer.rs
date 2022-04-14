@@ -143,6 +143,7 @@ impl<'d> DocumentDataViewer<'d> {
         render_template(json!({
             "id": self.document.id,
             "document_type": self.document.document_type,
+            "subtype": self.document.subtype,
             "updated_at": self.document.updated_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M").to_string(),
             "show_empty_fields_toggle": has_empty_fields,
             "fields": fields,

@@ -199,6 +199,11 @@ async fn edit_document_page(req: Request<Body>) -> ServerResponse {
 }
 
 async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
+    let subtype = req
+        .get_url()
+        .get_query_param("subtype")
+        .map(ToString::to_string);
+
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -207,7 +212,7 @@ async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
 
     let fields = extract_fields(body).await?;
 
-    let response = app.edit_document_page_handler(&id, &parent_collection, &fields)?;
+    let response = app.edit_document_page_handler(&id, &parent_collection, subtype, &fields)?;
 
     app.render(response)
 }

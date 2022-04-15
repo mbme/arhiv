@@ -286,7 +286,7 @@ impl ArhivConnection {
 
         if let Some(ref pattern) = filter.conditions.search {
             qb.and_select(format!(
-                "calculate_search_score(documents.document_type, documents.data, {}) AS search_score",
+                "calculate_search_score(documents.document_type, documents.subtype, documents.data, {}) AS search_score",
                 qb.param(pattern)
             ));
             qb.where_condition("search_score > 0");
@@ -558,13 +558,14 @@ impl ArhivConnection {
 
         {
             let mut stmt = self.get_connection().prepare_cached(
-                "INSERT OR REPLACE INTO documents_refs (id, rev, refs) VALUES (?, ?, extract_refs(?, ?))"
+                "INSERT OR REPLACE INTO documents_refs (id, rev, refs) VALUES (?, ?, extract_refs(?, ?, ?))"
             )?;
 
             stmt.execute(params![
                 document.id,
                 document.rev,
                 document.document_type,
+                document.subtype,
                 document.data.to_string(),
             ])
             .context(anyhow!("Failed to put document refs {}", &document.id))?;
@@ -598,7 +599,7 @@ impl ArhivConnection {
 
         let rows_count = self.get_connection().execute(
             "INSERT INTO documents_refs(id, rev, refs)
-               SELECT id, rev, extract_refs(document_type, data)
+               SELECT id, rev, extract_refs(document_type, subtype, data)
                FROM documents_snapshots ds
                WHERE NOT EXISTS (
                  SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev

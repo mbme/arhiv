@@ -58,7 +58,7 @@ impl Document {
     }
 
     pub fn extract_refs(&self, schema: &DataSchema) -> Result<Refs> {
-        schema.extract_refs(&self.document_type, &self.data)
+        schema.extract_refs(&self.document_type, &self.subtype, &self.data)
     }
 
     pub(crate) fn erase(&mut self) {

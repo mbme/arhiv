@@ -272,7 +272,11 @@ impl Field {
 
     #[must_use]
     pub fn for_subtype(&self, subtype: &str) -> bool {
-        self.for_subtypes.unwrap_or(&[""]).contains(&subtype)
+        if let Some(for_subtypes) = self.for_subtypes {
+            for_subtypes.contains(&subtype)
+        } else {
+            true
+        }
     }
 }
 

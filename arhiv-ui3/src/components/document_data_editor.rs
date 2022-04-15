@@ -21,15 +21,22 @@ struct FormField {
     value: String,
     editable: bool,
     errors: Vec<String>,
+    for_subtypes: &'static [&'static str],
 }
 
 pub struct DocumentDataEditor {
     fields: Vec<FormField>,
+    subtype: String,
+    subtypes: &'static [&'static str],
     errors: Vec<String>,
 }
 
 impl DocumentDataEditor {
-    pub fn new(data: &DocumentData, data_description: &DataDescription) -> Result<Self> {
+    pub fn new(
+        subtype: &str,
+        data: &DocumentData,
+        data_description: &DataDescription,
+    ) -> Result<Self> {
         let fields = data_description
             .fields
             .iter()
@@ -65,6 +72,9 @@ impl DocumentDataEditor {
                     value,
                     editable: !field.readonly,
                     errors: vec![],
+                    for_subtypes: field
+                        .for_subtypes
+                        .unwrap_or_else(|| data_description.subtypes.unwrap_or(&[""])),
                 };
 
                 match &field.field_type {
@@ -83,6 +93,8 @@ impl DocumentDataEditor {
 
         Ok(DocumentDataEditor {
             fields,
+            subtype: subtype.to_string(),
+            subtypes: data_description.subtypes.unwrap_or(&[""]),
             errors: vec![],
         })
     }
@@ -112,6 +124,8 @@ impl DocumentDataEditor {
 
     pub fn render(self, action_url: &str, cancel_url: &str) -> Result<String> {
         render_template(json!({
+            "subtype": self.subtype,
+            "subtypes": self.subtypes,
             "errors": self.errors,
             "fields": self.fields,
             "action_url": action_url,

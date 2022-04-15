@@ -52,6 +52,7 @@ impl App {
         error: Option<ValidationError>,
     ) -> Result<String> {
         let editor = DocumentDataEditor::new(
+            &document.subtype,
             &document.data,
             self.arhiv
                 .get_schema()
@@ -84,9 +85,13 @@ impl App {
         &self,
         id: &Id,
         parent_collection: &Option<Id>,
+        subtype: Option<String>,
         fields: &Fields,
     ) -> Result<AppResponse> {
         let mut document = self.arhiv.must_get_document(id)?;
+        if let Some(subtype) = subtype {
+            document.subtype = subtype;
+        }
 
         let data_description = self
             .arhiv
@@ -94,7 +99,7 @@ impl App {
             .get_data_description(&document.document_type)?;
 
         let prev_data = document.data;
-        document.data = fields_to_document_data(fields, data_description)?;
+        document.data = fields_to_document_data(fields, data_description, &document.subtype)?;
 
         let tx = self.arhiv.get_tx()?;
         let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));

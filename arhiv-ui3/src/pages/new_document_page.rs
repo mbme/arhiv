@@ -67,12 +67,13 @@ impl App {
     fn render_new_document_page_content(
         &self,
         document_type: &str,
-        _subtype: &str,
+        subtype: &str,
         data: &DocumentData,
         parent_collection: &Option<Id>,
         error: Option<ValidationError>,
     ) -> Result<String> {
         let editor = DocumentDataEditor::new(
+            subtype,
             data,
             self.arhiv
                 .get_schema()
@@ -112,7 +113,7 @@ impl App {
             .get_schema()
             .get_data_description(document_type)?;
 
-        let data = fields_to_document_data(fields, data_description)?;
+        let data = fields_to_document_data(fields, data_description, subtype)?;
 
         let mut document = Document::new_with_data(document_type, subtype, data);
 

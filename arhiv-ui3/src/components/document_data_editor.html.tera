@@ -3,7 +3,9 @@
   action="{{action_url}}"
   method="post"
   autocomplete="off"
+  data-subtypes="{{subtypes | json_encode()}}"
   v-preserve-unsaved-changes
+  v-js="arhiv_ui.initDataEditor(this)"
 >
   <!-- Prevent implicit submission of the form -->
   <button type="submit" disabled style="display: none" hidden aria-hidden="true"></button>
@@ -21,9 +23,26 @@
   </div>
   {% endfor %}
 
+  {% if subtypes | length > 0 %}
+  <label class="flex justify-end items-center gap-2 mb-8">
+    Subtype:
+    <select id="subtype" class="field inline-block">
+      {% for subtype_option in subtypes %}
+      <option
+        value="{{subtype_option}}"
+        {% if subtype_option == subtype %}
+        selected
+        {% endif %}
+      >{{subtype_option}}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+
   {% for field in fields %}
   <label
     class="block mb-12 {% if field.errors | length > 0 %} has-errors {% endif %}"
+    data-for-subtypes="{{field.for_subtypes | json_encode()}}"
   >
     <h5 class="section-heading mb-2 relative">
       {{ field.label }}

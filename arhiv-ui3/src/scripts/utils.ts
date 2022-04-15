@@ -79,6 +79,18 @@ export function keepSessionState(el: HTMLElement, key: string): void {
   throw new Error(`unsupported element "${el.tagName}"`);
 }
 
+export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
+  const url = new URL(urlStr, window.location.href);
+
+  if (value === undefined) {
+    url.searchParams.delete(param);
+  } else {
+    url.searchParams.set(param, value);
+  }
+
+  return url.toString();
+}
+
 export function updateQueryParam(param: string, value: string | undefined): void {
   const searchParams = new URLSearchParams(window.location.search);
 

@@ -13,6 +13,7 @@ import { dispatchCloseModalEvent, getModalContainer, showModal } from './scripts
 
 import { initPickDocumentModal } from './pages/pick_document_modal';
 import { initPlayerApp } from './pages/player_app_page';
+import { initDataEditor } from './components/document_data_editor';
 import './scripts/v-audio-player';
 import './scripts/v-editor';
 
@@ -28,6 +29,7 @@ class ArhivUI {
   initPickDocumentModal = initPickDocumentModal;
 
   initPlayerApp = initPlayerApp;
+  initDataEditor = initDataEditor;
 
   copyTextAndNotify = copyTextAndNotify;
 }

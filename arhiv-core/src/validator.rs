@@ -163,7 +163,7 @@ impl<'c> Validator<'c> {
 
         Validator::validate_fields_presence(document, data_description)?;
 
-        for field in &data_description.fields {
+        for field in data_description.iter_fields(&document.subtype) {
             let value = document.data.get(field.name);
 
             if value.is_some() && !field.for_subtype(&document.subtype) {

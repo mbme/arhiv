@@ -41,14 +41,19 @@ impl DataSchema {
             .collect()
     }
 
-    pub fn extract_refs(&self, document_type: &str, data: &DocumentData) -> Result<Refs> {
+    pub fn extract_refs(
+        &self,
+        document_type: &str,
+        subtype: &str,
+        data: &DocumentData,
+    ) -> Result<Refs> {
         let data_description = self.get_data_description(document_type)?;
 
         let collection_ref_fields = self.get_collection_ref_fields(document_type);
 
         let mut refs = Refs::default();
 
-        for field in &data_description.fields {
+        for field in data_description.iter_fields(subtype) {
             let value = if let Some(value) = data.get(field.name) {
                 value
             } else {
@@ -94,11 +99,12 @@ impl DataSchema {
     pub fn get_title(&self, document: &Document) -> Result<String> {
         let data_description = self.get_data_description(&document.document_type)?;
 
-        let title_field = if let Some(title_field) = data_description.pick_title_field() {
-            title_field
-        } else {
-            return Ok(format!("{} {}", document.document_type, document.id));
-        };
+        let title_field =
+            if let Some(title_field) = data_description.pick_title_field(&document.subtype) {
+                title_field
+            } else {
+                return Ok(format!("{} {}", document.document_type, document.id));
+            };
 
         document
             .data

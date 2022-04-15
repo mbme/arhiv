@@ -70,10 +70,11 @@ pub type Fields = HashMap<String, String>;
 pub fn fields_to_document_data(
     fields: &Fields,
     data_description: &DataDescription,
+    subtypes: &str,
 ) -> Result<DocumentData> {
     let mut data = DocumentData::new();
 
-    for field in &data_description.fields {
+    for field in data_description.iter_fields(subtypes) {
         let raw_value = fields.get(field.name).map(String::as_str);
 
         let value = field.from_raw_value(raw_value)?;

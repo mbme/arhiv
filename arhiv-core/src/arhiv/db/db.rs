@@ -49,12 +49,14 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
             .as_str()
             .context("document_type must be str")?;
 
+        let subtype = ctx.get_raw(1).as_str().context("subtype must be str")?;
+
         let document_data = ctx
-            .get_raw(1)
+            .get_raw(2)
             .as_str()
             .context("document_data must be str")?;
 
-        let pattern = ctx.get_raw(2).as_str().context("pattern must be str")?;
+        let pattern = ctx.get_raw(3).as_str().context("pattern must be str")?;
 
         if pattern.is_empty() {
             return Ok(1);
@@ -63,7 +65,7 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
         let data_description = schema.get_data_description(document_type)?;
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
-        let result = data_description.search(&document_data, pattern);
+        let result = data_description.search(subtype, &document_data, pattern);
 
         if let Err(ref err) = result {
             log::error!("calculate_search_score() failed: \n{}", err);
@@ -74,10 +76,10 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
 
     conn.create_scalar_function(
         "calculate_search_score",
-        3,
+        4,
         FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
         move |ctx| {
-            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+            assert_eq!(ctx.len(), 4, "called with unexpected number of arguments");
 
             calculate_search_score(ctx)
                 .context("calculate_search_score() failed")
@@ -116,24 +118,26 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
             .as_str()
             .context("document_type must be str")?;
 
+        let subtype = ctx.get_raw(1).as_str().context("subtype must be str")?;
+
         let document_data = ctx
-            .get_raw(1)
+            .get_raw(2)
             .as_str()
             .context("document_data must be str")?;
 
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
-        let refs = schema.extract_refs(document_type, &document_data)?;
+        let refs = schema.extract_refs(document_type, subtype, &document_data)?;
 
         serde_json::to_string(&refs).context("failed to serialize refs")
     };
 
     conn.create_scalar_function(
         "extract_refs",
-        2,
+        3,
         FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
         move |ctx| {
-            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
 
             let result = extract_refs(ctx);
 

@@ -17,7 +17,7 @@
   </tr>
   <tr>
     <td class="section-heading">type:</td>
-    <td class="capitalize">
+    <td>
       {{document_type}}
       {% if subtype %}
       / {{ subtype }}

@@ -24,8 +24,8 @@ pub enum Collection {
 
 impl DataDescription {
     #[must_use]
-    pub fn pick_title_field(&self) -> Option<&Field> {
-        self.fields.iter().find(|field| {
+    pub fn pick_title_field(&self, subtype: &str) -> Option<&Field> {
+        self.iter_fields(subtype).find(|field| {
             matches!(
                 field.field_type,
                 FieldType::String {} | FieldType::MarkupString {}
@@ -33,8 +33,8 @@ impl DataDescription {
         })
     }
 
-    pub fn search(&self, data: &DocumentData, pattern: &str) -> Result<usize> {
-        let title_field = self.pick_title_field();
+    pub fn search(&self, subtype: &str, data: &DocumentData, pattern: &str) -> Result<usize> {
+        let title_field = self.pick_title_field(subtype);
 
         let mut final_score = 0;
         let multi_search = MultiSearch::new(pattern);

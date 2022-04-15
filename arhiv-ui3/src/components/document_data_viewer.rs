@@ -47,13 +47,12 @@ impl<'d> DocumentDataViewer<'d> {
             .get_schema()
             .get_data_description(&self.document.document_type)?;
 
-        let title_field = data_description.pick_title_field();
+        let title_field = data_description.pick_title_field(&self.document.subtype);
 
         let data = &self.document.data;
 
         let fields = data_description
-            .fields
-            .iter()
+            .iter_fields(&self.document.subtype)
             .map(|field_description| {
                 let is_title = title_field.map_or(false, |title_field| {
                     title_field.name == field_description.name

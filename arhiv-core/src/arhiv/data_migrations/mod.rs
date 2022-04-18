@@ -1,6 +1,7 @@
 mod migration;
 mod v1;
 
+use std::borrow::Cow;
 use std::time::Instant;
 
 use anyhow::{ensure, Context, Result};
@@ -9,7 +10,7 @@ use rs_utils::log;
 
 use crate::ArhivConnection;
 
-use super::db::{extract_document, SETTING_DATA_VERSION};
+use super::db::SETTING_DATA_VERSION;
 
 use self::migration::DataMigration;
 use self::v1::DataSchema1;
@@ -57,24 +58,28 @@ pub(crate) fn apply_data_migrations(conn: &ArhivConnection) -> Result<()> {
 
     let mut stmt = conn
         .get_connection()
-        .prepare("SELECT * FROM documents_snapshots")?;
+        .prepare("SELECT rowid FROM documents_snapshots")?;
 
-    let rows = stmt
-        .query_and_then([], extract_document)
-        .context("failed to query documents snapshots")?;
+    let row_ids = stmt
+        .query_and_then([], |row| row.get(0).context("failed to get arg 0"))
+        .context("failed to query documents snapshots")?
+        .collect::<Result<Vec<i64>>>()?;
 
     let now = Instant::now();
     let mut rows_count = 0;
-    for row in rows {
-        let mut document = row?;
+    for rowid in row_ids {
+        let document = conn.get_document_by_rowid(rowid)?;
+        let mut document = Cow::Borrowed(&document);
 
         for migration in &migrations {
             migration.update(&mut document)?;
         }
 
-        conn.put_document(&document)?;
-
-        rows_count += 1;
+        // update document only if it has been mutated
+        if let Cow::Owned(document) = document {
+            conn.put_or_replace_document(&document, true)?;
+            rows_count += 1;
+        }
     }
 
     conn.set_setting(&SETTING_DATA_VERSION, &latest_data_version)?;

@@ -423,6 +423,21 @@ impl ArhivConnection {
         }
     }
 
+    pub(crate) fn get_document_by_rowid(&self, rowid: i64) -> Result<Document> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents_snapshots WHERE rowid = ?1 LIMIT 1")?;
+
+        let mut rows = stmt
+            .query_and_then([rowid], utils::extract_document)
+            .context(anyhow!(
+                "Failed to get document snapshot with rowid {}",
+                rowid
+            ))?;
+
+        rows.next().expect("document must exist")
+    }
+
     pub(crate) fn get_new_blob_ids(&self) -> Result<HashSet<BLOBId>> {
         let mut stmt = self
             .get_connection()
@@ -531,12 +546,20 @@ impl ArhivConnection {
     }
 
     pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
+        self.put_or_replace_document(document, false)
+    }
+
+    pub(crate) fn put_or_replace_document(
+        &self,
+        document: &Document,
+        force_update: bool,
+    ) -> Result<()> {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
                     (id, rev, prev_rev, document_type, subtype, created_at, updated_at, data)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                if document.is_staged() {
+                if force_update || document.is_staged() {
                     "OR REPLACE"
                 } else {
                     ""

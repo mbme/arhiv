@@ -23,7 +23,7 @@
   </div>
   {% endfor %}
 
-  {% if subtypes | length > 0 %}
+  {% if subtypes | length > 1 %}
   <label class="flex justify-end items-center gap-2 mb-8">
     Subtype:
     <select id="subtype" class="field inline-block">

@@ -128,7 +128,7 @@ fn render_document_page_toolbar(
         toolbar = toolbar.with_action(Action::new_document(item_type, &Some(document.id.clone())));
     };
 
-    if data_description.is_editable() {
+    if data_description.is_editable(&document.subtype) {
         toolbar = toolbar.with_action(Action::edit(document, collection_id));
     }
 

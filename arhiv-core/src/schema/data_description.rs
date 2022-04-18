@@ -39,7 +39,7 @@ impl DataDescription {
         let mut final_score = 0;
         let multi_search = MultiSearch::new(pattern);
 
-        for field in &self.fields {
+        for field in self.iter_fields(subtype) {
             let value = if let Some(value) = data.get(field.name) {
                 value
             } else {
@@ -72,8 +72,8 @@ impl DataDescription {
     }
 
     #[must_use]
-    pub fn is_editable(&self) -> bool {
-        self.fields.iter().any(|field| !field.readonly)
+    pub fn is_editable(&self, subtype: &str) -> bool {
+        self.iter_fields(subtype).any(|field| !field.readonly)
     }
 
     #[must_use]

@@ -77,7 +77,7 @@ impl<'a> Faker<'a> {
             .unwrap();
 
         let mut rng = thread_rng();
-        for field in &description.fields {
+        for field in description.iter_fields(subtype) {
             match &field.field_type {
                 FieldType::String {} => {
                     let (min, max) = self

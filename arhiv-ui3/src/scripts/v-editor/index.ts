@@ -1,9 +1,12 @@
-import { initEditor } from './editor';
+import { initEditor, EditorView } from './editor';
 
 export class EditorElement extends HTMLElement {
   static get observedAttributes() {
     return ['for', 'autofocus'];
   }
+
+  private textarea?: HTMLTextAreaElement;
+  private editor?: EditorView;
 
   connectedCallback() {
     const textareaId = this.getAttribute('for');
@@ -21,12 +24,27 @@ export class EditorElement extends HTMLElement {
       throw new Error(`'for' attribute must point to textarea`);
     }
 
-    const editor = initEditor(textarea, this);
+    this.textarea = textarea;
+    this.editor = initEditor(textarea, this);
 
     if (this.hasAttribute('autofocus')) {
-      editor.focus();
+      this.editor.focus();
+    }
+
+    for (const label of textarea.labels) {
+      label.addEventListener('click', this.onLabelClick);
     }
   }
+
+  disconnectedCallback() {
+    for (const label of this.textarea?.labels || []) {
+      label.removeEventListener('click', this.onLabelClick);
+    }
+  }
+
+  private onLabelClick = () => {
+    this.editor?.focus();
+  };
 }
 
 customElements.define('v-editor', EditorElement);

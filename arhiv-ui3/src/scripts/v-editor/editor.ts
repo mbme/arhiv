@@ -61,3 +61,5 @@ export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement)
 
   return editor;
 }
+
+export { EditorView };

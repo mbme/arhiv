@@ -68,6 +68,7 @@ main {
 #content {
   background-color: var(--bg-color);
   @apply py-4 px-2 md:p-6 lg:py-12 lg:px-16 flex-grow shadow mb-4;
+  @apply flex flex-col;
 }
 
 a:not(.clean-link) {

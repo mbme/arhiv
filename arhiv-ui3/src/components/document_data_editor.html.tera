@@ -60,7 +60,6 @@
     >{{field.value}}</textarea>
     <v-editor
       for="{{field.name}}"
-      {% if loop.first %}autofocus{% endif %}
     />
 
     {% elif 'Enum' in field.field_type %}
@@ -68,7 +67,6 @@
       name="{{field.name}}"
       class="field"
       {% if not field.editable %}readonly{% endif %}
-      {% if loop.first %}autofocus{% endif %}
     >
       {% if not field.mandatory %}
       <option value></option>
@@ -91,7 +89,6 @@
       class="field"
       {% if field.value == "true" %}checked{% endif %}
       {% if not field.editable %}readonly{% endif %}
-      {% if loop.first %}autofocus{% endif %}
       value="true"
     >
 
@@ -102,7 +99,6 @@
       class="field"
       {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
-      {% if loop.first %}autofocus{% endif %}
       value="{{field.value}}"
     >
     {% endif %}

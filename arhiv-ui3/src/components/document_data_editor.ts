@@ -20,24 +20,30 @@ export function initDataEditor(form: HTMLFormElement) {
 
     const subtype = subtypeSelect.value;
 
-    for (const field of form.querySelectorAll<HTMLElement>('[data-for-subtypes]')) {
-      if (!field.dataset.forSubtypes) {
+    for (const fieldLabel of form.querySelectorAll<HTMLLabelElement>('label[data-for-subtypes]')) {
+      if (!fieldLabel.dataset.forSubtypes) {
         throw new Error('form field must have attribute data-for-subtypes');
       }
 
-      const forSubtypes = JSON.parse(field.dataset.forSubtypes) as string[];
+      const forSubtypes = JSON.parse(fieldLabel.dataset.forSubtypes) as string[];
 
       const shouldBeVisible = forSubtypes.includes(subtype);
 
-      field.toggleAttribute('hidden', !shouldBeVisible);
+      fieldLabel.toggleAttribute('hidden', !shouldBeVisible);
     }
   };
-
-  updateFieldsVisibility();
 
   subtypeSelect.addEventListener('change', () => {
     form.action = setQueryParam(form.action, 'subtype', subtypeSelect.value);
 
     updateFieldsVisibility();
   });
+
+  updateFieldsVisibility();
+
+  // autofocus the first visible field
+  const firstVisibleLabel = form.querySelector<HTMLLabelElement>(
+    'label[data-for-subtypes]:not([hidden])'
+  );
+  firstVisibleLabel?.click();
 }

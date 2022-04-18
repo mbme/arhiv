@@ -30,6 +30,11 @@ export function initDataEditor(form: HTMLFormElement) {
       const shouldBeVisible = forSubtypes.includes(subtype);
 
       fieldLabel.toggleAttribute('hidden', !shouldBeVisible);
+      if (!fieldLabel.control) {
+        throw new Error('All field labels must have associated controls');
+      }
+
+      fieldLabel.control.toggleAttribute('disabled', !shouldBeVisible);
     }
   };
 

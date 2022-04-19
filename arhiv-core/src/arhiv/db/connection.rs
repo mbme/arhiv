@@ -877,7 +877,7 @@ impl ArhivConnection {
         Ok(missing_blob_ids)
     }
 
-    pub(crate) fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
+    pub fn add_blob(&mut self, file_path: &str, move_file: bool) -> Result<BLOBId> {
         ensure!(
             file_exists(file_path)?,
             "BLOB source must exist and must be a file"

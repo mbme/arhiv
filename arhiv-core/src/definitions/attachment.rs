@@ -1,9 +1,9 @@
 use std::ops::{Deref, DerefMut};
 
-use anyhow::{ensure, Context, Error, Result};
+use anyhow::{ensure, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, DownloadResult, FFProbe};
+use rs_utils::{get_file_name, get_file_size, get_media_type, FFProbe};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -83,14 +83,13 @@ impl Attachment {
         document.document_type == ATTACHMENT_TYPE
     }
 
-    fn new(filename: &str, media_type: &str, blob_id: &BLOBId, size: u64) -> Self {
+    fn new(filename: &str, media_type: &str, size: u64) -> Self {
         let document = Document::new_with_data(
             ATTACHMENT_TYPE,
             "",
             json!({
                 FIELD_FILENAME: filename,
                 FIELD_MEDIA_TYPE: media_type,
-                FIELD_BLOB: blob_id,
                 FIELD_SIZE: size,
             })
             .try_into()
@@ -100,14 +99,12 @@ impl Attachment {
         Attachment(document)
     }
 
-    pub fn create(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
+    pub fn create(file_path: &str) -> Result<Self> {
         let filename = get_file_name(file_path).to_string();
         let media_type = get_media_type(file_path)?;
         let size = get_file_size(file_path)?;
 
-        let blob_id = tx.add_blob(file_path, move_file)?;
-
-        let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
+        let mut attachment = Attachment::new(&filename, &media_type, size);
 
         if attachment.is_audio() {
             let ffprobe = FFProbe::check()?;
@@ -119,40 +116,17 @@ impl Attachment {
             attachment.data.set(BIT_RATE, stats.bit_rate);
         }
 
-        tx.stage_document(&mut attachment)
-            .context("failed to create attachment")?;
-
         Ok(attachment)
     }
 
-    pub fn from_download_result(
-        download_result: &DownloadResult,
+    pub fn create_and_stage(
+        file_path: &str,
+        move_file: bool,
         tx: &mut ArhivConnection,
-    ) -> Result<Attachment> {
-        let media_type = get_media_type(&download_result.file_path)?;
-        let size = get_file_size(&download_result.file_path)?;
-
-        let blob_id = tx.add_blob(&download_result.file_path, true)?;
-
-        let mut attachment = Attachment::new(
-            &download_result.original_file_name,
-            &media_type,
-            &blob_id,
-            size,
-        );
-
-        if attachment.is_audio() {
-            let ffprobe = FFProbe::check()?;
-
-            let stats = ffprobe.get_stats(&download_result.file_path)?;
-
-            attachment.subtype = AUDIO_SUBTYPE.to_string();
-            attachment.data.set(DURATION, stats.duration_ms);
-            attachment.data.set(BIT_RATE, stats.bit_rate);
-        }
-
-        tx.stage_document(&mut attachment)
-            .context("failed to create attachment")?;
+    ) -> Result<Self> {
+        let mut attachment = Attachment::create(file_path)?;
+        let blob_id = tx.add_blob(file_path, move_file)?;
+        attachment.set_blob_id(blob_id);
 
         Ok(attachment)
     }
@@ -164,9 +138,17 @@ impl Attachment {
         BLOBId::from_string(blob_id)
     }
 
+    pub fn set_blob_id(&mut self, blob_id: BLOBId) {
+        self.data.set(FIELD_BLOB, blob_id);
+    }
+
     #[must_use]
     pub fn get_filename(&self) -> &str {
         self.data.get_mandatory_str(FIELD_FILENAME)
+    }
+
+    pub fn set_filename(&mut self, filename: &str) {
+        self.data.set(FIELD_FILENAME, filename);
     }
 
     #[must_use]

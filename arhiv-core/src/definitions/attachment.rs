@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use anyhow::{ensure, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, FFProbe};
+use rs_utils::{get_file_name, get_file_size, get_media_type, log, FFProbe};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -58,15 +58,15 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
             Field {
                 name: DURATION, // in milliseconds
                 field_type: FieldType::NaturalNumber {},
-                mandatory: true,
-                readonly: true,
+                mandatory: false,
+                readonly: false,
                 for_subtypes: Some(&[AUDIO_SUBTYPE]),
             },
             Field {
                 name: BIT_RATE,
                 field_type: FieldType::NaturalNumber {},
-                mandatory: true,
-                readonly: true,
+                mandatory: false,
+                readonly: false,
                 for_subtypes: Some(&[AUDIO_SUBTYPE]),
             },
         ],
@@ -107,13 +107,18 @@ impl Attachment {
         let mut attachment = Attachment::new(&filename, &media_type, size);
 
         if attachment.is_audio() {
-            let ffprobe = FFProbe::check()?;
+            let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
 
-            let stats = ffprobe.get_stats(file_path)?;
-
-            attachment.subtype = AUDIO_SUBTYPE.to_string();
-            attachment.data.set(DURATION, stats.duration_ms);
-            attachment.data.set(BIT_RATE, stats.bit_rate);
+            match stats {
+                Ok(stats) => {
+                    attachment.subtype = AUDIO_SUBTYPE.to_string();
+                    attachment.data.set(DURATION, stats.duration_ms);
+                    attachment.data.set(BIT_RATE, stats.bit_rate);
+                }
+                Err(err) => {
+                    log::warn!("Failed to get audio stats from file {}: {}", file_path, err);
+                }
+            }
         }
 
         Ok(attachment)

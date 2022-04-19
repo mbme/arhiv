@@ -21,8 +21,8 @@ const FIELD_BLOB: &str = "blob";
 const FIELD_SIZE: &str = "size";
 
 // AUDIO
-const DURATION: &str = "duration";
-const BIT_RATE: &str = "bit_rate";
+const FIELD_DURATION: &str = "duration";
+const FIELD_BIT_RATE: &str = "bit_rate";
 
 // IMAGE
 const FIELD_WIDTH: &str = "width";
@@ -62,14 +62,14 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 for_subtypes: None,
             },
             Field {
-                name: DURATION, // in milliseconds
+                name: FIELD_DURATION, // in milliseconds
                 field_type: FieldType::NaturalNumber {},
                 mandatory: false,
                 readonly: false,
                 for_subtypes: Some(&[AUDIO_SUBTYPE]),
             },
             Field {
-                name: BIT_RATE,
+                name: FIELD_BIT_RATE,
                 field_type: FieldType::NaturalNumber {},
                 mandatory: false,
                 readonly: false,
@@ -133,8 +133,8 @@ impl Attachment {
 
             match stats {
                 Ok(stats) => {
-                    attachment.data.set(DURATION, stats.duration_ms);
-                    attachment.data.set(BIT_RATE, stats.bit_rate);
+                    attachment.data.set(FIELD_DURATION, stats.duration_ms);
+                    attachment.data.set(FIELD_BIT_RATE, stats.bit_rate);
                 }
                 Err(err) => {
                     log::warn!("Failed to get audio stats from file {}: {}", file_path, err);

@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use anyhow::{ensure, Context, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, DownloadResult};
+use rs_utils::{get_file_name, get_file_size, get_media_type, DownloadResult, FFProbe};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -12,11 +12,15 @@ use crate::{
 };
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
+pub const AUDIO_SUBTYPE: &str = "audio";
 
 const FIELD_FILENAME: &str = "filename";
 const FIELD_MEDIA_TYPE: &str = "media_type";
 const FIELD_BLOB: &str = "blob";
 const FIELD_SIZE: &str = "size";
+
+const DURATION: &str = "duration";
+const BIT_RATE: &str = "bit_rate";
 
 pub fn get_attachment_definitions() -> Vec<DataDescription> {
     vec![DataDescription {
@@ -51,8 +55,22 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 readonly: true,
                 for_subtypes: None,
             },
+            Field {
+                name: DURATION, // in milliseconds
+                field_type: FieldType::NaturalNumber {},
+                mandatory: true,
+                readonly: true,
+                for_subtypes: Some(&[AUDIO_SUBTYPE]),
+            },
+            Field {
+                name: BIT_RATE,
+                field_type: FieldType::NaturalNumber {},
+                mandatory: true,
+                readonly: true,
+                for_subtypes: Some(&[AUDIO_SUBTYPE]),
+            },
         ],
-        subtypes: None,
+        subtypes: Some(&["", AUDIO_SUBTYPE]),
     }]
 }
 
@@ -65,8 +83,7 @@ impl Attachment {
         document.document_type == ATTACHMENT_TYPE
     }
 
-    #[must_use]
-    pub fn new(filename: &str, media_type: &str, blob_id: &BLOBId, size: u64) -> Self {
+    fn new(filename: &str, media_type: &str, blob_id: &BLOBId, size: u64) -> Self {
         let document = Document::new_with_data(
             ATTACHMENT_TYPE,
             "",
@@ -92,6 +109,16 @@ impl Attachment {
 
         let mut attachment = Attachment::new(&filename, &media_type, &blob_id, size);
 
+        if attachment.is_audio() {
+            let ffprobe = FFProbe::check()?;
+
+            let stats = ffprobe.get_stats(file_path)?;
+
+            attachment.subtype = AUDIO_SUBTYPE.to_string();
+            attachment.data.set(DURATION, stats.duration_ms);
+            attachment.data.set(BIT_RATE, stats.bit_rate);
+        }
+
         tx.stage_document(&mut attachment)
             .context("failed to create attachment")?;
 
@@ -113,6 +140,16 @@ impl Attachment {
             &blob_id,
             size,
         );
+
+        if attachment.is_audio() {
+            let ffprobe = FFProbe::check()?;
+
+            let stats = ffprobe.get_stats(&download_result.file_path)?;
+
+            attachment.subtype = AUDIO_SUBTYPE.to_string();
+            attachment.data.set(DURATION, stats.duration_ms);
+            attachment.data.set(BIT_RATE, stats.bit_rate);
+        }
 
         tx.stage_document(&mut attachment)
             .context("failed to create attachment")?;

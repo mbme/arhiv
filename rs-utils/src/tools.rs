@@ -49,6 +49,11 @@ impl ZStd {
 /// part of ffmpeg
 pub struct FFProbe(String);
 
+pub struct FFStats {
+    pub duration_ms: u32,
+    pub bit_rate: u32,
+}
+
 impl FFProbe {
     pub fn check() -> Result<Self> {
         find_bin("ffprobe")?
@@ -56,7 +61,7 @@ impl FFProbe {
             .context("ffprobe must be available")
     }
 
-    fn get_stats(&self, file_path: &str) -> Result<Value> {
+    pub fn get_stats(&self, file_path: &str) -> Result<FFStats> {
         let stats = run_command(
             &self.0,
             vec![
@@ -70,17 +75,26 @@ impl FFProbe {
         )
         .context("failed to run ffprobe")?;
 
-        serde_json::from_str(&stats).context("failed to parse ffprobe output as JSON")
-    }
+        let value: Value =
+            serde_json::from_str(&stats).context("failed to parse ffprobe output as JSON")?;
 
-    pub fn get_duration(&self, file_path: &str) -> Result<f32> {
-        let stats = self.get_stats(file_path)?;
-
-        stats["format"]["duration"]
+        let duration_ms = value["format"]["duration"]
             .as_str()
             .context(".format.duration must be present")?
-            .parse()
+            .parse::<f32>()
             .context("failed to parse duration")
+            .map(|duration| (duration * 1000.0) as u32)?;
+
+        let bit_rate = value["format"]["bit_rate"]
+            .as_str()
+            .context(".format.bit_rate must be present")?
+            .parse()
+            .context("failed to parse bit_rate")?;
+
+        Ok(FFStats {
+            duration_ms,
+            bit_rate,
+        })
     }
 }
 

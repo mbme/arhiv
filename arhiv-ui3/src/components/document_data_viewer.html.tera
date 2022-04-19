@@ -44,7 +44,7 @@
   </h5>
 
   {% if field.kind == "Title" %}
-  <h1 class="text-3xl font-bold tracking-wide text-indigo-900">
+  <h1 class="text-3xl font-bold tracking-wide text-indigo-900 break-words">
     {{ field.value }}
   </h1>
   {% elif field.kind == "Markup" %}

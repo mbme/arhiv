@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use anyhow::{ensure, Error, Result};
 use serde_json::json;
 
-use rs_utils::{get_file_name, get_file_size, get_media_type, log, FFProbe};
+use rs_utils::{get_file_name, get_file_size, get_image_size, get_media_type, log, FFProbe};
 
 use crate::{
     entities::{BLOBId, Document},
@@ -13,14 +13,20 @@ use crate::{
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
 pub const AUDIO_SUBTYPE: &str = "audio";
+pub const IMAGE_SUBTYPE: &str = "image";
 
 const FIELD_FILENAME: &str = "filename";
 const FIELD_MEDIA_TYPE: &str = "media_type";
 const FIELD_BLOB: &str = "blob";
 const FIELD_SIZE: &str = "size";
 
+// AUDIO
 const DURATION: &str = "duration";
 const BIT_RATE: &str = "bit_rate";
+
+// IMAGE
+const FIELD_WIDTH: &str = "width";
+const FIELD_HEIGHT: &str = "height";
 
 pub fn get_attachment_definitions() -> Vec<DataDescription> {
     vec![DataDescription {
@@ -69,8 +75,22 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 readonly: false,
                 for_subtypes: Some(&[AUDIO_SUBTYPE]),
             },
+            Field {
+                name: FIELD_WIDTH,
+                field_type: FieldType::NaturalNumber {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: Some(&[IMAGE_SUBTYPE]),
+            },
+            Field {
+                name: FIELD_HEIGHT,
+                field_type: FieldType::NaturalNumber {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: Some(&[IMAGE_SUBTYPE]),
+            },
         ],
-        subtypes: Some(&["", AUDIO_SUBTYPE]),
+        subtypes: Some(&["", AUDIO_SUBTYPE, IMAGE_SUBTYPE]),
     }]
 }
 
@@ -107,16 +127,31 @@ impl Attachment {
         let mut attachment = Attachment::new(&filename, &media_type, size);
 
         if attachment.is_audio() {
+            attachment.subtype = AUDIO_SUBTYPE.to_string();
+
             let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
 
             match stats {
                 Ok(stats) => {
-                    attachment.subtype = AUDIO_SUBTYPE.to_string();
                     attachment.data.set(DURATION, stats.duration_ms);
                     attachment.data.set(BIT_RATE, stats.bit_rate);
                 }
                 Err(err) => {
                     log::warn!("Failed to get audio stats from file {}: {}", file_path, err);
+                }
+            }
+        }
+
+        if attachment.is_image() {
+            attachment.subtype = IMAGE_SUBTYPE.to_string();
+
+            match get_image_size(file_path) {
+                Ok((width, height)) => {
+                    attachment.data.set(FIELD_WIDTH, width);
+                    attachment.data.set(FIELD_HEIGHT, height);
+                }
+                Err(err) => {
+                    log::warn!("Failed to get image size from file {}: {}", file_path, err);
                 }
             }
         }

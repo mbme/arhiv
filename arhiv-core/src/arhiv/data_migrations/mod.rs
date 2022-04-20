@@ -1,5 +1,6 @@
 mod migration;
 mod v1;
+mod v2;
 
 use std::borrow::Cow;
 use std::time::Instant;
@@ -14,10 +15,12 @@ use super::db::SETTING_DATA_VERSION;
 
 use self::migration::DataMigration;
 use self::v1::DataSchema1;
+use self::v2::DataSchema2;
 
 lazy_static! {
     static ref MIGRATIONS: Vec<Box<dyn DataMigration>> = vec![ //
         Box::new(DataSchema1),
+        Box::new(DataSchema2),
     ];
 
     static ref DATA_VERSION: u8 = MIGRATIONS
@@ -71,8 +74,9 @@ pub(crate) fn apply_data_migrations(conn: &ArhivConnection) -> Result<()> {
         let document = conn.get_document_by_rowid(rowid)?;
         let mut document = Cow::Borrowed(&document);
 
+        let data_dir = &conn.get_path_manager().data_dir;
         for migration in &migrations {
-            migration.update(&mut document)?;
+            migration.update(&mut document, data_dir)?;
         }
 
         // update document only if it has been mutated

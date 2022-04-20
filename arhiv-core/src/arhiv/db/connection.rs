@@ -122,7 +122,7 @@ impl ArhivConnection {
         }
     }
 
-    fn get_path_manager(&self) -> &PathManager {
+    pub(crate) fn get_path_manager(&self) -> &PathManager {
         match self {
             ArhivConnection::ReadOnly { path_manager, .. }
             | ArhivConnection::Transaction { path_manager, .. } => path_manager,

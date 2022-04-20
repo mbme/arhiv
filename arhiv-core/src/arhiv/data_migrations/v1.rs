@@ -13,7 +13,7 @@ impl DataMigration for DataSchema1 {
         1
     }
 
-    fn update(&self, document: &mut Cow<Document>) -> Result<()> {
+    fn update(&self, document: &mut Cow<Document>, _data_dir: &str) -> Result<()> {
         // replace "completed" with "status"
         if let Some(completed) = document.data.get_bool("completed") {
             if completed {

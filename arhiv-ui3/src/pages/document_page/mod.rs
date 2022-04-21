@@ -5,7 +5,7 @@ use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::{
-    definitions::PROJECT_TYPE,
+    definitions::{ATTACHMENT_TYPE, PROJECT_TYPE},
     entities::{Document, Id, ERASED_DOCUMENT_TYPE},
     schema::Collection,
     Arhiv, Filter,
@@ -19,9 +19,12 @@ use crate::{
     urls::{erase_document_url, index_url, parent_collection_url},
 };
 
-use self::document_view::render_document_view;
-use self::project_view::render_project_view;
+use self::{
+    attachment_view::render_attachment_view, document_view::render_document_view,
+    project_view::render_project_view,
+};
 
+mod attachment_view;
 mod document_view;
 mod project_view;
 
@@ -46,15 +49,13 @@ impl App {
             }
         };
 
-        let toolbar = render_document_page_toolbar(&document, collection_id, &self.arhiv)?;
+        let title = format!(
+            "{} {}",
+            document.document_type,
+            self.arhiv.get_schema().get_title(&document)?
+        );
 
-        let content = if document.document_type == PROJECT_TYPE {
-            render_project_view(&document, &self.arhiv, &url)?
-        } else if document.document_type == ERASED_DOCUMENT_TYPE {
-            render_erased_document_template(json!({}))?
-        } else {
-            render_document_view(&document, &self.arhiv, url)?
-        };
+        let toolbar = render_document_page_toolbar(&document, collection_id, &self.arhiv)?;
 
         let backrefs = self
             .arhiv
@@ -64,18 +65,27 @@ impl App {
             .map(|document| Ref::from_document(document).render(&self.arhiv))
             .collect::<Result<Vec<_>>>()?;
 
+        let erase_document_url = document
+            .is_erased()
+            .not()
+            .then(|| erase_document_url(&document.id, collection_id));
+
+        let content = if document.document_type == PROJECT_TYPE {
+            render_project_view(&document, &self.arhiv, &url)?
+        } else if document.document_type == ATTACHMENT_TYPE {
+            render_attachment_view(document.try_into()?, &self.arhiv)?
+        } else if document.document_type == ERASED_DOCUMENT_TYPE {
+            render_erased_document_template(json!({}))?
+        } else {
+            render_document_view(&document, &self.arhiv, url)?
+        };
+
         let content = render_template(json!({
             "toolbar": toolbar,
             "content": content,
             "backrefs": backrefs,
-            "erase_document_url": document.is_erased().not().then(|| erase_document_url(&document.id, collection_id)),
+            "erase_document_url": erase_document_url,
         }))?;
-
-        let title = format!(
-            "{} {}",
-            document.document_type,
-            self.arhiv.get_schema().get_title(&document)?
-        );
 
         Ok(AppResponse::page(title, content))
     }

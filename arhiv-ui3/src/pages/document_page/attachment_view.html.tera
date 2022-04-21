@@ -1,0 +1,9 @@
+{{ content | safe }}
+
+<section class="mb-16">
+  {% if subtype == "audio" %}
+  <v-audio-player url="{{blob_url}}"></v-audio-player>
+  {% elif subtype == "image" %}
+  <img src="{{blob_url}}" alt="{{filename}}" class="max-h-96 mx-auto" />
+  {% endif %}
+</section>

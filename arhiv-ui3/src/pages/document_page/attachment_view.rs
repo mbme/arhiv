@@ -10,8 +10,8 @@ template_fn!(
     "./attachment_view.html.tera"
 );
 
-pub fn render_attachment_view(attachment: Attachment, arhiv: &Arhiv) -> Result<String> {
-    let content = DocumentDataViewer::new(&attachment).render(arhiv)?;
+pub fn render_attachment_view(attachment: &Attachment, arhiv: &Arhiv) -> Result<String> {
+    let content = DocumentDataViewer::new(attachment).render(arhiv)?;
 
     render_attachment_view_template(json!({
         "content": content,

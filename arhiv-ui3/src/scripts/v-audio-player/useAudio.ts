@@ -120,7 +120,15 @@ export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): Audi
       sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(volumeState));
     };
     const onEnded = () => {
-      optionsRef.current?.onTrackEnded?.();
+      const onTrackEnded = optionsRef.current?.onTrackEnded;
+
+      if (onTrackEnded) {
+        onTrackEnded();
+      } else {
+        // reset playback state on playback ended
+        audio.currentTime = 0;
+      }
+
       console.debug('audio: track ended');
     };
     const onError = () => {

@@ -4,7 +4,7 @@
     <td>
       <button
         type="button"
-        class="block font-mono tracking-wide cursor-pointer hover:text-blue-500 focus:text-blue-500 group"
+        class="block font-mono tracking-wide cursor-pointer text-blue-500 focus:text-blue-500 group"
         title="Copy document id to clipboard"
         onclick="arhiv_ui.copyTextAndNotify('{{id}}', 'document id')"
       >
@@ -17,7 +17,7 @@
   </tr>
   <tr>
     <td class="section-heading">type:</td>
-    <td>
+    <td class="font-semibold">
       {{document_type}}
       {% if subtype %}
       / {{ subtype }}

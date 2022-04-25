@@ -122,7 +122,7 @@ a:not(.clean-link) {
 }
 
 v-audio-player {
-  @apply block bg-stone-100 shadow-lg;
+  @apply block bg-stone-100;
 
   & button {
     @apply text-gray-600 hover:text-sky-800;

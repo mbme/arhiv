@@ -94,9 +94,9 @@ export function AudioPlayer({
 
   return (
     <div className="px-6 py-4">
-      <div className="flex items-center gap-3 text-gray-900 cursor-pointer mb-2">
+      <div className="flex items-center gap-3 text-gray-900 cursor-default mb-2">
         <span className="text-xl font-semibold">{artist}</span>
-        <span className="text-xl">{title ? '-' : <>&nbsp;</>}</span>
+        <span className="text-xl">{title && <>&ndash;</>}</span>
         <span className="text-lg">{title}</span>
       </div>
 

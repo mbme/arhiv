@@ -11,8 +11,8 @@ const getMediaSession = () => {
 };
 
 type Options = {
-  artist?: string;
-  title?: string;
+  artist: string;
+  title: string;
   nextTrack?: Callback;
   prevTrack?: Callback;
   onStop?: Callback;

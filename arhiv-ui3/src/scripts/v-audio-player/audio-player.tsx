@@ -17,9 +17,9 @@ function formatTime(timeS: number): string {
 }
 
 type Props = {
-  title?: string;
-  artist?: string;
-  url?: string;
+  title: string;
+  artist: string;
+  url: string;
   autoplay?: boolean;
   nextTrack?: Callback;
   prevTrack?: Callback;

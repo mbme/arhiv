@@ -35,7 +35,7 @@ const DEFAULT_OPTIONS: Options = {
   autoplay: false,
 };
 
-export function useAudio(url?: string, options: Options = DEFAULT_OPTIONS): AudioState {
+export function useAudio(url: string, options: Options = DEFAULT_OPTIONS): AudioState {
   const [currentTimeS, setCurrentTimeS] = useState(0);
   const [duration, setDuration] = useState(Infinity);
   const [playerState, setPlayerState] = useState<AudioPlayerState>('initial');

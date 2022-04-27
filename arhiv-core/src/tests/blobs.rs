@@ -3,7 +3,11 @@ use anyhow::Result;
 use rs_utils::{workspace_relpath, TempFile};
 
 use super::utils::*;
-use crate::{prime_server::start_prime_server, test_arhiv::TestArhiv};
+use crate::{
+    definitions::{get_standard_schema, Attachment},
+    prime_server::start_prime_server,
+    test_arhiv::TestArhiv,
+};
 
 #[tokio::test]
 async fn test_blobs() -> Result<()> {
@@ -117,6 +121,22 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
         let result = tx.add_blob(&resource_dir_link, false);
         assert!(result.is_err());
     }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_create_attachment() -> Result<()> {
+    let arhiv = TestArhiv::new_prime_with_schema(get_standard_schema());
+
+    let src = &workspace_relpath("resources/k2.jpg");
+
+    let mut tx = arhiv.get_tx()?;
+    let attachment = Attachment::create(src, false, &mut tx)?;
+    tx.commit()?;
+
+    assert!(arhiv.get_blob(&attachment.data.blob)?.exists()?);
+    assert!(arhiv.get_document(&attachment.id)?.is_some());
 
     Ok(())
 }

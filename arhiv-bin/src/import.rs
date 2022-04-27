@@ -19,10 +19,10 @@ pub fn import_document_from_file(
         TRACK_TYPE => import_track(arhiv, file_path, move_file),
         ATTACHMENT_TYPE => {
             let mut tx = arhiv.get_tx()?;
-            let attachment = Attachment::create_and_stage(file_path, move_file, &mut tx)?;
+            let attachment = Attachment::create(file_path, move_file, &mut tx)?;
             tx.commit()?;
 
-            Ok(attachment.into())
+            attachment.into_document()
         }
         other => bail!("Don't know how to import document of type '{}'", other),
     }
@@ -31,15 +31,15 @@ pub fn import_document_from_file(
 fn import_track(arhiv: &Arhiv, file_path: &str, move_file: bool) -> Result<Document> {
     let mut tx = arhiv.get_tx()?;
 
-    let attachment = Attachment::create_and_stage(file_path, move_file, &mut tx)?;
+    let attachment = Attachment::create(file_path, move_file, &mut tx)?;
 
     ensure!(
         attachment.is_audio(),
         "file type must be audio, got {}",
-        attachment.get_media_type()
+        attachment.data.media_type
     );
 
-    let file_name = remove_file_extension(attachment.get_filename())?;
+    let file_name = remove_file_extension(&attachment.data.filename)?;
 
     let mut iter = file_name.split('-');
 

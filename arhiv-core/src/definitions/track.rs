@@ -1,6 +1,11 @@
-use super::fields::*;
-use super::ATTACHMENT_TYPE;
-use crate::schema::*;
+use anyhow::Error;
+use serde::{Deserialize, Serialize};
+
+use super::{fields::*, ATTACHMENT_TYPE};
+use crate::{
+    entities::{Document, Id},
+    schema::*,
+};
 
 pub const TRACK_TYPE: &str = "track";
 pub const TRACK_COLLECTION_TYPE: &str = "track collection";
@@ -96,4 +101,27 @@ pub fn get_track_definitions() -> Vec<DataDescription> {
             subtypes: None,
         },
     ]
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct TrackData {
+    pub title: String,
+    pub artist: String,
+    pub track: Id,
+    pub cover: Option<Id>,
+    pub release_date: Option<String>,
+    pub language: Option<String>,
+    pub collections: Option<Vec<Id>>,
+    pub comment: Option<String>,
+}
+
+pub type TrackDocument = Document<TrackData>;
+
+impl TryInto<TrackDocument> for Document {
+    type Error = Error;
+
+    fn try_into(self) -> Result<TrackDocument, Self::Error> {
+        self.convert(TRACK_TYPE)
+    }
 }

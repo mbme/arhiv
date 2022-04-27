@@ -1,7 +1,13 @@
+use std::collections::HashSet;
+
 use anyhow::Result;
 use serde_json::json;
 
-use arhiv_core::{definitions::TRACK_TYPE, Filter};
+use arhiv_core::{
+    definitions::{Attachment, TrackDocument, TRACK_TYPE},
+    entities::Id,
+    Filter,
+};
 
 use crate::{
     app::{App, AppResponse},
@@ -15,17 +21,36 @@ impl App {
     pub fn player_app_page(&self) -> Result<AppResponse> {
         let filter = Filter::default().with_document_type(TRACK_TYPE).all_items();
 
-        let tracks = self
-            .arhiv
+        let tx = self.arhiv.get_tx()?;
+
+        let tracks: Vec<TrackDocument> = tx
             .list_documents(&filter)?
             .items
             .into_iter()
-            .map(|document| {
+            .map(|document| document.try_into().expect("must be track"))
+            .collect();
+
+        let attachment_ids: HashSet<&Id> = tracks.iter().map(|track| &track.data.track).collect();
+
+        let attachments: Vec<Attachment> = tx
+            .get_documents(&attachment_ids)?
+            .into_iter()
+            .map(|document| document.try_into().expect("must be attachment"))
+            .collect();
+
+        let tracks = tracks
+            .into_iter()
+            .map(|track| {
+                let attachment = attachments
+                    .iter()
+                    .find(|attachment| attachment.id == track.data.track)
+                    .expect("coudn't find track attachment");
+
                 json!({
-                    "url": document_url(&document.id, &None),
-                    "artist": document.data.get_str("artist"),
-                    "title": document.data.get_str("title"),
-                    "track_id": document.data.get_str("track"),
+                    "url": document_url(&track.id, &None),
+                    "artist": track.data.artist,
+                    "title": track.data.title,
+                    "blob_id": attachment.data.blob,
                 })
             })
             .collect::<Vec<_>>();

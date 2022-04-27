@@ -103,14 +103,15 @@ impl Ref {
             .context("failed to serialize");
         }
 
+        let title = arhiv.get_schema().get_title(&document)?;
+
         let attachment: Attachment = document.try_into()?;
-        let title = arhiv.get_schema().get_title(&attachment)?;
 
         if attachment.is_image() {
             return serde_json::to_value(RefMode::Image {
                 title,
                 document_url: document_url(&attachment.id, &None),
-                blob_url: blob_url(&attachment.get_blob_id()),
+                blob_url: blob_url(&attachment.data.blob),
             })
             .context("failed to serialize");
         }

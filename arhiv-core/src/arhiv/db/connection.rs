@@ -267,7 +267,7 @@ impl ArhivConnection {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub(crate) fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
         let mut qb = QueryBuilder::new();
 
         qb.select("*", "documents");
@@ -421,6 +421,31 @@ impl ArhivConnection {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn get_documents(&self, ids: &HashSet<&Id>) -> Result<Vec<Document>> {
+        ensure!(!ids.is_empty(), "set of ids must not be empty");
+
+        let mut stmt = self.get_connection().prepare_cached(&format!(
+            "SELECT * FROM documents WHERE id IN ({}) LIMIT {}",
+            vec!["?"; ids.len()].join(", "),
+            ids.len()
+        ))?;
+
+        let rows = stmt
+            .query_and_then(params_from_iter(ids), utils::extract_document)
+            .context("failed to get documents")?;
+
+        let documents = rows.collect::<Result<Vec<_>>>()?;
+
+        ensure!(
+            documents.len() == ids.len(),
+            "expected to get {} documents but got only {}",
+            documents.len(),
+            ids.len()
+        );
+
+        Ok(documents)
     }
 
     pub(crate) fn get_document_by_rowid(&self, rowid: i64) -> Result<Document> {

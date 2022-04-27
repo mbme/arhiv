@@ -20,7 +20,7 @@
       class="flex justify-between p-4 cursor-pointer hover:bg-slate-100"
       data-artist="{{track.artist}}"
       data-title="{{track.title}}"
-      data-track-id="{{track.track_id}}"
+      data-blob-id="{{track.blob_id}}"
     >
       <div>
         <span class="mr-4 text-slate-400 w-6 text-center font-mono inline-block"

@@ -73,7 +73,7 @@ impl App {
         let content = if document.document_type == PROJECT_TYPE {
             render_project_view(&document, &self.arhiv, &url)?
         } else if document.document_type == ATTACHMENT_TYPE {
-            render_attachment_view(&document.try_into()?, &self.arhiv)?
+            render_attachment_view(document, &self.arhiv)?
         } else if document.document_type == ERASED_DOCUMENT_TYPE {
             render_erased_document_template(json!({}))?
         } else {

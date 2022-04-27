@@ -53,12 +53,12 @@ impl App {
             .ok_or_else(|| anyhow!("file_path field must be present"))?;
 
         let mut tx = self.arhiv.get_tx()?;
-        let attachment = Attachment::create_and_stage(file_path, false, &mut tx)?;
+        let attachment = Attachment::create(file_path, false, &mut tx)?;
         tx.commit()?;
 
         let id = attachment.id.to_string();
 
-        let attachment_ref = Ref::from_document(attachment.into()).render(&self.arhiv)?;
+        let attachment_ref = Ref::from_document(attachment.into_document()?).render(&self.arhiv)?;
 
         let content = render_confirmation_result(json!({
             "id": id,

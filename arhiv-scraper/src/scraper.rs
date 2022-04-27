@@ -164,15 +164,13 @@ impl<'a> Scraper<'a> {
             ScraperAction::CreateAttachment { url } => {
                 let download_result = Download::new(&url)?.start().await?;
 
-                let mut attachment = Attachment::create(&download_result.file_path)?;
-                attachment.set_filename(&download_result.original_file_name);
+                let mut attachment = Attachment::create(&download_result.file_path, true, tx)?;
+                attachment.data.filename = download_result.original_file_name.clone();
 
-                let blob_id = tx.add_blob(&download_result.file_path, true)?;
-                attachment.set_blob_id(blob_id);
+                let mut document = attachment.into_document()?;
+                tx.stage_document(&mut document)?;
 
-                tx.stage_document(&mut attachment)?;
-
-                Ok(attachment.into())
+                Ok(document)
             }
             ScraperAction::CreateDocument {
                 document_type,

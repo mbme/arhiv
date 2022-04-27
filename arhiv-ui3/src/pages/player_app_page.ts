@@ -1,11 +1,5 @@
-import { fetchJSON, pickRandomElement } from '../scripts/utils';
+import { pickRandomElement } from '../scripts/utils';
 import { AudioPlayerElement } from '../scripts/v-audio-player';
-
-type Attachment = {
-  data: {
-    blob: string;
-  };
-};
 
 export function initPlayerApp(rootEl: HTMLElement): void {
   const player = rootEl.querySelector('#player') as AudioPlayerElement;
@@ -34,21 +28,13 @@ export function initPlayerApp(rootEl: HTMLElement): void {
       return;
     }
 
-    const trackId = trackEl.dataset.trackId || '';
+    const blobId = trackEl.dataset.blobId || '';
     const artist = trackEl.dataset.artist || '';
     const title = trackEl.dataset.title || '';
 
     console.info('Play track %s - %s', artist, title);
 
-    fetchJSON<Attachment>(`/api/documents/${trackId}`)
-      .then((document) => {
-        const blobId = document.data.blob;
-
-        player.setTrack(artist, title, `/blobs/${blobId}`);
-      })
-      .catch((e) => {
-        console.error('Failed to play track %s - %s', artist, title, e);
-      });
+    player.setTrack(artist, title, `/blobs/${blobId}`);
   }
 
   const listTrackEls = () => Array.from(list.children) as HTMLElement[];

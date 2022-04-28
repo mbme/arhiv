@@ -1,4 +1,5 @@
 /* eslint-env node */
+const plugin = require('tailwindcss/plugin');
 
 module.exports = {
   content: ['./src/**/*.html.tera', './src/**/*.tsx'],
@@ -26,5 +27,8 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
     require('@tailwindcss/line-clamp'),
+    plugin(function ({ addVariant }) {
+      addVariant('is-active', '&[data-is-active]');
+    }),
   ],
 };

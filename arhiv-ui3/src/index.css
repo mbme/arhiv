@@ -141,20 +141,6 @@ v-audio-player {
   }
 }
 
-#track-list li {
-  & a {
-    visibility: hidden;
-  }
-
-  &:hover a {
-    visibility: visible;
-  }
-
-  &.is-active {
-    @apply bg-lime-100;
-  }
-}
-
 @layer components {
   .markup {
     @apply prose;

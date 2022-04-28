@@ -13,11 +13,11 @@ export function initPlayerApp(rootEl: HTMLElement): void {
   let activeTrackEl: HTMLElement | undefined = undefined;
 
   function play(trackEl?: HTMLElement) {
-    activeTrackEl?.classList.remove('is-active');
+    activeTrackEl?.toggleAttribute('data-is-active', false);
 
     activeTrackEl = trackEl;
     if (activeTrackEl) {
-      activeTrackEl.classList.add('is-active');
+      activeTrackEl.toggleAttribute('data-is-active', true);
       activeTrackEl.scrollIntoView({
         block: 'center',
       });

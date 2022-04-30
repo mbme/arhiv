@@ -5,17 +5,18 @@ import {
   highlightActiveLine,
   highlightSpecialChars,
   keymap,
+  lineNumbers,
+  rectangularSelection,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
-import { lineNumbers } from '@codemirror/gutter';
-import { defaultKeymap } from '@codemirror/commands';
-import { history, historyKeymap } from '@codemirror/history';
-import { indentOnInput } from '@codemirror/language';
-import { bracketMatching } from '@codemirror/matchbrackets';
-import { closeBrackets, closeBracketsKeymap } from '@codemirror/closebrackets';
-import { rectangularSelection } from '@codemirror/rectangular-selection';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  indentOnInput,
+  bracketMatching,
+  defaultHighlightStyle,
+  syntaxHighlighting,
+} from '@codemirror/language';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { classHighlightStyle, defaultHighlightStyle } from '@codemirror/highlight';
 
 export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement): EditorView {
   const handlers = EditorView.domEventHandlers({
@@ -37,21 +38,18 @@ export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement)
           drawSelection(),
           EditorState.allowMultipleSelections.of(true),
           indentOnInput(),
-          defaultHighlightStyle.extension,
-          classHighlightStyle.extension,
+          syntaxHighlighting(defaultHighlightStyle),
           EditorView.lineWrapping,
           bracketMatching(),
-          closeBrackets(),
           rectangularSelection(),
           highlightSelectionMatches(),
           keymap.of([
-            ...closeBracketsKeymap, //
-            ...defaultKeymap,
+            ...defaultKeymap, //
             ...searchKeymap,
             ...historyKeymap,
           ]),
         ],
-        handlers, //
+        handlers,
         markdown(),
       ],
     }),

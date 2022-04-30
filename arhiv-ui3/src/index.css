@@ -115,10 +115,6 @@ a:not(.clean-link) {
     border: 0;
     @apply pl-2;
   }
-
-  & .cmt-heading {
-    text-decoration: none;
-  }
 }
 
 v-audio-player {

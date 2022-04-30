@@ -3,10 +3,6 @@ import { setQueryParam } from '../scripts/utils';
 export function initDataEditor(form: HTMLFormElement) {
   const subtypeSelect: HTMLSelectElement | null = form.querySelector('select#subtype');
 
-  if (!subtypeSelect) {
-    throw new Error('subtype select must be present');
-  }
-
   if (!form.dataset.subtypes) {
     throw new Error('form must have attribute data-subtypes');
   }
@@ -18,7 +14,7 @@ export function initDataEditor(form: HTMLFormElement) {
       return;
     }
 
-    const subtype = subtypeSelect.value;
+    const subtype = subtypeSelect?.value || '';
 
     for (const fieldLabel of form.querySelectorAll<HTMLLabelElement>('label[data-for-subtypes]')) {
       if (!fieldLabel.dataset.forSubtypes) {
@@ -38,7 +34,7 @@ export function initDataEditor(form: HTMLFormElement) {
     }
   };
 
-  subtypeSelect.addEventListener('change', () => {
+  subtypeSelect?.addEventListener('change', () => {
     form.action = setQueryParam(form.action, 'subtype', subtypeSelect.value);
 
     updateFieldsVisibility();

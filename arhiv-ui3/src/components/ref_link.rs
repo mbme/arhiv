@@ -17,6 +17,7 @@ template_fn!(render_template, "./ref_link.html.tera");
 enum RefMode<'a> {
     Ref {
         document_type: &'a str,
+        subtype: &'a str,
         title: String,
         url: String,
     },
@@ -30,6 +31,10 @@ enum RefMode<'a> {
     },
     Image {
         title: String,
+        document_url: String,
+        blob_url: String,
+    },
+    Audio {
         document_url: String,
         blob_url: String,
     },
@@ -97,6 +102,7 @@ impl Ref {
 
             return serde_json::to_value(RefMode::Ref {
                 document_type: &document.document_type,
+                subtype: &document.subtype,
                 title,
                 url: document_url(&document.id, &None),
             })
@@ -116,8 +122,17 @@ impl Ref {
             .context("failed to serialize");
         }
 
+        if attachment.is_audio() {
+            return serde_json::to_value(RefMode::Audio {
+                document_url: document_url(&attachment.id, &None),
+                blob_url: blob_url(&attachment.data.blob),
+            })
+            .context("failed to serialize");
+        }
+
         serde_json::to_value(RefMode::Ref {
             document_type: &attachment.document_type,
+            subtype: &attachment.subtype,
             title,
             url: document_url(&attachment.id, &None),
         })

@@ -183,7 +183,8 @@ impl Arhiv {
 
         let last_update_time = tx.get_last_update_time()?;
 
-        let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
+        let prime_rpc =
+            PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
 
         // TODO parallel file upload
         for blob_id in new_blob_ids {
@@ -220,7 +221,8 @@ impl Arhiv {
             return Ok(());
         }
 
-        let prime_rpc = PrimeServerRPC::new(&self.config.prime_url)?;
+        let prime_rpc =
+            PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
 
         // TODO parallel file download
         for blob_id in missing_blob_ids {

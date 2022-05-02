@@ -42,17 +42,16 @@ impl Download {
     pub fn new(url: &str) -> Result<Self> {
         let downloads_dir = get_downloads_dir().context("failed to find Downloads dir")?;
 
-        ensure_dir_exists(&downloads_dir).context("dir for downloads doesn't exist")?;
-
-        let url_hash = get_string_hash_blake3(url);
-        let completed_file_path = format!("{}/{}", &downloads_dir, url_hash);
-
-        Download::new_with_path(url, completed_file_path)
+        Download::new_with_path(url, &downloads_dir)
     }
 
-    pub fn new_with_path(url: &str, completed_file_path: impl Into<String>) -> Result<Self> {
-        let completed_file_path = completed_file_path.into();
+    pub fn new_with_path(url: &str, downloads_dir: &str) -> Result<Self> {
+        ensure_dir_exists(downloads_dir).context("dir for downloads doesn't exist")?;
 
+        let url_hash = get_string_hash_blake3(url);
+        let completed_file_path = format!("{}/{}", downloads_dir, url_hash);
+
+        // FIXME better check if download is complete
         ensure!(
             !file_exists(&completed_file_path)?,
             "Completed download file {} already exists",

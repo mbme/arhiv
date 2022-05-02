@@ -7,15 +7,20 @@ use crate::entities::*;
 
 pub struct PrimeServerRPC {
     prime_url: String,
+    downloads_dir: String,
 }
 
 impl PrimeServerRPC {
-    pub fn new<S: Into<String>>(prime_url: S) -> Result<Self> {
+    pub fn new(prime_url: impl Into<String>, downloads_dir: impl Into<String>) -> Result<Self> {
         let prime_url = prime_url.into();
+        let downloads_dir = downloads_dir.into();
 
         ensure!(!prime_url.is_empty(), "prime_url must not  be empty");
 
-        Ok(PrimeServerRPC { prime_url })
+        Ok(PrimeServerRPC {
+            prime_url,
+            downloads_dir,
+        })
     }
 
     pub async fn download_blob(&self, blob: &BLOB) -> Result<()> {
@@ -26,15 +31,21 @@ impl PrimeServerRPC {
             );
         }
 
-        log::debug!("downloading BLOB {} into {}", &blob.id, &blob.file_path);
+        log::debug!("downloading BLOB {}", &blob.id);
 
         let url = self.get_blob_url(&blob.id);
 
-        let mut download = Download::new_with_path(&url, &blob.file_path)?;
+        let mut download = Download::new_with_path(&url, &self.downloads_dir)?;
         download.keep_completed_file(true);
         download.keep_download_file(true);
 
-        download.start().await?;
+        let download_result = download.start().await?;
+
+        tokio::fs::rename(&download_result.file_path, &blob.file_path)
+            .await
+            .context("failed to move downloaded blob into blob dir")?;
+
+        log::debug!("downloaded BLOB {}", &blob.id);
 
         Ok(())
     }

@@ -62,23 +62,6 @@ export function replaceEl(el: Element, content: string, selector = ''): void {
   }
 }
 
-export function keepSessionState(el: HTMLElement, key: string): void {
-  const sessionKey = `state-${el.tagName}-${key}-${location.pathname}`;
-  const savedState = sessionStorage.getItem(sessionKey);
-
-  if (el instanceof HTMLDetailsElement) {
-    if (savedState) {
-      el.open = savedState === 'true';
-    }
-
-    el.addEventListener('toggle', () => sessionStorage.setItem(sessionKey, el.open.toString()));
-
-    return;
-  }
-
-  throw new Error(`unsupported element "${el.tagName}"`);
-}
-
 export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
   const url = new URL(urlStr, window.location.href);
 

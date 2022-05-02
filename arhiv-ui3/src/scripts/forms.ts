@@ -25,29 +25,6 @@ function isEqualFormData(fd1: FormData, fd2: FormData): boolean {
   return JSON.stringify(fd1Obj) === JSON.stringify(fd2Obj);
 }
 
-export function autoGrowTextarea(textarea: HTMLTextAreaElement): void {
-  const parent = textarea.parentElement;
-  if (!parent) {
-    console.error("Textarea doesn't have a parent element");
-    return;
-  }
-
-  const updateHeight = () => {
-    // preserve height between updates
-    parent.style.height = `${parent.scrollHeight}px`;
-
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-
-    parent.style.height = 'auto';
-  };
-
-  updateHeight();
-
-  textarea.addEventListener('input', updateHeight, { passive: true });
-  window.addEventListener('resize', updateHeight, { passive: true });
-}
-
 export function preserveUnsavedChanges(form: HTMLFormElement): void {
   let submitted = false;
   const initialFormData = new FormData(form);

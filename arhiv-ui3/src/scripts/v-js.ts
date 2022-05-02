@@ -2,7 +2,7 @@ import { sum } from './utils';
 
 export type DirectiveName = `v-${string}`;
 export type Directive = (el: Element, arg: string) => void;
-export type Directives = Record<DirectiveName, Directive>;
+type Directives = Record<DirectiveName, Directive>;
 
 class DirectivesProcessor {
   private _registries: Record<DirectiveName, WeakSet<Element>>;
@@ -64,10 +64,16 @@ class DirectivesProcessor {
   }
 }
 
-export function init_V_JS(observeChanges = false, directives: Directives): void {
-  console.debug('[v]: registered %s directives', Object.keys(directives).length);
+const DIRECTIVES: Directives = {};
 
-  const processor = new DirectivesProcessor(directives);
+export function registerVDirective(directiveName: DirectiveName, directive: Directive) {
+  DIRECTIVES[directiveName] = directive;
+}
+
+export function init_V_JS(observeChanges = false): void {
+  console.debug('[v]: registered %s directives', Object.keys(DIRECTIVES).length);
+
+  const processor = new DirectivesProcessor(DIRECTIVES);
 
   {
     const result = processor.processElements();

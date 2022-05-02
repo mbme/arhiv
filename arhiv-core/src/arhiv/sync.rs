@@ -165,6 +165,8 @@ impl Arhiv {
 
         tx.commit()?;
 
+        log::info!("Completed local sync");
+
         Ok(())
     }
 
@@ -187,10 +189,17 @@ impl Arhiv {
             PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
 
         // TODO parallel file upload
-        for blob_id in new_blob_ids {
+        for (index, blob_id) in new_blob_ids.iter().enumerate() {
             let blob = self.get_blob(&blob_id)?;
 
+            log::info!("uploading BLOB {} out of {}", index + 1, new_blob_ids.len());
             prime_rpc.upload_blob(&blob).await?;
+        }
+
+        if new_blob_ids.is_empty() {
+            log::info!("There are no BLOBs to upload");
+        } else {
+            log::info!("uploaded {} BLOBs", new_blob_ids.len());
         }
 
         let response: ChangesetResponse = prime_rpc.send_changeset(&changeset).await?;
@@ -207,7 +216,7 @@ impl Arhiv {
 
         tx.commit()?;
 
-        log::debug!("sync_remotely: success!");
+        log::info!("Completed remote sync");
 
         Ok(())
     }
@@ -218,6 +227,7 @@ impl Arhiv {
         log::debug!("There are {} missing local BLOBs", missing_blob_ids.len());
 
         if missing_blob_ids.is_empty() {
+            log::info!("There are no missing BLOBs to download");
             return Ok(());
         }
 
@@ -225,11 +235,18 @@ impl Arhiv {
             PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
 
         // TODO parallel file download
-        for blob_id in missing_blob_ids {
+        for (index, blob_id) in missing_blob_ids.iter().enumerate() {
             let blob = self.get_blob(&blob_id)?;
 
+            log::info!(
+                "downloading BLOBS {} of {}",
+                index + 1,
+                missing_blob_ids.len()
+            );
             prime_rpc.download_blob(&blob).await?;
         }
+
+        log::info!("finished downloading {} BLOBS", missing_blob_ids.len());
 
         Ok(())
     }

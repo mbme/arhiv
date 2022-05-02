@@ -17,6 +17,7 @@ use crate::{
 
 template_fn!(render_template, "./player_app_page.html.tera");
 
+#[allow(clippy::similar_names)]
 fn format_duration(duration_ms: u64) -> String {
     let duration_s = (duration_ms as f64 / 1000.0).round() as u64;
 

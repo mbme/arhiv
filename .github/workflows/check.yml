@@ -1,4 +1,4 @@
-name: Rust
+name: Check code
 
 on:
   push:
@@ -20,13 +20,24 @@ jobs:
           toolchain: stable
       - name: Check & lint Rust
         run: cargo clippy --verbose --all-targets --all-features -- -D warnings
+
       - name: Run Rust tests
         run: cargo test --verbose
+
       - name: Install JS modules
         run: yarn install
+
       - name: Check JS & TS formatting
         run: yarn run check-fmt
+
       - name: Lint Arhiv UI
         run: yarn workspace arhiv-ui3 run lint
+
+      - name: Type Check Arhiv UI
+        run: yarn workspace arhiv-ui3 run compiler-errors
+
       - name: Lint Arhiv Scraper
         run: yarn workspace arhiv-scraper run lint
+
+      - name: Type Check Arhiv Scraper
+        run: yarn workspace arhiv-scraper run compiler-errors

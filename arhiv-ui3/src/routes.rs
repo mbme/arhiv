@@ -40,10 +40,10 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/documents/:id/edit", edit_document_page)
         .post("/documents/:id/edit", edit_document_page_handler)
-        .get("/documents/:id/erase", erase_document_confirmation_dialog)
+        .get("/documents/:id/erase", erase_document_confirmation_modal)
         .post(
             "/documents/:id/erase",
-            erase_document_confirmation_dialog_handler,
+            erase_document_confirmation_modal_handler,
         )
         //
         .get("/collections/:collection_id/documents/:id", document_page)
@@ -57,11 +57,11 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         )
         .get(
             "/collections/:collection_id/documents/:id/erase",
-            erase_document_confirmation_dialog,
+            erase_document_confirmation_modal,
         )
         .post(
             "/collections/:collection_id/documents/:id/erase",
-            erase_document_confirmation_dialog_handler,
+            erase_document_confirmation_modal_handler,
         )
         //
         .get("/blobs/:blob_id", blob_handler)
@@ -217,18 +217,18 @@ async fn edit_document_page_handler(req: Request<Body>) -> ServerResponse {
     app.render(response)
 }
 
-async fn erase_document_confirmation_dialog(req: Request<Body>) -> ServerResponse {
+async fn erase_document_confirmation_modal(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let id: Id = req.param("id").unwrap().into();
     let parent_collection: Option<Id> = req.param("collection_id").map(Into::into);
 
-    let response = app.erase_document_confirmation_dialog(&id, &parent_collection)?;
+    let response = app.erase_document_confirmation_modal(&id, &parent_collection)?;
 
     app.render(response)
 }
 
-async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> ServerResponse {
+async fn erase_document_confirmation_modal_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
@@ -239,7 +239,7 @@ async fn erase_document_confirmation_dialog_handler(req: Request<Body>) -> Serve
     let fields = parse_urlencoded(&body);
 
     let response =
-        app.erase_document_confirmation_dialog_handler(&id, &parent_collection, &fields)?;
+        app.erase_document_confirmation_modal_handler(&id, &parent_collection, &fields)?;
 
     app.render(response)
 }

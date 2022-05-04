@@ -1,7 +1,7 @@
 mod catalog_page;
 mod document_page;
 mod edit_document_page;
-mod erase_document_confirmation_dialog;
+mod erase_document_confirmation_modal;
 mod erased_documents_list_page;
 mod index_page;
 mod new_document_page;
@@ -15,7 +15,7 @@ mod scrape_modal;
 pub use catalog_page::*;
 pub use document_page::*;
 pub use edit_document_page::*;
-pub use erase_document_confirmation_dialog::*;
+pub use erase_document_confirmation_modal::*;
 pub use erased_documents_list_page::*;
 pub use index_page::*;
 pub use new_document_page::*;

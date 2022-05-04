@@ -12,11 +12,11 @@ use crate::{
 
 template_fn!(
     render_template,
-    "./erase_document_confirmation_dialog.html.tera"
+    "./erase_document_confirmation_modal.html.tera"
 );
 
 impl App {
-    pub fn erase_document_confirmation_dialog(
+    pub fn erase_document_confirmation_modal(
         &self,
         id: &Id,
         parent_collection: &Option<Id>,
@@ -45,7 +45,7 @@ impl App {
         Ok(AppResponse::dialog(title, content))
     }
 
-    pub fn erase_document_confirmation_dialog_handler(
+    pub fn erase_document_confirmation_modal_handler(
         &self,
         id: &Id,
         parent_collection: &Option<Id>,

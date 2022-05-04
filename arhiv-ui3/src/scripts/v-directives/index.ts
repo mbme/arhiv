@@ -5,3 +5,4 @@ import './v-layer';
 import './v-modal-close';
 import './v-modal-link';
 import './v-modal-submit';
+import './v-preserve-unsaved-changes';

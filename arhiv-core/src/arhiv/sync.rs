@@ -190,7 +190,7 @@ impl Arhiv {
 
         // TODO parallel file upload
         for (index, blob_id) in new_blob_ids.iter().enumerate() {
-            let blob = self.get_blob(&blob_id)?;
+            let blob = self.get_blob(blob_id)?;
 
             log::info!("uploading BLOB {} out of {}", index + 1, new_blob_ids.len());
             prime_rpc.upload_blob(&blob).await?;
@@ -236,7 +236,7 @@ impl Arhiv {
 
         // TODO parallel file download
         for (index, blob_id) in missing_blob_ids.iter().enumerate() {
-            let blob = self.get_blob(&blob_id)?;
+            let blob = self.get_blob(blob_id)?;
 
             log::info!(
                 "downloading BLOBS {} of {}",

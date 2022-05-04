@@ -8,7 +8,7 @@ pub struct NodeJS(String);
 
 impl NodeJS {
     pub fn check() -> Result<Self> {
-        find_bin("nodejs")?
+        find_bin("node")?
             .map(Self)
             .context("NodeJS must be available")
     }

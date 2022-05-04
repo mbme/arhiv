@@ -1,6 +1,7 @@
 import { copyTextAndNotify } from '../scripts/clipboard';
 import { isFormElement, initDynamicLink, initDynamicForm, isAnchorElement } from '../scripts/forms';
 import { dispatchCloseModalEvent } from '../scripts/modal';
+import { replaceElContent } from '../scripts/utils';
 
 export function initPickDocumentModal(modalEl: HTMLElement): void {
   modalEl.querySelectorAll('[data-component=catalog-entry]').forEach((el) => {
@@ -37,5 +38,5 @@ export function initPickDocumentModal(modalEl: HTMLElement): void {
     throw new Error('search form must be present');
   }
 
-  initDynamicForm(searchForm, modalEl);
+  initDynamicForm(searchForm, (content) => replaceElContent(modalEl, content));
 }

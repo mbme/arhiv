@@ -1,4 +1,5 @@
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
+use hyper::StatusCode;
 use serde_json::json;
 
 use arhiv_core::entities::Id;
@@ -34,29 +35,31 @@ impl App {
         let document_title = self.arhiv.get_schema().get_title(&document)?;
 
         let content = render_template(json!({
+            "id": document.id,
             "document_type": document.document_type,
             "title": document_title,
             "confirmation_text": get_confirmation_text(&document.document_type),
-            "cancel_url": document_url(&document.id, parent_collection),
+            "success_url":  parent_collection_url(&document.document_type, parent_collection),
         }))?;
 
-        let title = format!("Erase {}?", &document.document_type);
-
-        Ok(AppResponse::dialog(title, content))
+        Ok(AppResponse::fragment(content))
     }
 
     pub fn erase_document_confirmation_modal_handler(
         &self,
-        id: &Id,
-        parent_collection: &Option<Id>,
         fields: &Fields,
     ) -> Result<AppResponse> {
-        let document = self.arhiv.must_get_document(id)?;
+        let id: Id = fields
+            .get("id")
+            .context("field 'id' must be present")?
+            .into();
 
         let confirmation_text = fields
             .get("confirmation_text")
             .map(String::as_str)
             .unwrap_or_default();
+
+        let document = self.arhiv.must_get_document(&id)?;
 
         ensure!(
             confirmation_text == get_confirmation_text(&document.document_type),
@@ -64,12 +67,12 @@ impl App {
         );
 
         let tx = self.arhiv.get_tx()?;
-        tx.erase_document(id)?;
+        tx.erase_document(&id)?;
         tx.commit()?;
 
-        let location = parent_collection_url(&document.document_type, parent_collection);
-
-        Ok(AppResponse::SeeOther { location })
+        Ok(AppResponse::Status {
+            status: StatusCode::NO_CONTENT,
+        })
     }
 }
 

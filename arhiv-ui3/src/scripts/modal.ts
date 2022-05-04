@@ -15,24 +15,24 @@ function renderModal(modalContent: string): void {
 
   rootEl.appendChild(modalEl);
 
-  const dialog = new A11yDialog(modalEl);
+  const modal = new A11yDialog(modalEl);
 
   let unlockScroll = noop;
-  dialog.on('show', () => {
+  modal.on('show', () => {
     unlockScroll = lockGlobalScroll();
   });
 
-  dialog.on('hide', () => {
+  modal.on('hide', () => {
     unlockScroll();
 
     modalEl.remove();
   });
 
   rootEl.addEventListener(CLOSE_MODAL_EVENT, () => {
-    dialog.hide();
+    modal.hide();
   });
 
-  dialog.show();
+  modal.show();
 }
 
 export async function showModal(url: string): Promise<void> {

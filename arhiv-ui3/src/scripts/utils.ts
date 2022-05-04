@@ -62,6 +62,14 @@ export function replaceEl(el: Element, content: string, selector = ''): void {
   }
 }
 
+export function replaceElContent(el: Element, content: string, resetScroll = true): void {
+  el.innerHTML = content;
+
+  if (resetScroll) {
+    el.scrollTop = 0;
+  }
+}
+
 export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
   const url = new URL(urlStr, window.location.href);
 

@@ -3,7 +3,9 @@
 <article id="content">
   {{ content | safe }} {% if erase_document_url %}
   <div class="flex items-end grow justify-end text-sm">
-    <a href="{{erase_document_url}}" class="clean-link text-red-600 font-mono ml-1">Erase</a>
+    <button type="button" class="btn btn-link text-red-600" v-layer="{{erase_document_url}}">
+      Erase
+    </button>
   </div>
   {% endif %}
 </article>

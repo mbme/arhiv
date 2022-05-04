@@ -86,7 +86,10 @@ export function isFormElement(el: Element | null): el is HTMLFormElement {
   return el instanceof HTMLFormElement;
 }
 
-export function initDynamicForm(formEl: HTMLFormElement, containerEl: Element): void {
+export function initDynamicForm(
+  formEl: HTMLFormElement,
+  onSuccess: (content: string) => void
+): void {
   let inProgress = false;
 
   formEl.addEventListener('submit', (e) => {
@@ -102,8 +105,7 @@ export function initDynamicForm(formEl: HTMLFormElement, containerEl: Element): 
     submitForm(formEl)
       .then(
         (content) => {
-          containerEl.innerHTML = content;
-          containerEl.scrollTop = 0;
+          onSuccess(content);
         },
         (err) => {
           console.error('Failed to submit form', err);

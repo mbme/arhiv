@@ -43,7 +43,11 @@ pub fn parent_collection_url(document_type: &str, parent_collection: &Option<Id>
 }
 
 pub fn erase_document_url(id: &Id, parent_collection: &Option<Id>) -> String {
-    document_url(id, parent_collection) + "/erase"
+    if let Some(ref collection_id) = parent_collection {
+        format!("/modals/erase-document/{}/{}", collection_id, id)
+    } else {
+        format!("/modals/erase-document/{}", id)
+    }
 }
 
 pub fn pick_file_modal_fragment_url(dir: impl Into<String>, show_hidden: bool) -> String {

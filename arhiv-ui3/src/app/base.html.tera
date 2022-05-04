@@ -12,7 +12,6 @@
   </head>
   <body>
     <nav id="sidebar">
-      {% if show_sidebar %}
       <a href="/">index</a>
 
       {% for document_type in nav_document_types %}
@@ -35,7 +34,6 @@
 
         PLAYER
       </a>
-      {% endif %}
     </nav>
 
     <main>{{ content | safe }}</main>

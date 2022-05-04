@@ -40,11 +40,6 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/documents/:id/edit", edit_document_page)
         .post("/documents/:id/edit", edit_document_page_handler)
-        .get("/documents/:id/erase", erase_document_confirmation_modal)
-        .post(
-            "/documents/:id/erase",
-            erase_document_confirmation_modal_handler,
-        )
         //
         .get("/collections/:collection_id/documents/:id", document_page)
         .get(
@@ -55,16 +50,21 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
             "/collections/:collection_id/documents/:id/edit",
             edit_document_page_handler,
         )
+        //
+        .get("/blobs/:blob_id", blob_handler)
+        //
         .get(
-            "/collections/:collection_id/documents/:id/erase",
+            "/modals/erase-document/:id",
+            erase_document_confirmation_modal,
+        )
+        .get(
+            "/modals/erase-document/:collection_id/:id",
             erase_document_confirmation_modal,
         )
         .post(
-            "/collections/:collection_id/documents/:id/erase",
+            "/modals/erase-document",
             erase_document_confirmation_modal_handler,
         )
-        //
-        .get("/blobs/:blob_id", blob_handler)
         //
         .get("/modals/pick-document", pick_document_modal)
         .get("/modals/pick-file", pick_file_modal)
@@ -232,14 +232,10 @@ async fn erase_document_confirmation_modal_handler(req: Request<Body>) -> Server
     let (parts, body): (Parts, Body) = req.into_parts();
     let app: &App = parts.data().unwrap();
 
-    let id: Id = parts.param("id").unwrap().into();
-    let parent_collection: Option<Id> = parts.param("collection_id").map(Into::into);
-
     let body = hyper::body::to_bytes(body).await?;
     let fields = parse_urlencoded(&body);
 
-    let response =
-        app.erase_document_confirmation_modal_handler(&id, &parent_collection, &fields)?;
+    let response = app.erase_document_confirmation_modal_handler(&fields)?;
 
     app.render(response)
 }

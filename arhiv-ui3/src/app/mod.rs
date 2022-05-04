@@ -41,13 +41,11 @@ impl App {
         status: StatusCode,
         title: &str,
         content: &str,
-        show_sidebar: bool,
     ) -> ServerResponse {
         let icons = render_icons(json!({})).expect("failed to render icons");
 
         let result = render_template(json!({
             "title": capitalize(title),
-            "show_sidebar": show_sidebar,
             "nav_document_types": self.nav_document_types,
             "content": content,
             "icons": icons,
@@ -62,10 +60,7 @@ impl App {
                 title,
                 content,
                 status,
-            } => self.render_page_with_status(status, &title, &content, true),
-            AppResponse::Dialog { title, content } => {
-                self.render_page_with_status(StatusCode::OK, &title, &content, false)
-            }
+            } => self.render_page_with_status(status, &title, &content),
             AppResponse::Json { content } => render_json(StatusCode::OK, content),
             AppResponse::Fragment { content } => render_content(StatusCode::OK, content),
             AppResponse::Status { status } => respond_with_status(status),
@@ -80,10 +75,6 @@ pub enum AppResponse {
         title: String,
         content: String,
         status: StatusCode,
-    },
-    Dialog {
-        title: String,
-        content: String,
     },
     Fragment {
         content: String,
@@ -117,10 +108,6 @@ impl AppResponse {
             content,
             status,
         }
-    }
-
-    pub fn dialog(title: String, content: String) -> Self {
-        AppResponse::Dialog { title, content }
     }
 
     pub fn fragment(content: String) -> Self {

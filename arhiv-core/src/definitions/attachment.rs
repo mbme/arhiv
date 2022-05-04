@@ -22,14 +22,14 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
                 name: "filename",
                 field_type: FieldType::String {},
                 mandatory: true,
-                readonly: true,
+                readonly: false,
                 for_subtypes: None,
             },
             Field {
                 name: "media_type",
                 field_type: FieldType::String {},
                 mandatory: true,
-                readonly: true,
+                readonly: false,
                 for_subtypes: None,
             },
             Field {

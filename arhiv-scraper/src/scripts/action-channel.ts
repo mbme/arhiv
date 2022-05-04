@@ -31,7 +31,11 @@ export class ActionChannel {
     return value;
   }
 
-  createAttachment(url: string) {
+  async createAttachment(url: string) {
+    if (!url) {
+      return '';
+    }
+
     return this.runAction({
       type: 'CreateAttachment',
       url,

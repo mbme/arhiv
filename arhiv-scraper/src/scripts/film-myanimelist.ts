@@ -1,5 +1,5 @@
 import { Context } from './context';
-import { getImageSrc, getTable, getText, Obj } from './utils';
+import { getAttribute, getTable, getText, Obj } from './utils';
 
 export async function extractFilmFromMyanimelist(url: string, context: Context): Promise<boolean> {
   // https://myanimelist.net/anime/30276/One_Punch_Man
@@ -14,7 +14,7 @@ export async function extractFilmFromMyanimelist(url: string, context: Context):
   const engTitle = await getText(page, '.title-english').catch(() => '');
   data.title = engTitle || (await getText(page, '.title-name'));
 
-  const cover_src = await getImageSrc(page, '.leftside img');
+  const cover_src = (await getAttribute(page, '.leftside img', 'data-src')) || '';
   data.cover = await context.channel.createAttachment(cover_src);
 
   const metadata = await getTable(page, '.leftside .spaceit_pad');

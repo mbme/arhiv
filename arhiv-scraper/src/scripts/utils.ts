@@ -46,6 +46,18 @@ export function getImageSrc(
   return el.$eval(selector, (node) => (node as HTMLImageElement).src);
 }
 
+export function getAttribute(
+  el: ElementHandle<HTMLElement> | Page,
+  selector: string,
+  attributeName: string
+): Promise<string | null> {
+  return el.$eval(
+    selector,
+    (node, attributeName) => (node as HTMLElement).getAttribute(attributeName as string),
+    attributeName
+  );
+}
+
 export function removeEl(el: ElementHandle<HTMLElement> | Page, selector: string): Promise<void> {
   return el.$eval(selector, (node) => node.remove());
 }

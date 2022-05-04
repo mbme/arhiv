@@ -67,7 +67,7 @@ impl Download {
             completed_file_path,
             download_file_path,
             keep_download_file: false,
-            keep_completed_file: true,
+            keep_completed_file: false,
         })
     }
 

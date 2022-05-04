@@ -156,19 +156,4 @@ mod tests {
 
         Ok(())
     }
-
-    #[ignore]
-    #[tokio::test]
-    async fn test_scrape_myanimelist_series_with_prequel() -> Result<()> {
-        let result = scrape_and_extract(
-            "https://myanimelist.net/anime/40028/Shingeki_no_Kyojin__The_Final_Season",
-            "film",
-            2,
-        )
-        .await;
-
-        assert!(result.is_err());
-
-        Ok(())
-    }
 }

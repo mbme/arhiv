@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::entities::{Revision, Timestamp};
+use crate::entities::{Document, Revision, Timestamp};
 
 pub struct DBSetting<T: Serialize + DeserializeOwned>(pub &'static str, PhantomData<T>);
 
@@ -54,19 +54,7 @@ pub struct BLOBSCount {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ListPage<T> {
-    pub items: Vec<T>,
+pub struct ListPage {
+    pub items: Vec<Document>,
     pub has_more: bool,
-}
-
-impl<T> ListPage<T> {
-    pub fn map<K, F>(self, f: F) -> ListPage<K>
-    where
-        F: Fn(T) -> K,
-    {
-        ListPage {
-            items: self.items.into_iter().map(f).collect(),
-            has_more: self.has_more,
-        }
-    }
 }

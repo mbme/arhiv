@@ -159,7 +159,7 @@ impl Arhiv {
         conn.get_setting(&SETTING_IS_PRIME)
     }
 
-    pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage> {
         let conn = self.get_connection()?;
 
         conn.list_documents(filter.as_ref())

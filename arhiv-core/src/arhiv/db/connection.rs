@@ -267,7 +267,7 @@ impl ArhivConnection {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage<Document>> {
+    pub fn list_documents(&self, filter: &Filter) -> Result<ListPage> {
         let mut qb = QueryBuilder::new();
 
         qb.select("*", "documents");

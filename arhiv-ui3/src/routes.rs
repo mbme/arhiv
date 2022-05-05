@@ -82,8 +82,6 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/apps/player", app_player)
         //
-        .get("/api/documents/:id", api_get_document)
-        //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
         //
@@ -311,16 +309,6 @@ async fn app_player(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = app.player_app_page()?;
-
-    app.render(response)
-}
-
-async fn api_get_document(req: Request<Body>) -> ServerResponse {
-    let app: &App = req.data().unwrap();
-
-    let id: Id = req.param("id").unwrap().into();
-
-    let response = app.document_api(&id)?;
 
     app.render(response)
 }

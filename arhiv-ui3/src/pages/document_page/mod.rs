@@ -1,6 +1,6 @@
 use std::ops::Not;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use hyper::StatusCode;
 use serde_json::json;
 
@@ -88,17 +88,6 @@ impl App {
         }))?;
 
         Ok(AppResponse::page(title, content))
-    }
-
-    pub fn document_api(&self, id: &Id) -> Result<AppResponse> {
-        if let Some(document) = self.arhiv.get_document(id)? {
-            let content =
-                serde_json::to_string(&document).context("failed to serialize document")?;
-
-            Ok(AppResponse::json(content))
-        } else {
-            Ok(AppResponse::status(StatusCode::NOT_FOUND))
-        }
     }
 }
 

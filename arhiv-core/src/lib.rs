@@ -13,6 +13,7 @@
     clippy::cast_lossless
 )]
 
+mod api;
 mod arhiv;
 mod config;
 pub mod definitions;
@@ -31,6 +32,7 @@ pub use crate::arhiv::db::{
     ArhivConnection, BLOBSCount, Conditions, DocumentsCount, Filter, ListPage, OrderBy,
 };
 pub use crate::arhiv::Arhiv;
+pub use api::{ApiRequest, ApiResponse};
 pub use config::Config;
 pub use validator::{FieldValidationErrors, ValidationError, Validator};
 

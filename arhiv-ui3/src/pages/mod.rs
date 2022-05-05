@@ -1,3 +1,4 @@
+mod api;
 mod catalog_page;
 mod document_page;
 mod edit_document_page;
@@ -12,6 +13,7 @@ mod pick_file_modal;
 mod player_app_page;
 mod scrape_modal;
 
+pub use api::*;
 pub use catalog_page::*;
 pub use document_page::*;
 pub use edit_document_page::*;

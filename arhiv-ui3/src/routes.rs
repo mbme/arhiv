@@ -82,6 +82,7 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/apps/player", app_player)
         //
+        .post("/api", api_handler)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
         //
@@ -309,6 +310,17 @@ async fn app_player(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = app.player_app_page()?;
+
+    app.render(response)
+}
+
+async fn api_handler(req: Request<Body>) -> ServerResponse {
+    let (parts, body): (Parts, Body) = req.into_parts();
+    let app: &App = parts.data().unwrap();
+
+    let body = hyper::body::to_bytes(body).await?;
+
+    let response = app.api_handler(&body)?;
 
     app.render(response)
 }

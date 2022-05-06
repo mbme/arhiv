@@ -68,7 +68,7 @@ impl BackupPaths {
     pub fn new(backup_dir: String) -> Self {
         let data_dir = format!("{}/data", &backup_dir);
 
-        let now = chrono::Local::now().format("%Y-%m-%d_%H:%M:%S");
+        let now = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S");
         let backup_db_file = format!("{}/arhiv_{}.sqlite.zst", &backup_dir, now);
 
         BackupPaths {

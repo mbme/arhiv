@@ -8,6 +8,7 @@ use super::utils::extract_id;
 use crate::entities::*;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub enum MarkupStr<'a> {
     Ref(&'a str),
     Owned(String),

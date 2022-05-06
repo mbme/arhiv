@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::entities::{Document, Revision, Timestamp};
 
@@ -11,7 +11,7 @@ pub const SETTING_IS_PRIME: DBSetting<bool> = DBSetting("is_prime", PhantomData)
 pub const SETTING_DATA_VERSION: DBSetting<u8> = DBSetting("data_version", PhantomData);
 pub const SETTING_LAST_SYNC_TIME: DBSetting<Timestamp> = DBSetting("last_sync_time", PhantomData);
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Debug)]
 pub struct DbStatus {
     pub arhiv_id: String,
     pub is_prime: bool,

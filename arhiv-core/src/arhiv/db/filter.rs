@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::entities::{Id, ERASED_DOCUMENT_TYPE};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(deny_unknown_fields)]
 pub struct Conditions {
     pub field: Option<(String, String)>, // field, pattern
     pub search: Option<String>,          // pattern
@@ -15,6 +16,7 @@ pub struct Conditions {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "type", deny_unknown_fields)]
 pub enum OrderBy {
     Field {
         selector: String,
@@ -37,6 +39,7 @@ impl Default for OrderBy {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Filter {
     pub page_offset: Option<u8>,
     pub page_size: Option<u8>,

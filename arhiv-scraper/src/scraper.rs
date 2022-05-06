@@ -16,7 +16,7 @@ use arhiv_core::{
 use rs_utils::{log, Chromium, Download, NodeJS, TempFile};
 
 #[derive(Deserialize, Debug, Clone)]
-#[serde(tag = "type")]
+#[serde(tag = "type", deny_unknown_fields)]
 enum ScraperAction {
     CreateAttachment {
         url: String,

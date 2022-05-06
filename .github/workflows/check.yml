@@ -30,14 +30,14 @@ jobs:
       - name: Check JS & TS formatting
         run: yarn run check-fmt
 
-      - name: Arhiv UI: lint
+      - name: Arhiv UI - lint
         run: yarn workspace arhiv-ui3 run lint
 
-      - name: Arhiv UI: check types
+      - name: Arhiv UI - check types
         run: yarn workspace arhiv-ui3 run compiler-errors
 
-      - name: Arhiv Scraper: lint
+      - name: Arhiv Scraper - lint
         run: yarn workspace arhiv-scraper run lint
 
-      - name: Arhiv Scraper: check types
+      - name: Arhiv Scraper - check types
         run: yarn workspace arhiv-scraper run compiler-errors

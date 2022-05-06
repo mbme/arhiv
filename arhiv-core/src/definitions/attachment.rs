@@ -176,6 +176,8 @@ impl TryInto<Attachment> for Document {
     type Error = Error;
 
     fn try_into(self) -> Result<Attachment, Self::Error> {
-        self.convert(ATTACHMENT_TYPE)
+        self.ensure_document_type(ATTACHMENT_TYPE)?;
+
+        self.convert()
     }
 }

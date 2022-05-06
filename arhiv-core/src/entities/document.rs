@@ -72,7 +72,7 @@ impl Document {
         self.updated_at = Utc::now();
     }
 
-    pub fn convert<D: DeserializeOwned>(self, document_type: &str) -> Result<Document<D>> {
+    pub fn ensure_document_type(&self, document_type: &str) -> Result<()> {
         ensure!(
             self.document_type == document_type,
             "expected document_type to be '{}', got '{}' instead",
@@ -80,6 +80,10 @@ impl Document {
             document_type
         );
 
+        Ok(())
+    }
+
+    pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
         let data: D = serde_json::from_value(self.data.into()).context("failed to convert data")?;
 
         Ok(Document {

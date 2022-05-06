@@ -122,6 +122,8 @@ impl TryInto<TrackDocument> for Document {
     type Error = Error;
 
     fn try_into(self) -> Result<TrackDocument, Self::Error> {
-        self.convert(TRACK_TYPE)
+        self.ensure_document_type(TRACK_TYPE)?;
+
+        self.convert()
     }
 }

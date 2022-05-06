@@ -46,8 +46,8 @@ fn build_app() -> Command<'static> {
                 .about("Backup arhiv data")
                 .arg(
                     Arg::new("backup_dir")
-                        .short('d')
                         .long("backup_dir")
+                        .takes_value(true)
                         .help("Directory to store backup. Will take precendence over config.backup_dir option."),
                 ),
         )
@@ -335,7 +335,7 @@ pub async fn arhiv_cli() {
 
             join_handle.await.expect("must join");
         }
-        ("backup", _) => {
+        ("backup", matches) => {
             let arhiv = Arhiv::must_open();
 
             let backup_dir = matches.value_of("backup_dir");

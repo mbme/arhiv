@@ -43,7 +43,13 @@ fn build_app() -> Command<'static> {
         )
         .subcommand(
             Command::new("backup") //
-                .about("Backup arhiv data"),
+                .about("Backup arhiv data")
+                .arg(
+                    Arg::new("backup_dir")
+                        .short('d')
+                        .long("backup_dir")
+                        .help("Directory to store backup. Will take precendence over config.backup_dir option."),
+                ),
         )
         .subcommand(
             Command::new("ui-server") //
@@ -332,7 +338,9 @@ pub async fn arhiv_cli() {
         ("backup", _) => {
             let arhiv = Arhiv::must_open();
 
-            arhiv.backup().expect("must be able to backup");
+            let backup_dir = matches.value_of("backup_dir");
+
+            arhiv.backup(backup_dir).expect("must be able to backup");
         }
         _ => unreachable!(),
     }

@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use anyhow::{bail, ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, log, ZStd};
+use rs_utils::{ensure_dir_exists, file_exists, into_absolute_path, log, ZStd};
 
 use super::Arhiv;
 use crate::entities::BLOBId;
@@ -11,8 +11,10 @@ impl Arhiv {
     pub fn backup(&self, backup_dir: Option<&str>) -> Result<()> {
         let zstd = ZStd::check()?;
 
-        let backup_dir = backup_dir.unwrap_or(&self.config.backup_dir).to_string();
+        let backup_dir = backup_dir.unwrap_or(&self.config.backup_dir);
         ensure!(!backup_dir.is_empty(), "coudn't determine backup dir");
+
+        let backup_dir = into_absolute_path(backup_dir)?;
 
         log::debug!("backup_dir: {}", &backup_dir);
 

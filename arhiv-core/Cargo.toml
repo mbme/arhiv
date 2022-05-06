@@ -29,7 +29,7 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 nanoid = "0.4.0"
 pulldown-cmark = { version = "0.9", default-features = false, features = ["simd"] }
 
-hyper = { version = "0.14", features = ["http1", "server", "stream"] }
+hyper = { version = "0.14", features = ["http1", "server"] }
 routerify = "3"
 
 rusqlite = { version = "0.27", features = ["chrono", "serde_json", "functions"] }

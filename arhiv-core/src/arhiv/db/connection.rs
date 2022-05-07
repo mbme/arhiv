@@ -948,10 +948,11 @@ impl ArhivConnection {
     }
 
     pub(crate) fn remove_orphaned_blobs(&mut self) -> Result<()> {
-        ensure!(
-            !self.has_staged_documents()?,
-            "there must be no staged changes"
-        );
+        if self.has_staged_documents()? {
+            log::warn!("there are staged documents, skipping");
+
+            return Ok(());
+        }
 
         let used_blob_ids = self.get_used_blob_ids()?;
 

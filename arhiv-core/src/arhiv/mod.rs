@@ -121,7 +121,6 @@ impl Arhiv {
             let mut tx = self.get_tx()?;
             tx.remove_orphaned_blobs()?;
             tx.commit()?;
-            log::debug!("");
         }
 
         log::debug!("Cleanup completed");

@@ -1,9 +1,18 @@
 import { Scraper } from '../scraper';
 import { getEl, getLocationURL, parseHumanDate } from '../utils';
-import { FacebookPostList } from './post-list';
 import { isFBMobile, isPostListPage } from './utils';
 
-export const scrapeFBMobilePostList: Scraper<FacebookPostList> = () => {
+type PostListItem = {
+  permalink: string;
+  date: string;
+  dateISO?: string;
+  preview: string;
+};
+export type FacebookMobilePostList = {
+  posts: PostListItem[];
+};
+
+export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = () => {
   const locationURL = getLocationURL();
 
   if (!isFBMobile(locationURL) || !isPostListPage(locationURL)) {

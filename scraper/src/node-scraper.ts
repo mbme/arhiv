@@ -1,6 +1,5 @@
 import { Browser, devices, Page, launch, Target } from 'puppeteer-core';
-import type { ScrapedData } from './browser-scraper';
-import { handleFacebookRedirect } from './facebook/puppeteer-utils';
+import type { ScrapeResult } from './browser-scraper';
 
 declare const __BROWSER_SCRAPER__: string; // injected by esbuild
 async function injectBrowserScraper(url: string, page: Page) {
@@ -42,8 +41,6 @@ async function openURL(page: Page, url: string, mobile?: boolean, manual?: boole
   if (manual) {
     await injectScrapeButton(page);
   }
-
-  await page.waitForTimeout(1000);
 }
 
 async function waitForPageClosed(browser: Browser, page: Page) {
@@ -65,8 +62,6 @@ type Options = {
   executablePath?: string;
 };
 
-type ScrapeResult = [ScrapedData | null, string | null];
-
 export async function runScrapers(url: string, options?: Options): Promise<ScrapeResult[]> {
   const browser: Browser = await launch({
     executablePath: options?.executablePath || '/usr/bin/chromium',
@@ -84,14 +79,9 @@ export async function runScrapers(url: string, options?: Options): Promise<Scrap
   try {
     await openURL(page, url, options?.mobile, options?.manual);
 
-    const newUrl = await handleFacebookRedirect(page, url);
-    if (newUrl) {
-      await openURL(page, newUrl, true, options?.manual);
-    }
-
     const results: ScrapeResult[] = [];
-    await page.exposeFunction("_onScrape", (result: ScrapedData | null, error: string | null) => {
-      results.push([result, error]);
+    await page.exposeFunction("_onScrape", (result: ScrapeResult) => {
+      results.push(result);
     });
 
     const pageClosedPromise = waitForPageClosed(browser, page);

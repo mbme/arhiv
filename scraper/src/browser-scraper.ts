@@ -14,44 +14,57 @@ const SCRAPERS = [
   scrapeFBMobilePostList,
 ] as const;
 
-export type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>
+type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>
 
-async function scrape(): Promise<ScrapedData | null> {
-  for (const scraper of SCRAPERS) {
-    try {
-      const result = await scraper();
+export type ScrapeResult = {
+  url: string,
+  originalUrl?: string,
 
-      if (result) {
-        console.info(`scraper ${scraper.name} succeeded`);
-        return result;
-      }
-    } catch (e) {
-      console.error(`scraper ${scraper.name} failed:`, e);
-      throw e;
-    }
-  }
+  scraperName?: string,
 
-  return null;
+  data?: ScrapedData,
+  error?: string,
 }
 
 declare global {
   interface Window {
     originalURL: URL;
-    _scrape: () => Promise<ScrapedData | null>;
-    _onScrape?: (result: ScrapedData | null, error: string | null) => void;
+    _scrape: () => Promise<ScrapeResult>;
+    _onScrape?: (result: ScrapeResult) => void;
   }
 }
 
-window._scrape = async () => {
-  try {
-    const result = await scrape();
+window._scrape = async (): Promise<ScrapeResult> => {
+  const result: ScrapeResult = {
+    url: location.href,
+    originalUrl: window.originalURL?.toString(),
+  };
 
-    window._onScrape?.(result, null);
+  for (const scraper of SCRAPERS) {
+    try {
+      const data = await scraper();
 
-    return result;
-  } catch (e) {
-    window._onScrape?.(null, (e as Error).toString());
+      if (data) {
+        console.info(`scraper ${scraper.name} succeeded`);
 
-    throw e;
+        result.scraperName = scraper.name;
+        result.data = data;
+
+        break;
+      }
+    } catch (e) {
+      console.error(`scraper ${scraper.name} failed:`, e);
+
+      result.scraperName = scraper.name
+      result.error = (e as Error).toString();
+
+      window._onScrape?.(result);
+
+      throw e;
+    }
   }
+
+  window._onScrape?.(result);
+
+  return result;
 };

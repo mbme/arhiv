@@ -1,0 +1,16 @@
+---
+source: scraper/src/lib.rs
+assertion_line: 106
+expression: result
+---
+[
+  [
+    {
+      "content": "Warriors in Newcastle tomorrow night and Manchester on Tuesday. As we go through this crazy heatwave it is extra important that you take care of yourselves and each other at the shows. Stay hydrated & keep in the shade during the day where possible and keep topped up with free water at the bar at the show.\nThe Prodigy HQ",
+      "date": "17 July at 08:46",
+      "dateISO": "2022-07-17T05:46:00.000Z",
+      "permalink": "https://www.facebook.com/photo.php?fbid=601056601380488&set=a.210381377114681&type=3&__xts__%5B0%5D=68.ARDJ7KK9DIw8zWUjmj4QBo8QHwY4huedJoMox70RKUDXzEjSH0TDuiWjyYIwYcaKX-fMuF_P7uF4CatF-a06dbcssTMp2XyizL3BGBT1FjmvG8JkdukXo12Cy4riw6LanXOxOM2G3ONIdYUMpF7iwBlLyeN6kFHaXHvoVUqvU4XziHbajZcLZERDgG4cQtIkuGWP7_XXkQJXLWk68Ae97Ptiy0ozxXGzqzPhXVDxxwOqokOXk-WiwJYg8-EWCOj0vxXkX5E4FbEd8NttJke9wzFsHYz3nHImdi3MRjeQnL7SoJnbW6E&__tn__=-R"
+    },
+    null
+  ]
+]

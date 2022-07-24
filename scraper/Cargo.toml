@@ -1,0 +1,22 @@
+[package]
+name = "scraper"
+version = "0.0.0"
+edition = "2021"
+authors = ["mbme"]
+publish = false
+
+[dependencies]
+rs-utils = { path = "../rs-utils" }
+
+anyhow = "1"
+
+clap = { version = "3.2", features = ["color", "cargo", "derive"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+insta = { version = "1", features = ["redactions", "backtrace"] }
+
+[build-dependencies]
+rs-utils = { path = "../rs-utils" }

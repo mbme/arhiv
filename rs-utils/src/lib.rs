@@ -13,6 +13,7 @@
     clippy::cast_lossless
 )]
 
+use std::collections::HashMap;
 use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
@@ -44,8 +45,17 @@ mod string;
 mod tools;
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
+    run_command_with_envs(command, args, HashMap::new())
+}
+
+pub fn run_command_with_envs(
+    command: &str,
+    args: Vec<&str>,
+    envs: HashMap<&str, &str>,
+) -> Result<String> {
     let output = Command::new(command)
         .args(args)
+        .envs(envs)
         .output()
         .context("failed to execute command")?;
 

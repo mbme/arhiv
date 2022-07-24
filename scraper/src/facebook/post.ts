@@ -2,14 +2,14 @@ import { Scraper } from '../scraper';
 import { getEl, getLocationURL, parseHumanDate } from '../utils';
 import { isFB, isPostPage } from './utils';
 
-export type Post = {
+export type FacebookPost = {
   permalink: string;
   date: string;
   dateISO?: string;
   content: string;
 };
 
-export const scrapeFBPost: Scraper<Post> = () => {
+export const scrapeFBPost: Scraper<FacebookPost> = () => {
   const locationURL = getLocationURL();
 
   if (!isFB(locationURL) || !isPostPage(locationURL)) {

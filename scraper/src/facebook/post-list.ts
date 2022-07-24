@@ -8,14 +8,14 @@ type PostListItem = {
   dateISO?: string;
   preview: string;
 };
-export type PostList = {
+export type FacebookPostList = {
   posts: PostListItem[];
 };
 
 const hasLoader = (el: HTMLElement) => !!el.querySelector('[role=progressbar]');
 const isComment = (el: HTMLElement) => !!el.parentElement?.closest('[role=article]');
 
-export const scrapeFBPostList: Scraper<PostList> = () => {
+export const scrapeFBPostList: Scraper<FacebookPostList> = () => {
   const locationURL = getLocationURL();
 
   if (!isFB(locationURL) || !isPostListPage(locationURL)) {

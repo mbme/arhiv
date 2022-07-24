@@ -1,19 +1,22 @@
-import { Scraper } from './scraper';
+import { ExtractScraperGeneric } from './scraper';
 
 import { scrapeFBPost } from './facebook/post';
 import { scrapeFBPostList } from './facebook/post-list';
 import { scrapeFBMobilePostList } from './facebook/post-list-mobile';
 import { scrapeFBMobilePost } from './facebook/post-mobile';
+import { ArrayElement } from './utils';
 
-const SCRAPERS: Scraper[] = [
+const SCRAPERS = [
   //
   scrapeFBPost,
   scrapeFBPostList,
   scrapeFBMobilePost,
   scrapeFBMobilePostList,
-];
+] as const;
 
-async function scrape(): Promise<unknown | undefined> {
+export type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>
+
+async function scrape(): Promise<ScrapedData | null> {
   for (const scraper of SCRAPERS) {
     try {
       const result = await scraper();
@@ -28,14 +31,14 @@ async function scrape(): Promise<unknown | undefined> {
     }
   }
 
-  return undefined;
+  return null;
 }
 
 declare global {
   interface Window {
     originalURL: URL;
-    _scrape: () => Promise<unknown | undefined>;
-    _onScrape?: (result: unknown | null, error: string | null) => void;
+    _scrape: () => Promise<ScrapedData | null>;
+    _onScrape?: (result: ScrapedData | null, error: string | null) => void;
   }
 }
 

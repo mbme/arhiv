@@ -27,3 +27,6 @@ export const getEl = <T extends Element = HTMLElement>(
 
   return el as T;
 };
+
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;

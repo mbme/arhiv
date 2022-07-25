@@ -46,5 +46,8 @@ pub fn main() {
 
     let result = scraper.scrape(&args.url).expect("failed to scrape");
 
-    println!("{}", result);
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&result).expect("must serialize")
+    );
 }

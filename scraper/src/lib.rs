@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 
 use rs_utils::{log, run_command_with_envs, Chromium, NodeJS, TempFile};
 
@@ -15,6 +16,16 @@ fn get_script_temp_file() -> Result<TempFile> {
     temp_file.write(script)?;
 
     Ok(temp_file)
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct ScrapeResult {
+    url: String,
+    original_url: Option<String>,
+    scraper_name: Option<String>,
+    data: Option<serde_json::Value>,
+    error: Option<String>,
 }
 
 pub struct Scraper {
@@ -50,7 +61,7 @@ impl Scraper {
         self.mobile = true;
     }
 
-    pub fn scrape(&self, url: &str) -> Result<serde_json::Value> {
+    pub fn scrape(&self, url: &str) -> Result<Vec<ScrapeResult>> {
         log::info!("Scraping data from '{}'", url);
 
         let script_temp_file = get_script_temp_file()?;
@@ -76,10 +87,6 @@ impl Scraper {
 
         // TODO handle plain file downloads
 
-        if result.trim().is_empty() {
-            return Ok(serde_json::Value::default());
-        }
-
         serde_json::from_str(&result).context("failed to parse JSON")
     }
 }
@@ -88,9 +95,9 @@ impl Scraper {
 mod tests {
     use anyhow::Result;
 
-    use crate::Scraper;
+    use crate::{ScrapeResult, Scraper};
 
-    fn scrape(url: &str) -> Result<serde_json::Value> {
+    fn scrape(url: &str) -> Result<Vec<ScrapeResult>> {
         let scraper = Scraper::new()?;
 
         scraper.scrape(url)

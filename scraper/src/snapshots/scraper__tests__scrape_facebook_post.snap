@@ -1,18 +1,19 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 103
+assertion_line: 112
 expression: result
 ---
 [
   {
+    "url": "https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml",
+    "originalUrl": "https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml",
+    "scraperName": "scrapeFBPost",
     "data": {
       "content": "Warriors in Newcastle tomorrow night and Manchester on Tuesday. As we go through this crazy heatwave it is extra important that you take care of yourselves and each other at the shows. Stay hydrated & keep in the shade during the day where possible and keep topped up with free water at the bar at the show.\nThe Prodigy HQ",
       "date": "17 July at 08:46",
       "dateISO": "2022-07-17T05:46:00.000Z",
-      "permalink": "https://www.facebook.com/photo.php?fbid=601056601380488&set=a.210381377114681&type=3&__xts__%5B0%5D=68.ARA3JV7AUuKpoyTnIdf8YBpdtw7zQROy3BWEzOetmmV7B0_ZC-k6ayRjnwWJ0Gu5sijDpOd-Oqdf2JOrXdYk79Cvc5b0QAgfeq8P00-CU2RG6WLUJnVMueTbIQ7RPvqP1yGwnB_hGRZbHdaoFPU3fq9nq6y4EYWibvJInaM-zKkA-heocxPLVYIoo44UKnsy1-LGa0iE-AuOO7kOpxj3esAfP6V1Fpin4RiaRpOU1mEUOkgEQ4a_5N2sEGBvcnal8qlNUiMJfusWoobVWkTok40HnPBn-jaIRzL9-PqX3Lgcu27mz6g&__tn__=-R"
+      "permalink": "https://www.facebook.com/photo.php?fbid=601056601380488&set=a.210381377114681&type=3&__xts__%5B0%5D=68.ARBJlXkvEJpnDGwcFugdHvNmvM6lRlye1MSxpVANs_HiAQ3BBwueJeE56hM2P43kvvLSzd9lvZl-OzaLMV2QsAIvDASs_f8CDfN4RYQEqsLy34ALmsljgdkWSsn27vdEZy7xNscXnDKGZ2QpIrORduIFfpkT5HqZGwykjjkpLr0kjnDXbURv7UvFtyq-kNFbYkxTRxoJCg7fkQxW3fxW-5NTs1CZt_WbaSW99Rg8HVEk5mX7VOACtL1sBxWxBMpKSWBX9rslaw9Yc06CMwytYcR2376NjJsrEis0s_oV3qwd9BrRdW0&__tn__=-R"
     },
-    "originalUrl": "https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml",
-    "scraperName": "scrapeFBPost",
-    "url": "https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml"
+    "error": null
   }
 ]

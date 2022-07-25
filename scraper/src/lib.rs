@@ -108,7 +108,9 @@ mod tests {
     fn test_scrape_facebook_post() -> Result<()> {
         let result = scrape("https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml")?;
 
-        insta::assert_json_snapshot!(result);
+        insta::assert_json_snapshot!(result, {
+            "[].data.permalink" => "[permalink]"
+        });
 
         Ok(())
     }

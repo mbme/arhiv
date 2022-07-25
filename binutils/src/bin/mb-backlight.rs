@@ -1,17 +1,4 @@
 #![deny(clippy::all)]
-#![deny(clippy::pedantic)]
-#![allow(
-    clippy::module_name_repetitions,
-    clippy::module_inception,
-    clippy::wildcard_imports,
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
-    clippy::cast_precision_loss,
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    clippy::cast_sign_loss,
-    clippy::cast_lossless
-)]
 
 use clap::{crate_version, Arg, Command};
 
@@ -34,7 +21,7 @@ fn main() {
 
     let matches = app.get_matches();
 
-    let notify = matches.is_present("notify");
+    let notify = matches.contains_id("notify");
 
     match matches.subcommand_name() {
         Some("inc") => {

@@ -1,6 +1,6 @@
 use std::{process, sync::Arc};
 
-use clap::{crate_version, AppSettings, Arg, Command};
+use clap::{builder::PossibleValuesParser, crate_version, AppSettings, Arg, Command};
 use clap_complete::{generate_to, Shell};
 
 use arhiv_core::{
@@ -108,11 +108,12 @@ fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("document_type")
                         .required(true)
-                        .possible_values(get_standard_schema().get_document_types())
+                        .value_parser(PossibleValuesParser::new(get_standard_schema().get_document_types()))
+                        .takes_value(true)
                         .index(1)
                         .help("One of known document types"),
                 )
-                .arg(Arg::new("subtype").help("Document subtype"))
+                .arg(Arg::new("subtype").long("subtype").takes_value(true).help("Document subtype"))
                 .arg(
                     Arg::new("data")
                         .required(true)
@@ -136,7 +137,8 @@ fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("document_type")
                         .required(true)
-                        .possible_values(get_standard_schema().get_document_types())
+                        .value_parser(PossibleValuesParser::new(get_standard_schema().get_document_types()))
+                        .takes_value(true)
                         .index(1)
                         .help("One of known document types"),
                 )
@@ -156,7 +158,7 @@ fn build_app() -> Command<'static> {
         .arg(
             Arg::new("verbose")
                 .short('v')
-                .multiple_occurrences(true)
+                .action(clap::ArgAction::Count)
                 .global(true)
                 .help("Increases logging verbosity each use for up to 2 times"),
         )
@@ -167,7 +169,9 @@ fn build_app() -> Command<'static> {
 pub async fn arhiv_cli() {
     let matches = build_app().get_matches();
 
-    let verbose_count = matches.occurrences_of("verbose");
+    let verbose_count = matches
+        .get_one::<u8>("verbose")
+        .expect("counted argument must be present");
     match verbose_count {
         0 => log::setup_logger(),
         1 => log::setup_debug_logger(),
@@ -177,10 +181,10 @@ pub async fn arhiv_cli() {
     match matches.subcommand().expect("subcommand must be provided") {
         ("init", matches) => {
             let arhiv_id = matches
-                .value_of("arhiv_id")
+                .get_one::<String>("arhiv_id")
                 .expect("arhiv_id must be present");
 
-            let prime = matches.is_present("prime");
+            let prime = matches.contains_id("prime");
 
             let config = Config::must_read().0;
             let schema = get_standard_schema();
@@ -196,7 +200,7 @@ pub async fn arhiv_cli() {
             // FIXME print number of unused temp attachments
         }
         ("config", matches) => {
-            if matches.is_present("template") {
+            if matches.contains_id("template") {
                 print!("{}", include_str!("../arhiv.json.template"));
                 return;
             }
@@ -212,7 +216,10 @@ pub async fn arhiv_cli() {
             Arhiv::must_open().sync().await.expect("must sync");
         }
         ("get", matches) => {
-            let id: Id = matches.value_of("id").expect("id must be present").into();
+            let id: Id = matches
+                .get_one::<String>("id")
+                .expect("id must be present")
+                .into();
 
             let arhiv = Arhiv::must_open();
 
@@ -230,11 +237,16 @@ pub async fn arhiv_cli() {
         }
         ("add", matches) => {
             let document_type: &str = matches
-                .value_of("document_type")
+                .get_one::<String>("document_type")
                 .expect("document_type must be present");
-            let subtype: &str = matches.value_of("subtype").unwrap_or_default();
+            let subtype: &str = matches
+                .get_one::<String>("subtype")
+                .map(String::as_str)
+                .unwrap_or_default();
 
-            let data: &str = matches.value_of("data").expect("data must be present");
+            let data: &str = matches
+                .get_one::<String>("data")
+                .expect("data must be present");
             let data: DocumentData =
                 serde_json::from_str(data).expect("data must be a JSON object");
 
@@ -253,7 +265,9 @@ pub async fn arhiv_cli() {
             print_document(&document, port);
         }
         ("scrape", matches) => {
-            let url: &str = matches.value_of("url").expect("url must be present");
+            let url: &str = matches
+                .get_one::<String>("url")
+                .expect("url must be present");
 
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
@@ -267,15 +281,16 @@ pub async fn arhiv_cli() {
         }
         ("import", matches) => {
             let document_type: &str = matches
-                .value_of("document_type")
+                .get_one::<String>("document_type")
                 .expect("document_type must be provided");
 
             let file_paths: Vec<&str> = matches
-                .values_of("file_path")
+                .get_many("file_path")
                 .expect("file_path must be provided")
+                .copied()
                 .collect();
 
-            let move_file: bool = matches.is_present("move_file");
+            let move_file: bool = matches.contains_id("move_file");
 
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
@@ -297,12 +312,15 @@ pub async fn arhiv_cli() {
             start_ui_server().await;
         }
         ("ui-open", matches) => {
-            let id: Id = matches.value_of("id").expect("id must be present").into();
+            let id: Id = matches
+                .get_one::<String>("id")
+                .expect("id must be present")
+                .into();
 
             let port = Config::must_read().0.ui_server_port;
 
             let browser = matches
-                .value_of("browser")
+                .get_one::<String>("browser")
                 .expect("either browser must be specified or $BROWSER env var must be set");
 
             log::info!("Opening document {} UI in {}", id, browser);
@@ -326,9 +344,8 @@ pub async fn arhiv_cli() {
                 panic!("server must be started on prime instance");
             }
 
-            let port: u16 = matches
-                .value_of("port")
-                .map(|value| value.parse().expect("port must be valid u16"))
+            let port = *matches
+                .get_one::<u16>("port")
                 .expect("port is missing or invalid");
 
             let (join_handle, _, _) = start_prime_server(arhiv, port);
@@ -338,7 +355,7 @@ pub async fn arhiv_cli() {
         ("backup", matches) => {
             let arhiv = Arhiv::must_open();
 
-            let backup_dir = matches.value_of("backup_dir");
+            let backup_dir = matches.get_one::<String>("backup_dir").map(String::as_str);
 
             arhiv.backup(backup_dir).expect("must be able to backup");
         }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 
-use rs_utils::{log, run_command_with_envs, Chromium, Download, NodeJS, TempFile};
+use rs_utils::{log, run_command_with_envs, Chromium, NodeJS, TempFile};
 
 fn get_script_temp_file() -> Result<TempFile> {
     let script = include_str!("../dist/node-scraper.js");
@@ -97,6 +97,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_scrape_facebook_post() -> Result<()> {
         let result = scrape("https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml")?;
 

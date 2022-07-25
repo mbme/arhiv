@@ -12,17 +12,17 @@ async function injectBrowserScraper(url: string, page: Page) {
 
 async function injectScrapeButton(page: Page) {
   await page.evaluate(() => {
-    const button = document.createElement("button");
+    const button = document.createElement('button');
     button.onclick = () => window._scrape();
-    button.innerText = "[ SCRAPE! ]";
-    button.style.color = "orange";
-    button.style.fontSize = "xx-large";
-    button.style.cursor = "pointer";
+    button.innerText = '[ SCRAPE! ]';
+    button.style.color = 'orange';
+    button.style.fontSize = 'xx-large';
+    button.style.cursor = 'pointer';
 
-    button.style.position = "fixed";
-    button.style.zIndex = "1000";
-    button.style.top = "5%";
-    button.style.right = "10%";
+    button.style.position = 'fixed';
+    button.style.zIndex = '1000';
+    button.style.top = '5%';
+    button.style.right = '10%';
 
     document.body.insertAdjacentElement('afterbegin', button);
   });
@@ -66,7 +66,7 @@ export async function runScrapers(url: string, options?: Options): Promise<Scrap
   const browser: Browser = await launch({
     executablePath: options?.executablePath || '/usr/bin/chromium',
 
-    headless: (!options?.debug && !options?.manual),
+    headless: !options?.debug && !options?.manual,
     devtools: options?.debug,
 
     defaultViewport: null, // use full viewport
@@ -80,7 +80,7 @@ export async function runScrapers(url: string, options?: Options): Promise<Scrap
     await openURL(page, url, options?.mobile, options?.manual);
 
     const results: ScrapeResult[] = [];
-    await page.exposeFunction("_onScrape", (result: ScrapeResult) => {
+    await page.exposeFunction('_onScrape', (result: ScrapeResult) => {
       results.push(result);
     });
 

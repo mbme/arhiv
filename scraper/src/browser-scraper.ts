@@ -14,17 +14,17 @@ const SCRAPERS = [
   scrapeFBMobilePostList,
 ] as const;
 
-type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>
+type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>;
 
 export type ScrapeResult = {
-  url: string,
-  originalUrl?: string,
+  url: string;
+  originalUrl?: string;
 
-  scraperName?: string,
+  scraperName?: string;
 
-  data?: ScrapedData,
-  error?: string,
-}
+  data?: ScrapedData;
+  error?: string;
+};
 
 declare global {
   interface Window {
@@ -55,7 +55,7 @@ window._scrape = async (): Promise<ScrapeResult> => {
     } catch (e) {
       console.error(`scraper ${scraper.name} failed:`, e);
 
-      result.scraperName = scraper.name
+      result.scraperName = scraper.name;
       result.error = (e as Error).toString();
 
       window._onScrape?.(result);

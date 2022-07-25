@@ -8,9 +8,8 @@ type PostListItem = {
   dateISO?: string;
   preview: string;
 };
-export type FacebookMobilePostList = {
-  posts: PostListItem[];
-};
+
+export type FacebookMobilePostList = PostListItem[];
 
 export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = () => {
   const locationURL = getLocationURL();
@@ -36,7 +35,5 @@ export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = () => {
     };
   });
 
-  return {
-    posts,
-  };
+  return posts;
 };

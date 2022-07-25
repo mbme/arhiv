@@ -1,50 +1,66 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getEl, getLocationURL, parseHumanDate, promiseTimeout } from '../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {
   permalink: string;
   date: string;
   dateISO?: string;
-  preview: string;
+  content: string;
 };
-export type FacebookPostList = {
-  posts: PostListItem[];
-};
+
+export type FacebookPostList = PostListItem[];
 
 const hasLoader = (el: HTMLElement) => !!el.querySelector('[role=progressbar]');
 const isComment = (el: HTMLElement) => !!el.parentElement?.closest('[role=article]');
 
-export const scrapeFBPostList: Scraper<FacebookPostList> = () => {
+const clickSeeMore = (el: HTMLElement) => {
+  const seeMoreBtn = Array.from(el.querySelectorAll<HTMLElement>('[role=button]')).find(
+    (el) => el.textContent === 'See more'
+  );
+
+  if (!seeMoreBtn) {
+    return;
+  }
+
+  seeMoreBtn.click();
+};
+
+export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
   const locationURL = getLocationURL();
 
   if (!isFB(locationURL) || !isPostListPage(locationURL)) {
     return undefined;
   }
 
-  const posts = Array.from(document.querySelectorAll<HTMLElement>('[role=article]'))
-    .filter((postEl) => !hasLoader(postEl) && !isComment(postEl))
-    .map((postEl) => {
-      const dateEl = postEl.querySelectorAll('a')[3];
-      if (!dateEl) {
-        throw new Error("can't find date element");
-      }
+  const postsElements = Array.from(document.querySelectorAll<HTMLElement>('[role=article]')).filter(
+    (postEl) => !hasLoader(postEl) && !isComment(postEl)
+  );
 
-      const permalink = dateEl.href;
-      const date = dateEl.innerText;
-      const dateISO = parseHumanDate(date)?.toISOString();
+  postsElements.forEach((postEl) => {
+    clickSeeMore(postEl);
+  });
+  await promiseTimeout(1000);
 
-      const preview = getEl(postEl, '[data-ad-preview=message]', 'preview element').innerText;
+  const posts = postsElements.map((postEl) => {
+    const dateEl = postEl.querySelectorAll('a')[3];
+    if (!dateEl) {
+      throw new Error("can't find date element");
+    }
 
-      return {
-        permalink,
-        date,
-        dateISO,
-        preview,
-      };
-    });
+    const permalink = dateEl.href;
+    const date = dateEl.innerText;
+    const dateISO = parseHumanDate(date)?.toISOString();
 
-  return {
-    posts,
-  };
+    const content = getEl(postEl, '[data-ad-preview=message]', 'content element').innerText;
+
+    return {
+      permalink,
+      date,
+      dateISO,
+      content,
+    };
+  });
+
+  return posts;
 };

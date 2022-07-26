@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getAll, getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getAll, getEl, getLocationURL, getSelectionString, parseHumanDate } from '../utils';
 import { isFB, isPostPage } from './utils';
 
 export type FacebookPost = {
@@ -19,7 +19,7 @@ export const scrapeFBPost: Scraper<FacebookPost> = () => {
 
   const postEl = getEl(document, '[role=article]', 'post element');
 
-  const content = getEl(postEl, '[data-testid=post_message]', 'post content').innerText;
+  const content = getSelectionString(getEl(postEl, '[data-testid=post_message]', 'post content'));
 
   const dateEl = postEl.querySelector('a > abbr')?.parentElement;
   if (!dateEl) {

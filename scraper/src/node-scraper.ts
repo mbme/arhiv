@@ -13,7 +13,7 @@ async function injectBrowserScraper(url: string, page: Page) {
 async function injectScrapeButton(page: Page) {
   await page.evaluate(() => {
     const button = document.createElement('button');
-    button.onclick = () => window._scrape();
+    button.onclick = () => window._scraper.scrape();
     button.innerText = '[ SCRAPE! ]';
     button.style.color = 'orange';
     button.style.fontSize = 'xx-large';
@@ -87,7 +87,7 @@ export async function runScrapers(url: string, options?: Options): Promise<Scrap
     const pageClosedPromise = waitForPageClosed(browser, page);
 
     if (!options?.manual) {
-      await page.evaluate(() => window._scrape());
+      await page.evaluate(() => window._scraper.scrape());
       await page.close();
     }
 

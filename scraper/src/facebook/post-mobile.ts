@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getEl, getLocationURL, getSelectionString, parseHumanDate } from '../utils';
 import { isFBMobile, isPostPage } from './utils';
 
 export type FacebookMobilePost = {
@@ -18,7 +18,7 @@ export const scrapeFBMobilePost: Scraper<FacebookMobilePost> = () => {
 
   const postEl = getEl(document, '.story_body_container', 'post element');
 
-  const content = getEl(postEl, ':scope>div', 'post content').innerText;
+  const content = getSelectionString(getEl(postEl, ':scope>div', 'post content'));
 
   const dateEl = getEl(postEl, 'header a abbr', 'post date').parentElement as HTMLAnchorElement;
 

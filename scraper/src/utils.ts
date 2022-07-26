@@ -39,3 +39,21 @@ export const getAll = <T extends Element = HTMLElement>(
 
 export type ArrayElement<ArrayType extends readonly unknown[]> =
   ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+
+export const getSelectionString = (el: HTMLElement): string => {
+  const selection = window.getSelection();
+  if (!selection) {
+    throw new Error('selection is missing');
+  }
+
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  const selectionStr = selection.toString();
+
+  selection.removeAllRanges();
+
+  return selectionStr;
+};

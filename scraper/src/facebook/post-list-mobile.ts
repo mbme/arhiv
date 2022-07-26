@@ -35,5 +35,7 @@ export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = () => {
     };
   });
 
+  posts.reverse();
+
   return posts;
 };

@@ -1,5 +1,12 @@
 import { Scraper } from '../scraper';
-import { getEl, getAll, getLocationURL, parseHumanDate, promiseTimeout } from '../utils';
+import {
+  getEl,
+  getAll,
+  getLocationURL,
+  parseHumanDate,
+  promiseTimeout,
+  getSelectionString,
+} from '../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {
@@ -47,13 +54,16 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
   const postsElements = getAll(document, '[role=article]').filter(
     (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
   );
+  console.log(`scraping ${postsElements.length} posts`);
 
-  postsElements.forEach((postEl) => {
+  const posts: FacebookPostList = [];
+  for (let i = 0; i < postsElements.length; i += 1) {
+    const postEl = postsElements[i];
+
+    postEl.scrollIntoView(true);
     clickSeeMore(postEl);
-  });
-  await promiseTimeout(1000);
+    await promiseTimeout(1000);
 
-  const posts = postsElements.map((postEl) => {
     const links = collectLinks(postEl);
     const dateEl = links[3];
     if (!dateEl) {
@@ -64,21 +74,27 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
     const date = dateEl.innerText;
     const dateISO = parseHumanDate(date)?.toISOString();
 
-    const content = getEl(postEl, '[data-ad-preview=message]', 'content element').innerText;
+    const content = getSelectionString(
+      getEl(postEl, '[data-ad-preview=message]', 'content element')
+    );
 
     const images = collectImages(postEl).map((img) => img.src);
 
     const videos = collectVideos(postEl).map((video) => video.src);
 
-    return {
+    posts.push({
       permalink,
       date,
       dateISO,
       content,
       images,
       videos,
-    };
-  });
+    });
+
+    console.log(`Scraped post ${i + 1} of ${postsElements.length}`);
+  }
+
+  posts.reverse();
 
   return posts;
 };

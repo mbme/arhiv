@@ -114,4 +114,16 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    #[ignore]
+    fn test_scrape_facebook_post_with_multiple_images() -> Result<()> {
+        let result = scrape("https://www.facebook.com/theprodigyofficial/posts/pfbid0WVYZ4VTe9sddydcCNQGe7NUjajU92iVjM4TQYJgDpo14hy7zfHpQpdH5s2bWsoqul")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.permalink" => "[permalink]"
+        });
+
+        Ok(())
+    }
 }

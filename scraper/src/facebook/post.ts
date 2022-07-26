@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getAll, getEl, getLocationURL, parseHumanDate } from '../utils';
 import { isFB, isPostPage } from './utils';
 
 export type FacebookPost = {
@@ -7,6 +7,7 @@ export type FacebookPost = {
   date: string;
   dateISO?: string;
   content: string;
+  images: string[];
 };
 
 export const scrapeFBPost: Scraper<FacebookPost> = () => {
@@ -20,20 +21,25 @@ export const scrapeFBPost: Scraper<FacebookPost> = () => {
 
   const content = getEl(postEl, '[data-testid=post_message]', 'post content').innerText;
 
-  const dateEl = postEl.querySelectorAll('a')[3];
+  const dateEl = postEl.querySelector('a > abbr')?.parentElement;
   if (!dateEl) {
     throw new Error("can't find date element");
   }
 
-  const permalink = dateEl.href;
+  const permalink = (dateEl as HTMLAnchorElement).href;
 
   const date = dateEl.innerText;
   const dateISO = parseHumanDate(date)?.toISOString();
+
+  const images = getAll<HTMLImageElement>(postEl, '[data-testid=post_message] ~ div a img').map(
+    (img) => img.src
+  );
 
   return {
     permalink,
     date,
     dateISO,
     content,
+    images,
   };
 };

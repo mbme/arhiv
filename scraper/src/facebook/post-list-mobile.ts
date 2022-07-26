@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getAll, getEl, getLocationURL, parseHumanDate } from '../utils';
 import { isFBMobile, isPostListPage } from './utils';
 
 type PostListItem = {
@@ -18,7 +18,7 @@ export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = () => {
     return undefined;
   }
 
-  const posts = Array.from(document.querySelectorAll<HTMLElement>('article')).map((postEl) => {
+  const posts = getAll(document, 'article').map((postEl) => {
     const dateEl = getEl(postEl, 'header a abbr', 'post date').parentElement as HTMLAnchorElement;
 
     const permalink = dateEl.href;

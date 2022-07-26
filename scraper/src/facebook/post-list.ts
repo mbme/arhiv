@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, parseHumanDate, promiseTimeout } from '../utils';
+import { getEl, getAll, getLocationURL, parseHumanDate, promiseTimeout } from '../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {
@@ -7,17 +7,19 @@ type PostListItem = {
   date: string;
   dateISO?: string;
   content: string;
+  images: string[];
+  videos: string[];
 };
 
 export type FacebookPostList = PostListItem[];
 
 const hasLoader = (el: HTMLElement) => !!el.querySelector('[role=progressbar]');
-const isComment = (el: HTMLElement) => !!el.parentElement?.closest('[role=article]');
+
+const isInCommentSection = (el: HTMLElement) =>
+  Boolean(el.parentElement?.closest('[data-visualcompletion="ignore-dynamic"]'));
 
 const clickSeeMore = (el: HTMLElement) => {
-  const seeMoreBtn = Array.from(el.querySelectorAll<HTMLElement>('[role=button]')).find(
-    (el) => el.textContent === 'See more'
-  );
+  const seeMoreBtn = getAll(el, '[role=button]').find((el) => el.textContent === 'See more');
 
   if (!seeMoreBtn) {
     return;
@@ -26,6 +28,15 @@ const clickSeeMore = (el: HTMLElement) => {
   seeMoreBtn.click();
 };
 
+const collectLinks = (postEl: HTMLElement): HTMLAnchorElement[] =>
+  getAll<HTMLAnchorElement>(postEl, 'a').filter((link) => !isInCommentSection(link));
+
+const collectImages = (postEl: HTMLElement): HTMLImageElement[] =>
+  getAll<HTMLImageElement>(postEl, 'a img').filter((img) => !isInCommentSection(img));
+
+const collectVideos = (postEl: HTMLElement): HTMLVideoElement[] =>
+  getAll<HTMLVideoElement>(postEl, 'video').filter((img) => !isInCommentSection(img));
+
 export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
   const locationURL = getLocationURL();
 
@@ -33,8 +44,8 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
     return undefined;
   }
 
-  const postsElements = Array.from(document.querySelectorAll<HTMLElement>('[role=article]')).filter(
-    (postEl) => !hasLoader(postEl) && !isComment(postEl)
+  const postsElements = getAll(document, '[role=article]').filter(
+    (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
   );
 
   postsElements.forEach((postEl) => {
@@ -43,7 +54,8 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
   await promiseTimeout(1000);
 
   const posts = postsElements.map((postEl) => {
-    const dateEl = postEl.querySelectorAll('a')[3];
+    const links = collectLinks(postEl);
+    const dateEl = links[3];
     if (!dateEl) {
       throw new Error("can't find date element");
     }
@@ -54,11 +66,17 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
 
     const content = getEl(postEl, '[data-ad-preview=message]', 'content element').innerText;
 
+    const images = collectImages(postEl).map((img) => img.src);
+
+    const videos = collectVideos(postEl).map((video) => video.src);
+
     return {
       permalink,
       date,
       dateISO,
       content,
+      images,
+      videos,
     };
   });
 

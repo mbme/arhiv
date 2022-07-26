@@ -28,5 +28,14 @@ export const getEl = <T extends Element = HTMLElement>(
   return el as T;
 };
 
+export const getAll = <T extends Element = HTMLElement>(
+  root: HTMLElement | Document,
+  selector: string
+): T[] => {
+  const results = Array.from(root.querySelectorAll(selector));
+
+  return results as T[];
+};
+
 export type ArrayElement<ArrayType extends readonly unknown[]> =
   ArrayType extends readonly (infer ElementType)[] ? ElementType : never;

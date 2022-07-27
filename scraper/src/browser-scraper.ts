@@ -1,20 +1,5 @@
-import { ExtractScraperGeneric } from './scraper';
-
-import { scrapeFBPost } from './facebook/post';
-import { scrapeFBPostList } from './facebook/post-list';
-import { scrapeFBMobilePostList } from './facebook/post-list-mobile';
-import { scrapeFBMobilePost } from './facebook/post-mobile';
-import { ArrayElement, getSelectionString } from './utils';
-
-const SCRAPERS = [
-  //
-  scrapeFBPost,
-  scrapeFBPostList,
-  scrapeFBMobilePost,
-  scrapeFBMobilePostList,
-] as const;
-
-type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>;
+import { ScrapedData, SCRAPERS } from './scrapers';
+import { getSelectionString } from './utils';
 
 export type ScrapeResult = {
   url: string;

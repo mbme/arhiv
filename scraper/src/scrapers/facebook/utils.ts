@@ -1,4 +1,4 @@
-import { getPathSegments } from '../utils';
+import { getPathSegments } from '../../utils';
 
 export const isFB = (url: URL) => url.hostname === 'www.facebook.com';
 export const isLoginPage = (url: URL) => isFB(url) && url.pathname === '/login/';

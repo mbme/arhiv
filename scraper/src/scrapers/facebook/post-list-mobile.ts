@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getAll, getEl, getLocationURL, parseHumanDate } from '../utils';
+import { getAll, getEl, getLocationURL, parseHumanDate } from '../../utils';
 import { isFBMobile, isPostListPage } from './utils';
 
 type PostListItem = {

@@ -6,7 +6,7 @@ import {
   parseHumanDate,
   promiseTimeout,
   getSelectionString,
-} from '../utils';
+} from '../../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {

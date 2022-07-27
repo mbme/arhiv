@@ -1,5 +1,20 @@
 import * as chrono from 'chrono-node';
 
+type ObjValue = string | number | boolean | null | undefined;
+export type Obj<TValue = ObjValue> = Record<string, TValue>;
+
+export function uniqArr<T>(arr: T[]): T[] {
+  const result: T[] = [];
+
+  for (const item of arr) {
+    if (!result.includes(item)) {
+      result.push(item);
+    }
+  }
+
+  return result;
+}
+
 export const promiseTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
@@ -55,3 +70,27 @@ export const getSelectionString = (el: HTMLElement): string => {
 
   return selectionStr;
 };
+
+export function getListValues(el: HTMLElement | Document, selector: string): string[] {
+  const items = Array.from(el.querySelectorAll<HTMLElement>(selector))
+    .map((el) => el.innerText.trim())
+    .filter((item) => item.length > 0);
+
+  return uniqArr(items);
+}
+
+export function getTable(
+  el: HTMLElement | Document,
+  rowSelector: string,
+  split = ':'
+): Obj<string | undefined> {
+  const items = getListValues(el, rowSelector);
+
+  const table = Object.fromEntries(
+    items.map(
+      (item) => item.split(split).map((value) => value.trim()) as [string, string | undefined]
+    )
+  );
+
+  return table;
+}

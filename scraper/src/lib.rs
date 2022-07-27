@@ -109,7 +109,8 @@ mod tests {
         let result = scrape("https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml")?;
 
         insta::assert_json_snapshot!(result, {
-            "[].data.permalink" => "[permalink]"
+            "[].data.permalink" => "[permalink]",
+            "[].data.images[]" => "[permalink]"
         });
 
         Ok(())
@@ -121,7 +122,20 @@ mod tests {
         let result = scrape("https://www.facebook.com/theprodigyofficial/posts/pfbid0WVYZ4VTe9sddydcCNQGe7NUjajU92iVjM4TQYJgDpo14hy7zfHpQpdH5s2bWsoqul")?;
 
         insta::assert_json_snapshot!(result, {
-            "[].data.permalink" => "[permalink]"
+            "[].data.permalink" => "[permalink]",
+            "[].data.images[]" => "[permalink]"
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_yakaboo_book() -> Result<()> {
+        let result = scrape("https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[permalink]"
         });
 
         Ok(())

@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 123
+assertion_line: 124
 expression: result
 ---
 [
@@ -13,11 +13,11 @@ expression: result
       "date": "24 July at 06:19",
       "dateISO": "2022-07-24T03:19:00.000Z",
       "images": [
-        "https://scontent.flwo6-1.fna.fbcdn.net/v/t39.30808-6/294931331_605487010937447_5851313217691047658_n.jpg?stp=dst-jpg_s261x260&_nc_cat=110&ccb=1-7&_nc_sid=8024bb&_nc_ohc=49NMSvD9TvMAX_r_eM6&_nc_ht=scontent.flwo6-1.fna&oh=00_AT9NfO74rdmdiNQ3Uy3TiFxSSVrPtzbYSxCn6CxjLNekqQ&oe=62E42E54",
-        "https://scontent.flwo6-1.fna.fbcdn.net/v/t39.30808-6/295516141_605487014270780_7057612721924215012_n.jpg?stp=dst-jpg_s261x260&_nc_cat=105&ccb=1-7&_nc_sid=8024bb&_nc_ohc=NP3YIpRxUFkAX8XNtr4&_nc_oc=AQkXDbRRM9nptb1yZcs6RlOuhim1E2QBTNh99R7VWtjBddyEyVGhoky1OvJVDJyaq5M&_nc_ht=scontent.flwo6-1.fna&oh=00_AT9bgidjwqSIGxRkAW0Y2NDdkUvLIZ_nrja_u58Nv1OCYw&oe=62E52A9E",
-        "https://scontent.flwo6-1.fna.fbcdn.net/v/t39.30808-6/295255480_605487007604114_3995477224120169571_n.jpg?stp=dst-jpg_p168x128&_nc_cat=106&ccb=1-7&_nc_sid=8024bb&_nc_ohc=f4G3OZMuebAAX8PQEDf&_nc_ht=scontent.flwo6-1.fna&oh=00_AT9AcRy7EcDwezApksFj2kLlh-IYmhUBB5YbD_Ptyay0AA&oe=62E5708F",
-        "https://scontent.flwo6-1.fna.fbcdn.net/v/t39.30808-6/295558398_605487004270781_700684560552675133_n.jpg?stp=dst-jpg_p168x128&_nc_cat=110&ccb=1-7&_nc_sid=8024bb&_nc_ohc=TU_3_uxSQu4AX9OTbp6&_nc_ht=scontent.flwo6-1.fna&oh=00_AT_vJWxxJC7jBGOlGoFnLAMnhxf0zPDDKhRKPE9EzH0j0w&oe=62E4EB83",
-        "https://scontent.flwo6-1.fna.fbcdn.net/v/t39.30808-6/294399027_605487017604113_2503223099144554172_n.jpg?stp=dst-jpg_p168x128&_nc_cat=107&ccb=1-7&_nc_sid=8024bb&_nc_ohc=hg5N8hcOJqkAX_Y4SY1&_nc_ht=scontent.flwo6-1.fna&oh=00_AT-Ym0sosXED6HbujyIPGa4xUJdMamyqDtHj-SI5rBy9kg&oe=62E60287"
+        "[permalink]",
+        "[permalink]",
+        "[permalink]",
+        "[permalink]",
+        "[permalink]"
       ],
       "permalink": "[permalink]"
     },

@@ -1,12 +1,5 @@
 import { Scraper } from '../scraper';
-import {
-  getEl,
-  getAll,
-  getLocationURL,
-  parseHumanDate,
-  promiseTimeout,
-  getSelectionString,
-} from '../../utils';
+import { getEl, getAll, parseHumanDate, promiseTimeout, getSelectionString } from '../../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {
@@ -44,9 +37,7 @@ const collectImages = (postEl: HTMLElement): HTMLImageElement[] =>
 const collectVideos = (postEl: HTMLElement): HTMLVideoElement[] =>
   getAll<HTMLVideoElement>(postEl, 'video').filter((img) => !isInCommentSection(img));
 
-export const scrapeFBPostList: Scraper<FacebookPostList> = async () => {
-  const locationURL = getLocationURL();
-
+export const scrapeFBPostList: Scraper<FacebookPostList> = async (locationURL) => {
   if (!isFB(locationURL) || !isPostListPage(locationURL)) {
     return undefined;
   }

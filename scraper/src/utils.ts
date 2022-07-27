@@ -3,8 +3,6 @@ import * as chrono from 'chrono-node';
 export const promiseTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
-export const getLocationURL = () => new URL(window.location.href);
-
 export const getPathSegments = (url: URL) =>
   url.pathname.split('/').filter((segment) => segment.length > 0);
 

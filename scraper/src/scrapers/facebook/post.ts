@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getAll, getEl, getLocationURL, getSelectionString, parseHumanDate } from '../../utils';
+import { getAll, getEl, getSelectionString, parseHumanDate } from '../../utils';
 import { isFB, isPostPage } from './utils';
 
 export type FacebookPost = {
@@ -10,9 +10,7 @@ export type FacebookPost = {
   images: string[];
 };
 
-export const scrapeFBPost: Scraper<FacebookPost> = () => {
-  const locationURL = getLocationURL();
-
+export const scrapeFBPost: Scraper<FacebookPost> = (locationURL) => {
   if (!isFB(locationURL) || !isPostPage(locationURL)) {
     return undefined;
   }

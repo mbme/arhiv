@@ -18,9 +18,11 @@ const scraper = {
       originalUrl: window.originalURL?.toString(),
     };
 
+    const locationURL = new URL(window.location.href);
+
     for (const scraper of SCRAPERS) {
       try {
-        const data = await scraper();
+        const data = await scraper(locationURL);
 
         if (data) {
           console.info(`scraper ${scraper.name} succeeded`);

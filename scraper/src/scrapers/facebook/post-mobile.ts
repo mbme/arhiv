@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getLocationURL, getSelectionString, parseHumanDate } from '../../utils';
+import { getEl, getSelectionString, parseHumanDate } from '../../utils';
 import { isFBMobile, isPostPage } from './utils';
 
 export type FacebookMobilePost = {
@@ -9,9 +9,7 @@ export type FacebookMobilePost = {
   content: string;
 };
 
-export const scrapeFBMobilePost: Scraper<FacebookMobilePost> = () => {
-  const locationURL = getLocationURL();
-
+export const scrapeFBMobilePost: Scraper<FacebookMobilePost> = (locationURL) => {
   if (!isFBMobile(locationURL) || !isPostPage(locationURL)) {
     return undefined;
   }

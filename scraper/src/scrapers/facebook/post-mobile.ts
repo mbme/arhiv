@@ -9,6 +9,7 @@ export type FacebookMobilePost = {
   content: string;
 };
 
+// https://m.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
 export const scrapeFBMobilePost: Scraper<FacebookMobilePost> = (locationURL) => {
   if (!isFBMobile(locationURL) || !isPostPage(locationURL)) {
     return undefined;

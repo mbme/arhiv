@@ -37,6 +37,7 @@ const collectImages = (postEl: HTMLElement): HTMLImageElement[] =>
 const collectVideos = (postEl: HTMLElement): HTMLVideoElement[] =>
   getAll<HTMLVideoElement>(postEl, 'video').filter((img) => !isInCommentSection(img));
 
+// https://www.facebook.com/vmistozher/
 export const scrapeFBPostList: Scraper<FacebookPostList> = async (locationURL) => {
   if (!isFB(locationURL) || !isPostListPage(locationURL)) {
     return undefined;

@@ -10,6 +10,7 @@ export type FacebookPost = {
   images: string[];
 };
 
+// https://www.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
 export const scrapeFBPost: Scraper<FacebookPost> = (locationURL) => {
   if (!isFB(locationURL) || !isPostPage(locationURL)) {
     return undefined;

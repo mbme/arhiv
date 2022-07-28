@@ -11,6 +11,7 @@ type PostListItem = {
 
 export type FacebookMobilePostList = PostListItem[];
 
+// https://m.facebook.com/vmistozher/
 export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = (locationURL) => {
   if (!isFBMobile(locationURL) || !isPostListPage(locationURL)) {
     return undefined;

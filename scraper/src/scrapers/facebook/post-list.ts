@@ -1,5 +1,5 @@
 import { Scraper } from '../scraper';
-import { getEl, getAll, parseHumanDate, promiseTimeout, getSelectionString } from '../../utils';
+import { getEl, getAll, parseHumanDate, waitForTimeout, getSelectionString } from '../../utils';
 import { isFB, isPostListPage } from './utils';
 
 type PostListItem = {
@@ -54,7 +54,7 @@ export const scrapeFBPostList: Scraper<FacebookPostList> = async (locationURL) =
 
     postEl.scrollIntoView(true);
     clickSeeMore(postEl);
-    await promiseTimeout(1000);
+    await waitForTimeout(1000);
 
     const links = collectLinks(postEl);
     const dateEl = links[3];

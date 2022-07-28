@@ -15,7 +15,7 @@ export function uniqArr<T>(arr: T[]): T[] {
   return result;
 }
 
-export const promiseTimeout = (timeoutMs: number) =>
+export const waitForTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
 export const getPathSegments = (url: URL) =>

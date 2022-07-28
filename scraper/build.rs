@@ -1,6 +1,6 @@
 use std::env;
 
-use rs_utils::{create_dir_if_not_exist, create_file_if_not_exist, current_dir_relpath, run_yarn};
+use rs_utils::run_yarn;
 
 fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
@@ -14,9 +14,5 @@ fn main() {
         return;
     }
 
-    // in dev mode create file if missing so that CI doesn't fail
-    create_dir_if_not_exist(current_dir_relpath("dist"))
-        .expect("failed to create dir if not exist");
-    create_file_if_not_exist(current_dir_relpath("dist/node-scraper.js"))
-        .expect("failed to create file if not exist");
+    run_yarn("build");
 }

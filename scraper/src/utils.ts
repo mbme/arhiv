@@ -18,6 +18,36 @@ export function uniqArr<T>(arr: T[]): T[] {
 export const waitForTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
+export const waitForSelector = async (
+  el: HTMLElement | Document,
+  selector: string,
+  description: string,
+  timeoutMs = 30000
+) => {
+  if (timeoutMs === 0) {
+    throw new Error('timeoutMs must be positive number');
+  }
+
+  const ATTEMPT_TIMEOUT_MS = 500;
+  const maxAttempts = Math.ceil(timeoutMs / ATTEMPT_TIMEOUT_MS);
+
+  let attempt = 1;
+
+  while (attempt <= maxAttempts) {
+    if (el.querySelector(selector)) {
+      return;
+    }
+
+    if (attempt < maxAttempts) {
+      await waitForTimeout(ATTEMPT_TIMEOUT_MS);
+    }
+
+    attempt += 1;
+  }
+
+  throw new Error(`waitForSelector for "${description}" timed out`);
+};
+
 export const getPathSegments = (url: URL) =>
   url.pathname.split('/').filter((segment) => segment.length > 0);
 
@@ -94,3 +124,9 @@ export function getTable(
 
   return table;
 }
+
+export const getListStr = (el: HTMLElement | Document, selector: string): string => {
+  const values = getListValues(el, selector);
+
+  return values.join(', ');
+};

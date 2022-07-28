@@ -11,7 +11,9 @@ export type ScrapeResult = {
   error?: string;
 };
 
-const scraper = {
+const SCRAPER = {
+  results: [] as ScrapeResult[],
+
   async scrape(): Promise<ScrapeResult> {
     const result: ScrapeResult = {
       url: location.href,
@@ -38,25 +40,28 @@ const scraper = {
         result.scraperName = scraper.name;
         result.error = (e as Error).toString();
 
+        SCRAPER.results.push(result);
         window._onScrape?.(result);
 
         throw e;
       }
     }
 
+    SCRAPER.results.push(result);
     window._onScrape?.(result);
 
     return result;
   },
+
   getSelectionString,
 } as const;
 
 declare global {
   interface Window {
     originalURL: URL;
-    _scraper: typeof scraper;
+    _scraper: typeof SCRAPER;
     _onScrape?: (result: ScrapeResult) => void;
   }
 }
 
-window._scraper = scraper;
+window._scraper = SCRAPER;

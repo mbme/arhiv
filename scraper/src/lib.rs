@@ -140,4 +140,18 @@ mod tests {
 
         Ok(())
     }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_steam_game() -> Result<()> {
+        let result = scrape(
+            "https://store.steampowered.com/app/814380/Sekiro_Shadows_Die_Twice__GOTY_Edition/",
+        )?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[cover_attachment_id]",
+        });
+
+        Ok(())
+    }
 }

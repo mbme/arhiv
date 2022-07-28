@@ -1,4 +1,4 @@
-import { getEl, getTable, Obj } from '../utils';
+import { getEl, getPathSegments, getTable, Obj } from '../utils';
 import { Scraper } from './scraper';
 
 const LANGUAGE_TRANSLATIONS: Obj<string> = {
@@ -21,7 +21,7 @@ export type YakabooBook = {
 
 // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
 export const scrapeBookFromYakaboo: Scraper<YakabooBook> = (locationURL) => {
-  if (locationURL.hostname !== 'www.yakaboo.ua') {
+  if (locationURL.hostname !== 'www.yakaboo.ua' || getPathSegments(locationURL)[0] !== 'ua') {
     return undefined;
   }
 

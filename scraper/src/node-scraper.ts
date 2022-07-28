@@ -1,17 +1,24 @@
 import { Browser, devices, Page, launch, Target } from 'puppeteer-core';
+import { runHelpers } from './node-scraper-helpers';
 import type { ScrapeResult } from './browser-scraper';
 
 declare const __BROWSER_SCRAPER__: string; // injected by esbuild
-async function injectBrowserScraper(url: string, page: Page) {
-  await page.evaluate((originalURL) => {
+async function injectBrowserScraper(
+  url: string,
+  page: Page,
+  onResult: (result: ScrapeResult) => void
+) {
+  await page.evaluateOnNewDocument((originalURL) => {
     window.originalURL = new URL(originalURL);
   }, url);
 
-  await page.addScriptTag({ content: __BROWSER_SCRAPER__ });
+  await page.evaluateOnNewDocument(__BROWSER_SCRAPER__);
+
+  await page.exposeFunction('_onScrape', onResult);
 }
 
 async function injectScrapeButton(page: Page) {
-  await page.evaluate(() => {
+  await page.evaluateOnNewDocument(() => {
     const button = document.createElement('button');
     button.onclick = () => window._scraper.scrape();
     button.innerText = '[ SCRAPE! ]';
@@ -24,23 +31,36 @@ async function injectScrapeButton(page: Page) {
     button.style.top = '5%';
     button.style.right = '10%';
 
-    document.body.insertAdjacentElement('afterbegin', button);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.insertAdjacentElement('afterbegin', button);
+    });
   });
 }
 
-async function openURL(page: Page, url: string, mobile?: boolean, manual?: boolean) {
-  if (mobile) {
-    await page.emulate(devices['iPad Pro landscape']);
-  }
+async function enableMobileMode(page: Page) {
+  await page.emulate(devices['iPad Pro landscape']);
+}
 
-  await page.goto(url, {
-    waitUntil: 'networkidle2',
+async function ignoreIrrelevantRequests(page: Page) {
+  await page.setRequestInterception(true);
+  page.on('request', (request) => {
+    switch (request.resourceType()) {
+      case 'image':
+      case 'font':
+      case 'manifest':
+      case 'signedexchange':
+      case 'cspviolationreport':
+      case 'ping': {
+        void request.abort();
+        break;
+      }
+
+      default: {
+        void request.continue();
+        break;
+      }
+    }
   });
-
-  await injectBrowserScraper(url, page);
-  if (manual) {
-    await injectScrapeButton(page);
-  }
 }
 
 async function waitForPageClosed(browser: Browser, page: Page) {
@@ -63,10 +83,12 @@ type Options = {
 };
 
 export async function runScrapers(url: string, options?: Options): Promise<ScrapeResult[]> {
+  const headless = !options?.debug && !options?.manual;
+
   const browser: Browser = await launch({
     executablePath: options?.executablePath || '/usr/bin/chromium',
 
-    headless: !options?.debug && !options?.manual,
+    headless,
     devtools: options?.debug,
 
     defaultViewport: null, // use full viewport
@@ -75,14 +97,30 @@ export async function runScrapers(url: string, options?: Options): Promise<Scrap
   });
 
   const page = (await browser.pages())[0];
+  if (!options?.manual) {
+    await ignoreIrrelevantRequests(page);
+  }
+
+  const results: ScrapeResult[] = [];
+
+  await injectBrowserScraper(url, page, (result) => {
+    results.push(result);
+  });
+
+  if (options?.manual) {
+    await injectScrapeButton(page);
+  }
+
+  if (options?.mobile) {
+    await enableMobileMode(page);
+  }
 
   try {
-    await openURL(page, url, options?.mobile, options?.manual);
-
-    const results: ScrapeResult[] = [];
-    await page.exposeFunction('_onScrape', (result: ScrapeResult) => {
-      results.push(result);
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
     });
+
+    await runHelpers(page);
 
     const pageClosedPromise = waitForPageClosed(browser, page);
 

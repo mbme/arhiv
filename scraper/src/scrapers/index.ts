@@ -7,6 +7,7 @@ import { scrapeFBMobilePostList } from './facebook/post-list-mobile';
 import { scrapeFBMobilePost } from './facebook/post-mobile';
 import { scrapeBookFromYakaboo } from './yakaboo-book';
 import { scrapeGameFromSteam } from './steam-game';
+import { scrapeAnimeFromMyanimelist } from './myanimelist-anime';
 
 export const SCRAPERS = [
   //
@@ -16,6 +17,7 @@ export const SCRAPERS = [
   scrapeFBMobilePostList,
   scrapeBookFromYakaboo,
   scrapeGameFromSteam,
+  scrapeAnimeFromMyanimelist,
 ] as const;
 
 export type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>;

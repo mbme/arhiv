@@ -154,4 +154,28 @@ mod tests {
 
         Ok(())
     }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_myanimelist_movie() -> Result<()> {
+        let result = scrape("https://myanimelist.net/anime/523/Tonari_no_Totoro")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[cover_attachment_id]",
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_myanimelist_series() -> Result<()> {
+        let result = scrape("https://myanimelist.net/anime/16498/Shingeki_no_Kyojin")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[cover_attachment_id]",
+        });
+
+        Ok(())
+    }
 }

@@ -1,0 +1,21 @@
+---
+source: scraper/src/lib.rs
+assertion_line: 163
+expression: result
+---
+[
+  {
+    "url": "https://myanimelist.net/anime/523/Tonari_no_Totoro",
+    "originalUrl": "https://myanimelist.net/anime/523/Tonari_no_Totoro",
+    "scraperName": "scrapeAnimeFromMyanimelist",
+    "data": {
+      "coverURL": "[cover_attachment_id]",
+      "creators": "Studio Ghibli",
+      "description": "In 1950s Japan, Tatsuo Kusakabe relocates himself and his two daughters, Satsuki and Mei, to the countryside to be closer to their mother, who is hospitalized due to long-term illness. As the girls grow acquainted with rural life, Mei encounters a small, bunny-like creature in the yard one day. Chasing it into the forest, she finds \"Totoro\"—a giant, mystical forest spirit whom she soon befriends. Before long, Satsuki too meets Totoro, and the two girls suddenly find their lives filled with magical adventures in nature and fantastical creatures of the woods.\n\n[Written by MAL Rewrite]\n",
+      "duration": "1 hr. 26 min.",
+      "releaseDate": "Apr 16, 1988",
+      "title": "My Neighbor Totoro"
+    },
+    "error": null
+  }
+]

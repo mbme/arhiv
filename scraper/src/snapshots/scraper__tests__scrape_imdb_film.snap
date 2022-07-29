@@ -1,0 +1,24 @@
+---
+source: scraper/src/lib.rs
+assertion_line: 187
+expression: result
+---
+[
+  {
+    "url": "https://www.imdb.com/title/tt0133093/",
+    "originalUrl": "https://www.imdb.com/title/tt0133093/",
+    "scraperName": "scrapeFilmFromIMDB",
+    "data": {
+      "cast": "Keanu Reeves, Laurence Fishburne, Carrie-Anne Moss",
+      "countriesOfOrigin": "United States, Australia",
+      "coverURL": "[permalink]",
+      "creators": "Lana Wachowski, Lilly Wachowski",
+      "description": "Thomas A. Anderson is a man living two lives. By day he is an average computer programmer and by night a hacker known as Neo. Neo has always questioned his reality, but the truth is far beyond his imagination. Neo finds himself targeted by the police when he is contacted by Morpheus, a legendary computer hacker branded a terrorist by the government. As a rebel against the machines, Neo must confront the agents: super-powerful computer programs devoted to stopping Neo and the entire human rebellion.",
+      "duration": "2h 16m",
+      "originalLanguage": "English",
+      "releaseDate": "1999",
+      "title": "The Matrix"
+    },
+    "error": null
+  }
+]

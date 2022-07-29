@@ -149,7 +149,7 @@ mod tests {
         )?;
 
         insta::assert_json_snapshot!(result, {
-            "[].data.coverURL" => "[cover_attachment_id]",
+            "[].data.coverURL" => "[permalink]",
         });
 
         Ok(())
@@ -161,7 +161,7 @@ mod tests {
         let result = scrape("https://myanimelist.net/anime/523/Tonari_no_Totoro")?;
 
         insta::assert_json_snapshot!(result, {
-            "[].data.coverURL" => "[cover_attachment_id]",
+            "[].data.coverURL" => "[permalink]",
         });
 
         Ok(())
@@ -173,7 +173,43 @@ mod tests {
         let result = scrape("https://myanimelist.net/anime/16498/Shingeki_no_Kyojin")?;
 
         insta::assert_json_snapshot!(result, {
-            "[].data.coverURL" => "[cover_attachment_id]",
+            "[].data.coverURL" => "[permalink]",
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_imdb_film() -> Result<()> {
+        let result = scrape("https://www.imdb.com/title/tt0133093/")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[permalink]",
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_imdb_series() -> Result<()> {
+        let result = scrape("https://www.imdb.com/title/tt0098936/")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[permalink]",
+        });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_imdb_mini_series() -> Result<()> {
+        let result = scrape("https://www.imdb.com/title/tt8134186/")?;
+
+        insta::assert_json_snapshot!(result, {
+            "[].data.coverURL" => "[permalink]",
         });
 
         Ok(())

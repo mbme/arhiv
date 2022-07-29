@@ -18,12 +18,12 @@ export function uniqArr<T>(arr: T[]): T[] {
 export const waitForTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
-export const waitForSelector = async (
+export const waitForSelector = async <T extends Element = HTMLElement>(
   el: HTMLElement | Document,
   selector: string,
   description: string,
   timeoutMs = 30000
-) => {
+): Promise<T> => {
   if (timeoutMs === 0) {
     throw new Error('timeoutMs must be positive number');
   }
@@ -34,8 +34,9 @@ export const waitForSelector = async (
   let attempt = 1;
 
   while (attempt <= maxAttempts) {
-    if (el.querySelector(selector)) {
-      return;
+    const result = el.querySelector(selector);
+    if (result) {
+      return result as T;
     }
 
     if (attempt < maxAttempts) {

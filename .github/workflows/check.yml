@@ -18,14 +18,15 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+
+      - name: Install JS modules
+        run: yarn install --immutable --immutable-cache
+
       - name: Check & lint Rust
         run: cargo clippy --verbose --all-targets --all-features -- -D warnings
 
       - name: Run Rust tests
         run: cargo test --verbose
-
-      - name: Install JS modules
-        run: yarn install
 
       - name: Check JS & TS formatting
         run: yarn run check-fmt

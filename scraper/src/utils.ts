@@ -57,15 +57,43 @@ export const parseHumanDate = (dateStr: string): Date | undefined => {
   return date ?? undefined;
 };
 
-export const getEl = <T extends Element = HTMLElement>(
-  root: HTMLElement | Document,
-  selector: string,
-  description: string
-): T => {
+type GetEl = {
+  <T extends Element = HTMLElement>(selector: string): T | null;
+  <T extends Element = HTMLElement>(selector: string, description: string): T;
+  <T extends Element = HTMLElement>(root: HTMLElement, selector: string): T | null;
+  <T extends Element = HTMLElement>(root: HTMLElement, selector: string, description: string): T;
+};
+
+export const getEl: GetEl = <T extends Element = HTMLElement>(
+  arg1: string | HTMLElement | Document,
+  arg2?: string,
+  arg3?: string
+): T | null => {
+  let selector: string;
+  let root: HTMLElement | Document = document;
+  let description: string | undefined = undefined;
+
+  if (typeof arg1 === 'string') {
+    selector = arg1;
+    description = arg2;
+  } else {
+    root = arg1;
+
+    if (typeof arg2 !== 'string') {
+      throw new Error('expected second argument to be a string');
+    }
+    selector = arg2;
+
+    description = arg3;
+  }
   const el = root.querySelector(selector);
 
   if (!el) {
-    throw new Error(`can't find element '${description}' using selector '${selector}'`);
+    if (description !== undefined) {
+      throw new Error(`can't find '${description}' using selector '${selector}'`);
+    }
+
+    return el;
   }
 
   return el as T;

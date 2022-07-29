@@ -25,14 +25,14 @@ export const scrapeBookFromYakaboo: Scraper<YakabooBook> = (locationURL) => {
     return undefined;
   }
 
-  const coverURL = getEl<HTMLImageElement>(document, '#image', 'cover image').src;
-  const title = getEl(document, '#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
+  const coverURL = getEl<HTMLImageElement>('#image', 'cover image').src;
+  const title = getEl('#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
 
-  getEl(document, "a[href='#tab-description']", 'description tab').click();
+  getEl("a[href='#tab-description']", 'description tab').click();
 
-  const description = getEl(document, '.description-shadow', 'description').innerText;
+  const description = getEl('.description-shadow', 'description').innerText;
 
-  getEl(document, "a[href='#tab-attributes']", 'attributes tab').click();
+  getEl("a[href='#tab-attributes']", 'attributes tab').click();
 
   const table = getTable(document, '#product-attribute-specs-table tr', '\n');
   const authors = table['Автор'] || '';

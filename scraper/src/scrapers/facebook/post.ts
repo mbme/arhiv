@@ -16,7 +16,7 @@ export const scrapeFBPost: Scraper<FacebookPost> = (locationURL) => {
     return undefined;
   }
 
-  const postEl = getEl(document, '[role=article]', 'post element');
+  const postEl = getEl('[role=article]', 'post element');
 
   const content = getSelectionString(getEl(postEl, '[data-testid=post_message]', 'post content'));
 

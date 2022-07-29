@@ -15,7 +15,7 @@ export const scrapeFBMobilePost: Scraper<FacebookMobilePost> = (locationURL) => 
     return undefined;
   }
 
-  const postEl = getEl(document, '.story_body_container', 'post element');
+  const postEl = getEl('.story_body_container', 'post element');
 
   const content = getSelectionString(getEl(postEl, ':scope>div', 'post content'));
 

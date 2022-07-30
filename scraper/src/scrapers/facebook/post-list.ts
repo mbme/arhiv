@@ -2,17 +2,6 @@ import { Scraper } from '../scraper';
 import { getEl, getAll, parseHumanDate, waitForTimeout, getSelectionString } from '../../utils';
 import { isFB, isPostListPage } from './utils';
 
-type PostListItem = {
-  permalink: string;
-  date: string;
-  dateISO?: string;
-  content: string;
-  images: string[];
-  videos: string[];
-};
-
-export type FacebookPostList = PostListItem[];
-
 const hasLoader = (el: HTMLElement) => !!el.querySelector('[role=progressbar]');
 
 const isInCommentSection = (el: HTMLElement) =>
@@ -37,56 +26,75 @@ const collectImages = (postEl: HTMLElement): HTMLImageElement[] =>
 const collectVideos = (postEl: HTMLElement): HTMLVideoElement[] =>
   getAll<HTMLVideoElement>(postEl, 'video').filter((img) => !isInCommentSection(img));
 
-// https://www.facebook.com/vmistozher/
-export const scrapeFBPostList: Scraper<FacebookPostList> = async (locationURL) => {
-  if (!isFB(locationURL) || !isPostListPage(locationURL)) {
-    return undefined;
+type PostListItem = {
+  permalink: string;
+  date: string;
+  dateISO?: string;
+  content: string;
+  images: string[];
+  videos: string[];
+};
+
+export type FacebookPostList = {
+  typeName: 'FacebookPostList';
+  posts: PostListItem[];
+};
+
+export class FBPostListScraper extends Scraper<'FacebookPostList', FacebookPostList> {
+  canScrape(locationURL: URL): boolean {
+    // https://www.facebook.com/vmistozher/
+    return isFB(locationURL) && isPostListPage(locationURL);
   }
 
-  const postsElements = getAll(document, '[role=article]').filter(
-    (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
-  );
-  console.log(`scraping ${postsElements.length} posts`);
+  protected _scrape = async (): Promise<FacebookPostList> => {
+    const postsElements = getAll(document, '[role=article]').filter(
+      (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
+    );
+    console.log(`scraping ${postsElements.length} posts`);
 
-  const posts: FacebookPostList = [];
-  for (let i = 0; i < postsElements.length; i += 1) {
-    const postEl = postsElements[i];
+    const posts: PostListItem[] = [];
+    for (let i = 0; i < postsElements.length; i += 1) {
+      const postEl = postsElements[i];
 
-    postEl.scrollIntoView(true);
-    clickSeeMore(postEl);
-    await waitForTimeout(1000);
+      postEl.scrollIntoView(true);
+      clickSeeMore(postEl);
+      await waitForTimeout(1000);
 
-    const links = collectLinks(postEl);
-    const dateEl = links[3];
-    if (!dateEl) {
-      throw new Error("can't find date element");
+      const links = collectLinks(postEl);
+      const dateEl = links[3];
+      if (!dateEl) {
+        throw new Error("can't find date element");
+      }
+
+      const permalink = dateEl.href;
+      const date = dateEl.innerText;
+      const dateISO = parseHumanDate(date)?.toISOString();
+
+      const content = getSelectionString(
+        getEl(postEl, '[data-ad-preview=message]', 'content element')
+      );
+
+      const images = collectImages(postEl).map((img) => img.src);
+
+      const videos = collectVideos(postEl).map((video) => video.src);
+
+      posts.push({
+        permalink,
+        date,
+        dateISO,
+        content,
+        images,
+        videos,
+      });
+
+      console.log(`Scraped post ${i + 1} of ${postsElements.length}`);
     }
 
-    const permalink = dateEl.href;
-    const date = dateEl.innerText;
-    const dateISO = parseHumanDate(date)?.toISOString();
+    posts.reverse();
 
-    const content = getSelectionString(
-      getEl(postEl, '[data-ad-preview=message]', 'content element')
-    );
-
-    const images = collectImages(postEl).map((img) => img.src);
-
-    const videos = collectVideos(postEl).map((video) => video.src);
-
-    posts.push({
-      permalink,
-      date,
-      dateISO,
-      content,
-      images,
-      videos,
-    });
-
-    console.log(`Scraped post ${i + 1} of ${postsElements.length}`);
-  }
-
-  posts.reverse();
-
-  return posts;
-};
+    return {
+      typeName: 'FacebookPostList',
+      posts,
+    };
+  };
+}

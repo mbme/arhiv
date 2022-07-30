@@ -9,32 +9,43 @@ type PostListItem = {
   preview: string;
 };
 
-export type FacebookMobilePostList = PostListItem[];
+export type FacebookMobilePostList = {
+  typeName: 'FacebookMobilePostList';
+  posts: PostListItem[];
+};
 
-// https://m.facebook.com/vmistozher/
-export const scrapeFBMobilePostList: Scraper<FacebookMobilePostList> = (locationURL) => {
-  if (!isFBMobile(locationURL) || !isPostListPage(locationURL)) {
-    return undefined;
+export class FBMobilePostListScraper extends Scraper<
+  'FacebookMobilePostList',
+  FacebookMobilePostList
+> {
+  canScrape(locationURL: URL): boolean {
+    // https://m.facebook.com/vmistozher/
+    return isFBMobile(locationURL) && isPostListPage(locationURL);
   }
 
-  const posts = getAll(document, 'article').map((postEl) => {
-    const dateEl = getEl(postEl, 'header a abbr', 'post date').parentElement as HTMLAnchorElement;
+  protected _scrape = (): FacebookMobilePostList => {
+    const posts = getAll(document, 'article').map((postEl) => {
+      const dateEl = getEl(postEl, 'header a abbr', 'post date').parentElement as HTMLAnchorElement;
 
-    const permalink = dateEl.href;
-    const date = dateEl.innerText;
-    const dateISO = parseHumanDate(date)?.toISOString();
+      const permalink = dateEl.href;
+      const date = dateEl.innerText;
+      const dateISO = parseHumanDate(date)?.toISOString();
 
-    const preview = getEl(postEl, 'header~div', 'preview element').innerText;
+      const preview = getEl(postEl, 'header~div', 'preview element').innerText;
+
+      return {
+        permalink,
+        date,
+        dateISO,
+        preview,
+      };
+    });
+
+    posts.reverse();
 
     return {
-      permalink,
-      date,
-      dateISO,
-      preview,
+      typeName: 'FacebookMobilePostList',
+      posts,
     };
-  });
-
-  posts.reverse();
-
-  return posts;
-};
+  };
+}

@@ -7,7 +7,7 @@ expression: result
   {
     "url": "https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html",
     "originalUrl": "https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html",
-    "scraperName": "scrapeBookFromYakaboo",
+    "scraperName": "YakabooBookScraper",
     "data": {
       "authors": "Тед Чан",
       "coverURL": "[permalink]",
@@ -17,7 +17,8 @@ expression: result
       "publicationDate": "2020",
       "publisher": "Picador",
       "title": "Stories of Your Life and Others",
-      "translators": ""
+      "translators": "",
+      "typeName": "YakabooBook"
     },
     "error": null
   }

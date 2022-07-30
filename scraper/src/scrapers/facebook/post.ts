@@ -3,6 +3,7 @@ import { getAll, getEl, getSelectionString, parseHumanDate } from '../../utils';
 import { isFB, isPostPage } from './utils';
 
 export type FacebookPost = {
+  typeName: 'FacebookPost';
   permalink: string;
   date: string;
   dateISO?: string;
@@ -10,35 +11,38 @@ export type FacebookPost = {
   images: string[];
 };
 
-// https://www.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
-export const scrapeFBPost: Scraper<FacebookPost> = (locationURL) => {
-  if (!isFB(locationURL) || !isPostPage(locationURL)) {
-    return undefined;
+export class FBPostScraper extends Scraper<'FacebookPost', FacebookPost> {
+  canScrape(locationURL: URL): boolean {
+    // https://www.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
+    return isFB(locationURL) && isPostPage(locationURL);
   }
 
-  const postEl = getEl('[role=article]', 'post element');
+  protected _scrape = (): FacebookPost => {
+    const postEl = getEl('[role=article]', 'post element');
 
-  const content = getSelectionString(getEl(postEl, '[data-testid=post_message]', 'post content'));
+    const content = getSelectionString(getEl(postEl, '[data-testid=post_message]', 'post content'));
 
-  const dateEl = postEl.querySelector('a > abbr')?.parentElement;
-  if (!dateEl) {
-    throw new Error("can't find date element");
-  }
+    const dateEl = postEl.querySelector('a > abbr')?.parentElement;
+    if (!dateEl) {
+      throw new Error("can't find date element");
+    }
 
-  const permalink = (dateEl as HTMLAnchorElement).href;
+    const permalink = (dateEl as HTMLAnchorElement).href;
 
-  const date = dateEl.innerText;
-  const dateISO = parseHumanDate(date)?.toISOString();
+    const date = dateEl.innerText;
+    const dateISO = parseHumanDate(date)?.toISOString();
 
-  const images = getAll<HTMLImageElement>(postEl, '[data-testid=post_message] ~ div a img').map(
-    (img) => img.src
-  );
+    const images = getAll<HTMLImageElement>(postEl, '[data-testid=post_message] ~ div a img').map(
+      (img) => img.src
+    );
 
-  return {
-    permalink,
-    date,
-    dateISO,
-    content,
-    images,
+    return {
+      typeName: 'FacebookPost',
+      permalink,
+      date,
+      dateISO,
+      content,
+      images,
+    };
   };
-};
+}

@@ -1,25 +1,24 @@
 import { ArrayElement } from '../utils';
 import { ExtractScraperGeneric } from './scraper';
 
-import { scrapeFBPost } from './facebook/post';
-import { scrapeFBPostList } from './facebook/post-list';
-import { scrapeFBMobilePostList } from './facebook/post-list-mobile';
-import { scrapeFBMobilePost } from './facebook/post-mobile';
-import { scrapeBookFromYakaboo } from './yakaboo-book';
-import { scrapeGameFromSteam } from './steam-game';
-import { scrapeAnimeFromMyanimelist } from './myanimelist-anime';
-import { scrapeFilmFromIMDB } from './imdb-film';
+import { FBPostScraper } from './facebook/post';
+import { FBPostListScraper } from './facebook/post-list';
+import { FBMobilePostListScraper } from './facebook/post-list-mobile';
+import { FBMobilePostScraper } from './facebook/post-mobile';
+import { YakabooBookScraper } from './yakaboo-book';
+import { SteamGameScraper } from './steam-game';
+import { MyAnimeListAnimeScraper } from './myanimelist-anime';
+import { IMDBFilmScraper } from './imdb-film';
 
 export const SCRAPERS = [
-  //
-  scrapeFBPost,
-  scrapeFBPostList,
-  scrapeFBMobilePost,
-  scrapeFBMobilePostList,
-  scrapeBookFromYakaboo,
-  scrapeGameFromSteam,
-  scrapeAnimeFromMyanimelist,
-  scrapeFilmFromIMDB,
+  new FBPostScraper(),
+  new FBPostListScraper(),
+  new FBMobilePostScraper(),
+  new FBMobilePostListScraper(),
+  new YakabooBookScraper(),
+  new SteamGameScraper(),
+  new MyAnimeListAnimeScraper(),
+  new IMDBFilmScraper(),
 ] as const;
 
 export type ScrapedData = ExtractScraperGeneric<ArrayElement<typeof SCRAPERS>>;

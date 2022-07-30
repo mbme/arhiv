@@ -8,6 +8,7 @@ const LANGUAGE_TRANSLATIONS: Obj<string> = {
 };
 
 export type YakabooBook = {
+  typeName: 'YakabooBook';
   coverURL: string;
   title: string;
   authors: string;
@@ -19,40 +20,43 @@ export type YakabooBook = {
   language: string;
 };
 
-// https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
-export const scrapeBookFromYakaboo: Scraper<YakabooBook> = (locationURL) => {
-  if (locationURL.hostname !== 'www.yakaboo.ua' || getPathSegments(locationURL)[0] !== 'ua') {
-    return undefined;
+export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
+  canScrape(locationURL: URL): boolean {
+    // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
+    return locationURL.hostname === 'www.yakaboo.ua' && getPathSegments(locationURL)[0] === 'ua';
   }
 
-  const coverURL = getEl<HTMLImageElement>('#image', 'cover image').src;
-  const title = getEl('#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
+  protected _scrape = (): YakabooBook => {
+    const coverURL = getEl<HTMLImageElement>('#image', 'cover image').src;
+    const title = getEl('#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
 
-  getEl("a[href='#tab-description']", 'description tab').click();
+    getEl("a[href='#tab-description']", 'description tab').click();
 
-  const description = getEl('.description-shadow', 'description').innerText;
+    const description = getEl('.description-shadow', 'description').innerText;
 
-  getEl("a[href='#tab-attributes']", 'attributes tab').click();
+    getEl("a[href='#tab-attributes']", 'attributes tab').click();
 
-  const table = getTable(document, '#product-attribute-specs-table tr', '\n');
-  const authors = table['Автор'] || '';
+    const table = getTable(document, '#product-attribute-specs-table tr', '\n');
+    const authors = table['Автор'] || '';
 
-  const language = LANGUAGE_TRANSLATIONS[table['Мова'] || ''];
+    const language = LANGUAGE_TRANSLATIONS[table['Мова'] || ''];
 
-  const publicationDate = table['Рік видання'] || '';
-  const translators = table['Перекладач'] || '';
-  const publisher = table['Видавництво'] || '';
-  const pages = Number.parseInt(table['Кількість сторінок'] || '', 10);
+    const publicationDate = table['Рік видання'] || '';
+    const translators = table['Перекладач'] || '';
+    const publisher = table['Видавництво'] || '';
+    const pages = Number.parseInt(table['Кількість сторінок'] || '', 10);
 
-  return {
-    coverURL,
-    title,
-    authors,
-    publicationDate,
-    description,
-    translators,
-    publisher,
-    pages,
-    language,
+    return {
+      typeName: 'YakabooBook',
+      coverURL,
+      title,
+      authors,
+      publicationDate,
+      description,
+      translators,
+      publisher,
+      pages,
+      language,
+    };
   };
-};
+}

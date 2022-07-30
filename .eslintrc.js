@@ -20,5 +20,6 @@ module.exports = {
   rules: {
     'linebreak-style': ['error', 'unix'],
     'no-prototype-builtins': 0,
+    '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
   },
 };

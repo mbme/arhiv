@@ -7,7 +7,7 @@ expression: result
   {
     "url": "https://www.imdb.com/title/tt0133093/",
     "originalUrl": "https://www.imdb.com/title/tt0133093/",
-    "scraperName": "scrapeFilmFromIMDB",
+    "scraperName": "IMDBFilmScraper",
     "data": {
       "cast": "Keanu Reeves, Laurence Fishburne, Carrie-Anne Moss",
       "countriesOfOrigin": "United States, Australia",
@@ -17,7 +17,8 @@ expression: result
       "duration": "2h 16m",
       "originalLanguage": "English",
       "releaseDate": "1999",
-      "title": "The Matrix"
+      "title": "The Matrix",
+      "typeName": "IMDBFilm"
     },
     "error": null
   }

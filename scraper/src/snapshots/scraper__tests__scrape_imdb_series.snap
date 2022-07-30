@@ -7,7 +7,7 @@ expression: result
   {
     "url": "https://www.imdb.com/title/tt0098936/",
     "originalUrl": "https://www.imdb.com/title/tt0098936/",
-    "scraperName": "scrapeFilmFromIMDB",
+    "scraperName": "IMDBFilmScraper",
     "data": {
       "cast": "Kyle MacLachlan, Michael Ontkean, Mädchen Amick",
       "countriesOfOrigin": "United States",
@@ -19,7 +19,8 @@ expression: result
       "originalLanguage": "English",
       "releaseDate": "1990–1991",
       "seasons": 2,
-      "title": "Twin Peaks"
+      "title": "Twin Peaks",
+      "typeName": "IMDBFilm"
     },
     "error": null
   }

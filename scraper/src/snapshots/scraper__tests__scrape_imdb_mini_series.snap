@@ -7,7 +7,7 @@ expression: result
   {
     "url": "https://www.imdb.com/title/tt8134186/",
     "originalUrl": "https://www.imdb.com/title/tt8134186/",
-    "scraperName": "scrapeFilmFromIMDB",
+    "scraperName": "IMDBFilmScraper",
     "data": {
       "cast": "Sonoya Mizuno, Nick Offerman, Jin Ha",
       "countriesOfOrigin": "United Kingdom, United States",
@@ -19,7 +19,8 @@ expression: result
       "originalLanguage": "English",
       "releaseDate": "2020",
       "seasons": 1,
-      "title": "Devs"
+      "title": "Devs",
+      "typeName": "IMDBFilm"
     },
     "error": null
   }

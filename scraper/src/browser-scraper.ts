@@ -22,22 +22,19 @@ const SCRAPER = {
 
     const locationURL = new URL(window.location.href);
 
-    for (const scraper of SCRAPERS) {
+    const scraper = SCRAPERS.find((scraper) => scraper.canScrape(locationURL));
+
+    if (scraper) {
       try {
-        const data = await scraper(locationURL);
+        const data = await scraper.scrape(locationURL);
+        console.info(`scraper ${scraper.constructor.name} succeeded`);
 
-        if (data) {
-          console.info(`scraper ${scraper.name} succeeded`);
-
-          result.scraperName = scraper.name;
-          result.data = data;
-
-          break;
-        }
+        result.scraperName = scraper.constructor.name;
+        result.data = data;
       } catch (e) {
-        console.error(`scraper ${scraper.name} failed:`, e);
+        console.error(`scraper ${scraper.constructor.name} failed:`, e);
 
-        result.scraperName = scraper.name;
+        result.scraperName = scraper.constructor.name;
         result.error = (e as Error).toString();
 
         SCRAPER.results.push(result);

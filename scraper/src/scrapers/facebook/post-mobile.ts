@@ -1,6 +1,5 @@
 import { Scraper } from '../scraper';
 import { getEl, getSelectionString, parseHumanDate } from '../../utils';
-import { isFBMobile, isPostPage } from './utils';
 
 export type FacebookMobilePost = {
   typeName: 'FacebookMobilePost';
@@ -11,12 +10,13 @@ export type FacebookMobilePost = {
 };
 
 export class FBMobilePostScraper extends Scraper<'FacebookMobilePost', FacebookMobilePost> {
-  canScrape(locationURL: URL): boolean {
-    // https://m.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
-    return isFBMobile(locationURL) && isPostPage(locationURL);
-  }
+  // https://m.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
+  readonly pattern = new URLPattern({
+    hostname: 'm.facebook.com',
+    pathname: '/:group/posts/:id',
+  });
 
-  protected _scrape = (): FacebookMobilePost => {
+  readonly scrape = (): FacebookMobilePost => {
     const postEl = getEl('.story_body_container', 'post element');
 
     const content = getSelectionString(getEl(postEl, ':scope>div', 'post content'));

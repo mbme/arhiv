@@ -1,4 +1,4 @@
-import { getEl, getPathSegments, getTable, Obj } from '../utils';
+import { getEl, getTable, Obj } from '../utils';
 import { Scraper } from './scraper';
 
 const LANGUAGE_TRANSLATIONS: Obj<string> = {
@@ -21,12 +21,13 @@ export type YakabooBook = {
 };
 
 export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
-  canScrape(locationURL: URL): boolean {
-    // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
-    return locationURL.hostname === 'www.yakaboo.ua' && getPathSegments(locationURL)[0] === 'ua';
-  }
+  // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
+  readonly pattern = new URLPattern({
+    hostname: 'www.yakaboo.ua',
+    pathname: '/ua/*',
+  });
 
-  protected _scrape = (): YakabooBook => {
+  readonly scrape = (): YakabooBook => {
     const coverURL = getEl<HTMLImageElement>('#image', 'cover image').src;
     const title = getEl('#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
 

@@ -17,6 +17,7 @@
     "puppeteer-core": "^15.3.2"
   },
   "dependencies": {
-    "chrono-node": "^2.3.9"
+    "chrono-node": "^2.3.9",
+    "urlpattern-polyfill": "^5.0.5"
   }
 }

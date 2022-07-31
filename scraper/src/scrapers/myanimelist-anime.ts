@@ -1,4 +1,4 @@
-import { getEl, getPathSegments, getTable } from '../utils';
+import { getEl, getTable } from '../utils';
 import { Scraper } from './scraper';
 
 export type MyAnimeListAnime = {
@@ -12,14 +12,13 @@ export type MyAnimeListAnime = {
 };
 
 export class MyAnimeListAnimeScraper extends Scraper<'MyAnimeListAnime', MyAnimeListAnime> {
-  canScrape(locationURL: URL): boolean {
-    // https://myanimelist.net/anime/30276/One_Punch_Man
-    return (
-      locationURL.hostname === 'myanimelist.net' && getPathSegments(locationURL)[0] === 'anime'
-    );
-  }
+  // https://myanimelist.net/anime/30276/One_Punch_Man
+  readonly pattern = new URLPattern({
+    hostname: 'myanimelist.net',
+    pathname: '/anime/*',
+  });
 
-  protected _scrape = (): MyAnimeListAnime => {
+  readonly scrape = (): MyAnimeListAnime => {
     const engTitle = getEl('.title-english')?.innerText;
 
     const title = engTitle || getEl('.title-name')?.innerText || '';

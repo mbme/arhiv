@@ -49,9 +49,6 @@ export const waitForSelector = async <T extends Element = HTMLElement>(
   throw new Error(`waitForSelector for "${description}" timed out`);
 };
 
-export const getPathSegments = (url: URL) =>
-  url.pathname.split('/').filter((segment) => segment.length > 0);
-
 export const parseHumanDate = (dateStr: string): Date | undefined => {
   const date: Date | null = chrono.parseDate(dateStr);
 

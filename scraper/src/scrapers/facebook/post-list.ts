@@ -1,6 +1,5 @@
 import { Scraper } from '../scraper';
 import { getEl, getAll, parseHumanDate, waitForTimeout, getSelectionString } from '../../utils';
-import { isFB, isPostListPage } from './utils';
 
 const hasLoader = (el: HTMLElement) => !!el.querySelector('[role=progressbar]');
 
@@ -41,12 +40,13 @@ export type FacebookPostList = {
 };
 
 export class FBPostListScraper extends Scraper<'FacebookPostList', FacebookPostList> {
-  canScrape(locationURL: URL): boolean {
-    // https://www.facebook.com/vmistozher/
-    return isFB(locationURL) && isPostListPage(locationURL);
-  }
+  // https://www.facebook.com/vmistozher/
+  readonly pattern = new URLPattern({
+    hostname: 'www.facebook.com',
+    pathname: '/:group/',
+  });
 
-  protected _scrape = async (): Promise<FacebookPostList> => {
+  readonly scrape = async (): Promise<FacebookPostList> => {
     const postsElements = getAll(document, '[role=article]').filter(
       (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
     );

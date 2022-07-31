@@ -1,12 +1,4 @@
-import {
-  getAll,
-  getEl,
-  getListStr,
-  getListValues,
-  getPathSegments,
-  uniqArr,
-  waitForSelector,
-} from '../utils';
+import { getAll, getEl, getListStr, getListValues, uniqArr, waitForSelector } from '../utils';
 import { Scraper } from './scraper';
 
 export type IMDBFilm = {
@@ -28,12 +20,13 @@ export type IMDBFilm = {
 // often changes based on content type (movie/series/short series etc.)
 
 export class IMDBFilmScraper extends Scraper<'IMDBFilm', IMDBFilm> {
-  canScrape(locationURL: URL): boolean {
-    // https://www.imdb.com/title/tt0133093/
-    return locationURL.hostname === 'www.imdb.com' && getPathSegments(locationURL)[0] === 'title';
-  }
+  // https://www.imdb.com/title/tt0133093/
+  readonly pattern = new URLPattern({
+    hostname: 'www.imdb.com',
+    pathname: '/title/*',
+  });
 
-  protected _scrape = async (): Promise<IMDBFilm> => {
+  readonly scrape = async (): Promise<IMDBFilm> => {
     const metadata = getListValues(document, '[data-testid=hero-title-block__metadata] li');
     if (metadata.length === 3) {
       metadata.unshift('');

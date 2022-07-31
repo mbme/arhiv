@@ -1941,6 +1941,11 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
+urlpattern-polyfill@^5.0.5:
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/urlpattern-polyfill/-/urlpattern-polyfill-5.0.5.tgz#037adfd438161125f81d8199b9d493e91c5ce247"
+  integrity sha512-Oq4ak65m3IezuCqYnxMN0cKh1eiL62YurYDCXp6epo91iBhN+aesVW8+q0qtUC9r84jKuTWXomWrnpkY5WWuRg==
+
 util-deprecate@^1.0.1, util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"

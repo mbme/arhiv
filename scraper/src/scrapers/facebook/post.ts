@@ -1,6 +1,5 @@
 import { Scraper } from '../scraper';
 import { getAll, getEl, getSelectionString, parseHumanDate } from '../../utils';
-import { isFB, isPostPage } from './utils';
 
 export type FacebookPost = {
   typeName: 'FacebookPost';
@@ -12,12 +11,13 @@ export type FacebookPost = {
 };
 
 export class FBPostScraper extends Scraper<'FacebookPost', FacebookPost> {
-  canScrape(locationURL: URL): boolean {
-    // https://www.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
-    return isFB(locationURL) && isPostPage(locationURL);
-  }
+  // https://www.facebook.com/theprodigyofficial/posts/pfbid0WoM5Kzm79yfeiBKqR9FkfhsVXA6CeqW4DtzJbyKnc56xw7kytdQYfqwgK55hoheFl
+  readonly pattern = new URLPattern({
+    hostname: 'www.facebook.com',
+    pathname: '/:group/posts/:id',
+  });
 
-  protected _scrape = (): FacebookPost => {
+  readonly scrape = (): FacebookPost => {
     const postEl = getEl('[role=article]', 'post element');
 
     const content = getSelectionString(getEl(postEl, '[data-testid=post_message]', 'post content'));

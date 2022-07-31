@@ -1,4 +1,4 @@
-import { getEl, getListStr, getPathSegments } from '../utils';
+import { getEl, getListStr } from '../utils';
 import { Scraper } from './scraper';
 
 type SteamGame = {
@@ -11,14 +11,13 @@ type SteamGame = {
 };
 
 export class SteamGameScraper extends Scraper<'SteamGame', SteamGame> {
-  canScrape(locationURL: URL): boolean {
-    // https://store.steampowered.com/app/814380/Sekiro_Shadows_Die_Twice__GOTY_Edition/
-    return (
-      locationURL.hostname === 'store.steampowered.com' && getPathSegments(locationURL)[0] === 'app'
-    );
-  }
+  // https://store.steampowered.com/app/814380/Sekiro_Shadows_Die_Twice__GOTY_Edition/
+  readonly pattern = new URLPattern({
+    hostname: 'store.steampowered.com',
+    pathname: '/app/*',
+  });
 
-  protected _scrape = (): SteamGame => {
+  readonly scrape = (): SteamGame => {
     const coverURL = getEl<HTMLImageElement>('.game_header_image_full', 'cover image').src;
     const name = getEl('#appHubAppName', 'game name').innerText;
     const releaseDate = getEl('.release_date .date', 'release date').innerText;

@@ -20,17 +20,19 @@ const SCRAPER = {
       originalUrl: window.originalURL?.toString(),
     };
 
-    const locationURL = new URL(window.location.href);
+    for (const scraper of SCRAPERS) {
+      if (!scraper.pattern.test(window.location.href)) {
+        continue;
+      }
 
-    const scraper = SCRAPERS.find((scraper) => scraper.canScrape(locationURL));
-
-    if (scraper) {
       try {
-        const data = await scraper.scrape(locationURL);
+        const data = await scraper.scrape();
         console.info(`scraper ${scraper.constructor.name} succeeded`);
 
         result.scraperName = scraper.constructor.name;
         result.data = data;
+
+        break;
       } catch (e) {
         console.error(`scraper ${scraper.constructor.name} failed:`, e);
 

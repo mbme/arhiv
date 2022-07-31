@@ -1,15 +1,9 @@
+import 'urlpattern-polyfill';
+
 export abstract class Scraper<TypeName extends string, Data extends { typeName: TypeName }> {
-  abstract canScrape(locationURL: URL): boolean;
+  abstract readonly pattern: URLPattern;
 
-  protected abstract _scrape: ((locationURL: URL) => Data) | ((locationURL: URL) => Promise<Data>);
-
-  scrape(locationURL: URL): Promise<Data> | Data {
-    if (!this.canScrape(locationURL)) {
-      throw new Error(`can't scrape ${locationURL.toString()}`);
-    }
-
-    return this._scrape(locationURL);
-  }
+  abstract readonly scrape: (() => Data) | (() => Promise<Data>);
 }
 
 export type ExtractScraperGeneric<Type> = Type extends Scraper<string, infer X> ? X : never;

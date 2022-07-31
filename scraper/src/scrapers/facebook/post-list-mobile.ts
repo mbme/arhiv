@@ -1,6 +1,5 @@
 import { Scraper } from '../scraper';
 import { getAll, getEl, parseHumanDate } from '../../utils';
-import { isFBMobile, isPostListPage } from './utils';
 
 type PostListItem = {
   permalink: string;
@@ -18,12 +17,13 @@ export class FBMobilePostListScraper extends Scraper<
   'FacebookMobilePostList',
   FacebookMobilePostList
 > {
-  canScrape(locationURL: URL): boolean {
-    // https://m.facebook.com/vmistozher/
-    return isFBMobile(locationURL) && isPostListPage(locationURL);
-  }
+  // https://m.facebook.com/vmistozher/
+  pattern = new URLPattern({
+    hostname: 'm.facebook.com',
+    pathname: '/:group/',
+  });
 
-  protected _scrape = (): FacebookMobilePostList => {
+  readonly scrape = (): FacebookMobilePostList => {
     const posts = getAll(document, 'article').map((postEl) => {
       const dateEl = getEl(postEl, 'header a abbr', 'post date').parentElement as HTMLAnchorElement;
 

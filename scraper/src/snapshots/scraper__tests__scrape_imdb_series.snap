@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 199
+assertion_line: 294
 expression: result
 ---
 [
@@ -9,18 +9,18 @@ expression: result
     "originalUrl": "https://www.imdb.com/title/tt0098936/",
     "scraperName": "IMDBFilmScraper",
     "data": {
-      "cast": "Kyle MacLachlan, Michael Ontkean, Mädchen Amick",
-      "countriesOfOrigin": "United States",
-      "coverURL": "[permalink]",
-      "creators": "Mark Frost, David Lynch",
-      "description": "The body of a young girl (Laura Palmer) is washed up on a beach near the small Washington state town of Twin Peaks. FBI Special Agent Dale Cooper is called in to investigate her strange demise only to uncover a web of mystery that ultimately leads him deep into the heart of the surrounding woodland and his very own soul.",
-      "duration": "47m",
-      "episodes": 30,
-      "originalLanguage": "English",
-      "releaseDate": "1990–1991",
-      "seasons": 2,
+      "typeName": "IMDBFilm",
       "title": "Twin Peaks",
-      "typeName": "IMDBFilm"
+      "coverURL": "[permalink]",
+      "releaseDate": "1990–1991",
+      "originalLanguage": "English",
+      "countriesOfOrigin": "United States",
+      "creators": "Mark Frost, David Lynch",
+      "cast": "Kyle MacLachlan, Michael Ontkean, Mädchen Amick",
+      "seasons": 2,
+      "episodes": 30,
+      "duration": "47m",
+      "description": "The body of a young girl (Laura Palmer) is washed up on a beach near the small Washington state town of Twin Peaks. FBI Special Agent Dale Cooper is called in to investigate her strange demise only to uncover a web of mystery that ultimately leads him deep into the heart of the surrounding woodland and his very own soul."
     },
     "error": null
   }

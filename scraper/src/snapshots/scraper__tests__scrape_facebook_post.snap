@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 111
+assertion_line: 126
 expression: result
 ---
 [
@@ -9,14 +9,14 @@ expression: result
     "originalUrl": "https://www.facebook.com/theprodigyofficial/posts/pfbid02XeNwZbYFN8TeXtYrgSCRLPciWpfNWEu3HaUartDe7X5HUH8XGWeXYbHz8wKdREdml",
     "scraperName": "FBPostScraper",
     "data": {
-      "content": "Warriors in Newcastle tomorrow night and Manchester on Tuesday. As we go through this crazy heatwave it is extra important that you take care of yourselves and each other at the shows. Stay hydrated & keep in the shade during the day where possible and keep topped up with free water at the bar at the show.\nThe Prodigy HQ",
+      "typeName": "FacebookPost",
+      "permalink": "[permalink]",
       "date": "17 July at 08:46",
       "dateISO": "2022-07-17T05:46:00.000Z",
+      "content": "Warriors in Newcastle tomorrow night and Manchester on Tuesday. As we go through this crazy heatwave it is extra important that you take care of yourselves and each other at the shows. Stay hydrated & keep in the shade during the day where possible and keep topped up with free water at the bar at the show.\nThe Prodigy HQ",
       "images": [
         "[permalink]"
-      ],
-      "permalink": "[permalink]",
-      "typeName": "FacebookPost"
+      ]
     },
     "error": null
   }

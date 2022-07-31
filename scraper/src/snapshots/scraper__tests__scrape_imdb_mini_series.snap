@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 211
+assertion_line: 306
 expression: result
 ---
 [
@@ -9,18 +9,18 @@ expression: result
     "originalUrl": "https://www.imdb.com/title/tt8134186/",
     "scraperName": "IMDBFilmScraper",
     "data": {
-      "cast": "Sonoya Mizuno, Nick Offerman, Jin Ha",
-      "countriesOfOrigin": "United Kingdom, United States",
-      "coverURL": "[permalink]",
-      "creators": "Alex Garland",
-      "description": "A computer engineer investigates the secretive development division in her company, which she believes is behind the disappearance of her boyfriend.",
-      "duration": "",
-      "episodes": 8,
-      "originalLanguage": "English",
-      "releaseDate": "2020",
-      "seasons": 1,
+      "typeName": "IMDBFilm",
       "title": "Devs",
-      "typeName": "IMDBFilm"
+      "coverURL": "[permalink]",
+      "releaseDate": "2020",
+      "originalLanguage": "English",
+      "countriesOfOrigin": "United Kingdom, United States",
+      "creators": "Alex Garland",
+      "cast": "Sonoya Mizuno, Nick Offerman, Jin Ha",
+      "seasons": 1,
+      "episodes": 8,
+      "duration": "",
+      "description": "A computer engineer investigates the secretive development division in her company, which she believes is behind the disappearance of her boyfriend."
     },
     "error": null
   }

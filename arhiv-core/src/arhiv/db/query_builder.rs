@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::fmt::Write as _;
 
 pub struct QueryBuilder {
     what: Vec<String>,
@@ -86,11 +87,11 @@ impl QueryBuilder {
         }
 
         if let Some(limit) = self.limit {
-            query += &format!(" LIMIT {}", limit);
+            write!(query, " LIMIT {}", limit).expect("must append query");
         }
 
         if let Some(offset) = self.offset {
-            query += &format!(" OFFSET {}", offset);
+            write!(query, " OFFSET {}", offset).expect("must append query");
         }
 
         (query, self.params.into_inner())

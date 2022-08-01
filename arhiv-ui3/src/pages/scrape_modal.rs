@@ -1,7 +1,6 @@
 use anyhow::Result;
+use arhiv_core::ScraperOptions;
 use serde_json::{json, Value};
-
-use arhiv_scraper::Scraper;
 
 use crate::{
     app::{App, AppResponse},
@@ -26,8 +25,18 @@ impl App {
     pub async fn scrape_modal_handler(&self, fields: &Fields) -> Result<AppResponse> {
         let url = fields.get("url").map(|url| url.trim()).unwrap_or_default();
 
-        let scraper = Scraper::new(&self.arhiv)?;
-        let content = match scraper.scrape(url).await {
+        let content = match self
+            .arhiv
+            .scrape(
+                url,
+                ScraperOptions {
+                    manual: false,
+                    emulate_mobile: false,
+                    debug: false,
+                },
+            )
+            .await
+        {
             Ok(documents) => {
                 let refs = documents
                     .into_iter()

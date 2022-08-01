@@ -7,7 +7,6 @@ publish = false
 
 [dependencies]
 arhiv-core = { path = "../arhiv-core" }
-arhiv-scraper = { path = "../arhiv-scraper" }
 rs-utils = { path = "../rs-utils" }
 
 anyhow = "1"

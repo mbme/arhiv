@@ -127,20 +127,11 @@ pub struct ScrapeResult {
     pub error: Option<String>,
 }
 
+#[derive(Default)]
 pub struct ScraperOptions {
     pub debug: bool,
     pub manual: bool,
     pub emulate_mobile: bool,
-}
-
-impl Default for ScraperOptions {
-    fn default() -> Self {
-        ScraperOptions {
-            debug: false,
-            manual: false,
-            emulate_mobile: false,
-        }
-    }
 }
 
 pub struct Scraper {

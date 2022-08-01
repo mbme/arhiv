@@ -193,7 +193,7 @@ impl Arhiv {
 }
 
 async fn create_attachment(url: &str, tx: &mut ArhivConnection) -> Result<Document> {
-    let download_result = Download::new(&url)?.start().await?;
+    let download_result = Download::new(url)?.start().await?;
 
     let mut attachment = Attachment::create(&download_result.file_path, true, tx)?;
     attachment.data.filename = download_result.original_file_name.clone();

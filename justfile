@@ -59,8 +59,6 @@ check-ts:
   yarn run check-fmt
   yarn workspace arhiv-ui3 run lint
   yarn workspace arhiv-ui3 run compiler-errors
-  yarn workspace arhiv-scraper run lint
-  yarn workspace arhiv-scraper run compiler-errors
   yarn workspace scraper run lint
   yarn workspace scraper run compiler-errors
 

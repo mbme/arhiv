@@ -68,25 +68,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "arhiv-scraper"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arhiv-core",
- "insta",
- "rs-utils",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "arhiv-ui3"
 version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "arhiv-scraper",
  "chrono",
  "hyper",
  "routerify",

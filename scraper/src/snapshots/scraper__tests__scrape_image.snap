@@ -1,0 +1,17 @@
+---
+source: scraper/src/lib.rs
+assertion_line: 323
+expression: result
+---
+[
+  {
+    "url": "https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png",
+    "originalUrl": "https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png",
+    "scraperName": "ImageScraper",
+    "data": {
+      "typeName": "Image",
+      "imageURL": "https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png"
+    },
+    "error": null
+  }
+]

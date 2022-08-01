@@ -111,6 +111,10 @@ pub enum ScrapedData {
         pages: u32,
         language: String,
     },
+    Image {
+        #[serde(rename = "imageURL")]
+        image_url: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -306,6 +310,17 @@ mod tests {
         insta::assert_json_snapshot!(result, {
             "[].data.coverURL" => "[permalink]",
         });
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn test_scrape_image() -> Result<()> {
+        let result =
+            scrape("https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png")?;
+
+        insta::assert_json_snapshot!(result);
 
         Ok(())
     }

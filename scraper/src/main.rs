@@ -4,7 +4,7 @@ use clap::Parser;
 
 use rs_utils::log;
 
-use scraper::Scraper;
+use scraper::{Scraper, ScraperOptions};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None, arg_required_else_help = true)]
@@ -30,19 +30,12 @@ pub fn main() {
 
     let args = Args::parse();
 
-    let mut scraper = Scraper::new().expect("failed to init scraper");
-
-    if args.debug {
-        scraper.debug();
-    }
-
-    if args.mobile {
-        scraper.emulate_mobile();
-    }
-
-    if args.manual {
-        scraper.manual();
-    }
+    let scraper = Scraper::new_with_options(&ScraperOptions {
+        debug: args.debug,
+        emulate_mobile: args.mobile,
+        manual: args.manual,
+    })
+    .expect("failed to init scraper");
 
     let result = scraper.scrape(&args.url).expect("failed to scrape");
 

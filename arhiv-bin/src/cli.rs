@@ -7,9 +7,8 @@ use arhiv_core::{
     definitions::get_standard_schema,
     entities::{Document, DocumentData, Id},
     prime_server::start_prime_server,
-    Arhiv, Config,
+    Arhiv, Config, ScraperOptions,
 };
-use arhiv_scraper::Scraper;
 use arhiv_ui3::start_ui_server;
 use rs_utils::{into_absolute_path, log};
 
@@ -129,6 +128,16 @@ fn build_app() -> Command<'static> {
                         .required(true)
                         .index(1)
                         .help("url to scrape"),
+                )
+                .arg(
+                    Arg::new("manual")
+                        .long("manual")
+                        .help("Manual scraper mode")
+                )
+                .arg(
+                    Arg::new("mobile")
+                        .long("mobile")
+                        .help("Emulate mobile mode")
                 ),
         )
         .subcommand(
@@ -269,11 +278,23 @@ pub async fn arhiv_cli() {
                 .get_one::<String>("url")
                 .expect("url must be present");
 
+            let emulate_mobile = matches.contains_id("mobile");
+            let manual = matches.contains_id("manual");
+
             let arhiv = Arhiv::must_open();
             let port = arhiv.get_config().ui_server_port;
 
-            let scraper = Scraper::new(&arhiv).expect("failed to create scraper");
-            let documents = scraper.scrape(url).await.expect("failed to scrape");
+            let documents = arhiv
+                .scrape(
+                    url,
+                    ScraperOptions {
+                        manual,
+                        emulate_mobile,
+                        debug: false,
+                    },
+                )
+                .await
+                .expect("failed to scrape");
 
             for document in documents {
                 print_document(&document, port);

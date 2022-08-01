@@ -18,7 +18,7 @@ fn get_script_temp_file() -> Result<TempFile> {
     Ok(temp_file)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct FacebookPostListItem {
     permalink: String,
@@ -30,7 +30,7 @@ pub struct FacebookPostListItem {
     videos: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct FacebookMobilePostListItem {
     permalink: String,
@@ -40,7 +40,7 @@ pub struct FacebookMobilePostListItem {
     preview: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]
 pub enum ScrapedData {
     FacebookPost {
@@ -117,47 +117,55 @@ pub enum ScrapedData {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct ScrapeResult {
-    url: String,
-    original_url: Option<String>,
-    scraper_name: Option<String>,
-    data: Option<ScrapedData>,
-    error: Option<String>,
+    pub url: String,
+    pub original_url: Option<String>,
+    pub scraper_name: Option<String>,
+    pub data: Option<ScrapedData>,
+    pub error: Option<String>,
+}
+
+pub struct ScraperOptions {
+    pub debug: bool,
+    pub manual: bool,
+    pub emulate_mobile: bool,
+}
+
+impl Default for ScraperOptions {
+    fn default() -> Self {
+        ScraperOptions {
+            debug: false,
+            manual: false,
+            emulate_mobile: false,
+        }
+    }
 }
 
 pub struct Scraper {
     chrome_bin_path: String,
-    debug: bool,
-    manual: bool,
-    mobile: bool,
+    pub debug: bool,
+    pub manual: bool,
+    pub emulate_mobile: bool,
 }
 
 impl Scraper {
     pub fn new() -> Result<Self> {
+        Scraper::new_with_options(&Default::default())
+    }
+
+    pub fn new_with_options(options: &ScraperOptions) -> Result<Self> {
         NodeJS::check()?;
 
         let chromium = Chromium::check()?;
 
         Ok(Scraper {
             chrome_bin_path: chromium.get_bin_path().to_string(),
-            debug: false,
-            manual: false,
-            mobile: false,
+            debug: options.debug,
+            manual: options.manual,
+            emulate_mobile: options.emulate_mobile,
         })
-    }
-
-    pub fn debug(&mut self) {
-        self.debug = true;
-    }
-
-    pub fn manual(&mut self) {
-        self.manual = true;
-    }
-
-    pub fn emulate_mobile(&mut self) {
-        self.mobile = true;
     }
 
     pub fn scrape(&self, url: &str) -> Result<Vec<ScrapeResult>> {
@@ -178,7 +186,7 @@ impl Scraper {
             args.push("--manual")
         }
 
-        if self.mobile {
+        if self.emulate_mobile {
             args.push("--mobile")
         }
 

@@ -34,7 +34,6 @@ version = "0.48.3"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "arhiv-scraper",
  "arhiv-ui3",
  "clap",
  "clap_complete",
@@ -61,6 +60,7 @@ dependencies = [
  "routerify",
  "rs-utils",
  "rusqlite",
+ "scraper",
  "serde",
  "serde_json",
  "tokio",

@@ -37,8 +37,8 @@ jobs:
       - name: Arhiv UI - check types
         run: yarn workspace arhiv-ui3 run compiler-errors
 
-      - name: Arhiv Scraper - lint
-        run: yarn workspace arhiv-scraper run lint
+      - name: Scraper - lint
+        run: yarn workspace scraper run lint
 
       - name: Arhiv Scraper - check types
-        run: yarn workspace arhiv-scraper run compiler-errors
+        run: yarn workspace scraper run compiler-errors

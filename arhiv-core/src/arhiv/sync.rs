@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 
 use rs_utils::log;
 
@@ -173,6 +173,14 @@ impl Arhiv {
     async fn sync_remotely(&self) -> Result<()> {
         log::info!("Initiating remote sync");
 
+        let prime_rpc =
+            PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
+
+        prime_rpc
+            .check_connection()
+            .await
+            .context("remote connection check failed")?;
+
         let mut tx = self.get_tx()?;
 
         let changeset = tx.generate_changeset()?;
@@ -184,9 +192,6 @@ impl Arhiv {
         );
 
         let last_update_time = tx.get_last_update_time()?;
-
-        let prime_rpc =
-            PrimeServerRPC::new(&self.config.prime_url, &self.path_manager.downloads_dir)?;
 
         // TODO parallel file upload
         for (index, blob_id) in new_blob_ids.iter().enumerate() {

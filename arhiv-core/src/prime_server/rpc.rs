@@ -98,4 +98,14 @@ impl PrimeServerRPC {
     fn get_blob_url(&self, blob_id: &BLOBId) -> String {
         format!("{}/blobs/{}", self.prime_url, blob_id)
     }
+
+    pub async fn check_connection(&self) -> Result<()> {
+        Client::new()
+            .get(&format!("{}/status", self.prime_url))
+            .send()
+            .await?
+            .error_for_status()?;
+
+        Ok(())
+    }
 }

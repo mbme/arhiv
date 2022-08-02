@@ -2,9 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use lazy_static::*;
 use regex::Regex;
 
-use rs_utils::run_command;
-
-use crate::utils::{match_str, send_notification};
+use crate::{match_str, run_command, send_notification};
 
 pub struct Speakers {
     id: String,

@@ -2,11 +2,10 @@
 
 use clap::{crate_version, Arg, Command};
 
-use binutils::devices::Backlight;
-use rs_utils::log::setup_logger;
+use rs_utils::{log, Backlight};
 
 fn main() {
-    setup_logger();
+    log::setup_logger();
 
     let app = Command::new("mb-backlight")
         .arg(

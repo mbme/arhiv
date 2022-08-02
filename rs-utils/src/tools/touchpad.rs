@@ -2,9 +2,7 @@ use anyhow::{bail, Result};
 use lazy_static::*;
 use regex::Regex;
 
-use rs_utils::{log::info, run_command};
-
-use crate::utils::{match_str, send_notification};
+use crate::{match_str, run_command, send_notification};
 
 pub struct Touchpad {
     pub id: String,
@@ -31,7 +29,7 @@ impl Touchpad {
             let result = match_str(&ID_RE, line);
 
             if let Some(id) = result {
-                info!("{}", &line);
+                log::info!("{}", &line);
 
                 ids.push(id);
             }

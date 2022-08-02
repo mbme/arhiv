@@ -2,8 +2,7 @@
 
 use clap::{crate_version, Arg, Command};
 
-use binutils::devices::{Microphone, Speakers};
-use rs_utils::log;
+use rs_utils::{log, Microphone, Speakers};
 
 fn main() {
     log::setup_logger();

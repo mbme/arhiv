@@ -8,10 +8,5 @@ publish = false
 [dependencies]
 anyhow = "1.0.38"
 clap = { version = "3.0", features = ["color", "cargo"] }
-regex = "1.4.3"
-lazy_static = "1.4.0"
 
 rs-utils = { path = "../rs-utils" }
-
-serde = { version = "1.0.120", features = ["derive"] }
-serde_json = "1.0.61"

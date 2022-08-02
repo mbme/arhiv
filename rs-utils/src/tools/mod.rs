@@ -4,6 +4,16 @@ use which::which_all;
 
 use crate::{path_to_string, run_command};
 
+mod backlight;
+mod microphone;
+mod speakers;
+mod touchpad;
+
+pub use self::backlight::Backlight;
+pub use self::microphone::Microphone;
+pub use self::speakers::Speakers;
+pub use self::touchpad::Touchpad;
+
 pub struct NodeJS(String);
 
 impl NodeJS {

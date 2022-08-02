@@ -6,6 +6,7 @@ use std::process;
 use std::process::{Command, Stdio};
 
 use anyhow::{bail, Context, Result};
+use regex::Regex;
 
 pub use crypto::*;
 pub use download::*;
@@ -114,4 +115,20 @@ pub fn get_image_size(file_path: &str) -> Result<(usize, usize)> {
     let dimensions = imagesize::size(file_path).context("Failed to determine image size")?;
 
     Ok((dimensions.width, dimensions.height))
+}
+
+pub fn send_notification(message: &str) {
+    run_command("notify-send", vec!["-u", "low", message])
+        .expect("must be able to send notification");
+}
+
+#[must_use]
+pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
+    regex.captures(s).map(|captures| {
+        captures
+            .get(1)
+            .expect("group 1 must be present")
+            .as_str()
+            .to_string()
+    })
 }

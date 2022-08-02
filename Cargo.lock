@@ -137,11 +137,7 @@ version = "0.10.1"
 dependencies = [
  "anyhow",
  "clap",
- "lazy_static",
- "regex",
  "rs-utils",
- "serde",
- "serde_json",
 ]
 
 [[package]]

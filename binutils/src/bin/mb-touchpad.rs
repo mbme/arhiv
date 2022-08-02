@@ -1,12 +1,11 @@
 #![deny(clippy::all)]
 
-use binutils::devices::Touchpad;
 use clap::{crate_version, Arg, Command};
 
-use rs_utils::log::{error, info, setup_logger};
+use rs_utils::{log, Touchpad};
 
 fn main() {
-    setup_logger();
+    log::setup_logger();
 
     let app = Command::new("mb-touchpad")
         .arg(
@@ -23,7 +22,7 @@ fn main() {
     let matches = app.get_matches();
 
     let touchpad = Touchpad::find();
-    info!("Touchpad id: {}", &touchpad.id);
+    log::info!("Touchpad id: {}", &touchpad.id);
 
     let notify = matches.contains_id("notify");
 
@@ -44,10 +43,10 @@ fn main() {
             touchpad.print_status(notify);
         }
         Some(command) => {
-            error!("Unexpected command {}", command);
+            log::error!("Unexpected command {}", command);
         }
         None => {
-            error!("Command is missing");
+            log::error!("Command is missing");
         }
     }
 }

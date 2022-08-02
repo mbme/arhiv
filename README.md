@@ -12,6 +12,5 @@
 * `tmux` for running dev servers in parallel
 
 ## Projects
-* [app-shell](app-shell) - for building desktop UI apps using web technologies
 * [binutils](binutils) - cli apps for controling laptop backlight, volume, microphone, touchpad etc.
 * [utils](rs-utils) - various helpers

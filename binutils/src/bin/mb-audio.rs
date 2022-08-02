@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 
-use clap::{crate_version, Arg, Command};
+use clap::{Arg, Command};
 
-use rs_utils::{log, Microphone, Speakers};
+use rs_utils::{get_crate_version, log, Microphone, Speakers};
 
 fn main() {
     log::setup_logger();
@@ -31,7 +31,7 @@ fn main() {
                 .subcommand(Command::new("unmute").about("Unmute microphone"))
                 .subcommand(Command::new("toggle").about("Toggle mute")),
         )
-        .version(crate_version!());
+        .version(get_crate_version());
 
     let matches = app.get_matches();
     let notify = matches.contains_id("notify");

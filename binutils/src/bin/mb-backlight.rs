@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 
-use clap::{crate_version, Arg, Command};
+use clap::{Arg, Command};
 
-use rs_utils::{log, Backlight};
+use rs_utils::{get_crate_version, log, Backlight};
 
 fn main() {
     log::setup_logger();
@@ -16,7 +16,7 @@ fn main() {
         .subcommand(Command::new("status").about("Print current state of backlight"))
         .subcommand(Command::new("inc").about("Increase backlight"))
         .subcommand(Command::new("dec").about("Decrease backlight"))
-        .version(crate_version!());
+        .version(get_crate_version());
 
     let matches = app.get_matches();
 

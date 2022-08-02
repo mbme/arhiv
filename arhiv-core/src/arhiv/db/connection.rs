@@ -6,7 +6,7 @@ use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 
-use rs_utils::{file_exists, is_same_filesystem, log, FsTransaction};
+use rs_utils::{file_exists, get_crate_version, is_same_filesystem, log, FsTransaction};
 
 use crate::{
     arhiv::{db_migrations::get_db_version, status::Status},
@@ -679,6 +679,7 @@ impl ArhivConnection {
         let last_update_time = self.get_last_update_time()?;
 
         Ok(Status {
+            app_version: get_crate_version().to_string(),
             db_status,
             db_version,
             data_version,

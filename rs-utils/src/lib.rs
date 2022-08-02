@@ -132,3 +132,7 @@ pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
             .to_string()
     })
 }
+
+pub fn get_crate_version() -> &'static str {
+    option_env!("TYPED_V_VERSION").unwrap_or("dev-build")
+}

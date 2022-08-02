@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 
-use clap::{crate_version, Arg, Command};
+use clap::{Arg, Command};
 
-use rs_utils::{log, Touchpad};
+use rs_utils::{get_crate_version, log, Touchpad};
 
 fn main() {
     log::setup_logger();
@@ -17,7 +17,7 @@ fn main() {
         .subcommand(Command::new("on").about("Enable touchpad"))
         .subcommand(Command::new("off").about("Disable touchpad"))
         .subcommand(Command::new("toggle").about("Toggle touchpad"))
-        .version(crate_version!());
+        .version(get_crate_version());
 
     let matches = app.get_matches();
 

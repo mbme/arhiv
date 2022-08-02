@@ -2,12 +2,12 @@
 
 use clap::Parser;
 
-use rs_utils::log;
+use rs_utils::{get_crate_version, log};
 
 use scraper::{Scraper, ScraperOptions};
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None, arg_required_else_help = true)]
+#[clap(author, version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
 struct Args {
     /// URL to scrape
     #[clap(required = true, value_parser)]

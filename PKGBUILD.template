@@ -28,7 +28,7 @@ build() {
   export RUSTUP_TOOLCHAIN=stable
   export CARGO_TARGET_DIR=target
 
-  export TYPED_V_VERSION=$pkgver
+  export TYPED_V_VERSION=$(git describe --tags)
 
   cargo build --frozen --release --features production-mode
 }

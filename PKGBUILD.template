@@ -1,0 +1,64 @@
+# Maintainer: mbme
+
+pkgname=typed-v
+pkgrel=1
+pkgver="0.0.0"
+pkgdesc='Personal computing environment'
+arch=(x86_64)
+license=(MIT)
+depends=(sqlite zstd libnotify libpulse light xorg-xinput gtk3 nodejs)
+makedepends=(git cargo yarn)
+
+pkgver() {
+  cd ..
+
+  git describe --abbrev=0 --tags
+}
+
+prepare() {
+  cd ..
+
+  yarn install --immutable --immutable-cache
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+  cd ..
+
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+
+  cargo build --frozen --release --features production-mode
+}
+
+check() {
+  cd ..
+
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+
+  cargo test --frozen --release --features production-mode
+}
+
+package() {
+  cd ..
+
+  # binutils
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-audio"
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-backlight"
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-touchpad"
+
+  # scraper
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/scraper"
+
+  # arhiv
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
+
+  install -Dm 644 "arhiv-bin/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
+  install -Dm 755 "arhiv-bin/resources/arhiv-ui-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-ui-server.service"
+  install -Dm 755 "arhiv-bin/resources/arhiv-prime-server@.service" "${pkgdir}/usr/lib/systemd/system/arhiv-prime-server@.service"
+
+  "target/release/gen-completions"
+  install -Dm 755 "target/completions/arhiv.bash" "${pkgdir}/usr/share/bash-completion/completions/arhiv.bash"
+  install -Dm 755 "target/completions/_arhiv" "${pkgdir}/usr/share/zsh/site-functions/_arhiv"
+}

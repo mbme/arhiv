@@ -1,4 +1,4 @@
-use std::{process, sync::Arc};
+use std::{env, process, sync::Arc};
 
 use clap::{builder::PossibleValuesParser, crate_version, AppSettings, Arg, Command};
 use clap_complete::{generate_to, Shell};
@@ -10,7 +10,7 @@ use arhiv_core::{
     Arhiv, Config, ScraperOptions,
 };
 use arhiv_ui3::start_ui_server;
-use rs_utils::{into_absolute_path, log};
+use rs_utils::{create_dir_if_not_exist, into_absolute_path, log};
 
 use crate::import::import_document_from_file;
 
@@ -24,7 +24,6 @@ fn build_app() -> Command<'static> {
                 .about("Initialize Arhiv instance on local machine")
                 .arg(
                     Arg::new("arhiv_id")
-                        .long("arhiv_id")
                         .required(true)
                         .index(1)
                         .help("Arhiv id to use"),
@@ -210,7 +209,7 @@ pub async fn arhiv_cli() {
         }
         ("config", matches) => {
             if matches.contains_id("template") {
-                print!("{}", include_str!("../arhiv.json.template"));
+                print!("{}", include_str!("../resources/arhiv.json.template"));
                 return;
             }
 
@@ -398,11 +397,12 @@ fn print_document(document: &Document, port: u16) {
 }
 
 pub fn gen_completions_cli() {
-    let manifest_dir = env!(
-        "CARGO_MANIFEST_DIR",
-        "CARGO_MANIFEST_DIR env variable is missing"
+    let outdir = format!(
+        "{}/target/completions",
+        env::current_dir()
+            .expect("current dir must be set")
+            .to_string_lossy()
     );
-    let outdir = format!("{}/completions", manifest_dir);
 
     let mut app = build_app();
 
@@ -410,6 +410,8 @@ pub fn gen_completions_cli() {
         .get_bin_name()
         .expect("failed to get bin name")
         .to_string();
+
+    create_dir_if_not_exist(&outdir).expect("failed to create completions dir");
 
     generate_to(Shell::Bash, &mut app, &bin_name, &outdir)
         .expect("failed to generate Bash completions");

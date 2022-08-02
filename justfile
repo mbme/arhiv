@@ -1,6 +1,3 @@
-# Local Variables:
-# mode: makefile
-# End:
 # vim: set ft=make :
 
 generate-fakes:
@@ -27,20 +24,15 @@ web3:
      split-window 'yarn watch:css' \; \
      select-pane -t 0
 
+bump-version:
+  ./bump-version.sh
+
 prod-build-install:
-  cd {{invocation_directory()}}; cp PKGBUILD.template PKGBUILD; makepkg -efi; rm -rf pkg; rm *.pkg.tar.zst; rm PKGBUILD
-
-arhiv-bump-minor *PARAMS:
-  cd arhiv-bin; cargo release --no-dev-version minor {{PARAMS}}
-
-arhiv-bump-patch *PARAMS:
-  cd arhiv-bin; cargo release --no-dev-version patch {{PARAMS}}
-
-binutils-bump-minor *PARAMS:
-  cd binutils; cargo release --no-dev-version minor {{PARAMS}}
-
-binutils-bump-patch *PARAMS:
-  cd binutils; cargo release --no-dev-version patch {{PARAMS}}
+  cp PKGBUILD.template PKGBUILD
+  makepkg -efi || true
+  rm -rf pkg
+  rm -f *.pkg.tar.zst
+  rm PKGBUILD
 
 test-scrapers *PARAMS:
   cd scraper; cargo test -- --ignored --test-threads 1 {{PARAMS}}

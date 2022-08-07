@@ -6,8 +6,9 @@ use rs_utils::{get_crate_version, log};
 
 use scraper::{Scraper, ScraperOptions};
 
+/// Extract data from websites and output it in JSON format
 #[derive(Parser, Debug)]
-#[clap(author, version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
+#[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
 struct Args {
     /// URL to scrape
     #[clap(required = true, value_parser)]

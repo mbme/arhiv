@@ -1,38 +1,49 @@
 #![deny(clippy::all)]
 
-use clap::{Arg, Command};
+use clap::{Parser, Subcommand};
 
 use rs_utils::{get_crate_version, log, Backlight};
+
+/// Control brightness of the screen of the laptop
+#[derive(Parser, Debug)]
+#[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
+struct Args {
+    /// Show notification with the current brightness level
+    #[clap(short, action, global = true)]
+    notify: bool,
+
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Print current brightness level
+    Status,
+    /// Increase backlight brightness
+    #[clap(name = "inc")]
+    Increase,
+    /// Decrease backlight brightness
+    #[clap(name = "dec")]
+    Decrease,
+}
 
 fn main() {
     log::setup_logger();
 
-    let app = Command::new("mb-backlight")
-        .arg(
-            Arg::new("notify")
-                .short('n')
-                .help("Send notification with current backlight state"),
-        )
-        .subcommand(Command::new("status").about("Print current state of backlight"))
-        .subcommand(Command::new("inc").about("Increase backlight"))
-        .subcommand(Command::new("dec").about("Decrease backlight"))
-        .version(get_crate_version());
+    let args = Args::parse();
 
-    let matches = app.get_matches();
-
-    let notify = matches.contains_id("notify");
-
-    match matches.subcommand_name() {
-        Some("inc") => {
+    match args.command {
+        Command::Increase => {
             Backlight::inc();
-            Backlight::print_status(notify);
+            Backlight::print_status(args.notify);
         }
-        Some("dec") => {
+        Command::Decrease => {
             Backlight::dec();
-            Backlight::print_status(notify);
+            Backlight::print_status(args.notify);
         }
-        _ => {
-            Backlight::print_status(notify);
+        Command::Status => {
+            Backlight::print_status(args.notify);
         }
     }
 }

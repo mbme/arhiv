@@ -1,52 +1,55 @@
 #![deny(clippy::all)]
 
-use clap::{Arg, Command};
+use clap::{Parser, Subcommand};
 
 use rs_utils::{get_crate_version, log, Touchpad};
+
+#[derive(Parser, Debug)]
+#[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
+struct Args {
+    /// Show notification with the current touchpad state
+    #[clap(short, action, global = true)]
+    notify: bool,
+
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Print current touchpad state
+    Status,
+    /// Enable touchpad
+    On,
+    /// Disable touchpad
+    Off,
+    /// Toggle touchpad
+    Toggle,
+}
 
 fn main() {
     log::setup_logger();
 
-    let app = Command::new("mb-touchpad")
-        .arg(
-            Arg::new("notify")
-                .short('n')
-                .help("Send notification with current touchpad state"),
-        )
-        .subcommand(Command::new("status").about("Print current state of touchpad"))
-        .subcommand(Command::new("on").about("Enable touchpad"))
-        .subcommand(Command::new("off").about("Disable touchpad"))
-        .subcommand(Command::new("toggle").about("Toggle touchpad"))
-        .version(get_crate_version());
-
-    let matches = app.get_matches();
+    let args = Args::parse();
 
     let touchpad = Touchpad::find();
     log::info!("Touchpad id: {}", &touchpad.id);
 
-    let notify = matches.contains_id("notify");
-
-    match matches.subcommand_name() {
-        Some("status") => {
-            touchpad.print_status(notify);
+    match args.command {
+        Command::Status => {
+            touchpad.print_status(args.notify);
         }
-        Some("on") => {
+        Command::On => {
             touchpad.enable(true);
-            touchpad.print_status(notify);
+            touchpad.print_status(args.notify);
         }
-        Some("off") => {
+        Command::Off => {
             touchpad.disable();
-            touchpad.print_status(notify);
+            touchpad.print_status(args.notify);
         }
-        Some("toggle") => {
+        Command::Toggle => {
             touchpad.toggle();
-            touchpad.print_status(notify);
-        }
-        Some(command) => {
-            log::error!("Unexpected command {}", command);
-        }
-        None => {
-            log::error!("Command is missing");
+            touchpad.print_status(args.notify);
         }
     }
 }

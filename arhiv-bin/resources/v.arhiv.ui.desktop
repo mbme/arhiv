@@ -3,4 +3,4 @@ Type=Application
 Name=Arhiv UI
 Comment=UI for Arhiv - personal database
 Exec=xdg-open "http://localhost:23421"
-Keywords=Arhiv;
+Keywords=Arhiv;Архів;архів;

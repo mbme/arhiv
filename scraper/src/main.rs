@@ -36,7 +36,7 @@ struct Args {
 pub fn main() {
     log::setup_logger();
 
-    let args = if let Ok(_) = env::var("JSON_ARG_MOODE") {
+    let args = if env::var("JSON_ARG_MOODE").is_ok() {
         let args: Vec<String> = env::args().collect();
         let arg = args
             .get(1)

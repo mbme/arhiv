@@ -4,13 +4,13 @@ use anyhow::{ensure, Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
+use rs_utils::now;
+
 use crate::schema::DataSchema;
 
 use super::{DocumentData, Id, Refs, Revision};
 
 pub const ERASED_DOCUMENT_TYPE: &str = "";
-
-pub type Timestamp = DateTime<Utc>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
@@ -28,7 +28,7 @@ pub struct Document<D = DocumentData> {
 impl<D> Document<D> {
     #[must_use]
     pub fn new_with_data(document_type: &str, subtype: &str, data: D) -> Self {
-        let now = Utc::now();
+        let now = now();
 
         Document {
             id: Id::new(),

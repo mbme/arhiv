@@ -12,7 +12,7 @@ pub use blob::BLOB;
 pub use blob_id::BLOBId;
 pub use changeset::Changeset;
 pub use changeset_response::ChangesetResponse;
-pub use document::{Document, Timestamp, ERASED_DOCUMENT_TYPE};
+pub use document::{Document, ERASED_DOCUMENT_TYPE};
 pub use document_data::DocumentData;
 pub use id::Id;
 pub use refs::Refs;

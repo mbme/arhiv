@@ -1,18 +1,19 @@
 use std::{collections::HashSet, fs, sync::Arc, time::Instant};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use chrono::Utc;
 use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 
-use rs_utils::{file_exists, get_crate_version, is_same_filesystem, log, FsTransaction};
+use rs_utils::{
+    file_exists, get_crate_version, is_same_filesystem, log, now, FsTransaction, Timestamp,
+    MIN_TIMESTAMP,
+};
 
 use crate::{
     arhiv::{db_migrations::get_db_version, status::Status},
     entities::{
-        BLOBId, Changeset, ChangesetResponse, Document, Id, Revision, Timestamp, BLOB,
-        ERASED_DOCUMENT_TYPE,
+        BLOBId, Changeset, ChangesetResponse, Document, Id, Revision, BLOB, ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
     schema::DataSchema,
@@ -263,7 +264,7 @@ impl ArhivConnection {
             .optional()
             .context("Failed to get last update time")?;
 
-        Ok(result.unwrap_or(chrono::MIN_DATETIME))
+        Ok(result.unwrap_or(MIN_TIMESTAMP))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -746,14 +747,14 @@ impl ArhivConnection {
                 prev_document.updated_at
             );
 
-            document.updated_at = Utc::now();
+            document.updated_at = now();
         } else {
             log::debug!("Creating new document {}", &document.id);
 
             document.rev = Revision::STAGING;
             document.prev_rev = Revision::STAGING;
 
-            let now = Utc::now();
+            let now = now();
             document.created_at = now;
             document.updated_at = now;
         }

@@ -2,8 +2,9 @@ use std::fmt;
 
 use serde::Serialize;
 
+use rs_utils::{Timestamp, MIN_TIMESTAMP};
+
 use super::db::{BLOBSCount, DbStatus, DocumentsCount};
-use crate::entities::Timestamp;
 
 #[derive(Serialize)]
 pub struct Status {
@@ -62,7 +63,7 @@ impl fmt::Display for Status {
         writeln!(
             f,
             " Last update time: {}",
-            if self.last_update_time == chrono::MIN_DATETIME {
+            if self.last_update_time == MIN_TIMESTAMP {
                 "NEVER".to_string()
             } else {
                 format_date(self.last_update_time)
@@ -71,7 +72,7 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "   Last sync time: {}",
-            if self.db_status.last_sync_time == chrono::MIN_DATETIME {
+            if self.db_status.last_sync_time == MIN_TIMESTAMP {
                 "NEVER".to_string()
             } else {
                 format_date(self.db_status.last_sync_time)

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
 
-use rs_utils::log;
+use rs_utils::{log, MIN_TIMESTAMP};
 
 use crate::path_manager::PathManager;
 use crate::{config::Config, definitions::get_standard_schema, entities::*, schema::DataSchema};
@@ -105,7 +105,7 @@ impl Arhiv {
         tx.set_setting(&SETTING_ARHIV_ID, &arhiv_id.to_string())?;
         tx.set_setting(&SETTING_IS_PRIME, &prime)?;
         tx.set_setting(&SETTING_DATA_VERSION, &arhiv.data_version)?;
-        tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::MIN_DATETIME)?;
+        tx.set_setting(&SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
         tx.commit()?;
 

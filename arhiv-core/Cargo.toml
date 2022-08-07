@@ -32,7 +32,7 @@ pulldown-cmark = { version = "0.9", default-features = false, features = ["simd"
 hyper = { version = "0.14", features = ["http1", "server"] }
 routerify = "3"
 
-rusqlite = { version = "0.27", features = ["chrono", "serde_json", "functions"] }
+rusqlite = { version = "0.28", features = ["chrono", "serde_json", "functions"] }
 
 rs-utils = { path = "../rs-utils" }
 scraper = { path = "../scraper" }

@@ -17,6 +17,7 @@ pub use http::*;
 pub use json::*;
 pub use markov::Markov;
 pub use string::*;
+pub use time::*;
 pub use tools::*;
 
 mod crypto;
@@ -30,6 +31,7 @@ mod json;
 pub mod log;
 mod markov;
 mod string;
+mod time;
 mod tools;
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {

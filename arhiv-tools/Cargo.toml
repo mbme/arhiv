@@ -1,5 +1,5 @@
 [package]
-name = "arhiv-utils"
+name = "arhiv-tools"
 version = "0.0.0"
 authors = ["mbme"]
 edition = "2021"

@@ -68,6 +68,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "arhiv-tools"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arhiv-core",
+ "rand",
+ "rs-utils",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "arhiv-ui3"
 version = "0.0.0"
 dependencies = [
@@ -81,18 +93,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tera",
- "tokio",
-]
-
-[[package]]
-name = "arhiv-utils"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arhiv-core",
- "rand",
- "rs-utils",
- "serde_json",
  "tokio",
 ]
 

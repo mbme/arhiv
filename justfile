@@ -1,10 +1,10 @@
 # vim: set ft=make :
 
 generate-fakes:
-  cd arhiv-utils; cargo run --bin generate-fakes
+  cd arhiv-tools; cargo run --bin generate-fakes
 
 remove-arhiv:
-  cd arhiv-utils; cargo run --bin remove-arhiv
+  cd arhiv-tools; cargo run --bin remove-arhiv
 
 init-arhiv:
   cd arhiv-bin; cargo run --bin arhiv init test-arhiv --prime
@@ -55,3 +55,8 @@ check-ts:
   yarn workspace scraper run compiler-errors
 
 check: check-rs check-ts
+
+clean-all:
+  cargo clean
+  cargo clean --release
+  rm -rf .log

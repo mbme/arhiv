@@ -3,7 +3,7 @@ members = [
   "arhiv-core",
   "arhiv-ui3",
   "arhiv-bin",
-  "arhiv-utils",
+  "arhiv-tools",
   "binutils",
   "rs-utils",
   "scraper"

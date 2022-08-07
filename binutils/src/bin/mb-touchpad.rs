@@ -32,24 +32,21 @@ fn main() {
 
     let args = Args::parse();
 
-    let touchpad = Touchpad::find();
-    log::info!("Touchpad id: {}", &touchpad.id);
-
     match args.command {
         Command::Status => {
-            touchpad.print_status(args.notify);
+            Touchpad::print_status(args.notify);
         }
         Command::On => {
-            touchpad.enable(true);
-            touchpad.print_status(args.notify);
+            Touchpad::enable(true);
+            Touchpad::print_status(args.notify);
         }
         Command::Off => {
-            touchpad.disable();
-            touchpad.print_status(args.notify);
+            Touchpad::disable();
+            Touchpad::print_status(args.notify);
         }
         Command::Toggle => {
-            touchpad.toggle();
-            touchpad.print_status(args.notify);
+            Touchpad::toggle();
+            Touchpad::print_status(args.notify);
         }
     }
 }

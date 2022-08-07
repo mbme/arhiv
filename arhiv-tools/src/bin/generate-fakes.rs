@@ -1,5 +1,5 @@
 use arhiv_core::Arhiv;
-use arhiv_utils::generator::*;
+use arhiv_tools::generator::*;
 use rs_utils::log::setup_logger;
 
 #[tokio::main]

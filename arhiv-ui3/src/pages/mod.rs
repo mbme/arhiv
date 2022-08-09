@@ -1,4 +1,3 @@
-mod api;
 mod catalog_page;
 mod document_page;
 mod edit_document_page;
@@ -12,8 +11,9 @@ mod pick_file_confirmation_modal;
 mod pick_file_modal;
 mod player_app_page;
 mod scrape_modal;
+mod workspace_api_handler;
+mod workspace_page;
 
-pub use api::*;
 pub use catalog_page::*;
 pub use document_page::*;
 pub use edit_document_page::*;
@@ -27,3 +27,5 @@ pub use pick_file_confirmation_modal::*;
 pub use pick_file_modal::*;
 pub use player_app_page::*;
 pub use scrape_modal::*;
+pub use workspace_api_handler::*;
+pub use workspace_page::*;

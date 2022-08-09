@@ -7,8 +7,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
 void esbuild.build({
-  entryPoints: ['./src/index.ts'],
-  outfile: './public/index.js',
+  entryPoints: {
+    'index': './src/index.ts',
+    'workspace': './src/workspace/workspace.tsx',
+  },
+  outdir: './public',
 
   target: ['es2020', 'chrome90', 'firefox87'],
   bundle: true,

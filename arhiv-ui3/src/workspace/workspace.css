@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */
+  a,
+  button {
+    touch-action: manipulation;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+html {
+  overflow-y: scroll;
+}
+
+html,
+body {
+  height: auto;
+  min-height: 100vh;
+
+  text-rendering: optimizeLegibility;
+  @apply antialiased;
+
+  color: #333;
+}

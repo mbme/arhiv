@@ -15,6 +15,7 @@ mod public_assets_handler;
 mod routes;
 mod ui_config;
 mod urls;
+mod workspace;
 
 #[macro_use]
 mod utils;

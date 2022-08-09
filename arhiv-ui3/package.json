@@ -8,9 +8,9 @@
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "build:js": "node build.js",
-    "build:css": "TAILWIND_MODE=build postcss ./src/index.css -o public/index.css",
+    "build:css": "TAILWIND_MODE=build postcss ./src/index.css ./src/workspace/workspace.css --dir public/",
     "watch:js": "node build.js --watch",
-    "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/index.css -o public/index.css",
+    "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/index.css ./src/workspace/workspace.css --dir public/",
     "prod:build:js": "NODE_ENV=production yarn build:js",
     "prod:build:css": "NODE_ENV=production yarn build:css",
     "prod:build": "yarn run prod:build:js && yarn run prod:build:css",

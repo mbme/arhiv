@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <title>Workspace</title>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+    <link rel="stylesheet" href="/public/workspace.css" />
+  </head>
+  <body>
+    <main></main>
+    <script src="/public/workspace.js"></script>
+  </body>
+</html>

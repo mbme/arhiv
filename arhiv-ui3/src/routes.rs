@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Error, Result};
-use hyper::{http::request::Parts, Body, Request};
+use hyper::{header, http::request::Parts, Body, Request, StatusCode};
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 
 use arhiv_core::{
@@ -11,7 +11,11 @@ use rs_utils::http_server::{
     ServerResponse,
 };
 
-use crate::{app::App, public_assets_handler::public_assets_handler, utils::extract_fields};
+use crate::{
+    app::{App, AppResponse},
+    public_assets_handler::public_assets_handler,
+    utils::extract_fields,
+};
 
 pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
     let router = Router::builder()
@@ -19,6 +23,9 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         .middleware(Middleware::post_with_info(logger_middleware))
         .get("/public/:fileName", public_assets_handler)
         .get("/", index_page)
+        //
+        .get("/workspace", workspace_page)
+        .post("/workspace_api", workspace_api_handler)
         //
         .get("/new", new_document_variants_page)
         .get("/new/:document_type", new_document_page)
@@ -82,7 +89,6 @@ pub fn build_router_service(app: App) -> Result<RouterService<Body, Error>> {
         //
         .get("/apps/player", app_player)
         //
-        .post("/api", api_handler)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
         //
@@ -99,6 +105,39 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = app.index_page()?;
+
+    app.render(response)
+}
+
+async fn workspace_page(req: Request<Body>) -> ServerResponse {
+    let app: &App = req.data().unwrap();
+
+    let response = app.workspace_page()?;
+
+    app.render(response)
+}
+
+async fn workspace_api_handler(req: Request<Body>) -> ServerResponse {
+    let (parts, body): (Parts, Body) = req.into_parts();
+
+    let app: &App = parts.data().unwrap();
+
+    let content_type = parts
+        .headers
+        .get(header::CONTENT_TYPE)
+        .map(|value| value.to_str())
+        .transpose()?
+        .unwrap_or_default();
+
+    let response = if content_type == "application/json" {
+        let body = hyper::body::to_bytes(body).await?;
+
+        app.workspace_api_handler(&body)?
+    } else {
+        AppResponse::Status {
+            status: StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        }
+    };
 
     app.render(response)
 }
@@ -310,17 +349,6 @@ async fn app_player(req: Request<Body>) -> ServerResponse {
     let app: &App = req.data().unwrap();
 
     let response = app.player_app_page()?;
-
-    app.render(response)
-}
-
-async fn api_handler(req: Request<Body>) -> ServerResponse {
-    let (parts, body): (Parts, Body) = req.into_parts();
-    let app: &App = parts.data().unwrap();
-
-    let body = hyper::body::to_bytes(body).await?;
-
-    let response = app.api_handler(&body)?;
 
     app.render(response)
 }

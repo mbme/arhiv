@@ -5,7 +5,7 @@ use arhiv_core::Filter;
 
 use crate::{
     app::{App, AppResponse},
-    workspace::dto::{WorkspaceRequest, WorkspaceResponse},
+    workspace::dto::{ListDocumentsResult, WorkspaceRequest, WorkspaceResponse},
 };
 
 impl App {
@@ -16,16 +16,29 @@ impl App {
         let response = match request {
             WorkspaceRequest::ListDocuments { query } => {
                 let mut filter = Filter::default();
-                filter = filter.search(query.unwrap_or_default());
+                filter = filter.search(query);
 
+                if filter.get_pattern().is_none() {
+                    filter = filter.recently_updated_first();
+                }
+
+                let schema = self.arhiv.get_schema();
                 let page = self.arhiv.list_documents(filter)?;
 
                 WorkspaceResponse::ListDocuments {
+                    has_more: page.has_more,
                     documents: page
                         .items
-                        .iter()
-                        .map(|item| serde_json::to_string_pretty(item).unwrap())
-                        .collect(),
+                        .into_iter()
+                        .map(|item| {
+                            Ok(ListDocumentsResult {
+                                title: schema.get_title(&item)?,
+                                id: item.id,
+                                document_type: item.document_type,
+                                updated_at: item.updated_at,
+                            })
+                        })
+                        .collect::<Result<_>>()?,
                 }
             }
             WorkspaceRequest::GetStatus {} => {

@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { formatDate, formatDateHuman } from '../scripts/date';
 import { RPC } from './rpc';
 
 const renderRoot = document.querySelector('main');
@@ -31,12 +32,12 @@ function SearchInput({ value, onSearch }: SearchInputProps) {
   );
 }
 
-function useQuery<Result>(
-  cb: (signal: AbortSignal) => Promise<Result>,
+function useQuery<TResult>(
+  cb: (signal: AbortSignal) => Promise<TResult>,
   inputs: readonly unknown[]
-): { result?: Result; inProgress: boolean; error?: unknown } {
+): { result?: TResult; inProgress: boolean; error?: unknown } {
   const [inProgress, setInProgress] = useState(false);
-  const [result, setResult] = useState<Result>();
+  const [result, setResult] = useState<TResult>();
   const [error, setError] = useState<unknown>();
 
   useEffect(() => {
@@ -69,27 +70,54 @@ function useQuery<Result>(
   };
 }
 
+type RelTimeProps = {
+  datetime: string;
+  className?: string;
+};
+
+function RelTime({ datetime, className }: RelTimeProps) {
+  const date = new Date(datetime);
+
+  return (
+    <time dateTime={datetime} title={formatDate(date)} className={className}>
+      {formatDateHuman(date)}
+    </time>
+  );
+}
+
 function Workspace() {
   const [query, setQuery] = useState('');
 
   const { result, error, inProgress } = useQuery(
-    async (abortSignal) => {
-      const { documents } = await RPC.ListDocuments({ query }, abortSignal);
-
-      return documents;
-    },
+    (abortSignal) => RPC.ListDocuments({ query }, abortSignal),
     [query]
   );
 
+  const items = result?.documents.map((item) => (
+    <div className="mb-4 cursor-pointer bg-zinc-100 px-4 py-2" key={item.id}>
+      <div className="font-bold text-lg">
+        [{item.documentType || 'erased'}] {item.title}
+      </div>
+
+      <RelTime className="font-mono text-sm" datetime={item.updatedAt} />
+    </div>
+  ));
+
   return (
-    <div>
+    <div className="p-8">
       <SearchInput value={query} onSearch={setQuery} />
 
       {inProgress && <div className="mb-8">Loading...</div>}
 
-      <pre>
-        <code>{error ? JSON.stringify(error) : result}</code>
-      </pre>
+      {error && (
+        <pre>
+          <code>{JSON.stringify(error)}</code>
+        </pre>
+      )}
+
+      {items}
+
+      {result?.hasMore && <h2>HAS MORE</h2>}
     </div>
   );
 }

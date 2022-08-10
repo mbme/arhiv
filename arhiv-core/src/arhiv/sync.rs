@@ -1,6 +1,6 @@
 use anyhow::{ensure, Context, Result};
 
-use rs_utils::log;
+use rs_utils::{log, now};
 
 use crate::entities::{Changeset, ChangesetResponse, Document};
 use crate::prime_server::PrimeServerRPC;
@@ -142,7 +142,7 @@ impl Arhiv {
         // update last sync time
         {
             let tx = self.get_tx()?;
-            tx.set_setting(&SETTING_LAST_SYNC_TIME, &chrono::Utc::now())?;
+            tx.set_setting(&SETTING_LAST_SYNC_TIME, &now())?;
             tx.commit()?;
         }
 

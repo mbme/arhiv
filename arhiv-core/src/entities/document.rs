@@ -1,10 +1,9 @@
 use std::fmt;
 
 use anyhow::{ensure, Context, Result};
-use chrono::{DateTime, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use rs_utils::now;
+use rs_utils::{now, Timestamp};
 
 use crate::schema::DataSchema;
 
@@ -20,8 +19,8 @@ pub struct Document<D = DocumentData> {
     pub prev_rev: Revision,
     pub document_type: String,
     pub subtype: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
     pub data: D,
 }
 
@@ -69,7 +68,7 @@ impl Document {
         self.rev = Revision::STAGING;
         self.prev_rev = Revision::STAGING;
         self.data = DocumentData::new();
-        self.updated_at = Utc::now();
+        self.updated_at = now();
     }
 
     pub fn ensure_document_type(&self, document_type: &str) -> Result<()> {

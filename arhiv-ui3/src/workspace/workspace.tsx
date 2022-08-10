@@ -1,6 +1,7 @@
 import { render } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { formatDate, formatDateHuman } from '../scripts/date';
+import { useQuery } from './hooks';
 import { RPC } from './rpc';
 
 const renderRoot = document.querySelector('main');
@@ -30,44 +31,6 @@ function SearchInput({ value, onSearch }: SearchInputProps) {
       />
     </form>
   );
-}
-
-function useQuery<TResult>(
-  cb: (signal: AbortSignal) => Promise<TResult>,
-  inputs: readonly unknown[]
-): { result?: TResult; inProgress: boolean; error?: unknown } {
-  const [inProgress, setInProgress] = useState(false);
-  const [result, setResult] = useState<TResult>();
-  const [error, setError] = useState<unknown>();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setInProgress(true);
-
-    cb(controller.signal).then(
-      (result) => {
-        setResult(result);
-        setError(undefined);
-        setInProgress(false);
-      },
-      (error) => {
-        setResult(undefined);
-        setError(error);
-        setInProgress(false);
-      }
-    );
-
-    return () => {
-      controller.abort();
-      setInProgress(false);
-    };
-  }, inputs);
-
-  return {
-    result,
-    error,
-    inProgress,
-  };
 }
 
 type RelTimeProps = {
@@ -107,13 +70,13 @@ function Workspace() {
     <div className="p-8">
       <SearchInput value={query} onSearch={setQuery} />
 
-      {inProgress && <div className="mb-8">Loading...</div>}
-
       {error && (
         <pre>
-          <code>{JSON.stringify(error)}</code>
+          <code>{String(error)}</code>
         </pre>
       )}
+
+      {inProgress && <div className="mb-8">Loading...</div>}
 
       {items}
 

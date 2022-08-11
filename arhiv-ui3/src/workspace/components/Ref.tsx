@@ -24,8 +24,9 @@ export function Ref({ id }: RefProps) {
 
   return (
     <a href={url} class="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm">
-      <span class="font-mono uppercase text-gray-400 mr-1">
-        {result.documentType} {result.subtype}
+      <span class="font-mono uppercase text-gray-400 mr-4">
+        {result.documentType}
+        {result.subtype && <> / {result.subtype}</>}
       </span>
       {result.title}
     </a>

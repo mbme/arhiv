@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
 import { QueryError } from './QueryError';
-import { RelTime } from './RelTime';
+import { DateTime } from './DateTime';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
@@ -28,7 +28,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
         [{item.documentType || 'erased'}] {item.title}
       </div>
 
-      <RelTime className="font-mono text-sm" datetime={item.updatedAt} />
+      <DateTime className="font-mono text-sm" datetime={item.updatedAt} relative />
     </div>
   ));
 

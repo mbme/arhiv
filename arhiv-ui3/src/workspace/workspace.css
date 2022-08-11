@@ -28,3 +28,24 @@ body {
 
   color: #333;
 }
+
+@layer components {
+  .section-heading {
+    @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
+  }
+}
+
+#document-head {
+  @apply mb-10 ml-auto relative text-sm;
+
+  & td {
+    @apply pb-1 tracking-wide;
+  }
+
+  & td:first-child {
+    text-align: right;
+    padding-right: 0.6rem;
+    padding-bottom: 0;
+    vertical-align: middle;
+  }
+}

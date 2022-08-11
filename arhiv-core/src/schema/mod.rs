@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::{anyhow, Result};
+use serde::Serialize;
 
 use crate::entities::{Document, DocumentData, Refs, ERASED_DOCUMENT_TYPE};
 
@@ -18,6 +19,7 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     subtypes: None,
 };
 
+#[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
     modules: Vec<DataDescription>,
 }

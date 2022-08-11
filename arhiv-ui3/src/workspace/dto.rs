@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use arhiv_core::{
-    entities::{DocumentData, Id},
-    schema::DataDescription,
-};
+use arhiv_core::entities::{DocumentData, Id};
 use rs_utils::Timestamp;
 
 #[derive(Deserialize, Debug)]
@@ -12,11 +9,13 @@ pub enum WorkspaceRequest {
     ListDocuments { query: String },
     GetStatus {},
     GetDocument { id: Id },
+    RenderMarkup { markup: String },
+    GetRef { id: Id },
 }
 
 #[derive(Serialize)]
 #[serde(deny_unknown_fields, tag = "typeName")]
-pub enum WorkspaceResponse<'schema> {
+pub enum WorkspaceResponse {
     ListDocuments {
         documents: Vec<ListDocumentsResult>,
         #[serde(rename = "hasMore")]
@@ -32,7 +31,16 @@ pub enum WorkspaceResponse<'schema> {
         subtype: String,
         updated_at: Timestamp,
         data: DocumentData,
-        data_description: &'schema DataDescription,
+    },
+    RenderMarkup {
+        html: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    GetRef {
+        id: Id,
+        document_type: String,
+        subtype: String,
+        title: String,
     },
 }
 

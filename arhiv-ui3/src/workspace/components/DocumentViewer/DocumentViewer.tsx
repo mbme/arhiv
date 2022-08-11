@@ -2,6 +2,7 @@ import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { DocumentFields } from './DocumentFields';
 import { QueryError } from '../QueryError';
+import { getFieldDescriptions } from '../../schema';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -22,8 +23,7 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
       {result && (
         <DocumentFields
           data={result.data}
-          dataDescription={result.dataDescription}
-          subtype={result.subtype}
+          fields={getFieldDescriptions(result.documentType, result.subtype)}
         />
       )}
     </div>

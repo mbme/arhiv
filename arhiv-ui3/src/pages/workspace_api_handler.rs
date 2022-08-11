@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
-use arhiv_core::Filter;
+use arhiv_core::{markup::MarkupStr, Filter};
 
 use crate::{
     app::{App, AppResponse},
+    markup::MarkupStringExt,
     workspace::dto::{ListDocumentsResult, WorkspaceRequest, WorkspaceResponse},
 };
 
@@ -51,10 +52,6 @@ impl App {
             }
             WorkspaceRequest::GetDocument { id } => {
                 let document = self.arhiv.must_get_document(id)?;
-                let data_description = self
-                    .arhiv
-                    .get_schema()
-                    .get_data_description(&document.document_type)?;
 
                 WorkspaceResponse::GetDocument {
                     id: document.id,
@@ -62,7 +59,23 @@ impl App {
                     subtype: document.subtype,
                     updated_at: document.updated_at,
                     data: document.data,
-                    data_description,
+                }
+            }
+            WorkspaceRequest::RenderMarkup { markup } => {
+                let markup: MarkupStr = markup.into();
+                let html = markup.to_html(&self.arhiv);
+                WorkspaceResponse::RenderMarkup { html }
+            }
+            WorkspaceRequest::GetRef { id } => {
+                let document = self.arhiv.must_get_document(&id)?;
+
+                let schema = self.arhiv.get_schema();
+
+                WorkspaceResponse::GetRef {
+                    title: schema.get_title(&document)?,
+                    id,
+                    document_type: document.document_type,
+                    subtype: document.subtype,
                 }
             }
         };

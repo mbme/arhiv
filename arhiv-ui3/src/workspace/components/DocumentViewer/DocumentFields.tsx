@@ -1,17 +1,13 @@
-import { DataDescription, DocumentData } from '../../dto';
+import { DocumentData } from '../../dto';
+import { DataDescriptionField } from '../../schema';
 import { DocumentField } from './DocumentField';
 
 type DocumentFieldsProps = {
   data: DocumentData;
-  dataDescription: DataDescription;
-  subtype: string;
+  fields: DataDescriptionField[];
 };
 
-export function DocumentFields({ data, dataDescription, subtype }: DocumentFieldsProps) {
-  const fields = dataDescription.fields.filter(
-    (field) => field.for_subtypes?.includes(subtype) ?? true
-  );
-
+export function DocumentFields({ data, fields }: DocumentFieldsProps) {
   return (
     <>
       {fields.map((field) => (

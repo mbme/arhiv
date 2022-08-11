@@ -11,6 +11,9 @@
   </head>
   <body>
     <main></main>
+    <script>
+      window.SCHEMA = {{ schema | safe }};
+    </script>
     <script src="/public/workspace.js"></script>
   </body>
 </html>

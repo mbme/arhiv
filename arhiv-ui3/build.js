@@ -9,7 +9,7 @@ const watch = process.argv.includes('--watch');
 void esbuild.build({
   entryPoints: {
     'index': './src/index.ts',
-    'workspace': './src/workspace/workspace.tsx',
+    'workspace': './src/workspace/index.tsx',
   },
   outdir: './public',
 

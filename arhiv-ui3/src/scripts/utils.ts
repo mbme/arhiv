@@ -1,4 +1,6 @@
 export type Obj<T = string> = Record<string, T | undefined>;
+export type EmptyObj = Obj<never>;
+
 export type Callback = () => void;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

@@ -86,7 +86,7 @@ impl Filter {
             page_offset: None,
             page_size: None,
             conditions: Conditions {
-                document_ref: Some(id.into()),
+                document_ref: Some(id.into()), // TODO: custom "Option": None/Equals/NotEquals
                 ..Conditions::default()
             },
             order: vec![OrderBy::UpdatedAt { asc: false }],

@@ -35,6 +35,7 @@ impl App {
                                 title: schema.get_title(&item)?,
                                 id: item.id,
                                 document_type: item.document_type,
+                                subtype: item.subtype,
                                 updated_at: item.updated_at,
                             })
                         })
@@ -46,6 +47,22 @@ impl App {
 
                 WorkspaceResponse::GetStatus {
                     status: status.to_string(),
+                }
+            }
+            WorkspaceRequest::GetDocument { id } => {
+                let document = self.arhiv.must_get_document(id)?;
+                let data_description = self
+                    .arhiv
+                    .get_schema()
+                    .get_data_description(&document.document_type)?;
+
+                WorkspaceResponse::GetDocument {
+                    id: document.id,
+                    document_type: document.document_type,
+                    subtype: document.subtype,
+                    updated_at: document.updated_at,
+                    data: document.data,
+                    data_description,
                 }
             }
         };

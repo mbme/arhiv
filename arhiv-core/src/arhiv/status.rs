@@ -2,7 +2,7 @@ use std::fmt;
 
 use serde::Serialize;
 
-use rs_utils::{Timestamp, MIN_TIMESTAMP};
+use rs_utils::{format_time, Timestamp, MIN_TIMESTAMP};
 
 use super::db::{BLOBSCount, DbStatus, DocumentsCount};
 
@@ -128,7 +128,5 @@ impl fmt::Display for Status {
 }
 
 fn format_date(date: Timestamp) -> String {
-    date.with_timezone(&chrono::Local)
-        .format("%a %b %e %T %Y")
-        .to_string()
+    format_time(date, "%a %b %e %T %Y")
 }

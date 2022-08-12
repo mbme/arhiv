@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use anyhow::{bail, ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, into_absolute_path, log, ZStd};
+use rs_utils::{ensure_dir_exists, file_exists, format_time, into_absolute_path, log, now, ZStd};
 
 use super::Arhiv;
 use crate::entities::BLOBId;
@@ -68,7 +68,7 @@ impl BackupPaths {
     pub fn new(backup_dir: String) -> Self {
         let data_dir = format!("{}/data", &backup_dir);
 
-        let now = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S");
+        let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
         let backup_db_file = format!("{}/arhiv_{}.sqlite.zst", &backup_dir, now);
 
         BackupPaths {

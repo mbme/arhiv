@@ -17,12 +17,6 @@
   </div>
   {% endfor %}
 
-  {% for error in errors %}
-  <div class="text-red-500 text-xl pl-1 my-2">
-    {{ error }}
-  </div>
-  {% endfor %}
-
   {% if subtypes | length > 1 %}
   <label class="flex justify-end items-center gap-2 mb-8">
     Subtype:

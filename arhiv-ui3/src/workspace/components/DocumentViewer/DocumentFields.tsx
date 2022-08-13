@@ -1,13 +1,18 @@
 import { DocumentData } from '../../dto';
-import { DataDescriptionField } from '../../schema';
+import { DataDescriptionField, getFieldDescriptions, isFieldActive } from '../../schema';
 import { DocumentField } from './DocumentField';
 
 type DocumentFieldsProps = {
+  documentType: string;
+  subtype: string;
   data: DocumentData;
-  fields: DataDescriptionField[];
 };
 
-export function DocumentFields({ data, fields }: DocumentFieldsProps) {
+export function DocumentFields({ documentType, subtype, data }: DocumentFieldsProps) {
+  const fields = getFieldDescriptions(documentType).filter((field) =>
+    isFieldActive(field, subtype)
+  );
+
   return (
     <>
       {fields.map((field) => (

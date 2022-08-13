@@ -25,7 +25,12 @@ export class EditorElement extends HTMLElement {
     }
 
     this.textarea = textarea;
-    this.editor = initEditor(textarea, this);
+    const editor = initEditor(this, textarea.value, true, () => {
+      textarea.value = editor.state.doc.toString();
+    });
+    this.editor = editor;
+
+    textarea.setAttribute('hidden', 'true');
 
     if (this.hasAttribute('autofocus')) {
       this.editor.focus();

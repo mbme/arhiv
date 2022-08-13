@@ -17,18 +17,26 @@ import {
   syntaxHighlighting,
 } from '@codemirror/language';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import { Callback } from '../utils';
 
-export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement): EditorView {
+export type Editor = EditorView;
+
+export function initEditor(
+  parent: HTMLElement,
+  initialValue: string,
+  editable: boolean,
+  onBlur?: Callback
+): Editor {
   const handlers = EditorView.domEventHandlers({
-    'blur': (_event, view) => {
-      textareaEl.value = view.state.doc.toString();
+    'blur': (_event, _view) => {
+      onBlur?.();
     },
   });
 
   const editor = new EditorView({
     parent,
     state: EditorState.create({
-      doc: textareaEl.value,
+      doc: initialValue,
       extensions: [
         [
           lineNumbers(),
@@ -51,11 +59,10 @@ export function initEditor(textareaEl: HTMLTextAreaElement, parent: HTMLElement)
         ],
         handlers,
         markdown(),
+        ...(editable ? [EditorState.readOnly.of(true)] : []),
       ],
     }),
   });
-
-  textareaEl.setAttribute('hidden', 'true');
 
   return editor;
 }

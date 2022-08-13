@@ -64,11 +64,11 @@ impl App {
             WorkspaceRequest::RenderMarkup { markup } => {
                 let markup: MarkupStr = markup.into();
                 let html = markup.to_html(&self.arhiv);
+
                 WorkspaceResponse::RenderMarkup { html }
             }
             WorkspaceRequest::GetRef { id } => {
                 let document = self.arhiv.must_get_document(&id)?;
-
                 let schema = self.arhiv.get_schema();
 
                 WorkspaceResponse::GetRef {

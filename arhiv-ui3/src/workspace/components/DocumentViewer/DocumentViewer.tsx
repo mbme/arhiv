@@ -4,12 +4,15 @@ import { DocumentFields } from './DocumentFields';
 import { QueryError } from '../QueryError';
 import { getFieldDescriptions } from '../../schema';
 import { DocumentHead } from './DocumentHead';
+import { Callback } from '../../../scripts/utils';
 
 type DocumentViewerProps = {
   documentId: string;
+  onClose: Callback;
+  onEdit: Callback;
 };
 
-export function DocumentViewer({ documentId }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     []
@@ -17,6 +20,16 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
 
   return (
     <div className="p-8">
+      <div className="flex gap-2 justify-between bg-neutral-200 py-2 mb-12 sticky top-0 z-10">
+        <button className="font-mono" onClick={onClose}>
+          CLOSE
+        </button>
+
+        <button className="font-mono" onClick={onEdit}>
+          EDIT
+        </button>
+      </div>
+
       <QueryError error={error} />
 
       {inProgress && <div className="mb-8">Loading...</div>}
@@ -30,8 +43,9 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
             updatedAt={result.updatedAt}
           />
           <DocumentFields
+            documentType={result.documentType}
+            subtype={result.subtype}
             data={result.data}
-            fields={getFieldDescriptions(result.documentType, result.subtype)}
           />
         </>
       )}

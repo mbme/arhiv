@@ -1,4 +1,4 @@
-import { Obj } from '../scripts/utils';
+import { JSONObj, JSONValue, Obj } from '../scripts/utils';
 
 export type WorkspaceRequest =
   | {
@@ -59,4 +59,4 @@ export type ListDocumentsResult = {
   updatedAt: string;
 };
 
-export type DocumentData = Obj<unknown>;
+export type DocumentData = JSONObj;

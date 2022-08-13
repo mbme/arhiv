@@ -1,5 +1,14 @@
 export type Obj<T = string> = Record<string, T | undefined>;
 export type EmptyObj = Obj<never>;
+export type JSONValue =
+  | undefined
+  | null
+  | string
+  | number
+  | boolean
+  | { [prop: string]: JSONValue }
+  | JSONValue[];
+export type JSONObj = Obj<JSONValue>;
 
 export type Callback = () => void;
 

@@ -1,13 +1,18 @@
 import { DateTime } from '../DateTime';
 
-type DocumentHeadProps = {
+type DocumentViewerHeadProps = {
   id: string;
   documentType: string;
   subtype: string;
   updatedAt: string;
 };
 
-export function DocumentHead({ id, documentType, subtype, updatedAt }: DocumentHeadProps) {
+export function DocumentViewerHead({
+  id,
+  documentType,
+  subtype,
+  updatedAt,
+}: DocumentViewerHeadProps) {
   return (
     <table id="document-head">
       <tr>

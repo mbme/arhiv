@@ -1,9 +1,8 @@
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
-import { DocumentFields } from './DocumentFields';
+import { DocumentViewerFields } from './DocumentViewerFields';
 import { QueryError } from '../QueryError';
-import { getFieldDescriptions } from '../../schema';
-import { DocumentHead } from './DocumentHead';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
 
 type DocumentViewerProps = {
@@ -36,13 +35,13 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
 
       {result && (
         <>
-          <DocumentHead
+          <DocumentViewerHead
             id={result.id}
             documentType={result.documentType}
             subtype={result.subtype}
             updatedAt={result.updatedAt}
           />
-          <DocumentFields
+          <DocumentViewerFields
             documentType={result.documentType}
             subtype={result.subtype}
             data={result.data}

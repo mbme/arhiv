@@ -2,12 +2,12 @@ import { DataDescriptionField } from '../../schema';
 import { Markup } from '../Markup';
 import { Ref } from '../Ref';
 
-type DocumentFieldProps = {
+type DocumentViewerFieldProps = {
   field: DataDescriptionField;
   value: unknown;
 };
 
-function FieldValue({ field, value }: DocumentFieldProps) {
+function FieldValue({ field, value }: DocumentViewerFieldProps) {
   if ('MarkupString' in field.field_type) {
     return <Markup markup={value as string} />;
   }
@@ -31,7 +31,7 @@ function FieldValue({ field, value }: DocumentFieldProps) {
   return <>{String(value)}</>;
 }
 
-export function DocumentField({ field, value }: DocumentFieldProps) {
+export function DocumentViewerField({ field, value }: DocumentViewerFieldProps) {
   if (!value) {
     return null;
   }

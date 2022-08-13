@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'preact/hooks';
+import { Callback } from '../../../scripts/utils';
 import { Editor, initEditor } from '../../../scripts/v-editor/editor';
 import { useFormField } from './Form';
 
@@ -9,14 +11,26 @@ type MarkupEditorProps = {
 };
 export function MarkupEditor({ name, initialValue, readonly, mandatory }: MarkupEditorProps) {
   const controlRef = useFormField<Editor>(name, (editor) => editor.state.doc.toString());
+  const unsubRef = useRef<Callback>();
 
   const initContainer = (containerEl: HTMLDivElement | null) => {
     if (!containerEl || controlRef.current) {
       return;
     }
 
-    controlRef.current = initEditor(containerEl, initialValue || '', !readonly);
+    const editor = initEditor(containerEl, initialValue || '', !readonly);
+
+    controlRef.current = editor;
+
+    const label = containerEl.closest('label');
+    const clickHandler = () => editor.focus();
+    label?.addEventListener('click', clickHandler);
+    unsubRef.current = () => label?.removeEventListener('click', clickHandler);
   };
+
+  useEffect(() => {
+    return () => unsubRef.current?.();
+  }, []);
 
   return <div ref={initContainer} />;
 }

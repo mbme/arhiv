@@ -59,6 +59,7 @@ export function Form({ children, onSubmit }: FormProps) {
   return (
     <FormContext.Provider value={valueExtractors}>
       <form
+        className="form"
         onSubmit={(e) => {
           e.preventDefault();
 

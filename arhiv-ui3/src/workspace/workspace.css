@@ -30,8 +30,65 @@ body {
 }
 
 @layer components {
+  .markup {
+    @apply prose;
+
+    & h1 {
+      @apply text-2xl;
+    }
+
+    & h2 {
+      @apply text-xl;
+    }
+
+    & :is(h3, h4, h5, h6) {
+      @apply text-lg;
+    }
+
+    hyphens: auto;
+    overflow-wrap: break-word;
+
+    /* task lists */
+    & li > input[type='checkbox'] {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+
   .section-heading {
     @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
+  }
+
+  .form {
+    & .field {
+      display: block;
+
+      &:not(input[type='checkbox'], input[type='number'], select) {
+        @apply w-full;
+      }
+
+      &[readonly] {
+        @apply bg-gray-100;
+      }
+    }
+
+    & .has-errors {
+      & .field {
+        @apply border-red-500;
+      }
+
+      & h5 {
+        @apply text-red-500;
+      }
+    }
+
+    & textarea {
+      @apply p-2;
+
+      resize: none;
+      min-height: 19rem;
+      overflow-y: hidden;
+    }
   }
 }
 
@@ -47,5 +104,30 @@ body {
     padding-right: 0.6rem;
     padding-bottom: 0;
     vertical-align: middle;
+  }
+}
+
+.cm-editor {
+  font-size: 1rem;
+  min-height: 19rem;
+
+  @apply border-2;
+
+  & .cm-scroller {
+    overflow: auto;
+  }
+
+  &.cm-focused {
+    @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
+  }
+
+  & .cm-content {
+    @apply pl-4 pr-2;
+  }
+
+  & .cm-gutters {
+    background-color: var(--bg-color);
+    border: 0;
+    @apply pl-2;
   }
 }

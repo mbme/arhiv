@@ -1,3 +1,4 @@
+import { Button } from '../Button';
 import { DateTime } from '../DateTime';
 
 type DocumentViewerHeadProps = {
@@ -18,16 +19,16 @@ export function DocumentViewerHead({
       <tr>
         <td class="section-heading">id:</td>
         <td>
-          <button
-            type="button"
-            class="block font-mono tracking-wide cursor-pointer text-blue-500 focus:text-blue-500 group"
+          <Button
+            variant="link"
+            className="block font-mono tracking-wide cursor-pointer group"
             title="Copy document id to clipboard"
           >
             {id}
             <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
               <use xlinkHref="#icon-clipboard-copy" />
             </svg>
-          </button>
+          </Button>
         </td>
       </tr>
       <tr>

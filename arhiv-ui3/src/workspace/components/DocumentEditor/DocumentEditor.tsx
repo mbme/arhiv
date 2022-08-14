@@ -2,6 +2,7 @@ import { useRef } from 'preact/hooks';
 import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
+import { Button } from '../Button';
 import { QueryError } from '../QueryError';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
@@ -22,20 +23,19 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
   return (
     <div className="p-8">
       <div className="flex gap-2 justify-between bg-neutral-200 py-2 mb-12 sticky top-0 z-10">
-        <button className="font-mono" onClick={onCancel}>
-          CANCEL
-        </button>
+        <Button variant="simple" onClick={onCancel}>
+          Cancel
+        </Button>
 
-        <button
-          className="font-mono"
+        <Button
+          variant="prime"
           onClick={() => {
             formRef.current?.requestSubmit();
           }}
-          type="submit"
           disabled={!result}
         >
-          SAVE
-        </button>
+          Save
+        </Button>
       </div>
 
       {result && (

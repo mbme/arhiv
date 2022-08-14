@@ -38,7 +38,7 @@ declare global {
   }
 }
 
-export function getFieldDescriptions(documentType: string): DataDescriptionField[] {
+export function getDataDescription(documentType: string): DataDescription {
   const dataDescription = window.SCHEMA.modules.find(
     (module) => module.document_type === documentType
   );
@@ -46,7 +46,20 @@ export function getFieldDescriptions(documentType: string): DataDescriptionField
     throw new Error(`Can't find data description for "${documentType}"`);
   }
 
-  return dataDescription.fields;
+  return dataDescription;
+}
+
+export function getFieldDescriptions(
+  documentType: string,
+  subtype?: string
+): DataDescriptionField[] {
+  const dataDescription = getDataDescription(documentType);
+
+  if (subtype === undefined) {
+    return dataDescription.fields;
+  }
+
+  return dataDescription.fields.filter((field) => isFieldActive(field, subtype));
 }
 
 export function isFieldActive(field: DataDescriptionField, subtype: string): boolean {

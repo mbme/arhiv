@@ -96,10 +96,16 @@ type DocumentEditorFieldProps = {
   field: DataDescriptionField;
   initialValue: JSONValue;
   hidden: boolean;
+  errors?: string[];
 };
-export function DocumentEditorField({ field, initialValue, hidden }: DocumentEditorFieldProps) {
+export function DocumentEditorField({
+  field,
+  initialValue,
+  hidden,
+  errors = [],
+}: DocumentEditorFieldProps) {
   return (
-    <label className="block mb-12" hidden={hidden}>
+    <label className={`block mb-12 ${errors.length > 0 ? 'has-errors' : ''}`} hidden={hidden}>
       <h5 className="section-heading mb-2 relative">
         {field.name}
         {field.readonly && '(readonly)'}
@@ -107,6 +113,12 @@ export function DocumentEditorField({ field, initialValue, hidden }: DocumentEdi
       </h5>
 
       <ValueEditor field={field} initialValue={initialValue} />
+
+      {errors.map((error, index) => (
+        <div key={index} class="text-red-500 text-xs pl-1 my-2">
+          {error}
+        </div>
+      ))}
     </label>
   );
 }

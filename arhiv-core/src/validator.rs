@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use anyhow::{anyhow, bail, ensure, Error, Result};
+use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
     arhiv::db::ArhivConnection,
@@ -9,7 +9,7 @@ use crate::{
     schema::{DataDescription, Field},
 };
 
-pub type FieldValidationErrors = HashMap<String, Vec<Error>>;
+pub type FieldValidationErrors = HashMap<String, Vec<String>>;
 
 #[derive(Debug)]
 pub enum ValidationError {
@@ -51,7 +51,7 @@ impl fmt::Display for ValidationError {
 
 pub struct Validator<'c> {
     conn: &'c ArhivConnection,
-    errors: HashMap<String, Vec<Error>>,
+    errors: FieldValidationErrors,
 }
 
 impl<'c> Validator<'c> {
@@ -102,7 +102,7 @@ impl<'c> Validator<'c> {
             self.errors
                 .entry(field.name.to_string())
                 .or_default()
-                .push(err);
+                .push(err.to_string());
         }
     }
 

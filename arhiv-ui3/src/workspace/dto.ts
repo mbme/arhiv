@@ -1,4 +1,4 @@
-import { JSONObj, JSONValue, Obj } from '../scripts/utils';
+import { JSONObj, Obj } from '../scripts/utils';
 
 export type WorkspaceRequest =
   | {
@@ -19,6 +19,12 @@ export type WorkspaceRequest =
   | {
       typeName: 'GetRef';
       id: string;
+    }
+  | {
+      typeName: 'SaveDocument';
+      id: string;
+      subtype: string;
+      data: DocumentData;
     };
 
 export type WorkspaceResponse =
@@ -49,6 +55,13 @@ export type WorkspaceResponse =
       documentType: string;
       subtype: string;
       title: string;
+    }
+  | {
+      typeName: 'SaveDocument';
+      errors?: {
+        documentErrors: string[];
+        fieldErrors: DocumentFieldErrors;
+      };
     };
 
 export type ListDocumentsResult = {
@@ -60,3 +73,5 @@ export type ListDocumentsResult = {
 };
 
 export type DocumentData = JSONObj;
+
+export type DocumentFieldErrors = Obj<string[]>;

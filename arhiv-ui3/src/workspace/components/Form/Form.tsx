@@ -50,20 +50,23 @@ function collectValues(valueExtractors: ControlValueExtractors): JSONObj {
 
 type FormProps = {
   children: ComponentChildren;
-  onSubmit: (values: JSONObj) => void;
+  onSubmit: (values: JSONObj) => Promise<void>;
+  formRef?: MutableRef<HTMLFormElement | null>;
 };
 
-export function Form({ children, onSubmit }: FormProps) {
+export function Form({ children, onSubmit, formRef }: FormProps) {
   const [valueExtractors] = useState<ControlValueExtractors>(() => ({}));
 
   return (
     <FormContext.Provider value={valueExtractors}>
       <form
+        ref={formRef}
         className="form"
         onSubmit={(e) => {
           e.preventDefault();
 
-          onSubmit(collectValues(valueExtractors));
+          // TODO block editing while submitting
+          void onSubmit(collectValues(valueExtractors));
         }}
       >
         {/* Prevent implicit submission of the form */}

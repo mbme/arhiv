@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{BLOBId, Id};
 
-#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Refs {
     pub documents: HashSet<Id>,

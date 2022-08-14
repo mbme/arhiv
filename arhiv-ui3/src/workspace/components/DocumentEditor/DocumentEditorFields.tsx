@@ -1,4 +1,4 @@
-import { DocumentData } from '../../dto';
+import { DocumentData, DocumentFieldErrors } from '../../dto';
 import { getFieldDescriptions, isFieldActive } from '../../schema';
 import { DocumentEditorField } from './DocumentEditorField';
 
@@ -6,9 +6,15 @@ type DocumentEditorFieldsProps = {
   documentType: string;
   subtype: string;
   data: DocumentData;
+  errors: DocumentFieldErrors;
 };
 
-export function DocumentEditorFields({ documentType, subtype, data }: DocumentEditorFieldsProps) {
+export function DocumentEditorFields({
+  documentType,
+  subtype,
+  data,
+  errors,
+}: DocumentEditorFieldsProps) {
   const fields = getFieldDescriptions(documentType);
 
   return (
@@ -19,6 +25,7 @@ export function DocumentEditorFields({ documentType, subtype, data }: DocumentEd
           field={field}
           initialValue={data[field.name]}
           hidden={!isFieldActive(field, subtype)}
+          errors={errors[field.name]}
         />
       ))}
     </>

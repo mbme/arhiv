@@ -4,7 +4,7 @@ use anyhow::{bail, Error, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct DocumentData(Map<String, Value>);
 
 impl DocumentData {

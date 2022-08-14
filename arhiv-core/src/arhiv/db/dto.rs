@@ -23,7 +23,7 @@ pub struct DbStatus {
     pub last_sync_time: Timestamp,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct DocumentsCount {
     pub documents_committed: u32,
     pub documents_updated: u32,
@@ -47,7 +47,7 @@ impl DocumentsCount {
     }
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct BLOBSCount {
     pub blobs_staged: u32,
     pub local_blobs_count: u32,

@@ -1,5 +1,5 @@
 import { DocumentData } from '../../dto';
-import { getFieldDescriptions, isFieldActive } from '../../schema';
+import { getFieldDescriptions } from '../../schema';
 import { DocumentViewerField } from './DocumentViewerField';
 
 type DocumentViewerFieldsProps = {
@@ -9,9 +9,7 @@ type DocumentViewerFieldsProps = {
 };
 
 export function DocumentViewerFields({ documentType, subtype, data }: DocumentViewerFieldsProps) {
-  const fields = getFieldDescriptions(documentType).filter((field) =>
-    isFieldActive(field, subtype)
-  );
+  const fields = getFieldDescriptions(documentType, subtype);
 
   return (
     <>

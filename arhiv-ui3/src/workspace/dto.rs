@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use arhiv_core::entities::{DocumentData, Id};
@@ -6,11 +8,24 @@ use rs_utils::Timestamp;
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]
 pub enum WorkspaceRequest {
-    ListDocuments { query: String },
+    ListDocuments {
+        query: String,
+    },
     GetStatus {},
-    GetDocument { id: Id },
-    RenderMarkup { markup: String },
-    GetRef { id: Id },
+    GetDocument {
+        id: Id,
+    },
+    RenderMarkup {
+        markup: String,
+    },
+    GetRef {
+        id: Id,
+    },
+    SaveDocument {
+        id: Id,
+        subtype: String,
+        data: DocumentData,
+    },
 }
 
 #[derive(Serialize)]
@@ -42,6 +57,9 @@ pub enum WorkspaceResponse {
         subtype: String,
         title: String,
     },
+    SaveDocument {
+        errors: Option<SaveDocumentErrors>,
+    },
 }
 
 #[derive(Serialize)]
@@ -52,4 +70,11 @@ pub struct ListDocumentsResult {
     pub subtype: String,
     pub title: String,
     pub updated_at: Timestamp,
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveDocumentErrors {
+    pub document_errors: Vec<String>,
+    pub field_errors: HashMap<String, Vec<String>>,
 }

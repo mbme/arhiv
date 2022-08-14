@@ -1,12 +1,14 @@
 use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
-use arhiv_core::{markup::MarkupStr, Filter};
+use arhiv_core::{markup::MarkupStr, Filter, ValidationError, Validator};
 
 use crate::{
     app::{App, AppResponse},
     markup::MarkupStringExt,
-    workspace::dto::{ListDocumentsResult, WorkspaceRequest, WorkspaceResponse},
+    workspace::dto::{
+        ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest, WorkspaceResponse,
+    },
 };
 
 impl App {
@@ -78,10 +80,48 @@ impl App {
                     subtype: document.subtype,
                 }
             }
+            WorkspaceRequest::SaveDocument { id, subtype, data } => {
+                let mut document = self.arhiv.must_get_document(&id)?;
+
+                let prev_data = document.data;
+
+                document.subtype = subtype;
+                document.data = data;
+
+                let tx = self.arhiv.get_tx()?;
+                let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
+
+                let errors = if let Err(error) = validation_result {
+                    Some(error.into())
+                } else {
+                    tx.stage_document(&mut document)?;
+
+                    None
+                };
+
+                tx.commit()?;
+
+                WorkspaceResponse::SaveDocument { errors }
+            }
         };
 
         let response = serde_json::to_string(&response).context("failed to serialize response")?;
 
         Ok(AppResponse::json(response))
+    }
+}
+
+impl From<ValidationError> for SaveDocumentErrors {
+    fn from(val: ValidationError) -> Self {
+        match val {
+            ValidationError::DocumentError { errors } => SaveDocumentErrors {
+                document_errors: errors,
+                ..Default::default()
+            },
+            ValidationError::FieldError { errors } => SaveDocumentErrors {
+                field_errors: errors,
+                ..Default::default()
+            },
+        }
     }
 }

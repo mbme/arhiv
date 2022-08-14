@@ -8,7 +8,9 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSearch((e.target as HTMLFormElement).querySelector('input')!.value);
+        const input = (e.target as HTMLFormElement).querySelector('input')!;
+        onSearch(input.value);
+        input.blur();
       }}
     >
       <input
@@ -17,7 +19,6 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
         class="field w-full mb-8"
         value={value}
         placeholder="Type something"
-        autofocus
       />
     </form>
   );

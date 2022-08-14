@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks';
-import { useQuery } from '../hooks';
-import { RPC } from '../rpc';
-import { QueryError } from './QueryError';
-import { DateTime } from './DateTime';
+import { useQuery } from '../../hooks';
+import { RPC } from '../../rpc';
+import { DateTime } from '../DateTime';
+import { QueryError } from '../QueryError';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {

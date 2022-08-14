@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { Catalog } from './Catalog';
+import { Catalog } from './Catalog/Catalog';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 import { DocumentViewer } from './DocumentViewer/DocumentViewer';
 

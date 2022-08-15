@@ -7,7 +7,7 @@ type MarkupProps = {
   className?: string;
 };
 
-export function Markup({ markup, className }: MarkupProps) {
+export function Markup({ markup, className = '' }: MarkupProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.RenderMarkup({ markup }, abortSignal),
     [markup]
@@ -21,5 +21,7 @@ export function Markup({ markup, className }: MarkupProps) {
     return null;
   }
 
-  return <div className={className} dangerouslySetInnerHTML={{ __html: result.html }} />;
+  return (
+    <div className={`markup ${className}`} dangerouslySetInnerHTML={{ __html: result.html }} />
+  );
 }

@@ -20,7 +20,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
 
   const items = result?.documents.map((item) => (
     <div
-      className="mb-4 cursor-pointer even:bg-gray-50 px-4 py-2"
+      className="cursor-pointer px-2 py-4 transition-colors hover:bg-sky-100"
       key={item.id}
       onClick={() => onDocumentSelected(item.id)}
     >
@@ -40,7 +40,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
 
       {inProgress && <div className="mb-8">Loading...</div>}
 
-      {items}
+      <div className="divide-y">{items}</div>
 
       {result?.hasMore && <h2>HAS MORE</h2>}
     </div>

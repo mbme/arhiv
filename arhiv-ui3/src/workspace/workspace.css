@@ -27,6 +27,7 @@ body {
   @apply antialiased;
 
   color: #333;
+  @apply bg-zinc-100 p-2;
 }
 
 @layer components {

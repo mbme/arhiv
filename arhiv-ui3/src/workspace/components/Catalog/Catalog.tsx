@@ -20,7 +20,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
 
   const items = result?.documents.map((item) => (
     <div
-      className="mb-4 cursor-pointer bg-zinc-100 px-4 py-2"
+      className="mb-4 cursor-pointer even:bg-gray-50 px-4 py-2"
       key={item.id}
       onClick={() => onDocumentSelected(item.id)}
     >
@@ -33,7 +33,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
   ));
 
   return (
-    <div className="p-8" hidden={hidden}>
+    <div hidden={hidden}>
       <SearchInput value={query} onSearch={setQuery} />
 
       <QueryError error={error} />

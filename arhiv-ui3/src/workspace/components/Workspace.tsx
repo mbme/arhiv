@@ -14,7 +14,7 @@ export function Workspace() {
   }, [documentId]);
 
   return (
-    <div>
+    <div className="max-w-lg bg-white px-4 py-2 max-h-screen overflow-auto">
       <Catalog hidden={Boolean(documentId)} onDocumentSelected={setDocumentId} />
 
       {documentId && !edit && (

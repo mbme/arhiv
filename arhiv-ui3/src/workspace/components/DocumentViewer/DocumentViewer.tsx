@@ -23,11 +23,12 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
     <div className="p-8">
       <div className="flex gap-2 justify-between bg-neutral-200 py-2 mb-12 sticky top-0 z-10">
         <Button variant="simple" onClick={onClose}>
-          Return
+          <Icon variant="arrow-left" className="mr-2" />
+          Back
         </Button>
 
-        <Button variant="link" className="flex gap-1" onClick={onEdit}>
-          <Icon variant="document-edit" />
+        <Button variant="simple" onClick={onEdit}>
+          <Icon variant="document-edit" className="mr-2" />
           Edit
         </Button>
       </div>

@@ -27,7 +27,7 @@ export function DocumentEditorForm({
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
 
-  const onSubmit = async (values: JSONObj) => {
+  const submitDocument = async (values: JSONObj) => {
     const subtype = values[SUBTYPE_FIELD_NAME] as string;
 
     const data: JSONObj = {};
@@ -49,7 +49,7 @@ export function DocumentEditorForm({
   };
 
   return (
-    <Form onSubmit={onSubmit} formRef={formRef}>
+    <Form onSubmit={submitDocument} formRef={formRef}>
       <DocumentEditorSubtypeSelect documentType={documentType} initialValue={subtype} />
 
       {documentErrors.map((error, index) => (

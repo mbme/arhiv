@@ -4,6 +4,7 @@ import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { Button } from '../Button';
 import { QueryError } from '../QueryError';
+import { Spinner } from '../Spinner';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
 type DocumentEditorProps = {
@@ -51,7 +52,11 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
       <QueryError error={error} />
 
-      {inProgress && <div className="mb-8">Loading...</div>}
+      {inProgress && (
+        <div className="mb-8">
+          <Spinner /> Loading...
+        </div>
+      )}
     </div>
   );
 }

@@ -35,7 +35,7 @@ impl TestArhiv {
             fields: vec![
                 Field {
                     name: "blob",
-                    field_type: FieldType::BLOBId,
+                    field_type: FieldType::BLOBId {},
                     mandatory: false,
                     readonly: false,
                     for_subtypes: None,
@@ -66,7 +66,7 @@ impl TestArhiv {
             fields: vec![
                 Field {
                     name: "blob",
-                    field_type: FieldType::BLOBId,
+                    field_type: FieldType::BLOBId {},
                     mandatory: false,
                     readonly: false,
                     for_subtypes: None,

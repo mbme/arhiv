@@ -17,7 +17,7 @@ pub enum FieldType {
     NaturalNumber {},              // u64
     Ref(&'static str),             // string
     RefList(&'static str),         // string[]
-    BLOBId,                        // string
+    BLOBId {},                     // string
     Enum(&'static [&'static str]), // string
     Date {},                       // string
     Duration {},                   // string
@@ -66,7 +66,7 @@ impl Field {
     pub fn extract_blob_ids(&self, value: &Value) -> HashSet<BLOBId> {
         let mut result = HashSet::new();
 
-        if matches!(self.field_type, FieldType::BLOBId) {
+        if matches!(self.field_type, FieldType::BLOBId {}) {
             let value: BLOBId = serde_json::from_value(value.clone()).expect("field must parse");
 
             result.insert(value);
@@ -235,7 +235,7 @@ impl Field {
                 }
             }
 
-            FieldType::BLOBId => {
+            FieldType::BLOBId {} => {
                 if is_empty_string {
                     return Ok(());
                 }

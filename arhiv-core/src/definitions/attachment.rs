@@ -34,7 +34,7 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
             },
             Field {
                 name: "blob",
-                field_type: FieldType::BLOBId,
+                field_type: FieldType::BLOBId {},
                 mandatory: true,
                 readonly: true,
                 for_subtypes: None,

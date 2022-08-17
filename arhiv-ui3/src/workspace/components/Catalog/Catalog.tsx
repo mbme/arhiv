@@ -6,11 +6,10 @@ import { QueryError } from '../QueryError';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
-  hidden?: boolean;
   onDocumentSelected: (documentId: string) => void;
 };
 
-export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
+export function Catalog({ onDocumentSelected }: CatalogProps) {
   const [query, setQuery] = useState('');
 
   const { result, error, inProgress } = useQuery(
@@ -33,7 +32,7 @@ export function Catalog({ hidden, onDocumentSelected }: CatalogProps) {
   ));
 
   return (
-    <div hidden={hidden}>
+    <div>
       <SearchInput value={query} onSearch={setQuery} />
 
       <QueryError error={error} />

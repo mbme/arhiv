@@ -10,6 +10,7 @@ echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
   git tag $NEXT_VERSION
+  git push
   git push --tags
 else
   echo "Cancelled"

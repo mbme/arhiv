@@ -37,8 +37,8 @@ export function DocumentViewerField({ field, value }: DocumentViewerFieldProps) 
   }
 
   return (
-    <section className="mb-16">
-      <h5 class="section-heading mb-4">{field.name}</h5>
+    <section className="mb-8">
+      <h5 class="section-heading mb-2">{field.name}</h5>
       <FieldValue field={field} value={value} />
     </section>
   );

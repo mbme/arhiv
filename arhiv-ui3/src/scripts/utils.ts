@@ -15,6 +15,9 @@ export type Callback = () => void;
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 
+let _newIdState = 0;
+export const newId = (): number => (_newIdState += 1);
+
 export const sum = (a: number, b: number) => a + b;
 
 export async function fetchText(

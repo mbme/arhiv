@@ -62,12 +62,12 @@ export function useAudio(url: string, options: Options = DEFAULT_OPTIONS): Audio
     console.debug('audio: src changed to "%s"', url);
     audio.src = url || '';
     setPlayerState('initial');
-  }, [url]);
+  }, [audio, url]);
 
   useEffect(() => {
     console.debug('audio: autoplay=%s', options.autoplay);
     audio.autoplay = options.autoplay;
-  }, [options.autoplay]);
+  }, [audio, options.autoplay]);
 
   useEffect(() => {
     setVolume(audio.volume);

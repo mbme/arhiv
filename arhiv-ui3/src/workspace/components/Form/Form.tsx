@@ -31,7 +31,7 @@ export function useFormField<T>(
     return () => {
       formContext[name] = undefined;
     };
-  }, [name]);
+  }, [formContext, name]);
 
   return controlRef;
 }

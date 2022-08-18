@@ -18,7 +18,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
-    []
+    [documentId]
   );
 
   return (

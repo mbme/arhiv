@@ -16,7 +16,7 @@ type DocumentViewerProps = {
 export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
-    []
+    [documentId]
   );
 
   return (

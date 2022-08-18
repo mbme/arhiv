@@ -9,7 +9,12 @@ type MarkupEditorProps = {
   readonly: boolean;
   mandatory: boolean;
 };
-export function MarkupEditor({ name, initialValue, readonly, mandatory }: MarkupEditorProps) {
+export function MarkupEditor({
+  name,
+  initialValue,
+  readonly: _readonly, // TODO handle
+  mandatory: _mandatory, // TODO handle
+}: MarkupEditorProps) {
   const controlRef = useFormField<Editor>(name, (editor) => editor.state.doc.toString());
   const unsubRef = useRef<Callback>();
 

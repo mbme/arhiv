@@ -8,7 +8,12 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const input = (e.target as HTMLFormElement).querySelector('input')!;
+
+        const input = (e.target as HTMLFormElement).querySelector('input');
+        if (!input) {
+          throw new Error('unreachable: input must exist');
+        }
+
         onSearch(input.value);
         input.blur();
       }}

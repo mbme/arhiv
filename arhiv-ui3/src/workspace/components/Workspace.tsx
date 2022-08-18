@@ -3,17 +3,16 @@ import { newId } from '../../scripts/utils';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 
-type CardVariant = 'catalog' | 'new-document';
+type CardVariant =
+  | { variant: 'catalog' } //
+  | { variant: 'new-document'; documentType: string };
 
-type Card = {
-  id: number;
-  variant: CardVariant;
-};
+type Card = CardVariant & { id: number };
 
 export function Workspace() {
   const [cards] = useState<Card[]>([
-    { id: newId(), variant: 'new-document' }, //
-    { id: newId(), variant: 'catalog' }, //
+    { id: newId(), variant: 'new-document', documentType: 'note' }, //
+    { id: newId(), variant: 'catalog' },
   ]);
 
   return (
@@ -24,7 +23,7 @@ export function Workspace() {
             return <CatalogCard key={card.id} />;
 
           case 'new-document':
-            return <NewDocumentCard key={card.id} />;
+            return <NewDocumentCard key={card.id} documentType={card.documentType} />;
         }
 
         throw new Error('unreachable');

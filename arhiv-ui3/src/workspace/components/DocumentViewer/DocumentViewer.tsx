@@ -6,6 +6,7 @@ import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
 import { Icon } from '../Icon';
 import { Button } from '../Button';
+import { CardTopbar } from '../CardTopbar';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -21,7 +22,7 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
 
   return (
     <div>
-      <div className="flex gap-2 justify-between bg-neutral-200 py-2 mb-12 sticky top-0 z-10">
+      <CardTopbar>
         <Button variant="simple" onClick={onClose}>
           <Icon variant="arrow-left" className="mr-2" />
           Back
@@ -31,7 +32,7 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
           <Icon variant="document-edit" className="mr-2" />
           Edit
         </Button>
-      </div>
+      </CardTopbar>
 
       {error && <QueryError error={error} />}
 

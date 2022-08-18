@@ -3,6 +3,7 @@ import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { Button } from '../Button';
+import { CardTopbar } from '../CardTopbar';
 import { QueryError } from '../QueryError';
 import { Spinner } from '../Spinner';
 import { DocumentEditorForm } from './DocumentEditorForm';
@@ -23,7 +24,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
   return (
     <div>
-      <div className="flex gap-2 justify-between bg-neutral-200 py-2 mb-12 sticky top-0 z-10">
+      <CardTopbar>
         <Button variant="simple" onClick={onCancel}>
           Cancel
         </Button>
@@ -37,7 +38,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
         >
           Save
         </Button>
-      </div>
+      </CardTopbar>
 
       {result && (
         <DocumentEditorForm

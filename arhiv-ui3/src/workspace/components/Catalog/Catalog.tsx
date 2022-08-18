@@ -35,7 +35,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
     <div>
       <SearchInput value={query} onSearch={setQuery} />
 
-      <QueryError error={error} />
+      {error && <QueryError error={error} />}
 
       {inProgress && <div className="mb-8">Loading...</div>}
 

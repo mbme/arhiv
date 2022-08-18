@@ -50,7 +50,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
         />
       )}
 
-      <QueryError error={error} />
+      {error && <QueryError error={error} />}
 
       {inProgress && (
         <div className="mb-8">

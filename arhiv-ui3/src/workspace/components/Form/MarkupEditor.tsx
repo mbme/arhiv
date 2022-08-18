@@ -18,7 +18,7 @@ export function MarkupEditor({ name, initialValue, readonly, mandatory }: Markup
       return;
     }
 
-    const editor = initEditor(containerEl, initialValue || '', !readonly);
+    const editor = initEditor(containerEl, initialValue || '');
 
     controlRef.current = editor;
 

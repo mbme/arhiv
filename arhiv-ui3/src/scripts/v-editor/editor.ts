@@ -21,12 +21,7 @@ import { Callback } from '../utils';
 
 export type Editor = EditorView;
 
-export function initEditor(
-  parent: HTMLElement,
-  initialValue: string,
-  editable: boolean,
-  onBlur?: Callback
-): Editor {
+export function initEditor(parent: HTMLElement, initialValue: string, onBlur?: Callback): Editor {
   const handlers = EditorView.domEventHandlers({
     'blur': (_event, _view) => {
       onBlur?.();
@@ -59,7 +54,6 @@ export function initEditor(
         ],
         handlers,
         markdown(),
-        ...(editable ? [EditorState.readOnly.of(true)] : []),
       ],
     }),
   });

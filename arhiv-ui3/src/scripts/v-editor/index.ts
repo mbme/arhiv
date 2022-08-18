@@ -25,7 +25,7 @@ export class EditorElement extends HTMLElement {
     }
 
     this.textarea = textarea;
-    const editor = initEditor(this, textarea.value, true, () => {
+    const editor = initEditor(this, textarea.value, () => {
       textarea.value = editor.state.doc.toString();
     });
     this.editor = editor;

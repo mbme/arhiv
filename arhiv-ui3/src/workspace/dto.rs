@@ -21,6 +21,12 @@ pub enum WorkspaceRequest {
     GetRef {
         id: Id,
     },
+    #[serde(rename_all = "camelCase")]
+    CreateDocument {
+        document_type: String,
+        subtype: String,
+        data: DocumentData,
+    },
     SaveDocument {
         id: Id,
         subtype: String,
@@ -56,6 +62,10 @@ pub enum WorkspaceResponse {
         document_type: String,
         subtype: String,
         title: String,
+    },
+    CreateDocument {
+        id: Option<Id>,
+        errors: Option<SaveDocumentErrors>,
     },
     SaveDocument {
         errors: Option<SaveDocumentErrors>,

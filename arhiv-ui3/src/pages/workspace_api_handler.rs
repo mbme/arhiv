@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
-use arhiv_core::{markup::MarkupStr, Filter, ValidationError, Validator};
+use arhiv_core::{entities::Document, markup::MarkupStr, Filter, ValidationError, Validator};
 
 use crate::{
     app::{App, AppResponse},
@@ -102,6 +102,28 @@ impl App {
                 tx.commit()?;
 
                 WorkspaceResponse::SaveDocument { errors }
+            }
+            WorkspaceRequest::CreateDocument {
+                document_type,
+                subtype,
+                data,
+            } => {
+                let mut document = Document::new_with_data(&document_type, &subtype, data);
+
+                let tx = self.arhiv.get_tx()?;
+                let validation_result = Validator::new(&tx).validate(&document, None);
+
+                let (id, errors) = if let Err(error) = validation_result {
+                    (None, Some(error.into()))
+                } else {
+                    tx.stage_document(&mut document)?;
+
+                    (Some(document.id), None)
+                };
+
+                tx.commit()?;
+
+                WorkspaceResponse::CreateDocument { id, errors }
             }
         };
 

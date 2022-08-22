@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'preact/hooks';
-import { Card } from './Card';
 import { Catalog } from './Catalog/Catalog';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 import { DocumentViewer } from './DocumentViewer/DocumentViewer';
@@ -15,7 +14,7 @@ export function CatalogCard() {
   }, [documentId]);
 
   return (
-    <Card>
+    <>
       {!documentId && <Catalog onDocumentSelected={setDocumentId} />}
 
       {documentId && !edit && (
@@ -35,6 +34,6 @@ export function CatalogCard() {
           onCancel={() => setEdit(false)}
         />
       )}
-    </Card>
+    </>
   );
 }

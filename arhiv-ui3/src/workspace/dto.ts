@@ -25,6 +25,12 @@ export type WorkspaceRequest =
       id: string;
       subtype: string;
       data: DocumentData;
+    }
+  | {
+      typeName: 'CreateDocument';
+      documentType: string;
+      subtype: string;
+      data: DocumentData;
     };
 
 export type WorkspaceResponse =
@@ -58,10 +64,12 @@ export type WorkspaceResponse =
     }
   | {
       typeName: 'SaveDocument';
-      errors?: {
-        documentErrors: string[];
-        fieldErrors: DocumentFieldErrors;
-      };
+      errors?: SaveDocumentErrors;
+    }
+  | {
+      typeName: 'CreateDocument';
+      id?: string;
+      errors?: SaveDocumentErrors;
     };
 
 export type ListDocumentsResult = {
@@ -75,3 +83,8 @@ export type ListDocumentsResult = {
 export type DocumentData = JSONObj;
 
 export type DocumentFieldErrors = Obj<string[]>;
+
+export type SaveDocumentErrors = {
+  documentErrors: string[];
+  fieldErrors: DocumentFieldErrors;
+};

@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { Workspace } from './components/Workspace';
+import { Workspace } from './Workspace';
 
 const renderRoot = document.querySelector('main');
 if (!renderRoot) {

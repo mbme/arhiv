@@ -10,7 +10,7 @@ import { CardTopbar } from '../CardTopbar';
 
 type DocumentViewerProps = {
   documentId: string;
-  onClose: Callback;
+  onClose?: Callback;
   onEdit: Callback;
 };
 
@@ -23,10 +23,12 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
   return (
     <div>
       <CardTopbar>
-        <Button variant="simple" onClick={onClose}>
-          <Icon variant="arrow-left" className="mr-2" />
-          Back
-        </Button>
+        {onClose && (
+          <Button variant="simple" onClick={onClose}>
+            <Icon variant="arrow-left" className="mr-2" />
+            Back
+          </Button>
+        )}
 
         <Button variant="simple" onClick={onEdit}>
           <Icon variant="document-edit" className="mr-2" />

@@ -65,3 +65,9 @@ export function getFieldDescriptions(
 export function isFieldActive(field: DataDescriptionField, subtype: string): boolean {
   return field.for_subtypes?.includes(subtype) ?? true;
 }
+
+export function getDefaultSubtype(documentType: string): string {
+  const dataDescription = getDataDescription(documentType);
+
+  return dataDescription.subtypes?.[0] ?? '';
+}

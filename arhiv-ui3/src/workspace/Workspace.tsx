@@ -4,17 +4,48 @@ import { CatalogCard } from './components/CatalogCard';
 import { NewDocumentCard } from './components/NewDocumentCard';
 import { CardContainer } from './components/CardContainer';
 import { DocumentCard } from './components/DocumentCard';
+import { StatusCard } from './components/StatusCard';
+import { Button } from './components/Button';
+import { Icon } from './components/Icon';
 
 export function Workspace() {
   const [cards, dispatch] = useReducer(workspaceReducer, []);
 
   useEffect(() => {
-    dispatch({ type: 'open', newCard: { variant: 'new-document', documentType: 'note' } });
     dispatch({ type: 'open', newCard: { variant: 'catalog' } });
   }, []);
 
   return (
-    <div className="flex flex-row gap-4 h-full w-auto overflow-x-auto pt-4 pb-2 pl-8 pr-16">
+    <div className="relative flex flex-row gap-4 h-full w-auto overflow-x-auto pt-4 pb-2 pl-32 pr-16">
+      <nav className="absolute inset-y-0 left-0 w-32 p-4 flex flex-col gap-4">
+        <Button
+          variant="link"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
+        >
+          <Icon variant="search-catalog" className="mr-1" />
+          Browse
+        </Button>
+
+        <Button
+          variant="link"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
+        >
+          <Icon variant="add-document" className="mr-1" />
+          New...
+        </Button>
+
+        <Button
+          variant="link"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'status' } })}
+        >
+          Status
+        </Button>
+
+        <Button variant="link">Scrape URL</Button>
+
+        <Button variant="link">Player</Button>
+      </nav>
+
       {cards.map((card) => {
         switch (card.variant) {
           case 'catalog':
@@ -35,6 +66,13 @@ export function Workspace() {
             return (
               <CardContainer key={card.id} card={card} dispatch={dispatch}>
                 <DocumentCard documentId={card.documentId} />
+              </CardContainer>
+            );
+
+          case 'status':
+            return (
+              <CardContainer key={card.id} card={card} dispatch={dispatch}>
+                <StatusCard />
               </CardContainer>
             );
         }

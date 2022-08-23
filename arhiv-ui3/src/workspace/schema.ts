@@ -38,6 +38,10 @@ declare global {
   }
 }
 
+export function getDocumentTypes(): string[] {
+  return window.SCHEMA.modules.map((module) => module.document_type);
+}
+
 export function getDataDescription(documentType: string): DataDescription {
   const dataDescription = window.SCHEMA.modules.find(
     (module) => module.document_type === documentType

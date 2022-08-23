@@ -4,7 +4,8 @@ import { newId } from '../scripts/utils';
 
 type CardVariant =
   | { variant: 'catalog' } //
-  | { variant: 'new-document'; documentType: string }
+  | { variant: 'status' }
+  | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string };
 
 export type Card = CardVariant & { id: number };

@@ -21,7 +21,7 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
 
   return (
     <CardContext.Provider value={cardContextRef.current}>
-      <div className="w-[38rem] shrink-0 bg-white px-4 py-2 overflow-auto">{children}</div>
+      <div className="w-[38rem] shrink-0 grow-0 bg-white px-4 py-2 overflow-auto">{children}</div>
     </CardContext.Provider>
   );
 }

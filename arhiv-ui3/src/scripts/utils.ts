@@ -128,3 +128,27 @@ export function pickRandomElement<T>(arr: T[]): T {
 
   return arr[pos];
 }
+
+export function cx(
+  ...args: Array<string | null | undefined | false | Obj<string | null | undefined | boolean>>
+): string {
+  let result = '';
+
+  for (const arg of args) {
+    if (!arg) {
+      continue;
+    }
+
+    if (typeof arg === 'string') {
+      result += ' ' + arg;
+    }
+
+    for (const [objKey, objVal] of Object.entries(arg)) {
+      if (objVal) {
+        result += ' ' + objKey;
+      }
+    }
+  }
+
+  return result;
+}

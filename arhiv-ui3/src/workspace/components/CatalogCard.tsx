@@ -21,7 +21,7 @@ export function CatalogCard() {
         <DocumentViewer
           key={documentId}
           documentId={documentId}
-          onClose={() => setDocumentId(undefined)}
+          onBack={() => setDocumentId(undefined)}
           onEdit={() => setEdit(true)}
         />
       )}

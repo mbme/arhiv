@@ -107,6 +107,8 @@ main {
 
     @apply text-blue-600 hover:text-blue-700 hover:bg-blue-200 hover:bg-opacity-20;
 
+    @apply flex items-center;
+
     &.btn-simple {
       @apply border-opacity-0;
       @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
@@ -134,6 +136,11 @@ main {
       font-weight: inherit;
       @apply p-0 border-0 hover:bg-inherit;
     }
+  }
+
+  .icon-btn {
+    @apply uppercase p-3 flex items-center max-w-max shadow-sm hover:shadow-lg rounded-full;
+    @apply border-2 border-transparent hover:border-2 hover:border-slate-200;
   }
 
   .icon {

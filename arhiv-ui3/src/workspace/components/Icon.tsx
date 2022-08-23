@@ -1,7 +1,13 @@
 type IconProps = {
-  variant: 'document-edit' | 'arrow-left';
+  variant: 'document-edit' | 'arrow-left' | 'x';
   className?: string;
 };
+
+function throwBadIconVariant(value: never): never;
+function throwBadIconVariant(value: IconProps['variant']) {
+  throw new Error(`Unknown icon variant: ${value}`);
+}
+
 export function Icon({ variant, className = '' }: IconProps) {
   switch (variant) {
     case 'document-edit':
@@ -24,7 +30,19 @@ export function Icon({ variant, className = '' }: IconProps) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
         </svg>
       );
+
+    case 'x':
+      return (
+        <svg className={`icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      );
   }
 
-  throw new Error('unknown icon variant');
+  throwBadIconVariant(variant);
 }

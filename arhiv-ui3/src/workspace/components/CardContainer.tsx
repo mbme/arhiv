@@ -1,6 +1,8 @@
 import { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
-import { Card, CardContext, WorkspaceDispatch } from '../workspace-reducer';
+import { Card, CardContext, useCardContext, WorkspaceDispatch } from '../workspace-reducer';
+import { Button } from './Button';
+import { Icon } from './Icon';
 
 type CardContainerProps = {
   card: Card;
@@ -23,3 +25,26 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
     </CardContext.Provider>
   );
 }
+
+type TopbarProps = {
+  children: ComponentChildren;
+};
+CardContainer.Topbar = function Topbar({ children }: TopbarProps) {
+  return (
+    <div className="flex gap-2 justify-end bg-neutral-200 mb-6 sticky top-0 z-10">{children}</div>
+  );
+};
+
+CardContainer.CloseButton = function CloseButton() {
+  const context = useCardContext();
+
+  const onClose = () => {
+    context.close();
+  };
+
+  return (
+    <Button variant="icon" onClick={onClose}>
+      <Icon variant="x" />
+    </Button>
+  );
+};

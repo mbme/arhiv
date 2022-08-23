@@ -3,7 +3,7 @@ import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { Button } from '../Button';
-import { CardTopbar } from '../CardTopbar';
+import { CardContainer } from '../CardContainer';
 import { QueryError } from '../QueryError';
 import { Spinner } from '../Spinner';
 import { DocumentEditorForm } from './DocumentEditorForm';
@@ -23,8 +23,8 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
   );
 
   return (
-    <div>
-      <CardTopbar>
+    <>
+      <CardContainer.Topbar>
         <Button variant="simple" onClick={onCancel}>
           Cancel
         </Button>
@@ -38,7 +38,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
         >
           Save
         </Button>
-      </CardTopbar>
+      </CardContainer.Topbar>
 
       {result && (
         <DocumentEditorForm
@@ -58,6 +58,6 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
           <Spinner /> Loading...
         </div>
       )}
-    </div>
+    </>
   );
 }

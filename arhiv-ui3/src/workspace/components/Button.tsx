@@ -1,9 +1,9 @@
 import { ComponentChildren } from 'preact';
-import { Callback } from '../../scripts/utils';
+import { Callback, cx } from '../../scripts/utils';
 import { Spinner } from './Spinner';
 
 type ButtonProps = {
-  variant: 'simple' | 'prime' | 'warn' | 'danger' | 'link'; // TODO rename link to text
+  variant: 'simple' | 'prime' | 'warn' | 'danger' | 'link' | 'icon'; // TODO rename link to text
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
@@ -23,7 +23,14 @@ export function Button({
   return (
     <button
       type="button"
-      className={`btn btn-${variant} ${className}`}
+      className={cx(className, {
+        'btn btn-simple': variant === 'simple',
+        'btn btn-prime': variant === 'prime',
+        'btn btn-warn': variant === 'warn',
+        'btn btn-danger': variant === 'danger',
+        'btn btn-link': variant === 'link',
+        'icon-btn': variant === 'icon',
+      })}
       onClick={onClick}
       disabled={disabled || loading}
       title={title}

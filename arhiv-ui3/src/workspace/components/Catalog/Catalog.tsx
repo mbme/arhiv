@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
+import { CardContainer } from '../CardContainer';
 import { DateTime } from '../DateTime';
 import { QueryError } from '../QueryError';
 import { SearchInput } from './SearchInput';
@@ -32,7 +33,11 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
   ));
 
   return (
-    <div>
+    <>
+      <CardContainer.Topbar>
+        <CardContainer.CloseButton />
+      </CardContainer.Topbar>
+
       <SearchInput value={query} onSearch={setQuery} />
 
       {error && <QueryError error={error} />}
@@ -42,6 +47,6 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
       <div className="divide-y">{items}</div>
 
       {result?.hasMore && <h2>HAS MORE</h2>}
-    </div>
+    </>
   );
 }

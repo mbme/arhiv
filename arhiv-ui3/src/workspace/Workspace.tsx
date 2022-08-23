@@ -14,7 +14,7 @@ export function Workspace() {
   }, []);
 
   return (
-    <div className="flex flex-row gap-4 h-full w-auto overflow-x-auto p-4">
+    <div className="flex flex-row gap-4 h-full w-auto overflow-x-auto pt-4 pb-2 pl-8 pr-16">
       {cards.map((card) => {
         switch (card.variant) {
           case 'catalog':

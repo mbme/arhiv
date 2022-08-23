@@ -1,7 +1,7 @@
 import { useRef } from 'preact/hooks';
-import { useCardContext } from '../workspace-reducer';
+import { CardContext, useCardContext } from '../workspace-reducer';
 import { Button } from './Button';
-import { CardTopbar } from './CardTopbar';
+import { CardContainer } from './CardContainer';
 import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
 
 type NewDocumentCardProps = {
@@ -21,7 +21,7 @@ export function NewDocumentCard({ documentType }: NewDocumentCardProps) {
 
   return (
     <>
-      <CardTopbar>
+      <CardContainer.Topbar>
         <Button variant="simple" onClick={onCancel}>
           Cancel
         </Button>
@@ -34,7 +34,7 @@ export function NewDocumentCard({ documentType }: NewDocumentCardProps) {
         >
           Create
         </Button>
-      </CardTopbar>
+      </CardContainer.Topbar>
 
       <DocumentEditorForm formRef={formRef} documentType={documentType} onSave={onSave} />
     </>

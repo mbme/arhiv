@@ -6,35 +6,39 @@ import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
 import { Icon } from '../Icon';
 import { Button } from '../Button';
-import { CardTopbar } from '../CardTopbar';
+import { CardContainer } from '../CardContainer';
 
 type DocumentViewerProps = {
   documentId: string;
-  onClose?: Callback;
+  onBack?: Callback;
   onEdit: Callback;
 };
 
-export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     [documentId]
   );
 
   return (
-    <div>
-      <CardTopbar>
-        {onClose && (
-          <Button variant="simple" onClick={onClose}>
+    <>
+      <CardContainer.Topbar>
+        {onBack && (
+          <Button variant="simple" onClick={onBack} className="mr-auto">
             <Icon variant="arrow-left" className="mr-2" />
             Back
           </Button>
         )}
 
-        <Button variant="simple" onClick={onEdit}>
-          <Icon variant="document-edit" className="mr-2" />
-          Edit
-        </Button>
-      </CardTopbar>
+        <div className="flex gap-1">
+          <Button variant="simple" onClick={onEdit}>
+            <Icon variant="document-edit" className="mr-2" />
+            Edit
+          </Button>
+
+          <CardContainer.CloseButton />
+        </div>
+      </CardContainer.Topbar>
 
       {error && <QueryError error={error} />}
 
@@ -55,6 +59,6 @@ export function DocumentViewer({ documentId, onClose, onEdit }: DocumentViewerPr
           />
         </>
       )}
-    </div>
+    </>
   );
 }

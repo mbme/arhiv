@@ -19,9 +19,21 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
     };
   }, [card, dispatch]);
 
+  const scrolledRef = useRef(false);
+
   return (
     <CardContext.Provider value={cardContextRef.current}>
-      <div className="w-[38rem] shrink-0 grow-0 bg-white drop-shadow relative       snap-center">
+      <div
+        className="w-[38rem] shrink-0 grow-0 bg-white drop-shadow relative       snap-center"
+        ref={(containerEl) => {
+          if (!containerEl || scrolledRef.current) {
+            return;
+          }
+
+          containerEl.scrollIntoView({ inline: 'center' });
+          scrolledRef.current = true;
+        }}
+      >
         <div className="max-h-full overflow-auto px-4 pt-16 pb-2">{children}</div>
       </div>
     </CardContext.Provider>

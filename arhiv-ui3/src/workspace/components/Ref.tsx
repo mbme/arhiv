@@ -1,6 +1,8 @@
 import { formatDocumentType } from '../../scripts/utils';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
+import { useCardContext } from '../workspace-reducer';
+import { Button } from './Button';
 import { QueryError } from './QueryError';
 
 type RefContainerProps = {
@@ -37,14 +39,22 @@ type RefProps = {
   title: string;
 };
 export function Ref({ id, documentType, subtype, title }: RefProps) {
-  const url = `/documents/${id}`; // FIXME remove this
+  const context = useCardContext();
+
+  const openDocument = () => {
+    context.open({ variant: 'document', documentId: id });
+  };
 
   return (
-    <a href={url} class="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm">
-      <span class="font-mono uppercase text-gray-400 mr-4">
+    <Button
+      variant="link"
+      className="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm"
+      onClick={openDocument}
+    >
+      <span className="font-mono uppercase text-gray-400 mr-4">
         {formatDocumentType(documentType, subtype)}
       </span>
       {title}
-    </a>
+    </Button>
   );
 }

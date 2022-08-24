@@ -85,5 +85,11 @@ export function useCardContext() {
         newCard,
       });
     },
+    open(newCard: CardVariant) {
+      dispatch({
+        type: 'open',
+        newCard,
+      });
+    },
   };
 }

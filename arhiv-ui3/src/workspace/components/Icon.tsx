@@ -1,7 +1,7 @@
 import { cx } from '../../scripts/utils';
 
 type IconProps = {
-  variant: 'document-edit' | 'arrow-left' | 'x' | 'search-catalog' | 'add-document';
+  variant: 'document-edit' | 'arrow-left' | 'arrow-right' | 'x' | 'search-catalog' | 'add-document';
   className?: string;
 };
 
@@ -20,16 +20,38 @@ export function Icon({ variant, className = '' }: IconProps) {
       );
 
     case 'arrow-left':
-      // heroicons outline arrow-narrow-left
+      // heroicons outline arrow-long-left
       return (
         <svg
           className={cx('icon', className)}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.5"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6.75 15.75L3 12m0 0l3.75-3.75M3 12h18"
+          />
+        </svg>
+      );
+
+    case 'arrow-right':
+      // heroicons outline arrow-long-right
+      return (
+        <svg
+          className={cx('icon', className)}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
+          />
         </svg>
       );
 

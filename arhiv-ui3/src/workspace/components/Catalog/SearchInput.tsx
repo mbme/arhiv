@@ -21,7 +21,7 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
       <input
         type="search"
         name="pattern"
-        class="field w-full mb-8"
+        class="field w-full mb-4"
         value={value}
         placeholder="Type something"
       />

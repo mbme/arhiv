@@ -10,6 +10,7 @@ use rs_utils::Timestamp;
 pub enum WorkspaceRequest {
     ListDocuments {
         query: String,
+        page: u8,
     },
     GetStatus {},
     GetDocument {

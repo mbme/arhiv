@@ -11,19 +11,20 @@ use crate::{
     },
 };
 
+const PAGE_SIZE: u8 = 10;
+
 impl App {
     pub fn workspace_api_handler(&self, body: &Bytes) -> Result<AppResponse> {
         let request: WorkspaceRequest =
             serde_json::from_slice(body).context("failed to parse request")?;
 
         let response = match request {
-            WorkspaceRequest::ListDocuments { query } => {
-                let mut filter = Filter::default();
-                filter = filter.search(query);
-
-                if filter.get_pattern().is_none() {
-                    filter = filter.recently_updated_first();
-                }
+            WorkspaceRequest::ListDocuments { query, page } => {
+                let filter = Filter::default()
+                    .search(query)
+                    .page_size(PAGE_SIZE)
+                    .on_page(page)
+                    .recently_updated_first();
 
                 let schema = self.arhiv.get_schema();
                 let page = self.arhiv.list_documents(filter)?;

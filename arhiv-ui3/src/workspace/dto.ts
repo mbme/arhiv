@@ -4,6 +4,7 @@ export type WorkspaceRequest =
   | {
       typeName: 'ListDocuments';
       query: string;
+      page: number;
     }
   | {
       typeName: 'GetStatus';

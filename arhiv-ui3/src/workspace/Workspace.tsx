@@ -16,7 +16,7 @@ export function Workspace() {
   }, []);
 
   return (
-    <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-4 pb-2 pl-32 pr-16">
+    <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-4 pb-2 pl-36 pr-16">
       <nav className="fixed inset-y-0 left-0 z-20 bg-zinc-200 var-bg-color w-32 p-4 flex flex-col gap-4">
         <Button
           variant="link"

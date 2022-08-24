@@ -53,6 +53,7 @@ pub enum WorkspaceResponse {
         subtype: String,
         updated_at: Timestamp,
         data: DocumentData,
+        backrefs: Vec<DocumentBackref>,
     },
     RenderMarkup {
         html: String,
@@ -88,4 +89,13 @@ pub struct ListDocumentsResult {
 pub struct SaveDocumentErrors {
     pub document_errors: Vec<String>,
     pub field_errors: HashMap<String, Vec<String>>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentBackref {
+    pub id: Id,
+    pub document_type: String,
+    pub subtype: String,
+    pub title: String,
 }

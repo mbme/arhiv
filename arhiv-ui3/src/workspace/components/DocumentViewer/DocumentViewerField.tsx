@@ -1,6 +1,6 @@
 import { DataDescriptionField } from '../../schema';
 import { Markup } from '../Markup';
-import { Ref } from '../Ref';
+import { RefContainer } from '../Ref';
 
 type DocumentViewerFieldProps = {
   field: DataDescriptionField;
@@ -15,14 +15,14 @@ function FieldValue({ field, value }: DocumentViewerFieldProps) {
   if ('Ref' in field.field_type) {
     const id = value as string;
 
-    return <Ref key={id} id={id} />;
+    return <RefContainer key={id} id={id} />;
   }
 
   if ('RefList' in field.field_type) {
     return (
       <>
         {(value as string[]).map((id) => (
-          <Ref key={id} id={id} />
+          <RefContainer key={id} id={id} />
         ))}
       </>
     );

@@ -7,6 +7,7 @@ import { Callback } from '../../../scripts/utils';
 import { Icon } from '../Icon';
 import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
+import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -61,6 +62,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
             subtype={result.subtype}
             data={result.data}
           />
+          <DocumentViewerBackrefs backrefs={result.backrefs} />
         </>
       )}
     </>

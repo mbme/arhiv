@@ -51,6 +51,7 @@ export type WorkspaceResponse =
       subtype: string;
       updatedAt: string;
       data: DocumentData;
+      backrefs: DocumentBackref[];
     }
   | {
       typeName: 'RenderMarkup';
@@ -82,6 +83,13 @@ export type ListDocumentsResult = {
 };
 
 export type DocumentData = JSONObj;
+
+export type DocumentBackref = {
+  id: string;
+  documentType: string;
+  subtype: string;
+  title: string;
+};
 
 export type DocumentFieldErrors = Obj<string[]>;
 

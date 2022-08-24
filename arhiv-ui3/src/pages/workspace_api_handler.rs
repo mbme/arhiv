@@ -7,7 +7,8 @@ use crate::{
     app::{App, AppResponse},
     markup::MarkupStringExt,
     workspace::dto::{
-        ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest, WorkspaceResponse,
+        DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
+        WorkspaceResponse,
     },
 };
 
@@ -53,8 +54,25 @@ impl App {
                     status: status.to_string(),
                 }
             }
-            WorkspaceRequest::GetDocument { id } => {
+            WorkspaceRequest::GetDocument { ref id } => {
                 let document = self.arhiv.must_get_document(id)?;
+
+                let schema = self.arhiv.get_schema();
+
+                let backrefs = self
+                    .arhiv
+                    .list_documents(Filter::all_backrefs(id))?
+                    .items
+                    .into_iter()
+                    .map(|item| {
+                        Ok(DocumentBackref {
+                            title: schema.get_title(&item)?,
+                            id: item.id,
+                            document_type: item.document_type,
+                            subtype: item.subtype,
+                        })
+                    })
+                    .collect::<Result<_>>()?;
 
                 WorkspaceResponse::GetDocument {
                     id: document.id,
@@ -62,6 +80,7 @@ impl App {
                     subtype: document.subtype,
                     updated_at: document.updated_at,
                     data: document.data,
+                    backrefs,
                 }
             }
             WorkspaceRequest::RenderMarkup { markup } => {

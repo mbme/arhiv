@@ -14,30 +14,6 @@
   }
 }
 
-html {
-  overflow-y: scroll;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-
-  text-rendering: optimizeLegibility;
-  @apply antialiased;
-
-  color: #333;
-  @apply bg-zinc-100;
-}
-
-main {
-  height: 100%;
-}
-
 @layer components {
   .markup {
     @apply prose;
@@ -146,6 +122,36 @@ main {
   .icon {
     @apply inline h-5 w-5;
   }
+}
+
+@layer utilities {
+  .var-bg-color {
+    @apply bg-zinc-100;
+  }
+}
+
+html {
+  overflow-y: scroll;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+
+  text-rendering: optimizeLegibility;
+  @apply antialiased;
+
+  color: #333;
+  @apply var-bg-color;
+}
+
+main {
+  height: 100%;
 }
 
 #document-head {

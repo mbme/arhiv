@@ -1,3 +1,4 @@
+import { formatDocumentType } from '../../../scripts/utils';
 import { Button } from '../Button';
 import { DateTime } from '../DateTime';
 
@@ -33,10 +34,7 @@ export function DocumentViewerHead({
       </tr>
       <tr>
         <td class="section-heading">type:</td>
-        <td class="font-semibold">
-          {documentType}
-          {subtype && <>/ {subtype}</>}
-        </td>
+        <td class="font-semibold">{formatDocumentType(documentType, subtype)}</td>
       </tr>
       <tr>
         <td class="section-heading">modified:</td>

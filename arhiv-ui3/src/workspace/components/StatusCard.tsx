@@ -11,9 +11,7 @@ export function StatusCard() {
 
   return (
     <>
-      <CardContainer.Topbar>
-        <CardContainer.CloseButton />
-      </CardContainer.Topbar>
+      <CardContainer.Topbar title="Status" right={<CardContainer.CloseButton />} />
 
       {error && <QueryError error={error} />}
 

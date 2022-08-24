@@ -21,17 +21,27 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
 
   return (
     <CardContext.Provider value={cardContextRef.current}>
-      <div className="w-[38rem] shrink-0 grow-0 bg-white px-4 py-2 overflow-auto">{children}</div>
+      <div className="w-[38rem] shrink-0 grow-0 bg-white drop-shadow relative       snap-center">
+        <div className="max-h-full overflow-auto px-4 pt-16 pb-2">{children}</div>
+      </div>
     </CardContext.Provider>
   );
 }
 
 type TopbarProps = {
-  children: ComponentChildren;
+  title?: string;
+  left?: ComponentChildren;
+  right?: ComponentChildren;
 };
-CardContainer.Topbar = function Topbar({ children }: TopbarProps) {
+CardContainer.Topbar = function Topbar({ title, left, right }: TopbarProps) {
   return (
-    <div className="flex gap-2 justify-end bg-neutral-200 mb-6 sticky top-0 z-10">{children}</div>
+    <div className="flex items-center gap-4 justify-between bg-white px-4 py-2 absolute inset-x-0 top-0 z-10">
+      <div className="flex items-center gap-4">{left}</div>
+
+      {title && <div className="section-heading text-lg">{title}</div>}
+
+      <div className="flex items-center gap-4">{right}</div>
+    </div>
   );
 };
 
@@ -43,7 +53,7 @@ CardContainer.CloseButton = function CloseButton() {
   };
 
   return (
-    <Button variant="icon" onClick={onClose}>
+    <Button variant="link" onClick={onClose}>
       <Icon variant="x" />
     </Button>
   );

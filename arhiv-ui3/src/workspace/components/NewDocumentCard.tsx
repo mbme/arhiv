@@ -24,21 +24,26 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
 
   return (
     <>
-      <CardContainer.Topbar>
-        <Button variant="simple" onClick={onCancel}>
-          Cancel
-        </Button>
+      <CardContainer.Topbar
+        title={`New ${documentType || 'document'}`}
+        right={
+          <>
+            <Button variant="simple" onClick={onCancel}>
+              Cancel
+            </Button>
 
-        <Button
-          variant="prime"
-          disabled={!documentType}
-          onClick={() => {
-            formRef.current?.requestSubmit();
-          }}
-        >
-          Create
-        </Button>
-      </CardContainer.Topbar>
+            <Button
+              variant="prime"
+              disabled={!documentType}
+              onClick={() => {
+                formRef.current?.requestSubmit();
+              }}
+            >
+              Create
+            </Button>
+          </>
+        }
+      />
 
       {documentType ? (
         <DocumentEditorForm
@@ -48,7 +53,7 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
           onSave={onSave}
         />
       ) : (
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4 px-8 py-16">
           {getDocumentTypes().map((documentType) => (
             <Button
               key={documentType}

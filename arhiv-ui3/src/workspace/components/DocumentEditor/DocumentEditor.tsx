@@ -24,21 +24,26 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
   return (
     <>
-      <CardContainer.Topbar>
-        <Button variant="simple" onClick={onCancel}>
-          Cancel
-        </Button>
+      <CardContainer.Topbar
+        title={`Edit ${result?.documentType || ''}`}
+        right={
+          <>
+            <Button variant="simple" onClick={onCancel}>
+              Cancel
+            </Button>
 
-        <Button
-          variant="prime"
-          onClick={() => {
-            formRef.current?.requestSubmit();
-          }}
-          disabled={!result}
-        >
-          Save
-        </Button>
-      </CardContainer.Topbar>
+            <Button
+              variant="prime"
+              onClick={() => {
+                formRef.current?.requestSubmit();
+              }}
+              disabled={!result}
+            >
+              Save
+            </Button>
+          </>
+        }
+      />
 
       {result && (
         <DocumentEditorForm

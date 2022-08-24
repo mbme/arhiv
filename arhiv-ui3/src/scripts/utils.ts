@@ -152,3 +152,11 @@ export function cx(
 
   return result;
 }
+
+export function formatDocumentType(documentType: string, subtype?: string): string {
+  if (subtype) {
+    return `${documentType}/${subtype}`;
+  }
+
+  return documentType;
+}

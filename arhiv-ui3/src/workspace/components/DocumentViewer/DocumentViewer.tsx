@@ -22,23 +22,27 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
 
   return (
     <>
-      <CardContainer.Topbar>
-        {onBack && (
-          <Button variant="simple" onClick={onBack} className="mr-auto">
-            <Icon variant="arrow-left" className="mr-2" />
-            Back
-          </Button>
-        )}
+      <CardContainer.Topbar
+        title="Viewer"
+        left={
+          onBack && (
+            <Button variant="link" onClick={onBack}>
+              <Icon variant="arrow-left" className="mr-2" />
+              Back
+            </Button>
+          )
+        }
+        right={
+          <>
+            <Button variant="link" onClick={onEdit}>
+              <Icon variant="document-edit" className="mr-2" />
+              Edit
+            </Button>
 
-        <div className="flex gap-1">
-          <Button variant="simple" onClick={onEdit}>
-            <Icon variant="document-edit" className="mr-2" />
-            Edit
-          </Button>
-
-          <CardContainer.CloseButton />
-        </div>
-      </CardContainer.Topbar>
+            <CardContainer.CloseButton />
+          </>
+        }
+      />
 
       {error && <QueryError error={error} />}
 

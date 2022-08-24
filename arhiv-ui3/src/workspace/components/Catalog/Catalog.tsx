@@ -34,9 +34,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
 
   return (
     <>
-      <CardContainer.Topbar>
-        <CardContainer.CloseButton />
-      </CardContainer.Topbar>
+      <CardContainer.Topbar title="Catalog" right={<CardContainer.CloseButton />} />
 
       <SearchInput value={query} onSearch={setQuery} />
 

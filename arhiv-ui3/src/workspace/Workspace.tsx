@@ -16,8 +16,8 @@ export function Workspace() {
   }, []);
 
   return (
-    <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-4 pb-2 pl-36 pr-16">
-      <nav className="fixed inset-y-0 left-0 z-20 bg-zinc-200 var-bg-color w-32 p-4 flex flex-col gap-4">
+    <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-14 pb-2 pl-8 pr-16">
+      <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color px-16 pt-4 flex flex-row gap-8">
         <Button
           variant="link"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}

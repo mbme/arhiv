@@ -47,7 +47,7 @@ export function Ref({ id, documentType, subtype, title }: RefProps) {
 
   return (
     <Button
-      variant="link"
+      variant="text"
       className="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm"
       onClick={openDocument}
     >

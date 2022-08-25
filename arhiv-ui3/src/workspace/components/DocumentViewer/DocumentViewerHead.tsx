@@ -21,7 +21,7 @@ export function DocumentViewerHead({
         <td class="section-heading">id:</td>
         <td>
           <Button
-            variant="link"
+            variant="text"
             className="block font-mono tracking-wide cursor-pointer group"
             title="Copy document id to clipboard"
           >

@@ -27,7 +27,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
         title="Viewer"
         left={
           onBack && (
-            <Button variant="link" onClick={onBack}>
+            <Button variant="text" onClick={onBack}>
               <Icon variant="arrow-left" className="mr-2" />
               Back
             </Button>
@@ -35,7 +35,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
         }
         right={
           <>
-            <Button variant="link" onClick={onEdit}>
+            <Button variant="text" onClick={onEdit}>
               <Icon variant="document-edit" className="mr-2" />
               Edit
             </Button>

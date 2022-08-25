@@ -65,7 +65,7 @@ CardContainer.CloseButton = function CloseButton() {
   };
 
   return (
-    <Button variant="link" onClick={onClose}>
+    <Button variant="text" onClick={onClose}>
       <Icon variant="x" />
     </Button>
   );

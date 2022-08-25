@@ -114,11 +114,6 @@
     }
   }
 
-  .icon-btn {
-    @apply uppercase p-3 flex items-center max-w-max shadow-sm hover:shadow-lg rounded-full;
-    @apply border-2 border-transparent hover:border-2 hover:border-slate-200;
-  }
-
   .icon {
     @apply inline h-5 w-5;
   }

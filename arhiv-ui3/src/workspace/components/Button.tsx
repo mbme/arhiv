@@ -2,10 +2,10 @@ import { ComponentChildren } from 'preact';
 import { Callback, cx } from '../../scripts/utils';
 import { Spinner } from './Spinner';
 
-// TODO remove warn & danger; iconbutton as a separate component
+// TODO remove warn & danger;
 
 type ButtonProps = {
-  variant: 'simple' | 'prime' | 'warn' | 'danger' | 'text' | 'icon';
+  variant: 'simple' | 'prime' | 'warn' | 'danger' | 'text';
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
@@ -31,7 +31,6 @@ export function Button({
         'btn btn-warn': variant === 'warn',
         'btn btn-danger': variant === 'danger',
         'btn btn-text': variant === 'text',
-        'icon-btn': variant === 'icon',
       })}
       onClick={onClick}
       disabled={disabled || loading}

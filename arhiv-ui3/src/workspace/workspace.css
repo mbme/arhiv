@@ -81,36 +81,48 @@
     @apply focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 focus:border-opacity-0;
     @apply font-semibold tracking-wide cursor-pointer;
 
-    @apply text-blue-600 hover:text-blue-700 hover:bg-blue-200 hover:bg-opacity-20;
+    @apply hover:bg-opacity-20;
 
     @apply flex items-center;
 
     &.btn-simple {
       @apply border-opacity-0;
       @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
+
+      &.btn-warn {
+        @apply text-yellow-700 hover:bg-yellow-300;
+      }
+
+      &.btn-danger {
+        @apply text-red-700 hover:bg-red-300;
+      }
     }
 
     &.btn-prime {
       @apply text-white rounded-md hover:shadow-lg;
-
       @apply bg-blue-500 hover:bg-blue-600;
-    }
 
-    &.btn-warn {
-      @apply text-white rounded-md hover:shadow-lg;
+      &.btn-warn {
+        @apply bg-yellow-500 hover:bg-yellow-600;
+      }
 
-      @apply bg-yellow-500 hover:bg-yellow-600;
-    }
-
-    &.btn-danger {
-      @apply text-white rounded-md hover:shadow-lg;
-
-      @apply bg-red-500 hover:bg-red-600;
+      &.btn-danger {
+        @apply bg-red-500 hover:bg-red-600 hover:shadow-lg;
+      }
     }
 
     &.btn-text {
       font-weight: inherit;
       @apply p-0 border-0 hover:bg-inherit;
+      @apply text-blue-800 hover:text-blue-600;
+
+      &.btn-warn {
+        @apply text-yellow-700 hover:text-yellow-600;
+      }
+
+      &.btn-danger {
+        @apply text-red-700 hover:text-red-600;
+      }
     }
   }
 

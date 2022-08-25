@@ -5,7 +5,8 @@ import { Spinner } from './Spinner';
 // TODO remove warn & danger;
 
 type ButtonProps = {
-  variant: 'simple' | 'prime' | 'warn' | 'danger' | 'text';
+  variant: 'simple' | 'prime' | 'text';
+  color?: 'warn' | 'danger';
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
@@ -15,6 +16,7 @@ type ButtonProps = {
 };
 export function Button({
   variant,
+  color,
   className = '',
   onClick,
   disabled,
@@ -28,9 +30,9 @@ export function Button({
       className={cx(className, {
         'btn btn-simple': variant === 'simple',
         'btn btn-prime': variant === 'prime',
-        'btn btn-warn': variant === 'warn',
-        'btn btn-danger': variant === 'danger',
         'btn btn-text': variant === 'text',
+        'btn-warn': color === 'warn',
+        'btn-danger': color === 'danger',
       })}
       onClick={onClick}
       disabled={disabled || loading}

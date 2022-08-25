@@ -1,11 +1,11 @@
 import { cx } from '../../scripts/utils';
 
 export type IconVariant =
-  | 'document-edit'
   | 'arrow-left'
   | 'arrow-right'
   | 'x'
   | 'search-catalog'
+  | 'edit-document'
   | 'add-document'
   | 'erase-document';
 
@@ -21,13 +21,6 @@ function throwBadIconVariant(value: IconVariant) {
 
 export function Icon({ variant, className = '' }: IconProps) {
   switch (variant) {
-    case 'document-edit':
-      return (
-        <svg className={cx('icon', className)} viewBox="0 0 20 20" fill="currentColor">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-        </svg>
-      );
-
     case 'arrow-left':
       // heroicons outline arrow-long-left
       return (
@@ -90,6 +83,13 @@ export function Icon({ variant, className = '' }: IconProps) {
             d="M8 10a4 4 0 00-3.446 6.032l-1.261 1.26a1 1 0 101.414 1.415l1.261-1.261A4 4 0 108 10zm-2 4a2 2 0 114 0 2 2 0 01-4 0z"
             clipRule="evenodd"
           />
+        </svg>
+      );
+
+    case 'edit-document':
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 20 20" fill="currentColor">
+          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
         </svg>
       );
 

@@ -38,7 +38,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
               Erase
             </Button>
 
-            <Button variant="text" icon="document-edit" onClick={onEdit}>
+            <Button variant="text" icon="edit-document" onClick={onEdit}>
               Edit
             </Button>
 

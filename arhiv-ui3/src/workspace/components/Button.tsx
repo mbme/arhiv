@@ -1,5 +1,6 @@
 import { ComponentChildren } from 'preact';
 import { Callback, cx } from '../../scripts/utils';
+import { Icon, IconVariant } from './Icon';
 import { Spinner } from './Spinner';
 
 // TODO remove warn & danger;
@@ -13,6 +14,7 @@ type ButtonProps = {
   children: ComponentChildren;
   title?: string;
   loading?: boolean;
+  icon?: IconVariant;
 };
 export function Button({
   variant,
@@ -23,6 +25,7 @@ export function Button({
   children,
   title,
   loading,
+  icon,
 }: ButtonProps) {
   return (
     <button
@@ -38,6 +41,7 @@ export function Button({
       disabled={disabled || loading}
       title={title}
     >
+      {icon && <Icon variant={icon} className="mr-1" />}
       {loading && <Spinner className="mr-2" />}
 
       {children}

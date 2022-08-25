@@ -20,17 +20,17 @@ export function Workspace() {
       <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color px-16 pt-4 flex flex-row gap-8">
         <Button
           variant="text"
+          icon="search-catalog"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
         >
-          <Icon variant="search-catalog" className="mr-1" />
           Browse
         </Button>
 
         <Button
           variant="text"
+          icon="add-document"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
         >
-          <Icon variant="add-document" className="mr-1" />
           New...
         </Button>
 

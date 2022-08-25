@@ -27,16 +27,18 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
         title="Viewer"
         left={
           onBack && (
-            <Button variant="text" onClick={onBack}>
-              <Icon variant="arrow-left" className="mr-2" />
+            <Button variant="text" icon="arrow-left" onClick={onBack}>
               Back
             </Button>
           )
         }
         right={
           <>
-            <Button variant="text" onClick={onEdit}>
-              <Icon variant="document-edit" className="mr-2" />
+            <Button variant="text" color="warn" icon="erase-document" onClick={onEdit}>
+              Erase
+            </Button>
+
+            <Button variant="text" icon="document-edit" onClick={onEdit}>
               Edit
             </Button>
 

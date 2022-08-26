@@ -32,6 +32,10 @@ export type WorkspaceRequest =
       documentType: string;
       subtype: string;
       data: DocumentData;
+    }
+  | {
+      typeName: 'EraseDocument';
+      id: string;
     };
 
 export type WorkspaceResponse =
@@ -48,6 +52,7 @@ export type WorkspaceResponse =
       typeName: 'GetDocument';
       id: string;
       documentType: string;
+      title: string;
       subtype: string;
       updatedAt: string;
       data: DocumentData;
@@ -72,6 +77,9 @@ export type WorkspaceResponse =
       typeName: 'CreateDocument';
       id?: string;
       errors?: SaveDocumentErrors;
+    }
+  | {
+      typeName: 'EraseDocument';
     };
 
 export type ListDocumentsResult = {

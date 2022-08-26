@@ -3,8 +3,6 @@ import { Callback, cx } from '../../scripts/utils';
 import { Icon, IconVariant } from './Icon';
 import { Spinner } from './Spinner';
 
-// TODO remove warn & danger;
-
 type ButtonProps = {
   variant: 'simple' | 'prime' | 'text';
   color?: 'warn' | 'danger';
@@ -15,6 +13,7 @@ type ButtonProps = {
   title?: string;
   loading?: boolean;
   icon?: IconVariant;
+  type?: HTMLButtonElement['type'];
 };
 export function Button({
   variant,
@@ -26,10 +25,11 @@ export function Button({
   title,
   loading,
   icon,
+  type = 'button',
 }: ButtonProps) {
   return (
     <button
-      type="button"
+      type={type}
       className={cx(className, {
         'btn btn-simple': variant === 'simple',
         'btn btn-prime': variant === 'prime',

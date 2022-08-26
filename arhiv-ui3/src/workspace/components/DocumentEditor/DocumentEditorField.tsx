@@ -12,7 +12,7 @@ import {
 
 type ValueEditorProps = {
   field: DataDescriptionField;
-  initialValue: JSONValue;
+  initialValue?: JSONValue;
 };
 function ValueEditor({ field, initialValue }: ValueEditorProps) {
   if ('MarkupString' in field.field_type) {
@@ -94,7 +94,7 @@ function ValueEditor({ field, initialValue }: ValueEditorProps) {
 
 type DocumentEditorFieldProps = {
   field: DataDescriptionField;
-  initialValue: JSONValue;
+  initialValue?: JSONValue;
   hidden: boolean;
   errors?: string[];
 };

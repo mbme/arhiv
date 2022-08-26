@@ -7,10 +7,7 @@ type RefInputProps = {
   mandatory: boolean;
 };
 export function RefInput({ name, initialValue, readonly, mandatory }: RefInputProps) {
-  const controlRef = useFormField<HTMLInputElement>(
-    name,
-    (input) => input.value.trim() || undefined
-  );
+  const controlRef = useFormField<HTMLInputElement>(name, (input) => input.value.trim() || null);
 
   return (
     <input

@@ -1,8 +1,8 @@
 import { useFormField } from './Form';
 
-function parseRefsList(refs: string): string[] | undefined {
+function parseRefsList(refs: string): string[] | null {
   if (refs.trim().length === 0) {
-    return undefined;
+    return null;
   }
 
   return refs

@@ -4,10 +4,7 @@ import { CardContainer } from './CardContainer';
 import { QueryError } from './QueryError';
 
 export function StatusCard() {
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.GetStatus({}, abortSignal),
-    []
-  );
+  const { result, error, inProgress } = useQuery((abortSignal) => RPC.GetStatus({}, abortSignal));
 
   return (
     <>

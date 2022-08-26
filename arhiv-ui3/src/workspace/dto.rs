@@ -33,6 +33,9 @@ pub enum WorkspaceRequest {
         subtype: String,
         data: DocumentData,
     },
+    EraseDocument {
+        id: Id,
+    },
 }
 
 #[derive(Serialize)]
@@ -49,6 +52,7 @@ pub enum WorkspaceResponse {
     #[serde(rename_all = "camelCase")]
     GetDocument {
         id: Id,
+        title: String,
         document_type: String,
         subtype: String,
         updated_at: Timestamp,
@@ -72,6 +76,7 @@ pub enum WorkspaceResponse {
     SaveDocument {
         errors: Option<SaveDocumentErrors>,
     },
+    EraseDocument {},
 }
 
 #[derive(Serialize)]

@@ -129,11 +129,33 @@
   .icon {
     @apply inline h-5 w-5;
   }
+
+  .modal {
+    @apply mx-auto mt-16 mb-8 rounded-md shadow-lg var-card-width bg-white;
+  }
+
+  .modal-title {
+    @apply text-lg font-bold tracking-wider uppercase bg-gray-50 rounded-t-md;
+    @apply p-2 sm:p-4 md:px-6;
+  }
+
+  .modal-content {
+    @apply p-2 sm:p-4 md:p-6 break-words;
+  }
+
+  .modal-buttons {
+    @apply flex justify-end bg-gray-50 rounded-b-md;
+    @apply p-2 sm:p-4 md:p-6;
+  }
 }
 
 @layer utilities {
   .var-bg-color {
     @apply bg-zinc-100;
+  }
+
+  .var-card-width {
+    width: 39rem;
   }
 }
 
@@ -176,6 +198,10 @@ main {
   }
 }
 
+#modal-root {
+  z-index: 1;
+}
+
 .cm-editor {
   font-size: 1rem;
   min-height: 19rem;
@@ -195,8 +221,7 @@ main {
   }
 
   & .cm-gutters {
-    background-color: var(--bg-color);
     border: 0;
-    @apply pl-2;
+    @apply pl-2 bg-inherit;
   }
 }

@@ -4,10 +4,10 @@ import { DocumentViewerFields } from './DocumentViewerFields';
 import { QueryError } from '../QueryError';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
-import { Icon } from '../Icon';
 import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
+import { EraseDocumentButton } from './EraseDocumentButton';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -16,9 +16,11 @@ type DocumentViewerProps = {
 };
 
 export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerProps) {
-  const { result, error, inProgress } = useQuery(
+  const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
-    [documentId]
+    {
+      refreshIfChange: [documentId],
+    }
   );
 
   return (
@@ -34,9 +36,14 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
         }
         right={
           <>
-            <Button variant="text" color="warn" icon="erase-document" onClick={onEdit}>
-              Erase
-            </Button>
+            {result && (
+              <EraseDocumentButton
+                documentId={result.id}
+                documentType={result.documentType}
+                title={result.title}
+                onErase={triggerRefresh}
+              />
+            )}
 
             <Button variant="text" icon="edit-document" onClick={onEdit}>
               Edit

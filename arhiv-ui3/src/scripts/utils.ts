@@ -1,7 +1,6 @@
 export type Obj<T = string> = Record<string, T | undefined>;
 export type EmptyObj = Obj<never>;
 export type JSONValue =
-  | undefined
   | null
   | string
   | number
@@ -159,4 +158,18 @@ export function formatDocumentType(documentType: string, subtype?: string): stri
   }
 
   return documentType;
+}
+
+export function getSessionValue<T extends JSONValue>(key: string, defaultValue: T): T {
+  const value = sessionStorage.getItem(key);
+
+  if (value === null) {
+    return defaultValue;
+  }
+
+  return JSON.parse(value) as T;
+}
+
+export function setSessionValue(key: string, value: JSONValue) {
+  sessionStorage.setItem(key, JSON.stringify(value));
 }

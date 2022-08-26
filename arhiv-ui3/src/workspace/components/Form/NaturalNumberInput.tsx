@@ -13,7 +13,7 @@ export function NaturalNumberInput({
   mandatory,
 }: NaturalNumberInputProps) {
   const controlRef = useFormField<HTMLInputElement>(name, (input) =>
-    input.value ? Number.parseInt(input.value, 10) : undefined
+    input.value ? Number.parseInt(input.value, 10) : null
   );
 
   return (

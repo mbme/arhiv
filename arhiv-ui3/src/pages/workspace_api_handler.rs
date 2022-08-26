@@ -74,8 +74,11 @@ impl App {
                     })
                     .collect::<Result<_>>()?;
 
+                let title = schema.get_title(&document)?;
+
                 WorkspaceResponse::GetDocument {
                     id: document.id,
+                    title,
                     document_type: document.document_type,
                     subtype: document.subtype,
                     updated_at: document.updated_at,
@@ -144,6 +147,13 @@ impl App {
                 tx.commit()?;
 
                 WorkspaceResponse::CreateDocument { id, errors }
+            }
+            WorkspaceRequest::EraseDocument { ref id } => {
+                let tx = self.arhiv.get_tx()?;
+                tx.erase_document(id)?;
+                tx.commit()?;
+
+                WorkspaceResponse::EraseDocument {}
             }
         };
 

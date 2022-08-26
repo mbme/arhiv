@@ -11,6 +11,9 @@
   </head>
   <body>
     <main></main>
+
+    <div id="modal-root"></div>
+
     <script>
       window.SCHEMA = {{ schema | safe }};
     </script>

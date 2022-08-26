@@ -21,7 +21,9 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
 
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.ListDocuments({ query, page }, abortSignal),
-    [query, page]
+    {
+      refreshIfChange: [query, page],
+    }
   );
 
   const items = result?.documents.map((item) => (

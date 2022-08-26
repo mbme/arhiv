@@ -10,7 +10,9 @@ type MarkupProps = {
 export function Markup({ markup, className = '' }: MarkupProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.RenderMarkup({ markup }, abortSignal),
-    [markup]
+    {
+      refreshIfChange: [markup],
+    }
   );
 
   if (error) {

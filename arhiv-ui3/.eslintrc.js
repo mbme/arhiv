@@ -4,12 +4,4 @@ module.exports = {
     tsconfigRootDir: __dirname,
     project: ['./tsconfig.json'],
   },
-  rules: {
-    'react-hooks/exhaustive-deps': [
-      'warn',
-      {
-        'additionalHooks': '(useQuery)',
-      },
-    ],
-  },
 };

@@ -9,10 +9,9 @@ type RefContainerProps = {
   id: string;
 };
 export function RefContainer({ id }: RefContainerProps) {
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.GetRef({ id }, abortSignal),
-    [id]
-  );
+  const { result, error, inProgress } = useQuery((abortSignal) => RPC.GetRef({ id }, abortSignal), {
+    refreshIfChange: [id],
+  });
 
   if (error) {
     return <QueryError error={error} />;

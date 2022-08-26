@@ -20,6 +20,8 @@ export function createRPCProxy<Request extends SerdeEnum, Response extends Serde
       get(_, prop) {
         return async (params: Obj, signal?: AbortSignal) => {
           try {
+            console.debug('RPC: %s', prop);
+
             const response = await fetch(url, {
               method: 'POST',
               headers: {

@@ -24,7 +24,7 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
   return (
     <CardContext.Provider value={cardContextRef.current}>
       <div
-        className="w-[38rem] shrink-0 grow-0 bg-white drop-shadow relative       snap-center"
+        className="var-card-width shrink-0 grow-0 bg-white drop-shadow relative       snap-center"
         ref={(containerEl) => {
           if (!containerEl || scrolledRef.current) {
             return;
@@ -34,7 +34,7 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
           scrolledRef.current = true;
         }}
       >
-        <div className="max-h-full overflow-auto px-4 pt-16 pb-2">{children}</div>
+        <div className="max-h-full overflow-auto px-4 pt-16 pb-6">{children}</div>
       </div>
     </CardContext.Provider>
   );

@@ -14,8 +14,8 @@
   "author": "mbme",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "^0.14.5",
-    "puppeteer-core": "^15.3.2"
+    "esbuild": "^0.15.5",
+    "puppeteer-core": "^16.2.0"
   },
   "dependencies": {
     "chrono-node": "^2.3.9",

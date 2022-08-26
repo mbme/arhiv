@@ -129,24 +129,6 @@
   .icon {
     @apply inline h-5 w-5;
   }
-
-  .modal {
-    @apply mx-auto mt-16 mb-8 rounded-md shadow-lg var-card-width bg-white;
-  }
-
-  .modal-title {
-    @apply text-lg font-bold tracking-wider uppercase bg-gray-50 rounded-t-md;
-    @apply p-2 sm:p-4 md:px-6;
-  }
-
-  .modal-content {
-    @apply p-2 sm:p-4 md:p-6 break-words;
-  }
-
-  .modal-buttons {
-    @apply flex justify-end bg-gray-50 rounded-b-md;
-    @apply p-2 sm:p-4 md:p-6;
-  }
 }
 
 @layer utilities {
@@ -177,6 +159,8 @@ body {
 
   color: #333;
   @apply var-bg-color;
+
+  font-size: 16px;
 }
 
 main {
@@ -223,5 +207,39 @@ main {
   & .cm-gutters {
     border: 0;
     @apply pl-2 bg-inherit;
+  }
+}
+
+.modal-container {
+  [aria-hidden='true'] {
+    display: none;
+  }
+
+  @apply fixed z-50 inset-0 overflow-y-scroll flex flex-col;
+
+  .modal-overlay {
+    @apply fixed z-10 inset-0 backdrop-blur-md;
+  }
+
+  .modal-dialog {
+    @apply z-10 mx-auto mt-16 mb-8 rounded-md shadow-lg var-card-width bg-white;
+  }
+
+  .modal-title {
+    @apply text-lg font-bold tracking-wider uppercase bg-gray-50 rounded-t-md;
+    @apply p-2 sm:p-4 md:px-6;
+
+    &.is-warn {
+      @apply bg-red-500 bg-opacity-75;
+    }
+  }
+
+  .modal-content {
+    @apply p-2 sm:p-4 md:p-6 break-words;
+  }
+
+  .modal-buttons {
+    @apply flex justify-end bg-gray-50 rounded-b-md;
+    @apply p-2 sm:p-4 md:p-6;
   }
 }

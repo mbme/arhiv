@@ -2,30 +2,32 @@ import { ComponentChildren } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
-import { Callback, lockGlobalScroll } from '../../scripts/utils';
+import { Callback, cx, lockGlobalScroll } from '../../scripts/utils';
+import { useId } from '../hooks';
 
 type DialogProps = {
   onHide: Callback;
+  variant?: 'warn';
+  title: ComponentChildren;
   children: ComponentChildren;
+  buttons?: ComponentChildren;
 };
-export function Dialog({ onHide, children }: DialogProps) {
+export function Dialog({ onHide, variant, title, children, buttons }: DialogProps) {
+  const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
+
   const onHideRef = useRef(onHide);
   onHideRef.current = onHide;
 
-  const [modalEl] = useState(() => {
-    const rootEl = document.getElementById('modal-root');
-    if (!rootEl) {
-      throw new Error('modal root el not found');
-    }
-
-    const modalEl = document.createElement('div');
-    modalEl.className = 'fixed z-50 inset-0 overflow-y-scroll backdrop-blur-md';
-    rootEl.appendChild(modalEl);
-
-    return modalEl;
-  });
+  const rootEl = document.getElementById('modal-root');
+  if (!rootEl) {
+    throw new Error('modal root el not found');
+  }
 
   useEffect(() => {
+    if (!modalEl) {
+      return;
+    }
+
     const modal = new A11yDialog(modalEl);
 
     modal.show();
@@ -34,11 +36,33 @@ export function Dialog({ onHide, children }: DialogProps) {
 
     return () => {
       modal.destroy();
-      modalEl.remove();
     };
-  }, []);
+  }, [modalEl]);
 
   useEffect(() => lockGlobalScroll(), []);
 
-  return createPortal(<div className="modal">{children}</div>, modalEl);
+  const id = useId();
+  const titleId = `modal-title-${id}`;
+
+  return createPortal(
+    <div className="modal-container" ref={setModalEl} aria-labelledby={titleId} aria-hidden="true">
+      <div data-a11y-dialog-hide className="modal-overlay"></div>
+
+      <div role="document" className="modal-dialog">
+        <h1
+          id={titleId}
+          className={cx('modal-title', {
+            'is-warn': variant === 'warn',
+          })}
+        >
+          {title}
+        </h1>
+
+        <div className="modal-content">{children}</div>
+
+        {buttons && <div className="modal-buttons">{buttons}</div>}
+      </div>
+    </div>,
+    rootEl
+  );
 }

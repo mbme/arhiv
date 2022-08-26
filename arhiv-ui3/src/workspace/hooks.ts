@@ -1,5 +1,5 @@
 import { EffectCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Callback } from '../scripts/utils';
+import { Callback, newId } from '../scripts/utils';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -92,4 +92,10 @@ export function useUpdateEffect(effect: EffectCallback, deps: Inputs) {
       return effect();
     }
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+export function useId(): number {
+  const [id] = useState(() => newId());
+
+  return id;
 }

@@ -45,35 +45,12 @@ export function EraseDocumentButton({
     <Button variant="text" color="warn" icon="erase-document" onClick={() => setShowModal(true)}>
       Erase
       {showModal && (
-        <Dialog onHide={hideModal}>
-          <form
-            className="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              triggerRefresh();
-            }}
-          >
-            <div className="modal-title bg-red-500 bg-opacity-75">Erase {documentType}</div>
-
-            <div className="modal-content">
-              Do you really want to erase the {documentType} <b>{title}</b> and its history?
-              <label className="block mt-8">
-                Type <b>{confirmationText}</b> to confirm:
-                <input
-                  type="text"
-                  autocomplete="off"
-                  name="confirmation_text"
-                  className="field mt-2"
-                  required
-                  pattern={confirmationText}
-                  value=""
-                  disabled={inProgress}
-                />
-              </label>
-              {error && <QueryError error={error} />}
-            </div>
-
-            <div className="modal-buttons">
+        <Dialog
+          onHide={hideModal}
+          variant="warn"
+          title={`Erase ${documentType}`}
+          buttons={
+            <>
               <Button variant="simple" className="mr-8" onClick={hideModal} disabled={inProgress}>
                 Cancel
               </Button>
@@ -81,7 +58,31 @@ export function EraseDocumentButton({
               <Button type="submit" variant="prime" color="danger" loading={inProgress}>
                 ERASE
               </Button>
-            </div>
+            </>
+          }
+        >
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              triggerRefresh();
+            }}
+          >
+            Do you really want to erase the {documentType} <b>{title}</b> and its history?
+            <label className="block mt-8">
+              Type <b>{confirmationText}</b> to confirm:
+              <input
+                type="text"
+                autocomplete="off"
+                name="confirmation_text"
+                className="field mt-2"
+                required
+                pattern={confirmationText}
+                value=""
+                disabled={inProgress}
+              />
+            </label>
+            {error && <QueryError error={error} />}
           </form>
         </Dialog>
       )}

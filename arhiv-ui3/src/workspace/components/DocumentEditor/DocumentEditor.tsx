@@ -60,11 +60,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
       {error && <QueryError error={error} />}
 
-      {inProgress && (
-        <div className="mb-8">
-          <Spinner /> Loading...
-        </div>
-      )}
+      {inProgress && <Spinner className="mb-8" />}
     </>
   );
 }

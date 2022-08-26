@@ -4,6 +4,7 @@ import { RPC } from '../../rpc';
 import { CardContainer } from '../CardContainer';
 import { DateTime } from '../DateTime';
 import { QueryError } from '../QueryError';
+import { Spinner } from '../Spinner';
 import { Pagination } from './Pagination';
 import { SearchInput } from './SearchInput';
 
@@ -48,7 +49,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
 
       {error && <QueryError error={error} />}
 
-      {inProgress && <div className="mb-8">Loading...</div>}
+      {inProgress && <Spinner className="mb-8" />}
 
       <div className="divide-y mb-6">{items}</div>
 

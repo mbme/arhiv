@@ -10,12 +10,15 @@ export function Pagination({ page, hasMore, onClick }: PaginationProps) {
   return (
     <div className="flex items-center justify-center gap-6 font-mono">
       {page > 0 && (
-        <Button variant="text" onClick={() => onClick(page - 1)}>
-          <Icon variant="arrow-left" className="mr-1" />
-          prev
-        </Button>
+        <>
+          <Button variant="text" onClick={() => onClick(page - 1)}>
+            <Icon variant="arrow-left" className="mr-1" />
+            prev
+          </Button>
+
+          <div>Page {page}</div>
+        </>
       )}
-      <div>Page {page}</div>
 
       {hasMore && (
         <Button variant="text" onClick={() => onClick(page + 1)}>

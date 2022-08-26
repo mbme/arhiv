@@ -116,3 +116,18 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
     };
   }, [timeoutMs, enabled]);
 }
+
+// https://usehooks-ts.com/react-hook/use-debounce
+export function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delayMs);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}

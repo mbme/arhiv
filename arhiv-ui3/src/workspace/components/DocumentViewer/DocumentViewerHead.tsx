@@ -1,6 +1,10 @@
-import { formatDocumentType } from '../../../scripts/utils';
+import { useState } from 'preact/hooks';
+import { copyText } from '../../../scripts/clipboard';
+import { cx, formatDocumentType } from '../../../scripts/utils';
+import { useTimeout } from '../../hooks';
 import { Button } from '../Button';
 import { DateTime } from '../DateTime';
+import { Icon } from '../Icon';
 
 type DocumentViewerHeadProps = {
   id: string;
@@ -15,6 +19,28 @@ export function DocumentViewerHead({
   subtype,
   updatedAt,
 }: DocumentViewerHeadProps) {
+  const [copied, setCopied] = useState(false);
+
+  useTimeout(
+    () => {
+      setCopied(false);
+    },
+    2000,
+    copied
+  );
+
+  const copyIdToClipboard = () => {
+    void copyText(id).then(
+      () => {
+        setCopied(true);
+        console.log('Copied text "%s" to clipboard"', id);
+      },
+      (e) => {
+        console.error(`Failed to copy text "${id}" to clipboard`, e);
+      }
+    );
+  };
+
   return (
     <table id="document-head">
       <tr>
@@ -24,11 +50,15 @@ export function DocumentViewerHead({
             variant="text"
             className="block font-mono tracking-wide cursor-pointer group"
             title="Copy document id to clipboard"
+            onClick={copyIdToClipboard}
           >
             {id}
-            <svg className="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
-              <use xlinkHref="#icon-clipboard-copy" />
-            </svg>
+            <Icon
+              variant={copied ? 'clipboard-check' : 'clipboard'}
+              className={cx('ml-1', {
+                'invisible group-hover:visible': !copied,
+              })}
+            />
           </Button>
         </td>
       </tr>

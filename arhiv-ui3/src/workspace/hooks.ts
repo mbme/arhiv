@@ -99,3 +99,20 @@ export function useId(): number {
 
   return id;
 }
+
+export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): void {
+  const cbRef = useRef(cb);
+  cbRef.current = cb;
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => cbRef.current(), timeoutMs);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [timeoutMs, enabled]);
+}

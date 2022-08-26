@@ -8,7 +8,7 @@ import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
-import { Spinner } from '../Spinner';
+import { Icon } from '../Icon';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -59,7 +59,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
 
       {error && <QueryError error={error} />}
 
-      {inProgress && <Spinner className="mb-8" />}
+      {inProgress && <Icon variant="spinner" className="mb-8" />}
 
       {result && (
         <>

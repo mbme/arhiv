@@ -1,8 +1,8 @@
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
 import { CardContainer } from './CardContainer';
+import { Icon } from './Icon';
 import { QueryError } from './QueryError';
-import { Spinner } from './Spinner';
 
 export function StatusCard() {
   const { result, error, inProgress } = useQuery((abortSignal) => RPC.GetStatus({}, abortSignal));
@@ -13,7 +13,7 @@ export function StatusCard() {
 
       {error && <QueryError error={error} />}
 
-      {inProgress && <Spinner className="mb-8" />}
+      {inProgress && <Icon variant="spinner" className="mb-8" />}
 
       {result && (
         <pre className="text-sm">

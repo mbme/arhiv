@@ -1,7 +1,6 @@
 import { ComponentChildren } from 'preact';
 import { Callback, cx } from '../../scripts/utils';
 import { Icon, IconVariant } from './Icon';
-import { Spinner } from './Spinner';
 
 type ButtonProps = {
   variant: 'simple' | 'prime' | 'text';
@@ -42,7 +41,7 @@ export function Button({
       title={title}
     >
       {icon && <Icon variant={icon} className="mr-1" />}
-      {loading && <Spinner className="mr-2" />}
+      {loading && <Icon variant="spinner" className="mr-2" />}
 
       {children}
     </button>

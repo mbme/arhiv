@@ -4,8 +4,8 @@ import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
+import { Icon } from '../Icon';
 import { QueryError } from '../QueryError';
-import { Spinner } from '../Spinner';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
 type DocumentEditorProps = {
@@ -60,7 +60,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
 
       {error && <QueryError error={error} />}
 
-      {inProgress && <Spinner className="mb-8" />}
+      {inProgress && <Icon variant="spinner" className="mb-8" />}
     </>
   );
 }

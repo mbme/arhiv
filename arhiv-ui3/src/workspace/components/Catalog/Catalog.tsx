@@ -31,6 +31,12 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
       className="cursor-pointer px-2 py-3 transition-colors hover:bg-sky-100"
       key={item.id}
       onClick={() => onDocumentSelected(item.id)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          (e.target as HTMLElement).click();
+        }
+      }}
     >
       <div className="font-bold text-lg">
         [{item.documentType || 'erased'}] {item.title}

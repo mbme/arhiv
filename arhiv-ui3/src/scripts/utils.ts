@@ -131,7 +131,7 @@ export function pickRandomElement<T>(arr: T[]): T {
 export function cx(
   ...args: Array<string | null | undefined | false | Obj<string | null | undefined | boolean>>
 ): string {
-  let result = '';
+  const result = [];
 
   for (const arg of args) {
     if (!arg) {
@@ -139,17 +139,18 @@ export function cx(
     }
 
     if (typeof arg === 'string') {
-      result += ' ' + arg;
+      result.push(arg);
+      continue;
     }
 
     for (const [objKey, objVal] of Object.entries(arg)) {
       if (objVal) {
-        result += ' ' + objKey;
+        result.push(objKey);
       }
     }
   }
 
-  return result;
+  return result.join(' ');
 }
 
 export function formatDocumentType(documentType: string, subtype?: string): string {

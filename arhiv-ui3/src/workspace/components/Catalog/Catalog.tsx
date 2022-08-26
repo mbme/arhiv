@@ -51,7 +51,10 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
 
       {inProgress && <Spinner className="mb-8" />}
 
-      <div className="divide-y mb-6">{items}</div>
+      <div className="divide-y mb-6">
+        {items}
+        {items?.length === 0 && <div className="text-center">No results :(</div>}
+      </div>
 
       {result && (
         <Pagination page={page} hasMore={result.hasMore} onClick={(newPage) => setPage(newPage)} />

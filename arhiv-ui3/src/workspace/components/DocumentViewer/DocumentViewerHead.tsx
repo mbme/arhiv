@@ -18,7 +18,7 @@ export function DocumentViewerHead({
   return (
     <table id="document-head">
       <tr>
-        <td class="section-heading">id:</td>
+        <td className="section-heading">id:</td>
         <td>
           <Button
             variant="text"
@@ -26,18 +26,18 @@ export function DocumentViewerHead({
             title="Copy document id to clipboard"
           >
             {id}
-            <svg class="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
+            <svg className="h-5 w-5 inline-block relative left-[-8px] invisible group-hover:visible group-focus:visible">
               <use xlinkHref="#icon-clipboard-copy" />
             </svg>
           </Button>
         </td>
       </tr>
       <tr>
-        <td class="section-heading">type:</td>
-        <td class="font-semibold">{formatDocumentType(documentType, subtype)}</td>
+        <td className="section-heading">type:</td>
+        <td className="font-semibold">{formatDocumentType(documentType, subtype)}</td>
       </tr>
       <tr>
-        <td class="section-heading">modified:</td>
+        <td className="section-heading">modified:</td>
         <td>
           <DateTime datetime={updatedAt} />
         </td>

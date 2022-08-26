@@ -9,6 +9,16 @@ type DocumentViewerFieldsProps = {
 };
 
 export function DocumentViewerFields({ documentType, subtype, data }: DocumentViewerFieldsProps) {
+  if (!documentType) {
+    return (
+      <img
+        src="/public/nothing-to-see-here.jpg"
+        alt="funny picture for the erased document"
+        class="my-16 mx-auto"
+      />
+    );
+  }
+
   const fields = getFieldDescriptions(documentType, subtype);
 
   return (

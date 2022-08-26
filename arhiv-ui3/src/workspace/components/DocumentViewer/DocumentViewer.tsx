@@ -36,18 +36,20 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
         }
         right={
           <>
-            {result && (
-              <EraseDocumentButton
-                documentId={result.id}
-                documentType={result.documentType}
-                title={result.title}
-                onErase={triggerRefresh}
-              />
-            )}
+            {result?.documentType && (
+              <>
+                <EraseDocumentButton
+                  documentId={result.id}
+                  documentType={result.documentType}
+                  title={result.title}
+                  onErase={triggerRefresh}
+                />
 
-            <Button variant="text" icon="edit-document" onClick={onEdit}>
-              Edit
-            </Button>
+                <Button variant="text" icon="edit-document" onClick={onEdit}>
+                  Edit
+                </Button>
+              </>
+            )}
 
             <CardContainer.CloseButton />
           </>

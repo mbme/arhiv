@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { CardContainer } from '../CardContainer';
@@ -14,10 +14,6 @@ type CatalogProps = {
 export function Catalog({ onDocumentSelected }: CatalogProps) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
-
-  useEffect(() => {
-    setPage(0);
-  }, [query]);
 
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.ListDocuments({ query, page }, abortSignal),
@@ -50,7 +46,14 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
     <>
       <CardContainer.Topbar title="Catalog" right={<CardContainer.CloseButton />} />
 
-      <SearchInput value={query} onSearch={setQuery} loading={inProgress} />
+      <SearchInput
+        value={query}
+        onSearch={(newQuery) => {
+          setQuery(newQuery);
+          setPage(0);
+        }}
+        loading={inProgress}
+      />
 
       {error && <QueryError error={error} />}
 

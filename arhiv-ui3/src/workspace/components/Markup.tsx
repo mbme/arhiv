@@ -1,3 +1,4 @@
+import { cx } from '../../scripts/utils';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
 import { QueryError } from './QueryError';
@@ -24,6 +25,6 @@ export function Markup({ markup, className = '' }: MarkupProps) {
   }
 
   return (
-    <div className={`markup ${className}`} dangerouslySetInnerHTML={{ __html: result.html }} />
+    <div className={cx('markup', className)} dangerouslySetInnerHTML={{ __html: result.html }} />
   );
 }

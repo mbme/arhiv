@@ -24,13 +24,14 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
   return (
     <CardContext.Provider value={cardContextRef.current}>
       <div
-        className="var-card-width shrink-0 grow-0 bg-white drop-shadow relative       snap-center"
+        className="var-card-width shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity opacity-30"
         ref={(containerEl) => {
           if (!containerEl || scrolledRef.current) {
             return;
           }
 
           containerEl.scrollIntoView({ inline: 'center' });
+          containerEl.classList.remove('opacity-30');
           scrolledRef.current = true;
         }}
       >
@@ -62,7 +63,7 @@ CardContainer.CloseButton = function CloseButton() {
   };
 
   return (
-    <Button variant="text" onClick={onClose}>
+    <Button variant="text" onClick={onClose} className="relative left-2">
       <Icon variant="x" />
     </Button>
   );

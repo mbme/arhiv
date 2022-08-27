@@ -9,6 +9,10 @@
     touch-action: manipulation;
   }
 
+  a:not(.clean-link) {
+    @apply text-blue-700;
+  }
+
   [hidden] {
     display: none !important;
   }

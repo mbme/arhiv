@@ -19,9 +19,6 @@ pub enum WorkspaceRequest {
     RenderMarkup {
         markup: String,
     },
-    GetRef {
-        id: Id,
-    },
     #[serde(rename_all = "camelCase")]
     CreateDocument {
         document_type: String,
@@ -61,13 +58,6 @@ pub enum WorkspaceResponse {
     },
     RenderMarkup {
         html: String,
-    },
-    #[serde(rename_all = "camelCase")]
-    GetRef {
-        id: Id,
-        document_type: String,
-        subtype: String,
-        title: String,
     },
     CreateDocument {
         id: Option<Id>,

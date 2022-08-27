@@ -9,6 +9,8 @@ import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
 import { Icon } from '../Icon';
+import { isAttachment, isImageAttachment } from '../../schema';
+import { DocumentData } from '../../dto';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -69,6 +71,13 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
             subtype={result.subtype}
             updatedAt={result.updatedAt}
           />
+
+          {isAttachment(result.documentType) && (
+            <div className="mb-8 empty:hidden">
+              {getAttachmentPreview(result.subtype, result.data)}
+            </div>
+          )}
+
           <DocumentViewerFields
             documentType={result.documentType}
             subtype={result.subtype}
@@ -79,4 +88,17 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
       )}
     </>
   );
+}
+
+export function getAttachmentPreview(subtype: string, data: DocumentData) {
+  const filename = data['filename'] as string;
+  const blobId = data['blob'] as string;
+
+  const blobUrl = `/blobs/${blobId}`;
+
+  if (isImageAttachment(subtype)) {
+    return <img src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
+  }
+
+  return null;
 }

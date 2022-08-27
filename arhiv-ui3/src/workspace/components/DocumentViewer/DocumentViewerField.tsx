@@ -15,7 +15,7 @@ function FieldValue({ field, value }: DocumentViewerFieldProps) {
   if ('Ref' in field.field_type) {
     const id = value as string;
 
-    return <RefContainer key={id} id={id} />;
+    return <RefContainer key={id} id={id} attachmentPreview />;
   }
 
   if ('RefList' in field.field_type) {

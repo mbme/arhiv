@@ -93,17 +93,6 @@ impl App {
 
                 WorkspaceResponse::RenderMarkup { html }
             }
-            WorkspaceRequest::GetRef { id } => {
-                let document = self.arhiv.must_get_document(&id)?;
-                let schema = self.arhiv.get_schema();
-
-                WorkspaceResponse::GetRef {
-                    title: schema.get_title(&document)?,
-                    id,
-                    document_type: document.document_type,
-                    subtype: document.subtype,
-                }
-            }
             WorkspaceRequest::SaveDocument { id, subtype, data } => {
                 let mut document = self.arhiv.must_get_document(&id)?;
 

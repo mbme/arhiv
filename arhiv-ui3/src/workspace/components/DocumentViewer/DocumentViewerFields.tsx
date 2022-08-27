@@ -1,6 +1,5 @@
 import { DocumentData } from '../../dto';
-import { getFieldDescriptions, isAttachment } from '../../schema';
-import { AttachmentPreview } from './AttachmentPreview';
+import { getFieldDescriptions } from '../../schema';
 import { DocumentViewerField } from './DocumentViewerField';
 
 type DocumentViewerFieldsProps = {
@@ -24,12 +23,6 @@ export function DocumentViewerFields({ documentType, subtype, data }: DocumentVi
 
   return (
     <>
-      {isAttachment(documentType) && (
-        <div className="mb-8">
-          <AttachmentPreview subtype={subtype} data={data} />
-        </div>
-      )}
-
       {fields.map((field) => (
         <DocumentViewerField key={field.name} field={field} value={data[field.name]} />
       ))}

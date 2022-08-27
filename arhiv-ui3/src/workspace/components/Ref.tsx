@@ -1,17 +1,23 @@
 import { formatDocumentType } from '../../scripts/utils';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
+import { isAttachment } from '../schema';
 import { useCardContext } from '../workspace-reducer';
 import { Button } from './Button';
+import { getAttachmentPreview } from './DocumentViewer/DocumentViewer';
 import { QueryError } from './QueryError';
 
 type RefContainerProps = {
   id: string;
+  attachmentPreview?: boolean;
 };
-export function RefContainer({ id }: RefContainerProps) {
-  const { result, error, inProgress } = useQuery((abortSignal) => RPC.GetRef({ id }, abortSignal), {
-    refreshIfChange: [id],
-  });
+export function RefContainer({ id, attachmentPreview }: RefContainerProps) {
+  const { result, error, inProgress } = useQuery(
+    (abortSignal) => RPC.GetDocument({ id }, abortSignal),
+    {
+      refreshIfChange: [id],
+    }
+  );
 
   if (error) {
     return <QueryError error={error} />;
@@ -19,6 +25,14 @@ export function RefContainer({ id }: RefContainerProps) {
 
   if (inProgress || !result) {
     return null;
+  }
+
+  if (attachmentPreview && isAttachment(result.documentType)) {
+    const preview = getAttachmentPreview(result.subtype, result.data);
+
+    if (preview) {
+      return preview;
+    }
   }
 
   return (

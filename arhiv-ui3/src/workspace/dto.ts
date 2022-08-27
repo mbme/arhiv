@@ -18,10 +18,6 @@ export type WorkspaceRequest =
       markup: string;
     }
   | {
-      typeName: 'GetRef';
-      id: string;
-    }
-  | {
       typeName: 'SaveDocument';
       id: string;
       subtype: string;
@@ -61,13 +57,6 @@ export type WorkspaceResponse =
   | {
       typeName: 'RenderMarkup';
       html: string;
-    }
-  | {
-      typeName: 'GetRef';
-      id: string;
-      documentType: string;
-      subtype: string;
-      title: string;
     }
   | {
       typeName: 'SaveDocument';

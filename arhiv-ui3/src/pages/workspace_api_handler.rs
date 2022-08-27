@@ -25,6 +25,7 @@ impl App {
                     .search(query)
                     .page_size(PAGE_SIZE)
                     .on_page(page)
+                    .skip_erased()
                     .recently_updated_first();
 
                 let schema = self.arhiv.get_schema();

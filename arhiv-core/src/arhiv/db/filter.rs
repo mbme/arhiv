@@ -13,6 +13,7 @@ pub struct Conditions {
     pub document_ref: Option<Id>,
     pub collection_ref: Option<Id>,
     pub only_staged: Option<bool>,
+    pub skip_erased: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -160,6 +161,13 @@ impl Filter {
     #[must_use]
     pub fn only_staged(mut self) -> Filter {
         self.conditions.only_staged = Some(true);
+
+        self
+    }
+
+    #[must_use]
+    pub fn skip_erased(mut self) -> Filter {
+        self.conditions.skip_erased = Some(true);
 
         self
     }

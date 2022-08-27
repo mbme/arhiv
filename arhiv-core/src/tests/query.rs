@@ -183,7 +183,7 @@ fn test_multiple_order_by() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_matcher() -> Result<()> {
+async fn test_conditions() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
@@ -191,6 +191,10 @@ async fn test_matcher() -> Result<()> {
 
         tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
         tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
+
+        let mut document3 = new_document(json!({ "test": "value2" }));
+        tx.stage_document(&mut document3)?;
+        tx.erase_document(&document3.id)?;
 
         tx.commit()?;
     }
@@ -222,6 +226,24 @@ async fn test_matcher() -> Result<()> {
         let page = arhiv.list_documents(Filter::default().search("Val"))?;
 
         assert_eq!(get_values(page).len(), 2);
+    }
+
+    {
+        // test Skip erased
+        let page = arhiv.list_documents(Filter::default().skip_erased())?;
+
+        assert_eq!(get_values(page).len(), 2);
+    }
+
+    {
+        // tests only staged
+        let page = arhiv.list_documents(Filter::default().only_staged())?;
+        assert_eq!(get_values(page).len(), 3);
+
+        arhiv.sync().await?;
+
+        let page = arhiv.list_documents(Filter::default().only_staged())?;
+        assert_eq!(get_values(page).len(), 0);
     }
 
     Ok(())

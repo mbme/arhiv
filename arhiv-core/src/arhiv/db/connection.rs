@@ -277,6 +277,10 @@ impl ArhivConnection {
             qb.where_condition("documents.rev = 0");
         }
 
+        if let Some(true) = filter.conditions.skip_erased {
+            qb.where_condition("documents.document_type != ''");
+        }
+
         if let Some((ref field, ref pattern)) = filter.conditions.field {
             qb.where_condition(format!(
                 "json_contains(documents.data, {}, {})",

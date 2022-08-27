@@ -75,3 +75,11 @@ export function getDefaultSubtype(documentType: string): string {
 
   return dataDescription.subtypes?.[0] ?? '';
 }
+
+export function isAttachment(documentType: string) {
+  return documentType === 'attachment';
+}
+
+export function isImageAttachment(subtype: string) {
+  return subtype === 'image';
+}

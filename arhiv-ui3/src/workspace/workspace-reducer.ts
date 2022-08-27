@@ -1,6 +1,6 @@
 import { createContext } from 'preact';
-import { useContext } from 'preact/hooks';
-import { newId } from '../scripts/utils';
+import { useContext, useEffect, useReducer } from 'preact/hooks';
+import { newId, getSessionValue, setSessionValue } from '../scripts/utils';
 
 type CardVariant =
   | { variant: 'catalog' } //
@@ -15,7 +15,7 @@ export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
 
-function newCard(variant: CardVariant): Card {
+function createCard(variant: CardVariant): Card {
   return {
     id: newId(),
     ...variant,
@@ -39,21 +39,39 @@ type ActionType =
 
 export type WorkspaceDispatch = (action: ActionType) => void;
 
-export function workspaceReducer(state: Card[], action: ActionType): Card[] {
+function workspaceReducer(state: Card[], action: ActionType): Card[] {
   switch (action.type) {
     case 'open': {
-      return [...state, newCard(action.newCard)];
+      return [...state, createCard(action.newCard)];
     }
     case 'close': {
       return state.filter((card) => card.id !== action.id);
     }
     case 'replace': {
-      return state.map((card) => (card.id === action.id ? newCard(action.newCard) : card));
+      return state.map((card) => (card.id === action.id ? createCard(action.newCard) : card));
     }
     default: {
       return state;
     }
   }
+}
+
+const SESSION_STORAGE_KEY = 'workspace-state';
+
+export function useWorkspaceReducer(): [Card[], WorkspaceDispatch] {
+  const [cards, dispatch] = useReducer(workspaceReducer, undefined, () =>
+    getSessionValue<Card[]>(SESSION_STORAGE_KEY, []).map((card) => ({
+      ...card,
+      // override card ids to prevent id clashes after page reload
+      id: newId(),
+    }))
+  );
+
+  useEffect(() => {
+    setSessionValue(SESSION_STORAGE_KEY, cards);
+  }, [cards]);
+
+  return [cards, dispatch];
 }
 
 type CardContextType = {

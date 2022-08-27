@@ -1,6 +1,4 @@
-import { useEffect, useReducer } from 'preact/hooks';
-import { getSessionValue, setSessionValue } from '../scripts/utils';
-import { throwBadCardVariant, workspaceReducer } from './workspace-reducer';
+import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
 import { CatalogCard } from './components/CatalogCard';
 import { NewDocumentCard } from './components/NewDocumentCard';
 import { CardContainer } from './components/CardContainer';
@@ -8,16 +6,8 @@ import { DocumentCard } from './components/DocumentCard';
 import { StatusCard } from './components/StatusCard';
 import { Button } from './components/Button';
 
-const SESSION_STORAGE_KEY = 'workspace-state';
-
 export function Workspace() {
-  const [cards, dispatch] = useReducer(workspaceReducer, undefined, () =>
-    getSessionValue(SESSION_STORAGE_KEY, [])
-  );
-
-  useEffect(() => {
-    setSessionValue(SESSION_STORAGE_KEY, cards);
-  }, [cards]);
+  const [cards, dispatch] = useWorkspaceReducer();
 
   return (
     <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-14 pb-2 pl-8 pr-16">

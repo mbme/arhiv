@@ -27,7 +27,9 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
   return (
     <>
       <CardContainer.Topbar
-        title={`Edit ${result?.documentType || ''}`}
+        left={
+          <span className="section-heading text-lg">{`Edit ${result?.documentType || ''}`}</span>
+        }
         right={
           <>
             <Button variant="simple" onClick={onCancel}>

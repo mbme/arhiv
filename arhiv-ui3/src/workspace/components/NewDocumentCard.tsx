@@ -25,7 +25,9 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
   return (
     <>
       <CardContainer.Topbar
-        title={`New ${documentType || 'document'}`}
+        left={
+          <span className="section-heading text-lg">{`New ${documentType || 'document'}`}</span>
+        }
         right={
           <>
             <Button variant="simple" onClick={onCancel}>

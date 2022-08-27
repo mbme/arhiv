@@ -29,7 +29,6 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
   return (
     <>
       <CardContainer.Topbar
-        title="Viewer"
         left={
           onBack && (
             <Button variant="text" icon="arrow-left" onClick={onBack}>

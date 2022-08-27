@@ -41,16 +41,13 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
 }
 
 type TopbarProps = {
-  title?: string;
   left?: ComponentChildren;
   right?: ComponentChildren;
 };
-CardContainer.Topbar = function Topbar({ title, left, right }: TopbarProps) {
+CardContainer.Topbar = function Topbar({ left, right }: TopbarProps) {
   return (
     <div className="flex items-center gap-4 justify-between bg-white px-4 py-2 absolute inset-x-0 top-0 z-10">
       <div className="flex items-center gap-4">{left}</div>
-
-      {title && <div className="section-heading text-lg">{title}</div>}
 
       <div className="flex items-center gap-4">{right}</div>
     </div>

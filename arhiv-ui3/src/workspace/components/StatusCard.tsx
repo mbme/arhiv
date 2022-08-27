@@ -9,7 +9,10 @@ export function StatusCard() {
 
   return (
     <>
-      <CardContainer.Topbar title="Status" right={<CardContainer.CloseButton />} />
+      <CardContainer.Topbar
+        left={<span className="section-heading text-lg">Status</span>}
+        right={<CardContainer.CloseButton />}
+      />
 
       {error && <QueryError error={error} />}
 

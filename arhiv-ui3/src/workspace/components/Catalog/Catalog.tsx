@@ -44,7 +44,10 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
 
   return (
     <>
-      <CardContainer.Topbar title="Catalog" right={<CardContainer.CloseButton />} />
+      <CardContainer.Topbar
+        left={<span className="section-heading text-lg">Catalog</span>}
+        right={<CardContainer.CloseButton />}
+      />
 
       <SearchInput
         value={query}

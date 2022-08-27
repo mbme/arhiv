@@ -4,7 +4,7 @@ type QueryErrorProps = {
 
 export function QueryError({ error }: QueryErrorProps) {
   return (
-    <pre className="border-red-500">
+    <pre className="bg-red-300 p-4">
       <code>{String(error)}</code>
     </pre>
   );

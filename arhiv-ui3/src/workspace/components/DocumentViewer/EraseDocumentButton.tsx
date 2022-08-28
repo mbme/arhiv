@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
@@ -18,6 +18,7 @@ export function EraseDocumentButton({
   title,
   onErase,
 }: EraseDocumentButtonProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [showModal, setShowModal] = useState(false);
 
   const { error, inProgress, triggerRefresh } = useQuery(
@@ -55,13 +56,19 @@ export function EraseDocumentButton({
                 Cancel
               </Button>
 
-              <Button type="submit" variant="prime" color="danger" loading={inProgress}>
+              <Button
+                variant="prime"
+                color="danger"
+                loading={inProgress}
+                onClick={() => formRef.current?.requestSubmit()}
+              >
                 ERASE
               </Button>
             </>
           }
         >
           <form
+            ref={formRef}
             className="form"
             onSubmit={(e) => {
               e.preventDefault();

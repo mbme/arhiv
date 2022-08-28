@@ -33,6 +33,15 @@ pub enum WorkspaceRequest {
     EraseDocument {
         id: Id,
     },
+    #[serde(rename_all = "camelCase")]
+    ListDir {
+        dir: Option<String>,
+        show_hidden: bool,
+    },
+    #[serde(rename_all = "camelCase")]
+    CreateAttachment {
+        file_path: String,
+    },
 }
 
 #[derive(Serialize)]
@@ -67,6 +76,13 @@ pub enum WorkspaceResponse {
         errors: Option<SaveDocumentErrors>,
     },
     EraseDocument {},
+    ListDir {
+        dir: String,
+        entries: Vec<DirEntry>,
+    },
+    CreateAttachment {
+        id: Id,
+    },
 }
 
 #[derive(Serialize)]
@@ -93,4 +109,42 @@ pub struct DocumentBackref {
     pub document_type: String,
     pub subtype: String,
     pub title: String,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "typeName")]
+pub enum DirEntry {
+    #[serde(rename_all = "camelCase")]
+    Dir {
+        name: String,
+        path: String,
+        is_readable: bool,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    File {
+        name: String,
+        path: String,
+        is_readable: bool,
+        size: u64,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    Symlink {
+        name: String,
+        path: String,
+        is_readable: bool,
+        links_to: String,
+        size: Option<u64>,
+    },
+}
+
+impl DirEntry {
+    pub fn get_name(&self) -> &str {
+        match self {
+            DirEntry::Dir { name, .. } => name,
+            DirEntry::File { name, .. } => name,
+            DirEntry::Symlink { name, .. } => name,
+        }
+    }
 }

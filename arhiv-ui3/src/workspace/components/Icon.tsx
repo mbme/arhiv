@@ -7,6 +7,8 @@ export type IconVariant =
   | 'spinner'
   | 'clipboard'
   | 'clipboard-check'
+  | 'paperclip'
+  | 'folder'
   | 'search'
   | 'search-catalog'
   | 'edit-document'
@@ -99,7 +101,7 @@ export function Icon({ variant, className = '' }: IconProps) {
       );
 
     case 'clipboard':
-      // hero icons outline clipboard
+      // heroicons outline clipboard
       return (
         <svg
           className={cx('icon', className)}
@@ -117,7 +119,7 @@ export function Icon({ variant, className = '' }: IconProps) {
       );
 
     case 'clipboard-check':
-      // hero icons outline clipboard-document-check
+      // heroicons outline clipboard-document-check
       return (
         <svg
           className={cx('icon', className)}
@@ -133,9 +135,37 @@ export function Icon({ variant, className = '' }: IconProps) {
           />
         </svg>
       );
+    case 'paperclip':
+      // material design icons paperclip-plus
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M18 13.09C17.47 13.18 16.97 13.34 16.5 13.55V6H18V13.09M12.5 21.5C10.29 21.5 8.5 19.71 8.5 17.5V5C8.5 3.62 9.62 2.5 11 2.5S13.5 3.62 13.5 5V15.5C13.5 16.05 13.05 16.5 12.5 16.5S11.5 16.05 11.5 15.5V6H10V15.5C10 16.88 11.12 18 12.5 18C12.71 18 12.91 17.97 13.1 17.92C13.35 16.58 14.03 15.41 15 14.54V5C15 2.79 13.21 1 11 1S7 2.79 7 5V17.5C7 20.54 9.46 23 12.5 23C13.13 23 13.73 22.89 14.29 22.7C13.97 22.29 13.7 21.84 13.5 21.36C13.17 21.44 12.84 21.5 12.5 21.5M20 18V15H18V18H15V20H18V23H20V20H23V18H20Z"
+          />
+        </svg>
+      );
+
+    case 'folder':
+      // heroicons outline folder
+      return (
+        <svg
+          className={cx('icon', className)}
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+          />
+        </svg>
+      );
 
     case 'search':
-      // hero icons outline magnifying-glass
+      // heroicons outline magnifying-glass
       return (
         <svg
           className={cx('icon', className)}

@@ -1,13 +1,19 @@
+use std::{cmp::Ordering, fs, path::Path};
+
 use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
-use arhiv_core::{entities::Document, markup::MarkupStr, Filter, ValidationError, Validator};
+use arhiv_core::{
+    definitions::Attachment, entities::Document, markup::MarkupStr, Filter, ValidationError,
+    Validator,
+};
+use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
 use crate::{
     app::{App, AppResponse},
     markup::MarkupStringExt,
     workspace::dto::{
-        DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
+        DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
         WorkspaceResponse,
     },
 };
@@ -145,6 +151,27 @@ impl App {
 
                 WorkspaceResponse::EraseDocument {}
             }
+            WorkspaceRequest::ListDir { dir, show_hidden } => {
+                let dir = dir.unwrap_or_else(|| get_home_dir().unwrap_or_else(|| "/".to_string()));
+                ensure_dir_exists(&dir)?;
+
+                let dir = fs::canonicalize(dir)?;
+
+                let mut entries: Vec<DirEntry> = list_entries(&dir, show_hidden)?;
+                sort_entries(&mut entries);
+
+                WorkspaceResponse::ListDir {
+                    dir: path_to_string(dir)?,
+                    entries,
+                }
+            }
+            WorkspaceRequest::CreateAttachment { ref file_path } => {
+                let mut tx = self.arhiv.get_tx()?;
+                let attachment = Attachment::create(file_path, false, &mut tx)?;
+                tx.commit()?;
+
+                WorkspaceResponse::CreateAttachment { id: attachment.id }
+            }
         };
 
         let response = serde_json::to_string(&response).context("failed to serialize response")?;
@@ -166,4 +193,85 @@ impl From<ValidationError> for SaveDocumentErrors {
             },
         }
     }
+}
+
+fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
+    let mut result = vec![];
+
+    if let Some(parent) = dir.parent() {
+        let path = path_to_string(parent)?;
+
+        let metadata = fs::metadata(&path)?;
+
+        result.push(DirEntry::Dir {
+            name: "..".to_string(),
+            path,
+            is_readable: is_readable(&metadata),
+        });
+    }
+
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+
+        let name = path_to_string(entry.file_name())?;
+
+        // skip hidden files
+        if !show_hidden && name.starts_with('.') {
+            continue;
+        }
+
+        let path = path_to_string(entry.path())?;
+
+        let file_type = entry.file_type()?;
+        let metadata = fs::metadata(&path)?;
+
+        let is_readable = is_readable(&metadata);
+
+        if metadata.is_dir() {
+            result.push(DirEntry::Dir {
+                name,
+                path,
+                is_readable,
+            });
+            continue;
+        }
+
+        if file_type.is_symlink() {
+            let link_path = fs::canonicalize(&path)?;
+            let link_path = path_to_string(link_path)?;
+
+            let size = metadata.is_file().then(|| metadata.len());
+
+            result.push(DirEntry::Symlink {
+                name,
+                path,
+                is_readable,
+                links_to: link_path,
+                size,
+            });
+            continue;
+        }
+
+        result.push(DirEntry::File {
+            name,
+            path,
+            is_readable,
+            size: metadata.len(),
+        });
+    }
+
+    Ok(result)
+}
+
+fn sort_entries(entries: &mut [DirEntry]) {
+    entries.sort_by(|a, b| {
+        match (
+            matches!(a, DirEntry::Dir { .. }),
+            matches!(b, DirEntry::Dir { .. }),
+        ) {
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            _ => a.get_name().cmp(b.get_name()),
+        }
+    });
 }

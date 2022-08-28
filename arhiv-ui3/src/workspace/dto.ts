@@ -32,6 +32,15 @@ export type WorkspaceRequest =
   | {
       typeName: 'EraseDocument';
       id: string;
+    }
+  | {
+      typeName: 'ListDir';
+      dir?: string;
+      showHidden: boolean;
+    }
+  | {
+      typeName: 'CreateAttachment';
+      filePath: string;
     };
 
 export type WorkspaceResponse =
@@ -69,6 +78,15 @@ export type WorkspaceResponse =
     }
   | {
       typeName: 'EraseDocument';
+    }
+  | {
+      typeName: 'ListDir';
+      dir: string;
+      entries: DirEntry[];
+    }
+  | {
+      typeName: 'CreateAttachment';
+      id: string;
     };
 
 export type ListDocumentsResult = {
@@ -94,3 +112,26 @@ export type SaveDocumentErrors = {
   documentErrors: string[];
   fieldErrors: DocumentFieldErrors;
 };
+
+export type DirEntry =
+  | {
+      typeName: 'Dir';
+      name: string;
+      path: string;
+      isReadable: boolean;
+    }
+  | {
+      typeName: 'File';
+      name: string;
+      path: string;
+      isReadable: boolean;
+      size: number;
+    }
+  | {
+      typeName: 'Symlink';
+      name: string;
+      path: string;
+      isReadable: boolean;
+      linksTo: string;
+      size?: number;
+    };

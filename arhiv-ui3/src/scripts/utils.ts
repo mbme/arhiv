@@ -174,3 +174,15 @@ export function getSessionValue<T extends JSONValue>(key: string, defaultValue: 
 export function setSessionValue(key: string, value: JSONValue) {
   sessionStorage.setItem(key, JSON.stringify(value));
 }
+
+const BYTES_SIZES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+export function formatBytes(bytes: number): string {
+  if (!bytes) {
+    return '0';
+  }
+
+  const power = Math.floor(Math.log(bytes) / Math.log(1024));
+
+  const value = (bytes / Math.pow(1024, power)).toFixed(2);
+  return `${value} ${BYTES_SIZES[power]}`;
+}

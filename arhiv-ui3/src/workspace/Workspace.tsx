@@ -5,6 +5,7 @@ import { CardContainer } from './components/CardContainer';
 import { DocumentCard } from './components/DocumentCard';
 import { StatusCard } from './components/StatusCard';
 import { Button } from './components/Button';
+import { FilePickerCard } from './components/FilePickerCard';
 
 export function Workspace() {
   const [cards, dispatch] = useWorkspaceReducer();
@@ -26,6 +27,14 @@ export function Workspace() {
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
         >
           New...
+        </Button>
+
+        <Button
+          variant="text"
+          icon="paperclip"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
+        >
+          Add file
         </Button>
 
         <Button
@@ -67,6 +76,13 @@ export function Workspace() {
             return (
               <CardContainer key={card.id} card={card} dispatch={dispatch}>
                 <StatusCard />
+              </CardContainer>
+            );
+
+          case 'file-picker':
+            return (
+              <CardContainer key={card.id} card={card} dispatch={dispatch}>
+                <FilePickerCard />
               </CardContainer>
             );
         }

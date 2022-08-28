@@ -4,6 +4,7 @@ import { newId, getSessionValue, setSessionValue } from '../scripts/utils';
 
 type CardVariant =
   | { variant: 'catalog' } //
+  | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string };

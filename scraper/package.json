@@ -15,7 +15,7 @@
   "license": "ISC",
   "devDependencies": {
     "esbuild": "^0.15.5",
-    "puppeteer-core": "^16.2.0"
+    "puppeteer-core": "^15.3.2"
   },
   "dependencies": {
     "chrono-node": "^2.3.9",

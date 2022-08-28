@@ -42,6 +42,9 @@ pub enum WorkspaceRequest {
     CreateAttachment {
         file_path: String,
     },
+    Scrape {
+        url: String,
+    },
 }
 
 #[derive(Serialize)]
@@ -82,6 +85,9 @@ pub enum WorkspaceResponse {
     },
     CreateAttachment {
         id: Id,
+    },
+    Scrape {
+        documents: Vec<ListDocumentsResult>,
     },
 }
 

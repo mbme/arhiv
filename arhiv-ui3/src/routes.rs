@@ -132,7 +132,7 @@ async fn workspace_api_handler(req: Request<Body>) -> ServerResponse {
     let response = if content_type == "application/json" {
         let body = hyper::body::to_bytes(body).await?;
 
-        app.workspace_api_handler(&body)?
+        app.workspace_api_handler(&body).await?
     } else {
         AppResponse::Status {
             status: StatusCode::UNSUPPORTED_MEDIA_TYPE,

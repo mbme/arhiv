@@ -6,6 +6,7 @@ type CardVariant =
   | { variant: 'catalog' } //
   | { variant: 'file-picker' }
   | { variant: 'status' }
+  | { variant: 'scraper' }
   | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string };
 

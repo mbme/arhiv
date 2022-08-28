@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
 use arhiv_core::{
-    definitions::Attachment, entities::Document, markup::MarkupStr, Filter, ValidationError,
-    Validator,
+    definitions::Attachment, entities::Document, markup::MarkupStr, schema::DataSchema, Filter,
+    ScraperOptions, ValidationError, Validator,
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
@@ -21,7 +21,7 @@ use crate::{
 const PAGE_SIZE: u8 = 10;
 
 impl App {
-    pub fn workspace_api_handler(&self, body: &Bytes) -> Result<AppResponse> {
+    pub async fn workspace_api_handler(&self, body: &Bytes) -> Result<AppResponse> {
         let request: WorkspaceRequest =
             serde_json::from_slice(body).context("failed to parse request")?;
 
@@ -39,19 +39,7 @@ impl App {
 
                 WorkspaceResponse::ListDocuments {
                     has_more: page.has_more,
-                    documents: page
-                        .items
-                        .into_iter()
-                        .map(|item| {
-                            Ok(ListDocumentsResult {
-                                title: schema.get_title(&item)?,
-                                id: item.id,
-                                document_type: item.document_type,
-                                subtype: item.subtype,
-                                updated_at: item.updated_at,
-                            })
-                        })
-                        .collect::<Result<_>>()?,
+                    documents: documents_into_results(page.items, schema)?,
                 }
             }
             WorkspaceRequest::GetStatus {} => {
@@ -172,6 +160,25 @@ impl App {
 
                 WorkspaceResponse::CreateAttachment { id: attachment.id }
             }
+            WorkspaceRequest::Scrape { url } => {
+                let documents = self
+                    .arhiv
+                    .scrape(
+                        url,
+                        ScraperOptions {
+                            manual: false,
+                            emulate_mobile: false,
+                            debug: false,
+                        },
+                    )
+                    .await?;
+
+                let schema = self.arhiv.get_schema();
+
+                WorkspaceResponse::Scrape {
+                    documents: documents_into_results(documents, schema)?,
+                }
+            }
         };
 
         let response = serde_json::to_string(&response).context("failed to serialize response")?;
@@ -274,4 +281,22 @@ fn sort_entries(entries: &mut [DirEntry]) {
             _ => a.get_name().cmp(b.get_name()),
         }
     });
+}
+
+fn documents_into_results(
+    documents: Vec<Document>,
+    schema: &DataSchema,
+) -> Result<Vec<ListDocumentsResult>> {
+    documents
+        .into_iter()
+        .map(|item| {
+            Ok(ListDocumentsResult {
+                title: schema.get_title(&item)?,
+                id: item.id,
+                document_type: item.document_type,
+                subtype: item.subtype,
+                updated_at: item.updated_at,
+            })
+        })
+        .collect::<Result<_>>()
 }

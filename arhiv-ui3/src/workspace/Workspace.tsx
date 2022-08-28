@@ -6,6 +6,7 @@ import { DocumentCard } from './components/DocumentCard';
 import { StatusCard } from './components/StatusCard';
 import { Button } from './components/Button';
 import { FilePickerCard } from './components/FilePickerCard';
+import { ScraperCard } from './components/ScraperCard';
 
 export function Workspace() {
   const [cards, dispatch] = useWorkspaceReducer();
@@ -39,12 +40,18 @@ export function Workspace() {
 
         <Button
           variant="text"
+          icon="web"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'scraper' } })}
+        >
+          Scrape URL
+        </Button>
+
+        <Button
+          variant="text"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'status' } })}
         >
           Status
         </Button>
-
-        <Button variant="text">Scrape URL</Button>
 
         <Button variant="text">Player</Button>
       </nav>
@@ -83,6 +90,13 @@ export function Workspace() {
             return (
               <CardContainer key={card.id} card={card} dispatch={dispatch}>
                 <FilePickerCard />
+              </CardContainer>
+            );
+
+          case 'scraper':
+            return (
+              <CardContainer key={card.id} card={card} dispatch={dispatch}>
+                <ScraperCard />
               </CardContainer>
             );
         }

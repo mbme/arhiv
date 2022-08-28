@@ -41,6 +41,10 @@ export type WorkspaceRequest =
   | {
       typeName: 'CreateAttachment';
       filePath: string;
+    }
+  | {
+      typeName: 'Scrape';
+      url: string;
     };
 
 export type WorkspaceResponse =
@@ -87,6 +91,10 @@ export type WorkspaceResponse =
   | {
       typeName: 'CreateAttachment';
       id: string;
+    }
+  | {
+      typeName: 'Scrape';
+      documents: ListDocumentsResult[];
     };
 
 export type ListDocumentsResult = {

@@ -57,13 +57,14 @@ export function ScraperCard() {
           <h1>{url}</h1>
 
           {result.documents.map((document) => (
-            <Ref
-              key={document.id}
-              id={document.id}
-              documentType={document.documentType}
-              subtype={document.subtype}
-              title={document.title}
-            />
+            <div key={document.id} className="mb-4">
+              <Ref
+                id={document.id}
+                documentType={document.documentType}
+                subtype={document.subtype}
+                title={document.title}
+              />
+            </div>
           ))}
         </>
       )}

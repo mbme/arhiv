@@ -92,7 +92,7 @@
     &[disabled] {
       cursor: not-allowed;
 
-      &.is-loading {
+      &.is-busy {
         cursor: progress;
       }
     }

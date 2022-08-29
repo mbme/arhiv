@@ -55,7 +55,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
           setQuery(newQuery);
           setPage(0);
         }}
-        loading={inProgress}
+        busy={inProgress}
       />
 
       {error && <QueryError error={error} />}

@@ -79,7 +79,7 @@ export function EraseDocumentButton({
                 Cancel
               </Button>
 
-              <Button variant="prime" alarming type="submit" loading={inProgress}>
+              <Button variant="prime" alarming type="submit" busy={inProgress}>
                 ERASE
               </Button>
             </div>

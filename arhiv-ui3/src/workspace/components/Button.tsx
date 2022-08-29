@@ -9,7 +9,7 @@ type ButtonProps = {
   disabled?: boolean;
   children: ComponentChildren;
   title?: string;
-  loading?: boolean;
+  busy?: boolean;
   alarming?: boolean;
   icon?: IconVariant;
   type?: HTMLButtonElement['type'];
@@ -21,7 +21,7 @@ export function Button({
   disabled,
   children,
   title,
-  loading,
+  busy,
   alarming,
   icon,
   type = 'button',
@@ -34,14 +34,14 @@ export function Button({
         'btn btn-prime': variant === 'prime',
         'btn btn-text': variant === 'text',
         'btn-alarming': alarming,
-        'is-loading': loading,
+        'is-busy': busy,
       })}
       onClick={onClick}
-      disabled={disabled || loading}
+      disabled={disabled || busy}
       title={title}
     >
       {icon && <Icon variant={icon} className="mr-1" />}
-      {loading && <Icon variant="spinner" className="mr-2" />}
+      {busy && <Icon variant="spinner" className="mr-2" />}
 
       {children}
     </button>

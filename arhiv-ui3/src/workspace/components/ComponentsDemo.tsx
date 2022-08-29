@@ -47,15 +47,15 @@ export function ComponentsDemo() {
             </Button>
           </div>
 
-          <h1>Button: loading</h1>
+          <h1>Button: busy</h1>
           <div className="examples">
-            <Button variant="prime" loading>
+            <Button variant="prime" busy>
               Prime
             </Button>
-            <Button variant="simple" loading>
+            <Button variant="simple" busy>
               Simple
             </Button>
-            <Button variant="text" loading>
+            <Button variant="text" busy>
               Text
             </Button>
           </div>

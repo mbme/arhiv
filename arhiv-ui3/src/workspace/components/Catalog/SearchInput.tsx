@@ -5,10 +5,10 @@ import { Icon } from '../Icon';
 type SearchInputProps = {
   value: string;
   onSearch: (query: string) => void;
-  loading: boolean;
+  busy: boolean;
 };
 
-export function SearchInput({ value: initialValue, onSearch, loading }: SearchInputProps) {
+export function SearchInput({ value: initialValue, onSearch, busy }: SearchInputProps) {
   const onSearchRef = useRef(onSearch);
   onSearchRef.current = onSearch;
 
@@ -27,7 +27,7 @@ export function SearchInput({ value: initialValue, onSearch, loading }: SearchIn
       }}
     >
       <Icon
-        variant={loading ? 'spinner' : 'search'}
+        variant={busy ? 'spinner' : 'search'}
         className="absolute top-3 left-3 pointer-events-none"
       />
 

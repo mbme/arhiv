@@ -40,10 +40,11 @@ export function Button({
       disabled={disabled || busy}
       title={title}
     >
-      {icon && <Icon variant={icon} className="mr-1" />}
-      {busy && <Icon variant="spinner" className="mr-2" />}
+      {icon && <Icon variant={icon} />}
 
       {children}
+
+      {busy && <Icon variant="spinner" />}
     </button>
   );
 }

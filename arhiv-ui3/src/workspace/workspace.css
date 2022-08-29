@@ -87,7 +87,7 @@
 
     @apply hover:bg-opacity-20;
 
-    @apply flex items-center justify-center;
+    @apply flex items-center justify-center gap-2;
 
     &[disabled] {
       cursor: not-allowed;

@@ -28,27 +28,25 @@ export function FilePickerConfirmationDialog({
   );
 
   return (
-    <Dialog
-      onHide={onCancel}
-      title="Add file"
-      buttons={
-        <>
-          <Button variant="simple" className="mr-8" onClick={onCancel} disabled={inProgress}>
-            Cancel
-          </Button>
+    <Dialog onHide={onCancel} title="Add file">
+      <div className="modal-content">
+        <div>
+          Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
+          <b>{formatBytes(size)}</b>?
+        </div>
 
-          <Button variant="prime" loading={inProgress} onClick={triggerRefresh}>
-            Create attachment
-          </Button>
-        </>
-      }
-    >
-      <div>
-        Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
-        <b>{formatBytes(size)}</b>?
+        {error && <QueryError error={error} />}
       </div>
 
-      {error && <QueryError error={error} />}
+      <div className="modal-buttons">
+        <Button variant="simple" className="mr-8" onClick={onCancel} disabled={inProgress}>
+          Cancel
+        </Button>
+
+        <Button variant="prime" loading={inProgress} onClick={triggerRefresh}>
+          Create attachment
+        </Button>
+      </div>
     </Dialog>
   );
 }

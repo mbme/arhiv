@@ -7,12 +7,11 @@ import { useId } from '../hooks';
 
 type DialogProps = {
   onHide: Callback;
-  variant?: 'warn';
+  alarming?: boolean;
   title: ComponentChildren;
   children: ComponentChildren;
-  buttons?: ComponentChildren;
 };
-export function Dialog({ onHide, variant, title, children, buttons }: DialogProps) {
+export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
 
   const onHideRef = useRef(onHide);
@@ -52,15 +51,13 @@ export function Dialog({ onHide, variant, title, children, buttons }: DialogProp
         <h1
           id={titleId}
           className={cx('modal-title', {
-            'is-warn': variant === 'warn',
+            'is-alarming': alarming,
           })}
         >
           {title}
         </h1>
 
-        <div className="modal-content">{children}</div>
-
-        {buttons && <div className="modal-buttons">{buttons}</div>}
+        {children}
       </div>
     </div>,
     rootEl

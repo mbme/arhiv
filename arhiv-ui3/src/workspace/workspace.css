@@ -233,7 +233,7 @@ main {
     @apply text-lg font-bold tracking-wider uppercase bg-gray-50 rounded-t-md;
     @apply p-2 sm:p-4 md:px-6;
 
-    &.is-warn {
+    &.is-alarming {
       @apply bg-red-500 bg-opacity-75;
     }
   }
@@ -243,7 +243,7 @@ main {
   }
 
   .modal-buttons {
-    @apply flex justify-end bg-gray-50 rounded-b-md;
+    @apply flex justify-end gap-8 bg-gray-50 rounded-b-md;
     @apply p-2 sm:p-4 md:p-6;
   }
 }

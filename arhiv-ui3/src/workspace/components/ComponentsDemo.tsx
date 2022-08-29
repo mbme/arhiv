@@ -1,7 +1,13 @@
+import { ComponentChildren } from 'preact';
+import { FC, useState } from 'preact/compat';
+import { noop } from '../../scripts/utils';
+import { CardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { DateTime } from './DateTime';
+import { Dialog } from './Dialog';
 import { Icon, ICON_VARIANTS } from './Icon';
 import { QueryError } from './QueryError';
+import { Ref } from './Ref';
 
 export function ComponentsDemo() {
   return (
@@ -98,7 +104,79 @@ export function ComponentsDemo() {
             ))}
           </div>
         </div>
+
+        <div>
+          <h1>Dialog</h1>
+          <div className="examples">
+            <DialogExample buttonText="Dialog with buttons">
+              <div className="modal-content">Hello world!</div>
+              <div className="modal-buttons">
+                <Button variant="simple">Cancel</Button>
+                <Button variant="prime">Test</Button>
+              </div>
+            </DialogExample>
+
+            <DialogExample buttonText="Alarming dialog" alarming>
+              <div className="modal-content">Hello world!</div>
+              <div className="modal-buttons">
+                <Button variant="simple">Cancel</Button>
+                <Button variant="prime" alarming>
+                  Test
+                </Button>
+              </div>
+            </DialogExample>
+          </div>
+        </div>
+
+        <div>
+          <CardContextMock>
+            <h1>Ref</h1>
+
+            <div className="examples">
+              <Ref id="12342" documentType="note" subtype="" title="Very important note" />
+            </div>
+
+            <h1>Ref with subtype</h1>
+
+            <div className="examples">
+              <Ref id="12342" documentType="note" subtype="other" title="Very important note" />
+            </div>
+          </CardContextMock>
+        </div>
       </div>
     </div>
+  );
+}
+
+const CardContextMock: FC = ({ children }) => {
+  return (
+    <CardContext.Provider
+      value={{ card: { variant: 'document', id: 1, documentId: 'test' }, dispatch: noop }}
+    >
+      {children}
+    </CardContext.Provider>
+  );
+};
+
+type DialogExampleProps = {
+  buttonText: string;
+  children: ComponentChildren;
+  alarming?: boolean;
+};
+function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <Button variant="prime" onClick={() => setShowModal(true)} alarming={alarming}>
+        {buttonText}
+      </Button>
+
+      {showModal && (
+        <Dialog title="Dialog example" onHide={() => setShowModal(false)} alarming={alarming}>
+          {children}
+        </Dialog>
+      )}
+    </>
   );
 }

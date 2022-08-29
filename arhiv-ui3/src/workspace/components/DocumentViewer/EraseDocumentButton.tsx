@@ -43,8 +43,11 @@ export function EraseDocumentButton({
   const confirmationText = `erase ${documentType}`;
 
   return (
-    <Button variant="text" color="warn" icon="erase-document" onClick={() => setShowModal(true)}>
-      Erase
+    <>
+      <Button variant="text" alarming icon="erase-document" onClick={() => setShowModal(true)}>
+        Erase
+      </Button>
+
       {showModal && (
         <Dialog
           onHide={hideModal}
@@ -58,7 +61,7 @@ export function EraseDocumentButton({
 
               <Button
                 variant="prime"
-                color="danger"
+                alarming
                 loading={inProgress}
                 onClick={() => formRef.current?.requestSubmit()}
               >
@@ -93,6 +96,6 @@ export function EraseDocumentButton({
           </form>
         </Dialog>
       )}
-    </Button>
+    </>
   );
 }

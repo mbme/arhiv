@@ -91,17 +91,17 @@
 
     &[disabled] {
       cursor: not-allowed;
+
+      &.is-loading {
+        cursor: progress;
+      }
     }
 
     &.btn-simple {
       @apply border-opacity-0;
       @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
 
-      &.btn-warn {
-        @apply text-yellow-700 hover:bg-yellow-300;
-      }
-
-      &.btn-danger {
+      &.btn-alarming {
         @apply text-red-700 hover:bg-red-300;
       }
     }
@@ -110,11 +110,7 @@
       @apply text-white rounded-md hover:shadow-lg;
       @apply bg-blue-500 hover:bg-blue-600;
 
-      &.btn-warn {
-        @apply bg-yellow-500 hover:bg-yellow-600;
-      }
-
-      &.btn-danger {
+      &.btn-alarming {
         @apply bg-red-500 hover:bg-red-600 hover:shadow-lg;
       }
 
@@ -125,14 +121,10 @@
 
     &.btn-text {
       font-weight: inherit;
-      @apply p-0 border-0 hover:bg-inherit;
+      @apply px-4 py-1 border-0 hover:bg-inherit;
       @apply text-blue-800 hover:text-blue-600;
 
-      &.btn-warn {
-        @apply text-yellow-700 hover:text-yellow-600;
-      }
-
-      &.btn-danger {
+      &.btn-alarming {
         @apply text-red-700 hover:text-red-600;
       }
     }
@@ -253,5 +245,28 @@ main {
   .modal-buttons {
     @apply flex justify-end bg-gray-50 rounded-b-md;
     @apply p-2 sm:p-4 md:p-6;
+  }
+}
+
+.components-demo {
+  @apply divide-y-2 divide-dashed max-w-screen-md mx-auto;
+
+  & > div {
+    @apply py-12 px-8;
+  }
+
+  h1 {
+    @apply text-xl font-bold font-serif mb-2;
+  }
+
+  .examples {
+    @apply flex items-center gap-6 flex-wrap mb-8;
+  }
+
+  .examples-grid {
+    display: grid;
+    grid-column-gap: 1rem;
+    grid-row-gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 }

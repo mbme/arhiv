@@ -9,6 +9,9 @@ export type JSONValue =
   | JSONValue[];
 export type JSONObj = Obj<JSONValue>;
 
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+
 export type Callback = () => void;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

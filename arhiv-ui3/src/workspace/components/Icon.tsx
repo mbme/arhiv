@@ -1,20 +1,23 @@
-import { cx } from '../../scripts/utils';
+import { ArrayElement, cx } from '../../scripts/utils';
 
-export type IconVariant =
-  | 'arrow-left'
-  | 'arrow-right'
-  | 'x'
-  | 'spinner'
-  | 'clipboard'
-  | 'clipboard-check'
-  | 'paperclip'
-  | 'folder'
-  | 'search'
-  | 'web'
-  | 'search-catalog'
-  | 'edit-document'
-  | 'add-document'
-  | 'erase-document';
+export const ICON_VARIANTS = [
+  'arrow-left',
+  'arrow-right',
+  'x',
+  'spinner',
+  'clipboard',
+  'clipboard-check',
+  'paperclip',
+  'folder',
+  'search',
+  'web',
+  'search-catalog',
+  'edit-document',
+  'add-document',
+  'erase-document',
+] as const;
+
+export type IconVariant = ArrayElement<typeof ICON_VARIANTS>;
 
 type IconProps = {
   variant: IconVariant;

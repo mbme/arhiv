@@ -4,25 +4,25 @@ import { Icon, IconVariant } from './Icon';
 
 type ButtonProps = {
   variant: 'simple' | 'prime' | 'text';
-  color?: 'warn' | 'danger';
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
   children: ComponentChildren;
   title?: string;
   loading?: boolean;
+  alarming?: boolean;
   icon?: IconVariant;
   type?: HTMLButtonElement['type'];
 };
 export function Button({
   variant,
-  color,
   className = '',
   onClick,
   disabled,
   children,
   title,
   loading,
+  alarming,
   icon,
   type = 'button',
 }: ButtonProps) {
@@ -33,8 +33,8 @@ export function Button({
         'btn btn-simple': variant === 'simple',
         'btn btn-prime': variant === 'prime',
         'btn btn-text': variant === 'text',
-        'btn-warn': color === 'warn',
-        'btn-danger': color === 'danger',
+        'btn-alarming': alarming,
+        'is-loading': loading,
       })}
       onClick={onClick}
       disabled={disabled || loading}

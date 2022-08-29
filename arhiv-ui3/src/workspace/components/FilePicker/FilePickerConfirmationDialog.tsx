@@ -39,7 +39,7 @@ export function FilePickerConfirmationDialog({
       </div>
 
       <div className="modal-buttons">
-        <Button variant="simple" className="mr-8" onClick={onCancel} disabled={inProgress}>
+        <Button variant="simple" onClick={onCancel} disabled={inProgress}>
           Cancel
         </Button>
 

@@ -75,7 +75,7 @@ export function EraseDocumentButton({
             </div>
 
             <div className="modal-buttons">
-              <Button variant="simple" className="mr-8" onClick={hideModal} disabled={inProgress}>
+              <Button variant="simple" onClick={hideModal} disabled={inProgress}>
                 Cancel
               </Button>
 

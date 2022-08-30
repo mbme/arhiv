@@ -1,6 +1,7 @@
 import { ComponentChildren } from 'preact';
 import { FC, useState } from 'preact/compat';
 import { noop } from '../../scripts/utils';
+import '../../scripts/v-editor';
 import { CardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { DateTime } from './DateTime';
@@ -13,6 +14,10 @@ export function ComponentsDemo() {
   return (
     <div className="bg-white h-full overflow-auto">
       <div className="components-demo">
+        <div>
+          <h1>Form controls</h1>
+          <FormControlsDemo />
+        </div>
         <div>
           <h1>Button</h1>
           <div className="examples">
@@ -178,5 +183,60 @@ function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
         </Dialog>
       )}
     </>
+  );
+}
+
+function FormControlsDemo() {
+  const [data, setData] = useState('');
+
+  return (
+    <form
+      className="flex flex-col gap-8"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target as HTMLFormElement);
+
+        setData(JSON.stringify(Object.fromEntries(fd), null, 2));
+      }}
+    >
+      <label>
+        Editor
+        <v-editor name="editor" value="" required />
+      </label>
+
+      <label className="flex items-center gap-2">
+        Text input
+        <input name="text" type="text" placeholder="Some initial text" />
+      </label>
+
+      <label className="flex items-center gap-2">
+        Number input
+        <input name="number" type="number" placeholder="numbers" min={0} max={100} step={1} />
+      </label>
+
+      <label className="flex items-center gap-2">
+        Select
+        <select name="select">
+          <option value="">Empty value</option>
+          <option value="1">Value 1</option>
+          <option value="2">Value 2</option>
+        </select>
+      </label>
+
+      <label className="flex items-center gap-2">
+        <input name="checkbox" type="checkbox" />
+        Checkbox
+      </label>
+
+      <div>
+        <Button type="submit" variant="prime">
+          SUBMIT
+        </Button>
+      </div>
+
+      <pre hidden={!data}>
+        <code>{data}</code>
+      </pre>
+    </form>
   );
 }

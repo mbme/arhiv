@@ -45,15 +45,11 @@
     </h5>
 
     {% if 'MarkupString' in field.field_type %}
-    <textarea
-      id="{{field.name}}"
+    <v-editor
       name="{{field.name}}"
-      hidden
+      value="{{field.value}}"
       {% if not field.editable %}readonly{% endif %}
       {% if field.mandatory %}required{% endif %}
-    >{{field.value}}</textarea>
-    <v-editor
-      for="{{field.name}}"
     />
 
     {% elif 'Enum' in field.field_type %}

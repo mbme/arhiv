@@ -1,55 +1,138 @@
+import 'element-internals-polyfill';
+import type { ElementInternals } from 'element-internals-polyfill/dist/element-internals';
 import { initEditor, EditorView } from './editor';
 
-export class EditorElement extends HTMLElement {
-  static get observedAttributes() {
-    return ['for', 'autofocus'];
+// TODO: disabled readonly https://stackoverflow.com/a/7730719
+
+export class HTMLVEditorElement extends HTMLElement {
+  static get formAssociated() {
+    return true;
   }
 
-  private textarea?: HTMLTextAreaElement;
+  static get observedAttributes() {
+    return ['required'];
+  }
+
   private editor?: EditorView;
+  private internals: ElementInternals;
+
+  constructor() {
+    super();
+
+    this.internals = this.attachInternals();
+
+    this.addEventListener('focus', () => this.editor?.focus());
+  }
 
   connectedCallback() {
-    const textareaId = this.getAttribute('for');
-
-    if (!textareaId) {
-      throw new Error(`editor is missing a mandatory "for" attribute`);
-    }
-
-    const textarea = document.getElementById(textareaId);
-    if (!textarea) {
-      throw new Error(`can't find textarea using selector '${textareaId}'`);
-    }
-
-    if (!(textarea instanceof HTMLTextAreaElement)) {
-      throw new Error(`'for' attribute must point to textarea`);
-    }
-
-    this.textarea = textarea;
-    const editor = initEditor(this, textarea.value, () => {
-      textarea.value = editor.state.doc.toString();
+    this.editor = initEditor(this, this.getInitialValue(), () => {
+      this.updateFormValue();
     });
-    this.editor = editor;
+    this.updateFormValue();
 
-    textarea.setAttribute('hidden', 'true');
+    // element must be focusable for form validation to work
+    this.tabIndex = 0;
 
     if (this.hasAttribute('autofocus')) {
       this.editor.focus();
     }
+  }
 
-    for (const label of textarea.labels) {
-      label.addEventListener('click', this.onLabelClick);
+  attributeChangedCallback(name: string) {
+    if (name === 'required') {
+      this.updateFormValue();
     }
   }
 
-  disconnectedCallback() {
-    for (const label of this.textarea?.labels || []) {
-      label.removeEventListener('click', this.onLabelClick);
-    }
-  }
+  private updateFormValue = () => {
+    const value = this.value;
 
-  private onLabelClick = () => {
-    this.editor?.focus();
+    if (this.hasAttribute('required') && !value) {
+      this.internals.setValidity({ valueMissing: true }, 'Field must not be empty');
+    } else {
+      this.internals.setValidity({});
+    }
+
+    this.internals.setFormValue(value);
   };
+
+  private getInitialValue = () => this.getAttribute('value') ?? '';
+
+  formDisabledCallback(disabled: boolean) {
+    // Do something.  e.g. adding/removing ‘disabled’ content attributes
+    // to/from form controls in this shadow tree.
+    if (disabled) {
+      console.log('is disabled');
+    }
+  }
+
+  formResetCallback() {
+    this.value = this.getInitialValue();
+  }
+
+  formStateRestoreCallback(state: string) {
+    this.value = state;
+  }
+
+  get form(): HTMLFormElement | null {
+    return this.internals.form;
+  }
+
+  get name() {
+    return this.getAttribute('name');
+  }
+
+  get type() {
+    return this.localName;
+  }
+
+  get value() {
+    return this.editor?.state.doc.toString() ?? this.getInitialValue();
+  }
+
+  set value(value: string) {
+    const editor = this.editor;
+
+    if (!editor) {
+      throw new Error("editor isn't initialized yet");
+    }
+
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: value },
+    });
+  }
+
+  get validity() {
+    return this.internals.validity;
+  }
+  get validationMessage() {
+    return this.internals.validationMessage;
+  }
+  get willValidate() {
+    return this.internals.willValidate;
+  }
+
+  checkValidity() {
+    return this.internals.checkValidity();
+  }
+  reportValidity() {
+    return this.internals.reportValidity();
+  }
 }
 
-customElements.define('v-editor', EditorElement);
+declare module 'preact' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface EditorElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
+      autofocus?: boolean;
+      required?: boolean;
+      value?: string;
+    }
+
+    interface IntrinsicElements {
+      'v-editor': EditorElementAttributes;
+    }
+  }
+}
+
+customElements.define('v-editor', HTMLVEditorElement);

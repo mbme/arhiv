@@ -19,12 +19,14 @@ import {
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { Callback } from '../utils';
 
-export type Editor = EditorView;
-
-export function initEditor(parent: HTMLElement, initialValue: string, onBlur?: Callback): Editor {
+export function initEditor(
+  parent: HTMLElement,
+  initialValue: string,
+  onBlur: Callback
+): EditorView {
   const handlers = EditorView.domEventHandlers({
     'blur': (_event, _view) => {
-      onBlur?.();
+      onBlur();
     },
   });
 

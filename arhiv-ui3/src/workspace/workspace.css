@@ -190,27 +190,32 @@ main {
   z-index: 1;
 }
 
-.cm-editor {
-  font-size: 1rem;
+v-editor {
+  display: block;
   min-height: 19rem;
 
-  @apply border-2;
+  .cm-editor {
+    font-size: 1rem;
+    min-height: 19rem;
 
-  & .cm-scroller {
-    overflow: auto;
-  }
+    @apply border-2;
 
-  &.cm-focused {
-    @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
-  }
+    & .cm-scroller {
+      overflow: auto;
+    }
 
-  & .cm-content {
-    @apply pl-4 pr-2;
-  }
+    &.cm-focused {
+      @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
+    }
 
-  & .cm-gutters {
-    border: 0;
-    @apply pl-2 bg-inherit;
+    & .cm-content {
+      @apply pl-4 pr-2;
+    }
+
+    & .cm-gutters {
+      border: 0;
+      @apply pl-2 bg-inherit;
+    }
   }
 }
 

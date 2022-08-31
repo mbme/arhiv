@@ -201,6 +201,9 @@ function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
 
 function FormControlsDemo() {
   const [data, setData] = useState('');
+  const [disabled, setDisabled] = useState(false);
+  const [readonly, setReadonly] = useState(false);
+  const [required, setRequired] = useState(false);
 
   return (
     <form
@@ -212,24 +215,64 @@ function FormControlsDemo() {
         setData(JSON.stringify(Object.fromEntries(fd), null, 2));
       }}
     >
+      <div className="flex gap-4 bg-rose-50 px-2 py-4">
+        <label className="flex gap-1 items-center">
+          <input type="checkbox" checked={disabled} onChange={() => setDisabled(!disabled)} />
+          Disabled
+        </label>
+
+        <label className="flex gap-1 items-center">
+          <input type="checkbox" checked={readonly} onChange={() => setReadonly(!readonly)} />
+          Readonly
+        </label>
+
+        <label className="flex gap-1 items-center">
+          <input type="checkbox" checked={required} onChange={() => setRequired(!required)} />
+          Required
+        </label>
+      </div>
+
       <label>
         Editor
-        <v-editor name="editor" value="" required />
+        <v-editor
+          name="editor"
+          value=""
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+        />
       </label>
 
       <label className="flex items-center gap-2">
         Text input
-        <input name="text" type="text" placeholder="Some initial text" />
+        <input
+          name="text"
+          type="text"
+          placeholder="Some initial text"
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+        />
       </label>
 
       <label className="flex items-center gap-2">
         Number input
-        <input name="number" type="number" placeholder="numbers" min={0} max={100} step={1} />
+        <input
+          name="number"
+          type="number"
+          placeholder="numbers"
+          min={0}
+          max={100}
+          step={1}
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+        />
       </label>
 
       <label className="flex items-center gap-2">
         Select
-        <select name="select">
+        <select name="select" required={required} disabled={disabled} readonly={readonly}>
           <option value="">Empty value</option>
           <option value="1">Value 1</option>
           <option value="2">Value 2</option>
@@ -237,7 +280,13 @@ function FormControlsDemo() {
       </label>
 
       <label className="flex items-center gap-2">
-        <input name="checkbox" type="checkbox" />
+        <input
+          name="checkbox"
+          type="checkbox"
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+        />
         Checkbox
       </label>
 

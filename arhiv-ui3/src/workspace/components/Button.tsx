@@ -2,6 +2,8 @@ import { ComponentChildren } from 'preact';
 import { Callback, cx } from '../../scripts/utils';
 import { Icon, IconVariant } from './Icon';
 
+// TODO: button size - small / regular (maybe boolean property)
+
 type ButtonProps = {
   variant: 'simple' | 'primary' | 'text';
   className?: string;
@@ -11,7 +13,8 @@ type ButtonProps = {
   title?: string;
   busy?: boolean;
   alarming?: boolean;
-  icon?: IconVariant;
+  leadingIcon?: IconVariant;
+  trailingIcon?: IconVariant;
   type?: HTMLButtonElement['type'];
 };
 export function Button({
@@ -23,7 +26,8 @@ export function Button({
   title,
   busy,
   alarming,
-  icon,
+  leadingIcon,
+  trailingIcon,
   type = 'button',
 }: ButtonProps) {
   return (
@@ -40,9 +44,11 @@ export function Button({
       disabled={disabled || busy}
       title={title}
     >
-      {icon && <Icon variant={icon} />}
+      {leadingIcon && <Icon variant={leadingIcon} />}
 
       {children}
+
+      {trailingIcon && <Icon variant={trailingIcon} />}
 
       {busy && <Icon variant="spinner" />}
     </button>

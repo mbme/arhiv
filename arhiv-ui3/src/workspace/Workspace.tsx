@@ -16,7 +16,7 @@ export function Workspace() {
       <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color px-16 pt-4 flex flex-row gap-8">
         <Button
           variant="text"
-          icon="search-catalog"
+          leadingIcon="search-catalog"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
         >
           Browse
@@ -24,7 +24,7 @@ export function Workspace() {
 
         <Button
           variant="text"
-          icon="add-document"
+          leadingIcon="add-document"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
         >
           New...
@@ -32,7 +32,7 @@ export function Workspace() {
 
         <Button
           variant="text"
-          icon="paperclip"
+          leadingIcon="paperclip"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
         >
           Add file
@@ -40,7 +40,7 @@ export function Workspace() {
 
         <Button
           variant="text"
-          icon="web"
+          leadingIcon="web"
           onClick={() => dispatch({ type: 'open', newCard: { variant: 'scraper' } })}
         >
           Scrape URL

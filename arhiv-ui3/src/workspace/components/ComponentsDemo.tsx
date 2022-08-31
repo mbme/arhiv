@@ -1,5 +1,5 @@
 import { ComponentChildren } from 'preact';
-import { FC, useState } from 'preact/compat';
+import { useState } from 'preact/hooks';
 import { noop } from '../../scripts/utils';
 import '../../scripts/v-editor';
 import { CardContext } from '../workspace-reducer';
@@ -26,15 +26,28 @@ export function ComponentsDemo() {
             <Button variant="text">Text</Button>
           </div>
 
-          <h1>Button: with icons</h1>
+          <h1>Button: with leading icon</h1>
           <div className="examples">
-            <Button variant="primary" icon="web">
+            <Button variant="primary" leadingIcon="web">
               Primary
             </Button>
-            <Button variant="simple" icon="web">
+            <Button variant="simple" leadingIcon="web">
               Simple
             </Button>
-            <Button variant="text" icon="web">
+            <Button variant="text" leadingIcon="web">
+              Text
+            </Button>
+          </div>
+
+          <h1>Button: with trailing icon</h1>
+          <div className="examples">
+            <Button variant="primary" trailingIcon="web">
+              Primary
+            </Button>
+            <Button variant="simple" trailingIcon="web">
+              Simple
+            </Button>
+            <Button variant="text" trailingIcon="web">
               Text
             </Button>
           </div>
@@ -153,7 +166,7 @@ export function ComponentsDemo() {
   );
 }
 
-const CardContextMock: FC = ({ children }) => {
+const CardContextMock = ({ children }: { children: ComponentChildren }) => {
   return (
     <CardContext.Provider
       value={{ card: { variant: 'document', id: 1, documentId: 'test' }, dispatch: noop }}

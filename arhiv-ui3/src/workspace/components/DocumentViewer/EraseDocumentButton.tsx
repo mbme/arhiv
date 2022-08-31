@@ -43,7 +43,12 @@ export function EraseDocumentButton({
 
   return (
     <>
-      <Button variant="text" alarming icon="erase-document" onClick={() => setShowModal(true)}>
+      <Button
+        variant="text"
+        alarming
+        leadingIcon="erase-document"
+        onClick={() => setShowModal(true)}
+      >
         Erase
       </Button>
 

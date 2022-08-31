@@ -31,7 +31,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
       <CardContainer.Topbar
         left={
           onBack && (
-            <Button variant="text" icon="arrow-left" onClick={onBack}>
+            <Button variant="text" leadingIcon="arrow-left" onClick={onBack}>
               Back
             </Button>
           )
@@ -47,7 +47,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
                   onErase={triggerRefresh}
                 />
 
-                <Button variant="text" icon="edit-document" onClick={onEdit}>
+                <Button variant="text" leadingIcon="edit-document" onClick={onEdit}>
                   Edit
                 </Button>
               </>

@@ -15,6 +15,7 @@ type QueryHookResult<TResult> = {
   triggerRefresh: Callback;
 };
 
+// TODO refetch on focus, refetch on reconnect, cache
 export function useQuery<TResult>(
   cb: (signal: AbortSignal) => Promise<TResult>,
   options?: Options

@@ -241,7 +241,11 @@ function FormControlsDemo() {
         Checkbox
       </label>
 
-      <div>
+      <div className="buttons">
+        <Button variant="simple" type="reset">
+          Reset
+        </Button>
+
         <Button type="submit" variant="primary">
           SUBMIT
         </Button>

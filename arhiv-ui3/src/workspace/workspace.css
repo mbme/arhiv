@@ -18,6 +18,21 @@
   }
 }
 
+@layer utilities {
+  .var-bg-color {
+    @apply bg-zinc-100;
+  }
+
+  .var-card-width {
+    width: 39rem;
+  }
+
+  .buttons {
+    @apply flex justify-end gap-8;
+    @apply p-2 sm:p-4 md:p-6;
+  }
+}
+
 @layer components {
   .markup {
     @apply prose;
@@ -135,16 +150,6 @@
   }
 }
 
-@layer utilities {
-  .var-bg-color {
-    @apply bg-zinc-100;
-  }
-
-  .var-card-width {
-    width: 39rem;
-  }
-}
-
 html {
   overflow-y: scroll;
 }
@@ -248,8 +253,7 @@ v-editor {
   }
 
   .modal-buttons {
-    @apply flex justify-end gap-8 bg-gray-50 rounded-b-md;
-    @apply p-2 sm:p-4 md:p-6;
+    @apply buttons bg-gray-50 rounded-b-md;
   }
 }
 

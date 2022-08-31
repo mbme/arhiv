@@ -56,7 +56,8 @@ export class HTMLVEditorElement extends HTMLElement {
     this.internals.setFormValue(value);
   };
 
-  private getInitialValue = () => this.getAttribute('value') ?? '';
+  private getInitialValue = () => this.getAttribute('value') ?? this.getDefaultValue();
+  private getDefaultValue = () => this.getAttribute('defaultValue') ?? '';
 
   formDisabledCallback(disabled: boolean) {
     // Do something.  e.g. adding/removing ‘disabled’ content attributes
@@ -67,7 +68,7 @@ export class HTMLVEditorElement extends HTMLElement {
   }
 
   formResetCallback() {
-    this.value = this.getInitialValue();
+    this.value = this.getDefaultValue();
   }
 
   formStateRestoreCallback(state: string) {
@@ -126,6 +127,7 @@ declare module 'preact' {
     interface EditorElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
       autofocus?: boolean;
       required?: boolean;
+      defaultValue?: string;
       value?: string;
     }
 

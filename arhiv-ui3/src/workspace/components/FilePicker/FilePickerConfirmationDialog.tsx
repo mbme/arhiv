@@ -43,7 +43,7 @@ export function FilePickerConfirmationDialog({
           Cancel
         </Button>
 
-        <Button variant="prime" busy={inProgress} onClick={triggerRefresh}>
+        <Button variant="primary" busy={inProgress} onClick={triggerRefresh}>
           Create attachment
         </Button>
       </div>

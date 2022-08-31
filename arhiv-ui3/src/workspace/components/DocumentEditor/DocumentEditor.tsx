@@ -37,7 +37,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
             </Button>
 
             <Button
-              variant="prime"
+              variant="primary"
               onClick={() => {
                 formRef.current?.requestSubmit();
               }}

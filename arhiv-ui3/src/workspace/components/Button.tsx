@@ -3,7 +3,7 @@ import { Callback, cx } from '../../scripts/utils';
 import { Icon, IconVariant } from './Icon';
 
 type ButtonProps = {
-  variant: 'simple' | 'prime' | 'text';
+  variant: 'simple' | 'primary' | 'text';
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
@@ -31,7 +31,7 @@ export function Button({
       type={type}
       className={cx(className, {
         'btn btn-simple': variant === 'simple',
-        'btn btn-prime': variant === 'prime',
+        'btn btn-primary': variant === 'primary',
         'btn btn-text': variant === 'text',
         'btn-alarming': alarming,
         'is-busy': busy,

@@ -35,7 +35,7 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
             </Button>
 
             <Button
-              variant="prime"
+              variant="primary"
               disabled={!documentType}
               onClick={() => {
                 formRef.current?.requestSubmit();

@@ -106,7 +106,7 @@
       }
     }
 
-    &.btn-prime {
+    &.btn-primary {
       @apply text-white rounded-md hover:shadow-lg;
       @apply bg-blue-500 hover:bg-blue-600;
 

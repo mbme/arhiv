@@ -21,15 +21,15 @@ export function ComponentsDemo() {
         <div>
           <h1>Button</h1>
           <div className="examples">
-            <Button variant="prime">Prime</Button>
+            <Button variant="primary">Primary</Button>
             <Button variant="simple">Simple</Button>
             <Button variant="text">Text</Button>
           </div>
 
           <h1>Button: with icons</h1>
           <div className="examples">
-            <Button variant="prime" icon="web">
-              Prime
+            <Button variant="primary" icon="web">
+              Primary
             </Button>
             <Button variant="simple" icon="web">
               Simple
@@ -41,8 +41,8 @@ export function ComponentsDemo() {
 
           <h1>Button: disabled</h1>
           <div className="examples">
-            <Button variant="prime" disabled>
-              Prime
+            <Button variant="primary" disabled>
+              Primary
             </Button>
             <Button variant="simple" disabled>
               Simple
@@ -54,8 +54,8 @@ export function ComponentsDemo() {
 
           <h1>Button: busy</h1>
           <div className="examples">
-            <Button variant="prime" busy>
-              Prime
+            <Button variant="primary" busy>
+              Primary
             </Button>
             <Button variant="simple" busy>
               Simple
@@ -67,8 +67,8 @@ export function ComponentsDemo() {
 
           <h1>Button: alarming</h1>
           <div className="examples">
-            <Button variant="prime" alarming>
-              Prime
+            <Button variant="primary" alarming>
+              Primary
             </Button>
             <Button variant="simple" alarming>
               Simple
@@ -117,7 +117,7 @@ export function ComponentsDemo() {
               <div className="modal-content">Hello world!</div>
               <div className="modal-buttons">
                 <Button variant="simple">Cancel</Button>
-                <Button variant="prime">Test</Button>
+                <Button variant="primary">Test</Button>
               </div>
             </DialogExample>
 
@@ -125,7 +125,7 @@ export function ComponentsDemo() {
               <div className="modal-content">Hello world!</div>
               <div className="modal-buttons">
                 <Button variant="simple">Cancel</Button>
-                <Button variant="prime" alarming>
+                <Button variant="primary" alarming>
                   Test
                 </Button>
               </div>
@@ -173,7 +173,7 @@ function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
 
   return (
     <>
-      <Button variant="prime" onClick={() => setShowModal(true)} alarming={alarming}>
+      <Button variant="primary" onClick={() => setShowModal(true)} alarming={alarming}>
         {buttonText}
       </Button>
 
@@ -229,7 +229,7 @@ function FormControlsDemo() {
       </label>
 
       <div>
-        <Button type="submit" variant="prime">
+        <Button type="submit" variant="primary">
           SUBMIT
         </Button>
       </div>

@@ -43,7 +43,7 @@ export function ScraperCard() {
               autoComplete="off"
             />
 
-            <Button type="submit" variant="prime" busy={inProgress}>
+            <Button type="submit" variant="primary" busy={inProgress}>
               Scrape!
             </Button>
           </div>

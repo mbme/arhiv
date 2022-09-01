@@ -32,8 +32,9 @@ export function Select({
       name={name}
       disabled={disabled}
       readonly={readonly}
+      required={required}
     >
-      {required || <option key="" value="" disabled={readonly} />}
+      <option key="" value="" disabled={readonly} />
 
       {options.map((option) => (
         <option key={option} value={option} disabled={readonly} selected={option === initialValue}>

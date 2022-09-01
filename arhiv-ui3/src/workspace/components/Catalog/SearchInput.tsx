@@ -37,7 +37,7 @@ export function SearchInput({ value: initialValue, onSearch, busy }: SearchInput
         className="field w-full mb-4 pl-10"
         value={value}
         onChange={(e) => {
-          setValue((e.target as HTMLInputElement).value);
+          setValue(e.currentTarget.value);
         }}
         placeholder="Type something"
         autoComplete="off"

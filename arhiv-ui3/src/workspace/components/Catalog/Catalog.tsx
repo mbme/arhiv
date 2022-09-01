@@ -30,7 +30,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
-          (e.target as HTMLElement).click();
+          e.currentTarget.click();
         }
       }}
     >

@@ -38,7 +38,7 @@ export function ScraperCard() {
               placeholder="Enter URL"
               className="field grow"
               value={url}
-              onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
+              onChange={(e) => setUrl(e.currentTarget.value)}
               disabled={inProgress}
               autoComplete="off"
             />

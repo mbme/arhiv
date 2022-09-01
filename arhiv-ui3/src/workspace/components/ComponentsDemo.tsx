@@ -212,7 +212,7 @@ function FormControlsDemo() {
       className="form flex flex-col gap-8"
       onSubmit={(e) => {
         e.preventDefault();
-        const fd = new FormData(e.target as HTMLFormElement);
+        const fd = new FormData(e.currentTarget);
 
         setData(JSON.stringify(Object.fromEntries(fd), null, 2));
       }}

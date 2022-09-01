@@ -152,7 +152,7 @@ export function AudioPlayer({
             max="100"
             step="1"
             value={Math.round(volume * 100)}
-            onInput={(e) => onVolumeRangeInput(e.target as HTMLInputElement)}
+            onInput={(e) => onVolumeRangeInput(e.currentTarget)}
           />
         </div>
       </div>
@@ -170,7 +170,7 @@ export function AudioPlayer({
           max={durationS}
           step="1"
           value={currentTimeS}
-          onInput={(e) => onDurationRangeInput(e.target as HTMLInputElement)}
+          onInput={(e) => onDurationRangeInput(e.currentTarget)}
         />
 
         <output title="Duration" className="cursor-default min-w-[3rem] text-center">

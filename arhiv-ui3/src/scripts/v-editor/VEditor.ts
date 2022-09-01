@@ -6,7 +6,6 @@ import {
   highlightActiveLine,
   highlightSpecialChars,
   keymap,
-  lineNumbers,
   placeholder,
   rectangularSelection,
 } from '@codemirror/view';
@@ -35,7 +34,6 @@ class VEditor {
         doc: initialValue,
         extensions: [
           [
-            lineNumbers(),
             highlightActiveLine(),
             highlightSpecialChars(),
             history(),

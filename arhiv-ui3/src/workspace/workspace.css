@@ -221,26 +221,20 @@ v-editor {
   }
 
   .cm-editor {
-    font-size: 1rem;
     min-height: 19rem;
 
     @apply border-2;
-
-    & .cm-scroller {
-      overflow: auto;
-    }
 
     &.cm-focused {
       @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
     }
 
-    & .cm-content {
-      @apply pl-4 pr-2;
+    & .cm-scroller {
+      overflow: auto;
     }
 
-    & .cm-gutters {
-      border: 0;
-      @apply pl-2 bg-inherit;
+    & .cm-content {
+      @apply px-2;
     }
   }
 }

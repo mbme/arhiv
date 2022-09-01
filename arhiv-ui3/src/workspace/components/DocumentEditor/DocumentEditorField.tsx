@@ -1,5 +1,5 @@
 import { cx, JSONValue } from '../../../scripts/utils';
-import { DataDescriptionField } from '../../schema';
+import { DataDescriptionField, FieldType } from '../../schema';
 import { Checkbox } from '../Form/Checkbox';
 import { useGettersContext } from '../Form/Form';
 import { Select } from '../Form/Select';
@@ -17,42 +17,51 @@ function parseRefsList(refs: string): string[] | null {
 }
 
 type ValueEditorProps = {
-  field: DataDescriptionField;
+  name: string;
+  fieldType: FieldType;
   initialValue?: JSONValue;
-  ignoreReadonly: boolean;
+  required: boolean;
+  readonly: boolean;
   disabled: boolean;
 };
-function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEditorProps) {
+function ValueEditor({
+  name,
+  fieldType,
+  initialValue,
+  required,
+  readonly,
+  disabled,
+}: ValueEditorProps) {
   const getters = useGettersContext();
 
-  if ('MarkupString' in field.field_type) {
+  if ('MarkupString' in fieldType) {
     return (
       <v-editor
         className="field"
-        name={field.name}
+        name={name}
         defaultValue={initialValue as string | undefined}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
   }
 
-  if ('Enum' in field.field_type) {
+  if ('Enum' in fieldType) {
     return (
       <Select
         className="field"
-        name={field.name}
+        name={name}
         initialValue={initialValue as string | undefined}
-        options={field.field_type.Enum}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        options={fieldType.Enum}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
   }
 
-  if ('Flag' in field.field_type) {
+  if ('Flag' in fieldType) {
     return (
       <Checkbox
         className="field"
@@ -62,16 +71,16 @@ function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEdi
           }
           getters.set(el, () => el.checked);
         }}
-        name={field.name}
+        name={name}
         initialValue={initialValue === 'true'}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
   }
 
-  if ('Ref' in field.field_type) {
+  if ('Ref' in fieldType) {
     return (
       <input
         className="field"
@@ -83,16 +92,16 @@ function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEdi
           getters.set(el, () => el.value.trim() || null);
         }}
         type="text"
-        name={field.name}
+        name={name}
         defaultValue={initialValue as string | undefined}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
   }
 
-  if ('RefList' in field.field_type) {
+  if ('RefList' in fieldType) {
     return (
       <input
         className="field"
@@ -104,16 +113,16 @@ function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEdi
           getters.set(el, () => parseRefsList(el.value));
         }}
         type="text"
-        name={field.name}
+        name={name}
         defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
   }
 
-  if ('NaturalNumber' in field.field_type) {
+  if ('NaturalNumber' in fieldType) {
     return (
       <input
         className="field"
@@ -127,10 +136,10 @@ function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEdi
         type="number"
         min={0}
         step={1}
-        name={field.name}
+        name={name}
         defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
-        readonly={field.readonly && !ignoreReadonly}
-        required={field.mandatory}
+        readonly={readonly}
+        required={required}
         disabled={disabled}
       />
     );
@@ -140,10 +149,10 @@ function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEdi
     <input
       className="field"
       type="text"
-      name={field.name}
+      name={name}
       defaultValue={initialValue as string}
-      readonly={field.readonly && !ignoreReadonly}
-      required={field.mandatory}
+      readonly={readonly}
+      required={required}
       disabled={disabled}
     />
   );
@@ -167,14 +176,15 @@ export function DocumentEditorField({
     <label className={cx('block mb-12', { 'has-errors': errors.length > 0 })} hidden={disabled}>
       <h5 className="section-heading mb-2 relative">
         {field.name}
-        {field.readonly && !ignoreReadonly && '(readonly)'}
         {field.mandatory && <span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>}
       </h5>
 
       <ValueEditor
-        field={field}
+        name={field.name}
+        fieldType={field.field_type}
         initialValue={initialValue}
-        ignoreReadonly={ignoreReadonly}
+        readonly={field.readonly && !ignoreReadonly}
+        required={field.mandatory}
         disabled={disabled}
       />
 

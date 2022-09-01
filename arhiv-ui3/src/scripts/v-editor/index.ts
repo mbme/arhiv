@@ -3,7 +3,7 @@ import { FormControlElement } from './FormControlElement';
 
 export class HTMLVEditorElement extends FormControlElement {
   static get observedAttributes() {
-    return ['required', 'readonly', 'disabled'];
+    return ['required', 'readonly', 'disabled', 'placeholder'];
   }
 
   private editor?: VEditor;
@@ -35,10 +35,17 @@ export class HTMLVEditorElement extends FormControlElement {
 
   override attributeChangedCallback() {
     this.updateState();
+    this.updateFormValue();
   }
 
   private updateState = () => {
-    this.editor?.setDisabled(this.disabled);
+    if (!this.editor) {
+      return;
+    }
+
+    this.editor.setDisabled(this.disabled);
+    this.editor.setReadonly(this.readonly);
+    this.editor.setPlaceholder(this.placeholder ?? '');
 
     if (this.disabled) {
       this.tabIndex = -1;
@@ -46,12 +53,6 @@ export class HTMLVEditorElement extends FormControlElement {
       // element must be focusable for form validation to work
       this.tabIndex = 0;
     }
-
-    if (this.disabled || this.readonly) {
-      this.internals.setValidity({});
-    }
-
-    this.editor?.setReadonly(this.readonly);
   };
 
   private updateFormValue = () => {
@@ -83,6 +84,10 @@ export class HTMLVEditorElement extends FormControlElement {
 
   get required() {
     return this.hasAttribute('required');
+  }
+
+  get placeholder() {
+    return this.getAttribute('placeholder');
   }
 
   override formResetCallback() {
@@ -118,6 +123,7 @@ declare module 'preact' {
       disabled?: boolean;
       defaultValue?: string;
       value?: string;
+      placeholder?: string;
     }
 
     interface IntrinsicElements {

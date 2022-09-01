@@ -1,5 +1,6 @@
 import { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
+import { formDataToObject } from '../../scripts/forms';
 import { noop } from '../../scripts/utils';
 import '../../scripts/v-editor';
 import { CardContext } from '../workspace-reducer';
@@ -212,9 +213,10 @@ function FormControlsDemo() {
       className="form flex flex-col gap-8"
       onSubmit={(e) => {
         e.preventDefault();
-        const fd = new FormData(e.currentTarget);
 
-        setData(JSON.stringify(Object.fromEntries(fd), null, 2));
+        const fd = formDataToObject(new FormData(e.currentTarget));
+
+        setData(JSON.stringify(fd, null, 2));
       }}
     >
       <div className="flex gap-4 bg-rose-50 px-2 py-4">
@@ -242,6 +244,7 @@ function FormControlsDemo() {
           required={required}
           disabled={disabled}
           readonly={readonly}
+          placeholder="Type something"
         />
       </label>
 
@@ -251,7 +254,7 @@ function FormControlsDemo() {
           className="field flex-1"
           name="text"
           type="text"
-          placeholder="Some initial text"
+          placeholder="Type something"
           required={required}
           disabled={disabled}
           readonly={readonly}

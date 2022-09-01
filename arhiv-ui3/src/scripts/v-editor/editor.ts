@@ -7,6 +7,7 @@ import {
   highlightSpecialChars,
   keymap,
   lineNumbers,
+  placeholder,
   rectangularSelection,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
@@ -23,6 +24,7 @@ class VEditor {
   private readonlyCompartment = new Compartment();
   private domEventHandlersCompartment = new Compartment();
   private editableCompartment = new Compartment();
+  private placeholderCompartment = new Compartment();
 
   private editor: EditorView;
 
@@ -48,6 +50,7 @@ class VEditor {
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
             this.domEventHandlersCompartment.of(EditorView.domEventHandlers({})),
+            this.placeholderCompartment.of(placeholder('')),
             keymap.of([
               ...defaultKeymap, //
               ...searchKeymap,
@@ -89,6 +92,12 @@ class VEditor {
   setReadonly(readonly: boolean) {
     this.editor.dispatch({
       effects: [this.readonlyCompartment.reconfigure(EditorState.readOnly.of(readonly))],
+    });
+  }
+
+  setPlaceholder(value: string) {
+    this.editor.dispatch({
+      effects: [this.placeholderCompartment.reconfigure(placeholder(value))],
     });
   }
 

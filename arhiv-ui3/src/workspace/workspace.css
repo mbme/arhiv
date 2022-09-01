@@ -67,12 +67,20 @@
     & .field {
       display: block;
 
+      &:is(select, input[type='number']) {
+        min-width: 10rem;
+      }
+
       &:not(input[type='checkbox'], input[type='number'], select) {
         @apply w-full;
       }
 
-      &[readonly] {
+      &[readonly='true'] {
         @apply bg-gray-100;
+
+        &:is(select) option {
+          display: none;
+        }
       }
     }
 

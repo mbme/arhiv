@@ -1,27 +1,41 @@
-import { JSONValue } from '../../../scripts/utils';
+import { cx, JSONValue } from '../../../scripts/utils';
 import { DataDescriptionField } from '../../schema';
-import {
-  Flag,
-  MarkupEditor,
-  NaturalNumberInput,
-  RefInput,
-  RefListInput,
-  Select,
-  TextInput,
-} from '../Form';
+import { Checkbox } from '../Form/Checkbox';
+import { useGettersContext } from '../Form/Form';
+import { Select } from '../Form/Select';
+
+function parseRefsList(refs: string): string[] | null {
+  if (refs.trim().length === 0) {
+    return null;
+  }
+
+  return refs
+    .replaceAll(',', ' ')
+    .split(' ')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
 
 type ValueEditorProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
+  disabled: boolean;
 };
-function ValueEditor({ field, initialValue }: ValueEditorProps) {
+function ValueEditor({
+  field,
+  initialValue,
+  disabled: _disabled /* FIXME handle */,
+}: ValueEditorProps) {
+  const getters = useGettersContext();
+
   if ('MarkupString' in field.field_type) {
     return (
-      <MarkupEditor
+      <v-editor
+        className="field"
         name={field.name}
-        initialValue={initialValue as string | undefined}
+        value={initialValue as string | undefined}
         readonly={field.readonly}
-        mandatory={field.mandatory}
+        required={field.mandatory}
       />
     );
   }
@@ -29,65 +43,105 @@ function ValueEditor({ field, initialValue }: ValueEditorProps) {
   if ('Enum' in field.field_type) {
     return (
       <Select
+        className="field"
         name={field.name}
         initialValue={initialValue as string | undefined}
         options={field.field_type.Enum}
         readonly={field.readonly}
-        mandatory={field.mandatory}
+        required={field.mandatory}
       />
     );
   }
 
   if ('Flag' in field.field_type) {
     return (
-      <Flag
+      <Checkbox
+        className="field"
+        innerRef={(el) => {
+          if (!el) {
+            return;
+          }
+          getters.set(el, () => el.checked);
+        }}
         name={field.name}
         initialValue={initialValue === 'true'}
         readonly={field.readonly}
-        mandatory={field.mandatory}
+        required={field.mandatory}
       />
     );
   }
 
   if ('Ref' in field.field_type) {
     return (
-      <RefInput
+      <input
+        className="field"
+        ref={(el) => {
+          if (!el) {
+            return;
+          }
+
+          getters.set(el, () => el.value.trim() || null);
+        }}
+        type="text"
         name={field.name}
-        initialValue={initialValue as string | undefined}
-        readonly={field.readonly}
-        mandatory={field.mandatory}
+        readOnly={field.readonly}
+        required={field.mandatory}
+        defaultValue={initialValue as string | undefined}
       />
     );
   }
 
   if ('RefList' in field.field_type) {
     return (
-      <RefListInput
+      <input
+        className="field"
+        ref={(el) => {
+          if (!el) {
+            return;
+          }
+
+          getters.set(el, () => parseRefsList(el.value));
+        }}
+        type="text"
         name={field.name}
-        initialValue={initialValue as string[] | undefined}
-        readonly={field.readonly}
-        mandatory={field.mandatory}
+        className="field"
+        readOnly={field.readonly}
+        required={field.mandatory}
+        defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
       />
     );
   }
 
   if ('NaturalNumber' in field.field_type) {
     return (
-      <NaturalNumberInput
+      <input
+        className="field"
+        ref={(el) => {
+          if (!el) {
+            return;
+          }
+
+          getters.set(el, () => (el.value ? Number.parseInt(el.value, 10) : null));
+        }}
+        type="number"
+        min={0}
+        step={1}
         name={field.name}
-        initialValue={initialValue as number | undefined}
-        readonly={field.readonly}
-        mandatory={field.mandatory}
+        readOnly={field.readonly}
+        required={field.mandatory}
+        defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
       />
     );
   }
 
   return (
-    <TextInput
+    <input
+      className="field"
+      type="text"
       name={field.name}
-      initialValue={initialValue as string}
-      readonly={field.readonly}
-      mandatory={field.mandatory}
+      readOnly={field.readonly}
+      required={field.mandatory}
+      defaultValue={initialValue as string}
     />
   );
 }
@@ -95,24 +149,24 @@ function ValueEditor({ field, initialValue }: ValueEditorProps) {
 type DocumentEditorFieldProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
-  hidden: boolean;
+  disabled: boolean;
   errors?: string[];
 };
 export function DocumentEditorField({
   field,
   initialValue,
-  hidden,
+  disabled,
   errors = [],
 }: DocumentEditorFieldProps) {
   return (
-    <label className={`block mb-12 ${errors.length > 0 ? 'has-errors' : ''}`} hidden={hidden}>
+    <label className={cx('block mb-12', { 'has-errors': errors.length > 0 })} hidden={disabled}>
       <h5 className="section-heading mb-2 relative">
         {field.name}
         {field.readonly && '(readonly)'}
         {field.mandatory && <span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>}
       </h5>
 
-      <ValueEditor field={field} initialValue={initialValue} />
+      <ValueEditor field={field} initialValue={initialValue} disabled={disabled} />
 
       {errors.map((error, index) => (
         <div key={index} class="text-red-500 text-xs pl-1 my-2">

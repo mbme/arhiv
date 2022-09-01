@@ -1,27 +1,42 @@
-import { useFormField } from './Form';
+import { Ref } from 'preact';
 
-type SelectProps = {
-  name: string;
+type Props = {
+  className?: string;
+  name?: string;
   initialValue?: string;
   options: string[];
-  readonly: boolean;
-  mandatory: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+  innerRef?: Ref<HTMLSelectElement>;
 };
-export function Select({ name, initialValue, options, readonly, mandatory }: SelectProps) {
-  const controlRef = useFormField<HTMLSelectElement>(name, (select) => select.value);
+
+export function Select({
+  className,
+  name,
+  initialValue,
+  options,
+  readonly,
+  required,
+  disabled,
+  innerRef,
+}: Props) {
+  if (options.includes('')) {
+    throw new Error('options must not include empty string');
+  }
 
   return (
     <select
-      ref={controlRef}
+      ref={innerRef}
+      className={className}
       name={name}
-      className="field"
-      readOnly={readonly}
-      value={initialValue ?? undefined}
+      disabled={disabled}
+      readonly={readonly}
     >
-      {mandatory || <option key="" value="" />}
+      {required || <option key="" value="" disabled={readonly} />}
 
       {options.map((option) => (
-        <option key={option} value={option}>
+        <option key={option} value={option} disabled={readonly} selected={option === initialValue}>
           {option}
         </option>
       ))}

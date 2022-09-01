@@ -14,11 +14,7 @@ export function DocumentEditorSubtypeSelect({
 
   return (
     <label class="flex justify-end items-center gap-2 mb-8" hidden={subtypes.length < 2}>
-      <select
-        className="field"
-        name="@subtype"
-        onChange={(e) => onChange((e.target as HTMLSelectElement).value)}
-      >
+      <select onChange={(e) => onChange(e.currentTarget.value)}>
         {subtypes.map((subtype) => (
           <option key={subtype} value={subtype} selected={subtype === value}>
             {subtype}

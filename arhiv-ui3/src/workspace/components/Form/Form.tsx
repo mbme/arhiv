@@ -1,48 +1,40 @@
 import { ComponentChildren, createContext } from 'preact';
-import { MutableRef, useContext, useEffect, useRef, useState } from 'preact/hooks';
-import { JSONObj, JSONValue, Obj } from '../../../scripts/utils';
+import { MutableRef, useContext, useState } from 'preact/hooks';
+import { JSONObj, JSONValue } from '../../../scripts/utils';
 
-type ControlValueExtractors = Obj<() => JSONValue>;
-const FormContext = createContext<ControlValueExtractors | undefined>(undefined);
+type Getter = () => JSONValue;
+type Getters = WeakMap<Element, Getter>;
 
-export function useFormField<T>(
-  name: string,
-  extract: (control: T) => JSONValue
-): MutableRef<T | null> {
-  const controlRef = useRef<T | null>(null);
-
-  const extractorRef = useRef(extract);
-  extractorRef.current = extract;
-
-  const formContext = useContext(FormContext);
-  if (!formContext) {
-    throw new Error('must be used inside the form');
+const GettersContext = createContext<Getters | undefined>(undefined);
+export function useGettersContext(): Getters {
+  const getters = useContext(GettersContext);
+  if (!getters) {
+    throw new Error('context not initialized');
   }
 
-  useEffect(() => {
-    formContext[name] = () => {
-      if (!controlRef.current) {
-        throw new Error(`uninitialized ref to control "${name}"`);
-      }
-
-      return extractorRef.current(controlRef.current);
-    };
-
-    return () => {
-      formContext[name] = undefined;
-    };
-  }, [formContext, name]);
-
-  return controlRef;
+  return getters;
 }
 
-function collectValues(valueExtractors: ControlValueExtractors): JSONObj {
+function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
   const result: JSONObj = {};
 
-  for (const [name, extractor] of Object.entries(valueExtractors)) {
-    if (extractor) {
-      result[name] = extractor();
+  for (const [name, value] of new FormData(form)) {
+    if (typeof value !== 'string') {
+      throw new Error('only string values are supported');
     }
+
+    const control = form.elements.namedItem(name);
+    if (!control) {
+      throw new Error(`control "${name}" is missing`);
+    }
+
+    if (control instanceof RadioNodeList) {
+      throw new Error(`control "${name}" is RadioNodeList which is unsupported`);
+    }
+
+    const getter = getters.get(control);
+
+    result[name] = getter ? getter() : value;
   }
 
   return result;
@@ -55,18 +47,18 @@ type FormProps = {
 };
 
 export function Form({ children, onSubmit, formRef }: FormProps) {
-  const [valueExtractors] = useState<ControlValueExtractors>(() => ({}));
+  const [valueExtractors] = useState<Getters>(() => new WeakMap());
 
   return (
-    <FormContext.Provider value={valueExtractors}>
+    <GettersContext.Provider value={valueExtractors}>
       <form
         ref={formRef}
         className="form"
         onSubmit={(e) => {
           e.preventDefault();
 
-          // TODO block editing while submitting
-          void onSubmit(collectValues(valueExtractors));
+          // TODO readonly controls while submitting
+          void onSubmit(collectValues(e.currentTarget, valueExtractors));
         }}
       >
         {/* Prevent implicit submission of the form */}
@@ -74,6 +66,6 @@ export function Form({ children, onSubmit, formRef }: FormProps) {
 
         {children}
       </form>
-    </FormContext.Provider>
+    </GettersContext.Provider>
   );
 }

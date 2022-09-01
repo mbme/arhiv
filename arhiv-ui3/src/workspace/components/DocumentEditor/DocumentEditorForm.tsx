@@ -2,9 +2,9 @@ import { MutableRef, useState } from 'preact/hooks';
 import { JSONObj } from '../../../scripts/utils';
 import { DocumentData, DocumentFieldErrors } from '../../dto';
 import { RPC } from '../../rpc';
-import { getDefaultSubtype, getFieldDescriptions } from '../../schema';
+import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../schema';
 import { Form } from '../Form/Form';
-import { DocumentEditorFields } from './DocumentEditorFields';
+import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
 
 type DocumentEditorFormProps = {
@@ -28,12 +28,7 @@ export function DocumentEditorForm({
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
   const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));
 
-  const submitDocument = async (values: JSONObj) => {
-    const data: JSONObj = {};
-    for (const field of getFieldDescriptions(documentType, subtype)) {
-      data[field.name] = values[field.name];
-    }
-
+  const submitDocument = async (data: JSONObj) => {
     const submitResult = await (documentId
       ? RPC.SaveDocument({ id: documentId, subtype, data })
       : RPC.CreateDocument({ documentType, subtype, data }));
@@ -49,6 +44,8 @@ export function DocumentEditorForm({
     }
   };
 
+  const fields = getFieldDescriptions(documentType);
+
   return (
     <Form onSubmit={submitDocument} formRef={formRef}>
       <DocumentEditorSubtypeSelect
@@ -63,12 +60,15 @@ export function DocumentEditorForm({
         </div>
       ))}
 
-      <DocumentEditorFields
-        documentType={documentType}
-        subtype={subtype}
-        data={data}
-        errors={fieldErrors}
-      />
+      {fields.map((field) => (
+        <DocumentEditorField
+          key={field.name}
+          field={field}
+          initialValue={data[field.name]}
+          disabled={!isFieldActive(field, subtype)}
+          errors={fieldErrors[field.name]}
+        />
+      ))}
     </Form>
   );
 }

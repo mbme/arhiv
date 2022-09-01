@@ -6,6 +6,8 @@ import { CardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { DateTime } from './DateTime';
 import { Dialog } from './Dialog';
+import { Checkbox } from './Form/Checkbox';
+import { Select } from './Form/Select';
 import { Icon, ICON_VARIANTS } from './Icon';
 import { QueryError } from './QueryError';
 import { Ref } from './Ref';
@@ -207,7 +209,7 @@ function FormControlsDemo() {
 
   return (
     <form
-      className="flex flex-col gap-8"
+      className="form flex flex-col gap-8"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.target as HTMLFormElement);
@@ -235,6 +237,7 @@ function FormControlsDemo() {
       <label>
         Editor
         <v-editor
+          className="field"
           name="editor"
           value=""
           required={required}
@@ -246,6 +249,7 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Text input
         <input
+          className="field flex-1"
           name="text"
           type="text"
           placeholder="Some initial text"
@@ -258,6 +262,7 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Number input
         <input
+          className="field"
           name="number"
           type="number"
           placeholder="numbers"
@@ -272,17 +277,20 @@ function FormControlsDemo() {
 
       <label className="flex items-center gap-2">
         Select
-        <select name="select" required={required} disabled={disabled} readonly={readonly}>
-          <option value="">Empty value</option>
-          <option value="1">Value 1</option>
-          <option value="2">Value 2</option>
-        </select>
+        <Select
+          className="field"
+          name="select"
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+          options={['1', '2']}
+        />
       </label>
 
       <label className="flex items-center gap-2">
-        <input
+        <Checkbox
+          className="field"
           name="checkbox"
-          type="checkbox"
           required={required}
           disabled={disabled}
           readonly={readonly}

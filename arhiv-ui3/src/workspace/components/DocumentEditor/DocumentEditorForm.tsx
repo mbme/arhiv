@@ -67,6 +67,7 @@ export function DocumentEditorForm({
         <DocumentEditorField
           key={field.name}
           field={field}
+          ignoreReadonly={!documentId}
           initialValue={data[field.name]}
           disabled={!isFieldActive(field, subtype)}
           errors={fieldErrors[field.name]}

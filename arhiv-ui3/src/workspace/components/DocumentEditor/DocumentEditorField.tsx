@@ -19,9 +19,10 @@ function parseRefsList(refs: string): string[] | null {
 type ValueEditorProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
+  ignoreReadonly: boolean;
   disabled: boolean;
 };
-function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
+function ValueEditor({ field, initialValue, ignoreReadonly, disabled }: ValueEditorProps) {
   const getters = useGettersContext();
 
   if ('MarkupString' in field.field_type) {
@@ -30,7 +31,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         className="field"
         name={field.name}
         defaultValue={initialValue as string | undefined}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -44,7 +45,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         name={field.name}
         initialValue={initialValue as string | undefined}
         options={field.field_type.Enum}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -63,7 +64,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         }}
         name={field.name}
         initialValue={initialValue === 'true'}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -84,7 +85,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         type="text"
         name={field.name}
         defaultValue={initialValue as string | undefined}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -105,7 +106,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         type="text"
         name={field.name}
         defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -128,7 +129,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
         step={1}
         name={field.name}
         defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
-        readonly={field.readonly}
+        readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
         disabled={disabled}
       />
@@ -141,7 +142,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
       type="text"
       name={field.name}
       defaultValue={initialValue as string}
-      readonly={field.readonly}
+      readonly={field.readonly && !ignoreReadonly}
       required={field.mandatory}
       disabled={disabled}
     />
@@ -151,12 +152,14 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
 type DocumentEditorFieldProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
+  ignoreReadonly: boolean;
   disabled: boolean;
   errors?: string[];
 };
 export function DocumentEditorField({
   field,
   initialValue,
+  ignoreReadonly,
   disabled,
   errors = [],
 }: DocumentEditorFieldProps) {
@@ -164,11 +167,16 @@ export function DocumentEditorField({
     <label className={cx('block mb-12', { 'has-errors': errors.length > 0 })} hidden={disabled}>
       <h5 className="section-heading mb-2 relative">
         {field.name}
-        {field.readonly && '(readonly)'}
+        {field.readonly && !ignoreReadonly && '(readonly)'}
         {field.mandatory && <span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>}
       </h5>
 
-      <ValueEditor field={field} initialValue={initialValue} disabled={disabled} />
+      <ValueEditor
+        field={field}
+        initialValue={initialValue}
+        ignoreReadonly={ignoreReadonly}
+        disabled={disabled}
+      />
 
       {errors.map((error, index) => (
         <div key={index} class="text-red-500 text-xs pl-1 my-2">

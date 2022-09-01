@@ -29,7 +29,7 @@ function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
       <v-editor
         className="field"
         name={field.name}
-        value={initialValue as string | undefined}
+        defaultValue={initialValue as string | undefined}
         readonly={field.readonly}
         required={field.mandatory}
         disabled={disabled}

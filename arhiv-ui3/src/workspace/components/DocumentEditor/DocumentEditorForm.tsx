@@ -4,6 +4,7 @@ import { DocumentData, DocumentFieldErrors } from '../../dto';
 import { RPC } from '../../rpc';
 import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../schema';
 import { Form } from '../Form/Form';
+import { PreventImplicitSubmissionOnEnter } from '../Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
 
@@ -48,6 +49,8 @@ export function DocumentEditorForm({
 
   return (
     <Form onSubmit={submitDocument} formRef={formRef}>
+      <PreventImplicitSubmissionOnEnter />
+
       <DocumentEditorSubtypeSelect
         documentType={documentType}
         value={subtype}

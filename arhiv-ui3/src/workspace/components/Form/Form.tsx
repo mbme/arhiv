@@ -65,9 +65,6 @@ export function Form({ children, onSubmit, formRef }: FormProps) {
           void onSubmit(collectValues(e.currentTarget, valueExtractors));
         }}
       >
-        {/* Prevent implicit submission of the form */}
-        <button type="submit" disabled style="display: none" hidden aria-hidden="true"></button>
-
         {children}
       </form>
     </GettersContext.Provider>

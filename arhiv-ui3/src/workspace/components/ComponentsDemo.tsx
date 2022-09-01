@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { formDataToObject } from '../../scripts/forms';
 import { noop } from '../../scripts/utils';
 import '../../scripts/v-editor';
+import { useSessionState } from '../hooks';
 import { CardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { DateTime } from './DateTime';
@@ -203,10 +204,11 @@ function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
 }
 
 function FormControlsDemo() {
+  const [disabled, setDisabled] = useSessionState<boolean>('demo-form-disabled', false);
+  const [readonly, setReadonly] = useSessionState<boolean>('demo-form-readonly', false);
+  const [required, setRequired] = useSessionState<boolean>('demo-form-required', false);
+
   const [data, setData] = useState('');
-  const [disabled, setDisabled] = useState(false);
-  const [readonly, setReadonly] = useState(false);
-  const [required, setRequired] = useState(false);
 
   return (
     <form

@@ -1,5 +1,5 @@
-import { EffectCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Callback, newId } from '../scripts/utils';
+import { EffectCallback, StateUpdater, useEffect, useRef, useState } from 'preact/hooks';
+import { Callback, getSessionValue, JSONValue, newId, setSessionValue } from '../scripts/utils';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -131,4 +131,22 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   }, [value, delayMs]);
 
   return debouncedValue;
+}
+
+export function useSessionState<T extends JSONValue>(
+  key: string,
+  initialValue: T
+): [T, StateUpdater<T>] {
+  const initialKeyRef = useRef(key);
+  if (initialKeyRef.current !== key) {
+    throw new Error(`key changed from "${initialKeyRef.current}" to "${key}"`);
+  }
+
+  const [value, setValue] = useState<T>(() => getSessionValue(key, initialValue));
+
+  useEffect(() => {
+    setSessionValue(key, value);
+  }, [key, value]);
+
+  return [value, setValue];
 }

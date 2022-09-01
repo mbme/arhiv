@@ -21,11 +21,7 @@ type ValueEditorProps = {
   initialValue?: JSONValue;
   disabled: boolean;
 };
-function ValueEditor({
-  field,
-  initialValue,
-  disabled: _disabled /* FIXME handle */,
-}: ValueEditorProps) {
+function ValueEditor({ field, initialValue, disabled }: ValueEditorProps) {
   const getters = useGettersContext();
 
   if ('MarkupString' in field.field_type) {
@@ -36,6 +32,7 @@ function ValueEditor({
         value={initialValue as string | undefined}
         readonly={field.readonly}
         required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -49,6 +46,7 @@ function ValueEditor({
         options={field.field_type.Enum}
         readonly={field.readonly}
         required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -67,6 +65,7 @@ function ValueEditor({
         initialValue={initialValue === 'true'}
         readonly={field.readonly}
         required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -84,9 +83,10 @@ function ValueEditor({
         }}
         type="text"
         name={field.name}
-        readOnly={field.readonly}
-        required={field.mandatory}
         defaultValue={initialValue as string | undefined}
+        readonly={field.readonly}
+        required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -104,10 +104,10 @@ function ValueEditor({
         }}
         type="text"
         name={field.name}
-        className="field"
-        readOnly={field.readonly}
-        required={field.mandatory}
         defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
+        readonly={field.readonly}
+        required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -127,9 +127,10 @@ function ValueEditor({
         min={0}
         step={1}
         name={field.name}
-        readOnly={field.readonly}
-        required={field.mandatory}
         defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
+        readonly={field.readonly}
+        required={field.mandatory}
+        disabled={disabled}
       />
     );
   }
@@ -139,9 +140,10 @@ function ValueEditor({
       className="field"
       type="text"
       name={field.name}
-      readOnly={field.readonly}
-      required={field.mandatory}
       defaultValue={initialValue as string}
+      readonly={field.readonly}
+      required={field.mandatory}
+      disabled={disabled}
     />
   );
 }

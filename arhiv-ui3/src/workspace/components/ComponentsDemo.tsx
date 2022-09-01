@@ -239,7 +239,6 @@ function FormControlsDemo() {
         <v-editor
           className="field"
           name="editor"
-          value=""
           required={required}
           disabled={disabled}
           readonly={readonly}

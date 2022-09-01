@@ -75,7 +75,11 @@
         @apply w-full;
       }
 
-      &[readonly='true'] {
+      &[disabled] {
+        @apply bg-gray-100;
+      }
+
+      &[readonly] {
         @apply bg-gray-100;
 
         &:is(select) option {
@@ -144,7 +148,7 @@
 
     &.btn-text {
       font-weight: inherit;
-      @apply px-4 py-1 border-0 hover:bg-inherit;
+      @apply p-0 border-0 hover:bg-inherit;
       @apply text-blue-800 hover:text-blue-600;
 
       &.btn-alarming {
@@ -204,8 +208,17 @@ main {
 }
 
 v-editor {
+  cursor: text;
   display: block;
   min-height: 19rem;
+
+  &[readonly] .cm-editor .cm-cursorLayer {
+    display: none;
+  }
+
+  &[disabled] {
+    cursor: unset;
+  }
 
   .cm-editor {
     font-size: 1rem;

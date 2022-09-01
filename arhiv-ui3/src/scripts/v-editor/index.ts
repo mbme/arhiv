@@ -1,53 +1,67 @@
-import 'element-internals-polyfill';
-import type { ElementInternals } from 'element-internals-polyfill/dist/element-internals';
-import { initEditor, EditorView } from './editor';
+import { VEditor } from './editor';
+import { FormControlElement } from './FormControlElement';
 
-// TODO: disabled readonly https://stackoverflow.com/a/7730719
-
-export class HTMLVEditorElement extends HTMLElement {
-  static get formAssociated() {
-    return true;
-  }
-
+export class HTMLVEditorElement extends FormControlElement {
   static get observedAttributes() {
-    return ['required'];
+    return ['required', 'readonly', 'disabled'];
   }
 
-  private editor?: EditorView;
-  private internals: ElementInternals;
+  private editor?: VEditor;
 
   constructor() {
     super();
 
-    this.internals = this.attachInternals();
-
-    this.addEventListener('focus', () => this.editor?.focus());
+    this.addEventListener('focus', () => {
+      this.editor?.focus();
+    });
   }
 
-  connectedCallback() {
-    this.editor = initEditor(this, this.getInitialValue(), () => {
-      this.updateFormValue();
-    });
-    this.updateFormValue();
+  override connectedCallback() {
+    this.editor = new VEditor(this, this.getInitialValue());
 
-    // element must be focusable for form validation to work
-    this.tabIndex = 0;
+    this.editor.setEventHandlers({
+      'blur': () => {
+        this.updateFormValue();
+      },
+    });
+
+    this.updateFormValue();
+    this.updateState();
 
     if (this.hasAttribute('autofocus')) {
       this.editor.focus();
     }
   }
 
-  attributeChangedCallback(name: string) {
-    if (name === 'required') {
-      this.updateFormValue();
-    }
+  override attributeChangedCallback() {
+    this.updateState();
   }
 
+  private updateState = () => {
+    this.editor?.setDisabled(this.disabled);
+
+    if (this.disabled) {
+      this.tabIndex = -1;
+    } else {
+      // element must be focusable for form validation to work
+      this.tabIndex = 0;
+    }
+
+    if (this.disabled || this.readonly) {
+      this.internals.setValidity({});
+    }
+
+    this.editor?.setReadonly(this.readonly);
+  };
+
   private updateFormValue = () => {
+    if (this.readonly || this.disabled) {
+      return;
+    }
+
     const value = this.value;
 
-    if (this.hasAttribute('required') && !value) {
+    if (this.required && !value) {
       this.internals.setValidity({ valueMissing: true }, 'Field must not be empty');
     } else {
       this.internals.setValidity({});
@@ -59,36 +73,28 @@ export class HTMLVEditorElement extends HTMLElement {
   private getInitialValue = () => this.getAttribute('value') ?? this.getDefaultValue();
   private getDefaultValue = () => this.getAttribute('defaultValue') ?? '';
 
-  formDisabledCallback(disabled: boolean) {
-    // Do something.  e.g. adding/removing ‘disabled’ content attributes
-    // to/from form controls in this shadow tree.
-    if (disabled) {
-      console.log('is disabled');
-    }
+  get disabled() {
+    return this.hasAttribute('disabled');
   }
 
-  formResetCallback() {
+  get readonly() {
+    return this.hasAttribute('readonly');
+  }
+
+  get required() {
+    return this.hasAttribute('required');
+  }
+
+  override formResetCallback() {
     this.value = this.getDefaultValue();
   }
 
-  formStateRestoreCallback(state: string) {
+  override formStateRestoreCallback(state: string) {
     this.value = state;
   }
 
-  get form(): HTMLFormElement | null {
-    return this.internals.form;
-  }
-
-  get name() {
-    return this.getAttribute('name');
-  }
-
-  get type() {
-    return this.localName;
-  }
-
   get value() {
-    return this.editor?.state.doc.toString() ?? this.getInitialValue();
+    return this.editor?.getValue() ?? this.getInitialValue();
   }
 
   set value(value: string) {
@@ -98,26 +104,7 @@ export class HTMLVEditorElement extends HTMLElement {
       throw new Error("editor isn't initialized yet");
     }
 
-    editor.dispatch({
-      changes: { from: 0, to: editor.state.doc.length, insert: value },
-    });
-  }
-
-  get validity() {
-    return this.internals.validity;
-  }
-  get validationMessage() {
-    return this.internals.validationMessage;
-  }
-  get willValidate() {
-    return this.internals.willValidate;
-  }
-
-  checkValidity() {
-    return this.internals.checkValidity();
-  }
-  reportValidity() {
-    return this.internals.reportValidity();
+    editor.setValue(value);
   }
 }
 
@@ -126,7 +113,9 @@ declare module 'preact' {
   namespace JSX {
     interface EditorElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
       autofocus?: boolean;
+      readonly?: boolean;
       required?: boolean;
+      disabled?: boolean;
       defaultValue?: string;
       value?: string;
     }

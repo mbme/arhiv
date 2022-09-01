@@ -1,5 +1,6 @@
 import { ComponentChildren, createContext } from 'preact';
 import { MutableRef, useContext, useState } from 'preact/hooks';
+import { formDataToObject } from '../../../scripts/forms';
 import { JSONObj, JSONValue } from '../../../scripts/utils';
 
 type Getter = () => JSONValue;
@@ -18,14 +19,17 @@ export function useGettersContext(): Getters {
 function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
   const result: JSONObj = {};
 
-  for (const [name, value] of new FormData(form)) {
-    if (typeof value !== 'string') {
-      throw new Error('only string values are supported');
+  const fd = formDataToObject(new FormData(form));
+
+  for (const control of form.elements) {
+    if (control.hasAttribute('disabled')) {
+      continue;
     }
 
-    const control = form.elements.namedItem(name);
-    if (!control) {
-      throw new Error(`control "${name}" is missing`);
+    const name = control.getAttribute('name');
+    if (!name) {
+      console.error('control must have a name', control);
+      continue;
     }
 
     if (control instanceof RadioNodeList) {
@@ -34,7 +38,7 @@ function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
 
     const getter = getters.get(control);
 
-    result[name] = getter ? getter() : value;
+    result[name] = getter ? getter() : fd[name];
   }
 
   return result;

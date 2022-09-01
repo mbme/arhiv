@@ -1,4 +1,4 @@
-import { VEditor } from './editor';
+import { VEditor } from './VEditor';
 import { FormControlElement } from './FormControlElement';
 
 export class HTMLVEditorElement extends FormControlElement {

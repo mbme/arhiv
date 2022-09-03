@@ -1,8 +1,7 @@
 /* eslint-env node */
-/* eslint-disable @typescript-eslint/no-var-requires */
 
-const fs = require('fs');
-const esbuild = require('esbuild');
+import fs from 'fs';
+import esbuild from 'esbuild';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -49,11 +48,7 @@ async function buildNodeBundle() {
   });
 }
 
-async function build() {
-  await fs.promises.rm('./dist', { force: true, recursive: true });
+await fs.promises.rm('./dist', { force: true, recursive: true });
 
-  await buildBrowserBundle();
-  await buildNodeBundle();
-}
-
-void build();
+await buildBrowserBundle();
+await buildNodeBundle();

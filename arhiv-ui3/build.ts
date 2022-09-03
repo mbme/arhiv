@@ -1,12 +1,11 @@
 /* eslint-env node */
-/* eslint-disable @typescript-eslint/no-var-requires */
 
-const esbuild = require('esbuild');
+import esbuild from 'esbuild';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
-void esbuild.build({
+await esbuild.build({
   entryPoints: {
     'index': './src/index.ts',
     'workspace': './src/workspace/index.tsx',

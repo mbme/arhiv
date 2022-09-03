@@ -1,0 +1,45 @@
+@layer components {
+  .form {
+    & .field {
+      display: block;
+
+      &:is(select, input[type='number']) {
+        min-width: 10rem;
+      }
+
+      &:not(input[type='checkbox'], input[type='number'], select) {
+        @apply w-full;
+      }
+
+      &[disabled] {
+        @apply bg-gray-100;
+      }
+
+      &[readonly] {
+        @apply bg-gray-100;
+
+        &:is(select) option {
+          display: none;
+        }
+      }
+    }
+
+    & .has-errors {
+      & .field {
+        @apply border-red-500;
+      }
+
+      & h5 {
+        @apply text-red-500;
+      }
+    }
+
+    & textarea {
+      @apply p-2;
+
+      resize: none;
+      min-height: 19rem;
+      overflow-y: hidden;
+    }
+  }
+}

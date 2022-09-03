@@ -4,10 +4,11 @@ module.exports = {
   plugins: ['@typescript-eslint', 'react-hooks'],
   extends: [
     'eslint:recommended',
-    'prettier',
+    'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:react-hooks/recommended',
+    'plugin:@typescript-eslint/strict',
+    'prettier',
   ],
   env: {
     'browser': true,

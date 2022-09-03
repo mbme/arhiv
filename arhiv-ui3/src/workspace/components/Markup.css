@@ -1,0 +1,26 @@
+@layer components {
+  .markup {
+    @apply prose;
+
+    & h1 {
+      @apply text-2xl;
+    }
+
+    & h2 {
+      @apply text-xl;
+    }
+
+    & :is(h3, h4, h5, h6) {
+      @apply text-lg;
+    }
+
+    hyphens: auto;
+    overflow-wrap: break-word;
+
+    /* task lists */
+    & li > input[type='checkbox'] {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+}

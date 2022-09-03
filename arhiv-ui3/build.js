@@ -13,14 +13,14 @@ void esbuild.build({
   },
   outdir: './public',
 
-  target: ['es2020', 'chrome90', 'firefox87'],
+  target: ['es2020'],
   bundle: true,
   minify: isProduction,
   sourcemap: true,
 
-  inject: ['./preact-shim.js'],
   jsxFactory: 'h',
   jsxFragment: 'Fragment',
+  jsxImportSource: 'preact',
 
   loader: {
     '.html': 'text',

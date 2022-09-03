@@ -14,7 +14,7 @@ async function buildBrowserBundle() {
     entryPoints: ['./src/browser-scraper.ts'],
     outfile: BROWSER_SCRAPER_OUT_FILE,
 
-    target: ['es2020', 'chrome90', 'firefox87'],
+    target: ['es2020'],
     bundle: true,
     minify: isProduction,
     sourcemap: true,

@@ -1,6 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import './scripts/v-editor/index.css';
 
 @layer base {
   /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */

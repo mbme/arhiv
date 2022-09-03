@@ -6,10 +6,10 @@
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "build": "node build.js",
-    "prod:build": "NODE_ENV=production yarn run build",
+    "prod:build": "NODE_ENV=production npm run build",
     "lint": "eslint --cache --ext .ts src/",
     "fmt": "prettier --write src/",
-    "scrape": "yarn run build && node dist/node-scraper.js"
+    "scrape": "npm run build && node dist/node-scraper.js"
   },
   "author": "mbme",
   "license": "ISC",

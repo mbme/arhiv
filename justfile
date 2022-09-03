@@ -20,8 +20,8 @@ reset-arhiv: remove-arhiv init-arhiv
 web3:
   cd arhiv-ui3; tmux new-session -s arhiv-ui3 \
      'watchexec -r -d 4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 cargo run"' \; \
-     split-window -h 'yarn watch:js' \; \
-     split-window 'yarn watch:css' \; \
+     split-window -h 'npm run watch:js' \; \
+     split-window 'npm run watch:css' \; \
      select-pane -t 0
 
 bump-version:
@@ -48,11 +48,9 @@ check-rs:
   cargo test
 
 check-ts:
-  yarn run check-fmt
-  yarn workspace arhiv-ui3 run lint
-  yarn workspace arhiv-ui3 run compiler-errors
-  yarn workspace scraper run lint
-  yarn workspace scraper run compiler-errors
+  npm run check-fmt
+  npm run lint --workspaces
+  npm run compiler-errors --workspaces
 
 check: check-rs check-ts
 

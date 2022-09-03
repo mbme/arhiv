@@ -1,6 +1,6 @@
 use std::env;
 
-use rs_utils::run_yarn;
+use rs_utils::npm_run;
 
 fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
@@ -12,6 +12,6 @@ fn main() {
     }
 
     // build web app in release mode
-    run_yarn("install");
-    run_yarn("prod:build");
+    npm_run("install");
+    npm_run("prod:build");
 }

@@ -15,30 +15,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: extractions/setup-just@v1
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
 
       - name: Install JS modules
-        run: yarn install --immutable --immutable-cache
+        run: npm ci
 
-      - name: Check & lint Rust
-        run: cargo clippy --verbose --all-targets --all-features -- -D warnings
+      - name: Lint & test Rust
+        run: just check-rs
 
-      - name: Run Rust tests
-        run: cargo test --verbose
-
-      - name: Check JS & TS formatting
-        run: yarn run check-fmt
-
-      - name: Arhiv UI - lint
-        run: yarn workspace arhiv-ui3 run lint
-
-      - name: Arhiv UI - check types
-        run: yarn workspace arhiv-ui3 run compiler-errors
-
-      - name: Scraper - lint
-        run: yarn workspace scraper run lint
-
-      - name: Arhiv Scraper - check types
-        run: yarn workspace scraper run compiler-errors
+      - name: Lint and test TS
+        run: just check-ts

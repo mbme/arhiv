@@ -1,6 +1,6 @@
 use std::env;
 
-use rs_utils::npm_run;
+use rs_utils::run_package_json_script;
 
 fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
@@ -9,10 +9,10 @@ fn main() {
 
     // build app in release mode
     if env::var("PROFILE").unwrap() == "release" {
-        npm_run("install");
-        npm_run("prod:build");
+        run_package_json_script("install");
+        run_package_json_script("prod:build");
         return;
     }
 
-    npm_run("build");
+    run_package_json_script("build");
 }

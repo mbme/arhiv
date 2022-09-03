@@ -21,7 +21,7 @@ jobs:
           toolchain: stable
 
       - name: Install JS modules
-        run: npm ci
+        run: yarn install --immutable --immutable-cache
 
       - name: Lint & test Rust
         run: just check-rs

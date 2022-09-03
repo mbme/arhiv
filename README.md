@@ -3,7 +3,7 @@
 * `cargo`
 * `just` command runner https://github.com/casey/just
 * `nodejs`
-* `npm`
+* `yarn`
 
 # Dev dependencies
 * `watchexec` to run commands in response to file modifications

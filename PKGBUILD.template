@@ -7,7 +7,7 @@ pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
 depends=(sqlite zstd libnotify libpulse light xorg-xinput gtk3 nodejs)
-makedepends=(git cargo npm)
+makedepends=(git cargo yarn)
 
 pkgver() {
   cd ..
@@ -18,7 +18,7 @@ pkgver() {
 prepare() {
   cd ..
 
-  npm ci
+  yarn install --immutable --immutable-cache
   cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
 }
 

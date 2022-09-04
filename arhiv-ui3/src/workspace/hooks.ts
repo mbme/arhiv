@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Callback, getSessionValue, JSONValue, newId, setSessionValue } from '../scripts/utils';
 import { EffectCallback } from './types';
 
@@ -151,4 +151,14 @@ export function useSessionState<T extends JSONValue>(
   }, [key, value]);
 
   return [value, setValue];
+}
+
+export function useToggle(initialValue: boolean): [boolean, Callback] {
+  const [value, setValue] = useState(initialValue);
+
+  const toggleValue = useCallback(() => {
+    setValue((currentValue) => !currentValue);
+  }, []);
+
+  return [value, toggleValue];
 }

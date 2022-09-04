@@ -1,4 +1,4 @@
-import * as RadixDialog from '@radix-ui/react-dialog';
+import { Dialog as HeadlessDialog } from '@headlessui/react';
 import { Callback, cx } from '../../scripts/utils';
 import { JSXChildren } from '../types';
 
@@ -10,31 +10,20 @@ type DialogProps = {
 };
 export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   return (
-    <RadixDialog.Root
-      open
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          onHide();
-        }
-      }}
-    >
-      <RadixDialog.Portal>
-        <RadixDialog.Overlay className="modal-backdrop" />
+    <HeadlessDialog open onClose={onHide} className="modal-container">
+      <div className="modal-overlay" />
 
-        <RadixDialog.Content className="modal-container">
-          <div className="modal-dialog">
-            <RadixDialog.Title
-              className={cx('modal-title', {
-                'is-alarming': alarming,
-              })}
-            >
-              {title}
-            </RadixDialog.Title>
+      <HeadlessDialog.Panel className="modal-dialog">
+        <HeadlessDialog.Title
+          className={cx('modal-title', {
+            'is-alarming': alarming,
+          })}
+        >
+          {title}
+        </HeadlessDialog.Title>
 
-            {children}
-          </div>
-        </RadixDialog.Content>
-      </RadixDialog.Portal>
-    </RadixDialog.Root>
+        {children}
+      </HeadlessDialog.Panel>
+    </HeadlessDialog>
   );
 }

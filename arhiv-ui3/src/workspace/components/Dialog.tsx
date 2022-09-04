@@ -1,8 +1,5 @@
-import ReactDOM from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
-import A11yDialog from 'a11y-dialog';
-import { Callback, cx, lockGlobalScroll } from '../../scripts/utils';
-import { useId } from '../hooks';
+import * as RadixDialog from '@radix-ui/react-dialog';
+import { Callback, cx } from '../../scripts/utils';
 import { JSXChildren } from '../types';
 
 type DialogProps = {
@@ -12,54 +9,32 @@ type DialogProps = {
   children: JSXChildren;
 };
 export function Dialog({ onHide, alarming, title, children }: DialogProps) {
-  const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
+  return (
+    <RadixDialog.Root
+      open
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          onHide();
+        }
+      }}
+    >
+      <RadixDialog.Portal>
+        <RadixDialog.Overlay className="modal-backdrop" />
 
-  const onHideRef = useRef(onHide);
-  onHideRef.current = onHide;
+        <RadixDialog.Content className="modal-container">
+          <div className="modal-dialog">
+            <RadixDialog.Title
+              className={cx('modal-title', {
+                'is-alarming': alarming,
+              })}
+            >
+              {title}
+            </RadixDialog.Title>
 
-  const rootEl = document.getElementById('modal-root');
-  if (!rootEl) {
-    throw new Error('modal root el not found');
-  }
-
-  useEffect(() => {
-    if (!modalEl) {
-      return;
-    }
-
-    const modal = new A11yDialog(modalEl);
-
-    modal.show();
-
-    modal.on('hide', onHideRef.current);
-
-    return () => {
-      modal.destroy();
-    };
-  }, [modalEl]);
-
-  useEffect(() => lockGlobalScroll(), []);
-
-  const id = useId();
-  const titleId = `modal-title-${id}`;
-
-  return ReactDOM.createPortal(
-    <div className="modal-container" ref={setModalEl} aria-labelledby={titleId} aria-hidden="true">
-      <div data-a11y-dialog-hide className="modal-overlay"></div>
-
-      <div role="document" className="modal-dialog">
-        <h1
-          id={titleId}
-          className={cx('modal-title', {
-            'is-alarming': alarming,
-          })}
-        >
-          {title}
-        </h1>
-
-        {children}
-      </div>
-    </div>,
-    rootEl
+            {children}
+          </div>
+        </RadixDialog.Content>
+      </RadixDialog.Portal>
+    </RadixDialog.Root>
   );
 }

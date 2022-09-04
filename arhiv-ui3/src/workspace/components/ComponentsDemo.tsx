@@ -131,7 +131,13 @@ export function ComponentsDemo() {
           <h1>Dialog</h1>
           <div className="examples">
             <DialogExample buttonText="Dialog with buttons">
-              <div className="modal-content">Hello world!</div>
+              <div className="modal-content">
+                Hello world!
+                <label>
+                  Some input:
+                  <input className="field" type="text" />
+                </label>
+              </div>
               <div className="modal-buttons">
                 <Button variant="simple">Cancel</Button>
                 <Button variant="primary">Test</Button>

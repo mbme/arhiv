@@ -189,3 +189,21 @@ export function formatBytes(bytes: number): string {
   const value = (bytes / Math.pow(1024, power)).toFixed(2);
   return `${value} ${BYTES_SIZES[power]}`;
 }
+
+export function setElementAttribute(
+  el: HTMLElement,
+  attribute: string,
+  value?: string | boolean | null
+) {
+  if (typeof value === 'string') {
+    el.setAttribute(attribute, value);
+    return;
+  }
+
+  if (value === true) {
+    el.setAttribute(attribute, 'true');
+    return;
+  }
+
+  el.removeAttribute(attribute);
+}

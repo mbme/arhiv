@@ -1,4 +1,4 @@
-import { useRef, useState } from 'preact/hooks';
+import { useRef, useState } from 'react';
 import { getDocumentTypes } from '../schema';
 import { useCardContext } from '../workspace-reducer';
 import { Button } from './Button';

@@ -1,9 +1,9 @@
-import { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { formDataToObject } from '../../scripts/forms';
 import { noop } from '../../scripts/utils';
 import '../../scripts/v-editor';
 import { useSessionState } from '../hooks';
+import { JSXChildren } from '../types';
 import { CardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { DateTime } from './DateTime';
@@ -170,7 +170,7 @@ export function ComponentsDemo() {
   );
 }
 
-const CardContextMock = ({ children }: { children: ComponentChildren }) => {
+const CardContextMock = ({ children }: { children: JSXChildren }) => {
   return (
     <CardContext.Provider
       value={{ card: { variant: 'document', id: 1, documentId: 'test' }, dispatch: noop }}
@@ -182,7 +182,7 @@ const CardContextMock = ({ children }: { children: ComponentChildren }) => {
 
 type DialogExampleProps = {
   buttonText: string;
-  children: ComponentChildren;
+  children: JSXChildren;
   alarming?: boolean;
 };
 function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
@@ -259,7 +259,7 @@ function FormControlsDemo() {
           placeholder="Type something"
           required={required}
           disabled={disabled}
-          readonly={readonly}
+          readOnly={readonly}
         />
       </label>
 
@@ -275,7 +275,7 @@ function FormControlsDemo() {
           step={1}
           required={required}
           disabled={disabled}
-          readonly={readonly}
+          readOnly={readonly}
         />
       </label>
 

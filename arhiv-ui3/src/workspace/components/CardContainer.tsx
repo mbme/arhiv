@@ -1,5 +1,5 @@
-import { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'react';
+import { JSXChildren } from '../types';
 import { Card, CardContext, useCardContext, WorkspaceDispatch } from '../workspace-reducer';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -7,7 +7,7 @@ import { Icon } from './Icon';
 type CardContainerProps = {
   card: Card;
   dispatch: WorkspaceDispatch;
-  children: ComponentChildren;
+  children: JSXChildren;
 };
 export function CardContainer({ card, dispatch, children }: CardContainerProps) {
   const cardContextRef = useRef({ card, dispatch });
@@ -42,8 +42,8 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
 }
 
 type TopbarProps = {
-  left?: ComponentChildren;
-  right?: ComponentChildren;
+  left?: JSXChildren;
+  right?: JSXChildren;
 };
 CardContainer.Topbar = function Topbar({ left, right }: TopbarProps) {
   return (

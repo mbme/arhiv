@@ -1,15 +1,15 @@
-import { ComponentChildren } from 'preact';
-import { createPortal } from 'preact/compat';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import ReactDOM from 'react-dom';
+import { useEffect, useRef, useState } from 'react';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx, lockGlobalScroll } from '../../scripts/utils';
 import { useId } from '../hooks';
+import { JSXChildren } from '../types';
 
 type DialogProps = {
   onHide: Callback;
   alarming?: boolean;
-  title: ComponentChildren;
-  children: ComponentChildren;
+  title: JSXChildren;
+  children: JSXChildren;
 };
 export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
@@ -57,7 +57,7 @@ export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   const id = useId();
   const titleId = `modal-title-${id}`;
 
-  return createPortal(
+  return ReactDOM.createPortal(
     <div className="modal-container" ref={setModalEl} aria-labelledby={titleId} aria-hidden="true">
       <div data-a11y-dialog-hide className="modal-overlay"></div>
 

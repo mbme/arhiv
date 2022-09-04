@@ -94,7 +94,7 @@ function ValueEditor({
         type="text"
         name={name}
         defaultValue={initialValue as string | undefined}
-        readonly={readonly}
+        readOnly={readonly}
         required={required}
         disabled={disabled}
       />
@@ -115,7 +115,7 @@ function ValueEditor({
         type="text"
         name={name}
         defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
-        readonly={readonly}
+        readOnly={readonly}
         required={required}
         disabled={disabled}
       />
@@ -138,7 +138,7 @@ function ValueEditor({
         step={1}
         name={name}
         defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
-        readonly={readonly}
+        readOnly={readonly}
         required={required}
         disabled={disabled}
       />
@@ -151,7 +151,7 @@ function ValueEditor({
       type="text"
       name={name}
       defaultValue={initialValue as string}
-      readonly={readonly}
+      readOnly={readonly}
       required={required}
       disabled={disabled}
     />
@@ -176,7 +176,9 @@ export function DocumentEditorField({
     <label className={cx('block mb-12', { 'has-errors': errors.length > 0 })} hidden={disabled}>
       <h5 className="section-heading mb-2 relative">
         {field.name}
-        {field.mandatory && <span class="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>}
+        {field.mandatory && (
+          <span className="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
+        )}
       </h5>
 
       <ValueEditor
@@ -189,7 +191,7 @@ export function DocumentEditorField({
       />
 
       {errors.map((error, index) => (
-        <div key={index} class="text-red-500 text-xs pl-1 my-2">
+        <div key={index} className="text-red-500 text-xs pl-1 my-2">
           {error}
         </div>
       ))}

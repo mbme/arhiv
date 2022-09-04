@@ -1,4 +1,6 @@
-import { Ref } from 'preact';
+import { useEffect, useRef } from 'react';
+import { setElementAttribute } from '../../../scripts/utils';
+import { JSXRef, setJSXRef } from '../../types';
 
 type Props = {
   className?: string;
@@ -8,7 +10,7 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
-  innerRef?: Ref<HTMLSelectElement>;
+  innerRef?: JSXRef<HTMLSelectElement>;
 };
 
 export function Select({
@@ -25,19 +27,37 @@ export function Select({
     throw new Error('options must not include empty string');
   }
 
+  const selectRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (selectRef.current) {
+      setElementAttribute(selectRef.current, 'readonly', readonly);
+    }
+  }, [readonly]);
+
   return (
     <select
-      ref={innerRef}
+      ref={(el) => {
+        selectRef.current = el;
+
+        if (innerRef) {
+          setJSXRef(innerRef, el);
+        }
+
+        if (el) {
+          setElementAttribute(el, 'readonly', readonly);
+        }
+      }}
       className={className}
       name={name}
       disabled={disabled}
-      readonly={readonly}
       required={required}
+      defaultValue={initialValue}
     >
       <option key="" value="" disabled={readonly} />
 
       {options.map((option) => (
-        <option key={option} value={option} disabled={readonly} selected={option === initialValue}>
+        <option key={option} value={option} disabled={readonly}>
           {option}
         </option>
       ))}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState } from 'react';
 import { Catalog } from './Catalog/Catalog';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 import { DocumentViewer } from './DocumentViewer/DocumentViewer';

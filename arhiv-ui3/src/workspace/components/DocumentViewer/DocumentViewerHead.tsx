@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { copyText } from '../../../scripts/clipboard';
 import { cx, formatDocumentType } from '../../../scripts/utils';
 import { useTimeout } from '../../hooks';
@@ -43,35 +43,37 @@ export function DocumentViewerHead({
 
   return (
     <table id="document-head">
-      <tr>
-        <td className="section-heading">id:</td>
-        <td>
-          <Button
-            variant="text"
-            className="block font-mono tracking-wide cursor-pointer group"
-            title="Copy document id to clipboard"
-            onClick={copyIdToClipboard}
-          >
-            {id}
-            <Icon
-              variant={copied ? 'clipboard-check' : 'clipboard'}
-              className={cx('ml-1', {
-                'invisible group-hover:visible': !copied,
-              })}
-            />
-          </Button>
-        </td>
-      </tr>
-      <tr>
-        <td className="section-heading">type:</td>
-        <td className="font-semibold">{formatDocumentType(documentType, subtype)}</td>
-      </tr>
-      <tr>
-        <td className="section-heading">modified:</td>
-        <td>
-          <DateTime datetime={updatedAt} />
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td className="section-heading">id:</td>
+          <td>
+            <Button
+              variant="text"
+              className="block font-mono tracking-wide cursor-pointer group"
+              title="Copy document id to clipboard"
+              onClick={copyIdToClipboard}
+            >
+              {id}
+              <Icon
+                variant={copied ? 'clipboard-check' : 'clipboard'}
+                className={cx('ml-1', {
+                  'invisible group-hover:visible': !copied,
+                })}
+              />
+            </Button>
+          </td>
+        </tr>
+        <tr>
+          <td className="section-heading">type:</td>
+          <td className="font-semibold">{formatDocumentType(documentType, subtype)}</td>
+        </tr>
+        <tr>
+          <td className="section-heading">modified:</td>
+          <td>
+            <DateTime datetime={updatedAt} />
+          </td>
+        </tr>
+      </tbody>
     </table>
   );
 }

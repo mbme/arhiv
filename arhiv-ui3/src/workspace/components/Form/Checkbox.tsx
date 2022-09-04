@@ -1,4 +1,4 @@
-import { Ref } from 'preact';
+import { JSXRef } from '../../types';
 
 type Props = {
   className?: string;
@@ -7,7 +7,7 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
-  innerRef?: Ref<HTMLInputElement>;
+  innerRef?: JSXRef<HTMLInputElement>;
 };
 
 export function Checkbox({
@@ -27,12 +27,11 @@ export function Checkbox({
       type="checkbox"
       required={required}
       disabled={disabled}
-      readonly={readonly}
+      readOnly={readonly}
       onInputCapture={(e) => {
         if (readonly) {
           e.currentTarget.checked = !e.currentTarget.checked;
           e.preventDefault();
-          e.stopImmediatePropagation();
         }
       }}
       checked={initialValue}

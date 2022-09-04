@@ -13,7 +13,7 @@ export function DocumentEditorSubtypeSelect({
   const subtypes = getDataDescription(documentType).subtypes || [];
 
   return (
-    <label class="flex justify-end items-center gap-2 mb-8" hidden={subtypes.length < 2}>
+    <label className="flex justify-end items-center gap-2 mb-8" hidden={subtypes.length < 2}>
       <select onChange={(e) => onChange(e.currentTarget.value)} form="">
         {subtypes.map((subtype) => (
           <option key={subtype} value={subtype} selected={subtype === value}>

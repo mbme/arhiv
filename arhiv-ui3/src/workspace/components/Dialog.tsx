@@ -38,6 +38,20 @@ export function Dialog({ onHide, alarming, title, children }: DialogProps) {
     };
   }, [modalEl]);
 
+  useEffect(() => {
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onHideRef.current();
+      }
+    };
+
+    document.body.addEventListener('keydown', onKeydown);
+
+    return () => {
+      document.body.removeEventListener('keydown', onKeydown);
+    };
+  }, []);
+
   useEffect(() => lockGlobalScroll(), []);
 
   const id = useId();

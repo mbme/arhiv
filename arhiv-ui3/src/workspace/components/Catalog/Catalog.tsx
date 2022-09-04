@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
 import { CardContainer } from '../CardContainer';

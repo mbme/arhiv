@@ -113,10 +113,12 @@ export class HTMLVEditorElement extends FormControlElement {
   }
 }
 
-declare module 'preact' {
+declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
-    interface EditorElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
+    interface EditorElementAttributes extends React.DOMAttributes<HTMLElement> {
+      className?: string;
+      name?: string;
       autofocus?: boolean;
       readonly?: boolean;
       required?: boolean;

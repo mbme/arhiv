@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DirEntry } from '../../dto';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';

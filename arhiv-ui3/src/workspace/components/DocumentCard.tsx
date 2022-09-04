@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 import { DocumentViewer } from './DocumentViewer/DocumentViewer';
 

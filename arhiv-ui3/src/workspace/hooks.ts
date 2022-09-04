@@ -1,5 +1,6 @@
-import { EffectCallback, StateUpdater, useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'react';
 import { Callback, getSessionValue, JSONValue, newId, setSessionValue } from '../scripts/utils';
+import { EffectCallback } from './types';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -11,7 +12,7 @@ type Options = {
 type QueryHookResult<TResult> = {
   result?: TResult;
   inProgress: boolean;
-  error?: unknown;
+  error?: Error | string;
   triggerRefresh: Callback;
 };
 
@@ -25,7 +26,7 @@ export function useQuery<TResult>(
 
   const [inProgress, setInProgress] = useState(false);
   const [result, setResult] = useState<TResult>();
-  const [error, setError] = useState<unknown>();
+  const [error, setError] = useState<Error | string>();
 
   const [counter, setCounter] = useState(0);
 
@@ -46,7 +47,7 @@ export function useQuery<TResult>(
       },
       (error) => {
         setResult(undefined);
-        setError(error);
+        setError(error as Error | string);
         setInProgress(false);
       }
     );
@@ -133,6 +134,7 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debouncedValue;
 }
 
+type StateUpdater<S> = React.Dispatch<React.SetStateAction<S>>;
 export function useSessionState<T extends JSONValue>(
   key: string,
   initialValue: T

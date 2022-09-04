@@ -1,7 +1,7 @@
-import { ComponentChildren, createContext } from 'preact';
-import { MutableRef, useContext, useState } from 'preact/hooks';
+import { useContext, useState, createContext } from 'react';
 import { formDataToObject } from '../../../scripts/forms';
 import { JSONObj, JSONValue } from '../../../scripts/utils';
+import { JSXChildren, JSXRef } from '../../types';
 
 type Getter = () => JSONValue;
 type Getters = WeakMap<Element, Getter>;
@@ -45,9 +45,9 @@ function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
 }
 
 type FormProps = {
-  children: ComponentChildren;
+  children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void>;
-  formRef?: MutableRef<HTMLFormElement | null>;
+  formRef?: JSXRef<HTMLFormElement>;
 };
 
 export function Form({ children, onSubmit, formRef }: FormProps) {

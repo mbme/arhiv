@@ -14,7 +14,7 @@ export function DocumentViewerFields({ documentType, subtype, data }: DocumentVi
       <img
         src="/public/nothing-to-see-here.jpg"
         alt="funny picture for the erased document"
-        class="my-16 mx-auto"
+        className="my-16 mx-auto"
       />
     );
   }

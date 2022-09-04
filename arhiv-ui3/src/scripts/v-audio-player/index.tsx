@@ -1,4 +1,4 @@
-import { render } from 'preact';
+import ReactDOM from 'react-dom/client';
 import { Callback } from '../utils';
 import { AudioPlayer } from './audio-player';
 
@@ -6,6 +6,8 @@ export class AudioPlayerElement extends HTMLElement {
   static get observedAttributes() {
     return ['data-artist', 'data-title', 'url', 'autoplay'];
   }
+
+  private reactRoot = ReactDOM.createRoot(this);
 
   private nextTrack?: Callback;
   private prevTrack?: Callback;
@@ -64,7 +66,7 @@ export class AudioPlayerElement extends HTMLElement {
     const url = this.getAttribute('url') || '';
     const autoplay = this.hasAttribute('autoplay');
 
-    render(
+    this.reactRoot.render(
       <AudioPlayer
         artist={artist}
         title={title}
@@ -74,8 +76,7 @@ export class AudioPlayerElement extends HTMLElement {
         prevTrack={this.prevTrack}
         onStop={this.stop}
         onTrackEnded={this.trackEnded}
-      />,
-      this
+      />
     );
   }
 }

@@ -1,5 +1,5 @@
-import { ComponentChildren } from 'preact';
 import { Callback, cx } from '../../scripts/utils';
+import { JSXChildren } from '../types';
 import { Icon, IconVariant } from './Icon';
 
 // TODO: button size - small / regular (maybe boolean property)
@@ -9,13 +9,13 @@ type ButtonProps = {
   className?: string;
   onClick?: Callback;
   disabled?: boolean;
-  children: ComponentChildren;
+  children: JSXChildren;
   title?: string;
   busy?: boolean;
   alarming?: boolean;
   leadingIcon?: IconVariant;
   trailingIcon?: IconVariant;
-  type?: HTMLButtonElement['type'];
+  type?: 'button' | 'submit' | 'reset';
 };
 export function Button({
   variant,

@@ -17,10 +17,6 @@ await esbuild.build({
   minify: isProduction,
   sourcemap: true,
 
-  jsxFactory: 'h',
-  jsxFragment: 'Fragment',
-  jsxImportSource: 'preact',
-
   loader: {
     '.html': 'text',
   },

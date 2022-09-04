@@ -1,9 +1,4 @@
-// Must be the first import
-if (process.env.NODE_ENV === 'development') {
-  require('preact/debug');
-}
-
-import { render } from 'preact';
+import ReactDOM from 'react-dom/client';
 import { ComponentsDemo } from './components/ComponentsDemo';
 import { Workspace } from './Workspace';
 
@@ -12,8 +7,9 @@ if (!renderRoot) {
   throw new Error('render root not found');
 }
 
+const root = ReactDOM.createRoot(renderRoot);
 if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
-  render(<ComponentsDemo />, renderRoot);
+  root.render(<ComponentsDemo />);
 } else {
-  render(<Workspace />, renderRoot);
+  root.render(<Workspace />);
 }

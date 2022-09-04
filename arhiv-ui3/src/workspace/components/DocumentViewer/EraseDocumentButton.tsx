@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
@@ -67,12 +67,12 @@ export function EraseDocumentButton({
                 Type <b>{confirmationText}</b> to confirm:
                 <input
                   type="text"
-                  autocomplete="off"
+                  autoComplete="off"
                   name="confirmation_text"
                   className="field mt-2"
                   required
                   pattern={confirmationText}
-                  value=""
+                  defaultValue=""
                   disabled={inProgress}
                 />
               </label>

@@ -1,8 +1,9 @@
-import { MutableRef, useState } from 'preact/hooks';
+import { useState } from 'react';
 import { JSONObj } from '../../../scripts/utils';
 import { DocumentData, DocumentFieldErrors } from '../../dto';
 import { RPC } from '../../rpc';
 import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../schema';
+import { JSXRef } from '../../types';
 import { Form } from '../Form/Form';
 import { PreventImplicitSubmissionOnEnter } from '../Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
@@ -14,7 +15,7 @@ type DocumentEditorFormProps = {
   subtype?: string;
   data?: DocumentData;
   onSave: (id: string) => void;
-  formRef?: MutableRef<HTMLFormElement | null>;
+  formRef?: JSXRef<HTMLFormElement>;
 };
 
 export function DocumentEditorForm({

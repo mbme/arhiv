@@ -5,7 +5,7 @@ import '../../scripts/v-editor';
 import { useSessionState } from '../hooks';
 import { JSXChildren } from '../types';
 import { CardContext } from '../workspace-reducer';
-import { Button } from './Button';
+import { Button, IconButton } from './Button';
 import { DateTime } from './DateTime';
 import { Dialog } from './Dialog';
 import { Checkbox } from './Form/Checkbox';
@@ -93,6 +93,13 @@ export function ComponentsDemo() {
             <Button variant="text" alarming>
               Text
             </Button>
+          </div>
+
+          <h1>Icon Button</h1>
+          <div className="examples">
+            <IconButton icon="web" className="text-red-700" />
+
+            <IconButton icon="web" size="lg" />
           </div>
         </div>
 

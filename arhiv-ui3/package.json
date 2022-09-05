@@ -26,6 +26,7 @@
     "@codemirror/search": "^6.0.0",
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
+    "@floating-ui/react-dom-interactions": "^0.9.3",
     "a11y-dialog": "^7.3.0",
     "element-internals-polyfill": "^1.1.11",
     "react": "^18.2.0",

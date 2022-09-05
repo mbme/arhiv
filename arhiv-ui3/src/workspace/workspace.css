@@ -19,6 +19,10 @@
     width: 39rem;
   }
 
+  .var-active-color {
+    @apply text-blue-800 hover:text-blue-600;
+  }
+
   .buttons {
     @apply flex justify-end gap-8;
     @apply p-2 sm:p-4 md:p-6;

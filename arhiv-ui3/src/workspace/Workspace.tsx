@@ -7,13 +7,14 @@ import { StatusCard } from './components/StatusCard';
 import { Button } from './components/Button';
 import { FilePickerCard } from './components/FilePickerCard';
 import { ScraperCard } from './components/ScraperCard';
+import { DropdownMenu } from './components/DropdownMenu';
 
 export function Workspace() {
   const [cards, dispatch] = useWorkspaceReducer();
 
   return (
     <div className="relative flex flex-row gap-8 h-full w-auto overflow-x-auto pt-14 pb-2 pl-8 pr-16">
-      <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color px-16 pt-4 flex flex-row gap-8">
+      <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-16 pr-4 flex flex-row gap-8">
         <Button
           variant="text"
           leadingIcon="search-catalog"
@@ -30,30 +31,36 @@ export function Workspace() {
           New...
         </Button>
 
-        <Button
-          variant="text"
-          leadingIcon="paperclip"
-          onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
-        >
-          Add file
-        </Button>
-
-        <Button
-          variant="text"
-          leadingIcon="web"
-          onClick={() => dispatch({ type: 'open', newCard: { variant: 'scraper' } })}
-        >
-          Scrape URL
-        </Button>
-
-        <Button
-          variant="text"
-          onClick={() => dispatch({ type: 'open', newCard: { variant: 'status' } })}
-        >
-          Status
-        </Button>
-
         <Button variant="text">Player</Button>
+
+        <div className="ml-auto">
+          <DropdownMenu
+            options={[
+              {
+                text: 'Add file',
+                icon: 'paperclip',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'file-picker' } }),
+              },
+              {
+                text: 'Scrape URL',
+                icon: 'web',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'scraper' } }),
+              },
+
+              {
+                text: 'Status',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
+              },
+
+              {
+                text: 'Components Demo',
+                onClick: () => {
+                  window.location.search = 'DEMO';
+                },
+              },
+            ]}
+          />
+        </div>
       </nav>
 
       {cards.map((card) => {

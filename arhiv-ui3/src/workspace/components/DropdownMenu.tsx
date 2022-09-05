@@ -28,7 +28,7 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
 
   const { x, y, reference, floating, strategy, context } = useFloating({
     placement: 'bottom-start',
-    middleware: [offset(10), shift()],
+    middleware: [offset(2), shift()],
     open,
     onOpenChange: setOpen,
   });

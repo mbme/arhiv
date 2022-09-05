@@ -74,7 +74,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ className, icon, onClick, size, ...props }, ref) => (
     <button
       type="button"
-      className={cx(className, 'icon-btn')}
+      className={cx(className, 'icon-btn', {
+        'p-4': size === 'lg',
+      })}
       onClick={onClick}
       ref={ref}
       {...props}

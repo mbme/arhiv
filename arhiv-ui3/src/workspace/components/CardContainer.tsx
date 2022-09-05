@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { JSXChildren } from '../types';
 import { Card, CardContext, useCardContext, WorkspaceDispatch } from '../workspace-reducer';
-import { Button } from './Button';
-import { Icon } from './Icon';
+import { IconButton } from './Button';
 
 type CardContainerProps = {
   card: Card;
@@ -62,9 +61,5 @@ CardContainer.CloseButton = function CloseButton() {
     context.close();
   };
 
-  return (
-    <Button variant="text" onClick={onClose} className="relative left-2">
-      <Icon variant="x" />
-    </Button>
-  );
+  return <IconButton icon="x" onClick={onClose} className="relative left-2" />;
 };

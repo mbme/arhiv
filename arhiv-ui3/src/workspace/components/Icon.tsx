@@ -199,20 +199,10 @@ export function Icon({ variant, className = '' }: IconProps) {
       );
 
     case 'more':
-      // heroicons outline ellipsis-vertical
+      // material design icons menu
       return (
-        <svg
-          className={cx('icon', className)}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-          />
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
         </svg>
       );
 

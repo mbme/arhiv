@@ -61,5 +61,5 @@ CardContainer.CloseButton = function CloseButton() {
     context.close();
   };
 
-  return <IconButton icon="x" onClick={onClose} className="relative left-2" />;
+  return <IconButton icon="x" onClick={onClose} className="relative left-3" />;
 };

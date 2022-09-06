@@ -4,7 +4,7 @@ import { DocumentViewerFields } from './DocumentViewerFields';
 import { QueryError } from '../QueryError';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
-import { Button } from '../Button';
+import { Button, IconButton } from '../Button';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
@@ -30,11 +30,7 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
     <>
       <CardContainer.Topbar
         left={
-          onBack && (
-            <Button variant="text" leadingIcon="arrow-left" onClick={onBack}>
-              Back
-            </Button>
-          )
+          onBack && <IconButton icon="arrow-left" onClick={onBack} className="relative right-2" />
         }
         right={
           <>

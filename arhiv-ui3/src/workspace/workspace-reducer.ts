@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useReducer } from 'react';
+import { createContext } from 'preact';
+import { useContext, useEffect, useReducer } from 'preact/hooks';
 import { newId, getSessionValue, setSessionValue } from '../scripts/utils';
 
 type CardVariant =

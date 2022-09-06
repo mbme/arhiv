@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  EffectCallback,
+  StateUpdater,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'preact/hooks';
 import { Callback, getSessionValue, JSONValue, newId, setSessionValue } from '../scripts/utils';
-import { EffectCallback } from './types';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -134,7 +140,6 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debouncedValue;
 }
 
-type StateUpdater<S> = React.Dispatch<React.SetStateAction<S>>;
 export function useSessionState<T extends JSONValue>(
   key: string,
   initialValue: T

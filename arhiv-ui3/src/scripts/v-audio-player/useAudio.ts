@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Callback } from '../utils';
 
 export type AudioPlayerState = 'initial' | 'ready' | 'playing' | 'paused';

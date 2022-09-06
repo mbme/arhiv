@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';

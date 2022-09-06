@@ -1,5 +1,6 @@
+import { forwardRef } from 'preact/compat';
 import { Callback, cx } from '../../scripts/utils';
-import { JSXChildren } from '../types';
+import { JSXChildren } from '../jsx';
 import { Icon, IconVariant } from './Icon';
 
 // TODO: button size - small / regular (maybe boolean property)
@@ -63,9 +64,10 @@ type IconButtonProps = {
   icon: IconVariant;
   size?: 'lg';
 };
-export function IconButton({ className, icon, onClick, size, ...props }: IconButtonProps) {
-  return (
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ className, icon, onClick, size, ...props }, ref) => (
     <button
+      ref={ref}
       type="button"
       className={cx(className, 'icon-btn', {
         'p-4': size === 'lg',
@@ -80,5 +82,5 @@ export function IconButton({ className, icon, onClick, size, ...props }: IconBut
         })}
       />
     </button>
-  );
-}
+  )
+);

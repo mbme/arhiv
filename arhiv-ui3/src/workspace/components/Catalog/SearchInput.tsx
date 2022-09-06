@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useDebouncedValue } from '../../hooks';
 import { Icon } from '../Icon';
 

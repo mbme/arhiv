@@ -1,9 +1,9 @@
-import ReactDOM from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'preact/compat';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx, lockGlobalScroll } from '../../scripts/utils';
 import { useId } from '../hooks';
-import { JSXChildren } from '../types';
+import { JSXChildren } from '../jsx';
 
 type DialogProps = {
   onHide: Callback;
@@ -57,7 +57,7 @@ export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   const id = useId();
   const titleId = `modal-title-${id}`;
 
-  return ReactDOM.createPortal(
+  return createPortal(
     <div className="modal-container" ref={setModalEl} aria-labelledby={titleId} aria-hidden="true">
       <div data-a11y-dialog-hide className="modal-overlay"></div>
 

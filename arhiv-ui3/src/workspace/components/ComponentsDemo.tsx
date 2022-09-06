@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { formDataToObject } from '../../scripts/forms';
 import { noop } from '../../scripts/utils';
 import '../../scripts/v-editor';
 import { useSessionState } from '../hooks';
-import { JSXChildren } from '../types';
+import { JSXChildren } from '../jsx';
 import { CardContext } from '../workspace-reducer';
 import { Button, IconButton } from './Button';
 import { DateTime } from './DateTime';

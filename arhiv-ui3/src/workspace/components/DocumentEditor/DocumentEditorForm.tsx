@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { JSONObj } from '../../../scripts/utils';
 import { DocumentData, DocumentFieldErrors } from '../../dto';
 import { RPC } from '../../rpc';
 import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../schema';
-import { JSXRef } from '../../types';
+import { JSXRef } from '../../jsx';
 import { Form } from '../Form/Form';
 import { PreventImplicitSubmissionOnEnter } from '../Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';

@@ -17,6 +17,9 @@ await esbuild.build({
   minify: isProduction,
   sourcemap: true,
 
+  jsxImportSource: 'preact',
+  jsx: 'automatic',
+
   loader: {
     '.html': 'text',
   },

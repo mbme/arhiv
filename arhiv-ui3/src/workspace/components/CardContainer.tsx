@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { JSXChildren } from '../types';
+import { useEffect, useRef } from 'preact/hooks';
+import { JSXChildren } from '../jsx';
 import { Card, CardContext, useCardContext, WorkspaceDispatch } from '../workspace-reducer';
 import { IconButton } from './Button';
 

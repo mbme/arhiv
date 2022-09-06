@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef } from 'preact/hooks';
 import { Callback } from '../../../scripts/utils';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';

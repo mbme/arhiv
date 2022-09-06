@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'preact/hooks';
 import { copyText } from '../../../scripts/clipboard';
 import { cx, formatDocumentType } from '../../../scripts/utils';
 import { useTimeout } from '../../hooks';

@@ -1,7 +1,8 @@
-import { useContext, useState, createContext } from 'react';
+import { createContext } from 'preact';
+import { useContext, useState } from 'preact/hooks';
 import { formDataToObject } from '../../../scripts/forms';
 import { JSONObj, JSONValue } from '../../../scripts/utils';
-import { JSXChildren, JSXRef } from '../../types';
+import { JSXChildren, JSXRef } from '../../jsx';
 
 type Getter = () => JSONValue;
 type Getters = WeakMap<Element, Getter>;

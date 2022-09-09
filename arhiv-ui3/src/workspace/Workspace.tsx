@@ -68,7 +68,11 @@ export function Workspace() {
           case 'catalog':
             return (
               <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                <CatalogCard />
+                <CatalogCard
+                  query={card.query ?? ''}
+                  page={card.page ?? 0}
+                  documentId={card.documentId}
+                />
               </CardContainer>
             );
 

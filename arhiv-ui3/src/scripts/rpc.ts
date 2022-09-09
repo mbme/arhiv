@@ -18,10 +18,15 @@ export function createRPCProxy<Request extends SerdeEnum, Response extends Serde
     {},
     {
       get(_, prop) {
-        return async (params: Obj, signal?: AbortSignal) => {
-          try {
-            console.debug('RPC: %s', prop);
+        return async (params: Obj, signal: AbortSignal) => {
+          console.debug('RPC: %s', prop, params);
 
+          const onAbort = () => {
+            console.debug('RPC: aborted %s', prop, params);
+          };
+          signal.addEventListener('abort', onAbort);
+
+          try {
             const response = await fetch(url, {
               method: 'POST',
               headers: {
@@ -44,6 +49,8 @@ export function createRPCProxy<Request extends SerdeEnum, Response extends Serde
           } catch (e) {
             console.error(e);
             throw e;
+          } finally {
+            signal.removeEventListener('abort', onAbort);
           }
         };
       },

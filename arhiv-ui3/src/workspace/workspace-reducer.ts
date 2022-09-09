@@ -3,7 +3,7 @@ import { useContext, useEffect, useReducer } from 'preact/hooks';
 import { newId, getSessionValue, setSessionValue } from '../scripts/utils';
 
 type CardVariant =
-  | { variant: 'catalog' } //
+  | { variant: 'catalog'; query?: string; page?: number; documentId?: string } //
   | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'scraper' }
@@ -37,7 +37,14 @@ type ActionType =
       type: 'replace';
       id: number;
       newCard: CardVariant;
+    }
+  | {
+      type: 'update';
+      id: number;
+      props: UpdateActionProps;
     };
+
+type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
 
 export type WorkspaceDispatch = (action: ActionType) => void;
 
@@ -51,6 +58,18 @@ function workspaceReducer(state: Card[], action: ActionType): Card[] {
     }
     case 'replace': {
       return state.map((card) => (card.id === action.id ? createCard(action.newCard) : card));
+    }
+    case 'update': {
+      return state.map((card) => {
+        if (card.id === action.id) {
+          return {
+            ...card,
+            ...action.props,
+          };
+        }
+
+        return card;
+      });
     }
     default: {
       return state;
@@ -103,6 +122,13 @@ export function useCardContext() {
         type: 'replace',
         id: card.id,
         newCard,
+      });
+    },
+    update(props: UpdateActionProps) {
+      dispatch({
+        type: 'update',
+        id: card.id,
+        props,
       });
     },
     open(newCard: CardVariant) {

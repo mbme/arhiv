@@ -3,10 +3,19 @@ import {
   StateUpdater,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
-import { Callback, getSessionValue, JSONValue, newId, setSessionValue } from '../scripts/utils';
+import {
+  ensure,
+  Callback,
+  debounce,
+  getSessionValue,
+  JSONValue,
+  newId,
+  setSessionValue,
+} from '../scripts/utils';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -125,19 +134,24 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
   }, [timeoutMs, enabled]);
 }
 
-// https://usehooks-ts.com/react-hook/use-debounce
-export function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+export function useDebouncedCallback<Args extends any[]>(
+  callback: (...args: Args) => void,
+  waitFor: number
+) {
+  ensure(waitFor > 1, 'waitFor must be positive number');
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delayMs);
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delayMs]);
+  const debouncedCallback = useMemo(
+    () =>
+      debounce<Args, (...args: Args) => void>((...args) => {
+        callbackRef.current(...args);
+      }, waitFor),
+    [waitFor]
+  );
 
-  return debouncedValue;
+  return debouncedCallback;
 }
 
 export function useSessionState<T extends JSONValue>(

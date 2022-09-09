@@ -8,12 +8,22 @@ import { Pagination } from './Pagination';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
+  initialQuery: string;
+  initialPage: number;
+  onQueryChange: (query: string) => void;
+  onPageChange: (page: number) => void;
   onDocumentSelected: (documentId: string) => void;
 };
 
-export function Catalog({ onDocumentSelected }: CatalogProps) {
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(0);
+export function Catalog({
+  initialQuery,
+  initialPage,
+  onQueryChange,
+  onPageChange,
+  onDocumentSelected,
+}: CatalogProps) {
+  const [query, _setQuery] = useState(initialQuery);
+  const [page, _setPage] = useState(initialPage);
 
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.ListDocuments({ query, page }, abortSignal),
@@ -21,6 +31,16 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
       refreshIfChange: [query, page],
     }
   );
+
+  const setQuery = (query: string) => {
+    _setQuery(query);
+    onQueryChange(query);
+  };
+
+  const setPage = (page: number) => {
+    _setPage(page);
+    onPageChange(page);
+  };
 
   const items = result?.documents.map((item) => (
     <div
@@ -50,7 +70,7 @@ export function Catalog({ onDocumentSelected }: CatalogProps) {
       />
 
       <SearchInput
-        value={query}
+        initialValue={query}
         onSearch={(newQuery) => {
           setQuery(newQuery);
           setPage(0);

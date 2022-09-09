@@ -1,23 +1,14 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { useDebouncedValue } from '../../hooks';
+import { useDebouncedCallback } from '../../hooks';
 import { Icon } from '../Icon';
 
 type SearchInputProps = {
-  value: string;
+  initialValue: string;
   onSearch: (query: string) => void;
   busy: boolean;
 };
 
-export function SearchInput({ value: initialValue, onSearch, busy }: SearchInputProps) {
-  const onSearchRef = useRef(onSearch);
-  onSearchRef.current = onSearch;
-
-  const [value, setValue] = useState(initialValue);
-  const debouncedValue = useDebouncedValue(value, 400);
-
-  useEffect(() => {
-    onSearchRef.current(debouncedValue);
-  }, [debouncedValue]);
+export function SearchInput({ initialValue, onSearch, busy }: SearchInputProps) {
+  const onSearchDebounced = useDebouncedCallback(onSearch, 400);
 
   return (
     <form
@@ -35,9 +26,9 @@ export function SearchInput({ value: initialValue, onSearch, busy }: SearchInput
         type="search"
         name="pattern"
         className="field w-full mb-4 pl-10"
-        value={value}
+        defaultValue={initialValue}
         onChange={(e) => {
-          setValue(e.currentTarget.value);
+          onSearchDebounced(e.currentTarget.value);
         }}
         placeholder="Type something"
         autoComplete="off"

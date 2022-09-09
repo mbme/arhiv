@@ -22,6 +22,12 @@ export const newId = (): number => (_newIdState += 1);
 
 export const sum = (a: number, b: number) => a + b;
 
+export const ensure = (condition: unknown, message: string) => {
+  if (!condition) {
+    throw new Error(`assertion failed: condition is "${String(condition)}"; ${message}`);
+  }
+};
+
 export async function fetchText(
   url: string,
   body?: XMLHttpRequestBodyInit,
@@ -207,3 +213,17 @@ export function setElementAttribute(
 
   el.removeAttribute(attribute);
 }
+
+export const debounce = <Args extends any[], F extends (...args: Args) => void>(
+  func: F,
+  waitFor: number
+): F => {
+  let timeoutId: number;
+
+  const debounced = (...args: Args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => func(...args), waitFor);
+  };
+
+  return debounced as F;
+};

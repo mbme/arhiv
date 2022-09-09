@@ -181,3 +181,19 @@ export function useToggle(initialValue: boolean): [boolean, Callback] {
 
   return [value, toggleValue];
 }
+
+export function useUnsavedChangesWarning() {
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+
+      return (event.returnValue = 'Page has unsaved changes. Are you sure you want to exit?');
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload, { capture: true });
+
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
+    };
+  }, []);
+}

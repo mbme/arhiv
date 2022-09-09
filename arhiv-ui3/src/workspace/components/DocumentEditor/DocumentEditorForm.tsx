@@ -8,6 +8,7 @@ import { Form } from '../Form/Form';
 import { PreventImplicitSubmissionOnEnter } from '../Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
+import { useUnsavedChangesWarning } from '../../hooks';
 
 type DocumentEditorFormProps = {
   documentId?: string;
@@ -26,6 +27,8 @@ export function DocumentEditorForm({
   onSave,
   formRef,
 }: DocumentEditorFormProps) {
+  useUnsavedChangesWarning();
+
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
   const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));

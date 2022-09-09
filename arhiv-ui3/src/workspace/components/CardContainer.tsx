@@ -34,7 +34,7 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
           scrolledRef.current = true;
         }}
       >
-        <div className="max-h-full overflow-auto px-4 pt-16 pb-6">{children}</div>
+        <div className="px-4 pb-6">{children}</div>
       </div>
     </CardContext.Provider>
   );
@@ -46,7 +46,7 @@ type TopbarProps = {
 };
 CardContainer.Topbar = function Topbar({ left, right }: TopbarProps) {
   return (
-    <div className="flex items-center gap-4 justify-between bg-white px-4 py-2 absolute inset-x-0 top-0 z-10">
+    <div className="flex items-center gap-4 justify-between bg-white py-2 sticky inset-x-0 top-0 z-10">
       <div className="flex items-center gap-4">{left}</div>
 
       <div className="flex items-center gap-4">{right}</div>

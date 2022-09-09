@@ -59,8 +59,8 @@
     margin: 0;
     padding: 0;
 
-    height: 100vh;
-    width: 100vw;
+    height: fit-content;
+    width: fit-content;
 
     text-rendering: optimizeLegibility;
     @apply antialiased;
@@ -72,7 +72,9 @@
   }
 
   main {
-    height: 100%;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
     position: relative;
     z-index: 1;
   }

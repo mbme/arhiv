@@ -42,6 +42,9 @@ type ActionType =
       type: 'update';
       id: number;
       props: UpdateActionProps;
+    }
+  | {
+      type: 'close-all';
     };
 
 type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
@@ -71,6 +74,10 @@ function workspaceReducer(state: Card[], action: ActionType): Card[] {
         return card;
       });
     }
+    case 'close-all': {
+      return [];
+    }
+
     default: {
       return state;
     }

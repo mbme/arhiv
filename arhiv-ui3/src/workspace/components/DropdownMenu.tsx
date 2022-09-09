@@ -20,7 +20,7 @@ type MenuItem = {
 };
 
 type DropdownMenuProps = {
-  options: readonly MenuItem[];
+  options: ReadonlyArray<MenuItem | false>;
 };
 
 export function DropdownMenu({ options }: DropdownMenuProps) {
@@ -43,7 +43,7 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
 
   return (
     <>
-      <IconButton icon="more" size="lg" ref={reference} {...getReferenceProps()} />
+      <IconButton icon="more" ref={reference} {...getReferenceProps()} />
 
       {open && (
         <FloatingFocusManager context={context}>
@@ -60,24 +60,30 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
             }}
             {...getFloatingProps()}
           >
-            {options.map((option, index) => (
-              <button
-                type="button"
-                key={index}
-                className="flex items-center gap-2 cursor-pointer text-blue-700 hover:bg-sky-100 px-4 py-2 whitespace-nowrap"
-                role="menuitem"
-                {...getItemProps({
-                  onClick: () => {
-                    option.onClick();
-                    setOpen(false);
-                  },
-                })}
-              >
-                {option.icon ? <Icon variant={option.icon} /> : <div className="w-5" />}
+            {options.map((option, index) => {
+              if (!option) {
+                return null;
+              }
 
-                {option.text}
-              </button>
-            ))}
+              return (
+                <button
+                  type="button"
+                  key={index}
+                  className="flex items-center gap-2 cursor-pointer text-blue-700 hover:bg-sky-100 px-4 py-2 whitespace-nowrap"
+                  role="menuitem"
+                  {...getItemProps({
+                    onClick: () => {
+                      option.onClick();
+                      setOpen(false);
+                    },
+                  })}
+                >
+                  {option.icon ? <Icon variant={option.icon} /> : <div className="w-5" />}
+
+                  {option.text}
+                </button>
+              );
+            })}
           </div>
         </FloatingFocusManager>
       )}

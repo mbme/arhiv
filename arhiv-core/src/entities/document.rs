@@ -75,8 +75,8 @@ impl Document {
         ensure!(
             self.document_type == document_type,
             "expected document_type to be '{}', got '{}' instead",
-            self.document_type,
-            document_type
+            document_type,
+            self.document_type
         );
 
         Ok(())

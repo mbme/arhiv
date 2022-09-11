@@ -136,7 +136,8 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
 
 function cardUpdateConfirmed(state: WorkspaceState, id: number) {
   return (
-    state.lockedCardIds.has(id) && window.confirm('The card may contain unsaved changes. Continue?')
+    !state.lockedCardIds.has(id) ||
+    window.confirm('The card may contain unsaved changes. Continue?')
   );
 }
 

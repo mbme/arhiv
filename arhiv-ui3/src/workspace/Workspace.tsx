@@ -10,10 +10,10 @@ import { ScraperCard } from './components/ScraperCard';
 import { DropdownMenu } from './components/DropdownMenu';
 
 export function Workspace() {
-  const [cards, dispatch] = useWorkspaceReducer();
+  const [{ cards }, dispatch] = useWorkspaceReducer();
 
   return (
-    <div className="w-screen h-full overflow-x-auto pt-14 pb-2 pl-8 pr-16">
+    <div className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth">
       <div className="flex flex-row justify-center items-start gap-8 h-full w-fit min-w-full">
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-16 pr-4 flex flex-row gap-8">
           <Button
@@ -60,8 +60,8 @@ export function Workspace() {
                   },
                 },
 
-                cards.length > 1 && {
-                  text: `Close ${cards.length} cards`,
+                {
+                  text: 'Close cards',
                   icon: 'x',
                   onClick: () => {
                     dispatch({

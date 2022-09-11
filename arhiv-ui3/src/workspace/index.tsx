@@ -3,10 +3,13 @@ if (process.env.NODE_ENV === 'development') {
   require('preact/debug');
 }
 
+import { enableMapSet } from 'immer';
 import { render } from 'preact';
 
 import { ComponentsDemo } from './components/ComponentsDemo';
 import { Workspace } from './Workspace';
+
+enableMapSet();
 
 const renderRoot = document.querySelector('main');
 if (!renderRoot) {

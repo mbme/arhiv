@@ -1,18 +1,12 @@
 use std::collections::HashSet;
 use std::convert::From;
 
-use pulldown_cmark::{Event, Options, Parser, Tag};
-use serde::{Deserialize, Serialize};
+use pulldown_cmark::{CowStr, Event, Options, Parser, Tag};
 
 use super::utils::extract_id;
 use crate::entities::*;
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-pub enum MarkupStr<'a> {
-    Ref(&'a str),
-    Owned(String),
-}
+pub struct MarkupStr<'a>(CowStr<'a>);
 
 impl<'a> MarkupStr<'a> {
     #[must_use]
@@ -22,7 +16,7 @@ impl<'a> MarkupStr<'a> {
         options.insert(Options::ENABLE_TABLES);
         options.insert(Options::ENABLE_TASKLISTS);
 
-        Parser::new_ext(self.as_ref(), options)
+        Parser::new_ext(self.0.as_ref(), options)
     }
 
     #[must_use]
@@ -43,7 +37,8 @@ impl<'a> MarkupStr<'a> {
 
     #[must_use]
     pub fn preview(&self, lines: usize) -> Self {
-        self.as_ref()
+        self.0
+            .as_ref()
             .lines()
             .take(lines)
             .collect::<Vec<_>>()
@@ -52,23 +47,14 @@ impl<'a> MarkupStr<'a> {
     }
 }
 
-impl<'a> AsRef<str> for MarkupStr<'a> {
-    fn as_ref(&self) -> &str {
-        match self {
-            MarkupStr::Ref(s) => s,
-            MarkupStr::Owned(s) => s,
-        }
-    }
-}
-
 impl<'a> From<&'a str> for MarkupStr<'a> {
     fn from(value: &'a str) -> Self {
-        MarkupStr::Ref(value)
+        MarkupStr(CowStr::Borrowed(value))
     }
 }
 
 impl<'a> From<String> for MarkupStr<'a> {
     fn from(value: String) -> Self {
-        MarkupStr::Owned(value)
+        MarkupStr(CowStr::Boxed(value.into_boxed_str()))
     }
 }

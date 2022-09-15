@@ -11,7 +11,6 @@ use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
 use crate::{
     app::{App, AppResponse},
-    markup::MarkupStringExt,
     workspace::dto::{
         DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
         WorkspaceResponse,
@@ -81,11 +80,13 @@ impl App {
                     backrefs,
                 }
             }
-            WorkspaceRequest::RenderMarkup { markup } => {
+            WorkspaceRequest::ParseMarkup { markup } => {
                 let markup: MarkupStr = markup.into();
-                let html = markup.to_html(&self.arhiv);
 
-                WorkspaceResponse::RenderMarkup { html }
+                let ast = markup.get_ast()?;
+                let ast = serde_json::to_value(ast).context("failed to serialize ast")?;
+
+                WorkspaceResponse::ParseMarkup { ast }
             }
             WorkspaceRequest::SaveDocument { id, subtype, data } => {
                 let mut document = self.arhiv.must_get_document(&id)?;

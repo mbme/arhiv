@@ -12,14 +12,14 @@ export function SearchInput({ initialValue, onSearch, busy }: SearchInputProps) 
 
   return (
     <form
-      className="form relative"
+      className="form relative pt-1"
       onSubmit={(e) => {
         e.preventDefault();
       }}
     >
       <Icon
         variant={busy ? 'spinner' : 'search'}
-        className="absolute top-3 left-3 pointer-events-none"
+        className="absolute top-4 left-3 pointer-events-none"
       />
 
       <input

@@ -14,7 +14,7 @@ export type WorkspaceRequest =
       id: string;
     }
   | {
-      typeName: 'RenderMarkup';
+      typeName: 'ParseMarkup';
       markup: string;
     }
   | {
@@ -68,8 +68,8 @@ export type WorkspaceResponse =
       backrefs: DocumentBackref[];
     }
   | {
-      typeName: 'RenderMarkup';
-      html: string;
+      typeName: 'ParseMarkup';
+      ast: MarkupElement;
     }
   | {
       typeName: 'SaveDocument';
@@ -143,3 +143,158 @@ export type DirEntry =
       linksTo: string;
       size?: number;
     };
+
+export type MarkupElement =
+  | {
+      typeName: 'Document';
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Text';
+      range: Range;
+      value: string;
+    }
+  | {
+      typeName: 'Code';
+      range: Range;
+      value: string;
+    }
+  | {
+      typeName: 'Html';
+      range: Range;
+      value: string;
+    }
+  | {
+      typeName: 'FootnoteReference';
+      range: Range;
+      label: string;
+    }
+  | {
+      typeName: 'SoftBreak';
+      range: Range;
+    }
+  | {
+      typeName: 'HardBreak';
+      range: Range;
+    }
+  | {
+      typeName: 'Rule';
+      range: Range;
+    }
+  | {
+      typeName: 'TaskListMarker';
+      range: Range;
+      checked: boolean;
+    }
+  | {
+      typeName: 'Paragraph';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Heading';
+      range: Range;
+      level: 'H1' | 'H2' | 'H3' | 'H4' | 'H5' | 'H6';
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'BlockQuote';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'CodeBlock';
+      range: Range;
+      kind: 'Indented' | { Fenced: string };
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'List';
+      range: Range;
+      first_item_number?: number;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'ListItem';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'FootnoteDefinition';
+      range: Range;
+      label: string;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Table';
+      range: Range;
+      alignments: Array<'None' | 'Left' | 'Center' | 'Right'>;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'TableHead';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'TableRow';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'TableCell';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Emphasis';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Strong';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Strikethrough';
+      range: Range;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Link';
+      range: Range;
+      link_type: LinkType;
+      url: string;
+      title: string;
+      children: MarkupElement[];
+    }
+  | {
+      typeName: 'Image';
+      range: Range;
+      link_type: LinkType;
+      url: string;
+      title: string;
+      children: MarkupElement[];
+    };
+
+export type Range = {
+  start: number;
+  end: number;
+};
+
+type LinkType =
+  | 'Inline'
+  | 'Reference'
+  | 'ReferenceUnknown'
+  | 'Collapsed'
+  | 'CollapsedUnknown'
+  | 'Shortcut'
+  | 'ShortcutUnknown'
+  | 'Autolink'
+  | 'Email';
+
+export function throwBadMarkupElement(value: never): never;
+export function throwBadMarkupElement(value: MarkupElement) {
+  throw new Error(`Unknown MarkupElement: ${value.typeName}`);
+}

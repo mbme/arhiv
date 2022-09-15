@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use arhiv_core::entities::{DocumentData, Id};
 use rs_utils::Timestamp;
@@ -16,7 +17,7 @@ pub enum WorkspaceRequest {
     GetDocument {
         id: Id,
     },
-    RenderMarkup {
+    ParseMarkup {
         markup: String,
     },
     #[serde(rename_all = "camelCase")]
@@ -68,8 +69,8 @@ pub enum WorkspaceResponse {
         data: DocumentData,
         backrefs: Vec<DocumentBackref>,
     },
-    RenderMarkup {
-        html: String,
+    ParseMarkup {
+        ast: Value,
     },
     CreateDocument {
         id: Option<Id>,

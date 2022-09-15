@@ -25,7 +25,7 @@ tokio-util = { version = "0.7", features = ["compat"] }
 
 reqwest = { version = "0.11", features = ["json", "stream"] }
 nanoid = "0.4.0"
-pulldown-cmark = { version = "0.9", default-features = false, features = ["simd"] }
+pulldown-cmark = { version = "0.9", default-features = false, features = ["simd", "serde"] }
 
 hyper = { version = "0.14", features = ["http1", "server"] }
 routerify = "3"
@@ -37,3 +37,6 @@ scraper = { path = "../scraper" }
 
 fslock = "0.2.1"
 lazy_static = "1.4.0"
+
+[dev-dependencies]
+insta = { version = "1", features = ["json"] }

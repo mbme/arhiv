@@ -61,6 +61,7 @@ dependencies = [
  "fslock",
  "futures",
  "hyper",
+ "insta",
  "lazy_static",
  "nanoid",
  "pulldown-cmark",
@@ -1252,6 +1253,7 @@ checksum = "2d9cc634bc78768157b5cbfe988ffcd1dcba95cd2b2f03a88316c08c6d00ed63"
 dependencies = [
  "bitflags",
  "memchr",
+ "serde",
  "unicase",
 ]
 

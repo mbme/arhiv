@@ -1,0 +1,39 @@
+---
+source: arhiv-core/src/markup/markup_str.rs
+assertion_line: 461
+expression: ast
+---
+{
+  "children": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "range": {
+                "end": 6,
+                "start": 2
+              },
+              "typeName": "Text",
+              "value": "test"
+            }
+          ],
+          "link_type": "Inline",
+          "range": {
+            "end": 40,
+            "start": 0
+          },
+          "title": "some title",
+          "typeName": "Image",
+          "url": "http://example.com"
+        }
+      ],
+      "range": {
+        "end": 40,
+        "start": 0
+      },
+      "typeName": "Paragraph"
+    }
+  ],
+  "typeName": "Document"
+}

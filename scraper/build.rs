@@ -5,7 +5,6 @@ use rs_utils::run_package_json_script;
 fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
     println!("cargo:rerun-if-changed=src");
-    println!("cargo:rerun-if-changed=dist");
 
     // build app in release mode
     if env::var("PROFILE").unwrap() == "release" {

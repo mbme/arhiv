@@ -51,6 +51,10 @@ pub fn ensure_dir_exists(path: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn is_empty_dir(path: &str) -> Result<bool> {
+    Ok(fs::read_dir(path)?.next().is_none())
+}
+
 pub fn ensure_file_exists(path: &str) -> Result<()> {
     ensure!(file_exists(path)?, "file doesn't exist {}", path);
 

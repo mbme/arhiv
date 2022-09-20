@@ -16,6 +16,7 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const onSave = (documentId: string) => {
+    cardContext.unlock();
     cardContext.replace({ variant: 'document', documentId });
   };
   const onCancel = () => {

@@ -62,7 +62,7 @@ export function ScraperCard() {
                 id={document.id}
                 documentType={document.documentType}
                 subtype={document.subtype}
-                title={document.title}
+                documentTitle={document.title}
               />
             </div>
           ))}

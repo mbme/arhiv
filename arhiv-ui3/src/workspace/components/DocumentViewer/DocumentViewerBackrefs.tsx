@@ -14,7 +14,7 @@ export function DocumentViewerBackrefs({ backrefs }: DocumentViewerBackrefsProps
           id={backref.id}
           documentType={backref.documentType}
           subtype={backref.subtype}
-          title={backref.title}
+          documentTitle={backref.title}
         />
       ))}
     </div>

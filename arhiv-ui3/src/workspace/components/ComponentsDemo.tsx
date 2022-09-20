@@ -11,6 +11,7 @@ import { Dialog } from './Dialog';
 import { Checkbox } from './Form/Checkbox';
 import { Select } from './Form/Select';
 import { Icon, ICON_VARIANTS } from './Icon';
+import { Link } from './Link';
 import { QueryError } from './QueryError';
 import { Ref } from './Ref';
 
@@ -162,13 +163,38 @@ export function ComponentsDemo() {
             <h1>Ref</h1>
 
             <div className="examples">
-              <Ref id="12342" documentType="note" subtype="" title="Very important note" />
+              <Ref id="12342" documentType="note" subtype="" documentTitle="Very important note" />
             </div>
 
             <h1>Ref with subtype</h1>
 
             <div className="examples">
-              <Ref id="12342" documentType="note" subtype="other" title="Very important note" />
+              <Ref
+                id="12342"
+                documentType="note"
+                subtype="other"
+                documentTitle="Very important note"
+              />
+            </div>
+
+            <h1>Ref to erased document</h1>
+
+            <div className="examples">
+              <Ref id="12342321" documentType="" subtype="" documentTitle="12342321" />
+            </div>
+
+            <h1>Ref with subtype</h1>
+
+            <div className="examples">
+              <Ref id="12342" documentType="note" subtype="other" title="custom title">
+                Note with custom description
+              </Ref>
+            </div>
+
+            <h1>External link</h1>
+
+            <div className="examples">
+              <Link url="https://example.com" title="some title" description="Goto link" />
             </div>
           </CardContextMock>
         </div>

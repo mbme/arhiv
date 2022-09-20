@@ -11,44 +11,44 @@
         cursor: progress;
       }
     }
+  }
 
-    &.btn-simple {
-      @apply border-opacity-0;
-      @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
+  .btn-simple {
+    @apply border-opacity-0;
+    @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
 
-      &.btn-alarming {
-        @apply text-red-700 hover:bg-red-300;
-      }
-
-      &[disabled] {
-        @apply bg-blue-50 text-blue-300;
-      }
+    &.btn-alarming {
+      @apply text-red-700 hover:bg-red-300;
     }
 
-    &.btn-primary {
-      @apply text-white bg-blue-500 hover:bg-blue-600;
+    &[disabled] {
+      @apply bg-blue-50 text-blue-300;
+    }
+  }
 
-      &.btn-alarming {
-        @apply bg-red-500 hover:bg-red-600;
-      }
+  .btn-primary {
+    @apply text-white bg-blue-500 hover:bg-blue-600;
 
-      &[disabled] {
-        @apply bg-blue-200 hover:bg-blue-200;
-      }
+    &.btn-alarming {
+      @apply bg-red-500 hover:bg-red-600;
     }
 
-    &.btn-text {
-      font-weight: inherit;
-      @apply p-0 border-0 hover:bg-inherit;
-      @apply var-active-color;
+    &[disabled] {
+      @apply bg-blue-200 hover:bg-blue-200;
+    }
+  }
 
-      &.btn-alarming {
-        @apply text-red-700 hover:text-red-600;
-      }
+  .btn-text {
+    font-weight: inherit;
+    @apply p-0 border-0 hover:bg-inherit;
+    @apply var-active-color;
 
-      &[disabled] {
-        @apply text-blue-300 hover:text-blue-300;
-      }
+    &.btn-alarming {
+      @apply text-red-700 hover:text-red-600;
+    }
+
+    &[disabled] {
+      @apply text-blue-300 hover:text-blue-300;
     }
   }
 

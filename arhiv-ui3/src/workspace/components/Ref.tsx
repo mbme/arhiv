@@ -1,4 +1,4 @@
-import { formatDocumentType } from '../../scripts/utils';
+import { cx, formatDocumentType } from '../../scripts/utils';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
 import { isAttachment } from '../schema';
@@ -10,8 +10,10 @@ import { QueryError } from './QueryError';
 type RefContainerProps = {
   id: string;
   attachmentPreview?: boolean;
+  title?: string;
+  children?: string;
 };
-export function RefContainer({ id, attachmentPreview }: RefContainerProps) {
+export function RefContainer({ id, attachmentPreview, title, children }: RefContainerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id }, abortSignal),
     {
@@ -40,8 +42,11 @@ export function RefContainer({ id, attachmentPreview }: RefContainerProps) {
       id={result.id}
       documentType={result.documentType}
       subtype={result.subtype}
-      title={result.title}
-    />
+      documentTitle={result.title}
+      title={title}
+    >
+      {children}
+    </Ref>
   );
 }
 
@@ -49,9 +54,11 @@ type RefProps = {
   id: string;
   documentType: string;
   subtype: string;
-  title: string;
+  documentTitle?: string;
+  title?: string;
+  children?: string;
 };
-export function Ref({ id, documentType, subtype, title }: RefProps) {
+export function Ref({ id, documentType, subtype, documentTitle, title, children }: RefProps) {
   const context = useCardContext();
 
   const openDocument = () => {
@@ -61,13 +68,21 @@ export function Ref({ id, documentType, subtype, title }: RefProps) {
   return (
     <Button
       variant="text"
-      className="bg-yellow-300 bg-opacity-30 px-2 py-1 rounded-sm"
+      className={cx(
+        'bg-yellow-300/30 hover:bg-yellow-300/60 px-1 py-0 rounded w-fit flex items-baseline',
+        documentType || 'line-through text-slate-700/50'
+      )}
       onClick={openDocument}
+      title={title}
     >
-      <span className="font-mono uppercase text-gray-400 mr-4">
-        {formatDocumentType(documentType, subtype)}
-      </span>
-      {title}
+      {children || (
+        <>
+          <span className="font-mono uppercase text-gray-400 mr-1">
+            {formatDocumentType(documentType, subtype)}
+          </span>
+          {documentTitle}
+        </>
+      )}
     </Button>
   );
 }

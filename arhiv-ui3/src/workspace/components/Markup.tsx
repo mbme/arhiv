@@ -3,7 +3,26 @@ import { MarkupElement, throwBadMarkupElement } from '../dto';
 import { useQuery } from '../hooks';
 import { JSXElement } from '../jsx';
 import { RPC } from '../rpc';
+import { Link } from './Link';
 import { QueryError } from './QueryError';
+import { RefContainer } from './Ref';
+
+function extractText(children: MarkupElement[]): string {
+  return children
+    .flatMap((el) => {
+      if (el.typeName === 'Text') {
+        return el.value;
+      }
+
+      if ('children' in el) {
+        return extractText(el.children);
+      }
+
+      return null;
+    })
+    .filter((item) => Boolean(item))
+    .join(' ');
+}
 
 function markupElementToJSX(el: MarkupElement): JSXElement {
   switch (el.typeName) {
@@ -171,31 +190,32 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
         </s>
       );
     }
-    case 'Link': {
-      // TODO handle link_type?
-      return (
-        <a
-          data-range-start={el.range.start}
-          data-range-end={el.range.end}
-          href={el.url}
-          title={el.title}
-          target="_blank"
-          rel="noopen noreferer"
-        >
-          {el.children.map(markupElementToJSX)}
-        </a>
-      );
-    }
+    case 'Link':
     case 'Image': {
+      let description = extractText(el.children);
+
+      if (el.link_type === 'Autolink') {
+        description = '';
+      }
+
+      if (el.url.startsWith('ref:')) {
+        const id = el.url.substring('ref:'.length);
+        const preview = el.typeName === 'Image';
+
+        return (
+          <span data-range-start={el.range.start} data-range-end={el.range.end}>
+            <RefContainer id={id} attachmentPreview={preview} title={el.title}>
+              {description}
+            </RefContainer>
+          </span>
+        );
+      }
+
       // TODO handle link_type?
       return (
-        <img
-          data-range-start={el.range.start}
-          data-range-end={el.range.end}
-          href={el.url}
-          title={el.title}
-          alt={String(el.children.map(markupElementToJSX))}
-        />
+        <span data-range-start={el.range.start} data-range-end={el.range.end}>
+          <Link url={el.url} title={el.title} description={description} />
+        </span>
       );
     }
   }

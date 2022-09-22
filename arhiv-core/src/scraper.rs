@@ -155,7 +155,7 @@ impl Arhiv {
                         let cover = create_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            "film",
+                            "game",
                             "",
                             json!({
                                 "cover": &cover.id,

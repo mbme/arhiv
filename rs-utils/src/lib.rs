@@ -97,9 +97,8 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     }
 }
 
-pub fn run_package_json_script(command: &str) {
+pub fn run_yarn(command: &str) {
     let command_status = Command::new("yarn")
-        .arg("run")
         .arg(command)
         .status()
         .expect("failed to run yarn command");

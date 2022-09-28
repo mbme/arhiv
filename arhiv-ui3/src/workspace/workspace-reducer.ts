@@ -4,7 +4,7 @@ import { useContext, useEffect, useReducer } from 'preact/hooks';
 import { newId, getSessionValue, setSessionValue } from '../scripts/utils';
 
 type CardVariant =
-  | { variant: 'catalog'; query?: string; page?: number; documentId?: string } //
+  | { variant: 'catalog'; query?: string; page?: number } //
   | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'scraper' }

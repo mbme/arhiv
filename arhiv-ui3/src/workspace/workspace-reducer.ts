@@ -11,16 +11,17 @@ type CardVariant =
   | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string };
 
-export type Card = CardVariant & { id: number };
+export type Card = CardVariant & { id: number; previousCard?: CardVariant };
 
 export function throwBadCardVariant(value: never): never;
 export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
 
-function createCard(variant: CardVariant): Card {
+function createCard(variant: CardVariant, previousCard?: CardVariant): Card {
   return {
     id: newId(),
+    previousCard,
     ...variant,
   };
 }
@@ -38,6 +39,7 @@ type ActionType =
       type: 'replace';
       id: number;
       newCard: CardVariant;
+      stackPrevious?: boolean;
     }
   | {
       type: 'update';
@@ -88,9 +90,11 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
       }
 
       return produce(state, (newState) => {
-        newState.cards = newState.cards.map((card) =>
-          card.id === action.id ? createCard(action.newCard) : card
-        );
+        const pos = newState.cards.findIndex((card) => card.id === action.id);
+        if (pos > -1) {
+          const prevCard = action.stackPrevious ? newState.cards[pos] : undefined;
+          newState.cards[pos] = createCard(action.newCard, prevCard);
+        }
       });
     }
 
@@ -180,41 +184,62 @@ export function useCardContext() {
   const { card, dispatch } = context;
 
   return {
-    close() {
+    close: () => {
       dispatch({
         type: 'close',
         id: card.id,
       });
     },
-    replace(newCard: CardVariant) {
+    replace: (newCard: CardVariant) => {
       dispatch({
         type: 'replace',
         id: card.id,
         newCard,
       });
     },
-    update(props: UpdateActionProps) {
+    hasStackedCards: Boolean(card.previousCard),
+    pushStack: (newCard: CardVariant) => {
+      dispatch({
+        type: 'replace',
+        id: card.id,
+        newCard,
+        stackPrevious: true,
+      });
+    },
+    popStack: () => {
+      const newCard = card.previousCard;
+      if (!newCard) {
+        throw new Error("can't pop: there is no previousCard");
+      }
+
+      dispatch({
+        type: 'replace',
+        id: card.id,
+        newCard,
+      });
+    },
+    update: (props: UpdateActionProps) => {
       dispatch({
         type: 'update',
         id: card.id,
         props,
       });
     },
-    open(newCard: CardVariant) {
+    open: (newCard: CardVariant) => {
       dispatch({
         type: 'open',
         newCard,
       });
     },
 
-    lock() {
+    lock: () => {
       dispatch({
         type: 'lock-card',
         id: card.id,
       });
     },
 
-    unlock() {
+    unlock: () => {
       dispatch({
         type: 'unlock-card',
         id: card.id,

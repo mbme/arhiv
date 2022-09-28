@@ -4,7 +4,7 @@ import { DocumentViewerFields } from './DocumentViewerFields';
 import { QueryError } from '../QueryError';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { Callback } from '../../../scripts/utils';
-import { Button, IconButton } from '../Button';
+import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
@@ -14,11 +14,10 @@ import { DocumentData } from '../../dto';
 
 type DocumentViewerProps = {
   documentId: string;
-  onBack?: Callback;
   onEdit: Callback;
 };
 
-export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
   const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     {
@@ -29,9 +28,6 @@ export function DocumentViewer({ documentId, onBack, onEdit }: DocumentViewerPro
   return (
     <>
       <CardContainer.Topbar
-        left={
-          onBack && <IconButton icon="arrow-left" onClick={onBack} className="relative right-2" />
-        }
         right={
           <>
             {result?.documentType && (

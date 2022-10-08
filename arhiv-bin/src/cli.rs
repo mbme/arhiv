@@ -304,11 +304,11 @@ pub async fn arhiv_cli() {
                 .get_one::<String>("document_type")
                 .expect("document_type must be provided");
 
-            let file_paths: Vec<&str> = matches
-                .get_many("file_path")
+            let file_paths = matches
+                .get_many::<String>("file_path")
                 .expect("file_path must be provided")
-                .copied()
-                .collect();
+                .map(|item| item.as_str())
+                .collect::<Vec<_>>();
 
             let move_file: bool = matches.contains_id("move_file");
 

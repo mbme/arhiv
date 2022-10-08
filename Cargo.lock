@@ -147,6 +147,9 @@ dependencies = [
  "anyhow",
  "clap",
  "rs-utils",
+ "scraper",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1478,7 +1481,6 @@ name = "scraper"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "clap",
  "insta",
  "rs-utils",
  "serde",

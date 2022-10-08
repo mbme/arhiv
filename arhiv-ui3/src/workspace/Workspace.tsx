@@ -34,44 +34,46 @@ export function Workspace() {
 
           <Button variant="text">Player</Button>
 
-          <div className="ml-auto">
-            <DropdownMenu
-              options={[
-                {
-                  text: 'Add file',
-                  icon: 'paperclip',
-                  onClick: () => dispatch({ type: 'open', newCard: { variant: 'file-picker' } }),
-                },
-                {
-                  text: 'Scrape URL',
-                  icon: 'web',
-                  onClick: () => dispatch({ type: 'open', newCard: { variant: 'scraper' } }),
-                },
+          <Button
+            variant="text"
+            leadingIcon="paperclip"
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
+            className="ml-auto"
+          >
+            Add file
+          </Button>
 
-                {
-                  text: 'Status',
-                  onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
-                },
+          <DropdownMenu
+            options={[
+              {
+                text: 'Scrape URL',
+                icon: 'web',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'scraper' } }),
+              },
 
-                {
-                  text: 'Components Demo',
-                  onClick: () => {
-                    window.location.search = 'DEMO';
-                  },
-                },
+              {
+                text: 'Status',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
+              },
 
-                {
-                  text: 'Close cards',
-                  icon: 'x',
-                  onClick: () => {
-                    dispatch({
-                      type: 'close-all',
-                    });
-                  },
+              {
+                text: 'Components Demo',
+                onClick: () => {
+                  window.location.search = 'DEMO';
                 },
-              ]}
-            />
-          </div>
+              },
+
+              {
+                text: 'Close cards',
+                icon: 'x',
+                onClick: () => {
+                  dispatch({
+                    type: 'close-all',
+                  });
+                },
+              },
+            ]}
+          />
         </nav>
 
         {cards.map((card) => {

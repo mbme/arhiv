@@ -31,7 +31,7 @@ export function ScraperCard() {
             triggerRefresh();
           }}
         >
-          <div className="flex mb-4">
+          <div className="flex gap-2 mb-4 p-1">
             <input
               type="url"
               name="url"

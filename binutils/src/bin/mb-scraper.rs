@@ -2,7 +2,7 @@
 
 use std::env;
 
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_crate_version, log};
@@ -15,7 +15,7 @@ use scraper::{Scraper, ScraperOptions};
 #[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true)]
 struct Args {
     /// URL to scrape
-    #[clap(required = true, value_parser)]
+    #[clap(required = true, value_parser, value_hint = ValueHint::Url)]
     url: String,
 
     /// Open browser and allow to run scripts manually

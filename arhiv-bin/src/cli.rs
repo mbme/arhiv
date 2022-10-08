@@ -1,6 +1,6 @@
 use std::{env, process, sync::Arc};
 
-use clap::{builder::PossibleValuesParser, Arg, Command};
+use clap::{builder::PossibleValuesParser, Arg, Command, ValueHint};
 use clap_complete::{generate_to, Shell};
 
 use arhiv_core::{
@@ -46,6 +46,7 @@ fn build_app() -> Command {
                     Arg::new("backup_dir")
                         .long("backup_dir")
                         .num_args(1)
+                        .value_hint(ValueHint::DirPath)
                         .help("Directory to store backup. Will take precendence over config.backup_dir option."),
                 ),
         )
@@ -65,7 +66,7 @@ fn build_app() -> Command {
                 .arg(
                     Arg::new("browser")
                         .long("browser")
-                        .num_args(0..1)
+                        .num_args(0..=1)
                         .env("BROWSER")
                         .help("Open using provided browser or fall back to $BROWSER env variable"),
                 ),
@@ -125,6 +126,7 @@ fn build_app() -> Command {
                     Arg::new("url") //
                         .required(true)
                         .index(1)
+                        .value_hint(ValueHint::Url)
                         .help("url to scrape"),
                 )
                 .arg(
@@ -154,6 +156,7 @@ fn build_app() -> Command {
                         .required(true)
                         .index(2)
                         .num_args(1..)
+                        .value_hint(ValueHint::FilePath)
                         .help("Files to import"),
                 )
                 .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),

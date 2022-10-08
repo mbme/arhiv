@@ -9,7 +9,9 @@ use rs_utils::Timestamp;
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]
 pub enum WorkspaceRequest {
+    #[serde(rename_all = "camelCase")]
     ListDocuments {
+        collection_id: Option<String>,
         query: String,
         page: u8,
     },
@@ -68,6 +70,7 @@ pub enum WorkspaceResponse {
         updated_at: Timestamp,
         data: DocumentData,
         backrefs: Vec<DocumentBackref>,
+        is_collection: bool,
     },
     ParseMarkup {
         ast: Value,

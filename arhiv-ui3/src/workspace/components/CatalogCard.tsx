@@ -1,9 +1,10 @@
 import { useCardContext } from '../workspace-reducer';
+import { CardContainer } from './CardContainer';
 import { Catalog } from './Catalog/Catalog';
 
 type CatalogCardProps = {
-  query: string;
-  page: number;
+  query?: string;
+  page?: number;
 };
 export function CatalogCard({ query, page }: CatalogCardProps) {
   const context = useCardContext();
@@ -21,12 +22,19 @@ export function CatalogCard({ query, page }: CatalogCardProps) {
   };
 
   return (
-    <Catalog
-      initialQuery={query}
-      initialPage={page}
-      onQueryChange={updateQuery}
-      onPageChange={updatePage}
-      onDocumentSelected={updateDocumentId}
-    />
+    <>
+      <CardContainer.Topbar
+        left={<span className="section-heading text-lg">Catalog</span>}
+        right={<CardContainer.CloseButton />}
+      />
+
+      <Catalog
+        initialQuery={query}
+        initialPage={page}
+        onQueryChange={updateQuery}
+        onPageChange={updatePage}
+        onDocumentSelected={updateDocumentId}
+      />
+    </>
   );
 }

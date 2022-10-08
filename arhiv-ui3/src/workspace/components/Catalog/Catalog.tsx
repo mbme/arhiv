@@ -1,23 +1,24 @@
 import { useState } from 'preact/hooks';
 import { useQuery } from '../../hooks';
 import { RPC } from '../../rpc';
-import { CardContainer } from '../CardContainer';
 import { DateTime } from '../DateTime';
 import { QueryError } from '../QueryError';
 import { Pagination } from './Pagination';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
-  initialQuery: string;
-  initialPage: number;
+  collectionId?: string;
+  initialQuery?: string;
+  initialPage?: number;
   onQueryChange: (query: string) => void;
   onPageChange: (page: number) => void;
   onDocumentSelected: (documentId: string) => void;
 };
 
 export function Catalog({
-  initialQuery,
-  initialPage,
+  collectionId,
+  initialQuery = '',
+  initialPage = 0,
   onQueryChange,
   onPageChange,
   onDocumentSelected,
@@ -26,9 +27,9 @@ export function Catalog({
   const [page, _setPage] = useState(initialPage);
 
   const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.ListDocuments({ query, page }, abortSignal),
+    (abortSignal) => RPC.ListDocuments({ query, page, collectionId }, abortSignal),
     {
-      refreshIfChange: [query, page],
+      refreshIfChange: [query, page, collectionId],
     }
   );
 
@@ -64,11 +65,6 @@ export function Catalog({
 
   return (
     <>
-      <CardContainer.Topbar
-        left={<span className="section-heading text-lg">Catalog</span>}
-        right={<CardContainer.CloseButton />}
-      />
-
       <SearchInput
         initialValue={query}
         onSearch={(newQuery) => {

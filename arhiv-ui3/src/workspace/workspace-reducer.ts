@@ -9,7 +9,7 @@ type CardVariant =
   | { variant: 'status' }
   | { variant: 'scraper' }
   | { variant: 'new-document'; documentType?: string }
-  | { variant: 'document'; documentId: string };
+  | { variant: 'document'; documentId: string; query?: string; page?: number };
 
 export type Card = CardVariant & { id: number; previousCard?: CardVariant };
 

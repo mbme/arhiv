@@ -88,4 +88,8 @@ impl DataDescription {
             .iter()
             .filter(move |field| field.for_subtype(&subtype))
     }
+
+    pub fn is_collection(&self) -> bool {
+        !matches!(self.collection_of, Collection::None)
+    }
 }

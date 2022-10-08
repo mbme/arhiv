@@ -11,13 +11,16 @@ import { EraseDocumentButton } from './EraseDocumentButton';
 import { Icon } from '../Icon';
 import { isAttachment, isImageAttachment } from '../../schema';
 import { DocumentData } from '../../dto';
+import { CollectionCatalog } from './CollectionCatalog';
 
 type DocumentViewerProps = {
   documentId: string;
   onEdit: Callback;
+  query?: string;
+  page?: number;
 };
 
-export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onEdit, query, page }: DocumentViewerProps) {
   const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     {
@@ -74,6 +77,11 @@ export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
             subtype={result.subtype}
             data={result.data}
           />
+
+          {result.isCollection && (
+            <CollectionCatalog collectionId={documentId} query={query} page={page} />
+          )}
+
           <DocumentViewerBackrefs backrefs={result.backrefs} />
         </>
       )}

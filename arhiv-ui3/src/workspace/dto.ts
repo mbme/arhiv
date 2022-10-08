@@ -3,6 +3,7 @@ import { JSONObj, Obj } from '../scripts/utils';
 export type WorkspaceRequest =
   | {
       typeName: 'ListDocuments';
+      collectionId?: string;
       query: string;
       page: number;
     }
@@ -66,6 +67,7 @@ export type WorkspaceResponse =
       updatedAt: string;
       data: DocumentData;
       backrefs: DocumentBackref[];
+      isCollection: boolean;
     }
   | {
       typeName: 'ParseMarkup';

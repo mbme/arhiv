@@ -25,13 +25,21 @@ impl App {
             serde_json::from_slice(body).context("failed to parse request")?;
 
         let response = match request {
-            WorkspaceRequest::ListDocuments { query, page } => {
-                let filter = Filter::default()
+            WorkspaceRequest::ListDocuments {
+                collection_id,
+                query,
+                page,
+            } => {
+                let mut filter = Filter::default()
                     .search(query)
                     .page_size(PAGE_SIZE)
                     .on_page(page)
                     .skip_erased()
                     .recently_updated_first();
+
+                if let Some(collection_id) = collection_id {
+                    filter = filter.with_collection_ref(collection_id);
+                }
 
                 let schema = self.arhiv.get_schema();
                 let page = self.arhiv.list_documents(filter)?;
@@ -70,6 +78,10 @@ impl App {
 
                 let title = schema.get_title(&document)?;
 
+                let is_collection = schema
+                    .get_data_description(&document.document_type)?
+                    .is_collection();
+
                 WorkspaceResponse::GetDocument {
                     id: document.id,
                     title,
@@ -78,6 +90,7 @@ impl App {
                     updated_at: document.updated_at,
                     data: document.data,
                     backrefs,
+                    is_collection,
                 }
             }
             WorkspaceRequest::ParseMarkup { markup } => {

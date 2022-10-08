@@ -7,6 +7,7 @@ export type DataSchema = {
 export type DataDescription = {
   document_type: string;
   subtypes?: string[];
+  collection_of: 'None' | { Type: { document_type: string; field: string } };
   fields: DataDescriptionField[];
 };
 
@@ -42,6 +43,10 @@ export function getDocumentTypes(): string[] {
   return window.SCHEMA.modules.map((module) => module.document_type);
 }
 
+export function getDocumentModules(): readonly DataDescription[] {
+  return window.SCHEMA.modules;
+}
+
 export function getDataDescription(documentType: string): DataDescription {
   const dataDescription = window.SCHEMA.modules.find(
     (module) => module.document_type === documentType
@@ -51,6 +56,10 @@ export function getDataDescription(documentType: string): DataDescription {
   }
 
   return dataDescription;
+}
+
+export function isModuleCollection(module: DataDescription): boolean {
+  return module.collection_of !== 'None';
 }
 
 export function getFieldDescriptions(

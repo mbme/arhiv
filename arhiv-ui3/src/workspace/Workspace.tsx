@@ -8,6 +8,7 @@ import { Button } from './components/Button';
 import { FilePickerCard } from './components/FilePickerCard';
 import { ScraperCard } from './components/ScraperCard';
 import { DropdownMenu } from './components/DropdownMenu';
+import { BrowserCard } from './components/BrowserCard';
 
 export function Workspace() {
   const [{ cards }, dispatch] = useWorkspaceReducer();
@@ -19,26 +20,34 @@ export function Workspace() {
           <Button
             variant="text"
             leadingIcon="search-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
           >
             Browse
           </Button>
 
           <Button
             variant="text"
-            leadingIcon="add-document"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
+            leadingIcon="search-catalog"
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
           >
-            New...
+            Search
           </Button>
 
           <Button variant="text">Player</Button>
 
           <Button
             variant="text"
+            leadingIcon="add-document"
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
+            className="ml-auto"
+          >
+            New...
+          </Button>
+
+          <Button
+            variant="text"
             leadingIcon="paperclip"
             onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
-            className="ml-auto"
           >
             Add file
           </Button>
@@ -81,7 +90,18 @@ export function Workspace() {
             case 'catalog':
               return (
                 <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <CatalogCard query={card.query} page={card.page} />
+                  <CatalogCard
+                    query={card.query}
+                    page={card.page}
+                    documentType={card.documentType}
+                  />
+                </CardContainer>
+              );
+
+            case 'browser':
+              return (
+                <CardContainer key={card.id} card={card} dispatch={dispatch}>
+                  <BrowserCard />
                 </CardContainer>
               );
 

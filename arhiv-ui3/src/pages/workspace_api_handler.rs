@@ -27,6 +27,7 @@ impl App {
         let response = match request {
             WorkspaceRequest::ListDocuments {
                 collection_id,
+                document_type,
                 query,
                 page,
             } => {
@@ -34,11 +35,19 @@ impl App {
                     .search(query)
                     .page_size(PAGE_SIZE)
                     .on_page(page)
-                    .skip_erased()
+                    .skip_erased(true)
                     .recently_updated_first();
 
                 if let Some(collection_id) = collection_id {
                     filter = filter.with_collection_ref(collection_id);
+                }
+
+                if let Some(document_type) = document_type {
+                    if document_type == "" {
+                        filter = filter.skip_erased(false);
+                    }
+
+                    filter = filter.with_document_type(document_type);
                 }
 
                 let schema = self.arhiv.get_schema();

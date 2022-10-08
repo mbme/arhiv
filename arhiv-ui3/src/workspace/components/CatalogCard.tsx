@@ -2,11 +2,12 @@ import { useCardContext } from '../workspace-reducer';
 import { CardContainer } from './CardContainer';
 import { Catalog } from './Catalog/Catalog';
 
-type CatalogCardProps = {
+type Props = {
   query?: string;
   page?: number;
+  documentType?: string;
 };
-export function CatalogCard({ query, page }: CatalogCardProps) {
+export function CatalogCard({ query, page, documentType }: Props) {
   const context = useCardContext();
 
   const updateQuery = (query: string) => {
@@ -24,11 +25,16 @@ export function CatalogCard({ query, page }: CatalogCardProps) {
   return (
     <>
       <CardContainer.Topbar
-        left={<span className="section-heading text-lg">Catalog</span>}
+        left={
+          <span className="section-heading text-lg">
+            {documentType === undefined ? 'Catalog' : `Catalog: ${documentType || 'ERASED'}`}
+          </span>
+        }
         right={<CardContainer.CloseButton />}
       />
 
       <Catalog
+        documentType={documentType}
         initialQuery={query}
         initialPage={page}
         onQueryChange={updateQuery}

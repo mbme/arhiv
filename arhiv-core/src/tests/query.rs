@@ -230,7 +230,7 @@ async fn test_conditions() -> Result<()> {
 
     {
         // test Skip erased
-        let page = arhiv.list_documents(Filter::default().skip_erased())?;
+        let page = arhiv.list_documents(Filter::default().skip_erased(true))?;
 
         assert_eq!(get_values(page).len(), 2);
     }

@@ -8,6 +8,7 @@ import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
   collectionId?: string;
+  documentType?: string;
   initialQuery?: string;
   initialPage?: number;
   onQueryChange: (query: string) => void;
@@ -17,6 +18,7 @@ type CatalogProps = {
 
 export function Catalog({
   collectionId,
+  documentType,
   initialQuery = '',
   initialPage = 0,
   onQueryChange,
@@ -27,9 +29,9 @@ export function Catalog({
   const [page, _setPage] = useState(initialPage);
 
   const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.ListDocuments({ query, page, collectionId }, abortSignal),
+    (abortSignal) => RPC.ListDocuments({ query, page, collectionId, documentType }, abortSignal),
     {
-      refreshIfChange: [query, page, collectionId],
+      refreshIfChange: [query, page, collectionId, documentType],
     }
   );
 

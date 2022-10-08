@@ -166,8 +166,8 @@ impl Filter {
     }
 
     #[must_use]
-    pub fn skip_erased(mut self) -> Filter {
-        self.conditions.skip_erased = Some(true);
+    pub fn skip_erased(mut self, skip: bool) -> Filter {
+        self.conditions.skip_erased = Some(skip);
 
         self
     }

@@ -4,6 +4,7 @@ export type WorkspaceRequest =
   | {
       typeName: 'ListDocuments';
       collectionId?: string;
+      documentType?: string;
       query: string;
       page: number;
     }

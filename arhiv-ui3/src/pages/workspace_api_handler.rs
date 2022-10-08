@@ -87,10 +87,6 @@ impl App {
 
                 let title = schema.get_title(&document)?;
 
-                let is_collection = schema
-                    .get_data_description(&document.document_type)?
-                    .is_collection();
-
                 WorkspaceResponse::GetDocument {
                     id: document.id,
                     title,
@@ -99,7 +95,6 @@ impl App {
                     updated_at: document.updated_at,
                     data: document.data,
                     backrefs,
-                    is_collection,
                 }
             }
             WorkspaceRequest::ParseMarkup { markup } => {

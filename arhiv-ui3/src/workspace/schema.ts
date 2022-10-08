@@ -62,6 +62,12 @@ export function isModuleCollection(module: DataDescription): boolean {
   return module.collection_of !== 'None';
 }
 
+export function isDocumentTypeCollection(documentType: string): boolean {
+  const dataDescription = getDataDescription(documentType);
+
+  return isModuleCollection(dataDescription);
+}
+
 export function getFieldDescriptions(
   documentType: string,
   subtype?: string

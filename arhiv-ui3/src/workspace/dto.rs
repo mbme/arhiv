@@ -71,7 +71,6 @@ pub enum WorkspaceResponse {
         updated_at: Timestamp,
         data: DocumentData,
         backrefs: Vec<DocumentBackref>,
-        is_collection: bool,
     },
     ParseMarkup {
         ast: Value,

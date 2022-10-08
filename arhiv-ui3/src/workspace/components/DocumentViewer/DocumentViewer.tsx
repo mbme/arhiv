@@ -9,7 +9,7 @@ import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
 import { Icon } from '../Icon';
-import { isAttachment, isImageAttachment } from '../../schema';
+import { isAttachment, isDocumentTypeCollection, isImageAttachment } from '../../schema';
 import { DocumentData } from '../../dto';
 import { CollectionCatalog } from './CollectionCatalog';
 
@@ -78,7 +78,7 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
             data={result.data}
           />
 
-          {result.isCollection && (
+          {isDocumentTypeCollection(result.documentType) && (
             <CollectionCatalog collectionId={documentId} query={query} page={page} />
           )}
 

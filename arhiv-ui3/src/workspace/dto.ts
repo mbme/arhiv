@@ -68,7 +68,6 @@ export type WorkspaceResponse =
       updatedAt: string;
       data: DocumentData;
       backrefs: DocumentBackref[];
-      isCollection: boolean;
     }
   | {
       typeName: 'ParseMarkup';

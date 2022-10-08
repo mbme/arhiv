@@ -19,7 +19,7 @@ export function Workspace() {
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-16 pr-4 flex flex-row gap-8">
           <Button
             variant="text"
-            leadingIcon="search-catalog"
+            leadingIcon="browse-catalog"
             onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
           >
             Browse

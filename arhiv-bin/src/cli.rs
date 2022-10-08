@@ -1,6 +1,6 @@
 use std::{env, process, sync::Arc};
 
-use clap::{builder::PossibleValuesParser, AppSettings, Arg, Command};
+use clap::{builder::PossibleValuesParser, Arg, Command};
 use clap_complete::{generate_to, Shell};
 
 use arhiv_core::{
@@ -16,7 +16,7 @@ use crate::import::import_document_from_file;
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
-fn build_app() -> Command<'static> {
+fn build_app() -> Command {
     Command::new("arhiv")
         .bin_name("arhiv")
         .subcommand(
@@ -45,7 +45,7 @@ fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("backup_dir")
                         .long("backup_dir")
-                        .takes_value(true)
+                        .num_args(1)
                         .help("Directory to store backup. Will take precendence over config.backup_dir option."),
                 ),
         )
@@ -65,8 +65,7 @@ fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("browser")
                         .long("browser")
-                        .takes_value(true)
-                        .min_values(0)
+                        .num_args(0..1)
                         .env("BROWSER")
                         .help("Open using provided browser or fall back to $BROWSER env variable"),
                 ),
@@ -75,7 +74,7 @@ fn build_app() -> Command<'static> {
             Command::new("prime-server").about("Run prime server").arg(
                 Arg::new("port")
                     .long("port")
-                    .takes_value(true)
+                    .num_args(1)
                     .default_value("23420")
                     .help("Listen on specific port"),
             ),
@@ -107,11 +106,11 @@ fn build_app() -> Command<'static> {
                     Arg::new("document_type")
                         .required(true)
                         .value_parser(PossibleValuesParser::new(get_standard_schema().get_document_types()))
-                        .takes_value(true)
+                        .num_args(1)
                         .index(1)
                         .help("One of known document types"),
                 )
-                .arg(Arg::new("subtype").long("subtype").takes_value(true).help("Document subtype"))
+                .arg(Arg::new("subtype").long("subtype").num_args(1).help("Document subtype"))
                 .arg(
                     Arg::new("data")
                         .required(true)
@@ -146,7 +145,7 @@ fn build_app() -> Command<'static> {
                     Arg::new("document_type")
                         .required(true)
                         .value_parser(PossibleValuesParser::new(get_standard_schema().get_document_types()))
-                        .takes_value(true)
+                        .num_args(1)
                         .index(1)
                         .help("One of known document types"),
                 )
@@ -154,7 +153,7 @@ fn build_app() -> Command<'static> {
                     Arg::new("file_path") //
                         .required(true)
                         .index(2)
-                        .multiple_values(true)
+                        .num_args(1..)
                         .help("Files to import"),
                 )
                 .arg(Arg::new("move_file").short('m').help("Move file to arhiv")),
@@ -162,7 +161,6 @@ fn build_app() -> Command<'static> {
         .disable_help_subcommand(true)
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .global_setting(AppSettings::DeriveDisplayOrder)
         .arg(
             Arg::new("verbose")
                 .short('v')

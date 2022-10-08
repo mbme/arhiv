@@ -1,4 +1,5 @@
 import { createElement } from 'preact';
+import { Obj } from '../../scripts/utils';
 import { MarkupElement, throwBadMarkupElement } from '../dto';
 import { useQuery } from '../hooks';
 import { JSXElement } from '../jsx';
@@ -74,7 +75,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
         {
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
-        },
+        } as Obj<unknown>,
         ...el.children.map(markupElementToJSX)
       );
     }

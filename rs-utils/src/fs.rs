@@ -209,7 +209,7 @@ pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
 
     let path = path.as_ref();
 
-    let path = if path.starts_with("/") {
+    let path = if path.starts_with('/') {
         PathBuf::from(path)
     } else {
         current_dir_relpath(path)

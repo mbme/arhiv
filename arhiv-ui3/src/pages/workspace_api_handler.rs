@@ -4,8 +4,11 @@ use anyhow::{Context, Result};
 use hyper::body::Bytes;
 
 use arhiv_core::{
-    definitions::Attachment, entities::Document, markup::MarkupStr, schema::DataSchema, Filter,
-    ScraperOptions, ValidationError, Validator,
+    definitions::Attachment,
+    entities::{Document, ERASED_DOCUMENT_TYPE},
+    markup::MarkupStr,
+    schema::DataSchema,
+    Filter, ScraperOptions, ValidationError, Validator,
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
@@ -43,7 +46,7 @@ impl App {
                 }
 
                 if let Some(document_type) = document_type {
-                    if document_type == "" {
+                    if document_type == ERASED_DOCUMENT_TYPE {
                         filter = filter.skip_erased(false);
                     }
 

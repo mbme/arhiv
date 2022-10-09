@@ -285,7 +285,7 @@ async fn main() {
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();
 
-            let backup_dir = backup_dir.unwrap_or(arhiv.get_config().backup_dir.clone());
+            let backup_dir = backup_dir.unwrap_or_else(|| arhiv.get_config().backup_dir.clone());
 
             arhiv.backup(&backup_dir).expect("must be able to backup");
         }

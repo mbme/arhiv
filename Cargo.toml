@@ -2,7 +2,6 @@
 members = [
   "arhiv-core",
   "arhiv-ui3",
-  "arhiv-bin",
   "arhiv-tools",
   "binutils",
   "rs-utils",

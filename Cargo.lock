@@ -38,21 +38,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
 
 [[package]]
-name = "arhiv-bin"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arhiv-core",
- "arhiv-ui3",
- "clap",
- "clap_complete",
- "rs-utils",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "arhiv-core"
 version = "0.0.0"
 dependencies = [
@@ -145,11 +130,15 @@ name = "binutils"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "arhiv-core",
+ "arhiv-ui3",
  "clap",
+ "clap_complete",
  "rs-utils",
  "scraper",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

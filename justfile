@@ -7,10 +7,10 @@ remove-arhiv:
   cd arhiv-tools; cargo run --bin remove-arhiv
 
 init-arhiv:
-  cd arhiv-bin; cargo run --bin arhiv init test-arhiv --prime
+  cargo run --bin arhiv init test-arhiv --prime
 
 arhiv *PARAMS:
-  cd arhiv-bin; cargo run --bin arhiv {{PARAMS}}
+  cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
   just arhiv prime-server

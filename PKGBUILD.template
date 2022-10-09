@@ -60,7 +60,10 @@ package() {
   install -Dm 755 "arhiv-bin/resources/arhiv-ui-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-ui-server.service"
   install -Dm 755 "arhiv-bin/resources/arhiv-prime-server@.service" "${pkgdir}/usr/lib/systemd/system/arhiv-prime-server@.service"
 
-  "target/release/gen-completions"
+  mkdir -p "target/completions"
+  "target/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"
+  "target/release/arhiv" generate-completions zsh > "target/completions/_arhiv"
+
   install -Dm 755 "target/completions/arhiv.bash" "${pkgdir}/usr/share/bash-completion/completions/arhiv.bash"
   install -Dm 755 "target/completions/_arhiv" "${pkgdir}/usr/share/zsh/site-functions/_arhiv"
 }

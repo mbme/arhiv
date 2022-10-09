@@ -11,7 +11,7 @@ production-mode = ["arhiv-core/production-mode"]
 [dependencies]
 anyhow = "1.0.38"
 
-clap = { version = "4.0", features = ["env"] }
+clap = { version = "4.0", features = ["env", "derive"] }
 clap_complete = "4.0"
 
 serde = { version = "1", features = ["derive", "rc"] }

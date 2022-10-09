@@ -8,10 +8,9 @@ use super::Arhiv;
 use crate::entities::BLOBId;
 
 impl Arhiv {
-    pub fn backup(&self, backup_dir: Option<&str>) -> Result<()> {
+    pub fn backup(&self, backup_dir: &str) -> Result<()> {
         let zstd = ZStd::check()?;
 
-        let backup_dir = backup_dir.unwrap_or(&self.config.backup_dir);
         ensure!(!backup_dir.is_empty(), "coudn't determine backup dir");
 
         let backup_dir = into_absolute_path(backup_dir)?;

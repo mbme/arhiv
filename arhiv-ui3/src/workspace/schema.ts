@@ -98,3 +98,7 @@ export function isAttachment(documentType: string) {
 export function isImageAttachment(subtype: string) {
   return subtype === 'image';
 }
+
+export function isAudioAttachment(subtype: string) {
+  return subtype === 'audio';
+}

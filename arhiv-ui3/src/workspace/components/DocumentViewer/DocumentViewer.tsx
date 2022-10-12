@@ -9,9 +9,15 @@ import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
 import { Icon } from '../Icon';
-import { isAttachment, isDocumentTypeCollection, isImageAttachment } from '../../schema';
+import {
+  isAttachment,
+  isAudioAttachment,
+  isDocumentTypeCollection,
+  isImageAttachment,
+} from '../../schema';
 import { DocumentData } from '../../dto';
 import { CollectionCatalog } from './CollectionCatalog';
+import { AudioPlayer } from '../AudioPlayer/AudioPlayer';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -97,6 +103,10 @@ export function getAttachmentPreview(subtype: string, data: DocumentData) {
 
   if (isImageAttachment(subtype)) {
     return <img src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
+  }
+
+  if (isAudioAttachment(subtype)) {
+    return <AudioPlayer url={blobUrl} title="" artist="" />;
   }
 
   return null;

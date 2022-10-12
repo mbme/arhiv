@@ -37,6 +37,26 @@
   .icon {
     @apply inline h-5 w-5;
   }
+
+  .audio-player {
+    @apply bg-stone-100;
+
+    & button {
+      @apply text-gray-600 hover:text-sky-800;
+
+      &[disabled] {
+        @apply text-gray-300 hover:text-gray-300;
+      }
+    }
+
+    & input[type='range'] {
+      @apply block h-2 bg-blue-100 appearance-none cursor-pointer rounded-md;
+
+      &[disabled] {
+        @apply cursor-default;
+      }
+    }
+  }
 }
 
 @layer base {

@@ -12,6 +12,12 @@ export const ICON_VARIANTS = [
   'search',
   'web',
   'more',
+  'play',
+  'pause',
+  'skip-previous',
+  'skip-next',
+  'volume-off',
+  'volume-high',
   'search-catalog',
   'browse-catalog',
   'edit-document',
@@ -204,6 +210,60 @@ export function Icon({ variant, className = '' }: IconProps) {
       return (
         <svg className={cx('icon', className)} viewBox="0 0 24 24">
           <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+        </svg>
+      );
+
+    case 'play':
+      // material design icons play
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z" />
+        </svg>
+      );
+
+    case 'pause':
+      // material design icons pause
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z" />
+        </svg>
+      );
+
+    case 'skip-previous':
+      // material design icons skip-previous
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path fill="currentColor" d="M6,18V6H8V18H6M9.5,12L18,6V18L9.5,12Z" />
+        </svg>
+      );
+
+    case 'skip-next':
+      // material design icons skip-next
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path fill="currentColor" d="M16,18H18V6H16M6,18L14.5,12L6,6V18Z" />
+        </svg>
+      );
+
+    case 'volume-off':
+      // material design icons volume-off
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z"
+          />
+        </svg>
+      );
+
+    case 'volume-high':
+      // material design icons volume-high
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"
+          />
         </svg>
       );
 

@@ -18,6 +18,7 @@ type ButtonProps = {
   leadingIcon?: IconVariant;
   trailingIcon?: IconVariant;
   type?: 'button' | 'submit' | 'reset';
+  size?: 'sm' | 'md';
 };
 
 export function Button({
@@ -32,6 +33,7 @@ export function Button({
   leadingIcon,
   trailingIcon,
   type = 'button',
+  size = 'md',
 }: ButtonProps) {
   return (
     <button
@@ -42,6 +44,7 @@ export function Button({
         'btn btn-text': variant === 'text',
         'btn-alarming': alarming,
         'is-busy': busy,
+        'is-sm': size === 'sm',
       })}
       onClick={onClick}
       disabled={disabled || busy}

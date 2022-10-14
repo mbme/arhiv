@@ -11,6 +11,14 @@
         cursor: progress;
       }
     }
+
+    &.is-sm {
+      @apply text-sm;
+
+      .icon {
+        @apply h-4 w-4;
+      }
+    }
   }
 
   .btn-simple {

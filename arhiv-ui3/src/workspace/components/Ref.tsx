@@ -145,9 +145,10 @@ export function RefPreview({
           variant="text"
           onClick={openDocument}
           className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
+          trailingIcon="link-arrow"
+          size="sm"
         >
           open
-          <Icon variant="link-arrow" className="h-4 w-4" />
         </Button>
       </div>
       {preview}

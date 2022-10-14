@@ -186,9 +186,14 @@ export function ComponentsDemo() {
             <h1>Ref with subtype</h1>
 
             <div className="examples">
-              <Ref id="12342" documentType="note" subtype="other" title="custom title">
-                Note with custom description
-              </Ref>
+              <Ref
+                id="12342"
+                documentType="note"
+                documentTitle=""
+                subtype="other"
+                title="custom title"
+                description="Note with custom description"
+              />
             </div>
 
             <h1>External link</h1>

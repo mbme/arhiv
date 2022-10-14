@@ -2,13 +2,14 @@
   .form {
     & .field {
       display: block;
+      min-width: 65%;
+
+      &:is(v-editor) {
+        width: 100%;
+      }
 
       &:is(select, input[type='number']) {
         min-width: 10rem;
-      }
-
-      &:not(input[type='checkbox'], input[type='number'], select) {
-        @apply w-full;
       }
 
       &[disabled] {

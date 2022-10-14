@@ -69,16 +69,18 @@ export function DocumentEditorForm({
         </div>
       ))}
 
-      {fields.map((field) => (
-        <DocumentEditorField
-          key={field.name}
-          field={field}
-          ignoreReadonly={!documentId}
-          initialValue={data[field.name]}
-          disabled={!isFieldActive(field, subtype)}
-          errors={fieldErrors[field.name]}
-        />
-      ))}
+      <div className="divide-y divide-dashed">
+        {fields.map((field) => (
+          <DocumentEditorField
+            key={field.name}
+            field={field}
+            ignoreReadonly={!documentId}
+            initialValue={data[field.name]}
+            disabled={!isFieldActive(field, subtype)}
+            errors={fieldErrors[field.name]}
+          />
+        ))}
+      </div>
     </Form>
   );
 }

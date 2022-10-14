@@ -37,8 +37,8 @@ export function DocumentViewerField({ field, value }: DocumentViewerFieldProps) 
   }
 
   return (
-    <section className="mb-6">
-      <h5 className="section-heading mb-1">{field.name}</h5>
+    <section className="py-3 flex flex-wrap justify-between align-center">
+      <h5 className="form-field-heading mb-1">{field.name}</h5>
       <FieldValue field={field} value={value} />
     </section>
   );

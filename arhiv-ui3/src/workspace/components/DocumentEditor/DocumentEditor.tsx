@@ -27,6 +27,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
   return (
     <>
       <CardContainer.Topbar
+        skipBack
         left={
           <span className="section-heading text-lg">{`Edit ${result?.documentType || ''}`}</span>
         }

@@ -173,8 +173,13 @@ export function DocumentEditorField({
   errors = [],
 }: DocumentEditorFieldProps) {
   return (
-    <label className={cx('block mb-12', { 'has-errors': errors.length > 0 })} hidden={disabled}>
-      <h5 className="section-heading mb-2 relative">
+    <label
+      className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
+        'has-errors': errors.length > 0,
+      })}
+      hidden={disabled}
+    >
+      <h5 className="form-field-heading mr-8 relative">
         {field.name}
         {field.mandatory && (
           <span className="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
@@ -191,7 +196,7 @@ export function DocumentEditorField({
       />
 
       {errors.map((error, index) => (
-        <div key={index} className="text-red-500 text-xs pl-1 my-2">
+        <div key={index} className="text-red-500 text-xs pl-1 my-2 w-full">
           {error}
         </div>
       ))}

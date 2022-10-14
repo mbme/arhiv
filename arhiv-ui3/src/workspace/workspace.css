@@ -34,6 +34,10 @@
     @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
   }
 
+  .form-field-heading {
+    @apply font-semibold text-sky-800 uppercase text-sm;
+  }
+
   .icon {
     @apply inline h-5 w-5;
   }

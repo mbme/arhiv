@@ -22,10 +22,10 @@ export function DocumentViewerFields({ documentType, subtype, data }: DocumentVi
   const fields = getFieldDescriptions(documentType, subtype);
 
   return (
-    <>
+    <div className="divide-y divide-dashed">
       {fields.map((field) => (
         <DocumentViewerField key={field.name} field={field} value={data[field.name]} />
       ))}
-    </>
+    </div>
   );
 }

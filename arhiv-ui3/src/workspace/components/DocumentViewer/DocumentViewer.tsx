@@ -40,18 +40,9 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
         right={
           <>
             {result?.documentType && (
-              <>
-                <EraseDocumentButton
-                  documentId={result.id}
-                  documentType={result.documentType}
-                  title={result.title}
-                  onErase={triggerRefresh}
-                />
-
-                <Button variant="text" leadingIcon="edit-document" onClick={onEdit}>
-                  Edit
-                </Button>
-              </>
+              <Button variant="text" leadingIcon="edit-document" onClick={onEdit}>
+                Edit
+              </Button>
             )}
 
             <CardContainer.CloseButton />
@@ -89,6 +80,17 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
           )}
 
           <DocumentViewerBackrefs backrefs={result.backrefs} />
+
+          {result.documentType && (
+            <div className="flex justify-end mt-8">
+              <EraseDocumentButton
+                documentId={result.id}
+                documentType={result.documentType}
+                title={result.title}
+                onErase={triggerRefresh}
+              />
+            </div>
+          )}
         </>
       )}
     </>

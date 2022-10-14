@@ -48,6 +48,7 @@ export function EraseDocumentButton({
         alarming
         leadingIcon="erase-document"
         onClick={() => setShowModal(true)}
+        size="sm"
       >
         Erase
       </Button>

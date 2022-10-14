@@ -83,7 +83,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<Entry>> {
 
         let is_readable = is_readable(&metadata);
         let is_dir = metadata.is_dir();
-        let size = metadata.is_file().then(|| metadata.len());
+        let size = metadata.is_file().then_some(metadata.len());
         let mut links_to = None;
 
         if file_type.is_symlink() {

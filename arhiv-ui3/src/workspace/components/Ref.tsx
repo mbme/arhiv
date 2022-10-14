@@ -6,7 +6,6 @@ import { isAttachment } from '../schema';
 import { useCardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { getAttachmentPreview } from './DocumentViewer/DocumentViewer';
-import { Icon } from './Icon';
 import { QueryError } from './QueryError';
 
 type RefContainerProps = {

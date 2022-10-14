@@ -268,7 +268,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
             let link_path = fs::canonicalize(&path)?;
             let link_path = path_to_string(link_path)?;
 
-            let size = metadata.is_file().then(|| metadata.len());
+            let size = metadata.is_file().then_some(metadata.len());
 
             result.push(DirEntry::Symlink {
                 name,

@@ -61,12 +61,7 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
 
       {result && (
         <>
-          <DocumentViewerHead
-            id={result.id}
-            documentType={result.documentType}
-            subtype={result.subtype}
-            updatedAt={result.updatedAt}
-          />
+          <DocumentViewerHead id={result.id} updatedAt={result.updatedAt} />
 
           {isAttachment(result.documentType) && (
             <div className="mb-8 empty:hidden">

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { copyText } from '../../../scripts/clipboard';
-import { cx, formatDocumentType } from '../../../scripts/utils';
+import { cx } from '../../../scripts/utils';
 import { useTimeout } from '../../hooks';
 import { Button } from '../Button';
 import { DateTime } from '../DateTime';
@@ -8,17 +8,10 @@ import { Icon } from '../Icon';
 
 type DocumentViewerHeadProps = {
   id: string;
-  documentType: string;
-  subtype: string;
   updatedAt: string;
 };
 
-export function DocumentViewerHead({
-  id,
-  documentType,
-  subtype,
-  updatedAt,
-}: DocumentViewerHeadProps) {
+export function DocumentViewerHead({ id, updatedAt }: DocumentViewerHeadProps) {
   const [copied, setCopied] = useState(false);
 
   useTimeout(

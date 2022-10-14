@@ -64,10 +64,6 @@ export function DocumentViewerHead({
           </td>
         </tr>
         <tr>
-          <td className="section-heading">type:</td>
-          <td className="font-semibold">{formatDocumentType(documentType, subtype)}</td>
-        </tr>
-        <tr>
           <td className="section-heading">modified:</td>
           <td>
             <DateTime datetime={updatedAt} />

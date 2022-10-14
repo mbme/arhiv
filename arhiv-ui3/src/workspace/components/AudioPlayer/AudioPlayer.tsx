@@ -136,7 +136,7 @@ export function AudioPlayer({
             className="text-gray-500"
             onClick={toggleMute}
           >
-            <Icon className="h-8 w-8" variant={muted ? 'volume-off' : 'volume-high'} />
+            <Icon className="h-7 w-7" variant={muted ? 'volume-off' : 'volume-high'} />
           </button>
 
           <input

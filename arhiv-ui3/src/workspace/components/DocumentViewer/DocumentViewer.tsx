@@ -3,7 +3,7 @@ import { RPC } from '../../rpc';
 import { DocumentViewerFields } from './DocumentViewerFields';
 import { QueryError } from '../QueryError';
 import { DocumentViewerHead } from './DocumentViewerHead';
-import { Callback } from '../../../scripts/utils';
+import { Callback, formatDocumentType } from '../../../scripts/utils';
 import { Button } from '../Button';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
@@ -37,6 +37,11 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
   return (
     <>
       <CardContainer.Topbar
+        left={
+          <span className="section-heading text-lg">
+            {result ? formatDocumentType(result.documentType, result.subtype) : ''}
+          </span>
+        }
         right={
           <>
             {result?.documentType && (

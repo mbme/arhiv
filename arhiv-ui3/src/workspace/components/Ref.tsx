@@ -1,19 +1,21 @@
 import { cx, formatDocumentType } from '../../scripts/utils';
+import { DocumentData } from '../dto';
 import { useQuery } from '../hooks';
 import { RPC } from '../rpc';
 import { isAttachment } from '../schema';
 import { useCardContext } from '../workspace-reducer';
 import { Button } from './Button';
 import { getAttachmentPreview } from './DocumentViewer/DocumentViewer';
+import { Icon } from './Icon';
 import { QueryError } from './QueryError';
 
 type RefContainerProps = {
   id: string;
-  attachmentPreview?: boolean;
   title?: string;
-  children?: string;
+  description?: string;
+  attachmentPreview?: boolean;
 };
-export function RefContainer({ id, attachmentPreview, title, children }: RefContainerProps) {
+export function RefContainer({ id, title, description, attachmentPreview }: RefContainerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id }, abortSignal),
     {
@@ -29,12 +31,18 @@ export function RefContainer({ id, attachmentPreview, title, children }: RefCont
     return null;
   }
 
-  if (attachmentPreview && isAttachment(result.documentType)) {
-    const preview = getAttachmentPreview(result.subtype, result.data);
-
-    if (preview) {
-      return preview;
-    }
+  if (attachmentPreview) {
+    return (
+      <RefPreview
+        id={result.id}
+        documentType={result.documentType}
+        subtype={result.subtype}
+        data={result.data}
+        documentTitle={result.title}
+        title={title}
+        description={description}
+      />
+    );
   }
 
   return (
@@ -44,9 +52,8 @@ export function RefContainer({ id, attachmentPreview, title, children }: RefCont
       subtype={result.subtype}
       documentTitle={result.title}
       title={title}
-    >
-      {children}
-    </Ref>
+      description={description}
+    />
   );
 }
 
@@ -54,11 +61,11 @@ type RefProps = {
   id: string;
   documentType: string;
   subtype: string;
-  documentTitle?: string;
+  documentTitle: string;
   title?: string;
-  children?: string;
+  description?: string;
 };
-export function Ref({ id, documentType, subtype, documentTitle, title, children }: RefProps) {
+export function Ref({ id, documentType, subtype, documentTitle, title, description }: RefProps) {
   const context = useCardContext();
 
   const openDocument = () => {
@@ -75,7 +82,7 @@ export function Ref({ id, documentType, subtype, documentTitle, title, children 
       onClick={openDocument}
       title={title}
     >
-      {children || (
+      {description || (
         <>
           <span className="font-mono uppercase text-gray-400 mr-1">
             {formatDocumentType(documentType, subtype)}
@@ -84,5 +91,66 @@ export function Ref({ id, documentType, subtype, documentTitle, title, children 
         </>
       )}
     </Button>
+  );
+}
+
+type RefPreviewProps = {
+  id: string;
+  documentType: string;
+  subtype: string;
+  data: DocumentData;
+  documentTitle: string;
+  title?: string;
+  description?: string;
+};
+export function RefPreview({
+  id,
+  documentType,
+  subtype,
+  data,
+  documentTitle,
+  title,
+  description,
+}: RefPreviewProps) {
+  const context = useCardContext();
+
+  const openDocument = () => {
+    context.open({ variant: 'document', documentId: id });
+  };
+
+  let preview;
+  if (isAttachment(documentType)) {
+    preview = getAttachmentPreview(subtype, data);
+  }
+
+  if (!preview) {
+    return (
+      <Ref
+        id={id}
+        documentType={documentType}
+        subtype={subtype}
+        documentTitle={documentTitle}
+        title={title}
+        description={description}
+      />
+    );
+  }
+
+  return (
+    <div title={title} className="RefPreview group">
+      <div className="flex space-between items-center">
+        <span className="text-blue-900 pointer font-serif pl-1">{description}</span>
+
+        <Button
+          variant="text"
+          onClick={openDocument}
+          className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
+        >
+          open
+          <Icon variant="link-arrow" className="h-4 w-4" />
+        </Button>
+      </div>
+      {preview}
+    </div>
   );
 }

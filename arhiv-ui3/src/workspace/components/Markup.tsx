@@ -205,9 +205,12 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
 
         return (
           <span data-range-start={el.range.start} data-range-end={el.range.end}>
-            <RefContainer id={id} attachmentPreview={preview} title={el.title}>
-              {description}
-            </RefContainer>
+            <RefContainer
+              id={id}
+              attachmentPreview={preview}
+              title={el.title}
+              description={description}
+            />
           </span>
         );
       }

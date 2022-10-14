@@ -14,6 +14,14 @@
       @apply text-lg;
     }
 
+    .RefPreview {
+      margin-top: 1rem;
+
+      img {
+        margin-top: 0;
+      }
+    }
+
     hyphens: auto;
     overflow-wrap: break-word;
   }

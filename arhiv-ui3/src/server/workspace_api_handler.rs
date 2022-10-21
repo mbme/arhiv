@@ -12,9 +12,9 @@ use arhiv_core::{
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
-use crate::{
+use super::{
     app::{App, AppResponse},
-    workspace::dto::{
+    dto::{
         DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
         WorkspaceResponse,
     },

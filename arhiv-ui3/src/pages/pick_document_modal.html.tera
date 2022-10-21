@@ -1,8 +1,0 @@
-<div
-  class="modal"
-  v-js="arhiv_ui.initPickDocumentModal(this)"
->
-  <div class="modal-content">
-    {{ catalog | safe }}
-  </div>
-</div>

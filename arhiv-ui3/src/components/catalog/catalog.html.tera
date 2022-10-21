@@ -1,9 +1,0 @@
-<div class="catalog">
-  {{ search_input | safe }}
-
-  <ul class="catalog-entries">
-    {{ entries | safe }}
-  </ul>
-
-  {{ pagination | safe }}
-</div>

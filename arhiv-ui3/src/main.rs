@@ -1,5 +1,6 @@
-use arhiv_ui3::start_ui_server;
 use rs_utils::log::setup_logger;
+
+use arhiv_ui3::start_ui_server;
 
 #[tokio::main]
 async fn main() {

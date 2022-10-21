@@ -1,5 +1,0 @@
-{{ toolbar | safe }}
-
-<article id="content">
-  {{ editor | safe }}
-</article>

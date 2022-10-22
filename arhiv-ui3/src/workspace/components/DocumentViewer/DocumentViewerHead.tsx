@@ -1,6 +1,5 @@
 import { useState } from 'preact/hooks';
-import { copyText } from '../../../scripts/clipboard';
-import { cx } from '../../../scripts/utils';
+import { cx, copyTextToClipbard } from '../../../scripts/utils';
 import { useTimeout } from '../../hooks';
 import { Button } from '../Button';
 import { DateTime } from '../DateTime';
@@ -23,7 +22,7 @@ export function DocumentViewerHead({ id, updatedAt }: DocumentViewerHeadProps) {
   );
 
   const copyIdToClipboard = () => {
-    void copyText(id).then(
+    void copyTextToClipbard(id).then(
       () => {
         setCopied(true);
         console.log('Copied text "%s" to clipboard"', id);

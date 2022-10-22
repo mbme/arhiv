@@ -50,12 +50,6 @@ export function updateQueryParam(param: string, value: string | undefined): void
   window.history.replaceState({}, '', '?' + searchParams.toString());
 }
 
-export function pickRandomElement<T>(arr: T[]): T {
-  const pos = Math.floor(Math.random() * arr.length);
-
-  return arr[pos];
-}
-
 export function cx(
   ...args: Array<string | null | undefined | false | Obj<string | null | undefined | boolean>>
 ): string {
@@ -163,4 +157,18 @@ export function formDataToObject(fd: FormData): Record<string, string> {
   }
 
   return result;
+}
+
+export function copyTextToClipbard(text: string): Promise<void> {
+  if (document.hasFocus()) {
+    return navigator.clipboard.writeText(text);
+  }
+
+  return new Promise((resolve, reject) => {
+    const handler = () => {
+      navigator.clipboard.writeText(text).then(resolve, reject);
+    };
+
+    window.addEventListener('focus', handler, { once: true });
+  });
 }

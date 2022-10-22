@@ -20,77 +20,11 @@ export const noop = (): void => {};
 let _newIdState = 0;
 export const newId = (): number => (_newIdState += 1);
 
-export const sum = (a: number, b: number) => a + b;
-
 export const ensure = (condition: unknown, message: string) => {
   if (!condition) {
     throw new Error(`assertion failed: condition is "${String(condition)}"; ${message}`);
   }
 };
-
-export async function fetchText(
-  url: string,
-  body?: XMLHttpRequestBodyInit,
-  headers?: HeadersInit
-): Promise<string> {
-  try {
-    const response = await fetch(url, {
-      method: body ? 'POST' : 'GET',
-      headers,
-      body,
-    });
-
-    const message = await response.text();
-
-    if (!response.ok) {
-      throw new Error(`failed to fetch text: ${response.status}\n${message}`);
-    }
-
-    return message;
-  } catch (e) {
-    console.error(e);
-    alert(e);
-
-    throw e;
-  }
-}
-
-export async function fetchJSON<T>(url: string): Promise<T> {
-  const result = await fetchText(url, undefined, {
-    Accept: 'application/json',
-  });
-
-  return JSON.parse(result) as T;
-}
-
-export async function fetchAndReplace(url: string, el: Element, selector = ''): Promise<void> {
-  const content = await fetchText(url);
-
-  replaceEl(el, content, selector);
-}
-
-function selectNodes(content: string, selector: string): NodeListOf<Element> {
-  const domEl = document.createElement('div');
-  domEl.innerHTML = content;
-
-  return domEl.querySelectorAll(selector);
-}
-
-export function replaceEl(el: Element, content: string, selector = ''): void {
-  if (selector.length === 0) {
-    el.outerHTML = content;
-  } else {
-    el.replaceWith(...selectNodes(content, selector));
-  }
-}
-
-export function replaceElContent(el: Element, content: string, resetScroll = true): void {
-  el.innerHTML = content;
-
-  if (resetScroll) {
-    el.scrollTop = 0;
-  }
-}
 
 export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
   const url = new URL(urlStr, window.location.href);
@@ -114,21 +48,6 @@ export function updateQueryParam(param: string, value: string | undefined): void
   }
 
   window.history.replaceState({}, '', '?' + searchParams.toString());
-}
-
-export function lockGlobalScroll(): Callback {
-  const documentEl = document.documentElement;
-  const originalStyle = documentEl.style.cssText;
-  const scrollTop = documentEl.scrollTop;
-
-  // preserve scroll position and hide scroll
-  documentEl.style.cssText = `position: fixed; left: 0; right: 0; overflow: hidden; top: -${scrollTop}px`;
-
-  return () => {
-    // restore scroll position
-    documentEl.style.cssText = originalStyle;
-    documentEl.scrollTop = scrollTop;
-  };
 }
 
 export function pickRandomElement<T>(arr: T[]): T {
@@ -227,3 +146,21 @@ export const debounce = <Args extends any[], F extends (...args: Args) => void>(
 
   return debounced as F;
 };
+
+export function formDataToObject(fd: FormData): Record<string, string> {
+  const result: Record<string, string> = {};
+
+  for (const [key, value] of fd.entries()) {
+    if (value instanceof File) {
+      throw new Error('unsupported: FormData contains a File');
+    }
+
+    if (result.hasOwnProperty(key)) {
+      throw new Error(`unsupported: FormData contains duplicate key "${key}"`);
+    }
+
+    result[key] = value;
+  }
+
+  return result;
+}

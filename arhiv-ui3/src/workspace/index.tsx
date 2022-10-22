@@ -6,6 +6,8 @@ if (process.env.NODE_ENV === 'development') {
 import { enableMapSet } from 'immer';
 import { render } from 'preact';
 
+import '../../scripts/v-editor';
+
 import { ComponentsDemo } from './components/ComponentsDemo';
 import { Workspace } from './Workspace';
 

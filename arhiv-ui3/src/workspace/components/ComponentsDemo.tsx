@@ -1,7 +1,5 @@
 import { useState } from 'preact/hooks';
-import { formDataToObject } from '../../scripts/forms';
-import { noop } from '../../scripts/utils';
-import '../../scripts/v-editor';
+import { noop, formDataToObject } from '../../scripts/utils';
 import { useSessionState } from '../hooks';
 import { JSXChildren } from '../jsx';
 import { CardContext } from '../workspace-reducer';

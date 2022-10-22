@@ -1,9 +1,24 @@
 import { createPortal } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
-import { Callback, cx, lockGlobalScroll } from '../../scripts/utils';
+import { Callback, cx } from '../../scripts/utils';
 import { useId } from '../hooks';
 import { JSXChildren } from '../jsx';
+
+function lockGlobalScroll(): Callback {
+  const documentEl = document.documentElement;
+  const originalStyle = documentEl.style.cssText;
+  const scrollTop = documentEl.scrollTop;
+
+  // preserve scroll position and hide scroll
+  documentEl.style.cssText = `position: fixed; left: 0; right: 0; overflow: hidden; top: -${scrollTop}px`;
+
+  return () => {
+    // restore scroll position
+    documentEl.style.cssText = originalStyle;
+    documentEl.scrollTop = scrollTop;
+  };
+}
 
 type DialogProps = {
   onHide: Callback;

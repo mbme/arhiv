@@ -1,28 +1,38 @@
 use anyhow::{Context, Result};
-use serde_json::json;
-use tera::{Context as TeraContext, Tera};
-
-use crate::include_dynamic_str;
 
 use super::app::{App, AppResponse};
 
 impl App {
     pub fn workspace_page(&self) -> Result<AppResponse> {
-        let template = include_dynamic_str!("./workspace_page.html.tera")?;
+        let schema =
+            serde_json::to_string(self.arhiv.get_schema()).context("failed to serialize schema")?;
 
-        let schema = serde_json::to_string_pretty(self.arhiv.get_schema())
-            .context("failed to serialize schema")?;
+        let content = format!(
+            r#"
+            <!DOCTYPE html>
+            <html lang="en" dir="ltr">
+                <head>
+                    <title>Workspace</title>
 
-        let context = json!({
-            "schema": schema,
-        });
-        let context = TeraContext::from_value(
-            serde_json::to_value(context).context("failed to serialize context")?,
-        )
-        .context("failed to create context")?;
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        let content =
-            Tera::one_off(&template, &context, true).context("failed to render template")?;
+                    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+                    <link rel="stylesheet" href="/public/workspace.css" />
+                </head>
+                <body>
+                    <main></main>
+
+                    <div id="modal-root"></div>
+
+                    <script>
+                        window.SCHEMA = {schema};
+                    </script>
+
+                    <script src="/public/workspace.js"></script>
+                </body>
+            </html>"#
+        );
 
         Ok(AppResponse::fragment(content))
     }

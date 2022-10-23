@@ -12,13 +12,12 @@ use arhiv_core::{
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
-use super::{
-    app::{App, AppResponse},
-    dto::{
-        DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
-        WorkspaceResponse,
-    },
+use crate::dto::{
+    DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
+    WorkspaceResponse,
 };
+
+use super::app::{App, AppResponse};
 
 const PAGE_SIZE: u8 = 10;
 

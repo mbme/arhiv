@@ -7,8 +7,7 @@ const watch = process.argv.includes('--watch');
 
 await esbuild.build({
   entryPoints: {
-    'index': './src/index.ts',
-    'workspace': './src/workspace/index.tsx',
+    'index': './src/ui/index.tsx',
   },
   outdir: './public',
 

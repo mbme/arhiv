@@ -2,7 +2,7 @@
 const plugin = require('tailwindcss/plugin');
 
 module.exports = {
-  content: ['./src/**/*.html.tera', './src/**/*.tsx'],
+  content: ['./src/ui/**/*.tsx'],
   theme: {
     extend: {
       fontFamily: {

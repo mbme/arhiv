@@ -7,7 +7,6 @@ use app::App;
 use routes::build_router_service;
 
 mod app;
-mod dto;
 mod public_assets_handler;
 mod routes;
 mod workspace_api_handler;

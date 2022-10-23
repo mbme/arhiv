@@ -1,16 +1,22 @@
-use hyper::Server;
+use std::sync::Arc;
 
-use arhiv_core::Arhiv;
-use rs_utils::log;
+use anyhow::Context;
+use hyper::{header, http::request::Parts, Body, Request, Server, StatusCode};
+use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
 
-use app::App;
-use routes::build_router_service;
+use arhiv_core::{entities::BLOBId, prime_server::respond_with_blob, Arhiv};
+use public_assets_handler::public_assets_handler;
+use rs_utils::{
+    http_server::{
+        error_handler, logger_middleware, not_found_handler, respond_with_status, ServerResponse,
+    },
+    log,
+};
 
-mod app;
+use self::{utils::render_content, workspace_api_handler::handle_workspace_api_request};
+
 mod public_assets_handler;
-mod routes;
 mod workspace_api_handler;
-mod workspace_page;
 
 #[macro_use]
 mod utils;
@@ -18,9 +24,25 @@ mod utils;
 pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
     let port = arhiv.get_config().ui_server_port;
-    let app = App::new(arhiv);
 
-    let service = build_router_service(app).expect("router must work");
+    let arhiv = Arc::new(arhiv);
+
+    let router = Router::builder()
+        .data(arhiv)
+        .middleware(Middleware::post_with_info(logger_middleware))
+        //
+        .get("/public/:fileName", public_assets_handler)
+        .get("/blobs/:blob_id", blob_handler)
+        .get("/workspace", workspace_page)
+        .post("/workspace_api", workspace_api_handler)
+        //
+        .any(not_found_handler)
+        .err_handler_with_info(error_handler)
+        //
+        .build()
+        .expect("failed to build router");
+
+    let service = RouterService::new(router).expect("failed to build router service");
 
     let server = Server::bind(&(std::net::Ipv4Addr::LOCALHOST, port).into()).serve(service);
     let addr = server.local_addr();
@@ -30,6 +52,71 @@ pub async fn start_ui_server() {
     if let Err(e) = server.with_graceful_shutdown(shutdown_signal()).await {
         log::error!("UI server error: {}", e);
     }
+}
+
+async fn workspace_page(req: Request<Body>) -> ServerResponse {
+    let arhiv: &Arhiv = req.data().unwrap();
+
+    let schema = serde_json::to_string(arhiv.get_schema()).context("failed to serialize schema")?;
+
+    let content = format!(
+        r#"
+            <!DOCTYPE html>
+            <html lang="en" dir="ltr">
+                <head>
+                    <title>Workspace</title>
+
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+                    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+                    <link rel="stylesheet" href="/public/workspace.css" />
+                </head>
+                <body>
+                    <main></main>
+
+                    <div id="modal-root"></div>
+
+                    <script>
+                        window.SCHEMA = {schema};
+                    </script>
+
+                    <script src="/public/workspace.js"></script>
+                </body>
+            </html>"#
+    );
+
+    render_content(StatusCode::OK, content)
+}
+
+async fn workspace_api_handler(req: Request<Body>) -> ServerResponse {
+    let (parts, body): (Parts, Body) = req.into_parts();
+
+    let arhiv: &Arhiv = parts.data().unwrap();
+
+    let content_type = parts
+        .headers
+        .get(header::CONTENT_TYPE)
+        .map(|value| value.to_str())
+        .transpose()?
+        .unwrap_or_default();
+
+    if content_type == "application/json" {
+        let body = hyper::body::to_bytes(body).await?;
+
+        handle_workspace_api_request(arhiv, &body).await
+    } else {
+        respond_with_status(StatusCode::UNSUPPORTED_MEDIA_TYPE)
+    }
+}
+
+async fn blob_handler(req: Request<Body>) -> ServerResponse {
+    let arhiv: &Arhiv = req.data().unwrap();
+
+    let blob_id = req.param("blob_id").unwrap().as_str();
+    let blob_id = BLOBId::from_string(blob_id);
+
+    respond_with_blob(arhiv, &blob_id, req.headers()).await
 }
 
 async fn shutdown_signal() {

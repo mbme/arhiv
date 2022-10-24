@@ -1,7 +1,6 @@
 use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{Context, Result};
-use hyper::{body::Bytes, StatusCode};
 
 use arhiv_core::{
     definitions::Attachment,
@@ -10,23 +9,19 @@ use arhiv_core::{
     schema::DataSchema,
     Arhiv, Filter, ScraperOptions, ValidationError, Validator,
 };
-use rs_utils::{
-    ensure_dir_exists, get_home_dir, http_server::ServerResponse, is_readable, path_to_string,
-};
+use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
 use crate::dto::{
     DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
     WorkspaceResponse,
 };
 
-use super::utils::render_json;
-
 const PAGE_SIZE: u8 = 10;
 
-pub async fn handle_workspace_api_request(arhiv: &Arhiv, body: &Bytes) -> ServerResponse {
-    let request: WorkspaceRequest =
-        serde_json::from_slice(body).context("failed to parse request")?;
-
+pub async fn handle_api_request(
+    arhiv: &Arhiv,
+    request: WorkspaceRequest,
+) -> Result<WorkspaceResponse> {
     let response = match request {
         WorkspaceRequest::ListDocuments {
             collection_id,
@@ -200,9 +195,7 @@ pub async fn handle_workspace_api_request(arhiv: &Arhiv, body: &Bytes) -> Server
         }
     };
 
-    let content = serde_json::to_string(&response).context("failed to serialize response")?;
-
-    render_json(StatusCode::OK, content)
+    Ok(response)
 }
 
 impl From<ValidationError> for SaveDocumentErrors {

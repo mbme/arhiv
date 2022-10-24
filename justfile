@@ -18,7 +18,7 @@ arhiv-server:
 reset-arhiv: remove-arhiv init-arhiv
 
 web3:
-  cd arhiv-ui3; tmux new-session -s arhiv-ui3 \
+  cd arhiv-ui3; yarn run clean; tmux new-session -s arhiv-ui3 \
      'watchexec -r -d 4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 cargo run"' \; \
      split-window -h 'yarn run watch:js' \; \
      split-window 'yarn run watch:css' \; \

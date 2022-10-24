@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use hyper::{header, http::request::Parts, Body, Request, Server, StatusCode};
+use hyper::{header, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
 
 use arhiv_core::{entities::BLOBId, prime_server::respond_with_blob, Arhiv};
@@ -13,13 +13,12 @@ use rs_utils::{
     log,
 };
 
-use self::{utils::render_content, workspace_api_handler::handle_workspace_api_request};
+use crate::dto::WorkspaceRequest;
 
+use api_handler::handle_api_request;
+
+mod api_handler;
 mod public_assets_handler;
-mod workspace_api_handler;
-
-#[macro_use]
-mod utils;
 
 pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
@@ -34,7 +33,7 @@ pub async fn start_ui_server() {
         .get("/public/:fileName", public_assets_handler)
         .get("/blobs/:blob_id", blob_handler)
         .get("/workspace", workspace_page)
-        .post("/workspace_api", workspace_api_handler)
+        .post("/workspace_api", api_handler)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -70,7 +69,7 @@ async fn workspace_page(req: Request<Body>) -> ServerResponse {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
                     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
-                    <link rel="stylesheet" href="/public/workspace.css" />
+                    <link rel="stylesheet" href="/public/index.css" />
                 </head>
                 <body>
                     <main></main>
@@ -81,15 +80,15 @@ async fn workspace_page(req: Request<Body>) -> ServerResponse {
                         window.SCHEMA = {schema};
                     </script>
 
-                    <script src="/public/workspace.js"></script>
+                    <script src="/public/index.js"></script>
                 </body>
             </html>"#
     );
 
-    render_content(StatusCode::OK, content)
+    render_html(StatusCode::OK, content)
 }
 
-async fn workspace_api_handler(req: Request<Body>) -> ServerResponse {
+async fn api_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
     let arhiv: &Arc<Arhiv> = parts.data().unwrap();
@@ -101,13 +100,20 @@ async fn workspace_api_handler(req: Request<Body>) -> ServerResponse {
         .transpose()?
         .unwrap_or_default();
 
-    if content_type == "application/json" {
-        let body = hyper::body::to_bytes(body).await?;
-
-        handle_workspace_api_request(arhiv, &body).await
-    } else {
-        respond_with_status(StatusCode::UNSUPPORTED_MEDIA_TYPE)
+    if content_type != "application/json" {
+        return respond_with_status(StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
+
+    let body = hyper::body::to_bytes(body).await?;
+
+    let request: WorkspaceRequest =
+        serde_json::from_slice(&body).context("failed to parse api request")?;
+
+    let response = handle_api_request(arhiv, request).await?;
+
+    let content = serde_json::to_string(&response).context("failed to serialize response")?;
+
+    render_json(StatusCode::OK, content)
 }
 
 async fn blob_handler(req: Request<Body>) -> ServerResponse {
@@ -117,6 +123,26 @@ async fn blob_handler(req: Request<Body>) -> ServerResponse {
     let blob_id = BLOBId::from_string(blob_id);
 
     respond_with_blob(arhiv, &blob_id, req.headers()).await
+}
+
+fn build_response(status: StatusCode, content_type: &str, content: String) -> ServerResponse {
+    Response::builder()
+        .status(status)
+        .header(header::CONTENT_TYPE, content_type)
+        // prevent page from caching
+        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+        .header(header::EXPIRES, "0")
+        // ---
+        .body(content.into())
+        .context("failed to build response")
+}
+
+fn render_html(status: StatusCode, content: String) -> ServerResponse {
+    build_response(status, "text/html", content)
+}
+
+fn render_json(status: StatusCode, content: String) -> ServerResponse {
+    build_response(status, "application/json", content)
 }
 
 async fn shutdown_signal() {

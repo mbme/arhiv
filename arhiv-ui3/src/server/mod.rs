@@ -32,7 +32,7 @@ pub async fn start_ui_server() {
         //
         .get("/public/:fileName", public_assets_handler)
         .get("/blobs/:blob_id", blob_handler)
-        .get("/workspace", workspace_page)
+        .get("/", index_page)
         .post("/api", api_handler)
         //
         .any(not_found_handler)
@@ -53,7 +53,7 @@ pub async fn start_ui_server() {
     }
 }
 
-async fn workspace_page(req: Request<Body>) -> ServerResponse {
+async fn index_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
     let schema = serde_json::to_string(arhiv.get_schema()).context("failed to serialize schema")?;
@@ -63,7 +63,7 @@ async fn workspace_page(req: Request<Body>) -> ServerResponse {
             <!DOCTYPE html>
             <html lang="en" dir="ltr">
                 <head>
-                    <title>Workspace</title>
+                    <title>Arhiv</title>
 
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

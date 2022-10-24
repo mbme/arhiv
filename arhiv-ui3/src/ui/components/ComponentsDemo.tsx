@@ -181,7 +181,7 @@ export function ComponentsDemo() {
               <Ref id="12342321" documentType="" subtype="" documentTitle="12342321" />
             </div>
 
-            <h1>Ref with subtype</h1>
+            <h1>Ref with custom description & title</h1>
 
             <div className="examples">
               <Ref

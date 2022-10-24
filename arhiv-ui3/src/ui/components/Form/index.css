@@ -12,6 +12,10 @@
         min-width: 10rem;
       }
 
+      &:is(input[type='checkbox']) {
+        min-width: auto;
+      }
+
       &[disabled] {
         @apply bg-gray-100;
       }

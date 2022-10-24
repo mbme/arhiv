@@ -13,7 +13,7 @@ use rs_utils::{
     log,
 };
 
-use crate::dto::WorkspaceRequest;
+use crate::dto::APIRequest;
 
 use api_handler::handle_api_request;
 
@@ -33,7 +33,7 @@ pub async fn start_ui_server() {
         .get("/public/:fileName", public_assets_handler)
         .get("/blobs/:blob_id", blob_handler)
         .get("/workspace", workspace_page)
-        .post("/workspace_api", api_handler)
+        .post("/api", api_handler)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -106,7 +106,7 @@ async fn api_handler(req: Request<Body>) -> ServerResponse {
 
     let body = hyper::body::to_bytes(body).await?;
 
-    let request: WorkspaceRequest =
+    let request: APIRequest =
         serde_json::from_slice(&body).context("failed to parse api request")?;
 
     let response = handle_api_request(arhiv, request).await?;

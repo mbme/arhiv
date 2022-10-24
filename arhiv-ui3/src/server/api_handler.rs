@@ -12,18 +12,14 @@ use arhiv_core::{
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
 use crate::dto::{
-    DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors, WorkspaceRequest,
-    WorkspaceResponse,
+    APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
 };
 
 const PAGE_SIZE: u8 = 10;
 
-pub async fn handle_api_request(
-    arhiv: &Arhiv,
-    request: WorkspaceRequest,
-) -> Result<WorkspaceResponse> {
+pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<APIResponse> {
     let response = match request {
-        WorkspaceRequest::ListDocuments {
+        APIRequest::ListDocuments {
             collection_id,
             document_type,
             query,
@@ -51,19 +47,19 @@ pub async fn handle_api_request(
             let schema = arhiv.get_schema();
             let page = arhiv.list_documents(filter)?;
 
-            WorkspaceResponse::ListDocuments {
+            APIResponse::ListDocuments {
                 has_more: page.has_more,
                 documents: documents_into_results(page.items, schema)?,
             }
         }
-        WorkspaceRequest::GetStatus {} => {
+        APIRequest::GetStatus {} => {
             let status = arhiv.get_status()?;
 
-            WorkspaceResponse::GetStatus {
+            APIResponse::GetStatus {
                 status: status.to_string(),
             }
         }
-        WorkspaceRequest::GetDocument { ref id } => {
+        APIRequest::GetDocument { ref id } => {
             let document = arhiv.must_get_document(id)?;
 
             let schema = arhiv.get_schema();
@@ -84,7 +80,7 @@ pub async fn handle_api_request(
 
             let title = schema.get_title(&document)?;
 
-            WorkspaceResponse::GetDocument {
+            APIResponse::GetDocument {
                 id: document.id,
                 title,
                 document_type: document.document_type,
@@ -94,15 +90,15 @@ pub async fn handle_api_request(
                 backrefs,
             }
         }
-        WorkspaceRequest::ParseMarkup { markup } => {
+        APIRequest::ParseMarkup { markup } => {
             let markup: MarkupStr = markup.into();
 
             let ast = markup.get_ast()?;
             let ast = serde_json::to_value(ast).context("failed to serialize ast")?;
 
-            WorkspaceResponse::ParseMarkup { ast }
+            APIResponse::ParseMarkup { ast }
         }
-        WorkspaceRequest::SaveDocument { id, subtype, data } => {
+        APIRequest::SaveDocument { id, subtype, data } => {
             let mut document = arhiv.must_get_document(&id)?;
 
             let prev_data = document.data;
@@ -123,9 +119,9 @@ pub async fn handle_api_request(
 
             tx.commit()?;
 
-            WorkspaceResponse::SaveDocument { errors }
+            APIResponse::SaveDocument { errors }
         }
-        WorkspaceRequest::CreateDocument {
+        APIRequest::CreateDocument {
             document_type,
             subtype,
             data,
@@ -145,16 +141,16 @@ pub async fn handle_api_request(
 
             tx.commit()?;
 
-            WorkspaceResponse::CreateDocument { id, errors }
+            APIResponse::CreateDocument { id, errors }
         }
-        WorkspaceRequest::EraseDocument { ref id } => {
+        APIRequest::EraseDocument { ref id } => {
             let tx = arhiv.get_tx()?;
             tx.erase_document(id)?;
             tx.commit()?;
 
-            WorkspaceResponse::EraseDocument {}
+            APIResponse::EraseDocument {}
         }
-        WorkspaceRequest::ListDir { dir, show_hidden } => {
+        APIRequest::ListDir { dir, show_hidden } => {
             let dir = dir.unwrap_or_else(|| get_home_dir().unwrap_or_else(|| "/".to_string()));
             ensure_dir_exists(&dir)?;
 
@@ -163,19 +159,19 @@ pub async fn handle_api_request(
             let mut entries: Vec<DirEntry> = list_entries(&dir, show_hidden)?;
             sort_entries(&mut entries);
 
-            WorkspaceResponse::ListDir {
+            APIResponse::ListDir {
                 dir: path_to_string(dir)?,
                 entries,
             }
         }
-        WorkspaceRequest::CreateAttachment { ref file_path } => {
+        APIRequest::CreateAttachment { ref file_path } => {
             let mut tx = arhiv.get_tx()?;
             let attachment = Attachment::create(file_path, false, &mut tx)?;
             tx.commit()?;
 
-            WorkspaceResponse::CreateAttachment { id: attachment.id }
+            APIResponse::CreateAttachment { id: attachment.id }
         }
-        WorkspaceRequest::Scrape { url } => {
+        APIRequest::Scrape { url } => {
             let documents = arhiv
                 .scrape(
                     url,
@@ -189,7 +185,7 @@ pub async fn handle_api_request(
 
             let schema = arhiv.get_schema();
 
-            WorkspaceResponse::Scrape {
+            APIResponse::Scrape {
                 documents: documents_into_results(documents, schema)?,
             }
         }

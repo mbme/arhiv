@@ -1,4 +1,4 @@
 import { createRPCProxy } from './utils/rpc';
-import { WorkspaceRequest, WorkspaceResponse } from '../dto';
+import { APIRequest, APIResponse } from '../dto';
 
-export const RPC = createRPCProxy<WorkspaceRequest, WorkspaceResponse>('/workspace_api');
+export const RPC = createRPCProxy<APIRequest, APIResponse>('/api');

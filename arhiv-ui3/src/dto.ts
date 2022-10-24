@@ -1,6 +1,6 @@
 import { JSONObj, Obj } from './ui/utils';
 
-export type WorkspaceRequest =
+export type APIRequest =
   | {
       typeName: 'ListDocuments';
       collectionId?: string;
@@ -49,7 +49,7 @@ export type WorkspaceRequest =
       url: string;
     };
 
-export type WorkspaceResponse =
+export type APIResponse =
   | {
       typeName: 'ListDocuments';
       documents: ListDocumentsResult[];

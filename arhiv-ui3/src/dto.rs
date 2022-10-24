@@ -8,7 +8,7 @@ use rs_utils::Timestamp;
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields, tag = "typeName")]
-pub enum WorkspaceRequest {
+pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     ListDocuments {
         collection_id: Option<String>,
@@ -53,7 +53,7 @@ pub enum WorkspaceRequest {
 
 #[derive(Serialize)]
 #[serde(deny_unknown_fields, tag = "typeName")]
-pub enum WorkspaceResponse {
+pub enum APIResponse {
     ListDocuments {
         documents: Vec<ListDocumentsResult>,
         #[serde(rename = "hasMore")]

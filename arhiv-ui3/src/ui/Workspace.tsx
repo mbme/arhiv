@@ -1,3 +1,4 @@
+import { useEffect } from 'preact/hooks';
 import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
 import { CatalogCard } from './components/CatalogCard';
 import { NewDocumentCard } from './components/NewDocumentCard';
@@ -9,9 +10,22 @@ import { FilePickerCard } from './components/FilePickerCard';
 import { ScraperCard } from './components/ScraperCard';
 import { DropdownMenu } from './components/DropdownMenu';
 import { BrowserCard } from './components/BrowserCard';
+import { getQueryParam } from './utils';
 
 export function Workspace() {
   const [{ cards }, dispatch] = useWorkspaceReducer();
+
+  useEffect(() => {
+    const documentId = getQueryParam('id');
+
+    if (documentId) {
+      dispatch({
+        type: 'open',
+        newCard: { variant: 'document', documentId },
+        skipDocumentIfAlreadyOpen: true,
+      });
+    }
+  }, []);
 
   return (
     <div className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth">

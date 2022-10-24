@@ -8,7 +8,8 @@ use arhiv_core::{entities::BLOBId, prime_server::respond_with_blob, Arhiv};
 use public_assets_handler::public_assets_handler;
 use rs_utils::{
     http_server::{
-        error_handler, logger_middleware, not_found_handler, respond_with_status, ServerResponse,
+        error_handler, logger_middleware, not_found_handler, respond_moved_permanently,
+        respond_with_status, ServerResponse,
     },
     log,
 };
@@ -33,6 +34,7 @@ pub async fn start_ui_server() {
         .get("/public/:fileName", public_assets_handler)
         .get("/blobs/:blob_id", blob_handler)
         .get("/", index_page)
+        .get("/documents/:document_id", old_document_page_handler) // redirect for compatibility with the old UI
         .post("/api", api_handler)
         //
         .any(not_found_handler)
@@ -86,6 +88,12 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
     );
 
     render_html(StatusCode::OK, content)
+}
+
+async fn old_document_page_handler(req: Request<Body>) -> ServerResponse {
+    let document_id = req.param("document_id").unwrap().as_str();
+
+    respond_moved_permanently(format!("/?id={document_id}"))
 }
 
 async fn api_handler(req: Request<Body>) -> ServerResponse {

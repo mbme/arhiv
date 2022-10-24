@@ -31,6 +31,7 @@ type ActionType =
   | {
       type: 'open';
       newCard: CardVariant;
+      skipDocumentIfAlreadyOpen?: boolean;
     }
   | {
       type: 'close';
@@ -70,6 +71,18 @@ type WorkspaceState = {
 function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceState {
   switch (action.type) {
     case 'open': {
+      if (action.skipDocumentIfAlreadyOpen && action.newCard.variant === 'document') {
+        const { documentId } = action.newCard;
+
+        const isAlreadyOpen = state.cards.some(
+          (card) => card.variant === 'document' && card.documentId === documentId
+        );
+
+        if (isAlreadyOpen) {
+          return state;
+        }
+      }
+
       return produce(state, (newState) => {
         newState.cards.push(createCard(action.newCard));
       });

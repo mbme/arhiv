@@ -26,6 +26,12 @@ export const ensure = (condition: unknown, message: string) => {
   }
 };
 
+export function getQueryParam(name: string) {
+  const params = new URLSearchParams(window.location.search);
+
+  return params.get(name);
+}
+
 export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
   const url = new URL(urlStr, window.location.href);
 

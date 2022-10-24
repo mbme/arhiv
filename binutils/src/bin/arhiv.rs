@@ -11,7 +11,7 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config, ScraperOptions,
 };
-use arhiv_ui3::start_ui_server;
+use arhiv_ui3::{get_document_url, start_ui_server};
 use rs_utils::{get_crate_version, into_absolute_path, log};
 
 #[derive(Parser, Debug)]
@@ -260,7 +260,7 @@ async fn main() {
             let port = Config::must_read().0.ui_server_port;
 
             process::Command::new(&browser)
-                .arg(document_url(&id, port))
+                .arg(get_document_url(&id, port))
                 .stdout(process::Stdio::null())
                 .stderr(process::Stdio::null())
                 .spawn()
@@ -299,15 +299,11 @@ async fn main() {
     }
 }
 
-fn document_url(id: &Id, port: u16) -> String {
-    format!("http://localhost:{}/documents/{}", port, id)
-}
-
 fn print_document(document: &Document, port: u16) {
     println!(
         "[{} {}] {}",
         document.document_type,
         document.id,
-        document_url(&document.id, port)
+        get_document_url(&document.id, port)
     );
 }

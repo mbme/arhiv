@@ -18,8 +18,6 @@ tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
 hyper = { version = "0.14", features = ["http1", "server"] }
 routerify = "3"
 
-chrono = { version = "0.4", features = ["serde"] }
-
 rust-embed= { version = "6", features = ["interpolate-folder-path"]}
 
 [build-dependencies]

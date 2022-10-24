@@ -79,7 +79,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "chrono",
  "hyper",
  "routerify",
  "rs-utils",

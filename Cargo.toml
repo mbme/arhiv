@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "arhiv-core",
-  "arhiv-ui3",
+  "arhiv-ui",
   "arhiv-tools",
   "binutils",
   "rs-utils",

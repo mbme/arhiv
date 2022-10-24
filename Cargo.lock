@@ -74,7 +74,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "arhiv-ui3"
+name = "arhiv-ui"
 version = "0.0.0"
 dependencies = [
  "anyhow",
@@ -129,7 +129,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
- "arhiv-ui3",
+ "arhiv-ui",
  "clap",
  "clap_complete",
  "rs-utils",

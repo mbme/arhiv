@@ -11,7 +11,7 @@ use arhiv_core::{
     prime_server::start_prime_server,
     Arhiv, Config, ScraperOptions,
 };
-use arhiv_ui3::{get_document_url, start_ui_server};
+use arhiv_ui::{get_document_url, start_ui_server};
 use rs_utils::{get_crate_version, into_absolute_path, log};
 
 #[derive(Parser, Debug)]

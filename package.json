@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "arhiv-ui3",
+    "arhiv-ui",
     "scraper"
   ],
   "scripts": {

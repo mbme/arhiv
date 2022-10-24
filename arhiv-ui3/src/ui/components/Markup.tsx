@@ -28,7 +28,7 @@ function extractText(children: MarkupElement[]): string {
 function markupElementToJSX(el: MarkupElement): JSXElement {
   switch (el.typeName) {
     case 'Document': {
-      return <div className="markup">{el.children.map(markupElementToJSX)}</div>;
+      return <div className="markup w-full">{el.children.map(markupElementToJSX)}</div>;
     }
     case 'Text': {
       return (

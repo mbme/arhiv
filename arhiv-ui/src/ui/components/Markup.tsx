@@ -200,11 +200,7 @@ function markupElementToJSX(
     }
     case 'Link':
     case 'Image': {
-      let description = extractText(el.children);
-
-      if (el.link_type === 'Autolink') {
-        description = '';
-      }
+      const description = extractText(el.children);
 
       if (el.url.startsWith('ref:')) {
         const id = el.url.substring('ref:'.length);

@@ -455,6 +455,13 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_autolink() {
+        let ast = into_ast(r#"<http://example.com>"#);
+
+        insta::assert_json_snapshot!(ast);
+    }
+
+    #[test]
     fn test_parse_image() {
         let ast = into_ast(r#"![test](http://example.com "some title")"#);
 

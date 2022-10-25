@@ -49,15 +49,15 @@ CardContainer.Topbar = function Topbar({ left, right, skipBack }: TopbarProps) {
   const { hasStackedCards, popStack } = useCardContext();
 
   return (
-    <div className="flex items-center gap-4 justify-between bg-white py-2 sticky inset-x-0 top-0 z-10">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 bg-white py-2 sticky inset-x-0 top-0 z-10">
+      <div className="flex items-center gap-4 justify-start grow">
         {hasStackedCards && !skipBack && (
           <IconButton icon="arrow-left" onClick={popStack} className="relative right-2" />
         )}
         {left}
       </div>
 
-      <div className="flex items-center gap-4">{right}</div>
+      <div className="flex items-center gap-4 justify-end grow">{right}</div>
     </div>
   );
 };

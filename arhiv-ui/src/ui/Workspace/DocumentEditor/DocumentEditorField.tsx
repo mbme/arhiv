@@ -1,8 +1,8 @@
 import { cx, JSONValue } from '../../utils';
-import { DataDescriptionField, FieldType } from '../../schema';
-import { Checkbox } from '../Form/Checkbox';
-import { useGettersContext } from '../Form/Form';
-import { Select } from '../Form/Select';
+import { DataDescriptionField, FieldType } from '../../utils/schema';
+import { Checkbox } from '../../components/Form/Checkbox';
+import { useGettersContext } from '../../components/Form/Form';
+import { Select } from '../../components/Form/Select';
 
 function parseRefsList(refs: string): string[] | null {
   if (refs.trim().length === 0) {

@@ -1,23 +1,17 @@
-import { useQuery } from '../../hooks';
-import { RPC } from '../../rpc';
-import { DocumentViewerFields } from './DocumentViewerFields';
-import { QueryError } from '../QueryError';
-import { DocumentViewerHead } from './DocumentViewerHead';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/rpc';
 import { Callback, formatDocumentType } from '../../utils';
-import { Button } from '../Button';
+import { isAttachment, isDocumentTypeCollection } from '../../utils/schema';
+import { QueryError } from '../../components/QueryError';
+import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
+import { getAttachmentPreview } from '../../components/Ref';
+import { DocumentViewerFields } from './DocumentViewerFields';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { CardContainer } from '../CardContainer';
 import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
-import { Icon } from '../Icon';
-import {
-  isAttachment,
-  isAudioAttachment,
-  isDocumentTypeCollection,
-  isImageAttachment,
-} from '../../schema';
-import { DocumentData } from '../../../dto';
 import { CollectionCatalog } from './CollectionCatalog';
-import { AudioPlayer } from '../AudioPlayer/AudioPlayer';
 
 type DocumentViewerProps = {
   documentId: string;
@@ -95,21 +89,4 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
       )}
     </>
   );
-}
-
-export function getAttachmentPreview(subtype: string, data: DocumentData) {
-  const filename = data['filename'] as string;
-  const blobId = data['blob'] as string;
-
-  const blobUrl = `/blobs/${blobId}`;
-
-  if (isImageAttachment(subtype)) {
-    return <img src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
-  }
-
-  if (isAudioAttachment(subtype)) {
-    return <AudioPlayer url={blobUrl} title="" artist="" />;
-  }
-
-  return null;
 }

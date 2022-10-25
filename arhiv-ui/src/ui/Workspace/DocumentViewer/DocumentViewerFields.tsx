@@ -1,5 +1,5 @@
 import { DocumentData } from '../../../dto';
-import { getFieldDescriptions } from '../../schema';
+import { getFieldDescriptions } from '../../utils/schema';
 import { DocumentViewerField } from './DocumentViewerField';
 
 type DocumentViewerFieldsProps = {

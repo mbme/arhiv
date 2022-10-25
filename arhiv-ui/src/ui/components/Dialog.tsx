@@ -2,8 +2,8 @@ import { createPortal } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx } from '../utils';
-import { useId } from '../hooks';
-import { JSXChildren } from '../jsx';
+import { useId } from '../utils/hooks';
+import { JSXChildren } from '../utils/jsx';
 
 function lockGlobalScroll(): Callback {
   const documentEl = document.documentElement;

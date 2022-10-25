@@ -1,6 +1,6 @@
-import { getDocumentModules, isModuleCollection } from '../schema';
-import { useCardContext } from '../workspace-reducer';
-import { Button } from './Button';
+import { getDocumentModules, isModuleCollection } from '../utils/schema';
+import { Button } from '../components/Button';
+import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
 export function BrowserCard() {

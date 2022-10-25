@@ -1,9 +1,9 @@
 import { createElement } from 'preact';
 import { Obj } from '../utils';
 import { MarkupElement, throwBadMarkupElement } from '../../dto';
-import { useQuery } from '../hooks';
-import { JSXElement } from '../jsx';
-import { RPC } from '../rpc';
+import { useQuery } from '../utils/hooks';
+import { JSXElement } from '../utils/jsx';
+import { RPC } from '../utils/rpc';
 import { Link } from './Link';
 import { QueryError } from './QueryError';
 import { RefContainer } from './Ref';
@@ -25,10 +25,17 @@ function extractText(children: MarkupElement[]): string {
     .join(' ');
 }
 
-function markupElementToJSX(el: MarkupElement): JSXElement {
+function markupElementToJSX(
+  el: MarkupElement,
+  onRefClick: (documentId: string) => void
+): JSXElement {
   switch (el.typeName) {
     case 'Document': {
-      return <div className="markup w-full">{el.children.map(markupElementToJSX)}</div>;
+      return (
+        <div className="markup w-full">
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+        </div>
+      );
     }
     case 'Text': {
       return (
@@ -65,7 +72,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'Paragraph': {
       return (
         <p data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </p>
       );
     }
@@ -76,13 +83,13 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
         } as Obj<unknown>,
-        ...el.children.map(markupElementToJSX)
+        ...el.children.map((child) => markupElementToJSX(child, onRefClick))
       );
     }
     case 'BlockQuote': {
       return (
         <blockquote data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </blockquote>
       );
     }
@@ -91,7 +98,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
       return (
         <pre>
           <code data-range-start={el.range.start} data-range-end={el.range.end}>
-            {el.children.map(markupElementToJSX)}
+            {el.children.map((child) => markupElementToJSX(child, onRefClick))}
           </code>
         </pre>
       );
@@ -105,7 +112,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
           'data-range-end': el.range.end,
         },
 
-        ...el.children.map(markupElementToJSX)
+        ...el.children.map((child) => markupElementToJSX(child, onRefClick))
       );
     }
     case 'TaskListMarker': {
@@ -123,7 +130,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'ListItem': {
       return (
         <li data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </li>
       );
     }
@@ -137,7 +144,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
       // TODO handle alignments
       return (
         <table data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </table>
       );
     }
@@ -150,7 +157,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
                 throw new Error(`Expected TableCell, got ${col.typeName}`);
               }
 
-              return <th>{col.children.map(markupElementToJSX)}</th>;
+              return <th>{col.children.map((child) => markupElementToJSX(child, onRefClick))}</th>;
             })}
           </tr>
         </thead>
@@ -159,35 +166,35 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'TableRow': {
       return (
         <tr data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </tr>
       );
     }
     case 'TableCell': {
       return (
         <td data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </td>
       );
     }
     case 'Emphasis': {
       return (
         <em data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </em>
       );
     }
     case 'Strong': {
       return (
         <strong data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </strong>
       );
     }
     case 'Strikethrough': {
       return (
         <s data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map(markupElementToJSX)}
+          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
         </s>
       );
     }
@@ -210,6 +217,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
               attachmentPreview={preview}
               title={el.title}
               description={description}
+              onClick={() => onRefClick(id)}
             />
           </span>
         );
@@ -229,9 +237,10 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
 
 type MarkupProps = {
   markup: string;
+  onRefClick: (documentId: string) => void;
 };
 
-export function Markup({ markup }: MarkupProps) {
+export function Markup({ markup, onRefClick }: MarkupProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.ParseMarkup({ markup }, abortSignal),
     {
@@ -247,5 +256,5 @@ export function Markup({ markup }: MarkupProps) {
     return null;
   }
 
-  return markupElementToJSX(result.ast);
+  return markupElementToJSX(result.ast, onRefClick);
 }

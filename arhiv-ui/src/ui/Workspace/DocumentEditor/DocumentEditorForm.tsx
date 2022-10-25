@@ -1,15 +1,15 @@
 import { useState } from 'preact/hooks';
 import { JSONObj } from '../../utils';
 import { DocumentData, DocumentFieldErrors } from '../../../dto';
-import { RPC } from '../../rpc';
-import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../schema';
-import { JSXRef } from '../../jsx';
-import { Form } from '../Form/Form';
-import { PreventImplicitSubmissionOnEnter } from '../Form/PreventImplicitSubmissionOnEnter';
+import { RPC } from '../../utils/rpc';
+import { useUnsavedChangesWarning } from '../../utils/hooks';
+import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from '../../utils/schema';
+import { JSXRef } from '../../utils/jsx';
+import { Form } from '../../components/Form/Form';
+import { PreventImplicitSubmissionOnEnter } from '../../components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
-import { useUnsavedChangesWarning } from '../../hooks';
-import { useCardLock } from '../../workspace-reducer';
+import { useCardLock } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
   documentId?: string;

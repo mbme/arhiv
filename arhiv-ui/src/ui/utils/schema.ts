@@ -1,4 +1,4 @@
-import { EmptyObj } from './utils';
+import { EmptyObj } from './index';
 
 export type DataSchema = {
   modules: DataDescription[];

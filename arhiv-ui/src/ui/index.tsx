@@ -9,7 +9,7 @@ import { render } from 'preact';
 import './components/v-editor';
 
 import { ComponentsDemo } from './components/ComponentsDemo';
-import { Workspace } from './Workspace';
+import { Workspace } from './Workspace/Workspace';
 
 enableMapSet();
 

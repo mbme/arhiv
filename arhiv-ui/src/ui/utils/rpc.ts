@@ -1,3 +1,4 @@
+import { APIRequest, APIResponse } from '../../dto';
 import { Obj } from './index';
 
 type SerdeEnum = {
@@ -11,7 +12,7 @@ type ProxyHandlers<Request extends SerdeEnum, Response extends SerdeEnum> = {
   ) => Promise<Extract<Response, { typeName: key }>>;
 };
 
-export function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
+function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
   url: string
 ): ProxyHandlers<Request, Response> {
   return new Proxy(
@@ -57,3 +58,5 @@ export function createRPCProxy<Request extends SerdeEnum, Response extends Serde
     }
   ) as ProxyHandlers<Request, Response>;
 }
+
+export const RPC = createRPCProxy<APIRequest, APIResponse>('/api');

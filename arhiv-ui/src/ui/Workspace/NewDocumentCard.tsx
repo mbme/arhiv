@@ -1,7 +1,7 @@
 import { useRef, useState } from 'preact/hooks';
-import { getDocumentTypes } from '../schema';
-import { useCardContext } from '../workspace-reducer';
-import { Button } from './Button';
+import { getDocumentTypes } from '../utils/schema';
+import { Button } from '../components/Button';
+import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
 

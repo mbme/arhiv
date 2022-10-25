@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
-import { useQuery } from '../../hooks';
-import { RPC } from '../../rpc';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/rpc';
 import { DateTime } from '../DateTime';
 import { QueryError } from '../QueryError';
 import { Pagination } from './Pagination';

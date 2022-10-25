@@ -1,6 +1,6 @@
-import { useCardContext } from '../workspace-reducer';
+import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
-import { FilePicker } from './FilePicker/FilePicker';
+import { FilePicker } from '../components/FilePicker/FilePicker';
 
 export function FilePickerCard() {
   const context = useCardContext();

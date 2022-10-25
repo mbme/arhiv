@@ -15,7 +15,7 @@ import {
   JSONValue,
   newId,
   setSessionValue,
-} from './utils';
+} from './index';
 
 type Inputs = ReadonlyArray<unknown>;
 

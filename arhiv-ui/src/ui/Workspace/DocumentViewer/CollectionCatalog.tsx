@@ -1,5 +1,5 @@
-import { useCardContext } from '../../workspace-reducer';
-import { Catalog } from '../Catalog/Catalog';
+import { Catalog } from '../../components/Catalog/Catalog';
+import { useCardContext } from '../workspace-reducer';
 
 type Props = {
   collectionId: string;

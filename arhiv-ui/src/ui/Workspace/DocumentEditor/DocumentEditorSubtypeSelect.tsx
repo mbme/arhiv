@@ -1,4 +1,4 @@
-import { getDataDescription } from '../../schema';
+import { getDataDescription } from '../../utils/schema';
 
 type DocumentEditorSubtypeSelectProps = {
   documentType: string;

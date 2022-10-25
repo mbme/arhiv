@@ -1,9 +1,9 @@
 import { useState } from 'preact/hooks';
 import { cx, copyTextToClipbard } from '../../utils';
-import { useTimeout } from '../../hooks';
-import { Button } from '../Button';
-import { DateTime } from '../DateTime';
-import { Icon } from '../Icon';
+import { useTimeout } from '../../utils/hooks';
+import { Button } from '../../components/Button';
+import { DateTime } from '../../components/DateTime';
+import { Icon } from '../../components/Icon';
 
 type DocumentViewerHeadProps = {
   id: string;

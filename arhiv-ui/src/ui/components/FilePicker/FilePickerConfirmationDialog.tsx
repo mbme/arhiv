@@ -1,6 +1,6 @@
 import { Callback, formatBytes } from '../../utils';
-import { useQuery } from '../../hooks';
-import { RPC } from '../../rpc';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/rpc';
 import { Button } from '../Button';
 import { Dialog } from '../Dialog';
 import { QueryError } from '../QueryError';

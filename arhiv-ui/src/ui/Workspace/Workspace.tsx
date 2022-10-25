@@ -1,16 +1,16 @@
 import { useEffect } from 'preact/hooks';
+import { getQueryParam } from '../utils';
+import { Button } from '../components/Button';
+import { DropdownMenu } from '../components/DropdownMenu';
 import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
-import { CatalogCard } from './components/CatalogCard';
-import { NewDocumentCard } from './components/NewDocumentCard';
-import { CardContainer } from './components/CardContainer';
-import { DocumentCard } from './components/DocumentCard';
-import { StatusCard } from './components/StatusCard';
-import { Button } from './components/Button';
-import { FilePickerCard } from './components/FilePickerCard';
-import { ScraperCard } from './components/ScraperCard';
-import { DropdownMenu } from './components/DropdownMenu';
-import { BrowserCard } from './components/BrowserCard';
-import { getQueryParam } from './utils';
+import { CatalogCard } from './CatalogCard';
+import { NewDocumentCard } from './NewDocumentCard';
+import { CardContainer } from './CardContainer';
+import { DocumentCard } from './DocumentCard';
+import { StatusCard } from './StatusCard';
+import { FilePickerCard } from './FilePickerCard';
+import { ScraperCard } from './ScraperCard';
+import { BrowserCard } from './BrowserCard';
 
 export function Workspace() {
   const [{ cards }, dispatch] = useWorkspaceReducer();

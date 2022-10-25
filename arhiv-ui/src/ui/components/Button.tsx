@@ -1,6 +1,6 @@
 import { forwardRef } from 'preact/compat';
 import { Callback, cx } from '../utils';
-import { JSXChildren } from '../jsx';
+import { JSXChildren } from '../utils/jsx';
 import { Icon, IconVariant } from './Icon';
 
 // TODO: button size - small / regular (maybe boolean property)

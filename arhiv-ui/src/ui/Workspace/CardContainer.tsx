@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { JSXChildren } from '../jsx';
-import { Card, CardContext, useCardContext, WorkspaceDispatch } from '../workspace-reducer';
-import { IconButton } from './Button';
+import { JSXChildren } from '../utils/jsx';
+import { IconButton } from '../components/Button';
+import { Card, CardContext, useCardContext, WorkspaceDispatch } from './workspace-reducer';
 
 type CardContainerProps = {
   card: Card;

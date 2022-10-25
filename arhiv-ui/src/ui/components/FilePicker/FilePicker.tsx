@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { DirEntry } from '../../../dto';
-import { useQuery } from '../../hooks';
-import { RPC } from '../../rpc';
+import { useQuery } from '../../utils/hooks';
+import { RPC } from '../../utils/rpc';
 import { Icon } from '../Icon';
 import { QueryError } from '../QueryError';
 import { FilePickerConfirmationDialog } from './FilePickerConfirmationDialog';

@@ -1,20 +1,26 @@
-import { cx, formatDocumentType } from '../utils';
+import { Callback, cx, formatDocumentType } from '../utils';
 import { DocumentData } from '../../dto';
-import { useQuery } from '../hooks';
-import { RPC } from '../rpc';
-import { isAttachment } from '../schema';
-import { useCardContext } from '../workspace-reducer';
+import { useQuery } from '../utils/hooks';
+import { RPC } from '../utils/rpc';
+import { isAttachment, isAudioAttachment, isImageAttachment } from '../utils/schema';
 import { Button } from './Button';
-import { getAttachmentPreview } from './DocumentViewer/DocumentViewer';
 import { QueryError } from './QueryError';
+import { AudioPlayer } from './AudioPlayer/AudioPlayer';
 
 type RefContainerProps = {
   id: string;
   title?: string;
   description?: string;
   attachmentPreview?: boolean;
+  onClick: Callback;
 };
-export function RefContainer({ id, title, description, attachmentPreview }: RefContainerProps) {
+export function RefContainer({
+  id,
+  title,
+  description,
+  attachmentPreview,
+  onClick,
+}: RefContainerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id }, abortSignal),
     {
@@ -33,44 +39,45 @@ export function RefContainer({ id, title, description, attachmentPreview }: RefC
   if (attachmentPreview) {
     return (
       <RefPreview
-        id={result.id}
         documentType={result.documentType}
         subtype={result.subtype}
         data={result.data}
         documentTitle={result.title}
         title={title}
         description={description}
+        onClick={onClick}
       />
     );
   }
 
   return (
     <Ref
-      id={result.id}
       documentType={result.documentType}
       subtype={result.subtype}
       documentTitle={result.title}
       title={title}
       description={description}
+      onClick={onClick}
     />
   );
 }
 
 type RefProps = {
-  id: string;
   documentType: string;
   subtype: string;
   documentTitle: string;
   title?: string;
   description?: string;
+  onClick: Callback;
 };
-export function Ref({ id, documentType, subtype, documentTitle, title, description }: RefProps) {
-  const context = useCardContext();
-
-  const openDocument = () => {
-    context.open({ variant: 'document', documentId: id });
-  };
-
+export function Ref({
+  documentType,
+  subtype,
+  documentTitle,
+  title,
+  description,
+  onClick,
+}: RefProps) {
   return (
     <Button
       variant="text"
@@ -78,7 +85,7 @@ export function Ref({ id, documentType, subtype, documentTitle, title, descripti
         'bg-yellow-300/30 hover:bg-yellow-300/60 px-1 py-0 rounded w-fit flex items-baseline',
         documentType || 'line-through text-slate-700/50'
       )}
-      onClick={openDocument}
+      onClick={onClick}
       title={title}
     >
       {description || (
@@ -94,29 +101,23 @@ export function Ref({ id, documentType, subtype, documentTitle, title, descripti
 }
 
 type RefPreviewProps = {
-  id: string;
   documentType: string;
   subtype: string;
   data: DocumentData;
   documentTitle: string;
   title?: string;
   description?: string;
+  onClick: Callback;
 };
 export function RefPreview({
-  id,
   documentType,
   subtype,
   data,
   documentTitle,
   title,
   description,
+  onClick,
 }: RefPreviewProps) {
-  const context = useCardContext();
-
-  const openDocument = () => {
-    context.open({ variant: 'document', documentId: id });
-  };
-
   let preview;
   if (isAttachment(documentType)) {
     preview = getAttachmentPreview(subtype, data);
@@ -125,12 +126,12 @@ export function RefPreview({
   if (!preview) {
     return (
       <Ref
-        id={id}
         documentType={documentType}
         subtype={subtype}
         documentTitle={documentTitle}
         title={title}
         description={description}
+        onClick={onClick}
       />
     );
   }
@@ -142,7 +143,7 @@ export function RefPreview({
 
         <Button
           variant="text"
-          onClick={openDocument}
+          onClick={onClick}
           className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
           trailingIcon="link-arrow"
           size="sm"
@@ -153,4 +154,21 @@ export function RefPreview({
       {preview}
     </div>
   );
+}
+
+export function getAttachmentPreview(subtype: string, data: DocumentData) {
+  const filename = data['filename'] as string;
+  const blobId = data['blob'] as string;
+
+  const blobUrl = `/blobs/${blobId}`;
+
+  if (isImageAttachment(subtype)) {
+    return <img src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
+  }
+
+  if (isAudioAttachment(subtype)) {
+    return <AudioPlayer url={blobUrl} title="" artist="" />;
+  }
+
+  return null;
 }

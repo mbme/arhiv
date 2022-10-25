@@ -1,12 +1,15 @@
 import { useState } from 'preact/hooks';
-import { useQuery } from '../hooks';
-import { RPC } from '../rpc';
-import { Button } from './Button';
+import { useQuery } from '../utils/hooks';
+import { RPC } from '../utils/rpc';
+import { Button } from '../components/Button';
+import { QueryError } from '../components/QueryError';
+import { Ref } from '../components/Ref';
 import { CardContainer } from './CardContainer';
-import { QueryError } from './QueryError';
-import { Ref } from './Ref';
+import { useCardContext } from './workspace-reducer';
 
 export function ScraperCard() {
+  const { open } = useCardContext();
+
   const [url, setUrl] = useState('');
 
   const { result, error, inProgress, triggerRefresh } = useQuery(
@@ -59,10 +62,10 @@ export function ScraperCard() {
           {result.documents.map((document) => (
             <div key={document.id} className="mb-4">
               <Ref
-                id={document.id}
                 documentType={document.documentType}
                 subtype={document.subtype}
                 documentTitle={document.title}
+                onClick={() => open({ variant: 'document', documentId: document.id })}
               />
             </div>
           ))}

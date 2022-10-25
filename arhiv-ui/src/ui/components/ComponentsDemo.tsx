@@ -1,8 +1,7 @@
 import { useState } from 'preact/hooks';
 import { noop, formDataToObject } from '../utils';
-import { useSessionState } from '../hooks';
-import { JSXChildren } from '../jsx';
-import { CardContext } from '../workspace-reducer';
+import { useSessionState } from '../utils/hooks';
+import { JSXChildren } from '../utils/jsx';
 import { Button, IconButton } from './Button';
 import { DateTime } from './DateTime';
 import { Dialog } from './Dialog';
@@ -157,64 +156,57 @@ export function ComponentsDemo() {
         </div>
 
         <div>
-          <CardContextMock>
-            <h1>Ref</h1>
+          <h1>Ref</h1>
 
-            <div className="examples">
-              <Ref id="12342" documentType="note" subtype="" documentTitle="Very important note" />
-            </div>
+          <div className="examples">
+            <Ref
+              documentType="note"
+              subtype=""
+              documentTitle="Very important note"
+              onClick={noop}
+            />
+          </div>
 
-            <h1>Ref with subtype</h1>
+          <h1>Ref with subtype</h1>
 
-            <div className="examples">
-              <Ref
-                id="12342"
-                documentType="note"
-                subtype="other"
-                documentTitle="Very important note"
-              />
-            </div>
+          <div className="examples">
+            <Ref
+              documentType="note"
+              subtype="other"
+              documentTitle="Very important note"
+              onClick={noop}
+            />
+          </div>
 
-            <h1>Ref to erased document</h1>
+          <h1>Ref to erased document</h1>
 
-            <div className="examples">
-              <Ref id="12342321" documentType="" subtype="" documentTitle="12342321" />
-            </div>
+          <div className="examples">
+            <Ref documentType="" subtype="" documentTitle="12342321" onClick={noop} />
+          </div>
 
-            <h1>Ref with custom description & title</h1>
+          <h1>Ref with custom description & title</h1>
 
-            <div className="examples">
-              <Ref
-                id="12342"
-                documentType="note"
-                documentTitle=""
-                subtype="other"
-                title="custom title"
-                description="Note with custom description"
-              />
-            </div>
+          <div className="examples">
+            <Ref
+              documentType="note"
+              documentTitle=""
+              subtype="other"
+              title="custom title"
+              description="Note with custom description"
+              onClick={noop}
+            />
+          </div>
 
-            <h1>External link</h1>
+          <h1>External link</h1>
 
-            <div className="examples">
-              <Link url="https://example.com" title="some title" description="Goto link" />
-            </div>
-          </CardContextMock>
+          <div className="examples">
+            <Link url="https://example.com" title="some title" description="Goto link" />
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-const CardContextMock = ({ children }: { children: JSXChildren }) => {
-  return (
-    <CardContext.Provider
-      value={{ card: { variant: 'document', id: 1, documentId: 'test' }, dispatch: noop }}
-    >
-      {children}
-    </CardContext.Provider>
-  );
-};
 
 type DialogExampleProps = {
   buttonText: string;

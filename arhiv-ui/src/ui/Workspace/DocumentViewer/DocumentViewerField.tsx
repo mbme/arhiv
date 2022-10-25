@@ -1,6 +1,7 @@
-import { DataDescriptionField } from '../../schema';
-import { Markup } from '../Markup';
-import { RefContainer } from '../Ref';
+import { DataDescriptionField } from '../../utils/schema';
+import { Markup } from '../../components/Markup';
+import { RefContainer } from '../../components/Ref';
+import { useCardContext } from '../workspace-reducer';
 
 type DocumentViewerFieldProps = {
   field: DataDescriptionField;
@@ -8,21 +9,39 @@ type DocumentViewerFieldProps = {
 };
 
 function FieldValue({ field, value }: DocumentViewerFieldProps) {
+  const { open } = useCardContext();
+
   if ('MarkupString' in field.field_type) {
-    return <Markup markup={value as string} />;
+    return (
+      <Markup
+        markup={value as string}
+        onRefClick={(documentId) => open({ variant: 'document', documentId })}
+      />
+    );
   }
 
   if ('Ref' in field.field_type) {
     const id = value as string;
 
-    return <RefContainer key={id} id={id} attachmentPreview />;
+    return (
+      <RefContainer
+        key={id}
+        id={id}
+        attachmentPreview
+        onClick={() => open({ variant: 'document', documentId: id })}
+      />
+    );
   }
 
   if ('RefList' in field.field_type) {
     return (
       <>
         {(value as string[]).map((id) => (
-          <RefContainer key={id} id={id} />
+          <RefContainer
+            key={id}
+            id={id}
+            onClick={() => open({ variant: 'document', documentId: id })}
+          />
         ))}
       </>
     );

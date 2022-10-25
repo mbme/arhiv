@@ -1,4 +1,4 @@
-import { useDebouncedCallback } from '../../hooks';
+import { useDebouncedCallback } from '../../utils/hooks';
 import { Icon } from '../Icon';
 
 type SearchInputProps = {

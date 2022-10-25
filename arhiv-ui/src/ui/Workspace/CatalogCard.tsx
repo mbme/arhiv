@@ -1,6 +1,6 @@
-import { useCardContext } from '../workspace-reducer';
+import { Catalog } from '../components/Catalog/Catalog';
+import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
-import { Catalog } from './Catalog/Catalog';
 
 type Props = {
   query?: string;

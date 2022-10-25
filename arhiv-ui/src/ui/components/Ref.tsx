@@ -1,8 +1,8 @@
-import { Callback, cx, formatDocumentType } from '../utils';
-import { DocumentData } from '../../dto';
-import { useQuery } from '../utils/hooks';
-import { RPC } from '../utils/rpc';
-import { isAttachment, isAudioAttachment, isImageAttachment } from '../utils/schema';
+import { DocumentData } from 'dto';
+import { Callback, cx, formatDocumentType } from 'utils';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
 import { Button } from './Button';
 import { QueryError } from './QueryError';
 import { AudioPlayer } from './AudioPlayer/AudioPlayer';

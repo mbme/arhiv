@@ -211,7 +211,11 @@ function markupElementToJSX(
         }
 
         return (
-          <span data-range-start={el.range.start} data-range-end={el.range.end}>
+          <span
+            data-range-start={el.range.start}
+            data-range-end={el.range.end}
+            className="inline-block"
+          >
             <RefContainer
               id={id}
               attachmentPreview={preview}

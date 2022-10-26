@@ -200,11 +200,15 @@ function markupElementToJSX(
     }
     case 'Link':
     case 'Image': {
-      const description = extractText(el.children);
+      let description = extractText(el.children);
 
       if (el.url.startsWith('ref:')) {
         const id = el.url.substring('ref:'.length);
         const preview = el.typeName === 'Image';
+
+        if (el.link_type === 'Autolink') {
+          description = '';
+        }
 
         return (
           <span data-range-start={el.range.start} data-range-end={el.range.end}>

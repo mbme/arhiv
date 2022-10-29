@@ -1,5 +1,7 @@
 #![deny(clippy::all)]
 
+use std::time::Duration;
+
 use anyhow::{ensure, Context, Result};
 use cookie::Cookie;
 use fantoccini::{Client, ClientBuilder};
@@ -91,6 +93,8 @@ impl ScraperOptions {
     }
 
     async fn run_browser_scraper(&self, client: &Client, url: &str) -> Result<Vec<ScrapeResult>> {
+        self.configure_timeouts(client).await?;
+
         client.goto(url).await.context("failed to open url")?;
 
         self.maybe_run_helpers(client, url)
@@ -205,6 +209,23 @@ impl ScraperOptions {
             .context("Failed to save screenshot")?;
 
         log::info!("Saved page screenshot into {file_path}");
+
+        Ok(())
+    }
+
+    async fn configure_timeouts(&self, client: &Client) -> Result<()> {
+        let mut timeouts = client
+            .get_timeouts()
+            .await
+            .context("Failed to get session timeouts")?;
+
+        if self.manual {
+            timeouts.set_script(Some(Duration::from_secs(30 * 60)));
+            client
+                .update_timeouts(timeouts)
+                .await
+                .context("Failed to update session timeouts")?;
+        }
 
         Ok(())
     }

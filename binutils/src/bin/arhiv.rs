@@ -221,6 +221,7 @@ async fn main() {
                         manual,
                         emulate_mobile: mobile,
                         debug: false,
+                        screenshot_file: None,
                     },
                 )
                 .await
@@ -241,7 +242,7 @@ async fn main() {
             println!("Importing {} files", file_paths.len());
 
             for file_path in file_paths {
-                let file_path = into_absolute_path(file_path)
+                let file_path = into_absolute_path(file_path, true)
                     .expect("failed to convert path into absolute path");
 
                 let document = arhiv

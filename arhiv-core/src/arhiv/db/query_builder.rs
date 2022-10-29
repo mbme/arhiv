@@ -78,12 +78,12 @@ impl QueryBuilder {
 
         if !self.where_conditions.is_empty() {
             query += " WHERE ";
-            query += &self.where_conditions.join(" AND ");
+            query += self.where_conditions.join(" AND ").as_str();
         }
 
         if !self.order_by_conditions.is_empty() {
             query += " ORDER BY ";
-            query += &self.order_by_conditions.join(", ");
+            query += self.order_by_conditions.join(", ").as_str();
         }
 
         if let Some(limit) = self.limit {

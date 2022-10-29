@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_crate_version, log};
 
-use scraper::{Scraper, ScraperOptions};
+use scraper::ScraperOptions;
 
 /// Extract data from websites and output it in JSON format
 #[derive(Parser, Debug, Serialize, Deserialize)]
@@ -31,9 +31,15 @@ struct Args {
     #[serde(default)]
     #[clap(long, action)]
     mobile: bool,
+
+    /// Save a screenshot of the page in a PNG format into this file
+    #[serde(default)]
+    #[clap(long, action)]
+    screenshot_file: Option<String>,
 }
 
-pub fn main() {
+#[tokio::main]
+pub async fn main() {
     log::setup_logger();
 
     let args = if env::var("JSON_ARG_MOODE").is_ok() {
@@ -47,14 +53,15 @@ pub fn main() {
         Args::parse()
     };
 
-    let scraper = Scraper::new_with_options(&ScraperOptions {
+    let result = ScraperOptions {
         debug: args.debug,
         emulate_mobile: args.mobile,
         manual: args.manual,
-    })
-    .expect("failed to init scraper");
-
-    let result = scraper.scrape(&args.url).expect("failed to scrape");
+        screenshot_file: args.screenshot_file,
+    }
+    .scrape(&args.url)
+    .await
+    .expect("failed to scrape");
 
     println!(
         "{}",

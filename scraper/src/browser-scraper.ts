@@ -40,16 +40,34 @@ const SCRAPER = {
         result.error = (e as Error).toString();
 
         SCRAPER.results.push(result);
-        window._onScrape?.(result);
 
         throw e;
       }
     }
 
     SCRAPER.results.push(result);
-    window._onScrape?.(result);
 
     return result;
+  },
+
+  injectScraperUI() {
+    const button = document.createElement('button');
+    button.onclick = () => window._scraper.scrape();
+    button.innerText = '[ SCRAPE! ]';
+    button.style.background = 'white';
+    button.style.color = 'orange';
+    button.style.border = '1px solid orange';
+    button.style.fontSize = 'xx-large';
+    button.style.cursor = 'pointer';
+
+    button.style.position = 'fixed';
+    button.style.zIndex = '1000';
+    button.style.top = '5%';
+    button.style.right = '10%';
+
+    document.body.insertAdjacentElement('afterbegin', button);
+
+    // FIXME add DONE button, wrap into some "panel"
   },
 
   getSelectionString,
@@ -59,7 +77,7 @@ declare global {
   interface Window {
     originalURL: URL;
     _scraper: typeof SCRAPER;
-    _onScrape?: (result: ScrapeResult) => void;
+    _doneCallback: () => void;
   }
 }
 

@@ -1,9 +1,8 @@
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use serde_json::json;
 
 use rs_utils::{log, Download};
-pub use scraper::ScraperOptions;
-use scraper::{ScrapedData, Scraper};
+use scraper::{ScrapedData, ScraperOptions};
 
 use crate::{definitions::Attachment, entities::Document, Arhiv, ArhivConnection};
 
@@ -11,18 +10,16 @@ impl Arhiv {
     pub async fn scrape(
         &self,
         url: impl Into<String>,
-        options: ScraperOptions,
+        scraper_options: ScraperOptions,
     ) -> Result<Vec<Document>> {
         let url = url.into();
 
         log::info!("Scraping data from '{}'", url);
 
-        let results = tokio::task::spawn_blocking(move || {
-            let scraper = Scraper::new_with_options(&options)?;
-
-            scraper.scrape(&url)
-        })
-        .await??;
+        let results = scraper_options
+            .scrape(&url)
+            .await
+            .context("failed to scrape url")?;
 
         let errors: String = results
             .iter()

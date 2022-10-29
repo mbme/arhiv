@@ -1,3 +1,5 @@
+use anyhow::{Context, Result};
+
 #[must_use]
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
     // if needle is empty then it matches everything
@@ -62,6 +64,10 @@ pub fn generate_alpanumeric_string(length: usize) -> String {
         .map(char::from)
         .take(length)
         .collect()
+}
+
+pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
+    base64::decode(data).context("Failed to decode base64 string")
 }
 
 #[cfg(test)]

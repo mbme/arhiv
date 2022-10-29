@@ -204,21 +204,23 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     Ok(())
 }
 
-pub fn into_absolute_path(path: impl AsRef<str>) -> Result<String> {
+pub fn into_absolute_path(path: impl AsRef<str>, canonicalize: bool) -> Result<String> {
     let path = shellexpand::full(path.as_ref()).context("failed to expand path")?;
 
     let path = path.as_ref();
 
-    let path = if path.starts_with('/') {
+    let mut path = if path.starts_with('/') {
         PathBuf::from(path)
     } else {
         current_dir_relpath(path)
     };
 
     // NOTE: path must exist
-    let path = path
-        .canonicalize()
-        .with_context(|| format!("failed to canonicalize path {}", path.to_string_lossy()))?;
+    if canonicalize {
+        path = path
+            .canonicalize()
+            .with_context(|| format!("failed to canonicalize path {}", path.to_string_lossy()))?;
+    }
 
     path_to_string(path)
 }

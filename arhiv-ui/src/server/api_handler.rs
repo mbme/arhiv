@@ -179,6 +179,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                         manual: false,
                         emulate_mobile: false,
                         debug: false,
+                        screenshot_file: None,
                     },
                 )
                 .await?;

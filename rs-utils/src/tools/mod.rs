@@ -1,5 +1,8 @@
+use std::process::Stdio;
+
 use anyhow::{Context, Result};
 use serde_json::Value;
+use tokio::process::{Child, Command};
 use which::which_all;
 
 use crate::{path_to_string, run_command};
@@ -36,6 +39,48 @@ impl Chromium {
     #[must_use]
     pub fn get_bin_path(&self) -> &str {
         &self.0
+    }
+}
+
+pub struct Chromedriver {
+    bin_path: String,
+    pub port: u16,
+    pub debug: bool,
+}
+
+impl Chromedriver {
+    pub fn new() -> Result<Self> {
+        let bin_path = find_bin("chromedriver")?.context("Chromedriver must be available")?;
+
+        Ok(Chromedriver {
+            bin_path,
+            port: 9515,
+            debug: false,
+        })
+    }
+
+    #[must_use]
+    pub fn get_bin_path(&self) -> &str {
+        &self.bin_path
+    }
+
+    pub fn spawn(&self) -> Result<Child> {
+        let mut command = Command::new("chromedriver");
+
+        command.arg(format!("--port={}", self.port));
+
+        command.kill_on_drop(true);
+
+        if !self.debug {
+            // silence the chromedriver output if not debugging
+            command.stdout(Stdio::null());
+        }
+
+        command.spawn().context("failed to spawn chromedriver")
+    }
+
+    pub fn get_url(&self) -> String {
+        format!("http://localhost:{}", self.port)
     }
 }
 

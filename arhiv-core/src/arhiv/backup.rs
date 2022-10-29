@@ -13,7 +13,7 @@ impl Arhiv {
 
         ensure!(!backup_dir.is_empty(), "coudn't determine backup dir");
 
-        let backup_dir = into_absolute_path(backup_dir)?;
+        let backup_dir = into_absolute_path(backup_dir, true)?;
 
         log::debug!("backup_dir: {}", &backup_dir);
 

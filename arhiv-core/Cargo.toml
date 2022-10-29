@@ -12,23 +12,23 @@ doctest = false
 production-mode = []
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow.workspace = true
 
-serde = { version = "1", features = ["derive", "rc"] }
-serde_json = "1"
+serde.workspace = true
+serde_json.workspace = true
 
 aho-corasick = "0.7"
 
-futures = "0.3"
-tokio = { version = "1", features = ["macros", "signal", "rt-multi-thread"] }
-tokio-util = { version = "0.7", features = ["compat"] }
+futures.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
 
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest.workspace = true
 nanoid = "0.4.0"
 pulldown-cmark = { version = "0.9", default-features = false, features = ["simd", "serde"] }
 
-hyper = { version = "0.14", features = ["http1", "server"] }
-routerify = "3"
+hyper.workspace = true
+routerify.workspace = true
 
 rusqlite = { version = "0.28", features = ["chrono", "serde_json", "functions"] }
 
@@ -36,7 +36,7 @@ rs-utils = { path = "../rs-utils" }
 scraper = { path = "../scraper" }
 
 fslock = "0.2.1"
-lazy_static = "1.4.0"
+lazy_static.workspace = true
 
 [dev-dependencies]
-insta = { version = "1", features = ["json"] }
+insta.workspace = true

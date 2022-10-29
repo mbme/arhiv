@@ -21,9 +21,9 @@ export type YakabooBook = {
 };
 
 export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
-  // https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html
+  // https://old.yakaboo.ua/ua/stories-of-your-life-and-others.html
   readonly pattern = new URLPattern({
-    hostname: 'www.yakaboo.ua',
+    hostname: 'old.yakaboo.ua',
     pathname: '/ua/*',
   });
 

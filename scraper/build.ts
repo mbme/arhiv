@@ -13,6 +13,10 @@ await esbuild.build({
   minify: isProduction,
   sourcemap: true,
 
+  loader: {
+    '.html': 'text',
+  },
+
   define: {
     'process.env.NODE_ENV': isProduction ? '"production"' : '"development"',
   },

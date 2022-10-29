@@ -1,5 +1,5 @@
 import { ScrapedData, SCRAPERS } from './scrapers';
-import { getSelectionString } from './utils';
+import scraperUIstr from './scraper-ui.html';
 
 export type ScrapeResult = {
   url: string;
@@ -11,13 +11,25 @@ export type ScrapeResult = {
   error?: string;
 };
 
-const SCRAPER = {
-  results: [] as ScrapeResult[],
+class BrowserScraper {
+  public results: ScrapeResult[] = [];
+
+  injectScraperUI() {
+    document.body.insertAdjacentHTML('afterbegin', scraperUIstr);
+
+    document
+      .getElementById('_scraper-ui-btn-scrape')!
+      .addEventListener('click', () => void this.scrape());
+
+    document
+      .getElementById('_scraper-ui-btn-done')!
+      .addEventListener('click', () => window._doneCallback());
+  }
 
   async scrape(): Promise<ScrapeResult> {
     const result: ScrapeResult = {
       url: location.href,
-      originalUrl: window.originalURL?.toString(),
+      originalUrl: window.originalURL.toString(),
     };
 
     for (const scraper of SCRAPERS) {
@@ -39,46 +51,34 @@ const SCRAPER = {
         result.scraperName = scraper.constructor.name;
         result.error = (e as Error).toString();
 
-        SCRAPER.results.push(result);
+        this._addResult(result);
 
         throw e;
       }
     }
 
-    SCRAPER.results.push(result);
+    this._addResult(result);
 
     return result;
-  },
+  }
 
-  injectScraperUI() {
-    const button = document.createElement('button');
-    button.onclick = () => window._scraper.scrape();
-    button.innerText = '[ SCRAPE! ]';
-    button.style.background = 'white';
-    button.style.color = 'orange';
-    button.style.border = '1px solid orange';
-    button.style.fontSize = 'xx-large';
-    button.style.cursor = 'pointer';
+  private _addResult(result: ScrapeResult) {
+    this.results.push(result);
 
-    button.style.position = 'fixed';
-    button.style.zIndex = '1000';
-    button.style.top = '5%';
-    button.style.right = '10%';
+    const counterEl = document.querySelector('#_scraper-results-counter span');
 
-    document.body.insertAdjacentElement('afterbegin', button);
-
-    // FIXME add DONE button, wrap into some "panel"
-  },
-
-  getSelectionString,
-} as const;
+    if (counterEl) {
+      counterEl.innerHTML = this.results.length.toString();
+    }
+  }
+}
 
 declare global {
   interface Window {
     originalURL: URL;
-    _scraper: typeof SCRAPER;
+    _scraper: BrowserScraper;
     _doneCallback: () => void;
   }
 }
 
-window._scraper = SCRAPER;
+window._scraper = new BrowserScraper();

@@ -22,5 +22,6 @@ module.exports = {
     'linebreak-style': ['error', 'unix'],
     'no-prototype-builtins': 0,
     '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
+    '@typescript-eslint/no-non-null-assertion': 0,
   },
 };

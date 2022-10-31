@@ -14,6 +14,7 @@ export function DocumentViewerBackrefs({ backrefs }: DocumentViewerBackrefsProps
       {backrefs.map((backref) => (
         <Ref
           key={backref.id}
+          documentId={backref.id}
           documentType={backref.documentType}
           subtype={backref.subtype}
           documentTitle={backref.title}

@@ -13,13 +13,19 @@ import { Workspace } from './Workspace/Workspace';
 
 enableMapSet();
 
-const renderRoot = document.querySelector('main');
-if (!renderRoot) {
-  throw new Error('render root not found');
+function renderApp() {
+  const renderRoot = document.querySelector('main');
+  if (!renderRoot) {
+    throw new Error('render root not found');
+  }
+
+  if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
+    render(<ComponentsDemo />, renderRoot);
+  } else {
+    render(<Workspace />, renderRoot);
+  }
 }
 
-if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
-  render(<ComponentsDemo />, renderRoot);
-} else {
-  render(<Workspace />, renderRoot);
-}
+renderApp();
+
+window.addEventListener('popstate', renderApp);

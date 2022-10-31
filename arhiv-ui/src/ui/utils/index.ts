@@ -32,8 +32,8 @@ export function getQueryParam(name: string) {
   return params.get(name);
 }
 
-export function setQueryParam(urlStr: string, param: string, value: string | undefined): string {
-  const url = new URL(urlStr, window.location.href);
+export function setQueryParam(param: string, value: string | undefined, replace = false): void {
+  const url = new URL(window.location.href);
 
   if (value === undefined) {
     url.searchParams.delete(param);
@@ -41,19 +41,11 @@ export function setQueryParam(urlStr: string, param: string, value: string | und
     url.searchParams.set(param, value);
   }
 
-  return url.toString();
-}
-
-export function updateQueryParam(param: string, value: string | undefined): void {
-  const searchParams = new URLSearchParams(window.location.search);
-
-  if (value) {
-    searchParams.set(param, value);
+  if (replace) {
+    window.history.replaceState({}, '', url.toString());
   } else {
-    searchParams.delete(param);
+    window.history.pushState({}, '', url.toString());
   }
-
-  window.history.replaceState({}, '', '?' + searchParams.toString());
 }
 
 export function cx(
@@ -87,6 +79,10 @@ export function formatDocumentType(documentType: string, subtype?: string): stri
   }
 
   return documentType;
+}
+
+export function getDocumentUrl(documentId: string): string {
+  return `${window.location.origin}/?id=${documentId}`;
 }
 
 export function getSessionValue<T extends JSONValue>(key: string, defaultValue: T): T {
@@ -135,16 +131,47 @@ export function setElementAttribute(
 
 export const debounce = <Args extends any[], F extends (...args: Args) => void>(
   func: F,
-  waitFor: number
+  waitForMs: number
 ): F => {
   let timeoutId: number;
 
   const debounced = (...args: Args) => {
     window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => func(...args), waitFor);
+    timeoutId = window.setTimeout(() => func(...args), waitForMs);
   };
 
   return debounced as F;
+};
+
+// throttle with trailing execution
+export const throttle = <Args extends any[], F extends (...args: Args) => void>(
+  func: F,
+  waitForMs: number
+): F => {
+  let timeoutId: number | undefined;
+  let pendingArgs: Args | undefined;
+
+  const throttled = (...args: Args) => {
+    if (timeoutId !== undefined) {
+      pendingArgs = args; // save args for trailing execution
+      return;
+    }
+
+    func(...args);
+
+    timeoutId = window.setTimeout(() => {
+      timeoutId = undefined;
+
+      // trailing execution
+      if (pendingArgs) {
+        const args = pendingArgs;
+        pendingArgs = undefined;
+        throttled(...args);
+      }
+    }, waitForMs);
+  };
+
+  return throttled as F;
 };
 
 export function formDataToObject(fd: FormData): Record<string, string> {

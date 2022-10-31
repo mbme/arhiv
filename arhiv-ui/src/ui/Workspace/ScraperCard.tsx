@@ -62,6 +62,7 @@ export function ScraperCard() {
           {result.documents.map((document) => (
             <div key={document.id} className="mb-4">
               <Ref
+                documentId={document.id}
                 documentType={document.documentType}
                 subtype={document.subtype}
                 documentTitle={document.title}

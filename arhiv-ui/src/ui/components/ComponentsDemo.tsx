@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
-import { noop, formDataToObject } from '../utils';
-import { useSessionState } from '../utils/hooks';
+import { noop, formDataToObject, setQueryParam } from '../utils';
+import { useScrollTopRestoration, useSessionState } from '../utils/hooks';
 import { JSXChildren } from '../utils/jsx';
 import { Button, IconButton } from './Button';
 import { DateTime } from './DateTime';
@@ -13,8 +13,20 @@ import { QueryError } from './QueryError';
 import { Ref } from './Ref';
 
 export function ComponentsDemo() {
+  const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
+
+  useScrollTopRestoration(wrapperEl, 'components-demo-scrollTop');
+
   return (
-    <div className="bg-white h-full overflow-auto">
+    <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>
+      <IconButton
+        icon="x"
+        className="fixed top-2 right-4"
+        onClick={() => {
+          setQueryParam('DEMO', undefined);
+          window.location.reload();
+        }}
+      />
       <div className="components-demo">
         <div>
           <h1>Form controls</h1>
@@ -160,6 +172,7 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
+              documentId="test123"
               documentType="note"
               subtype=""
               documentTitle="Very important note"
@@ -171,6 +184,7 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
+              documentId="test123"
               documentType="note"
               subtype="other"
               documentTitle="Very important note"
@@ -181,13 +195,20 @@ export function ComponentsDemo() {
           <h1>Ref to erased document</h1>
 
           <div className="examples">
-            <Ref documentType="" subtype="" documentTitle="12342321" onClick={noop} />
+            <Ref
+              documentId="test123"
+              documentType=""
+              subtype=""
+              documentTitle="12342321"
+              onClick={noop}
+            />
           </div>
 
           <h1>Ref with custom description & title</h1>
 
           <div className="examples">
             <Ref
+              documentId="test123"
               documentType="note"
               documentTitle=""
               subtype="other"
@@ -195,6 +216,22 @@ export function ComponentsDemo() {
               description="Note with custom description"
               onClick={noop}
             />
+          </div>
+
+          <h1>Long Ref line wrap</h1>
+
+          <div className="examples">
+            <div className="w-8/12 overflow-auto block border border-indigo-500">
+              Some looooooooooong text and{' '}
+              <Ref
+                documentId="test123"
+                documentType="attachment"
+                subtype="image"
+                documentTitle="298099334_5292996204070913_3866792344061939409_n.jpg"
+                onClick={noop}
+              />{' '}
+              and lorem ipsum
+            </div>
           </div>
 
           <h1>External link</h1>

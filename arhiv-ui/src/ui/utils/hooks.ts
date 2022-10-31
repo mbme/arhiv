@@ -3,6 +3,7 @@ import {
   StateUpdater,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -15,6 +16,7 @@ import {
   JSONValue,
   newId,
   setSessionValue,
+  throttle,
 } from './index';
 
 type Inputs = ReadonlyArray<unknown>;
@@ -196,4 +198,24 @@ export function useUnsavedChangesWarning() {
       window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
     };
   }, []);
+}
+
+export function useScrollTopRestoration(el: HTMLElement | null, key: string) {
+  useLayoutEffect(() => {
+    if (!el) {
+      return;
+    }
+
+    el.scrollTop = getSessionValue(key, 0);
+
+    const onScroll = throttle(() => {
+      setSessionValue(key, el.scrollTop);
+    }, 350);
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [el, key]);
 }

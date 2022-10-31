@@ -1,5 +1,5 @@
 import { DocumentData } from 'dto';
-import { Callback, cx, formatDocumentType } from 'utils';
+import { Callback, cx, formatDocumentType, getDocumentUrl } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
@@ -39,6 +39,7 @@ export function RefContainer({
   if (attachmentPreview) {
     return (
       <RefPreview
+        documentId={result.id}
         documentType={result.documentType}
         subtype={result.subtype}
         data={result.data}
@@ -52,6 +53,7 @@ export function RefContainer({
 
   return (
     <Ref
+      documentId={result.id}
       documentType={result.documentType}
       subtype={result.subtype}
       documentTitle={result.title}
@@ -63,6 +65,7 @@ export function RefContainer({
 }
 
 type RefProps = {
+  documentId: string;
   documentType: string;
   subtype: string;
   documentTitle: string;
@@ -71,6 +74,7 @@ type RefProps = {
   onClick: Callback;
 };
 export function Ref({
+  documentId,
   documentType,
   subtype,
   documentTitle,
@@ -79,28 +83,28 @@ export function Ref({
   onClick,
 }: RefProps) {
   return (
-    <Button
-      variant="text"
+    <a
+      href={getDocumentUrl(documentId)}
+      title={title || `${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
+      target="_blank"
+      rel="noopen noreferer"
       className={cx(
-        'bg-yellow-300/30 hover:bg-yellow-300/60 px-1 py-0 rounded w-fit flex items-baseline',
+        'font-semibold text-blue-700 hover:text-blue-600/90 break-words cursor-pointer',
         documentType || 'line-through text-slate-700/50'
       )}
-      onClick={onClick}
-      title={title}
+      onClick={(e) => {
+        e.preventDefault();
+
+        onClick();
+      }}
     >
-      {description || (
-        <>
-          <span className="font-mono uppercase text-gray-400 mr-1">
-            {formatDocumentType(documentType, subtype)}
-          </span>
-          {documentTitle}
-        </>
-      )}
-    </Button>
+      {description || documentTitle}
+    </a>
   );
 }
 
 type RefPreviewProps = {
+  documentId: string;
   documentType: string;
   subtype: string;
   data: DocumentData;
@@ -110,6 +114,7 @@ type RefPreviewProps = {
   onClick: Callback;
 };
 export function RefPreview({
+  documentId,
   documentType,
   subtype,
   data,
@@ -126,6 +131,7 @@ export function RefPreview({
   if (!preview) {
     return (
       <Ref
+        documentId={documentId}
         documentType={documentType}
         subtype={subtype}
         documentTitle={documentTitle}

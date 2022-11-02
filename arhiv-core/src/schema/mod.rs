@@ -26,7 +26,9 @@ pub struct DataSchema {
 
 impl DataSchema {
     #[must_use]
-    pub fn new(modules: Vec<DataDescription>) -> Self {
+    pub fn new(mut modules: Vec<DataDescription>) -> Self {
+        modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
+
         DataSchema { modules }
     }
 
@@ -75,10 +77,6 @@ impl DataSchema {
     }
 
     pub fn get_data_description(&self, document_type: &str) -> Result<&DataDescription> {
-        if document_type == ERASED_DOCUMENT_TYPE {
-            return Ok(ERASED_DOCUMENT_DATA_DESCRIPTION);
-        }
-
         self.modules
             .iter()
             .find(|module| module.document_type == document_type)

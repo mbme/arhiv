@@ -1,14 +1,15 @@
-import { DataDescriptionField } from '../../utils/schema';
-import { Markup } from '../../components/Markup';
-import { RefContainer } from '../../components/Ref';
+import { JSXChildren } from 'utils/jsx';
+import { DataDescriptionField } from 'utils/schema';
+import { Markup } from 'components/Markup';
+import { RefContainer } from 'components/Ref';
 import { useCardContext } from '../workspace-reducer';
 
-type DocumentViewerFieldProps = {
+type FieldValueProps = {
   field: DataDescriptionField;
   value: unknown;
 };
 
-function FieldValue({ field, value }: DocumentViewerFieldProps) {
+export function FieldValue({ field, value }: FieldValueProps) {
   const { open } = useCardContext();
 
   if ('MarkupString' in field.field_type) {
@@ -50,15 +51,15 @@ function FieldValue({ field, value }: DocumentViewerFieldProps) {
   return <>{String(value)}</>;
 }
 
-export function DocumentViewerField({ field, value }: DocumentViewerFieldProps) {
-  if (!value) {
-    return null;
-  }
-
+type DocumentViewerFieldProps = {
+  name: string;
+  children: JSXChildren;
+};
+export function DocumentViewerField({ name, children }: DocumentViewerFieldProps) {
   return (
     <section className="py-3 flex flex-wrap justify-between align-center">
-      <h5 className="form-field-heading mb-1">{field.name}</h5>
-      <FieldValue field={field} value={value} />
+      <h5 className="form-field-heading mb-1">{name}</h5>
+      {children}
     </section>
   );
 }

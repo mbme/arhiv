@@ -94,6 +94,10 @@ export function isAttachment(documentType: string) {
   return documentType === 'attachment';
 }
 
+export function isErasedDocument(documentType: string) {
+  return documentType === '';
+}
+
 export function isImageAttachment(subtype: string) {
   return subtype === 'image';
 }

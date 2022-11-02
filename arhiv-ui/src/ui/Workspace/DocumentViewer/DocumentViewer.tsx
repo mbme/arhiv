@@ -1,11 +1,11 @@
-import { useQuery } from '../../utils/hooks';
-import { RPC } from '../../utils/rpc';
-import { Callback, formatDocumentType } from '../../utils';
-import { isAttachment, isDocumentTypeCollection } from '../../utils/schema';
-import { QueryError } from '../../components/QueryError';
-import { Button } from '../../components/Button';
-import { Icon } from '../../components/Icon';
-import { getAttachmentPreview } from '../../components/Ref';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { Callback, formatDocumentType } from 'utils';
+import { isAttachment, isDocumentTypeCollection, isErasedDocument } from 'utils/schema';
+import { QueryError } from 'components/QueryError';
+import { Button } from 'components/Button';
+import { Icon } from 'components/Icon';
+import { getAttachmentPreview } from 'components/Ref';
 import { DocumentViewerFields } from './DocumentViewerFields';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { CardContainer } from '../CardContainer';
@@ -61,6 +61,14 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
             <div className="mb-8 empty:hidden">
               {getAttachmentPreview(result.subtype, result.data)}
             </div>
+          )}
+
+          {isErasedDocument(result.documentType) && (
+            <img
+              src="/public/nothing-to-see-here.jpg"
+              alt="funny picture for the erased document"
+              className="my-16 mx-auto"
+            />
           )}
 
           <DocumentViewerFields

@@ -1,5 +1,5 @@
-import { getDocumentTypes } from '../utils/schema';
-import { Button } from '../components/Button';
+import { getDocumentTypes } from 'utils/schema';
+import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
@@ -7,7 +7,7 @@ export function BrowserCard() {
   const context = useCardContext();
 
   const openCatalog = (documentType: string) => {
-    context.pushStack({ variant: 'catalog', documentType });
+    context.replace({ variant: 'catalog', documentType });
   };
 
   return (

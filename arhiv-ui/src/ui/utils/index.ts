@@ -1,3 +1,5 @@
+import { isErasedDocument } from './schema';
+
 export type Obj<T = string> = Record<string, T | undefined>;
 export type EmptyObj = Obj<never>;
 export type JSONValue =
@@ -74,6 +76,10 @@ export function cx(
 }
 
 export function formatDocumentType(documentType: string, subtype?: string): string {
+  if (isErasedDocument(documentType)) {
+    return 'erased';
+  }
+
   if (subtype) {
     return `${documentType}/${subtype}`;
   }

@@ -43,7 +43,12 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
 
   return (
     <>
-      <IconButton icon="more" ref={reference} {...getReferenceProps()} />
+      <IconButton
+        icon="more"
+        ref={reference}
+        {...getReferenceProps()}
+        className={cx({ 'bg-blue-100': open })}
+      />
 
       {open && (
         <FloatingFocusManager context={context}>
@@ -69,7 +74,7 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
                 <button
                   type="button"
                   key={index}
-                  className="flex items-center gap-2 cursor-pointer text-blue-700 hover:bg-sky-100 px-4 py-2 whitespace-nowrap"
+                  className="flex items-center gap-5 cursor-pointer text-blue-700 hover:bg-sky-100 px-4 py-2 whitespace-nowrap"
                   role="menuitem"
                   {...getItemProps({
                     onClick: () => {

@@ -219,7 +219,6 @@ function markupElementToJSX(
             <RefContainer
               id={id}
               attachmentPreview={preview}
-              title={el.title}
               description={description}
               onClick={() => onRefClick(id)}
             />
@@ -230,7 +229,7 @@ function markupElementToJSX(
       // TODO handle link_type?
       return (
         <span data-range-start={el.range.start} data-range-end={el.range.end}>
-          <Link url={el.url} title={el.title} description={description} />
+          <Link url={el.url} description={description} />
         </span>
       );
     }

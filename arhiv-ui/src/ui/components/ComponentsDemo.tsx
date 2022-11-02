@@ -204,7 +204,7 @@ export function ComponentsDemo() {
             />
           </div>
 
-          <h1>Ref with custom description & title</h1>
+          <h1>Ref with custom description</h1>
 
           <div className="examples">
             <Ref
@@ -212,7 +212,6 @@ export function ComponentsDemo() {
               documentType="note"
               documentTitle=""
               subtype="other"
-              title="custom title"
               description="Note with custom description"
               onClick={noop}
             />
@@ -227,7 +226,7 @@ export function ComponentsDemo() {
                 documentId="test123"
                 documentType="attachment"
                 subtype="image"
-                documentTitle="298099334_5292996204070913_3866792344061939409_n.jpg"
+                documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
                 onClick={noop}
               />{' '}
               and lorem ipsum

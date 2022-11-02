@@ -169,18 +169,16 @@ impl<'a> MarkupStr<'a> {
                             range,
                         },
 
-                        Tag::Link(link_type, url, title) => MarkupElement::Link {
+                        Tag::Link(link_type, url, _title) => MarkupElement::Link {
                             link_type,
                             url,
-                            title,
                             children: vec![],
                             range,
                         },
 
-                        Tag::Image(link_type, url, title) => MarkupElement::Image {
+                        Tag::Image(link_type, url, _title) => MarkupElement::Image {
                             link_type,
                             url,
-                            title,
                             children: vec![],
                             range,
                         },
@@ -321,7 +319,6 @@ pub enum MarkupElement<'a> {
         range: Range<usize>,
         link_type: LinkType,
         url: CowStr<'a>,
-        title: CowStr<'a>,
         children: Children<'a>,
     },
 
@@ -329,7 +326,6 @@ pub enum MarkupElement<'a> {
         range: Range<usize>,
         link_type: LinkType,
         url: CowStr<'a>,
-        title: CowStr<'a>,
         children: Children<'a>,
     },
 }

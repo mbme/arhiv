@@ -268,7 +268,6 @@ export type MarkupElement =
       range: Range;
       link_type: LinkType;
       url: string;
-      title: string;
       children: MarkupElement[];
     }
   | {
@@ -276,7 +275,6 @@ export type MarkupElement =
       range: Range;
       link_type: LinkType;
       url: string;
-      title: string;
       children: MarkupElement[];
     };
 

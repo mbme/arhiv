@@ -9,14 +9,12 @@ import { AudioPlayer } from './AudioPlayer/AudioPlayer';
 
 type RefContainerProps = {
   id: string;
-  title?: string;
   description?: string;
   attachmentPreview?: boolean;
   onClick: Callback;
 };
 export function RefContainer({
   id,
-  title,
   description,
   attachmentPreview,
   onClick,
@@ -44,7 +42,6 @@ export function RefContainer({
         subtype={result.subtype}
         data={result.data}
         documentTitle={result.title}
-        title={title}
         description={description}
         onClick={onClick}
       />
@@ -57,7 +54,6 @@ export function RefContainer({
       documentType={result.documentType}
       subtype={result.subtype}
       documentTitle={result.title}
-      title={title}
       description={description}
       onClick={onClick}
     />
@@ -69,7 +65,6 @@ type RefProps = {
   documentType: string;
   subtype: string;
   documentTitle: string;
-  title?: string;
   description?: string;
   onClick: Callback;
 };
@@ -78,14 +73,13 @@ export function Ref({
   documentType,
   subtype,
   documentTitle,
-  title,
   description,
   onClick,
 }: RefProps) {
   return (
     <a
       href={getDocumentUrl(documentId)}
-      title={title || `${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
+      title={`${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
       target="_blank"
       rel="noopen noreferer"
       className={cx(
@@ -109,7 +103,6 @@ type RefPreviewProps = {
   subtype: string;
   data: DocumentData;
   documentTitle: string;
-  title?: string;
   description?: string;
   onClick: Callback;
 };
@@ -119,7 +112,6 @@ export function RefPreview({
   subtype,
   data,
   documentTitle,
-  title,
   description,
   onClick,
 }: RefPreviewProps) {
@@ -135,7 +127,6 @@ export function RefPreview({
         documentType={documentType}
         subtype={subtype}
         documentTitle={documentTitle}
-        title={title}
         description={description}
         onClick={onClick}
       />
@@ -143,7 +134,10 @@ export function RefPreview({
   }
 
   return (
-    <div title={title} className="RefPreview group">
+    <div
+      className="RefPreview group"
+      title={`${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
+    >
       <div className="flex space-between items-center">
         <span className="text-blue-900 pointer font-serif pl-1">{description}</span>
 

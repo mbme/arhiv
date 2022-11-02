@@ -1,4 +1,4 @@
-import { getDocumentModules, isModuleCollection } from '../utils/schema';
+import { getDocumentTypes } from '../utils/schema';
 import { Button } from '../components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -19,15 +19,11 @@ export function BrowserCard() {
 
       <section className="mb-8">
         <h1 className="section-heading">Documents</h1>
-        {getDocumentModules()
-          .filter((module) => !isModuleCollection(module))
-          .map((module) => module.document_type)
-          .sort()
-          .map((documentType) => (
-            <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
-              {documentType}
-            </Button>
-          ))}
+        {getDocumentTypes(false).map((documentType) => (
+          <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
+            {documentType}
+          </Button>
+        ))}
 
         <Button
           key=""
@@ -41,15 +37,11 @@ export function BrowserCard() {
 
       <section>
         <h1 className="section-heading">Collections</h1>
-        {getDocumentModules()
-          .filter((module) => isModuleCollection(module))
-          .map((module) => module.document_type)
-          .sort()
-          .map((documentType) => (
-            <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
-              {documentType}
-            </Button>
-          ))}
+        {getDocumentTypes(true).map((documentType) => (
+          <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
+            {documentType}
+          </Button>
+        ))}
       </section>
     </>
   );

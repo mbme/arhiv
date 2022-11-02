@@ -39,12 +39,11 @@ declare global {
   }
 }
 
-export function getDocumentTypes(): string[] {
-  return window.SCHEMA.modules.map((module) => module.document_type);
-}
-
-export function getDocumentModules(): readonly DataDescription[] {
-  return window.SCHEMA.modules;
+export function getDocumentTypes(collections: boolean): string[] {
+  return window.SCHEMA.modules
+    .filter((module) => isModuleCollection(module) === collections)
+    .map((module) => module.document_type)
+    .sort();
 }
 
 export function getDataDescription(documentType: string): DataDescription {
@@ -58,7 +57,7 @@ export function getDataDescription(documentType: string): DataDescription {
   return dataDescription;
 }
 
-export function isModuleCollection(module: DataDescription): boolean {
+function isModuleCollection(module: DataDescription): boolean {
   return module.collection_of !== 'None';
 }
 

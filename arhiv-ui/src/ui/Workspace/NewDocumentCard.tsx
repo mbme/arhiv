@@ -56,17 +56,33 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
           onSave={onSave}
         />
       ) : (
-        <div className="flex flex-wrap gap-4 px-8 py-16">
-          {getDocumentTypes().map((documentType) => (
-            <Button
-              key={documentType}
-              variant="simple"
-              onClick={() => setDocumentType(documentType)}
-            >
-              {documentType}
-            </Button>
-          ))}
-        </div>
+        <>
+          <section className="mb-8">
+            <h1 className="section-heading">Documents</h1>
+            {getDocumentTypes(false).map((documentType) => (
+              <Button
+                key={documentType}
+                variant="simple"
+                onClick={() => setDocumentType(documentType)}
+              >
+                {documentType}
+              </Button>
+            ))}
+          </section>
+
+          <section>
+            <h1 className="section-heading">Collections</h1>
+            {getDocumentTypes(true).map((documentType) => (
+              <Button
+                key={documentType}
+                variant="simple"
+                onClick={() => setDocumentType(documentType)}
+              >
+                {documentType}
+              </Button>
+            ))}
+          </section>
+        </>
       )}
     </>
   );

@@ -1,6 +1,6 @@
 ---
 source: arhiv-core/src/markup/markup_str.rs
-assertion_line: 461
+assertion_line: 457
 expression: ast
 ---
 {
@@ -23,7 +23,6 @@ expression: ast
             "end": 20,
             "start": 0
           },
-          "title": "",
           "typeName": "Link",
           "url": "http://example.com"
         }

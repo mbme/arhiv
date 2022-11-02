@@ -13,12 +13,7 @@ type RefContainerProps = {
   attachmentPreview?: boolean;
   onClick: Callback;
 };
-export function RefContainer({
-  id,
-  description,
-  attachmentPreview,
-  onClick,
-}: RefContainerProps) {
+export function RefContainer({ id, description, attachmentPreview, onClick }: RefContainerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id }, abortSignal),
     {

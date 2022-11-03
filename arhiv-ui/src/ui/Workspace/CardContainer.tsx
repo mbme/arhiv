@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'preact/hooks';
-import { JSXChildren } from '../utils/jsx';
-import { IconButton } from '../components/Button';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { JSXChildren } from 'utils/jsx';
+import { IconButton } from 'components/Button';
 import { Card, CardContext, useCardContext, WorkspaceDispatch } from './workspace-reducer';
 
 type CardContainerProps = {
@@ -9,6 +9,8 @@ type CardContainerProps = {
   children: JSXChildren;
 };
 export function CardContainer({ card, dispatch, children }: CardContainerProps) {
+  const [el, setEl] = useState<HTMLElement | null>(null);
+
   const cardContextRef = useRef({ card, dispatch });
 
   useEffect(() => {
@@ -18,21 +20,18 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
     };
   }, [card, dispatch]);
 
-  const scrolledRef = useRef(false);
+  useEffect(() => {
+    if (el) {
+      el.classList.remove('opacity-30');
+      el.scrollIntoView({ inline: 'center' });
+    }
+  }, [el]);
 
   return (
     <CardContext.Provider value={cardContextRef.current}>
       <div
         className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity opacity-30"
-        ref={(containerEl) => {
-          if (!containerEl || scrolledRef.current) {
-            return;
-          }
-
-          containerEl.scrollIntoView({ inline: 'center' });
-          containerEl.classList.remove('opacity-30');
-          scrolledRef.current = true;
-        }}
+        ref={setEl}
       >
         <div className="px-4 pb-6">{children}</div>
       </div>

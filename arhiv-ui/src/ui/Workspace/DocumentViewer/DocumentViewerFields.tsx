@@ -13,8 +13,6 @@ export function DocumentViewerFields({ documentType, subtype, data }: DocumentVi
 
   return (
     <div className="divide-y divide-dashed">
-      <DocumentViewerField name="id">{document.id}</DocumentViewerField>
-
       {fields.map((field) => {
         const value = data[field.name];
 

@@ -130,7 +130,7 @@ export function RefPreview({
 
   return (
     <div
-      className="RefPreview group"
+      className="RefPreview w-full group"
       title={`${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
     >
       <div className="flex space-between items-center">

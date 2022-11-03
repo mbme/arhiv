@@ -214,7 +214,7 @@ function markupElementToJSX(
           <span
             data-range-start={el.range.start}
             data-range-end={el.range.end}
-            className="inline-block"
+            className="inline-block w-full"
           >
             <RefContainer
               id={id}

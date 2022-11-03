@@ -1,4 +1,4 @@
-import { getDocumentTypes } from 'utils/schema';
+import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -17,32 +17,40 @@ export function BrowserCard() {
         right={<CardContainer.CloseButton />}
       />
 
-      <section className="mb-8">
-        <h1 className="section-heading">Documents</h1>
-        {getDocumentTypes(false).map((documentType) => (
-          <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
-            {documentType}
-          </Button>
-        ))}
+      <div className="flex justify-around mt-8">
+        <section>
+          <h1 className="section-heading ml-4">Documents</h1>
+          {getDocumentTypes(false).map((documentType) => {
+            if (isErasedDocument(documentType)) {
+              return null;
+            }
 
-        <Button
-          key=""
-          variant="simple"
-          onClick={() => openCatalog('')}
-          className="mt-4 line-through"
-        >
-          ERASED
-        </Button>
-      </section>
+            return (
+              <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
+                {documentType}
+              </Button>
+            );
+          })}
 
-      <section>
-        <h1 className="section-heading">Collections</h1>
-        {getDocumentTypes(true).map((documentType) => (
-          <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
-            {documentType}
+          <Button
+            key=""
+            variant="simple"
+            onClick={() => openCatalog('')}
+            className="mt-4 line-through"
+          >
+            ERASED
           </Button>
-        ))}
-      </section>
+        </section>
+
+        <section>
+          <h1 className="section-heading ml-4">Collections</h1>
+          {getDocumentTypes(true).map((documentType) => (
+            <Button key={documentType} variant="simple" onClick={() => openCatalog(documentType)}>
+              {documentType}
+            </Button>
+          ))}
+        </section>
+      </div>
     </>
   );
 }

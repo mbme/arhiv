@@ -1,6 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
-import { getDocumentTypes } from '../utils/schema';
-import { Button } from '../components/Button';
+import { getDocumentTypes, isErasedDocument } from 'utils/schema';
+import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
@@ -56,22 +56,27 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
           onSave={onSave}
         />
       ) : (
-        <>
-          <section className="mb-8">
-            <h1 className="section-heading">Documents</h1>
-            {getDocumentTypes(false).map((documentType) => (
-              <Button
-                key={documentType}
-                variant="simple"
-                onClick={() => setDocumentType(documentType)}
-              >
-                {documentType}
-              </Button>
-            ))}
+        <div className="flex justify-around mt-8">
+          <section>
+            <h1 className="section-heading ml-4">Documents</h1>
+            {getDocumentTypes(false).map((documentType) => {
+              if (isErasedDocument(documentType)) {
+                return null;
+              }
+              return (
+                <Button
+                  key={documentType}
+                  variant="simple"
+                  onClick={() => setDocumentType(documentType)}
+                >
+                  {documentType}
+                </Button>
+              );
+            })}
           </section>
 
           <section>
-            <h1 className="section-heading">Collections</h1>
+            <h1 className="section-heading ml-4">Collections</h1>
             {getDocumentTypes(true).map((documentType) => (
               <Button
                 key={documentType}
@@ -82,7 +87,7 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
               </Button>
             ))}
           </section>
-        </>
+        </div>
       )}
     </>
   );

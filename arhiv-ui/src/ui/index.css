@@ -99,7 +99,7 @@
   }
 
   #document-head {
-    @apply mb-10 ml-auto relative text-sm;
+    @apply relative text-sm;
 
     & td {
       @apply pb-1 tracking-wide;

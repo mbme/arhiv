@@ -9,7 +9,6 @@ import { getAttachmentPreview } from 'components/Ref';
 import { DocumentViewerFields } from './DocumentViewerFields';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { CardContainer } from '../CardContainer';
-import { DocumentViewerBackrefs } from './DocumentViewerBackrefs';
 import { EraseDocumentButton } from './EraseDocumentButton';
 import { CollectionCatalog } from './CollectionCatalog';
 
@@ -55,7 +54,11 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
 
       {result && (
         <>
-          <DocumentViewerHead id={result.id} updatedAt={result.updatedAt} />
+          <DocumentViewerHead
+            id={result.id}
+            updatedAt={result.updatedAt}
+            backrefs={result.backrefs}
+          />
 
           {isAttachment(result.documentType) && (
             <div className="mb-8 empty:hidden">
@@ -80,8 +83,6 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
           {isDocumentTypeCollection(result.documentType) && (
             <CollectionCatalog collectionId={documentId} query={query} page={page} />
           )}
-
-          <DocumentViewerBackrefs backrefs={result.backrefs} />
 
           {result.documentType && (
             <div className="flex justify-end mt-8">

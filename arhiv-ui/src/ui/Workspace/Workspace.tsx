@@ -30,15 +30,7 @@ export function Workspace() {
   return (
     <div className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth">
       <div className="flex flex-row items-start gap-6 h-full w-fit min-w-full">
-        <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-16 pr-4 flex flex-row gap-8">
-          <Button
-            variant="text"
-            leadingIcon="browse-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
-          >
-            Browse
-          </Button>
-
+        <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
           <Button
             variant="text"
             leadingIcon="search-catalog"
@@ -72,6 +64,12 @@ export function Workspace() {
                 text: 'Scrape URL',
                 icon: 'web',
                 onClick: () => dispatch({ type: 'open', newCard: { variant: 'scraper' } }),
+              },
+
+              {
+                text: 'Browse',
+                icon: 'browse-catalog',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'browser' } }),
               },
 
               {

@@ -1,4 +1,4 @@
-import { Catalog } from '../components/Catalog/Catalog';
+import { Catalog } from 'components/Catalog/Catalog';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
@@ -34,6 +34,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
       />
 
       <Catalog
+        autofocus={!context.restored}
         documentType={documentType}
         initialQuery={query}
         initialPage={page}

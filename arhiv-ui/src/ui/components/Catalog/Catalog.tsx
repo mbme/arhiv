@@ -1,12 +1,13 @@
 import { useState } from 'preact/hooks';
-import { useQuery } from '../../utils/hooks';
-import { RPC } from '../../utils/rpc';
-import { DateTime } from '../DateTime';
-import { QueryError } from '../QueryError';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { DateTime } from 'components/DateTime';
+import { QueryError } from 'components/QueryError';
 import { Pagination } from './Pagination';
 import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
+  autofocus?: boolean;
   collectionId?: string;
   documentType?: string;
   initialQuery?: string;
@@ -17,6 +18,7 @@ type CatalogProps = {
 };
 
 export function Catalog({
+  autofocus = false,
   collectionId,
   documentType,
   initialQuery = '',
@@ -74,6 +76,7 @@ export function Catalog({
           setPage(0);
         }}
         busy={inProgress}
+        autofocus={autofocus}
       />
 
       {error && <QueryError error={error} />}

@@ -12,7 +12,11 @@ type CardVariant =
   | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string; query?: string; page?: number };
 
-export type Card = CardVariant & { id: number; previousCard?: CardVariant, restored?: boolean };
+export type Card = CardVariant & {
+  id: number;
+  previousCard?: CardVariant;
+  restored?: boolean;
+};
 
 export function throwBadCardVariant(value: never): never;
 export function throwBadCardVariant(value: CardVariant) {
@@ -261,6 +265,8 @@ export function useCardContext() {
         id: card.id,
       });
     },
+
+    restored: Boolean(card.restored),
   };
 }
 

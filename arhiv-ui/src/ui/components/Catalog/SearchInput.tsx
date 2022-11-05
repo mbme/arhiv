@@ -1,13 +1,14 @@
-import { useDebouncedCallback } from '../../utils/hooks';
-import { Icon } from '../Icon';
+import { useDebouncedCallback } from 'utils/hooks';
+import { Icon } from 'components/Icon';
 
 type SearchInputProps = {
+  autofocus: boolean;
   initialValue: string;
   onSearch: (query: string) => void;
   busy: boolean;
 };
 
-export function SearchInput({ initialValue, onSearch, busy }: SearchInputProps) {
+export function SearchInput({ autofocus, initialValue, onSearch, busy }: SearchInputProps) {
   const onSearchDebounced = useDebouncedCallback(onSearch, 400);
 
   return (
@@ -32,6 +33,11 @@ export function SearchInput({ initialValue, onSearch, busy }: SearchInputProps) 
         }}
         placeholder="Type something"
         autoComplete="off"
+        ref={(inputRef) => {
+          if (inputRef && autofocus) {
+            inputRef.focus();
+          }
+        }}
       />
     </form>
   );

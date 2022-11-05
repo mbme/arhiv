@@ -3,7 +3,7 @@ import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
-import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
+import { Card, throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { CardContainer } from './CardContainer';
@@ -106,65 +106,39 @@ export function Workspace() {
           />
         </nav>
 
-        {cards.map((card) => {
-          switch (card.variant) {
-            case 'catalog':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <CatalogCard
-                    query={card.query}
-                    page={card.page}
-                    documentType={card.documentType}
-                  />
-                </CardContainer>
-              );
-
-            case 'browser':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <BrowserCard />
-                </CardContainer>
-              );
-
-            case 'new-document':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <NewDocumentCard documentType={card.documentType} />
-                </CardContainer>
-              );
-
-            case 'document':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <DocumentCard documentId={card.documentId} query={card.query} page={card.page} />
-                </CardContainer>
-              );
-
-            case 'status':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <StatusCard />
-                </CardContainer>
-              );
-
-            case 'file-picker':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <FilePickerCard />
-                </CardContainer>
-              );
-
-            case 'scraper':
-              return (
-                <CardContainer key={card.id} card={card} dispatch={dispatch}>
-                  <ScraperCard />
-                </CardContainer>
-              );
-          }
-
-          throwBadCardVariant(card);
-        })}
+        {cards.map((card) => (
+          <CardContainer key={card.id} card={card} dispatch={dispatch}>
+            {renderCard(card)}
+          </CardContainer>
+        ))}
       </div>
     </div>
   );
+}
+
+function renderCard(card: Card) {
+  switch (card.variant) {
+    case 'catalog':
+      return <CatalogCard query={card.query} page={card.page} documentType={card.documentType} />;
+
+    case 'browser':
+      return <BrowserCard />;
+
+    case 'new-document':
+      return <NewDocumentCard documentType={card.documentType} />;
+
+    case 'document':
+      return <DocumentCard documentId={card.documentId} query={card.query} page={card.page} />;
+
+    case 'status':
+      return <StatusCard />;
+
+    case 'file-picker':
+      return <FilePickerCard />;
+
+    case 'scraper':
+      return <ScraperCard />;
+  }
+
+  throwBadCardVariant(card);
 }

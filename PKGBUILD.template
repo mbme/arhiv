@@ -6,7 +6,7 @@ pkgver="0.0.0"
 pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
-depends=(sqlite zstd libnotify libpulse light xorg-xinput gtk3 nodejs)
+depends=(openssl sqlite zstd libnotify libpulse light xorg-xinput gtk3 nodejs)
 makedepends=(git cargo yarn)
 
 pkgver() {

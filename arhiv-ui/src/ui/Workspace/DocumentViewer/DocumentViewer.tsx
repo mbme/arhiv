@@ -31,21 +31,19 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
     <>
       <CardContainer.Topbar
         left={
-          <span className="section-heading text-lg">
-            {result ? formatDocumentType(result.documentType, result.subtype) : ''}
-          </span>
-        }
-        right={
           <>
+            <span className="section-heading text-lg">
+              {result ? formatDocumentType(result.documentType, result.subtype) : ''}
+            </span>
+
             {result?.documentType && (
               <Button variant="text" leadingIcon="edit-document" onClick={onEdit}>
                 Edit
               </Button>
             )}
-
-            <CardContainer.CloseButton />
           </>
         }
+        right={<CardContainer.CloseButton />}
       />
 
       {error && <QueryError error={error} />}

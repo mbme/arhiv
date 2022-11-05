@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'preact/hooks';
 import { useDebouncedCallback } from 'utils/hooks';
 import { Icon } from 'components/Icon';
 
@@ -9,6 +10,14 @@ type SearchInputProps = {
 };
 
 export function SearchInput({ autofocus, initialValue, onSearch, busy }: SearchInputProps) {
+  const [inputEl, setInputEl] = useState<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (inputEl && autofocus) {
+      inputEl.focus();
+    }
+  }, [inputEl, autofocus]);
+
   const onSearchDebounced = useDebouncedCallback(onSearch, 400);
 
   return (
@@ -33,11 +42,7 @@ export function SearchInput({ autofocus, initialValue, onSearch, busy }: SearchI
         }}
         placeholder="Type something"
         autoComplete="off"
-        ref={(inputRef) => {
-          if (inputRef && autofocus) {
-            inputRef.focus();
-          }
-        }}
+        ref={setInputEl}
       />
     </form>
   );

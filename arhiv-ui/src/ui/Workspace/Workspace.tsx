@@ -39,7 +39,9 @@ export function Workspace() {
             Search
           </Button>
 
-          <Button variant="text">Player</Button>
+          <Button variant="text" disabled>
+            Player
+          </Button>
 
           <Button
             variant="text"

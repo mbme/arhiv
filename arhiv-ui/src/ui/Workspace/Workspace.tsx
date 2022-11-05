@@ -1,5 +1,6 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { getQueryParam } from 'utils';
+import { useScrollRestoration } from 'utils/hooks';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
@@ -13,6 +14,9 @@ import { ScraperCard } from './ScraperCard';
 import { BrowserCard } from './BrowserCard';
 
 export function Workspace() {
+  const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
+  useScrollRestoration(wrapperEl, 'workspace-scroll');
+
   const [{ cards }, dispatch] = useWorkspaceReducer();
 
   useEffect(() => {
@@ -28,7 +32,10 @@ export function Workspace() {
   }, []);
 
   return (
-    <div className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth">
+    <div
+      className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth"
+      ref={setWrapperEl}
+    >
       <div className="flex flex-row items-start gap-6 h-full w-fit min-w-full">
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
           <Button

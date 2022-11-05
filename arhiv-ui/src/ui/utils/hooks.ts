@@ -200,17 +200,29 @@ export function useUnsavedChangesWarning() {
   }, []);
 }
 
-export function useScrollTopRestoration(el: HTMLElement | null, key: string) {
+export function useScrollRestoration(el: HTMLElement | null, key: string) {
   useLayoutEffect(() => {
     if (!el) {
       return;
     }
 
-    el.scrollTop = getSessionValue(key, 0);
+    const [scrollTop, scrollLeft] = getSessionValue(key, [0, 0]);
+
+    const originalScrollBehavior = el.style.scrollBehavior;
+
+    el.style.scrollBehavior = 'auto';
+    el.scrollTo({
+      top: scrollTop,
+      left: scrollLeft,
+    });
+
+    el.style.scrollBehavior = originalScrollBehavior;
 
     const onScroll = throttle(() => {
-      setSessionValue(key, el.scrollTop);
+      setSessionValue(key, [el.scrollTop, el.scrollLeft]);
     }, 350);
+
+    // TODO also listen for resize?
 
     el.addEventListener('scroll', onScroll, { passive: true });
 

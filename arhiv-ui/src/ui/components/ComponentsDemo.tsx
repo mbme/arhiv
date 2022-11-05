@@ -1,21 +1,21 @@
 import { useState } from 'preact/hooks';
-import { noop, formDataToObject, setQueryParam } from '../utils';
-import { useScrollTopRestoration, useSessionState } from '../utils/hooks';
-import { JSXChildren } from '../utils/jsx';
-import { Button, IconButton } from './Button';
-import { DateTime } from './DateTime';
-import { Dialog } from './Dialog';
-import { Checkbox } from './Form/Checkbox';
-import { Select } from './Form/Select';
-import { Icon, ICON_VARIANTS } from './Icon';
-import { Link } from './Link';
-import { QueryError } from './QueryError';
-import { Ref } from './Ref';
+import { noop, formDataToObject, setQueryParam } from 'utils';
+import { useScrollRestoration, useSessionState } from 'utils/hooks';
+import { JSXChildren } from 'utils/jsx';
+import { Button, IconButton } from 'components/Button';
+import { DateTime } from 'components/DateTime';
+import { Dialog } from 'components/Dialog';
+import { Checkbox } from 'components/Form/Checkbox';
+import { Select } from 'components/Form/Select';
+import { Icon, ICON_VARIANTS } from 'components/Icon';
+import { Link } from 'components/Link';
+import { QueryError } from 'components/QueryError';
+import { Ref } from 'components/Ref';
 
 export function ComponentsDemo() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
 
-  useScrollTopRestoration(wrapperEl, 'components-demo-scrollTop');
+  useScrollRestoration(wrapperEl, 'components-demo-scroll');
 
   return (
     <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>

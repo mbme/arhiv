@@ -2,7 +2,7 @@ import { DocumentData } from 'dto';
 import { Callback, cx, formatDocumentType, getDocumentUrl } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
-import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
+import { isAttachment, isAudioAttachment, isErasedDocument, isImageAttachment } from 'utils/schema';
 import { Button } from './Button';
 import { QueryError } from './QueryError';
 import { AudioPlayer } from './AudioPlayer/AudioPlayer';
@@ -71,10 +71,12 @@ export function Ref({
   description,
   onClick,
 }: RefProps) {
+  const typeStr = formatDocumentType(documentType, subtype).toUpperCase();
+
   return (
     <a
       href={getDocumentUrl(documentId)}
-      title={`${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
+      title={`${typeStr} ${documentTitle}`}
       target="_blank"
       rel="noopen noreferer"
       className={cx(
@@ -87,6 +89,12 @@ export function Ref({
         onClick();
       }}
     >
+      <span
+        className="text-[smaller] font-normal font-mono tracking-tight bg-slate-100 px-0.5 mr-1 align-middle"
+        hidden={isErasedDocument(documentType)}
+      >
+        {typeStr}
+      </span>
       {description || documentTitle}
     </a>
   );

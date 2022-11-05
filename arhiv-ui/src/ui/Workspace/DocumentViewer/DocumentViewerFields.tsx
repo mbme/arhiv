@@ -8,7 +8,11 @@ type DocumentViewerFieldsProps = {
   data: DocumentData;
 };
 
-export function DocumentViewerFields({ documentType, subtype, data }: DocumentViewerFieldsProps) {
+export function DocumentViewerFields({
+  documentType,
+  subtype,
+  data,
+}: DocumentViewerFieldsProps) {
   const fields = getFieldDescriptions(documentType, subtype);
 
   return (

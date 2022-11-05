@@ -198,7 +198,7 @@ export function formDataToObject(fd: FormData): Record<string, string> {
   return result;
 }
 
-export function copyTextToClipbard(text: string): Promise<void> {
+function _copyTextToClipbard(text: string): Promise<void> {
   if (document.hasFocus()) {
     return navigator.clipboard.writeText(text);
   }
@@ -210,4 +210,15 @@ export function copyTextToClipbard(text: string): Promise<void> {
 
     window.addEventListener('focus', handler, { once: true });
   });
+}
+
+export function copyTextToClipbard(text: string): Promise<void> {
+  return _copyTextToClipbard(text).then(
+    () => {
+      console.log('Copied text "%s" to clipboard"', text);
+    },
+    (e) => {
+      console.error('Failed to copy text "%s" to clipboard', text, e);
+    }
+  );
 }

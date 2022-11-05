@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { DocumentBackref } from 'dto';
-import { cx, copyTextToClipbard } from 'utils';
+import { cx, copyTextToClipbard, formatDocumentType } from 'utils';
 import { useTimeout } from 'utils/hooks';
 import { Ref } from 'components/Ref';
 import { Button } from 'components/Button';
@@ -10,11 +10,19 @@ import { useCardContext } from '../workspace-reducer';
 
 type DocumentViewerHeadProps = {
   id: string;
+  documentType: string;
+  subtype: string;
   updatedAt: string;
   backrefs: DocumentBackref[];
 };
 
-export function DocumentViewerHead({ id, updatedAt, backrefs }: DocumentViewerHeadProps) {
+export function DocumentViewerHead({
+  id,
+  documentType,
+  subtype,
+  updatedAt,
+  backrefs,
+}: DocumentViewerHeadProps) {
   const { open } = useCardContext();
 
   const [copied, setCopied] = useState(false);
@@ -28,19 +36,13 @@ export function DocumentViewerHead({ id, updatedAt, backrefs }: DocumentViewerHe
   );
 
   const copyIdToClipboard = () => {
-    void copyTextToClipbard(id).then(
-      () => {
-        setCopied(true);
-        console.log('Copied text "%s" to clipboard"', id);
-      },
-      (e) => {
-        console.error(`Failed to copy text "${id}" to clipboard`, e);
-      }
-    );
+    void copyTextToClipbard(id).then(() => {
+      setCopied(true);
+    });
   };
 
   return (
-    <div className="flex justify-between pl-2 py-4 mb-6">
+    <div className="flex justify-between pl-2 mb-6">
       <div className={cx('flex flex-col gap-2', { 'invisible': backrefs.length === 0 })}>
         <h1 className="section-heading">Linked by:</h1>
         {backrefs.map((backref) => (
@@ -75,6 +77,10 @@ export function DocumentViewerHead({ id, updatedAt, backrefs }: DocumentViewerHe
                 />
               </Button>
             </td>
+          </tr>
+          <tr>
+            <td className="section-heading">type:</td>
+            <td>{formatDocumentType(documentType, subtype)}</td>
           </tr>
           <tr>
             <td className="section-heading">modified:</td>

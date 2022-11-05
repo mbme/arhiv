@@ -16,14 +16,16 @@ import { IconButton } from './Button';
 type MenuItem = {
   text: string;
   icon?: IconVariant;
+  alarming?: boolean;
   onClick: Callback;
 };
 
 type DropdownMenuProps = {
+  icon?: IconVariant;
   options: ReadonlyArray<MenuItem | false>;
 };
 
-export function DropdownMenu({ options }: DropdownMenuProps) {
+export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
 
   const { x, y, reference, floating, strategy, context } = useFloating({
@@ -44,7 +46,7 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
   return (
     <>
       <IconButton
-        icon="more"
+        icon={icon}
         ref={reference}
         {...getReferenceProps()}
         className={cx({ 'bg-blue-100': open })}
@@ -54,10 +56,7 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
         <FloatingFocusManager context={context}>
           <div
             ref={floating}
-            className={cx(
-              'bg-white rounded min-w-[10rem] flex flex-col gap-2 drop-shadow py-2',
-              {}
-            )}
+            className="bg-white rounded min-w-[10rem] flex flex-col gap-2 drop-shadow py-2"
             style={{
               position: strategy,
               top: y ?? 0,
@@ -74,7 +73,13 @@ export function DropdownMenu({ options }: DropdownMenuProps) {
                 <button
                   type="button"
                   key={index}
-                  className="flex items-center gap-5 cursor-pointer text-blue-700 hover:bg-sky-100 px-4 py-2 whitespace-nowrap"
+                  className={cx(
+                    'flex items-center gap-5 cursor-pointer px-4 py-2 whitespace-nowrap',
+                    {
+                      'text-blue-700 hover:bg-sky-100': !option.alarming,
+                      'text-red-700 hover:bg-red-300': option.alarming,
+                    }
+                  )}
                   role="menuitem"
                   {...getItemProps({
                     onClick: () => {

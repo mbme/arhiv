@@ -13,6 +13,7 @@ export const ICON_VARIANTS = [
   'search',
   'web',
   'more',
+  'dots-horizontal',
   'play',
   'pause',
   'skip-previous',
@@ -228,6 +229,17 @@ export function Icon({ variant, className = '' }: IconProps) {
       return (
         <svg className={cx('icon', className)} viewBox="0 0 24 24">
           <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+        </svg>
+      );
+
+    case 'dots-horizontal':
+      // material design icons dots-horizontal
+      return (
+        <svg className={cx('icon', className)} viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
+          />
         </svg>
       );
 

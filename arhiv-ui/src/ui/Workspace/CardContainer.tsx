@@ -23,7 +23,10 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
   useEffect(() => {
     if (el) {
       el.classList.remove('opacity-30');
-      el.scrollIntoView({ inline: 'center' });
+
+      if (!cardContextRef.current.card.restored) {
+        el.scrollIntoView({ inline: 'center' });
+      }
     }
   }, [el]);
 

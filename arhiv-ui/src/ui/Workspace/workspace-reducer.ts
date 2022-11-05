@@ -12,7 +12,7 @@ type CardVariant =
   | { variant: 'new-document'; documentType?: string }
   | { variant: 'document'; documentId: string; query?: string; page?: number };
 
-export type Card = CardVariant & { id: number; previousCard?: CardVariant };
+export type Card = CardVariant & { id: number; previousCard?: CardVariant, restored?: boolean };
 
 export function throwBadCardVariant(value: never): never;
 export function throwBadCardVariant(value: CardVariant) {
@@ -23,6 +23,7 @@ function createCard(variant: CardVariant, previousCard?: CardVariant): Card {
   return {
     id: newId(),
     previousCard,
+    restored: false,
     ...variant,
   };
 }
@@ -167,6 +168,7 @@ export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
       ...card,
       // override card ids to prevent id clashes after page reload
       id: newId(),
+      restored: true,
     }));
 
     return {

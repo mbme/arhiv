@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks';
-import { getQueryParam } from '../utils';
-import { Button } from '../components/Button';
-import { DropdownMenu } from '../components/DropdownMenu';
+import { getQueryParam } from 'utils';
+import { Button } from 'components/Button';
+import { DropdownMenu } from 'components/DropdownMenu';
 import { throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';

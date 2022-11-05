@@ -14,6 +14,7 @@ export const ICON_VARIANTS = [
   'web',
   'more',
   'dots-horizontal',
+  'info',
   'play',
   'pause',
   'skip-previous',
@@ -239,6 +240,24 @@ export function Icon({ variant, className = '' }: IconProps) {
           <path
             fill="currentColor"
             d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
+          />
+        </svg>
+      );
+
+    case 'info':
+      // heroicons outline information-circle
+      return (
+        <svg
+          className={cx('icon', className)}
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
           />
         </svg>
       );

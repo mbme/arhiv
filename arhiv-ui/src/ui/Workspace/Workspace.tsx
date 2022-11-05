@@ -83,6 +83,7 @@ export function Workspace() {
 
               {
                 text: 'Status',
+                icon: 'info',
                 onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
               },
 

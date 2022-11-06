@@ -34,7 +34,7 @@ export abstract class FormControlElement extends HTMLElement {
     return this.localName;
   }
 
-  override get name() {
+  get name() {
     return this.getAttribute('name');
   }
 

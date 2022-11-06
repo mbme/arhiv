@@ -37,40 +37,36 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
       <CardContainer.Topbar
         left={
           result?.documentType ? (
-            <DropdownMenu
-              icon="dots-horizontal"
-              options={[
-                {
-                  text: 'Copy link',
-                  icon: 'clipboard',
-                  onClick: () => {
-                    void copyTextToClipbard(getDocumentUrl(result.id));
+            <>
+              <DropdownMenu
+                icon="dots-horizontal"
+                options={[
+                  {
+                    text: 'Copy link',
+                    icon: 'clipboard',
+                    onClick: () => {
+                      void copyTextToClipbard(getDocumentUrl(result.id));
+                    },
                   },
-                },
-                {
-                  text: `Erase ${result.documentType}`,
-                  icon: 'erase-document',
-                  alarming: true,
-                  onClick: () => setShowEraseDocumentConfirmationDialog(true),
-                },
-              ]}
-            />
-          ) : null
-        }
-        right={
-          <>
-            {result && (
+                  {
+                    text: `Erase ${result.documentType}`,
+                    icon: 'erase-document',
+                    alarming: true,
+                    onClick: () => setShowEraseDocumentConfirmationDialog(true),
+                  },
+                ]}
+              />
+
               <IconButton
                 icon="pencil-square"
                 title={`Edit ${result.documentType}`}
                 onClick={onEdit}
                 size="lg"
               />
-            )}
-
-            <CardContainer.CloseButton />
-          </>
+            </>
+          ) : null
         }
+        right={<CardContainer.CloseButton />}
       />
 
       {error && <QueryError error={error} />}

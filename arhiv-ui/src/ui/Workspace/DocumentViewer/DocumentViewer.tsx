@@ -4,7 +4,7 @@ import { RPC } from 'utils/rpc';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
 import { isAttachment, isDocumentTypeCollection, isErasedDocument } from 'utils/schema';
 import { QueryError } from 'components/QueryError';
-import { Button } from 'components/Button';
+import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { getAttachmentPreview } from 'components/Ref';
 import { DropdownMenu } from 'components/DropdownMenu';
@@ -37,33 +37,40 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
       <CardContainer.Topbar
         left={
           result?.documentType ? (
-            <>
-              <Button variant="text" leadingIcon="edit-document" onClick={onEdit}>
-                Edit
-              </Button>
-
-              <DropdownMenu
-                icon="dots-horizontal"
-                options={[
-                  {
-                    text: 'Copy link',
-                    icon: 'clipboard',
-                    onClick: () => {
-                      void copyTextToClipbard(getDocumentUrl(result.id));
-                    },
+            <DropdownMenu
+              icon="dots-horizontal"
+              options={[
+                {
+                  text: 'Copy link',
+                  icon: 'clipboard',
+                  onClick: () => {
+                    void copyTextToClipbard(getDocumentUrl(result.id));
                   },
-                  {
-                    text: 'Erase document',
-                    icon: 'erase-document',
-                    alarming: true,
-                    onClick: () => setShowEraseDocumentConfirmationDialog(true),
-                  },
-                ]}
-              />
-            </>
+                },
+                {
+                  text: `Erase ${result.documentType}`,
+                  icon: 'erase-document',
+                  alarming: true,
+                  onClick: () => setShowEraseDocumentConfirmationDialog(true),
+                },
+              ]}
+            />
           ) : null
         }
-        right={<CardContainer.CloseButton />}
+        right={
+          <>
+            {result && (
+              <IconButton
+                icon="pencil-square"
+                title={`Edit ${result.documentType}`}
+                onClick={onEdit}
+                size="lg"
+              />
+            )}
+
+            <CardContainer.CloseButton />
+          </>
+        }
       />
 
       {error && <QueryError error={error} />}
@@ -95,8 +102,6 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
           )}
 
           <DocumentViewerFields
-            id={result.id}
-            updatedAt={result.updatedAt}
             documentType={result.documentType}
             subtype={result.subtype}
             data={result.data}

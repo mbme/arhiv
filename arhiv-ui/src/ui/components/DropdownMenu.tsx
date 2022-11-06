@@ -47,6 +47,7 @@ export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
     <>
       <IconButton
         icon={icon}
+        size="lg"
         ref={reference}
         {...getReferenceProps()}
         className={cx({ 'bg-blue-100': open })}

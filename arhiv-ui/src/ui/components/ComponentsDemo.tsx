@@ -109,7 +109,9 @@ export function ComponentsDemo() {
           <div className="examples">
             <IconButton icon="web" className="text-red-700" />
 
-            <IconButton icon="web" size="lg" />
+            <IconButton icon="web" size="lg" title="lg" />
+
+            <IconButton icon="web" size="xl" title="xl" />
           </div>
         </div>
 

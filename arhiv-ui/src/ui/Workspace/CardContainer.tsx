@@ -51,7 +51,7 @@ CardContainer.Topbar = function Topbar({ left, right, skipBack }: TopbarProps) {
   const { hasStackedCards, popStack } = useCardContext();
 
   return (
-    <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md sticky inset-x-0 top-0 z-10 -mx-4 px-4 py-2 mb-4">
+    <div className="flex items-center gap-4 bg-white/95 sticky inset-x-0 top-0 z-10 -mx-4 px-4 py-2 mb-4">
       <div className="flex items-center gap-4 justify-start grow">{left}</div>
 
       <div className="flex items-center gap-1 justify-end grow">

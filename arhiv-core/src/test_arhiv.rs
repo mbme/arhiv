@@ -1,17 +1,15 @@
 use std::{ops::Deref, sync::Arc};
 
+use baza::schema::{Collection, DataDescription, DataSchema, Field, FieldType};
 use rs_utils::generate_temp_path;
 
-use crate::{
-    schema::{Collection, DataDescription, DataSchema, Field, FieldType},
-    Arhiv, Config,
-};
+use crate::{Arhiv, Config};
 
 pub struct TestArhiv(pub Arc<Arhiv>);
 
 impl TestArhiv {
     fn new(config: Config, prime: bool, schema: DataSchema) -> Self {
-        let arhiv = Arhiv::create(config, schema, "test-arhiv", prime)
+        let arhiv = Arhiv::create_with_options(config, schema, vec![], "test-arhiv", prime)
             .expect("must be able to create temp arhiv");
 
         TestArhiv(Arc::new(arhiv))

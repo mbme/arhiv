@@ -41,19 +41,14 @@ checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 name = "arhiv-core"
 version = "0.0.0"
 dependencies = [
- "aho-corasick",
  "anyhow",
- "fslock",
+ "baza",
  "futures",
  "hyper",
  "insta",
- "lazy_static",
- "nanoid",
- "pulldown-cmark",
  "reqwest",
  "routerify",
  "rs-utils",
- "rusqlite",
  "scraper",
  "serde",
  "serde_json",
@@ -67,6 +62,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
+ "baza",
  "rand",
  "rs-utils",
  "serde_json",
@@ -79,6 +75,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
+ "baza",
  "hyper",
  "routerify",
  "rs-utils",
@@ -124,12 +121,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "baza"
+version = "0.0.0"
+dependencies = [
+ "aho-corasick",
+ "anyhow",
+ "fslock",
+ "insta",
+ "nanoid",
+ "pulldown-cmark",
+ "rs-utils",
+ "rusqlite",
+ "scraper",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "binutils"
 version = "0.0.0"
 dependencies = [
  "anyhow",
  "arhiv-core",
  "arhiv-ui",
+ "baza",
  "clap",
  "clap_complete",
  "rs-utils",

@@ -1,9 +1,8 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use reqwest::{Client, StatusCode};
 
+use baza::entities::*;
 use rs_utils::{create_body_from_file, log, Download};
-
-use crate::entities::*;
 
 pub struct PrimeServerRPC {
     prime_url: String,

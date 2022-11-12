@@ -1,10 +1,12 @@
 use anyhow::Result;
+use baza::{entities::Revision, BLOBSCount, DocumentsCount, Filter};
 use serde_json::json;
 
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
-use crate::{entities::Revision, test_arhiv::TestArhiv, BLOBSCount, DocumentsCount, Filter};
+use crate::test_arhiv::TestArhiv;
+use crate::BazaConnectionExt;
 
 #[test]
 fn test_crud() -> Result<()> {
@@ -14,20 +16,20 @@ fn test_crud() -> Result<()> {
 
     // CREATE
     let id = {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         let mut document = new_document(original_data.clone());
         tx.stage_document(&mut document)?;
         tx.commit()?;
 
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 1);
+        assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 1);
 
         document.id
     };
 
     // READ
     {
-        let other_document = arhiv.get_document(&id)?.unwrap();
+        let other_document = arhiv.baza.get_document(&id)?.unwrap();
 
         assert_eq!(other_document.data, original_data.try_into().unwrap());
         assert!(other_document.rev.is_staged());
@@ -35,19 +37,22 @@ fn test_crud() -> Result<()> {
 
     // UPDATE
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
-        let mut other_document = arhiv.get_document(&id)?.unwrap();
+        let mut other_document = arhiv.baza.get_document(&id)?.unwrap();
         other_document.data = json!({ "test": "1" }).try_into().unwrap();
         tx.stage_document(&mut other_document)?;
         tx.commit()?;
 
-        assert_eq!(arhiv.get_document(&id)?.unwrap().data, other_document.data);
+        assert_eq!(
+            arhiv.baza.get_document(&id)?.unwrap().data,
+            other_document.data
+        );
     }
 
     // DELETE
     let document_id = {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         let mut document = new_document(json!({ "test": "test" }));
         tx.stage_document(&mut document)?;
@@ -56,20 +61,20 @@ fn test_crud() -> Result<()> {
         document.id
     };
 
-    assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
+    assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 2);
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.erase_document(&document_id)?;
         tx.commit()?;
 
-        let erased_document = arhiv.get_document(&document_id)?.unwrap();
+        let erased_document = arhiv.baza.get_document(&document_id)?.unwrap();
 
         assert!(erased_document.is_erased());
         assert_eq!(erased_document.prev_rev, Revision::STAGING);
 
-        assert_eq!(arhiv.list_documents(Filter::default())?.items.len(), 2);
+        assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 2);
     }
 
     Ok(())
@@ -81,7 +86,7 @@ async fn test_status() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.documents_count,
             DocumentsCount {
@@ -106,7 +111,7 @@ async fn test_status() -> Result<()> {
 
     // create document with blob
     let mut document = {
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
 
         let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
         let mut document = new_document(json!({
@@ -121,7 +126,7 @@ async fn test_status() -> Result<()> {
     };
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.blobs_count,
             BLOBSCount {
@@ -137,7 +142,7 @@ async fn test_status() -> Result<()> {
     arhiv.sync().await?;
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.documents_count,
             DocumentsCount {
@@ -162,7 +167,7 @@ async fn test_status() -> Result<()> {
     }
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         // update document
         tx.stage_document(&mut document)?;
@@ -174,7 +179,7 @@ async fn test_status() -> Result<()> {
     }
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.documents_count,
             DocumentsCount {
@@ -192,7 +197,7 @@ async fn test_status() -> Result<()> {
 
     // delete document
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.erase_document(&document.id)?;
 
@@ -200,7 +205,7 @@ async fn test_status() -> Result<()> {
     }
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.documents_count,
             DocumentsCount {
@@ -227,7 +232,7 @@ async fn test_status() -> Result<()> {
     arhiv.sync().await?;
 
     {
-        let status = arhiv.get_status()?;
+        let status = arhiv.baza.get_connection()?.get_status()?;
         assert_eq!(
             status.documents_count,
             DocumentsCount {

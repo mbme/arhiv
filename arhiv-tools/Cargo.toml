@@ -11,5 +11,6 @@ rand.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 
+baza = { path = "../baza" }
 arhiv-core = { path = "../arhiv-core" }
 rs-utils = { path = "../rs-utils" }

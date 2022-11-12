@@ -32,7 +32,7 @@ pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
         }
     }
 
-    let mime = get_mime_from_path(&asset);
+    let mime = get_mime_from_path(asset);
 
     Response::builder()
         .header(header::ETAG, hash)

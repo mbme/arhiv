@@ -2,12 +2,13 @@ use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{Context, Result};
 
-use arhiv_core::{
-    definitions::Attachment,
+use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
+use baza::{
     entities::{Document, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::DataSchema,
-    Arhiv, Filter, ScraperOptions, ValidationError, Validator,
+    validator::{ValidationError, Validator},
+    Filter,
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
@@ -44,8 +45,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 filter = filter.with_document_type(document_type);
             }
 
-            let schema = arhiv.get_schema();
-            let page = arhiv.list_documents(filter)?;
+            let schema = arhiv.baza.get_schema();
+            let page = arhiv.baza.list_documents(filter)?;
 
             APIResponse::ListDocuments {
                 has_more: page.has_more,
@@ -53,18 +54,20 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetStatus {} => {
-            let status = arhiv.get_status()?;
+            let tx = arhiv.baza.get_connection()?;
+            let status = tx.get_status()?;
 
             APIResponse::GetStatus {
                 status: status.to_string(),
             }
         }
         APIRequest::GetDocument { ref id } => {
-            let document = arhiv.must_get_document(id)?;
+            let document = arhiv.baza.must_get_document(id)?;
 
-            let schema = arhiv.get_schema();
+            let schema = arhiv.baza.get_schema();
 
             let backrefs = arhiv
+                .baza
                 .list_documents(Filter::all_backrefs(id))?
                 .items
                 .into_iter()
@@ -99,14 +102,14 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::ParseMarkup { ast }
         }
         APIRequest::SaveDocument { id, subtype, data } => {
-            let mut document = arhiv.must_get_document(&id)?;
+            let mut document = arhiv.baza.must_get_document(&id)?;
 
             let prev_data = document.data;
 
             document.subtype = subtype;
             document.data = data;
 
-            let tx = arhiv.get_tx()?;
+            let tx = arhiv.baza.get_tx()?;
             let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
 
             let errors = if let Err(error) = validation_result {
@@ -128,7 +131,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         } => {
             let mut document = Document::new_with_data(&document_type, &subtype, data);
 
-            let tx = arhiv.get_tx()?;
+            let tx = arhiv.baza.get_tx()?;
             let validation_result = Validator::new(&tx).validate(&document, None);
 
             let (id, errors) = if let Err(error) = validation_result {
@@ -144,7 +147,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::CreateDocument { id, errors }
         }
         APIRequest::EraseDocument { ref id } => {
-            let tx = arhiv.get_tx()?;
+            let tx = arhiv.baza.get_tx()?;
             tx.erase_document(id)?;
             tx.commit()?;
 
@@ -165,8 +168,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::CreateAttachment { ref file_path } => {
-            let mut tx = arhiv.get_tx()?;
-            let attachment = Attachment::create(file_path, false, &mut tx)?;
+            let mut tx = arhiv.baza.get_tx()?;
+            let attachment = tx.create_attachment(file_path, false)?;
             tx.commit()?;
 
             APIResponse::CreateAttachment { id: attachment.id }
@@ -184,7 +187,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 )
                 .await?;
 
-            let schema = arhiv.get_schema();
+            let schema = arhiv.baza.get_schema();
 
             APIResponse::Scrape {
                 documents: documents_into_results(documents, schema)?,

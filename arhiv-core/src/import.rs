@@ -1,11 +1,11 @@
 use anyhow::{bail, ensure, Context, Result};
 
+use baza::entities::{Document, DocumentData};
 use rs_utils::{ensure_file_exists, remove_file_extension};
 
 use crate::{
-    definitions::{Attachment, ATTACHMENT_TYPE, TRACK_TYPE},
-    entities::{Document, DocumentData},
-    Arhiv,
+    definitions::{ATTACHMENT_TYPE, TRACK_TYPE},
+    Arhiv, BazaConnectionExt,
 };
 
 impl Arhiv {
@@ -20,8 +20,8 @@ impl Arhiv {
         match document_type {
             TRACK_TYPE => self.import_track(file_path, move_file),
             ATTACHMENT_TYPE => {
-                let mut tx = self.get_tx()?;
-                let attachment = Attachment::create(file_path, move_file, &mut tx)?;
+                let mut tx = self.baza.get_tx()?;
+                let attachment = tx.create_attachment(file_path, move_file)?;
                 tx.commit()?;
 
                 attachment.into_document()
@@ -31,12 +31,12 @@ impl Arhiv {
     }
 
     fn import_track(&self, file_path: &str, move_file: bool) -> Result<Document> {
-        let mut tx = self.get_tx()?;
+        let mut tx = self.baza.get_tx()?;
 
-        let attachment = Attachment::create(file_path, move_file, &mut tx)?;
+        let attachment = tx.create_attachment(file_path, move_file)?;
 
         ensure!(
-            attachment.is_audio(),
+            attachment.data.is_audio(),
             "file type must be audio, got {}",
             attachment.data.media_type
         );

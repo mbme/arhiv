@@ -2,7 +2,7 @@ use std::fs;
 
 use rand::{prelude::*, thread_rng};
 
-use arhiv_core::{entities::*, markup::create_ref};
+use baza::{entities::Id, markup::create_ref};
 use rs_utils::{workspace_relpath, Markov};
 
 pub struct TextGenerator {

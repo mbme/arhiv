@@ -9,10 +9,10 @@ use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
+use baza::entities::{BLOBId, Changeset};
 use rs_utils::{create_body_from_file, http_server::*, log, parse_range_header};
 
-use crate::entities::{BLOBId, Changeset};
-use crate::Arhiv;
+use crate::{Arhiv, BazaConnectionExt};
 
 #[must_use]
 pub fn start_prime_server(
@@ -66,7 +66,8 @@ pub fn start_prime_server(
 async fn status_handler(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
-    let status = arhiv.get_status()?;
+    let conn = arhiv.baza.get_connection()?;
+    let status = conn.get_status()?;
 
     json_response(status)
 }
@@ -79,7 +80,8 @@ async fn post_blob_handler(req: Request<Body>) -> ServerResponse {
 
     let arhiv: &Arc<Arhiv> = parts.data().unwrap();
 
-    let blob = arhiv.get_blob(&blob_id)?;
+    let conn = arhiv.baza.get_connection()?;
+    let blob = conn.get_blob(&blob_id);
 
     if blob.exists()? {
         return respond_with_status(StatusCode::CONFLICT);
@@ -125,9 +127,9 @@ async fn post_changeset_handler(req: Request<Body>) -> ServerResponse {
 
     let base_rev = changeset.base_rev;
 
-    let mut tx = arhiv.get_tx()?;
+    let mut tx = arhiv.baza.get_tx()?;
 
-    let conflicts = arhiv.apply_changeset(&mut tx, changeset)?;
+    let conflicts = arhiv.baza.apply_changeset(&mut tx, changeset)?;
 
     let response = tx.generate_changeset_response(base_rev, conflicts)?;
 
@@ -141,7 +143,8 @@ pub async fn respond_with_blob(
     blob_id: &BLOBId,
     headers: &HeaderMap,
 ) -> ServerResponse {
-    let blob = arhiv.get_blob(blob_id)?;
+    let conn = arhiv.baza.get_connection()?;
+    let blob = conn.get_blob(blob_id);
 
     if !blob.exists()? {
         return respond_not_found();

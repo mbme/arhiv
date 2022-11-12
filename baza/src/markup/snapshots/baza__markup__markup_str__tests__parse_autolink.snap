@@ -1,0 +1,38 @@
+---
+source: baza/src/markup/markup_str.rs
+assertion_line: 457
+expression: ast
+---
+{
+  "children": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "range": {
+                "end": 19,
+                "start": 1
+              },
+              "typeName": "Text",
+              "value": "http://example.com"
+            }
+          ],
+          "link_type": "Autolink",
+          "range": {
+            "end": 20,
+            "start": 0
+          },
+          "typeName": "Link",
+          "url": "http://example.com"
+        }
+      ],
+      "range": {
+        "end": 20,
+        "start": 0
+      },
+      "typeName": "Paragraph"
+    }
+  ],
+  "typeName": "Document"
+}

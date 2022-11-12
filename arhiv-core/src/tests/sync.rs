@@ -12,7 +12,7 @@ async fn test_prime_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let mut tx = arhiv.get_tx()?;
+    let mut tx = arhiv.baza.get_tx()?;
 
     let blob_id = tx.add_blob(src, false)?;
 
@@ -22,23 +22,33 @@ async fn test_prime_sync() -> Result<()> {
     tx.stage_document(&mut document)?;
     tx.commit()?;
 
-    assert!(arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
+    assert!(arhiv
+        .baza
+        .get_document(&document.id)?
+        .unwrap()
+        .rev
+        .is_staged());
 
     arhiv.sync().await?;
 
-    assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged());
+    assert!(!arhiv
+        .baza
+        .get_document(&document.id)?
+        .unwrap()
+        .rev
+        .is_staged());
 
     // Test blob
-    let blob = arhiv.get_blob(&blob_id)?;
+    let blob = arhiv.baza.get_blob(&blob_id)?;
 
     assert!(blob.exists()?);
     assert!(are_equal_files(src, &blob.file_path)?);
 
     // Test if document is updated correctly
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
-        let mut document = arhiv.get_document(&document.id)?.unwrap();
+        let mut document = arhiv.baza.get_document(&document.id)?.unwrap();
         document.data = json!({ "test": "other" }).try_into().unwrap();
         tx.stage_document(&mut document)?;
 
@@ -48,7 +58,7 @@ async fn test_prime_sync() -> Result<()> {
     arhiv.sync().await?;
 
     assert_eq!(
-        arhiv.get_document(&document.id)?.unwrap().data,
+        arhiv.baza.get_document(&document.id)?.unwrap().data,
         json!({ "test": "other" }).try_into().unwrap(),
     );
 
@@ -63,7 +73,7 @@ async fn test_replica_sync() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let mut tx = replica.get_tx()?;
+    let mut tx = replica.baza.get_tx()?;
 
     let blob_id = tx.add_blob(src, false)?;
 
@@ -78,11 +88,11 @@ async fn test_replica_sync() -> Result<()> {
 
     replica.sync().await?;
 
-    assert!(!replica.get_document(&id)?.unwrap().rev.is_staged());
+    assert!(!replica.baza.get_document(&id)?.unwrap().rev.is_staged());
 
     // Test blob on replica
     {
-        let blob = replica.get_blob(&blob_id)?;
+        let blob = replica.baza.get_blob(&blob_id)?;
 
         assert!(blob.exists()?);
         assert!(are_equal_files(src, &blob.file_path)?);
@@ -90,7 +100,7 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test blob on prime
     {
-        let blob = prime.get_blob(&blob_id)?;
+        let blob = prime.baza.get_blob(&blob_id)?;
 
         assert!(blob.exists()?);
         assert!(are_equal_files(src, &blob.file_path)?);
@@ -98,17 +108,17 @@ async fn test_replica_sync() -> Result<()> {
 
     // Test if document is updated correctly
     {
-        let mut document = replica.get_document(&id)?.unwrap();
+        let mut document = replica.baza.get_document(&id)?.unwrap();
         document.data = json!({ "test": "1" }).try_into().unwrap();
 
-        let tx = replica.get_tx()?;
+        let tx = replica.baza.get_tx()?;
         tx.stage_document(&mut document)?;
         tx.commit()?;
 
         replica.sync().await?;
 
         assert_eq!(
-            replica.get_document(&id)?.unwrap().data,
+            replica.baza.get_document(&id)?.unwrap().data,
             json!({ "test": "1" }).try_into().unwrap(),
         );
     }
@@ -123,7 +133,7 @@ async fn test_replica_sync() -> Result<()> {
 async fn test_sync_removes_unused_local_blobs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
-    let mut tx = arhiv.get_tx()?;
+    let mut tx = arhiv.baza.get_tx()?;
 
     let blob_id1 = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
 
@@ -144,13 +154,18 @@ async fn test_sync_removes_unused_local_blobs() -> Result<()> {
 
     arhiv.sync().await?;
 
-    assert!(!arhiv.get_document(&document.id)?.unwrap().rev.is_staged(),);
+    assert!(!arhiv
+        .baza
+        .get_document(&document.id)?
+        .unwrap()
+        .rev
+        .is_staged(),);
 
     // blob1 should removed
-    assert!(!arhiv.get_blob(&blob_id1)?.exists()?);
+    assert!(!arhiv.baza.get_blob(&blob_id1)?.exists()?);
 
     // blob2 should be present
-    assert!(arhiv.get_blob(&blob_id2)?.exists()?);
+    assert!(arhiv.baza.get_blob(&blob_id2)?.exists()?);
 
     Ok(())
 }

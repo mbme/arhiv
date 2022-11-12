@@ -1,18 +1,18 @@
 use std::{process, sync::Arc};
 
+use baza::entities::{Document, DocumentData, Id};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
 use clap_complete::{generate, Shell};
 
 use arhiv_core::{
-    definitions::get_standard_schema,
-    entities::{Document, DocumentData, Id},
-    prime_server::start_prime_server,
-    Arhiv, Config, ScraperOptions,
+    definitions::get_standard_schema, prime_server::start_prime_server, Arhiv, BazaConnectionExt,
+    Config,
 };
 use arhiv_ui::{get_document_url, start_ui_server};
 use rs_utils::{get_crate_version, into_absolute_path, log};
+use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
 #[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true, disable_help_subcommand = true)]
@@ -139,15 +139,12 @@ async fn main() {
 
     match args.command {
         CLICommand::Init { arhiv_id, prime } => {
-            let config = Config::must_read().0;
-            let schema = get_standard_schema();
-
-            Arhiv::create(config, schema, &arhiv_id, prime).expect("must be able to create arhiv");
+            Arhiv::create(&arhiv_id, prime).expect("must be able to create arhiv");
         }
         CLICommand::Status => {
-            let status = Arhiv::must_open()
-                .get_status()
-                .expect("must be able to get status");
+            let arhiv = Arhiv::must_open();
+            let conn = arhiv.baza.get_connection().expect("must open connection");
+            let status = conn.get_status().expect("must be able to get status");
 
             println!("{}", status);
             // FIXME print number of unused temp attachments
@@ -166,12 +163,14 @@ async fn main() {
             );
         }
         CLICommand::Sync => {
-            Arhiv::must_open().sync().await.expect("must sync");
+            let arhiv = Arhiv::must_open();
+            arhiv.sync().await.expect("must sync");
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
 
             let document = arhiv
+                .baza
                 .get_document(&id)
                 .expect("must be able to query for a document");
 
@@ -196,7 +195,7 @@ async fn main() {
 
             let arhiv = Arhiv::must_open();
 
-            let tx = arhiv.get_tx().expect("must open tx");
+            let tx = arhiv.baza.get_tx().expect("must open tx");
 
             tx.stage_document(&mut document)
                 .expect("must be able to stage document");
@@ -269,8 +268,9 @@ async fn main() {
         }
         CLICommand::PrimeServer { port } => {
             let arhiv = Arc::new(Arhiv::must_open());
+            let conn = arhiv.baza.get_connection().expect("must open connection");
 
-            if !arhiv
+            if !conn
                 .get_status()
                 .expect("must be able to get status")
                 .db_status

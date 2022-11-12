@@ -1,19 +1,19 @@
 use anyhow::Result;
+use baza::{
+    schema::{Collection, DataDescription, DataSchema, Field, FieldType},
+    Filter, OrderBy,
+};
 use serde_json::json;
 
 use super::utils::*;
-use crate::{
-    schema::{Collection, DataDescription, DataSchema, Field, FieldType},
-    test_arhiv::TestArhiv,
-    Filter, OrderBy,
-};
+use crate::test_arhiv::TestArhiv;
 
 #[test]
 fn test_pagination() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.stage_document(&mut empty_document())?;
         tx.stage_document(&mut empty_document())?;
@@ -21,7 +21,7 @@ fn test_pagination() -> Result<()> {
         tx.commit()?;
     }
 
-    let page = arhiv.list_documents(Filter::default().page_size(1))?;
+    let page = arhiv.baza.list_documents(Filter::default().page_size(1))?;
 
     assert_eq!(page.items.len(), 1);
     assert!(page.has_more);
@@ -35,7 +35,7 @@ async fn test_modes() -> Result<()> {
 
     // committed
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "1" })))?;
         tx.commit()?;
     }
@@ -44,14 +44,14 @@ async fn test_modes() -> Result<()> {
 
     // staged
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "3" })))?;
         tx.commit()?;
     }
 
     {
         // test default
-        let page = arhiv.list_documents(Filter {
+        let page = arhiv.baza.list_documents(Filter {
             order: vec![OrderBy::UpdatedAt { asc: false }],
             ..Filter::default()
         })?;
@@ -64,7 +64,7 @@ async fn test_modes() -> Result<()> {
 
     {
         // test staged
-        let page = arhiv.list_documents(Filter::default().only_staged())?;
+        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
 
         assert_eq!(get_values(page), vec![json!({ "test": "3" })]);
     }
@@ -88,7 +88,7 @@ fn test_order_by_enum_field() -> Result<()> {
     }]));
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
         tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
@@ -98,7 +98,7 @@ fn test_order_by_enum_field() -> Result<()> {
         tx.commit()?;
     }
 
-    let page = arhiv.list_documents(Filter {
+    let page = arhiv.baza.list_documents(Filter {
         order: vec![OrderBy::EnumField {
             selector: "$.enum".to_string(),
             asc: true,
@@ -145,7 +145,7 @@ fn test_multiple_order_by() -> Result<()> {
     }]));
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
         tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
@@ -155,7 +155,7 @@ fn test_multiple_order_by() -> Result<()> {
         tx.commit()?;
     }
 
-    let page = arhiv.list_documents(Filter {
+    let page = arhiv.baza.list_documents(Filter {
         order: vec![
             OrderBy::Field {
                 selector: "$.prop".to_string(),
@@ -187,7 +187,7 @@ async fn test_conditions() -> Result<()> {
     let arhiv = TestArhiv::new_prime();
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
         tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
@@ -201,7 +201,9 @@ async fn test_conditions() -> Result<()> {
 
     {
         // test unexpected type
-        let page = arhiv.list_documents(Filter::default().with_document_type("random"))?;
+        let page = arhiv
+            .baza
+            .list_documents(Filter::default().with_document_type("random"))?;
 
         let empty: Vec<serde_json::Value> = vec![];
         assert_eq!(get_values(page), empty);
@@ -209,40 +211,46 @@ async fn test_conditions() -> Result<()> {
 
     {
         // test expected type
-        let page = arhiv.list_documents(Filter::default().with_document_type("test_type"))?;
+        let page = arhiv
+            .baza
+            .list_documents(Filter::default().with_document_type("test_type"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // test Field
-        let page = arhiv.list_documents(Filter::default().where_field("test", "value"))?;
+        let page = arhiv
+            .baza
+            .list_documents(Filter::default().where_field("test", "value"))?;
 
         assert_eq!(get_values(page).len(), 1);
     }
 
     {
         // test Search
-        let page = arhiv.list_documents(Filter::default().search("Val"))?;
+        let page = arhiv.baza.list_documents(Filter::default().search("Val"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // test Skip erased
-        let page = arhiv.list_documents(Filter::default().skip_erased(true))?;
+        let page = arhiv
+            .baza
+            .list_documents(Filter::default().skip_erased(true))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // tests only staged
-        let page = arhiv.list_documents(Filter::default().only_staged())?;
+        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
         assert_eq!(get_values(page).len(), 3);
 
         arhiv.sync().await?;
 
-        let page = arhiv.list_documents(Filter::default().only_staged())?;
+        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
         assert_eq!(get_values(page).len(), 0);
     }
 

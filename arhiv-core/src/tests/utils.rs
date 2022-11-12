@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{entities::Document, ListPage};
+use baza::{entities::Document, ListPage};
 
 pub fn empty_document() -> Document {
     Document::new("test_type", "")

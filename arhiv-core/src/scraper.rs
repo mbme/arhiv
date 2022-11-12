@@ -1,10 +1,11 @@
 use anyhow::{bail, Context, Result};
 use serde_json::json;
 
+use baza::{entities::Document, BazaConnection};
 use rs_utils::{log, Download};
-use scraper::{ScrapedData, ScraperOptions};
+pub use scraper::{ScrapedData, ScraperOptions};
 
-use crate::{definitions::Attachment, entities::Document, Arhiv, ArhivConnection};
+use crate::{Arhiv, BazaConnectionExt};
 
 impl Arhiv {
     pub async fn scrape(
@@ -31,7 +32,7 @@ impl Arhiv {
             bail!("Scraper returned errors: {}", errors);
         }
 
-        let mut tx = self.get_tx()?;
+        let mut tx = self.baza.get_tx()?;
         let mut documents = Vec::new();
 
         for scrape_result in results {
@@ -48,7 +49,7 @@ impl Arhiv {
                         pages,
                         language,
                     } => {
-                        let cover = create_attachment(cover_url, &mut tx).await?;
+                        let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
                             "book",
@@ -85,7 +86,7 @@ impl Arhiv {
                         duration,
                         description,
                     } => {
-                        let cover = create_attachment(cover_url, &mut tx).await?;
+                        let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
                             "film",
@@ -119,7 +120,7 @@ impl Arhiv {
                         duration,
                         description,
                     } => {
-                        let cover = create_attachment(cover_url, &mut tx).await?;
+                        let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
                             "film",
@@ -149,7 +150,7 @@ impl Arhiv {
                         developers,
                         description,
                     } => {
-                        let cover = create_attachment(cover_url, &mut tx).await?;
+                        let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
                             "game",
@@ -170,7 +171,7 @@ impl Arhiv {
                         documents.push(document);
                     }
                     ScrapedData::Image { image_url } => {
-                        let image = create_attachment(image_url, &mut tx).await?;
+                        let image = download_attachment(image_url, &mut tx).await?;
                         documents.push(image);
                     }
                     _ => {
@@ -189,10 +190,10 @@ impl Arhiv {
     }
 }
 
-async fn create_attachment(url: &str, tx: &mut ArhivConnection) -> Result<Document> {
+async fn download_attachment(url: &str, tx: &mut BazaConnection) -> Result<Document> {
     let download_result = Download::new(url)?.start().await?;
 
-    let mut attachment = Attachment::create(&download_result.file_path, true, tx)?;
+    let mut attachment = tx.create_attachment(&download_result.file_path, true)?;
     attachment.data.filename = download_result.original_file_name.clone();
 
     let mut document = attachment.into_document()?;

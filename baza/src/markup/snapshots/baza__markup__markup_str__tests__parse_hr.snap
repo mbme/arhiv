@@ -1,0 +1,17 @@
+---
+source: baza/src/markup/markup_str.rs
+assertion_line: 412
+expression: ast
+---
+{
+  "children": [
+    {
+      "range": {
+        "end": 3,
+        "start": 0
+      },
+      "typeName": "Rule"
+    }
+  ],
+  "typeName": "Document"
+}

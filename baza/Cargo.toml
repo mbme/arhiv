@@ -1,0 +1,33 @@
+[package]
+name = "baza"
+version = "0.0.0"
+edition = "2021"
+authors = ["mbme"]
+publish = false
+
+[lib]
+doctest = false
+
+[features]
+production-mode = []
+
+[dependencies]
+anyhow.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+
+aho-corasick = "0.7"
+
+nanoid = "0.4.0"
+pulldown-cmark = { version = "0.9", default-features = false, features = ["simd", "serde"] }
+
+rusqlite = { version = "0.28", features = ["chrono", "serde_json", "functions"] }
+
+rs-utils = { path = "../rs-utils" }
+scraper = { path = "../scraper" }
+
+fslock = "0.2.1"
+
+[dev-dependencies]
+insta.workspace = true

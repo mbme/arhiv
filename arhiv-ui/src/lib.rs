@@ -1,6 +1,6 @@
 #![deny(clippy::all)]
 
-use arhiv_core::entities::Id;
+use baza::entities::Id;
 
 mod dto;
 mod server;

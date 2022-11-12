@@ -4,11 +4,10 @@ use std::fs;
 use anyhow::Result;
 use rand::{prelude::*, thread_rng};
 
-use arhiv_core::{
-    definitions::Attachment,
-    entities::*,
+use arhiv_core::{Arhiv, BazaConnectionExt};
+use baza::{
+    entities::{Document, DocumentData, Id},
     schema::{Collection, FieldType},
-    Arhiv,
 };
 use rs_utils::{is_image_filename, workspace_relpath};
 
@@ -41,9 +40,9 @@ impl<'a> Faker<'a> {
     pub fn new(arhiv: &'a Arhiv) -> Result<Faker> {
         let mut attachment_ids: Vec<Id> = vec![];
 
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
         for file_path in list_attachments() {
-            let attachment = Attachment::create(&file_path, false, &mut tx)?;
+            let attachment = tx.create_attachment(&file_path, false)?;
 
             attachment_ids.push(attachment.id.clone());
         }
@@ -72,6 +71,7 @@ impl<'a> Faker<'a> {
     fn create_fake(&self, document_type: &str, subtype: &str, mut data: DocumentData) -> Document {
         let description = self
             .arhiv
+            .baza
             .get_schema()
             .get_data_description(document_type)
             .unwrap();
@@ -111,13 +111,14 @@ impl<'a> Faker<'a> {
 
         let data_description = self
             .arhiv
+            .baza
             .get_schema()
             .get_data_description(&document_type)
             .expect("Unknown document type");
 
         let quantity = self.get_quantity_limit(&document_type);
 
-        let tx = self.arhiv.get_tx().expect("must open transaction");
+        let tx = self.arhiv.baza.get_tx().expect("must open transaction");
 
         let mut child_total: u32 = 0;
         for _ in 0..quantity {

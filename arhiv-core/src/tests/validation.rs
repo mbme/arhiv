@@ -1,6 +1,7 @@
 use serde_json::json;
 
-use crate::{schema::*, test_arhiv::TestArhiv};
+use crate::test_arhiv::TestArhiv;
+use baza::schema::{Collection, DataDescription, DataSchema, Field, FieldType};
 
 use super::utils::*;
 
@@ -20,14 +21,14 @@ fn test_validation_mandatory() {
     }]));
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.baza.get_tx().unwrap();
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);
         assert!(result.is_err());
     }
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.baza.get_tx().unwrap();
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
@@ -50,7 +51,7 @@ fn test_validation_readonly() {
     }]));
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.baza.get_tx().unwrap();
 
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
@@ -62,7 +63,7 @@ fn test_validation_readonly() {
     }
 
     {
-        let tx = arhiv.get_tx().unwrap();
+        let tx = arhiv.baza.get_tx().unwrap();
 
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);

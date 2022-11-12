@@ -4,7 +4,8 @@ use anyhow::Context;
 use hyper::{header, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
 
-use arhiv_core::{entities::BLOBId, prime_server::respond_with_blob, Arhiv};
+use arhiv_core::{prime_server::respond_with_blob, Arhiv};
+use baza::entities::BLOBId;
 use public_assets_handler::public_assets_handler;
 use rs_utils::{
     http_server::{
@@ -58,7 +59,8 @@ pub async fn start_ui_server() {
 async fn index_page(req: Request<Body>) -> ServerResponse {
     let arhiv: &Arc<Arhiv> = req.data().unwrap();
 
-    let schema = serde_json::to_string(arhiv.get_schema()).context("failed to serialize schema")?;
+    let schema =
+        serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
 
     let content = format!(
         r#"

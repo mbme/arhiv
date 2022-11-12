@@ -1,12 +1,12 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_file_name, get_file_size, get_image_size, get_media_type, log, FFProbe};
 
-use crate::{
+use baza::{
     entities::{BLOBId, Document},
     schema::*,
-    ArhivConnection,
+    BazaConnection,
 };
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
@@ -96,88 +96,78 @@ pub struct AttachmentData {
     pub height: Option<u64>,
 }
 
-pub type Attachment = Document<AttachmentData>;
-
-impl Attachment {
-    #[must_use]
-    pub fn is_attachment(document: &Document) -> bool {
-        document.document_type == ATTACHMENT_TYPE
-    }
-    pub fn create(file_path: &str, move_file: bool, tx: &mut ArhivConnection) -> Result<Self> {
-        let filename = get_file_name(file_path).to_string();
-        let media_type = get_media_type(file_path)?;
-        let size = get_file_size(file_path)?;
-
-        let blob = tx.add_blob(file_path, move_file)?;
-
-        let mut attachment = Document::new_with_data(
-            ATTACHMENT_TYPE,
-            "",
-            AttachmentData {
-                filename,
-                media_type,
-                size,
-                blob,
-                duration: None,
-                bit_rate: None,
-                width: None,
-                height: None,
-            },
-        );
-
-        if attachment.is_audio() {
-            attachment.subtype = AUDIO_SUBTYPE.to_string();
-
-            let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
-
-            match stats {
-                Ok(stats) => {
-                    attachment.data.duration = Some(stats.duration_ms as u64);
-                    attachment.data.bit_rate = Some(stats.bit_rate as u64);
-                }
-                Err(err) => {
-                    log::warn!("Failed to get audio stats from file {}: {}", file_path, err);
-                }
-            }
-        }
-
-        if attachment.is_image() {
-            attachment.subtype = IMAGE_SUBTYPE.to_string();
-
-            match get_image_size(file_path) {
-                Ok((width, height)) => {
-                    attachment.data.width = Some(width as u64);
-                    attachment.data.height = Some(height as u64);
-                }
-                Err(err) => {
-                    log::warn!("Failed to get image size from file {}: {}", file_path, err);
-                }
-            }
-        }
-
-        let mut document = attachment.into_document()?;
-        tx.stage_document(&mut document)?;
-
-        document.try_into()
-    }
-
+impl AttachmentData {
     #[must_use]
     pub fn is_image(&self) -> bool {
-        self.data.media_type.starts_with("image/")
+        self.media_type.starts_with("image/")
     }
 
     #[must_use]
     pub fn is_audio(&self) -> bool {
-        self.data.media_type.starts_with("audio/")
+        self.media_type.starts_with("audio/")
     }
 }
 
-impl TryInto<Attachment> for Document {
-    type Error = Error;
+pub type Attachment = Document<AttachmentData>;
 
-    fn try_into(self) -> Result<Attachment, Self::Error> {
-        self.ensure_document_type(ATTACHMENT_TYPE)?;
+pub fn create_attachment(
+    file_path: &str,
+    move_file: bool,
+    tx: &mut BazaConnection,
+) -> Result<Attachment> {
+    let filename = get_file_name(file_path).to_string();
+    let media_type = get_media_type(file_path)?;
+    let size = get_file_size(file_path)?;
 
-        self.convert()
+    let blob = tx.add_blob(file_path, move_file)?;
+
+    let mut attachment = Document::new_with_data(
+        ATTACHMENT_TYPE,
+        "",
+        AttachmentData {
+            filename,
+            media_type,
+            size,
+            blob,
+            duration: None,
+            bit_rate: None,
+            width: None,
+            height: None,
+        },
+    );
+
+    if attachment.data.is_audio() {
+        attachment.subtype = AUDIO_SUBTYPE.to_string();
+
+        let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
+
+        match stats {
+            Ok(stats) => {
+                attachment.data.duration = Some(stats.duration_ms as u64);
+                attachment.data.bit_rate = Some(stats.bit_rate as u64);
+            }
+            Err(err) => {
+                log::warn!("Failed to get audio stats from file {}: {}", file_path, err);
+            }
+        }
     }
+
+    if attachment.data.is_image() {
+        attachment.subtype = IMAGE_SUBTYPE.to_string();
+
+        match get_image_size(file_path) {
+            Ok((width, height)) => {
+                attachment.data.width = Some(width as u64);
+                attachment.data.height = Some(height as u64);
+            }
+            Err(err) => {
+                log::warn!("Failed to get image size from file {}: {}", file_path, err);
+            }
+        }
+    }
+
+    let mut document = attachment.into_document()?;
+    tx.stage_document(&mut document)?;
+
+    document.convert()
 }

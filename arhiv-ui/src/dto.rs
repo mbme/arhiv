@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use arhiv_core::entities::{DocumentData, Id};
+use baza::entities::{DocumentData, Id};
 use rs_utils::Timestamp;
 
 #[derive(Deserialize, Debug)]

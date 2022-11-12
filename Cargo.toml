@@ -4,6 +4,7 @@ debug = 0
 
 [workspace]
 members = [
+  "baza",
   "arhiv-core",
   "arhiv-ui",
   "arhiv-tools",

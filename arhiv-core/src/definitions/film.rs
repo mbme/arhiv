@@ -1,6 +1,7 @@
+use baza::schema::*;
+
 use super::fields::*;
 use super::ATTACHMENT_TYPE;
-use crate::schema::*;
 
 pub const FILM_TYPE: &str = "film";
 pub const FILM_COLLECTION_TYPE: &str = "film collection";

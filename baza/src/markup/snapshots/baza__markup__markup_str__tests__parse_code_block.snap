@@ -1,0 +1,30 @@
+---
+source: baza/src/markup/markup_str.rs
+assertion_line: 443
+expression: ast
+---
+{
+  "children": [
+    {
+      "children": [
+        {
+          "range": {
+            "end": 71,
+            "start": 9
+          },
+          "typeName": "Text",
+          "value": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"age\": 25\n}\n"
+        }
+      ],
+      "kind": {
+        "Fenced": "json"
+      },
+      "range": {
+        "end": 74,
+        "start": 1
+      },
+      "typeName": "CodeBlock"
+    }
+  ],
+  "typeName": "Document"
+}

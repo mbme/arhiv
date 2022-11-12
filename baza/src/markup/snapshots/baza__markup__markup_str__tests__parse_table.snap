@@ -1,0 +1,204 @@
+---
+source: baza/src/markup/markup_str.rs
+assertion_line: 426
+expression: ast
+---
+{
+  "children": [
+    {
+      "alignments": [
+        "Left",
+        "Center",
+        "Right"
+      ],
+      "children": [
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 9,
+                    "start": 3
+                  },
+                  "typeName": "Text",
+                  "value": "Syntax"
+                }
+              ],
+              "range": {
+                "end": 15,
+                "start": 2
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 28,
+                    "start": 17
+                  },
+                  "typeName": "Text",
+                  "value": "Description"
+                }
+              ],
+              "range": {
+                "end": 29,
+                "start": 16
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 40,
+                    "start": 31
+                  },
+                  "typeName": "Text",
+                  "value": "Test Text"
+                }
+              ],
+              "range": {
+                "end": 45,
+                "start": 30
+              },
+              "typeName": "TableCell"
+            }
+          ],
+          "range": {
+            "end": 47,
+            "start": 1
+          },
+          "typeName": "TableHead"
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 101,
+                    "start": 95
+                  },
+                  "typeName": "Text",
+                  "value": "Header"
+                }
+              ],
+              "range": {
+                "end": 107,
+                "start": 94
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 114,
+                    "start": 109
+                  },
+                  "typeName": "Text",
+                  "value": "Title"
+                }
+              ],
+              "range": {
+                "end": 121,
+                "start": 108
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 134,
+                    "start": 123
+                  },
+                  "typeName": "Text",
+                  "value": "Here's this"
+                }
+              ],
+              "range": {
+                "end": 137,
+                "start": 122
+              },
+              "typeName": "TableCell"
+            }
+          ],
+          "range": {
+            "end": 139,
+            "start": 93
+          },
+          "typeName": "TableRow"
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 150,
+                    "start": 141
+                  },
+                  "typeName": "Text",
+                  "value": "Paragraph"
+                }
+              ],
+              "range": {
+                "end": 153,
+                "start": 140
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 159,
+                    "start": 155
+                  },
+                  "typeName": "Text",
+                  "value": "Text"
+                }
+              ],
+              "range": {
+                "end": 167,
+                "start": 154
+              },
+              "typeName": "TableCell"
+            },
+            {
+              "children": [
+                {
+                  "range": {
+                    "end": 177,
+                    "start": 169
+                  },
+                  "typeName": "Text",
+                  "value": "And more"
+                }
+              ],
+              "range": {
+                "end": 183,
+                "start": 168
+              },
+              "typeName": "TableCell"
+            }
+          ],
+          "range": {
+            "end": 185,
+            "start": 139
+          },
+          "typeName": "TableRow"
+        }
+      ],
+      "range": {
+        "end": 185,
+        "start": 1
+      },
+      "typeName": "Table"
+    }
+  ],
+  "typeName": "Document"
+}

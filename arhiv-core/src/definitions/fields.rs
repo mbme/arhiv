@@ -1,4 +1,4 @@
-use crate::schema::FieldType;
+use baza::schema::FieldType;
 
 const LANGUAGES: &[&str] = &[
     "Ukrainian",

@@ -1,6 +1,6 @@
-use crate::schema::DataSchema;
+use baza::schema::DataSchema;
 
-pub use attachment::{Attachment, ATTACHMENT_TYPE};
+pub use attachment::{create_attachment, Attachment, ATTACHMENT_TYPE};
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
 pub use contact::{CONTACT_COLLECTION_TYPE, CONTACT_TYPE};
 pub use film::{FILM_COLLECTION_TYPE, FILM_TYPE};

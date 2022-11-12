@@ -1,11 +1,11 @@
-use anyhow::Error;
 use serde::{Deserialize, Serialize};
 
-use super::{fields::*, ATTACHMENT_TYPE};
-use crate::{
+use baza::{
     entities::{Document, Id},
     schema::*,
 };
+
+use super::{fields::*, ATTACHMENT_TYPE};
 
 pub const TRACK_TYPE: &str = "track";
 pub const TRACK_COLLECTION_TYPE: &str = "track collection";
@@ -117,13 +117,3 @@ pub struct TrackData {
 }
 
 pub type TrackDocument = Document<TrackData>;
-
-impl TryInto<TrackDocument> for Document {
-    type Error = Error;
-
-    fn try_into(self) -> Result<TrackDocument, Self::Error> {
-        self.ensure_document_type(TRACK_TYPE)?;
-
-        self.convert()
-    }
-}

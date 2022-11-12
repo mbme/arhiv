@@ -1,4 +1,4 @@
-use crate::schema::*;
+use baza::schema::*;
 
 pub const NOTE_TYPE: &str = "note";
 

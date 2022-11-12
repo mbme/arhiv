@@ -4,9 +4,8 @@ use rs_utils::{workspace_relpath, TempFile};
 
 use super::utils::*;
 use crate::{
-    definitions::{get_standard_schema, Attachment},
-    prime_server::start_prime_server,
-    test_arhiv::TestArhiv,
+    definitions::get_standard_schema, prime_server::start_prime_server, test_arhiv::TestArhiv,
+    BazaConnectionExt,
 };
 
 #[tokio::test]
@@ -16,7 +15,7 @@ async fn test_blobs() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = {
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
 
         let blob_id = tx.add_blob(src, false)?;
         tx.commit()?;
@@ -24,28 +23,28 @@ async fn test_blobs() -> Result<()> {
         blob_id
     };
 
-    assert!(arhiv.get_blob(&blob_id)?.exists()?);
+    assert!(arhiv.baza.get_blob(&blob_id)?.exists()?);
 
     let mut document = empty_document();
     document.data.set("blob", &blob_id);
 
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
         tx.stage_document(&mut document)?;
         tx.commit()?;
     }
-    assert!(arhiv.get_blob(&blob_id)?.exists()?);
+    assert!(arhiv.baza.get_blob(&blob_id)?.exists()?);
 
     // delete
     {
-        let tx = arhiv.get_tx()?;
+        let tx = arhiv.baza.get_tx()?;
         tx.erase_document(&document.id)?;
         tx.commit()?;
     }
 
     arhiv.sync().await?;
 
-    assert!(!arhiv.get_blob(&blob_id)?.exists()?);
+    assert!(!arhiv.baza.get_blob(&blob_id)?.exists()?);
 
     Ok(())
 }
@@ -57,7 +56,7 @@ async fn test_download_blob_during_sync() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let blob_id = {
-        let mut tx = prime.get_tx()?;
+        let mut tx = prime.baza.get_tx()?;
 
         let blob_id = tx.add_blob(src, false)?;
 
@@ -77,7 +76,7 @@ async fn test_download_blob_during_sync() -> Result<()> {
 
     replica.sync().await?;
 
-    let blob = replica.get_blob(&blob_id)?;
+    let blob = replica.baza.get_blob(&blob_id)?;
 
     let dst = &blob.file_path;
 
@@ -101,7 +100,7 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     std::os::unix::fs::symlink(&resource_file, &resource_file_link)?;
 
     {
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
         let result = tx.add_blob(&resource_file_link, false);
         assert!(result.is_err());
     }
@@ -111,13 +110,13 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
 
     {
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
         let result = tx.add_blob(&resource_dir, false);
         assert!(result.is_err());
     }
 
     {
-        let mut tx = arhiv.get_tx()?;
+        let mut tx = arhiv.baza.get_tx()?;
         let result = tx.add_blob(&resource_dir_link, false);
         assert!(result.is_err());
     }
@@ -131,12 +130,12 @@ async fn test_create_attachment() -> Result<()> {
 
     let src = &workspace_relpath("resources/k2.jpg");
 
-    let mut tx = arhiv.get_tx()?;
-    let attachment = Attachment::create(src, false, &mut tx)?;
+    let mut tx = arhiv.baza.get_tx()?;
+    let attachment = tx.create_attachment(src, false)?;
     tx.commit()?;
 
-    assert!(arhiv.get_blob(&attachment.data.blob)?.exists()?);
-    assert!(arhiv.get_document(&attachment.id)?.is_some());
+    assert!(arhiv.baza.get_blob(&attachment.data.blob)?.exists()?);
+    assert!(arhiv.baza.get_document(&attachment.id)?.is_some());
 
     Ok(())
 }

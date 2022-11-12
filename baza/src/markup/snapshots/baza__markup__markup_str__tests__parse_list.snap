@@ -1,0 +1,155 @@
+---
+source: baza/src/markup/markup_str.rs
+assertion_line: 405
+expression: ast
+---
+{
+  "children": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "checked": false,
+              "range": {
+                "end": 6,
+                "start": 3
+              },
+              "typeName": "TaskListMarker"
+            },
+            {
+              "range": {
+                "end": 13,
+                "start": 7
+              },
+              "typeName": "Text",
+              "value": "test 1"
+            }
+          ],
+          "range": {
+            "end": 14,
+            "start": 1
+          },
+          "typeName": "ListItem"
+        },
+        {
+          "children": [
+            {
+              "range": {
+                "end": 17,
+                "start": 16
+              },
+              "typeName": "Text",
+              "value": "["
+            },
+            {
+              "range": {
+                "end": 18,
+                "start": 17
+              },
+              "typeName": "Text",
+              "value": "+"
+            },
+            {
+              "range": {
+                "end": 19,
+                "start": 18
+              },
+              "typeName": "Text",
+              "value": "]"
+            },
+            {
+              "range": {
+                "end": 26,
+                "start": 19
+              },
+              "typeName": "Text",
+              "value": " test 2"
+            }
+          ],
+          "range": {
+            "end": 27,
+            "start": 14
+          },
+          "typeName": "ListItem"
+        },
+        {
+          "children": [
+            {
+              "checked": true,
+              "range": {
+                "end": 32,
+                "start": 29
+              },
+              "typeName": "TaskListMarker"
+            },
+            {
+              "range": {
+                "end": 39,
+                "start": 33
+              },
+              "typeName": "Text",
+              "value": "test 3"
+            }
+          ],
+          "range": {
+            "end": 40,
+            "start": 27
+          },
+          "typeName": "ListItem"
+        },
+        {
+          "children": [
+            {
+              "range": {
+                "end": 48,
+                "start": 42
+              },
+              "typeName": "Text",
+              "value": "test 4"
+            }
+          ],
+          "range": {
+            "end": 49,
+            "start": 40
+          },
+          "typeName": "ListItem"
+        }
+      ],
+      "first_item_number": null,
+      "range": {
+        "end": 49,
+        "start": 1
+      },
+      "typeName": "List"
+    },
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "range": {
+                "end": 57,
+                "start": 51
+              },
+              "typeName": "Text",
+              "value": "test 5"
+            }
+          ],
+          "range": {
+            "end": 58,
+            "start": 49
+          },
+          "typeName": "ListItem"
+        }
+      ],
+      "first_item_number": null,
+      "range": {
+        "end": 58,
+        "start": 49
+      },
+      "typeName": "List"
+    }
+  ],
+  "typeName": "Document"
+}

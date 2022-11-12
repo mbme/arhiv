@@ -5,12 +5,11 @@ use anyhow::{anyhow, Context, Result};
 use rs_utils::log;
 
 use crate::{
-    data_migration::{apply_data_migrations, get_latest_data_version, DataMigrations},
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
     db_migrations::{apply_db_migrations, create_db},
     entities::*,
     path_manager::PathManager,
-    schema::DataSchema,
+    schema::{get_latest_data_version, DataMigrations, DataSchema},
 };
 
 pub struct Baza {
@@ -37,7 +36,7 @@ impl Baza {
         let tx = baza.get_tx()?;
 
         // ensure data is up to date
-        apply_data_migrations(&tx, &migrations)
+        tx.apply_data_migrations(&migrations)
             .context("failed to apply data migrations to Baza db")?;
 
         // ensure computed data is up to date

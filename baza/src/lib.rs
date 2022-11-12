@@ -2,7 +2,6 @@
 #![allow(clippy::module_inception)]
 
 mod baza;
-mod data_migration;
 mod db;
 mod db_migrations;
 pub mod entities;
@@ -13,5 +12,4 @@ mod sync;
 pub mod validator;
 
 pub use baza::Baza;
-pub use data_migration::{DataMigration, DataMigrations};
 pub use db::*;

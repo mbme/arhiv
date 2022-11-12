@@ -6,9 +6,11 @@ use serde::Serialize;
 use crate::entities::{Document, DocumentData, Refs, ERASED_DOCUMENT_TYPE};
 
 pub use data_description::*;
+pub use data_migration::*;
 pub use field::*;
 
 mod data_description;
+mod data_migration;
 mod field;
 mod search;
 

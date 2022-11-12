@@ -1,7 +1,7 @@
 mod v1;
 mod v2;
 
-use baza::DataMigrations;
+use baza::schema::DataMigrations;
 
 use self::v1::DataSchema1;
 use self::v2::DataSchema2;

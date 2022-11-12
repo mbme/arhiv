@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use anyhow::Result;
 
-use baza::{entities::Document, DataMigration};
+use baza::{entities::Document, schema::DataMigration};
 
 pub struct DataSchema1;
 

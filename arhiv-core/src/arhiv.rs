@@ -1,6 +1,9 @@
 use anyhow::Result;
 
-use baza::{schema::DataSchema, Baza, BazaConnection, DataMigrations, SETTING_DATA_VERSION};
+use baza::{
+    schema::{DataMigrations, DataSchema},
+    Baza, BazaConnection, SETTING_DATA_VERSION,
+};
 use rs_utils::{get_crate_version, MIN_TIMESTAMP};
 
 use crate::{

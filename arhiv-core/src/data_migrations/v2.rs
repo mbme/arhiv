@@ -5,7 +5,7 @@ use rs_utils::{get_image_size, log};
 
 use baza::{
     entities::{BLOBId, Document, BLOB},
-    DataMigration,
+    schema::DataMigration,
 };
 
 pub struct DataSchema2;

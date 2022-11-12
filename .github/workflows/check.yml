@@ -14,11 +14,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+        # selecting a toolchain either by action or manual `rustup` calls should happen
+        # before the plugin, as the cache uses the current rustc version as its cache key
+      - run: rustup toolchain install stable --profile minimal
+
+      - uses: actions/checkout@v3
       - uses: extractions/setup-just@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install JS modules
         run: yarn install --immutable --immutable-cache

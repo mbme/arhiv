@@ -1,13 +1,12 @@
 use serde_json::json;
 
-use crate::test_arhiv::TestArhiv;
-use baza::schema::{Collection, DataDescription, DataSchema, Field, FieldType};
+use crate::schema::{Collection, DataDescription, DataSchema, Field, FieldType};
 
-use super::utils::*;
+use super::{new_document, TestBaza};
 
 #[test]
 fn test_validation_mandatory() {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
+    let baza = TestBaza::create(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
         fields: vec![Field {
@@ -21,14 +20,14 @@ fn test_validation_mandatory() {
     }]));
 
     {
-        let tx = arhiv.baza.get_tx().unwrap();
+        let tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);
         assert!(result.is_err());
     }
 
     {
-        let tx = arhiv.baza.get_tx().unwrap();
+        let tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
@@ -37,7 +36,7 @@ fn test_validation_mandatory() {
 
 #[test]
 fn test_validation_readonly() {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
+    let baza = TestBaza::create(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
         collection_of: Collection::None,
         fields: vec![Field {
@@ -51,7 +50,7 @@ fn test_validation_readonly() {
     }]));
 
     {
-        let tx = arhiv.baza.get_tx().unwrap();
+        let tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
@@ -63,7 +62,7 @@ fn test_validation_readonly() {
     }
 
     {
-        let tx = arhiv.baza.get_tx().unwrap();
+        let tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);

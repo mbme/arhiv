@@ -11,5 +11,8 @@ pub mod schema;
 mod sync;
 pub mod validator;
 
+#[cfg(test)]
+mod tests;
+
 pub use baza::Baza;
 pub use db::*;

@@ -83,7 +83,7 @@ export function Catalog({
 
       <div className="divide-y mb-6">
         {items}
-        {items?.length === 0 && <div className="text-center">No results :(</div>}
+        {items?.length === 0 && <div className="text-center">No results 😿</div>}
       </div>
 
       {result && (

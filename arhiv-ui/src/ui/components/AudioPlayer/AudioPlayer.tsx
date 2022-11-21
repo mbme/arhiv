@@ -77,7 +77,7 @@ export function AudioPlayer({
 
     console.info('player: seeking to', seekTime);
 
-    if ('fastSeek' in audio) {
+    if (audio.fastSeek) {
       audio.fastSeek(seekTime);
     } else {
       audio.currentTime = seekTime;

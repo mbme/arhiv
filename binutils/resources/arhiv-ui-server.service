@@ -4,7 +4,7 @@ Description=Arhiv UI server
 [Service]
 Type=simple
 StandardOutput=journal
-ExecStart=arhiv ui-server
+ExecStart=arhiv ui-server -v
 Restart=always
 RestartSec=30
 

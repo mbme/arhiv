@@ -59,7 +59,7 @@ export function Catalog({
         }
       }}
     >
-      <div className="font-bold text-lg">
+      <div className="font-bold text-lg break-all">
         [{item.documentType || 'erased'}] {item.title}
       </div>
 

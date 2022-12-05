@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { setElementAttribute } from '../../utils';
-import { JSXRef, setJSXRef } from '../../utils/jsx';
+import { setElementAttribute } from 'utils';
+import { JSXRef, setJSXRef } from 'utils/jsx';
 
 type Props = {
   className?: string;

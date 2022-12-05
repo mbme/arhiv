@@ -1,4 +1,4 @@
-import { JSXRef } from '../../utils/jsx';
+import { JSXRef } from 'utils/jsx';
 
 type Props = {
   className?: string;

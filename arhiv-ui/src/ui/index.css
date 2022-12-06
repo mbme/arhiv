@@ -2,10 +2,10 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-@import './components/v-editor/index.css';
 @import './components/Button.css';
 @import './components/Dialog.css';
 @import './components/Markup.css';
+@import './components/Form/v-editor/index.css';
 @import './components/Form/index.css';
 @import './components/ComponentsDemo.css';
 

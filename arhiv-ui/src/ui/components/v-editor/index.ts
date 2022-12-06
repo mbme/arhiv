@@ -1,5 +1,5 @@
+import { FormControlElement } from 'components/Form/FormControlElement';
 import { VEditor } from './VEditor';
-import { FormControlElement } from './FormControlElement';
 
 export class HTMLVEditorElement extends FormControlElement {
   static get observedAttributes() {

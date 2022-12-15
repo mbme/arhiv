@@ -6,7 +6,9 @@ if (process.env.NODE_ENV === 'development') {
 import { enableMapSet } from 'immer';
 import { render } from 'preact';
 
-import './components/Form/v-editor'; // register the v-editor web component
+// register web components
+import './components/Form/v-editor';
+import './components/Form/v-ref-input';
 
 import { ComponentsDemo } from './components/ComponentsDemo';
 import { Workspace } from './Workspace/Workspace';

@@ -252,6 +252,10 @@ export function useCardContext() {
       });
     },
 
+    openDocument: (documentId: string) => {
+      dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+    },
+
     lock: () => {
       dispatch({
         type: 'lock-card',

@@ -65,15 +65,17 @@ type IconButtonProps = {
   className?: string;
   onClick?: Callback;
   icon: IconVariant;
-  size?: 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   title?: string;
 };
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, icon, onClick, size, title }, ref) => (
+  ({ className, icon, onClick, size = 'md', title }, ref) => (
     <button
       ref={ref}
       type="button"
       className={cx(className, 'icon-btn', {
+        'p-1': size === 'sm',
+        'p-3': size === 'md',
         'p-2': size === 'lg',
         'p-4': size === 'xl',
       })}
@@ -83,6 +85,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       <Icon
         variant={icon}
         className={cx({
+          'h-4 w-4': size === 'sm',
           'h-6 w-6': size === 'lg',
           'h-7 w-7': size === 'xl',
         })}

@@ -368,6 +368,18 @@ function FormControlsDemo() {
         Checkbox
       </label>
 
+      <label className="flex items-center gap-2">
+        Ref picker input
+        <v-ref-input
+          documentType="note"
+          name="note-ref"
+          required={required}
+          disabled={disabled}
+          readonly={readonly}
+          onRefClick={(e) => console.error('ON REF CLICK', e.detail.documentId)}
+        />
+      </label>
+
       <div className="buttons">
         <Button variant="simple" type="reset">
           Reset

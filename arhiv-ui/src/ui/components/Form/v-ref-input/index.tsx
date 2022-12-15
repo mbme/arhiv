@@ -1,62 +1,62 @@
+import { render } from 'preact';
 import { FormControlElement } from 'components/Form/FormControlElement';
-import { VEditor } from './VEditor';
+import { RefInput } from './RefInput';
 
-export class HTMLVEditorElement extends FormControlElement {
-  static get observedAttributes() {
-    return ['required', 'readonly', 'disabled', 'placeholder'];
+export class RefClickEvent extends CustomEvent<{ documentId: string }> {
+  constructor(public readonly documentId: string) {
+    super('RefClick', { detail: { documentId } });
   }
+}
 
-  private editor?: VEditor;
-
-  constructor() {
-    super();
-
-    this.addEventListener('focus', () => {
-      this.editor?.focus();
-    });
+export class HTMLVRefInputElement extends FormControlElement {
+  static get observedAttributes() {
+    return ['required', 'readonly', 'disabled'];
   }
 
   override connectedCallback() {
-    this.editor = new VEditor(this, this.getInitialValue());
-
-    this.editor.setEventHandlers({
-      'blur': () => {
-        this.updateFormValue();
-      },
-    });
-
     this.updateFormValue();
-    this.updateState();
-
-    if (this.hasAttribute('autofocus')) {
-      this.editor.focus();
-    }
+    this.render();
   }
 
   override attributeChangedCallback() {
-    this.updateState();
+    this.render();
     this.updateFormValue();
   }
 
-  private updateState = () => {
-    if (!this.editor) {
-      return;
-    }
+  private _value?: string;
 
-    this.editor.setDisabled(this.disabled);
-    this.editor.setReadonly(this.readonly);
-    this.editor.setPlaceholder(this.placeholder ?? '');
-
+  private render = () => {
     if (this.disabled) {
       this.tabIndex = -1;
     } else {
       // element must be focusable for form validation to work
       this.tabIndex = 0;
     }
+
+    const onChange = (documentId?: string) => {
+      this.value = documentId ?? '';
+      this.updateFormValue();
+    };
+
+    const onRefClick = (documentId: string) => {
+      this.dispatchEvent(new RefClickEvent(documentId));
+    };
+
+    render(
+      <RefInput
+        documentType={this.documentType}
+        documentId={this.value || undefined}
+        readonly={this.readonly}
+        disabled={this.disabled}
+        onChange={onChange}
+        onRefClick={onRefClick}
+      />,
+      this
+    );
   };
 
   private updateFormValue = () => {
-    if (this.readonly || this.disabled) {
+    if (this.disabled) {
       return;
     }
 
@@ -74,6 +74,15 @@ export class HTMLVEditorElement extends FormControlElement {
   private getInitialValue = () => this.getAttribute('value') ?? this.getDefaultValue();
   private getDefaultValue = () => this.getAttribute('defaultValue') ?? '';
 
+  get documentType() {
+    const documentType = this.getAttribute('documentType');
+    if (documentType === null) {
+      throw new Error('documentType attribute is missing');
+    }
+
+    return documentType;
+  }
+
   get disabled() {
     return this.hasAttribute('disabled');
   }
@@ -86,10 +95,6 @@ export class HTMLVEditorElement extends FormControlElement {
     return this.hasAttribute('required');
   }
 
-  get placeholder() {
-    return this.getAttribute('placeholder');
-  }
-
   override formResetCallback() {
     this.value = this.getDefaultValue();
     this.updateFormValue();
@@ -100,37 +105,33 @@ export class HTMLVEditorElement extends FormControlElement {
   }
 
   get value() {
-    return this.editor?.getValue() ?? this.getInitialValue();
+    return this._value ?? this.getInitialValue();
   }
 
   set value(value: string) {
-    const editor = this.editor;
-
-    if (!editor) {
-      throw new Error("editor isn't initialized yet");
-    }
-
-    editor.setValue(value);
+    this._value = value;
+    this.render();
   }
 }
 
 declare module 'preact' {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
-    interface EditorElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
-      autofocus?: boolean;
+    interface RefInputElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
       readonly?: boolean;
       required?: boolean;
       disabled?: boolean;
       defaultValue?: string;
       value?: string;
-      placeholder?: string;
+
+      documentType: string;
+      onRefClick?: (e: RefClickEvent) => void;
     }
 
     interface IntrinsicElements {
-      'v-editor': EditorElementAttributes;
+      'v-ref-input': RefInputElementAttributes;
     }
   }
 }
 
-customElements.define('v-editor', HTMLVEditorElement);
+customElements.define('v-ref-input', HTMLVRefInputElement);

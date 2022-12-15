@@ -12,8 +12,8 @@ type CatalogProps = {
   documentType?: string;
   initialQuery?: string;
   initialPage?: number;
-  onQueryChange: (query: string) => void;
-  onPageChange: (page: number) => void;
+  onQueryChange?: (query: string) => void;
+  onPageChange?: (page: number) => void;
   onDocumentSelected: (documentId: string) => void;
 };
 
@@ -39,12 +39,12 @@ export function Catalog({
 
   const setQuery = (query: string) => {
     _setQuery(query);
-    onQueryChange(query);
+    onQueryChange?.(query);
   };
 
   const setPage = (page: number) => {
     _setPage(page);
-    onPageChange(page);
+    onPageChange?.(page);
   };
 
   const items = result?.documents.map((item) => (

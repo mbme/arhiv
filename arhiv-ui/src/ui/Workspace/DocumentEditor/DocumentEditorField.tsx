@@ -1,8 +1,9 @@
-import { cx, JSONValue } from '../../utils';
-import { DataDescriptionField, FieldType } from '../../utils/schema';
-import { Checkbox } from '../../components/Form/Checkbox';
-import { useGettersContext } from '../../components/Form/Form';
-import { Select } from '../../components/Form/Select';
+import { cx, JSONValue } from 'utils';
+import { DataDescriptionField, FieldType } from 'utils/schema';
+import { Checkbox } from 'components/Form/Checkbox';
+import { useGettersContext } from 'components/Form/Form';
+import { Select } from 'components/Form/Select';
+import { useCardContext } from 'Workspace/workspace-reducer';
 
 function parseRefsList(refs: string): string[] | null {
   if (refs.trim().length === 0) {
@@ -33,6 +34,7 @@ function ValueEditor({
   disabled,
 }: ValueEditorProps) {
   const getters = useGettersContext();
+  const { openDocument } = useCardContext();
 
   if ('MarkupString' in fieldType) {
     return (
@@ -82,21 +84,15 @@ function ValueEditor({
 
   if ('Ref' in fieldType) {
     return (
-      <input
+      <v-ref-input
         className="field"
-        ref={(el) => {
-          if (!el) {
-            return;
-          }
-
-          getters.set(el, () => el.value.trim() || null);
-        }}
-        type="text"
+        documentType={fieldType.Ref}
         name={name}
         defaultValue={initialValue as string | undefined}
-        readOnly={readonly}
+        readonly={readonly}
         required={required}
         disabled={disabled}
+        onRefClick={(e) => openDocument(e.detail.documentId)}
       />
     );
   }

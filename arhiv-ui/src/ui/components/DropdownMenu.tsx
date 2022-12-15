@@ -8,8 +8,8 @@ import {
   useFloating,
   useInteractions,
   useRole,
-} from '@floating-ui/react-dom-interactions';
-import { Callback, cx } from '../utils';
+} from '@floating-ui/react';
+import { Callback, cx } from 'utils';
 import { Icon, IconVariant } from './Icon';
 import { IconButton } from './Button';
 

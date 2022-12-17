@@ -6,6 +6,7 @@
 @import './components/Dialog.css';
 @import './components/Markup.css';
 @import './components/Form/v-editor/index.css';
+@import './components/Form/v-ref-input/index.css';
 @import './components/Form/index.css';
 @import './components/ComponentsDemo.css';
 

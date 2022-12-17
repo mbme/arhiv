@@ -42,6 +42,8 @@ struct Args {
 pub async fn main() {
     log::setup_logger();
 
+    // TODO more feature similar to https://shot-scraper.datasette.io/en/stable/
+
     let args = if env::var("JSON_ARG_MOODE").is_ok() {
         let args: Vec<String> = env::args().collect();
         let arg = args

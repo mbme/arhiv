@@ -24,6 +24,9 @@ ui:
      split-window 'yarn run watch:css' \; \
      select-pane -t 0
 
+scrape *PARAMS:
+  cargo run --bin mb-scraper {{PARAMS}}
+
 bump-version:
   ./bump-version.sh
 

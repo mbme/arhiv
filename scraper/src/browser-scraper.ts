@@ -49,7 +49,7 @@ class BrowserScraper {
         console.error(`scraper ${scraper.constructor.name} failed:`, e);
 
         result.scraperName = scraper.constructor.name;
-        result.error = (e as Error).toString();
+        result.error = (e as Error).stack?.toString() ?? '';
 
         this._addResult(result);
 

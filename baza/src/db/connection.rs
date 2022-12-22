@@ -969,9 +969,8 @@ impl BazaConnection {
             let document = self.get_document_by_rowid(rowid)?;
             let mut document = Cow::Borrowed(&document);
 
-            let data_dir = &self.get_path_manager().data_dir;
             for migration in &migrations {
-                migration.update(&mut document, data_dir)?;
+                migration.update(&mut document, &self)?;
             }
 
             // update document only if it has been mutated

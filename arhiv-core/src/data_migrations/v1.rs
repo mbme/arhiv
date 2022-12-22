@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use anyhow::Result;
 
-use baza::{entities::Document, schema::DataMigration};
+use baza::{entities::Document, schema::DataMigration, BazaConnection};
 
 pub struct DataSchema1;
 
@@ -11,7 +11,7 @@ impl DataMigration for DataSchema1 {
         1
     }
 
-    fn update(&self, document: &mut Cow<Document>, _data_dir: &str) -> Result<()> {
+    fn update(&self, document: &mut Cow<Document>, _conn: &BazaConnection) -> Result<()> {
         // replace "completed" with "status"
         if let Some(completed) = document.data.get_bool("completed") {
             if completed {

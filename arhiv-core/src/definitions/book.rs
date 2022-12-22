@@ -11,7 +11,6 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: BOOK_TYPE,
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "title",
@@ -132,10 +131,6 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: BOOK_COLLECTION_TYPE,
-            collection_of: Collection::Type {
-                document_type: BOOK_TYPE,
-                field: "collections",
-            },
             fields: vec![
                 Field {
                     name: "name",
@@ -147,6 +142,13 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "description",
                     field_type: FieldType::MarkupString {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
+                Field {
+                    name: "books",
+                    field_type: FieldType::RefList(BOOK_TYPE),
                     mandatory: false,
                     readonly: false,
                     for_subtypes: None,

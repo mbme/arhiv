@@ -18,10 +18,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: PROJECT_TYPE,
-            collection_of: Collection::Type {
-                document_type: "task",
-                field: "project",
-            },
             fields: vec![
                 //
                 Field {
@@ -38,12 +34,18 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                     readonly: false,
                     for_subtypes: None,
                 },
+                Field {
+                    name: "tasks",
+                    field_type: FieldType::RefList(TASK_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
             ],
             subtypes: None,
         },
         DataDescription {
             document_type: TASK_TYPE,
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "title",

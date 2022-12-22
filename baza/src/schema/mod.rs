@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 
@@ -16,7 +14,6 @@ mod search;
 
 const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     document_type: ERASED_DOCUMENT_TYPE,
-    collection_of: Collection::None,
     fields: vec![],
     subtypes: None,
 };
@@ -34,19 +31,6 @@ impl DataSchema {
         DataSchema { modules }
     }
 
-    fn get_collection_ref_fields(&self, document_type: &str) -> HashSet<&str> {
-        self.modules
-            .iter()
-            .filter_map(|module| match module.collection_of {
-                Collection::Type {
-                    document_type: child_type,
-                    field,
-                } if child_type == document_type => Some(field),
-                _ => None,
-            })
-            .collect()
-    }
-
     pub fn extract_refs(
         &self,
         document_type: &str,
@@ -55,24 +39,13 @@ impl DataSchema {
     ) -> Result<Refs> {
         let data_description = self.get_data_description(document_type)?;
 
-        let collection_ref_fields = self.get_collection_ref_fields(document_type);
-
         let mut refs = Refs::default();
 
         for field in data_description.iter_fields(subtype) {
-            let value = if let Some(value) = data.get(field.name) {
-                value
-            } else {
-                continue;
-            };
-
-            if collection_ref_fields.contains(&field.name) {
-                refs.collections.extend(field.extract_refs(value));
-            } else {
+            if let Some(value) = data.get(field.name) {
                 refs.documents.extend(field.extract_refs(value));
+                refs.blobs.extend(field.extract_blob_ids(value));
             }
-
-            refs.blobs.extend(field.extract_blob_ids(value));
         }
 
         Ok(refs)

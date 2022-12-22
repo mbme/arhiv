@@ -9,17 +9,7 @@ use super::{field::*, search::MultiSearch};
 pub struct DataDescription {
     pub document_type: &'static str,
     pub subtypes: Option<&'static [&'static str]>,
-    pub collection_of: Collection,
     pub fields: Vec<Field>,
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub enum Collection {
-    None,
-    Type {
-        document_type: &'static str,
-        field: &'static str,
-    },
 }
 
 impl DataDescription {
@@ -87,9 +77,5 @@ impl DataDescription {
         self.fields
             .iter()
             .filter(move |field| field.for_subtype(&subtype))
-    }
-
-    pub fn is_collection(&self) -> bool {
-        !matches!(self.collection_of, Collection::None)
     }
 }

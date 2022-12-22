@@ -16,7 +16,6 @@ pub const IMAGE_SUBTYPE: &str = "image";
 pub fn get_attachment_definitions() -> Vec<DataDescription> {
     vec![DataDescription {
         document_type: ATTACHMENT_TYPE,
-        collection_of: Collection::None,
         fields: vec![
             Field {
                 name: "filename",

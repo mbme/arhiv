@@ -7,7 +7,6 @@ export type DataSchema = {
 export type DataDescription = {
   document_type: string;
   subtypes?: string[];
-  collection_of: 'None' | { Type: { document_type: string; field: string } };
   fields: DataDescriptionField[];
 };
 
@@ -58,7 +57,7 @@ export function getDataDescription(documentType: string): DataDescription {
 }
 
 function isModuleCollection(module: DataDescription): boolean {
-  return module.collection_of !== 'None';
+  return module.fields.some(field => 'RefList' in field.field_type)
 }
 
 export function isDocumentTypeCollection(documentType: string): boolean {

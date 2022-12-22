@@ -1,6 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
-use baza::schema::{Collection, DataDescription, DataSchema, Field, FieldType};
+use baza::schema::{DataDescription, DataSchema, Field, FieldType};
 use rs_utils::generate_temp_path;
 
 use crate::{Arhiv, Config};
@@ -29,7 +29,6 @@ impl TestArhiv {
     pub fn new_prime() -> Self {
         TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
             document_type: "test_type",
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "blob",
@@ -60,7 +59,6 @@ impl TestArhiv {
 
         let schema = DataSchema::new(vec![DataDescription {
             document_type: "test_type",
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "blob",

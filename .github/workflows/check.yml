@@ -18,14 +18,13 @@ jobs:
       - run: rustup toolchain install stable --profile minimal
 
       - uses: actions/checkout@v3
-      - uses: extractions/setup-just@v1
       - uses: Swatinem/rust-cache@v2
 
       - name: Install JS modules
         run: yarn install --immutable --immutable-cache
 
       - name: Lint & test Rust
-        run: just check-rs
+        run: cargo clippy --all-targets --all-features -- -D warnings && cargo test
 
       - name: Lint and test TS
-        run: just check-ts
+        run: yarn run check-fmt && yarn workspaces run lint && yarn workspaces run compiler-errors

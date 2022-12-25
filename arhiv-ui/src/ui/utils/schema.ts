@@ -57,7 +57,7 @@ export function getDataDescription(documentType: string): DataDescription {
 }
 
 function isModuleCollection(module: DataDescription): boolean {
-  return module.fields.some(field => 'RefList' in field.field_type)
+  return module.fields.some((field) => 'RefList' in field.field_type);
 }
 
 export function isDocumentTypeCollection(documentType: string): boolean {

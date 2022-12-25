@@ -444,7 +444,7 @@ impl BazaConnection {
         Ok(documents)
     }
 
-    pub(crate) fn get_document_by_rowid(&self, rowid: i64) -> Result<Document> {
+    fn get_document_by_rowid(&self, rowid: &i64) -> Result<Document> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents_snapshots WHERE rowid = ?1 LIMIT 1")?;
@@ -963,30 +963,30 @@ impl BazaConnection {
             .context("failed to query documents snapshots")?
             .collect::<Result<Vec<i64>>>()?;
 
-        let now = Instant::now();
-        let mut rows_count = 0;
-        for rowid in row_ids {
-            let document = self.get_document_by_rowid(rowid)?;
-            let mut document = Cow::Borrowed(&document);
+        for migration in &migrations {
+            let now = Instant::now();
+            let mut rows_count = 0;
+            for rowid in &row_ids {
+                let document = self.get_document_by_rowid(rowid)?;
+                let mut document = Cow::Borrowed(&document);
 
-            for migration in &migrations {
-                migration.update(&mut document, &self)?;
+                migration.update(&mut document, self)?;
+
+                // update document only if it has been mutated
+                if let Cow::Owned(document) = document {
+                    self.put_or_replace_document(&document, true)?;
+                    rows_count += 1;
+                }
             }
 
-            // update document only if it has been mutated
-            if let Cow::Owned(document) = document {
-                self.put_or_replace_document(&document, true)?;
-                rows_count += 1;
-            }
+            let version = migration.get_version();
+            self.set_setting(&SETTING_DATA_VERSION, &version)?;
+
+            log::info!(
+                "Migrated {rows_count} rows in {} seconds to version {version}",
+                now.elapsed().as_secs_f32(),
+            );
         }
-
-        self.set_setting(&SETTING_DATA_VERSION, &latest_data_version)?;
-
-        log::info!(
-            "Migrated {} rows in {} seconds",
-            rows_count,
-            now.elapsed().as_secs_f32()
-        );
 
         log::info!("Finished data migration");
 

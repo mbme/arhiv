@@ -107,6 +107,13 @@ pub fn get_game_definitions() -> Vec<DataDescription> {
                     readonly: false,
                     for_subtypes: None,
                 },
+                Field {
+                    name: "games",
+                    field_type: FieldType::RefList(GAME_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
             ],
             subtypes: None,
         },

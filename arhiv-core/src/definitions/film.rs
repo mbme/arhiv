@@ -149,6 +149,13 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                     readonly: false,
                     for_subtypes: None,
                 },
+                Field {
+                    name: "films",
+                    field_type: FieldType::RefList(FILM_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
             ],
             subtypes: None,
         },

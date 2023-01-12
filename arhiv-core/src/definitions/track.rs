@@ -97,6 +97,13 @@ pub fn get_track_definitions() -> Vec<DataDescription> {
                     readonly: false,
                     for_subtypes: None,
                 },
+                Field {
+                    name: "tracks",
+                    field_type: FieldType::RefList(TRACK_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
             ],
             subtypes: None,
         },

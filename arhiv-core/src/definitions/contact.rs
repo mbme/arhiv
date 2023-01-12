@@ -107,6 +107,13 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                     readonly: false,
                     for_subtypes: None,
                 },
+                Field {
+                    name: "contacts",
+                    field_type: FieldType::RefList(CONTACT_TYPE),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
             ],
             subtypes: None,
         },

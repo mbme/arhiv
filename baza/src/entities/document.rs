@@ -58,6 +58,10 @@ impl Document {
         self.rev == Revision::STAGING
     }
 
+    pub fn is_initial(&self) -> bool {
+        self.prev_rev == Revision::STAGING
+    }
+
     pub fn extract_refs(&self, schema: &DataSchema) -> Result<Refs> {
         schema.extract_refs(&self.document_type, &self.subtype, &self.data)
     }

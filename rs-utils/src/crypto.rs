@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use base64::{decode_config, encode_config, URL_SAFE};
+use base64::{engine, Engine};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -41,12 +41,12 @@ pub fn get_string_hash_blake3(data: &str) -> String {
 
 #[must_use]
 pub fn to_url_safe_base64(bytes: &[u8]) -> String {
-    encode_config(bytes, URL_SAFE)
+    engine::general_purpose::URL_SAFE.encode(bytes)
 }
 
 #[must_use]
 pub fn is_valid_base64(value: &str) -> bool {
-    decode_config(value, URL_SAFE).is_ok()
+    engine::general_purpose::URL_SAFE.decode(value).is_ok()
 }
 
 #[must_use]

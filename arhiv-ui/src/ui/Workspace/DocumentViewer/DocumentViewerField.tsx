@@ -36,15 +36,13 @@ export function FieldValue({ field, value }: FieldValueProps) {
 
   if ('RefList' in field.field_type) {
     return (
-      <>
+      <div className="w-full">
         {(value as string[]).map((id) => (
-          <RefContainer
-            key={id}
-            id={id}
-            onClick={() => open({ variant: 'document', documentId: id })}
-          />
+          <div key={id}>
+            <RefContainer id={id} onClick={() => open({ variant: 'document', documentId: id })} />
+          </div>
         ))}
-      </>
+      </div>
     );
   }
 

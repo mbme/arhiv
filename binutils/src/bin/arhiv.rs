@@ -1,6 +1,9 @@
 use std::{process, sync::Arc};
 
-use baza::entities::{Document, DocumentData, Id};
+use baza::{
+    entities::{Document, DocumentData, Id},
+    Filter, SETTING_DATA_VERSION,
+};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -125,6 +128,8 @@ enum CLICommand {
         #[arg(value_enum)]
         shell: Shell,
     },
+    /// Add tasks to projects they reference
+    MigrateTasks,
 }
 
 #[tokio::main]
@@ -296,6 +301,44 @@ async fn main() {
             let name = cmd.get_name().to_string();
 
             generate(shell, &mut cmd, name, &mut std::io::stdout());
+        }
+        CLICommand::MigrateTasks => {
+            let arhiv = Arhiv::must_open();
+
+            let tx = arhiv.baza.get_tx().expect("failed to open connection");
+            let projects = tx
+                .list_documents(&Filter::default().with_document_type("project").all_items())
+                .expect("failed to query projects");
+
+            let data_version = tx
+                .get_setting(&SETTING_DATA_VERSION)
+                .expect("failed to get data version");
+            assert_eq!(data_version, 3);
+
+            for mut project in projects.items {
+                let tasks = tx
+                    .list_documents(
+                        &Filter::default()
+                            .with_document_type("task")
+                            .with_collection_ref(&project.id)
+                            .all_items(),
+                    )
+                    .expect("failed to query tasks");
+
+                let ids = tasks
+                    .items
+                    .into_iter()
+                    .map(|task| task.id)
+                    .collect::<Vec<_>>();
+
+                if !ids.is_empty() {
+                    project.data.set("tasks", ids);
+                    tx.stage_document(&mut project)
+                        .expect("failed to save document");
+                }
+            }
+
+            tx.commit().expect("failed to commit");
         }
     }
 }

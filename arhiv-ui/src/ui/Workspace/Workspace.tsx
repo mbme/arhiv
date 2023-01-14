@@ -38,14 +38,6 @@ export function Workspace() {
     >
       <div className="flex flex-row items-start gap-6 h-full w-fit min-w-full">
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
-          <Button
-            variant="text"
-            leadingIcon="search-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
-          >
-            Search
-          </Button>
-
           <Button variant="text" disabled>
             Player
           </Button>
@@ -61,10 +53,18 @@ export function Workspace() {
 
           <Button
             variant="text"
-            leadingIcon="paperclip"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'file-picker' } })}
+            leadingIcon="search-catalog"
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
           >
-            Add file
+            Search
+          </Button>
+
+          <Button
+            variant="text"
+            leadingIcon="browse-catalog"
+            onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
+          >
+            Browse
           </Button>
 
           <DropdownMenu
@@ -76,9 +76,9 @@ export function Workspace() {
               },
 
               {
-                text: 'Browse',
-                icon: 'browse-catalog',
-                onClick: () => dispatch({ type: 'open', newCard: { variant: 'browser' } }),
+                text: 'Add file',
+                icon: 'paperclip',
+                onClick: () => dispatch({ type: 'open', newCard: { variant: 'file-picker' } }),
               },
 
               {

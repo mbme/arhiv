@@ -1,6 +1,6 @@
 use anyhow::Result;
 use baza::{
-    schema::{Collection, DataDescription, DataSchema, Field, FieldType},
+    schema::{DataDescription, DataSchema, Field, FieldType},
     Filter, OrderBy,
 };
 use serde_json::json;
@@ -76,7 +76,6 @@ async fn test_modes() -> Result<()> {
 fn test_order_by_enum_field() -> Result<()> {
     let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
-        collection_of: Collection::None,
         fields: vec![Field {
             name: "enum",
             field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
@@ -124,7 +123,6 @@ fn test_order_by_enum_field() -> Result<()> {
 fn test_multiple_order_by() -> Result<()> {
     let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
-        collection_of: Collection::None,
         fields: vec![
             Field {
                 name: "prop",

@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
-import { isAttachment, isDocumentTypeCollection, isErasedDocument } from 'utils/schema';
+import { isAttachment, isErasedDocument } from 'utils/schema';
 import { QueryError } from 'components/QueryError';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
@@ -12,16 +12,13 @@ import { DocumentViewerFields } from './DocumentViewerFields';
 import { DocumentViewerHead } from './DocumentViewerHead';
 import { CardContainer } from '../CardContainer';
 import { EraseDocumentConfirmationDialog } from './EraseDocumentConfirmationDialog';
-import { CollectionCatalog } from './CollectionCatalog';
 
 type DocumentViewerProps = {
   documentId: string;
   onEdit: Callback;
-  query?: string;
-  page?: number;
 };
 
-export function DocumentViewer({ documentId, onEdit, query, page }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
   const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     {
@@ -102,10 +99,6 @@ export function DocumentViewer({ documentId, onEdit, query, page }: DocumentView
             subtype={result.subtype}
             data={result.data}
           />
-
-          {isDocumentTypeCollection(result.documentType) && (
-            <CollectionCatalog collectionId={documentId} query={query} page={page} />
-          )}
 
           {showEraseDocumentConfirmationDialog && (
             <EraseDocumentConfirmationDialog

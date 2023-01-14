@@ -129,7 +129,7 @@ function renderCard(card: Card) {
       return <NewDocumentCard documentType={card.documentType} />;
 
     case 'document':
-      return <DocumentCard documentId={card.documentId} query={card.query} page={card.page} />;
+      return <DocumentCard documentId={card.documentId} />;
 
     case 'status':
       return <StatusCard />;

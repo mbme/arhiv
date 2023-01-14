@@ -3,7 +3,6 @@ import { JSONObj, Obj } from './ui/utils';
 export type APIRequest =
   | {
       typeName: 'ListDocuments';
-      collectionId?: string;
       documentType?: string;
       query: string;
       page: number;

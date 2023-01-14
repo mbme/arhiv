@@ -21,7 +21,6 @@ const PAGE_SIZE: u8 = 10;
 pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<APIResponse> {
     let response = match request {
         APIRequest::ListDocuments {
-            collection_id,
             document_type,
             query,
             page,
@@ -32,10 +31,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .on_page(page)
                 .skip_erased(true)
                 .recently_updated_first();
-
-            if let Some(collection_id) = collection_id {
-                filter = filter.with_collection_ref(collection_id);
-            }
 
             if let Some(document_type) = document_type {
                 if document_type == ERASED_DOCUMENT_TYPE {

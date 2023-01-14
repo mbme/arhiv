@@ -11,7 +11,6 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: CONTACT_TYPE,
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "name",
@@ -56,13 +55,6 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                     for_subtypes: None,
                 },
                 Field {
-                    name: "collections",
-                    field_type: FieldType::RefList(CONTACT_COLLECTION_TYPE),
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-                Field {
                     name: "addresses",
                     field_type: FieldType::MarkupString {},
                     mandatory: false,
@@ -88,10 +80,6 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: CONTACT_COLLECTION_TYPE,
-            collection_of: Collection::Type {
-                document_type: CONTACT_TYPE,
-                field: "collections",
-            },
             fields: vec![
                 Field {
                     name: "name",

@@ -11,7 +11,6 @@ pub struct Conditions {
     pub search: Option<String>,          // pattern
     pub document_type: Option<String>,   // document_type
     pub document_ref: Option<Id>,
-    pub collection_ref: Option<Id>,
     pub only_staged: Option<bool>,
     pub skip_erased: Option<bool>,
 }
@@ -152,13 +151,6 @@ impl Filter {
     }
 
     #[must_use]
-    pub fn with_collection_ref(mut self, collection_id: impl Into<Id>) -> Filter {
-        self.conditions.collection_ref = Some(collection_id.into());
-
-        self
-    }
-
-    #[must_use]
     pub fn only_staged(mut self) -> Filter {
         self.conditions.only_staged = Some(true);
 
@@ -210,10 +202,5 @@ impl Filter {
     #[must_use]
     pub fn get_document_type(&self) -> Option<&str> {
         self.conditions.document_type.as_deref()
-    }
-
-    #[must_use]
-    pub fn get_parent_collection(&self) -> Option<Id> {
-        self.conditions.collection_ref.clone()
     }
 }

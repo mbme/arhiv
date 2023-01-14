@@ -302,14 +302,6 @@ impl BazaConnection {
             qb.where_condition(format!("document_refs.value = {}", qb.param(id.clone())));
         }
 
-        if let Some(ref collection_id) = filter.conditions.collection_ref {
-            qb.and_from("json_each(refs, '$.collections') AS collection_refs");
-            qb.where_condition(format!(
-                "collection_refs.value = {}",
-                qb.param(collection_id.clone())
-            ));
-        }
-
         for order in &filter.order {
             match order {
                 OrderBy::UpdatedAt { asc } => {

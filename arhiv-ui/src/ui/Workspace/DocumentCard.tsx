@@ -4,10 +4,8 @@ import { DocumentViewer } from './DocumentViewer/DocumentViewer';
 
 type Props = {
   documentId: string;
-  query?: string;
-  page?: number;
 };
-export function DocumentCard({ documentId, query, page }: Props) {
+export function DocumentCard({ documentId }: Props) {
   const [edit, setEdit] = useState(false);
 
   if (edit) {
@@ -21,13 +19,5 @@ export function DocumentCard({ documentId, query, page }: Props) {
     );
   }
 
-  return (
-    <DocumentViewer
-      key={documentId}
-      documentId={documentId}
-      onEdit={() => setEdit(true)}
-      query={query}
-      page={page}
-    />
-  );
+  return <DocumentViewer key={documentId} documentId={documentId} onEdit={() => setEdit(true)} />;
 }

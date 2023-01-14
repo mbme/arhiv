@@ -18,10 +18,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: PROJECT_TYPE,
-            collection_of: Collection::Type {
-                document_type: "task",
-                field: "project",
-            },
             fields: vec![
                 //
                 Field {
@@ -50,7 +46,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: TASK_TYPE,
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "title",
@@ -69,13 +64,6 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                 Field {
                     name: "status",
                     field_type: FieldType::Enum(TASK_STATUS),
-                    mandatory: true,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-                Field {
-                    name: "project",
-                    field_type: FieldType::Ref(PROJECT_TYPE),
                     mandatory: true,
                     readonly: false,
                     for_subtypes: None,

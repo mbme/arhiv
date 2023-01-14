@@ -11,7 +11,6 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: FILM_TYPE,
-            collection_of: Collection::None,
             fields: vec![
                 Field {
                     name: "title",
@@ -98,13 +97,6 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                     for_subtypes: None,
                 },
                 Field {
-                    name: "collections",
-                    field_type: FieldType::RefList(FILM_COLLECTION_TYPE),
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-                Field {
                     name: "status",
                     field_type: STATUS_FIELD,
                     mandatory: false,
@@ -130,10 +122,6 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: FILM_COLLECTION_TYPE,
-            collection_of: Collection::Type {
-                document_type: FILM_TYPE,
-                field: "collections",
-            },
             fields: vec![
                 Field {
                     name: "name",

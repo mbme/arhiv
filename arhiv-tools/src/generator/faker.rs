@@ -7,7 +7,8 @@ use rand::{prelude::*, thread_rng};
 use arhiv_core::{Arhiv, BazaConnectionExt};
 use baza::{
     entities::{Document, DocumentData, Id},
-    schema::{Collection, FieldType},
+    schema::FieldType,
+    BazaConnection,
 };
 use rs_utils::{is_image_filename, workspace_relpath};
 
@@ -68,7 +69,7 @@ impl<'a> Faker<'a> {
             .map(|(min, max)| (*min, *max))
     }
 
-    fn create_fake(&self, document_type: &str, subtype: &str, mut data: DocumentData) -> Document {
+    fn create_fake(&self, tx: &BazaConnection, document_type: &str, subtype: &str) -> Document {
         let description = self
             .arhiv
             .baza
@@ -76,6 +77,7 @@ impl<'a> Faker<'a> {
             .get_data_description(document_type)
             .unwrap();
 
+        let mut data = DocumentData::new();
         let mut rng = thread_rng();
         for field in description.iter_fields(subtype) {
             match &field.field_type {
@@ -99,69 +101,48 @@ impl<'a> Faker<'a> {
                     let value: &str = values.choose(&mut rng).unwrap();
                     data.set(field.name, value);
                 }
+                FieldType::RefList(child_document_type) => {
+                    let child_quantity = self.get_quantity_limit(child_document_type);
+
+                    let mut child_refs = Vec::new();
+                    for _ in 0..child_quantity {
+                        let mut child_document = self.create_fake(tx, child_document_type, "");
+
+                        tx.stage_document(&mut child_document)
+                            .expect("must be able to save child document");
+
+                        child_refs.push(child_document.id);
+                    }
+
+                    data.set(field.name, child_refs);
+
+                    println!("Generated {child_quantity} child {child_document_type} for {document_type}",);
+                }
                 _ => {}
             }
         }
 
-        Document::new_with_data(document_type, subtype, data)
+        let mut document = Document::new_with_data(document_type, subtype, data);
+
+        tx.stage_document(&mut document)
+            .expect("must be able to save document");
+
+        document
     }
 
     pub fn create_fakes<S: Into<String>>(&self, document_type: S, subtype: &str) {
         let document_type = document_type.into();
 
-        let data_description = self
-            .arhiv
-            .baza
-            .get_schema()
-            .get_data_description(&document_type)
-            .expect("Unknown document type");
-
         let quantity = self.get_quantity_limit(&document_type);
 
         let tx = self.arhiv.baza.get_tx().expect("must open transaction");
 
-        let mut child_total: u32 = 0;
         for _ in 0..quantity {
-            let mut document = self.create_fake(&document_type, subtype, DocumentData::new());
-
-            tx.stage_document(&mut document)
-                .expect("must be able to save document");
-
-            if let Collection::Type {
-                document_type: child_document_type,
-                field,
-            } = data_description.collection_of
-            {
-                let child_quantity = self.get_quantity_limit(child_document_type);
-
-                for _ in 0..child_quantity {
-                    let mut initial_values = DocumentData::new();
-                    initial_values.set(field.to_string(), &document.id);
-
-                    let mut child_document =
-                        self.create_fake(child_document_type, "", initial_values);
-
-                    tx.stage_document(&mut child_document)
-                        .expect("must be able to save child document");
-                }
-
-                child_total += child_quantity as u32;
-            }
+            self.create_fake(&tx, &document_type, subtype);
         }
 
         tx.commit().expect("must commit");
 
-        if let Collection::Type {
-            document_type: item_type,
-            ..
-        } = &data_description.collection_of
-        {
-            println!(
-                "Generated {} {} and {} child {}",
-                quantity, document_type, child_total, item_type
-            );
-        } else {
-            println!("Generated {} {}", quantity, document_type);
-        }
+        println!("Generated {} {}", quantity, document_type);
     }
 }

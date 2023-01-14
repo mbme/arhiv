@@ -48,7 +48,9 @@ impl Field {
             FieldType::Ref(_) => {
                 let value: Id = serde_json::from_value(value.clone()).expect("field must parse");
 
-                result.insert(value);
+                if !value.is_empty() {
+                    result.insert(value);
+                }
             }
             FieldType::RefList(_) => {
                 let value: Vec<Id> =

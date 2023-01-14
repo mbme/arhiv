@@ -28,7 +28,6 @@ function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
 
     const name = control.getAttribute('name');
     if (!name) {
-      console.error('control must have a name', control);
       continue;
     }
 

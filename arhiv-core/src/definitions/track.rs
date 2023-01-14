@@ -107,7 +107,6 @@ pub struct TrackData {
     pub cover: Option<Id>,
     pub release_date: Option<String>,
     pub language: Option<String>,
-    pub collections: Option<Vec<Id>>,
     pub comment: Option<String>,
 }
 

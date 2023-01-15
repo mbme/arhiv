@@ -1,7 +1,7 @@
 import { JSXChildren } from 'utils/jsx';
 import { DataDescriptionField } from 'utils/schema';
 import { Markup } from 'components/Markup';
-import { RefContainer } from 'components/Ref';
+import { RefContainer, RefListContainer } from 'components/Ref';
 import { useCardContext } from '../workspace-reducer';
 
 type FieldValueProps = {
@@ -36,12 +36,11 @@ export function FieldValue({ field, value }: FieldValueProps) {
 
   if ('RefList' in field.field_type) {
     return (
-      <div className="w-full">
-        {(value as string[]).map((id) => (
-          <div key={id}>
-            <RefContainer id={id} onClick={() => open({ variant: 'document', documentId: id })} />
-          </div>
-        ))}
+      <div className="w-full flex flex-col">
+        <RefListContainer
+          ids={value as string[]}
+          onClick={(id) => open({ variant: 'document', documentId: id })}
+        />
       </div>
     );
   }

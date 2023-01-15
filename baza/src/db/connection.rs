@@ -411,6 +411,11 @@ impl BazaConnection {
         }
     }
 
+    pub fn must_get_document(&self, id: &Id) -> Result<Document> {
+        self.get_document(id)?
+            .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
+    }
+
     pub fn get_documents(&self, ids: &HashSet<&Id>) -> Result<Vec<Document>> {
         ensure!(!ids.is_empty(), "set of ids must not be empty");
 

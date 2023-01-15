@@ -8,6 +8,10 @@ export type APIRequest =
       page: number;
     }
   | {
+      typeName: 'GetDocuments';
+      ids: string[];
+    }
+  | {
       typeName: 'GetStatus';
     }
   | {
@@ -53,6 +57,10 @@ export type APIResponse =
       typeName: 'ListDocuments';
       documents: ListDocumentsResult[];
       hasMore: boolean;
+    }
+  | {
+      typeName: 'GetDocuments';
+      documents: ListDocumentsResult[];
     }
   | {
       typeName: 'GetStatus';

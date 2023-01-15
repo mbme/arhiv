@@ -48,6 +48,20 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 documents: documents_into_results(page.items, schema)?,
             }
         }
+        APIRequest::GetDocuments { ids } => {
+            let conn = arhiv.baza.get_connection()?;
+
+            let schema = arhiv.baza.get_schema();
+
+            let documents = ids
+                .iter()
+                .map(|id| conn.must_get_document(id))
+                .collect::<Result<Vec<_>>>()?;
+
+            APIResponse::GetDocuments {
+                documents: documents_into_results(documents, schema)?,
+            }
+        }
         APIRequest::GetStatus {} => {
             let tx = arhiv.baza.get_connection()?;
             let status = tx.get_status()?;
@@ -57,13 +71,13 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetDocument { ref id } => {
-            let document = arhiv.baza.must_get_document(id)?;
+            let conn = arhiv.baza.get_connection()?;
+            let document = conn.must_get_document(id)?;
 
             let schema = arhiv.baza.get_schema();
 
-            let backrefs = arhiv
-                .baza
-                .list_documents(Filter::all_backrefs(id))?
+            let backrefs = conn
+                .list_documents(&Filter::all_backrefs(id))?
                 .items
                 .into_iter()
                 .map(|item| {
@@ -97,14 +111,15 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::ParseMarkup { ast }
         }
         APIRequest::SaveDocument { id, subtype, data } => {
-            let mut document = arhiv.baza.must_get_document(&id)?;
+            let tx = arhiv.baza.get_tx()?;
+
+            let mut document = tx.must_get_document(&id)?;
 
             let prev_data = document.data;
 
             document.subtype = subtype;
             document.data = data;
 
-            let tx = arhiv.baza.get_tx()?;
             let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
 
             let errors = if let Err(error) = validation_result {

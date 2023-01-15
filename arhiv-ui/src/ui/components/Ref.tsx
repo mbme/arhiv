@@ -55,6 +55,42 @@ export function RefContainer({ id, description, attachmentPreview, onClick }: Re
   );
 }
 
+type RefListContainerProps = {
+  ids: string[];
+  onClick: (documentId: string) => void;
+};
+export function RefListContainer({ ids, onClick }: RefListContainerProps) {
+  const { result, error, inProgress } = useQuery(
+    (abortSignal) => RPC.GetDocuments({ ids }, abortSignal),
+    {
+      refreshIfChange: ids,
+    }
+  );
+
+  if (error) {
+    return <QueryError error={error} />;
+  }
+
+  if (inProgress || !result) {
+    return null;
+  }
+
+  return (
+    <>
+      {result.documents.map((item) => (
+        <Ref
+          key={item.id}
+          documentId={item.id}
+          documentType={item.documentType}
+          subtype={item.subtype}
+          documentTitle={item.title}
+          onClick={() => onClick(item.id)}
+        />
+      ))}
+    </>
+  );
+}
+
 type RefProps = {
   documentId: string;
   documentType: string;

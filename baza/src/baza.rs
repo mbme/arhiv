@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 
 use rs_utils::log;
 
@@ -121,13 +121,6 @@ impl Baza {
         let conn = self.get_connection()?;
 
         conn.get_document(&id.into())
-    }
-
-    pub fn must_get_document(&self, id: impl Into<Id>) -> Result<Document> {
-        let id = id.into();
-
-        self.get_document(&id)?
-            .ok_or_else(|| anyhow!("Can't find document with id '{}'", id))
     }
 
     pub fn get_blob(&self, id: &BLOBId) -> Result<BLOB> {

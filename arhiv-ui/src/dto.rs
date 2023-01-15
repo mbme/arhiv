@@ -15,6 +15,9 @@ pub enum APIRequest {
         query: String,
         page: u8,
     },
+    GetDocuments {
+        ids: Vec<Id>,
+    },
     GetStatus {},
     GetDocument {
         id: Id,
@@ -57,6 +60,9 @@ pub enum APIResponse {
         documents: Vec<ListDocumentsResult>,
         #[serde(rename = "hasMore")]
         has_more: bool,
+    },
+    GetDocuments {
+        documents: Vec<ListDocumentsResult>,
     },
     GetStatus {
         status: String,

@@ -1,6 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useState } from 'preact/hooks';
-import { JSONObj, JSONValue, formDataToObject } from 'utils';
+import { JSONObj, JSONValue, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
 
 type Getter = () => JSONValue;
@@ -35,6 +35,15 @@ function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
       throw new Error(`control "${name}" is RadioNodeList which is unsupported`);
     }
 
+    if (control instanceof HTMLElement) {
+      const value = control.dataset['value'];
+
+      if (typeof value === 'string') {
+        result[name] = JSON.parse(value) as JSONValue;
+        continue;
+      }
+    }
+
     const getter = getters.get(control);
 
     result[name] = getter ? getter() : fd[name];
@@ -44,19 +53,20 @@ function collectValues(form: HTMLFormElement, getters: Getters): JSONObj {
 }
 
 type FormProps = {
+  className?: string;
   children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void>;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
-export function Form({ children, onSubmit, formRef }: FormProps) {
+export function Form({ className, children, onSubmit, formRef }: FormProps) {
   const [valueExtractors] = useState<Getters>(() => new WeakMap());
 
   return (
     <GettersContext.Provider value={valueExtractors}>
       <form
         ref={formRef}
-        className="form"
+        className={cx("form", className)}
         onSubmit={(e) => {
           e.preventDefault();
 

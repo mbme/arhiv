@@ -1,10 +1,12 @@
 import { useState } from 'preact/hooks';
-import { noop, formDataToObject, setQueryParam } from 'utils';
+import { noop, setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
 import { JSXChildren } from 'utils/jsx';
 import { Button, IconButton } from 'components/Button';
 import { DateTime } from 'components/DateTime';
 import { Dialog } from 'components/Dialog';
+import { Form } from 'components/Form/Form';
+import { NumberInput } from 'components/Form/NumberInput';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Icon, ICON_VARIANTS } from 'components/Icon';
@@ -277,14 +279,10 @@ function FormControlsDemo() {
   const [data, setData] = useState('');
 
   return (
-    <form
-      className="form flex flex-col gap-8"
-      onSubmit={(e) => {
-        e.preventDefault();
-
-        const fd = formDataToObject(new FormData(e.currentTarget));
-
-        setData(JSON.stringify(fd, null, 2));
+    <Form
+      className="flex flex-col gap-8"
+      onSubmit={async (values: JSONObj) => {
+        setData(JSON.stringify(values, null, 2));
       }}
     >
       <div className="flex gap-4 bg-rose-50 px-2 py-4">
@@ -331,17 +329,15 @@ function FormControlsDemo() {
 
       <label className="flex items-center gap-2">
         Number input
-        <input
-          className="field"
+        <NumberInput
           name="number"
-          type="number"
           placeholder="numbers"
           min={0}
           max={100}
           step={1}
           required={required}
           disabled={disabled}
-          readOnly={readonly}
+          readonly={readonly}
         />
       </label>
 
@@ -393,6 +389,6 @@ function FormControlsDemo() {
       <pre hidden={!data}>
         <code>{data}</code>
       </pre>
-    </form>
+    </Form>
   );
 }

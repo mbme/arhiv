@@ -3,6 +3,7 @@ import { DataDescriptionField, FieldType } from 'utils/schema';
 import { Checkbox } from 'components/Form/Checkbox';
 import { useGettersContext } from 'components/Form/Form';
 import { Select } from 'components/Form/Select';
+import { NumberInput } from 'components/Form/NumberInput';
 import { useCardContext } from 'Workspace/workspace-reducer';
 
 function parseRefsList(refs: string): string[] | null {
@@ -67,12 +68,6 @@ function ValueEditor({
     return (
       <Checkbox
         className="field"
-        innerRef={(el) => {
-          if (!el) {
-            return;
-          }
-          getters.set(el, () => el.checked);
-        }}
         name={name}
         initialValue={initialValue === 'true'}
         readonly={readonly}
@@ -120,21 +115,13 @@ function ValueEditor({
 
   if ('NaturalNumber' in fieldType) {
     return (
-      <input
+      <NumberInput
         className="field"
-        ref={(el) => {
-          if (!el) {
-            return;
-          }
-
-          getters.set(el, () => (el.value ? Number.parseInt(el.value, 10) : null));
-        }}
-        type="number"
         min={0}
         step={1}
         name={name}
-        defaultValue={(initialValue as number | undefined)?.toString() ?? undefined}
-        readOnly={readonly}
+        initialValue={initialValue as number | undefined}
+        readonly={readonly}
         required={required}
         disabled={disabled}
       />

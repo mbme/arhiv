@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { setElementAttribute } from 'utils';
-import { JSXRef, setJSXRef } from 'utils/jsx';
 
 type Props = {
   className?: string;
@@ -10,7 +9,6 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
-  innerRef?: JSXRef<HTMLSelectElement>;
 };
 
 export function Select({
@@ -21,7 +19,6 @@ export function Select({
   readonly,
   required,
   disabled,
-  innerRef,
 }: Props) {
   if (options.includes('')) {
     throw new Error('options must not include empty string');
@@ -39,10 +36,6 @@ export function Select({
     <select
       ref={(el) => {
         selectRef.current = el;
-
-        if (innerRef) {
-          setJSXRef(innerRef, el);
-        }
 
         if (el) {
           setElementAttribute(el, 'readonly', readonly);

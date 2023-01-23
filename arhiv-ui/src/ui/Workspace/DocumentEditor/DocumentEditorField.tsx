@@ -2,7 +2,6 @@ import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
-import { NumberInput } from 'components/Form/NumberInput';
 import { useCardContext } from 'Workspace/workspace-reducer';
 
 type ValueEditorProps = {
@@ -96,12 +95,13 @@ function ValueEditor({
 
   if ('NaturalNumber' in fieldType) {
     return (
-      <NumberInput
+      <input
+        type="number"
         className="field"
         min={0}
         step={1}
         name={name}
-        initialValue={initialValue as number | undefined}
+        defaultValue={(initialValue as number | undefined)?.toString()}
         readonly={readonly}
         required={required}
         disabled={disabled}

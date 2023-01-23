@@ -6,7 +6,6 @@ import { Button, IconButton } from 'components/Button';
 import { DateTime } from 'components/DateTime';
 import { Dialog } from 'components/Dialog';
 import { Form } from 'components/Form/Form';
-import { NumberInput } from 'components/Form/NumberInput';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Icon, ICON_VARIANTS } from 'components/Icon';
@@ -281,7 +280,7 @@ function FormControlsDemo() {
   return (
     <Form
       className="flex flex-col gap-8"
-      onSubmit={async (values: JSONObj) => {
+      onSubmit={(values: JSONObj) => {
         setData(JSON.stringify(values, null, 2));
       }}
     >
@@ -329,8 +328,9 @@ function FormControlsDemo() {
 
       <label className="flex items-center gap-2">
         Number input
-        <NumberInput
+        <input
           name="number"
+          type="number"
           placeholder="numbers"
           min={0}
           max={100}

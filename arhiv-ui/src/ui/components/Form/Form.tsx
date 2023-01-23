@@ -1,4 +1,4 @@
-import { JSONObj, JSONValue, formDataToObject, cx } from 'utils';
+import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
 import { HTMLVRefInputElement } from 'components/Form/v-ref-input/index';
 
@@ -32,13 +32,14 @@ function collectValues(form: HTMLFormElement): JSONObj {
       continue;
     }
 
-    if (control instanceof HTMLElement) {
-      const value = control.dataset['value'];
+    if (control instanceof HTMLInputElement && control.type === 'number') {
+      result[name] = control.value ? Number.parseInt(control.value, 10) : null;
+      continue;
+    }
 
-      if (typeof value === 'string') {
-        result[name] = JSON.parse(value) as JSONValue;
-        continue;
-      }
+    if (control instanceof HTMLInputElement && control.type === 'checkbox') {
+      result[name] = control.checked;
+      continue;
     }
 
     result[name] = fd[name];

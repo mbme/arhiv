@@ -35,10 +35,13 @@ export function FieldValue({ field, value }: FieldValueProps) {
   }
 
   if ('RefList' in field.field_type) {
+    const ids = value as string[];
+
     return (
       <div className="w-full flex flex-col">
+        <div className="font-mono">{ids.length} items</div>
         <RefListContainer
-          ids={value as string[]}
+          ids={ids}
           onClick={(id) => open({ variant: 'document', documentId: id })}
         />
       </div>

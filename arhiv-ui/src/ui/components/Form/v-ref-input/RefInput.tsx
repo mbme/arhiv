@@ -1,7 +1,8 @@
 import { useState } from 'preact/hooks';
-import { RefContainer } from 'components/Ref';
+import { Ref, useDocuments } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
+import { QueryError } from 'components/QueryError';
 
 type Props = {
   documentType: string;
@@ -26,27 +27,46 @@ export function RefInput({
 
   const canAdd = ids.length === 0 || multiple;
 
+  const { documents, error, inProgress } = useDocuments(ids);
+
+  if (error) {
+    return <QueryError error={error} />;
+  }
+
+  if (inProgress || !documents) {
+    return null;
+  }
+
   return (
     <>
       {showPicker && (
         <DocumentPicker
           documentType={documentType}
           onSelected={(documentId) => {
-            onChange([...ids, documentId]);
+            if (!ids.includes(documentId)) {
+              onChange([...ids, documentId]);
+            }
             setShowPicker(false);
           }}
           onCancel={() => setShowPicker(false)}
         />
       )}
-      {ids.map((documentId) => (
-        <div className="flex items-center gap-4" key={documentId}>
-          <RefContainer id={documentId} onClick={() => onRefClick(documentId)} />
+
+      {documents.map((item) => (
+        <div className="flex items-center gap-4" key={item.id}>
+          <Ref
+            documentId={item.id}
+            documentType={item.documentType}
+            subtype={item.subtype}
+            documentTitle={item.title}
+            onClick={() => onRefClick(item.id)}
+          />
 
           {!readonly && !disabled && (
             <IconButton
               icon="x"
               size="sm"
-              onClick={() => onChange(ids.filter((id) => id !== documentId))}
+              onClick={() => onChange(ids.filter((id) => id !== item.id))}
             />
           )}
         </div>

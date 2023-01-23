@@ -55,11 +55,7 @@ export function RefContainer({ id, description, attachmentPreview, onClick }: Re
   );
 }
 
-type RefListContainerProps = {
-  ids: string[];
-  onClick: (documentId: string) => void;
-};
-export function RefListContainer({ ids, onClick }: RefListContainerProps) {
+export const useDocuments = (ids: string[]) => {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocuments({ ids }, abortSignal),
     {
@@ -67,17 +63,27 @@ export function RefListContainer({ ids, onClick }: RefListContainerProps) {
     }
   );
 
+  return { inProgress, error, documents: result?.documents };
+};
+
+type RefListContainerProps = {
+  ids: string[];
+  onClick: (documentId: string) => void;
+};
+export function RefListContainer({ ids, onClick }: RefListContainerProps) {
+  const { documents, error, inProgress } = useDocuments(ids);
+
   if (error) {
     return <QueryError error={error} />;
   }
 
-  if (inProgress || !result) {
+  if (inProgress || !documents) {
     return null;
   }
 
   return (
     <>
-      {result.documents.map((item) => (
+      {documents.map((item) => (
         <Ref
           key={item.id}
           documentId={item.id}

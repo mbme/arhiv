@@ -5,16 +5,18 @@ import { Button, IconButton } from 'components/Button';
 
 type Props = {
   documentType: string;
-  documentId?: string;
+  ids: string[];
+  multiple: boolean;
   readonly: boolean;
   disabled: boolean;
-  onChange: (documentId?: string) => void;
+  onChange: (ids: string[]) => void;
   onRefClick: (documentId: string) => void;
 };
 
 export function RefInput({
   documentType,
-  documentId,
+  ids,
+  multiple,
   readonly,
   disabled,
   onChange,
@@ -22,34 +24,39 @@ export function RefInput({
 }: Props) {
   const [showPicker, setShowPicker] = useState(false);
 
-  if (showPicker) {
-    return (
-      <DocumentPicker
-        documentType={documentType}
-        onSelected={(documentId) => {
-          onChange(documentId);
-          setShowPicker(false);
-        }}
-        onCancel={() => setShowPicker(false)}
-      />
-    );
-  }
-
-  if (documentId) {
-    return (
-      <div className="flex items-center gap-4">
-        <RefContainer id={documentId} onClick={() => onRefClick(documentId)} />
-
-        {!readonly && !disabled && (
-          <IconButton icon="x" size="sm" onClick={() => onChange(undefined)} />
-        )}
-      </div>
-    );
-  }
+  const canAdd = ids.length === 0 || multiple;
 
   return (
-    <Button variant="text" onClick={() => setShowPicker(true)} disabled={readonly || disabled}>
-      Pick {documentType}...
-    </Button>
+    <>
+      {showPicker && (
+        <DocumentPicker
+          documentType={documentType}
+          onSelected={(documentId) => {
+            onChange([...ids, documentId]);
+            setShowPicker(false);
+          }}
+          onCancel={() => setShowPicker(false)}
+        />
+      )}
+      {ids.map((documentId) => (
+        <div className="flex items-center gap-4" key={documentId}>
+          <RefContainer id={documentId} onClick={() => onRefClick(documentId)} />
+
+          {!readonly && !disabled && (
+            <IconButton
+              icon="x"
+              size="sm"
+              onClick={() => onChange(ids.filter((id) => id !== documentId))}
+            />
+          )}
+        </div>
+      ))}
+
+      {canAdd && (
+        <Button variant="text" onClick={() => setShowPicker(true)} disabled={readonly || disabled}>
+          Pick {documentType}...
+        </Button>
+      )}
+    </>
   );
 }

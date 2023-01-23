@@ -8,6 +8,14 @@ export class RefClickEvent extends CustomEvent<{ documentId: string }> {
   }
 }
 
+function parseRefsList(refs: string): string[] {
+  return refs
+    .replaceAll(',', ' ')
+    .split(' ')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
 export class HTMLVRefInputElement extends FormControlElement {
   static get observedAttributes() {
     return ['required', 'readonly', 'disabled'];
@@ -33,8 +41,8 @@ export class HTMLVRefInputElement extends FormControlElement {
       this.tabIndex = 0;
     }
 
-    const onChange = (documentId?: string) => {
-      this.value = documentId ?? '';
+    const onChange = (ids: string[]) => {
+      this.value = ids.join(', ');
       this.updateFormValue();
     };
 
@@ -45,7 +53,8 @@ export class HTMLVRefInputElement extends FormControlElement {
     render(
       <RefInput
         documentType={this.documentType}
-        documentId={this.value || undefined}
+        ids={this.refs}
+        multiple={this.multiple}
         readonly={this.readonly}
         disabled={this.disabled}
         onChange={onChange}
@@ -83,6 +92,10 @@ export class HTMLVRefInputElement extends FormControlElement {
     return documentType;
   }
 
+  get multiple() {
+    return this.hasAttribute('multiple');
+  }
+
   get disabled() {
     return this.hasAttribute('disabled');
   }
@@ -112,6 +125,10 @@ export class HTMLVRefInputElement extends FormControlElement {
     this._value = value;
     this.render();
   }
+
+  get refs() {
+    return parseRefsList(this.value);
+  }
 }
 
 declare module 'preact' {
@@ -125,6 +142,7 @@ declare module 'preact' {
       value?: string;
 
       documentType: string;
+      multiple?: boolean;
       onRefClick?: (e: RefClickEvent) => void;
     }
 

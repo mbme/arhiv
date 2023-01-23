@@ -51,7 +51,7 @@ function collectValues(form: HTMLFormElement): JSONObj {
 type FormProps = {
   className?: string;
   children: JSXChildren;
-  onSubmit: (values: JSONObj) => Promise<void>;
+  onSubmit: (values: JSONObj) => Promise<void> | void;
   formRef?: JSXRef<HTMLFormElement>;
 };
 

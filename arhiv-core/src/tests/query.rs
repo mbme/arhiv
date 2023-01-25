@@ -1,9 +1,11 @@
 use anyhow::Result;
+use serde_json::json;
+
 use baza::{
+    entities::Document,
     schema::{DataDescription, DataSchema, Field, FieldType},
     Filter, OrderBy,
 };
-use serde_json::json;
 
 use super::utils::*;
 use crate::test_arhiv::TestArhiv;
@@ -251,6 +253,72 @@ async fn test_conditions() -> Result<()> {
         let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
         assert_eq!(get_values(page).len(), 0);
     }
+
+    Ok(())
+}
+
+#[test]
+fn test_backrefs() -> Result<()> {
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![
+        //
+        DataDescription {
+            document_type: "test_type",
+            fields: vec![Field {
+                name: "ref",
+                field_type: FieldType::Ref("other_type"),
+                mandatory: false,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
+        },
+        DataDescription {
+            document_type: "other_type",
+            fields: vec![Field {
+                name: "field",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
+        },
+    ]));
+
+    let tx = arhiv.baza.get_tx()?;
+
+    let mut doc1 = Document::new_with_data(
+        "other_type",
+        "",
+        json!({ "field": "value" }).try_into().unwrap(),
+    );
+
+    tx.stage_document(&mut doc1)?;
+
+    tx.stage_document(&mut Document::new_with_data(
+        "test_type",
+        "",
+        json!({
+            "ref": &doc1.id,
+        })
+        .try_into()
+        .unwrap(),
+    ))?;
+    tx.stage_document(&mut Document::new_with_data(
+        "test_type",
+        "",
+        json!({
+            "ref": &doc1.id,
+        })
+        .try_into()
+        .unwrap(),
+    ))?;
+
+    tx.commit()?;
+
+    let page = arhiv.baza.list_documents(Filter::all_backrefs(&doc1.id))?;
+
+    assert_eq!(page.items.len(), 2);
 
     Ok(())
 }

@@ -322,3 +322,71 @@ fn test_backrefs() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_collections() -> Result<()> {
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![
+        //
+        DataDescription {
+            document_type: "collection_type",
+            fields: vec![Field {
+                name: "items",
+                field_type: FieldType::RefList("other_type"),
+                mandatory: true,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
+        },
+        DataDescription {
+            document_type: "other_type",
+            fields: vec![Field {
+                name: "field",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
+        },
+    ]));
+
+    let tx = arhiv.baza.get_tx()?;
+
+    let mut doc1 = Document::new_with_data(
+        "other_type",
+        "",
+        json!({ "field": "value" }).try_into().unwrap(),
+    );
+
+    tx.stage_document(&mut doc1)?;
+
+    tx.stage_document(&mut Document::new_with_data(
+        "collection_type",
+        "",
+        json!({
+            "items": vec![&doc1.id],
+        })
+        .try_into()
+        .unwrap(),
+    ))?;
+    tx.stage_document(&mut Document::new_with_data(
+        "collection_type",
+        "",
+        json!({
+            "items": vec![&doc1.id],
+        })
+        .try_into()
+        .unwrap(),
+    ))?;
+
+    tx.commit()?;
+
+    let page = arhiv
+        .baza
+        .list_documents(Filter::all_collections(&doc1.id))?;
+
+    assert_eq!(page.items.len(), 2);
+
+    Ok(())
+}

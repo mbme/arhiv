@@ -8,7 +8,12 @@ use super::{BLOBId, Id};
 #[serde(deny_unknown_fields)]
 pub struct Refs {
     pub documents: HashSet<Id>,
+    pub collection: HashSet<Id>,
     pub blobs: HashSet<BLOBId>,
+}
+
+impl Refs {
+    pub const VERSION: u8 = 1;
 }
 
 impl fmt::Display for Refs {

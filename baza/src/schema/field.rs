@@ -52,13 +52,20 @@ impl Field {
                     result.insert(value);
                 }
             }
-            FieldType::RefList(_) => {
-                let value: Vec<Id> =
-                    serde_json::from_value(value.clone()).expect("field must parse");
-
-                result.extend(value);
-            }
             _ => {}
+        }
+
+        result
+    }
+
+    #[must_use]
+    pub fn extract_collection_refs(&self, value: &Value) -> HashSet<Id> {
+        let mut result = HashSet::new();
+
+        if let FieldType::RefList(_) = self.field_type {
+            let value: Vec<Id> = serde_json::from_value(value.clone()).expect("field must parse");
+
+            result.extend(value);
         }
 
         result

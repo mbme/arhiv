@@ -12,7 +12,8 @@ use rs_utils::{
 use crate::{
     db_migrations::get_db_version,
     entities::{
-        BLOBId, Changeset, ChangesetResponse, Document, Id, Revision, BLOB, ERASED_DOCUMENT_TYPE,
+        BLOBId, Changeset, ChangesetResponse, Document, Id, Refs, Revision, BLOB,
+        ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
@@ -21,7 +22,10 @@ use crate::{
 
 use super::{
     db::{init_functions, open_connection},
-    dto::{BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_DATA_VERSION},
+    dto::{
+        BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_COMPUTED_DATA_VERSION,
+        SETTING_DATA_VERSION,
+    },
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
     utils,
@@ -161,16 +165,30 @@ impl BazaConnection {
     pub fn get_setting<T: Serialize + DeserializeOwned>(
         &self,
         setting: &DBSetting<T>,
-    ) -> Result<T> {
+    ) -> Result<Option<T>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT value FROM settings WHERE key = ?1")?;
 
-        let value: String = stmt
+        let value: Option<String> = stmt
             .query_row([setting.0], |row| row.get(0))
+            .optional()
             .context(anyhow!("failed to read setting {}", setting.0))?;
 
-        serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
+        if let Some(value) = value {
+            serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn must_get_setting<T: Serialize + DeserializeOwned>(
+        &self,
+        setting: &DBSetting<T>,
+    ) -> Result<T> {
+        self.get_setting(setting)
+            .transpose()
+            .context(anyhow!("setting {} is missing", setting.0))?
     }
 
     pub fn get_db_rev(&self) -> Result<Revision> {
@@ -300,6 +318,14 @@ impl BazaConnection {
         if let Some(ref id) = filter.conditions.document_ref {
             qb.and_from("json_each(refs, '$.documents') AS document_refs");
             qb.where_condition(format!("document_refs.value = {}", qb.param(id.clone())));
+        }
+
+        if let Some(ref collection_id) = filter.conditions.collection_ref {
+            qb.and_from("json_each(refs, '$.collection') AS collection_refs");
+            qb.where_condition(format!(
+                "collection_refs.value = {}",
+                qb.param(collection_id.clone())
+            ));
         }
 
         for order in &filter.order {
@@ -636,6 +662,20 @@ impl BazaConnection {
     }
 
     pub(crate) fn compute_data(&self) -> Result<()> {
+        let computed_data_version = self
+            .get_setting(&SETTING_COMPUTED_DATA_VERSION)?
+            .unwrap_or(0);
+
+        ensure!(
+            computed_data_version <= Refs::VERSION,
+            "computed_data_version is greater than Refs version"
+        );
+        if computed_data_version < Refs::VERSION {
+            self.get_connection()
+                .execute("DELETE FROM documents_refs", [])?;
+            self.set_setting(&SETTING_COMPUTED_DATA_VERSION, &Refs::VERSION)?;
+        }
+
         let now = Instant::now();
 
         let rows_count = self.get_connection().execute(
@@ -756,7 +796,7 @@ impl BazaConnection {
         let documents = self.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            data_version: self.get_setting(&SETTING_DATA_VERSION)?,
+            data_version: self.must_get_setting(&SETTING_DATA_VERSION)?,
             base_rev,
             documents,
         };
@@ -928,7 +968,7 @@ impl BazaConnection {
     }
 
     pub(crate) fn apply_data_migrations(&self, migrations: &DataMigrations) -> Result<()> {
-        let data_version = self.get_setting(&SETTING_DATA_VERSION)?;
+        let data_version = self.must_get_setting(&SETTING_DATA_VERSION)?;
         let latest_data_version = get_latest_data_version(migrations);
 
         ensure!(

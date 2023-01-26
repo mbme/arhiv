@@ -11,6 +11,7 @@ pub struct Conditions {
     pub search: Option<String>,          // pattern
     pub document_type: Option<String>,   // document_type
     pub document_ref: Option<Id>,
+    pub collection_ref: Option<Id>,
     pub only_staged: Option<bool>,
     pub skip_erased: Option<bool>,
 }
@@ -94,6 +95,19 @@ impl Filter {
     }
 
     #[must_use]
+    pub fn all_collections(id: impl Into<Id>) -> Filter {
+        Filter {
+            page_offset: None,
+            page_size: None,
+            conditions: Conditions {
+                collection_ref: Some(id.into()), // TODO: custom "Option": None/Equals/NotEquals
+                ..Conditions::default()
+            },
+            order: vec![OrderBy::UpdatedAt { asc: false }],
+        }
+    }
+
+    #[must_use]
     pub fn all_erased_documents() -> Filter {
         Filter {
             page_offset: None,
@@ -146,6 +160,13 @@ impl Filter {
     #[must_use]
     pub fn with_document_ref(mut self, id: Id) -> Filter {
         self.conditions.document_ref = Some(id);
+
+        self
+    }
+
+    #[must_use]
+    pub fn with_collection_ref(mut self, collection_id: impl Into<Id>) -> Filter {
+        self.conditions.collection_ref = Some(collection_id.into());
 
         self
     }

@@ -78,6 +78,7 @@ export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
             subtype={result.subtype}
             updatedAt={result.updatedAt}
             backrefs={result.backrefs}
+            collections={result.collections}
           />
 
           {isAttachment(result.documentType) && (

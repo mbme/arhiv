@@ -90,6 +90,20 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 })
                 .collect::<Result<_>>()?;
 
+            let collections = conn
+                .list_documents(&Filter::all_collections(id))?
+                .items
+                .into_iter()
+                .map(|item| {
+                    Ok(DocumentBackref {
+                        title: schema.get_title(&item)?,
+                        id: item.id,
+                        document_type: item.document_type,
+                        subtype: item.subtype,
+                    })
+                })
+                .collect::<Result<_>>()?;
+
             let title = schema.get_title(&document)?;
 
             APIResponse::GetDocument {
@@ -100,6 +114,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 updated_at: document.updated_at,
                 data: document.data,
                 backrefs,
+                collections,
             }
         }
         APIRequest::ParseMarkup { markup } => {

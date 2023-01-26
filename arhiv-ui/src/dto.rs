@@ -76,6 +76,7 @@ pub enum APIResponse {
         updated_at: Timestamp,
         data: DocumentData,
         backrefs: Vec<DocumentBackref>,
+        collections: Vec<DocumentBackref>,
     },
     ParseMarkup {
         ast: Value,

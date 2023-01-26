@@ -75,6 +75,7 @@ export type APIResponse =
       updatedAt: string;
       data: DocumentData;
       backrefs: DocumentBackref[];
+      collections: DocumentBackref[];
     }
   | {
       typeName: 'ParseMarkup';

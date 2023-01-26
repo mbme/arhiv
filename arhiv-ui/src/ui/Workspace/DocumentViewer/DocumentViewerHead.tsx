@@ -14,6 +14,7 @@ type DocumentViewerHeadProps = {
   subtype: string;
   updatedAt: string;
   backrefs: DocumentBackref[];
+  collections: DocumentBackref[];
 };
 
 export function DocumentViewerHead({
@@ -22,6 +23,7 @@ export function DocumentViewerHead({
   subtype,
   updatedAt,
   backrefs,
+  collections,
 }: DocumentViewerHeadProps) {
   const { open } = useCardContext();
 
@@ -43,8 +45,23 @@ export function DocumentViewerHead({
 
   return (
     <div className="flex justify-between pl-2 mb-6">
-      <div className={cx('flex flex-col gap-2', { 'invisible': backrefs.length === 0 })}>
-        <h1 className="section-heading">Linked by:</h1>
+      <div
+        className={cx('flex flex-col gap-2', {
+          'invisible': backrefs.length === 0 && collections.length === 0,
+        })}
+      >
+        {collections.length > 0 && <h1 className="section-heading">Collections:</h1>}
+        {collections.map((collection) => (
+          <Ref
+            key={collection.id}
+            documentId={collection.id}
+            documentType={collection.documentType}
+            subtype={collection.subtype}
+            documentTitle={collection.title}
+            onClick={() => open({ variant: 'document', documentId: collection.id })}
+          />
+        ))}
+        {backrefs.length > 0 && <h1 className="section-heading">Linked by:</h1>}
         {backrefs.map((backref) => (
           <Ref
             key={backref.id}

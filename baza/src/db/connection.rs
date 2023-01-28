@@ -308,11 +308,16 @@ impl BazaConnection {
             qb.order_by("search_score", false);
         }
 
-        if let Some(ref document_type) = filter.conditions.document_type {
-            qb.where_condition(format!(
-                "documents.document_type = {}",
-                qb.param(document_type)
-            ));
+        if !filter.conditions.document_types.is_empty() {
+            let list = filter
+                .conditions
+                .document_types
+                .iter()
+                .map(|document_type| format!("'{document_type}'"))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            qb.where_condition(format!("documents.document_type IN ({list})"));
         }
 
         if let Some(ref id) = filter.conditions.document_ref {

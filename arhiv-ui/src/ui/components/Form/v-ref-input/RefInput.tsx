@@ -5,7 +5,7 @@ import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 
 type Props = {
-  documentType: string;
+  documentTypes: string[];
   ids: string[];
   multiple: boolean;
   readonly: boolean;
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export function RefInput({
-  documentType,
+  documentTypes,
   ids,
   multiple,
   readonly,
@@ -41,7 +41,7 @@ export function RefInput({
     <>
       {showPicker && (
         <DocumentPicker
-          documentType={documentType}
+          documentTypes={documentTypes}
           onSelected={(documentId) => {
             if (!ids.includes(documentId)) {
               onChange([...ids, documentId]);
@@ -74,7 +74,7 @@ export function RefInput({
 
       {canAdd && (
         <Button variant="text" onClick={() => setShowPicker(true)} disabled={readonly || disabled}>
-          Pick {documentType}...
+          Pick {documentTypes.join(', ')}...
         </Button>
       )}
     </>

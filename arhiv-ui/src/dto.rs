@@ -11,7 +11,7 @@ use rs_utils::Timestamp;
 pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     ListDocuments {
-        document_type: Option<String>,
+        document_types: Vec<String>,
         query: String,
         page: u8,
     },

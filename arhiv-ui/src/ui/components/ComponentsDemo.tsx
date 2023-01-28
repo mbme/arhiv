@@ -367,7 +367,7 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Ref picker input
         <v-ref-input
-          documentType="note"
+          documentTypes={JSON.stringify(['note', 'book'])}
           name="note-ref"
           required={required}
           disabled={disabled}

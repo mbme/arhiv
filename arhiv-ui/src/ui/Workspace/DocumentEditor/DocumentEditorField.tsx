@@ -66,7 +66,7 @@ function ValueEditor({
     return (
       <v-ref-input
         className="field"
-        documentType={fieldType.Ref}
+        documentTypes={JSON.stringify([fieldType.Ref])}
         name={name}
         defaultValue={initialValue as string | undefined}
         readonly={readonly}
@@ -81,7 +81,7 @@ function ValueEditor({
     return (
       <v-ref-input
         className="field"
-        documentType={fieldType.RefList}
+        documentTypes={JSON.stringify([fieldType.RefList])}
         name={name}
         defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
         readonly={readonly}

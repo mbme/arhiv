@@ -8,7 +8,7 @@ import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
   autofocus?: boolean;
-  documentType?: string;
+  documentTypes?: string[];
   initialQuery?: string;
   initialPage?: number;
   onQueryChange?: (query: string) => void;
@@ -18,7 +18,7 @@ type CatalogProps = {
 
 export function Catalog({
   autofocus = false,
-  documentType,
+  documentTypes = [],
   initialQuery = '',
   initialPage = 0,
   onQueryChange,
@@ -29,9 +29,9 @@ export function Catalog({
   const [page, _setPage] = useState(initialPage);
 
   const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.ListDocuments({ query, page, documentType }, abortSignal),
+    (abortSignal) => RPC.ListDocuments({ query, page, documentTypes }, abortSignal),
     {
-      refreshIfChange: [query, page, documentType],
+      refreshIfChange: [query, page, ...documentTypes],
     }
   );
 

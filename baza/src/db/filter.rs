@@ -1,4 +1,4 @@
-use std::default::Default;
+use std::{collections::HashSet, default::Default};
 
 use serde::{Deserialize, Serialize};
 
@@ -9,9 +9,9 @@ use crate::entities::{Id, ERASED_DOCUMENT_TYPE};
 pub struct Conditions {
     pub field: Option<(String, String)>, // field, pattern
     pub search: Option<String>,          // pattern
-    pub document_type: Option<String>,   // document_type
-    pub document_ref: Option<Id>,
-    pub collection_ref: Option<Id>,
+    pub document_types: HashSet<String>, // document_types, if empty matches all types
+    pub document_ref: Option<Id>,        // TODO: custom "Option": None/Equals/NotEquals
+    pub collection_ref: Option<Id>,      // TODO: custom "Option": None/Equals/NotEquals
     pub only_staged: Option<bool>,
     pub skip_erased: Option<bool>,
 }
@@ -87,7 +87,7 @@ impl Filter {
             page_offset: None,
             page_size: None,
             conditions: Conditions {
-                document_ref: Some(id.into()), // TODO: custom "Option": None/Equals/NotEquals
+                document_ref: Some(id.into()),
                 ..Conditions::default()
             },
             order: vec![OrderBy::UpdatedAt { asc: false }],
@@ -100,7 +100,7 @@ impl Filter {
             page_offset: None,
             page_size: None,
             conditions: Conditions {
-                collection_ref: Some(id.into()), // TODO: custom "Option": None/Equals/NotEquals
+                collection_ref: Some(id.into()),
                 ..Conditions::default()
             },
             order: vec![OrderBy::UpdatedAt { asc: false }],
@@ -109,20 +109,29 @@ impl Filter {
 
     #[must_use]
     pub fn all_erased_documents() -> Filter {
-        Filter {
+        let filter = Filter {
             page_offset: None,
             page_size: None,
-            conditions: Conditions {
-                document_type: Some(ERASED_DOCUMENT_TYPE.to_string()),
-                ..Conditions::default()
-            },
+            conditions: Conditions::default(),
             order: vec![OrderBy::UpdatedAt { asc: false }],
-        }
+        };
+
+        filter.with_document_type(ERASED_DOCUMENT_TYPE)
     }
 
     #[must_use]
     pub fn with_document_type(mut self, document_type: impl Into<String>) -> Filter {
-        self.conditions.document_type = Some(document_type.into());
+        self.conditions.document_types.insert(document_type.into());
+
+        self
+    }
+
+    #[must_use]
+    pub fn with_document_types(
+        mut self,
+        document_types: impl IntoIterator<Item = String>,
+    ) -> Filter {
+        self.conditions.document_types.extend(document_types);
 
         self
     }
@@ -218,10 +227,5 @@ impl Filter {
     #[must_use]
     pub fn get_pattern(&self) -> Option<&str> {
         self.conditions.search.as_deref()
-    }
-
-    #[must_use]
-    pub fn get_document_type(&self) -> Option<&str> {
-        self.conditions.document_type.as_deref()
     }
 }

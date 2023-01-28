@@ -1,7 +1,7 @@
 import { createContext } from 'preact';
 import { useContext, useEffect, useReducer } from 'preact/hooks';
 import produce from 'immer';
-import { newId, getSessionValue, setSessionValue } from '../utils';
+import { newId, getSessionValue, setSessionValue } from 'utils';
 
 type CardVariant =
   | { variant: 'catalog'; query?: string; page?: number; documentType?: string } //

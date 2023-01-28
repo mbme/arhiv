@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { JSONObj } from 'utils';
-import { DocumentData, DocumentFieldErrors } from 'dto';
+import { DocumentBackref, DocumentData, DocumentFieldErrors } from 'dto';
 import { RPC } from 'utils/rpc';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from 'utils/schema';
@@ -16,6 +16,7 @@ type DocumentEditorFormProps = {
   documentType: string;
   subtype?: string;
   data?: DocumentData;
+  collections: DocumentBackref[];
   onSave: (id: string) => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
@@ -25,6 +26,7 @@ export function DocumentEditorForm({
   documentType,
   subtype: initialSubtype,
   data = {},
+  collections,
   onSave,
   formRef,
 }: DocumentEditorFormProps) {

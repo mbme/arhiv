@@ -21,7 +21,7 @@ const PAGE_SIZE: u8 = 10;
 pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<APIResponse> {
     let response = match request {
         APIRequest::ListDocuments {
-            document_type,
+            document_types,
             query,
             page,
         } => {
@@ -32,12 +32,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .skip_erased(true)
                 .recently_updated_first();
 
-            if let Some(document_type) = document_type {
-                if document_type == ERASED_DOCUMENT_TYPE {
+            if !document_types.is_empty() {
+                if document_types.contains(&ERASED_DOCUMENT_TYPE.into()) {
                     filter = filter.skip_erased(false);
                 }
 
-                filter = filter.with_document_type(document_type);
+                filter = filter.with_document_types(document_types);
             }
 
             let schema = arhiv.baza.get_schema();

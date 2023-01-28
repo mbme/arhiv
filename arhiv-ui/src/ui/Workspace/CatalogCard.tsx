@@ -35,7 +35,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
 
       <Catalog
         autofocus={!context.restored}
-        documentType={documentType}
+        documentTypes={documentType === undefined ? undefined : [documentType]}
         initialQuery={query}
         initialPage={page}
         onQueryChange={updateQuery}

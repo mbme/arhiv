@@ -57,6 +57,7 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
           documentType={result.documentType}
           subtype={result.subtype}
           data={result.data}
+          collections={result.collections}
           onSave={onSave}
         />
       )}

@@ -52,7 +52,7 @@ export class HTMLVRefInputElement extends FormControlElement {
 
     render(
       <RefInput
-        documentType={this.documentType}
+        documentTypes={this.documentTypes}
         ids={this.refs}
         multiple={this.multiple}
         readonly={this.readonly}
@@ -83,13 +83,13 @@ export class HTMLVRefInputElement extends FormControlElement {
   private getInitialValue = () => this.getAttribute('value') ?? this.getDefaultValue();
   private getDefaultValue = () => this.getAttribute('defaultValue') ?? '';
 
-  get documentType() {
-    const documentType = this.getAttribute('documentType');
-    if (documentType === null) {
-      throw new Error('documentType attribute is missing');
+  get documentTypes(): string[] {
+    const documentTypes = this.getAttribute('documentTypes');
+    if (documentTypes === null) {
+      throw new Error('documentTypes attribute is missing');
     }
 
-    return documentType;
+    return JSON.parse(documentTypes) as string[];
   }
 
   get multiple() {
@@ -141,7 +141,7 @@ declare module 'preact' {
       defaultValue?: string;
       value?: string;
 
-      documentType: string;
+      documentTypes: string;
       multiple?: boolean;
       onRefClick?: (e: RefClickEvent) => void;
     }

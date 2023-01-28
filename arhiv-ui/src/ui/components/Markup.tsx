@@ -1,9 +1,9 @@
 import { createElement } from 'preact';
-import { Obj } from '../utils';
-import { MarkupElement, throwBadMarkupElement } from '../../dto';
-import { useQuery } from '../utils/hooks';
-import { JSXElement } from '../utils/jsx';
-import { RPC } from '../utils/rpc';
+import { cx, Obj } from 'utils';
+import { MarkupElement, throwBadMarkupElement } from 'dto';
+import { useQuery } from 'utils/hooks';
+import { JSXElement } from 'utils/jsx';
+import { RPC } from 'utils/rpc';
 import { Link } from './Link';
 import { QueryError } from './QueryError';
 import { RefContainer } from './Ref';
@@ -214,7 +214,9 @@ function markupElementToJSX(
           <span
             data-range-start={el.range.start}
             data-range-end={el.range.end}
-            className="inline-block w-full"
+            className={cx({
+              'inline-block w-full': el.typeName === 'Image',
+            })}
           >
             <RefContainer
               id={id}

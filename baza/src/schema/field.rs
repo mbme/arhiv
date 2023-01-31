@@ -89,55 +89,6 @@ impl Field {
         result
     }
 
-    pub fn from_raw_value(&self, raw_value: Option<&str>) -> Result<Value> {
-        match self.field_type {
-            // skip empty string from ref field
-            FieldType::Ref(_) => {
-                let value = raw_value.unwrap_or_default().trim();
-
-                if value.is_empty() {
-                    return Ok(Value::Null);
-                }
-
-                serde_json::to_value(value).context("failed to serialize")
-            }
-
-            // convert string list of refs into array of ids
-            FieldType::RefList(_) => {
-                let value = extract_ids_from_reflist(raw_value.unwrap_or_default());
-
-                serde_json::to_value(value).context("failed to serialize")
-            }
-
-            // convert string "true" to boolean, default to false
-            // (since browsers do not send values of unchecked radio inputs)
-            FieldType::Flag {} => {
-                let value = raw_value.unwrap_or_default() == "true";
-
-                serde_json::to_value(value).context("failed to serialize")
-            }
-
-            // convert string to number
-            FieldType::NaturalNumber {} => {
-                let raw_value = raw_value.unwrap_or_default().trim();
-
-                if raw_value.is_empty() {
-                    return Ok(Value::Null);
-                }
-
-                let value: u64 = raw_value.parse().context(anyhow!(
-                    "failed to parse natural number field {}: {}",
-                    self.name,
-                    raw_value
-                ))?;
-
-                serde_json::to_value(value).context("failed to serialize")
-            }
-
-            _ => serde_json::to_value(raw_value).context("failed to serialize"),
-        }
-    }
-
     pub fn extract_search_data(&self, value: &Value) -> Result<Option<String>> {
         // TODO also search in Ref and RefList document titles
 
@@ -291,48 +242,5 @@ impl Field {
         } else {
             true
         }
-    }
-}
-
-fn extract_ids_from_reflist(reflist: &str) -> Vec<Id> {
-    reflist
-        .replace(',', " ")
-        .split(' ')
-        .map(str::trim)
-        .filter(|item| !item.is_empty())
-        .map(Into::into)
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::extract_ids_from_reflist;
-
-    #[test]
-    fn test_extract_ids_from_reflist() {
-        assert_eq!(
-            extract_ids_from_reflist(""), //
-            vec![],
-        );
-
-        assert_eq!(
-            extract_ids_from_reflist("test"), //
-            vec!["test".into()],
-        );
-
-        assert_eq!(
-            extract_ids_from_reflist("test,123"), //
-            vec!["test".into(), "123".into()],
-        );
-
-        assert_eq!(
-            extract_ids_from_reflist("test , 123"), //
-            vec!["test".into(), "123".into()],
-        );
-
-        assert_eq!(
-            extract_ids_from_reflist("test 123 ,,, ,"), //
-            vec!["test".into(), "123".into()],
-        );
     }
 }

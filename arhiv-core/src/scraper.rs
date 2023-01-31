@@ -1,11 +1,17 @@
 use anyhow::{bail, Context, Result};
 use serde_json::json;
 
-use baza::{entities::Document, BazaConnection};
+use baza::{
+    entities::{Document, DocumentType},
+    BazaConnection,
+};
 use rs_utils::{log, Download};
 pub use scraper::{ScrapedData, ScraperOptions};
 
-use crate::{Arhiv, BazaConnectionExt};
+use crate::{
+    definitions::{BOOK_TYPE, FILM_TYPE, GAME_TYPE},
+    Arhiv, BazaConnectionExt,
+};
 
 impl Arhiv {
     pub async fn scrape(
@@ -52,8 +58,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            "book",
-                            "",
+                            DocumentType::new(BOOK_TYPE, ""),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -89,8 +94,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            "film",
-                            "",
+                            DocumentType::new(FILM_TYPE, ""),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -123,8 +127,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            "film",
-                            "",
+                            DocumentType::new(FILM_TYPE, ""),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -153,8 +156,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            "game",
-                            "",
+                            DocumentType::new(GAME_TYPE, ""),
                             json!({
                                 "cover": &cover.id,
                                 "name": name,

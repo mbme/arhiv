@@ -3,14 +3,20 @@ use std::fs;
 use anyhow::Result;
 use serde_json::Value;
 
-use baza::{entities::Document, ListPage};
+use baza::{
+    entities::{Document, DocumentType},
+    ListPage,
+};
 
 pub fn empty_document() -> Document {
-    Document::new("test_type", "")
+    Document::new(DocumentType::new("test_type", ""))
 }
 
 pub fn new_document(value: Value) -> Document {
-    Document::new_with_data("test_type", "", value.try_into().unwrap())
+    Document::new_with_data(
+        DocumentType::new("test_type", ""),
+        value.try_into().unwrap(),
+    )
 }
 
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {

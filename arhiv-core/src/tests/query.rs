@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde_json::json;
 
 use baza::{
-    entities::Document,
+    entities::{Document, DocumentType},
     schema::{DataDescription, DataSchema, Field, FieldType},
     Filter, OrderBy,
 };
@@ -288,16 +288,14 @@ fn test_backrefs() -> Result<()> {
     let tx = arhiv.baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
-        "other_type",
-        "",
+        DocumentType::new("other_type", ""),
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
     tx.stage_document(&mut doc1)?;
 
     tx.stage_document(&mut Document::new_with_data(
-        "test_type",
-        "",
+        DocumentType::new("test_type", ""),
         json!({
             "ref": &doc1.id,
         })
@@ -305,8 +303,7 @@ fn test_backrefs() -> Result<()> {
         .unwrap(),
     ))?;
     tx.stage_document(&mut Document::new_with_data(
-        "test_type",
-        "",
+        DocumentType::new("test_type", ""),
         json!({
             "ref": &doc1.id,
         })
@@ -354,16 +351,14 @@ fn test_collections() -> Result<()> {
     let tx = arhiv.baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
-        "other_type",
-        "",
+        DocumentType::new("other_type", ""),
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
     tx.stage_document(&mut doc1)?;
 
     tx.stage_document(&mut Document::new_with_data(
-        "collection_type",
-        "",
+        DocumentType::new("collection_type", ""),
         json!({
             "items": vec![&doc1.id],
         })
@@ -371,8 +366,7 @@ fn test_collections() -> Result<()> {
         .unwrap(),
     ))?;
     tx.stage_document(&mut Document::new_with_data(
-        "collection_type",
-        "",
+        DocumentType::new("collection_type", ""),
         json!({
             "items": vec![&doc1.id],
         })

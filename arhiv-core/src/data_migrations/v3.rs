@@ -14,27 +14,27 @@ impl DataMigration for DataSchema3 {
     }
 
     fn update(&self, document: &mut Cow<Document>, _conn: &BazaConnection) -> Result<()> {
-        if document.document_type == "book collection" {
+        if document.document_type.document_type == "book collection" {
             let document = document.to_mut();
             document.data.set("books", json!([]));
         }
-        if document.document_type == "contact collection" {
+        if document.document_type.document_type == "contact collection" {
             let document = document.to_mut();
             document.data.set("contacts", json!([]));
         }
-        if document.document_type == "film collection" {
+        if document.document_type.document_type == "film collection" {
             let document = document.to_mut();
             document.data.set("films", json!([]));
         }
-        if document.document_type == "game collection" {
+        if document.document_type.document_type == "game collection" {
             let document = document.to_mut();
             document.data.set("games", json!([]));
         }
-        if document.document_type == "project" {
+        if document.document_type.document_type == "project" {
             let document = document.to_mut();
             document.data.set("tasks", json!([]));
         }
-        if document.document_type == "track collection" {
+        if document.document_type.document_type == "track collection" {
             let document = document.to_mut();
             document.data.set("tracks", json!([]));
         }

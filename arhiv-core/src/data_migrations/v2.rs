@@ -19,14 +19,14 @@ impl DataMigration for DataSchema2 {
     fn update(&self, document: &mut Cow<Document>, conn: &BazaConnection) -> Result<()> {
         // in attachment
         // if image, add subtype and dimensions
-        if document.document_type == "attachment"
+        if document.document_type.document_type == "attachment"
             && document
                 .data
                 .get_mandatory_str("media_type")
                 .starts_with("image/")
         {
-            let mut document = document.to_mut();
-            document.subtype = "image".to_string();
+            let document = document.to_mut();
+            document.document_type.set_subtype("image");
 
             let blob_id = BLOBId::from_string(document.data.get_mandatory_str("blob"));
             let blob = BLOB::new(blob_id, &conn.get_path_manager().data_dir);

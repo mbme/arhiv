@@ -4,11 +4,11 @@ use anyhow::{Context, Result};
 
 use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
 use baza::{
-    entities::{Document, ERASED_DOCUMENT_TYPE},
+    entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::DataSchema,
     validator::{ValidationError, Validator},
-    Filter,
+    DocumentExpert, Filter,
 };
 use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
 
@@ -75,6 +75,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document = conn.must_get_document(id)?;
 
             let schema = arhiv.baza.get_schema();
+            let document_expert = DocumentExpert::new(schema);
 
             let backrefs = conn
                 .list_documents(&Filter::all_backrefs(id))?
@@ -82,10 +83,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: schema.get_title(&item)?,
+                        title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
-                        document_type: item.document_type,
-                        subtype: item.subtype,
+                        document_type: item.document_type.document_type,
+                        subtype: item.document_type.subtype,
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -96,21 +97,21 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: schema.get_title(&item)?,
+                        title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
-                        document_type: item.document_type,
-                        subtype: item.subtype,
+                        document_type: item.document_type.document_type,
+                        subtype: item.document_type.subtype,
                     })
                 })
                 .collect::<Result<_>>()?;
 
-            let title = schema.get_title(&document)?;
+            let title = document_expert.get_title(&document.document_type, &document.data)?;
 
             APIResponse::GetDocument {
                 id: document.id,
                 title,
-                document_type: document.document_type,
-                subtype: document.subtype,
+                document_type: document.document_type.document_type,
+                subtype: document.document_type.subtype,
                 updated_at: document.updated_at,
                 data: document.data,
                 backrefs,
@@ -132,7 +133,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let prev_data = document.data;
 
-            document.subtype = subtype;
+            document.document_type.set_subtype(subtype);
             document.data = data;
 
             let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
@@ -154,7 +155,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             subtype,
             data,
         } => {
-            let mut document = Document::new_with_data(&document_type, &subtype, data);
+            let document_type = DocumentType::new(document_type, subtype);
+            let mut document = Document::new_with_data(document_type, data);
 
             let tx = arhiv.baza.get_tx()?;
             let validation_result = Validator::new(&tx).validate(&document, None);
@@ -323,14 +325,16 @@ fn documents_into_results(
     documents: Vec<Document>,
     schema: &DataSchema,
 ) -> Result<Vec<ListDocumentsResult>> {
+    let document_expert = DocumentExpert::new(schema);
+
     documents
         .into_iter()
         .map(|item| {
             Ok(ListDocumentsResult {
-                title: schema.get_title(&item)?,
+                title: document_expert.get_title(&item.document_type, &item.data)?,
                 id: item.id,
-                document_type: item.document_type,
-                subtype: item.subtype,
+                document_type: item.document_type.document_type,
+                subtype: item.document_type.subtype,
                 updated_at: item.updated_at,
             })
         })

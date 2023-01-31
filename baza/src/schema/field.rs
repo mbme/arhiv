@@ -9,7 +9,7 @@ use crate::{
     markup::MarkupStr,
 };
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub enum FieldType {
     String {},                     // string
     MarkupString {},               // string
@@ -25,7 +25,7 @@ pub enum FieldType {
     Countries {},                  // string
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Field {
     pub name: &'static str,
     pub field_type: FieldType,
@@ -35,6 +35,11 @@ pub struct Field {
 }
 
 impl Field {
+    #[must_use]
+    pub fn could_be_title(&self) -> bool {
+        matches!(self.field_type, FieldType::String {})
+    }
+
     #[must_use]
     pub fn extract_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();

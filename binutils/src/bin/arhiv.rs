@@ -1,6 +1,6 @@
 use std::{process, sync::Arc};
 
-use baza::entities::{Document, DocumentData, Id};
+use baza::entities::{Document, DocumentData, DocumentType, Id};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -190,8 +190,10 @@ async fn main() {
             let data: DocumentData =
                 serde_json::from_str(&data).expect("data must be a JSON object");
 
-            let mut document =
-                Document::new_with_data(&document_type, &subtype.unwrap_or_default(), data);
+            let mut document = Document::new_with_data(
+                DocumentType::new(document_type, subtype.unwrap_or_default()),
+                data,
+            );
 
             let arhiv = Arhiv::must_open();
 

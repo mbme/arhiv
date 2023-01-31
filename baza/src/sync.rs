@@ -4,6 +4,7 @@ use rs_utils::log;
 
 use crate::baza::Baza;
 use crate::db::BazaConnection;
+use crate::document_expert::DocumentExpert;
 use crate::entities::{Changeset, Document};
 
 impl Baza {
@@ -56,6 +57,8 @@ impl Baza {
         let new_rev = db_rev.inc();
         log::debug!("current rev is {}, new rev is {}", db_rev, new_rev);
 
+        let document_expert = DocumentExpert::new(schema);
+
         for mut document in changeset.documents {
             if tx.has_snapshot(&document.id, document.rev)? {
                 log::warn!("Got duplicate snapshot of the {}, ignoring", &document);
@@ -98,7 +101,10 @@ impl Baza {
 
             tx.put_document(&document)?;
 
-            for blob_id in document.extract_refs(schema)?.blobs {
+            for blob_id in document_expert
+                .extract_refs(&document.document_type, &document.data)?
+                .blobs
+            {
                 let blob = tx.get_blob(&blob_id);
 
                 ensure!(

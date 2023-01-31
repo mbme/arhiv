@@ -4,7 +4,11 @@ use serde_json::Value;
 
 use rs_utils::generate_temp_path;
 
-use crate::{entities::Document, schema::DataSchema, Baza};
+use crate::{
+    entities::{Document, DocumentType},
+    schema::DataSchema,
+    Baza,
+};
 
 mod validation;
 
@@ -38,5 +42,8 @@ impl Deref for TestBaza {
 }
 
 pub fn new_document(value: Value) -> Document {
-    Document::new_with_data("test_type", "", value.try_into().unwrap())
+    Document::new_with_data(
+        DocumentType::new("test_type", ""),
+        value.try_into().unwrap(),
+    )
 }

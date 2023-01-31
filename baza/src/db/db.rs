@@ -11,7 +11,8 @@ use serde_json::Value;
 use rs_utils::log;
 
 use crate::{
-    entities::{BLOBId, DocumentData, Id, Revision},
+    document_expert::DocumentExpert,
+    entities::{BLOBId, DocumentData, DocumentType, Id, Revision},
     schema::DataSchema,
 };
 
@@ -62,10 +63,13 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
             return Ok(1);
         }
 
-        let data_description = schema.get_data_description(document_type)?;
+        let document_type = DocumentType::new(document_type, subtype);
+
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
-        let result = data_description.search(subtype, &document_data, pattern);
+        let document_expert = DocumentExpert::new(&schema);
+
+        let result = document_expert.search(&document_type, &document_data, pattern);
 
         if let Err(ref err) = result {
             log::error!("calculate_search_score() failed: \n{}", err);
@@ -125,9 +129,13 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
             .as_str()
             .context("document_data must be str")?;
 
+        let document_type = DocumentType::new(document_type, subtype);
+
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
-        let refs = schema.extract_refs(document_type, subtype, &document_data)?;
+        let document_expert = DocumentExpert::new(&schema);
+
+        let refs = document_expert.extract_refs(&document_type, &document_data)?;
 
         serde_json::to_string(&refs).context("failed to serialize refs")
     };

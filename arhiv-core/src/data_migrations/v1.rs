@@ -25,7 +25,7 @@ impl DataMigration for DataSchema1 {
         // rename episode_duration -> duration
         // rename number_of_episodes -> episodes
         // rename number_of_seasons -> seasons
-        if document.document_type == "film" {
+        if document.document_type.document_type == "film" {
             let data = &mut document.to_mut().data;
 
             data.remove("is_series");

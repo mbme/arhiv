@@ -1,15 +1,11 @@
 use std::fmt;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use crate::schema::DataSchema;
-
-use super::{DocumentData, Id, Refs, Revision};
-
-pub const ERASED_DOCUMENT_TYPE: &str = "";
+use super::{DocumentData, DocumentType, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
@@ -17,8 +13,8 @@ pub struct Document<D = DocumentData> {
     pub id: Id,
     pub rev: Revision,
     pub prev_rev: Revision,
-    pub document_type: String,
-    pub subtype: String,
+    #[serde(flatten)]
+    pub document_type: DocumentType,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub data: D,
@@ -26,15 +22,14 @@ pub struct Document<D = DocumentData> {
 
 impl<D> Document<D> {
     #[must_use]
-    pub fn new_with_data(document_type: &str, subtype: &str, data: D) -> Self {
+    pub fn new_with_data(document_type: DocumentType, data: D) -> Self {
         let now = now();
 
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
-            document_type: document_type.to_string(),
-            subtype: subtype.to_string(),
+            document_type,
             created_at: now,
             updated_at: now,
             data,
@@ -44,13 +39,13 @@ impl<D> Document<D> {
 
 impl Document {
     #[must_use]
-    pub fn new(document_type: &str, subtype: &str) -> Self {
-        Document::new_with_data(document_type, subtype, DocumentData::new())
+    pub fn new(document_type: DocumentType) -> Self {
+        Document::new_with_data(document_type, DocumentData::new())
     }
 
     #[must_use]
     pub fn is_erased(&self) -> bool {
-        self.document_type == ERASED_DOCUMENT_TYPE
+        self.document_type.is_erased()
     }
 
     #[must_use]
@@ -62,28 +57,12 @@ impl Document {
         self.prev_rev == Revision::STAGING
     }
 
-    pub fn extract_refs(&self, schema: &DataSchema) -> Result<Refs> {
-        schema.extract_refs(&self.document_type, &self.subtype, &self.data)
-    }
-
     pub fn erase(&mut self) {
-        self.document_type = ERASED_DOCUMENT_TYPE.to_string();
-        self.subtype = "".to_string();
+        self.document_type = DocumentType::erased();
         self.rev = Revision::STAGING;
         self.prev_rev = Revision::STAGING;
         self.data = DocumentData::new();
         self.updated_at = now();
-    }
-
-    pub fn ensure_document_type(&self, document_type: &str) -> Result<()> {
-        ensure!(
-            self.document_type == document_type,
-            "expected document_type to be '{}', got '{}' instead",
-            document_type,
-            self.document_type
-        );
-
-        Ok(())
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
@@ -94,7 +73,6 @@ impl Document {
             rev: self.rev,
             prev_rev: self.prev_rev,
             document_type: self.document_type,
-            subtype: self.subtype,
             created_at: self.created_at,
             updated_at: self.updated_at,
             data,
@@ -113,7 +91,6 @@ impl<D: Serialize> Document<D> {
             rev: self.rev,
             prev_rev: self.prev_rev,
             document_type: self.document_type,
-            subtype: self.subtype,
             created_at: self.created_at,
             updated_at: self.updated_at,
             data,
@@ -133,8 +110,8 @@ impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[Document {}/{} {} {}]",
-            self.document_type, self.subtype, self.id, self.rev,
+            "[Document {} {} {}]",
+            self.document_type, self.id, self.rev,
         )
     }
 }

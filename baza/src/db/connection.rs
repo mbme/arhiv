@@ -619,8 +619,8 @@ impl BazaConnection {
                 document.id,
                 document.rev,
                 document.prev_rev,
-                document.document_type,
-                document.subtype,
+                document.document_type.document_type,
+                document.document_type.subtype,
                 document.created_at,
                 document.updated_at,
                 document.data.to_string(),
@@ -636,8 +636,8 @@ impl BazaConnection {
             stmt.execute(params![
                 document.id,
                 document.rev,
-                document.document_type,
-                document.subtype,
+                document.document_type.document_type,
+                document.document_type.subtype,
                 document.data.to_string(),
             ])
             .context(anyhow!("Failed to put document refs {}", &document.id))?;

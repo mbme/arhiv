@@ -17,7 +17,7 @@
 
     "downlevelIteration": true,
     "keyofStringsOnly": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

@@ -1,10 +1,10 @@
 import { useRef } from 'preact/hooks';
-import { Callback } from '../../utils';
-import { useQuery } from '../../utils/hooks';
-import { RPC } from '../../utils/rpc';
-import { Button } from '../../components/Button';
-import { Icon } from '../../components/Icon';
-import { QueryError } from '../../components/QueryError';
+import { Callback } from 'utils';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { Button } from 'components/Button';
+import { Icon } from 'components/Icon';
+import { QueryError } from 'components/QueryError';
 import { CardContainer } from '../CardContainer';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
@@ -58,7 +58,15 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
           subtype={result.subtype}
           data={result.data}
           collections={result.collections.map((item) => item.id)}
-          onSave={onSave}
+          onSubmit={async (data, subtype, _collections) => {
+            const submitResult = await RPC.SaveDocument({ id: documentId, subtype, data });
+
+            if (submitResult.errors) {
+              return submitResult.errors;
+            }
+
+            onSave();
+          }}
         />
       )}
 

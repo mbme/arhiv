@@ -1,5 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
+import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -15,10 +16,6 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  const onSave = (documentId: string) => {
-    cardContext.unlock();
-    cardContext.replace({ variant: 'document', documentId });
-  };
   const onCancel = () => {
     cardContext.close();
   };
@@ -53,7 +50,16 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
           key={documentType}
           formRef={formRef}
           documentType={documentType}
-          onSave={onSave}
+          onSubmit={async (data, subtype, _collections) => {
+            const submitResult = await RPC.CreateDocument({ documentType, subtype, data });
+
+            if (submitResult.errors) {
+              return submitResult.errors;
+            }
+
+            cardContext.unlock();
+            cardContext.replace({ variant: 'document', documentId: submitResult.id! });
+          }}
         />
       ) : (
         <div className="flex justify-around mt-8">

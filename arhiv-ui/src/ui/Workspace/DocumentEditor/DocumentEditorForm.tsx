@@ -1,9 +1,13 @@
 import { useState } from 'preact/hooks';
 import { JSONObj } from 'utils';
-import { DocumentData, DocumentFieldErrors } from 'dto';
-import { RPC } from 'utils/rpc';
+import { DocumentData, DocumentFieldErrors, SaveDocumentErrors } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
-import { getCollectionTypesForDocument, getDefaultSubtype, getFieldDescriptions, isFieldActive } from 'utils/schema';
+import {
+  getCollectionTypesForDocument,
+  getDefaultSubtype,
+  getFieldDescriptions,
+  isFieldActive,
+} from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
 import { HTMLVRefInputElement } from 'components/Form/v-ref-input';
@@ -17,8 +21,12 @@ type DocumentEditorFormProps = {
   documentType: string;
   subtype?: string;
   data?: DocumentData;
-  collections: string[];
-  onSave: (id: string) => void;
+  collections?: string[];
+  onSubmit: (
+    data: JSONObj,
+    subtype: string,
+    collections: string[]
+  ) => Promise<SaveDocumentErrors | void>;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
@@ -28,7 +36,7 @@ export function DocumentEditorForm({
   subtype: initialSubtype,
   data = {},
   collections: initialCollections,
-  onSave,
+  onSubmit,
   formRef,
 }: DocumentEditorFormProps) {
   const { openDocument } = useCardContext();
@@ -42,18 +50,14 @@ export function DocumentEditorForm({
   const [collections, setCollections] = useState(initialCollections ?? []);
 
   const submitDocument = async (data: JSONObj) => {
-    const submitResult = await (documentId
-      ? RPC.SaveDocument({ id: documentId, subtype, data })
-      : RPC.CreateDocument({ documentType, subtype, data }));
+    const errors = await onSubmit(data, subtype, collections);
 
-    if (submitResult.errors) {
-      setDocumentErrors(submitResult.errors.documentErrors);
-      setFieldErrors(submitResult.errors.fieldErrors);
+    if (errors) {
+      setDocumentErrors(errors.documentErrors);
+      setFieldErrors(errors.fieldErrors);
     } else {
       setDocumentErrors([]);
       setFieldErrors({});
-
-      onSave(submitResult.typeName === 'CreateDocument' ? submitResult.id! : documentId!);
     }
   };
 

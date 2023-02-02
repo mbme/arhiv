@@ -60,6 +60,22 @@ function isModuleCollection(module: DataDescription): boolean {
   return module.fields.some((field) => 'RefList' in field.field_type);
 }
 
+function isModuleCollectionForDocument(module: DataDescription, documentType: string) {
+  return module.fields.some((field) => {
+    if ('RefList' in field.field_type) {
+      return field.field_type.RefList === documentType;
+    }
+
+    return false;
+  });
+}
+
+export function getCollectionTypesForDocument(documentType: string) {
+  return window.SCHEMA.modules
+    .filter((module) => isModuleCollectionForDocument(module, documentType))
+    .map((module) => module.document_type);
+}
+
 export function getFieldDescriptions(
   documentType: string,
   subtype?: string

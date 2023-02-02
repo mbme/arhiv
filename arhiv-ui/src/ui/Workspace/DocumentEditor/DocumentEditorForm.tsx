@@ -1,22 +1,23 @@
 import { useState } from 'preact/hooks';
 import { JSONObj } from 'utils';
-import { DocumentBackref, DocumentData, DocumentFieldErrors } from 'dto';
+import { DocumentData, DocumentFieldErrors } from 'dto';
 import { RPC } from 'utils/rpc';
 import { useUnsavedChangesWarning } from 'utils/hooks';
-import { getDefaultSubtype, getFieldDescriptions, isFieldActive } from 'utils/schema';
+import { getCollectionTypesForDocument, getDefaultSubtype, getFieldDescriptions, isFieldActive } from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
+import { HTMLVRefInputElement } from 'components/Form/v-ref-input';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
-import { useCardLock } from '../workspace-reducer';
+import { useCardLock, useCardContext } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
   documentId?: string;
   documentType: string;
   subtype?: string;
   data?: DocumentData;
-  collections: DocumentBackref[];
+  collections: string[];
   onSave: (id: string) => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
@@ -26,16 +27,19 @@ export function DocumentEditorForm({
   documentType,
   subtype: initialSubtype,
   data = {},
-  collections,
+  collections: initialCollections,
   onSave,
   formRef,
 }: DocumentEditorFormProps) {
+  const { openDocument } = useCardContext();
+
   useUnsavedChangesWarning();
   useCardLock();
 
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
   const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));
+  const [collections, setCollections] = useState(initialCollections ?? []);
 
   const submitDocument = async (data: JSONObj) => {
     const submitResult = await (documentId
@@ -59,11 +63,23 @@ export function DocumentEditorForm({
     <Form onSubmit={submitDocument} formRef={formRef}>
       <PreventImplicitSubmissionOnEnter />
 
-      <DocumentEditorSubtypeSelect
-        documentType={documentType}
-        value={subtype}
-        onChange={setSubtype}
-      />
+      <div className="flex space-between">
+        <v-ref-input
+          className="field"
+          documentTypes={JSON.stringify(getCollectionTypesForDocument(documentType))}
+          defaultValue={collections.join(', ')}
+          multiple
+          form=""
+          onChange={(e) => setCollections((e.currentTarget as HTMLVRefInputElement).refs)}
+          onRefClick={(e) => openDocument(e.detail.documentId)}
+        />
+
+        <DocumentEditorSubtypeSelect
+          documentType={documentType}
+          value={subtype}
+          onChange={setSubtype}
+        />
+      </div>
 
       {documentErrors.map((error, index) => (
         <div key={index} className="text-red-500 text-xl pl-1 my-2">

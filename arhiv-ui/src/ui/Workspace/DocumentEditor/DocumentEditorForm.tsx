@@ -4,6 +4,7 @@ import { DocumentData, DocumentFieldErrors, SaveDocumentErrors } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import {
   getCollectionTypesForDocument,
+  getDataDescription,
   getDefaultSubtype,
   getFieldDescriptions,
   isFieldActive,
@@ -49,6 +50,12 @@ export function DocumentEditorForm({
   const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));
   const [collections, setCollections] = useState(initialCollections ?? []);
 
+  const collectionTypes = getCollectionTypesForDocument(documentType);
+  const subtypes = getDataDescription(documentType).subtypes || [];
+
+  const canAddCollections = collectionTypes.length > 0;
+  const canChooseSubtype = subtypes.length > 1;
+
   const submitDocument = async (data: JSONObj) => {
     const errors = await onSubmit(data, subtype, collections);
 
@@ -67,22 +74,24 @@ export function DocumentEditorForm({
     <Form onSubmit={submitDocument} formRef={formRef}>
       <PreventImplicitSubmissionOnEnter />
 
-      <div className="flex space-between">
-        <v-ref-input
-          className="field"
-          documentTypes={JSON.stringify(getCollectionTypesForDocument(documentType))}
-          defaultValue={collections.join(', ')}
-          multiple
-          form=""
-          onChange={(e) => setCollections((e.currentTarget as HTMLVRefInputElement).refs)}
-          onRefClick={(e) => openDocument(e.detail.documentId)}
-        />
+      <div className="flex justify-between mb-8" hidden={!canAddCollections && !canChooseSubtype}>
+        {canAddCollections ? (
+          <v-ref-input
+            className="field"
+            documentTypes={JSON.stringify(collectionTypes)}
+            defaultValue={collections.join(', ')}
+            multiple
+            form=""
+            onChange={(e) => setCollections((e.currentTarget as HTMLVRefInputElement).refs)}
+            onRefClick={(e) => openDocument(e.detail.documentId)}
+          />
+        ) : (
+          <div />
+        )}
 
-        <DocumentEditorSubtypeSelect
-          documentType={documentType}
-          value={subtype}
-          onChange={setSubtype}
-        />
+        {canChooseSubtype && (
+          <DocumentEditorSubtypeSelect subtypes={subtypes} value={subtype} onChange={setSubtype} />
+        )}
       </div>
 
       {documentErrors.map((error, index) => (

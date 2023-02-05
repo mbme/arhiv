@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::{
-    entities::{DocumentData, DocumentType, Refs},
+    entities::{Document, DocumentData, DocumentType, Refs},
     schema::{DataSchema, Field},
     search::MultiSearch,
 };
@@ -94,5 +94,46 @@ impl<'s> DocumentExpert<'s> {
         }
 
         Ok(final_score)
+    }
+
+    fn find_collection_field_for(
+        &self,
+        collection_type: &DocumentType,
+        document_type: &DocumentType,
+    ) -> Result<&Field> {
+        self.schema
+            .iter_fields(collection_type)?
+            .find(|field| field.can_collect(document_type))
+            .context(anyhow!(
+                "document {collection_type} can't collect {document_type}",
+            ))
+    }
+
+    pub fn add_document_to_collection(
+        &self,
+        document: &Document,
+        collection: &mut Document,
+    ) -> Result<()> {
+        let field =
+            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
+
+        collection.data.add_to_ref_list(field.name, &document.id)?;
+
+        Ok(())
+    }
+
+    pub fn remove_document_from_collection(
+        &self,
+        document: &Document,
+        collection: &mut Document,
+    ) -> Result<()> {
+        let field =
+            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
+
+        collection
+            .data
+            .remove_from_ref_list(field.name, &document.id)?;
+
+        Ok(())
     }
 }

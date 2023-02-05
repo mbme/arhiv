@@ -27,12 +27,14 @@ export type APIRequest =
       id: string;
       subtype: string;
       data: DocumentData;
+      collections: string[];
     }
   | {
       typeName: 'CreateDocument';
       documentType: string;
       subtype: string;
       data: DocumentData;
+      collections: string[];
     }
   | {
       typeName: 'EraseDocument';

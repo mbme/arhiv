@@ -30,11 +30,13 @@ pub enum APIRequest {
         document_type: String,
         subtype: String,
         data: DocumentData,
+        collections: Vec<Id>,
     },
     SaveDocument {
         id: Id,
         subtype: String,
         data: DocumentData,
+        collections: Vec<Id>,
     },
     EraseDocument {
         id: Id,

@@ -8,6 +8,12 @@ export class RefClickEvent extends CustomEvent<{ documentId: string }> {
   }
 }
 
+export class RefsChangeEvent extends CustomEvent<{ refs: string[] }> {
+  constructor(public readonly refs: string[]) {
+    super('RefsChange', { detail: { refs } });
+  }
+}
+
 function parseRefsList(refs: string): string[] {
   return refs
     .replaceAll(',', ' ')
@@ -44,6 +50,7 @@ export class HTMLVRefInputElement extends FormControlElement {
     const onChange = (ids: string[]) => {
       this.value = ids.join(', ');
       this.updateFormValue();
+      this.dispatchEvent(new RefsChangeEvent(ids));
     };
 
     const onRefClick = (documentId: string) => {
@@ -144,6 +151,7 @@ declare module 'preact' {
       documentTypes: string;
       multiple?: boolean;
       onRefClick?: (e: RefClickEvent) => void;
+      onRefsChange?: (e: RefsChangeEvent) => void;
     }
 
     interface IntrinsicElements {

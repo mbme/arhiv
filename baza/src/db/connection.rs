@@ -1034,6 +1034,19 @@ impl BazaConnection {
 
         Ok(())
     }
+
+    pub fn list_document_backrefs(&self, id: &Id) -> Result<Vec<Document>> {
+        let documents = self.list_documents(&Filter::all_backrefs(id))?.items;
+
+        Ok(documents)
+    }
+
+    pub fn list_document_collections(&self, id: &Id) -> Result<Vec<Document>> {
+        let documents = self.list_documents(&Filter::all_collections(id))?.items;
+
+        Ok(documents)
+    }
+
     // FIXME pub fn get_blob_stream(&self, hash: &hash) -> Result<FileStream>
     // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
 }

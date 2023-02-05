@@ -11,7 +11,6 @@ import {
 } from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
-import { HTMLVRefInputElement } from 'components/Form/v-ref-input';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
@@ -82,7 +81,7 @@ export function DocumentEditorForm({
             defaultValue={collections.join(', ')}
             multiple
             form=""
-            onChange={(e) => setCollections((e.currentTarget as HTMLVRefInputElement).refs)}
+            onRefsChange={(e) => setCollections(e.refs)}
             onRefClick={(e) => openDocument(e.detail.documentId)}
           />
         ) : (

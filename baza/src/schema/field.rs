@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    entities::{BLOBId, Id},
+    entities::{BLOBId, DocumentType, Id},
     markup::MarkupStr,
 };
 
@@ -242,5 +242,10 @@ impl Field {
         } else {
             true
         }
+    }
+
+    #[must_use]
+    pub fn can_collect(&self, document_type: &DocumentType) -> bool {
+        matches!(self.field_type, FieldType::RefList(ref_list_document_type) if ref_list_document_type == document_type.document_type)
     }
 }

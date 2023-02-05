@@ -58,8 +58,13 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
           subtype={result.subtype}
           data={result.data}
           collections={result.collections.map((item) => item.id)}
-          onSubmit={async (data, subtype, _collections) => {
-            const submitResult = await RPC.SaveDocument({ id: documentId, subtype, data });
+          onSubmit={async (data, subtype, collections) => {
+            const submitResult = await RPC.SaveDocument({
+              id: documentId,
+              subtype,
+              data,
+              collections,
+            });
 
             if (submitResult.errors) {
               return submitResult.errors;

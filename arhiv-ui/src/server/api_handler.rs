@@ -78,8 +78,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document_expert = DocumentExpert::new(schema);
 
             let backrefs = conn
-                .list_documents(&Filter::all_backrefs(id))?
-                .items
+                .list_document_backrefs(id)?
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
@@ -92,8 +91,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .collect::<Result<_>>()?;
 
             let collections = conn
-                .list_documents(&Filter::all_collections(id))?
-                .items
+                .list_document_collections(id)?
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
@@ -126,7 +124,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::ParseMarkup { ast }
         }
-        APIRequest::SaveDocument { id, subtype, data } => {
+        APIRequest::SaveDocument {
+            id,
+            subtype,
+            data,
+            collections,
+        } => {
             let tx = arhiv.baza.get_tx()?;
 
             let mut document = tx.must_get_document(&id)?;
@@ -136,7 +139,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             document.document_type.set_subtype(subtype);
             document.data = data;
 
-            let validation_result = Validator::new(&tx).validate(&document, Some(&prev_data));
+            let validator = Validator::new(&tx);
+            let validation_result = validator.validate(&document, Some(&prev_data));
 
             let errors = if let Err(error) = validation_result {
                 Some(error.into())
@@ -146,6 +150,31 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 None
             };
 
+            let schema = arhiv.baza.get_schema();
+            let document_expert = DocumentExpert::new(schema);
+
+            let mut old_collections = tx.list_document_collections(&id)?;
+
+            for old_collection in &mut old_collections {
+                if !collections.contains(&old_collection.id) {
+                    document_expert.remove_document_from_collection(&document, old_collection)?;
+                    tx.stage_document(old_collection)?;
+                }
+            }
+
+            let old_collections_ids = old_collections
+                .iter()
+                .map(|collection| &collection.id)
+                .collect::<Vec<_>>();
+
+            for collection_id in collections {
+                if !old_collections_ids.contains(&&collection_id) {
+                    let mut collection = tx.must_get_document(&collection_id)?;
+                    document_expert.add_document_to_collection(&document, &mut collection)?;
+                    tx.stage_document(&mut collection)?;
+                }
+            }
+
             tx.commit()?;
 
             APIResponse::SaveDocument { errors }
@@ -154,20 +183,32 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             document_type,
             subtype,
             data,
+            collections,
         } => {
             let document_type = DocumentType::new(document_type, subtype);
             let mut document = Document::new_with_data(document_type, data);
 
             let tx = arhiv.baza.get_tx()?;
-            let validation_result = Validator::new(&tx).validate(&document, None);
+
+            let validator = Validator::new(&tx);
+            let validation_result = validator.validate(&document, None);
 
             let (id, errors) = if let Err(error) = validation_result {
                 (None, Some(error.into()))
             } else {
                 tx.stage_document(&mut document)?;
 
-                (Some(document.id), None)
+                (Some(document.id.clone()), None)
             };
+
+            let schema = arhiv.baza.get_schema();
+            let document_expert = DocumentExpert::new(schema);
+
+            for collection_id in collections {
+                let mut collection = tx.must_get_document(&collection_id)?;
+                document_expert.add_document_to_collection(&document, &mut collection)?;
+                tx.stage_document(&mut collection)?;
+            }
 
             tx.commit()?;
 

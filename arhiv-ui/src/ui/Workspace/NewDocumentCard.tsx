@@ -50,8 +50,13 @@ export function NewDocumentCard({ documentType: initialDocumentType }: NewDocume
           key={documentType}
           formRef={formRef}
           documentType={documentType}
-          onSubmit={async (data, subtype, _collections) => {
-            const submitResult = await RPC.CreateDocument({ documentType, subtype, data });
+          onSubmit={async (data, subtype, collections) => {
+            const submitResult = await RPC.CreateDocument({
+              documentType,
+              subtype,
+              data,
+              collections,
+            });
 
             if (submitResult.errors) {
               return submitResult.errors;

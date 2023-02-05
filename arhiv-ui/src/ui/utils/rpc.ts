@@ -1,4 +1,4 @@
-import { APIRequest, APIResponse } from '../../dto';
+import { APIRequest, APIResponse } from 'dto';
 import { Obj } from './index';
 
 type SerdeEnum = {

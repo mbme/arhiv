@@ -114,3 +114,15 @@ export function isImageAttachment(subtype: string) {
 export function isAudioAttachment(subtype: string) {
   return subtype === 'audio';
 }
+
+export function formatDocumentType(documentType: string, subtype?: string): string {
+  if (isErasedDocument(documentType)) {
+    return 'erased';
+  }
+
+  if (subtype) {
+    return `${documentType}/${subtype}`;
+  }
+
+  return documentType;
+}

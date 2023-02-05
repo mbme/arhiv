@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { DocumentBackref } from 'dto';
-import { cx, copyTextToClipbard, formatDocumentType } from 'utils';
+import { cx, copyTextToClipbard } from 'utils';
+import { formatDocumentType } from 'utils/schema';
 import { useTimeout } from 'utils/hooks';
 import { Ref } from 'components/Ref';
 import { Button } from 'components/Button';

@@ -193,7 +193,7 @@ pub async fn respond_with_blob(
             .header(hyper::header::CONTENT_LENGTH, range_size)
             .header(
                 hyper::header::CONTENT_RANGE,
-                format!("bytes {}-{}/{}", start_pos, end_pos, size),
+                format!("bytes {start_pos}-{end_pos}/{size}"),
             )
             .body(body)
             .context("failed to build BLOB response")

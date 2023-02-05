@@ -87,11 +87,11 @@ impl QueryBuilder {
         }
 
         if let Some(limit) = self.limit {
-            write!(query, " LIMIT {}", limit).expect("must append query");
+            write!(query, " LIMIT {limit}").expect("must append query");
         }
 
         if let Some(offset) = self.offset {
-            write!(query, " OFFSET {}", offset).expect("must append query");
+            write!(query, " OFFSET {offset}").expect("must append query");
         }
 
         (query, self.params.into_inner())

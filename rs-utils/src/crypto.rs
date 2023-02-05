@@ -53,7 +53,7 @@ pub fn is_valid_base64(value: &str) -> bool {
 pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
     let mut result = String::with_capacity(2 * bytes.len());
     for byte in bytes {
-        write!(result, "{:02X}", byte).expect("failed to write data into String");
+        write!(result, "{byte:02X}").expect("failed to write data into String");
     }
 
     result

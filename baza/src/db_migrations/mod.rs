@@ -113,7 +113,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
 
         log::info!("Upgrading db to version {}...", upgrade_version);
 
-        let temp_dir = TempFile::new_with_details(format!("DB-upgrade-{}-", upgrade_version), "");
+        let temp_dir = TempFile::new_with_details(format!("DB-upgrade-{upgrade_version}-"), "");
 
         let mut fs_tx = FsTransaction::new();
 

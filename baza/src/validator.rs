@@ -28,7 +28,7 @@ impl fmt::Display for ValidationError {
                 for (field, errors) in errors {
                     writeln!(f, "  field '{}': {} errors", field, errors.len())?;
                     for error in errors {
-                        writeln!(f, "                {}", error)?;
+                        writeln!(f, "                {error}")?;
                     }
                 }
 
@@ -36,11 +36,11 @@ impl fmt::Display for ValidationError {
                     .values()
                     .fold(0, |total, field_errors| total + field_errors.len());
 
-                writeln!(f, "{} errors in total", total_errors_count)?;
+                writeln!(f, "{total_errors_count} errors in total")?;
             }
             ValidationError::DocumentError { errors } => {
                 for error in errors {
-                    writeln!(f, "{}", error)?;
+                    writeln!(f, "{error}")?;
                 }
             }
         }

@@ -50,7 +50,7 @@ fn find_config_file<S: Into<String>>(file_name: S) -> Result<String> {
     if cfg!(feature = "production-mode") {
         let config_home =
             get_config_home().ok_or_else(|| anyhow!("Failed to find user config dir"))?;
-        let config = format!("{}/{}", config_home, file_name);
+        let config = format!("{config_home}/{file_name}");
 
         if file_exists(&config).unwrap_or(false) {
             return Ok(config);

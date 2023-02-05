@@ -16,13 +16,13 @@ pub fn extract_id(text: &str) -> Option<Id> {
 #[must_use]
 pub fn create_link(url: &str, text: &str) -> String {
     if text.is_empty() {
-        format!("<{}>", url)
+        format!("<{url}>")
     } else {
-        format!("[{}]({})", text, url)
+        format!("[{text}]({url})")
     }
 }
 
 #[must_use]
 pub fn create_ref(id: &Id, text: &str) -> String {
-    create_link(&format!("{}{}", REF_LINK_PREFIX, id), text)
+    create_link(&format!("{REF_LINK_PREFIX}{id}"), text)
 }

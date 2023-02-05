@@ -63,7 +63,7 @@ pub async fn error_handler(err: routerify::RouteError, info: RequestInfo) -> Res
     // TODO stacktrace/backtrace, prettier UI
     Response::builder()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .body(Body::from(format!("Something went wrong:\n{:?}", err)))
+        .body(Body::from(format!("Something went wrong:\n{err:?}")))
         .unwrap()
 }
 

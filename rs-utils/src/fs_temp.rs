@@ -98,5 +98,5 @@ fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
 pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
     let name = generate_alpanumeric_string(8);
 
-    file_in_temp_dir(format!("{}{}{}", prefix, name, suffix))
+    file_in_temp_dir(format!("{prefix}{name}{suffix}"))
 }

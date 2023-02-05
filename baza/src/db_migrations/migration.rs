@@ -14,7 +14,7 @@ pub trait DBMigration {
 }
 
 pub fn get_rows_count(conn: &Connection, table: &str) -> Result<u32> {
-    conn.query_row(&format!("SELECT COUNT(*) FROM {}", table), [], |row| {
+    conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
         row.get(0)
     })
     .context(anyhow!("failed to count number of rows in {}", table))

@@ -64,14 +64,14 @@ impl DocumentData {
         Some(
             value
                 .as_str()
-                .unwrap_or_else(|| panic!("can't use field '{}' as &str", field)),
+                .unwrap_or_else(|| panic!("can't use field '{field}' as &str")),
         )
     }
 
     #[must_use]
     pub fn get_mandatory_str(&self, field: &str) -> &str {
         self.get_str(field)
-            .unwrap_or_else(|| panic!("str field '{}' must be present", field))
+            .unwrap_or_else(|| panic!("str field '{field}' must be present"))
     }
 
     #[must_use]

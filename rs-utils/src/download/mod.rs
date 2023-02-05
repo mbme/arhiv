@@ -49,7 +49,7 @@ impl Download {
         ensure_dir_exists(downloads_dir).context("dir for downloads doesn't exist")?;
 
         let url_hash = get_string_hash_blake3(url);
-        let completed_file_path = format!("{}/{}", downloads_dir, url_hash);
+        let completed_file_path = format!("{downloads_dir}/{url_hash}");
 
         // FIXME better check if download is complete
         ensure!(
@@ -99,7 +99,7 @@ impl Download {
             .get(self.url.clone());
 
         if start_pos > 0 {
-            request = request.header(RANGE, format!("bytes={}-", start_pos));
+            request = request.header(RANGE, format!("bytes={start_pos}-"));
         }
 
         request.send().await.context("failed to send request")

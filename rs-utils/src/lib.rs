@@ -102,10 +102,7 @@ pub fn run_yarn(command: &str) {
         .expect("failed to run yarn command");
 
     if !command_status.success() {
-        println!(
-            "cargo:warning=yarn {} exit status is {}",
-            command, command_status
-        );
+        println!("cargo:warning=yarn {command} exit status is {command_status}");
         process::exit(1);
     }
 }

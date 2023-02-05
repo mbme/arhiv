@@ -36,7 +36,7 @@ pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> 
 
     let captures = RE
         .captures(header)
-        .with_context(|| format!("Unsupported Content-Disposition header: {}", header))?;
+        .with_context(|| format!("Unsupported Content-Disposition header: {header}"))?;
 
     let filename = captures
         .get(1)
@@ -60,7 +60,7 @@ pub fn parse_content_type_header(header: &str) -> Result<(String, Option<String>
 
     let captures = RE
         .captures(header)
-        .with_context(|| format!("Unsupported Content-Type header: {}", header))?;
+        .with_context(|| format!("Unsupported Content-Type header: {header}"))?;
 
     let content_type = captures
         .get(1)
@@ -93,7 +93,7 @@ pub fn parse_content_range_header(header: &str) -> Result<(u64, u64, u64)> {
 
     let captures = RE
         .captures(header)
-        .with_context(|| format!("Unsupported Content-Range header: {}", header))?;
+        .with_context(|| format!("Unsupported Content-Range header: {header}"))?;
 
     let start = captures
         .get(1)
@@ -141,7 +141,7 @@ pub fn parse_range_header(header: &str) -> Result<(u64, Option<u64>)> {
 
     let captures = RE
         .captures(header)
-        .with_context(|| format!("Unsupported Range header: {}", header))?;
+        .with_context(|| format!("Unsupported Range header: {header}"))?;
 
     let start: u64 = captures
         .get(1)

@@ -146,7 +146,7 @@ async fn main() {
             let conn = arhiv.baza.get_connection().expect("must open connection");
             let status = conn.get_status().expect("must be able to get status");
 
-            println!("{}", status);
+            println!("{status}");
             // FIXME print number of unused temp attachments
         }
         CLICommand::Config { template } => {
@@ -156,7 +156,7 @@ async fn main() {
             }
 
             let (config, path) = Config::must_read();
-            println!("Arhiv config {}:", path);
+            println!("Arhiv config {path}:");
             println!(
                 "{}",
                 serde_json::to_string_pretty(&config).expect("must be able to serialize config")
@@ -266,7 +266,7 @@ async fn main() {
                 .stdout(process::Stdio::null())
                 .stderr(process::Stdio::null())
                 .spawn()
-                .unwrap_or_else(|_| panic!("failed to run browser {}", browser));
+                .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::PrimeServer { port } => {
             let arhiv = Arc::new(Arhiv::must_open());

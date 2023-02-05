@@ -96,8 +96,8 @@ fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     temp_dir.mkdir()?;
 
     let resource_file = workspace_relpath("resources/k2.jpg");
-    let resource_file_link = format!("{}/resource_file_link", temp_dir);
-    std::os::unix::fs::symlink(&resource_file, &resource_file_link)?;
+    let resource_file_link = format!("{temp_dir}/resource_file_link");
+    std::os::unix::fs::symlink(resource_file, &resource_file_link)?;
 
     {
         let mut tx = arhiv.baza.get_tx()?;

@@ -53,7 +53,7 @@ impl TestArhiv {
     pub fn new_replica(port: u16) -> Self {
         let config = Config {
             arhiv_root: generate_temp_path("TempArhiv", ""),
-            prime_url: format!("http://localhost:{}", port),
+            prime_url: format!("http://localhost:{port}"),
             ..Config::default()
         };
 

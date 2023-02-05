@@ -8,5 +8,5 @@ mod server;
 pub use server::start_ui_server;
 
 pub fn get_document_url(id: &Id, port: u16) -> String {
-    format!("http://localhost:{}?id={}", port, id)
+    format!("http://localhost:{port}?id={id}")
 }

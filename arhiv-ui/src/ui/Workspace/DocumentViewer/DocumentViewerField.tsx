@@ -48,7 +48,7 @@ export function FieldValue({ field, value }: FieldValueProps) {
     );
   }
 
-  return <>{String(value)}</>;
+  return <div className="break-words w-full">{String(value)}</div>;
 }
 
 type DocumentViewerFieldProps = {

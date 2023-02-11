@@ -28,7 +28,7 @@ type DropdownMenuProps = {
 export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
 
-  const { x, y, reference, floating, strategy, context } = useFloating({
+  const { x, y, refs, strategy, context } = useFloating({
     placement: 'bottom-start',
     middleware: [offset(2), shift()],
     open,
@@ -48,7 +48,7 @@ export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
       <IconButton
         icon={icon}
         size="lg"
-        ref={reference}
+        ref={refs.setReference}
         {...getReferenceProps()}
         className={cx({ 'bg-blue-100': open })}
       />
@@ -56,8 +56,8 @@ export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
       {open && (
         <FloatingFocusManager context={context}>
           <div
-            ref={floating}
-            className="bg-white rounded min-w-[10rem] flex flex-col gap-2 drop-shadow py-2"
+            ref={refs.setFloating}
+            className="bg-white rounded w-max flex flex-col gap-2 drop-shadow py-2"
             style={{
               position: strategy,
               top: y ?? 0,

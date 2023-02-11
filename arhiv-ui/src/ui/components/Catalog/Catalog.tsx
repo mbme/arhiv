@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { DocumentId, DocumentType } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { DateTime } from 'components/DateTime';
@@ -8,12 +9,12 @@ import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
   autofocus?: boolean;
-  documentTypes?: string[];
+  documentTypes?: DocumentType[];
   initialQuery?: string;
   initialPage?: number;
   onQueryChange?: (query: string) => void;
   onPageChange?: (page: number) => void;
-  onDocumentSelected: (documentId: string) => void;
+  onDocumentSelected: (id: DocumentId) => void;
 };
 
 export function Catalog({

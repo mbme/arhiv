@@ -1,6 +1,13 @@
 import { useState } from 'preact/hooks';
 import { JSONObj } from 'utils';
-import { DocumentData, DocumentFieldErrors, SaveDocumentErrors } from 'dto';
+import {
+  DocumentData,
+  DocumentFieldErrors,
+  DocumentId,
+  DocumentType,
+  DocumentSubtype,
+  SaveDocumentErrors,
+} from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import {
   getCollectionTypesForDocument,
@@ -18,14 +25,14 @@ import { useCardLock, useCardContext } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
   documentId?: string;
-  documentType: string;
-  subtype?: string;
+  documentType: DocumentType;
+  subtype?: DocumentSubtype;
   data?: DocumentData;
-  collections?: string[];
+  collections?: DocumentId[];
   onSubmit: (
     data: JSONObj,
-    subtype: string,
-    collections: string[]
+    subtype: DocumentSubtype,
+    collections: DocumentId[]
   ) => Promise<SaveDocumentErrors | void>;
   formRef?: JSXRef<HTMLFormElement>;
 };

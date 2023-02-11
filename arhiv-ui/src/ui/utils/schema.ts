@@ -1,3 +1,4 @@
+import { DEFAULT_SUBTYPE, DocumentSubtype, DocumentType } from 'dto';
 import { EmptyObj } from './index';
 
 export type DataSchema = {
@@ -5,8 +6,8 @@ export type DataSchema = {
 };
 
 export type DataDescription = {
-  document_type: string;
-  subtypes?: string[];
+  document_type: DocumentType;
+  subtypes?: DocumentSubtype[];
   fields: DataDescriptionField[];
 };
 
@@ -15,7 +16,7 @@ export type DataDescriptionField = {
   field_type: FieldType;
   mandatory: boolean;
   readonly: boolean;
-  for_subtypes?: string[];
+  for_subtypes?: DocumentSubtype[];
 };
 
 export type FieldType =
@@ -23,8 +24,8 @@ export type FieldType =
   | { MarkupString: EmptyObj }
   | { Flag: EmptyObj }
   | { NaturalNumber: EmptyObj }
-  | { Ref: string }
-  | { RefList: string }
+  | { Ref: DocumentType }
+  | { RefList: DocumentType }
   | { BLOBId: EmptyObj }
   | { Enum: string[] }
   | { Date: EmptyObj }
@@ -38,14 +39,14 @@ declare global {
   }
 }
 
-export function getDocumentTypes(collections: boolean): string[] {
+export function getDocumentTypes(collections: boolean): DocumentType[] {
   return window.SCHEMA.modules
     .filter((module) => isModuleCollection(module) === collections)
     .map((module) => module.document_type)
     .sort();
 }
 
-export function getDataDescription(documentType: string): DataDescription {
+export function getDataDescription(documentType: DocumentType): DataDescription {
   const dataDescription = window.SCHEMA.modules.find(
     (module) => module.document_type === documentType
   );
@@ -60,7 +61,7 @@ function isModuleCollection(module: DataDescription): boolean {
   return module.fields.some((field) => 'RefList' in field.field_type);
 }
 
-function isModuleCollectionForDocument(module: DataDescription, documentType: string) {
+function isModuleCollectionForDocument(module: DataDescription, documentType: DocumentType) {
   return module.fields.some((field) => {
     if ('RefList' in field.field_type) {
       return field.field_type.RefList === documentType;
@@ -70,15 +71,15 @@ function isModuleCollectionForDocument(module: DataDescription, documentType: st
   });
 }
 
-export function getCollectionTypesForDocument(documentType: string) {
+export function getCollectionTypesForDocument(documentType: DocumentType) {
   return window.SCHEMA.modules
     .filter((module) => isModuleCollectionForDocument(module, documentType))
     .map((module) => module.document_type);
 }
 
 export function getFieldDescriptions(
-  documentType: string,
-  subtype?: string
+  documentType: DocumentType,
+  subtype?: DocumentSubtype
 ): DataDescriptionField[] {
   const dataDescription = getDataDescription(documentType);
 
@@ -89,33 +90,33 @@ export function getFieldDescriptions(
   return dataDescription.fields.filter((field) => isFieldActive(field, subtype));
 }
 
-export function isFieldActive(field: DataDescriptionField, subtype: string): boolean {
+export function isFieldActive(field: DataDescriptionField, subtype: DocumentSubtype): boolean {
   return field.for_subtypes?.includes(subtype) ?? true;
 }
 
-export function getDefaultSubtype(documentType: string): string {
+export function getDefaultSubtype(documentType: DocumentType): DocumentSubtype {
   const dataDescription = getDataDescription(documentType);
 
-  return dataDescription.subtypes?.[0] ?? '';
+  return dataDescription.subtypes?.[0] ?? DEFAULT_SUBTYPE;
 }
 
-export function isAttachment(documentType: string) {
+export function isAttachment(documentType: DocumentType) {
   return documentType === 'attachment';
 }
 
-export function isErasedDocument(documentType: string) {
+export function isErasedDocument(documentType: DocumentType) {
   return documentType === '';
 }
 
-export function isImageAttachment(subtype: string) {
+export function isImageAttachment(subtype: DocumentSubtype) {
   return subtype === 'image';
 }
 
-export function isAudioAttachment(subtype: string) {
+export function isAudioAttachment(subtype: DocumentSubtype) {
   return subtype === 'audio';
 }
 
-export function formatDocumentType(documentType: string, subtype?: string): string {
+export function formatDocumentType(documentType: DocumentType, subtype?: DocumentSubtype): string {
   if (isErasedDocument(documentType)) {
     return 'erased';
   }

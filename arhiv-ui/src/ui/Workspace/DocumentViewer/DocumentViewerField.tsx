@@ -3,6 +3,7 @@ import { DataDescriptionField } from 'utils/schema';
 import { Markup } from 'components/Markup';
 import { RefContainer, RefListContainer } from 'components/Ref';
 import { useCardContext } from '../workspace-reducer';
+import { DocumentId } from 'dto';
 
 type FieldValueProps = {
   field: DataDescriptionField;
@@ -22,7 +23,7 @@ export function FieldValue({ field, value }: FieldValueProps) {
   }
 
   if ('Ref' in field.field_type) {
-    const id = value as string;
+    const id = value as DocumentId;
 
     return (
       <RefContainer
@@ -35,7 +36,7 @@ export function FieldValue({ field, value }: FieldValueProps) {
   }
 
   if ('RefList' in field.field_type) {
-    const ids = value as string[];
+    const ids = value as DocumentId[];
 
     return (
       <div className="w-full flex flex-col">

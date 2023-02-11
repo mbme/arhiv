@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
 import { Button } from 'components/Button';
@@ -25,7 +26,7 @@ export function Workspace() {
     if (documentId) {
       dispatch({
         type: 'open',
-        newCard: { variant: 'document', documentId },
+        newCard: { variant: 'document', documentId: documentId as DocumentId },
         skipDocumentIfAlreadyOpen: true,
       });
     }

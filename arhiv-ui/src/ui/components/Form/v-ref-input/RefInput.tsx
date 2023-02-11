@@ -1,17 +1,18 @@
 import { useState } from 'preact/hooks';
+import { DocumentId, DocumentType } from 'dto';
 import { Ref, useDocuments } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 
 type Props = {
-  documentTypes: string[];
-  ids: string[];
+  documentTypes: DocumentType[];
+  ids: DocumentId[];
   multiple: boolean;
   readonly: boolean;
   disabled: boolean;
-  onChange: (ids: string[]) => void;
-  onRefClick: (documentId: string) => void;
+  onChange: (ids: DocumentId[]) => void;
+  onRefClick: (id: DocumentId) => void;
 };
 
 export function RefInput({

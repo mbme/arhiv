@@ -2,15 +2,16 @@ import { createContext } from 'preact';
 import { useContext, useEffect, useReducer } from 'preact/hooks';
 import produce from 'immer';
 import { newId, getSessionValue, setSessionValue } from 'utils';
+import { DocumentId, DocumentType } from 'dto';
 
 type CardVariant =
-  | { variant: 'catalog'; query?: string; page?: number; documentType?: string } //
+  | { variant: 'catalog'; query?: string; page?: number; documentType?: DocumentType } //
   | { variant: 'browser' }
   | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'scraper' }
-  | { variant: 'new-document'; documentType?: string }
-  | { variant: 'document'; documentId: string };
+  | { variant: 'new-document'; documentType?: DocumentType }
+  | { variant: 'document'; documentId: DocumentId };
 
 export type Card = CardVariant & {
   id: number;
@@ -252,7 +253,7 @@ export function useCardContext() {
       });
     },
 
-    openDocument: (documentId: string) => {
+    openDocument: (documentId: DocumentId) => {
       dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
     },
 

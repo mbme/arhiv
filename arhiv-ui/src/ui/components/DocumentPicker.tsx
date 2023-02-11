@@ -1,9 +1,10 @@
+import { DocumentId, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Catalog } from 'components/Catalog/Catalog';
 
 type Props = {
-  documentTypes: string[];
-  onSelected: (documentId: string) => void;
+  documentTypes: DocumentType[];
+  onSelected: (id: DocumentId) => void;
   onCancel: () => void;
 };
 

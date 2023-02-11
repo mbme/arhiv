@@ -1,25 +1,26 @@
 import { render } from 'preact';
+import { DocumentId, DocumentType } from 'dto';
 import { FormControlElement } from 'components/Form/FormControlElement';
 import { RefInput } from './RefInput';
 
-export class RefClickEvent extends CustomEvent<{ documentId: string }> {
-  constructor(public readonly documentId: string) {
+export class RefClickEvent extends CustomEvent<{ documentId: DocumentId }> {
+  constructor(public readonly documentId: DocumentId) {
     super('RefClick', { detail: { documentId } });
   }
 }
 
-export class RefsChangeEvent extends CustomEvent<{ refs: string[] }> {
-  constructor(public readonly refs: string[]) {
+export class RefsChangeEvent extends CustomEvent<{ refs: DocumentId[] }> {
+  constructor(public readonly refs: DocumentId[]) {
     super('RefsChange', { detail: { refs } });
   }
 }
 
-function parseRefsList(refs: string): string[] {
+function parseRefsList(refs: string): DocumentId[] {
   return refs
     .replaceAll(',', ' ')
     .split(' ')
     .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+    .filter((item) => item.length > 0) as DocumentId[];
 }
 
 export class HTMLVRefInputElement extends FormControlElement {
@@ -47,13 +48,13 @@ export class HTMLVRefInputElement extends FormControlElement {
       this.tabIndex = 0;
     }
 
-    const onChange = (ids: string[]) => {
+    const onChange = (ids: DocumentId[]) => {
       this.value = ids.join(', ');
       this.updateFormValue();
       this.dispatchEvent(new RefsChangeEvent(ids));
     };
 
-    const onRefClick = (documentId: string) => {
+    const onRefClick = (documentId: DocumentId) => {
       this.dispatchEvent(new RefClickEvent(documentId));
     };
 
@@ -90,13 +91,13 @@ export class HTMLVRefInputElement extends FormControlElement {
   private getInitialValue = () => this.getAttribute('value') ?? this.getDefaultValue();
   private getDefaultValue = () => this.getAttribute('defaultValue') ?? '';
 
-  get documentTypes(): string[] {
+  get documentTypes(): DocumentType[] {
     const documentTypes = this.getAttribute('documentTypes');
     if (documentTypes === null) {
       throw new Error('documentTypes attribute is missing');
     }
 
-    return JSON.parse(documentTypes) as string[];
+    return JSON.parse(documentTypes) as DocumentType[];
   }
 
   get multiple() {

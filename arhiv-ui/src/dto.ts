@@ -1,22 +1,22 @@
-import { JSONObj, Obj } from './ui/utils';
+import { JSONObj, NominalType, Obj } from 'utils';
 
 export type APIRequest =
   | {
       typeName: 'ListDocuments';
-      documentTypes: string[];
+      documentTypes: DocumentType[];
       query: string;
       page: number;
     }
   | {
       typeName: 'GetDocuments';
-      ids: string[];
+      ids: DocumentId[];
     }
   | {
       typeName: 'GetStatus';
     }
   | {
       typeName: 'GetDocument';
-      id: string;
+      id: DocumentId;
     }
   | {
       typeName: 'ParseMarkup';
@@ -24,21 +24,21 @@ export type APIRequest =
     }
   | {
       typeName: 'SaveDocument';
-      id: string;
-      subtype: string;
+      id: DocumentId;
+      subtype: DocumentSubtype;
       data: DocumentData;
-      collections: string[];
+      collections: DocumentId[];
     }
   | {
       typeName: 'CreateDocument';
-      documentType: string;
-      subtype: string;
+      documentType: DocumentType;
+      subtype: DocumentSubtype;
       data: DocumentData;
-      collections: string[];
+      collections: DocumentId[];
     }
   | {
       typeName: 'EraseDocument';
-      id: string;
+      id: DocumentId;
     }
   | {
       typeName: 'ListDir';
@@ -70,10 +70,10 @@ export type APIResponse =
     }
   | {
       typeName: 'GetDocument';
-      id: string;
-      documentType: string;
+      id: DocumentId;
+      documentType: DocumentType;
       title: string;
-      subtype: string;
+      subtype: DocumentSubtype;
       updatedAt: string;
       data: DocumentData;
       backrefs: DocumentBackref[];
@@ -89,7 +89,7 @@ export type APIResponse =
     }
   | {
       typeName: 'CreateDocument';
-      id?: string;
+      id?: DocumentId;
       errors?: SaveDocumentErrors;
     }
   | {
@@ -102,17 +102,23 @@ export type APIResponse =
     }
   | {
       typeName: 'CreateAttachment';
-      id: string;
+      id: DocumentId;
     }
   | {
       typeName: 'Scrape';
       documents: ListDocumentsResult[];
     };
 
+export type DocumentId = NominalType<string, 'DocumentId'>;
+export type DocumentType = NominalType<string, 'DocumentType'>;
+export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
+
+export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
+
 export type ListDocumentsResult = {
-  id: string;
-  documentType: string;
-  subtype: string;
+  id: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   title: string;
   updatedAt: string;
 };
@@ -120,9 +126,9 @@ export type ListDocumentsResult = {
 export type DocumentData = JSONObj;
 
 export type DocumentBackref = {
-  id: string;
-  documentType: string;
-  subtype: string;
+  id: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   title: string;
 };
 

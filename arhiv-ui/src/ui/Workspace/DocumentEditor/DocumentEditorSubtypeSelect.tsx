@@ -1,7 +1,9 @@
+import { DocumentSubtype } from 'dto';
+
 type DocumentEditorSubtypeSelectProps = {
-  subtypes: string[];
-  value: string;
-  onChange: (value: string) => void;
+  subtypes: DocumentSubtype[];
+  value: DocumentSubtype;
+  onChange: (value: DocumentSubtype) => void;
 };
 
 export function DocumentEditorSubtypeSelect({
@@ -11,7 +13,7 @@ export function DocumentEditorSubtypeSelect({
 }: DocumentEditorSubtypeSelectProps) {
   return (
     <label className="flex justify-end items-center gap-2">
-      <select onChange={(e) => onChange(e.currentTarget.value)} form="">
+      <select onChange={(e) => onChange(e.currentTarget.value as DocumentSubtype)} form="">
         {subtypes.map((subtype) => (
           <option key={subtype} value={subtype} selected={subtype === value}>
             {subtype}

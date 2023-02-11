@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { DocumentBackref } from 'dto';
+import { DocumentBackref, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, copyTextToClipbard } from 'utils';
 import { formatDocumentType } from 'utils/schema';
 import { useTimeout } from 'utils/hooks';
@@ -10,9 +10,9 @@ import { Icon } from 'components/Icon';
 import { useCardContext } from '../workspace-reducer';
 
 type DocumentViewerHeadProps = {
-  id: string;
-  documentType: string;
-  subtype: string;
+  id: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   updatedAt: string;
   backrefs: DocumentBackref[];
   collections: DocumentBackref[];

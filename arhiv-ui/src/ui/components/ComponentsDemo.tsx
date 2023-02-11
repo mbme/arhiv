@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { DEFAULT_SUBTYPE, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { noop, setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
 import { JSXChildren } from 'utils/jsx';
@@ -175,9 +176,9 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
-              documentId="test123"
-              documentType="note"
-              subtype=""
+              documentId={'test123' as DocumentId}
+              documentType={'note' as DocumentType}
+              subtype={DEFAULT_SUBTYPE}
               documentTitle="Very important note"
               onClick={noop}
             />
@@ -187,9 +188,9 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
-              documentId="test123"
-              documentType="note"
-              subtype="other"
+              documentId={'test123' as DocumentId}
+              documentType={'note' as DocumentType}
+              subtype={'other' as DocumentSubtype}
               documentTitle="Very important note"
               onClick={noop}
             />
@@ -199,9 +200,9 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
-              documentId="test123"
-              documentType=""
-              subtype=""
+              documentId={'test123' as DocumentId}
+              documentType={'' as DocumentType}
+              subtype={DEFAULT_SUBTYPE}
               documentTitle="12342321"
               onClick={noop}
             />
@@ -211,10 +212,10 @@ export function ComponentsDemo() {
 
           <div className="examples">
             <Ref
-              documentId="test123"
-              documentType="note"
+              documentId={'test123' as DocumentId}
+              documentType={'note' as DocumentType}
               documentTitle=""
-              subtype="other"
+              subtype={'other' as DocumentSubtype}
               description="Note with custom description"
               onClick={noop}
             />
@@ -226,9 +227,9 @@ export function ComponentsDemo() {
             <div className="w-8/12 overflow-auto block border border-indigo-500">
               Some looooooooooong text and{' '}
               <Ref
-                documentId="test123"
-                documentType="attachment"
-                subtype="image"
+                documentId={'test123' as DocumentId}
+                documentType={'attachment' as DocumentType}
+                subtype={'image' as DocumentSubtype}
                 documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
                 onClick={noop}
               />{' '}

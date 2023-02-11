@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { DocumentId } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
@@ -14,7 +15,7 @@ import { CardContainer } from '../CardContainer';
 import { EraseDocumentConfirmationDialog } from './EraseDocumentConfirmationDialog';
 
 type DocumentViewerProps = {
-  documentId: string;
+  documentId: DocumentId;
   onEdit: Callback;
 };
 

@@ -1,3 +1,4 @@
+import { DocumentType } from 'dto';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
@@ -6,7 +7,7 @@ import { CardContainer } from './CardContainer';
 export function BrowserCard() {
   const context = useCardContext();
 
-  const openCatalog = (documentType: string) => {
+  const openCatalog = (documentType?: DocumentType) => {
     context.replace({ variant: 'catalog', documentType });
   };
 
@@ -35,7 +36,7 @@ export function BrowserCard() {
           <Button
             key=""
             variant="simple"
-            onClick={() => openCatalog('')}
+            onClick={() => openCatalog()}
             className="mt-4 line-through"
           >
             ERASED

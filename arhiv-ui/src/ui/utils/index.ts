@@ -14,6 +14,12 @@ export type ArrayElement<ArrayType extends readonly unknown[]> =
 
 export type Callback = () => void;
 
+// https://dnlytras.com/blog/nominal-types
+declare const __nominal__type: unique symbol;
+export type NominalType<Type, Identifier> = Type & {
+  readonly [__nominal__type]: Identifier;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 

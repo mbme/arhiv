@@ -1,3 +1,4 @@
+import { DocumentId, DocumentType } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -5,7 +6,7 @@ import { CardContainer } from './CardContainer';
 type Props = {
   query?: string;
   page?: number;
-  documentType?: string;
+  documentType?: DocumentType;
 };
 export function CatalogCard({ query, page, documentType }: Props) {
   const context = useCardContext();
@@ -18,7 +19,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
     context.update({ page });
   };
 
-  const updateDocumentId = (documentId: string) => {
+  const updateDocumentId = (documentId: DocumentId) => {
     context.pushStack({ variant: 'document', documentId });
   };
 

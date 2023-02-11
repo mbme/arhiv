@@ -1,9 +1,10 @@
 import { useState } from 'preact/hooks';
+import { DocumentId } from 'dto';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 import { DocumentViewer } from './DocumentViewer/DocumentViewer';
 
 type Props = {
-  documentId: string;
+  documentId: DocumentId;
 };
 export function DocumentCard({ documentId }: Props) {
   const [edit, setEdit] = useState(false);

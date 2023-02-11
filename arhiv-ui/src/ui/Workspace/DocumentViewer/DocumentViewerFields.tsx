@@ -1,10 +1,10 @@
-import { DocumentData } from 'dto';
+import { DocumentData, DocumentType, DocumentSubtype } from 'dto';
 import { getFieldDescriptions } from 'utils/schema';
 import { DocumentViewerField, FieldValue } from './DocumentViewerField';
 
 type DocumentViewerFieldsProps = {
-  documentType: string;
-  subtype: string;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   data: DocumentData;
 };
 

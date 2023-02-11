@@ -1,6 +1,6 @@
 import { createElement } from 'preact';
 import { cx, Obj } from 'utils';
-import { MarkupElement, throwBadMarkupElement } from 'dto';
+import { DocumentId, MarkupElement, throwBadMarkupElement } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { JSXElement } from 'utils/jsx';
 import { RPC } from 'utils/rpc';
@@ -27,7 +27,7 @@ function extractText(children: MarkupElement[]): string {
 
 function markupElementToJSX(
   el: MarkupElement,
-  onRefClick: (documentId: string) => void
+  onRefClick: (documentId: DocumentId) => void
 ): JSXElement {
   switch (el.typeName) {
     case 'Document': {
@@ -203,7 +203,7 @@ function markupElementToJSX(
       let description = extractText(el.children);
 
       if (el.url.startsWith('ref:')) {
-        const id = el.url.substring('ref:'.length);
+        const id = el.url.substring('ref:'.length) as DocumentId;
         const preview = el.typeName === 'Image';
 
         if (el.link_type === 'Autolink') {
@@ -242,7 +242,7 @@ function markupElementToJSX(
 
 type MarkupProps = {
   markup: string;
-  onRefClick: (documentId: string) => void;
+  onRefClick: (documentId: DocumentId) => void;
 };
 
 export function Markup({ markup, onRefClick }: MarkupProps) {

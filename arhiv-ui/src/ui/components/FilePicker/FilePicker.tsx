@@ -1,15 +1,15 @@
 import { useState } from 'preact/hooks';
-import { DirEntry } from '../../../dto';
-import { useQuery } from '../../utils/hooks';
-import { RPC } from '../../utils/rpc';
-import { Icon } from '../Icon';
-import { QueryError } from '../QueryError';
+import { DirEntry, DocumentId } from 'dto';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { Icon } from 'components/Icon';
+import { QueryError } from 'components/QueryError';
 import { FilePickerConfirmationDialog } from './FilePickerConfirmationDialog';
 import { FilePickerEntry } from './FilePickerEntry';
 import { FilePickerHead } from './FilePickerHead';
 
 type Props = {
-  onAttachmentCreated: (id: string) => void;
+  onAttachmentCreated: (id: DocumentId) => void;
 };
 export function FilePicker({ onAttachmentCreated }: Props) {
   const [showHidden, setShowHidden] = useState(false);

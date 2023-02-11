@@ -1,4 +1,5 @@
 import { useRef, useState } from 'preact/hooks';
+import { DocumentType } from 'dto';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
@@ -7,7 +8,7 @@ import { CardContainer } from './CardContainer';
 import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
 
 type NewDocumentCardProps = {
-  documentType?: string;
+  documentType?: DocumentType;
 };
 export function NewDocumentCard({ documentType: initialDocumentType }: NewDocumentCardProps) {
   const [documentType, setDocumentType] = useState(initialDocumentType);

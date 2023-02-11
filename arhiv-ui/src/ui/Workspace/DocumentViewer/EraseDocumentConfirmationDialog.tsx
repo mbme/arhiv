@@ -1,3 +1,4 @@
+import { DocumentId, DocumentType } from 'dto';
 import { Callback } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
@@ -6,8 +7,8 @@ import { Dialog } from 'components/Dialog';
 import { QueryError } from 'components/QueryError';
 
 type EraseDocumentButtonProps = {
-  documentId: string;
-  documentType: string;
+  documentId: DocumentId;
+  documentType: DocumentType;
   title: string;
   onErase: Callback;
   onCancel: Callback;

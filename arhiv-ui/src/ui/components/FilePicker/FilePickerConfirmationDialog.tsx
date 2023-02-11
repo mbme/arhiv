@@ -1,14 +1,15 @@
-import { Callback, formatBytes } from '../../utils';
-import { useQuery } from '../../utils/hooks';
-import { RPC } from '../../utils/rpc';
-import { Button } from '../Button';
-import { Dialog } from '../Dialog';
-import { QueryError } from '../QueryError';
+import { DocumentId } from 'dto';
+import { Callback, formatBytes } from 'utils';
+import { useQuery } from 'utils/hooks';
+import { RPC } from 'utils/rpc';
+import { Button } from 'components/Button';
+import { Dialog } from 'components/Dialog';
+import { QueryError } from 'components/QueryError';
 
 type Props = {
   filePath: string;
   size: number;
-  onAttachmentCreated: (id: string) => void;
+  onAttachmentCreated: (id: DocumentId) => void;
   onCancel: Callback;
 };
 export function FilePickerConfirmationDialog({

@@ -1,4 +1,4 @@
-import { DocumentData } from 'dto';
+import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { Callback, cx, getDocumentUrl } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
@@ -9,12 +9,12 @@ import {
   isErasedDocument,
   isImageAttachment,
 } from 'utils/schema';
-import { Button } from './Button';
-import { QueryError } from './QueryError';
-import { AudioPlayer } from './AudioPlayer/AudioPlayer';
+import { Button } from 'components/Button';
+import { QueryError } from 'components/QueryError';
+import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 
 type RefContainerProps = {
-  id: string;
+  id: DocumentId;
   description?: string;
   attachmentPreview?: boolean;
   onClick: Callback;
@@ -61,7 +61,7 @@ export function RefContainer({ id, description, attachmentPreview, onClick }: Re
   );
 }
 
-export const useDocuments = (ids: string[]) => {
+export const useDocuments = (ids: DocumentId[]) => {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocuments({ ids }, abortSignal),
     {
@@ -73,8 +73,8 @@ export const useDocuments = (ids: string[]) => {
 };
 
 type RefListContainerProps = {
-  ids: string[];
-  onClick: (documentId: string) => void;
+  ids: DocumentId[];
+  onClick: (id: DocumentId) => void;
 };
 export function RefListContainer({ ids, onClick }: RefListContainerProps) {
   const { documents, error, inProgress } = useDocuments(ids);
@@ -104,9 +104,9 @@ export function RefListContainer({ ids, onClick }: RefListContainerProps) {
 }
 
 type RefProps = {
-  documentId: string;
-  documentType: string;
-  subtype: string;
+  documentId: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   documentTitle: string;
   description?: string;
   onClick: Callback;
@@ -149,9 +149,9 @@ export function Ref({
 }
 
 type RefPreviewProps = {
-  documentId: string;
-  documentType: string;
-  subtype: string;
+  documentId: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
   data: DocumentData;
   documentTitle: string;
   description?: string;
@@ -207,7 +207,7 @@ export function RefPreview({
   );
 }
 
-export function getAttachmentPreview(subtype: string, data: DocumentData) {
+export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentData) {
   const filename = data['filename'] as string;
   const blobId = data['blob'] as string;
 

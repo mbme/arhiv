@@ -1,4 +1,5 @@
 import { useRef } from 'preact/hooks';
+import { DocumentId } from 'dto';
 import { Callback } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
@@ -9,7 +10,7 @@ import { CardContainer } from '../CardContainer';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
 type DocumentEditorProps = {
-  documentId: string;
+  documentId: DocumentId;
   onSave: Callback;
   onCancel: Callback;
 };

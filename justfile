@@ -53,9 +53,9 @@ check-rs:
   cargo test
 
 check-ts:
+  yarn workspaces run compiler-errors
   yarn run check-fmt
   yarn workspaces run lint
-  yarn workspaces run compiler-errors
 
 check: check-rs check-ts
 

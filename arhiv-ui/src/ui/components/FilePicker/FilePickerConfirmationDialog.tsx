@@ -28,8 +28,14 @@ export function FilePickerConfirmationDialog({
     }
   );
 
+  const onHide = () => {
+    if (!inProgress) {
+      onCancel();
+    }
+  };
+
   return (
-    <Dialog onHide={onCancel} title="Add file">
+    <Dialog onHide={onHide} title="Add file">
       <div className="modal-content">
         <div>
           Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}

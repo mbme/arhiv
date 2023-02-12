@@ -26,8 +26,14 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
     }
   );
 
+  const onHide = () => {
+    if (!inProgress || window.confirm('Scraping is in progress. Are you sure?')) {
+      onCancel();
+    }
+  };
+
   return (
-    <Dialog onHide={onCancel} title="Scrape URL">
+    <Dialog onHide={onHide} title="Scrape URL">
       <form
         className="modal-content form"
         onSubmit={(e) => {

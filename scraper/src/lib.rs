@@ -224,11 +224,16 @@ impl ScraperOptions {
 
         if self.manual {
             timeouts.set_script(Some(Duration::from_secs(30 * 60)));
-            client
-                .update_timeouts(timeouts)
-                .await
-                .context("Failed to update session timeouts")?;
+            timeouts.set_page_load(Some(Duration::from_secs(60)));
+        } else {
+            timeouts.set_script(Some(Duration::from_secs(30)));
+            timeouts.set_page_load(Some(Duration::from_secs(30)));
         }
+
+        client
+            .update_timeouts(timeouts)
+            .await
+            .context("Failed to update session timeouts")?;
 
         Ok(())
     }

@@ -10,7 +10,7 @@ type CardVariant =
   | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'scraper' }
-  | { variant: 'new-document'; documentType?: DocumentType }
+  | { variant: 'new-document'; documentType: DocumentType }
   | { variant: 'document'; documentId: DocumentId };
 
 export type Card = CardVariant & {

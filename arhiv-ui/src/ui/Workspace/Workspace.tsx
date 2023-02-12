@@ -13,6 +13,7 @@ import { StatusCard } from './StatusCard';
 import { FilePickerCard } from './FilePickerCard';
 import { ScraperCard } from './ScraperCard';
 import { BrowserCard } from './BrowserCard';
+import { NewDocumentDialog } from './NewDocumentDialog';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -32,6 +33,8 @@ export function Workspace() {
     }
   }, []);
 
+  const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
+
   return (
     <div
       className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth"
@@ -46,11 +49,22 @@ export function Workspace() {
           <Button
             variant="text"
             leadingIcon="add-document"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'new-document' } })}
+            onClick={() => setShowNewDocumentDialog(true)}
             className="ml-auto"
           >
             New...
           </Button>
+          {showNewDocumentDialog && (
+            <NewDocumentDialog
+              onNewDocument={(documentType) => {
+                dispatch({ type: 'open', newCard: { variant: 'new-document', documentType } });
+                setShowNewDocumentDialog(false);
+              }}
+              onCancel={() => {
+                setShowNewDocumentDialog(false);
+              }}
+            />
+          )}
 
           <Button
             variant="text"

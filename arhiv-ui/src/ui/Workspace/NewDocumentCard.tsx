@@ -43,26 +43,26 @@ export function NewDocumentCard({ documentType }: NewDocumentCardProps) {
         }
       />
 
-        <DocumentEditorForm
-          key={documentType}
-          formRef={formRef}
-          documentType={documentType}
-          onSubmit={async (data, subtype, collections) => {
-            const submitResult = await RPC.CreateDocument({
-              documentType,
-              subtype,
-              data,
-              collections,
-            });
+      <DocumentEditorForm
+        key={documentType}
+        formRef={formRef}
+        documentType={documentType}
+        onSubmit={async (data, subtype, collections) => {
+          const submitResult = await RPC.CreateDocument({
+            documentType,
+            subtype,
+            data,
+            collections,
+          });
 
-            if (submitResult.errors) {
-              return submitResult.errors;
-            }
+          if (submitResult.errors) {
+            return submitResult.errors;
+          }
 
-            cardContext.unlock();
-            cardContext.replace({ variant: 'document', documentId: submitResult.id! });
-          }}
-        />
+          cardContext.unlock();
+          cardContext.replace({ variant: 'document', documentId: submitResult.id! });
+        }}
+      />
     </>
   );
 }

@@ -16,7 +16,7 @@ export function DocumentViewerFields({ documentType, subtype, data }: DocumentVi
       {fields.map((field) => {
         const value = data[field.name];
 
-        if (!value) {
+        if (value === null || value === undefined) {
           return null;
         }
 

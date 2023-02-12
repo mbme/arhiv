@@ -1,20 +1,18 @@
 import { useState } from 'preact/hooks';
-import { DirEntry, DocumentId } from 'dto';
+import { FileEntry } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Icon } from 'components/Icon';
 import { QueryError } from 'components/QueryError';
-import { FilePickerConfirmationDialog } from './FilePickerConfirmationDialog';
 import { FilePickerEntry } from './FilePickerEntry';
 import { FilePickerHead } from './FilePickerHead';
 
 type Props = {
-  onAttachmentCreated: (id: DocumentId) => void;
+  onFileSelected: (file: FileEntry) => void;
 };
-export function FilePicker({ onAttachmentCreated }: Props) {
+export function FilePicker({ onFileSelected }: Props) {
   const [showHidden, setShowHidden] = useState(false);
   const [dir, setDir] = useState<string>();
-  const [selectedFile, setSelectedFile] = useState<DirEntry>();
 
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.ListDir({ dir, showHidden }, abortSignal),
@@ -56,20 +54,11 @@ export function FilePicker({ onAttachmentCreated }: Props) {
             }
 
             if (entry.typeName === 'File') {
-              setSelectedFile(entry);
+              onFileSelected(entry);
             }
           }}
         />
       ))}
-
-      {selectedFile?.typeName === 'File' && (
-        <FilePickerConfirmationDialog
-          filePath={selectedFile.path}
-          size={selectedFile.size}
-          onAttachmentCreated={onAttachmentCreated}
-          onCancel={() => setSelectedFile(undefined)}
-        />
-      )}
     </div>
   );
 }

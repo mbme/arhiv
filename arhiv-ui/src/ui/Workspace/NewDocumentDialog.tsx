@@ -13,7 +13,7 @@ export function NewDocumentDialog({ onNewDocument, onCancel }: Props) {
 
   return (
     <Dialog onHide={onCancel} title="Create new document">
-      <div className="flex justify-around my-8">
+      <div className="modal-content flex justify-around">
         <section>
           <h1 className="section-heading ml-4">Documents</h1>
           {documentTypes.map((documentType) => {

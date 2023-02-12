@@ -4,17 +4,17 @@ import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
+import { ScraperDialog } from 'components/ScraperDialog';
+import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { Card, throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { CardContainer } from './CardContainer';
 import { DocumentCard } from './DocumentCard';
 import { StatusCard } from './StatusCard';
-import { FilePickerCard } from './FilePickerCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
 import { BrowserCard } from './BrowserCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
-import { ScraperDialog } from './ScraperDialog';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -32,10 +32,11 @@ export function Workspace() {
         skipDocumentIfAlreadyOpen: true,
       });
     }
-  }, []);
+  }, [dispatch]);
 
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
+  const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
   return (
     <div
@@ -96,6 +97,18 @@ export function Workspace() {
             />
           )}
 
+          {showFilePickerDialog && (
+            <FilePickerDialog
+              onAttachmentCreated={(documentId) => {
+                dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+                setShowFilePickerDialog(false);
+              }}
+              onCancel={() => {
+                setShowFilePickerDialog(false);
+              }}
+            />
+          )}
+
           <DropdownMenu
             options={[
               {
@@ -107,7 +120,7 @@ export function Workspace() {
               {
                 text: 'Add file',
                 icon: 'paperclip',
-                onClick: () => dispatch({ type: 'open', newCard: { variant: 'file-picker' } }),
+                onClick: () => setShowFilePickerDialog(true),
               },
 
               {
@@ -162,9 +175,6 @@ function renderCard(card: Card) {
 
     case 'status':
       return <StatusCard />;
-
-    case 'file-picker':
-      return <FilePickerCard />;
 
     case 'scrape-result':
       return <ScrapeResultCard url={card.url} ids={card.ids} />;

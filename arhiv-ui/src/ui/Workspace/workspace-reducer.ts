@@ -7,7 +7,6 @@ import { DocumentId, DocumentType } from 'dto';
 type CardVariant =
   | { variant: 'catalog'; query?: string; page?: number; documentType?: DocumentType } //
   | { variant: 'browser' }
-  | { variant: 'file-picker' }
   | { variant: 'status' }
   | { variant: 'scrape-result'; url: string; ids: DocumentId[] }
   | { variant: 'new-document'; documentType: DocumentType }

@@ -1,9 +1,9 @@
 import { createPortal } from 'preact/compat';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
-import { Callback, cx } from '../utils';
-import { useId } from '../utils/hooks';
-import { JSXChildren } from '../utils/jsx';
+import { Callback, cx } from 'utils';
+import { useId, useLatestRef } from 'utils/hooks';
+import { JSXChildren } from 'utils/jsx';
 
 function lockGlobalScroll(): Callback {
   const documentEl = document.documentElement;
@@ -29,29 +29,37 @@ type DialogProps = {
 export function Dialog({ onHide, alarming, title, children }: DialogProps) {
   const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
 
-  const onHideRef = useRef(onHide);
-  onHideRef.current = onHide;
+  const onHideRef = useLatestRef(onHide);
 
   const rootEl = document.getElementById('modal-root');
   if (!rootEl) {
     throw new Error('modal root el not found');
   }
 
+  const id = useId();
+  const titleId = `modal-title-${id}`;
+
   useEffect(() => {
     if (!modalEl) {
       return;
     }
 
+    let mounted = true;
     const modal = new A11yDialog(modalEl);
 
     modal.show();
 
-    modal.on('hide', onHideRef.current);
+    modal.on('hide', () => {
+      if (mounted) {
+        onHideRef.current();
+      }
+    });
 
     return () => {
+      mounted = false;
       modal.destroy();
     };
-  }, [modalEl]);
+  }, [modalEl, onHideRef]);
 
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
@@ -65,12 +73,9 @@ export function Dialog({ onHide, alarming, title, children }: DialogProps) {
     return () => {
       document.body.removeEventListener('keydown', onKeydown);
     };
-  }, []);
+  }, [onHideRef]);
 
   useEffect(() => lockGlobalScroll(), []);
-
-  const id = useId();
-  const titleId = `modal-title-${id}`;
 
   return createPortal(
     <div className="modal-container" ref={setModalEl} aria-labelledby={titleId} aria-hidden="true">

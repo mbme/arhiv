@@ -29,13 +29,13 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
   return (
     <Dialog onHide={onCancel} title="Scrape URL">
       <form
-        className="form"
+        className="modal-content form"
         onSubmit={(e) => {
           e.preventDefault();
           triggerRefresh();
         }}
       >
-        <div className="flex gap-2 my-8 px-4">
+        <div className="flex gap-2 mb-8">
           <input
             type="url"
             name="url"

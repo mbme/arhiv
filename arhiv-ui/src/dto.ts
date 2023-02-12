@@ -162,6 +162,8 @@ export type DirEntry =
       size?: number;
     };
 
+export type FileEntry = Extract<DirEntry, { typeName: 'File' }>;
+
 export type MarkupElement =
   | {
       typeName: 'Document';

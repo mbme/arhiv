@@ -1,10 +1,7 @@
-import { forwardRef } from 'preact/compat';
-import { Callback, cx } from '../utils';
-import { JSXChildren } from '../utils/jsx';
-import { Icon, IconVariant } from './Icon';
-
-// TODO: button size - small / regular (maybe boolean property)
-// TODO: lock button width on busy, and show only spinner
+import { forwardRef, useRef } from 'preact/compat';
+import { Callback, cx } from 'utils';
+import { JSXChildren } from 'utils/jsx';
+import { Icon, IconVariant } from 'components/Icon';
 
 type ButtonProps = {
   variant: 'simple' | 'primary' | 'text';
@@ -35,8 +32,22 @@ export function Button({
   type = 'button',
   size = 'md',
 }: ButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+
+  const el = ref.current;
+  if (el) {
+    if (busy && el.style.width.length === 0) {
+      el.style.width = `${el.offsetWidth}px`;
+    }
+
+    if (!busy && el.style.width.length !== 0) {
+      el.style.width = '';
+    }
+  }
+
   return (
     <button
+      ref={ref}
       type={type}
       className={cx(className, {
         'btn btn-simple': variant === 'simple',
@@ -50,13 +61,17 @@ export function Button({
       disabled={disabled || busy}
       title={title}
     >
-      {leadingIcon && <Icon variant={leadingIcon} />}
+      {busy ? (
+        <Icon variant="spinner" />
+      ) : (
+        <>
+          {leadingIcon && <Icon variant={leadingIcon} />}
 
-      {children}
+          {children}
 
-      {trailingIcon && <Icon variant={trailingIcon} />}
-
-      {busy && <Icon variant="spinner" />}
+          {trailingIcon && <Icon variant={trailingIcon} />}
+        </>
+      )}
     </button>
   );
 }

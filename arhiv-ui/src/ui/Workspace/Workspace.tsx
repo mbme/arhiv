@@ -11,9 +11,10 @@ import { CardContainer } from './CardContainer';
 import { DocumentCard } from './DocumentCard';
 import { StatusCard } from './StatusCard';
 import { FilePickerCard } from './FilePickerCard';
-import { ScraperCard } from './ScraperCard';
+import { ScrapeResultCard } from './ScrapeResultCard';
 import { BrowserCard } from './BrowserCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
+import { ScraperDialog } from './ScraperDialog';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -34,6 +35,7 @@ export function Workspace() {
   }, []);
 
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
+  const [showScraperDialog, setShowScraperDialog] = useState(false);
 
   return (
     <div
@@ -82,12 +84,24 @@ export function Workspace() {
             Browse
           </Button>
 
+          {showScraperDialog && (
+            <ScraperDialog
+              onSuccess={(url, ids) => {
+                dispatch({ type: 'open', newCard: { variant: 'scrape-result', url, ids } });
+                setShowScraperDialog(false);
+              }}
+              onCancel={() => {
+                setShowScraperDialog(false);
+              }}
+            />
+          )}
+
           <DropdownMenu
             options={[
               {
                 text: 'Scrape URL',
                 icon: 'web',
-                onClick: () => dispatch({ type: 'open', newCard: { variant: 'scraper' } }),
+                onClick: () => setShowScraperDialog(true),
               },
 
               {
@@ -152,8 +166,8 @@ function renderCard(card: Card) {
     case 'file-picker':
       return <FilePickerCard />;
 
-    case 'scraper':
-      return <ScraperCard />;
+    case 'scrape-result':
+      return <ScrapeResultCard url={card.url} ids={card.ids} />;
   }
 
   throwBadCardVariant(card);

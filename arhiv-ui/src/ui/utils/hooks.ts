@@ -1,3 +1,4 @@
+import { MutableRef } from 'preact/hooks';
 import {
   EffectCallback,
   StateUpdater,
@@ -21,9 +22,10 @@ import {
 
 type Inputs = ReadonlyArray<unknown>;
 
-type Options = {
+type Options<TResult> = {
   refreshIfChange?: Inputs;
   refreshOnMount?: boolean;
+  onSuccess?: (result: TResult) => void;
 };
 
 type QueryHookResult<TResult> = {
@@ -34,12 +36,13 @@ type QueryHookResult<TResult> = {
 };
 
 // TODO refetch on focus, refetch on reconnect, cache
+// inspired by https://swr.vercel.app/docs/api
 export function useQuery<TResult>(
   cb: (signal: AbortSignal) => Promise<TResult>,
-  options?: Options
+  options: Options<TResult> = {}
 ): QueryHookResult<TResult> {
-  const cbRef = useRef(cb);
-  cbRef.current = cb;
+  const cbRef = useLatestRef(cb);
+  const optionsRef = useLatestRef(options);
 
   const [inProgress, setInProgress] = useState(false);
   const [result, setResult] = useState<TResult>();
@@ -48,7 +51,7 @@ export function useQuery<TResult>(
   const [counter, setCounter] = useState(0);
 
   useEffect(() => {
-    const refreshOnMount = options?.refreshOnMount ?? true;
+    const refreshOnMount = optionsRef.current.refreshOnMount ?? true;
     if (counter === 0 && !refreshOnMount) {
       return;
     }
@@ -61,6 +64,7 @@ export function useQuery<TResult>(
         setResult(result);
         setError(undefined);
         setInProgress(false);
+        optionsRef.current.onSuccess?.(result);
       },
       (error) => {
         setResult(undefined);
@@ -73,7 +77,7 @@ export function useQuery<TResult>(
       controller.abort();
       setInProgress(false);
     };
-  }, [counter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [counter, cbRef, optionsRef]);
 
   useUpdateEffect(() => {
     setCounter(counter + 1);
@@ -87,6 +91,25 @@ export function useQuery<TResult>(
       setCounter(counter + 1);
     },
   };
+}
+
+export function useLatestRef<T>(value: T): MutableRef<T> {
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  return valueRef;
+}
+
+export function useAbortSignal() {
+  const [abortController] = useState(() => new AbortController());
+
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, [abortController]);
+
+  return abortController.signal;
 }
 
 // https://usehooks-ts.com/react-hook/use-is-first-render

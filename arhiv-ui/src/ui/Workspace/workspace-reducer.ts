@@ -9,7 +9,7 @@ type CardVariant =
   | { variant: 'browser' }
   | { variant: 'file-picker' }
   | { variant: 'status' }
-  | { variant: 'scraper' }
+  | { variant: 'scrape-result'; url: string; ids: DocumentId[] }
   | { variant: 'new-document'; documentType: DocumentType }
   | { variant: 'document'; documentId: DocumentId };
 

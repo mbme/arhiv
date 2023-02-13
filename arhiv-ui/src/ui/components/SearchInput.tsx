@@ -1,15 +1,29 @@
 import { useEffect, useState } from 'preact/hooks';
+import { cx } from 'utils';
 import { useDebouncedCallback } from 'utils/hooks';
 import { Icon } from 'components/Icon';
 
 type SearchInputProps = {
-  autofocus: boolean;
+  autofocus?: boolean;
   initialValue: string;
   onSearch: (query: string) => void;
-  busy: boolean;
+  onKeyDown?: (key: string) => boolean | void;
+  busy?: boolean;
+  placeholder?: string;
+  debounceMs?: number;
+  className?: string;
 };
 
-export function SearchInput({ autofocus, initialValue, onSearch, busy }: SearchInputProps) {
+export function SearchInput({
+  className,
+  autofocus,
+  initialValue,
+  onSearch,
+  onKeyDown,
+  busy,
+  placeholder = 'Type something',
+  debounceMs = 0,
+}: SearchInputProps) {
   const [inputEl, setInputEl] = useState<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -18,29 +32,35 @@ export function SearchInput({ autofocus, initialValue, onSearch, busy }: SearchI
     }
   }, [inputEl, autofocus]);
 
-  const onSearchDebounced = useDebouncedCallback(onSearch, 400);
+  const onSearchDebounced = useDebouncedCallback(onSearch, debounceMs);
 
   return (
     <form
-      className="form relative pt-1"
+      className={cx('form relative', className)}
       onSubmit={(e) => {
         e.preventDefault();
       }}
     >
       <Icon
         variant={busy ? 'spinner' : 'search'}
-        className="absolute top-4 left-3 pointer-events-none"
+        className="absolute top-3 left-3 pointer-events-none"
       />
 
       <input
         type="search"
         name="pattern"
         className="field w-full mb-4 pl-10"
+        autoFocus={autofocus || undefined}
         defaultValue={initialValue}
         onChange={(e) => {
           onSearchDebounced(e.currentTarget.value);
         }}
-        placeholder="Type something"
+        onKeyDown={(e) => {
+          if (onKeyDown?.(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        placeholder={placeholder}
         autoComplete="off"
         ref={setInputEl}
       />

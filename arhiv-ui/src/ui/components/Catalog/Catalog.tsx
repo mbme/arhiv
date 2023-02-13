@@ -4,8 +4,8 @@ import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { DateTime } from 'components/DateTime';
 import { QueryError } from 'components/QueryError';
+import { SearchInput } from 'components/SearchInput';
 import { Pagination } from './Pagination';
-import { SearchInput } from './SearchInput';
 
 type CatalogProps = {
   autofocus?: boolean;
@@ -76,6 +76,7 @@ export function Catalog({
         }}
         busy={inProgress}
         autofocus={autofocus}
+        debounceMs={400}
       />
 
       {error && <QueryError error={error} />}

@@ -7,6 +7,7 @@ type ButtonProps = {
   variant: 'simple' | 'primary' | 'text';
   className?: string;
   onClick?: Callback;
+  onHover?: (el: HTMLButtonElement) => void;
   disabled?: boolean;
   children: JSXChildren;
   title?: string;
@@ -22,6 +23,7 @@ export function Button({
   variant,
   className = '',
   onClick,
+  onHover,
   disabled,
   children,
   title,
@@ -58,6 +60,7 @@ export function Button({
         'is-sm': size === 'sm',
       })}
       onClick={onClick}
+      onMouseOver={(e) => onHover?.(e.currentTarget)}
       disabled={disabled || busy}
       title={title}
     >

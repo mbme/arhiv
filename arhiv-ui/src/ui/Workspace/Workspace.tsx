@@ -63,6 +63,14 @@ export function Workspace() {
                 dispatch({ type: 'open', newCard: { variant: 'new-document', documentType } });
                 setShowNewDocumentDialog(false);
               }}
+              onScrape={() => {
+                setShowScraperDialog(true);
+                setShowNewDocumentDialog(false);
+              }}
+              onAttach={() => {
+                setShowFilePickerDialog(true);
+                setShowNewDocumentDialog(false);
+              }}
               onCancel={() => {
                 setShowNewDocumentDialog(false);
               }}
@@ -111,18 +119,6 @@ export function Workspace() {
 
           <DropdownMenu
             options={[
-              {
-                text: 'Scrape URL',
-                icon: 'web',
-                onClick: () => setShowScraperDialog(true),
-              },
-
-              {
-                text: 'Add file',
-                icon: 'paperclip',
-                onClick: () => setShowFilePickerDialog(true),
-              },
-
               {
                 text: 'Status',
                 icon: 'info',

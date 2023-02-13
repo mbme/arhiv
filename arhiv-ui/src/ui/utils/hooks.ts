@@ -10,7 +10,6 @@ import {
   useState,
 } from 'preact/hooks';
 import {
-  ensure,
   Callback,
   debounce,
   getSessionValue,
@@ -163,18 +162,18 @@ export function useDebouncedCallback<Args extends any[]>(
   callback: (...args: Args) => void,
   waitFor: number
 ) {
-  ensure(waitFor > 1, 'waitFor must be positive number');
-
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
 
-  const debouncedCallback = useMemo(
-    () =>
-      debounce<Args, (...args: Args) => void>((...args) => {
-        callbackRef.current(...args);
-      }, waitFor),
-    [waitFor]
-  );
+  const debouncedCallback = useMemo(() => {
+    if (waitFor < 1) {
+      return (...args: Args) => callbackRef.current(...args);
+    }
+
+    return debounce<Args, (...args: Args) => void>((...args) => {
+      callbackRef.current(...args);
+    }, waitFor);
+  }, [waitFor]);
 
   return debouncedCallback;
 }

@@ -164,7 +164,9 @@ function renderCard(card: Card) {
       return <BrowserCard />;
 
     case 'new-document':
-      return <NewDocumentCard documentType={card.documentType} />;
+      return (
+        <NewDocumentCard documentType={card.documentType} subtype={card.subtype} data={card.data} />
+      );
 
     case 'document':
       return <DocumentCard documentId={card.documentId} />;

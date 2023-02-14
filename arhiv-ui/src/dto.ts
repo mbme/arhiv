@@ -114,6 +114,7 @@ export type DocumentType = NominalType<string, 'DocumentType'>;
 export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
 
 export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
+export const EMPTY_DATA: DocumentData = {};
 
 export type ListDocumentsResult = {
   id: DocumentId;

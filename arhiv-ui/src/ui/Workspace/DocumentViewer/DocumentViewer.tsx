@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { DocumentId } from 'dto';
+import { DocumentType, DocumentData, DocumentId, DocumentSubtype } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
@@ -17,9 +17,10 @@ import { EraseDocumentConfirmationDialog } from './EraseDocumentConfirmationDial
 type DocumentViewerProps = {
   documentId: DocumentId;
   onEdit: Callback;
+  onClone: (documentType: DocumentType, subtype: DocumentSubtype, data: DocumentData) => void;
 };
 
-export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
+export function DocumentViewer({ documentId, onEdit, onClone }: DocumentViewerProps) {
   const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
     {
@@ -44,6 +45,13 @@ export function DocumentViewer({ documentId, onEdit }: DocumentViewerProps) {
                     icon: 'clipboard',
                     onClick: () => {
                       void copyTextToClipbard(getDocumentUrl(result.id));
+                    },
+                  },
+                  {
+                    text: `Clone ${result.documentType}`,
+                    icon: 'duplicate-document',
+                    onClick: () => {
+                      onClone(result.documentType, result.subtype, result.data);
                     },
                   },
                   {

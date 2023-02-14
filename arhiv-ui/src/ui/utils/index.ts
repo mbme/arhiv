@@ -1,5 +1,6 @@
 export type Obj<T = string> = Record<string, T | undefined>;
 export type EmptyObj = Obj<never>;
+
 export type JSONValue =
   | null
   | string
@@ -7,7 +8,7 @@ export type JSONValue =
   | boolean
   | { [prop: string]: JSONValue }
   | JSONValue[];
-export type JSONObj = Obj<JSONValue>;
+export type JSONObj = { [prop: string]: JSONValue };
 
 export type ArrayElement<ArrayType extends readonly unknown[]> =
   ArrayType extends readonly (infer ElementType)[] ? ElementType : never;

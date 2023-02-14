@@ -26,8 +26,8 @@ import { useCardLock, useCardContext } from '../workspace-reducer';
 type DocumentEditorFormProps = {
   documentId?: string;
   documentType: DocumentType;
-  subtype?: DocumentSubtype;
-  data?: DocumentData;
+  subtype: DocumentSubtype;
+  data: DocumentData;
   collections?: DocumentId[];
   onSubmit: (
     data: JSONObj,
@@ -41,7 +41,7 @@ export function DocumentEditorForm({
   documentId,
   documentType,
   subtype: initialSubtype,
-  data = {},
+  data: initialData,
   collections: initialCollections,
   onSubmit,
   formRef,
@@ -112,7 +112,7 @@ export function DocumentEditorForm({
             key={field.name}
             field={field}
             ignoreReadonly={!documentId}
-            initialValue={data[field.name]}
+            initialValue={initialData[field.name]}
             disabled={!isFieldActive(field, subtype)}
             errors={fieldErrors[field.name]}
           />

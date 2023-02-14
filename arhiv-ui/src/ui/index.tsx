@@ -3,7 +3,6 @@ if (process.env.NODE_ENV === 'development') {
   require('preact/debug');
 }
 
-import { enableMapSet } from 'immer';
 import { render } from 'preact';
 
 // register web components
@@ -12,8 +11,6 @@ import './components/Form/v-ref-input';
 
 import { ComponentsDemo } from './components/ComponentsDemo';
 import { Workspace } from './Workspace/Workspace';
-
-enableMapSet();
 
 function renderApp() {
   const renderRoot = document.querySelector('main');

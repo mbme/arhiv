@@ -29,7 +29,6 @@
     "@floating-ui/react": "^0.19.1",
     "a11y-dialog": "^7.3.0",
     "element-internals-polyfill": "^1.1.11",
-    "immer": "^9.0.15",
     "preact": "^10.10.6"
   },
   "devDependencies": {

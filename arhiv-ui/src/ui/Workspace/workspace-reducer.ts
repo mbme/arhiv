@@ -1,16 +1,36 @@
 import { createContext } from 'preact';
 import { useContext, useEffect, useReducer } from 'preact/hooks';
-import produce from 'immer';
 import { newId, getSessionValue, setSessionValue } from 'utils';
-import { DocumentId, DocumentType } from 'dto';
+import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 
 type CardVariant =
-  | { variant: 'catalog'; query?: string; page?: number; documentType?: DocumentType } //
-  | { variant: 'browser' }
-  | { variant: 'status' }
-  | { variant: 'scrape-result'; url: string; ids: DocumentId[] }
-  | { variant: 'new-document'; documentType: DocumentType }
-  | { variant: 'document'; documentId: DocumentId };
+  | {
+      variant: 'catalog';
+      query?: string;
+      page?: number;
+      documentType?: DocumentType;
+    }
+  | {
+      variant: 'browser';
+    }
+  | {
+      variant: 'status';
+    }
+  | {
+      variant: 'scrape-result';
+      url: string;
+      ids: DocumentId[];
+    }
+  | {
+      variant: 'new-document';
+      documentType: DocumentType;
+      subtype?: DocumentSubtype;
+      data?: DocumentData;
+    }
+  | {
+      variant: 'document';
+      documentId: DocumentId;
+    };
 
 export type Card = CardVariant & {
   id: number;
@@ -88,9 +108,10 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
         }
       }
 
-      return produce(state, (newState) => {
-        newState.cards.push(createCard(action.newCard));
-      });
+      return {
+        ...state,
+        cards: [...state.cards, createCard(action.newCard)],
+      };
     }
 
     case 'close': {
@@ -98,9 +119,10 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
         return state;
       }
 
-      return produce(state, (newState) => {
-        newState.cards = newState.cards.filter((card) => card.id !== action.id);
-      });
+      return {
+        ...state,
+        cards: state.cards.filter((card) => card.id !== action.id),
+      };
     }
 
     case 'replace': {
@@ -108,13 +130,20 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
         return state;
       }
 
-      return produce(state, (newState) => {
-        const pos = newState.cards.findIndex((card) => card.id === action.id);
-        if (pos > -1) {
-          const prevCard = action.stackPrevious ? newState.cards[pos] : undefined;
-          newState.cards[pos] = createCard(action.newCard, prevCard);
-        }
-      });
+      const pos = state.cards.findIndex((card) => card.id === action.id);
+      if (pos === -1) {
+        throw new Error(`can't replace card: can't find card with id ${action.id}`);
+      }
+
+      const prevCard = action.stackPrevious ? state.cards[pos] : undefined;
+
+      const newCards = [...state.cards];
+      newCards[pos] = createCard(action.newCard, prevCard);
+
+      return {
+        ...state,
+        cards: newCards,
+      };
     }
 
     case 'update': {
@@ -122,33 +151,47 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
         return state;
       }
 
-      return produce(state, (newState) => {
-        const card = newState.cards.find((card) => card.id === action.id);
-        if (!card) {
-          throw new Error("can't find card by id");
-        }
+      return {
+        ...state,
+        cards: state.cards.map((card) => {
+          if (card.id === action.id) {
+            return {
+              ...card,
+              ...action.props,
+            };
+          }
 
-        Object.assign(card, action.props);
-      });
+          return card;
+        }),
+      };
     }
 
     case 'close-all': {
-      return produce(state, (newState) => {
+      return {
+        ...state,
         // keep only locked cards
-        newState.cards = newState.cards.filter((card) => newState.lockedCardIds.has(card.id));
-      });
+        cards: state.cards.filter((card) => state.lockedCardIds.has(card.id)),
+      };
     }
 
     case 'lock-card': {
-      return produce(state, (newState) => {
-        newState.lockedCardIds.add(action.id);
-      });
+      const lockedCardIds = new Set(state.lockedCardIds);
+      lockedCardIds.add(action.id);
+
+      return {
+        ...state,
+        lockedCardIds,
+      };
     }
 
     case 'unlock-card': {
-      return produce(state, (newState) => {
-        newState.lockedCardIds.delete(action.id);
-      });
+      const lockedCardIds = new Set(state.lockedCardIds);
+      lockedCardIds.delete(action.id);
+
+      return {
+        ...state,
+        lockedCardIds,
+      };
     }
 
     default: {

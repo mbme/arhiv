@@ -102,7 +102,7 @@ impl Baza {
             tx.put_document(&document)?;
 
             for blob_id in document_expert
-                .extract_refs(&document.document_type, &document.data)?
+                .extract_refs(&document.class, &document.data)?
                 .blobs
             {
                 let blob = tx.get_blob(&blob_id);

@@ -5,7 +5,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use super::{DocumentData, DocumentType, Id, Revision};
+use super::{DocumentClass, DocumentData, Id, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]
@@ -14,7 +14,7 @@ pub struct Document<D = DocumentData> {
     pub rev: Revision,
     pub prev_rev: Revision,
     #[serde(flatten)]
-    pub document_type: DocumentType,
+    pub class: DocumentClass,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub data: D,
@@ -22,14 +22,14 @@ pub struct Document<D = DocumentData> {
 
 impl<D> Document<D> {
     #[must_use]
-    pub fn new_with_data(document_type: DocumentType, data: D) -> Self {
+    pub fn new_with_data(class: DocumentClass, data: D) -> Self {
         let now = now();
 
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
             prev_rev: Revision::STAGING,
-            document_type,
+            class,
             created_at: now,
             updated_at: now,
             data,
@@ -39,13 +39,13 @@ impl<D> Document<D> {
 
 impl Document {
     #[must_use]
-    pub fn new(document_type: DocumentType) -> Self {
-        Document::new_with_data(document_type, DocumentData::new())
+    pub fn new(class: DocumentClass) -> Self {
+        Document::new_with_data(class, DocumentData::new())
     }
 
     #[must_use]
     pub fn is_erased(&self) -> bool {
-        self.document_type.is_erased()
+        self.class.is_erased()
     }
 
     #[must_use]
@@ -58,7 +58,7 @@ impl Document {
     }
 
     pub fn erase(&mut self) {
-        self.document_type = DocumentType::erased();
+        self.class = DocumentClass::erased();
         self.rev = Revision::STAGING;
         self.prev_rev = Revision::STAGING;
         self.data = DocumentData::new();
@@ -72,7 +72,7 @@ impl Document {
             id: self.id,
             rev: self.rev,
             prev_rev: self.prev_rev,
-            document_type: self.document_type,
+            class: self.class,
             created_at: self.created_at,
             updated_at: self.updated_at,
             data,
@@ -90,7 +90,7 @@ impl<D: Serialize> Document<D> {
             id: self.id,
             rev: self.rev,
             prev_rev: self.prev_rev,
-            document_type: self.document_type,
+            class: self.class,
             created_at: self.created_at,
             updated_at: self.updated_at,
             data,
@@ -108,10 +108,6 @@ impl std::str::FromStr for Document {
 
 impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "[Document {} {} {}]",
-            self.document_type, self.id, self.rev,
-        )
+        write!(f, "[Document {} {} {}]", self.class, self.id, self.rev,)
     }
 }

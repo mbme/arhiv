@@ -619,8 +619,8 @@ impl BazaConnection {
                 document.id,
                 document.rev,
                 document.prev_rev,
-                document.document_type.document_type,
-                document.document_type.subtype,
+                document.class.document_type,
+                document.class.subtype,
                 document.created_at,
                 document.updated_at,
                 document.data.to_string(),
@@ -636,8 +636,8 @@ impl BazaConnection {
             stmt.execute(params![
                 document.id,
                 document.rev,
-                document.document_type.document_type,
-                document.document_type.subtype,
+                document.class.document_type,
+                document.class.subtype,
                 document.data.to_string(),
             ])
             .context(anyhow!("Failed to put document refs {}", &document.id))?;
@@ -738,10 +738,10 @@ impl BazaConnection {
             }
 
             ensure!(
-                document.document_type == prev_document.document_type,
-                "document type '{}' is different from the type '{}' of existing document",
-                document.document_type,
-                prev_document.document_type
+                document.class == prev_document.class,
+                "document class '{}' is different from the class '{}' of existing document",
+                document.class,
+                prev_document.class
             );
 
             ensure!(

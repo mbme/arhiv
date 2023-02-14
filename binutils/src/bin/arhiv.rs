@@ -1,6 +1,6 @@
 use std::{process, sync::Arc};
 
-use baza::entities::{Document, DocumentData, DocumentType, Id};
+use baza::entities::{Document, DocumentClass, DocumentData, Id};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -191,7 +191,7 @@ async fn main() {
                 serde_json::from_str(&data).expect("data must be a JSON object");
 
             let mut document = Document::new_with_data(
-                DocumentType::new(document_type, subtype.unwrap_or_default()),
+                DocumentClass::new(document_type, subtype.unwrap_or_default()),
                 data,
             );
 
@@ -305,7 +305,7 @@ async fn main() {
 fn print_document(document: &Document, port: u16) {
     println!(
         "[{} {}] {}",
-        document.document_type,
+        document.class,
         document.id,
         get_document_url(&document.id, port)
     );

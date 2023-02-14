@@ -4,17 +4,17 @@ use anyhow::Result;
 use serde_json::Value;
 
 use baza::{
-    entities::{Document, DocumentType},
+    entities::{Document, DocumentClass},
     ListPage,
 };
 
 pub fn empty_document() -> Document {
-    Document::new(DocumentType::new("test_type", ""))
+    Document::new(DocumentClass::new("test_type", ""))
 }
 
 pub fn new_document(value: Value) -> Document {
     Document::new_with_data(
-        DocumentType::new("test_type", ""),
+        DocumentClass::new("test_type", ""),
         value.try_into().unwrap(),
     )
 }

@@ -5,7 +5,7 @@ use serde_json::Value;
 use rs_utils::generate_temp_path;
 
 use crate::{
-    entities::{Document, DocumentType},
+    entities::{Document, DocumentClass},
     schema::DataSchema,
     Baza,
 };
@@ -43,7 +43,7 @@ impl Deref for TestBaza {
 
 pub fn new_document(value: Value) -> Document {
     Document::new_with_data(
-        DocumentType::new("test_type", ""),
+        DocumentClass::new("test_type", ""),
         value.try_into().unwrap(),
     )
 }

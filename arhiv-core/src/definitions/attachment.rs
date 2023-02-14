@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use rs_utils::{get_file_name, get_file_size, get_image_size, get_media_type, log, FFProbe};
 
 use baza::{
-    entities::{BLOBId, Document, DocumentType},
+    entities::{BLOBId, Document, DocumentClass},
     schema::*,
     BazaConnection,
 };
@@ -121,7 +121,7 @@ pub fn create_attachment(
     let blob = tx.add_blob(file_path, move_file)?;
 
     let mut attachment = Document::new_with_data(
-        DocumentType::new(ATTACHMENT_TYPE, ""),
+        DocumentClass::new(ATTACHMENT_TYPE, ""),
         AttachmentData {
             filename,
             media_type,
@@ -135,7 +135,7 @@ pub fn create_attachment(
     );
 
     if attachment.data.is_audio() {
-        attachment.document_type.set_subtype(AUDIO_SUBTYPE);
+        attachment.class.set_subtype(AUDIO_SUBTYPE);
 
         let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
 
@@ -151,7 +151,7 @@ pub fn create_attachment(
     }
 
     if attachment.data.is_image() {
-        attachment.document_type.set_subtype(IMAGE_SUBTYPE);
+        attachment.class.set_subtype(IMAGE_SUBTYPE);
 
         match get_image_size(file_path) {
             Ok((width, height)) => {

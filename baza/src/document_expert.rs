@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 
 use crate::{
-    entities::{Document, DocumentData, DocumentType, Refs},
+    entities::{Document, DocumentClass, DocumentData, Refs},
     schema::{DataSchema, Field},
     search::MultiSearch,
 };
@@ -15,7 +15,7 @@ impl<'s> DocumentExpert<'s> {
         DocumentExpert { schema }
     }
 
-    pub fn extract_refs(&self, document_type: &DocumentType, data: &DocumentData) -> Result<Refs> {
+    pub fn extract_refs(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<Refs> {
         let mut refs = Refs::default();
 
         for field in self.schema.iter_fields(document_type)? {
@@ -29,7 +29,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(refs)
     }
 
-    pub fn pick_title_field(&self, document_type: &DocumentType) -> Result<Option<&Field>> {
+    pub fn pick_title_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
         let field = self
             .schema
             .iter_fields(document_type)?
@@ -38,7 +38,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(field)
     }
 
-    pub fn get_title(&self, document_type: &DocumentType, data: &DocumentData) -> Result<String> {
+    pub fn get_title(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<String> {
         let title_field = if let Some(title_field) = self.pick_title_field(document_type)? {
             title_field
         } else {
@@ -50,7 +50,7 @@ impl<'s> DocumentExpert<'s> {
             .ok_or_else(|| anyhow!("title field {} is missing", title_field.name))
     }
 
-    pub fn is_editable(&self, document_type: &DocumentType) -> Result<bool> {
+    pub fn is_editable(&self, document_type: &DocumentClass) -> Result<bool> {
         let is_editable = self
             .schema
             .iter_fields(document_type)?
@@ -61,7 +61,7 @@ impl<'s> DocumentExpert<'s> {
 
     pub fn search(
         &self,
-        document_type: &DocumentType,
+        document_type: &DocumentClass,
         data: &DocumentData,
         pattern: &str,
     ) -> Result<usize> {
@@ -98,8 +98,8 @@ impl<'s> DocumentExpert<'s> {
 
     fn find_collection_field_for(
         &self,
-        collection_type: &DocumentType,
-        document_type: &DocumentType,
+        collection_type: &DocumentClass,
+        document_type: &DocumentClass,
     ) -> Result<&Field> {
         self.schema
             .iter_fields(collection_type)?
@@ -114,8 +114,7 @@ impl<'s> DocumentExpert<'s> {
         document: &Document,
         collection: &mut Document,
     ) -> Result<()> {
-        let field =
-            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
+        let field = self.find_collection_field_for(&collection.class, &document.class)?;
 
         collection.data.add_to_ref_list(field.name, &document.id)?;
 
@@ -127,8 +126,7 @@ impl<'s> DocumentExpert<'s> {
         document: &Document,
         collection: &mut Document,
     ) -> Result<()> {
-        let field =
-            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
+        let field = self.find_collection_field_for(&collection.class, &document.class)?;
 
         collection
             .data

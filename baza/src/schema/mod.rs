@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 
-use crate::entities::{DocumentType, ERASED_DOCUMENT_TYPE};
+use crate::entities::{DocumentClass, ERASED_DOCUMENT_TYPE};
 
 pub use data_description::*;
 pub use data_migration::*;
@@ -30,7 +30,7 @@ impl DataSchema {
         DataSchema { modules }
     }
 
-    pub fn get_data_description(&self, document_type: &DocumentType) -> Result<&DataDescription> {
+    pub fn get_data_description(&self, document_type: &DocumentClass) -> Result<&DataDescription> {
         self.modules
             .iter()
             .find(|module| module.document_type == document_type.document_type)
@@ -47,7 +47,7 @@ impl DataSchema {
 
     pub fn iter_fields(
         &self,
-        document_type: &DocumentType,
+        document_type: &DocumentClass,
     ) -> Result<impl Iterator<Item = &Field>> {
         let subtype = document_type.subtype.clone();
 

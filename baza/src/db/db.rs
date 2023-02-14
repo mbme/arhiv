@@ -12,7 +12,7 @@ use rs_utils::log;
 
 use crate::{
     document_expert::DocumentExpert,
-    entities::{BLOBId, DocumentData, DocumentType, Id, Revision},
+    entities::{BLOBId, DocumentClass, DocumentData, Id, Revision},
     schema::DataSchema,
 };
 
@@ -63,7 +63,7 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
             return Ok(1);
         }
 
-        let document_type = DocumentType::new(document_type, subtype);
+        let document_type = DocumentClass::new(document_type, subtype);
 
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
@@ -129,7 +129,7 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
             .as_str()
             .context("document_data must be str")?;
 
-        let document_type = DocumentType::new(document_type, subtype);
+        let document_type = DocumentClass::new(document_type, subtype);
 
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 

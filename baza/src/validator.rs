@@ -5,7 +5,7 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use crate::{
     db::BazaConnection,
-    entities::{BLOBId, Document, DocumentData, DocumentType, Id},
+    entities::{BLOBId, Document, DocumentClass, DocumentData, Id},
     schema::Field,
 };
 
@@ -71,11 +71,11 @@ impl<'c> Validator<'c> {
 
         if let Some(document_type) = expected_document_type {
             ensure!(
-                document.document_type.document_type == document_type,
+                document.class.document_type == document_type,
                 "document '{}' expected to be '{}' but has type '{}'",
                 id,
                 document_type,
-                document.document_type,
+                document.class,
             );
         }
 
@@ -108,7 +108,7 @@ impl<'c> Validator<'c> {
 
     fn validate_document_type(
         &self,
-        document_type: &DocumentType,
+        document_type: &DocumentClass,
     ) -> std::result::Result<(), ValidationError> {
         let schema = self.conn.get_schema();
 
@@ -138,7 +138,7 @@ impl<'c> Validator<'c> {
         let schema = self.conn.get_schema();
 
         let data_description = schema
-            .get_data_description(&document.document_type)
+            .get_data_description(&document.class)
             .expect("document_type must be valid");
 
         let errors = document
@@ -151,16 +151,14 @@ impl<'c> Validator<'c> {
 
                 if data_description
                     .get_field(field_name)
-                    .map_or(false, |field| {
-                        field.for_subtype(&document.document_type.subtype)
-                    })
+                    .map_or(false, |field| field.for_subtype(&document.class.subtype))
                 {
                     return None;
                 }
 
                 Some(format!(
                     "Document type '{}' doesn't expect field '{}'",
-                    &document.document_type, field_name
+                    &document.class, field_name
                 ))
             })
             .collect::<Vec<_>>();
@@ -177,14 +175,14 @@ impl<'c> Validator<'c> {
         document: &Document,
         prev_data: Option<&DocumentData>,
     ) -> std::result::Result<(), ValidationError> {
-        self.validate_document_type(&document.document_type)?;
+        self.validate_document_type(&document.class)?;
 
         self.validate_fields_presence(document)?;
 
         for field in self
             .conn
             .get_schema()
-            .iter_fields(&document.document_type)
+            .iter_fields(&document.class)
             .expect("document_type must be valid")
         {
             let value = document.data.get(field.name);

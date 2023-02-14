@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 
 use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
 use baza::{
-    entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
+    entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::DataSchema,
     validator::{ValidationError, Validator},
@@ -82,10 +82,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: document_expert.get_title(&item.document_type, &item.data)?,
+                        title: document_expert.get_title(&item.class, &item.data)?,
                         id: item.id,
-                        document_type: item.document_type.document_type,
-                        subtype: item.document_type.subtype,
+                        document_type: item.class.document_type,
+                        subtype: item.class.subtype,
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -95,21 +95,21 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: document_expert.get_title(&item.document_type, &item.data)?,
+                        title: document_expert.get_title(&item.class, &item.data)?,
                         id: item.id,
-                        document_type: item.document_type.document_type,
-                        subtype: item.document_type.subtype,
+                        document_type: item.class.document_type,
+                        subtype: item.class.subtype,
                     })
                 })
                 .collect::<Result<_>>()?;
 
-            let title = document_expert.get_title(&document.document_type, &document.data)?;
+            let title = document_expert.get_title(&document.class, &document.data)?;
 
             APIResponse::GetDocument {
                 id: document.id,
                 title,
-                document_type: document.document_type.document_type,
-                subtype: document.document_type.subtype,
+                document_type: document.class.document_type,
+                subtype: document.class.subtype,
                 updated_at: document.updated_at,
                 data: document.data,
                 backrefs,
@@ -136,7 +136,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let prev_data = document.data;
 
-            document.document_type.set_subtype(subtype);
+            document.class.set_subtype(subtype);
             document.data = data;
 
             let validator = Validator::new(&tx);
@@ -185,7 +185,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             data,
             collections,
         } => {
-            let document_type = DocumentType::new(document_type, subtype);
+            let document_type = DocumentClass::new(document_type, subtype);
             let mut document = Document::new_with_data(document_type, data);
 
             let tx = arhiv.baza.get_tx()?;
@@ -372,10 +372,10 @@ fn documents_into_results(
         .into_iter()
         .map(|item| {
             Ok(ListDocumentsResult {
-                title: document_expert.get_title(&item.document_type, &item.data)?,
+                title: document_expert.get_title(&item.class, &item.data)?,
                 id: item.id,
-                document_type: item.document_type.document_type,
-                subtype: item.document_type.subtype,
+                document_type: item.class.document_type,
+                subtype: item.class.subtype,
                 updated_at: item.updated_at,
             })
         })

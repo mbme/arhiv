@@ -34,7 +34,10 @@ export function DocumentCard({ documentId }: Props) {
     content = (
       <DocumentEditor
         document={result}
-        onSave={() => setEdit(false)}
+        onSave={() => {
+          setEdit(false);
+          triggerRefresh();
+        }}
         onCancel={() => setEdit(false)}
       />
     );

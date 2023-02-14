@@ -113,6 +113,8 @@ export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;
 export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
 
+export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>, 'typeName'>;
+
 export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
 export const EMPTY_DATA: DocumentData = {};
 

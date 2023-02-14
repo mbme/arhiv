@@ -1,12 +1,8 @@
 import { useState } from 'preact/hooks';
-import { DocumentType, DocumentData, DocumentId, DocumentSubtype } from 'dto';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { DocumentDTO } from 'dto';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
 import { isAttachment, isErasedDocument } from 'utils/schema';
-import { QueryError } from 'components/QueryError';
 import { IconButton } from 'components/Button';
-import { Icon } from 'components/Icon';
 import { getAttachmentPreview } from 'components/Ref';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentViewerFields } from './DocumentViewerFields';
@@ -15,19 +11,13 @@ import { CardContainer } from '../CardContainer';
 import { EraseDocumentConfirmationDialog } from './EraseDocumentConfirmationDialog';
 
 type DocumentViewerProps = {
-  documentId: DocumentId;
+  document: DocumentDTO;
   onEdit: Callback;
-  onClone: (documentType: DocumentType, subtype: DocumentSubtype, data: DocumentData) => void;
+  onClone: Callback;
+  onErase: Callback;
 };
 
-export function DocumentViewer({ documentId, onEdit, onClone }: DocumentViewerProps) {
-  const { result, error, inProgress, triggerRefresh } = useQuery(
-    (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
-    {
-      refreshIfChange: [documentId],
-    }
-  );
-
+export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentViewerProps) {
   const [showEraseDocumentConfirmationDialog, setShowEraseDocumentConfirmationDialog] =
     useState(false);
 
@@ -35,91 +25,79 @@ export function DocumentViewer({ documentId, onEdit, onClone }: DocumentViewerPr
     <>
       <CardContainer.Topbar
         left={
-          result?.documentType ? (
-            <>
-              <DropdownMenu
-                icon="dots-horizontal"
-                options={[
-                  {
-                    text: 'Copy link',
-                    icon: 'clipboard',
-                    onClick: () => {
-                      void copyTextToClipbard(getDocumentUrl(result.id));
-                    },
+          <>
+            <DropdownMenu
+              icon="dots-horizontal"
+              options={[
+                {
+                  text: 'Copy link',
+                  icon: 'clipboard',
+                  onClick: () => {
+                    void copyTextToClipbard(getDocumentUrl(document.id));
                   },
-                  {
-                    text: `Clone ${result.documentType}`,
-                    icon: 'duplicate-document',
-                    onClick: () => {
-                      onClone(result.documentType, result.subtype, result.data);
-                    },
-                  },
-                  {
-                    text: `Erase ${result.documentType}`,
-                    icon: 'erase-document',
-                    alarming: true,
-                    onClick: () => setShowEraseDocumentConfirmationDialog(true),
-                  },
-                ]}
-              />
+                },
+                {
+                  text: `Clone ${document.documentType}`,
+                  icon: 'duplicate-document',
+                  onClick: onClone,
+                },
+                {
+                  text: `Erase ${document.documentType}`,
+                  icon: 'erase-document',
+                  alarming: true,
+                  onClick: () => setShowEraseDocumentConfirmationDialog(true),
+                },
+              ]}
+            />
 
-              <IconButton
-                icon="pencil-square"
-                title={`Edit ${result.documentType}`}
-                onClick={onEdit}
-                size="lg"
-              />
-            </>
-          ) : null
+            <IconButton
+              icon="pencil-square"
+              title={`Edit ${document.documentType}`}
+              onClick={onEdit}
+              size="lg"
+            />
+          </>
         }
         right={<CardContainer.CloseButton />}
       />
 
-      {error && <QueryError error={error} />}
+      <DocumentViewerHead
+        id={document.id}
+        documentType={document.documentType}
+        subtype={document.subtype}
+        updatedAt={document.updatedAt}
+        backrefs={document.backrefs}
+        collections={document.collections}
+      />
 
-      {inProgress && <Icon variant="spinner" className="mb-8" />}
+      {isAttachment(document.documentType) && (
+        <div className="mb-8 empty:hidden">
+          {getAttachmentPreview(document.subtype, document.data)}
+        </div>
+      )}
 
-      {result && (
-        <>
-          <DocumentViewerHead
-            id={result.id}
-            documentType={result.documentType}
-            subtype={result.subtype}
-            updatedAt={result.updatedAt}
-            backrefs={result.backrefs}
-            collections={result.collections}
-          />
+      {isErasedDocument(document.documentType) && (
+        <img
+          src="/public/nothing-to-see-here.jpg"
+          alt="funny picture for the erased document"
+          className="my-16 mx-auto"
+        />
+      )}
 
-          {isAttachment(result.documentType) && (
-            <div className="mb-8 empty:hidden">
-              {getAttachmentPreview(result.subtype, result.data)}
-            </div>
-          )}
+      <DocumentViewerFields
+        documentType={document.documentType}
+        subtype={document.subtype}
+        data={document.data}
+      />
 
-          {isErasedDocument(result.documentType) && (
-            <img
-              src="/public/nothing-to-see-here.jpg"
-              alt="funny picture for the erased document"
-              className="my-16 mx-auto"
-            />
-          )}
-
-          <DocumentViewerFields
-            documentType={result.documentType}
-            subtype={result.subtype}
-            data={result.data}
-          />
-
-          {showEraseDocumentConfirmationDialog && (
-            <EraseDocumentConfirmationDialog
-              documentId={result.id}
-              documentType={result.documentType}
-              title={result.title}
-              onErase={triggerRefresh}
-              onCancel={() => setShowEraseDocumentConfirmationDialog(false)}
-            />
-          )}
-        </>
+      {showEraseDocumentConfirmationDialog && (
+        <EraseDocumentConfirmationDialog
+          documentId={document.id}
+          documentType={document.documentType}
+          title={document.title}
+          onErase={onErase}
+          onCancel={() => setShowEraseDocumentConfirmationDialog(false)}
+        />
       )}
     </>
   );

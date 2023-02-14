@@ -1,36 +1,26 @@
 import { useRef } from 'preact/hooks';
-import { DocumentId } from 'dto';
+import { DocumentDTO } from 'dto';
 import { Callback } from 'utils';
-import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
-import { Icon } from 'components/Icon';
-import { QueryError } from 'components/QueryError';
 import { CardContainer } from '../CardContainer';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
 type DocumentEditorProps = {
-  documentId: DocumentId;
+  document: DocumentDTO;
   onSave: Callback;
   onCancel: Callback;
 };
 
-export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorProps) {
+export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorProps) {
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
-    {
-      refreshIfChange: [documentId],
-    }
-  );
 
   return (
     <>
       <CardContainer.Topbar
         skipBack
         left={
-          <span className="section-heading text-lg">{`Edit ${result?.documentType || ''}`}</span>
+          <span className="section-heading text-lg">{`Edit ${document.documentType || ''}`}</span>
         }
         right={
           <>
@@ -43,7 +33,6 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
               onClick={() => {
                 formRef.current?.requestSubmit();
               }}
-              disabled={!result}
             >
               Save
             </Button>
@@ -51,34 +40,28 @@ export function DocumentEditor({ documentId, onSave, onCancel }: DocumentEditorP
         }
       />
 
-      {result && (
-        <DocumentEditorForm
-          formRef={formRef}
-          documentId={documentId}
-          documentType={result.documentType}
-          subtype={result.subtype}
-          data={result.data}
-          collections={result.collections.map((item) => item.id)}
-          onSubmit={async (data, subtype, collections) => {
-            const submitResult = await RPC.SaveDocument({
-              id: documentId,
-              subtype,
-              data,
-              collections,
-            });
+      <DocumentEditorForm
+        formRef={formRef}
+        documentId={document.id}
+        documentType={document.documentType}
+        subtype={document.subtype}
+        data={document.data}
+        collections={document.collections.map((item) => item.id)}
+        onSubmit={async (data, subtype, collections) => {
+          const submitResult = await RPC.SaveDocument({
+            id: document.id,
+            subtype,
+            data,
+            collections,
+          });
 
-            if (submitResult.errors) {
-              return submitResult.errors;
-            }
+          if (submitResult.errors) {
+            return submitResult.errors;
+          }
 
-            onSave();
-          }}
-        />
-      )}
-
-      {error && <QueryError error={error} />}
-
-      {inProgress && <Icon variant="spinner" className="mb-8" />}
+          onSave();
+        }}
+      />
     </>
   );
 }

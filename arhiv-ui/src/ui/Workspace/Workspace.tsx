@@ -44,117 +44,115 @@ export function Workspace() {
 
   return (
     <div
-      className="w-screen h-full overflow-x-auto pt-12 pb-2 pl-8 pr-16 scroll-smooth"
+      className="flex flex-row items-start gap-6 h-full overflow-x-auto pt-12 pb-2 px-8 scroll-smooth"
       ref={setWrapperEl}
     >
-      <div className="flex flex-row items-start gap-6 h-full w-fit min-w-full">
-        <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
-          <Button variant="text" disabled>
-            Player
-          </Button>
+      <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
+        <Button variant="text" disabled>
+          Player
+        </Button>
 
-          <Button
-            variant="text"
-            leadingIcon="add-document"
-            onClick={() => setShowNewDocumentDialog(true)}
-            className="ml-auto"
-          >
-            New...
-          </Button>
-          {showNewDocumentDialog && (
-            <NewDocumentDialog
-              onNewDocument={(documentType) => {
-                dispatch({ type: 'open', newCard: { variant: 'new-document', documentType } });
-                setShowNewDocumentDialog(false);
-              }}
-              onScrape={() => {
-                setShowScraperDialog(true);
-                setShowNewDocumentDialog(false);
-              }}
-              onAttach={() => {
-                setShowFilePickerDialog(true);
-                setShowNewDocumentDialog(false);
-              }}
-              onCancel={() => {
-                setShowNewDocumentDialog(false);
-              }}
-            />
-          )}
-
-          <Button
-            variant="text"
-            leadingIcon="search-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
-          >
-            Search
-          </Button>
-
-          <Button
-            variant="text"
-            leadingIcon="browse-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
-          >
-            Browse
-          </Button>
-
-          {showScraperDialog && (
-            <ScraperDialog
-              onSuccess={(url, ids) => {
-                dispatch({ type: 'open', newCard: { variant: 'scrape-result', url, ids } });
-                setShowScraperDialog(false);
-              }}
-              onCancel={() => {
-                setShowScraperDialog(false);
-              }}
-            />
-          )}
-
-          {showFilePickerDialog && (
-            <FilePickerDialog
-              onAttachmentCreated={(documentId) => {
-                dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
-                setShowFilePickerDialog(false);
-              }}
-              onCancel={() => {
-                setShowFilePickerDialog(false);
-              }}
-            />
-          )}
-
-          <DropdownMenu
-            options={[
-              {
-                text: 'Status',
-                icon: 'info',
-                onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
-              },
-
-              {
-                text: 'Components Demo',
-                onClick: () => {
-                  window.location.search = 'DEMO';
-                },
-              },
-
-              {
-                text: 'Close cards',
-                icon: 'x',
-                onClick: () => {
-                  dispatch({
-                    type: 'close-all',
-                  });
-                },
-              },
-            ]}
+        <Button
+          variant="text"
+          leadingIcon="add-document"
+          onClick={() => setShowNewDocumentDialog(true)}
+          className="ml-auto"
+        >
+          New...
+        </Button>
+        {showNewDocumentDialog && (
+          <NewDocumentDialog
+            onNewDocument={(documentType) => {
+              dispatch({ type: 'open', newCard: { variant: 'new-document', documentType } });
+              setShowNewDocumentDialog(false);
+            }}
+            onScrape={() => {
+              setShowScraperDialog(true);
+              setShowNewDocumentDialog(false);
+            }}
+            onAttach={() => {
+              setShowFilePickerDialog(true);
+              setShowNewDocumentDialog(false);
+            }}
+            onCancel={() => {
+              setShowNewDocumentDialog(false);
+            }}
           />
-        </nav>
+        )}
 
-        {cards.map((card) => (
-          <CardContextProvider key={card.id} card={card} dispatch={dispatch}>
-            {renderCard(card)}
-          </CardContextProvider>
-        ))}
-      </div>
+        <Button
+          variant="text"
+          leadingIcon="search-catalog"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
+        >
+          Search
+        </Button>
+
+        <Button
+          variant="text"
+          leadingIcon="browse-catalog"
+          onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
+        >
+          Browse
+        </Button>
+
+        {showScraperDialog && (
+          <ScraperDialog
+            onSuccess={(url, ids) => {
+              dispatch({ type: 'open', newCard: { variant: 'scrape-result', url, ids } });
+              setShowScraperDialog(false);
+            }}
+            onCancel={() => {
+              setShowScraperDialog(false);
+            }}
+          />
+        )}
+
+        {showFilePickerDialog && (
+          <FilePickerDialog
+            onAttachmentCreated={(documentId) => {
+              dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+              setShowFilePickerDialog(false);
+            }}
+            onCancel={() => {
+              setShowFilePickerDialog(false);
+            }}
+          />
+        )}
+
+        <DropdownMenu
+          options={[
+            {
+              text: 'Status',
+              icon: 'info',
+              onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
+            },
+
+            {
+              text: 'Components Demo',
+              onClick: () => {
+                window.location.search = 'DEMO';
+              },
+            },
+
+            {
+              text: 'Close cards',
+              icon: 'x',
+              onClick: () => {
+                dispatch({
+                  type: 'close-all',
+                });
+              },
+            },
+          ]}
+        />
+      </nav>
+
+      {cards.map((card) => (
+        <CardContextProvider key={card.id} card={card} dispatch={dispatch}>
+          {renderCard(card)}
+        </CardContextProvider>
+      ))}
     </div>
   );
 }

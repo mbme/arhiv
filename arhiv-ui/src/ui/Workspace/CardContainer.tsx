@@ -22,7 +22,7 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
 
   useEffect(() => {
     if (el) {
-      el.classList.remove('opacity-30');
+      delete el.dataset.initializing;
 
       if (!cardContextRef.current.card.restored) {
         el.scrollIntoView({ inline: 'center' });
@@ -33,7 +33,8 @@ export function CardContainer({ card, dispatch, children }: CardContainerProps) 
   return (
     <CardContext.Provider value={cardContextRef.current}>
       <div
-        className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity opacity-30"
+        className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30"
+        data-initializing
         ref={setEl}
       >
         <div className="px-4 pb-6">{children}</div>

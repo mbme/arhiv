@@ -25,7 +25,7 @@ export function NewDocumentCard({
   };
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         left={
           <span className="section-heading text-lg">{`New ${documentType || 'document'}`}</span>
@@ -71,6 +71,6 @@ export function NewDocumentCard({
           cardContext.replace({ variant: 'document', documentId: submitResult.id! });
         }}
       />
-    </>
+    </CardContainer>
   );
 }

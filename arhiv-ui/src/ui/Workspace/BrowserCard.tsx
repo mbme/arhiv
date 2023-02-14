@@ -12,7 +12,7 @@ export function BrowserCard() {
   };
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         left={<span className="section-heading text-lg">Browser</span>}
         right={<CardContainer.CloseButton />}
@@ -52,6 +52,6 @@ export function BrowserCard() {
           ))}
         </section>
       </div>
-    </>
+    </CardContainer>
   );
 }

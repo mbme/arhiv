@@ -1,7 +1,8 @@
 import { createContext } from 'preact';
-import { useContext, useEffect, useReducer } from 'preact/hooks';
+import { useContext, useEffect, useReducer, useRef } from 'preact/hooks';
 import { newId, getSessionValue, setSessionValue } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { JSXChildren } from 'utils/jsx';
 
 type CardVariant =
   | {
@@ -235,7 +236,25 @@ type CardContextType = {
   card: Card;
   dispatch: WorkspaceDispatch;
 };
-export const CardContext = createContext<CardContextType | undefined>(undefined);
+const CardContext = createContext<CardContextType | undefined>(undefined);
+
+type CardContextProviderProps = {
+  card: Card;
+  dispatch: WorkspaceDispatch;
+  children: JSXChildren;
+};
+export function CardContextProvider({ card, dispatch, children }: CardContextProviderProps) {
+  const cardContextRef = useRef({ card, dispatch });
+
+  useEffect(() => {
+    cardContextRef.current = {
+      card,
+      dispatch,
+    };
+  }, [card, dispatch]);
+
+  return <CardContext.Provider value={cardContextRef.current}>{children}</CardContext.Provider>;
+}
 
 export function useCardContext() {
   const context = useContext(CardContext);

@@ -1,45 +1,34 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { JSXChildren } from 'utils/jsx';
 import { IconButton } from 'components/Button';
-import { Card, CardContext, useCardContext, WorkspaceDispatch } from './workspace-reducer';
+import { useCardContext } from './workspace-reducer';
 
 type CardContainerProps = {
-  card: Card;
-  dispatch: WorkspaceDispatch;
   children: JSXChildren;
 };
-export function CardContainer({ card, dispatch, children }: CardContainerProps) {
+export function CardContainer({ children }: CardContainerProps) {
+  const { restored } = useCardContext();
+
   const [el, setEl] = useState<HTMLElement | null>(null);
-
-  const cardContextRef = useRef({ card, dispatch });
-
-  useEffect(() => {
-    cardContextRef.current = {
-      card,
-      dispatch,
-    };
-  }, [card, dispatch]);
 
   useEffect(() => {
     if (el) {
       delete el.dataset.initializing;
 
-      if (!cardContextRef.current.card.restored) {
+      if (!restored) {
         el.scrollIntoView({ inline: 'center' });
       }
     }
-  }, [el]);
+  }, [el, restored]);
 
   return (
-    <CardContext.Provider value={cardContextRef.current}>
-      <div
-        className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30"
-        data-initializing
-        ref={setEl}
-      >
-        <div className="px-4 pb-6">{children}</div>
-      </div>
-    </CardContext.Provider>
+    <div
+      className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30"
+      data-initializing
+      ref={setEl}
+    >
+      <div className="px-4 pb-6">{children}</div>
+    </div>
   );
 }
 

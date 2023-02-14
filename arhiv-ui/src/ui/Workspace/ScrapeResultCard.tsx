@@ -12,7 +12,7 @@ export function ScrapeResultCard({ url, ids }: Props) {
   const { open } = useCardContext();
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         left={<span className="section-heading text-lg">Scrape result</span>}
         right={<CardContainer.CloseButton />}
@@ -30,6 +30,6 @@ export function ScrapeResultCard({ url, ids }: Props) {
           onClick={(documentId) => open({ variant: 'document', documentId })}
         />
       </div>
-    </>
+    </CardContainer>
   );
 }

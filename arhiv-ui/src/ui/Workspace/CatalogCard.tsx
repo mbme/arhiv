@@ -24,7 +24,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
   };
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         left={
           <span className="section-heading text-lg">
@@ -43,6 +43,6 @@ export function CatalogCard({ query, page, documentType }: Props) {
         onPageChange={updatePage}
         onDocumentSelected={updateDocumentId}
       />
-    </>
+    </CardContainer>
   );
 }

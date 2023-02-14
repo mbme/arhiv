@@ -6,7 +6,12 @@ import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
-import { Card, throwBadCardVariant, useWorkspaceReducer } from './workspace-reducer';
+import {
+  Card,
+  CardContextProvider,
+  throwBadCardVariant,
+  useWorkspaceReducer,
+} from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { CardContainer } from './CardContainer';
@@ -146,9 +151,9 @@ export function Workspace() {
         </nav>
 
         {cards.map((card) => (
-          <CardContainer key={card.id} card={card} dispatch={dispatch}>
+          <CardContextProvider key={card.id} card={card} dispatch={dispatch}>
             {renderCard(card)}
-          </CardContainer>
+          </CardContextProvider>
         ))}
       </div>
     </div>

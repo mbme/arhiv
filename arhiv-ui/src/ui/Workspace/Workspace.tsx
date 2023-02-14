@@ -14,7 +14,6 @@ import {
 } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
-import { CardContainer } from './CardContainer';
 import { DocumentCard } from './DocumentCard';
 import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';

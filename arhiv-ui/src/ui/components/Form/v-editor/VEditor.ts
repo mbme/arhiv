@@ -17,7 +17,6 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 
 class VEditor {
   private readonlyCompartment = new Compartment();
@@ -44,14 +43,12 @@ class VEditor {
             EditorView.lineWrapping,
             bracketMatching(),
             rectangularSelection(),
-            highlightSelectionMatches(),
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
             this.domEventHandlersCompartment.of(EditorView.domEventHandlers({})),
             this.placeholderCompartment.of(placeholder('')),
             keymap.of([
               ...defaultKeymap, //
-              ...searchKeymap,
               ...historyKeymap,
             ]),
           ],

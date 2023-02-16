@@ -33,6 +33,10 @@ export class HTMLVEditorElement extends FormControlElement {
     }
   }
 
+  override disconnectedCallback() {
+    this.editor?.destroy();
+  }
+
   override attributeChangedCallback() {
     this.updateState();
     this.updateFormValue();

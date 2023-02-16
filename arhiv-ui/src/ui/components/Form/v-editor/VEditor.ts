@@ -103,5 +103,9 @@ class VEditor {
       ],
     });
   }
+
+  destroy() {
+    this.editor.destroy();
+  }
 }
 export { VEditor };

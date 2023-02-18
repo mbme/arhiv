@@ -7,12 +7,14 @@ import { Button } from 'components/Button';
 import { SearchInput } from 'components/SearchInput';
 import { IconVariant } from 'components/Icon';
 
+const ARIA_SELECTED = 'aria-selected';
+
 const getItems = (root: HTMLElement) => root.querySelectorAll<HTMLElement>('.is-search-result');
 
 const activateItem = (root: HTMLElement, index: number) => {
   getItems(root).forEach((el, i) => {
     const isActive = index === i;
-    el.ariaSelected = isActive ? 'true' : '';
+    el.setAttribute(ARIA_SELECTED, isActive ? 'true' : '');
 
     if (isActive) {
       el.scrollIntoView({ block: 'nearest' });
@@ -27,7 +29,7 @@ const activateNextItem = (root: HTMLElement, increment = true) => {
     return;
   }
 
-  const index = items.findIndex((el) => el.ariaSelected === 'true');
+  const index = items.findIndex((el) => el.getAttribute(ARIA_SELECTED) === 'true');
 
   let newIndex = index + (increment ? 1 : -1);
   if (newIndex >= items.length) {
@@ -50,7 +52,7 @@ const activateElement = (root: HTMLElement, el: HTMLElement) => {
 const clickActive = (root: HTMLElement) => {
   const items = Array.from(getItems(root));
 
-  const activeItem = items.find((el) => el.ariaSelected === 'true');
+  const activeItem = items.find((el) => el.getAttribute(ARIA_SELECTED) === 'true');
 
   activeItem?.click();
 };
@@ -94,7 +96,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
   const documentTypes = getDocumentTypes(false).filter(matchesQuery);
   const collectionTypes = getDocumentTypes(true).filter(matchesQuery);
 
-  const searchResultClass = 'justify-start capitalize is-search-result aria-selected:bg-blue-100';
+  const searchResultClass = `justify-start capitalize is-search-result ${ARIA_SELECTED}:bg-blue-100`;
   const headingClass = 'section-heading ml-4 mt-8 first:mt-0';
 
   const activateOnHover = (el: HTMLElement) => {

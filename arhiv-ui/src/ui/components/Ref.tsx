@@ -207,6 +207,14 @@ export function RefPreview({
   );
 }
 
+export function canPreview(documentType: DocumentType, subtype: DocumentSubtype): boolean {
+  if (!isAttachment(documentType)) {
+    return false;
+  }
+
+  return isImageAttachment(subtype) || isAudioAttachment(subtype);
+}
+
 export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentData) {
   const filename = data['filename'] as string;
   const blobId = data['blob'] as string;

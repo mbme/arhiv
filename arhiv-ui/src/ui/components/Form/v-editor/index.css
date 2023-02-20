@@ -12,8 +12,6 @@ v-editor {
   }
 
   .cm-editor {
-    min-height: 19rem;
-
     @apply border-2;
 
     &.cm-focused {
@@ -26,6 +24,15 @@ v-editor {
 
     & .cm-content {
       @apply px-2;
+    }
+
+    & .cm-gutter,
+    & .cm-content {
+      min-height: 19rem;
+    }
+
+    & .v-editor-toolbar {
+      @apply px-2 py-1;
     }
   }
 }

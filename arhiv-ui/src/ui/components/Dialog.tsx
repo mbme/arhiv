@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx } from 'utils';
 import { useId, useLatestRef } from 'utils/hooks';
-import { JSXChildren } from 'utils/jsx';
+import { JSXChildren, JSXRef, setJSXRef } from 'utils/jsx';
 
 function lockGlobalScroll(): Callback {
   const documentEl = document.documentElement;
@@ -21,13 +21,18 @@ function lockGlobalScroll(): Callback {
 }
 
 type DialogProps = {
+  innerRef?: JSXRef<HTMLElement>;
   onHide: Callback;
   alarming?: boolean;
   title: JSXChildren;
   children: JSXChildren;
 };
-export function Dialog({ onHide, alarming, title, children }: DialogProps) {
+export function Dialog({ innerRef, onHide, alarming, title, children }: DialogProps) {
   const [modalEl, setModalEl] = useState<HTMLElement | null>(null);
+
+  if (innerRef) {
+    setJSXRef(innerRef, modalEl);
+  }
 
   const onHideRef = useLatestRef(onHide);
 

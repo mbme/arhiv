@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { DocumentId, DocumentType } from 'dto';
+import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { DateTime } from 'components/DateTime';
@@ -14,7 +14,11 @@ type CatalogProps = {
   initialPage?: number;
   onQueryChange?: (query: string) => void;
   onPageChange?: (page: number) => void;
-  onDocumentSelected: (id: DocumentId) => void;
+  onDocumentSelected: (
+    id: DocumentId,
+    documentType: DocumentType,
+    subtype: DocumentSubtype
+  ) => void;
 };
 
 export function Catalog({
@@ -50,7 +54,7 @@ export function Catalog({
     <div
       className="cursor-pointer px-2 py-3 transition-colors hover:bg-sky-100"
       key={item.id}
-      onClick={() => onDocumentSelected(item.id)}
+      onClick={() => onDocumentSelected(item.id, item.documentType, item.subtype)}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {

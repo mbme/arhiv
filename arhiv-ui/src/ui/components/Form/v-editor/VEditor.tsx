@@ -1,6 +1,6 @@
-import { Compartment, EditorState } from '@codemirror/state';
+import { render } from 'preact';
+import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
 import {
-  DOMEventHandlers,
   drawSelection,
   EditorView,
   highlightActiveLine,
@@ -8,6 +8,8 @@ import {
   keymap,
   placeholder,
   rectangularSelection,
+  showPanel,
+  ViewUpdate,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -17,16 +19,64 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
+import { createLink, createRefUrl } from 'utils/markup';
+import { canPreview } from 'components/Ref';
+import { VEditorToolbar } from './VEditorToolbar';
+
+function createToolbar(view: EditorView) {
+  const dom = document.createElement('div');
+  dom.classList.add('v-editor-toolbar');
+
+  render(
+    <VEditorToolbar
+      onDocumentSelected={(id, documentType, subtype) => {
+        const { state } = view;
+
+        const transaction = state.update(
+          state.changeByRange((range) => {
+            const value = state.sliceDoc(range.from, range.to);
+
+            const newValue = createLink(createRefUrl(id), value, canPreview(documentType, subtype));
+
+            return {
+              changes: {
+                from: range.from,
+                to: range.to,
+                insert: newValue,
+              },
+              range: EditorSelection.range(
+                range.from + newValue.length,
+                range.from + newValue.length
+              ),
+              effects: EditorView.scrollIntoView(range.from + newValue.length, { y: 'center' }),
+            };
+          })
+        );
+
+        view.dispatch(transaction);
+
+        view.focus();
+      }}
+    />,
+    dom
+  );
+
+  return { dom };
+}
+
+type Options = {
+  onBlur?: () => void;
+  onChange?: () => void;
+};
 
 class VEditor {
   private readonlyCompartment = new Compartment();
-  private domEventHandlersCompartment = new Compartment();
   private editableCompartment = new Compartment();
   private placeholderCompartment = new Compartment();
 
   private editor: EditorView;
 
-  constructor(parent: HTMLElement, initialValue: string) {
+  constructor(parent: HTMLElement, initialValue: string, private options: Options = {}) {
     this.editor = new EditorView({
       parent,
       state: EditorState.create({
@@ -37,7 +87,6 @@ class VEditor {
             highlightSpecialChars(),
             history(),
             drawSelection(),
-            EditorState.allowMultipleSelections.of(true),
             indentOnInput(),
             syntaxHighlighting(defaultHighlightStyle),
             EditorView.lineWrapping,
@@ -45,12 +94,16 @@ class VEditor {
             rectangularSelection(),
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
-            this.domEventHandlersCompartment.of(EditorView.domEventHandlers({})),
             this.placeholderCompartment.of(placeholder('')),
+            EditorView.domEventHandlers({ 'blur': this.onBlur }),
+            EditorView.updateListener.of((viewUpdate) => {
+              this.onChange(viewUpdate);
+            }),
             keymap.of([
               ...defaultKeymap, //
               ...historyKeymap,
             ]),
+            showPanel.of(createToolbar),
           ],
           markdown(),
         ],
@@ -58,8 +111,20 @@ class VEditor {
     });
   }
 
+  private onBlur = () => {
+    this.options.onBlur?.();
+  };
+
+  private onChange = (_viewUpdate: ViewUpdate) => {
+    this.options.onChange?.();
+  };
+
   focus() {
     this.editor.focus();
+  }
+
+  isFocused() {
+    return this.editor.hasFocus;
   }
 
   blur() {
@@ -93,14 +158,6 @@ class VEditor {
   setPlaceholder(value: string) {
     this.editor.dispatch({
       effects: [this.placeholderCompartment.reconfigure(placeholder(value))],
-    });
-  }
-
-  setEventHandlers(handlers: DOMEventHandlers<any>) {
-    this.editor.dispatch({
-      effects: [
-        this.domEventHandlersCompartment.reconfigure(EditorView.domEventHandlers(handlers)),
-      ],
     });
   }
 

@@ -17,11 +17,12 @@ export class HTMLVEditorElement extends FormControlElement {
   }
 
   override connectedCallback() {
-    this.editor = new VEditor(this, this.getInitialValue());
-
-    this.editor.setEventHandlers({
-      'blur': () => {
-        this.updateFormValue();
+    this.editor = new VEditor(this, this.getInitialValue(), {
+      onBlur: () => this.updateFormValue(),
+      onChange: () => {
+        if (!this.editor?.isFocused()) {
+          this.updateFormValue();
+        }
       },
     });
 

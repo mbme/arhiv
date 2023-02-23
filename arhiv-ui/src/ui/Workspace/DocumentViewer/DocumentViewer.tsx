@@ -22,7 +22,7 @@ export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentV
     useState(false);
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         left={
           <>
@@ -99,6 +99,6 @@ export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentV
           onCancel={() => setShowEraseDocumentConfirmationDialog(false)}
         />
       )}
-    </>
+    </CardContainer>
   );
 }

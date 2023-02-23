@@ -25,13 +25,24 @@ export function DocumentCard({ documentId }: Props) {
     }
   );
 
-  let content;
   if (error) {
-    content = <QueryError error={error} />;
-  } else if (inProgress || !result) {
-    content = <Icon variant="spinner" className="mb-8" />;
-  } else if (edit) {
-    content = (
+    return (
+      <CardContainer>
+        <QueryError error={error} />
+      </CardContainer>
+    );
+  }
+
+  if (inProgress || !result) {
+    return (
+      <CardContainer>
+        <Icon variant="spinner" className="mb-8" />
+      </CardContainer>
+    );
+  }
+
+  if (edit) {
+    return (
       <DocumentEditor
         document={result}
         onSave={() => {
@@ -41,23 +52,21 @@ export function DocumentCard({ documentId }: Props) {
         onCancel={() => setEdit(false)}
       />
     );
-  } else {
-    content = (
-      <DocumentViewer
-        document={result}
-        onEdit={() => setEdit(true)}
-        onClone={() => {
-          context.open({
-            variant: 'new-document',
-            documentType: result.documentType,
-            subtype: result.subtype,
-            data: result.data,
-          });
-        }}
-        onErase={triggerRefresh}
-      />
-    );
   }
 
-  return <CardContainer>{content}</CardContainer>;
+  return (
+    <DocumentViewer
+      document={result}
+      onEdit={() => setEdit(true)}
+      onClone={() => {
+        context.open({
+          variant: 'new-document',
+          documentType: result.documentType,
+          subtype: result.subtype,
+          data: result.data,
+        });
+      }}
+      onErase={triggerRefresh}
+    />
+  );
 }

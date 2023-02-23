@@ -16,7 +16,7 @@ export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorPro
   const formRef = useRef<HTMLFormElement | null>(null);
 
   return (
-    <>
+    <CardContainer>
       <CardContainer.Topbar
         skipBack
         left={
@@ -62,6 +62,6 @@ export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorPro
           onSave();
         }}
       />
-    </>
+    </CardContainer>
   );
 }

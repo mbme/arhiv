@@ -10,7 +10,9 @@ use baza::{
     validator::{ValidationError, Validator},
     DocumentExpert, Filter,
 };
-use rs_utils::{ensure_dir_exists, get_home_dir, is_readable, path_to_string};
+use rs_utils::{
+    ensure_dir_exists, get_home_dir, get_symlink_target_path, is_readable, path_to_string,
+};
 
 use crate::dto::{
     APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
@@ -225,9 +227,13 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let dir = dir.unwrap_or_else(|| get_home_dir().unwrap_or_else(|| "/".to_string()));
             ensure_dir_exists(&dir)?;
 
-            let dir = fs::canonicalize(dir)?;
+            let dir =
+                fs::canonicalize(&dir).context(format!("failed to canonicalize path '{dir}'"))?;
 
-            let mut entries: Vec<DirEntry> = list_entries(&dir, show_hidden)?;
+            let mut entries: Vec<DirEntry> = list_entries(&dir, show_hidden).context(format!(
+                "failed to list entries in a dir '{}'",
+                dir.display()
+            ))?;
             sort_entries(&mut entries);
 
             APIResponse::ListDir {
@@ -290,7 +296,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
     if let Some(parent) = dir.parent() {
         let path = path_to_string(parent)?;
 
-        let metadata = fs::metadata(&path)?;
+        let metadata = fs::metadata(&path).context("failed to read path metadata")?;
 
         result.push(DirEntry::Dir {
             name: "..".to_string(),
@@ -299,8 +305,8 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
         });
     }
 
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
+    for entry in fs::read_dir(dir).context("failed to read directory entries")? {
+        let entry = entry.context("failed to read an entry")?;
 
         let name = path_to_string(entry.file_name())?;
 
@@ -312,30 +318,33 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
         let path = path_to_string(entry.path())?;
 
         let file_type = entry.file_type()?;
-        let metadata = fs::metadata(&path)?;
-
-        let is_readable = is_readable(&metadata);
+        let metadata =
+            fs::symlink_metadata(&path).context(format!("failed to read metadata for '{path}'"))?;
 
         if metadata.is_dir() {
             result.push(DirEntry::Dir {
                 name,
                 path,
-                is_readable,
+                is_readable: is_readable(&metadata),
             });
             continue;
         }
 
         if file_type.is_symlink() {
-            let link_path = fs::canonicalize(&path)?;
-            let link_path = path_to_string(link_path)?;
+            let links_to = get_symlink_target_path(&path)?;
+            let metadata = fs::metadata(&path).ok();
 
-            let size = metadata.is_file().then_some(metadata.len());
+            let is_readable = metadata
+                .as_ref()
+                .map_or(false, |metadata| is_readable(&metadata));
+
+            let size = metadata.and_then(|metadata| metadata.is_file().then_some(metadata.len()));
 
             result.push(DirEntry::Symlink {
                 name,
                 path,
                 is_readable,
-                links_to: link_path,
+                links_to,
                 size,
             });
             continue;
@@ -344,7 +353,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
         result.push(DirEntry::File {
             name,
             path,
-            is_readable,
+            is_readable: is_readable(&metadata),
             size: metadata.len(),
         });
     }

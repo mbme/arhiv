@@ -1,6 +1,6 @@
-import { Callback, cx, formatBytes } from '../../utils';
-import { DirEntry } from '../../../dto';
-import { Icon } from '../Icon';
+import { Callback, cx, formatBytes } from 'utils';
+import { DirEntry } from 'dto';
+import { Icon } from 'components/Icon';
 
 type Props = {
   entry: DirEntry;
@@ -31,8 +31,10 @@ export function FilePickerEntry({ entry, onClick }: Props) {
           <span className="text-indigo-700">&rarr; {entry.linksTo}</span>
         )}
 
-        {'size' in entry && typeof entry.size === 'number' && (
+        {'size' in entry && typeof entry.size === 'number' ? (
           <div className="text-gray-500">{formatBytes(entry.size)}</div>
+        ) : (
+          <div className="w-16">&nbsp;</div>
         )}
       </div>
     </div>

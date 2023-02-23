@@ -61,6 +61,12 @@ pub fn ensure_file_exists(path: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn get_symlink_target_path(path: &str) -> Result<String> {
+    let target_path = fs::read_link(path).context("failed to read a symlink")?;
+
+    path_to_string(target_path)
+}
+
 /// check if path1 and path2 belong to the same filesystem or not
 pub fn is_same_filesystem(path1: &str, path2: &str) -> Result<bool> {
     let meta1 = fs::metadata(path1)?;

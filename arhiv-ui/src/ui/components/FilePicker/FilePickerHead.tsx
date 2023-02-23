@@ -1,4 +1,4 @@
-import { DirEntry } from '../../../dto';
+import { DirEntry } from 'dto';
 
 type Props = {
   dir?: string;

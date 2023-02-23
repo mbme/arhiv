@@ -334,9 +334,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
             let links_to = get_symlink_target_path(&path)?;
             let metadata = fs::metadata(&path).ok();
 
-            let is_readable = metadata
-                .as_ref()
-                .map_or(false, |metadata| is_readable(&metadata));
+            let is_readable = metadata.as_ref().map_or(false, is_readable);
 
             let size = metadata.and_then(|metadata| metadata.is_file().then_some(metadata.len()));
 

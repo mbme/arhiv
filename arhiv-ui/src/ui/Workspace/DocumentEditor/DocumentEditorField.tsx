@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'preact/hooks';
 import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
 import { Checkbox } from 'components/Form/Checkbox';
@@ -125,6 +126,7 @@ function ValueEditor({
 type DocumentEditorFieldProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
+  autofocus: boolean;
   ignoreReadonly: boolean;
   disabled: boolean;
   errors?: string[];
@@ -132,16 +134,26 @@ type DocumentEditorFieldProps = {
 export function DocumentEditorField({
   field,
   initialValue,
+  autofocus,
   ignoreReadonly,
   disabled,
   errors = [],
 }: DocumentEditorFieldProps) {
+  const labelRef = useRef<HTMLLabelElement>(null);
+
+  useEffect(() => {
+    if (autofocus) {
+      labelRef.current?.focus();
+    }
+  }, [autofocus]);
+
   return (
     <label
       className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
         'has-errors': errors.length > 0,
       })}
       hidden={disabled}
+      ref={labelRef}
     >
       <h5 className="form-field-heading mr-8 relative">
         {field.name}

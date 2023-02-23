@@ -74,7 +74,10 @@ export function DocumentEditorForm({
     }
   };
 
+  const ignoreReadonly = !documentId;
   const fields = getFieldDescriptions(documentType);
+
+  const fieldToFocus = fields.find((field) => ignoreReadonly || !field.readonly);
 
   return (
     <Form onSubmit={submitDocument} formRef={formRef}>
@@ -111,7 +114,8 @@ export function DocumentEditorForm({
           <DocumentEditorField
             key={field.name}
             field={field}
-            ignoreReadonly={!documentId}
+            autofocus={field === fieldToFocus}
+            ignoreReadonly={ignoreReadonly}
             initialValue={initialData[field.name]}
             disabled={!isFieldActive(field, subtype)}
             errors={fieldErrors[field.name]}

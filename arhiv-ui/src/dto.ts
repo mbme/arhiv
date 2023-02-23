@@ -48,6 +48,7 @@ export type APIRequest =
   | {
       typeName: 'CreateAttachment';
       filePath: string;
+      moveFile: boolean;
     }
   | {
       typeName: 'Scrape';

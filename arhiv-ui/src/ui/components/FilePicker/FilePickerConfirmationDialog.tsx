@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import { DocumentId } from 'dto';
 import { Callback, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';
@@ -18,9 +19,11 @@ export function FilePickerConfirmationDialog({
   onAttachmentCreated,
   onCancel,
 }: Props) {
+  const [moveFile, setMoveFile] = useState(false);
+
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
-      const { id } = await RPC.CreateAttachment({ filePath }, abortSignal);
+      const { id } = await RPC.CreateAttachment({ filePath, moveFile }, abortSignal);
       onAttachmentCreated(id);
     },
     {
@@ -37,10 +40,23 @@ export function FilePickerConfirmationDialog({
   return (
     <Dialog onHide={onHide} title="Add file">
       <div className="modal-content">
-        <div>
+        <div className="mb-6">
           Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
           <b>{formatBytes(size)}</b>?
         </div>
+
+        <form className="form" onSubmit={(e) => e.preventDefault()}>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              name="move_file"
+              type="checkbox"
+              className="field"
+              checked={moveFile}
+              onChange={() => setMoveFile(!moveFile)}
+            />
+            Remove original file
+          </label>
+        </form>
 
         {error && <QueryError error={error} />}
       </div>

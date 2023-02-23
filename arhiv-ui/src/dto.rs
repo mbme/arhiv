@@ -49,6 +49,7 @@ pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     CreateAttachment {
         file_path: String,
+        move_file: bool,
     },
     Scrape {
         url: String,

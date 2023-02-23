@@ -235,9 +235,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 entries,
             }
         }
-        APIRequest::CreateAttachment { ref file_path } => {
+        APIRequest::CreateAttachment {
+            ref file_path,
+            move_file,
+        } => {
             let mut tx = arhiv.baza.get_tx()?;
-            let attachment = tx.create_attachment(file_path, false)?;
+            let attachment = tx.create_attachment(file_path, move_file)?;
             tx.commit()?;
 
             APIResponse::CreateAttachment { id: attachment.id }

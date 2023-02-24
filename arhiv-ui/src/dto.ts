@@ -51,6 +51,11 @@ export type APIRequest =
       moveFile: boolean;
     }
   | {
+      typeName: 'UploadFile';
+      base64Data: string;
+      fileName: string;
+    }
+  | {
       typeName: 'Scrape';
       url: string;
     };
@@ -103,6 +108,10 @@ export type APIResponse =
     }
   | {
       typeName: 'CreateAttachment';
+      id: DocumentId;
+    }
+  | {
+      typeName: 'UploadFile';
       id: DocumentId;
     }
   | {

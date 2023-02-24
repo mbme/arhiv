@@ -19,6 +19,7 @@ import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
 import { BrowserCard } from './BrowserCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
+import { ImagePasteHandler } from './ImagePasteHandler';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -119,6 +120,8 @@ export function Workspace() {
             }}
           />
         )}
+
+        <ImagePasteHandler dispatch={dispatch} />
 
         <DropdownMenu
           options={[

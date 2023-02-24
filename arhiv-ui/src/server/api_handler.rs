@@ -11,7 +11,8 @@ use baza::{
     DocumentExpert, Filter,
 };
 use rs_utils::{
-    ensure_dir_exists, get_home_dir, get_symlink_target_path, is_readable, path_to_string,
+    decode_base64, ensure_dir_exists, get_home_dir, get_symlink_target_path, is_readable,
+    path_to_string, TempFile,
 };
 
 use crate::dto::{
@@ -250,6 +251,28 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             tx.commit()?;
 
             APIResponse::CreateAttachment { id: attachment.id }
+        }
+        APIRequest::UploadFile {
+            ref base64_data,
+            file_name,
+        } => {
+            let temp_file = TempFile::new();
+            temp_file.create_file()?;
+            temp_file
+                .write(&decode_base64(base64_data)?)
+                .context("failed to write data into temp file")?;
+
+            let mut tx = arhiv.baza.get_tx()?;
+
+            let mut attachment = tx.create_attachment(&temp_file.path, true)?;
+            attachment.data.filename = file_name;
+
+            let mut document = attachment.into_document()?;
+            tx.stage_document(&mut document)?;
+
+            tx.commit()?;
+
+            APIResponse::UploadFile { id: document.id }
         }
         APIRequest::Scrape { url } => {
             let documents = arhiv

@@ -259,3 +259,21 @@ export function fuzzySearch(needle: string, haystack: string, ignoreCase = true)
 
   return true;
 }
+
+export function fileAsBase64(file: File) {
+  const reader = new FileReader();
+
+  return new Promise<string>((resolve, reject) => {
+    reader.onload = () => {
+      const data = reader.result as string;
+
+      const dataInBase64 = data.slice(data.indexOf(',') + 1);
+
+      resolve(dataInBase64);
+    };
+    reader.onerror = reject;
+    reader.onabort = reject;
+
+    reader.readAsDataURL(file);
+  });
+}

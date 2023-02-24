@@ -110,11 +110,13 @@ impl AttachmentData {
 pub type Attachment = Document<AttachmentData>;
 
 pub fn create_attachment(
+    tx: &mut BazaConnection,
     file_path: &str,
     move_file: bool,
-    tx: &mut BazaConnection,
+    filename: Option<String>,
 ) -> Result<Attachment> {
-    let filename = get_file_name(file_path).to_string();
+    let filename = filename.unwrap_or_else(|| get_file_name(file_path).to_string());
+
     let media_type = get_media_type(file_path)?;
     let size = get_file_size(file_path)?;
 

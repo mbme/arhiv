@@ -9,7 +9,7 @@ use rs_utils::{get_crate_version, MIN_TIMESTAMP};
 use crate::{
     config::Config,
     data_migrations::get_data_migrations,
-    definitions::{create_attachment, get_standard_schema, Attachment},
+    definitions::get_standard_schema,
     settings::{SETTING_ARHIV_ID, SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME},
     status::{DbStatus, Status},
 };
@@ -78,8 +78,6 @@ pub trait BazaConnectionExt {
     fn get_db_status(&self) -> Result<DbStatus>;
 
     fn get_status(&self) -> Result<Status>;
-
-    fn create_attachment(&mut self, file_path: &str, move_file: bool) -> Result<Attachment>;
 }
 
 impl BazaConnectionExt for BazaConnection {
@@ -117,9 +115,5 @@ impl BazaConnectionExt for BazaConnection {
             debug_mode,
             root_dir,
         })
-    }
-
-    fn create_attachment(&mut self, file_path: &str, move_file: bool) -> Result<Attachment> {
-        create_attachment(file_path, move_file, self)
     }
 }

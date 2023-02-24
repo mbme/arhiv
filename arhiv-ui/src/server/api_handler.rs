@@ -2,7 +2,7 @@ use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{Context, Result};
 
-use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
+use arhiv_core::{create_attachment, scraper::ScraperOptions, Arhiv, BazaConnectionExt};
 use baza::{
     entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
@@ -247,7 +247,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             move_file,
         } => {
             let mut tx = arhiv.baza.get_tx()?;
-            let attachment = tx.create_attachment(file_path, move_file)?;
+            let attachment = create_attachment(&mut tx, file_path, move_file, None)?;
             tx.commit()?;
 
             APIResponse::CreateAttachment { id: attachment.id }
@@ -264,15 +264,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let mut tx = arhiv.baza.get_tx()?;
 
-            let mut attachment = tx.create_attachment(&temp_file.path, true)?;
-            attachment.data.filename = file_name;
-
-            let mut document = attachment.into_document()?;
-            tx.stage_document(&mut document)?;
+            let attachment = create_attachment(&mut tx, &temp_file.path, true, Some(file_name))?;
 
             tx.commit()?;
 
-            APIResponse::UploadFile { id: document.id }
+            APIResponse::UploadFile { id: attachment.id }
         }
         APIRequest::Scrape { url } => {
             let documents = arhiv

@@ -19,3 +19,4 @@ mod tests;
 
 pub use arhiv::{Arhiv, BazaConnectionExt};
 pub use config::Config;
+pub use definitions::create_attachment;

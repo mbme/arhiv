@@ -9,8 +9,9 @@ use rs_utils::{log, Download};
 pub use scraper::{ScrapedData, ScraperOptions};
 
 use crate::{
+    create_attachment,
     definitions::{BOOK_TYPE, FILM_TYPE, GAME_TYPE},
-    Arhiv, BazaConnectionExt,
+    Arhiv,
 };
 
 impl Arhiv {
@@ -195,11 +196,12 @@ impl Arhiv {
 async fn download_attachment(url: &str, tx: &mut BazaConnection) -> Result<Document> {
     let download_result = Download::new(url)?.start().await?;
 
-    let mut attachment = tx.create_attachment(&download_result.file_path, true)?;
-    attachment.data.filename = download_result.original_file_name.clone();
+    let attachment = create_attachment(
+        tx,
+        &download_result.file_path,
+        true,
+        Some(download_result.original_file_name.clone()),
+    )?;
 
-    let mut document = attachment.into_document()?;
-    tx.stage_document(&mut document)?;
-
-    Ok(document)
+    attachment.into_document()
 }

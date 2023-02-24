@@ -231,7 +231,7 @@ function markupElementToJSX(
       // TODO handle link_type?
       return (
         <span data-range-start={el.range.start} data-range-end={el.range.end}>
-          <Link url={el.url} description={description} />
+          <Link url={el.url}>{description}</Link>
         </span>
       );
     }

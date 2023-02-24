@@ -20,7 +20,7 @@ export function ScrapeResultCard({ url, ids }: Props) {
 
       <p className="mb-8">
         <div className="font-semibold text-sky-800 uppercase mb-2">Original url</div>
-        <Link url={url} description={url} />
+        <Link url={url}>{url}</Link>
       </p>
 
       <div className="font-semibold text-sky-800 uppercase mb-2">{ids.length} new documents</div>

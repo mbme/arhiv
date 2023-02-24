@@ -240,7 +240,9 @@ export function ComponentsDemo() {
           <h1>External link</h1>
 
           <div className="examples">
-            <Link url="https://example.com" title="some title" description="Goto link" />
+            <Link url="https://example.com" title="some title">
+              Goto link
+            </Link>
           </div>
         </div>
       </div>

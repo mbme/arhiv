@@ -1,9 +1,11 @@
+import { JSXChildren } from 'utils/jsx';
+
 type Props = {
   url: string;
   title?: string;
-  description: string;
+  children: JSXChildren;
 };
-export function Link({ url, title, description }: Props) {
+export function Link({ url, title, children }: Props) {
   return (
     <a
       href={url}
@@ -12,7 +14,7 @@ export function Link({ url, title, description }: Props) {
       rel="noopen noreferer"
       className="text-orange-600/70 hover:text-orange-700/100 transition-colors"
     >
-      {description}
+      {children}
     </a>
   );
 }

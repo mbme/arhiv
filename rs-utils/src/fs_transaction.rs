@@ -209,7 +209,7 @@ mod tests {
         // commit move transaction
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
 
@@ -219,28 +219,28 @@ mod tests {
 
             assert!(!temp1.exists());
             assert!(temp2.exists());
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
         }
 
         // revert move transaction & restore backup
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
-            temp2.write("temp2")?;
+            temp2.write_str("temp2")?;
 
             let mut fs_tx = FsTransaction::new();
             fs_tx.move_file(temp1.as_ref(), temp2.as_ref())?;
 
             assert!(!temp1.exists());
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
 
             fs_tx.rollback()?;
 
             assert!(temp1.exists());
-            assert_eq!(temp1.contents()?, "temp1");
-            assert_eq!(temp2.contents()?, "temp2");
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp2");
         }
 
         Ok(())
@@ -251,7 +251,7 @@ mod tests {
         // commit copy transaction
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
 
@@ -261,27 +261,27 @@ mod tests {
 
             assert!(temp1.exists());
             assert!(temp2.exists());
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
         }
 
         // revert copy transaction & restore backup
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
-            temp2.write("temp2")?;
+            temp2.write_str("temp2")?;
 
             let mut fs_tx = FsTransaction::new();
             fs_tx.copy_file(temp1.as_ref(), temp2.as_ref())?;
 
-            assert_eq!(temp1.contents()?, "temp1");
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
 
             fs_tx.rollback()?;
 
-            assert_eq!(temp1.contents()?, "temp1");
-            assert_eq!(temp2.contents()?, "temp2");
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp2");
         }
 
         Ok(())
@@ -292,7 +292,7 @@ mod tests {
         // commit hard link transaction
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
 
@@ -302,27 +302,27 @@ mod tests {
 
             assert!(temp1.exists());
             assert!(temp2.exists());
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
         }
 
         // revert hard link transaction & restore backup
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let temp2 = TempFile::new();
-            temp2.write("temp2")?;
+            temp2.write_str("temp2")?;
 
             let mut fs_tx = FsTransaction::new();
             fs_tx.hard_link_file(temp1.as_ref(), temp2.as_ref())?;
 
-            assert_eq!(temp1.contents()?, "temp1");
-            assert_eq!(temp2.contents()?, "temp1");
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp1");
 
             fs_tx.rollback()?;
 
-            assert_eq!(temp1.contents()?, "temp1");
-            assert_eq!(temp2.contents()?, "temp2");
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "temp2");
         }
 
         Ok(())
@@ -333,7 +333,7 @@ mod tests {
         // commit remove transaction
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let mut fs_tx = FsTransaction::new();
             fs_tx.remove_file(temp1.as_ref())?;
@@ -345,7 +345,7 @@ mod tests {
         // revert remove transaction
         {
             let temp1 = TempFile::new();
-            temp1.write("temp1")?;
+            temp1.write_str("temp1")?;
 
             let mut fs_tx = FsTransaction::new();
             fs_tx.remove_file(temp1.as_ref())?;
@@ -354,7 +354,7 @@ mod tests {
 
             fs_tx.rollback()?;
 
-            assert_eq!(temp1.contents()?, "temp1");
+            assert_eq!(temp1.str_contents()?, "temp1");
         }
 
         Ok(())

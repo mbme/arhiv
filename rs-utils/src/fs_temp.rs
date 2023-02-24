@@ -29,10 +29,14 @@ impl TempFile {
         Ok(())
     }
 
-    pub fn write(&self, data: impl AsRef<str>) -> Result<()> {
-        fs::write(&self.path, data.as_ref())?;
+    pub fn write(&self, data: &[u8]) -> Result<()> {
+        fs::write(&self.path, data)?;
 
         Ok(())
+    }
+
+    pub fn write_str(&self, data: impl AsRef<str>) -> Result<()> {
+        self.write(data.as_ref().as_bytes())
     }
 
     pub fn create_file(&self) -> Result<()> {
@@ -46,7 +50,7 @@ impl TempFile {
         path_exists(&self.path)
     }
 
-    pub fn contents(&self) -> Result<String> {
+    pub fn str_contents(&self) -> Result<String> {
         fs::read_to_string(&self.path).context("failed to read file contents")
     }
 }

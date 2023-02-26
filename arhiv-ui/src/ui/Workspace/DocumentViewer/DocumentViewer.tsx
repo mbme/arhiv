@@ -1,7 +1,9 @@
+import { Suspense } from 'preact/compat';
 import { useState } from 'preact/hooks';
 import { DocumentDTO } from 'dto';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
 import { isAttachment, isErasedDocument } from 'utils/schema';
+import { Icon } from 'components/Icon';
 import { IconButton } from 'components/Button';
 import { getAttachmentPreview } from 'components/Ref';
 import { DropdownMenu } from 'components/DropdownMenu';
@@ -84,11 +86,13 @@ export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentV
         />
       )}
 
-      <DocumentViewerFields
-        documentType={document.documentType}
-        subtype={document.subtype}
-        data={document.data}
-      />
+      <Suspense fallback={<Icon variant="spinner" className="mb-8" />}>
+        <DocumentViewerFields
+          documentType={document.documentType}
+          subtype={document.subtype}
+          data={document.data}
+        />
+      </Suspense>
 
       {showEraseDocumentConfirmationDialog && (
         <EraseDocumentConfirmationDialog

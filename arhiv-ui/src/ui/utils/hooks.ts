@@ -18,6 +18,7 @@ import {
   setSessionValue,
   throttle,
 } from './index';
+import { Suspender, suspensify } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -252,4 +253,29 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
       el.removeEventListener('scroll', onScroll);
     };
   }, [el, key]);
+}
+
+const SUSPENSE_CACHE = new Map<string, Suspender<unknown>>();
+export function useSuspense<T>(cacheKey: string, factory: () => Promise<T>, deps: Inputs): T {
+  const [value, setValue] = useState(() => {
+    const cachedSuspender = SUSPENSE_CACHE.get(cacheKey);
+    if (cachedSuspender) {
+      return cachedSuspender;
+    }
+
+    const suspender = suspensify(factory());
+    SUSPENSE_CACHE.set(cacheKey, suspender);
+
+    return suspender;
+  });
+
+  const factoryRef = useLatestRef(factory);
+  useUpdateEffect(() => {
+    const suspender = suspensify(factoryRef.current());
+    SUSPENSE_CACHE.set(cacheKey, suspender);
+
+    setValue(suspender);
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return value.read() as T;
 }

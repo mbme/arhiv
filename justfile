@@ -56,7 +56,7 @@ check-ts:
   yarn workspaces run compiler-errors
   yarn run check-fmt
   yarn workspaces run lint
-  # yarn workspace arhiv-ui run test
+  yarn workspace arhiv-ui run test
 
 check: check-rs check-ts
 

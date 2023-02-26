@@ -2,15 +2,15 @@ import { Suspense } from 'preact/compat';
 import { useState } from 'preact/hooks';
 import { DocumentDTO } from 'dto';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
-import { isAttachment, isErasedDocument } from 'utils/schema';
+import { getFieldDescriptions, isAttachment, isErasedDocument } from 'utils/schema';
 import { Icon } from 'components/Icon';
 import { IconButton } from 'components/Button';
 import { getAttachmentPreview } from 'components/Ref';
 import { DropdownMenu } from 'components/DropdownMenu';
-import { DocumentViewerFields } from './DocumentViewerFields';
-import { DocumentViewerHead } from './DocumentViewerHead';
 import { CardContainer } from '../CardContainer';
+import { DocumentViewerHead } from './DocumentViewerHead';
 import { EraseDocumentConfirmationDialog } from './EraseDocumentConfirmationDialog';
+import { DocumentViewerField, FieldValue } from './DocumentViewerField';
 
 type DocumentViewerProps = {
   document: DocumentDTO;
@@ -22,6 +22,8 @@ type DocumentViewerProps = {
 export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentViewerProps) {
   const [showEraseDocumentConfirmationDialog, setShowEraseDocumentConfirmationDialog] =
     useState(false);
+
+  const fields = getFieldDescriptions(document.documentType, document.subtype);
 
   return (
     <CardContainer>
@@ -87,11 +89,21 @@ export function DocumentViewer({ document, onEdit, onClone, onErase }: DocumentV
       )}
 
       <Suspense fallback={<Icon variant="spinner" className="mb-8" />}>
-        <DocumentViewerFields
-          documentType={document.documentType}
-          subtype={document.subtype}
-          data={document.data}
-        />
+        <div className="divide-y divide-dashed">
+          {fields.map((field) => {
+            const value = document.data[field.name];
+
+            if (value === null || value === undefined) {
+              return null;
+            }
+
+            return (
+              <DocumentViewerField key={field.name} name={field.name}>
+                <FieldValue field={field} value={value} />
+              </DocumentViewerField>
+            );
+          })}
+        </div>
       </Suspense>
 
       {showEraseDocumentConfirmationDialog && (

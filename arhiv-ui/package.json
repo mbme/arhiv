@@ -17,6 +17,7 @@
     "prod:build:css": "NODE_ENV=production yarn run build:css",
     "prod:build": "yarn run prod:build:js && yarn run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
+    "test": "ava",
     "fmt": "prettier --write src/"
   },
   "dependencies": {
@@ -42,5 +43,14 @@
     "react": "npm:@preact/compat",
     "react-dom": "npm:@preact/compat",
     "tailwindcss": "^3.0.7"
+  },
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--no-warnings",
+      "--loader=tsx"
+    ]
   }
 }

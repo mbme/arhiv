@@ -24,7 +24,7 @@ export function mergeRefs<T, R extends T>(...refs: ReadonlyArray<JSXRef<T> | und
 
 export type Suspender<T> = { read: () => T };
 export function suspensify<T>(promise: Promise<T>): Suspender<T> {
-  type SuspenseStatus = { type: 'resolved'; value: T } | { type: 'rejected'; value: any };
+  type SuspenseStatus = { type: 'resolved'; value: T } | { type: 'rejected'; value: unknown };
 
   let status: SuspenseStatus | undefined;
 

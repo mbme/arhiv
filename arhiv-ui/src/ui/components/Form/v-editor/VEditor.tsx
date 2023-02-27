@@ -12,7 +12,14 @@ import {
   ViewUpdate,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  cursorLineEnd,
+  cursorLineStart,
+  defaultKeymap,
+  deleteToLineEnd,
+  history,
+  historyKeymap,
+} from '@codemirror/commands';
 import {
   indentOnInput,
   bracketMatching,
@@ -102,6 +109,9 @@ class VEditor {
             keymap.of([
               ...defaultKeymap, //
               ...historyKeymap,
+              { key: 'Ctrl-a', run: cursorLineStart },
+              { key: 'Ctrl-e', run: cursorLineEnd },
+              { key: 'Ctrl-k', run: deleteToLineEnd },
             ]),
             showPanel.of(createToolbar),
           ],

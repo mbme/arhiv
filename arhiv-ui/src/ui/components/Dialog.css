@@ -4,14 +4,14 @@
       display: none;
     }
 
-    @apply fixed z-50 inset-0 overflow-y-scroll flex flex-col;
+    @apply fixed z-50 inset-0 overflow-y-scroll flex flex-col bg-white/95;
 
     .modal-overlay {
-      @apply fixed z-10 inset-0 backdrop-blur-md;
+      @apply fixed z-10 inset-0;
     }
 
     .modal-dialog {
-      @apply z-10 mx-auto mt-16 mb-8 rounded-md shadow-lg var-card-width bg-white;
+      @apply z-10 mx-auto mt-16 mb-8 rounded-md shadow-md var-card-width bg-white;
     }
 
     .modal-title {
@@ -28,7 +28,7 @@
     }
 
     .modal-buttons {
-      @apply buttons bg-gray-50 rounded-b-md;
+      @apply buttons bg-gray-50 rounded-b-md sticky bottom-0;
     }
   }
 }

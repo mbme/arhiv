@@ -1,6 +1,7 @@
 import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
 import { HTMLVRefInputElement } from 'components/Form/v-ref-input/index';
+import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
 
 function collectValues(form: HTMLFormElement): JSONObj {
   const result: JSONObj = {};
@@ -19,6 +20,11 @@ function collectValues(form: HTMLFormElement): JSONObj {
 
     if (control instanceof RadioNodeList) {
       throw new Error(`control "${name}" is RadioNodeList which is unsupported`);
+    }
+
+    if (control instanceof HTMLVFormFieldElement) {
+      result[name] = control.value;
+      continue;
     }
 
     if (control instanceof HTMLVRefInputElement) {
@@ -42,7 +48,7 @@ function collectValues(form: HTMLFormElement): JSONObj {
       continue;
     }
 
-    result[name] = fd[name];
+    result[name] = fd[name] ?? null;
   }
 
   return result;
@@ -62,6 +68,8 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
       className={cx('form', className)}
       onSubmit={(e) => {
         e.preventDefault();
+
+        // FIXME handle validation?
 
         // TODO readonly controls while submitting
         void onSubmit(collectValues(e.currentTarget));

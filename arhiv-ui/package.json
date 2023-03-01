@@ -35,8 +35,11 @@
     "@tailwindcss/forms": "^0.5.0",
     "@tailwindcss/line-clamp": "^0.4.0",
     "@tailwindcss/typography": "^0.5.0",
+    "@testing-library/preact": "^3.2.3",
     "autoprefixer": "^10.2.6",
     "esbuild": "^0.16.5",
+    "global-jsdom": "^8.7.0",
+    "jsdom": "^21.1.0",
     "postcss": "^8.3.0",
     "postcss-cli": "^10.0.0",
     "react": "npm:@preact/compat",
@@ -45,9 +48,11 @@
   },
   "ava": {
     "extensions": {
-      "ts": "module"
+      "ts": "module",
+      "tsx": "module"
     },
     "nodeArguments": [
+      "--no-experimental-fetch",
       "--no-warnings",
       "--loader=tsx"
     ]

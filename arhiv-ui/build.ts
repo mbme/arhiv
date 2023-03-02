@@ -1,11 +1,11 @@
 /* eslint-env node */
 
-import esbuild from 'esbuild';
+import esbuild, { BuildOptions } from 'esbuild';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
-await esbuild.build({
+const options: BuildOptions = {
   entryPoints: {
     'index': './src/ui/index.tsx',
   },
@@ -26,6 +26,11 @@ await esbuild.build({
   define: {
     'process.env.NODE_ENV': isProduction ? '"production"' : '"development"',
   },
+};
 
-  watch,
-});
+if (watch) {
+  const context = await esbuild.context(options);
+  await context.watch();
+} else {
+  await esbuild.build(options);
+}

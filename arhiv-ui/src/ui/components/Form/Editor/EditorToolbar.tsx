@@ -16,7 +16,7 @@ type Props = {
   ) => void;
 };
 
-function VEditorToolbar({ onDocumentSelected }: Props) {
+function EditorToolbar({ onDocumentSelected }: Props) {
   const [showPicker, setShowPicker] = useState(false);
 
   return (
@@ -44,7 +44,7 @@ export function createToolbar(view: EditorView) {
   dom.classList.add('v-editor-toolbar');
 
   render(
-    <VEditorToolbar
+    <EditorToolbar
       onDocumentSelected={(id, documentType, subtype) => {
         const { state } = view;
 

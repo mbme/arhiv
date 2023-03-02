@@ -25,14 +25,14 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { createToolbar } from './VEditorToolbar';
+import { createToolbar } from './EditorToolbar';
 
 type Options = {
   onBlur?: () => void;
   onChange?: () => void;
 };
 
-class VEditor {
+class Editor {
   private readonlyCompartment = new Compartment();
   private editableCompartment = new Compartment();
   private placeholderCompartment = new Compartment();
@@ -131,4 +131,4 @@ class VEditor {
     this.editor.destroy();
   }
 }
-export { VEditor };
+export { Editor };

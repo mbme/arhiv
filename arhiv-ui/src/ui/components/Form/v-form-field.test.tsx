@@ -60,11 +60,11 @@ test('dispatches change event', async (t) => {
   const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
   field.value = 123;
   await waitFor(() => field.value === 123);
-  t.is(changeCounter, 1);
+  t.is(changeCounter, 0);
 
   const form = findBySelector<HTMLFormElement>(container, 'form');
   form.reset();
-  t.is(changeCounter, 2);
+  t.is(changeCounter, 1);
 });
 
 test("doesn't store value in a form if disabled", (t) => {

@@ -39,7 +39,7 @@ export class HTMLVFormFieldElement extends HTMLElement {
   }
 
   formStateRestoreCallback(state: string) {
-    this._value = state;
+    this._value = JSON.parse(state) as JSONValue;
     this.updateFormValue();
     this.triggerChange();
   }
@@ -95,7 +95,6 @@ export class HTMLVFormFieldElement extends HTMLElement {
   set value(value: JSONValue) {
     this._value = value;
     this.updateFormValue();
-    this.triggerChange();
   }
 
   get form(): HTMLFormElement | null {

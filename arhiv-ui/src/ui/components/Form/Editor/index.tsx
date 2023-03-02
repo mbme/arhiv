@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { cx } from 'utils';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
-import { Editor } from './Editor';
+import { CodemirrorEditor } from './CodemirrorEditor';
 
 type Props = {
   className?: string;
@@ -21,7 +21,7 @@ export function Editor({
   readonly,
   required,
 }: Props) {
-  const [editor, setEditor] = useState<Editor>();
+  const [editor, setEditor] = useState<CodemirrorEditor>();
   const [fieldEl, setFieldEl] = useState<HTMLVFormFieldElement | null>(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function Editor({
       return;
     }
 
-    const editor = new Editor(fieldEl, fieldEl.value?.toString() ?? '', {
+    const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
       onBlur: () => {
         fieldEl.value = editor.getValue();
       },

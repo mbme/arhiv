@@ -32,7 +32,7 @@ type Options = {
   onChange?: () => void;
 };
 
-class Editor {
+class CodemirrorEditor {
   private readonlyCompartment = new Compartment();
   private editableCompartment = new Compartment();
   private placeholderCompartment = new Compartment();
@@ -131,4 +131,5 @@ class Editor {
     this.editor.destroy();
   }
 }
-export { Editor };
+
+export { CodemirrorEditor };

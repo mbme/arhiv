@@ -53,6 +53,7 @@
     },
     "nodeArguments": [
       "--no-experimental-fetch",
+      "--no-experimental-global-customevent",
       "--no-warnings",
       "--loader=tsx"
     ]

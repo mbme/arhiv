@@ -1,6 +1,12 @@
 import 'element-internals-polyfill';
 import { JSONValue } from 'utils';
 
+export class ChangeEvent extends CustomEvent<{ value: JSONValue }> {
+  constructor(public readonly value: JSONValue) {
+    super('change', { detail: { value } });
+  }
+}
+
 // This is a helper component that allows to build custom form fields, with validation!
 export class HTMLVFormFieldElement extends HTMLElement {
   static get formAssociated() {
@@ -29,23 +35,25 @@ export class HTMLVFormFieldElement extends HTMLElement {
   formResetCallback() {
     this._value = this.getDefaultValue();
     this.updateFormValue();
+    this.triggerChange();
   }
 
   formStateRestoreCallback(state: string) {
     this._value = state;
     this.updateFormValue();
+    this.triggerChange();
   }
 
-  private updateTabIndex = () => {
+  private updateTabIndex() {
     if (this.disabled) {
       this.tabIndex = -1;
     } else {
       // element must be focusable for form validation to work
       this.tabIndex = 0;
     }
-  };
+  }
 
-  private updateFormValue = () => {
+  private updateFormValue() {
     if (this.disabled) {
       this.internals.setFormValue(null);
       return;
@@ -60,10 +68,17 @@ export class HTMLVFormFieldElement extends HTMLElement {
     }
 
     this.internals.setFormValue(JSON.stringify(value));
-  };
+  }
 
-  private getDefaultValue = () =>
-    JSON.parse(this.getAttribute('defaultValue') ?? 'null') as JSONValue;
+  private triggerChange() {
+    this.dispatchEvent(new ChangeEvent(this._value));
+  }
+
+  private getDefaultValue() {
+    const value = this.getAttribute('defaultValue') ?? 'null';
+
+    return JSON.parse(value) as JSONValue;
+  }
 
   get disabled() {
     return this.hasAttribute('disabled');
@@ -80,6 +95,7 @@ export class HTMLVFormFieldElement extends HTMLElement {
   set value(value: JSONValue) {
     this._value = value;
     this.updateFormValue();
+    this.triggerChange();
   }
 
   get form(): HTMLFormElement | null {
@@ -115,11 +131,12 @@ export class HTMLVFormFieldElement extends HTMLElement {
 declare module 'preact' {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
-    interface FormFieldElementAttributes extends JSX.HTMLAttributes<HTMLElement> {
+    interface FormFieldElementAttributes extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onChange'> {
       required?: boolean;
       disabled?: boolean;
       defaultValue?: string;
       value?: never;
+      onChange?: (e: ChangeEvent) => void;
       name: string;
     }
 

@@ -43,6 +43,30 @@ test('stores value in a form', (t) => {
   }
 });
 
+test('dispatches change event', async (t) => {
+  let changeCounter = 0;
+
+  const { container } = render(
+    <form>
+      <v-form-field
+        name="test"
+        onChange={() => {
+          changeCounter += 1;
+        }}
+      />
+    </form>
+  );
+
+  const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
+  field.value = 123;
+  await waitFor(() => field.value === 123);
+  t.is(changeCounter, 1);
+
+  const form = findBySelector<HTMLFormElement>(container, 'form');
+  form.reset();
+  t.is(changeCounter, 2);
+});
+
 test("doesn't store value in a form if disabled", (t) => {
   const { container } = render(
     <form>
@@ -111,7 +135,7 @@ test('invalidates form if required & empty', async (t) => {
   const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
   field.setAttribute('required', '');
 
-  await waitFor(() => new Promise((resolve) => setTimeout(resolve, 1000)), { timeout: 2000 });
+  await waitFor(() => !form.checkValidity());
 
   t.false(form.checkValidity());
 

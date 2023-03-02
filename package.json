@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "check-fmt": "prettier --check .",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "check": "yarn workspaces run compiler-errors && yarn run check-fmt && yarn workspaces run lint && yarn workspace arhiv-ui run test"
   },
   "devDependencies": {
     "@types/node": "^18.0.4",

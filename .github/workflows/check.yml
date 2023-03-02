@@ -27,4 +27,4 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings && cargo test
 
       - name: Lint and test TS
-        run: yarn run check-fmt && yarn workspaces run lint && yarn workspaces run compiler-errors
+        run: yarn run check

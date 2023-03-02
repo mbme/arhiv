@@ -32,11 +32,11 @@ pub async fn start_ui_server() {
         .data(arhiv)
         .middleware(Middleware::post_with_info(logger_middleware))
         //
-        .get("/public/:fileName", public_assets_handler)
-        .get("/blobs/:blob_id", blob_handler)
         .get("/", index_page)
-        .get("/documents/:document_id", old_document_page_handler) // redirect for compatibility with the old UI
         .post("/api", api_handler)
+        .get("/documents/:document_id", old_document_page_handler) // redirect for compatibility with the old UI
+        .get("/blobs/:blob_id", blob_handler)
+        .get("/:fileName", public_assets_handler)
         //
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -72,8 +72,8 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-                    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
-                    <link rel="stylesheet" href="/public/index.css" />
+                    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+                    <link rel="stylesheet" href="/index.css" />
                 </head>
                 <body>
                     <main></main>
@@ -84,7 +84,7 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
                         window.SCHEMA = {schema};
                     </script>
 
-                    <script src="/public/index.js"></script>
+                    <script src="/index.js"></script>
                 </body>
             </html>"#
     );

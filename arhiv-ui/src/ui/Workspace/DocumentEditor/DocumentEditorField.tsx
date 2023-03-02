@@ -3,6 +3,7 @@ import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
+import { Editor } from 'components/Form/Editor';
 import { useCardContext } from 'Workspace/workspace-reducer';
 
 type ValueEditorProps = {
@@ -25,7 +26,7 @@ function ValueEditor({
 
   if ('MarkupString' in fieldType) {
     return (
-      <v-editor
+      <Editor
         className="field"
         name={name}
         defaultValue={initialValue as string | undefined}

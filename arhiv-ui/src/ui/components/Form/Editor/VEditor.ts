@@ -1,5 +1,4 @@
-import { render } from 'preact';
-import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -26,50 +25,7 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { createLink, createRefUrl } from 'utils/markup';
-import { canPreview } from 'components/Ref';
-import { VEditorToolbar } from './VEditorToolbar';
-
-function createToolbar(view: EditorView) {
-  const dom = document.createElement('div');
-  dom.classList.add('v-editor-toolbar');
-
-  render(
-    <VEditorToolbar
-      onDocumentSelected={(id, documentType, subtype) => {
-        const { state } = view;
-
-        const transaction = state.update(
-          state.changeByRange((range) => {
-            const value = state.sliceDoc(range.from, range.to);
-
-            const newValue = createLink(createRefUrl(id), value, canPreview(documentType, subtype));
-
-            return {
-              changes: {
-                from: range.from,
-                to: range.to,
-                insert: newValue,
-              },
-              range: EditorSelection.range(
-                range.from + newValue.length,
-                range.from + newValue.length
-              ),
-              effects: EditorView.scrollIntoView(range.from + newValue.length, { y: 'center' }),
-            };
-          })
-        );
-
-        view.dispatch(transaction);
-
-        view.focus();
-      }}
-    />,
-    dom
-  );
-
-  return { dom };
-}
+import { createToolbar } from './VEditorToolbar';
 
 type Options = {
   onBlur?: () => void;

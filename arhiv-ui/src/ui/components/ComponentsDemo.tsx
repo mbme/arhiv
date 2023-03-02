@@ -9,6 +9,7 @@ import { Dialog } from 'components/Dialog';
 import { Form } from 'components/Form/Form';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
+import { Editor } from 'components/Form/Editor';
 import { Icon, ICON_VARIANTS } from 'components/Icon';
 import { Link } from 'components/Link';
 import { QueryError } from 'components/QueryError';
@@ -306,7 +307,7 @@ function FormControlsDemo() {
 
       <label>
         Editor
-        <v-editor
+        <Editor
           className="field"
           name="editor"
           required={required}

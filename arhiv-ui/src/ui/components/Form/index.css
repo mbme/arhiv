@@ -4,7 +4,11 @@
       display: block;
       min-width: 65%;
 
-      &:is(v-editor) {
+      &:invalid {
+        @apply border border-red-500;
+      }
+
+      &:is(.editor-container) {
         width: 100%;
       }
 

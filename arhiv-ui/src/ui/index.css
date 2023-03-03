@@ -6,7 +6,7 @@
 @import './components/Dialog.css';
 @import './components/Markup.css';
 @import './components/Form/Editor/index.css';
-@import './components/Form/index.css';
+@import './components/Form/Form.css';
 @import './components/ComponentsDemo.css';
 
 @layer utilities {

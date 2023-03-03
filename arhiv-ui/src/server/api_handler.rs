@@ -178,7 +178,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 }
             }
 
-            tx.commit()?;
+            if errors.is_none() {
+                tx.commit()?;
+            }
 
             APIResponse::SaveDocument { errors }
         }
@@ -213,7 +215,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 tx.stage_document(&mut collection)?;
             }
 
-            tx.commit()?;
+            if errors.is_none() {
+                tx.commit()?;
+            }
 
             APIResponse::CreateDocument { id, errors }
         }

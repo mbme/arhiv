@@ -7,8 +7,6 @@ import { Ref } from 'components/Ref';
 import { Button } from 'components/Button';
 import { DateTime } from 'components/DateTime';
 import { Icon } from 'components/Icon';
-import { useCardContext } from '../workspace-reducer';
-
 type DocumentViewerHeadProps = {
   id: DocumentId;
   documentType: DocumentType;
@@ -26,8 +24,6 @@ export function DocumentViewerHead({
   backrefs,
   collections,
 }: DocumentViewerHeadProps) {
-  const { open } = useCardContext();
-
   const [copied, setCopied] = useState(false);
 
   useTimeout(
@@ -59,7 +55,6 @@ export function DocumentViewerHead({
             documentType={collection.documentType}
             subtype={collection.subtype}
             documentTitle={collection.title}
-            onClick={() => open({ variant: 'document', documentId: collection.id })}
           />
         ))}
         {backrefs.length > 0 && <h1 className="section-heading">Linked by:</h1>}
@@ -70,7 +65,6 @@ export function DocumentViewerHead({
             documentType={backref.documentType}
             subtype={backref.subtype}
             documentTitle={backref.title}
-            onClick={() => open({ variant: 'document', documentId: backref.id })}
           />
         ))}
       </div>

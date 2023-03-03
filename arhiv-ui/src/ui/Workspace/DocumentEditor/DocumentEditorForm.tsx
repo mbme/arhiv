@@ -22,7 +22,7 @@ import { RefInput } from 'components/Form/RefInput';
 import { Select } from 'components/Form/Select';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
-import { useCardLock, useCardContext } from '../workspace-reducer';
+import { useCardLock } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
   documentId?: string;
@@ -47,8 +47,6 @@ export function DocumentEditorForm({
   onSubmit,
   formRef,
 }: DocumentEditorFormProps) {
-  const { openDocument } = useCardContext();
-
   useUnsavedChangesWarning();
   useCardLock();
 
@@ -93,7 +91,6 @@ export function DocumentEditorForm({
           multiple
           readonly={!canAddCollections}
           onChange={setCollections}
-          onRefClick={openDocument}
         />
 
         <label className="flex justify-end items-center gap-2">

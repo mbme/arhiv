@@ -1,5 +1,6 @@
+import { createContext } from 'preact';
 import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
-import { Callback, cx, getDocumentUrl } from 'utils';
+import { cx, getDocumentUrl } from 'utils';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import {
@@ -12,14 +13,18 @@ import {
 import { Button } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
+import { useContext } from 'preact/hooks';
+
+export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
+  console.log('Ref clicked:', documentId);
+});
 
 type RefContainerProps = {
   id: DocumentId;
   description?: string;
   attachmentPreview?: boolean;
-  onClick: Callback;
 };
-export function RefContainer({ id, description, attachmentPreview, onClick }: RefContainerProps) {
+export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
   const { result, error, inProgress } = useQuery(
     (abortSignal) => RPC.GetDocument({ id }, abortSignal),
     {
@@ -44,7 +49,6 @@ export function RefContainer({ id, description, attachmentPreview, onClick }: Re
         data={result.data}
         documentTitle={result.title}
         description={description}
-        onClick={onClick}
       />
     );
   }
@@ -56,7 +60,6 @@ export function RefContainer({ id, description, attachmentPreview, onClick }: Re
       subtype={result.subtype}
       documentTitle={result.title}
       description={description}
-      onClick={onClick}
     />
   );
 }
@@ -74,9 +77,8 @@ export const useDocuments = (ids: DocumentId[]) => {
 
 type RefListContainerProps = {
   ids: DocumentId[];
-  onClick: (id: DocumentId) => void;
 };
-export function RefListContainer({ ids, onClick }: RefListContainerProps) {
+export function RefListContainer({ ids }: RefListContainerProps) {
   const { documents, error, inProgress } = useDocuments(ids);
 
   if (error) {
@@ -96,7 +98,6 @@ export function RefListContainer({ ids, onClick }: RefListContainerProps) {
           documentType={item.documentType}
           subtype={item.subtype}
           documentTitle={item.title}
-          onClick={() => onClick(item.id)}
         />
       ))}
     </>
@@ -109,16 +110,10 @@ type RefProps = {
   subtype: DocumentSubtype;
   documentTitle: string;
   description?: string;
-  onClick: Callback;
 };
-export function Ref({
-  documentId,
-  documentType,
-  subtype,
-  documentTitle,
-  description,
-  onClick,
-}: RefProps) {
+export function Ref({ documentId, documentType, subtype, documentTitle, description }: RefProps) {
+  const refClickHandler = useContext(RefClickHandlerContext);
+
   const typeStr = formatDocumentType(documentType, subtype).toUpperCase();
 
   return (
@@ -134,7 +129,7 @@ export function Ref({
       onClick={(e) => {
         e.preventDefault();
 
-        onClick();
+        refClickHandler(documentId);
       }}
     >
       <span
@@ -155,7 +150,6 @@ type RefPreviewProps = {
   data: DocumentData;
   documentTitle: string;
   description?: string;
-  onClick: Callback;
 };
 export function RefPreview({
   documentId,
@@ -164,8 +158,9 @@ export function RefPreview({
   data,
   documentTitle,
   description,
-  onClick,
 }: RefPreviewProps) {
+  const refClickHandler = useContext(RefClickHandlerContext);
+
   let preview;
   if (isAttachment(documentType)) {
     preview = getAttachmentPreview(subtype, data);
@@ -179,7 +174,6 @@ export function RefPreview({
         subtype={subtype}
         documentTitle={documentTitle}
         description={description}
-        onClick={onClick}
       />
     );
   }
@@ -194,7 +188,9 @@ export function RefPreview({
 
         <Button
           variant="text"
-          onClick={onClick}
+          onClick={() => {
+            refClickHandler(documentId);
+          }}
           className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
           trailingIcon="link-arrow"
           size="sm"

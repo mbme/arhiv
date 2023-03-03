@@ -17,7 +17,6 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
-  onRefClick: (id: DocumentId) => void;
   onChange?: (ids: DocumentId[]) => void;
 };
 
@@ -30,7 +29,6 @@ export function RefInput({
   readonly = false,
   required = false,
   disabled = false,
-  onRefClick,
   onChange,
 }: Props) {
   const fieldRef = useRef<HTMLVFormFieldElement>(null);
@@ -110,7 +108,6 @@ export function RefInput({
             documentType={item.documentType}
             subtype={item.subtype}
             documentTitle={item.title}
-            onClick={() => onRefClick(item.id)}
           />
 
           {!readonly && !disabled && (

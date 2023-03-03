@@ -6,7 +6,6 @@ import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Editor } from 'components/Form/Editor';
 import { RefInput } from 'components/Form/RefInput';
-import { useCardContext } from 'Workspace/workspace-reducer';
 
 type ValueEditorProps = {
   name: string;
@@ -24,8 +23,6 @@ function ValueEditor({
   readonly,
   disabled,
 }: ValueEditorProps) {
-  const { openDocument } = useCardContext();
-
   if ('MarkupString' in fieldType) {
     return (
       <Editor
@@ -76,7 +73,6 @@ function ValueEditor({
         readonly={readonly}
         required={required}
         disabled={disabled}
-        onRefClick={openDocument}
       />
     );
   }
@@ -92,7 +88,6 @@ function ValueEditor({
         required={required}
         disabled={disabled}
         multiple
-        onRefClick={openDocument}
       />
     );
   }

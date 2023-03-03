@@ -1,9 +1,8 @@
+import { DocumentId } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { DataDescriptionField } from 'utils/schema';
 import { Markup } from 'components/Markup';
 import { RefContainer, RefListContainer } from 'components/Ref';
-import { useCardContext } from '../workspace-reducer';
-import { DocumentId } from 'dto';
 
 type FieldValueProps = {
   field: DataDescriptionField;
@@ -11,28 +10,14 @@ type FieldValueProps = {
 };
 
 export function FieldValue({ field, value }: FieldValueProps) {
-  const { open } = useCardContext();
-
   if ('MarkupString' in field.field_type) {
-    return (
-      <Markup
-        markup={value as string}
-        onRefClick={(documentId) => open({ variant: 'document', documentId })}
-      />
-    );
+    return <Markup markup={value as string} />;
   }
 
   if ('Ref' in field.field_type) {
     const id = value as DocumentId;
 
-    return (
-      <RefContainer
-        key={id}
-        id={id}
-        attachmentPreview
-        onClick={() => open({ variant: 'document', documentId: id })}
-      />
-    );
+    return <RefContainer key={id} id={id} attachmentPreview />;
   }
 
   if ('RefList' in field.field_type) {
@@ -41,10 +26,7 @@ export function FieldValue({ field, value }: FieldValueProps) {
     return (
       <div className="w-full flex flex-col">
         <div className="font-mono">{ids.length} items</div>
-        <RefListContainer
-          ids={ids}
-          onClick={(id) => open({ variant: 'document', documentId: id })}
-        />
+        <RefListContainer ids={ids} />
       </div>
     );
   }

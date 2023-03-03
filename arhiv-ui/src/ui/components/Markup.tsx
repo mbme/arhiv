@@ -24,16 +24,11 @@ function extractText(children: MarkupElement[]): string {
     .join(' ');
 }
 
-function markupElementToJSX(
-  el: MarkupElement,
-  onRefClick: (documentId: DocumentId) => void
-): JSXElement {
+function markupElementToJSX(el: MarkupElement): JSXElement {
   switch (el.typeName) {
     case 'Document': {
       return (
-        <div className="markup w-full">
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
-        </div>
+        <div className="markup w-full">{el.children.map((child) => markupElementToJSX(child))}</div>
       );
     }
     case 'Text': {
@@ -71,7 +66,7 @@ function markupElementToJSX(
     case 'Paragraph': {
       return (
         <p data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </p>
       );
     }
@@ -82,13 +77,13 @@ function markupElementToJSX(
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
         } as Obj<unknown>,
-        ...el.children.map((child) => markupElementToJSX(child, onRefClick))
+        ...el.children.map((child) => markupElementToJSX(child))
       );
     }
     case 'BlockQuote': {
       return (
         <blockquote data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </blockquote>
       );
     }
@@ -97,7 +92,7 @@ function markupElementToJSX(
       return (
         <pre>
           <code data-range-start={el.range.start} data-range-end={el.range.end}>
-            {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+            {el.children.map((child) => markupElementToJSX(child))}
           </code>
         </pre>
       );
@@ -111,7 +106,7 @@ function markupElementToJSX(
           'data-range-end': el.range.end,
         },
 
-        ...el.children.map((child) => markupElementToJSX(child, onRefClick))
+        ...el.children.map((child) => markupElementToJSX(child))
       );
     }
     case 'TaskListMarker': {
@@ -129,7 +124,7 @@ function markupElementToJSX(
     case 'ListItem': {
       return (
         <li data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </li>
       );
     }
@@ -143,7 +138,7 @@ function markupElementToJSX(
       // TODO handle alignments
       return (
         <table data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </table>
       );
     }
@@ -156,7 +151,7 @@ function markupElementToJSX(
                 throw new Error(`Expected TableCell, got ${col.typeName}`);
               }
 
-              return <th>{col.children.map((child) => markupElementToJSX(child, onRefClick))}</th>;
+              return <th>{col.children.map((child) => markupElementToJSX(child))}</th>;
             })}
           </tr>
         </thead>
@@ -165,35 +160,35 @@ function markupElementToJSX(
     case 'TableRow': {
       return (
         <tr data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </tr>
       );
     }
     case 'TableCell': {
       return (
         <td data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </td>
       );
     }
     case 'Emphasis': {
       return (
         <em data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </em>
       );
     }
     case 'Strong': {
       return (
         <strong data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </strong>
       );
     }
     case 'Strikethrough': {
       return (
         <s data-range-start={el.range.start} data-range-end={el.range.end}>
-          {el.children.map((child) => markupElementToJSX(child, onRefClick))}
+          {el.children.map((child) => markupElementToJSX(child))}
         </s>
       );
     }
@@ -217,12 +212,7 @@ function markupElementToJSX(
               'inline-block w-full': el.typeName === 'Image',
             })}
           >
-            <RefContainer
-              id={id}
-              attachmentPreview={preview}
-              description={description}
-              onClick={() => onRefClick(id)}
-            />
+            <RefContainer id={id} attachmentPreview={preview} description={description} />
           </span>
         );
       }
@@ -241,11 +231,10 @@ function markupElementToJSX(
 
 type MarkupProps = {
   markup: string;
-  onRefClick: (documentId: DocumentId) => void;
 };
 
-export function Markup({ markup, onRefClick }: MarkupProps) {
+export function Markup({ markup }: MarkupProps) {
   const result = useSuspense(markup, () => RPC.ParseMarkup({ markup }), [markup]);
 
-  return markupElementToJSX(result.ast, onRefClick);
+  return markupElementToJSX(result.ast);
 }

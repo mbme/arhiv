@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { DEFAULT_SUBTYPE, DocumentId, DocumentSubtype, DocumentType } from 'dto';
-import { noop, setQueryParam, JSONObj } from 'utils';
+import { setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
 import { JSXChildren } from 'utils/jsx';
 import { Button, IconButton } from 'components/Button';
@@ -182,7 +182,6 @@ export function ComponentsDemo() {
               documentType={'note' as DocumentType}
               subtype={DEFAULT_SUBTYPE}
               documentTitle="Very important note"
-              onClick={noop}
             />
           </div>
 
@@ -194,7 +193,6 @@ export function ComponentsDemo() {
               documentType={'note' as DocumentType}
               subtype={'other' as DocumentSubtype}
               documentTitle="Very important note"
-              onClick={noop}
             />
           </div>
 
@@ -206,7 +204,6 @@ export function ComponentsDemo() {
               documentType={'' as DocumentType}
               subtype={DEFAULT_SUBTYPE}
               documentTitle="12342321"
-              onClick={noop}
             />
           </div>
 
@@ -219,7 +216,6 @@ export function ComponentsDemo() {
               documentTitle=""
               subtype={'other' as DocumentSubtype}
               description="Note with custom description"
-              onClick={noop}
             />
           </div>
 
@@ -233,7 +229,6 @@ export function ComponentsDemo() {
                 documentType={'attachment' as DocumentType}
                 subtype={'image' as DocumentSubtype}
                 documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
-                onClick={noop}
               />{' '}
               and lorem ipsum
             </div>
@@ -377,7 +372,6 @@ function FormControlsDemo() {
           required={required}
           disabled={disabled}
           readonly={readonly}
-          onRefClick={(documentId) => console.error('ON REF CLICK', documentId)}
         />
       </label>
 

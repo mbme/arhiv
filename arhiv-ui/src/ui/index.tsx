@@ -6,7 +6,6 @@ if (process.env.NODE_ENV === 'development') {
 import { render } from 'preact';
 
 // register web components
-import 'components/Form/v-ref-input';
 import 'components/Form/v-form-field';
 
 import { ComponentsDemo } from 'components/ComponentsDemo';

@@ -12,7 +12,7 @@
         width: 100%;
       }
 
-      &:is(v-ref-input[multiple]) {
+      &:is(.ref-input.is-multi) {
         width: 100%;
       }
 

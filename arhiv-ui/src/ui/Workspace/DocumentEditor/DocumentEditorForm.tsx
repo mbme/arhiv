@@ -18,6 +18,7 @@ import {
 } from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
+import { RefInput } from 'components/Form/RefInput';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
 import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
@@ -80,23 +81,18 @@ export function DocumentEditorForm({
   const fieldToFocus = fields.find((field) => ignoreReadonly || !field.readonly);
 
   return (
-    <Form onSubmit={submitDocument} formRef={formRef}>
-      <PreventImplicitSubmissionOnEnter />
-
+    <div>
       <div className="flex justify-between mb-8" hidden={!canAddCollections && !canChooseSubtype}>
-        {canAddCollections ? (
-          <v-ref-input
-            className="field"
-            documentTypes={JSON.stringify(collectionTypes)}
-            defaultValue={collections.join(', ')}
-            multiple
-            form=""
-            onRefsChange={(e) => setCollections(e.refs)}
-            onRefClick={(e) => openDocument(e.detail.documentId)}
-          />
-        ) : (
-          <div />
-        )}
+        <RefInput
+          className="field"
+          name="collections"
+          documentTypes={collectionTypes}
+          defaultValue={collections}
+          multiple
+          readonly={!canAddCollections}
+          onChange={setCollections}
+          onRefClick={openDocument}
+        />
 
         {canChooseSubtype && (
           <DocumentEditorSubtypeSelect subtypes={subtypes} value={subtype} onChange={setSubtype} />
@@ -109,19 +105,23 @@ export function DocumentEditorForm({
         </div>
       ))}
 
-      <div className="divide-y divide-dashed">
-        {fields.map((field) => (
-          <DocumentEditorField
-            key={field.name}
-            field={field}
-            autofocus={field === fieldToFocus}
-            ignoreReadonly={ignoreReadonly}
-            initialValue={initialData[field.name]}
-            disabled={!isFieldActive(field, subtype)}
-            errors={fieldErrors[field.name]}
-          />
-        ))}
-      </div>
-    </Form>
+      <Form onSubmit={submitDocument} formRef={formRef}>
+        <PreventImplicitSubmissionOnEnter />
+
+        <div className="divide-y divide-dashed">
+          {fields.map((field) => (
+            <DocumentEditorField
+              key={field.name}
+              field={field}
+              autofocus={field === fieldToFocus}
+              ignoreReadonly={ignoreReadonly}
+              initialValue={initialData[field.name]}
+              disabled={!isFieldActive(field, subtype)}
+              errors={fieldErrors[field.name]}
+            />
+          ))}
+        </div>
+      </Form>
+    </div>
   );
 }

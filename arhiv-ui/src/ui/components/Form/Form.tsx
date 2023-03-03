@@ -1,6 +1,5 @@
 import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
-import { HTMLVRefInputElement } from 'components/Form/v-ref-input/index';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
 
 function collectValues(form: HTMLFormElement): JSONObj {
@@ -24,17 +23,6 @@ function collectValues(form: HTMLFormElement): JSONObj {
 
     if (control instanceof HTMLVFormFieldElement) {
       result[name] = control.value;
-      continue;
-    }
-
-    if (control instanceof HTMLVRefInputElement) {
-      const value = control.refs;
-
-      if (control.multiple) {
-        result[name] = value;
-      } else {
-        result[name] = value[0] ?? null;
-      }
       continue;
     }
 

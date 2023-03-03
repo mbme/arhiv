@@ -10,6 +10,7 @@ import { Form } from 'components/Form/Form';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Editor } from 'components/Form/Editor';
+import { RefInput } from 'components/Form/RefInput';
 import { Icon, ICON_VARIANTS } from 'components/Icon';
 import { Link } from 'components/Link';
 import { QueryError } from 'components/QueryError';
@@ -370,13 +371,13 @@ function FormControlsDemo() {
 
       <label className="flex items-center gap-2">
         Ref picker input
-        <v-ref-input
-          documentTypes={JSON.stringify(['note', 'book'])}
+        <RefInput
+          documentTypes={['note', 'book'] as DocumentType[]}
           name="note-ref"
           required={required}
           disabled={disabled}
           readonly={readonly}
-          onRefClick={(e) => console.error('ON REF CLICK', e.detail.documentId)}
+          onRefClick={(documentId) => console.error('ON REF CLICK', documentId)}
         />
       </label>
 

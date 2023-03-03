@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
+import { DocumentId } from 'dto';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Editor } from 'components/Form/Editor';
+import { RefInput } from 'components/Form/RefInput';
 import { useCardContext } from 'Workspace/workspace-reducer';
 
 type ValueEditorProps = {
@@ -66,31 +68,31 @@ function ValueEditor({
 
   if ('Ref' in fieldType) {
     return (
-      <v-ref-input
+      <RefInput
         className="field"
-        documentTypes={JSON.stringify([fieldType.Ref])}
+        documentTypes={[fieldType.Ref]}
         name={name}
-        defaultValue={initialValue as string | undefined}
+        defaultValue={initialValue as DocumentId | undefined}
         readonly={readonly}
         required={required}
         disabled={disabled}
-        onRefClick={(e) => openDocument(e.detail.documentId)}
+        onRefClick={openDocument}
       />
     );
   }
 
   if ('RefList' in fieldType) {
     return (
-      <v-ref-input
+      <RefInput
         className="field"
-        documentTypes={JSON.stringify([fieldType.RefList])}
+        documentTypes={[fieldType.RefList]}
         name={name}
-        defaultValue={(initialValue as string[] | undefined)?.join(', ') ?? undefined}
+        defaultValue={initialValue as DocumentId[] | undefined}
         readonly={readonly}
         required={required}
         disabled={disabled}
         multiple
-        onRefClick={(e) => openDocument(e.detail.documentId)}
+        onRefClick={openDocument}
       />
     );
   }

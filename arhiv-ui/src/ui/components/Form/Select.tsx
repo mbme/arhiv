@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { setElementAttribute } from 'utils';
+import { cx, setElementAttribute } from 'utils';
 
 type Props = {
   className?: string;
@@ -9,6 +9,7 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
+  onChange?: (value: string) => void;
 };
 
 export function Select({
@@ -19,9 +20,10 @@ export function Select({
   readonly,
   required,
   disabled,
+  onChange,
 }: Props) {
   if (options.includes('')) {
-    throw new Error('options must not include empty string');
+    throw new Error('options must not include an empty string');
   }
 
   const selectRef = useRef<HTMLElement | null>(null);
@@ -41,11 +43,14 @@ export function Select({
           setElementAttribute(el, 'readonly', readonly);
         }
       }}
-      className={className}
+      className={cx(readonly && 'pointer-events-none', className)}
       name={name}
       disabled={disabled}
       required={required}
       defaultValue={initialValue}
+      onChange={(e) => {
+        onChange?.(e.currentTarget.value);
+      }}
     >
       <option key="" value="" disabled={readonly} />
 

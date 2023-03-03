@@ -19,9 +19,9 @@ import {
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
 import { RefInput } from 'components/Form/RefInput';
+import { Select } from 'components/Form/Select';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
-import { DocumentEditorSubtypeSelect } from './DocumentEditorSubtypeSelect';
 import { useCardLock, useCardContext } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
@@ -81,8 +81,10 @@ export function DocumentEditorForm({
   const fieldToFocus = fields.find((field) => ignoreReadonly || !field.readonly);
 
   return (
-    <div>
-      <div className="flex justify-between mb-8" hidden={!canAddCollections && !canChooseSubtype}>
+    <>
+      <form className="flex justify-between mb-8">
+        <PreventImplicitSubmissionOnEnter />
+
         <RefInput
           className="field"
           name="collections"
@@ -94,19 +96,26 @@ export function DocumentEditorForm({
           onRefClick={openDocument}
         />
 
-        {canChooseSubtype && (
-          <DocumentEditorSubtypeSelect subtypes={subtypes} value={subtype} onChange={setSubtype} />
-        )}
-      </div>
-
-      {documentErrors.map((error, index) => (
-        <div key={index} className="text-red-500 text-xl pl-1 my-2">
-          {error}
-        </div>
-      ))}
+        <label className="flex justify-end items-center gap-2">
+          <Select
+            className="field"
+            name="subtypes"
+            readonly={!canChooseSubtype}
+            initialValue={subtype}
+            options={subtypes}
+            onChange={(value) => setSubtype(value as DocumentSubtype)}
+          />
+        </label>
+      </form>
 
       <Form onSubmit={submitDocument} formRef={formRef}>
         <PreventImplicitSubmissionOnEnter />
+
+        {documentErrors.map((error, index) => (
+          <div key={index} className="text-red-500 text-xl pl-1 my-2">
+            {error}
+          </div>
+        ))}
 
         <div className="divide-y divide-dashed">
           {fields.map((field) => (
@@ -122,6 +131,6 @@ export function DocumentEditorForm({
           ))}
         </div>
       </Form>
-    </div>
+    </>
   );
 }

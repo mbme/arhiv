@@ -23,7 +23,7 @@ export function CardContainer({ children }: CardContainerProps) {
 
   return (
     <div
-      className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30"
+      className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30 custom-scrollbar"
       data-initializing
       ref={setEl}
     >

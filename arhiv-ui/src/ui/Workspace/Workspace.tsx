@@ -53,7 +53,7 @@ export function Workspace() {
   return (
     <RefClickHandlerContext.Provider value={refClickHandler}>
       <div
-        className="flex flex-row items-start gap-6 h-full overflow-x-auto pt-12 pb-2 px-8 scroll-smooth"
+        className="flex flex-row items-start gap-6 h-full overflow-x-auto pt-12 pb-2 px-8 scroll-smooth custom-scrollbar"
         ref={setWrapperEl}
       >
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">

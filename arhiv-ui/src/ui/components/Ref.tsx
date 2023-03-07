@@ -66,7 +66,11 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
 
 export const useDocuments = (ids: DocumentId[]) => {
   const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.GetDocuments({ ids }, abortSignal),
+    async (abortSignal) => {
+      if (ids.length > 0) {
+        return RPC.GetDocuments({ ids }, abortSignal);
+      }
+    },
     {
       refreshIfChange: ids,
     }

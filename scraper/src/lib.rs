@@ -226,7 +226,7 @@ impl ScraperOptions {
             timeouts.set_script(Some(Duration::from_secs(30 * 60)));
             timeouts.set_page_load(Some(Duration::from_secs(60)));
         } else {
-            timeouts.set_script(Some(Duration::from_secs(30)));
+            timeouts.set_script(Some(Duration::from_secs(60)));
             timeouts.set_page_load(Some(Duration::from_secs(30)));
         }
 

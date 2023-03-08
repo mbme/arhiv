@@ -109,7 +109,7 @@ pub fn run_yarn(command: &str) {
 
 /// returns (width, height)
 pub fn get_image_size(file_path: &str) -> Result<(usize, usize)> {
-    let dimensions = imagesize::size(file_path).context("Failed to determine image size")?;
+    let dimensions = imagesize::size(file_path)?;
 
     Ok((dimensions.width, dimensions.height))
 }

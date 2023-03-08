@@ -18,12 +18,11 @@ export function uniqArr<T>(arr: T[]): T[] {
 export const waitForTimeout = (timeoutMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 
-export const waitForSelector = async <T extends Element = HTMLElement>(
-  el: HTMLElement | Document,
-  selector: string,
+export const waitForFunction = async (
+  callback: () => boolean,
   description: string,
   timeoutMs = 30000
-): Promise<T> => {
+): Promise<void> => {
   if (timeoutMs === 0) {
     throw new Error('timeoutMs must be positive number');
   }
@@ -34,9 +33,8 @@ export const waitForSelector = async <T extends Element = HTMLElement>(
   let attempt = 1;
 
   while (attempt <= maxAttempts) {
-    const result = el.querySelector(selector);
-    if (result) {
-      return result as T;
+    if (callback()) {
+      return;
     }
 
     if (attempt < maxAttempts) {
@@ -46,7 +44,18 @@ export const waitForSelector = async <T extends Element = HTMLElement>(
     attempt += 1;
   }
 
-  throw new Error(`waitForSelector for "${description}" timed out`);
+  throw new Error(`waitForFunction: "${description}" timed out`);
+};
+
+export const waitForSelector = async <T extends Element = HTMLElement>(
+  el: HTMLElement | Document,
+  selector: string,
+  description: string,
+  timeoutMs = 30000
+): Promise<T> => {
+  await waitForFunction(() => !!el.querySelector(selector), description, timeoutMs);
+
+  return getEl<T>(selector, description);
 };
 
 export const parseHumanDate = (dateStr: string): Date | undefined => {
@@ -156,3 +165,8 @@ export const getListStr = (el: HTMLElement | Document, selector: string): string
 
   return values.join(', ');
 };
+
+export function scrollToBottom() {
+  const scrollingElement = document.scrollingElement || document.body;
+  scrollingElement.scrollTop = scrollingElement.scrollHeight;
+}

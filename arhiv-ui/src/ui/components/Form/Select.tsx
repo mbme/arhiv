@@ -22,10 +22,6 @@ export function Select({
   disabled,
   onChange,
 }: Props) {
-  if (options.includes('')) {
-    throw new Error('options must not include an empty string');
-  }
-
   const selectRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -52,8 +48,6 @@ export function Select({
         onChange?.(e.currentTarget.value);
       }}
     >
-      <option key="" value="" disabled={readonly} />
-
       {options.map((option) => (
         <option key={option} value={option} disabled={readonly}>
           {option}

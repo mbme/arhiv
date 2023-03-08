@@ -1,11 +1,9 @@
-import { useState } from 'preact/hooks';
 import { DocumentId } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { QueryError } from 'components/QueryError';
 import { Icon } from 'components/Icon';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
-import { DocumentViewer } from './DocumentViewer/DocumentViewer';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
@@ -15,8 +13,6 @@ type Props = {
 
 export function DocumentCard({ documentId }: Props) {
   const context = useCardContext();
-
-  const [edit, setEdit] = useState(false);
 
   const { result, error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal),
@@ -41,23 +37,12 @@ export function DocumentCard({ documentId }: Props) {
     );
   }
 
-  if (edit) {
-    return (
-      <DocumentEditor
-        document={result}
-        onSave={() => {
-          setEdit(false);
-          triggerRefresh();
-        }}
-        onCancel={() => setEdit(false)}
-      />
-    );
-  }
-
   return (
-    <DocumentViewer
+    <DocumentEditor
       document={result}
-      onEdit={() => setEdit(true)}
+      onDone={() => {
+        triggerRefresh();
+      }}
       onClone={() => {
         context.open({
           variant: 'new-document',

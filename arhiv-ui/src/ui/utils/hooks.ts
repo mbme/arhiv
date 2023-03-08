@@ -207,8 +207,12 @@ export function useToggle(initialValue: boolean): [boolean, Callback] {
   return [value, toggleValue];
 }
 
-export function useUnsavedChangesWarning() {
+export function useUnsavedChangesWarning(warn: boolean) {
   useEffect(() => {
+    if (!warn) {
+      return;
+    }
+
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
 
@@ -220,7 +224,7 @@ export function useUnsavedChangesWarning() {
     return () => {
       window.removeEventListener('beforeunload', onBeforeUnload, { capture: true });
     };
-  }, []);
+  }, [warn]);
 }
 
 export function useScrollRestoration(el: HTMLElement | null, key: string) {

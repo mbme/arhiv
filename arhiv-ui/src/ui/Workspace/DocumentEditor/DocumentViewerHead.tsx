@@ -7,6 +7,7 @@ import { Ref } from 'components/Ref';
 import { Button } from 'components/Button';
 import { DateTime } from 'components/DateTime';
 import { Icon } from 'components/Icon';
+
 type DocumentViewerHeadProps = {
   id: DocumentId;
   documentType: DocumentType;

@@ -336,14 +336,18 @@ export function useCardContext() {
   };
 }
 
-export function useCardLock() {
+export function useCardLock(lock: boolean) {
   const context = useCardContext();
 
   useEffect(() => {
+    if (!lock) {
+      return;
+    }
+
     context.lock();
 
     return () => {
       context.unlock();
     };
-  }, []);
+  }, [lock]);
 }

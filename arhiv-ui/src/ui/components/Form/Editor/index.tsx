@@ -1,6 +1,9 @@
+import { Suspense } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
 import { cx } from 'utils';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
+import { Icon } from 'components/Icon';
+import { Markup } from 'components/Markup';
 import { CodemirrorEditor } from './CodemirrorEditor';
 
 type Props = {
@@ -15,12 +18,13 @@ type Props = {
 export function Editor({
   className,
   name,
-  defaultValue,
+  defaultValue = '',
   placeholder,
   disabled,
   readonly,
   required,
 }: Props) {
+  const [preview, setPreview] = useState(defaultValue.length > 0);
   const [editor, setEditor] = useState<CodemirrorEditor>();
   const [fieldEl, setFieldEl] = useState<HTMLVFormFieldElement | null>(null);
 
@@ -64,15 +68,25 @@ export function Editor({
   }, [editor, disabled, readonly, placeholder]);
 
   return (
-    <v-form-field
-      className={cx('editor-container', className)}
-      ref={(el) => setFieldEl(el as HTMLVFormFieldElement | null)}
-      name={name}
-      defaultValue={JSON.stringify(defaultValue ?? '')}
-      disabled={disabled}
-      readonly={readonly}
-      required={required}
-      onChange={(e) => editor?.setValue(e.value as string)}
-    />
+    <div className={cx('editor-container', className)} onDblClick={() => setPreview(!preview)}>
+      <v-form-field
+        hidden={preview}
+        ref={(el) => setFieldEl(el as HTMLVFormFieldElement | null)}
+        name={name}
+        defaultValue={JSON.stringify(defaultValue)}
+        disabled={disabled}
+        readonly={readonly}
+        required={required}
+        onChange={(e) => {
+          const value = e.value as string;
+          editor?.setValue(value);
+        }}
+      />
+      {preview && (
+        <Suspense fallback={<Icon variant="spinner" className="mb-8" />}>
+          <Markup markup={editor?.getValue() ?? defaultValue} />
+        </Suspense>
+      )}
+    </div>
   );
 }

@@ -35,6 +35,7 @@ type DocumentEditorFormProps = {
     subtype: DocumentSubtype,
     collections: DocumentId[]
   ) => Promise<SaveDocumentErrors | void>;
+  onDirty?: () => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
@@ -45,10 +46,13 @@ export function DocumentEditorForm({
   data: initialData,
   collections: initialCollections,
   onSubmit,
+  onDirty,
   formRef,
 }: DocumentEditorFormProps) {
-  useUnsavedChangesWarning();
-  useCardLock();
+  const [isDirty, setDirty] = useState(false);
+
+  useUnsavedChangesWarning(isDirty);
+  useCardLock(isDirty);
 
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
@@ -60,6 +64,15 @@ export function DocumentEditorForm({
 
   const canAddCollections = collectionTypes.length > 0;
   const canChooseSubtype = subtypes.length > 1;
+
+  const onChange = () => {
+    if (isDirty) {
+      return;
+    }
+
+    setDirty(true);
+    onDirty?.();
+  };
 
   const submitDocument = async (data: JSONObj) => {
     const errors = await onSubmit(data, subtype, collections);
@@ -80,7 +93,7 @@ export function DocumentEditorForm({
 
   return (
     <>
-      <form className="flex justify-between mb-8">
+      <form className="flex justify-between mb-8" onChange={onChange}>
         <PreventImplicitSubmissionOnEnter />
 
         <RefInput
@@ -105,7 +118,7 @@ export function DocumentEditorForm({
         </label>
       </form>
 
-      <Form onSubmit={submitDocument} formRef={formRef}>
+      <Form onSubmit={submitDocument} formRef={formRef} onChange={onChange}>
         <PreventImplicitSubmissionOnEnter />
 
         {documentErrors.map((error, index) => (

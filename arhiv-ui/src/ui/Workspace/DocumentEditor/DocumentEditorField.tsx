@@ -64,6 +64,7 @@ function ValueEditor({
   }
 
   if ('Ref' in fieldType) {
+    // FIXME ref previews
     return (
       <RefInput
         className="field"

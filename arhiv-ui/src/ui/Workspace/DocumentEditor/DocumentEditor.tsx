@@ -1,44 +1,102 @@
-import { useRef } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { DocumentDTO } from 'dto';
-import { Callback } from 'utils';
+import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
 import { RPC } from 'utils/rpc';
+import { isAttachment, isErasedDocument } from 'utils/schema';
+import { getAttachmentPreview } from 'components/Ref';
 import { Button } from 'components/Button';
-import { CardContainer } from '../CardContainer';
+import { DropdownMenu } from 'components/DropdownMenu';
+import { CardContainer } from 'Workspace/CardContainer';
+import { EraseDocumentConfirmationDialog } from 'Workspace/DocumentEditor/EraseDocumentConfirmationDialog';
+import { DocumentViewerHead } from 'Workspace/DocumentEditor/DocumentViewerHead';
 import { DocumentEditorForm } from './DocumentEditorForm';
 
 type DocumentEditorProps = {
   document: DocumentDTO;
-  onSave: Callback;
-  onCancel: Callback;
+  onDone: Callback;
+  onClone: Callback;
+  onErase: Callback;
 };
 
-export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorProps) {
+export function DocumentEditor({ document, onDone, onClone, onErase }: DocumentEditorProps) {
+  const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
+  const [isDirty, setDirty] = useState(false);
+
   const formRef = useRef<HTMLFormElement | null>(null);
 
   return (
     <CardContainer>
       <CardContainer.Topbar
-        skipBack
+        skipBack={isDirty}
         left={
-          <span className="section-heading text-lg">{`Edit ${document.documentType || ''}`}</span>
+          <DropdownMenu
+            icon="dots-horizontal"
+            options={[
+              {
+                text: 'Copy link',
+                icon: 'clipboard',
+                onClick: () => {
+                  void copyTextToClipbard(getDocumentUrl(document.id));
+                },
+              },
+              {
+                text: `Clone ${document.documentType}`,
+                icon: 'duplicate-document',
+                onClick: onClone,
+              },
+              {
+                text: `Erase ${document.documentType}`,
+                icon: 'erase-document',
+                alarming: true,
+                onClick: () => setShowErasetConfirmation(true),
+              },
+            ]}
+          />
         }
         right={
-          <>
-            <Button variant="simple" onClick={onCancel}>
-              Cancel
-            </Button>
+          isDirty ? (
+            <>
+              <Button variant="simple" onClick={onDone}>
+                Cancel
+              </Button>
 
-            <Button
-              variant="primary"
-              onClick={() => {
-                formRef.current?.requestSubmit();
-              }}
-            >
-              Save
-            </Button>
-          </>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  formRef.current?.requestSubmit();
+                }}
+              >
+                Save
+              </Button>
+            </>
+          ) : (
+            <CardContainer.CloseButton />
+          )
         }
       />
+
+      <DocumentViewerHead
+        id={document.id}
+        documentType={document.documentType}
+        subtype={document.subtype}
+        updatedAt={document.updatedAt}
+        backrefs={document.backrefs}
+        collections={document.collections}
+      />
+
+      {isAttachment(document.documentType) && (
+        <div className="mb-8 empty:hidden">
+          {getAttachmentPreview(document.subtype, document.data)}
+        </div>
+      )}
+
+      {isErasedDocument(document.documentType) && (
+        <img
+          src="/nothing-to-see-here.jpg"
+          alt="funny picture for the erased document"
+          className="my-16 mx-auto"
+        />
+      )}
 
       <DocumentEditorForm
         formRef={formRef}
@@ -47,6 +105,7 @@ export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorPro
         subtype={document.subtype}
         data={document.data}
         collections={document.collections.map((item) => item.id)}
+        onDirty={() => setDirty(true)}
         onSubmit={async (data, subtype, collections) => {
           const submitResult = await RPC.SaveDocument({
             id: document.id,
@@ -59,9 +118,19 @@ export function DocumentEditor({ document, onSave, onCancel }: DocumentEditorPro
             return submitResult.errors;
           }
 
-          onSave();
+          onDone();
         }}
       />
+
+      {showEraseConfirmation && (
+        <EraseDocumentConfirmationDialog
+          documentId={document.id}
+          documentType={document.documentType}
+          title={document.title}
+          onErase={onErase}
+          onCancel={() => setShowErasetConfirmation(false)}
+        />
+      )}
     </CardContainer>
   );
 }

@@ -56,12 +56,12 @@ export function setQueryParam(param: string, value: string | undefined, replace 
 }
 
 export function cx(
-  ...args: Array<string | null | undefined | false | Obj<string | null | undefined | boolean>>
+  ...args: Array<string | null | undefined | boolean | Obj<string | null | undefined | boolean>>
 ): string {
   const result = [];
 
   for (const arg of args) {
-    if (!arg) {
+    if (!arg || arg === true) {
       continue;
     }
 

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { JSONObj } from 'utils';
+import { cx, JSONObj } from 'utils';
 import {
   DocumentData,
   DocumentFieldErrors,
@@ -64,8 +64,12 @@ export function DocumentEditorForm({
   const collectionTypes = getCollectionTypesForDocument(documentType);
   const subtypes = getDataDescription(documentType).subtypes || [];
 
+  const hasCollections = collections.length > 0;
   const canAddCollections = collectionTypes.length > 0;
   const canChooseSubtype = subtypes.length > 1;
+
+  const showCollectionPicker = hasCollections || canAddCollections;
+  const showSubtypeSelect = canChooseSubtype;
 
   const onChange = () => {
     if (isDirty) {
@@ -97,20 +101,27 @@ export function DocumentEditorForm({
 
   return (
     <>
-      <form className="flex justify-between mb-8" onChange={onChange}>
+      <form
+        className="grid grid-cols-2 mb-8"
+        onChange={onChange}
+        hidden={!showCollectionPicker && !showSubtypeSelect}
+      >
         <PreventImplicitSubmissionOnEnter />
 
-        <RefInput
-          className="field"
-          name="collections"
-          documentTypes={collectionTypes}
-          defaultValue={collections}
-          multiple
-          readonly={!canAddCollections}
-          onChange={setCollections}
-        />
+        <label className={cx(showCollectionPicker || 'invisible')}>
+          <RefInput
+            className="field"
+            name="collections"
+            documentTypes={collectionTypes}
+            defaultValue={collections}
+            multiple
+            readonly={!canAddCollections}
+            onChange={setCollections}
+          />
+        </label>
 
-        <label className="flex justify-end items-center gap-2">
+        <label className={cx('justify-self-end', showSubtypeSelect || 'invisible')}>
+          Subtype &nbsp;
           <Select
             className="field"
             name="subtypes"

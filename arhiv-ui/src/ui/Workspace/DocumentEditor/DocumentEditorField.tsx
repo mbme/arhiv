@@ -41,8 +41,8 @@ function ValueEditor({
       <Select
         className="field"
         name={name}
-        initialValue={initialValue as string | undefined}
-        options={fieldType.Enum}
+        initialValue={(initialValue as string | undefined) ?? ''}
+        options={['', ...fieldType.Enum]}
         readonly={readonly}
         required={required}
         disabled={disabled}

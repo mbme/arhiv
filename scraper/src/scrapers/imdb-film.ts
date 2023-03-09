@@ -1,4 +1,13 @@
-import { getAll, getEl, getListStr, getListValues, scrollToBottom, uniqArr, waitForFunction, waitForSelector } from '../utils';
+import {
+  getAll,
+  getEl,
+  getListStr,
+  getListValues,
+  scrollToBottom,
+  uniqArr,
+  waitForFunction,
+  waitForSelector,
+} from '../utils';
 import { Scraper } from './scraper';
 
 export type IMDBFilm = {
@@ -29,7 +38,10 @@ export class IMDBFilmScraper extends Scraper<'IMDBFilm', IMDBFilm> {
   readonly scrape = async (): Promise<IMDBFilm> => {
     scrollToBottom();
 
-    await waitForFunction(() => document.querySelector('[data-testid=storyline-loader]') === null, 'wait until loader is gone');
+    await waitForFunction(
+      () => document.querySelector('[data-testid=storyline-loader]') === null,
+      'wait until loader is gone'
+    );
 
     const metadata = getListValues(document, '[data-testid=hero-title-block__metadata] li');
     while (metadata.length < 4) {
@@ -40,7 +52,8 @@ export class IMDBFilmScraper extends Scraper<'IMDBFilm', IMDBFilm> {
     const isSeries = filmType.includes('series');
     const isMiniSeries = isSeries && filmType.includes('mini');
 
-    const title = (await waitForSelector(document, 'h1[data-testid=hero__pageTitle]', 'title')).innerText;
+    const title = (await waitForSelector(document, 'h1[data-testid=hero__pageTitle]', 'title'))
+      .innerText;
     const originalLanguage = getEl(
       '[data-testid=title-details-languages] ul li a',
       'original language'

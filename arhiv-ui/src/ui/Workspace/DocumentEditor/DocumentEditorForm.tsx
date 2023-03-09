@@ -91,7 +91,9 @@ export function DocumentEditorForm({
   const ignoreReadonly = !documentId;
   const fields = getFieldDescriptions(documentType);
 
-  const fieldToFocus = autofocus ? fields.find((field) => ignoreReadonly || !field.readonly) : undefined;
+  const fieldToFocus = autofocus
+    ? fields.find((field) => ignoreReadonly || !field.readonly)
+    : undefined;
 
   return (
     <>

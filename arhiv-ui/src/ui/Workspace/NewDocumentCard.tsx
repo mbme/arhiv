@@ -51,6 +51,7 @@ export function NewDocumentCard({
 
       <DocumentEditorForm
         key={documentType}
+        autofocus
         formRef={formRef}
         documentType={documentType}
         subtype={subtype}

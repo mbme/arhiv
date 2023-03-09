@@ -25,6 +25,7 @@ import { DocumentEditorField } from './DocumentEditorField';
 import { useCardLock } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
+  autofocus?: boolean;
   documentId?: string;
   documentType: DocumentType;
   subtype: DocumentSubtype;
@@ -48,6 +49,7 @@ export function DocumentEditorForm({
   onSubmit,
   onDirty,
   formRef,
+  autofocus = false,
 }: DocumentEditorFormProps) {
   const [isDirty, setDirty] = useState(false);
 
@@ -89,7 +91,7 @@ export function DocumentEditorForm({
   const ignoreReadonly = !documentId;
   const fields = getFieldDescriptions(documentType);
 
-  const fieldToFocus = fields.find((field) => ignoreReadonly || !field.readonly);
+  const fieldToFocus = autofocus ? fields.find((field) => ignoreReadonly || !field.readonly) : undefined;
 
   return (
     <>

@@ -51,7 +51,7 @@ package() {
   install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-touchpad"
 
   # scraper
-  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/scraper"
+  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-scraper"
 
   # arhiv
   install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/arhiv"

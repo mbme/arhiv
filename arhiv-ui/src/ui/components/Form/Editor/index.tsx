@@ -44,10 +44,6 @@ export function Editor({
       },
     });
 
-    if (fieldEl.hasAttribute('autofocus')) {
-      editor.focus();
-    }
-
     setEditor(editor);
 
     return () => {
@@ -67,6 +63,12 @@ export function Editor({
     editor.setPlaceholder(placeholder ?? '');
   }, [editor, disabled, readonly, placeholder]);
 
+  useEffect(() => {
+    if (editor && !preview) {
+      editor.focus();
+    }
+  }, [editor, preview]);
+
   return (
     <div className={cx('editor-container', className)} onDblClick={() => setPreview(!preview)}>
       <v-form-field
@@ -77,6 +79,7 @@ export function Editor({
         disabled={disabled}
         readonly={readonly}
         required={required}
+        tabIndex={-1}
         onChange={(e) => {
           const value = e.value as string;
           editor?.setValue(value);

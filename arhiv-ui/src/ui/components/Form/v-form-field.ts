@@ -48,8 +48,8 @@ export class HTMLVFormFieldElement extends HTMLElement {
     if (this.disabled) {
       this.tabIndex = -1;
     } else {
-      // element must be focusable for form validation to work
-      this.tabIndex = 0;
+      // note: element must be focusable for form validation to work
+      this.tabIndex = Number.parseInt(this.getAttribute('tabindex') || '0', 10);
     }
   }
 

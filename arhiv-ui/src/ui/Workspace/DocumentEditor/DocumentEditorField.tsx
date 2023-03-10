@@ -157,15 +157,12 @@ export function DocumentEditorField({
   }, [autofocus]);
 
   return (
-    <>
-      <label
-        className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
-          'has-errors': errors.length > 0,
-        })}
-        hidden={disabled}
-        ref={labelRef}
-        for={id}
-      >
+    <div
+      className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
+        'has-errors': errors.length > 0,
+      })}
+    >
+      <label hidden={disabled} ref={labelRef} for={id}>
         <h5 className="form-field-heading mr-8 relative">
           {field.name}
           {field.mandatory && (
@@ -189,6 +186,6 @@ export function DocumentEditorField({
           {error}
         </div>
       ))}
-    </>
+    </div>
   );
 }

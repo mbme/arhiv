@@ -83,6 +83,9 @@ export function Editor({
         readonly={readonly}
         required={required}
         tabIndex={-1}
+        onFocus={() => {
+          editor?.focus();
+        }}
         onChange={(e) => {
           const value = e.value as string;
           editor?.setValue(value);

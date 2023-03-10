@@ -1,6 +1,7 @@
 import { useRef } from 'preact/hooks';
 
 type Props = {
+  id?: string;
   className?: string;
   name?: string;
   initialValue?: boolean;
@@ -9,12 +10,21 @@ type Props = {
   disabled?: boolean;
 };
 
-export function Checkbox({ className, name, initialValue, readonly, required, disabled }: Props) {
+export function Checkbox({
+  id,
+  className,
+  name,
+  initialValue,
+  readonly,
+  required,
+  disabled,
+}: Props) {
   const ref = useRef<HTMLInputElement>(null);
 
   return (
     <input
       ref={ref}
+      id={id}
       className={className}
       name={name}
       type="checkbox"

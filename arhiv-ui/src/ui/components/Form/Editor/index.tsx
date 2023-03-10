@@ -7,6 +7,7 @@ import { Markup } from 'components/Markup';
 import { CodemirrorEditor } from './CodemirrorEditor';
 
 type Props = {
+  id?: string;
   className?: string;
   name: string;
   defaultValue?: string;
@@ -16,6 +17,7 @@ type Props = {
   required: boolean;
 };
 export function Editor({
+  id,
   className,
   name,
   defaultValue = '',
@@ -72,6 +74,7 @@ export function Editor({
   return (
     <div className={cx('editor-container', className)} onDblClick={() => setPreview(!preview)}>
       <v-form-field
+        id={id}
         hidden={preview}
         ref={(el) => setFieldEl(el as HTMLVFormFieldElement | null)}
         name={name}

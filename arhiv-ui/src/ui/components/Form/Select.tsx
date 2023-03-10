@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { cx, setElementAttribute } from 'utils';
 
 type Props = {
+  id?: string;
   className?: string;
   name?: string;
   initialValue?: string;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function Select({
+  id,
   className,
   name,
   initialValue,
@@ -39,6 +41,7 @@ export function Select({
           setElementAttribute(el, 'readonly', readonly);
         }
       }}
+      id={id}
       className={cx(readonly && 'pointer-events-none', className)}
       name={name}
       disabled={disabled}

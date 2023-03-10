@@ -9,6 +9,7 @@ import { QueryError } from 'components/QueryError';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
 
 type Props = {
+  id?: string;
   className?: string;
   documentTypes: DocumentType[];
   defaultValue?: DocumentId | DocumentId[];
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export function RefInput({
+  id,
   className,
   documentTypes,
   defaultValue,
@@ -74,6 +76,7 @@ export function RefInput({
   return (
     <v-form-field
       ref={fieldRef}
+      id={id}
       className={cx(
         'ref-input inline-block break-all border-none',
         multiple && 'is-multi',

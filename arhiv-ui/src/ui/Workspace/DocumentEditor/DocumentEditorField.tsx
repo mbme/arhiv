@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useId, useRef } from 'preact/hooks';
 import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
 import { DocumentId } from 'dto';
@@ -8,6 +8,7 @@ import { Editor } from 'components/Form/Editor';
 import { RefInput } from 'components/Form/RefInput';
 
 type ValueEditorProps = {
+  id: string;
   name: string;
   fieldType: FieldType;
   initialValue?: JSONValue;
@@ -16,6 +17,7 @@ type ValueEditorProps = {
   disabled: boolean;
 };
 function ValueEditor({
+  id,
   name,
   fieldType,
   initialValue,
@@ -26,6 +28,7 @@ function ValueEditor({
   if ('MarkupString' in fieldType) {
     return (
       <Editor
+        id={id}
         className="field"
         name={name}
         defaultValue={initialValue as string | undefined}
@@ -39,6 +42,7 @@ function ValueEditor({
   if ('Enum' in fieldType) {
     return (
       <Select
+        id={id}
         className="field"
         name={name}
         initialValue={(initialValue as string | undefined) ?? ''}
@@ -53,6 +57,7 @@ function ValueEditor({
   if ('Flag' in fieldType) {
     return (
       <Checkbox
+        id={id}
         className="field"
         name={name}
         initialValue={initialValue === 'true'}
@@ -67,6 +72,7 @@ function ValueEditor({
     // FIXME ref previews
     return (
       <RefInput
+        id={id}
         className="field"
         documentTypes={[fieldType.Ref]}
         name={name}
@@ -81,6 +87,7 @@ function ValueEditor({
   if ('RefList' in fieldType) {
     return (
       <RefInput
+        id={id}
         className="field"
         documentTypes={[fieldType.RefList]}
         name={name}
@@ -96,6 +103,7 @@ function ValueEditor({
   if ('NaturalNumber' in fieldType) {
     return (
       <input
+        id={id}
         type="number"
         className="field"
         min={0}
@@ -111,6 +119,7 @@ function ValueEditor({
 
   return (
     <input
+      id={id}
       className="field"
       type="text"
       name={name}
@@ -138,6 +147,7 @@ export function DocumentEditorField({
   disabled,
   errors = [],
 }: DocumentEditorFieldProps) {
+  const id = useId();
   const labelRef = useRef<HTMLLabelElement>(null);
 
   useEffect(() => {
@@ -147,21 +157,25 @@ export function DocumentEditorField({
   }, [autofocus]);
 
   return (
-    <label
-      className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
-        'has-errors': errors.length > 0,
-      })}
-      hidden={disabled}
-      ref={labelRef}
-    >
-      <h5 className="form-field-heading mr-8 relative">
-        {field.name}
-        {field.mandatory && (
-          <span className="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
-        )}
-      </h5>
+    <>
+      <label
+        className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
+          'has-errors': errors.length > 0,
+        })}
+        hidden={disabled}
+        ref={labelRef}
+        for={id}
+      >
+        <h5 className="form-field-heading mr-8 relative">
+          {field.name}
+          {field.mandatory && (
+            <span className="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
+          )}
+        </h5>
+      </label>
 
       <ValueEditor
+        id={id}
         name={field.name}
         fieldType={field.field_type}
         initialValue={initialValue}
@@ -175,6 +189,6 @@ export function DocumentEditorField({
           {error}
         </div>
       ))}
-    </label>
+    </>
   );
 }

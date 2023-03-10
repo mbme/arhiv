@@ -71,7 +71,7 @@ export function DocumentEditorForm({
   const showCollectionPicker = hasCollections || canAddCollections;
   const showSubtypeSelect = canChooseSubtype;
 
-  const onChange = () => {
+  const onInput = () => {
     if (isDirty) {
       return;
     }
@@ -103,7 +103,7 @@ export function DocumentEditorForm({
     <>
       <form
         className="grid grid-cols-2 mb-8"
-        onChange={onChange}
+        onInput={onInput}
         hidden={!showCollectionPicker && !showSubtypeSelect}
       >
         <PreventImplicitSubmissionOnEnter />
@@ -133,7 +133,7 @@ export function DocumentEditorForm({
         </label>
       </form>
 
-      <Form onSubmit={submitDocument} formRef={formRef} onChange={onChange}>
+      <Form onSubmit={submitDocument} formRef={formRef} onInput={onInput}>
         <PreventImplicitSubmissionOnEnter />
 
         {documentErrors.map((error, index) => (

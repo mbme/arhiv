@@ -46,11 +46,11 @@ type FormProps = {
   className?: string;
   children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void> | void;
-  onChange?: () => void;
+  onInput?: () => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
-export function Form({ className, children, onSubmit, onChange, formRef }: FormProps) {
+export function Form({ className, children, onSubmit, onInput, formRef }: FormProps) {
   return (
     <form
       ref={formRef}
@@ -58,12 +58,10 @@ export function Form({ className, children, onSubmit, onChange, formRef }: FormP
       onSubmit={(e) => {
         e.preventDefault();
 
-        // FIXME handle validation?
-
         // TODO readonly controls while submitting
         void onSubmit(collectValues(e.currentTarget));
       }}
-      onChange={onChange}
+      onInput={onInput}
     >
       {children}
     </form>

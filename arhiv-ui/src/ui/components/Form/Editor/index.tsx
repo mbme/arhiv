@@ -6,6 +6,7 @@ import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
 import { canPreview } from 'components/Ref';
 import { Icon } from 'components/Icon';
 import { Markup } from 'components/Markup';
+import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
 
@@ -75,7 +76,7 @@ export function Editor({
   }, [editor, preview]);
 
   return (
-    <div className={cx('editor-container', className)} onDblClick={() => setPreview(!preview)}>
+    <div className={cx('editor-container', className)}>
       <v-form-field
         id={id}
         hidden={preview}
@@ -100,22 +101,30 @@ export function Editor({
         </Suspense>
       )}
 
-      {!preview && (
-        <AddRefButton
-          className="sticky bottom-4 float-right mr-4 mt-1"
-          onDocumentSelected={(id, documentType, subtype) => {
-            if (!editor) {
-              throw new Error('editor is missing');
-            }
+      <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
+        {!preview && (
+          <AddRefButton
+            className="bg-indigo-100 drop-shadow-md"
+            onDocumentSelected={(id, documentType, subtype) => {
+              if (!editor) {
+                throw new Error('editor is missing');
+              }
 
-            editor.replaceSelections((value) =>
-              createLink(createRefUrl(id), value, canPreview(documentType, subtype))
-            );
+              editor.replaceSelections((value) =>
+                createLink(createRefUrl(id), value, canPreview(documentType, subtype))
+              );
 
-            editor.focus();
-          }}
+              editor.focus();
+            }}
+          />
+        )}
+
+        <IconButton
+          icon={preview ? 'pencil-square' : 'eye'}
+          className="bg-indigo-100 drop-shadow-md"
+          onClick={() => setPreview(!preview)}
         />
-      )}
+      </div>
     </div>
   );
 }

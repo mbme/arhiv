@@ -1,6 +1,5 @@
 import { useState } from 'preact/hooks';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
-import { cx } from 'utils';
 import { IconButton } from 'components/Button';
 import { DocumentPicker } from 'components/DocumentPicker';
 
@@ -18,11 +17,7 @@ export function AddRefButton({ className, onDocumentSelected }: Props) {
 
   return (
     <>
-      <IconButton
-        icon="link"
-        className={cx('bg-indigo-100 drop-shadow-md', className)}
-        onClick={() => setShowPicker(true)}
-      />
+      <IconButton icon="link" className={className} onClick={() => setShowPicker(true)} />
 
       {showPicker && (
         <DocumentPicker

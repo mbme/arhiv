@@ -83,7 +83,7 @@ export function Editor({
   }, [editor, preview]);
 
   return (
-    <div className={cx('editor-container', className)}>
+    <div className={cx('editor-container group', className)}>
       <v-form-field
         id={id}
         hidden={preview}
@@ -126,11 +126,20 @@ export function Editor({
           />
         )}
 
-        <IconButton
-          icon={preview ? 'pencil-square' : 'eye'}
-          className="bg-indigo-100 drop-shadow-md"
-          onClick={() => setPreview(!preview)}
-        />
+        {preview ? (
+          <IconButton
+            icon="pencil-square"
+            className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
+            onClick={() => setPreview(!preview)}
+          />
+        ) : (
+          <IconButton
+            icon="eye"
+            className="bg-indigo-100 drop-shadow-md"
+            onClick={() => setPreview(!preview)}
+          />
+
+        )}
       </div>
     </div>
   );

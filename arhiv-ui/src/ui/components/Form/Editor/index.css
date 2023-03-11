@@ -1,7 +1,5 @@
 .editor-container {
-  cursor: text;
   display: block;
-  min-height: 19rem;
   position: relative;
 
   &[readonly] .cm-editor .cm-cursorLayer {

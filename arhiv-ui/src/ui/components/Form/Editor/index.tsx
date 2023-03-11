@@ -138,7 +138,6 @@ export function Editor({
             className="bg-indigo-100 drop-shadow-md"
             onClick={() => setPreview(!preview)}
           />
-
         )}
       </div>
     </div>

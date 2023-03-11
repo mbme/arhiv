@@ -1,4 +1,4 @@
-import { Compartment, EditorState } from '@codemirror/state';
+import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -7,7 +7,6 @@ import {
   keymap,
   placeholder,
   rectangularSelection,
-  showPanel,
   ViewUpdate,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
@@ -25,7 +24,6 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { createToolbar } from './EditorToolbar';
 
 type Options = {
   onBlur?: () => void;
@@ -69,7 +67,6 @@ class CodemirrorEditor {
               { key: 'Ctrl-e', run: cursorLineEnd },
               { key: 'Ctrl-k', run: deleteToLineEnd },
             ]),
-            showPanel.of(createToolbar),
           ],
           markdown(),
         ],
@@ -125,6 +122,30 @@ class CodemirrorEditor {
     this.editor.dispatch({
       effects: [this.placeholderCompartment.reconfigure(placeholder(value))],
     });
+  }
+
+  replaceSelections(updater: (value: string) => string) {
+    const { state } = this.editor;
+
+    const transaction = state.update(
+      state.changeByRange((range) => {
+        const value = state.sliceDoc(range.from, range.to);
+
+        const newValue = updater(value);
+
+        return {
+          changes: {
+            from: range.from,
+            to: range.to,
+            insert: newValue,
+          },
+          range: EditorSelection.range(range.from + newValue.length, range.from + newValue.length),
+          effects: EditorView.scrollIntoView(range.from + newValue.length, { y: 'center' }),
+        };
+      })
+    );
+
+    this.editor.dispatch(transaction);
   }
 
   destroy() {

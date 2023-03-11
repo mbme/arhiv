@@ -1,10 +1,13 @@
 import { Suspense } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
 import { cx } from 'utils';
+import { createLink, createRefUrl } from 'utils/markup';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
+import { canPreview } from 'components/Ref';
 import { Icon } from 'components/Icon';
 import { Markup } from 'components/Markup';
 import { CodemirrorEditor } from './CodemirrorEditor';
+import { AddRefButton } from './AddRefButton';
 
 type Props = {
   id?: string;
@@ -95,6 +98,23 @@ export function Editor({
         <Suspense fallback={<Icon variant="spinner" className="mb-8" />}>
           <Markup markup={editor?.getValue() ?? defaultValue} />
         </Suspense>
+      )}
+
+      {!preview && (
+        <AddRefButton
+          className="sticky bottom-4 float-right mr-4 mt-1"
+          onDocumentSelected={(id, documentType, subtype) => {
+            if (!editor) {
+              throw new Error('editor is missing');
+            }
+
+            editor.replaceSelections((value) =>
+              createLink(createRefUrl(id), value, canPreview(documentType, subtype))
+            );
+
+            editor.focus();
+          }}
+        />
       )}
     </div>
   );

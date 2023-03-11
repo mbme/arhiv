@@ -2,6 +2,7 @@
   cursor: text;
   display: block;
   min-height: 19rem;
+  position: relative;
 
   &[readonly] .cm-editor .cm-cursorLayer {
     display: none;
@@ -29,10 +30,6 @@
     & .cm-gutter,
     & .cm-content {
       min-height: 19rem;
-    }
-
-    & .v-editor-toolbar {
-      @apply px-2 py-1;
     }
   }
 }

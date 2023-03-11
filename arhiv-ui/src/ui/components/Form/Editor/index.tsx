@@ -1,5 +1,5 @@
 import { Suspense } from 'preact/compat';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
@@ -69,10 +69,17 @@ export function Editor({
     editor.setPlaceholder(placeholder ?? '');
   }, [editor, disabled, readonly, placeholder]);
 
+  // skip autofocus in case preview is immediately false
+  const skipFocus = useRef(true);
   useEffect(() => {
-    if (editor && !preview) {
+    if (!editor) {
+      return;
+    }
+
+    if (!preview && !skipFocus.current) {
       editor.focus();
     }
+    skipFocus.current = false;
   }, [editor, preview]);
 
   return (

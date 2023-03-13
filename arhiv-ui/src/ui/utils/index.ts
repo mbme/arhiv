@@ -80,6 +80,10 @@ export function cx(
   return result.join(' ');
 }
 
+export function px(value: number) {
+  return `${value}px`;
+}
+
 export function getDocumentUrl(documentId: string): string {
   return `${window.location.origin}/?id=${documentId}`;
 }

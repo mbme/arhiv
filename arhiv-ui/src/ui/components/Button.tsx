@@ -1,5 +1,5 @@
 import { forwardRef, useRef } from 'preact/compat';
-import { Callback, cx } from 'utils';
+import { Callback, cx, px } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { Icon, IconVariant } from 'components/Icon';
 
@@ -39,7 +39,7 @@ export function Button({
   const el = ref.current;
   if (el) {
     if (busy && el.style.width.length === 0) {
-      el.style.width = `${el.offsetWidth}px`;
+      el.style.width = px(el.offsetWidth);
     }
 
     if (!busy && el.style.width.length !== 0) {

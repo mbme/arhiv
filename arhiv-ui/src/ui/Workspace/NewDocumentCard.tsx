@@ -1,4 +1,4 @@
-import { useRef } from 'preact/hooks';
+import { useRef } from 'react';
 import { DEFAULT_SUBTYPE, DocumentData, DocumentSubtype, DocumentType, EMPTY_DATA } from 'dto';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';

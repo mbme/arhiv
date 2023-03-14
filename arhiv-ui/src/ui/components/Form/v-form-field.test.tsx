@@ -2,9 +2,9 @@ import 'global-jsdom/register';
 global.Event = window.Event;
 
 import test from 'ava';
-import { render, cleanup, waitFor } from '@testing-library/preact';
+import { render, cleanup, waitFor } from '@testing-library/react';
 import { formDataToObject } from 'utils';
-import './v-form-field';
+import { VFormField } from './v-form-field';
 import { HTMLVFormFieldElement } from './v-form-field';
 
 test.after(cleanup);
@@ -22,7 +22,7 @@ function findBySelector<T extends Element>(container: Element, selector: string)
 test('stores value in a form', (t) => {
   const { container } = render(
     <form>
-      <v-form-field name="test" defaultValue='"initial"' />
+      <VFormField name="test" defaultValue="initial" />
     </form>
   );
 
@@ -48,7 +48,7 @@ test('dispatches change event', async (t) => {
 
   const { container } = render(
     <form>
-      <v-form-field
+      <VFormField
         name="test"
         onChange={() => {
           changeCounter += 1;
@@ -70,7 +70,7 @@ test('dispatches change event', async (t) => {
 test("doesn't store value in a form if disabled", (t) => {
   const { container } = render(
     <form>
-      <v-form-field name="test" defaultValue='"initial"' disabled />
+      <VFormField name="test" defaultValue="initial" disabled />
     </form>
   );
 
@@ -94,7 +94,7 @@ test("doesn't store value in a form if disabled", (t) => {
 test('returns to default value on form reset', async (t) => {
   const { container } = render(
     <form>
-      <v-form-field name="test" defaultValue='"initial"' />
+      <VFormField name="test" defaultValue="initial" />
     </form>
   );
 
@@ -121,7 +121,7 @@ test('returns to default value on form reset', async (t) => {
 test('invalidates form if required & empty', async (t) => {
   const { container } = render(
     <form>
-      <v-form-field name="test" />
+      <VFormField name="test" />
     </form>
   );
 

@@ -5,7 +5,6 @@
     "paths": {
       "dto": ["../dto"]
     },
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact"
+    "jsx": "react-jsx"
   }
 }

@@ -16,7 +16,6 @@ const options: BuildOptions = {
   minify: isProduction,
   sourcemap: true,
 
-  jsxImportSource: 'preact',
   jsx: 'automatic',
 
   loader: {

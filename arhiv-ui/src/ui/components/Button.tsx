@@ -1,4 +1,4 @@
-import { forwardRef, useRef } from 'preact/compat';
+import { forwardRef, useRef } from 'react';
 import { Callback, cx, px } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { Icon, IconVariant } from 'components/Icon';

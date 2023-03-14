@@ -1,14 +1,13 @@
-import { MutableRef } from 'preact/hooks';
 import {
+  MutableRefObject,
   EffectCallback,
-  StateUpdater,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
-} from 'preact/hooks';
+} from 'react';
 import {
   Callback,
   debounce,
@@ -18,7 +17,7 @@ import {
   setSessionValue,
   throttle,
 } from './index';
-import { Suspender, suspensify } from './jsx';
+import { StateUpdater, Suspender, suspensify } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -93,7 +92,7 @@ export function useQuery<TResult>(
   };
 }
 
-export function useLatestRef<T>(value: T): MutableRef<T> {
+export function useLatestRef<T>(value: T): MutableRefObject<T> {
   const valueRef = useRef(value);
   valueRef.current = value;
 

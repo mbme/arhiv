@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DEFAULT_SUBTYPE, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
@@ -337,7 +337,7 @@ function FormControlsDemo() {
           step={1}
           required={required}
           disabled={disabled}
-          readonly={readonly}
+          readOnly={readonly}
         />
       </label>
 

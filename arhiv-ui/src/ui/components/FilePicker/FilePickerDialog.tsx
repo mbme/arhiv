@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentId, FileEntry } from 'dto';
 import { FilePicker } from 'components/FilePicker/FilePicker';
 import { FilePickerConfirmationDialog } from 'components/FilePicker/FilePickerConfirmationDialog';

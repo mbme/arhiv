@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState } from 'react';
 import { JSXChildren } from 'utils/jsx';
 import { IconButton } from 'components/Button';
 import { useCardContext } from './workspace-reducer';

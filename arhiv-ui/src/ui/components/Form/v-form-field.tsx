@@ -1,5 +1,8 @@
 import 'element-internals-polyfill';
+import React, { useEffect, useRef } from 'react';
 import { JSONValue } from 'utils';
+import { useLatestRef } from 'utils/hooks';
+import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 
 export class ChangeEvent extends CustomEvent<{ value: JSONValue }> {
   constructor(public readonly value: JSONValue) {
@@ -127,22 +130,74 @@ export class HTMLVFormFieldElement extends HTMLElement {
   }
 }
 
-declare module 'preact' {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface FormFieldElementAttributes extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onChange'> {
-      required?: boolean;
-      disabled?: boolean;
-      defaultValue?: string;
-      value?: never;
-      onChange?: (e: ChangeEvent) => void;
-      name: string;
-    }
-
-    interface IntrinsicElements {
-      'v-form-field': FormFieldElementAttributes;
-    }
-  }
-}
-
 customElements.define('v-form-field', HTMLVFormFieldElement);
+
+type Props = {
+  innerRef?: JSXRef<HTMLVFormFieldElement>;
+  id?: string;
+  className?: string;
+  required?: boolean;
+  disabled?: boolean;
+  hidden?: boolean;
+  defaultValue?: JSONValue;
+  onChange?: (value: JSONValue) => void;
+  onFocus?: () => void;
+  name: string;
+  children?: JSXChildren;
+  tabIndex?: number;
+};
+
+export function VFormField({
+  innerRef,
+  id,
+  className,
+  required,
+  disabled,
+  hidden,
+  defaultValue,
+  onChange,
+  onFocus,
+  name,
+  children,
+  tabIndex,
+}: Props) {
+  const ref = useRef<HTMLVFormFieldElement>(null);
+
+  const onChangeRef = useLatestRef(onChange);
+  const onFocusRef = useLatestRef(onFocus);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) {
+      throw new Error('element is missing');
+    }
+
+    const handleChange = () => onChangeRef.current?.(el.value);
+    const handleFocus = () => onFocusRef.current?.();
+
+    el.addEventListener('change', handleChange);
+    el.addEventListener('focus', handleFocus);
+
+    return () => {
+      el.removeEventListener('change', handleChange);
+      el.removeEventListener('focus', handleFocus);
+    };
+  }, [onChangeRef, onFocusRef]);
+
+  return React.createElement(
+    'v-form-field',
+    {
+      ref: mergeRefs(ref, innerRef),
+      id,
+      className,
+      required: required || undefined,
+      disabled: disabled || undefined,
+      hidden: hidden || undefined,
+      defaultvalue: defaultValue === undefined ? undefined : JSON.stringify(defaultValue),
+      onchange: onChange,
+      onfocus: onFocus,
+      name,
+      tabindex: tabIndex,
+    },
+    children
+  );
+}

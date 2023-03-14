@@ -1,5 +1,4 @@
-import { createContext } from 'preact';
-import { useContext, useEffect, useReducer, useRef } from 'preact/hooks';
+import { useContext, useEffect, useReducer, useRef, createContext } from 'react';
 import { newId, getSessionValue, setSessionValue } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';

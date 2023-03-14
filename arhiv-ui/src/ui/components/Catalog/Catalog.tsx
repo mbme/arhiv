@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';

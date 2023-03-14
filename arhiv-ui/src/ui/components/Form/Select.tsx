@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'react';
 import { cx, setElementAttribute } from 'utils';
 
 type Props = {

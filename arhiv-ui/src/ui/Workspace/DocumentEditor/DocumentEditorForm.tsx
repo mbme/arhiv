@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { cx, JSONObj } from 'utils';
 import {
   DocumentData,

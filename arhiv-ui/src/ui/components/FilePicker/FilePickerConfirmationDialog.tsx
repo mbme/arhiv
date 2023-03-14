@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentId } from 'dto';
 import { Callback, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';

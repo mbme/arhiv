@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'preact/hooks';
+import { useEffect, useId, useRef } from 'react';
 import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
 import { DocumentId } from 'dto';
@@ -110,7 +110,7 @@ function ValueEditor({
         step={1}
         name={name}
         defaultValue={(initialValue as number | undefined)?.toString()}
-        readonly={readonly}
+        readOnly={readonly}
         required={required}
         disabled={disabled}
       />
@@ -162,7 +162,7 @@ export function DocumentEditorField({
         'has-errors': errors.length > 0,
       })}
     >
-      <label hidden={disabled} ref={labelRef} for={id}>
+      <label hidden={disabled} ref={labelRef} htmlFor={id}>
         <h5 className="form-field-heading mr-8 relative">
           {field.name}
           {field.mandatory && (

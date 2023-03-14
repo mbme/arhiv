@@ -1,8 +1,17 @@
-import { ComponentChildren, Ref, VNode } from 'preact';
+import {
+  Dispatch,
+  MutableRefObject,
+  ReactElement,
+  ReactNode,
+  Ref,
+  RefCallback,
+  SetStateAction,
+} from 'react';
 
-export type JSXChildren = ComponentChildren;
-export type JSXRef<T> = Ref<T>;
-export type JSXElement = VNode<any> | null;
+export type JSXChildren = ReactNode;
+export type JSXRef<T> = RefCallback<T> | MutableRefObject<T | null> | null;
+export type JSXElement = ReactElement | null;
+export type StateUpdater<T> = Dispatch<SetStateAction<T>>;
 
 export function setJSXRef<T>(ref: JSXRef<T>, value: T | null) {
   if (ref instanceof Function) {

@@ -29,13 +29,14 @@
     "@floating-ui/react": "^0.20.1",
     "a11y-dialog": "^7.3.0",
     "element-internals-polyfill": "^1.1.11",
-    "preact": "^10.10.6"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.0",
     "@tailwindcss/line-clamp": "^0.4.0",
     "@tailwindcss/typography": "^0.5.0",
-    "@testing-library/preact": "^3.2.3",
+    "@testing-library/react": "^14.0.0",
     "autoprefixer": "^10.2.6",
     "esbuild": "^0.17.10",
     "global-jsdom": "^8.7.0",
@@ -43,8 +44,6 @@
     "postcss": "^8.3.0",
     "postcss-cli": "^10.0.0",
     "prettier": "*",
-    "react": "npm:@preact/compat",
-    "react-dom": "npm:@preact/compat",
     "tailwindcss": "^3.0.7"
   },
   "ava": {

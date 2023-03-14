@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'preact/hooks';
-import { Callback } from '../../utils';
+import { useEffect, useRef } from 'react';
+import { Callback } from 'utils';
 
 const getMediaSession = () => {
   // WebView on Android doesn't support media session

@@ -1,4 +1,4 @@
-import { createElement } from 'preact';
+import { createElement } from 'react';
 import { cx, Obj } from 'utils';
 import { DocumentId, MarkupElement, throwBadMarkupElement } from 'dto';
 import { useQuery } from 'utils/hooks';
@@ -73,7 +73,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     }
     case 'Heading': {
       return createElement(
-        el.level,
+        el.level.toLowerCase(),
         {
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,

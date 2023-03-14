@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { IconButton } from 'components/Button';
 import { DocumentPicker } from 'components/DocumentPicker';

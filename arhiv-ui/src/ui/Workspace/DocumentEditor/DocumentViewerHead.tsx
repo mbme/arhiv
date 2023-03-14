@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentBackref, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, copyTextToClipbard } from 'utils';
 import { formatDocumentType } from 'utils/schema';

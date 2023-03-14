@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { DocumentId } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
@@ -51,7 +51,7 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
             onChange={(e) => setUrl(e.currentTarget.value)}
             disabled={inProgress}
             autoComplete="off"
-            autofocus
+            autoFocus
           />
 
           <Button type="submit" variant="primary" busy={inProgress}>

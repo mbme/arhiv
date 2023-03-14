@@ -1,4 +1,4 @@
-import { useRef } from 'preact/hooks';
+import { useRef } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Catalog } from 'components/Catalog/Catalog';

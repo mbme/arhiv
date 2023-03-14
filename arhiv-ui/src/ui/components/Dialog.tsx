@@ -1,5 +1,5 @@
-import { createPortal } from 'preact/compat';
-import { useEffect, useState } from 'preact/hooks';
+import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx } from 'utils';
 import { useId, useLatestRef } from 'utils/hooks';

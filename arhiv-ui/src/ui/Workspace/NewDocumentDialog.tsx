@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'react';
 import { ArrayElement, fuzzySearch } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { DocumentType } from 'dto';

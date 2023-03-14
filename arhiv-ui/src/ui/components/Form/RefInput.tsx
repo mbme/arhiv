@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 import { DocumentId, DocumentType } from 'dto';
@@ -6,7 +6,7 @@ import { Ref, useDocuments } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
-import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
+import { HTMLVFormFieldElement, VFormField } from 'components/Form/v-form-field';
 
 type Props = {
   id?: string;
@@ -74,8 +74,8 @@ export function RefInput({
   const canAdd = ids.length === 0 || multiple;
 
   return (
-    <v-form-field
-      ref={fieldRef}
+    <VFormField
+      innerRef={fieldRef}
       id={id}
       className={cx(
         'ref-input inline-block break-all border-none',
@@ -83,11 +83,10 @@ export function RefInput({
         className
       )}
       name={name}
-      defaultValue={JSON.stringify(defaultValue)}
+      defaultValue={defaultValue}
       disabled={disabled}
-      readonly={readonly}
       required={required}
-      onChange={(e) => setIds(e.value as DocumentId[])}
+      onChange={(value) => setIds(value as DocumentId[])}
     >
       {showPicker && (
         <DocumentPicker
@@ -133,6 +132,6 @@ export function RefInput({
           Pick {documentTypes.join(', ')}...
         </Button>
       )}
-    </v-form-field>
+    </VFormField>
   );
 }

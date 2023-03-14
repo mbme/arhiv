@@ -1,4 +1,4 @@
-import { createContext } from 'preact';
+import { createContext, useContext } from 'react';
 import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, getDocumentUrl } from 'utils';
 import { useQuery } from 'utils/hooks';
@@ -13,7 +13,6 @@ import {
 import { Button } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
-import { useContext } from 'preact/hooks';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'preact/hooks';
+import { useRef, useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
 import { RPC } from 'utils/rpc';

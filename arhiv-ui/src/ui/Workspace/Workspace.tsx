@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';

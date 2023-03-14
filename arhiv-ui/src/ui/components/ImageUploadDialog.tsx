@@ -1,4 +1,4 @@
-import { useMemo } from 'preact/hooks';
+import { useMemo } from 'react';
 import { DocumentId } from 'dto';
 import { Callback, fileAsBase64, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';

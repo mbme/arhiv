@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState } from 'react';
 import { cx } from 'utils';
 import { useDebouncedCallback } from 'utils/hooks';
 import { Icon } from 'components/Icon';

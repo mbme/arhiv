@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { cx } from 'utils';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cx, px } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
@@ -81,8 +81,22 @@ export function Editor({
     skipFocus.current = false;
   }, [editor, preview]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const containerEl = containerRef.current;
+    if (!containerEl) {
+      throw new Error('container el is missing');
+    }
+
+    containerEl.style.minHeight = '';
+
+    return () => {
+      containerEl.style.minHeight = px(containerEl.scrollHeight);
+    };
+  }, [preview]);
+
   return (
-    <div className={cx('editor-container group', className)}>
+    <div ref={containerRef} className={cx('editor-container group', className)}>
       <FormField
         id={id}
         hidden={preview}

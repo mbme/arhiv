@@ -1,5 +1,5 @@
 import test from 'ava';
-import { suspensify } from './jsx';
+import { suspensify } from './suspense';
 
 test('suspensify() returns a value when promise resolved', async (t) => {
   const suspender = suspensify<number>(new Promise((resolve) => resolve(1)));

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState, Suspense } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
-import { Icon } from 'components/Icon';
 import { Markup } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
+import { SuspenseBoundary } from 'components/SuspenseBoundary';
 
 type Props = {
   id?: string;
@@ -99,11 +99,10 @@ export function Editor({
           editor?.setValue(value as string);
         }}
       />
-      {preview && (
-        <Suspense fallback={<Icon variant="spinner" className="mb-8" />}>
-          <Markup markup={editor?.getValue() ?? defaultValue} />
-        </Suspense>
-      )}
+
+      <SuspenseBoundary>
+        {preview && <Markup markup={editor?.getValue() ?? defaultValue} />}
+      </SuspenseBoundary>
 
       <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
         {!preview && (

@@ -257,17 +257,3 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
     };
   }, [el, key]);
 }
-
-// TODO store cache in the "suspense context"
-const SUSPENSE_CACHE = new Map<string, Suspender<unknown>>();
-export function useSuspense<T>(cacheKey: string, factory: () => Promise<T>): T {
-  const cachedSuspender = SUSPENSE_CACHE.get(cacheKey);
-  if (cachedSuspender) {
-    return cachedSuspender.read() as T;
-  }
-
-  const suspender = suspensify(factory());
-  SUSPENSE_CACHE.set(cacheKey, suspender);
-
-  return suspender.read();
-}

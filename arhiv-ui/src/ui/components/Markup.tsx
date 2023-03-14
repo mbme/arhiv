@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { cx, Obj } from 'utils';
 import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
-import { useSuspense } from 'utils/hooks';
+import { useSuspense } from 'utils/suspense';
 import { JSXElement } from 'utils/jsx';
 import { RPC } from 'utils/rpc';
 import { Link } from 'components/Link';

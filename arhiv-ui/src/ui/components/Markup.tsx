@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { cx, Obj } from 'utils';
-import { DocumentId, MarkupElement, throwBadMarkupElement } from 'dto';
+import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
 import { useQuery } from 'utils/hooks';
 import { JSXElement } from 'utils/jsx';
 import { RPC } from 'utils/rpc';
@@ -25,6 +25,10 @@ function extractText(children: MarkupElement[]): string {
     .join(' ');
 }
 
+function rangeToString(range: Range): string {
+  return `${range.start}-${range.end}`;
+}
+
 function markupElementToJSX(el: MarkupElement): JSXElement {
   switch (el.typeName) {
     case 'Document': {
@@ -34,14 +38,22 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     }
     case 'Text': {
       return (
-        <span data-range-start={el.range.start} data-range-end={el.range.end}>
+        <span
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.value}
         </span>
       );
     }
     case 'Code': {
       return (
-        <code data-range-start={el.range.start} data-range-end={el.range.end}>
+        <code
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.value}
         </code>
       );
@@ -49,6 +61,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'Html': {
       return (
         <span
+          key={rangeToString(el.range)}
           data-range-start={el.range.start}
           data-range-end={el.range.end}
           dangerouslySetInnerHTML={{ __html: el.value }}
@@ -56,17 +69,39 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
       );
     }
     case 'SoftBreak': {
-      return <br data-range-start={el.range.start} data-range-end={el.range.end} />;
+      return (
+        <br
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        />
+      );
     }
     case 'HardBreak': {
-      return <br data-range-start={el.range.start} data-range-end={el.range.end} />;
+      return (
+        <br
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        />
+      );
     }
     case 'Rule': {
-      return <hr data-range-start={el.range.start} data-range-end={el.range.end} />;
+      return (
+        <hr
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        />
+      );
     }
     case 'Paragraph': {
       return (
-        <p data-range-start={el.range.start} data-range-end={el.range.end}>
+        <p
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </p>
       );
@@ -75,6 +110,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
       return createElement(
         el.level.toLowerCase(),
         {
+          key: rangeToString(el.range),
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
         } as Obj<unknown>,
@@ -83,7 +119,11 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     }
     case 'BlockQuote': {
       return (
-        <blockquote data-range-start={el.range.start} data-range-end={el.range.end}>
+        <blockquote
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </blockquote>
       );
@@ -91,7 +131,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'CodeBlock': {
       // TODO handle kind
       return (
-        <pre>
+        <pre key={rangeToString(el.range)}>
           <code data-range-start={el.range.start} data-range-end={el.range.end}>
             {el.children.map((child) => markupElementToJSX(child))}
           </code>
@@ -102,6 +142,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
       return createElement(
         el.first_item_number == null ? 'ul' : 'ol',
         {
+          key: rangeToString(el.range),
           'start': el.first_item_number ?? undefined,
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
@@ -113,6 +154,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'TaskListMarker': {
       return (
         <input
+          key={rangeToString(el.range)}
           type="checkbox"
           className="mr-1"
           checked={el.checked}
@@ -124,7 +166,11 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     }
     case 'ListItem': {
       return (
-        <li data-range-start={el.range.start} data-range-end={el.range.end}>
+        <li
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </li>
       );
@@ -138,21 +184,25 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     case 'Table': {
       // TODO handle alignments
       return (
-        <table data-range-start={el.range.start} data-range-end={el.range.end}>
+        <table
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </table>
       );
     }
     case 'TableHead': {
       return (
-        <thead>
+        <thead key={rangeToString(el.range)}>
           <tr data-range-start={el.range.start} data-range-end={el.range.end}>
-            {el.children.map((col) => {
+            {el.children.map((col, index) => {
               if (col.typeName !== 'TableCell') {
                 throw new Error(`Expected TableCell, got ${col.typeName}`);
               }
 
-              return <th>{col.children.map((child) => markupElementToJSX(child))}</th>;
+              return <th key={index}>{col.children.map((child) => markupElementToJSX(child))}</th>;
             })}
           </tr>
         </thead>
@@ -160,35 +210,55 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
     }
     case 'TableRow': {
       return (
-        <tr data-range-start={el.range.start} data-range-end={el.range.end}>
+        <tr
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </tr>
       );
     }
     case 'TableCell': {
       return (
-        <td data-range-start={el.range.start} data-range-end={el.range.end}>
+        <td
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </td>
       );
     }
     case 'Emphasis': {
       return (
-        <em data-range-start={el.range.start} data-range-end={el.range.end}>
+        <em
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </em>
       );
     }
     case 'Strong': {
       return (
-        <strong data-range-start={el.range.start} data-range-end={el.range.end}>
+        <strong
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </strong>
       );
     }
     case 'Strikethrough': {
       return (
-        <s data-range-start={el.range.start} data-range-end={el.range.end}>
+        <s
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           {el.children.map((child) => markupElementToJSX(child))}
         </s>
       );
@@ -207,6 +277,7 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
 
         return (
           <span
+            key={rangeToString(el.range)}
             data-range-start={el.range.start}
             data-range-end={el.range.end}
             className={cx({
@@ -220,7 +291,11 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
 
       // TODO handle link_type?
       return (
-        <span data-range-start={el.range.start} data-range-end={el.range.end}>
+        <span
+          key={rangeToString(el.range)}
+          data-range-start={el.range.start}
+          data-range-end={el.range.end}
+        >
           <Link url={el.url}>{description}</Link>
         </span>
       );

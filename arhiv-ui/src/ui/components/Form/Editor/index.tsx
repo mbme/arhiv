@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
-import { HTMLVFormFieldElement, VFormField } from 'components/Form/v-form-field';
+import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
 import { Icon } from 'components/Icon';
 import { Markup } from 'components/Markup';
@@ -83,7 +83,7 @@ export function Editor({
 
   return (
     <div className={cx('editor-container group', className)}>
-      <VFormField
+      <FormField
         id={id}
         hidden={preview}
         innerRef={setFieldEl}

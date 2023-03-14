@@ -147,7 +147,7 @@ type Props = {
   tabIndex?: number;
 };
 
-export function VFormField({
+export function FormField({
   innerRef,
   id,
   className,

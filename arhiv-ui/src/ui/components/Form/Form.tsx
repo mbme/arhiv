@@ -1,6 +1,6 @@
 import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
-import { HTMLVFormFieldElement } from 'components/Form/v-form-field';
+import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
 function collectValues(form: HTMLFormElement): JSONObj {
   const result: JSONObj = {};

@@ -6,7 +6,7 @@ import { Ref, useDocuments } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
-import { HTMLVFormFieldElement, VFormField } from 'components/Form/v-form-field';
+import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 
 type Props = {
   id?: string;
@@ -74,7 +74,7 @@ export function RefInput({
   const canAdd = ids.length === 0 || multiple;
 
   return (
-    <VFormField
+    <FormField
       innerRef={fieldRef}
       id={id}
       className={cx(
@@ -132,6 +132,6 @@ export function RefInput({
           Pick {documentTypes.join(', ')}...
         </Button>
       )}
-    </VFormField>
+    </FormField>
   );
 }

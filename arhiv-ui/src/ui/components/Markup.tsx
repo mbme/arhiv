@@ -1,12 +1,11 @@
 import { createElement } from 'react';
 import { cx, Obj } from 'utils';
 import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
-import { useQuery } from 'utils/hooks';
+import { useSuspense } from 'utils/hooks';
 import { JSXElement } from 'utils/jsx';
 import { RPC } from 'utils/rpc';
 import { Link } from 'components/Link';
 import { RefContainer } from 'components/Ref';
-import { QueryError } from 'components/QueryError';
 
 function extractText(children: MarkupElement[]): string {
   return children
@@ -310,20 +309,7 @@ type MarkupProps = {
 };
 
 export function Markup({ markup }: MarkupProps) {
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.ParseMarkup({ markup }, abortSignal),
-    {
-      refreshIfChange: [markup],
-    }
-  );
-
-  if (error) {
-    return <QueryError error={error} />;
-  }
-
-  if (inProgress || !result) {
-    return null;
-  }
+  const result = useSuspense(markup, () => RPC.ParseMarkup({ markup }));
 
   return markupElementToJSX(result.ast);
 }

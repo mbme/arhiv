@@ -258,27 +258,16 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
   }, [el, key]);
 }
 
+// TODO store cache in the "suspense context"
 const SUSPENSE_CACHE = new Map<string, Suspender<unknown>>();
-export function useSuspense<T>(cacheKey: string, factory: () => Promise<T>, deps: Inputs): T {
-  const [value, setValue] = useState(() => {
-    const cachedSuspender = SUSPENSE_CACHE.get(cacheKey);
-    if (cachedSuspender) {
-      return cachedSuspender;
-    }
+export function useSuspense<T>(cacheKey: string, factory: () => Promise<T>): T {
+  const cachedSuspender = SUSPENSE_CACHE.get(cacheKey);
+  if (cachedSuspender) {
+    return cachedSuspender.read() as T;
+  }
 
-    const suspender = suspensify(factory());
-    SUSPENSE_CACHE.set(cacheKey, suspender);
+  const suspender = suspensify(factory());
+  SUSPENSE_CACHE.set(cacheKey, suspender);
 
-    return suspender;
-  });
-
-  const factoryRef = useLatestRef(factory);
-  useUpdateEffect(() => {
-    const suspender = suspensify(factoryRef.current());
-    SUSPENSE_CACHE.set(cacheKey, suspender);
-
-    setValue(suspender);
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return value.read() as T;
+  return suspender.read();
 }

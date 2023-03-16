@@ -20,7 +20,7 @@ import { Form } from 'components/Form/Form';
 import { RefInput } from 'components/Form/RefInput';
 import { Select } from 'components/Form/Select';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
-import { DocumentEditorField } from './DocumentEditorField';
+import { DocumentField } from './DocumentField';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
@@ -122,7 +122,7 @@ export function DocumentEditorForm({
 
       <div className="divide-y divide-dashed">
         {fields.map((field) => (
-          <DocumentEditorField
+          <DocumentField
             key={field.name}
             field={field}
             autofocus={field === fieldToFocus}

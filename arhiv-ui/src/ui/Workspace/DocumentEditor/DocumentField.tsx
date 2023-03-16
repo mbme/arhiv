@@ -131,7 +131,7 @@ function ValueEditor({
   );
 }
 
-type DocumentEditorFieldProps = {
+type DocumentFieldProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
   autofocus: boolean;
@@ -139,14 +139,14 @@ type DocumentEditorFieldProps = {
   disabled: boolean;
   errors?: string[];
 };
-export function DocumentEditorField({
+export function DocumentField({
   field,
   initialValue,
   autofocus,
   ignoreReadonly,
   disabled,
   errors = [],
-}: DocumentEditorFieldProps) {
+}: DocumentFieldProps) {
   const id = useId();
   const labelRef = useRef<HTMLLabelElement>(null);
 

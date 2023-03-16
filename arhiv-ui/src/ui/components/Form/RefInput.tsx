@@ -8,6 +8,18 @@ import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 
+function normalizeIds(defaultValue: DocumentId | DocumentId[] | undefined | null): DocumentId[] {
+  if (!defaultValue) {
+    return [];
+  }
+
+  if (Array.isArray(defaultValue)) {
+    return defaultValue;
+  }
+
+  return [defaultValue];
+}
+
 type Props = {
   id?: string;
   className?: string;
@@ -25,7 +37,7 @@ export function RefInput({
   id,
   className,
   documentTypes,
-  defaultValue,
+  defaultValue: defaultValueRaw,
   name,
   multiple = false,
   readonly = false,
@@ -35,16 +47,8 @@ export function RefInput({
 }: Props) {
   const fieldRef = useRef<HTMLVFormFieldElement>(null);
 
-  const [ids, setIds] = useState(() => {
-    if (!defaultValue) {
-      return [];
-    }
-    if (Array.isArray(defaultValue)) {
-      return defaultValue;
-    }
-
-    return [defaultValue];
-  });
+  const defaultValue = normalizeIds(defaultValueRaw);
+  const [ids, setIds] = useState(defaultValue);
 
   const [showPicker, setShowPicker] = useState(false);
 

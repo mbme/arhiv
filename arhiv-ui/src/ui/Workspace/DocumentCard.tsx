@@ -96,7 +96,12 @@ export function DocumentCard({ documentId }: Props) {
         right={
           isDirty ? (
             <>
-              <Button variant="simple" onClick={triggerRefresh}>
+              <Button
+                variant="simple"
+                onClick={() => {
+                  form?.reset();
+                }}
+              >
                 Cancel
               </Button>
 

@@ -110,6 +110,9 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
           markFormDirty(e.currentTarget, true);
         }
       }}
+      onReset={(e) => {
+        markFormDirty(e.currentTarget, false);
+      }}
     >
       {children}
     </form>

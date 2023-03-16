@@ -123,12 +123,6 @@ export function useUpdateEffect(effect: EffectCallback, deps: Inputs) {
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
-export function useId(): number {
-  const [id] = useState(() => newId());
-
-  return id;
-}
-
 export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): void {
   const cbRef = useRef(cb);
   cbRef.current = cb;

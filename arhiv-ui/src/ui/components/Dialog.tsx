@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import A11yDialog from 'a11y-dialog';
 import { Callback, cx } from 'utils';
-import { useId, useLatestRef } from 'utils/hooks';
+import { useLatestRef } from 'utils/hooks';
 import { JSXChildren, JSXRef, setJSXRef } from 'utils/jsx';
 
 function lockGlobalScroll(): Callback {

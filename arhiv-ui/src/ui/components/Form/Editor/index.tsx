@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx, px } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
+import { useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
 import { Markup } from 'components/Markup';
 import { IconButton } from 'components/Button';
+import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
-import { SuspenseBoundary } from 'components/SuspenseBoundary';
 
 type Props = {
   id?: string;
@@ -30,12 +31,14 @@ export function Editor({
   required,
 }: Props) {
   const [preview, setPreview] = useState(defaultValue.length > 0);
-  const [editor, setEditor] = useState<CodemirrorEditor>();
-  const [fieldEl, setFieldEl] = useState<HTMLVFormFieldElement | null>(null);
+
+  const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
+  const editorRef = useRef<CodemirrorEditor | null>(null);
 
   useEffect(() => {
+    const fieldEl = fieldRef.current;
     if (!fieldEl) {
-      return;
+      throw new Error('field is missing');
     }
 
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
@@ -49,37 +52,38 @@ export function Editor({
       },
     });
 
-    setEditor(editor);
+    editorRef.current = editor;
 
     return () => {
-      setEditor(undefined);
+      editorRef.current = null;
 
       editor.destroy();
     };
-  }, [fieldEl]);
+  }, []);
 
   useEffect(() => {
+    const editor = editorRef.current;
     if (!editor) {
-      return;
+      throw new Error('Editor is missing');
     }
 
     editor.setDisabled(disabled);
     editor.setReadonly(readonly);
     editor.setPlaceholder(placeholder ?? '');
-  }, [editor, disabled, readonly, placeholder]);
+  }, [disabled, readonly, placeholder]);
 
   // skip autofocus in case preview is immediately false
-  const skipFocus = useRef(true);
-  useEffect(() => {
+  // useUpdateEffect
+  useUpdateEffect(() => {
+    const editor = editorRef.current;
     if (!editor) {
-      return;
+      throw new Error('Editor is missing');
     }
 
-    if (!preview && !skipFocus.current) {
+    if (!preview) {
       editor.focus();
     }
-    skipFocus.current = false;
-  }, [editor, preview]);
+  }, [preview]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
@@ -100,22 +104,22 @@ export function Editor({
       <FormField
         id={id}
         hidden={preview}
-        innerRef={setFieldEl}
+        innerRef={fieldRef}
         name={name}
         defaultValue={defaultValue}
         disabled={disabled}
         required={required}
         tabIndex={-1}
         onFocus={() => {
-          editor?.focus();
+          editorRef.current?.focus();
         }}
         onChange={(value) => {
-          editor?.setValue(value as string);
+          editorRef.current?.setValue(value as string);
         }}
       />
 
       <SuspenseBoundary>
-        {preview && <Markup markup={editor?.getValue() ?? defaultValue} />}
+        {preview && <Markup markup={editorRef.current?.getValue() ?? defaultValue} />}
       </SuspenseBoundary>
 
       <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
@@ -123,6 +127,7 @@ export function Editor({
           <AddRefButton
             className="bg-indigo-100 drop-shadow-md"
             onDocumentSelected={(id, documentType, subtype) => {
+              const editor = editorRef.current;
               if (!editor) {
                 throw new Error('editor is missing');
               }

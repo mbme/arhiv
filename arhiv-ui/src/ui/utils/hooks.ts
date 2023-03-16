@@ -111,27 +111,15 @@ export function useAbortSignal() {
   return abortController.signal;
 }
 
-// https://usehooks-ts.com/react-hook/use-is-first-render
-function useIsFirstRender(): boolean {
-  const isFirstRef = useRef(true);
-
-  if (isFirstRef.current) {
-    isFirstRef.current = false;
-
-    return true;
-  }
-
-  return false;
-}
-
-// https://usehooks-ts.com/react-hook/use-update-effect
 export function useUpdateEffect(effect: EffectCallback, deps: Inputs) {
-  const isFirst = useIsFirstRender();
-
+  const isFirstRef = useRef(true);
   useEffect(() => {
-    if (!isFirst) {
-      return effect();
+    if (isFirstRef.current) {
+      isFirstRef.current = false;
+      return;
     }
+
+    return effect();
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 }
 

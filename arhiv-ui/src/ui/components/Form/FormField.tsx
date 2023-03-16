@@ -23,25 +23,25 @@ export class HTMLVFormFieldElement extends HTMLElement {
   private internals = this.attachInternals();
   private _value: JSONValue = null;
 
-  connectedCallback() {
+  protected connectedCallback() {
     this._value = this.getDefaultValue();
 
     this.updateFormValue();
     this.updateTabIndex();
   }
 
-  attributeChangedCallback() {
+  protected attributeChangedCallback() {
     this.updateFormValue();
     this.updateTabIndex();
   }
 
-  formResetCallback() {
+  protected formResetCallback() {
     this._value = this.getDefaultValue();
     this.updateFormValue();
     this.triggerChange();
   }
 
-  formStateRestoreCallback(state: string) {
+  protected formStateRestoreCallback(state: string) {
     this._value = JSON.parse(state) as JSONValue;
     this.updateFormValue();
     this.triggerChange();

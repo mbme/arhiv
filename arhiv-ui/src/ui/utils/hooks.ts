@@ -17,7 +17,7 @@ import {
   setSessionValue,
   throttle,
 } from './index';
-import { StateUpdater, Suspender, suspensify } from './jsx';
+import { StateUpdater } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
 

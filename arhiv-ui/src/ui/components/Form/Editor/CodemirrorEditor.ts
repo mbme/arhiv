@@ -99,8 +99,14 @@ class CodemirrorEditor {
   }
 
   setValue(newValue: string) {
+    const { state } = this.editor;
+
     this.editor.dispatch({
-      changes: { from: 0, to: this.editor.state.doc.length, insert: newValue },
+      changes: { from: 0, to: state.doc.length, insert: newValue },
+      selection: {
+        anchor: state.selection.main.from,
+        head: state.selection.main.from,
+      },
     });
   }
 

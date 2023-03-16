@@ -8,7 +8,6 @@ import {
   DocumentSubtype,
   SaveDocumentErrors,
 } from 'dto';
-import { useUnsavedChangesWarning } from 'utils/hooks';
 import {
   getCollectionTypesForDocument,
   getDataDescription,
@@ -22,7 +21,6 @@ import { RefInput } from 'components/Form/RefInput';
 import { Select } from 'components/Form/Select';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentEditorField } from './DocumentEditorField';
-import { useCardLock } from '../workspace-reducer';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
@@ -36,7 +34,6 @@ type DocumentEditorFormProps = {
     subtype: DocumentSubtype,
     collections: DocumentId[]
   ) => Promise<SaveDocumentErrors | void>;
-  onDirty?: () => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
@@ -47,15 +44,9 @@ export function DocumentEditorForm({
   data: initialData,
   collections: initialCollections,
   onSubmit,
-  onDirty,
   formRef,
   autofocus = false,
 }: DocumentEditorFormProps) {
-  const [isDirty, setDirty] = useState(false);
-
-  useUnsavedChangesWarning(isDirty);
-  useCardLock(isDirty);
-
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
   const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));
@@ -71,16 +62,10 @@ export function DocumentEditorForm({
   const showCollectionPicker = hasCollections || canAddCollections;
   const showSubtypeSelect = canChooseSubtype;
 
-  const onInput = () => {
-    if (isDirty) {
-      return;
-    }
-
-    setDirty(true);
-    onDirty?.();
-  };
-
   const submitDocument = async (data: JSONObj) => {
+    delete data['@collections'];
+    delete data['@subtypes'];
+
     const errors = await onSubmit(data, subtype, collections);
 
     if (errors) {
@@ -100,18 +85,14 @@ export function DocumentEditorForm({
     : undefined;
 
   return (
-    <>
-      <form
-        className="grid grid-cols-2 mb-8"
-        onInput={onInput}
-        hidden={!showCollectionPicker && !showSubtypeSelect}
-      >
-        <PreventImplicitSubmissionOnEnter />
+    <Form onSubmit={submitDocument} formRef={formRef}>
+      <PreventImplicitSubmissionOnEnter />
 
+      <div className="grid grid-cols-2 mb-8" hidden={!showCollectionPicker && !showSubtypeSelect}>
         <label className={cx(showCollectionPicker || 'invisible')}>
           <RefInput
             className="field"
-            name="collections"
+            name="@collections"
             documentTypes={collectionTypes}
             defaultValue={collections}
             multiple
@@ -124,38 +105,34 @@ export function DocumentEditorForm({
           Subtype &nbsp;
           <Select
             className="field"
-            name="subtypes"
+            name="@subtypes"
             readonly={!canChooseSubtype}
             initialValue={subtype}
             options={subtypes}
             onChange={(value) => setSubtype(value as DocumentSubtype)}
           />
         </label>
-      </form>
+      </div>
 
-      <Form onSubmit={submitDocument} formRef={formRef} onInput={onInput}>
-        <PreventImplicitSubmissionOnEnter />
-
-        {documentErrors.map((error, index) => (
-          <div key={index} className="text-red-500 text-xl pl-1 my-2">
-            {error}
-          </div>
-        ))}
-
-        <div className="divide-y divide-dashed">
-          {fields.map((field) => (
-            <DocumentEditorField
-              key={field.name}
-              field={field}
-              autofocus={field === fieldToFocus}
-              ignoreReadonly={ignoreReadonly}
-              initialValue={initialData[field.name]}
-              disabled={!isFieldActive(field, subtype)}
-              errors={fieldErrors[field.name]}
-            />
-          ))}
+      {documentErrors.map((error, index) => (
+        <div key={index} className="text-red-500 text-xl pl-1 my-2">
+          {error}
         </div>
-      </Form>
-    </>
+      ))}
+
+      <div className="divide-y divide-dashed">
+        {fields.map((field) => (
+          <DocumentEditorField
+            key={field.name}
+            field={field}
+            autofocus={field === fieldToFocus}
+            ignoreReadonly={ignoreReadonly}
+            initialValue={initialData[field.name]}
+            disabled={!isFieldActive(field, subtype)}
+            errors={fieldErrors[field.name]}
+          />
+        ))}
+      </div>
+    </Form>
   );
 }

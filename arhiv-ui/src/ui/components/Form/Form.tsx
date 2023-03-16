@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
@@ -42,15 +43,54 @@ function collectValues(form: HTMLFormElement): JSONObj {
   return result;
 }
 
+class FormDirtyEvent extends CustomEvent<boolean> {
+  constructor(public readonly isDirty: boolean) {
+    super('formDirty', { detail: isDirty });
+  }
+}
+
+function isFormDirty(form: HTMLFormElement) {
+  return form.dataset['isDirty'] === 'true';
+}
+
+function markFormDirty(form: HTMLFormElement, isDirty: boolean) {
+  form.dataset['isDirty'] = isDirty ? 'true' : undefined;
+  form.dispatchEvent(new FormDirtyEvent(isDirty));
+}
+
+export function useIsFormDirty(form: HTMLFormElement | undefined | null) {
+  const [isDirty, setIsDirty] = useState(form ? isFormDirty(form) : false);
+
+  useEffect(() => {
+    if (!form) {
+      setIsDirty(false);
+      return;
+    }
+
+    setIsDirty(isFormDirty(form));
+
+    const onFormDirty = (e: Event) => {
+      setIsDirty((e as FormDirtyEvent).isDirty);
+    };
+
+    form.addEventListener('formDirty', onFormDirty);
+
+    return () => {
+      form.removeEventListener('formDirty', onFormDirty);
+    };
+  }, [form]);
+
+  return isDirty;
+}
+
 type FormProps = {
   className?: string;
   children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void> | void;
-  onInput?: () => void;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
-export function Form({ className, children, onSubmit, onInput, formRef }: FormProps) {
+export function Form({ className, children, onSubmit, formRef }: FormProps) {
   return (
     <form
       ref={formRef}
@@ -58,10 +98,18 @@ export function Form({ className, children, onSubmit, onInput, formRef }: FormPr
       onSubmit={(e) => {
         e.preventDefault();
 
+        const form = e.currentTarget;
+
         // TODO readonly controls while submitting
-        void onSubmit(collectValues(e.currentTarget));
+        void Promise.resolve(onSubmit(collectValues(e.currentTarget))).then(() => {
+          markFormDirty(form, false);
+        });
       }}
-      onInput={onInput}
+      onInput={(e) => {
+        if (!isFormDirty(e.currentTarget)) {
+          markFormDirty(e.currentTarget, true);
+        }
+      }}
     >
       {children}
     </form>

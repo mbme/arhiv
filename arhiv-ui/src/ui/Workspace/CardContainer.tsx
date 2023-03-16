@@ -27,7 +27,7 @@ export function CardContainer({ children }: CardContainerProps) {
       data-initializing
       ref={setEl}
     >
-      <div className="px-4 pb-6">{children}</div>
+      <div className="px-4 pb-6 relative">{children}</div>
     </div>
   );
 }

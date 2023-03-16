@@ -37,7 +37,7 @@ type DocumentEditorFormProps = {
   formRef?: JSXRef<HTMLFormElement>;
 };
 
-export function DocumentEditorForm({
+export function DocumentEditor({
   documentId,
   documentType,
   subtype: initialSubtype,

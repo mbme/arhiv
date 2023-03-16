@@ -4,7 +4,7 @@ import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
-import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
+import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 
 type NewDocumentCardProps = {
   documentType: DocumentType;
@@ -49,7 +49,7 @@ export function NewDocumentCard({
         }
       />
 
-      <DocumentEditorForm
+      <DocumentEditor
         key={documentType}
         autofocus
         formRef={formRef}

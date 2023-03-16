@@ -15,7 +15,7 @@ import { ProgressLocker } from 'components/ProgressLocker';
 import { useCardContext, useCardLock } from './workspace-reducer';
 import { EraseDocumentConfirmationDialog } from './DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from './DocumentEditor/DocumentViewerHead';
-import { DocumentEditorForm } from './DocumentEditor/DocumentEditorForm';
+import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 
 type Props = {
   documentId: DocumentId;
@@ -145,7 +145,7 @@ export function DocumentCard({ documentId }: Props) {
         />
       )}
 
-      <DocumentEditorForm
+      <DocumentEditor
         formRef={setForm}
         documentId={document.id}
         documentType={document.documentType}

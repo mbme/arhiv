@@ -24,8 +24,13 @@ export type NominalType<Type, Identifier> = Type & {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 
+const _idPrefix = Math.random();
 let _newIdState = 0;
-export const newId = (): number => (_newIdState += 1);
+export const newId = (): string => {
+  _newIdState += 1;
+
+  return `id/${_idPrefix}/${_newIdState}`;
+};
 
 export const ensure = (condition: unknown, message: string) => {
   if (!condition) {

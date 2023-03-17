@@ -33,7 +33,7 @@ type CardVariant =
     };
 
 export type Card = CardVariant & {
-  id: number;
+  id: string;
   previousCard?: CardVariant;
   restored?: boolean;
 };
@@ -60,17 +60,17 @@ type ActionType =
     }
   | {
       type: 'close';
-      id: number;
+      id: string;
     }
   | {
       type: 'replace';
-      id: number;
+      id: string;
       newCard: CardVariant;
       stackPrevious?: boolean;
     }
   | {
       type: 'update';
-      id: number;
+      id: string;
       props: UpdateActionProps;
     }
   | {
@@ -78,11 +78,11 @@ type ActionType =
     }
   | {
       type: 'lock-card';
-      id: number;
+      id: string;
     }
   | {
       type: 'unlock-card';
-      id: number;
+      id: string;
     };
 
 type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
@@ -91,7 +91,7 @@ export type WorkspaceDispatch = (action: ActionType) => void;
 
 type WorkspaceState = {
   cards: Card[];
-  lockedCardIds: Set<number>;
+  lockedCardIds: Set<string>;
 };
 function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceState {
   switch (action.type) {
@@ -200,7 +200,7 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
   }
 }
 
-function cardUpdateConfirmed(state: WorkspaceState, id: number) {
+function cardUpdateConfirmed(state: WorkspaceState, id: string) {
   return (
     !state.lockedCardIds.has(id) ||
     window.confirm('The card may contain unsaved changes. Continue?')
@@ -213,8 +213,6 @@ export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
   const [state, dispatch] = useReducer(workspaceReducer, undefined, () => {
     const cards = getSessionValue<Card[]>(SESSION_STORAGE_KEY, []).map((card) => ({
       ...card,
-      // override card ids to prevent id clashes after page reload
-      id: newId(),
       restored: true,
     }));
 

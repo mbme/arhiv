@@ -1,3 +1,4 @@
+import { startTransition } from 'react';
 import { DocumentId, DocumentType } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
 import { useCardContext } from './workspace-reducer';
@@ -20,7 +21,9 @@ export function CatalogCard({ query, page, documentType }: Props) {
   };
 
   const updateDocumentId = (documentId: DocumentId) => {
-    context.pushStack({ variant: 'document', documentId });
+    startTransition(() => {
+      context.pushStack({ variant: 'document', documentId });
+    });
   };
 
   return (

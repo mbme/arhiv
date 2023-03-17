@@ -1,4 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useDeferredValue } from 'react';
+import { Callback } from 'utils';
+import { useForceRender } from 'utils/hooks';
 
 export type Suspender<T> = { read: () => T };
 
@@ -33,16 +35,33 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
 
 export const SuspenseCacheContext = createContext(new Map<string, Suspender<unknown>>());
 
-export function useSuspense<T>(cacheKey: string, factory: () => Promise<T>): T {
+export function useSuspense<T>(
+  cacheKey: string,
+  factory: () => Promise<T>
+): { value: T; isUpdating: boolean; triggerRefresh: Callback } {
   const cache = useContext(SuspenseCacheContext);
 
-  const cachedSuspender = cache.get(cacheKey);
-  if (cachedSuspender) {
-    return cachedSuspender.read() as T;
+  // TODO remove previous value if cacheKey changes
+
+  let suspender = cache.get(cacheKey);
+  if (!suspender) {
+    suspender = suspensify(factory());
+    cache.set(cacheKey, suspender);
   }
+  const deferredSuspender = useDeferredValue(suspender);
 
-  const suspender = suspensify(factory());
-  cache.set(cacheKey, suspender);
+  const value = deferredSuspender.read() as T;
 
-  return suspender.read();
+  const forceRender = useForceRender();
+  const triggerRefresh = useCallback(() => {
+    console.error('trigger refresh');
+    cache.delete(cacheKey);
+    forceRender();
+  }, [cacheKey, forceRender]);
+
+  return {
+    value,
+    isUpdating: suspender !== deferredSuspender,
+    triggerRefresh,
+  };
 }

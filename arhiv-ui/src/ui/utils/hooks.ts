@@ -231,3 +231,9 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
     };
   }, [el, key]);
 }
+
+export function useForceRender(): Callback {
+  const [, setCounter] = useState(0);
+
+  return useCallback(() => setCounter((value) => value + 1), []);
+}

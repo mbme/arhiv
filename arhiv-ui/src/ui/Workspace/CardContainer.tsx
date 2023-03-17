@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { JSXChildren } from 'utils/jsx';
 import { IconButton } from 'components/Button';
+import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { useCardContext } from './workspace-reducer';
 
 type CardContainerProps = {
@@ -27,7 +28,9 @@ export function CardContainer({ children }: CardContainerProps) {
       data-initializing
       ref={setEl}
     >
-      <div className="px-4 pb-6 relative">{children}</div>
+      <div className="px-4 pb-6 relative">
+        <SuspenseBoundary>{children}</SuspenseBoundary>
+      </div>
     </div>
   );
 }

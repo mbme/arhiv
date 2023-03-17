@@ -6,7 +6,6 @@ import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
 import { Markup } from 'components/Markup';
 import { IconButton } from 'components/Button';
-import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
 
@@ -132,9 +131,7 @@ export function Editor({
         }}
       />
 
-      <SuspenseBoundary>
-        {preview && <Markup markup={editorRef.current?.getValue() ?? defaultValue} />}
-      </SuspenseBoundary>
+      {preview && <Markup markup={editorRef.current?.getValue() ?? defaultValue} />}
 
       <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
         {!preview && (

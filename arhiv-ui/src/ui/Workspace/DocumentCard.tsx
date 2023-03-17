@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { DocumentId } from 'dto';
 import { copyTextToClipbard, getDocumentUrl } from 'utils';
-import { useQuery, useUnsavedChangesWarning } from 'utils/hooks';
+import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { isAttachment, isErasedDocument } from 'utils/schema';
-import { QueryError } from 'components/QueryError';
-import { Icon } from 'components/Icon';
+import { useSuspense } from 'utils/suspense';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
@@ -33,29 +32,10 @@ export function DocumentCard({ documentId }: Props) {
   useCardLock(isDirty);
 
   const {
-    result: document,
-    error,
-    inProgress,
+    value: document,
+    isUpdating,
     triggerRefresh,
-  } = useQuery((abortSignal) => RPC.GetDocument({ id: documentId }, abortSignal), {
-    refreshIfChange: [documentId],
-  });
-
-  if (error) {
-    return (
-      <CardContainer>
-        <QueryError error={error} />
-      </CardContainer>
-    );
-  }
-
-  if (!document) {
-    return (
-      <CardContainer>
-        <Icon variant="spinner" className="mb-8" />
-      </CardContainer>
-    );
-  }
+  } = useSuspense(documentId, () => RPC.GetDocument({ id: documentId }));
 
   return (
     <CardContainer>
@@ -120,7 +100,7 @@ export function DocumentCard({ documentId }: Props) {
         }
       />
 
-      {inProgress && <ProgressLocker />}
+      {isUpdating && <ProgressLocker />}
 
       <DocumentViewerHead
         id={document.id}

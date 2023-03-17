@@ -309,7 +309,7 @@ type MarkupProps = {
 };
 
 export function Markup({ markup }: MarkupProps) {
-  const result = useSuspense(markup, () => RPC.ParseMarkup({ markup }));
+  const { value } = useSuspense(markup, () => RPC.ParseMarkup({ markup }));
 
-  return markupElementToJSX(result.ast);
+  return markupElementToJSX(value.ast);
 }

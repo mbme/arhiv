@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { cx, px } from 'utils';
+import { startTransition, useEffect, useRef, useState } from 'react';
+import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
@@ -92,22 +92,32 @@ export function Editor({
     }
   }, [preview]);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  useLayoutEffect(() => {
-    const containerEl = containerRef.current;
-    if (!containerEl) {
-      throw new Error('container el is missing');
+  useEffect(() => {
+    const fieldEl = fieldRef.current;
+    if (!fieldEl) {
+      throw new Error('field is missing');
     }
 
-    containerEl.style.minHeight = '';
+    const form = fieldEl.form;
+    if (!form) {
+      throw new Error('field form is missing');
+    }
+
+    const onFormSubmit = () => {
+      startTransition(() => {
+        setPreview(defaultPreview);
+      });
+    };
+
+    form.addEventListener('submit', onFormSubmit);
 
     return () => {
-      containerEl.style.minHeight = px(containerEl.scrollHeight);
+      form.removeEventListener('submit', onFormSubmit);
     };
-  }, [preview]);
+  }, [defaultPreview]);
 
   return (
-    <div ref={containerRef} className={cx('editor-container group', className)}>
+    <div className={cx('editor-container group', className)}>
       <FormField
         id={id}
         hidden={preview}
@@ -149,13 +159,17 @@ export function Editor({
           <IconButton
             icon="pencil-square"
             className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
-            onClick={() => setPreview(!preview)}
+            onClick={() => {
+              setPreview(false);
+            }}
           />
         ) : (
           <IconButton
             icon="eye"
             className="bg-indigo-100 drop-shadow-md"
-            onClick={() => setPreview(!preview)}
+            onClick={() => {
+              setPreview(true);
+            }}
           />
         )}
       </div>

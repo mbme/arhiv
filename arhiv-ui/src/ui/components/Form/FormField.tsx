@@ -4,12 +4,6 @@ import { JSONValue } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 
-export class ChangeEvent extends CustomEvent<{ value: JSONValue }> {
-  constructor(public readonly value: JSONValue) {
-    super('change', { detail: { value } });
-  }
-}
-
 // This is a helper component that allows to build custom form fields, with validation!
 export class HTMLVFormFieldElement extends HTMLElement {
   static get formAssociated() {
@@ -38,13 +32,11 @@ export class HTMLVFormFieldElement extends HTMLElement {
   protected formResetCallback() {
     this._value = this.getDefaultValue();
     this.updateFormValue();
-    this.triggerChange();
   }
 
   protected formStateRestoreCallback(state: string) {
     this._value = JSON.parse(state) as JSONValue;
     this.updateFormValue();
-    this.triggerChange();
   }
 
   private updateTabIndex() {
@@ -71,10 +63,6 @@ export class HTMLVFormFieldElement extends HTMLElement {
     }
 
     this.internals.setFormValue(JSON.stringify(value));
-  }
-
-  private triggerChange() {
-    this.dispatchEvent(new ChangeEvent(this._value));
   }
 
   private getDefaultValue() {
@@ -140,7 +128,6 @@ type Props = {
   disabled?: boolean;
   hidden?: boolean;
   defaultValue?: JSONValue;
-  onChange?: (value: JSONValue) => void;
   onFocus?: () => void;
   name: string;
   children?: JSXChildren;
@@ -155,7 +142,6 @@ export function FormField({
   disabled,
   hidden,
   defaultValue,
-  onChange,
   onFocus,
   name,
   children,
@@ -163,7 +149,6 @@ export function FormField({
 }: Props) {
   const ref = useRef<HTMLVFormFieldElement>(null);
 
-  const onChangeRef = useLatestRef(onChange);
   const onFocusRef = useLatestRef(onFocus);
   useEffect(() => {
     const el = ref.current;
@@ -171,17 +156,14 @@ export function FormField({
       throw new Error('element is missing');
     }
 
-    const handleChange = () => onChangeRef.current?.(el.value);
     const handleFocus = () => onFocusRef.current?.();
 
-    el.addEventListener('change', handleChange);
     el.addEventListener('focus', handleFocus);
 
     return () => {
-      el.removeEventListener('change', handleChange);
       el.removeEventListener('focus', handleFocus);
     };
-  }, [onChangeRef, onFocusRef]);
+  }, [onFocusRef]);
 
   return React.createElement(
     'v-form-field',
@@ -193,8 +175,6 @@ export function FormField({
       disabled: disabled || undefined,
       hidden: hidden || undefined,
       defaultvalue: defaultValue === undefined ? undefined : JSON.stringify(defaultValue),
-      onchange: onChange,
-      onfocus: onFocus,
       name,
       tabindex: tabIndex,
     },

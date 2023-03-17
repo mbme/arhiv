@@ -73,6 +73,28 @@ export function RefInput({
     onChangeRef.current?.(ids);
   }, [onChangeRef, ids, multiple]);
 
+  useEffect(() => {
+    const el = fieldRef.current;
+    if (!el) {
+      throw new Error('v-form-field element is missing');
+    }
+
+    const form = el.form;
+    if (!form) {
+      throw new Error('form is missing');
+    }
+
+    const onReset = () => {
+      setIds(el.value as DocumentId[]);
+    };
+
+    form.addEventListener('reset', onReset);
+
+    return () => {
+      form.removeEventListener('reset', onReset);
+    };
+  }, []);
+
   const { documents, error, inProgress } = useDocuments(ids);
 
   const canAdd = ids.length === 0 || multiple;
@@ -90,7 +112,6 @@ export function RefInput({
       defaultValue={defaultValue}
       disabled={disabled}
       required={required}
-      onChange={(value) => setIds(value as DocumentId[])}
     >
       {showPicker && (
         <DocumentPicker

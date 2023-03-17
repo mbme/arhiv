@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { JSONObj, formDataToObject, cx } from 'utils';
-import { JSXChildren, JSXRef } from 'utils/jsx';
+import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
 function collectValues(form: HTMLFormElement): JSONObj {
@@ -91,9 +91,31 @@ type FormProps = {
 };
 
 export function Form({ className, children, onSubmit, formRef }: FormProps) {
+  const ref = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    const form = ref.current;
+    if (!form) {
+      throw new Error('form is missing');
+    }
+
+    const onInput = () => {
+      if (!isFormDirty(form)) {
+        markFormDirty(form, true);
+      }
+    };
+
+    // NOTE: regular onInput doesn't catch custom input events dispatched by the v-form-field
+    form.addEventListener('input', onInput);
+
+    return () => {
+      form.removeEventListener('input', onInput);
+    };
+  }, []);
+
   return (
     <form
-      ref={formRef}
+      ref={mergeRefs(ref, formRef)}
       className={cx('form', className)}
       onSubmit={(e) => {
         e.preventDefault();
@@ -104,11 +126,6 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
         void Promise.resolve(onSubmit(collectValues(e.currentTarget))).then(() => {
           markFormDirty(form, false);
         });
-      }}
-      onInput={(e) => {
-        if (!isFormDirty(e.currentTarget)) {
-          markFormDirty(e.currentTarget, true);
-        }
       }}
       onReset={(e) => {
         markFormDirty(e.currentTarget, false);

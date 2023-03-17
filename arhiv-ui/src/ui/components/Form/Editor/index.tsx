@@ -30,7 +30,8 @@ export function Editor({
   readonly,
   required,
 }: Props) {
-  const [preview, setPreview] = useState(defaultValue.length > 0);
+  const defaultPreview = defaultValue.length > 0;
+  const [preview, setPreview] = useState(defaultPreview);
 
   const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
   const editorRef = useRef<CodemirrorEditor | null>(null);
@@ -47,13 +48,8 @@ export function Editor({
     }
 
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
-      onBlur: () => {
-        fieldEl.value = editor.getValue();
-      },
       onChange: () => {
-        if (!editor.isFocused()) {
-          fieldEl.value = editor.getValue();
-        }
+        fieldEl.inputValue(editor.getValue());
       },
     });
 
@@ -84,8 +80,7 @@ export function Editor({
     editor.setPlaceholder(placeholder ?? '');
   }, [disabled, readonly, placeholder]);
 
-  // skip autofocus in case preview is immediately false
-  // useUpdateEffect
+  // focus editor if editing except when the preview is initially false
   useUpdateEffect(() => {
     const editor = editorRef.current;
     if (!editor) {

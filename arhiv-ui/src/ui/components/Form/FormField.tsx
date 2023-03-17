@@ -88,6 +88,16 @@ export class HTMLVFormFieldElement extends HTMLElement {
     this.updateFormValue();
   }
 
+  inputValue(value: JSONValue) {
+    // TODO deep equality check
+    if (this._value === value) {
+      return;
+    }
+
+    this.value = value;
+    this.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
   get form(): HTMLFormElement | null {
     return this.internals.form;
   }

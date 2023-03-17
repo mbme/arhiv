@@ -8,15 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  Callback,
-  debounce,
-  getSessionValue,
-  JSONValue,
-  newId,
-  setSessionValue,
-  throttle,
-} from './index';
+import { Callback, debounce, getSessionValue, JSONValue, setSessionValue, throttle } from './index';
 import { StateUpdater } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;

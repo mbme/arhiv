@@ -32,11 +32,13 @@ export class HTMLVFormFieldElement extends HTMLElement {
   protected formResetCallback() {
     this._value = this.getDefaultValue();
     this.updateFormValue();
+    this.dispatchEvent(new Event('reset'));
   }
 
   protected formStateRestoreCallback(state: string) {
     this._value = JSON.parse(state) as JSONValue;
     this.updateFormValue();
+    this.dispatchEvent(new Event('reset'));
   }
 
   private updateTabIndex() {
@@ -139,6 +141,7 @@ type Props = {
   hidden?: boolean;
   defaultValue?: JSONValue;
   onFocus?: () => void;
+  onReset?: () => void;
   name: string;
   children?: JSXChildren;
   tabIndex?: number;
@@ -153,6 +156,7 @@ export function FormField({
   hidden,
   defaultValue,
   onFocus,
+  onReset,
   name,
   children,
   tabIndex,
@@ -160,6 +164,8 @@ export function FormField({
   const ref = useRef<HTMLVFormFieldElement>(null);
 
   const onFocusRef = useLatestRef(onFocus);
+  const onResetRef = useLatestRef(onReset);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) {
@@ -167,13 +173,16 @@ export function FormField({
     }
 
     const handleFocus = () => onFocusRef.current?.();
+    const handleReset = () => onResetRef.current?.();
 
     el.addEventListener('focus', handleFocus);
+    el.addEventListener('reset', handleReset);
 
     return () => {
       el.removeEventListener('focus', handleFocus);
+      el.removeEventListener('reset', handleReset);
     };
-  }, [onFocusRef]);
+  }, [onFocusRef, onResetRef]);
 
   return React.createElement(
     'v-form-field',

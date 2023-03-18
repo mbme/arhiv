@@ -41,11 +41,6 @@ export function Editor({
       throw new Error('field is missing');
     }
 
-    const form = fieldEl.form;
-    if (!form) {
-      throw new Error('form is missing');
-    }
-
     const editor = new CodemirrorEditor(fieldEl, fieldEl.value?.toString() ?? '', {
       onChange: () => {
         fieldEl.inputValue(editor.getValue());
@@ -54,14 +49,7 @@ export function Editor({
 
     setEditor(editor);
 
-    const onReset = () => {
-      editor.setValue(fieldEl.value as string);
-    };
-
-    form.addEventListener('reset', onReset);
-
     return () => {
-      form.removeEventListener('reset', onReset);
       editor.destroy();
     };
   }, []);
@@ -124,6 +112,9 @@ export function Editor({
         tabIndex={-1}
         onFocus={() => {
           editor?.focus();
+        }}
+        onReset={() => {
+          editor?.setValue(defaultValue);
         }}
       />
 

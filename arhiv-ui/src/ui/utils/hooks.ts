@@ -8,7 +8,15 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Callback, debounce, getSessionValue, JSONValue, setSessionValue, throttle } from './index';
+import {
+  Callback,
+  debounce,
+  getSessionValue,
+  JSONValue,
+  removeSessionValue,
+  setSessionValue,
+  throttle,
+} from './index';
 import { StateUpdater } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
@@ -228,6 +236,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
 
     return () => {
       el.removeEventListener('scroll', onScroll);
+      removeSessionValue(key);
     };
   }, [el, key]);
 }

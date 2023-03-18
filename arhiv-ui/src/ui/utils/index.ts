@@ -107,6 +107,10 @@ export function setSessionValue(key: string, value: JSONValue) {
   sessionStorage.setItem(key, JSON.stringify(value));
 }
 
+export function removeSessionValue(key: string) {
+  sessionStorage.removeItem(key);
+}
+
 const BYTES_SIZES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 export function formatBytes(bytes: number): string {
   if (!bytes) {

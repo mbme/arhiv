@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { JSXChildren } from 'utils/jsx';
+import { useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
+import { Icon } from 'components/Icon';
 import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { useCardContext } from './workspace-reducer';
 
@@ -8,30 +10,30 @@ type CardContainerProps = {
   children: JSXChildren;
 };
 export function CardContainer({ children }: CardContainerProps) {
-  const { restored } = useCardContext();
+  const { id, restored } = useCardContext();
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (el) {
-      delete el.dataset.initializing;
-
-      if (!restored) {
-        el.scrollIntoView({ inline: 'center' });
-      }
+    if (el && !restored) {
+      el.scrollIntoView({ inline: 'center' });
     }
   }, [el, restored]);
 
-  return (
-    <div
-      className="var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity data-[initializing]:opacity-30 custom-scrollbar"
-      data-initializing
-      ref={setEl}
-    >
-      <div className="px-4 pb-6 relative">
-        <SuspenseBoundary>{children}</SuspenseBoundary>
-      </div>
+  useScrollRestoration(el, `workspace-card-${id}`);
+
+  const fallback = (
+    <div className="card-container flex items-center justify-center">
+      <Icon variant="spinner" className="h-10 w-10 opacity-50" />
     </div>
+  );
+
+  return (
+    <SuspenseBoundary fallback={fallback}>
+      <div className="card-container" ref={setEl}>
+        <div className="px-4 pb-6 relative">{children}</div>
+      </div>
+    </SuspenseBoundary>
   );
 }
 

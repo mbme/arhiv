@@ -263,6 +263,7 @@ export function useCardContext() {
   const { card, dispatch } = context;
 
   return {
+    id: card.id,
     close: () => {
       dispatch({
         type: 'close',

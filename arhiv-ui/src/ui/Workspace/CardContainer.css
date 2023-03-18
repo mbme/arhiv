@@ -1,0 +1,5 @@
+@layer components {
+  .card-container {
+    @apply var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity custom-scrollbar;
+  }
+}

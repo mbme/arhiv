@@ -9,6 +9,8 @@
 @import './components/Form/Form.css';
 @import './components/ComponentsDemo.css';
 
+@import './Workspace/CardContainer.css';
+
 @layer utilities {
   .var-bg-color {
     @apply bg-zinc-100;

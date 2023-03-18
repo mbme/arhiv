@@ -137,6 +137,10 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
 
                 return true;
               }
+              case 'Escape': {
+                onCancel();
+                return true;
+              }
               default: {
                 return false;
               }

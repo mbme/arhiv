@@ -10,6 +10,7 @@ import {
   isErasedDocument,
   isImageAttachment,
 } from 'utils/schema';
+import { useSuspense } from 'utils/suspense';
 import { Button } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
@@ -24,20 +25,7 @@ type RefContainerProps = {
   attachmentPreview?: boolean;
 };
 export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.GetDocument({ id }, abortSignal),
-    {
-      refreshIfChange: [id],
-    }
-  );
-
-  if (error) {
-    return <QueryError error={error} />;
-  }
-
-  if (inProgress || !result) {
-    return null;
-  }
+  const { value: result } = useSuspense(id, () => RPC.GetDocument({ id }));
 
   if (attachmentPreview) {
     return (

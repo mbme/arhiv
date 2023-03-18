@@ -4,7 +4,7 @@ import { copyTextToClipbard, getDocumentUrl } from 'utils';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { isAttachment, isErasedDocument } from 'utils/schema';
-import { useSuspense } from 'utils/suspense';
+import { useSuspenseQuery } from 'utils/suspense';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
@@ -35,7 +35,7 @@ export function DocumentCard({ documentId }: Props) {
     value: document,
     isUpdating,
     triggerRefresh,
-  } = useSuspense(documentId, () => RPC.GetDocument({ id: documentId }));
+  } = useSuspenseQuery({ typeName: 'GetDocument', id: documentId });
 
   return (
     <CardContainer>

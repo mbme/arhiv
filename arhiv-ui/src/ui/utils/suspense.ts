@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useDeferredValue, useRef } from 'react';
+import { APIRequest } from 'dto';
 import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
+import { doRPC, ENDPOINT, RPCResponse } from 'utils/rpc';
 
-export type Suspender<T> = { read: () => T };
+type Suspender<T> = { read: () => T };
 
 export function suspensify<T>(promise: Promise<T>): Suspender<T> {
   type SuspenseStatus = { type: 'resolved'; value: T } | { type: 'rejected'; value: unknown };
@@ -33,36 +35,43 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
   };
 }
 
-export const SuspenseCacheContext = createContext(new Map<string, Suspender<unknown>>());
+export const createSuspenseCache = () => new Map<string, Suspender<unknown>>();
 
-export function useSuspense<T>(
-  cacheKey: string,
-  factory: () => Promise<T>
-): { value: T; isUpdating: boolean; triggerRefresh: Callback } {
+// FIXME remove stale values from cache
+export const SuspenseCacheContext = createContext(createSuspenseCache());
+
+export function useSuspenseQuery<Request extends APIRequest>(
+  request: Request
+): {
+  value: RPCResponse<Request>;
+  isUpdating: boolean;
+  triggerRefresh: Callback;
+} {
   const cache = useContext(SuspenseCacheContext);
 
+  const queryName = JSON.stringify(request);
+
   // delete stale cache value if key changed
-  // TODO test if it works
-  const prevCacheKey = useRef(cacheKey);
-  if (prevCacheKey.current !== cacheKey) {
-    cache.delete(prevCacheKey.current);
-    prevCacheKey.current = cacheKey;
+  const prevQueryName = useRef(queryName);
+  if (prevQueryName.current !== queryName) {
+    cache.delete(prevQueryName.current);
+    prevQueryName.current = queryName;
   }
 
-  let suspender = cache.get(cacheKey);
+  let suspender = cache.get(queryName);
   if (!suspender) {
-    suspender = suspensify(factory());
-    cache.set(cacheKey, suspender);
+    suspender = suspensify(doRPC(ENDPOINT, request));
+    cache.set(queryName, suspender);
   }
   const deferredSuspender = useDeferredValue(suspender);
 
-  const value = deferredSuspender.read() as T;
+  const value = deferredSuspender.read() as RPCResponse<Request>;
 
   const forceRender = useForceRender();
   const triggerRefresh = useCallback(() => {
-    cache.delete(cacheKey);
+    cache.delete(queryName);
     forceRender();
-  }, [cache, cacheKey, forceRender]);
+  }, [cache, queryName, forceRender]);
 
   return {
     value,

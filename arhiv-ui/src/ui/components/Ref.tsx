@@ -10,7 +10,7 @@ import {
   isErasedDocument,
   isImageAttachment,
 } from 'utils/schema';
-import { useSuspense } from 'utils/suspense';
+import { useSuspenseQuery } from 'utils/suspense';
 import { Button } from 'components/Button';
 import { QueryError } from 'components/QueryError';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
@@ -25,7 +25,7 @@ type RefContainerProps = {
   attachmentPreview?: boolean;
 };
 export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
-  const { value: result } = useSuspense(id, () => RPC.GetDocument({ id }));
+  const { value: result } = useSuspenseQuery({ typeName: 'GetDocument', id });
 
   if (attachmentPreview) {
     return (

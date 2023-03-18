@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useUpdateEffect } from 'utils/hooks';
-import { useSuspense } from 'utils/suspense';
-import { RPC } from 'utils/rpc';
+import { useSuspenseQuery } from 'utils/suspense';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { Pagination } from './Pagination';
@@ -37,7 +36,7 @@ export function Catalog({
     value: result,
     isUpdating,
     triggerRefresh,
-  } = useSuspense('catalog', () => RPC.ListDocuments({ query, page, documentTypes }));
+  } = useSuspenseQuery({ typeName: 'ListDocuments', query, page, documentTypes });
 
   useUpdateEffect(() => {
     triggerRefresh();

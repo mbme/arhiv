@@ -1,6 +1,6 @@
 import { Suspense, useMemo } from 'react';
 import { JSXChildren } from 'utils/jsx';
-import { Suspender, SuspenseCacheContext } from 'utils/suspense';
+import { createSuspenseCache, SuspenseCacheContext } from 'utils/suspense';
 import { ErrorBoundary } from 'components/ErrorBoundary';
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function SuspenseBoundary({ children, fallback }: Props) {
-  const cache = useMemo(() => new Map<string, Suspender<unknown>>(), []);
+  const cache = useMemo(() => createSuspenseCache(), []);
 
   return (
     <SuspenseCacheContext.Provider value={cache}>

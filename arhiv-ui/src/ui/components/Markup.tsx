@@ -1,9 +1,8 @@
 import { createElement } from 'react';
 import { cx, Obj } from 'utils';
 import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
-import { useSuspense } from 'utils/suspense';
+import { useSuspenseQuery } from 'utils/suspense';
 import { JSXElement } from 'utils/jsx';
-import { RPC } from 'utils/rpc';
 import { Link } from 'components/Link';
 import { RefContainer } from 'components/Ref';
 
@@ -309,7 +308,7 @@ type MarkupProps = {
 };
 
 export function Markup({ markup }: MarkupProps) {
-  const { value } = useSuspense(markup, () => RPC.ParseMarkup({ markup }));
+  const { value } = useSuspenseQuery({ typeName: 'ParseMarkup', markup });
 
   return markupElementToJSX(value.ast);
 }

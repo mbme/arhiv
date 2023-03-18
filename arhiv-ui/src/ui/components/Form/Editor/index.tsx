@@ -33,7 +33,7 @@ export function Editor({
   const [preview, setPreview] = useState(defaultPreview);
 
   const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
-  const editorRef = useRef<CodemirrorEditor | null>(null);
+  const [editor, setEditor] = useState<CodemirrorEditor>();
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -52,7 +52,7 @@ export function Editor({
       },
     });
 
-    editorRef.current = editor;
+    setEditor(editor);
 
     const onReset = () => {
       editor.setValue(fieldEl.value as string);
@@ -61,35 +61,31 @@ export function Editor({
     form.addEventListener('reset', onReset);
 
     return () => {
-      editorRef.current = null;
-
       form.removeEventListener('reset', onReset);
       editor.destroy();
     };
   }, []);
 
   useEffect(() => {
-    const editor = editorRef.current;
     if (!editor) {
-      throw new Error('Editor is missing');
+      return;
     }
 
     editor.setDisabled(disabled);
     editor.setReadonly(readonly);
     editor.setPlaceholder(placeholder ?? '');
-  }, [disabled, readonly, placeholder]);
+  }, [editor, disabled, readonly, placeholder]);
 
   // focus editor if editing except when the preview is initially false
   useUpdateEffect(() => {
-    const editor = editorRef.current;
     if (!editor) {
-      throw new Error('Editor is missing');
+      return;
     }
 
     if (!preview) {
       editor.focus();
     }
-  }, [preview]);
+  }, [editor, preview]);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -127,49 +123,44 @@ export function Editor({
         required={required}
         tabIndex={-1}
         onFocus={() => {
-          editorRef.current?.focus();
+          editor?.focus();
         }}
       />
 
-      {preview && <Markup markup={editorRef.current?.getValue() ?? defaultValue} />}
+      {preview && <Markup markup={editor?.getValue() ?? defaultValue} />}
 
-      <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
-        {!preview && (
-          <AddRefButton
-            className="bg-indigo-100 drop-shadow-md"
-            onDocumentSelected={(id, documentType, subtype) => {
-              const editor = editorRef.current;
-              if (!editor) {
-                throw new Error('editor is missing');
-              }
+      {editor && (
+        <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
+          {!preview && (
+            <AddRefButton
+              className="bg-indigo-100 drop-shadow-md"
+              onDocumentSelected={({ id, documentType, subtype }) => {
+                editor.replaceSelections((value) =>
+                  createLink(createRefUrl(id), value, canPreview(documentType, subtype))
+                );
+              }}
+            />
+          )}
 
-              editor.replaceSelections((value) =>
-                createLink(createRefUrl(id), value, canPreview(documentType, subtype))
-              );
-
-              editor.focus();
-            }}
-          />
-        )}
-
-        {preview ? (
-          <IconButton
-            icon="pencil-square"
-            className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
-            onClick={() => {
-              setPreview(false);
-            }}
-          />
-        ) : (
-          <IconButton
-            icon="eye"
-            className="bg-indigo-100 drop-shadow-md"
-            onClick={() => {
-              setPreview(true);
-            }}
-          />
-        )}
-      </div>
+          {preview ? (
+            <IconButton
+              icon="pencil-square"
+              className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
+              onClick={() => {
+                setPreview(false);
+              }}
+            />
+          ) : (
+            <IconButton
+              icon="eye"
+              className="bg-indigo-100 drop-shadow-md"
+              onClick={() => {
+                setPreview(true);
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

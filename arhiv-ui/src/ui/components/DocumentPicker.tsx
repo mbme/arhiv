@@ -3,9 +3,15 @@ import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Catalog } from 'components/Catalog/Catalog';
 
+export type DocumentInfo = {
+  id: DocumentId;
+  documentType: DocumentType;
+  subtype: DocumentSubtype;
+};
+
 type Props = {
   documentTypes?: DocumentType[];
-  onSelected: (id: DocumentId, documentType: DocumentType, subtype: DocumentSubtype) => void;
+  onSelected: (info: DocumentInfo) => void;
   onCancel: () => void;
   hideOnSelect?: boolean;
 };
@@ -32,7 +38,11 @@ export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSele
               dialogRef.current.setAttribute('hidden', '');
             }
 
-            onSelected(id, documentType, subtype);
+            onSelected({
+              id,
+              documentType,
+              subtype,
+            });
           }}
         />
       </div>

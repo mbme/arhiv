@@ -1,34 +1,27 @@
 import { useState } from 'react';
-import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { IconButton } from 'components/Button';
-import { DocumentPicker } from 'components/DocumentPicker';
+import { DocumentInfo, DocumentPicker } from 'components/DocumentPicker';
 
 type Props = {
   className?: string;
-  onDocumentSelected: (
-    id: DocumentId,
-    documentType: DocumentType,
-    subtype: DocumentSubtype
-  ) => void;
+  onDocumentSelected: (info: DocumentInfo) => void;
 };
 
 export function AddRefButton({ className, onDocumentSelected }: Props) {
   const [showPicker, setShowPicker] = useState(false);
 
-  return (
-    <>
-      <IconButton icon="link" className={className} onClick={() => setShowPicker(true)} />
+  if (showPicker) {
+    return (
+      <DocumentPicker
+        hideOnSelect
+        onSelected={(info) => {
+          setShowPicker(false);
+          onDocumentSelected(info);
+        }}
+        onCancel={() => setShowPicker(false)}
+      />
+    );
+  }
 
-      {showPicker && (
-        <DocumentPicker
-          hideOnSelect
-          onSelected={(documentId, documentType, subtype) => {
-            setShowPicker(false);
-            onDocumentSelected(documentId, documentType, subtype);
-          }}
-          onCancel={() => setShowPicker(false)}
-        />
-      )}
-    </>
-  );
+  return <IconButton icon="link" className={className} onClick={() => setShowPicker(true)} />;
 }

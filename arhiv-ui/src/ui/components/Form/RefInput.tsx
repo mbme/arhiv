@@ -116,9 +116,9 @@ export function RefInput({
       {showPicker && (
         <DocumentPicker
           documentTypes={documentTypes}
-          onSelected={(documentId) => {
-            if (!ids.includes(documentId)) {
-              setIds([...ids, documentId]);
+          onSelected={({ id }) => {
+            if (!ids.includes(id)) {
+              setIds([...ids, id]);
             }
             setShowPicker(false);
           }}

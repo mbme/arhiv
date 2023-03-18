@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
-import { useQuery } from 'utils/hooks';
+import { useUpdateEffect } from 'utils/hooks';
+import { useSuspense } from 'utils/suspense';
 import { RPC } from 'utils/rpc';
 import { DateTime } from 'components/DateTime';
-import { QueryError } from 'components/QueryError';
 import { SearchInput } from 'components/SearchInput';
 import { Pagination } from './Pagination';
 
@@ -33,12 +33,15 @@ export function Catalog({
   const [query, _setQuery] = useState(initialQuery);
   const [page, _setPage] = useState(initialPage);
 
-  const { result, error, inProgress } = useQuery(
-    (abortSignal) => RPC.ListDocuments({ query, page, documentTypes }, abortSignal),
-    {
-      refreshIfChange: [query, page, ...documentTypes],
-    }
-  );
+  const {
+    value: result,
+    isUpdating,
+    triggerRefresh,
+  } = useSuspense('catalog', () => RPC.ListDocuments({ query, page, documentTypes }));
+
+  useUpdateEffect(() => {
+    triggerRefresh();
+  }, [query, page, ...documentTypes]);
 
   const setQuery = (query: string) => {
     _setQuery(query);
@@ -50,7 +53,7 @@ export function Catalog({
     onPageChange?.(page);
   };
 
-  const items = result?.documents.map((item) => (
+  const items = result.documents.map((item) => (
     <div
       className="cursor-pointer px-2 py-3 transition-colors hover:bg-sky-100"
       key={item.id}
@@ -78,21 +81,17 @@ export function Catalog({
           setQuery(newQuery);
           setPage(0);
         }}
-        busy={inProgress}
+        busy={isUpdating}
         autofocus={autofocus}
         debounceMs={400}
       />
 
-      {error && <QueryError error={error} />}
-
       <div className="divide-y mb-6">
         {items}
-        {items?.length === 0 && <div className="text-center">No results 😿</div>}
+        {items.length === 0 && <div className="text-center">No results 😿</div>}
       </div>
 
-      {result && (
-        <Pagination page={page} hasMore={result.hasMore} onClick={(newPage) => setPage(newPage)} />
-      )}
+      <Pagination page={page} hasMore={result.hasMore} onClick={(newPage) => setPage(newPage)} />
     </>
   );
 }

@@ -101,11 +101,13 @@ class CodemirrorEditor {
   setValue(newValue: string) {
     const { state } = this.editor;
 
+    const cursorPos = Math.min(state.selection.main.from, newValue.length);
+
     this.editor.dispatch({
       changes: { from: 0, to: state.doc.length, insert: newValue },
       selection: {
-        anchor: state.selection.main.from,
-        head: state.selection.main.from,
+        anchor: cursorPos,
+        head: cursorPos,
       },
     });
   }

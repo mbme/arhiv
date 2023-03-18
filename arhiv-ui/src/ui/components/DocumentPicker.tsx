@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSelect }: Props) {
-  const dialogRef = useRef<HTMLElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   return (
     <Dialog

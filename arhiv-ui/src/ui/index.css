@@ -138,8 +138,4 @@
       vertical-align: middle;
     }
   }
-
-  #modal-root {
-    z-index: 1;
-  }
 }

@@ -78,8 +78,6 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
                 <body>
                     <main></main>
 
-                    <div id="modal-root"></div>
-
                     <script>
                         window.SCHEMA = {schema};
                     </script>

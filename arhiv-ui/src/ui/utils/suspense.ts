@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useDeferredValue } from 'react';
+import { createContext, useCallback, useContext, useDeferredValue, useEffect } from 'react';
 import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
 
@@ -55,6 +55,12 @@ export function useSuspense<T>(
     cache.delete(cacheKey);
     forceRender();
   }, [cache, cacheKey, forceRender]);
+
+  useEffect(() => {
+    return () => {
+      cache.delete(cacheKey);
+    };
+  }, [cache, cacheKey]);
 
   return {
     value,

@@ -41,8 +41,6 @@ export function useSuspense<T>(
 ): { value: T; isUpdating: boolean; triggerRefresh: Callback } {
   const cache = useContext(SuspenseCacheContext);
 
-  // TODO remove previous value if cacheKey changes
-
   let suspender = cache.get(cacheKey);
   if (!suspender) {
     suspender = suspensify(factory());
@@ -54,10 +52,9 @@ export function useSuspense<T>(
 
   const forceRender = useForceRender();
   const triggerRefresh = useCallback(() => {
-    console.error('trigger refresh');
     cache.delete(cacheKey);
     forceRender();
-  }, [cacheKey, forceRender]);
+  }, [cache, cacheKey, forceRender]);
 
   return {
     value,

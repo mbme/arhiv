@@ -180,7 +180,7 @@ export function FormField({
     {
       ref: mergeRefs(ref, innerRef),
       id,
-      className,
+      class: className,
       required: required || undefined,
       disabled: disabled || undefined,
       hidden: hidden || undefined,

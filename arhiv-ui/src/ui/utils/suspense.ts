@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useDeferredValue, useEffect } from 'react';
+import { createContext, useCallback, useContext, useDeferredValue, useRef } from 'react';
 import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
 
@@ -41,6 +41,14 @@ export function useSuspense<T>(
 ): { value: T; isUpdating: boolean; triggerRefresh: Callback } {
   const cache = useContext(SuspenseCacheContext);
 
+  // delete stale cache value if key changed
+  // TODO test if it works
+  const prevCacheKey = useRef(cacheKey);
+  if (prevCacheKey.current !== cacheKey) {
+    cache.delete(prevCacheKey.current);
+    prevCacheKey.current = cacheKey;
+  }
+
   let suspender = cache.get(cacheKey);
   if (!suspender) {
     suspender = suspensify(factory());
@@ -55,12 +63,6 @@ export function useSuspense<T>(
     cache.delete(cacheKey);
     forceRender();
   }, [cache, cacheKey, forceRender]);
-
-  useEffect(() => {
-    return () => {
-      cache.delete(cacheKey);
-    };
-  }, [cache, cacheKey]);
 
   return {
     value,

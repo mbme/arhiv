@@ -1,14 +1,5 @@
-import { useState } from 'react';
-import {
-  FloatingFocusManager,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-  useRole,
-} from '@floating-ui/react';
+import { Fragment } from 'react';
+import { Menu, Transition } from '@headlessui/react';
 import { Callback, cx } from 'utils';
 import { Icon, IconVariant } from './Icon';
 import { IconButton } from './Button';
@@ -23,81 +14,71 @@ type MenuItem = {
 type DropdownMenuProps = {
   icon?: IconVariant;
   options: ReadonlyArray<MenuItem | false>;
+  align: 'bottom-left' | 'bottom-right';
 };
 
-export function DropdownMenu({ icon = 'more', options }: DropdownMenuProps) {
-  const [open, setOpen] = useState(false);
-
-  const { x, y, refs, strategy, context } = useFloating({
-    placement: 'bottom-start',
-    middleware: [offset(2), shift()],
-    open,
-    onOpenChange: setOpen,
-  });
-
-  const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions([
-    useRole(context, {
-      role: 'menu',
-    }),
-    useClick(context),
-    useDismiss(context),
-  ]);
-
+export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProps) {
   return (
-    <>
-      <IconButton
-        icon={icon}
-        size="lg"
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        className={cx({ 'bg-blue-100': open })}
-      />
+    <Menu as="div" className="relative">
+      {({ open }) => (
+        <>
+          <Menu.Button
+            as={IconButton}
+            icon={icon}
+            size="lg"
+            className={cx({ 'var-item-active-bg-color': open })}
+          />
 
-      {open && (
-        <FloatingFocusManager context={context}>
-          <div
-            ref={refs.setFloating}
-            className="bg-white rounded w-max flex flex-col gap-2 drop-shadow py-2"
-            style={{
-              position: strategy,
-              top: y ?? 0,
-              left: x ?? 0,
-            }}
-            {...getFloatingProps()}
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
           >
-            {options.map((option, index) => {
-              if (!option) {
-                return null;
-              }
+            <Menu.Items
+              className={cx(
+                'rounded w-max flex flex-col gap-2 drop-shadow py-2 absolute mt-2 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+                {
+                  'left-0 origin-top-left': align === 'bottom-left',
+                  'right-0 origin-top-right': align === 'bottom-right',
+                }
+              )}
+            >
+              {options.map((option, index) => {
+                if (!option) {
+                  return null;
+                }
 
-              return (
-                <button
-                  type="button"
-                  key={index}
-                  className={cx(
-                    'flex items-center gap-5 cursor-pointer px-4 py-2 whitespace-nowrap',
-                    {
-                      'text-blue-700 hover:bg-sky-100': !option.alarming,
-                      'text-red-700 hover:bg-red-300': option.alarming,
-                    }
-                  )}
-                  role="menuitem"
-                  {...getItemProps({
-                    onClick: () => {
-                      option.onClick();
-                      setOpen(false);
-                    },
-                  })}
-                >
-                  {option.icon ? <Icon variant={option.icon} /> : <div className="w-5" />}
+                return (
+                  <Menu.Item key={index}>
+                    {({ active }) => (
+                      <button
+                        type="button"
+                        className={cx(
+                          'flex items-center gap-5 cursor-pointer px-4 py-2 whitespace-nowrap',
+                          {
+                            'text-blue-700 hover:bg-sky-100': !option.alarming,
+                            'text-red-700 hover:bg-red-300': option.alarming,
+                            'var-item-active-bg-color': active,
+                          }
+                        )}
+                        onClick={() => option.onClick()}
+                      >
+                        {option.icon ? <Icon variant={option.icon} /> : <div className="w-5" />}
 
-                  {option.text}
-                </button>
-              );
-            })}
-          </div>
-        </FloatingFocusManager>
+                        {option.text}
+                      </button>
+                    )}
+                  </Menu.Item>
+                );
+              })}
+            </Menu.Items>
+          </Transition>
+        </>
       )}
-    </>
+    </Menu>
   );
 }

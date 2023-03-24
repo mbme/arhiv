@@ -44,6 +44,7 @@ export function DocumentCard({ documentId }: Props) {
         left={
           <DropdownMenu
             icon="dots-horizontal"
+            align="bottom-left"
             options={[
               {
                 text: 'Copy link',

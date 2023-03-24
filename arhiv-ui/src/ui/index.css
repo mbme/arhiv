@@ -24,6 +24,10 @@
     @apply text-blue-800 hover:text-blue-600;
   }
 
+  .var-item-active-bg-color {
+    @apply bg-blue-100;
+  }
+
   .buttons {
     @apply flex justify-end gap-8;
     @apply p-2 sm:p-4 md:p-6;

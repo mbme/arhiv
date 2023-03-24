@@ -94,7 +94,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
   const documentTypes = getDocumentTypes(false).filter(matchesQuery);
   const collectionTypes = getDocumentTypes(true).filter(matchesQuery);
 
-  const searchResultClass = `justify-start capitalize is-search-result data-[selected=true]:bg-blue-100`;
+  const searchResultClass = `justify-start capitalize is-search-result data-[selected=true]:var-item-active-bg-color`;
   const headingClass = 'section-heading ml-4 mt-8 first:mt-0';
 
   const activateOnHover = (el: HTMLElement) => {

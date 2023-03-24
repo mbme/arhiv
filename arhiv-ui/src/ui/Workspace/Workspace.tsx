@@ -132,6 +132,7 @@ export function Workspace() {
           <ImagePasteHandler dispatch={dispatch} />
 
           <DropdownMenu
+            align="bottom-right"
             options={[
               {
                 text: 'Status',

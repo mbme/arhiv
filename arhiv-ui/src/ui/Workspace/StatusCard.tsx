@@ -8,12 +8,7 @@ export function StatusCard() {
   const { result, error, inProgress } = useQuery((abortSignal) => RPC.GetStatus({}, abortSignal));
 
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        left={<span className="section-heading text-lg">Status</span>}
-        right={<CardContainer.CloseButton />}
-      />
-
+    <CardContainer leftToolbar={<span className="section-heading text-lg">Status</span>}>
       {error && <QueryError error={error} />}
 
       {inProgress && <Icon variant="spinner" className="mb-8" />}

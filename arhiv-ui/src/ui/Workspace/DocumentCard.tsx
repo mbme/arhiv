@@ -38,69 +38,66 @@ export function DocumentCard({ documentId }: Props) {
   } = useSuspenseQuery({ typeName: 'GetDocument', id: documentId });
 
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        skipBack={isDirty}
-        left={
-          <DropdownMenu
-            icon="dots-horizontal"
-            align="bottom-left"
-            options={[
-              {
-                text: 'Copy link',
-                icon: 'clipboard',
-                onClick: () => {
-                  void copyTextToClipbard(getDocumentUrl(document.id));
-                },
+    <CardContainer
+      skipBack={isDirty}
+      leftToolbar={
+        <DropdownMenu
+          icon="dots-horizontal"
+          align="bottom-left"
+          options={[
+            {
+              text: 'Copy link',
+              icon: 'clipboard',
+              onClick: () => {
+                void copyTextToClipbard(getDocumentUrl(document.id));
               },
-              {
-                text: `Clone ${document.documentType}`,
-                icon: 'duplicate-document',
-                onClick: () => {
-                  context.open({
-                    variant: 'new-document',
-                    documentType: document.documentType,
-                    subtype: document.subtype,
-                    data: document.data,
-                  });
-                },
+            },
+            {
+              text: `Clone ${document.documentType}`,
+              icon: 'duplicate-document',
+              onClick: () => {
+                context.open({
+                  variant: 'new-document',
+                  documentType: document.documentType,
+                  subtype: document.subtype,
+                  data: document.data,
+                });
               },
-              {
-                text: `Erase ${document.documentType}`,
-                icon: 'erase-document',
-                alarming: true,
-                onClick: () => setShowErasetConfirmation(true),
-              },
-            ]}
-          />
-        }
-        right={
-          isDirty ? (
-            <>
-              <Button
-                variant="simple"
-                onClick={() => {
-                  form?.reset();
-                }}
-              >
-                Cancel
-              </Button>
+            },
+            {
+              text: `Erase ${document.documentType}`,
+              icon: 'erase-document',
+              alarming: true,
+              onClick: () => setShowErasetConfirmation(true),
+            },
+          ]}
+        />
+      }
+      rightToolbar={
+        isDirty && (
+          <>
+            <Button
+              variant="simple"
+              onClick={() => {
+                form?.reset();
+              }}
+            >
+              Cancel
+            </Button>
 
-              <Button
-                variant="primary"
-                onClick={() => {
-                  form?.requestSubmit();
-                }}
-              >
-                Save
-              </Button>
-            </>
-          ) : (
-            <CardContainer.CloseButton />
-          )
-        }
-      />
-
+            <Button
+              variant="primary"
+              onClick={() => {
+                form?.requestSubmit();
+              }}
+            >
+              Save
+            </Button>
+          </>
+        )
+      }
+      skipClose={isDirty}
+    >
       {isUpdating && <ProgressLocker />}
 
       <DocumentViewerHead

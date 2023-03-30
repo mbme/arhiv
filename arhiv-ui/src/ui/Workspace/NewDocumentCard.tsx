@@ -25,30 +25,29 @@ export function NewDocumentCard({
   };
 
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        left={
-          <span className="section-heading text-lg">{`New ${documentType || 'document'}`}</span>
-        }
-        right={
-          <>
-            <Button variant="simple" onClick={onCancel}>
-              Cancel
-            </Button>
+    <CardContainer
+      leftToolbar={
+        <span className="section-heading text-lg">{`New ${documentType || 'document'}`}</span>
+      }
+      rightToolbar={
+        <>
+          <Button variant="simple" onClick={onCancel}>
+            Cancel
+          </Button>
 
-            <Button
-              variant="primary"
-              disabled={!documentType}
-              onClick={() => {
-                formRef.current?.requestSubmit();
-              }}
-            >
-              Create
-            </Button>
-          </>
-        }
-      />
-
+          <Button
+            variant="primary"
+            disabled={!documentType}
+            onClick={() => {
+              formRef.current?.requestSubmit();
+            }}
+          >
+            Create
+          </Button>
+        </>
+      }
+      skipClose
+    >
       <DocumentEditor
         key={documentType}
         autofocus

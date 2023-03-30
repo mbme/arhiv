@@ -27,16 +27,13 @@ export function CatalogCard({ query, page, documentType }: Props) {
   };
 
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        left={
-          <span className="section-heading text-lg">
-            {documentType === undefined ? 'Catalog' : `Catalog: ${documentType || 'ERASED'}`}
-          </span>
-        }
-        right={<CardContainer.CloseButton />}
-      />
-
+    <CardContainer
+      leftToolbar={
+        <span className="section-heading text-lg">
+          {documentType === undefined ? 'Catalog' : `Catalog: ${documentType || 'ERASED'}`}
+        </span>
+      }
+    >
       <Catalog
         autofocus={!context.restored}
         documentTypes={documentType === undefined ? undefined : [documentType]}

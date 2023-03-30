@@ -9,12 +9,7 @@ type Props = {
 };
 export function ScrapeResultCard({ url, ids }: Props) {
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        left={<span className="section-heading text-lg">Scrape result</span>}
-        right={<CardContainer.CloseButton />}
-      />
-
+    <CardContainer leftToolbar={<span className="section-heading text-lg">Scrape result</span>}>
       <p className="mb-8">
         <div className="font-semibold text-sky-800 uppercase mb-2">Original url</div>
         <Link url={url}>{url}</Link>

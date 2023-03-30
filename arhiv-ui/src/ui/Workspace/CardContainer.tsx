@@ -8,9 +8,19 @@ import { useCardContext } from './workspace-reducer';
 
 type CardContainerProps = {
   children: JSXChildren;
+  leftToolbar?: JSXChildren;
+  rightToolbar?: JSXChildren;
+  skipBack?: boolean;
+  skipClose?: boolean;
 };
-export function CardContainer({ children }: CardContainerProps) {
-  const { id, restored } = useCardContext();
+export function CardContainer({
+  children,
+  leftToolbar,
+  rightToolbar,
+  skipBack,
+  skipClose,
+}: CardContainerProps) {
+  const { id, restored, hasStackedCards, popStack, close } = useCardContext();
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
@@ -31,48 +41,38 @@ export function CardContainer({ children }: CardContainerProps) {
   return (
     <SuspenseBoundary fallback={fallback}>
       <div className="card-container" ref={setEl}>
-        <div className="px-4 pb-6 relative">{children}</div>
+        <div className="px-4 pb-6 relative">
+          <div className="flex items-center gap-4 bg-white/95 sticky inset-x-0 top-0 z-10 -mx-4 px-4 py-2 mb-4">
+            <div className="flex items-center gap-4 justify-start grow">{leftToolbar}</div>
+
+            <div className="flex items-center gap-1 justify-end grow">
+              {hasStackedCards && !skipBack && (
+                <IconButton
+                  icon="arrow-left"
+                  size="lg"
+                  title="Go back"
+                  onClick={popStack}
+                  className="relative right-2"
+                />
+              )}
+
+              {rightToolbar}
+
+              {!skipClose && (
+                <IconButton
+                  icon="x"
+                  size="lg"
+                  title="Close"
+                  onClick={close}
+                  className="relative left-1"
+                />
+              )}
+            </div>
+          </div>
+
+          {children}
+        </div>
       </div>
     </SuspenseBoundary>
   );
 }
-
-type TopbarProps = {
-  left?: JSXChildren;
-  right?: JSXChildren;
-  skipBack?: boolean;
-};
-CardContainer.Topbar = function Topbar({ left, right, skipBack }: TopbarProps) {
-  const { hasStackedCards, popStack } = useCardContext();
-
-  return (
-    <div className="flex items-center gap-4 bg-white/95 sticky inset-x-0 top-0 z-10 -mx-4 px-4 py-2 mb-4">
-      <div className="flex items-center gap-4 justify-start grow">{left}</div>
-
-      <div className="flex items-center gap-1 justify-end grow">
-        {hasStackedCards && !skipBack && (
-          <IconButton
-            icon="arrow-left"
-            size="lg"
-            title="Go back"
-            onClick={popStack}
-            className="relative right-2"
-          />
-        )}
-        {right}
-      </div>
-    </div>
-  );
-};
-
-CardContainer.CloseButton = function CloseButton() {
-  const context = useCardContext();
-
-  const onClose = () => {
-    context.close();
-  };
-
-  return (
-    <IconButton icon="x" size="lg" title="Close" onClick={onClose} className="relative left-1" />
-  );
-};

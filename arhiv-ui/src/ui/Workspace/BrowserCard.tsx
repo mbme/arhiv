@@ -12,12 +12,7 @@ export function BrowserCard() {
   };
 
   return (
-    <CardContainer>
-      <CardContainer.Topbar
-        left={<span className="section-heading text-lg">Browser</span>}
-        right={<CardContainer.CloseButton />}
-      />
-
+    <CardContainer leftToolbar={<span className="section-heading text-lg">Browser</span>}>
       <div className="flex justify-around mt-8">
         <section>
           <h1 className="section-heading ml-4">Documents</h1>

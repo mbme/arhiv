@@ -160,9 +160,10 @@ export function DocumentField({
     <div
       className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
         'has-errors': errors.length > 0,
+        'hidden': disabled,
       })}
     >
-      <label hidden={disabled} ref={labelRef} htmlFor={id}>
+      <label ref={labelRef} htmlFor={id}>
         <h5 className="form-field-heading mr-8 relative">
           {field.name}
           {field.mandatory && (

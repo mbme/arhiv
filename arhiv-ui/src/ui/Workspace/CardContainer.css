@@ -1,5 +1,21 @@
 @layer components {
   .card-container {
-    @apply var-card-width min-h-[50%] max-h-full overflow-auto shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity custom-scrollbar;
+    @apply var-card-width min-h-[50%] max-h-full overflow-hidden shrink-0 grow-0 bg-white drop-shadow relative snap-center transition-opacity;
+  }
+
+  .card-content {
+    @apply overflow-auto custom-scrollbar px-4 pb-6;
+  }
+
+  .card-toolbar {
+    @apply flex items-center gap-4 bg-white/95 px-4 py-2;
+
+    & .card-toolbar-left {
+      @apply flex items-center gap-4 justify-start grow;
+    }
+
+    & .card-toolbar-right {
+      @apply flex items-center gap-1 justify-end grow;
+    }
   }
 }

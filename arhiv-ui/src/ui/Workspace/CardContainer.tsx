@@ -40,36 +40,35 @@ export function CardContainer({
 
   return (
     <SuspenseBoundary fallback={fallback}>
-      <div className="card-container" ref={setEl}>
-        <div className="px-4 pb-6 relative">
-          <div className="flex items-center gap-4 bg-white/95 sticky inset-x-0 top-0 z-10 -mx-4 px-4 py-2 mb-4">
-            <div className="flex items-center gap-4 justify-start grow">{leftToolbar}</div>
+      <div className="card-container flex flex-col">
+        <div className="card-toolbar">
+          <div className="card-toolbar-left">{leftToolbar}</div>
+          <div className="card-toolbar-right">
+            {hasStackedCards && !skipBack && (
+              <IconButton
+                icon="arrow-left"
+                size="lg"
+                title="Go back"
+                onClick={popStack}
+                className="relative right-2"
+              />
+            )}
 
-            <div className="flex items-center gap-1 justify-end grow">
-              {hasStackedCards && !skipBack && (
-                <IconButton
-                  icon="arrow-left"
-                  size="lg"
-                  title="Go back"
-                  onClick={popStack}
-                  className="relative right-2"
-                />
-              )}
+            {rightToolbar}
 
-              {rightToolbar}
-
-              {!skipClose && (
-                <IconButton
-                  icon="x"
-                  size="lg"
-                  title="Close"
-                  onClick={close}
-                  className="relative left-1"
-                />
-              )}
-            </div>
+            {!skipClose && (
+              <IconButton
+                icon="x"
+                size="lg"
+                title="Close"
+                onClick={close}
+                className="relative left-1"
+              />
+            )}
           </div>
+        </div>
 
+        <div className="card-content" ref={setEl}>
           {children}
         </div>
       </div>

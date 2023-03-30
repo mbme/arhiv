@@ -19,7 +19,7 @@ type DropdownMenuProps = {
 
 export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProps) {
   return (
-    <Menu as="div" className="relative">
+    <Menu as="div" className="relative z-10">
       {({ open }) => (
         <>
           <Menu.Button

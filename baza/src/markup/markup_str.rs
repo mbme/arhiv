@@ -7,6 +7,8 @@ use pulldown_cmark::{
 };
 use serde::Serialize;
 
+use rs_utils::create_byte_pos_to_char_pos_map;
+
 use super::utils::extract_id;
 use crate::entities::*;
 
@@ -53,7 +55,24 @@ impl<'a> MarkupStr<'a> {
     pub fn get_ast(&self) -> Result<MarkupElement<'_>> {
         let mut stack: Vec<MarkupElement<'_>> = vec![MarkupElement::Document { children: vec![] }];
 
-        for (event, range) in self.parse().into_offset_iter() {
+        let byte_pos_to_char_pos_map = create_byte_pos_to_char_pos_map(&self.0);
+
+        for (event, byte_range) in self.parse().into_offset_iter() {
+            let range = Range {
+                start: *byte_pos_to_char_pos_map
+                    .get(&byte_range.start)
+                    .context(format!(
+                        "failed to convert range start {} to char",
+                        byte_range.start
+                    ))?,
+                end: *byte_pos_to_char_pos_map
+                    .get(&byte_range.end)
+                    .context(format!(
+                        "failed to convert range end {} to char",
+                        byte_range.end
+                    ))?,
+            };
+
             match event {
                 Event::Text(value) => {
                     stack

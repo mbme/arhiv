@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use base64::{engine, Engine};
 
@@ -73,6 +75,23 @@ pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
         .context("Failed to decode base64 string")
 }
 
+pub fn create_byte_pos_to_char_pos_map(value: &str) -> HashMap<usize, usize> {
+    let mut map = HashMap::new();
+
+    let mut byte_index = 0;
+    let mut char_index = 0;
+    for char in value.chars() {
+        map.insert(byte_index, char_index);
+
+        byte_index += char.len_utf8();
+        char_index += 1;
+    }
+
+    map.insert(value.len(), char_index);
+
+    map
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,5 +114,26 @@ mod tests {
         assert_eq!(capitalize("123"), "123");
         assert_eq!(capitalize("Test"), "Test");
         assert_eq!(capitalize("test"), "Test");
+    }
+
+    #[test]
+    fn test_create_byte_pos_to_char_pos_map() {
+        {
+            let map = create_byte_pos_to_char_pos_map("test");
+            assert_eq!(*map.get(&0).unwrap(), 0);
+            assert_eq!(*map.get(&1).unwrap(), 1);
+            assert_eq!(*map.get(&2).unwrap(), 2);
+            assert_eq!(*map.get(&3).unwrap(), 3);
+            assert_eq!(*map.get(&4).unwrap(), 4);
+        }
+
+        {
+            let map = create_byte_pos_to_char_pos_map("тест");
+            assert_eq!(*map.get(&0).unwrap(), 0);
+            assert_eq!(*map.get(&2).unwrap(), 1);
+            assert_eq!(*map.get(&4).unwrap(), 2);
+            assert_eq!(*map.get(&6).unwrap(), 3);
+            assert_eq!(*map.get(&8).unwrap(), 4);
+        }
     }
 }

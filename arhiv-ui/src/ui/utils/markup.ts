@@ -15,3 +15,23 @@ export function createLink(url: string, description: string, preview = false) {
 
   return `[${description}](${url})`;
 }
+
+export function getLineAt(value: string, pos: number): string {
+  if (pos < 0 || pos >= value.length) {
+    throw new Error(`wrong pos: ${pos}`);
+  }
+
+  let lineStart = value.lastIndexOf('\n', pos);
+  if (lineStart === -1) {
+    lineStart = 0;
+  } else {
+    lineStart += 1;
+  }
+
+  let lineEnd = value.indexOf('\n', pos + 1);
+  if (lineEnd === -1) {
+    lineEnd = value.length;
+  }
+
+  return value.slice(lineStart, lineEnd);
+}

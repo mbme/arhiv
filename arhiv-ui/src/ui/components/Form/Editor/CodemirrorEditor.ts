@@ -156,6 +156,40 @@ class CodemirrorEditor {
     this.editor.dispatch(transaction);
   }
 
+  getFirstVisiblePos(viewport: HTMLElement) {
+    const { contentHeight } = this.editor;
+
+    const PADDING_TOP_PX = 5;
+    const MIN_LINE_HEIGHT_PX = 12;
+
+    const documentTop =
+      this.editor.documentTop - viewport.getBoundingClientRect().top - PADDING_TOP_PX;
+
+    if (documentTop >= 0) {
+      return undefined;
+    }
+
+    if (documentTop + contentHeight <= 0) {
+      return undefined;
+    }
+
+    const offset = -documentTop;
+
+    let lineBlock = this.editor.lineBlockAtHeight(offset);
+    if (lineBlock.bottom - offset < MIN_LINE_HEIGHT_PX) {
+      lineBlock = this.editor.lineBlockAtHeight(lineBlock.bottom + MIN_LINE_HEIGHT_PX);
+    }
+
+    // point in the center of the line
+    return Math.round((lineBlock.from + lineBlock.to) / 2);
+  }
+
+  scrollToPos(pos: number) {
+    this.editor.dispatch({
+      effects: [EditorView.scrollIntoView(pos, { y: 'start' })],
+    });
+  }
+
   destroy() {
     this.editor.destroy();
   }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { SuspenseBoundary } from 'components/SuspenseBoundary';
+import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { useCardContext } from './workspace-reducer';
 
 type CardContainerProps = {
@@ -68,7 +70,7 @@ export function CardContainer({
           </div>
         </div>
 
-        <div className="card-content" ref={setEl}>
+        <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
           {children}
         </div>
       </div>

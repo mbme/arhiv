@@ -1,13 +1,14 @@
 import { startTransition, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
-import { useUpdateEffect } from 'utils/hooks';
+import { useImmediateEffect, useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { canPreview } from 'components/Ref';
-import { Markup } from 'components/Markup';
+import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
+import { FORM_VIEWPORT_CLASSNAME } from '../Form';
 
 type Props = {
   id?: string;
@@ -33,6 +34,7 @@ export function Editor({
   const [preview, setPreview] = useState(defaultPreview);
 
   const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
+  const markupRef = useRef<MarkupRef | null>(null);
   const [editor, setEditor] = useState<CodemirrorEditor>();
 
   useEffect(() => {
@@ -99,6 +101,45 @@ export function Editor({
     };
   }, [defaultPreview]);
 
+  const posRef = useRef<number | undefined>(undefined);
+  useImmediateEffect(() => {
+    const fieldEl = fieldRef.current;
+    if (!fieldEl) {
+      throw new Error('field is missing');
+    }
+
+    const viewportEl = fieldEl.closest<HTMLElement>(`.${FORM_VIEWPORT_CLASSNAME}`);
+    if (!viewportEl) {
+      throw new Error('form viewport element is missing');
+    }
+
+    if (preview) {
+      posRef.current = editor?.getFirstVisiblePos(viewportEl);
+      console.debug('first visible pos from editor', posRef.current);
+    } else {
+      const markupEl = markupRef.current;
+      if (!markupEl) {
+        throw new Error('markup element is missing');
+      }
+
+      posRef.current = markupEl.getFirstVisiblePos(viewportEl);
+      console.debug('first visible pos from preview', posRef.current);
+    }
+  }, [preview]);
+
+  useEffect(() => {
+    const pos = posRef.current;
+    if (!pos) {
+      return;
+    }
+
+    if (preview) {
+      markupRef.current?.scrollToPos(pos);
+    } else {
+      editor?.scrollToPos(pos);
+    }
+  }, [preview, editor]);
+
   return (
     <div className={cx('editor-container group', className)}>
       <FormField
@@ -118,7 +159,7 @@ export function Editor({
         }}
       />
 
-      {preview && <Markup markup={editor?.getValue() ?? defaultValue} />}
+      {preview && <Markup ref={markupRef} markup={editor?.getValue() ?? defaultValue} />}
 
       {editor && (
         <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">

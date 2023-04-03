@@ -1,8 +1,8 @@
-import { createElement } from 'react';
+import { createElement, forwardRef, useImperativeHandle, useRef } from 'react';
 import { cx, Obj } from 'utils';
 import { DocumentId, MarkupElement, throwBadMarkupElement, Range } from 'dto';
 import { useSuspenseQuery } from 'utils/suspense';
-import { JSXElement } from 'utils/jsx';
+import { JSXElement, JSXRef } from 'utils/jsx';
 import { Link } from 'components/Link';
 import { RefContainer } from 'components/Ref';
 
@@ -27,11 +27,13 @@ function rangeToString(range: Range): string {
   return `${range.start}-${range.end}`;
 }
 
-function markupElementToJSX(el: MarkupElement): JSXElement {
+function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JSXElement {
   switch (el.typeName) {
     case 'Document': {
       return (
-        <div className="markup w-full">{el.children.map((child) => markupElementToJSX(child))}</div>
+        <div className="markup w-full" ref={ref}>
+          {el.children.map((child) => markupElementToJSX(child))}
+        </div>
       );
     }
     case 'Text': {
@@ -303,12 +305,96 @@ function markupElementToJSX(el: MarkupElement): JSXElement {
   throwBadMarkupElement(el);
 }
 
+function getFirstVisiblePosInMarkup(
+  viewportEl: HTMLElement,
+  markupEl: HTMLElement
+): number | undefined {
+  const MIN_EL_HEIGHT_PX = 12;
+
+  const viewportBounding = viewportEl.getBoundingClientRect();
+  const viewportTop = viewportBounding.top;
+  const viewportBottom = viewportTop + viewportBounding.height;
+
+  for (const el of markupEl.querySelectorAll<HTMLElement>('[data-range-start]')) {
+    const elBounding = el.getBoundingClientRect();
+    const elTop = elBounding.top;
+    const elBottom = elTop + elBounding.height;
+
+    if (elBottom - MIN_EL_HEIGHT_PX > viewportTop && elTop + MIN_EL_HEIGHT_PX < viewportBottom) {
+      // this might be a block element, so lets try to find its visible child
+      return (
+        getFirstVisiblePosInMarkup(viewportEl, el) ?? Number.parseInt(el.dataset.rangeStart!, 10)
+      );
+    }
+  }
+
+  return undefined;
+}
+
+function scrollFirstVisiblePosIntoView(markupEl: HTMLElement, pos: number) {
+  let minRangeEl: HTMLElement | null = null;
+  let minRangeWidth: number | null = null;
+
+  for (const el of markupEl.querySelectorAll<HTMLElement>('[data-range-start]')) {
+    const rangeStart = Number.parseInt(el.dataset.rangeStart!, 10);
+    const rangeEnd = Number.parseInt(el.dataset.rangeEnd!, 10);
+
+    if (pos < rangeStart || pos >= rangeEnd) {
+      continue;
+    }
+
+    const rangeWidth = rangeEnd - rangeStart;
+    if (!minRangeWidth || rangeWidth < minRangeWidth) {
+      minRangeEl = el;
+      minRangeWidth = rangeWidth;
+    }
+  }
+
+  if (!minRangeEl) {
+    throw new Error(`can't find range that includes pos ${pos}`);
+  }
+
+  minRangeEl.scrollIntoView({
+    block: 'start',
+  });
+}
+
+export type MarkupRef = {
+  getFirstVisiblePos(viewport: HTMLElement): number | undefined;
+  scrollToPos(pos: number): void;
+};
+
 type MarkupProps = {
   markup: string;
 };
 
-export function Markup({ markup }: MarkupProps) {
+export const Markup = forwardRef<MarkupRef, MarkupProps>(({ markup }, innerRef) => {
   const { value } = useSuspenseQuery({ typeName: 'ParseMarkup', markup });
 
-  return markupElementToJSX(value.ast);
-}
+  const markupRef = useRef<HTMLDivElement | null>(null);
+
+  useImperativeHandle(
+    innerRef,
+    () => ({
+      getFirstVisiblePos(viewport) {
+        const markupEl = markupRef.current;
+        if (!markupEl) {
+          throw new Error('Markup el is missing');
+        }
+
+        return getFirstVisiblePosInMarkup(viewport, markupEl);
+      },
+      scrollToPos(pos) {
+        const markupEl = markupRef.current;
+        if (!markupEl) {
+          throw new Error('Markup el is missing');
+        }
+
+        scrollFirstVisiblePosIntoView(markupEl, pos);
+      },
+    }),
+    []
+  );
+
+  return markupElementToJSX(value.ast, markupRef);
+});

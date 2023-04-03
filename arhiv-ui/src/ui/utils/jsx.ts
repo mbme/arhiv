@@ -9,11 +9,11 @@ import {
 } from 'react';
 
 export type JSXChildren = ReactNode;
-export type JSXRef<T> = RefCallback<T> | MutableRefObject<T | null> | null;
+export type JSXRef<T> = RefCallback<T> | MutableRefObject<T | null>;
 export type JSXElement = ReactElement | null;
 export type StateUpdater<T> = Dispatch<SetStateAction<T>>;
 
-export function setJSXRef<T>(ref: JSXRef<T>, value: T | null) {
+export function setJSXRef<T>(ref: JSXRef<T> | null, value: T | null) {
   if (ref instanceof Function) {
     ref(value);
   } else if (ref) {

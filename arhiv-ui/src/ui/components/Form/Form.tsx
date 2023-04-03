@@ -3,6 +3,8 @@ import { JSONObj, formDataToObject, cx } from 'utils';
 import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
+export const FORM_VIEWPORT_CLASSNAME = 'form-viewport';
+
 function collectValues(form: HTMLFormElement): JSONObj {
   const result: JSONObj = {};
 

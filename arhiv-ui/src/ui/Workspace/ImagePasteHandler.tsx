@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
+import { DocumentId } from 'dto';
 import { ImageUploadDialog } from 'components/ImageUploadDialog';
-import { WorkspaceDispatch } from './workspace-reducer';
 
 type Props = {
-  dispatch: WorkspaceDispatch;
+  onSuccess: (documentId: DocumentId) => void;
 };
-export function ImagePasteHandler({ dispatch }: Props) {
+export function ImagePasteHandler({ onSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
 
   // TODO: handle drop events https://www.smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
@@ -36,7 +36,7 @@ export function ImagePasteHandler({ dispatch }: Props) {
       file={file}
       onSuccess={(documentId) => {
         setFile(null);
-        dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+        onSuccess(documentId);
       }}
       onCancel={() => setFile(null)}
     />

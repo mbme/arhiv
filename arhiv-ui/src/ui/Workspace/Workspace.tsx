@@ -129,7 +129,11 @@ export function Workspace() {
             />
           )}
 
-          <ImagePasteHandler dispatch={dispatch} />
+          <ImagePasteHandler
+            onSuccess={(documentId) => {
+              dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+            }}
+          />
 
           <DropdownMenu
             align="bottom-right"

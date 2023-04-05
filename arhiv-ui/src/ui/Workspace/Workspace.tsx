@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
@@ -9,6 +9,7 @@ import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { RefClickHandlerContext } from 'components/Ref';
 import {
   Card,
+  useWorkspaceActions,
   CardContextProvider,
   throwBadCardVariant,
   useWorkspaceReducer,
@@ -28,30 +29,22 @@ export function Workspace() {
 
   const [{ cards }, dispatch] = useWorkspaceReducer();
 
+  const { openDocument, open, closeAll } = useWorkspaceActions(dispatch);
+
   useEffect(() => {
     const documentId = getQueryParam('id');
 
     if (documentId) {
-      dispatch({
-        type: 'open',
-        newCard: { variant: 'document', documentId: documentId as DocumentId },
-        skipDocumentIfAlreadyOpen: true,
-      });
+      openDocument(documentId as DocumentId, true);
     }
-  }, [dispatch]);
+  }, [openDocument]);
 
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
-  const refClickHandler = useCallback(
-    (documentId: DocumentId) =>
-      dispatch({ type: 'open', newCard: { variant: 'document', documentId } }),
-    [dispatch]
-  );
-
   return (
-    <RefClickHandlerContext.Provider value={refClickHandler}>
+    <RefClickHandlerContext.Provider value={openDocument}>
       <div
         className="flex flex-row items-start gap-6 h-full overflow-x-auto pt-12 pb-2 px-8 scroll-smooth custom-scrollbar"
         ref={setWrapperEl}
@@ -72,7 +65,7 @@ export function Workspace() {
           {showNewDocumentDialog && (
             <NewDocumentDialog
               onNewDocument={(documentType) => {
-                dispatch({ type: 'open', newCard: { variant: 'new-document', documentType } });
+                open({ variant: 'new-document', documentType });
                 setShowNewDocumentDialog(false);
               }}
               onScrape={() => {
@@ -92,7 +85,7 @@ export function Workspace() {
           <Button
             variant="text"
             leadingIcon="search-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'catalog' } })}
+            onClick={() => open({ variant: 'catalog' })}
           >
             Search
           </Button>
@@ -100,7 +93,7 @@ export function Workspace() {
           <Button
             variant="text"
             leadingIcon="browse-catalog"
-            onClick={() => dispatch({ type: 'open', newCard: { variant: 'browser' } })}
+            onClick={() => open({ variant: 'browser' })}
           >
             Browse
           </Button>
@@ -108,7 +101,7 @@ export function Workspace() {
           {showScraperDialog && (
             <ScraperDialog
               onSuccess={(url, ids) => {
-                dispatch({ type: 'open', newCard: { variant: 'scrape-result', url, ids } });
+                open({ variant: 'scrape-result', url, ids });
                 setShowScraperDialog(false);
               }}
               onCancel={() => {
@@ -120,7 +113,7 @@ export function Workspace() {
           {showFilePickerDialog && (
             <FilePickerDialog
               onAttachmentCreated={(documentId) => {
-                dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+                open({ variant: 'document', documentId });
                 setShowFilePickerDialog(false);
               }}
               onCancel={() => {
@@ -131,7 +124,7 @@ export function Workspace() {
 
           <ImagePasteHandler
             onSuccess={(documentId) => {
-              dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
+              open({ variant: 'document', documentId });
             }}
           />
 
@@ -141,7 +134,7 @@ export function Workspace() {
               {
                 text: 'Status',
                 icon: 'info',
-                onClick: () => dispatch({ type: 'open', newCard: { variant: 'status' } }),
+                onClick: () => open({ variant: 'status' }),
               },
 
               {
@@ -154,11 +147,7 @@ export function Workspace() {
               {
                 text: 'Close cards',
                 icon: 'x',
-                onClick: () => {
-                  dispatch({
-                    type: 'close-all',
-                  });
-                },
+                onClick: closeAll,
               },
             ]}
           />

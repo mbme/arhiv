@@ -5,10 +5,10 @@ import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
 export function BrowserCard() {
-  const context = useCardContext();
+  const { card, actions } = useCardContext();
 
   const openCatalog = (documentType?: DocumentType) => {
-    context.replace({ variant: 'catalog', documentType });
+    actions.replace(card.id, { variant: 'catalog', documentType });
   };
 
   return (

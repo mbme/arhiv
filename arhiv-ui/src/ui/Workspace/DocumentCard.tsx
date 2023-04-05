@@ -21,7 +21,7 @@ type Props = {
 };
 
 export function DocumentCard({ documentId }: Props) {
-  const context = useCardContext();
+  const { actions } = useCardContext();
 
   const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
 
@@ -56,7 +56,7 @@ export function DocumentCard({ documentId }: Props) {
               text: `Clone ${document.documentType}`,
               icon: 'duplicate-document',
               onClick: () => {
-                context.open({
+                actions.open({
                   variant: 'new-document',
                   documentType: document.documentType,
                   subtype: document.subtype,

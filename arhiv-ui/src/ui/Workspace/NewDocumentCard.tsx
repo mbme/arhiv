@@ -16,12 +16,12 @@ export function NewDocumentCard({
   subtype = DEFAULT_SUBTYPE,
   data = EMPTY_DATA,
 }: NewDocumentCardProps) {
-  const cardContext = useCardContext();
+  const { card, actions } = useCardContext();
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const onCancel = () => {
-    cardContext.close();
+    actions.close(card.id);
   };
 
   return (
@@ -67,8 +67,8 @@ export function NewDocumentCard({
             return submitResult.errors;
           }
 
-          cardContext.unlock();
-          cardContext.replace({ variant: 'document', documentId: submitResult.id! });
+          actions.unlock(card.id);
+          actions.replace(card.id, { variant: 'document', documentId: submitResult.id! });
         }}
       />
     </CardContainer>

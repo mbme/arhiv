@@ -1,4 +1,12 @@
-import { useContext, useEffect, useReducer, useRef, createContext } from 'react';
+import {
+  useEffect,
+  useReducer,
+  createContext,
+  startTransition,
+  useRef,
+  useContext,
+  useMemo,
+} from 'react';
 import { newId, getSessionValue, setSessionValue } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
@@ -32,8 +40,10 @@ type CardVariant =
       documentId: DocumentId;
     };
 
+export type CardId = string;
+
 export type Card = CardVariant & {
-  id: string;
+  id: CardId;
   previousCard?: CardVariant;
   restored?: boolean;
 };
@@ -60,17 +70,21 @@ type ActionType =
     }
   | {
       type: 'close';
-      id: string;
+      id: CardId;
     }
   | {
       type: 'replace';
-      id: string;
+      id: CardId;
       newCard: CardVariant;
       stackPrevious?: boolean;
     }
   | {
+      type: 'pop';
+      id: CardId;
+    }
+  | {
       type: 'update';
-      id: string;
+      id: CardId;
       props: UpdateActionProps;
     }
   | {
@@ -78,11 +92,11 @@ type ActionType =
     }
   | {
       type: 'lock-card';
-      id: string;
+      id: CardId;
     }
   | {
       type: 'unlock-card';
-      id: string;
+      id: CardId;
     };
 
 type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
@@ -91,7 +105,7 @@ export type WorkspaceDispatch = (action: ActionType) => void;
 
 type WorkspaceState = {
   cards: Card[];
-  lockedCardIds: Set<string>;
+  lockedCardIds: Set<CardId>;
 };
 function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceState {
   switch (action.type) {
@@ -139,6 +153,30 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
 
       const newCards = [...state.cards];
       newCards[pos] = createCard(action.newCard, prevCard);
+
+      return {
+        ...state,
+        cards: newCards,
+      };
+    }
+
+    case 'pop': {
+      if (!cardUpdateConfirmed(state, action.id)) {
+        return state;
+      }
+
+      const pos = state.cards.findIndex((card) => card.id === action.id);
+      if (pos === -1) {
+        throw new Error(`can't pop: can't find card with id ${action.id}`);
+      }
+      const card = state.cards[pos];
+
+      if (!card.previousCard) {
+        throw new Error("can't pop: there is no previousCard");
+      }
+
+      const newCards = [...state.cards];
+      newCards[pos] = createCard(card.previousCard);
 
       return {
         ...state,
@@ -200,7 +238,7 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
   }
 }
 
-function cardUpdateConfirmed(state: WorkspaceState, id: string) {
+function cardUpdateConfirmed(state: WorkspaceState, id: CardId) {
   return (
     !state.lockedCardIds.has(id) ||
     window.confirm('The card may contain unsaved changes. Continue?')
@@ -227,6 +265,95 @@ export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
   }, [state.cards]);
 
   return [state, dispatch];
+}
+
+export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
+  return useMemo(
+    () => ({
+      close: (id: CardId) => {
+        startTransition(() => {
+          dispatch({
+            type: 'close',
+            id,
+          });
+        });
+      },
+      closeAll: () => {
+        startTransition(() => {
+          dispatch({
+            type: 'close-all',
+          });
+        });
+      },
+      replace: (id: CardId, newCard: CardVariant) => {
+        startTransition(() => {
+          dispatch({
+            type: 'replace',
+            id,
+            newCard,
+          });
+        });
+      },
+      pushStack: (id: CardId, newCard: CardVariant) => {
+        startTransition(() => {
+          dispatch({
+            type: 'replace',
+            id,
+            newCard,
+            stackPrevious: true,
+          });
+        });
+      },
+      popStack: (id: CardId) => {
+        startTransition(() => {
+          dispatch({
+            type: 'pop',
+            id,
+          });
+        });
+      },
+      update: (id: CardId, props: UpdateActionProps) => {
+        dispatch({
+          type: 'update',
+          id,
+          props,
+        });
+      },
+      open: (newCard: CardVariant) => {
+        startTransition(() => {
+          dispatch({
+            type: 'open',
+            newCard,
+          });
+        });
+      },
+
+      openDocument: (documentId: DocumentId, skipDocumentIfAlreadyOpen = false) => {
+        startTransition(() => {
+          dispatch({
+            type: 'open',
+            newCard: { variant: 'document', documentId },
+            skipDocumentIfAlreadyOpen,
+          });
+        });
+      },
+
+      lock: (id: CardId) => {
+        dispatch({
+          type: 'lock-card',
+          id,
+        });
+      },
+
+      unlock: (id: CardId) => {
+        dispatch({
+          type: 'unlock-card',
+          id,
+        });
+      },
+    }),
+    [dispatch]
+  );
 }
 
 type CardContextType = {
@@ -263,89 +390,26 @@ export function useCardContext() {
   const { card, dispatch } = context;
 
   return {
-    id: card.id,
-    close: () => {
-      dispatch({
-        type: 'close',
-        id: card.id,
-      });
-    },
-    replace: (newCard: CardVariant) => {
-      dispatch({
-        type: 'replace',
-        id: card.id,
-        newCard,
-      });
-    },
-    hasStackedCards: Boolean(card.previousCard),
-    pushStack: (newCard: CardVariant) => {
-      dispatch({
-        type: 'replace',
-        id: card.id,
-        newCard,
-        stackPrevious: true,
-      });
-    },
-    popStack: () => {
-      const newCard = card.previousCard;
-      if (!newCard) {
-        throw new Error("can't pop: there is no previousCard");
-      }
-
-      dispatch({
-        type: 'replace',
-        id: card.id,
-        newCard,
-      });
-    },
-    update: (props: UpdateActionProps) => {
-      dispatch({
-        type: 'update',
-        id: card.id,
-        props,
-      });
-    },
-    open: (newCard: CardVariant) => {
-      dispatch({
-        type: 'open',
-        newCard,
-      });
-    },
-
-    openDocument: (documentId: DocumentId) => {
-      dispatch({ type: 'open', newCard: { variant: 'document', documentId } });
-    },
-
-    lock: () => {
-      dispatch({
-        type: 'lock-card',
-        id: card.id,
-      });
-    },
-
-    unlock: () => {
-      dispatch({
-        type: 'unlock-card',
-        id: card.id,
-      });
-    },
-
-    restored: Boolean(card.restored),
+    card,
+    actions: useWorkspaceActions(dispatch),
   };
 }
 
-export function useCardLock(lock: boolean) {
-  const context = useCardContext();
+export function useCardLock(lockCard: boolean) {
+  const {
+    card,
+    actions: { lock, unlock },
+  } = useCardContext();
 
   useEffect(() => {
-    if (!lock) {
+    if (!lockCard) {
       return;
     }
 
-    context.lock();
+    lock(card.id);
 
     return () => {
-      context.unlock();
+      unlock(card.id);
     };
-  }, [lock]);
+  }, [lockCard, card.id]);
 }

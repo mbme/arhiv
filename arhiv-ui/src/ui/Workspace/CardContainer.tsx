@@ -22,7 +22,10 @@ export function CardContainer({
   skipBack,
   skipClose,
 }: CardContainerProps) {
-  const { id, restored, hasStackedCards, popStack, close } = useCardContext();
+  const { card, actions } = useCardContext();
+
+  const restored = card.restored;
+  const hasStackedCards = Boolean(card.previousCard);
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
@@ -32,7 +35,7 @@ export function CardContainer({
     }
   }, [el, restored]);
 
-  useScrollRestoration(el, `workspace-card-${id}`);
+  useScrollRestoration(el, `workspace-card-${card.id}`);
 
   const fallback = (
     <div className="card-container flex items-center justify-center">
@@ -51,7 +54,7 @@ export function CardContainer({
                 icon="arrow-left"
                 size="lg"
                 title="Go back"
-                onClick={popStack}
+                onClick={() => actions.popStack(card.id)}
                 className="relative right-2"
               />
             )}
@@ -63,7 +66,7 @@ export function CardContainer({
                 icon="x"
                 size="lg"
                 title="Close"
-                onClick={close}
+                onClick={() => actions.close(card.id)}
                 className="relative left-1"
               />
             )}

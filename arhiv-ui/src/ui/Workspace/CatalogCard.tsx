@@ -1,4 +1,3 @@
-import { startTransition } from 'react';
 import { DocumentId, DocumentType } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
 import { useCardContext } from './workspace-reducer';
@@ -10,20 +9,18 @@ type Props = {
   documentType?: DocumentType;
 };
 export function CatalogCard({ query, page, documentType }: Props) {
-  const context = useCardContext();
+  const { card, actions } = useCardContext();
 
   const updateQuery = (query: string) => {
-    context.update({ query });
+    actions.update(card.id, { query });
   };
 
   const updatePage = (page: number) => {
-    context.update({ page });
+    actions.update(card.id, { page });
   };
 
   const updateDocumentId = (documentId: DocumentId) => {
-    startTransition(() => {
-      context.pushStack({ variant: 'document', documentId });
-    });
+    actions.pushStack(card.id, { variant: 'document', documentId });
   };
 
   return (
@@ -35,7 +32,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
       }
     >
       <Catalog
-        autofocus={!context.restored}
+        autofocus={!card.restored}
         documentTypes={documentType === undefined ? undefined : [documentType]}
         initialQuery={query}
         initialPage={page}

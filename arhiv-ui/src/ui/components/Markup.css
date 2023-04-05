@@ -1,17 +1,119 @@
 @layer components {
   .markup {
-    @apply prose;
-
-    & h1 {
-      @apply text-2xl;
+    & :first-child {
+      margin-top: 0;
     }
 
-    & h2 {
-      @apply text-xl;
+    & :last-child {
+      margin-bottom: 0;
     }
 
-    & :is(h3, h4, h5, h6) {
-      @apply text-lg;
+    & :is(h1, h2, h3, h4, h5, h6) {
+      @apply font-bold mb-2;
+
+      &::before {
+        display: inline;
+      }
+    }
+
+    & h1::before {
+      content: '# ';
+    }
+
+    & h2::before {
+      content: '## ';
+    }
+
+    & h3::before {
+      content: '### ';
+    }
+
+    & h4::before {
+      content: '#### ';
+    }
+
+    & h5::before {
+      content: '##### ';
+    }
+
+    & h6::before {
+      content: '###### ';
+    }
+
+    p {
+      @apply mb-4;
+    }
+
+    ul {
+      @apply ml-6 mb-4 list-disc;
+
+      & > li::marker {
+        @apply text-slate-500;
+      }
+    }
+
+    ol {
+      @apply ml-6 mb-4 list-decimal;
+    }
+
+    li {
+      @apply mb-2;
+
+      & > :is(ul, ol) {
+        @apply mt-2;
+      }
+    }
+
+    blockquote {
+      padding-left: 2ch;
+
+      @apply ml-2 my-4 italic font-medium border-l-2 border-slate-500;
+    }
+
+    hr {
+      @apply my-4;
+    }
+
+    table {
+      @apply mb-2 w-full text-left table-auto;
+
+      thead {
+        @apply border-b;
+
+        th {
+          @apply font-semibold align-bottom px-2 pb-1;
+
+          &:first-child {
+            @apply pl-0;
+          }
+
+          &:last-child {
+            @apply pr-0;
+          }
+        }
+      }
+
+      tbody {
+        tr {
+          @apply border-b;
+
+          &:last-child {
+            @apply border-b-0;
+          }
+        }
+
+        td {
+          @apply align-baseline px-2 py-1;
+
+          &:first-child {
+            @apply pl-0;
+          }
+
+          &:last-child {
+            @apply pr-0;
+          }
+        }
+      }
     }
 
     .RefPreview {

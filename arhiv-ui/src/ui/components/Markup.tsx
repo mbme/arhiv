@@ -183,13 +183,21 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
     }
     case 'Table': {
       // TODO handle alignments
+
+      const head = el.children[0];
+      if (head.typeName !== 'TableHead') {
+        throw new Error(`Expected TableHead, got ${head.typeName}`);
+      }
+
       return (
         <table
           key={rangeToString(el.range)}
           data-range-start={el.range.start}
           data-range-end={el.range.end}
         >
-          {el.children.map((child) => markupElementToJSX(child))}
+          {markupElementToJSX(head)}
+
+          <tbody>{el.children.slice(1).map((child) => markupElementToJSX(child))}</tbody>
         </table>
       );
     }

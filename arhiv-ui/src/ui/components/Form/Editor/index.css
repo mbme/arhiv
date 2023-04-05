@@ -22,7 +22,11 @@
     }
 
     & .cm-content {
-      @apply px-2;
+      @apply pl-1 pr-px;
+    }
+
+    & .cm-lineWrapping {
+      @apply break-all;
     }
 
     & .cm-gutter,

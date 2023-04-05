@@ -16,7 +16,6 @@
     "useDefineForClassFields": false,
 
     "downlevelIteration": true,
-    "keyofStringsOnly": true,
     "noImplicitReturns": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

@@ -1,11 +1,5 @@
 {
   "printWidth": 100,
   "singleQuote": true,
-  "quoteProps": "preserve",
-  "overrides": [
-    {
-      "files": "*.html.tera",
-      "options": { "parser": "html" }
-    }
-  ]
+  "quoteProps": "preserve"
 }

@@ -3,12 +3,12 @@ import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { useImmediateEffect, useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
+import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { canPreview } from 'components/Ref';
 import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';
 import { AddRefButton } from './AddRefButton';
-import { FORM_VIEWPORT_CLASSNAME } from '../Form';
 
 type Props = {
   id?: string;
@@ -35,7 +35,7 @@ export function Editor({
 
   const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
   const markupRef = useRef<MarkupRef | null>(null);
-  const [editor, setEditor] = useState<CodemirrorEditor>();
+  const editorRef = useRef<CodemirrorEditor | null>(null);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -49,14 +49,17 @@ export function Editor({
       },
     });
 
-    setEditor(editor);
+    editorRef.current = editor;
 
     return () => {
+      editorRef.current = null;
+
       editor.destroy();
     };
   }, []);
 
   useEffect(() => {
+    const editor = editorRef.current;
     if (!editor) {
       return;
     }
@@ -64,18 +67,14 @@ export function Editor({
     editor.setDisabled(disabled);
     editor.setReadonly(readonly);
     editor.setPlaceholder(placeholder ?? '');
-  }, [editor, disabled, readonly, placeholder]);
+  }, [disabled, readonly, placeholder]);
 
   // focus editor if editing except when the preview is initially false
   useUpdateEffect(() => {
-    if (!editor) {
-      return;
-    }
-
     if (!preview) {
-      editor.focus();
+      editorRef.current?.focus();
     }
-  }, [editor, preview]);
+  }, [preview]);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -114,7 +113,7 @@ export function Editor({
     }
 
     if (preview) {
-      posRef.current = editor?.getFirstVisiblePos(viewportEl);
+      posRef.current = editorRef.current?.getFirstVisiblePos(viewportEl);
       console.debug('first visible pos from editor', posRef.current);
     } else {
       const markupEl = markupRef.current;
@@ -136,9 +135,9 @@ export function Editor({
     if (preview) {
       markupRef.current?.scrollToPos(pos);
     } else {
-      editor?.scrollToPos(pos);
+      editorRef.current?.scrollToPos(pos);
     }
-  }, [preview, editor]);
+  }, [preview]);
 
   return (
     <div className={cx('editor-container group', className)}>
@@ -152,22 +151,22 @@ export function Editor({
         required={required}
         tabIndex={-1}
         onFocus={() => {
-          editor?.focus();
+          editorRef.current?.focus();
         }}
         onReset={() => {
-          editor?.setValue(defaultValue);
+          editorRef.current?.setValue(defaultValue);
         }}
       />
 
-      {preview && <Markup ref={markupRef} markup={editor?.getValue() ?? defaultValue} />}
-
-      {editor && (
+      {preview ? (
+        <Markup ref={markupRef} markup={editorRef.current?.getValue() ?? defaultValue} />
+      ) : (
         <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
           {!preview && (
             <AddRefButton
               className="bg-indigo-100 drop-shadow-md"
               onDocumentSelected={({ id, documentType, subtype }) => {
-                editor.replaceSelections((value) =>
+                editorRef.current?.replaceSelections((value) =>
                   createLink(createRefUrl(id), value, canPreview(documentType, subtype))
                 );
               }}

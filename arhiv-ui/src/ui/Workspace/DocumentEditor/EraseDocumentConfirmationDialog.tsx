@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { DocumentId, DocumentType } from 'dto';
 import { Callback } from 'utils';
 import { useQuery } from 'utils/hooks';
@@ -20,6 +21,8 @@ export function EraseDocumentConfirmationDialog({
   onErase,
   onCancel,
 }: EraseDocumentButtonProps) {
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
       await RPC.EraseDocument({ id: documentId }, abortSignal);
@@ -41,42 +44,48 @@ export function EraseDocumentConfirmationDialog({
 
   const confirmationText = `erase ${documentType}`;
 
+  const buttons = (
+    <>
+      <Button variant="simple" onClick={hideModal} disabled={inProgress}>
+        Cancel
+      </Button>
+
+      <Button
+        variant="primary"
+        alarming
+        onClick={() => formRef.current?.requestSubmit()}
+        busy={inProgress}
+      >
+        ERASE
+      </Button>
+    </>
+  );
+
   return (
-    <Dialog onHide={hideModal} alarming title={`Erase ${documentType}`}>
+    <Dialog onHide={hideModal} alarming title={`Erase ${documentType}`} buttons={buttons}>
       <form
         className="form"
+        ref={formRef}
         onSubmit={(e) => {
           e.preventDefault();
           triggerRefresh();
         }}
       >
-        <div className="modal-content">
-          Do you really want to erase the {documentType} <b>{title}</b> and its history?
-          <label className="block mt-8">
-            Type <b>{confirmationText}</b> to confirm:
-            <input
-              type="text"
-              autoComplete="off"
-              name="confirmation_text"
-              className="field mt-2"
-              required
-              pattern={confirmationText}
-              defaultValue=""
-              disabled={inProgress}
-            />
-          </label>
-          {error && <QueryError error={error} />}
-        </div>
-
-        <div className="modal-buttons">
-          <Button variant="simple" onClick={hideModal} disabled={inProgress}>
-            Cancel
-          </Button>
-
-          <Button variant="primary" alarming type="submit" busy={inProgress}>
-            ERASE
-          </Button>
-        </div>
+        Do you really want to erase the {documentType} <b>{title}</b> and its history?
+        <label className="block mt-8">
+          Type <b>{confirmationText}</b> to confirm:
+          <input
+            type="text"
+            autoComplete="off"
+            name="confirmation_text"
+            className="field mt-2"
+            required
+            pattern={confirmationText}
+            defaultValue=""
+            disabled={inProgress}
+          />
+        </label>
+        {error && <QueryError error={error} />}
       </form>
     </Dialog>
   );

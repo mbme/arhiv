@@ -36,25 +36,25 @@ export function ImageUploadDialog({ file, onSuccess, onCancel }: Props) {
     }
   };
 
+  const buttons = (
+    <Button type="button" variant="primary" busy={inProgress} onClick={triggerRefresh}>
+      Create attachment
+    </Button>
+  );
+
   return (
-    <Dialog onHide={onHide} title="Upload a file">
-      <div className="modal-content">
+    <Dialog onHide={onHide} title="Upload a file" buttons={buttons}>
+      <div className="flex justify-between mb-2">
         <div className="font-mono">
           {file.name} [{file.type}] <span className="text-gray-500">{formatBytes(file.size)}</span>
         </div>
 
-        <Link url={imgUrl}>
-          <img src={imgUrl} />
-        </Link>
-
-        {error && <QueryError error={error} />}
+        <Link url={imgUrl}>Open in a new tab</Link>
       </div>
 
-      <div className="modal-buttons">
-        <Button type="button" variant="primary" busy={inProgress} onClick={triggerRefresh}>
-          Create attachment
-        </Button>
-      </div>
+      <img src={imgUrl} />
+
+      {error && <QueryError error={error} />}
     </Dialog>
   );
 }

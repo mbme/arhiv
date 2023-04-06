@@ -153,22 +153,31 @@ export function ComponentsDemo() {
         <div>
           <h1>Dialog</h1>
           <div className="examples">
-            <DialogExample buttonText="Dialog with buttons">
-              <div className="modal-content">Hello world!</div>
-              <div className="modal-buttons">
-                <Button variant="simple">Cancel</Button>
-                <Button variant="primary">Test</Button>
-              </div>
+            <DialogExample
+              buttonText="Dialog with buttons"
+              buttons={
+                <>
+                  <Button variant="simple">Cancel</Button>
+                  <Button variant="primary">Test</Button>
+                </>
+              }
+            >
+              Hello world!
             </DialogExample>
 
-            <DialogExample buttonText="Alarming dialog" alarming>
-              <div className="modal-content">Hello world!</div>
-              <div className="modal-buttons">
-                <Button variant="simple">Cancel</Button>
-                <Button variant="primary" alarming>
-                  Test
-                </Button>
-              </div>
+            <DialogExample
+              buttonText="Alarming dialog"
+              alarming
+              buttons={
+                <>
+                  <Button variant="simple">Cancel</Button>
+                  <Button variant="primary" alarming>
+                    Test
+                  </Button>
+                </>
+              }
+            >
+              Hello world!
             </DialogExample>
           </div>
         </div>
@@ -251,8 +260,9 @@ type DialogExampleProps = {
   buttonText: string;
   children: JSXChildren;
   alarming?: boolean;
+  buttons?: JSXChildren;
 };
-function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
+function DialogExample({ buttonText, children, alarming, buttons }: DialogExampleProps) {
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -262,7 +272,12 @@ function DialogExample({ buttonText, children, alarming }: DialogExampleProps) {
       </Button>
 
       {showModal && (
-        <Dialog title="Dialog example" onHide={() => setShowModal(false)} alarming={alarming}>
+        <Dialog
+          title="Dialog example"
+          onHide={() => setShowModal(false)}
+          alarming={alarming}
+          buttons={buttons}
+        >
           {children}
         </Dialog>
       )}

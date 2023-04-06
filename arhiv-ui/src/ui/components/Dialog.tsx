@@ -8,8 +8,9 @@ type DialogProps = {
   alarming?: boolean;
   title: JSXChildren;
   children: JSXChildren;
+  buttons?: JSXChildren;
 };
-export function Dialog({ innerRef, onHide, alarming, title, children }: DialogProps) {
+export function Dialog({ innerRef, onHide, alarming, title, children, buttons }: DialogProps) {
   return (
     <HeadlessDialog ref={innerRef} open static onClose={onHide} className="modal-container">
       <div className="modal-overlay" />
@@ -24,7 +25,9 @@ export function Dialog({ innerRef, onHide, alarming, title, children }: DialogPr
             {title}
           </HeadlessDialog.Title>
 
-          {children}
+          <div className="modal-content">{children}</div>
+
+          {buttons && <div className="modal-buttons">{buttons}</div>}
         </HeadlessDialog.Panel>
       </div>
     </HeadlessDialog>

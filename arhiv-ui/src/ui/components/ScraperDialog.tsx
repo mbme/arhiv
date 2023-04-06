@@ -35,7 +35,7 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
   return (
     <Dialog onHide={onHide} title="Scrape URL">
       <form
-        className="modal-content form"
+        className="form"
         onSubmit={(e) => {
           e.preventDefault();
           triggerRefresh();

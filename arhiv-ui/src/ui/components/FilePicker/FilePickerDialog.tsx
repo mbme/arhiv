@@ -24,9 +24,7 @@ export function FilePickerDialog({ onAttachmentCreated, onCancel }: Props) {
 
   return (
     <Dialog onHide={onCancel} title="Add file">
-      <div className="modal-content">
-        <FilePicker onFileSelected={setSelectedFile} />
-      </div>
+      <FilePicker onFileSelected={setSelectedFile} />
     </Dialog>
   );
 }

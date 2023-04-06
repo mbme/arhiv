@@ -37,39 +37,39 @@ export function FilePickerConfirmationDialog({
     }
   };
 
+  const buttons = (
+    <>
+      <Button variant="simple" onClick={onCancel} disabled={inProgress}>
+        Cancel
+      </Button>
+
+      <Button variant="primary" busy={inProgress} onClick={triggerRefresh}>
+        Create attachment
+      </Button>
+    </>
+  );
+
   return (
-    <Dialog onHide={onHide} title="Add file">
-      <div className="modal-content">
-        <div className="mb-6">
-          Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
-          <b>{formatBytes(size)}</b>?
-        </div>
-
-        <form className="form" onSubmit={(e) => e.preventDefault()}>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              name="move_file"
-              type="checkbox"
-              className="field"
-              checked={moveFile}
-              onChange={() => setMoveFile(!moveFile)}
-            />
-            Remove original file
-          </label>
-        </form>
-
-        {error && <QueryError error={error} />}
+    <Dialog onHide={onHide} title="Add file" buttons={buttons}>
+      <div className="mb-6">
+        Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
+        <b>{formatBytes(size)}</b>?
       </div>
 
-      <div className="modal-buttons">
-        <Button variant="simple" onClick={onCancel} disabled={inProgress}>
-          Cancel
-        </Button>
+      <form className="form" onSubmit={(e) => e.preventDefault()}>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            name="move_file"
+            type="checkbox"
+            className="field"
+            checked={moveFile}
+            onChange={() => setMoveFile(!moveFile)}
+          />
+          Remove original file
+        </label>
+      </form>
 
-        <Button variant="primary" busy={inProgress} onClick={triggerRefresh}>
-          Create attachment
-        </Button>
-      </div>
+      {error && <QueryError error={error} />}
     </Dialog>
   );
 }

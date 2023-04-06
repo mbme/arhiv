@@ -108,97 +108,82 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
 
   return (
     <Dialog onHide={onCancel} title="Create new document">
-      <div className="modal-content">
-        <SearchInput
-          className="mb-8"
-          autofocus
-          initialValue=""
-          placeholder="Filter actions"
-          onSearch={setQuery}
-          onKeyDown={(key) => {
-            const root = resultsRef.current;
-            if (!root) {
-              throw new Error('root element is missing');
+      <SearchInput
+        className="mb-8"
+        autofocus
+        initialValue=""
+        placeholder="Filter actions"
+        onSearch={setQuery}
+        onKeyDown={(key) => {
+          const root = resultsRef.current;
+          if (!root) {
+            throw new Error('root element is missing');
+          }
+
+          switch (key) {
+            case 'Enter': {
+              clickActive(root);
+
+              return true;
             }
+            case 'ArrowUp': {
+              activateNextItem(root, false);
 
-            switch (key) {
-              case 'Enter': {
-                clickActive(root);
-
-                return true;
-              }
-              case 'ArrowUp': {
-                activateNextItem(root, false);
-
-                return true;
-              }
-              case 'ArrowDown': {
-                activateNextItem(root, true);
-
-                return true;
-              }
-              case 'Escape': {
-                onCancel();
-                return true;
-              }
-              default: {
-                return false;
-              }
+              return true;
             }
-          }}
-        />
+            case 'ArrowDown': {
+              activateNextItem(root, true);
 
-        <div
-          ref={resultsRef}
-          className="flex flex-col gap-1 min-h-[20vh] max-h-[70vh] overflow-y-auto"
-        >
-          {actions.length > 0 && <h1 className={headingClass}>Actions</h1>}
-          {actions.map((action) => (
-            <Button
-              key={action}
-              variant="simple"
-              leadingIcon={ACTION_ICONS[action]}
-              onClick={() => {
-                if (action === 'Scrape URL') {
-                  onScrape();
-                  return;
-                }
-
-                if (action === 'Attach file') {
-                  onAttach();
-                  return;
-                }
-
-                throwBadAction(action);
-              }}
-              onHover={activateOnHover}
-              className={searchResultClass}
-            >
-              &nbsp; {action}
-            </Button>
-          ))}
-
-          {documentTypes.length > 0 && <h1 className={headingClass}>Documents</h1>}
-          {documentTypes.map((documentType) => {
-            if (isErasedDocument(documentType)) {
-              return null;
+              return true;
             }
+            case 'Escape': {
+              onCancel();
+              return true;
+            }
+            default: {
+              return false;
+            }
+          }
+        }}
+      />
 
-            return (
-              <Button
-                key={documentType}
-                variant="simple"
-                onClick={() => onNewDocument(documentType)}
-                onHover={activateOnHover}
-                className={searchResultClass}
-              >
-                {documentType}
-              </Button>
-            );
-          })}
+      <div
+        ref={resultsRef}
+        className="flex flex-col gap-1 min-h-[20vh] max-h-[70vh] overflow-y-auto"
+      >
+        {actions.length > 0 && <h1 className={headingClass}>Actions</h1>}
+        {actions.map((action) => (
+          <Button
+            key={action}
+            variant="simple"
+            leadingIcon={ACTION_ICONS[action]}
+            onClick={() => {
+              if (action === 'Scrape URL') {
+                onScrape();
+                return;
+              }
 
-          {collectionTypes.length > 0 && <h1 className={headingClass}>Collections</h1>}
-          {collectionTypes.map((documentType) => (
+              if (action === 'Attach file') {
+                onAttach();
+                return;
+              }
+
+              throwBadAction(action);
+            }}
+            onHover={activateOnHover}
+            className={searchResultClass}
+          >
+            &nbsp; {action}
+          </Button>
+        ))}
+
+        {documentTypes.length > 0 && <h1 className={headingClass}>Documents</h1>}
+        {documentTypes.map((documentType) => {
+          if (isErasedDocument(documentType)) {
+            return null;
+          }
+
+          return (
             <Button
               key={documentType}
               variant="simple"
@@ -208,8 +193,21 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
             >
               {documentType}
             </Button>
-          ))}
-        </div>
+          );
+        })}
+
+        {collectionTypes.length > 0 && <h1 className={headingClass}>Collections</h1>}
+        {collectionTypes.map((documentType) => (
+          <Button
+            key={documentType}
+            variant="simple"
+            onClick={() => onNewDocument(documentType)}
+            onHover={activateOnHover}
+            className={searchResultClass}
+          >
+            {documentType}
+          </Button>
+        ))}
       </div>
     </Dialog>
   );

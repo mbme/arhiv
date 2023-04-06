@@ -46,6 +46,13 @@ export function DocumentCard({ documentId }: Props) {
           align="bottom-left"
           options={[
             {
+              text: `ID ${document.id}`,
+              icon: 'clipboard',
+              onClick: () => {
+                void copyTextToClipbard(document.id);
+              },
+            },
+            {
               text: 'Copy link',
               icon: 'clipboard',
               onClick: () => {
@@ -101,12 +108,10 @@ export function DocumentCard({ documentId }: Props) {
       {isUpdating && <ProgressLocker />}
 
       <DocumentViewerHead
-        id={document.id}
         documentType={document.documentType}
         subtype={document.subtype}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
-        collections={document.collections}
       />
 
       {isAttachment(document.documentType) && (

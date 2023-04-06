@@ -78,8 +78,10 @@ class CodemirrorEditor {
     this.options.onBlur?.();
   };
 
-  private onChange = (_viewUpdate: ViewUpdate) => {
-    this.options.onChange?.();
+  private onChange = (viewUpdate: ViewUpdate) => {
+    if (viewUpdate.docChanged) {
+      this.options.onChange?.();
+    }
   };
 
   focus() {

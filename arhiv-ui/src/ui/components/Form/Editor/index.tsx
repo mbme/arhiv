@@ -158,40 +158,38 @@ export function Editor({
         }}
       />
 
-      {preview ? (
-        <Markup ref={markupRef} markup={editorRef.current?.getValue() ?? defaultValue} />
-      ) : (
-        <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
-          {!preview && (
-            <AddRefButton
-              className="bg-indigo-100 drop-shadow-md"
-              onDocumentSelected={({ id, documentType, subtype }) => {
-                editorRef.current?.replaceSelections((value) =>
-                  createLink(createRefUrl(id), value, canPreview(documentType, subtype))
-                );
-              }}
-            />
-          )}
+      {preview && <Markup ref={markupRef} markup={editorRef.current?.getValue() ?? defaultValue} />}
 
-          {preview ? (
-            <IconButton
-              icon="pencil-square"
-              className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                setPreview(false);
-              }}
-            />
-          ) : (
-            <IconButton
-              icon="eye"
-              className="bg-indigo-100 drop-shadow-md"
-              onClick={() => {
-                setPreview(true);
-              }}
-            />
-          )}
-        </div>
-      )}
+      <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
+        {!preview && (
+          <AddRefButton
+            className="bg-indigo-100 drop-shadow-md"
+            onDocumentSelected={({ id, documentType, subtype }) => {
+              editorRef.current?.replaceSelections((value) =>
+                createLink(createRefUrl(id), value, canPreview(documentType, subtype))
+              );
+            }}
+          />
+        )}
+
+        {preview ? (
+          <IconButton
+            icon="pencil-square"
+            className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
+            onClick={() => {
+              setPreview(false);
+            }}
+          />
+        ) : (
+          <IconButton
+            icon="eye"
+            className="bg-indigo-100 drop-shadow-md"
+            onClick={() => {
+              setPreview(true);
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -94,7 +94,7 @@ export function DocumentEditor({
             className="field"
             name="@collections"
             documentTypes={collectionTypes}
-            defaultValue={collections}
+            defaultValue={initialCollections}
             multiple
             readonly={!canAddCollections}
             onChange={setCollections}

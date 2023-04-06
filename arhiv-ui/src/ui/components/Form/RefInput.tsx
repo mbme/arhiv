@@ -52,26 +52,30 @@ export function RefInput({
 
   const [showPicker, setShowPicker] = useState(false);
 
-  const onChangeRef = useLatestRef(onChange);
-  useEffect(() => {
+  const updateIds = (newIds: DocumentId[], triggerChange: boolean) => {
+    if (newIds.length > 1 && !multiple) {
+      return;
+    }
+
     const el = fieldRef.current;
     if (!el) {
       throw new Error('v-form-field element is missing');
     }
 
-    if (ids.length > 1 && !multiple) {
-      setIds([ids[0]]);
-      return;
-    }
-
-    if (multiple) {
-      el.value = ids;
+    const value = multiple ? newIds : newIds[0];
+    if (triggerChange) {
+      el.inputValue(value);
     } else {
-      el.value = ids[0];
+      el.value = value;
     }
 
+    setIds(newIds);
+  };
+
+  const onChangeRef = useLatestRef(onChange);
+  useEffect(() => {
     onChangeRef.current?.(ids);
-  }, [onChangeRef, ids, multiple]);
+  }, [onChangeRef, ids]);
 
   const { documents, error, inProgress } = useDocuments(ids);
 
@@ -91,7 +95,7 @@ export function RefInput({
       disabled={disabled}
       required={required}
       onReset={() => {
-        setIds(defaultValue);
+        updateIds(defaultValue, false);
       }}
     >
       {showPicker && (
@@ -99,7 +103,7 @@ export function RefInput({
           documentTypes={documentTypes}
           onSelected={({ id }) => {
             if (!ids.includes(id)) {
-              setIds([...ids, id]);
+              updateIds([...ids, id], true);
             }
             setShowPicker(false);
           }}
@@ -122,7 +126,12 @@ export function RefInput({
             <IconButton
               icon="x"
               size="sm"
-              onClick={() => setIds(ids.filter((id) => id !== item.id))}
+              onClick={() => {
+                updateIds(
+                  ids.filter((id) => id !== item.id),
+                  true
+                );
+              }}
             />
           )}
         </div>

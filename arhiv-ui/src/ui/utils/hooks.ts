@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { shallowEqual } from 'shallow-equal';
 import {
   Callback,
   debounce,
@@ -20,6 +21,26 @@ import {
 import { StateUpdater } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
+
+export function useShallowMemo<T>(value: T): T {
+  const valueRef = useRef(value);
+
+  if (value === valueRef.current) {
+    return value;
+  }
+
+  if (
+    value instanceof Object &&
+    valueRef.current instanceof Object &&
+    shallowEqual(value, valueRef.current)
+  ) {
+    return valueRef.current;
+  }
+
+  valueRef.current = value;
+
+  return valueRef.current;
+}
 
 type Options<TResult> = {
   refreshIfChange?: Inputs;
@@ -78,9 +99,10 @@ export function useQuery<TResult>(
     };
   }, [counter, cbRef, optionsRef]);
 
+  const inputsMemo = useShallowMemo(options?.refreshIfChange ?? []);
   useUpdateEffect(() => {
     setCounter(counter + 1);
-  }, options?.refreshIfChange ?? []);
+  }, [inputsMemo]);
 
   return {
     result,

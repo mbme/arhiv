@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { useImmediateEffect, useUpdateEffect } from 'utils/hooks';
@@ -88,9 +88,7 @@ export function Editor({
     }
 
     const onFormSubmit = () => {
-      startTransition(() => {
-        setPreview(defaultPreview);
-      });
+      setPreview(defaultPreview);
     };
 
     form.addEventListener('submit', onFormSubmit);

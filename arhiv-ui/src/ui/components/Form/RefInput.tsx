@@ -91,7 +91,7 @@ export function RefInput({
         className
       )}
       name={name}
-      defaultValue={defaultValue}
+      defaultValue={defaultValueRaw}
       disabled={disabled}
       required={required}
       onReset={() => {

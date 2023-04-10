@@ -6,6 +6,7 @@ import { JSXChildren } from 'utils/jsx';
 import { Button, IconButton } from 'components/Button';
 import { DateTime } from 'components/DateTime';
 import { Dialog } from 'components/Dialog';
+import { Badge } from 'components/Badge';
 import { Form } from 'components/Form/Form';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
@@ -116,6 +117,15 @@ export function ComponentsDemo() {
             <IconButton icon="web" size="lg" title="lg" />
 
             <IconButton icon="web" size="xl" title="xl" />
+          </div>
+        </div>
+
+        <div>
+          <h1>Badges</h1>
+          <div className="examples">
+            <Badge label="unchecked" />
+            <Badge label="checked" checked />
+            <Badge label="unchecked sm" size="sm" />
           </div>
         </div>
 

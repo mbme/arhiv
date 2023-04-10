@@ -3,7 +3,6 @@ import {
   EffectCallback,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -231,7 +230,7 @@ export function useUnsavedChangesWarning(warn: boolean) {
 }
 
 export function useScrollRestoration(el: HTMLElement | null, key: string) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!el) {
       return;
     }

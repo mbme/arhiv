@@ -348,7 +348,7 @@ function scrollFirstVisiblePosIntoView(markupEl: HTMLElement, pos: number) {
     const rangeStart = Number.parseInt(el.dataset.rangeStart!, 10);
     const rangeEnd = Number.parseInt(el.dataset.rangeEnd!, 10);
 
-    if (pos < rangeStart || pos >= rangeEnd) {
+    if (pos < rangeStart || pos > rangeEnd) {
       continue;
     }
 

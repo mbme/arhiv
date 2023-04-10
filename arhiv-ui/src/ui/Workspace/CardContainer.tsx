@@ -44,39 +44,37 @@ export function CardContainer({
   );
 
   return (
-    <SuspenseBoundary fallback={fallback}>
-      <div className="card-container flex flex-col">
-        <div className="card-toolbar">
-          <div className="card-toolbar-left">{leftToolbar}</div>
-          <div className="card-toolbar-right">
-            {hasStackedCards && !skipBack && (
-              <IconButton
-                icon="arrow-left"
-                size="lg"
-                title="Go back"
-                onClick={() => actions.popStack(card.id)}
-                className="relative right-2"
-              />
-            )}
+    <div className="card-container flex flex-col">
+      <div className="card-toolbar">
+        <div className="card-toolbar-left">{leftToolbar}</div>
+        <div className="card-toolbar-right">
+          {hasStackedCards && !skipBack && (
+            <IconButton
+              icon="arrow-left"
+              size="lg"
+              title="Go back"
+              onClick={() => actions.popStack(card.id)}
+              className="relative right-2"
+            />
+          )}
 
-            {rightToolbar}
+          {rightToolbar}
 
-            {!skipClose && (
-              <IconButton
-                icon="x"
-                size="lg"
-                title="Close"
-                onClick={() => actions.close(card.id)}
-                className="relative left-1"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
-          {children}
+          {!skipClose && (
+            <IconButton
+              icon="x"
+              size="lg"
+              title="Close"
+              onClick={() => actions.close(card.id)}
+              className="relative left-1"
+            />
+          )}
         </div>
       </div>
-    </SuspenseBoundary>
+
+      <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
+        <SuspenseBoundary fallback={fallback}>{children}</SuspenseBoundary>
+      </div>
+    </div>
   );
 }

@@ -156,7 +156,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
         <input
           key={rangeToString(el.range)}
           type="checkbox"
-          className="mr-1"
+          className="mr-2"
           checked={el.checked}
           disabled
           data-range-start={el.range.start}

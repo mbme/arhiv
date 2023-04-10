@@ -1,7 +1,9 @@
 import { DocumentId } from 'dto';
 
+export const REF_LINK_PREFIX = 'ref:';
+
 export function createRefUrl(id: DocumentId) {
-  return `ref:${id}`;
+  return `${REF_LINK_PREFIX}${id}`;
 }
 
 export function createLink(url: string, description: string, preview = false) {

@@ -5,6 +5,7 @@ import { useSuspenseQuery } from 'utils/suspense';
 import { JSXElement, JSXRef } from 'utils/jsx';
 import { Link } from 'components/Link';
 import { RefContainer } from 'components/Ref';
+import { REF_LINK_PREFIX } from 'utils/markup';
 
 function extractText(children: MarkupElement[]): string {
   return children
@@ -275,8 +276,8 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
     case 'Image': {
       let description = extractText(el.children);
 
-      if (el.url.startsWith('ref:')) {
-        const id = el.url.substring('ref:'.length) as DocumentId;
+      if (el.url.startsWith(REF_LINK_PREFIX)) {
+        const id = el.url.substring(REF_LINK_PREFIX.length) as DocumentId;
         const preview = el.typeName === 'Image';
 
         if (el.link_type === 'Autolink') {

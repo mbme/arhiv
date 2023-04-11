@@ -25,27 +25,26 @@ export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSele
       title={`Pick ${documentTypes?.join(', ') ?? 'document'}`}
       onHide={onCancel}
     >
-      <div className="px-2">
-        <Catalog
-          autofocus
-          documentTypes={documentTypes}
-          onDocumentSelected={(id, documentType, subtype) => {
-            if (!dialogRef.current) {
-              throw new Error('dialog element is missing');
-            }
+      <Catalog
+        className="px-2"
+        autofocus
+        documentTypes={documentTypes}
+        onDocumentSelected={(id, documentType, subtype) => {
+          if (!dialogRef.current) {
+            throw new Error('dialog element is missing');
+          }
 
-            if (hideOnSelect) {
-              dialogRef.current.setAttribute('hidden', '');
-            }
+          if (hideOnSelect) {
+            dialogRef.current.setAttribute('hidden', '');
+          }
 
-            onSelected({
-              id,
-              documentType,
-              subtype,
-            });
-          }}
-        />
-      </div>
+          onSelected({
+            id,
+            documentType,
+            subtype,
+          });
+        }}
+      />
     </Dialog>
   );
 }

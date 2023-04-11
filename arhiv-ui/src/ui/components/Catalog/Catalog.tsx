@@ -8,6 +8,7 @@ import { Pagination } from './Pagination';
 
 type CatalogProps = {
   autofocus?: boolean;
+  className?: string;
   documentTypes?: DocumentType[];
   initialQuery?: string;
   initialPage?: number;
@@ -22,6 +23,7 @@ type CatalogProps = {
 
 export function Catalog({
   autofocus = false,
+  className,
   documentTypes = [],
   initialQuery = '',
   initialPage = 0,
@@ -73,7 +75,7 @@ export function Catalog({
   ));
 
   return (
-    <>
+    <div className={className}>
       <SearchInput
         initialValue={query}
         onSearch={(newQuery) => {
@@ -91,6 +93,6 @@ export function Catalog({
       </div>
 
       <Pagination page={page} hasMore={result.hasMore} onClick={(newPage) => setPage(newPage)} />
-    </>
+    </div>
   );
 }

@@ -49,7 +49,7 @@ export function SearchInput({
       <input
         type="search"
         name="pattern"
-        className="field w-full mb-4 pl-10"
+        className="field w-full pl-10"
         autoFocus={autofocus || undefined}
         defaultValue={initialValue}
         onChange={(e) => {

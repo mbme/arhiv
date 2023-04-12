@@ -5,8 +5,9 @@ type Props = {
   size?: 'sm' | 'md';
   checked?: boolean;
   onClick?: Callback;
+  className?: string;
 };
-export function Badge({ label, checked, onClick, size = 'md' }: Props) {
+export function Badge({ label, checked, onClick, size = 'md', className }: Props) {
   return (
     <span
       className={cx(
@@ -15,7 +16,8 @@ export function Badge({ label, checked, onClick, size = 'md' }: Props) {
           'bg-blue-100 text-blue-800 border-blue-400': checked,
           'text-xs': size === 'sm',
           'text-sm': size === 'md',
-        }
+        },
+        className
       )}
       onClick={onClick}
     >

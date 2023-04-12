@@ -19,7 +19,6 @@ import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCard } from './DocumentCard';
 import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
-import { BrowserCard } from './BrowserCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
 
@@ -88,14 +87,6 @@ export function Workspace() {
             onClick={() => open({ variant: 'catalog' })}
           >
             Search
-          </Button>
-
-          <Button
-            variant="text"
-            leadingIcon="browse-catalog"
-            onClick={() => open({ variant: 'browser' })}
-          >
-            Browse
           </Button>
 
           {showScraperDialog && (
@@ -167,9 +158,6 @@ function renderCard(card: Card) {
   switch (card.variant) {
     case 'catalog':
       return <CatalogCard query={card.query} page={card.page} documentType={card.documentType} />;
-
-    case 'browser':
-      return <BrowserCard />;
 
     case 'new-document':
       return (

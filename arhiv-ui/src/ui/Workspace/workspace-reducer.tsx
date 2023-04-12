@@ -19,9 +19,6 @@ type CardVariant =
       documentType?: DocumentType;
     }
   | {
-      variant: 'browser';
-    }
-  | {
       variant: 'status';
     }
   | {
@@ -411,5 +408,5 @@ export function useCardLock(lockCard: boolean) {
     return () => {
       unlock(card.id);
     };
-  }, [lockCard, card.id]);
+  }, [lockCard, card.id, lock, unlock]);
 }

@@ -1,4 +1,10 @@
-import { DEFAULT_SUBTYPE, DocumentSubtype, DocumentType } from 'dto';
+import {
+  ATTACHMENT_DOCUMENT_TYPE,
+  DEFAULT_SUBTYPE,
+  DocumentSubtype,
+  DocumentType,
+  ERASED_DOCUMENT_TYPE,
+} from 'dto';
 import { EmptyObj } from './index';
 
 export type DataSchema = {
@@ -101,11 +107,11 @@ export function getDefaultSubtype(documentType: DocumentType): DocumentSubtype {
 }
 
 export function isAttachment(documentType: DocumentType) {
-  return documentType === 'attachment';
+  return documentType === ATTACHMENT_DOCUMENT_TYPE;
 }
 
 export function isErasedDocument(documentType: DocumentType) {
-  return documentType === '';
+  return documentType === ERASED_DOCUMENT_TYPE;
 }
 
 export function isImageAttachment(subtype: DocumentSubtype) {

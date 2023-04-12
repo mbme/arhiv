@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
-import { useUpdateEffect } from 'utils/hooks';
+import { useToggle } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
+import { IconButton } from 'components/Button';
 import { Pagination } from './Pagination';
+import { DEFAULT_DOCUMENT_TYPES, DocumentTypeSettings } from './DocumentTypeSettings';
 
 type CatalogProps = {
   autofocus?: boolean;
@@ -24,7 +26,7 @@ type CatalogProps = {
 export function Catalog({
   autofocus = false,
   className,
-  documentTypes = [],
+  documentTypes: initialDocumentTypes,
   initialQuery = '',
   initialPage = 0,
   onQueryChange,
@@ -33,16 +35,17 @@ export function Catalog({
 }: CatalogProps) {
   const [query, _setQuery] = useState(initialQuery);
   const [page, _setPage] = useState(initialPage);
+  const [showSettings, toggleSettings] = useToggle(false);
+  const [documentTypes, setDocumentTypes] = useState(
+    initialDocumentTypes ?? DEFAULT_DOCUMENT_TYPES
+  );
 
-  const {
-    value: result,
-    isUpdating,
-    triggerRefresh,
-  } = useSuspenseQuery({ typeName: 'ListDocuments', query, page, documentTypes });
-
-  useUpdateEffect(() => {
-    triggerRefresh();
-  }, [query, page, ...documentTypes]);
+  const { value: result, isUpdating } = useSuspenseQuery({
+    typeName: 'ListDocuments',
+    query,
+    page,
+    documentTypes,
+  });
 
   const setQuery = (query: string) => {
     _setQuery(query);
@@ -76,16 +79,30 @@ export function Catalog({
 
   return (
     <div className={className}>
-      <SearchInput
-        initialValue={query}
-        onSearch={(newQuery) => {
-          setQuery(newQuery);
-          setPage(0);
-        }}
-        busy={isUpdating}
-        autofocus={autofocus}
-        debounceMs={400}
-      />
+      <div className="flex gap-4 items-center mb-4">
+        <SearchInput
+          className="flex-auto"
+          initialValue={query}
+          onSearch={(newQuery) => {
+            setQuery(newQuery);
+            setPage(0);
+          }}
+          busy={isUpdating}
+          autofocus={autofocus}
+          debounceMs={400}
+        />
+
+        <IconButton icon="cog" size="sm" onClick={toggleSettings} />
+      </div>
+
+      {showSettings && (
+        <DocumentTypeSettings
+          className="mb-4 px-2 py-2 bg-zinc-50"
+          selectableTypes={initialDocumentTypes}
+          selected={documentTypes}
+          onChange={setDocumentTypes}
+        />
+      )}
 
       <div className="divide-y mb-6">
         {items}

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { useLatestRef } from 'utils/hooks';
+import { isAttachment } from 'utils/schema';
 import { DocumentId, DocumentType } from 'dto';
-import { Ref, useDocuments } from 'components/Ref';
+import { Ref, RefContainer, useDocuments } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { QueryError } from 'components/QueryError';
@@ -114,26 +115,30 @@ export function RefInput({
       {error && <QueryError error={error} />}
 
       {documents?.map((item) => (
-        <div className="flex items-center gap-4" key={item.id}>
-          <Ref
-            documentId={item.id}
-            documentType={item.documentType}
-            subtype={item.subtype}
-            documentTitle={item.title}
-          />
-
-          {!readonly && !disabled && (
-            <IconButton
-              icon="x"
-              size="sm"
-              onClick={() => {
-                updateIds(
-                  ids.filter((id) => id !== item.id),
-                  true
-                );
-              }}
+        <div key={item.id}>
+          <div className="flex items-center gap-4">
+            <Ref
+              documentId={item.id}
+              documentType={item.documentType}
+              subtype={item.subtype}
+              documentTitle={item.title}
             />
-          )}
+
+            {!readonly && !disabled && (
+              <IconButton
+                icon="x"
+                size="sm"
+                onClick={() => {
+                  updateIds(
+                    ids.filter((id) => id !== item.id),
+                    true
+                  );
+                }}
+              />
+            )}
+          </div>
+
+          {isAttachment(item.documentType) && <RefContainer id={item.id} attachmentPreview />}
         </div>
       ))}
 

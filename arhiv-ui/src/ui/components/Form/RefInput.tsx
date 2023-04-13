@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 import { isAttachment } from 'utils/schema';
+import { useSuspenseQuery } from 'utils/suspense';
 import { DocumentId, DocumentType } from 'dto';
-import { Ref, RefContainer, useDocuments } from 'components/Ref';
+import { Ref, RefContainer } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
-import { QueryError } from 'components/QueryError';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 
 function normalizeIds(defaultValue: DocumentId | DocumentId[] | undefined | null): DocumentId[] {
@@ -78,7 +78,10 @@ export function RefInput({
     onChangeRef.current?.(ids);
   }, [onChangeRef, ids]);
 
-  const { documents, error, inProgress } = useDocuments(ids);
+  const { value, isUpdating } = useSuspenseQuery({
+    typeName: 'GetDocuments',
+    ids,
+  });
 
   const canAdd = ids.length === 0 || multiple;
 
@@ -112,9 +115,7 @@ export function RefInput({
         />
       )}
 
-      {error && <QueryError error={error} />}
-
-      {documents?.map((item) => (
+      {value?.documents.map((item) => (
         <div key={item.id}>
           <div className="flex items-center gap-4">
             <Ref
@@ -147,7 +148,7 @@ export function RefInput({
           variant="text"
           onClick={() => setShowPicker(true)}
           disabled={readonly || disabled}
-          busy={inProgress}
+          busy={isUpdating}
         >
           Pick {documentTypes.join(', ')}...
         </Button>

@@ -79,3 +79,26 @@ export function useSuspenseQuery<Request extends APIRequest>(
     triggerRefresh,
   };
 }
+
+export function useSuspenseImage(url: string): HTMLImageElement {
+  const cache = useContext(SuspenseCacheContext);
+
+  // delete stale cache value if key changed
+  const prevUrl = useRef(url);
+  if (prevUrl.current !== url) {
+    cache.delete(prevUrl.current);
+    prevUrl.current = url;
+  }
+
+  let suspender = cache.get(url);
+  if (!suspender) {
+    const image = document.createElement('img');
+    image.src = url;
+
+    suspender = suspensify(image.decode().then(() => image));
+    cache.set(url, suspender);
+  }
+  const deferredSuspender = useDeferredValue(suspender);
+
+  return deferredSuspender.read() as HTMLImageElement;
+}

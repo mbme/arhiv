@@ -1,8 +1,6 @@
 import { createContext, useContext } from 'react';
 import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, getDocumentUrl } from 'utils';
-import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
 import {
   formatDocumentType,
   isAttachment,
@@ -12,8 +10,8 @@ import {
 } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { Button } from 'components/Button';
-import { QueryError } from 'components/QueryError';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
+import { SuspenseImage } from 'components/SuspenseImage';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);
@@ -51,38 +49,18 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
   );
 }
 
-export const useDocuments = (ids: DocumentId[]) => {
-  const { result, error, inProgress } = useQuery(
-    async (abortSignal) => {
-      if (ids.length > 0) {
-        return RPC.GetDocuments({ ids }, abortSignal);
-      }
-    },
-    {
-      refreshIfChange: ids,
-    }
-  );
-
-  return { inProgress, error, documents: result?.documents };
-};
-
 type RefListContainerProps = {
   ids: DocumentId[];
 };
 export function RefListContainer({ ids }: RefListContainerProps) {
-  const { documents, error, inProgress } = useDocuments(ids);
-
-  if (error) {
-    return <QueryError error={error} />;
-  }
-
-  if (inProgress || !documents) {
-    return null;
-  }
+  const { value } = useSuspenseQuery({
+    typeName: 'GetDocuments',
+    ids,
+  });
 
   return (
     <>
-      {documents.map((item) => (
+      {value?.documents.map((item) => (
         <Ref
           key={item.id}
           documentId={item.id}
@@ -209,7 +187,7 @@ export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentDat
   const blobUrl = `/blobs/${blobId}`;
 
   if (isImageAttachment(subtype)) {
-    return <img src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
+    return <SuspenseImage src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
   }
 
   if (isAudioAttachment(subtype)) {

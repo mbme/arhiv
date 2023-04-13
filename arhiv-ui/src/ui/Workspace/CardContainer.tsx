@@ -6,7 +6,14 @@ import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
+import { QueryError } from 'components/QueryError';
 import { useCardContext } from './workspace-reducer';
+
+const renderError = (error: unknown) => (
+  <div className="card-container">
+    <QueryError error={error} />
+  </div>
+);
 
 type CardContainerProps = {
   children: JSXChildren;
@@ -72,9 +79,11 @@ export function CardContainer({
         </div>
       </div>
 
-      <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
-        <SuspenseBoundary fallback={fallback}>{children}</SuspenseBoundary>
-      </div>
+      <SuspenseBoundary fallback={fallback} renderError={renderError}>
+        <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
+          {children}
+        </div>
+      </SuspenseBoundary>
     </div>
   );
 }

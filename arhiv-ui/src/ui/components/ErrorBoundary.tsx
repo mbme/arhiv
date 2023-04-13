@@ -1,9 +1,11 @@
 import { Component } from 'react';
-import { JSXChildren } from 'utils/jsx';
-import { QueryError } from 'components/QueryError';
+import { JSXChildren, JSXElement } from 'utils/jsx';
+
+export type ErrorRenderer = (error: unknown) => JSXElement;
 
 type Props = {
   children: JSXChildren;
+  renderError: ErrorRenderer;
 };
 
 type State = {
@@ -20,12 +22,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override render() {
-    const { children } = this.props;
+    const { children, renderError } = this.props;
     const { error } = this.state;
 
     return (
       <>
-        {error && <QueryError error={error} />}
+        {error && renderError(error)}
         {children}
       </>
     );

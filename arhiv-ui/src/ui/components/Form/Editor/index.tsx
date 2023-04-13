@@ -152,7 +152,7 @@ export function Editor({
           editorRef.current?.focus();
         }}
         onReset={() => {
-          editorRef.current?.setValue(defaultValue);
+          editorRef.current?.reset();
         }}
       />
 

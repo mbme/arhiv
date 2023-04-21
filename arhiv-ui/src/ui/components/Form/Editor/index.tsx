@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
 import { useImmediateEffect, useUpdateEffect } from 'utils/hooks';
@@ -88,7 +88,9 @@ export function Editor({
     }
 
     const onFormSubmit = () => {
-      setPreview(defaultPreview);
+      startTransition(() => {
+        setPreview(defaultPreview);
+      });
     };
 
     form.addEventListener('submit', onFormSubmit);
@@ -175,7 +177,9 @@ export function Editor({
             icon="pencil-square"
             className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
             onClick={() => {
-              setPreview(false);
+              startTransition(() => {
+                setPreview(false);
+              });
             }}
           />
         ) : (
@@ -183,7 +187,9 @@ export function Editor({
             icon="eye"
             className="bg-indigo-100 drop-shadow-md"
             onClick={() => {
-              setPreview(true);
+              startTransition(() => {
+                setPreview(true);
+              });
             }}
           />
         )}

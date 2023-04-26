@@ -164,19 +164,6 @@ impl ScraperOptions {
             return Ok(());
         }
 
-        // redirect to old yakaboo site
-        if url.host_str().unwrap_or_default() == "www.yakaboo.ua" {
-            let mut new_url = url.clone();
-            new_url.set_host(Some("old.yakaboo.ua"))?;
-
-            client
-                .goto(new_url.as_str())
-                .await
-                .context("failed to redirect to old yakaboo")?;
-
-            return Ok(());
-        }
-
         Ok(())
     }
 

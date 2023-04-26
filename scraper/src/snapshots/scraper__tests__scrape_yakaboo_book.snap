@@ -1,11 +1,11 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 257
+assertion_line: 273
 expression: result
 ---
 [
   {
-    "url": "https://old.yakaboo.ua/ua/stories-of-your-life-and-others.html",
+    "url": "https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html",
     "originalUrl": "https://www.yakaboo.ua/ua/stories-of-your-life-and-others.html",
     "scraperName": "YakabooBookScraper",
     "data": {

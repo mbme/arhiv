@@ -1,4 +1,4 @@
-import { getEl, getTable, Obj } from '../utils';
+import { getEl, getTable, Obj, waitForFunction } from '../utils';
 import { Scraper } from './scraper';
 
 const LANGUAGE_TRANSLATIONS: Obj<string> = {
@@ -21,23 +21,33 @@ export type YakabooBook = {
 };
 
 export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
-  // https://old.yakaboo.ua/ua/stories-of-your-life-and-others.html
+  // https://yakaboo.ua/ua/stories-of-your-life-and-others.html
   readonly pattern = new URLPattern({
-    hostname: 'old.yakaboo.ua',
+    hostname: 'www.yakaboo.ua',
     pathname: '/ua/*',
   });
 
-  readonly scrape = (): YakabooBook => {
-    const coverURL = getEl<HTMLImageElement>('#image', 'cover image').src;
-    const title = getEl('#product-title h1', 'title').innerText.substring('Книга '.length); // remove the prefix that Yakaboo adds to all titles
+  readonly scrape = async (): Promise<YakabooBook> => {
+    const coverURL = getEl<HTMLImageElement>('.gallery [aria-hidden=false] img', 'cover image').src;
+    const title = getEl('.base-product__title h1', 'title')
+      .innerText.substring('Книга '.length) // remove the prefix that Yakaboo adds to all titles
+      .trim();
 
-    getEl("a[href='#tab-description']", 'description tab').click();
+    getEl('.description__btn', 'expand description button').click();
 
-    const description = getEl('.description-shadow', 'description').innerText;
+    const description = getEl('.description__content', 'description').innerText;
 
-    getEl("a[href='#tab-attributes']", 'attributes tab').click();
+    getEl('.main__chars button.ui-btn-nav', 'expand attributes button').click();
+    await waitForFunction(
+      () =>
+        document
+          .querySelector<HTMLElement>('.main__chars button.ui-btn-nav')
+          ?.innerText.includes('Приховати') ?? false,
+      'collapse attributes button'
+    );
 
-    const table = getTable(document, '#product-attribute-specs-table tr', '\n');
+    const table = getTable(document, '.product-chars .chars .char', '\n');
+
     const authors = table['Автор'] || '';
 
     const language = LANGUAGE_TRANSLATIONS[table['Мова'] || ''];

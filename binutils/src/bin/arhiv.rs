@@ -30,10 +30,6 @@ struct CLIArgs {
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init {
-        /// Arhiv id to use
-        #[clap(long)]
-        arhiv_id: String,
-
         /// Initialize prime instance
         #[clap(long)]
         prime: bool,
@@ -138,8 +134,8 @@ async fn main() {
     };
 
     match args.command {
-        CLICommand::Init { arhiv_id, prime } => {
-            Arhiv::create(&arhiv_id, prime).expect("must be able to create arhiv");
+        CLICommand::Init { prime } => {
+            Arhiv::create(prime).expect("must be able to create arhiv");
         }
         CLICommand::Status => {
             let arhiv = Arhiv::must_open();

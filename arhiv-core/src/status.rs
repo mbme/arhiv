@@ -7,7 +7,6 @@ use rs_utils::{format_time, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize, Debug)]
 pub struct DbStatus {
-    pub arhiv_id: String,
     pub is_prime: bool,
     pub data_version: u8,
 
@@ -42,8 +41,7 @@ impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "Arhiv {}/{} (rev {}) in {}",
-            self.db_status.arhiv_id,
+            "Arhiv {} (rev {}) in {}",
             if self.db_status.is_prime {
                 "prime"
             } else {

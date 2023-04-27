@@ -24,6 +24,9 @@ impl DBMigration for MigrationV4 {
             "INSERT INTO settings
                        SELECT * FROM old_db.settings;
 
+            -- remove arhiv_id from settings
+            DELETE FROM settings WHERE key = 'arhiv_id';
+
             INSERT INTO documents_snapshots
                        SELECT * FROM old_db.documents_snapshots;
        ",

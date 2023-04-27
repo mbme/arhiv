@@ -92,6 +92,16 @@ pub fn create_byte_pos_to_char_pos_map(value: &str) -> HashMap<usize, usize> {
     map
 }
 
+pub fn generate_random_id() -> String {
+    // TODO make const fn
+    let chars: Vec<char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        .chars()
+        .collect();
+
+    // see https://zelark.github.io/nano-id-cc/
+    nanoid::nanoid!(14, &chars)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

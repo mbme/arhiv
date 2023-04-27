@@ -10,6 +10,8 @@ pub const SETTING_DATA_VERSION: DBSetting<u8> = DBSetting("data_version", Phanto
 pub const SETTING_COMPUTED_DATA_VERSION: DBSetting<u8> =
     DBSetting("computed_data_version", PhantomData);
 
+pub const SETTING_INSTANCE_ID: DBSetting<String> = DBSetting("instance_id", PhantomData);
+
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct DocumentsCount {
     pub documents_committed: u32,

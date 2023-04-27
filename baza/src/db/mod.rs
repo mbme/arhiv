@@ -1,5 +1,7 @@
 pub use connection::BazaConnection;
-pub use dto::{BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_DATA_VERSION};
+pub use dto::{
+    BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_DATA_VERSION, SETTING_INSTANCE_ID,
+};
 pub use filter::{Conditions, Filter, OrderBy};
 
 pub(crate) use db::{open_connection, vacuum};

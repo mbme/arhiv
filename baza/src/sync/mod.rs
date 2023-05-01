@@ -1,3 +1,5 @@
+pub mod instance_id;
+
 use anyhow::{ensure, Result};
 
 use rs_utils::log;

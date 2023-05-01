@@ -29,3 +29,9 @@ impl InstanceId {
         InstanceId(instance_id.into())
     }
 }
+
+impl Default for InstanceId {
+    fn default() -> Self {
+        InstanceId::new()
+    }
+}

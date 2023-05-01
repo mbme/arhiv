@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 
-use rs_utils::{generate_random_id, log};
+use rs_utils::log;
 
 use crate::{
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
@@ -10,6 +10,7 @@ use crate::{
     entities::*,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
+    sync::instance_id::InstanceId,
     SETTING_INSTANCE_ID,
 };
 
@@ -72,7 +73,7 @@ impl Baza {
         let tx = baza.get_tx()?;
 
         tx.set_setting(&SETTING_DATA_VERSION, &baza.data_version)?;
-        tx.set_setting(&SETTING_INSTANCE_ID, &generate_random_id())?;
+        tx.set_setting(&SETTING_INSTANCE_ID, &InstanceId::new().into())?;
 
         tx.commit()?;
 

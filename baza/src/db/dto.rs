@@ -1,16 +1,6 @@
-use std::marker::PhantomData;
-
-use serde::{de::DeserializeOwned, Serialize};
+use serde::Serialize;
 
 use crate::entities::Document;
-
-pub struct DBSetting<T: Serialize + DeserializeOwned>(pub &'static str, pub PhantomData<T>);
-
-pub const SETTING_DATA_VERSION: DBSetting<u8> = DBSetting("data_version", PhantomData);
-pub const SETTING_COMPUTED_DATA_VERSION: DBSetting<u8> =
-    DBSetting("computed_data_version", PhantomData);
-
-pub const SETTING_INSTANCE_ID: DBSetting<String> = DBSetting("instance_id", PhantomData);
 
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct DocumentsCount {

@@ -1,14 +1,16 @@
-pub use connection::BazaConnection;
-pub use dto::{
-    BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_DATA_VERSION, SETTING_INSTANCE_ID,
-};
-pub use filter::{Conditions, Filter, OrderBy};
-
-pub(crate) use db::{open_connection, vacuum};
-
 mod connection;
 mod db;
 mod dto;
 mod filter;
+mod kvs;
 mod query_builder;
+mod settings;
 mod utils;
+
+pub use connection::BazaConnection;
+pub use dto::{BLOBSCount, DocumentsCount, ListPage};
+pub use filter::{Conditions, Filter, OrderBy};
+pub use kvs::{KvsConstKey, KvsEntry, KvsKey};
+pub use settings::{SETTINGS_NAMESPACE, SETTING_DATA_VERSION, SETTING_INSTANCE_ID};
+
+pub(crate) use db::{open_connection, vacuum};

@@ -53,8 +53,8 @@ impl Arhiv {
 
         let tx = baza.get_tx()?;
 
-        tx.set_setting(&SETTING_IS_PRIME, &prime)?;
-        tx.set_setting(&SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
+        tx.kvs_const_set(SETTING_IS_PRIME, &prime)?;
+        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
         tx.commit()?;
 
@@ -64,7 +64,7 @@ impl Arhiv {
     pub fn is_prime(&self) -> Result<bool> {
         let conn = self.baza.get_connection()?;
 
-        conn.must_get_setting(&SETTING_IS_PRIME)
+        conn.kvs_const_must_get(SETTING_IS_PRIME)
     }
 
     pub fn get_config(&self) -> &Config {
@@ -81,10 +81,10 @@ pub trait BazaConnectionExt {
 impl BazaConnectionExt for BazaConnection {
     fn get_db_status(&self) -> Result<DbStatus> {
         Ok(DbStatus {
-            is_prime: self.must_get_setting(&SETTING_IS_PRIME)?,
-            data_version: self.must_get_setting(&SETTING_DATA_VERSION)?,
+            is_prime: self.kvs_const_must_get(SETTING_IS_PRIME)?,
+            data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
             db_rev: self.get_db_rev()?,
-            last_sync_time: self.must_get_setting(&SETTING_LAST_SYNC_TIME)?,
+            last_sync_time: self.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?,
         })
     }
 
@@ -94,7 +94,7 @@ impl BazaConnectionExt for BazaConnection {
 
         let db_status = self.get_db_status()?;
         let db_version = self.get_db_version()?;
-        let data_version = self.must_get_setting(&SETTING_DATA_VERSION)?;
+        let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
         let documents_count = self.count_documents()?;
         let blobs_count = self.count_blobs()?;
         let conflicts_count = self.count_conflicts()?;

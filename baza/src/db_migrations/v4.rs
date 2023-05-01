@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use rusqlite::Connection;
 
 use rs_utils::{generate_random_id, FsTransaction};
 
-use super::migration::{
-    ensure_settings_count_stay_the_same, ensure_snapshots_count_stay_the_same, DBMigration,
-};
+use crate::db_migrations::migration::get_rows_count;
+
+use super::migration::{ensure_snapshots_count_stay_the_same, DBMigration};
 
 pub struct MigrationV4;
 
@@ -21,11 +21,14 @@ impl DBMigration for MigrationV4 {
     fn apply(&self, conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
         let instance_id = generate_random_id();
         conn.execute_batch(
-            "INSERT INTO settings
+            "INSERT INTO kvs(key, value)
                        SELECT * FROM old_db.settings;
 
             -- remove arhiv_id from settings
-            DELETE FROM settings WHERE key = 'arhiv_id';
+            DELETE FROM kvs WHERE key = 'arhiv_id';
+
+            -- convert keys into kvs key array
+            UPDATE kvs(key, value) SET key = json_array('settings', key);
 
             INSERT INTO documents_snapshots
                        SELECT * FROM old_db.documents_snapshots;
@@ -34,7 +37,7 @@ impl DBMigration for MigrationV4 {
 
         // generate random instance id
         conn.execute(
-            "INSERT INTO settings(key, value) VALUES('instance_id', ?1)",
+            "INSERT INTO kvs(key, value) VALUES(json_array('settings', 'instance_id'), ?1)",
             [instance_id],
         )?;
 
@@ -43,7 +46,14 @@ impl DBMigration for MigrationV4 {
 
     fn test(&self, conn: &Connection, _data_dir: &str) -> Result<()> {
         ensure_snapshots_count_stay_the_same(conn)?;
-        ensure_settings_count_stay_the_same(conn)?;
+
+        let old_settings_count = get_rows_count(conn, "old_db.settings")?;
+        let new_settings_count = get_rows_count(conn, "kvs")?;
+
+        ensure!(
+            new_settings_count == old_settings_count,
+            "settings count must stay the same"
+        );
 
         Ok(())
     }

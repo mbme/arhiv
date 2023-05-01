@@ -1,6 +1,6 @@
 PRAGMA journal_mode=WAL; -- persistent pragma https://sqlite.org/wal.html#persistence_of_wal_mode
 
-CREATE TABLE settings (
+CREATE TABLE kvs (
   key TEXT NOT NULL,
   value TEXT,
 

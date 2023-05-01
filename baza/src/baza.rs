@@ -72,8 +72,8 @@ impl Baza {
         // TODO remove created arhiv if settings tx fails
         let tx = baza.get_tx()?;
 
-        tx.set_setting(&SETTING_DATA_VERSION, &baza.data_version)?;
-        tx.set_setting(&SETTING_INSTANCE_ID, &InstanceId::new().into())?;
+        tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
+        tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new().into())?;
 
         tx.commit()?;
 

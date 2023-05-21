@@ -9,7 +9,7 @@ pub struct TestArhiv(pub Arc<Arhiv>);
 
 impl TestArhiv {
     fn new(config: Config, prime: bool, schema: DataSchema) -> Self {
-        let arhiv = Arhiv::create_with_options(config, schema, vec![], "test-arhiv", prime)
+        let arhiv = Arhiv::create_with_options(config, schema, vec![], prime)
             .expect("must be able to create temp arhiv");
 
         TestArhiv(Arc::new(arhiv))

@@ -30,7 +30,7 @@ impl Arhiv {
         // update last sync time
         {
             let tx = self.baza.get_tx()?;
-            tx.set_setting(&SETTING_LAST_SYNC_TIME, &now())?;
+            tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &now())?;
             tx.commit()?;
         }
 

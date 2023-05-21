@@ -1,3 +1,5 @@
+pub mod instance_id;
+
 use anyhow::{ensure, Result};
 
 use rs_utils::log;
@@ -16,15 +18,6 @@ impl Baza {
         log::debug!("applying changeset {}", &changeset);
 
         let schema = self.get_schema();
-
-        // FIXME remove arhiv id
-        // let arhiv_id = tx.get_setting(&SETTING_ARHIV_ID)?;
-        // ensure!(
-        //     changeset.arhiv_id == arhiv_id,
-        //     "changeset arhiv_id {} must be equal to {}",
-        //     changeset.arhiv_id,
-        //     arhiv_id,
-        // );
 
         ensure!(
             changeset.data_version == self.data_version,

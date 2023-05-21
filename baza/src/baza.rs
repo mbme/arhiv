@@ -10,6 +10,8 @@ use crate::{
     entities::*,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
+    sync::instance_id::InstanceId,
+    SETTING_INSTANCE_ID,
 };
 
 pub struct Baza {
@@ -70,7 +72,8 @@ impl Baza {
         // TODO remove created arhiv if settings tx fails
         let tx = baza.get_tx()?;
 
-        tx.set_setting(&SETTING_DATA_VERSION, &baza.data_version)?;
+        tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
+        tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new().into())?;
 
         tx.commit()?;
 

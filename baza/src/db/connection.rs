@@ -3,7 +3,6 @@ use std::{borrow::Cow, collections::HashSet, fs, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
-use serde::{de::DeserializeOwned, Serialize};
 
 use rs_utils::{
     file_exists, is_same_filesystem, log, now, FsTransaction, Timestamp, MIN_TIMESTAMP,
@@ -22,12 +21,10 @@ use crate::{
 
 use super::{
     db::{init_functions, open_connection},
-    dto::{
-        BLOBSCount, DBSetting, DocumentsCount, ListPage, SETTING_COMPUTED_DATA_VERSION,
-        SETTING_DATA_VERSION,
-    },
+    dto::{BLOBSCount, DocumentsCount, ListPage},
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
+    settings::{SETTING_COMPUTED_DATA_VERSION, SETTING_DATA_VERSION},
     utils,
 };
 
@@ -160,35 +157,6 @@ impl BazaConnection {
 
     pub fn get_db_version(&self) -> Result<u8> {
         get_db_version(self.get_connection())
-    }
-
-    pub fn get_setting<T: Serialize + DeserializeOwned>(
-        &self,
-        setting: &DBSetting<T>,
-    ) -> Result<Option<T>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT value FROM settings WHERE key = ?1")?;
-
-        let value: Option<String> = stmt
-            .query_row([setting.0], |row| row.get(0))
-            .optional()
-            .context(anyhow!("failed to read setting {}", setting.0))?;
-
-        if let Some(value) = value {
-            serde_json::from_str(&value).context(anyhow!("failed to parse setting {}", setting.0))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub fn must_get_setting<T: Serialize + DeserializeOwned>(
-        &self,
-        setting: &DBSetting<T>,
-    ) -> Result<T> {
-        self.get_setting(setting)
-            .transpose()
-            .context(anyhow!("setting {} is missing", setting.0))?
     }
 
     pub fn get_db_rev(&self) -> Result<Revision> {
@@ -577,23 +545,6 @@ impl BazaConnection {
         }
     }
 
-    pub fn set_setting<T: Serialize + DeserializeOwned>(
-        &self,
-        setting: &DBSetting<T>,
-        value: &T,
-    ) -> Result<()> {
-        let value = serde_json::to_string(&value)?;
-
-        self.get_connection()
-            .execute(
-                "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                [setting.0, &value],
-            )
-            .context(anyhow!("failed to save setting {}", setting.0))?;
-
-        Ok(())
-    }
-
     pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
         self.put_or_replace_document(document, false)
     }
@@ -668,7 +619,7 @@ impl BazaConnection {
 
     pub(crate) fn compute_data(&self) -> Result<()> {
         let computed_data_version = self
-            .get_setting(&SETTING_COMPUTED_DATA_VERSION)?
+            .kvs_const_get(SETTING_COMPUTED_DATA_VERSION)?
             .unwrap_or(0);
 
         ensure!(
@@ -678,7 +629,7 @@ impl BazaConnection {
         if computed_data_version < Refs::VERSION {
             self.get_connection()
                 .execute("DELETE FROM documents_refs", [])?;
-            self.set_setting(&SETTING_COMPUTED_DATA_VERSION, &Refs::VERSION)?;
+            self.kvs_const_set(SETTING_COMPUTED_DATA_VERSION, &Refs::VERSION)?;
         }
 
         let now = Instant::now();
@@ -801,7 +752,7 @@ impl BazaConnection {
         let documents = self.list_documents(&Filter::all_staged_documents())?.items;
 
         let changeset = Changeset {
-            data_version: self.must_get_setting(&SETTING_DATA_VERSION)?,
+            data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
             base_rev,
             documents,
         };
@@ -973,7 +924,7 @@ impl BazaConnection {
     }
 
     pub(crate) fn apply_data_migrations(&self, migrations: &DataMigrations) -> Result<()> {
-        let data_version = self.must_get_setting(&SETTING_DATA_VERSION)?;
+        let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
         let latest_data_version = get_latest_data_version(migrations);
 
         ensure!(
@@ -1022,7 +973,7 @@ impl BazaConnection {
             }
 
             let version = migration.get_version();
-            self.set_setting(&SETTING_DATA_VERSION, &version)?;
+            self.kvs_const_set(SETTING_DATA_VERSION, &version)?;
 
             log::info!(
                 "Migrated {rows_count} rows in {} seconds to version {version}",

@@ -3,19 +3,15 @@ use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 
+use rs_utils::generate_random_id;
+
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Id(String);
 
 impl Id {
     #[must_use]
     pub fn new() -> Self {
-        // TODO make const fn
-        let chars: Vec<char> = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-            .chars()
-            .collect();
-
-        // see https://zelark.github.io/nano-id-cc/
-        Id(nanoid::nanoid!(14, &chars))
+        Id(generate_random_id())
     }
 }
 

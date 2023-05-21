@@ -18,6 +18,6 @@
   },
   "dependencies": {
     "chrono-node": "^2.3.9",
-    "urlpattern-polyfill": "^7.0.0"
+    "urlpattern-polyfill": "^8.0.0"
   }
 }

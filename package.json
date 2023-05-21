@@ -7,26 +7,19 @@
   "author": "mbme",
   "license": "MIT",
   "private": true,
-  "workspaces": [
-    "arhiv-ui",
-    "scraper"
-  ],
+  "workspaces": ["arhiv-ui", "scraper"],
   "scripts": {
     "check-fmt": "prettier --check .",
     "fmt": "prettier --write .",
-    "check": "yarn workspaces run compiler-errors && yarn run check-fmt && yarn workspaces run lint && yarn workspace arhiv-ui run test",
-    "prepare": "husky install"
+    "check": "yarn workspaces run compiler-errors && yarn run check-fmt && yarn workspaces run lint && yarn workspace arhiv-ui run test"
   },
   "devDependencies": {
-    "@types/node": "^18.0.4",
+    "@types/node": "^20.2.1",
     "@typescript-eslint/eslint-plugin": "^5.11.0",
     "@typescript-eslint/parser": "^5.11.0",
-    "ava": "^5.2.0",
     "eslint": "^8.9.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-ava": "^14.0.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "husky": "^8.0.0",
     "prettier": "^2.5.1",
     "tsx": "^3.9.0",
     "typescript": "~5.0.0"

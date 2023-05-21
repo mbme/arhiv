@@ -28,7 +28,7 @@ impl DBMigration for MigrationV4 {
             DELETE FROM kvs WHERE key = 'arhiv_id';
 
             -- convert keys into kvs key array
-            UPDATE kvs(key, value) SET key = json_array('settings', key);
+            UPDATE kvs SET key = json_array('settings', key);
 
             INSERT INTO documents_snapshots
                        SELECT * FROM old_db.documents_snapshots;

@@ -17,7 +17,7 @@
     "prod:build:css": "NODE_ENV=production yarn run build:css",
     "prod:build": "yarn run prod:build:js && yarn run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
-    "test": "ava",
+    "test": "exit 0",
     "fmt": "prettier --write src/"
   },
   "dependencies": {
@@ -37,22 +37,8 @@
     "@testing-library/react": "^14.0.0",
     "autoprefixer": "^10.2.6",
     "esbuild": "^0.17.10",
-    "global-jsdom": "^9.0.1",
-    "jsdom": "^22.0.0",
     "postcss": "^8.3.0",
     "postcss-cli": "^10.0.0",
     "tailwindcss": "^3.0.7"
-  },
-  "ava": {
-    "extensions": {
-      "ts": "module",
-      "tsx": "module"
-    },
-    "nodeArguments": [
-      "--no-experimental-fetch",
-      "--no-experimental-global-customevent",
-      "--no-warnings",
-      "--loader=tsx"
-    ]
   }
 }

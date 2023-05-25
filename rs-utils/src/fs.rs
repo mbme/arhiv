@@ -90,6 +90,22 @@ pub fn get_file_size(path: &str) -> Result<u64> {
     Ok(metadata.len())
 }
 
+pub fn set_file_size(path: &str, size: u64) -> Result<()> {
+    let file = fs::OpenOptions::new()
+        .read(false)
+        .write(true)
+        .create_new(false)
+        .open(path)
+        .context("Failed to open file")?;
+
+    file.set_len(size).context("Failed to set file size")?;
+
+    file.sync_all()
+        .context("Failed to sync file changes to disk")?;
+
+    Ok(())
+}
+
 #[must_use]
 pub fn get_file_extension(path: &str) -> Option<String> {
     let extension = Path::new(path).extension()?.to_str()?.to_string();
@@ -339,6 +355,17 @@ pub fn remove_file_if_exists(file_path: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn must_create_file(file_path: &str) -> Result<fs::File> {
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create_new(true)
+        .open(file_path)
+        .context("failed to create file")?;
+
+    Ok(file)
 }
 
 #[must_use]

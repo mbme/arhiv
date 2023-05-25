@@ -1,14 +1,20 @@
-use std::fs;
+use std::{fs, io::Write};
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use crate::{generate_alpanumeric_string, log, move_file, path_exists};
+use crate::{
+    ensure_file_exists, generate_alpanumeric_string, get_file_size, log, move_file,
+    must_create_file, path_exists, set_file_size,
+};
 
 enum FsOperation {
     Backup { src: String, dest: String },
     Move { src: String, dest: String },
     Copy { src: String, dest: String },
     HardLink { src: String, dest: String },
+    CreateFile { path: String },
+    CreateDir { path: String },
+    AppendFile { path: String, original_size: u64 },
 }
 
 pub struct FsTransaction {
@@ -107,6 +113,68 @@ impl FsTransaction {
         Ok(())
     }
 
+    pub fn create_file(&mut self, path: impl Into<String>, data: &[u8]) -> Result<()> {
+        let path = path.into();
+
+        let mut file = must_create_file(&path).context(anyhow!("Failed to Create file {path}"))?;
+
+        if !data.is_empty() {
+            file.write_all(data)
+                .context(anyhow!("Failed to write data into file {path}"))?;
+        }
+
+        file.sync_all()
+            .context("Failed to sync file changes to disk")?;
+
+        log::debug!("Created file {path}");
+
+        self.ops.push(FsOperation::CreateFile { path });
+
+        Ok(())
+    }
+
+    pub fn create_dir(&mut self, path: impl Into<String>) -> Result<()> {
+        let path = path.into();
+
+        fs::create_dir(&path).context(anyhow!("Failed to Create dir {path}"))?;
+
+        log::debug!("Created dir {path}");
+
+        self.ops.push(FsOperation::CreateDir { path });
+
+        Ok(())
+    }
+
+    pub fn append_file(&mut self, path: impl Into<String>, data: &[u8]) -> Result<()> {
+        let path = path.into();
+
+        ensure_file_exists(&path)?;
+
+        let original_size = get_file_size(&path)?;
+
+        let mut file = fs::OpenOptions::new()
+            .read(false)
+            .append(true)
+            .create_new(false)
+            .open(&path)
+            .context(anyhow!("Failed to open file {path}"))?;
+
+        file.write_all(data)
+            .context(anyhow!("Failed to append data to file {path}"))?;
+
+        file.sync_all()
+            .context("Failed to sync file changes to disk")?;
+
+        log::debug!("Appended {} bytes to file {path}", data.len());
+
+        self.ops.push(FsOperation::AppendFile {
+            path,
+            original_size,
+        });
+
+        Ok(())
+    }
+
     pub fn rollback(&mut self) -> Result<()> {
         if self.ops.is_empty() {
             return Ok(());
@@ -155,6 +223,33 @@ impl FsTransaction {
                         log::warn!("Reverted Backup {} to {}", src, dest);
                     }
                 }
+                FsOperation::CreateFile { path } => {
+                    if let Err(err) = fs::remove_file(path) {
+                        log::error!("Failed to revert CreateFile {path}: {err}");
+                        failed_count += 1;
+                    } else {
+                        log::warn!("Reverted CreateFile {path}");
+                    }
+                }
+                FsOperation::CreateDir { path } => {
+                    if let Err(err) = fs::remove_dir(path) {
+                        log::error!("Failed to revert CreateDir {path}: {err}");
+                        failed_count += 1;
+                    } else {
+                        log::warn!("Reverted CreateDir {path}");
+                    }
+                }
+                FsOperation::AppendFile {
+                    path,
+                    original_size,
+                } => {
+                    if let Err(err) = set_file_size(path, *original_size) {
+                        log::error!("Failed to revert AppendFile {path}: {err}");
+                        failed_count += 1;
+                    } else {
+                        log::warn!("Reverted AppendFile {path}");
+                    }
+                }
             }
         }
 
@@ -200,7 +295,7 @@ impl Default for FsTransaction {
 
 #[cfg(test)]
 mod tests {
-    use crate::TempFile;
+    use crate::{dir_exists, TempFile};
 
     use super::*;
 
@@ -355,6 +450,98 @@ mod tests {
             fs_tx.rollback()?;
 
             assert_eq!(temp1.str_contents()?, "temp1");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_create_file() -> Result<()> {
+        // commit create_file transaction
+        {
+            let temp1 = TempFile::new();
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.create_file(&temp1.path, "temp1".as_bytes())?;
+            fs_tx.commit()?;
+
+            assert!(temp1.exists());
+            assert_eq!(temp1.str_contents()?, "temp1");
+        }
+
+        // revert create_file transaction
+        {
+            let temp1 = TempFile::new();
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.create_file(&temp1.path, "temp1".as_bytes())?;
+
+            assert!(temp1.exists());
+
+            fs_tx.rollback()?;
+
+            assert!(!temp1.exists());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_create_dir() -> Result<()> {
+        // commit create_dir transaction
+        {
+            let temp1 = TempFile::new();
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.create_dir(&temp1.path)?;
+            fs_tx.commit()?;
+
+            assert!(temp1.exists());
+            assert!(dir_exists(&temp1.path)?);
+        }
+
+        // revert create_dir transaction
+        {
+            let temp1 = TempFile::new();
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.create_dir(&temp1.path)?;
+
+            fs_tx.rollback()?;
+
+            assert!(!temp1.exists());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_append_file() -> Result<()> {
+        // commit append_file transaction
+        {
+            let temp1 = TempFile::new();
+            temp1.write_str("foo")?;
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.append_file(&temp1.path, "bar".as_bytes())?;
+            fs_tx.commit()?;
+
+            assert!(temp1.exists());
+            assert_eq!(temp1.str_contents()?, "foobar");
+        }
+
+        // revert append_file transaction
+        {
+            let temp1 = TempFile::new();
+            temp1.write_str("foo")?;
+
+            let mut fs_tx = FsTransaction::new();
+            fs_tx.append_file(&temp1.path, "bar".as_bytes())?;
+
+            fs_tx.rollback()?;
+
+            assert!(temp1.exists());
+            assert_eq!(temp1.str_contents()?, "foo");
         }
 
         Ok(())

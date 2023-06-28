@@ -45,7 +45,7 @@ impl Baza {
             db_rev,
         );
 
-        let mut conflicts = vec![];
+        let conflicts = vec![];
 
         if changeset.is_empty() {
             log::debug!("empty changeset, ignoring");
@@ -73,26 +73,6 @@ impl Baza {
                 tx.erase_document_history(&document.id)?;
 
                 continue;
-            }
-
-            match tx.get_last_snapshot(&document.id)? {
-                // on conflict
-                Some(prev_snapshot) if prev_snapshot.rev != document.prev_rev => {
-                    if prev_snapshot.is_erased() {
-                        log::warn!(
-                            "Got an update for erased document {}, ignoring",
-                            &document.id
-                        );
-                        continue;
-                    }
-
-                    if document.data != prev_snapshot.data {
-                        log::warn!("Got data conflict on document {}", &document.id);
-                        conflicts.push(document);
-                        continue;
-                    }
-                }
-                _ => {}
             }
 
             document.rev = new_rev;

@@ -11,7 +11,6 @@ CREATE TABLE documents_snapshots (
   id          TEXT    NOT NULL,
 
   rev         INTEGER NOT NULL,
-  prev_rev    INTEGER NOT NULL,
 
   document_type   TEXT    NOT NULL,
   subtype         TEXT    NOT NULL,
@@ -51,18 +50,6 @@ CREATE VIEW documents AS
                                     DESC) rn
         FROM documents_snapshots) b
     ON a.rowid = b.rowid WHERE b.rn = 1;
-
--- conflict is a
--- 1. staged document (rev = 0)
--- 2. that isn't deleted
--- 3. with prev_rev != max rev of the same document
-CREATE VIEW conflicts AS
-  SELECT a.* FROM
-          documents_snapshots a
-      INNER JOIN
-          (SELECT id, MAX(rev) max_rev FROM documents_snapshots GROUP BY id) b
-      ON a.id = b.id
-      WHERE a.rev = 0 AND document_type != '' AND a.prev_rev != b.max_rev;
 
 CREATE VIEW committed_documents AS
   SELECT a.*

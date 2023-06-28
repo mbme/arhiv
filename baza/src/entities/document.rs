@@ -14,7 +14,6 @@ use super::{DocumentClass, DocumentData, Id};
 pub struct Document<D = DocumentData> {
     pub id: Id,
     pub rev: Revision,
-    pub prev_rev: Revision,
     #[serde(flatten)]
     pub class: DocumentClass,
     pub created_at: Timestamp,
@@ -30,7 +29,6 @@ impl<D> Document<D> {
         Document {
             id: Id::new(),
             rev: Revision::STAGING,
-            prev_rev: Revision::STAGING,
             class,
             created_at: now,
             updated_at: now,
@@ -55,14 +53,9 @@ impl Document {
         self.rev == Revision::STAGING
     }
 
-    pub fn is_initial(&self) -> bool {
-        self.prev_rev == Revision::STAGING
-    }
-
     pub fn erase(&mut self) {
         self.class = DocumentClass::erased();
         self.rev = Revision::STAGING;
-        self.prev_rev = Revision::STAGING;
         self.data = DocumentData::new();
         self.updated_at = now();
     }
@@ -73,7 +66,6 @@ impl Document {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            prev_rev: self.prev_rev,
             class: self.class,
             created_at: self.created_at,
             updated_at: self.updated_at,
@@ -91,7 +83,6 @@ impl<D: Serialize> Document<D> {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            prev_rev: self.prev_rev,
             class: self.class,
             created_at: self.created_at,
             updated_at: self.updated_at,

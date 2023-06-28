@@ -210,12 +210,6 @@ impl BazaConnection {
         })
     }
 
-    pub fn count_conflicts(&self) -> Result<u32> {
-        self.get_connection()
-            .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
-            .context("failed to count conflicts")
-    }
-
     pub(crate) fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
@@ -527,22 +521,6 @@ impl BazaConnection {
             .map(|value| value.unwrap_or(false))
     }
 
-    pub(crate) fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM documents_snapshots WHERE id = ?1 ORDER BY rev DESC LIMIT 1",
-        )?;
-
-        let mut rows = stmt
-            .query_and_then([id], utils::extract_document)
-            .context(anyhow!("Failed to get last snapshot of document {}", &id))?;
-
-        if let Some(row) = rows.next() {
-            Ok(Some(row?))
-        } else {
-            Ok(None)
-        }
-    }
-
     pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
         self.put_or_replace_document(document, false)
     }
@@ -555,8 +533,8 @@ impl BazaConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, prev_rev, document_type, subtype, created_at, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (id, rev, document_type, subtype, created_at, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
                 if force_update || document.is_staged() {
                     "OR REPLACE"
                 } else {
@@ -567,7 +545,6 @@ impl BazaConnection {
             stmt.execute(params![
                 document.id,
                 document.rev,
-                document.prev_rev,
                 document.class.document_type,
                 document.class.subtype,
                 document.created_at,
@@ -673,19 +650,6 @@ impl BazaConnection {
 
             document.rev = Revision::STAGING;
 
-            if prev_document.rev == Revision::STAGING {
-                ensure!(
-                    document.prev_rev == prev_document.prev_rev,
-                    "document prev_rev {} is different from the staged document prev_rev {}",
-                    document.prev_rev,
-                    prev_document.prev_rev
-                );
-            } else {
-                // we're going to modify committed document
-                // so we need to save its revision as prev_rev of the new document
-                document.prev_rev = prev_document.rev;
-            }
-
             ensure!(
                 document.class == prev_document.class,
                 "document class '{}' is different from the class '{}' of existing document",
@@ -712,7 +676,6 @@ impl BazaConnection {
             log::debug!("Creating new document {}", &document.id);
 
             document.rev = Revision::STAGING;
-            document.prev_rev = Revision::STAGING;
 
             let now = now();
             document.created_at = now;

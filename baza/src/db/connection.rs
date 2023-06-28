@@ -13,7 +13,7 @@ use crate::{
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::{changeset::Changeset, changeset_response::ChangesetResponse, revision::Revision},
+    sync::{changeset::Changeset, revision::Revision},
     validator::Validator,
 };
 
@@ -369,23 +369,6 @@ impl BazaConnection {
         Ok(ListPage { items, has_more })
     }
 
-    pub(crate) fn get_new_snapshots_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
-
-        let rows = stmt
-            .query_and_then([min_rev], utils::extract_document)
-            .context(anyhow!("Failed to get new snapshots since {}", min_rev))?;
-
-        let mut documents = Vec::new();
-        for row in rows {
-            documents.push(row?);
-        }
-
-        Ok(documents)
-    }
-
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let mut stmt = self
             .get_connection()
@@ -719,62 +702,6 @@ impl BazaConnection {
         };
 
         Ok(changeset)
-    }
-
-    pub fn generate_changeset_response(
-        &self,
-        base_rev: Revision,
-        conflicts: Vec<Document>,
-    ) -> Result<ChangesetResponse> {
-        let next_rev = base_rev.inc();
-
-        let new_snapshots = self.get_new_snapshots_since(next_rev)?;
-
-        let latest_rev = self.get_db_rev()?;
-
-        Ok(ChangesetResponse {
-            base_rev,
-            latest_rev,
-            new_snapshots,
-            conflicts,
-        })
-    }
-
-    pub fn apply_changeset_response(&mut self, response: ChangesetResponse) -> Result<()> {
-        let db_rev = self.get_db_rev()?;
-
-        ensure!(
-            response.base_rev == db_rev,
-            "base_rev {} isn't equal to current rev {}",
-            response.base_rev,
-            db_rev,
-        );
-
-        for document in response.new_snapshots {
-            self.put_document(&document)?;
-
-            // erase history of erased documents
-            if document.is_erased() {
-                self.erase_document_history(&document.id)?;
-            }
-        }
-
-        if !response.conflicts.is_empty() {
-            log::warn!(
-                "Got {} conflict(s) in changeset response",
-                response.conflicts.len()
-            );
-        }
-
-        // save conflicts in documents table
-        for document in response.conflicts {
-            log::warn!("Conflict in {}", &document);
-            self.put_document(&document)?;
-        }
-
-        log::debug!("successfully applied a changeset response");
-
-        Ok(())
     }
 
     pub fn get_blob(&self, blob_id: &BLOBId) -> BLOB {

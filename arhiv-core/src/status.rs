@@ -2,7 +2,7 @@ use std::fmt;
 
 use serde::Serialize;
 
-use baza::{entities::Revision, BLOBSCount, DocumentsCount};
+use baza::{sync::revision::Revision, BLOBSCount, DocumentsCount};
 use rs_utils::{format_time, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize, Debug)]

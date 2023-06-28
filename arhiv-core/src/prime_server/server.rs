@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anyhow::Context;
+use baza::sync::changeset::Changeset;
 use futures::TryStreamExt;
 use hyper::HeaderMap;
 use hyper::{body::Buf, http::request::Parts, Body, Request, Response, Server, StatusCode};
@@ -9,7 +10,7 @@ use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use baza::entities::{BLOBId, Changeset};
+use baza::entities::BLOBId;
 use rs_utils::{create_body_from_file, http_server::*, log, parse_range_header};
 
 use crate::{Arhiv, BazaConnectionExt};

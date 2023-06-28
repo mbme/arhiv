@@ -1,4 +1,7 @@
+pub mod changeset;
+pub mod changeset_response;
 pub mod instance_id;
+pub mod revision;
 
 use anyhow::{ensure, Result};
 
@@ -7,7 +10,9 @@ use rs_utils::log;
 use crate::baza::Baza;
 use crate::db::BazaConnection;
 use crate::document_expert::DocumentExpert;
-use crate::entities::{Changeset, Document};
+use crate::entities::Document;
+
+use self::changeset::Changeset;
 
 impl Baza {
     pub fn apply_changeset(

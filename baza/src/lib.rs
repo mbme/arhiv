@@ -10,7 +10,7 @@ pub mod markup;
 mod path_manager;
 pub mod schema;
 mod search;
-mod sync;
+pub mod sync;
 pub mod validator;
 
 #[cfg(test)]

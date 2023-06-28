@@ -1,5 +1,6 @@
 use anyhow::Result;
-use baza::{entities::Revision, BLOBSCount, DocumentsCount, Filter};
+use baza::sync::revision::Revision;
+use baza::{BLOBSCount, DocumentsCount, Filter};
 use serde_json::json;
 
 use rs_utils::workspace_relpath;

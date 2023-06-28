@@ -11,11 +11,11 @@ use rs_utils::{
 use crate::{
     db_migrations::get_db_version,
     entities::{
-        BLOBId, Changeset, ChangesetResponse, Document, Id, Refs, Revision, BLOB,
-        ERASED_DOCUMENT_TYPE,
+        BLOBId, Changeset, ChangesetResponse, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
+    sync::revision::Revision,
     validator::Validator,
 };
 

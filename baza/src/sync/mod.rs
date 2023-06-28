@@ -1,4 +1,5 @@
 pub mod instance_id;
+pub mod revision;
 
 use anyhow::{ensure, Result};
 

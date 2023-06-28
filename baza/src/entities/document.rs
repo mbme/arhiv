@@ -5,7 +5,9 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use super::{DocumentClass, DocumentData, Id, Revision};
+use crate::sync::revision::Revision;
+
+use super::{DocumentClass, DocumentData, Id};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]

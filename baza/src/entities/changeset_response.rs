@@ -3,7 +3,9 @@ use std::fmt;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use super::{Document, Revision};
+use crate::sync::revision::Revision;
+
+use super::Document;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]

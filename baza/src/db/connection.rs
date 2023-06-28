@@ -10,12 +10,10 @@ use rs_utils::{
 
 use crate::{
     db_migrations::get_db_version,
-    entities::{
-        BLOBId, Changeset, ChangesetResponse, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE,
-    },
+    entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::revision::Revision,
+    sync::{changeset::Changeset, changeset_response::ChangesetResponse, revision::Revision},
     validator::Validator,
 };
 

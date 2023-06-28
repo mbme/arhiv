@@ -1,7 +1,10 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use reqwest::{Client, StatusCode};
 
-use baza::entities::*;
+use baza::{
+    entities::*,
+    sync::{changeset::Changeset, changeset_response::ChangesetResponse},
+};
 use rs_utils::{create_body_from_file, log, Download};
 
 pub struct PrimeServerRPC {

@@ -2,9 +2,9 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::revision::Revision;
+use crate::entities::{Document, Id};
 
-use super::{Document, Id};
+use super::revision::Revision;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]

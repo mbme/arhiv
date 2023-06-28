@@ -1,6 +1,6 @@
 use anyhow::{ensure, Context, Result};
 
-use baza::entities::ChangesetResponse;
+use baza::sync::changeset_response::ChangesetResponse;
 use rs_utils::{log, now};
 
 use crate::{prime_server::PrimeServerRPC, settings::SETTING_LAST_SYNC_TIME};

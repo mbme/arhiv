@@ -9,17 +9,20 @@ use super::new_document;
 
 #[test]
 fn test_validation_mandatory() {
-    let baza = Baza::new_with_schema(DataSchema::new(vec![DataDescription {
-        document_type: "test_type",
-        fields: vec![Field {
-            name: "test",
-            field_type: FieldType::String {},
-            mandatory: true,
-            readonly: false,
-            for_subtypes: None,
+    let baza = Baza::new_with_schema(DataSchema::new(
+        "test",
+        vec![DataDescription {
+            document_type: "test_type",
+            fields: vec![Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: true,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
         }],
-        subtypes: None,
-    }]));
+    ));
 
     {
         let tx = baza.get_tx().unwrap();
@@ -38,17 +41,20 @@ fn test_validation_mandatory() {
 
 #[test]
 fn test_validation_readonly() {
-    let baza = Baza::new_with_schema(DataSchema::new(vec![DataDescription {
-        document_type: "test_type",
-        fields: vec![Field {
-            name: "test",
-            field_type: FieldType::String {},
-            mandatory: false,
-            readonly: true,
-            for_subtypes: None,
+    let baza = Baza::new_with_schema(DataSchema::new(
+        "test",
+        vec![DataDescription {
+            document_type: "test_type",
+            fields: vec![Field {
+                name: "test",
+                field_type: FieldType::String {},
+                mandatory: false,
+                readonly: true,
+                for_subtypes: None,
+            }],
+            subtypes: None,
         }],
-        subtypes: None,
-    }]));
+    ));
 
     {
         let tx = baza.get_tx().unwrap();

@@ -23,6 +23,7 @@ mod track;
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
     DataSchema::new(
+        "arhiv",
         vec![
             attachment::get_attachment_definitions(),
             note::get_note_definitions(),

@@ -29,17 +29,20 @@ impl Baza {
     }
 
     pub fn new_test_baza_with_id(id: &str) -> Self {
-        let baza = Baza::new_with_schema(DataSchema::new(vec![DataDescription {
-            document_type: "test_type",
-            fields: vec![Field {
-                name: "test",
-                field_type: FieldType::String {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
+        let baza = Baza::new_with_schema(DataSchema::new(
+            "test",
+            vec![DataDescription {
+                document_type: "test_type",
+                fields: vec![Field {
+                    name: "test",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                }],
+                subtypes: None,
             }],
-            subtypes: None,
-        }]));
+        ));
 
         let tx = baza.get_tx().unwrap();
         let id = id.try_into().unwrap();

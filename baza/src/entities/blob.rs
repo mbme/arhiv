@@ -4,6 +4,7 @@ use rs_utils::{file_exists, get_file_size, get_media_type};
 
 use crate::entities::BLOBId;
 
+#[derive(Hash, Eq, PartialEq)]
 pub struct BLOB {
     pub id: BLOBId,
     pub file_path: String,

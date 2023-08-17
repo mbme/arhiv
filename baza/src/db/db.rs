@@ -14,7 +14,7 @@ use crate::{
     document_expert::DocumentExpert,
     entities::{BLOBId, DocumentClass, DocumentData, Id},
     schema::DataSchema,
-    sync::revision::Revision,
+    sync::Revision,
 };
 
 pub fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
@@ -38,6 +38,7 @@ pub fn init_functions(conn: &Connection, schema: &Arc<DataSchema>) -> Result<()>
     init_extract_refs_fn(conn, schema.clone())?;
     init_calculate_search_score_fn(conn, schema.clone())?;
     init_json_contains(conn)?;
+    init_rev_cmp_collation(conn)?;
 
     Ok(())
 }
@@ -160,6 +161,18 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
     .context("Failed to define function 'extract_refs'")
 }
 
+fn init_rev_cmp_collation(conn: &Connection) -> Result<()> {
+    conn.create_collation("REV_CMP", move |rev_a, rev_b| {
+        let rev_a: Revision = serde_json::from_str(rev_a).expect("must parse rev_a as Revision");
+        let rev_b: Revision = serde_json::from_str(rev_b).expect("must parse rev_b as Revision");
+
+        rev_a
+            .partial_cmp(&rev_b)
+            .unwrap_or(std::cmp::Ordering::Equal) // conflicts are considered equal
+    })
+    .context("Failed to define collation 'REV_CMP'")
+}
+
 fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {
     let data: Value = serde_json::from_str(data)?;
 
@@ -197,20 +210,6 @@ pub fn vacuum(db_file: &str) -> Result<()> {
     );
 
     Ok(())
-}
-
-impl FromSql for Revision {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value
-            .as_i64()
-            .map(|value| Revision::from_value(value as u32))
-    }
-}
-
-impl ToSql for Revision {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.0))
-    }
 }
 
 impl FromSql for Id {

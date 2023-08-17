@@ -1,12 +1,15 @@
 use serde_json::json;
 
-use crate::schema::{DataDescription, DataSchema, Field, FieldType};
+use crate::{
+    schema::{DataDescription, DataSchema, Field, FieldType},
+    Baza,
+};
 
-use super::{new_document, TestBaza};
+use super::new_document;
 
 #[test]
 fn test_validation_mandatory() {
-    let baza = TestBaza::create(DataSchema::new(vec![DataDescription {
+    let baza = Baza::new_with_schema(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
         fields: vec![Field {
             name: "test",
@@ -35,7 +38,7 @@ fn test_validation_mandatory() {
 
 #[test]
 fn test_validation_readonly() {
-    let baza = TestBaza::create(DataSchema::new(vec![DataDescription {
+    let baza = Baza::new_with_schema(DataSchema::new(vec![DataDescription {
         document_type: "test_type",
         fields: vec![Field {
             name: "test",

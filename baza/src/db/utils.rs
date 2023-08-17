@@ -10,7 +10,11 @@ pub fn extract_document(row: &Row) -> Result<Document> {
 
     Ok(Document {
         id: row.get("id")?,
-        rev: row.get("rev")?,
+        rev: {
+            let rev: Value = row.get("rev")?;
+
+            rev.try_into()?
+        },
         class: DocumentClass::new(document_type, subtype),
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,

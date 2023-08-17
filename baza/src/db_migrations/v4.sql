@@ -41,15 +41,21 @@ CREATE VIEW documents_snapshots_and_refs AS
 CREATE VIEW documents AS
   SELECT a.* FROM documents_snapshots_and_refs a
     INNER JOIN
-        (SELECT rowid,
-                ROW_NUMBER() OVER (PARTITION BY id
-                                    ORDER BY CASE
-                                              WHEN rev = 0 THEN 4294967295 -- u32::MAX in Rust
-                                              ELSE rev
-                                            END
-                                    DESC) rn
+        (SELECT rowid, ROW_NUMBER() OVER (PARTITION BY id ORDER BY rev COLLATE REV_CMP DESC) rn
         FROM documents_snapshots) b
     ON a.rowid = b.rowid WHERE b.rn = 1;
+
+CREATE VIEW documents_with_conflicts AS
+  SELECT a.id, a.rev
+  FROM documents_snapshots_and_refs a
+  INNER JOIN (
+      SELECT id, MAX(rev) COLLATE REV_CMP as max_rev
+      FROM documents_snapshots
+      WHERE rev != '{}' COLLATE REV_CMP
+      GROUP BY id
+  ) b ON a.id = b.id AND a.rev = b.max_rev COLLATE REV_CMP
+  GROUP BY a.id
+  HAVING COUNT(*) > 1;
 
 CREATE VIEW committed_documents AS
   SELECT a.*

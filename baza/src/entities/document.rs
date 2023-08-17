@@ -9,7 +9,7 @@ use crate::sync::revision::Revision;
 
 use super::{DocumentClass, DocumentData, Id};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,
@@ -28,7 +28,7 @@ impl<D> Document<D> {
 
         Document {
             id: Id::new(),
-            rev: Revision::STAGING,
+            rev: Revision::staging(),
             class,
             created_at: now,
             updated_at: now,
@@ -50,14 +50,17 @@ impl Document {
 
     #[must_use]
     pub fn is_staged(&self) -> bool {
-        self.rev == Revision::STAGING
+        self.rev.is_staged()
     }
 
     pub fn erase(&mut self) {
         self.class = DocumentClass::erased();
-        self.rev = Revision::STAGING;
         self.data = DocumentData::new();
         self.updated_at = now();
+    }
+
+    pub fn stage(&mut self) {
+        self.rev = Revision::staging();
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
@@ -101,6 +104,12 @@ impl std::str::FromStr for Document {
 
 impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[Document {} {} {}]", self.class, self.id, self.rev,)
+        write!(
+            f,
+            "[Document {} {} {}]",
+            self.class,
+            self.id,
+            self.rev.serialize()
+        )
     }
 }

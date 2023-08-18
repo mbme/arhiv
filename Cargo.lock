@@ -196,7 +196,6 @@ dependencies = [
  "pulldown-cmark",
  "rs-utils",
  "rusqlite",
- "scraper",
  "serde",
  "serde_json",
  "tokio",

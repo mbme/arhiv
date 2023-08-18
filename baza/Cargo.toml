@@ -27,7 +27,6 @@ pulldown-cmark = { version = "0.9", default-features = false, features = ["simd"
 rusqlite = { version = "0.29", features = ["chrono", "serde_json", "functions", "collation"] }
 
 rs-utils = { path = "../rs-utils" }
-scraper = { path = "../scraper" }
 
 fslock = "0.2.1"
 

@@ -8,12 +8,12 @@ use crate::Baza;
 
 use super::{agent::SyncAgent, instance_id::InstanceId, ping::Ping};
 
-pub struct SyncManager {
+pub struct SyncService {
     agents: RefCell<Vec<SyncAgent>>,
     baza: Arc<Baza>,
 }
 
-impl SyncManager {
+impl SyncService {
     pub fn new(baza: Arc<Baza>) -> Self {
         Self {
             agents: Default::default(),

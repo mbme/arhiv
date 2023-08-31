@@ -4,13 +4,13 @@ use anyhow::Result;
 use serde_json::json;
 
 use crate::{
-    sync::{SyncAgent, SyncManager},
+    sync::{SyncAgent, SyncService},
     tests::{create_changeset, new_document_snapshot},
     Baza,
 };
 
 #[tokio::test]
-async fn test_sync_manager() -> Result<()> {
+async fn test_sync_service() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
 
     {
@@ -34,20 +34,20 @@ async fn test_sync_manager() -> Result<()> {
         tx.commit()?;
     }
 
-    let sync_manager = SyncManager::new(baza0.clone());
+    let sync_service = SyncService::new(baza0.clone());
 
     let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
-    sync_manager.add_agent(agent1);
+    sync_service.add_agent(agent1);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert_eq!(sync_manager.get_pings().len(), 0);
-    assert_eq!(sync_manager.sync().await?, false);
+    assert_eq!(sync_service.get_pings().len(), 0);
+    assert_eq!(sync_service.sync().await?, false);
 
-    sync_manager.refresh_peers().await?;
-    assert_eq!(sync_manager.get_pings().len(), 1);
-    assert_eq!(sync_manager.sync().await?, true);
+    sync_service.refresh_peers().await?;
+    assert_eq!(sync_service.get_pings().len(), 1);
+    assert_eq!(sync_service.sync().await?, true);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 5);

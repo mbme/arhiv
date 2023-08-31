@@ -4,7 +4,7 @@ mod instance_id;
 mod network;
 mod ping;
 mod revision;
-mod sync_manager;
+mod sync_service;
 
 use std::collections::HashSet;
 
@@ -22,7 +22,7 @@ pub use changeset::Changeset;
 pub use instance_id::InstanceId;
 pub use ping::Ping;
 pub use revision::Revision;
-pub use sync_manager::SyncManager;
+pub use sync_service::SyncService;
 
 #[derive(Default)]
 pub struct ChangesetSummary {

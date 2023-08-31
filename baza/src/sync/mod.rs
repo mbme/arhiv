@@ -1,6 +1,7 @@
 pub mod agent;
 pub mod changeset;
 pub mod instance_id;
+mod network;
 pub mod ping;
 mod revision;
 mod sync_manager;

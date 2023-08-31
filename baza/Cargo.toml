@@ -13,7 +13,6 @@ production-mode = []
 
 [dependencies]
 anyhow.workspace = true
-async-trait.workspace = true
 
 serde.workspace = true
 serde_json.workspace = true
@@ -29,6 +28,10 @@ rusqlite = { version = "0.29", features = ["chrono", "serde_json", "functions", 
 rs-utils = { path = "../rs-utils" }
 
 fslock = "0.2.1"
+
+reqwest.workspace = true
+hyper.workspace = true
+routerify.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

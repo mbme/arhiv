@@ -1,11 +1,12 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use reqwest::Client;
 
-use baza::{
-    entities::*,
+use rs_utils::{log, Download};
+
+use crate::{
+    entities::{BLOBId, BLOB},
     sync::{changeset::Changeset, Revision},
 };
-use rs_utils::{log, Download};
 
 pub struct BazaRpcClient {
     prime_url: String,

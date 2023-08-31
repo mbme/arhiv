@@ -1,11 +1,11 @@
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use reqwest::Client;
 
 use rs_utils::{log, Download};
 
 use crate::{
     entities::{BLOBId, BLOB},
-    sync::{changeset::Changeset, Revision},
+    sync::{changeset::Changeset, ping::Ping, Revision},
 };
 
 pub struct BazaRpcClient {
@@ -13,6 +13,7 @@ pub struct BazaRpcClient {
     downloads_dir: String,
 }
 
+// TODO support timeouts
 impl BazaRpcClient {
     pub fn new(prime_url: impl Into<String>, downloads_dir: impl Into<String>) -> Result<Self> {
         let prime_url = prime_url.into();
@@ -27,14 +28,18 @@ impl BazaRpcClient {
     }
 
     pub async fn download_blob(&self, blob: &BLOB) -> Result<()> {
+        log::debug!(
+            "Baza Server {}: downloading BLOB {}",
+            self.prime_url,
+            blob.id
+        );
+
         if blob.exists()? {
             bail!(
                 "can't download BLOB: file {} already exists",
                 blob.file_path
             );
         }
-
-        log::debug!("downloading BLOB {}", &blob.id);
 
         let url = self.get_blob_url(&blob.id);
 
@@ -48,14 +53,39 @@ impl BazaRpcClient {
             .await
             .context("failed to move downloaded blob into blob dir")?;
 
-        log::debug!("downloaded BLOB {}", &blob.id);
+        log::debug!(
+            "Baza Server {}: downloaded BLOB {}",
+            self.prime_url,
+            blob.id
+        );
 
         Ok(())
     }
 
-    pub async fn get_changeset(&self, min_rev: Revision) -> Result<Changeset> {
+    pub async fn get_ping(&self) -> Result<Ping> {
+        log::debug!("Baza Server {}: fetching a ping", self.prime_url);
+
+        let response = Client::new()
+            .get(&format!("{}/ping", self.prime_url))
+            .send()
+            .await?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if status.is_success() {
+            serde_json::from_str(&body).context("failed to parse server response")
+        } else {
+            bail!("Server responded with error: {}\n{}", status, body);
+        }
+    }
+
+    pub async fn get_changeset(&self, min_rev: &Revision) -> Result<Changeset> {
         let min_rev = min_rev.serialize();
-        log::debug!("fetching a changeset since {}", min_rev);
+        log::debug!(
+            "Baza Server {}: fetching a changeset since {min_rev}",
+            self.prime_url,
+        );
 
         let response = Client::new()
             .get(&format!("{}/changeset/{}", self.prime_url, min_rev))
@@ -68,7 +98,7 @@ impl BazaRpcClient {
         if status.is_success() {
             serde_json::from_str(&body).context("failed to parse server response")
         } else {
-            Err(anyhow!("Server responded with error: {}\n{}", status, body))
+            bail!("Server responded with error: {}\n{}", status, body);
         }
     }
 

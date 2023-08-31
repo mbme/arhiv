@@ -1,10 +1,12 @@
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::{cell::RefCell, rc::Rc};
 
 use anyhow::{Context, Result};
 
 use crate::{entities::BLOB, Baza};
 
-use super::{changeset::Changeset, instance_id::InstanceId, ping::Ping, Revision};
+use super::{
+    changeset::Changeset, instance_id::InstanceId, network::BazaRpcClient, ping::Ping, Revision,
+};
 
 pub enum SyncAgent {
     InMemory {
@@ -15,7 +17,7 @@ pub enum SyncAgent {
     Network {
         id: InstanceId,
         ping: RefCell<Option<Ping>>,
-        ping_timeout: Duration,
+        client: BazaRpcClient,
     },
 }
 
@@ -30,11 +32,11 @@ impl SyncAgent {
         })
     }
 
-    pub fn new_in_network(id: InstanceId) -> Self {
+    pub fn new_in_network(id: InstanceId, client: BazaRpcClient) -> Self {
         SyncAgent::Network {
             id,
             ping: Default::default(),
-            ping_timeout: Duration::from_secs(30),
+            client,
         }
     }
 
@@ -67,14 +69,10 @@ impl SyncAgent {
 
                 self.set_ping(ping);
             }
-            SyncAgent::Network { .. } => {
-                todo!();
-                // let ping_task = self.network.ping_all(&ping);
-                // log::debug!("Got {ping}");
+            SyncAgent::Network { client, .. } => {
+                let ping = client.get_ping().await?;
 
-                // if let Err(_) = tokio::time::timeout(self.ping_timeout, ping_task).await {
-                //     log::warn!("ping_all timed out");
-                // }
+                self.set_ping(ping);
             }
         };
 
@@ -84,7 +82,7 @@ impl SyncAgent {
     pub async fn fetch_changes(&self, min_rev: &Revision) -> Result<Changeset> {
         match self {
             SyncAgent::InMemory { baza, .. } => baza.get_connection()?.get_changeset(min_rev),
-            SyncAgent::Network { .. } => todo!(),
+            SyncAgent::Network { client, .. } => client.get_changeset(min_rev).await,
         }
     }
 
@@ -98,7 +96,9 @@ impl SyncAgent {
 
                 tokio::fs::copy(&other_blob.file_path, &blob.file_path).await?;
             }
-            SyncAgent::Network { .. } => todo!(),
+            SyncAgent::Network { client, .. } => {
+                client.download_blob(blob).await?;
+            }
         }
 
         Ok(())

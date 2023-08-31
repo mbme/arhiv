@@ -2,8 +2,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use anyhow::Context;
-use hyper::HeaderMap;
-use hyper::{Body, Request, Response, Server, StatusCode};
+use hyper::{Body, HeaderMap, Request, Response, Server, StatusCode};
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 
@@ -23,6 +22,7 @@ pub fn start_baza_server(
         .middleware(Middleware::post_with_info(logger_middleware))
         .get("/health", health_handler)
         .get("/blobs/:blob_id", get_blob_handler)
+        .get("/ping", get_ping_handler)
         .get("/changeset/:min_rev", get_changeset_handler)
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
@@ -72,6 +72,14 @@ async fn get_blob_handler(req: Request<Body>) -> ServerResponse {
     let baza: &Arc<Baza> = req.data().unwrap();
 
     respond_with_blob(baza, &blob_id, req.headers()).await
+}
+
+async fn get_ping_handler(req: Request<Body>) -> ServerResponse {
+    let baza: &Arc<Baza> = req.data().unwrap();
+
+    let ping = baza.get_connection()?.get_ping()?;
+
+    json_response(ping)
 }
 
 async fn get_changeset_handler(req: Request<Body>) -> ServerResponse {

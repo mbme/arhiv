@@ -6,7 +6,7 @@ use rs_utils::generate_temp_path;
 use crate::{
     entities::{Document, DocumentClass, Id},
     schema::{DataDescription, DataSchema, Field, FieldType},
-    sync::{changeset::Changeset, Revision},
+    sync::{Changeset, Revision},
     Baza, SETTING_INSTANCE_ID,
 };
 

@@ -1,8 +1,8 @@
-pub mod agent;
-pub mod changeset;
-pub mod instance_id;
+mod agent;
+mod changeset;
+mod instance_id;
 mod network;
-pub mod ping;
+mod ping;
 mod revision;
 mod sync_manager;
 
@@ -17,8 +17,10 @@ use crate::{
     BazaConnection, DocumentExpert,
 };
 
-use self::{changeset::Changeset, ping::Ping};
-
+pub use agent::SyncAgent;
+pub use changeset::Changeset;
+pub use instance_id::InstanceId;
+pub use ping::Ping;
 pub use revision::Revision;
 pub use sync_manager::SyncManager;
 

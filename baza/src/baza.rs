@@ -10,7 +10,7 @@ use crate::{
     entities::*,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::instance_id::InstanceId,
+    sync::InstanceId,
     SETTING_INSTANCE_ID,
 };
 

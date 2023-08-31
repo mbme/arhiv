@@ -1,4 +1,4 @@
-use crate::sync::instance_id::InstanceId;
+use crate::sync::InstanceId;
 
 use super::kvs::KvsConstKey;
 

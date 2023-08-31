@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde_json::json;
 
 use crate::{
-    sync::{agent::SyncAgent, SyncManager},
+    sync::{SyncAgent, SyncManager},
     tests::{create_changeset, new_document_snapshot},
     Baza,
 };

@@ -14,7 +14,7 @@ use crate::{
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::{instance_id::InstanceId, Revision},
+    sync::{InstanceId, Revision},
     validator::Validator,
     SETTING_INSTANCE_ID,
 };

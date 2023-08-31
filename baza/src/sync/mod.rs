@@ -1,9 +1,9 @@
 pub mod agent;
 pub mod changeset;
 pub mod instance_id;
-pub mod network;
 pub mod ping;
-pub mod revision;
+mod revision;
+mod sync_manager;
 
 use std::collections::HashSet;
 
@@ -19,6 +19,7 @@ use crate::{
 use self::{changeset::Changeset, ping::Ping};
 
 pub use revision::Revision;
+pub use sync_manager::SyncManager;
 
 #[derive(Default)]
 pub struct ChangesetSummary {

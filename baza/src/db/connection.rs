@@ -14,7 +14,7 @@ use crate::{
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::{instance_id::InstanceId, revision::Revision},
+    sync::{instance_id::InstanceId, Revision},
     validator::Validator,
     SETTING_INSTANCE_ID,
 };
@@ -763,7 +763,7 @@ impl BazaConnection {
         Ok(items)
     }
 
-    pub(crate) fn list_all_document_snapshots(&self) -> Result<Vec<Document>> {
+    pub fn list_all_document_snapshots(&self) -> Result<Vec<Document>> {
         let instance_id = self.get_instance_id()?;
 
         self.list_document_revisions(&Revision::from_value(json!({ instance_id: 1 }))?)
@@ -771,6 +771,12 @@ impl BazaConnection {
 
     pub fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
         BLOB::new(blob_id.clone(), &self.get_path_manager().data_dir)
+    }
+
+    pub fn get_existing_blob(&self, blob_id: &BLOBId) -> Result<Option<BLOB>> {
+        let blob = self.get_blob(blob_id);
+
+        Ok(blob.exists()?.then_some(blob))
     }
 
     pub fn get_local_blob_ids(&self) -> Result<HashSet<BLOBId>> {
@@ -970,7 +976,7 @@ impl BazaConnection {
 
         let mut staged_documents = self.list_staged_documents()?;
 
-        for mut document in &mut staged_documents {
+        for document in &mut staged_documents {
             document.rev = max_rev.clone();
 
             self.put_document(&document)?;

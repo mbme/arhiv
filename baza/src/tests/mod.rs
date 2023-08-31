@@ -12,7 +12,7 @@ use crate::{
 
 mod crud;
 mod sync;
-mod sync_agent;
+mod sync_manager;
 mod validation;
 
 #[cfg(test)]

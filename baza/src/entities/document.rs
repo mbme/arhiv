@@ -5,7 +5,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use crate::sync::revision::Revision;
+use crate::sync::Revision;
 
 use super::{DocumentClass, DocumentData, Id};
 

@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{anyhow, ensure, Context, Result};
 use hyper::{Body, HeaderMap, Request, Response, Server, StatusCode};
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
@@ -12,52 +12,82 @@ use crate::entities::BLOBId;
 use crate::sync::Revision;
 use crate::Baza;
 
-#[must_use]
-pub fn start_baza_server(
-    baza: Arc<Baza>,
-    port: u16,
-) -> (JoinHandle<()>, oneshot::Sender<()>, SocketAddr) {
-    let router = Router::builder()
-        .data(baza)
-        .middleware(Middleware::post_with_info(logger_middleware))
-        .get("/health", health_handler)
-        .get("/blobs/:blob_id", get_blob_handler)
-        .get("/ping", get_ping_handler)
-        .get("/changeset/:min_rev", get_changeset_handler)
-        .any(not_found_handler)
-        .err_handler_with_info(error_handler)
-        .build()
-        .expect("router must work");
+pub struct BazaServer {
+    address: SocketAddr,
+    shutdown_sender: oneshot::Sender<()>,
+    join_handle: JoinHandle<()>,
+}
 
-    let service = RouterService::new(router).expect("failed to build RouterService");
+impl BazaServer {
+    #[must_use]
+    pub fn start(baza: Arc<Baza>, port: u16) -> BazaServer {
+        let router = Router::builder()
+            .data(baza)
+            .middleware(Middleware::post_with_info(logger_middleware))
+            .get("/health", health_handler)
+            .get("/blobs/:blob_id", get_blob_handler)
+            .get("/ping", get_ping_handler)
+            .get("/changeset/:min_rev", get_changeset_handler)
+            .any(not_found_handler)
+            .err_handler_with_info(error_handler)
+            .build()
+            .expect("router must work");
 
-    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+        let service = RouterService::new(router).expect("failed to build RouterService");
 
-    let server = Server::bind(&(std::net::Ipv4Addr::UNSPECIFIED, port).into()).serve(service);
+        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
-    let addr = server.local_addr();
+        let server = Server::bind(&(std::net::Ipv4Addr::UNSPECIFIED, port).into()).serve(service);
 
-    // Spawn the server into a runtime
-    let join_handle = tokio::spawn(async move {
-        server
-            .with_graceful_shutdown(async {
-                tokio::select! {
-                    _ = signal::ctrl_c() => {
-                        log::info!("got Ctrl-C");
+        let address = server.local_addr();
+
+        // Spawn the server into a runtime
+        let join_handle = tokio::spawn(async move {
+            server
+                .with_graceful_shutdown(async {
+                    tokio::select! {
+                        _ = signal::ctrl_c() => {
+                            log::info!("got Ctrl-C");
+                        }
+
+                        Ok(_) = shutdown_receiver => {
+                            log::info!("Baza Server: got shutdown signal");
+                        }
                     }
+                })
+                .await
+                .expect("server must start");
 
-                    Ok(_) = shutdown_receiver => {
-                        log::info!("got shutdown signal");
-                    }
-                }
-            })
-            .await
-            .expect("server must start");
+            log::info!("Baza Server: started on {}", address);
+        });
 
-        log::info!("started server on {}", addr);
-    });
+        BazaServer {
+            join_handle,
+            shutdown_sender,
+            address,
+        }
+    }
 
-    (join_handle, shutdown_sender, addr)
+    #[must_use]
+    pub fn get_address(&self) -> &SocketAddr {
+        &self.address
+    }
+
+    pub async fn shutdown(self) -> Result<()> {
+        ensure!(!self.shutdown_sender.is_closed(), "already closed");
+
+        self.shutdown_sender
+            .send(())
+            .map_err(|_err| anyhow!("receiver dropped"))?;
+
+        self.join_handle.await.context("failed to join")?;
+
+        Ok(())
+    }
+
+    pub async fn join(self) -> Result<()> {
+        self.join_handle.await.context("failed to join")
+    }
 }
 
 #[allow(clippy::unused_async)]

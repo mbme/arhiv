@@ -3,6 +3,7 @@
 debug = 0
 
 [workspace]
+resolver = "2"
 members = [
   "baza",
   "arhiv-core",

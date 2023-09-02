@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::Result;
 
@@ -9,7 +9,7 @@ use crate::Baza;
 use super::{agent::SyncAgent, instance_id::InstanceId, ping::Ping};
 
 pub struct SyncService {
-    agents: RefCell<HashMap<InstanceId, SyncAgent>>,
+    agents: HashMap<InstanceId, SyncAgent>,
     baza: Arc<Baza>,
 }
 
@@ -21,43 +21,40 @@ impl SyncService {
         }
     }
 
-    pub fn add_agent(&self, agent: SyncAgent) {
-        self.agents
-            .borrow_mut()
-            .insert(agent.get_id().clone(), agent);
+    pub fn add_agent(&mut self, agent: SyncAgent) {
+        self.agents.insert(agent.get_id().clone(), agent);
     }
 
-    pub fn remove_agent(&self, id: &InstanceId) {
-        self.agents.borrow_mut().remove(id);
+    pub fn remove_agent(&mut self, id: &InstanceId) {
+        self.agents.remove(id);
     }
 
-    pub async fn refresh_peers(&self) -> Result<()> {
-        let agents = self.agents.borrow();
+    async fn collect_pings(&self) -> Result<Vec<Ping>> {
+        let pings = self.agents.values().map(|agent| agent.fetch_ping());
 
-        for agent in agents.values() {
-            // TODO parallel
-            agent.fetch_ping().await?;
-        }
+        let mut pings = futures::future::join_all(pings)
+            .await
+            .into_iter()
+            .collect::<Result<Vec<_>>>()?;
 
-        Ok(())
+        pings.sort_by_cached_key(|ping| ping.rev.clone());
+
+        Ok(pings)
     }
 
     pub async fn sync(&self) -> Result<bool> {
-        let agents = self.agents.borrow();
-        let mut agents = agents
-            .values()
-            .filter(|agent| agent.get_ping().is_some())
-            .collect::<Vec<_>>();
+        let pings = self.collect_pings().await?;
 
-        agents.sort_by_cached_key(|agent| agent.get_ping().expect("must have ping").rev);
-
-        log::info!("starting sync with {} other instances", agents.len());
+        log::info!("starting sync with {} other instances", pings.len());
 
         let mut updated = false;
+        for ping in pings {
+            let agent = self
+                .agents
+                .get(&ping.instance_id)
+                .expect("agent is missing");
 
-        for agent in agents.iter() {
             let local_rev = self.baza.get_connection()?.get_db_rev()?;
-            let ping = agent.get_ping().expect("must have ping");
 
             if local_rev.is_concurrent_or_older_than(&ping.rev) {
                 let changeset = agent.fetch_changes(&local_rev).await?;
@@ -92,13 +89,5 @@ impl SyncService {
         log::info!("finished sync");
 
         Ok(updated)
-    }
-
-    pub fn get_pings(&self) -> Vec<Ping> {
-        self.agents
-            .borrow()
-            .values()
-            .filter_map(|agent| agent.get_ping())
-            .collect()
     }
 }

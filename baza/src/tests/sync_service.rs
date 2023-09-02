@@ -34,7 +34,7 @@ async fn test_sync_service() -> Result<()> {
         tx.commit()?;
     }
 
-    let sync_service = SyncService::new(baza0.clone());
+    let mut sync_service = SyncService::new(baza0.clone());
 
     let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
     sync_service.add_agent(agent1);
@@ -42,11 +42,6 @@ async fn test_sync_service() -> Result<()> {
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert_eq!(sync_service.get_pings().len(), 0);
-    assert!(!(sync_service.sync().await?));
-
-    sync_service.refresh_peers().await?;
-    assert_eq!(sync_service.get_pings().len(), 1);
     assert!(sync_service.sync().await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();

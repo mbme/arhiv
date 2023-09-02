@@ -180,6 +180,7 @@ dependencies = [
  "aho-corasick 0.7.20",
  "anyhow",
  "fslock",
+ "futures",
  "hyper",
  "insta",
  "pulldown-cmark",

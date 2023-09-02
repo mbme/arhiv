@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use anyhow::{Context, Result};
 
@@ -11,12 +11,10 @@ use super::{
 pub enum SyncAgent {
     InMemory {
         id: InstanceId,
-        ping: RefCell<Option<Ping>>,
         baza: Rc<Baza>,
     },
     Network {
         id: InstanceId,
-        ping: RefCell<Option<Ping>>,
         client: BazaRpcClient,
     },
 }
@@ -25,19 +23,11 @@ impl SyncAgent {
     pub fn new_in_memory(baza: Rc<Baza>) -> Result<Self> {
         let id = baza.get_connection()?.get_instance_id()?;
 
-        Ok(SyncAgent::InMemory {
-            id,
-            baza,
-            ping: Default::default(),
-        })
+        Ok(SyncAgent::InMemory { id, baza })
     }
 
     pub fn new_in_network(id: InstanceId, client: BazaRpcClient) -> Self {
-        SyncAgent::Network {
-            id,
-            ping: Default::default(),
-            client,
-        }
+        SyncAgent::Network { id, client }
     }
 
     pub fn get_id(&self) -> &InstanceId {
@@ -47,36 +37,11 @@ impl SyncAgent {
         }
     }
 
-    pub fn get_ping(&self) -> Option<Ping> {
+    pub async fn fetch_ping(&self) -> Result<Ping> {
         match self {
-            SyncAgent::InMemory { ping, .. } => ping.borrow().clone(),
-            SyncAgent::Network { ping, .. } => ping.borrow().clone(),
+            SyncAgent::InMemory { baza, .. } => baza.get_connection()?.get_ping(),
+            SyncAgent::Network { client, .. } => client.get_ping().await,
         }
-    }
-
-    fn set_ping(&self, new_ping: Ping) {
-        match self {
-            SyncAgent::InMemory { ping, .. } | SyncAgent::Network { ping, .. } => {
-                let _ = ping.borrow_mut().insert(new_ping);
-            }
-        }
-    }
-
-    pub async fn fetch_ping(&self) -> Result<()> {
-        match self {
-            SyncAgent::InMemory { baza, .. } => {
-                let ping = baza.get_connection()?.get_ping()?;
-
-                self.set_ping(ping);
-            }
-            SyncAgent::Network { client, .. } => {
-                let ping = client.get_ping().await?;
-
-                self.set_ping(ping);
-            }
-        };
-
-        Ok(())
     }
 
     pub async fn fetch_changes(&self, min_rev: &Revision) -> Result<Changeset> {

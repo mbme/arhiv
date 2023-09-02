@@ -104,3 +104,9 @@ impl SyncAgent {
         Ok(())
     }
 }
+
+impl PartialEq for SyncAgent {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_id() == other.get_id()
+    }
+}

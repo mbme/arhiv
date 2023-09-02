@@ -1,4 +1,4 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 use anyhow::Result;
 
@@ -9,7 +9,7 @@ use crate::Baza;
 use super::{agent::SyncAgent, instance_id::InstanceId, ping::Ping};
 
 pub struct SyncService {
-    agents: RefCell<Vec<SyncAgent>>,
+    agents: RefCell<HashMap<InstanceId, SyncAgent>>,
     baza: Arc<Baza>,
 }
 
@@ -22,19 +22,19 @@ impl SyncService {
     }
 
     pub fn add_agent(&self, agent: SyncAgent) {
-        self.agents.borrow_mut().push(agent);
+        self.agents
+            .borrow_mut()
+            .insert(agent.get_id().clone(), agent);
     }
 
     pub fn remove_agent(&self, id: &InstanceId) {
-        self.agents
-            .borrow_mut()
-            .retain(|agent| agent.get_id() != id);
+        self.agents.borrow_mut().remove(id);
     }
 
     pub async fn refresh_peers(&self) -> Result<()> {
         let agents = self.agents.borrow();
 
-        for agent in agents.iter() {
+        for agent in agents.values() {
             // TODO parallel
             agent.fetch_ping().await?;
         }
@@ -45,7 +45,7 @@ impl SyncService {
     pub async fn sync(&self) -> Result<bool> {
         let agents = self.agents.borrow();
         let mut agents = agents
-            .iter()
+            .values()
             .filter(|agent| agent.get_ping().is_some())
             .collect::<Vec<_>>();
 
@@ -97,7 +97,7 @@ impl SyncService {
     pub fn get_pings(&self) -> Vec<Ping> {
         self.agents
             .borrow()
-            .iter()
+            .values()
             .filter_map(|agent| agent.get_ping())
             .collect()
     }

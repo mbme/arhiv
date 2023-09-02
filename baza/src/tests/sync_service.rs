@@ -43,11 +43,11 @@ async fn test_sync_service() -> Result<()> {
     assert_eq!(snapshots_count, 3);
 
     assert_eq!(sync_service.get_pings().len(), 0);
-    assert_eq!(sync_service.sync().await?, false);
+    assert!(!(sync_service.sync().await?));
 
     sync_service.refresh_peers().await?;
     assert_eq!(sync_service.get_pings().len(), 1);
-    assert_eq!(sync_service.sync().await?, true);
+    assert!(sync_service.sync().await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 5);

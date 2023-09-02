@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use super::instance_id::InstanceId;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, Hash)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq)]
 pub struct Revision(BTreeMap<InstanceId, u32>);
 
 #[derive(Debug, PartialEq)]
@@ -40,7 +40,7 @@ impl Revision {
     }
 
     pub fn get_version(&self, id: &InstanceId) -> u32 {
-        self.0.get(id).map(|version| *version).unwrap_or_default()
+        self.0.get(id).copied().unwrap_or_default()
     }
 
     pub fn set_version(&mut self, id: &InstanceId, version: u32) {
@@ -132,7 +132,7 @@ impl Revision {
 
         let mut result = String::new();
 
-        result.push_str("{");
+        result.push('{');
 
         let mut is_first = true;
         for key in keys {
@@ -142,19 +142,19 @@ impl Revision {
                 .expect("revision must contain a value for a key");
 
             if !is_first {
-                result.push_str(",");
+                result.push(',');
             }
             is_first = false;
 
-            result.push_str("\"");
+            result.push('\"');
             result.push_str(key.as_ref());
             result.push_str("\":");
             result.push_str(&value.to_string());
         }
 
-        result.push_str("}");
+        result.push('}');
 
-        return result;
+        result
     }
 }
 

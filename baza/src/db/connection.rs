@@ -245,7 +245,7 @@ impl BazaConnection {
             .query_row(
                 &format!(
                     "SELECT IFNULL(MAX(json_extract(rev, '$.{}')), 0) FROM documents_snapshots",
-                    id.to_string()
+                    id
                 ),
                 [],
                 |row| row.get::<usize, u32>(0),
@@ -979,7 +979,7 @@ impl BazaConnection {
         for document in &mut staged_documents {
             document.rev = max_rev.clone();
 
-            self.put_document(&document)?;
+            self.put_document(document)?;
         }
 
         self.delete_local_staged_changes()?;

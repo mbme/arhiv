@@ -19,9 +19,8 @@ mod validation;
 impl Baza {
     pub fn new_with_schema(schema: DataSchema) -> Self {
         let temp_dir = generate_temp_path("TestBaza", "");
-        let baza = Baza::create(temp_dir, schema, vec![]).expect("must create baza");
 
-        baza
+        Baza::create(temp_dir, schema, vec![]).expect("must create baza")
     }
 
     pub fn new_test_baza() -> Self {

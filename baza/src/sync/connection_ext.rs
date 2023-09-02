@@ -68,7 +68,7 @@ impl BazaConnection {
                 continue;
             }
 
-            self.put_document(&document)?;
+            self.put_document(document)?;
             summary.new_snapshots += 1;
 
             if document.is_erased() {

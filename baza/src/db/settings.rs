@@ -2,7 +2,7 @@ use crate::sync::InstanceId;
 
 use super::kvs::KvsConstKey;
 
-pub const SETTINGS_NAMESPACE: &'static str = "settings";
+pub const SETTINGS_NAMESPACE: &str = "settings";
 
 pub const SETTING_DATA_VERSION: &KvsConstKey<u8> =
     &KvsConstKey::new(SETTINGS_NAMESPACE, "data_version");

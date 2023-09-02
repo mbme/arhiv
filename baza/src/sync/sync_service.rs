@@ -80,7 +80,7 @@ impl SyncService {
                         summary.missing_blobs.len(),
                         ping.instance_id.as_ref(),
                     );
-                    agent.fetch_blob(&blob).await?;
+                    agent.fetch_blob(blob).await?;
                 }
 
                 tx.commit()?;

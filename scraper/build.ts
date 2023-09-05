@@ -10,7 +10,7 @@ await esbuild.build({
 
   target: ['es2020'],
   bundle: true,
-  minify: isProduction,
+  minify: false, // ease of debugging is more important than size
   sourcemap: true,
 
   loader: {

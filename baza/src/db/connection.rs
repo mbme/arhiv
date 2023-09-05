@@ -563,7 +563,7 @@ impl BazaConnection {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
                     (id, rev, document_type, subtype, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    VALUES (?, ?, ?, ?, ?, ?)",
                 if force_update || document.is_staged() {
                     "OR REPLACE"
                 } else {

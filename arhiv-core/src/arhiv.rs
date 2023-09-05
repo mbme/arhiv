@@ -10,7 +10,7 @@ use crate::{
     config::Config,
     data_migrations::get_data_migrations,
     definitions::get_standard_schema,
-    settings::{SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME},
+    settings::SETTING_LAST_SYNC_TIME,
     status::{DbStatus, Status},
 };
 
@@ -53,18 +53,11 @@ impl Arhiv {
 
         let tx = baza.get_tx()?;
 
-        tx.kvs_const_set(SETTING_IS_PRIME, &prime)?;
         tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
         tx.commit()?;
 
         Ok(Arhiv { baza, config })
-    }
-
-    pub fn is_prime(&self) -> Result<bool> {
-        let conn = self.baza.get_connection()?;
-
-        conn.kvs_const_must_get(SETTING_IS_PRIME)
     }
 
     pub fn get_config(&self) -> &Config {
@@ -81,7 +74,6 @@ pub trait BazaConnectionExt {
 impl BazaConnectionExt for BazaConnection {
     fn get_db_status(&self) -> Result<DbStatus> {
         Ok(DbStatus {
-            is_prime: self.kvs_const_must_get(SETTING_IS_PRIME)?,
             data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
             db_rev: self.get_db_rev()?,
             last_sync_time: self.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?,

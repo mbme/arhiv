@@ -27,6 +27,9 @@ impl DBMigration for MigrationV4 {
             -- remove arhiv_id from settings
             DELETE FROM kvs WHERE key = 'arhiv_id';
 
+            -- remove is_prime from settings
+            DELETE FROM kvs WHERE key = 'is_prime';
+
             -- convert keys into kvs key array
             UPDATE kvs SET key = json_array('settings', key);
 

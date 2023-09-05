@@ -2,12 +2,11 @@ use std::fmt;
 
 use serde::Serialize;
 
-use baza::{sync::revision::Revision, BLOBSCount, DocumentsCount};
+use baza::{sync::Revision, BLOBSCount, DocumentsCount};
 use rs_utils::{format_time, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize, Debug)]
 pub struct DbStatus {
-    pub is_prime: bool,
     pub data_version: u8,
 
     pub db_rev: Revision,
@@ -41,14 +40,8 @@ impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "Arhiv {} (rev {}) in {}",
-            if self.db_status.is_prime {
-                "prime"
-            } else {
-                "replica"
-            },
-            self.db_status.db_rev,
-            self.root_dir,
+            "Arhiv (rev {}) in {}",
+            self.db_status.db_rev, self.root_dir,
         )?;
 
         writeln!(f)?;

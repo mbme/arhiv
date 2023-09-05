@@ -10,7 +10,6 @@ pub mod prime_server;
 pub mod scraper;
 mod settings;
 mod status;
-mod sync;
 
 #[cfg(test)]
 pub mod test_arhiv;

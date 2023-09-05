@@ -22,7 +22,7 @@ pub struct Status {
     pub data_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
-    pub conflicts_count: u32,
+    pub conflicts_count: usize,
 
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
@@ -41,7 +41,8 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "Arhiv (rev {}) in {}",
-            self.db_status.db_rev, self.root_dir,
+            self.db_status.db_rev.serialize(),
+            self.root_dir,
         )?;
 
         writeln!(f)?;

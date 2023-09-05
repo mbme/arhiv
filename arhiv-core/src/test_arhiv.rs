@@ -8,8 +8,8 @@ use crate::{Arhiv, Config};
 pub struct TestArhiv(pub Arc<Arhiv>);
 
 impl TestArhiv {
-    fn new(config: Config, prime: bool, schema: DataSchema) -> Self {
-        let arhiv = Arhiv::create_with_options(config, schema, vec![], prime)
+    fn new(config: Config, schema: DataSchema) -> Self {
+        let arhiv = Arhiv::create_with_options(config, schema, vec![])
             .expect("must be able to create temp arhiv");
 
         TestArhiv(Arc::new(arhiv))
@@ -22,63 +22,34 @@ impl TestArhiv {
             ..Config::default()
         };
 
-        TestArhiv::new(config, true, schema)
+        TestArhiv::new(config, schema)
     }
 
     #[must_use]
     pub fn new_prime() -> Self {
-        TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
-            document_type: "test_type",
-            fields: vec![
-                Field {
-                    name: "blob",
-                    field_type: FieldType::BLOBId {},
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-                Field {
-                    name: "test",
-                    field_type: FieldType::String {},
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-            ],
-            subtypes: None,
-        }]))
-    }
-
-    #[must_use]
-    pub fn new_replica(port: u16) -> Self {
-        let config = Config {
-            arhiv_root: generate_temp_path("TempArhiv", ""),
-            prime_url: format!("http://localhost:{port}"),
-            ..Config::default()
-        };
-
-        let schema = DataSchema::new(vec![DataDescription {
-            document_type: "test_type",
-            fields: vec![
-                Field {
-                    name: "blob",
-                    field_type: FieldType::BLOBId {},
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-                Field {
-                    name: "test",
-                    field_type: FieldType::String {},
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                },
-            ],
-            subtypes: None,
-        }]);
-
-        TestArhiv::new(config, false, schema)
+        TestArhiv::new_prime_with_schema(DataSchema::new(
+            "test",
+            vec![DataDescription {
+                document_type: "test_type",
+                fields: vec![
+                    Field {
+                        name: "blob",
+                        field_type: FieldType::BLOBId {},
+                        mandatory: false,
+                        readonly: false,
+                        for_subtypes: None,
+                    },
+                    Field {
+                        name: "test",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                        for_subtypes: None,
+                    },
+                ],
+                subtypes: None,
+            }],
+        ))
     }
 }
 

@@ -6,7 +6,6 @@ mod config;
 mod data_migrations;
 pub mod definitions;
 mod import;
-pub mod prime_server;
 pub mod scraper;
 mod settings;
 mod status;

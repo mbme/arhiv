@@ -6,7 +6,6 @@ use super::utils::*;
 use crate::{
     create_attachment,
     definitions::{get_standard_schema, Attachment},
-    prime_server::start_prime_server,
     test_arhiv::TestArhiv,
 };
 

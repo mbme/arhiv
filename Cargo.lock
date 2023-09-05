@@ -101,11 +101,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "baza",
- "futures",
- "hyper",
  "insta",
- "reqwest",
- "routerify",
  "rs-utils",
  "scraper",
  "serde",

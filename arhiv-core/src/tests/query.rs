@@ -76,17 +76,20 @@ async fn test_modes() -> Result<()> {
 
 #[test]
 fn test_order_by_enum_field() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
-        document_type: "test_type",
-        fields: vec![Field {
-            name: "enum",
-            field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
-            mandatory: false,
-            readonly: false,
-            for_subtypes: None,
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        "test",
+        vec![DataDescription {
+            document_type: "test_type",
+            fields: vec![Field {
+                name: "enum",
+                field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
+                mandatory: false,
+                readonly: false,
+                for_subtypes: None,
+            }],
+            subtypes: None,
         }],
-        subtypes: None,
-    }]));
+    ));
 
     {
         let tx = arhiv.baza.get_tx()?;
@@ -123,26 +126,29 @@ fn test_order_by_enum_field() -> Result<()> {
 
 #[test]
 fn test_multiple_order_by() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![DataDescription {
-        document_type: "test_type",
-        fields: vec![
-            Field {
-                name: "prop",
-                field_type: FieldType::String {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
-            },
-            Field {
-                name: "other",
-                field_type: FieldType::String {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
-            },
-        ],
-        subtypes: None,
-    }]));
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        "test",
+        vec![DataDescription {
+            document_type: "test_type",
+            fields: vec![
+                Field {
+                    name: "prop",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
+                Field {
+                    name: "other",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                },
+            ],
+            subtypes: None,
+        }],
+    ));
 
     {
         let tx = arhiv.baza.get_tx()?;
@@ -259,31 +265,34 @@ async fn test_conditions() -> Result<()> {
 
 #[test]
 fn test_backrefs() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![
-        //
-        DataDescription {
-            document_type: "test_type",
-            fields: vec![Field {
-                name: "ref",
-                field_type: FieldType::Ref("other_type"),
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
-            }],
-            subtypes: None,
-        },
-        DataDescription {
-            document_type: "other_type",
-            fields: vec![Field {
-                name: "field",
-                field_type: FieldType::String {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
-            }],
-            subtypes: None,
-        },
-    ]));
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        "test",
+        vec![
+            //
+            DataDescription {
+                document_type: "test_type",
+                fields: vec![Field {
+                    name: "ref",
+                    field_type: FieldType::Ref("other_type"),
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                }],
+                subtypes: None,
+            },
+            DataDescription {
+                document_type: "other_type",
+                fields: vec![Field {
+                    name: "field",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                }],
+                subtypes: None,
+            },
+        ],
+    ));
 
     let tx = arhiv.baza.get_tx()?;
 
@@ -322,31 +331,34 @@ fn test_backrefs() -> Result<()> {
 
 #[test]
 fn test_collections() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(vec![
-        //
-        DataDescription {
-            document_type: "collection_type",
-            fields: vec![Field {
-                name: "items",
-                field_type: FieldType::RefList("other_type"),
-                mandatory: true,
-                readonly: false,
-                for_subtypes: None,
-            }],
-            subtypes: None,
-        },
-        DataDescription {
-            document_type: "other_type",
-            fields: vec![Field {
-                name: "field",
-                field_type: FieldType::String {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: None,
-            }],
-            subtypes: None,
-        },
-    ]));
+    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+        "test",
+        vec![
+            //
+            DataDescription {
+                document_type: "collection_type",
+                fields: vec![Field {
+                    name: "items",
+                    field_type: FieldType::RefList("other_type"),
+                    mandatory: true,
+                    readonly: false,
+                    for_subtypes: None,
+                }],
+                subtypes: None,
+            },
+            DataDescription {
+                document_type: "other_type",
+                fields: vec![Field {
+                    name: "field",
+                    field_type: FieldType::String {},
+                    mandatory: false,
+                    readonly: false,
+                    for_subtypes: None,
+                }],
+                subtypes: None,
+            },
+        ],
+    ));
 
     let tx = arhiv.baza.get_tx()?;
 

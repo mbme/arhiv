@@ -35,19 +35,18 @@ impl Arhiv {
         Ok(Arhiv { baza, config })
     }
 
-    pub fn create(prime: bool) -> Result<Self> {
+    pub fn create() -> Result<Self> {
         let config = Config::read()?.0;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
-        Arhiv::create_with_options(config, schema, data_migrations, prime)
+        Arhiv::create_with_options(config, schema, data_migrations)
     }
 
     pub fn create_with_options(
         config: Config,
         schema: DataSchema,
         data_migrations: DataMigrations,
-        prime: bool,
     ) -> Result<Self> {
         let baza = Baza::create(config.arhiv_root.clone(), schema, data_migrations)?;
 
@@ -89,7 +88,7 @@ impl BazaConnectionExt for BazaConnection {
         let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
         let documents_count = self.count_documents()?;
         let blobs_count = self.count_blobs()?;
-        let conflicts_count = self.count_conflicts()?;
+        let conflicts_count = self.get_coflicting_documents()?.len();
         let last_update_time = self.get_last_update_time()?;
 
         Ok(Status {

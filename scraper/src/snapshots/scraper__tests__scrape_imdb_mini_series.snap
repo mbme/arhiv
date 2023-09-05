@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 306
+assertion_line: 348
 expression: result
 ---
 [
@@ -10,7 +10,7 @@ expression: result
     "scraperName": "IMDBFilmScraper",
     "data": {
       "typeName": "IMDBFilm",
-      "title": "Devs",
+      "title": "Розробники",
       "coverURL": "[permalink]",
       "releaseDate": "2020",
       "originalLanguage": "English",

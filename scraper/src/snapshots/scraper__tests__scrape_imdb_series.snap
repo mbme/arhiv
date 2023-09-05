@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 294
+assertion_line: 336
 expression: result
 ---
 [
@@ -10,7 +10,7 @@ expression: result
     "scraperName": "IMDBFilmScraper",
     "data": {
       "typeName": "IMDBFilm",
-      "title": "Twin Peaks",
+      "title": "Твін Пікс",
       "coverURL": "[permalink]",
       "releaseDate": "1990–1991",
       "originalLanguage": "English",

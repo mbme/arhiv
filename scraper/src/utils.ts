@@ -136,8 +136,8 @@ export const getSelectionString = (el: HTMLElement): string => {
   return selectionStr;
 };
 
-export function getListValues(el: HTMLElement | Document, selector: string): string[] {
-  const items = Array.from(el.querySelectorAll<HTMLElement>(selector))
+export function getListValues(el: HTMLElement | Document | undefined, selector: string): string[] {
+  const items = Array.from(el?.querySelectorAll<HTMLElement>(selector) ?? [])
     .map((el) => el.innerText.trim())
     .filter((item) => item.length > 0);
 

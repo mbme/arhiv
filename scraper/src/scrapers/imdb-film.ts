@@ -43,7 +43,7 @@ export class IMDBFilmScraper extends Scraper<'IMDBFilm', IMDBFilm> {
       'wait until loader is gone'
     );
 
-    const metadata = getListValues(document, '[data-testid=hero-title-block__metadata] li');
+    const metadata = getListValues(document, 'h1[data-testid=hero__pageTitle]~.ipc-inline-list li');
     while (metadata.length < 4) {
       metadata.unshift('');
     }

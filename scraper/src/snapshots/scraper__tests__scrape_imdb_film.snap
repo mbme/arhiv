@@ -1,6 +1,6 @@
 ---
 source: scraper/src/lib.rs
-assertion_line: 282
+assertion_line: 324
 expression: result
 ---
 [
@@ -10,7 +10,7 @@ expression: result
     "scraperName": "IMDBFilmScraper",
     "data": {
       "typeName": "IMDBFilm",
-      "title": "The Matrix",
+      "title": "Матриця",
       "coverURL": "[permalink]",
       "releaseDate": "1999",
       "originalLanguage": "English",

@@ -16,7 +16,6 @@ pub struct Document<D = DocumentData> {
     pub rev: Revision,
     #[serde(flatten)]
     pub class: DocumentClass,
-    pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub data: D,
 }
@@ -24,14 +23,11 @@ pub struct Document<D = DocumentData> {
 impl<D> Document<D> {
     #[must_use]
     pub fn new_with_data(class: DocumentClass, data: D) -> Self {
-        let now = now();
-
         Document {
             id: Id::new(),
             rev: Revision::staging(),
             class,
-            created_at: now,
-            updated_at: now,
+            updated_at: now(),
             data,
         }
     }
@@ -70,7 +66,6 @@ impl Document {
             id: self.id,
             rev: self.rev,
             class: self.class,
-            created_at: self.created_at,
             updated_at: self.updated_at,
             data,
         })
@@ -87,7 +82,6 @@ impl<D: Serialize> Document<D> {
             id: self.id,
             rev: self.rev,
             class: self.class,
-            created_at: self.created_at,
             updated_at: self.updated_at,
             data,
         })

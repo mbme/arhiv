@@ -14,7 +14,6 @@ CREATE TABLE documents_snapshots (
 
   document_type   TEXT    NOT NULL,
   subtype         TEXT    NOT NULL,
-  created_at      TEXT    NOT NULL,
   updated_at      TEXT    NOT NULL,
   data            TEXT    NOT NULL,
 

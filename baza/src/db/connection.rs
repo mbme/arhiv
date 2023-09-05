@@ -562,7 +562,7 @@ impl BazaConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, document_type, subtype, created_at, updated_at, data)
+                    (id, rev, document_type, subtype, updated_at, data)
                     VALUES (?, ?, ?, ?, ?, ?, ?)",
                 if force_update || document.is_staged() {
                     "OR REPLACE"
@@ -576,7 +576,6 @@ impl BazaConnection {
                 document.rev.serialize(),
                 document.class.document_type,
                 document.class.subtype,
-                document.created_at,
                 document.updated_at,
                 document.data.to_string(),
             ])
@@ -693,13 +692,6 @@ impl BazaConnection {
             );
 
             ensure!(
-                document.created_at == prev_document.created_at,
-                "document created_at '{}' is different from the created_at '{}' of existing document",
-                document.created_at,
-                prev_document.created_at
-            );
-
-            ensure!(
                 document.updated_at == prev_document.updated_at,
                 "document updated_at '{}' is different from the updated_at '{}' of existing document",
                 document.updated_at,
@@ -712,9 +704,7 @@ impl BazaConnection {
 
             document.rev = Revision::staging();
 
-            let now = now();
-            document.created_at = now;
-            document.updated_at = now;
+            document.updated_at = now();
         }
 
         self.put_document(document)?;

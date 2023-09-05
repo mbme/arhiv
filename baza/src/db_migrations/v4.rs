@@ -33,8 +33,8 @@ impl DBMigration for MigrationV4 {
             -- convert keys into kvs key array
             UPDATE kvs SET key = json_array('settings', key);
 
-            INSERT INTO documents_snapshots
-                       SELECT * FROM old_db.documents_snapshots;
+            INSERT INTO documents_snapshots(id, rev, document_type, subtype, updated_at, data)
+                       SELECT id, rev, document_type, subtype, updated_at, data FROM old_db.documents_snapshots;
        ",
         )?;
 

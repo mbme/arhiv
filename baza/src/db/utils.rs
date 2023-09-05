@@ -16,7 +16,6 @@ pub fn extract_document(row: &Row) -> Result<Document> {
             rev.try_into()?
         },
         class: DocumentClass::new(document_type, subtype),
-        created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
         data: {
             let data: Value = row.get("data")?;

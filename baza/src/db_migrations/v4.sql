@@ -10,7 +10,7 @@ CREATE TABLE kvs (
 CREATE TABLE documents_snapshots (
   id          TEXT    NOT NULL,
 
-  rev         INTEGER NOT NULL,
+  rev         TEXT    NOT NULL,
 
   document_type   TEXT    NOT NULL,
   subtype         TEXT    NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE documents_snapshots (
 -- additional computed data
 CREATE TABLE documents_refs (
   id          TEXT    NOT NULL,
-  rev         INTEGER NOT NULL,
+  rev         TEXT    NOT NULL,
 
   refs        TEXT NOT NULL,
 

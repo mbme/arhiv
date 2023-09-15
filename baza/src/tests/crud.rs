@@ -20,10 +20,10 @@ fn test_crud_create() -> Result<()> {
     }
 
     {
-        let tx = baza.get_tx()?;
+        let tx = baza.get_connection()?;
 
         let document = tx.get_document(&Id::from("1"))?.unwrap();
-        assert_eq!(document.rev, Revision::from_value(json!({ "0": 0 }))?);
+        assert_eq!(document.rev, None,);
     }
 
     Ok(())
@@ -39,20 +39,21 @@ fn test_crud_read() -> Result<()> {
     {
         let tx = baza.get_tx()?;
 
-        let document = tx.get_document(&Id::from("1"))?.unwrap();
+        let mut document = tx.get_document(&Id::from("1"))?.unwrap();
         assert_eq!(
-            document.rev,
-            Revision::from_value(json!({ "0": 2, "2": 1 }))?
+            document.get_rev()?,
+            &Revision::from_value(json!({ "0": 2, "2": 1 }))?
         );
+
+        tx.stage_document(&mut document)?;
+        tx.commit()?;
     }
 
-    baza.add_document(Id::from("1"), json!({}))?;
-
     {
-        let tx = baza.get_tx()?;
+        let tx = baza.get_connection()?;
 
         let document = tx.get_document(&Id::from("1"))?.unwrap();
-        assert_eq!(document.rev, Revision::from_value(json!({}))?);
+        assert!(document.is_staged());
     }
 
     Ok(())
@@ -140,7 +141,7 @@ fn test_crud_commit() -> Result<()> {
 fn test_crud_commit_deduce_version() -> Result<()> {
     let baza = Baza::new_test_baza();
 
-    baza.add_document(Id::new(), json!({}))?;
+    baza.add_document(Id::new(), Value::Null)?;
     baza.add_document(Id::new(), json!({ "0": 1, "1": 1 }))?;
     baza.add_document(Id::new(), json!({ "0": 1, "1": 2 }))?;
     baza.add_document(Id::new(), json!({ "0": 2, "1": 1 }))?;
@@ -156,8 +157,8 @@ fn test_crud_commit_deduce_version() -> Result<()> {
         let document = tx.must_get_document(&document.id)?;
 
         assert_eq!(
-            document.rev,
-            Revision::from_value(json!({ "0": 3, "1": 3 }))?
+            document.get_rev()?,
+            &Revision::from_value(json!({ "0": 3, "1": 3 }))?
         );
     }
 

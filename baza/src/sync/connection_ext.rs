@@ -63,7 +63,7 @@ impl BazaConnection {
         let mut missing_blobs = HashSet::new();
 
         for document in &changeset.documents {
-            if self.has_snapshot(&document.id, &document.rev)? {
+            if self.has_snapshot(&document.id, document.get_rev()?)? {
                 log::warn!("Got duplicate snapshot of the {}, ignoring", &document);
                 continue;
             }
@@ -73,7 +73,7 @@ impl BazaConnection {
 
             if document.is_erased() {
                 // erase history of erased documents
-                self.erase_document_history(&document.id, &document.rev)?;
+                self.erase_document_history(&document.id, document.get_rev()?)?;
                 summary.erased_documents.insert(document.id.clone());
             }
 
@@ -98,7 +98,7 @@ impl BazaConnection {
         Ok(summary)
     }
 
-    pub fn get_changeset(&mut self, min_rev: &Revision) -> Result<Changeset> {
+    pub fn get_changeset(&self, min_rev: &Revision) -> Result<Changeset> {
         ensure!(
             !self.has_staged_documents()?,
             "there must be no staged changes"

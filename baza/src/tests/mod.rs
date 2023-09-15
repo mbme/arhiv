@@ -54,8 +54,8 @@ impl Baza {
     pub fn add_document(&self, id: Id, rev: Value) -> Result<Document> {
         let tx = self.get_tx()?;
 
-        let mut document = new_document_snapshot(id, rev);
-        tx.put_document(&mut document)?;
+        let document = new_document_snapshot(id, rev);
+        tx.put_document(&document)?;
         tx.commit()?;
 
         Ok(document)
@@ -82,7 +82,7 @@ pub fn new_document_snapshot(id: impl Into<Id>, revision: Value) -> Document {
     let mut document = new_document(json!({}));
     document.id = id.into();
 
-    document.rev = Revision::from_value(revision).expect("must be a valid revision");
+    document.rev = Revision::try_from_value(revision).expect("must be a valid revision");
 
     document
 }

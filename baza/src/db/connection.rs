@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashSet, fs, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use rs_utils::{
     file_exists, is_same_filesystem, log, now, FsTransaction, Timestamp, MIN_TIMESTAMP,
@@ -165,14 +165,14 @@ impl BazaConnection {
         )?;
 
         let value: Option<Value> = stmt
-            .query_row([Revision::staging().serialize()], |row| row.get(0))
+            .query_row([Revision::STAGED_STRING], |row| row.get(0))
             .optional()
             .context("failed to query for db rev")?;
 
         if let Some(value) = value {
-            value.try_into()
+            Revision::from_value(value)
         } else {
-            Ok(Revision::staging())
+            Ok(Revision::initial())
         }
     }
 
@@ -224,7 +224,7 @@ impl BazaConnection {
         self.get_connection()
             .query_row(
                 "SELECT true FROM documents_snapshots WHERE rev = ?1 LIMIT 1",
-                [Revision::staging().serialize()],
+                [Revision::STAGED_STRING],
                 |_row| Ok(true),
             )
             .optional()
@@ -240,7 +240,7 @@ impl BazaConnection {
         self.kvs_const_must_get(SETTING_DATA_VERSION)
     }
 
-    pub(crate) fn get_max_rev_version(&self, id: &InstanceId) -> Result<u32> {
+    fn get_max_rev_version(&self, id: &InstanceId) -> Result<u32> {
         self.get_connection()
             .query_row(
                 &format!(
@@ -274,10 +274,7 @@ impl BazaConnection {
         qb.select("*", "documents");
 
         if let Some(true) = filter.conditions.only_staged {
-            qb.where_condition(format!(
-                "documents.rev = '{}'",
-                Revision::staging().serialize()
-            ));
+            qb.where_condition(format!("documents.rev = '{}'", Revision::STAGED_STRING));
         }
 
         if let Some(true) = filter.conditions.skip_erased {
@@ -573,7 +570,7 @@ impl BazaConnection {
 
             stmt.execute(params![
                 document.id,
-                document.rev.serialize(),
+                Revision::to_string(&document.rev),
                 document.class.document_type,
                 document.class.subtype,
                 document.updated_at,
@@ -589,7 +586,7 @@ impl BazaConnection {
 
             stmt.execute(params![
                 document.id,
-                document.rev.serialize(),
+                Revision::to_string(&document.rev),
                 document.class.document_type,
                 document.class.subtype,
                 document.data.to_string(),
@@ -620,7 +617,7 @@ impl BazaConnection {
     pub fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection().execute(
             "DELETE FROM documents_snapshots WHERE rev = ?1",
-            [Revision::staging().serialize()],
+            [Revision::STAGED_STRING],
         )?;
 
         Ok(())
@@ -682,7 +679,7 @@ impl BazaConnection {
         if let Some(prev_document) = prev_document {
             log::debug!("Updating existing document {}", &document.id);
 
-            document.rev = Revision::staging();
+            document.stage();
 
             ensure!(
                 document.class == prev_document.class,
@@ -702,7 +699,7 @@ impl BazaConnection {
         } else {
             log::debug!("Creating new document {}", &document.id);
 
-            document.rev = Revision::staging();
+            document.stage();
 
             document.updated_at = now();
         }
@@ -745,7 +742,9 @@ impl BazaConnection {
         while let Some(row) = rows.next()? {
             let document = utils::extract_document(row)?;
 
-            if &document.rev != min_rev {
+            // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
+            // we don't need documents with revision equal to min_rev
+            if document.get_rev()? != min_rev {
                 items.push(document);
             }
         }
@@ -754,9 +753,7 @@ impl BazaConnection {
     }
 
     pub fn list_all_document_snapshots(&self) -> Result<Vec<Document>> {
-        let instance_id = self.get_instance_id()?;
-
-        self.list_document_revisions(&Revision::from_value(json!({ instance_id: 1 }))?)
+        self.list_document_revisions(&Revision::initial())
     }
 
     pub fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
@@ -967,7 +964,7 @@ impl BazaConnection {
         let mut staged_documents = self.list_staged_documents()?;
 
         for document in &mut staged_documents {
-            document.rev = max_rev.clone();
+            document.rev = Some(max_rev.clone());
 
             self.put_document(document)?;
         }

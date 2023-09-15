@@ -162,13 +162,20 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
 }
 
 fn init_rev_cmp_collation(conn: &Connection) -> Result<()> {
-    conn.create_collation("REV_CMP", move |rev_a, rev_b| {
-        let rev_a: Revision = serde_json::from_str(rev_a).expect("must parse rev_a as Revision");
-        let rev_b: Revision = serde_json::from_str(rev_b).expect("must parse rev_b as Revision");
+    use std::cmp::Ordering;
 
-        rev_a
-            .partial_cmp(&rev_b)
-            .unwrap_or(std::cmp::Ordering::Equal) // conflicts are considered equal
+    conn.create_collation("REV_CMP", move |rev_a, rev_b| {
+        let rev_a: Option<Revision> =
+            serde_json::from_str(rev_a).expect("must parse rev_a as Revision");
+        let rev_b: Option<Revision> =
+            serde_json::from_str(rev_b).expect("must parse rev_b as Revision");
+
+        match (rev_a, rev_b) {
+            (Some(rev_a), Some(rev_b)) => rev_a.partial_cmp(&rev_b).unwrap_or(Ordering::Equal), // conflicts are considered equal
+            (None, Some(_)) => Ordering::Greater,
+            (Some(_), None) => Ordering::Less,
+            (None, None) => Ordering::Equal,
+        }
     })
     .context("Failed to define collation 'REV_CMP'")
 }

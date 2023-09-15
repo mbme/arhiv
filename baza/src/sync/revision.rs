@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-use anyhow::{Context, Error, Result};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -21,22 +21,10 @@ pub enum VectorClockOrder {
 }
 
 impl Revision {
-    pub fn from_value(value: Value) -> Result<Self> {
-        value.try_into()
-    }
+    pub const STAGED_STRING: &str = "null";
 
-    pub fn staging() -> Self {
+    pub fn initial() -> Self {
         Revision(BTreeMap::new())
-    }
-
-    #[must_use]
-    pub fn is_staged(&self) -> bool {
-        self.0.values().sum::<u32>() == 0
-    }
-
-    #[must_use]
-    pub fn is_committed(&self) -> bool {
-        !self.is_staged()
     }
 
     pub fn get_version(&self, id: &InstanceId) -> u32 {
@@ -61,23 +49,12 @@ impl Revision {
     pub fn compare_vector_clocks(&self, other: &Self) -> VectorClockOrder {
         let all_keys: HashSet<&InstanceId> = self.0.keys().chain(other.0.keys()).collect();
 
-        let mut is_self_empty = true;
-        let mut is_other_empty = true;
-
         let mut has_before = false;
         let mut has_after = false;
 
         for key in all_keys {
             let value = self.0.get(key).unwrap_or(&0);
             let other_value = other.0.get(key).unwrap_or(&0);
-
-            if *value != 0 {
-                is_self_empty = false;
-            }
-
-            if *other_value != 0 {
-                is_other_empty = false;
-            }
 
             match value.cmp(other_value) {
                 Ordering::Less => {
@@ -92,13 +69,6 @@ impl Revision {
             if has_before && has_after {
                 return VectorClockOrder::Concurrent;
             }
-        }
-
-        match (is_self_empty, is_other_empty) {
-            (true, true) => return VectorClockOrder::Equal,
-            (true, false) => return VectorClockOrder::After,
-            (false, true) => return VectorClockOrder::Before,
-            (false, false) => {}
         }
 
         match (has_before, has_after) {
@@ -156,16 +126,24 @@ impl Revision {
 
         result
     }
-}
 
-impl TryInto<Revision> for Value {
-    type Error = Error;
+    pub fn to_string(rev: &Option<Revision>) -> String {
+        rev.as_ref()
+            .map(|rev| rev.serialize())
+            .unwrap_or(Revision::STAGED_STRING.to_string())
+    }
 
-    fn try_into(self) -> Result<Revision, Self::Error> {
-        let mut result: Revision =
-            serde_json::from_value(self).context("failed to convert into Revision")?;
+    pub fn from_value(value: Value) -> Result<Revision> {
+        Revision::try_from_value(value)?.context("expected a valid revision map")
+    }
 
-        result.0.retain(|_, value| *value > 0);
+    pub fn try_from_value(value: Value) -> Result<Option<Revision>> {
+        let mut result: Option<Revision> =
+            serde_json::from_value(value).context("failed to convert into Revision")?;
+
+        if let Some(ref mut rev) = result {
+            rev.0.retain(|_, value| *value > 0);
+        }
 
         Ok(result)
     }
@@ -200,7 +178,7 @@ impl Ord for Revision {
 
 impl Default for Revision {
     fn default() -> Self {
-        Revision::staging()
+        Revision::initial()
     }
 }
 
@@ -275,14 +253,6 @@ mod tests {
             assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
         }
 
-        {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 0 }))?;
-
-            assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Before);
-            assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
-        }
-
         Ok(())
     }
 
@@ -295,10 +265,10 @@ mod tests {
             let rev3 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
             let rev4 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
 
-            assert!(rev0 > rev1);
-            assert!(rev0 > rev2);
-            assert!(rev0 > rev3);
-            assert!(rev0 > rev4);
+            assert!(rev0 < rev1);
+            assert!(rev0 < rev2);
+            assert!(rev0 < rev3);
+            assert!(rev0 < rev4);
 
             assert!(rev1 < rev2);
             assert!(rev1 <= rev2);

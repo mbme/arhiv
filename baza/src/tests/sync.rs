@@ -1,5 +1,5 @@
 use anyhow::Result;
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::{
     entities::Id,
@@ -39,26 +39,30 @@ fn test_sync_get_changeset() -> Result<()> {
     baza.add_document(Id::new(), json!({ "0": 2, "1": 1 }))?;
 
     {
-        let mut tx = baza.get_tx()?;
+        let tx = baza.get_tx()?;
         let changeset = tx.get_changeset(&Revision::from_value(json!({ "0": 1 }))?)?;
 
         assert_eq!(changeset.documents.len(), 3);
     }
 
     {
-        let mut tx = baza.get_tx()?;
+        let tx = baza.get_tx()?;
         let changeset = tx.get_changeset(&Revision::from_value(json!({ "0": 1, "1": 1 }))?)?;
 
         assert_eq!(changeset.documents.len(), 2);
     }
 
     {
-        baza.add_document(Id::new(), json!({}))?;
+        baza.add_document(Id::new(), Value::Null)?;
 
-        let mut tx = baza.get_tx()?;
+        let tx = baza.get_connection()?;
+
         let changeset = tx.get_changeset(&Revision::from_value(json!({ "0": 1, "1": 1 }))?);
 
-        assert!(changeset.is_err());
+        assert!(
+            changeset.is_err(),
+            "expected an error if there are uncommitted changes"
+        );
     }
 
     Ok(())

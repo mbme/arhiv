@@ -37,6 +37,8 @@ impl DBMigration for MigrationV4 {
                        SELECT id, rev, document_type, subtype, updated_at, data FROM old_db.documents_snapshots;
        ",
         )?;
+        // FIXME change rev type from integer to text
+        // FIXME change rev === 0 to "null"
 
         // generate random instance id
         conn.execute(

@@ -13,7 +13,7 @@ use super::{DocumentClass, DocumentData, Id};
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,
-    pub rev: Revision,
+    pub rev: Option<Revision>,
     #[serde(flatten)]
     pub class: DocumentClass,
     pub updated_at: Timestamp,
@@ -25,7 +25,7 @@ impl<D> Document<D> {
     pub fn new_with_data(class: DocumentClass, data: D) -> Self {
         Document {
             id: Id::new(),
-            rev: Revision::staging(),
+            rev: None,
             class,
             updated_at: now(),
             data,
@@ -46,7 +46,16 @@ impl Document {
 
     #[must_use]
     pub fn is_staged(&self) -> bool {
-        self.rev.is_staged()
+        self.rev.is_none()
+    }
+
+    #[must_use]
+    pub fn is_committed(&self) -> bool {
+        !self.is_staged()
+    }
+
+    pub fn get_rev(&self) -> Result<&Revision> {
+        self.rev.as_ref().context("document revision is missing")
     }
 
     pub fn erase(&mut self) {
@@ -56,7 +65,7 @@ impl Document {
     }
 
     pub fn stage(&mut self) {
-        self.rev = Revision::staging();
+        self.rev = None;
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
@@ -103,7 +112,7 @@ impl fmt::Display for Document {
             "[Document {} {} {}]",
             self.class,
             self.id,
-            self.rev.serialize()
+            Revision::to_string(&self.rev),
         )
     }
 }

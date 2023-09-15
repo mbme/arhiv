@@ -139,8 +139,10 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
             new_document_snapshot("3", json!({ "0": 1, "1": 1 })),
             new_document_snapshot("3", json!({ "0": 1, "1": 2 })),
             new_document_snapshot("3", json!({ "0": 2, "1": 1 })),
-            new_document_snapshot("3", json!({})),
         ]))?;
+
+        let mut document = tx.get_document(&Id::from("3"))?.unwrap();
+        tx.stage_document(&mut document)?;
 
         let ids = tx.get_coflicting_documents()?;
         assert_eq!(ids.len(), 2);

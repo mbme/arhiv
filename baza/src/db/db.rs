@@ -39,6 +39,7 @@ pub fn init_functions(conn: &Connection, schema: &Arc<DataSchema>) -> Result<()>
     init_calculate_search_score_fn(conn, schema.clone())?;
     init_json_contains(conn)?;
     init_rev_cmp_collation(conn)?;
+    init_views(conn)?;
 
     Ok(())
 }
@@ -178,6 +179,68 @@ fn init_rev_cmp_collation(conn: &Connection) -> Result<()> {
         }
     })
     .context("Failed to define collation 'REV_CMP'")
+}
+
+fn init_views(conn: &Connection) -> Result<()> {
+    let staging = Revision::STAGED_STRING;
+
+    conn.execute_batch(&format!("
+        CREATE TEMPORARY VIEW documents_snapshots_and_refs AS
+            SELECT a.rowid, a.*, b.refs
+                FROM documents_snapshots a INNER JOIN documents_refs b
+                ON a.id = b.id AND a.rev = b.rev;
+
+        CREATE TEMPORARY VIEW documents AS
+            SELECT a.* FROM documents_snapshots_and_refs a
+                INNER JOIN
+                    (SELECT rowid, ROW_NUMBER() OVER (PARTITION BY id ORDER BY rev COLLATE REV_CMP DESC) rn
+                    FROM documents_snapshots) b
+                ON a.rowid = b.rowid WHERE b.rn = 1;
+
+        CREATE TEMPORARY VIEW documents_with_conflicts AS
+            SELECT a.id, a.rev
+            FROM documents_snapshots_and_refs a
+            INNER JOIN (
+                SELECT id, MAX(rev) COLLATE REV_CMP as max_rev
+                FROM documents_snapshots
+                WHERE rev != '{staging}'
+                GROUP BY id
+            ) b ON a.id = b.id AND a.rev = b.max_rev COLLATE REV_CMP
+            GROUP BY a.id
+            HAVING COUNT(*) > 1;
+
+        CREATE TEMPORARY VIEW committed_documents AS
+            SELECT a.*
+            FROM documents_snapshots_and_refs a
+                WHERE a.rev != '{staging}'
+                GROUP BY a.id HAVING MAX(a.rev) COLLATE REV_CMP;
+
+        CREATE TEMPORARY VIEW staged_documents AS
+            SELECT a.*
+                FROM documents_snapshots_and_refs a
+                WHERE a.rev = '{staging}';
+
+        CREATE TEMPORARY VIEW committed_blob_ids AS
+            SELECT DISTINCT blob_refs.value AS blob_id
+                FROM committed_documents AS cd, json_each(cd.refs, '$.blobs') AS blob_refs;
+
+        CREATE TEMPORARY VIEW staged_blob_ids AS
+            SELECT DISTINCT blob_refs.value AS blob_id
+                FROM staged_documents AS sd, json_each(sd.refs, '$.blobs') AS blob_refs;
+
+        CREATE TEMPORARY VIEW new_blob_ids AS
+            SELECT blob_id FROM staged_blob_ids
+            EXCEPT
+                SELECT blob_id FROM committed_blob_ids;
+
+        CREATE TEMPORARY VIEW used_blob_ids AS
+            SELECT DISTINCT blob_refs.value AS blob_id
+                FROM documents AS d, json_each(d.refs, '$.blobs') AS blob_refs;
+      "),
+    )
+    .context("Failed to initialize views")?;
+
+    Ok(())
 }
 
 fn json_contains(data: &str, field: &str, value: &str) -> Result<bool> {

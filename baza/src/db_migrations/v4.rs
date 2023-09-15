@@ -19,8 +19,10 @@ impl DBMigration for MigrationV4 {
     }
 
     fn apply(&self, conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
+        // generate random instance id
         let instance_id = generate_random_id();
-        conn.execute_batch(
+
+        conn.execute_batch(&format!(
             "INSERT INTO kvs(key, value)
                        SELECT * FROM old_db.settings;
 
@@ -34,13 +36,20 @@ impl DBMigration for MigrationV4 {
             UPDATE kvs SET key = json_array('settings', key);
 
             INSERT INTO documents_snapshots(id, rev, document_type, subtype, updated_at, data)
-                       SELECT id, rev, document_type, subtype, updated_at, data FROM old_db.documents_snapshots;
-       ",
-        )?;
-        // FIXME change rev type from integer to text
-        // FIXME change rev === 0 to "null"
+                       SELECT
+                         id,
+                         CASE rev
+                           WHEN 0 THEN 'null'
+                           ELSE json_object('{instance_id}', rev)
+                         END CASE,
+                         document_type,
+                         subtype,
+                         updated_at,
+                         data
+                       FROM old_db.documents_snapshots;
+       "
+        ))?;
 
-        // generate random instance id
         conn.execute(
             "INSERT INTO kvs(key, value) VALUES(json_array('settings', 'instance_id'), ?1)",
             [instance_id],

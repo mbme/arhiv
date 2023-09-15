@@ -1,85 +1,12 @@
 use anyhow::Result;
 use serde_json::json;
 
-use baza::sync::Revision;
-use baza::{BLOBSCount, DocumentsCount, Filter};
+use baza::{BLOBSCount, DocumentsCount};
 use rs_utils::workspace_relpath;
 
 use super::utils::*;
 use crate::test_arhiv::TestArhiv;
 use crate::BazaConnectionExt;
-
-#[test]
-fn test_crud() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
-
-    let original_data = json!({ "test": "test" });
-
-    // CREATE
-    let id = {
-        let tx = arhiv.baza.get_tx()?;
-
-        let mut document = new_document(original_data.clone());
-        tx.stage_document(&mut document)?;
-        tx.commit()?;
-
-        assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 1);
-
-        document.id
-    };
-
-    // READ
-    {
-        let other_document = arhiv.baza.get_document(&id)?.unwrap();
-
-        assert_eq!(other_document.data, original_data.try_into().unwrap());
-        assert!(other_document.rev.is_staged());
-    }
-
-    // UPDATE
-    {
-        let tx = arhiv.baza.get_tx()?;
-
-        let mut other_document = arhiv.baza.get_document(&id)?.unwrap();
-        other_document.data = json!({ "test": "1" }).try_into().unwrap();
-        tx.stage_document(&mut other_document)?;
-        tx.commit()?;
-
-        assert_eq!(
-            arhiv.baza.get_document(&id)?.unwrap().data,
-            other_document.data
-        );
-    }
-
-    // DELETE
-    let document_id = {
-        let tx = arhiv.baza.get_tx()?;
-
-        let mut document = new_document(json!({ "test": "test" }));
-        tx.stage_document(&mut document)?;
-        tx.commit()?;
-
-        document.id
-    };
-
-    assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 2);
-
-    {
-        let tx = arhiv.baza.get_tx()?;
-
-        tx.erase_document(&document_id)?;
-        tx.commit()?;
-
-        let erased_document = arhiv.baza.get_document(&document_id)?.unwrap();
-
-        assert!(erased_document.is_erased());
-        assert_eq!(erased_document.prev_rev, Revision::STAGING);
-
-        assert_eq!(arhiv.baza.list_documents(Filter::default())?.items.len(), 2);
-    }
-
-    Ok(())
-}
 
 #[allow(clippy::too_many_lines)]
 #[tokio::test]

@@ -126,7 +126,7 @@ fn test_crud_commit() -> Result<()> {
     let mut document = new_document(json!({}));
     tx.stage_document(&mut document)?;
 
-    assert_eq!(tx.get_db_rev()?, Revision::from_value(json!({ "0": 0 }))?);
+    assert_eq!(tx.get_db_rev()?, Revision::initial());
 
     let committed_count = tx.commit_staged_documents()?;
 

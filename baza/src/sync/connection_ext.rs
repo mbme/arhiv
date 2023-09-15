@@ -60,8 +60,6 @@ impl BazaConnection {
         let schema = self.get_schema();
         let document_expert = DocumentExpert::new(&schema);
 
-        let mut missing_blobs = HashSet::new();
-
         for document in &changeset.documents {
             if self.has_snapshot(&document.id, document.get_rev()?)? {
                 log::warn!("Got duplicate snapshot of the {}, ignoring", &document);
@@ -84,7 +82,7 @@ impl BazaConnection {
                 let blob = self.get_blob(&blob_id);
 
                 if !blob.exists()? {
-                    missing_blobs.insert(blob);
+                    summary.missing_blobs.insert(blob);
                 }
             }
         }

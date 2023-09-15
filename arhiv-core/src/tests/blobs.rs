@@ -50,45 +50,6 @@ async fn test_blobs() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_download_blob_during_sync() -> Result<()> {
-    let prime = TestArhiv::new_prime();
-
-    let src = &workspace_relpath("resources/k2.jpg");
-
-    let blob_id = {
-        let mut tx = prime.baza.get_tx()?;
-
-        let blob_id = tx.add_blob(src, false)?;
-
-        let mut document = empty_document();
-        document.data.set("blob", &blob_id);
-        tx.stage_document(&mut document)?;
-
-        tx.commit()?;
-
-        blob_id
-    };
-
-    prime.sync().await?;
-
-    let (join_handle, shutdown_sender, addr) = start_prime_server(prime.0.clone(), 0);
-    let replica = TestArhiv::new_replica(addr.port());
-
-    replica.sync().await?;
-
-    let blob = replica.baza.get_blob(&blob_id)?;
-
-    let dst = &blob.file_path;
-
-    assert!(are_equal_files(src, dst)?);
-
-    shutdown_sender.send(()).unwrap();
-    join_handle.await.unwrap();
-
-    Ok(())
-}
-
 #[test]
 fn test_add_blob_soft_links_and_dirs() -> Result<()> {
     let arhiv = TestArhiv::new_prime();

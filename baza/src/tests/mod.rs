@@ -1,4 +1,6 @@
-use anyhow::Result;
+use std::fs;
+
+use anyhow::{Context, Result};
 use serde_json::{json, Value};
 
 use rs_utils::generate_temp_path;
@@ -32,13 +34,22 @@ impl Baza {
             "test",
             vec![DataDescription {
                 document_type: "test_type",
-                fields: vec![Field {
-                    name: "test",
-                    field_type: FieldType::String {},
-                    mandatory: false,
-                    readonly: false,
-                    for_subtypes: None,
-                }],
+                fields: vec![
+                    Field {
+                        name: "test",
+                        field_type: FieldType::String {},
+                        mandatory: false,
+                        readonly: false,
+                        for_subtypes: None,
+                    },
+                    Field {
+                        name: "blob",
+                        field_type: FieldType::BLOBId {},
+                        mandatory: false,
+                        readonly: false,
+                        for_subtypes: None,
+                    },
+                ],
                 subtypes: None,
             }],
         ));
@@ -92,4 +103,9 @@ pub fn create_changeset(documents: Vec<Document>) -> Changeset {
         data_version: 0,
         documents,
     }
+}
+
+pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
+    Ok(fs::read(src).context("failed to read src file")?
+        == fs::read(dst).context("failed to read dst file")?)
 }

@@ -83,6 +83,11 @@ impl SyncService {
                 tx.commit()?;
 
                 updated = updated || summary.has_changes();
+            } else {
+                log::debug!(
+                    "instance {} has same or older revision",
+                    ping.instance_id.as_ref()
+                );
             }
         }
 

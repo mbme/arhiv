@@ -176,12 +176,6 @@ impl Ord for Revision {
     }
 }
 
-impl Default for Revision {
-    fn default() -> Self {
-        Revision::initial()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -259,7 +253,7 @@ mod tests {
     #[test]
     fn test_revision_cmp() -> Result<()> {
         {
-            let rev0 = Revision::default();
+            let rev0 = Revision::initial();
             let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
             let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
             let rev3 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
@@ -281,6 +275,46 @@ mod tests {
             assert!(rev3 >= rev1);
 
             assert!(rev4 != rev2);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_is_concurrent_or_newer_than() -> Result<()> {
+        {
+            let rev0 = Revision::initial();
+            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+
+            assert!(!rev0.is_concurrent_or_newer_than(&rev1));
+            assert!(rev1.is_concurrent_or_newer_than(&rev0));
+
+            assert!(rev3.is_concurrent_or_newer_than(&rev1));
+
+            assert!(rev2.is_concurrent_or_newer_than(&rev3));
+            assert!(rev3.is_concurrent_or_newer_than(&rev2));
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_is_concurrent_or_older_than() -> Result<()> {
+        {
+            let rev0 = Revision::initial();
+            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+
+            assert!(rev0.is_concurrent_or_older_than(&rev1));
+            assert!(!rev1.is_concurrent_or_older_than(&rev0));
+
+            assert!(rev1.is_concurrent_or_older_than(&rev3));
+
+            assert!(rev2.is_concurrent_or_older_than(&rev3));
+            assert!(rev3.is_concurrent_or_older_than(&rev2));
         }
 
         Ok(())

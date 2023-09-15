@@ -3,9 +3,11 @@ use std::{rc::Rc, sync::Arc};
 use anyhow::Result;
 use serde_json::json;
 
+use rs_utils::workspace_relpath;
+
 use crate::{
     sync::{SyncAgent, SyncService},
-    tests::{create_changeset, new_document_snapshot},
+    tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
     Baza,
 };
 
@@ -46,6 +48,42 @@ async fn test_sync_service() -> Result<()> {
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 5);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_sync_blobs() -> Result<()> {
+    let src = &workspace_relpath("resources/k2.jpg");
+
+    let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
+    let baza1 = Rc::new(Baza::new_test_baza_with_id("1"));
+
+    let blob_id = {
+        let mut tx = baza1.get_tx()?;
+
+        let blob_id = tx.add_blob(src, false)?;
+
+        let mut document = new_document(json!({ "blob": &blob_id }));
+        tx.stage_document(&mut document)?;
+
+        tx.commit_staged_documents()?;
+
+        tx.commit()?;
+
+        blob_id
+    };
+
+    let mut sync_service = SyncService::new(baza0.clone());
+
+    let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
+    sync_service.add_agent(agent1);
+
+    assert!(sync_service.sync().await?);
+
+    let blob = baza0.get_blob(&blob_id)?;
+    let dst = &blob.file_path;
+    assert!(are_equal_files(src, dst)?);
 
     Ok(())
 }

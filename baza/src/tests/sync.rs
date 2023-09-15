@@ -12,7 +12,7 @@ use crate::{
 fn test_sync_get_db_rev() -> Result<()> {
     let baza = Baza::new_test_baza();
 
-    baza.add_document(Id::new(), json!({}))?;
+    baza.add_document(Id::new(), Value::Null)?;
     baza.add_document(Id::new(), json!({ "0": 1, "1": 1 }))?;
     baza.add_document(Id::new(), json!({ "0": 1, "1": 2 }))?;
     baza.add_document(Id::new(), json!({ "0": 2, "1": 1 }))?;

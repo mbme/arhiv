@@ -1,29 +1,27 @@
 use anyhow::Result;
-use serde_json::json;
+use serde_json::{json, Value};
 
-use baza::{
-    entities::{Document, DocumentClass},
+use crate::{
+    entities::{Document, DocumentClass, Id},
     schema::{DataDescription, DataSchema, Field, FieldType},
-    Filter, OrderBy,
+    tests::{get_values, new_document},
+    Baza, Filter, OrderBy,
 };
-
-use super::utils::*;
-use crate::test_arhiv::TestArhiv;
 
 #[test]
 fn test_pagination() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
+    let baza = Baza::new_test_baza();
 
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
 
-        tx.stage_document(&mut empty_document())?;
-        tx.stage_document(&mut empty_document())?;
+        baza.add_document(Id::new(), Value::Null)?;
+        baza.add_document(Id::new(), Value::Null)?;
 
         tx.commit()?;
     }
 
-    let page = arhiv.baza.list_documents(Filter::default().page_size(1))?;
+    let page = baza.list_documents(Filter::default().page_size(1))?;
 
     assert_eq!(page.items.len(), 1);
     assert!(page.has_more);
@@ -31,29 +29,28 @@ fn test_pagination() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_modes() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
+#[test]
+fn test_modes() -> Result<()> {
+    let baza = Baza::new_test_baza();
 
     // committed
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "1" })))?;
+        tx.commit_staged_documents()?;
         tx.commit()?;
     }
 
-    arhiv.sync().await?;
-
     // staged
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "3" })))?;
         tx.commit()?;
     }
 
     {
         // test default
-        let page = arhiv.baza.list_documents(Filter {
+        let page = baza.list_documents(Filter {
             order: vec![OrderBy::UpdatedAt { asc: false }],
             ..Filter::default()
         })?;
@@ -66,7 +63,7 @@ async fn test_modes() -> Result<()> {
 
     {
         // test staged
-        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
+        let page = baza.list_documents(Filter::default().only_staged())?;
 
         assert_eq!(get_values(page), vec![json!({ "test": "3" })]);
     }
@@ -76,7 +73,7 @@ async fn test_modes() -> Result<()> {
 
 #[test]
 fn test_order_by_enum_field() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+    let baza = Baza::new_with_schema(DataSchema::new(
         "test",
         vec![DataDescription {
             document_type: "test_type",
@@ -92,7 +89,7 @@ fn test_order_by_enum_field() -> Result<()> {
     ));
 
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
         tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
@@ -102,7 +99,7 @@ fn test_order_by_enum_field() -> Result<()> {
         tx.commit()?;
     }
 
-    let page = arhiv.baza.list_documents(Filter {
+    let page = baza.list_documents(Filter {
         order: vec![OrderBy::EnumField {
             selector: "$.enum".to_string(),
             asc: true,
@@ -126,7 +123,7 @@ fn test_order_by_enum_field() -> Result<()> {
 
 #[test]
 fn test_multiple_order_by() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+    let baza = Baza::new_with_schema(DataSchema::new(
         "test",
         vec![DataDescription {
             document_type: "test_type",
@@ -151,7 +148,7 @@ fn test_multiple_order_by() -> Result<()> {
     ));
 
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
         tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
@@ -161,7 +158,7 @@ fn test_multiple_order_by() -> Result<()> {
         tx.commit()?;
     }
 
-    let page = arhiv.baza.list_documents(Filter {
+    let page = baza.list_documents(Filter {
         order: vec![
             OrderBy::Field {
                 selector: "$.prop".to_string(),
@@ -188,12 +185,12 @@ fn test_multiple_order_by() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_conditions() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
+#[test]
+fn test_conditions() -> Result<()> {
+    let baza = Baza::new_test_baza();
 
     {
-        let tx = arhiv.baza.get_tx()?;
+        let tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
         tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
@@ -207,9 +204,7 @@ async fn test_conditions() -> Result<()> {
 
     {
         // test unexpected type
-        let page = arhiv
-            .baza
-            .list_documents(Filter::default().with_document_type("random"))?;
+        let page = baza.list_documents(Filter::default().with_document_type("random"))?;
 
         let empty: Vec<serde_json::Value> = vec![];
         assert_eq!(get_values(page), empty);
@@ -217,46 +212,44 @@ async fn test_conditions() -> Result<()> {
 
     {
         // test expected type
-        let page = arhiv
-            .baza
-            .list_documents(Filter::default().with_document_type("test_type"))?;
+        let page = baza.list_documents(Filter::default().with_document_type("test_type"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // test Field
-        let page = arhiv
-            .baza
-            .list_documents(Filter::default().where_field("test", "value"))?;
+        let page = baza.list_documents(Filter::default().where_field("test", "value"))?;
 
         assert_eq!(get_values(page).len(), 1);
     }
 
     {
         // test Search
-        let page = arhiv.baza.list_documents(Filter::default().search("Val"))?;
+        let page = baza.list_documents(Filter::default().search("Val"))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // test Skip erased
-        let page = arhiv
-            .baza
-            .list_documents(Filter::default().skip_erased(true))?;
+        let page = baza.list_documents(Filter::default().skip_erased(true))?;
 
         assert_eq!(get_values(page).len(), 2);
     }
 
     {
         // tests only staged
-        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
+        let page = baza.list_documents(Filter::default().only_staged())?;
         assert_eq!(get_values(page).len(), 3);
 
-        arhiv.sync().await?;
+        {
+            let tx = baza.get_tx()?;
+            tx.commit_staged_documents()?;
+            tx.commit()?;
+        }
 
-        let page = arhiv.baza.list_documents(Filter::default().only_staged())?;
+        let page = baza.list_documents(Filter::default().only_staged())?;
         assert_eq!(get_values(page).len(), 0);
     }
 
@@ -265,7 +258,7 @@ async fn test_conditions() -> Result<()> {
 
 #[test]
 fn test_backrefs() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+    let baza = Baza::new_with_schema(DataSchema::new(
         "test",
         vec![
             //
@@ -294,7 +287,7 @@ fn test_backrefs() -> Result<()> {
         ],
     ));
 
-    let tx = arhiv.baza.get_tx()?;
+    let tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
         DocumentClass::new("other_type", ""),
@@ -322,7 +315,7 @@ fn test_backrefs() -> Result<()> {
 
     tx.commit()?;
 
-    let page = arhiv.baza.list_documents(Filter::all_backrefs(&doc1.id))?;
+    let page = baza.list_documents(Filter::all_backrefs(&doc1.id))?;
 
     assert_eq!(page.items.len(), 2);
 
@@ -331,7 +324,7 @@ fn test_backrefs() -> Result<()> {
 
 #[test]
 fn test_collections() -> Result<()> {
-    let arhiv = TestArhiv::new_prime_with_schema(DataSchema::new(
+    let baza = Baza::new_with_schema(DataSchema::new(
         "test",
         vec![
             //
@@ -360,7 +353,7 @@ fn test_collections() -> Result<()> {
         ],
     ));
 
-    let tx = arhiv.baza.get_tx()?;
+    let tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
         DocumentClass::new("other_type", ""),
@@ -388,9 +381,7 @@ fn test_collections() -> Result<()> {
 
     tx.commit()?;
 
-    let page = arhiv
-        .baza
-        .list_documents(Filter::all_collections(&doc1.id))?;
+    let page = baza.list_documents(Filter::all_collections(&doc1.id))?;
 
     assert_eq!(page.items.len(), 2);
 

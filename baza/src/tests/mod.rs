@@ -9,10 +9,11 @@ use crate::{
     entities::{Document, DocumentClass, Id},
     schema::{DataDescription, DataSchema, Field, FieldType},
     sync::{Changeset, Revision},
-    Baza, SETTING_INSTANCE_ID,
+    Baza, ListPage, SETTING_INSTANCE_ID,
 };
 
 mod crud;
+mod query;
 mod sync;
 mod sync_service;
 mod validation;
@@ -108,4 +109,11 @@ pub fn create_changeset(documents: Vec<Document>) -> Changeset {
 pub fn are_equal_files(src: &str, dst: &str) -> Result<bool> {
     Ok(fs::read(src).context("failed to read src file")?
         == fs::read(dst).context("failed to read dst file")?)
+}
+
+pub fn get_values(page: ListPage) -> Vec<Value> {
+    page.items
+        .into_iter()
+        .map(|item| item.data.into())
+        .collect()
 }

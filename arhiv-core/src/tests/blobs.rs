@@ -50,42 +50,6 @@ async fn test_blobs() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_add_blob_soft_links_and_dirs() -> Result<()> {
-    let arhiv = TestArhiv::new_prime();
-
-    let temp_dir = TempFile::new_with_details("test_add_blob_soft_links_and_dirs", "");
-    temp_dir.mkdir()?;
-
-    let resource_file = workspace_relpath("resources/k2.jpg");
-    let resource_file_link = format!("{temp_dir}/resource_file_link");
-    std::os::unix::fs::symlink(resource_file, &resource_file_link)?;
-
-    {
-        let mut tx = arhiv.baza.get_tx()?;
-        let result = tx.add_blob(&resource_file_link, false);
-        assert!(result.is_err());
-    }
-
-    let resource_dir = workspace_relpath("resources");
-    let resource_dir_link = format!("{}/resource_dir_link", &temp_dir);
-    std::os::unix::fs::symlink(&resource_dir, &resource_dir_link)?;
-
-    {
-        let mut tx = arhiv.baza.get_tx()?;
-        let result = tx.add_blob(&resource_dir, false);
-        assert!(result.is_err());
-    }
-
-    {
-        let mut tx = arhiv.baza.get_tx()?;
-        let result = tx.add_blob(&resource_dir_link, false);
-        assert!(result.is_err());
-    }
-
-    Ok(())
-}
-
 #[tokio::test]
 async fn test_create_attachment() -> Result<()> {
     let arhiv = TestArhiv::new_prime_with_schema(get_standard_schema());

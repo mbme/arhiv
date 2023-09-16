@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{rc::Rc, sync::Arc};
 
 use anyhow::Result;
 
@@ -6,10 +6,10 @@ use rs_utils::log;
 
 use crate::Baza;
 
-use super::{agent::SyncAgent, instance_id::InstanceId, ping::Ping};
+use super::{agent::SyncAgent, ping::Ping};
 
 pub struct SyncService {
-    agents: HashMap<InstanceId, SyncAgent>,
+    agents: Vec<Rc<SyncAgent>>,
     baza: Arc<Baza>,
 }
 
@@ -22,22 +22,22 @@ impl SyncService {
     }
 
     pub fn add_agent(&mut self, agent: SyncAgent) {
-        self.agents.insert(agent.get_id().clone(), agent);
+        self.agents.push(agent.into());
     }
 
-    pub fn remove_agent(&mut self, id: &InstanceId) {
-        self.agents.remove(id);
-    }
-
-    async fn collect_pings(&self) -> Result<Vec<Ping>> {
-        let pings = self.agents.values().map(|agent| agent.fetch_ping());
+    async fn collect_pings(&self) -> Result<Vec<(Rc<SyncAgent>, Ping)>> {
+        let pings = self
+            .agents
+            .iter()
+            .map(|agent| async { (agent.clone(), agent.fetch_ping().await) });
 
         let mut pings = futures::future::join_all(pings)
             .await
             .into_iter()
+            .map(|(agent, ping_result)| Ok((agent, ping_result?)))
             .collect::<Result<Vec<_>>>()?;
 
-        pings.sort_by_cached_key(|ping| ping.rev.clone());
+        pings.sort_by_cached_key(|(_agent, ping)| ping.rev.clone());
 
         Ok(pings)
     }
@@ -48,12 +48,7 @@ impl SyncService {
         log::info!("starting sync with {} other instances", pings.len());
 
         let mut updated = false;
-        for ping in pings {
-            let agent = self
-                .agents
-                .get(&ping.instance_id)
-                .expect("agent is missing");
-
+        for (agent, ping) in pings {
             let local_rev = self.baza.get_connection()?.get_db_rev()?;
 
             if local_rev.is_concurrent_or_older_than(&ping.rev) {

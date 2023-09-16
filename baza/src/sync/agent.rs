@@ -4,37 +4,20 @@ use anyhow::{Context, Result};
 
 use crate::{entities::BLOB, Baza};
 
-use super::{
-    changeset::Changeset, instance_id::InstanceId, network::BazaRpcClient, ping::Ping, Revision,
-};
+use super::{changeset::Changeset, network::BazaRpcClient, ping::Ping, Revision};
 
 pub enum SyncAgent {
-    InMemory {
-        id: InstanceId,
-        baza: Rc<Baza>,
-    },
-    Network {
-        id: InstanceId,
-        client: BazaRpcClient,
-    },
+    InMemory { baza: Rc<Baza> },
+    Network { client: BazaRpcClient },
 }
 
 impl SyncAgent {
     pub fn new_in_memory(baza: Rc<Baza>) -> Result<Self> {
-        let id = baza.get_connection()?.get_instance_id()?;
-
-        Ok(SyncAgent::InMemory { id, baza })
+        Ok(SyncAgent::InMemory { baza })
     }
 
-    pub fn new_in_network(id: InstanceId, client: BazaRpcClient) -> Self {
-        SyncAgent::Network { id, client }
-    }
-
-    pub fn get_id(&self) -> &InstanceId {
-        match self {
-            SyncAgent::InMemory { id, .. } => id,
-            SyncAgent::Network { id, .. } => id,
-        }
+    pub fn new_in_network(client: BazaRpcClient) -> Self {
+        SyncAgent::Network { client }
     }
 
     pub async fn fetch_ping(&self) -> Result<Ping> {
@@ -67,11 +50,5 @@ impl SyncAgent {
         }
 
         Ok(())
-    }
-}
-
-impl PartialEq for SyncAgent {
-    fn eq(&self, other: &Self) -> bool {
-        self.get_id() == other.get_id()
     }
 }

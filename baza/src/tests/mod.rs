@@ -7,11 +7,12 @@ use rs_utils::generate_temp_path;
 
 use crate::{
     entities::{Document, DocumentClass, Id},
-    schema::{DataDescription, DataSchema, Field, FieldType},
+    schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::{Changeset, Revision},
     Baza, ListPage, SETTING_INSTANCE_ID,
 };
 
+mod attachment;
 mod crud;
 mod query;
 mod sync;
@@ -33,26 +34,29 @@ impl Baza {
     pub fn new_test_baza_with_id(id: &str) -> Self {
         let baza = Baza::new_with_schema(DataSchema::new(
             "test",
-            vec![DataDescription {
-                document_type: "test_type",
-                fields: vec![
-                    Field {
-                        name: "test",
-                        field_type: FieldType::String {},
-                        mandatory: false,
-                        readonly: false,
-                        for_subtypes: None,
-                    },
-                    Field {
-                        name: "blob",
-                        field_type: FieldType::BLOBId {},
-                        mandatory: false,
-                        readonly: false,
-                        for_subtypes: None,
-                    },
-                ],
-                subtypes: None,
-            }],
+            vec![
+                DataDescription {
+                    document_type: "test_type",
+                    fields: vec![
+                        Field {
+                            name: "test",
+                            field_type: FieldType::String {},
+                            mandatory: false,
+                            readonly: false,
+                            for_subtypes: None,
+                        },
+                        Field {
+                            name: "blob",
+                            field_type: FieldType::BLOBId {},
+                            mandatory: false,
+                            readonly: false,
+                            for_subtypes: None,
+                        },
+                    ],
+                    subtypes: None,
+                },
+                get_attachment_definition(),
+            ],
         ));
 
         let tx = baza.get_tx().unwrap();

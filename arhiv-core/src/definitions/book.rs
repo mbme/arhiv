@@ -1,7 +1,6 @@
 use baza::schema::*;
 
 use super::fields::*;
-use super::ATTACHMENT_TYPE;
 
 pub const BOOK_TYPE: &str = "book";
 pub const BOOK_COLLECTION_TYPE: &str = "book collection";

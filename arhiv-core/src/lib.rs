@@ -10,11 +10,5 @@ pub mod scraper;
 mod settings;
 mod status;
 
-#[cfg(test)]
-pub mod test_arhiv;
-#[cfg(test)]
-mod tests;
-
 pub use arhiv::{Arhiv, BazaConnectionExt};
 pub use config::Config;
-pub use definitions::create_attachment;

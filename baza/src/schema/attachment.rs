@@ -3,18 +3,20 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{get_file_name, get_file_size, get_image_size, get_media_type, log, FFProbe};
 
-use baza::{
+use crate::{
     entities::{BLOBId, Document, DocumentClass},
-    schema::*,
+    schema::{Field, FieldType},
     BazaConnection,
 };
+
+use super::DataDescription;
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
 pub const AUDIO_SUBTYPE: &str = "audio";
 pub const IMAGE_SUBTYPE: &str = "image";
 
-pub fn get_attachment_definitions() -> Vec<DataDescription> {
-    vec![DataDescription {
+pub fn get_attachment_definition() -> DataDescription {
+    DataDescription {
         document_type: ATTACHMENT_TYPE,
         fields: vec![
             Field {
@@ -75,7 +77,7 @@ pub fn get_attachment_definitions() -> Vec<DataDescription> {
             },
         ],
         subtypes: Some(&["", AUDIO_SUBTYPE, IMAGE_SUBTYPE]),
-    }]
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

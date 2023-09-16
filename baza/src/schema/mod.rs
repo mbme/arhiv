@@ -3,10 +3,12 @@ use serde::Serialize;
 
 use crate::entities::{DocumentClass, ERASED_DOCUMENT_TYPE};
 
+pub use attachment::*;
 pub use data_description::*;
 pub use data_migration::*;
 pub use field::*;
 
+mod attachment;
 mod data_description;
 mod data_migration;
 mod field;

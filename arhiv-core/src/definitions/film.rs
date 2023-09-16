@@ -1,7 +1,6 @@
 use baza::schema::*;
 
 use super::fields::*;
-use super::ATTACHMENT_TYPE;
 
 pub const FILM_TYPE: &str = "film";
 pub const FILM_COLLECTION_TYPE: &str = "film collection";

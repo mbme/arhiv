@@ -36,7 +36,7 @@ async fn test_sync_service() -> Result<()> {
         tx.commit()?;
     }
 
-    let mut sync_service = SyncService::new(baza0.clone());
+    let mut sync_service = SyncService::new(&baza0);
 
     let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
     sync_service.add_agent(agent1);
@@ -74,7 +74,7 @@ async fn test_sync_blobs() -> Result<()> {
         blob_id
     };
 
-    let mut sync_service = SyncService::new(baza0.clone());
+    let mut sync_service = SyncService::new(&baza0);
 
     let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
     sync_service.add_agent(agent1);
@@ -129,7 +129,7 @@ async fn test_sync_service_network_agent() -> Result<()> {
         blob_id
     };
 
-    let mut sync_service = SyncService::new(baza0.clone());
+    let mut sync_service = SyncService::new(&baza0);
 
     let server1 = BazaServer::start(baza1.clone(), 0);
 

@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -8,13 +8,13 @@ use crate::Baza;
 
 use super::{agent::SyncAgent, ping::Ping};
 
-pub struct SyncService {
+pub struct SyncService<'b> {
     agents: Vec<Rc<SyncAgent>>,
-    baza: Arc<Baza>,
+    baza: &'b Baza,
 }
 
-impl SyncService {
-    pub fn new(baza: Arc<Baza>) -> Self {
+impl<'b> SyncService<'b> {
+    pub fn new(baza: &'b Baza) -> Self {
         Self {
             agents: Default::default(),
             baza,

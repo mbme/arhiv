@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
+    sync::SyncService,
     Baza, BazaConnection, SETTING_DATA_VERSION,
 };
 use rs_utils::{get_crate_version, MIN_TIMESTAMP};
@@ -61,6 +62,12 @@ impl Arhiv {
 
     pub fn get_config(&self) -> &Config {
         &self.config
+    }
+
+    pub fn get_sync_service(&self) -> SyncService {
+        let sync_service = SyncService::new(&self.baza);
+
+        sync_service
     }
 }
 

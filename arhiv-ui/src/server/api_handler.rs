@@ -2,11 +2,11 @@ use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{Context, Result};
 
-use arhiv_core::{create_attachment, scraper::ScraperOptions, Arhiv, BazaConnectionExt};
+use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
 use baza::{
     entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
-    schema::DataSchema,
+    schema::{create_attachment, DataSchema},
     validator::{ValidationError, Validator},
     DocumentExpert, Filter,
 };

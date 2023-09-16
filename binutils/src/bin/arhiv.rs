@@ -1,15 +1,15 @@
 use std::{process, sync::Arc};
 
-use baza::entities::{Document, DocumentClass, DocumentData, Id};
+use baza::{
+    entities::{Document, DocumentClass, DocumentData, Id},
+    sync::BazaServer,
+};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
 use clap_complete::{generate, Shell};
 
-use arhiv_core::{
-    definitions::get_standard_schema, prime_server::start_prime_server, Arhiv, BazaConnectionExt,
-    Config,
-};
+use arhiv_core::{definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config};
 use arhiv_ui::{get_document_url, start_ui_server};
 use rs_utils::{get_crate_version, into_absolute_path, log};
 use scraper::ScraperOptions;
@@ -29,12 +29,8 @@ struct CLIArgs {
 #[derive(Subcommand, Debug)]
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
-    Init {
-        /// Initialize prime instance
-        #[clap(long)]
-        prime: bool,
-    },
-    /// Sync changes
+    Init,
+    /// One-shot sync without starting a server
     Sync,
     /// Backup Arhiv data
     Backup {
@@ -55,9 +51,9 @@ enum CLICommand {
         #[clap(long, env = "BROWSER")]
         browser: String,
     },
-    /// Run prime server
-    #[clap(name = "prime-server")]
-    PrimeServer {
+    /// Run server
+    #[clap(name = "server")]
+    Server {
         /// Listen on specific port
         #[clap(long, default_value = "23420")]
         port: u16,
@@ -134,8 +130,8 @@ async fn main() {
     };
 
     match args.command {
-        CLICommand::Init { prime } => {
-            Arhiv::create(prime).expect("must be able to create arhiv");
+        CLICommand::Init => {
+            Arhiv::create().expect("must be able to create arhiv");
         }
         CLICommand::Status => {
             let arhiv = Arhiv::must_open();
@@ -160,7 +156,8 @@ async fn main() {
         }
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();
-            arhiv.sync().await.expect("must sync");
+
+            arhiv.get_sync_service().sync().await.expect("must sync");
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
@@ -264,22 +261,11 @@ async fn main() {
                 .spawn()
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
-        CLICommand::PrimeServer { port } => {
+        CLICommand::Server { port } => {
             let arhiv = Arc::new(Arhiv::must_open());
             let conn = arhiv.baza.get_connection().expect("must open connection");
-
-            if !conn
-                .get_status()
-                .expect("must be able to get status")
-                .db_status
-                .is_prime
-            {
-                panic!("server must be started on prime instance");
-            }
-
-            let (join_handle, _, _) = start_prime_server(arhiv, port);
-
-            join_handle.await.expect("must join");
+            let server = BazaServer::start(arhiv, port);
+            server.join().await.expect("must join");
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();

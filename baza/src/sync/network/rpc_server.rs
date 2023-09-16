@@ -135,7 +135,11 @@ async fn get_changeset_handler(req: Request<Body>) -> ServerResponse {
     json_response(changeset)
 }
 
-async fn respond_with_blob(baza: &Baza, blob_id: &BLOBId, headers: &HeaderMap) -> ServerResponse {
+pub async fn respond_with_blob(
+    baza: &Baza,
+    blob_id: &BLOBId,
+    headers: &HeaderMap,
+) -> ServerResponse {
     let conn = baza.get_connection()?;
     let blob = conn.get_blob(blob_id);
 

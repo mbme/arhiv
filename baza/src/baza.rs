@@ -17,7 +17,7 @@ use crate::{
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    pub(crate) data_version: u8,
+    data_version: u8,
 }
 
 impl Baza {

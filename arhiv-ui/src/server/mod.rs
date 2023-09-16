@@ -4,8 +4,8 @@ use anyhow::Context;
 use hyper::{header, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
 
-use arhiv_core::{prime_server::respond_with_blob, Arhiv};
-use baza::entities::BLOBId;
+use arhiv_core::Arhiv;
+use baza::{entities::BLOBId, sync::respond_with_blob};
 use public_assets_handler::public_assets_handler;
 use rs_utils::{
     http_server::{
@@ -130,7 +130,7 @@ async fn blob_handler(req: Request<Body>) -> ServerResponse {
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);
 
-    respond_with_blob(arhiv, &blob_id, req.headers()).await
+    respond_with_blob(&arhiv.baza, &blob_id, req.headers()).await
 }
 
 fn build_response(status: StatusCode, content_type: &str, content: String) -> ServerResponse {

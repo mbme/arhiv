@@ -1,36 +1,34 @@
-use anyhow::{bail, ensure, Context, Result};
-use reqwest::Client;
+use anyhow::{bail, Context, Result};
+use reqwest::{Client, Url};
 
 use rs_utils::{log, Download};
 
 use crate::{
-    entities::{BLOBId, BLOB},
+    entities::BLOB,
     sync::{changeset::Changeset, ping::Ping, Revision},
 };
 
+#[derive(Debug)]
 pub struct BazaRpcClient {
-    prime_url: String,
+    rpc_server_url: Url,
     downloads_dir: String,
 }
 
 // TODO support timeouts
 impl BazaRpcClient {
-    pub fn new(prime_url: impl Into<String>, downloads_dir: impl Into<String>) -> Result<Self> {
-        let prime_url = prime_url.into();
+    pub fn new(rpc_server_url: Url, downloads_dir: impl Into<String>) -> Self {
         let downloads_dir = downloads_dir.into();
 
-        ensure!(!prime_url.is_empty(), "prime_url must not  be empty");
-
-        Ok(BazaRpcClient {
-            prime_url,
+        BazaRpcClient {
+            rpc_server_url,
             downloads_dir,
-        })
+        }
     }
 
     pub async fn download_blob(&self, blob: &BLOB) -> Result<()> {
         log::debug!(
             "Baza Server {}: downloading BLOB {}",
-            self.prime_url,
+            self.rpc_server_url,
             blob.id
         );
 
@@ -41,9 +39,9 @@ impl BazaRpcClient {
             );
         }
 
-        let url = self.get_blob_url(&blob.id);
+        let blob_url = self.rpc_server_url.join("/blobs/")?.join(&blob.id)?;
 
-        let mut download = Download::new_with_path(&url, &self.downloads_dir)?;
+        let mut download = Download::new_with_path(blob_url.as_str(), &self.downloads_dir)?;
         download.keep_completed_file(true);
         download.keep_download_file(true);
 
@@ -55,7 +53,7 @@ impl BazaRpcClient {
 
         log::debug!(
             "Baza Server {}: downloaded BLOB {}",
-            self.prime_url,
+            self.rpc_server_url,
             blob.id
         );
 
@@ -63,10 +61,10 @@ impl BazaRpcClient {
     }
 
     pub async fn get_ping(&self) -> Result<Ping> {
-        log::debug!("Baza Server {}: fetching a ping", self.prime_url);
+        log::debug!("Baza Server {}: fetching a ping", self.rpc_server_url);
 
         let response = Client::new()
-            .get(&format!("{}/ping", self.prime_url))
+            .get(self.rpc_server_url.join("/ping")?)
             .send()
             .await?;
 
@@ -84,11 +82,11 @@ impl BazaRpcClient {
         let min_rev = min_rev.serialize();
         log::debug!(
             "Baza Server {}: fetching a changeset since {min_rev}",
-            self.prime_url,
+            self.rpc_server_url,
         );
 
         let response = Client::new()
-            .get(&format!("{}/changeset/{}", self.prime_url, min_rev))
+            .get(self.rpc_server_url.join("/changeset/")?.join(&min_rev)?)
             .send()
             .await?;
 
@@ -102,13 +100,9 @@ impl BazaRpcClient {
         }
     }
 
-    fn get_blob_url(&self, blob_id: &BLOBId) -> String {
-        format!("{}/blobs/{}", self.prime_url, blob_id)
-    }
-
     pub async fn check_connection(&self) -> Result<()> {
         Client::new()
-            .get(&format!("{}/status", self.prime_url))
+            .get(self.rpc_server_url.join("/status")?)
             .send()
             .await?
             .error_for_status()?;

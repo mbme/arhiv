@@ -1,11 +1,13 @@
 use anyhow::Result;
 use serde_json::{json, Value};
 
+use rs_utils::workspace_relpath;
+
 use crate::{
     entities::{Document, DocumentClass, Id},
     schema::{DataDescription, DataSchema, Field, FieldType},
     tests::{get_values, new_document},
-    Baza, Filter, OrderBy,
+    BLOBSCount, Baza, DocumentsCount, Filter, OrderBy,
 };
 
 #[test]
@@ -35,7 +37,7 @@ fn test_modes() -> Result<()> {
 
     // committed
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "1" })))?;
         tx.commit_staged_documents()?;
         tx.commit()?;
@@ -244,7 +246,7 @@ fn test_conditions() -> Result<()> {
         assert_eq!(get_values(page).len(), 3);
 
         {
-            let tx = baza.get_tx()?;
+            let mut tx = baza.get_tx()?;
             tx.commit_staged_documents()?;
             tx.commit()?;
         }
@@ -384,6 +386,199 @@ fn test_collections() -> Result<()> {
     let page = baza.list_documents(Filter::all_collections(&doc1.id))?;
 
     assert_eq!(page.items.len(), 2);
+
+    Ok(())
+}
+
+#[allow(clippy::too_many_lines)]
+#[test]
+fn test_count_documents_and_blobs() -> Result<()> {
+    let baza = Baza::new_test_baza();
+
+    {
+        let documents_count = baza.get_connection()?.count_documents()?;
+        assert_eq!(
+            documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 0,
+                documents_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_staged: 0,
+                snapshots: 0,
+            }
+        );
+
+        let blobs_count = baza.get_connection()?.count_blobs()?;
+        assert_eq!(
+            blobs_count,
+            BLOBSCount {
+                blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 0,
+                local_used_blobs_count: 0,
+            }
+        );
+    }
+
+    // create document with blob
+    let mut document = {
+        let mut tx = baza.get_tx()?;
+
+        let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
+        let mut document = new_document(json!({
+            "test": "test",
+            "blob": blob_id,
+        }));
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
+
+        document
+    };
+
+    {
+        let blobs_count = baza.get_connection()?.count_blobs()?;
+        assert_eq!(
+            blobs_count,
+            BLOBSCount {
+                blobs_staged: 1,
+                total_blobs_count: 1,
+                local_blobs_count: 1,
+                local_used_blobs_count: 1,
+            }
+        );
+    }
+
+    // commit document
+    {
+        let mut tx = baza.get_tx()?;
+        tx.commit_staged_documents()?;
+        tx.commit()?;
+    }
+
+    {
+        let documents_count = baza.get_connection()?.count_documents()?;
+        assert_eq!(
+            documents_count,
+            DocumentsCount {
+                documents_committed: 1,
+                documents_updated: 0,
+                documents_new: 0,
+                erased_documents_committed: 0,
+                erased_documents_staged: 0,
+                snapshots: 1,
+            }
+        );
+
+        let blobs_count = baza.get_connection()?.count_blobs()?;
+        assert_eq!(
+            blobs_count,
+            BLOBSCount {
+                blobs_staged: 0,
+                total_blobs_count: 1,
+                local_blobs_count: 1,
+                local_used_blobs_count: 1,
+            }
+        );
+    }
+
+    {
+        let tx = baza.get_tx()?;
+
+        // update document
+        tx.stage_document(&mut document)?;
+
+        // create another document
+        tx.stage_document(&mut new_document(json!({ "test": "test" })))?;
+
+        tx.commit()?;
+    }
+
+    {
+        let documents_count = baza.get_connection()?.count_documents()?;
+
+        assert_eq!(
+            documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 1,
+                documents_new: 1,
+                erased_documents_committed: 0,
+                erased_documents_staged: 0,
+                snapshots: 3,
+            }
+        );
+
+        assert_eq!(documents_count.count_staged_documents(), 2);
+    }
+
+    // delete document
+    {
+        let tx = baza.get_tx()?;
+
+        tx.erase_document(&document.id)?;
+
+        tx.commit()?;
+    }
+
+    {
+        let documents_count = baza.get_connection()?.count_documents()?;
+        assert_eq!(
+            documents_count,
+            DocumentsCount {
+                documents_committed: 0,
+                documents_updated: 0,
+                documents_new: 1,
+                erased_documents_committed: 0,
+                erased_documents_staged: 1,
+                snapshots: 3,
+            }
+        );
+
+        let blobs_count = baza.get_connection()?.count_blobs()?;
+        assert_eq!(
+            blobs_count,
+            BLOBSCount {
+                blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 1,
+                local_used_blobs_count: 0,
+            }
+        );
+    }
+
+    {
+        let mut tx = baza.get_tx()?;
+        tx.commit_staged_documents()?;
+        tx.commit()?;
+    }
+
+    {
+        let documents_count = baza.get_connection()?.count_documents()?;
+        assert_eq!(
+            documents_count,
+            DocumentsCount {
+                documents_committed: 1,
+                documents_updated: 0,
+                documents_new: 0,
+                erased_documents_committed: 1,
+                erased_documents_staged: 0,
+                snapshots: 2,
+            }
+        );
+
+        let blobs_count = baza.get_connection()?.count_blobs()?;
+        assert_eq!(
+            blobs_count,
+            BLOBSCount {
+                blobs_staged: 0,
+                total_blobs_count: 0,
+                local_blobs_count: 0,
+                local_used_blobs_count: 0,
+            }
+        );
+    }
 
     Ok(())
 }

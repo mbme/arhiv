@@ -187,26 +187,22 @@ impl BazaConnection {
             documents_new,
             erased_documents_committed,
             erased_documents_staged,
-        ): (u32, u32, u32, u32, u32) = conn
+            snapshots,
+        ): (u32, u32, u32, u32, u32, u32) = conn
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev != ?2               THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev =  ?2 AND count > 1 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev =  ?2 AND count = 1 THEN 1 ELSE 0 END), 0) AS documents_new,
 
-                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
-                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
-                FROM documents",
-                [ERASED_DOCUMENT_TYPE],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev != ?2               THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev =  ?2               THEN 1 ELSE 0 END), 0) AS erased_documents_staged,
+                    IFNULL(SUM(count), 0)                                                                        AS snapshots
+                FROM (SELECT *, COUNT(*) AS count FROM documents_snapshots GROUP BY id)",
+                [ERASED_DOCUMENT_TYPE, Revision::STAGED_STRING],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
             )
             .context("Failed to count documents")?;
-
-        let snapshots: u32 = conn
-            .query_row("SELECT COUNT(*) FROM documents_snapshots", [], |row| {
-                row.get(0)
-            })
-            .context("Failed to count documents_snapshots")?;
 
         Ok(DocumentsCount {
             documents_committed,
@@ -614,7 +610,7 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn delete_local_staged_changes(&self) -> Result<()> {
+    fn delete_local_staged_changes(&self) -> Result<()> {
         self.get_connection().execute(
             "DELETE FROM documents_snapshots WHERE rev = ?1",
             [Revision::STAGED_STRING],
@@ -847,7 +843,7 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub(crate) fn remove_orphaned_blobs(&mut self) -> Result<()> {
+    fn remove_orphaned_blobs(&mut self) -> Result<()> {
         if self.has_staged_documents()? {
             log::warn!("there are staged documents, skipping");
 
@@ -953,7 +949,7 @@ impl BazaConnection {
     // FIXME pub fn get_blob_stream(&self, hash: &hash) -> Result<FileStream>
     // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
 
-    pub fn commit_staged_documents(&self) -> Result<usize> {
+    pub fn commit_staged_documents(&mut self) -> Result<usize> {
         let mut max_rev = self.get_db_rev()?;
 
         let instance_id = self.get_instance_id()?;
@@ -967,9 +963,14 @@ impl BazaConnection {
             document.rev = Some(max_rev.clone());
 
             self.put_document(document)?;
+
+            if document.is_erased() {
+                self.erase_document_history(&document.id, &max_rev)?;
+            }
         }
 
         self.delete_local_staged_changes()?;
+        self.remove_orphaned_blobs()?;
 
         Ok(staged_documents.len())
     }

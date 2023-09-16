@@ -85,12 +85,6 @@ impl Baza {
 
         vacuum(&self.path_manager.db_file)?;
 
-        {
-            let mut tx = self.get_tx()?;
-            tx.remove_orphaned_blobs()?;
-            tx.commit()?;
-        }
-
         log::debug!("Cleanup completed");
 
         Ok(())

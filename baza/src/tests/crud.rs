@@ -123,7 +123,7 @@ fn test_crud_delete() -> Result<()> {
 fn test_crud_commit() -> Result<()> {
     let baza = Baza::new_test_baza();
 
-    let tx = baza.get_tx()?;
+    let mut tx = baza.get_tx()?;
 
     let mut document = new_document(json!({}));
     tx.stage_document(&mut document)?;
@@ -150,7 +150,7 @@ fn test_crud_commit_deduce_version() -> Result<()> {
     baza.add_document(Id::new(), json!({ "0": 2, "1": 3 }))?;
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         let mut document = new_document(json!({}));
         tx.stage_document(&mut document)?;

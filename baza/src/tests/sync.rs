@@ -106,6 +106,7 @@ fn test_sync_apply_changeset() -> Result<()> {
 fn test_sync_get_conflicting_documents() -> Result<()> {
     let baza = Baza::new_test_baza();
 
+    // There should be no conflict if document revisions aren't concurrent
     {
         let mut tx = baza.get_tx()?;
         tx.apply_changeset(create_changeset(vec![
@@ -119,6 +120,7 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
         tx.commit()?;
     }
 
+    // There should be conflict if document revisions are concurrent
     {
         let mut tx = baza.get_tx()?;
         tx.apply_changeset(create_changeset(vec![
@@ -133,6 +135,7 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
         tx.commit()?;
     }
 
+    // Conflict should exist even if there is a staged document
     {
         let mut tx = baza.get_tx()?;
         tx.apply_changeset(create_changeset(vec![
@@ -141,11 +144,23 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
             new_document_snapshot("3", json!({ "0": 2, "1": 1 })),
         ]))?;
 
-        let mut document = tx.get_document(&Id::from("3"))?.unwrap();
+        let mut document = tx.must_get_document(&Id::from("3"))?;
         tx.stage_document(&mut document)?;
 
         let ids = tx.get_coflicting_documents()?;
         assert_eq!(ids.len(), 2);
+
+        tx.commit()?;
+    }
+
+    // Conflict should get resolved after new document snapshot gets committed
+    {
+        let mut tx = baza.get_tx()?;
+
+        tx.commit_staged_documents()?;
+
+        let ids = tx.get_coflicting_documents()?;
+        assert_eq!(ids.len(), 1);
 
         tx.commit()?;
     }

@@ -212,3 +212,44 @@ fn test_crud_add_blob() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_crud_remove_orphaned_blob() -> Result<()> {
+    let baza = Baza::new_test_baza();
+
+    let document_id = {
+        let mut tx = baza.get_tx()?;
+
+        tx.add_blob(&workspace_relpath("resources/karpaty.jpeg"), false)?;
+
+        let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
+
+        let mut document = new_document(json!({ "blob": blob_id }));
+        tx.stage_document(&mut document)?;
+
+        tx.commit()?;
+
+        document.id
+    };
+
+    assert_eq!(baza.get_connection()?.get_local_blob_ids()?.len(), 2);
+
+    {
+        let mut tx = baza.get_tx()?;
+        tx.commit_staged_documents()?;
+        tx.commit()?;
+    }
+
+    assert_eq!(baza.get_connection()?.get_local_blob_ids()?.len(), 1);
+
+    {
+        let mut tx = baza.get_tx()?;
+        tx.erase_document(&document_id)?;
+        tx.commit_staged_documents()?;
+        tx.commit()?;
+    }
+
+    assert_eq!(baza.get_connection()?.get_local_blob_ids()?.len(), 0);
+
+    Ok(())
+}

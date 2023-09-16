@@ -58,13 +58,13 @@ impl Document {
         self.rev.as_ref().context("document revision is missing")
     }
 
-    pub fn erase(&mut self) {
+    pub(crate) fn erase(&mut self) {
         self.class = DocumentClass::erased();
         self.data = DocumentData::new();
         self.updated_at = now();
     }
 
-    pub fn stage(&mut self) {
+    pub(crate) fn stage(&mut self) {
         self.rev = None;
     }
 

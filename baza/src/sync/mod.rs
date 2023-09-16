@@ -10,7 +10,7 @@ mod sync_service;
 pub use agent::SyncAgent;
 pub use changeset::Changeset;
 pub use instance_id::InstanceId;
-pub use network::BazaServer;
+pub use network::{BazaRpcClient, BazaServer};
 pub use ping::Ping;
 pub use revision::Revision;
 pub use sync_service::SyncService;

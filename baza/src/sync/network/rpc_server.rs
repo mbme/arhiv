@@ -1,8 +1,10 @@
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Context, Result};
 use hyper::{Body, HeaderMap, Request, Response, Server, StatusCode};
+use reqwest::Url;
 use routerify::{ext::RequestExt, Middleware, Router, RouterService};
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 
@@ -15,7 +17,7 @@ use crate::Baza;
 pub struct BazaServer {
     address: SocketAddr,
     shutdown_sender: oneshot::Sender<()>,
-    join_handle: JoinHandle<()>,
+    join_handle: JoinHandle<Result<()>>,
 }
 
 impl BazaServer {
@@ -56,9 +58,11 @@ impl BazaServer {
                     }
                 })
                 .await
-                .expect("server must start");
+                .context("server failed to start")?;
 
             log::info!("Baza Server: started on {}", address);
+
+            Ok(())
         });
 
         BazaServer {
@@ -73,6 +77,11 @@ impl BazaServer {
         &self.address
     }
 
+    pub fn get_url(&self) -> Result<Url> {
+        Url::from_str(&format!("http://{}/", self.address))
+            .context("failed to create url from server address")
+    }
+
     pub async fn shutdown(self) -> Result<()> {
         ensure!(!self.shutdown_sender.is_closed(), "already closed");
 
@@ -80,13 +89,15 @@ impl BazaServer {
             .send(())
             .map_err(|_err| anyhow!("receiver dropped"))?;
 
-        self.join_handle.await.context("failed to join")?;
+        self.join_handle.await.context("failed to join")??;
 
         Ok(())
     }
 
     pub async fn join(self) -> Result<()> {
-        self.join_handle.await.context("failed to join")
+        self.join_handle.await.context("failed to join")??;
+
+        Ok(())
     }
 }
 

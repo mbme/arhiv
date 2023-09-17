@@ -1,8 +1,8 @@
-use std::{process, sync::Arc};
+use std::process;
 
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
-    sync::BazaServer,
+    sync::start_rpc_server,
 };
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
@@ -262,9 +262,8 @@ async fn main() {
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::Server { port } => {
-            let arhiv = Arc::new(Arhiv::must_open());
-            let conn = arhiv.baza.get_connection().expect("must open connection");
-            let server = BazaServer::start(arhiv, port);
+            let arhiv = Arhiv::must_open();
+            let server = start_rpc_server(arhiv.baza, port);
             server.join().await.expect("must join");
         }
         CLICommand::Backup { backup_dir } => {

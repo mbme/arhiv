@@ -6,7 +6,7 @@ use serde_json::json;
 use rs_utils::workspace_relpath;
 
 use crate::{
-    sync::{BazaClient, BazaServer, SyncAgent, SyncService},
+    sync::{start_rpc_server, BazaClient, SyncAgent, SyncService},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
     Baza,
 };
@@ -131,7 +131,7 @@ async fn test_sync_service_network_agent() -> Result<()> {
 
     let mut sync_service = SyncService::new(&baza0);
 
-    let server1 = BazaServer::start(baza1.clone(), 0);
+    let server1 = start_rpc_server(baza1.clone(), 0);
 
     let client1 = BazaClient::new(server1.get_url()?, &baza1.get_path_manager().downloads_dir);
     let agent1 = SyncAgent::new_in_network(client1);

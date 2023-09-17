@@ -5,15 +5,14 @@ use anyhow::Result;
 use baza::{
     schema::{DataMigrations, DataSchema},
     sync::SyncService,
-    Baza, BazaConnection, SETTING_DATA_VERSION,
+    Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
-use rs_utils::{get_crate_version, MIN_TIMESTAMP};
+use rs_utils::get_crate_version;
 
 use crate::{
     config::Config,
     data_migrations::get_data_migrations,
     definitions::get_standard_schema,
-    settings::SETTING_LAST_SYNC_TIME,
     status::{DbStatus, Status},
 };
 
@@ -55,12 +54,6 @@ impl Arhiv {
         data_migrations: DataMigrations,
     ) -> Result<Self> {
         let baza = Baza::create(config.arhiv_root.clone(), schema, data_migrations)?;
-
-        let tx = baza.get_tx()?;
-
-        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
-
-        tx.commit()?;
 
         Ok(Arhiv {
             baza: Arc::new(baza),

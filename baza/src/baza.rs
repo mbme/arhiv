@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 
-use rs_utils::log;
+use rs_utils::{log, MIN_TIMESTAMP};
 
 use crate::{
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
@@ -11,7 +11,7 @@ use crate::{
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
-    SETTING_INSTANCE_ID,
+    SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
 pub struct Baza {
@@ -74,6 +74,7 @@ impl Baza {
 
         tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
         tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new())?;
+        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
         tx.commit()?;
 

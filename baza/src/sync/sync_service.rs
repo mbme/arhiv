@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use rs_utils::log;
+use rs_utils::{log, now};
 
-use crate::Baza;
+use crate::{Baza, SETTING_LAST_SYNC_TIME};
 
 use super::{agent::SyncAgent, ping::Ping};
 
@@ -74,6 +74,8 @@ impl<'b> SyncService<'b> {
                     );
                     agent.fetch_blob(blob).await?;
                 }
+
+                tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &now())?;
 
                 tx.commit()?;
 

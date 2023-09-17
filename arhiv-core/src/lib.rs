@@ -7,7 +7,6 @@ mod data_migrations;
 pub mod definitions;
 mod import;
 pub mod scraper;
-mod settings;
 mod status;
 
 pub use arhiv::{Arhiv, BazaConnectionExt};

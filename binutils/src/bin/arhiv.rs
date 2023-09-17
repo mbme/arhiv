@@ -62,6 +62,8 @@ enum CLICommand {
     },
     /// Print settings
     Settings,
+    /// Commit pending changes
+    Commit,
     /// Get document by id
     Get {
         /// Id of the document
@@ -164,6 +166,17 @@ async fn main() {
             for KvsEntry(KvsKey { namespace: _, key }, value) in settings {
                 println!("  {:>25}: {value}", key);
             }
+        }
+        CLICommand::Commit => {
+            let arhiv = Arhiv::must_open();
+
+            let mut tx = arhiv.baza.get_tx().expect("must open transaction");
+            let count = tx
+                .commit_staged_documents()
+                .expect("must commit staged documents");
+            tx.commit().expect("must commit");
+
+            println!("Committed {count} staged documents");
         }
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();

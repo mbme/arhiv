@@ -55,8 +55,8 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
-            "           Synced: {}",
-            self.documents_count.count_staged() == 0
+            "       Has staged changes: {}",
+            self.documents_count.count_staged() > 0
         )?;
 
         writeln!(f)?;

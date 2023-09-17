@@ -1,11 +1,11 @@
 [Unit]
-Description=Arhiv Prime server of user %I
+Description=Arhiv server of user %I
 
 [Service]
 Type=simple
-User=%I
 StandardOutput=journal
-ExecStart=arhiv prime-server
+Environment=WAYLAND_DISPLAY=wayland-1
+ExecStart=arhiv server -v
 Restart=always
 RestartSec=30
 

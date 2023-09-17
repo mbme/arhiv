@@ -5,18 +5,21 @@ use reqwest::Url;
 
 use crate::{entities::BLOB, Baza};
 
-use super::{changeset::Changeset, network::BazaRpcClient, ping::Ping, Revision};
+use super::{changeset::Changeset, network::BazaClient, ping::Ping, Revision};
 
 pub enum SyncAgent {
     InMemory { baza: Rc<Baza> },
-    Network { client: BazaRpcClient },
+    Network { client: BazaClient },
 }
 
 impl SyncAgent {
     pub fn parse_network_agents(urls: &[&str], downloads_dir: &str) -> Result<Vec<Self>> {
         urls.iter()
             .map(|url| {
-                let client = BazaRpcClient::new(Url::from_str(url)?, downloads_dir);
+                let client = BazaClient::new(
+                    Url::from_str(url).context("failed to parse url")?,
+                    downloads_dir,
+                );
 
                 Ok(Self::new_in_network(client))
             })
@@ -27,7 +30,7 @@ impl SyncAgent {
         Ok(SyncAgent::InMemory { baza })
     }
 
-    pub fn new_in_network(client: BazaRpcClient) -> Self {
+    pub fn new_in_network(client: BazaClient) -> Self {
         SyncAgent::Network { client }
     }
 

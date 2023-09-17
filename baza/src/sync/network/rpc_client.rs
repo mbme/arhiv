@@ -9,17 +9,17 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct BazaRpcClient {
+pub struct BazaClient {
     rpc_server_url: Url,
     downloads_dir: String,
 }
 
 // TODO support timeouts
-impl BazaRpcClient {
+impl BazaClient {
     pub fn new(rpc_server_url: Url, downloads_dir: impl Into<String>) -> Self {
         let downloads_dir = downloads_dir.into();
 
-        BazaRpcClient {
+        BazaClient {
             rpc_server_url,
             downloads_dir,
         }

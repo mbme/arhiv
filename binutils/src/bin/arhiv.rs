@@ -2,7 +2,7 @@ use std::process;
 
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
-    sync::start_rpc_server,
+    sync::build_rpc_router,
 };
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
@@ -10,8 +10,8 @@ use clap::{
 use clap_complete::{generate, Shell};
 
 use arhiv_core::{definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config};
-use arhiv_ui::{get_document_url, start_ui_server};
-use rs_utils::{get_crate_version, into_absolute_path, log};
+use arhiv_ui::build_ui_router;
+use rs_utils::{get_crate_version, http_server::HttpServer, into_absolute_path, log};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -38,9 +38,6 @@ enum CLICommand {
         #[clap(long, value_hint = ValueHint::DirPath)]
         backup_dir: Option<String>,
     },
-    /// Run arhiv UI server
-    #[clap(name = "ui-server")]
-    UIServer,
     /// Open UI for a document
     #[clap(name = "ui-open")]
     UIOpen {
@@ -53,11 +50,7 @@ enum CLICommand {
     },
     /// Run server
     #[clap(name = "server")]
-    Server {
-        /// Listen on specific port
-        #[clap(long, default_value = "23420")]
-        port: u16,
-    },
+    Server,
     /// Print current status
     Status,
     /// Print config
@@ -246,9 +239,6 @@ async fn main() {
                 print_document(&document, port);
             }
         }
-        CLICommand::UIServer => {
-            start_ui_server().await;
-        }
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening document {} UI in {}", id, browser);
 
@@ -261,9 +251,14 @@ async fn main() {
                 .spawn()
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
-        CLICommand::Server { port } => {
+        CLICommand::Server => {
             let arhiv = Arhiv::must_open();
-            let server = start_rpc_server(arhiv.baza, port);
+
+            let port = arhiv.get_config().ui_server_port;
+
+            let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv)));
+            let server = HttpServer::start(router, port);
+
             server.join().await.expect("must join");
         }
         CLICommand::Backup { backup_dir } => {
@@ -281,6 +276,10 @@ async fn main() {
             generate(shell, &mut cmd, name, &mut std::io::stdout());
         }
     }
+}
+
+fn get_document_url(id: &Id, port: u16) -> String {
+    format!("http://localhost:{port}/ui?id={id}")
 }
 
 fn print_document(document: &Document, port: u16) {

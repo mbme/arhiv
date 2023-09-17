@@ -1,19 +1,16 @@
 # vim: set ft=make :
 
-generate-fakes:
-  cd arhiv-tools; cargo run --bin generate-fakes
-
 remove-arhiv:
   cd arhiv-tools; cargo run --bin remove-arhiv
 
 init-arhiv:
-  cargo run --bin arhiv init test-arhiv --prime
+  cargo run --bin arhiv init test-arhiv
 
 arhiv *PARAMS:
   cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
-  just arhiv prime-server
+  just arhiv server
 
 reset-arhiv: remove-arhiv init-arhiv
 

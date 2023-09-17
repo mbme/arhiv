@@ -39,12 +39,6 @@ export type FieldType =
   | { People: EmptyObj }
   | { Countries: EmptyObj };
 
-declare global {
-  interface Window {
-    SCHEMA: DataSchema;
-  }
-}
-
 export function getDocumentTypes(collections: boolean): DocumentType[] {
   return window.SCHEMA.modules
     .filter((module) => isModuleCollection(module) === collections)

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useDeferredValue, useRef } from
 import { APIRequest } from 'dto';
 import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
-import { doRPC, ENDPOINT, RPCResponse } from 'utils/rpc';
+import { doRPC, RPCResponse } from 'utils/rpc';
 
 type Suspender<T> = { read: () => T };
 
@@ -60,7 +60,7 @@ export function useSuspenseQuery<Request extends APIRequest>(
 
   let suspender = cache.get(queryName);
   if (!suspender) {
-    suspender = suspensify(doRPC(ENDPOINT, request));
+    suspender = suspensify(doRPC(window.API_ENDPOINT, request));
     cache.set(queryName, suspender);
   }
   const deferredSuspender = useDeferredValue(suspender);

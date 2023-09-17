@@ -10,22 +10,33 @@ use crate::entities::BLOBId;
 use crate::sync::Revision;
 use crate::Baza;
 
-pub fn build_rpc_router(baza: Arc<Baza>) -> Router<Body, anyhow::Error> {
-    Router::builder()
+pub fn build_rpc_router(
+    baza: Arc<Baza>,
+    ui_router: Option<Router<Body, anyhow::Error>>,
+) -> Router<Body, anyhow::Error> {
+    let mut builder = Router::builder()
         .data(baza)
         .middleware(Middleware::post_with_info(logger_middleware))
+        //
         .get("/health", health_handler)
         .get("/blobs/:blob_id", get_blob_handler)
         .get("/ping", get_ping_handler)
-        .get("/changeset/:min_rev", get_changeset_handler)
+        .get("/changeset/:min_rev", get_changeset_handler);
+
+    if let Some(ui_router) = ui_router {
+        builder = builder.scope("/ui", ui_router);
+    }
+
+    builder
         .any(not_found_handler)
         .err_handler_with_info(error_handler)
+        //
         .build()
         .expect("router must work")
 }
 
 pub fn start_rpc_server(baza: Arc<Baza>, port: u16) -> HttpServer {
-    let router = build_rpc_router(baza);
+    let router = build_rpc_router(baza, None);
 
     HttpServer::start(router, port)
 }

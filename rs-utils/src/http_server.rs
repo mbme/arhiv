@@ -156,7 +156,7 @@ impl HttpServer {
         let address = server.local_addr();
 
         // Spawn the server into a runtime
-        let join_handle = tokio::spawn(async move {
+        let join_handle = tokio::spawn(async {
             server
                 .with_graceful_shutdown(async {
                     tokio::select! {
@@ -170,12 +170,10 @@ impl HttpServer {
                     }
                 })
                 .await
-                .context("HTTP Server failed to start")?;
-
-            log::info!("HTTP Server: started on {}", address);
-
-            Ok(())
+                .context("HTTP Server failed to start")
         });
+
+        log::info!("HTTP Server: started on {}", address);
 
         HttpServer {
             join_handle,

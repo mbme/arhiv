@@ -19,37 +19,23 @@ impl DBMigration for MigrationV4 {
     }
 
     fn apply(&self, conn: &Connection, _fs_tx: &mut FsTransaction, _data_dir: &str) -> Result<()> {
-        // generate random instance id
         let instance_id = generate_random_id();
-
-        conn.execute_batch(&format!(
+        conn.execute_batch(
             "INSERT INTO kvs(key, value)
                        SELECT * FROM old_db.settings;
 
             -- remove arhiv_id from settings
             DELETE FROM kvs WHERE key = 'arhiv_id';
 
-            -- remove is_prime from settings
-            DELETE FROM kvs WHERE key = 'is_prime';
-
             -- convert keys into kvs key array
             UPDATE kvs SET key = json_array('settings', key);
 
-            INSERT INTO documents_snapshots(id, rev, document_type, subtype, updated_at, data)
-                       SELECT
-                         id,
-                         CASE rev
-                           WHEN 0 THEN 'null'
-                           ELSE json_object('{instance_id}', rev)
-                         END CASE,
-                         document_type,
-                         subtype,
-                         updated_at,
-                         data
-                       FROM old_db.documents_snapshots;
-       "
-        ))?;
+            INSERT INTO documents_snapshots
+                       SELECT * FROM old_db.documents_snapshots;
+       ",
+        )?;
 
+        // generate random instance id
         conn.execute(
             "INSERT INTO kvs(key, value) VALUES(json_array('settings', 'instance_id'), ?1)",
             [instance_id],

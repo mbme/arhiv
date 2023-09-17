@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 
 use baza::{
@@ -16,7 +18,7 @@ use crate::{
 };
 
 pub struct Arhiv {
-    pub baza: Baza,
+    pub baza: Arc<Baza>,
     pub(crate) config: Config,
 }
 
@@ -33,7 +35,10 @@ impl Arhiv {
 
         let baza = Baza::open(config.arhiv_root.clone(), schema, data_migrations)?;
 
-        Ok(Arhiv { baza, config })
+        Ok(Arhiv {
+            baza: Arc::new(baza),
+            config,
+        })
     }
 
     pub fn create() -> Result<Self> {
@@ -57,7 +62,10 @@ impl Arhiv {
 
         tx.commit()?;
 
-        Ok(Arhiv { baza, config })
+        Ok(Arhiv {
+            baza: Arc::new(baza),
+            config,
+        })
     }
 
     pub fn get_config(&self) -> &Config {

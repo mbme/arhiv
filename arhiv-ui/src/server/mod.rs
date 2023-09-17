@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anyhow::Context;
 use hyper::{header, http::request::Parts, Body, Request, Response, Server, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
@@ -25,8 +23,6 @@ mod public_assets_handler;
 pub async fn start_ui_server() {
     let arhiv = Arhiv::must_open();
     let port = arhiv.get_config().ui_server_port;
-
-    let arhiv = Arc::new(arhiv);
 
     let router = Router::builder()
         .data(arhiv)
@@ -57,7 +53,7 @@ pub async fn start_ui_server() {
 }
 
 async fn index_page(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
@@ -99,7 +95,7 @@ async fn old_document_page_handler(req: Request<Body>) -> ServerResponse {
 async fn api_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
-    let arhiv: &Arc<Arhiv> = parts.data().unwrap();
+    let arhiv: &Arhiv = parts.data().unwrap();
 
     let content_type = parts
         .headers
@@ -125,7 +121,7 @@ async fn api_handler(req: Request<Body>) -> ServerResponse {
 }
 
 async fn blob_handler(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);

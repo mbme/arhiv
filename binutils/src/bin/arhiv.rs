@@ -190,7 +190,7 @@ async fn main() {
 
             tx.commit().expect("must commit");
 
-            let port = arhiv.get_config().ui_server_port;
+            let port = arhiv.get_config().server_port;
             print_document(&document, port);
         }
         CLICommand::Scrape {
@@ -199,7 +199,7 @@ async fn main() {
             mobile,
         } => {
             let arhiv = Arhiv::must_open();
-            let port = arhiv.get_config().ui_server_port;
+            let port = arhiv.get_config().server_port;
 
             let documents = arhiv
                 .scrape(
@@ -224,7 +224,7 @@ async fn main() {
             move_file,
         } => {
             let arhiv = Arhiv::must_open();
-            let port = arhiv.get_config().ui_server_port;
+            let port = arhiv.get_config().server_port;
 
             println!("Importing {} files", file_paths.len());
 
@@ -242,7 +242,7 @@ async fn main() {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening document {} UI in {}", id, browser);
 
-            let port = Config::must_read().0.ui_server_port;
+            let port = Config::must_read().0.server_port;
 
             process::Command::new(&browser)
                 .arg(get_document_url(&id, port))
@@ -254,7 +254,7 @@ async fn main() {
         CLICommand::Server => {
             let arhiv = Arhiv::must_open();
 
-            let port = arhiv.get_config().ui_server_port;
+            let port = arhiv.get_config().server_port;
 
             let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv)));
             let server = HttpServer::start(router, port);

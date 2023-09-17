@@ -98,7 +98,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         return Ok(false);
     }
 
-    log::info!(
+    log::warn!(
         "DB version {}, starting upgrade to version {}",
         db_version,
         max_db_version,
@@ -148,7 +148,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         fs_tx.move_file(&new_db_pm.db_file, &db_pm.db_file)?;
         fs_tx.commit()?;
 
-        log::info!(
+        log::warn!(
             "Upgraded db from version {} to version {}",
             db_version,
             upgrade_version
@@ -157,7 +157,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         db_version = upgrade_version;
     }
 
-    log::info!("Done");
+    log::warn!("Done");
 
     Ok(true)
 }

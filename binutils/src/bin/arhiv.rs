@@ -3,6 +3,7 @@ use std::process;
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     sync::build_rpc_router,
+    KvsEntry, KvsKey,
 };
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
@@ -59,6 +60,8 @@ enum CLICommand {
         #[clap(short, long)]
         template: bool,
     },
+    /// Print settings
+    Settings,
     /// Get document by id
     Get {
         /// Id of the document
@@ -146,6 +149,21 @@ async fn main() {
                 "{}",
                 serde_json::to_string_pretty(&config).expect("must be able to serialize config")
             );
+        }
+        CLICommand::Settings => {
+            let arhiv = Arhiv::must_open();
+
+            let settings = arhiv
+                .baza
+                .get_connection()
+                .expect("must be able to open connection")
+                .list_settings()
+                .expect("must list settings");
+
+            println!("Arhiv settings, {} entries:", settings.len());
+            for KvsEntry(KvsKey { namespace: _, key }, value) in settings {
+                println!("  {:>25}: {value}", key);
+            }
         }
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();

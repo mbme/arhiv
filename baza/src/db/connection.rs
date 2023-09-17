@@ -16,7 +16,7 @@ use crate::{
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::{InstanceId, Revision},
     validator::Validator,
-    SETTING_INSTANCE_ID,
+    KvsEntry, SETTINGS_NAMESPACE, SETTING_INSTANCE_ID,
 };
 
 use super::{
@@ -973,6 +973,10 @@ impl BazaConnection {
         self.remove_orphaned_blobs()?;
 
         Ok(staged_documents.len())
+    }
+
+    pub fn list_settings(&self) -> Result<Vec<KvsEntry>> {
+        self.kvs_list(Some(SETTINGS_NAMESPACE))
     }
 }
 

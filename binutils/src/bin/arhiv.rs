@@ -43,7 +43,7 @@ enum CLICommand {
     UIOpen {
         /// Document id to open
         #[arg()]
-        id: Id,
+        id: Option<Id>,
         /// Open using provided browser or fall back to $BROWSER env variable
         #[clap(long, env = "BROWSER")]
         browser: String,
@@ -240,12 +240,12 @@ async fn main() {
             }
         }
         CLICommand::UIOpen { id, browser } => {
-            log::info!("Opening document {} UI in {}", id, browser);
+            log::info!("Opening arhiv UI in {}", browser);
 
             let port = Config::must_read().0.server_port;
 
             process::Command::new(&browser)
-                .arg(get_document_url(&id, port))
+                .arg(get_document_url(&id.as_ref(), port))
                 .stdout(process::Stdio::null())
                 .stderr(process::Stdio::null())
                 .spawn()
@@ -278,8 +278,14 @@ async fn main() {
     }
 }
 
-fn get_document_url(id: &Id, port: u16) -> String {
-    format!("http://localhost:{port}/ui?id={id}")
+fn get_document_url(id: &Option<&Id>, port: u16) -> String {
+    let base = format!("http://localhost:{port}/ui");
+
+    if let Some(id) = id {
+        format!("{base}?id={id}")
+    } else {
+        base
+    }
 }
 
 fn print_document(document: &Document, port: u16) {
@@ -287,6 +293,6 @@ fn print_document(document: &Document, port: u16) {
         "[{} {}] {}",
         document.class,
         document.id,
-        get_document_url(&document.id, port)
+        get_document_url(&Some(&document.id), port)
     );
 }

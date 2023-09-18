@@ -727,7 +727,11 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn list_document_revisions(&self, min_rev: &Revision) -> Result<Vec<Document>> {
+    pub fn list_document_revisions(
+        &self,
+        min_rev: &Revision,
+        skip_staged: bool,
+    ) -> Result<Vec<Document>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1 COLLATE REV_CMP")?;
@@ -740,16 +744,23 @@ impl BazaConnection {
 
             // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
             // we don't need documents with revision equal to min_rev
-            if document.get_rev()? != min_rev {
-                items.push(document);
+            if document.get_rev()? == min_rev {
+                continue;
             }
+
+            // TODO optimize
+            if skip_staged && document.is_staged() {
+                continue;
+            }
+
+            items.push(document);
         }
 
         Ok(items)
     }
 
     pub fn list_all_document_snapshots(&self) -> Result<Vec<Document>> {
-        self.list_document_revisions(&Revision::initial())
+        self.list_document_revisions(&Revision::initial(), false)
     }
 
     pub fn get_blob(&self, blob_id: &BLOBId) -> BLOB {

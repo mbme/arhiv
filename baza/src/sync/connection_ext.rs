@@ -97,14 +97,9 @@ impl BazaConnection {
     }
 
     pub fn get_changeset(&self, min_rev: &Revision) -> Result<Changeset> {
-        ensure!(
-            !self.has_staged_documents()?,
-            "there must be no staged changes"
-        );
-
         Ok(Changeset {
             data_version: self.get_data_version()?,
-            documents: self.list_document_revisions(min_rev)?,
+            documents: self.list_document_revisions(min_rev, true)?,
         })
     }
 }

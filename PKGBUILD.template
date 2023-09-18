@@ -57,7 +57,7 @@ package() {
   install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
 
   install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
-  install -Dm 755 "binutils/resources/arhiv-server@.service" "${pkgdir}/usr/lib/systemd/system/arhiv-server@.service"
+  install -Dm 755 "binutils/resources/arhiv-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-server.service"
 
   mkdir -p "target/completions"
   "target/release/arhiv" generate-completions bash > "target/completions/arhiv.bash"

@@ -33,7 +33,8 @@ prod-build-install:
   rm -rf pkg
   rm -f *.pkg.tar.zst
   rm PKGBUILD
-  sudo systemctl daemon-reload
+  systemctl --user daemon-reload
+  systemctl --user restart arhiv-server.service
 
 test-scrapers *PARAMS:
   cd scraper; cargo test -- --ignored --test-threads 1 {{PARAMS}}

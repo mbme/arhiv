@@ -1,15 +1,13 @@
 [Unit]
-Description=Arhiv server of user %I
+Description=Arhiv server
 
 [Service]
 Type=simple
 StandardOutput=journal
 Environment=WAYLAND_DISPLAY=wayland-1
-Environment=HOME=%h
-Environment=XDG_CONFIG_HOME=%E
 ExecStart=arhiv server -v
 Restart=always
 RestartSec=30
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

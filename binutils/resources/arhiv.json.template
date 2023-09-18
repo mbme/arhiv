@@ -1,4 +1,6 @@
 {
   "arhivRoot": "",
-  "primeUrl": ""
+  "backupDir": "",
+  "serverPort": 23421,
+  "staticPeers": []
 }

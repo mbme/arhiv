@@ -1,13 +1,12 @@
 use anyhow::{bail, ensure, Context, Result};
 
-use baza::entities::{Document, DocumentClass, DocumentData};
+use baza::{
+    entities::{Document, DocumentClass, DocumentData},
+    schema::{create_attachment, ATTACHMENT_TYPE},
+};
 use rs_utils::{ensure_file_exists, remove_file_extension};
 
-use crate::{
-    create_attachment,
-    definitions::{ATTACHMENT_TYPE, TRACK_TYPE},
-    Arhiv,
-};
+use crate::{definitions::TRACK_TYPE, Arhiv};
 
 impl Arhiv {
     pub fn import_document_from_file(

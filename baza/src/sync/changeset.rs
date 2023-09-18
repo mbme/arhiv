@@ -4,13 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{Document, Id};
 
-use super::revision::Revision;
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Changeset {
     pub data_version: u8,
-    pub base_rev: Revision,
     pub documents: Vec<Document>,
 }
 
@@ -35,10 +32,9 @@ impl fmt::Display for Changeset {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[Changeset (schema version {}) : {} documents since {}]",
+            "[Changeset (schema version {}) : {} documents]",
             self.data_version,
             self.documents.len(),
-            self.base_rev,
         )
     }
 }

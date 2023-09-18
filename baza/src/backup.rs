@@ -2,12 +2,11 @@ use std::{fs, path::Path};
 
 use anyhow::{bail, ensure, Result};
 
-use baza::entities::BLOBId;
 use rs_utils::{ensure_dir_exists, file_exists, format_time, into_absolute_path, log, now, ZStd};
 
-use super::Arhiv;
+use crate::{entities::BLOBId, Baza};
 
-impl Arhiv {
+impl Baza {
     pub fn backup(&self, backup_dir: &str) -> Result<()> {
         let zstd = ZStd::check()?;
 
@@ -21,18 +20,15 @@ impl Arhiv {
         backup.check()?;
 
         // 1. cleanup the db
-        self.baza.cleanup()?;
+        self.cleanup()?;
 
         // 2. copy & compress db file
-        zstd.compress(
-            &self.baza.get_path_manager().db_file,
-            &backup.backup_db_file,
-        )?;
+        zstd.compress(&self.get_path_manager().db_file, &backup.backup_db_file)?;
         log::info!("Created arhiv backup {}", &backup.backup_db_file);
 
         // 3. copy all data files if needed
         let mut blob_count = 0;
-        let conn = self.baza.get_connection()?;
+        let conn = self.get_connection()?;
         for blob_id in conn.get_local_blob_ids()? {
             // check if backup file exists
             if backup.blob_exists(&blob_id)? {

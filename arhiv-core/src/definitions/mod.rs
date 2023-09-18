@@ -1,6 +1,5 @@
-use baza::schema::DataSchema;
+use baza::schema::{get_attachment_definition, DataSchema};
 
-pub use attachment::{create_attachment, Attachment, ATTACHMENT_TYPE};
 pub use book::{BOOK_COLLECTION_TYPE, BOOK_TYPE};
 pub use contact::{CONTACT_COLLECTION_TYPE, CONTACT_TYPE};
 pub use film::{FILM_COLLECTION_TYPE, FILM_TYPE};
@@ -11,7 +10,6 @@ pub use track::{TrackDocument, TRACK_COLLECTION_TYPE, TRACK_TYPE};
 
 mod fields;
 
-mod attachment;
 mod book;
 mod contact;
 mod film;
@@ -23,8 +21,9 @@ mod track;
 #[must_use]
 pub fn get_standard_schema() -> DataSchema {
     DataSchema::new(
-        vec![
-            attachment::get_attachment_definitions(),
+        "arhiv",
+        [
+            vec![get_attachment_definition()],
             note::get_note_definitions(),
             task::get_task_definitions(),
             book::get_book_definitions(),

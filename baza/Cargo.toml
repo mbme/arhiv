@@ -17,16 +17,22 @@ anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
+futures.workspace = true
+tokio.workspace = true
+
 aho-corasick = "0.7"
 
 pulldown-cmark = { version = "0.9", default-features = false, features = ["simd", "serde"] }
 
-rusqlite = { version = "0.29", features = ["chrono", "serde_json", "functions"] }
+rusqlite = { version = "0.29", features = ["chrono", "serde_json", "functions", "collation"] }
 
 rs-utils = { path = "../rs-utils" }
-scraper = { path = "../scraper" }
 
 fslock = "0.2.1"
+
+reqwest.workspace = true
+hyper.workspace = true
+routerify.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

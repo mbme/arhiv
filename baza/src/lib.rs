@@ -1,6 +1,7 @@
 #![deny(clippy::all)]
 #![allow(clippy::module_inception)]
 
+mod backup;
 mod baza;
 mod db;
 mod db_migrations;

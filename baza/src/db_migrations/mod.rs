@@ -3,6 +3,7 @@ mod v1;
 mod v2;
 mod v3;
 mod v4;
+mod v5;
 
 use anyhow::{ensure, Context, Result};
 use rusqlite::{Connection, OpenFlags};
@@ -17,6 +18,7 @@ use self::v1::MigrationV1;
 use self::v2::MigrationV2;
 use self::v3::MigrationV3;
 use self::v4::MigrationV4;
+use self::v5::MigrationV5;
 
 pub fn get_db_version(conn: &Connection) -> Result<u8> {
     conn.pragma_query_value(None, "user_version", |row| row.get(0))
@@ -60,6 +62,7 @@ fn get_db_migrations() -> Vec<Box<dyn DBMigration>> {
         Box::new(MigrationV2),
         Box::new(MigrationV3),
         Box::new(MigrationV4),
+        Box::new(MigrationV5),
     ]
 }
 
@@ -95,7 +98,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         return Ok(false);
     }
 
-    log::info!(
+    log::warn!(
         "DB version {}, starting upgrade to version {}",
         db_version,
         max_db_version,
@@ -145,7 +148,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         fs_tx.move_file(&new_db_pm.db_file, &db_pm.db_file)?;
         fs_tx.commit()?;
 
-        log::info!(
+        log::warn!(
             "Upgraded db from version {} to version {}",
             db_version,
             upgrade_version
@@ -154,7 +157,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
         db_version = upgrade_version;
     }
 
-    log::info!("Done");
+    log::warn!("Done");
 
     Ok(true)
 }

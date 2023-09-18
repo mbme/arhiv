@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::SocketAddr, str::FromStr};
 
-use anyhow::{Context, Result};
-use hyper::{header, Body, Request, Response, StatusCode};
-use routerify::RequestInfo;
+use anyhow::{anyhow, ensure, Context, Result};
+use hyper::{header, Body, Request, Response, Server, StatusCode};
+use routerify::{RequestInfo, Router, RouterService};
 use serde::Serialize;
+use tokio::{signal, sync::oneshot, task::JoinHandle};
 
 pub type ServerResponse = Result<Response<Body>>;
 
@@ -134,5 +135,78 @@ impl RequestQueryExt for Request<Body> {
             .collect();
 
         Url { path, query_params }
+    }
+}
+
+pub struct HttpServer {
+    address: SocketAddr,
+    shutdown_sender: oneshot::Sender<()>,
+    join_handle: JoinHandle<Result<()>>,
+}
+
+impl HttpServer {
+    #[must_use]
+    pub fn start(router: Router<Body, anyhow::Error>, port: u16) -> HttpServer {
+        let service = RouterService::new(router).expect("failed to build RouterService");
+
+        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+
+        let server = Server::bind(&(std::net::Ipv4Addr::UNSPECIFIED, port).into()).serve(service);
+
+        let address = server.local_addr();
+
+        // Spawn the server into a runtime
+        let join_handle = tokio::spawn(async {
+            server
+                .with_graceful_shutdown(async {
+                    tokio::select! {
+                        _ = signal::ctrl_c() => {
+                            log::info!("got Ctrl-C");
+                        }
+
+                        Ok(_) = shutdown_receiver => {
+                            log::info!("HTTP Server: got shutdown signal");
+                        }
+                    }
+                })
+                .await
+                .context("HTTP Server failed to start")
+        });
+
+        log::info!("HTTP Server: started on {}", address);
+
+        HttpServer {
+            join_handle,
+            shutdown_sender,
+            address,
+        }
+    }
+
+    #[must_use]
+    pub fn get_address(&self) -> &SocketAddr {
+        &self.address
+    }
+
+    pub fn get_url(&self) -> Result<reqwest::Url> {
+        reqwest::Url::from_str(&format!("http://{}/", self.address))
+            .context("failed to create url from server address")
+    }
+
+    pub async fn shutdown(self) -> Result<()> {
+        ensure!(!self.shutdown_sender.is_closed(), "already closed");
+
+        self.shutdown_sender
+            .send(())
+            .map_err(|_err| anyhow!("receiver dropped"))?;
+
+        self.join_handle.await.context("failed to join")??;
+
+        Ok(())
+    }
+
+    pub async fn join(self) -> Result<()> {
+        self.join_handle.await.context("failed to join")??;
+
+        Ok(())
     }
 }

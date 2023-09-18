@@ -21,7 +21,7 @@ impl BazaConnection {
             .context(anyhow!("failed to read kvs {key}"))?;
 
         if let Some(value) = value {
-            serde_json::from_str(&value).context(anyhow!("failed to parse kvs {key}"))
+            serde_json::from_str(&value).context(anyhow!("failed to parse kvs value for {key}"))
         } else {
             Ok(None)
         }
@@ -56,10 +56,10 @@ impl BazaConnection {
         Ok(rows_count == 1)
     }
 
-    pub fn kvs_list(&self) -> Result<Vec<KvsEntry>> {
+    pub fn kvs_list(&self, namespace: Option<&str>) -> Result<Vec<KvsEntry>> {
         let mut stmt = self
             .get_connection()
-            .prepare_cached("SELECT key, value FROM kvs(key, value)")?;
+            .prepare_cached("SELECT key, value FROM kvs")?;
 
         let rows = stmt
             .query_and_then([], |row| -> Result<KvsEntry> {
@@ -70,12 +70,26 @@ impl BazaConnection {
                 Ok(KvsEntry(
                     key,
                     serde_json::from_str(&value)
-                        .context(anyhow!("failed to parse kvs {key_str}"))?,
+                        .context(anyhow!("failed to parse kvs value for {key_str}"))?,
                 ))
             })
             .context("failed to list kvs entries")?;
 
-        rows.collect::<Result<Vec<_>>>()
+        let entries = rows.collect::<Result<Vec<_>>>()?;
+
+        // TODO optimize
+        let entries = entries
+            .into_iter()
+            .filter(|KvsEntry(key, _value)| {
+                if let Some(namespace) = namespace {
+                    key.namespace == namespace
+                } else {
+                    true
+                }
+            })
+            .collect();
+
+        Ok(entries)
     }
 
     pub fn kvs_const_get<T: Serialize + DeserializeOwned>(
@@ -91,7 +105,7 @@ impl BazaConnection {
     ) -> Result<T> {
         self.kvs_const_get(key)
             .transpose()
-            .context(anyhow!("setting {key} is missing"))?
+            .context(anyhow!("kvs {key} is missing"))?
     }
 
     pub fn kvs_const_set<T: Serialize + DeserializeOwned>(
@@ -103,6 +117,7 @@ impl BazaConnection {
     }
 }
 
+#[derive(Debug)]
 pub struct KvsKey {
     pub namespace: String,
     pub key: String,
@@ -155,4 +170,5 @@ impl<T: Serialize + DeserializeOwned> KvsConstKey<T> {
     }
 }
 
-pub struct KvsEntry(KvsKey, Value);
+#[derive(Debug)]
+pub struct KvsEntry(pub KvsKey, pub Value);

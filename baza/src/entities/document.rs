@@ -5,19 +5,17 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use crate::sync::revision::Revision;
+use crate::sync::Revision;
 
 use super::{DocumentClass, DocumentData, Id};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,
-    pub rev: Revision,
-    pub prev_rev: Revision,
+    pub rev: Option<Revision>,
     #[serde(flatten)]
     pub class: DocumentClass,
-    pub created_at: Timestamp,
     pub updated_at: Timestamp,
     pub data: D,
 }
@@ -25,15 +23,11 @@ pub struct Document<D = DocumentData> {
 impl<D> Document<D> {
     #[must_use]
     pub fn new_with_data(class: DocumentClass, data: D) -> Self {
-        let now = now();
-
         Document {
             id: Id::new(),
-            rev: Revision::STAGING,
-            prev_rev: Revision::STAGING,
+            rev: None,
             class,
-            created_at: now,
-            updated_at: now,
+            updated_at: now(),
             data,
         }
     }
@@ -52,19 +46,26 @@ impl Document {
 
     #[must_use]
     pub fn is_staged(&self) -> bool {
-        self.rev == Revision::STAGING
+        self.rev.is_none()
     }
 
-    pub fn is_initial(&self) -> bool {
-        self.prev_rev == Revision::STAGING
+    #[must_use]
+    pub fn is_committed(&self) -> bool {
+        !self.is_staged()
     }
 
-    pub fn erase(&mut self) {
+    pub fn get_rev(&self) -> Result<&Revision> {
+        self.rev.as_ref().context("document revision is missing")
+    }
+
+    pub(crate) fn erase(&mut self) {
         self.class = DocumentClass::erased();
-        self.rev = Revision::STAGING;
-        self.prev_rev = Revision::STAGING;
         self.data = DocumentData::new();
         self.updated_at = now();
+    }
+
+    pub(crate) fn stage(&mut self) {
+        self.rev = None;
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {
@@ -73,9 +74,7 @@ impl Document {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            prev_rev: self.prev_rev,
             class: self.class,
-            created_at: self.created_at,
             updated_at: self.updated_at,
             data,
         })
@@ -91,9 +90,7 @@ impl<D: Serialize> Document<D> {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            prev_rev: self.prev_rev,
             class: self.class,
-            created_at: self.created_at,
             updated_at: self.updated_at,
             data,
         })
@@ -110,6 +107,12 @@ impl std::str::FromStr for Document {
 
 impl fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[Document {} {} {}]", self.class, self.id, self.rev,)
+        write!(
+            f,
+            "[Document {} {} {}]",
+            self.class,
+            self.id,
+            Revision::to_string(&self.rev),
+        )
     }
 }

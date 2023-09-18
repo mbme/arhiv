@@ -68,6 +68,4 @@ function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
   ) as ProxyHandlers<Request, Response>;
 }
 
-export const ENDPOINT = '/api';
-
-export const RPC = createRPCProxy<APIRequest, APIResponse>(ENDPOINT);
+export const RPC = createRPCProxy<APIRequest, APIResponse>(window.API_ENDPOINT);

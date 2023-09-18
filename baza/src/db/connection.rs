@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashSet, fs, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
+use serde_json::Value;
 
 use rs_utils::{
     file_exists, is_same_filesystem, log, now, FsTransaction, Timestamp, MIN_TIMESTAMP,
@@ -13,8 +14,9 @@ use crate::{
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::{changeset::Changeset, changeset_response::ChangesetResponse, revision::Revision},
+    sync::{InstanceId, Revision},
     validator::Validator,
+    KvsEntry, SETTINGS_NAMESPACE, SETTING_INSTANCE_ID,
 };
 
 use super::{
@@ -158,12 +160,20 @@ impl BazaConnection {
     }
 
     pub fn get_db_rev(&self) -> Result<Revision> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT IFNULL(MAX(rev), 0) FROM documents_snapshots")?;
+        let mut stmt = self.get_connection().prepare_cached(
+            "SELECT rev FROM documents_snapshots WHERE rev != ?1 ORDER BY rev COLLATE REV_CMP DESC LIMIT 1",
+        )?;
 
-        stmt.query_row([], |row| row.get(0))
-            .context("failed to query for db rev")
+        let value: Option<Value> = stmt
+            .query_row([Revision::STAGED_STRING], |row| row.get(0))
+            .optional()
+            .context("failed to query for db rev")?;
+
+        if let Some(value) = value {
+            Revision::from_value(value)
+        } else {
+            Ok(Revision::initial())
+        }
     }
 
     pub fn count_documents(&self) -> Result<DocumentsCount> {
@@ -177,26 +187,22 @@ impl BazaConnection {
             documents_new,
             erased_documents_committed,
             erased_documents_staged,
-        ): (u32, u32, u32, u32, u32) = conn
+            snapshots,
+        ): (u32, u32, u32, u32, u32, u32) = conn
             .query_row(
                 "SELECT
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS documents_committed,
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev > 0 THEN 1 ELSE 0 END), 0) AS documents_updated,
-                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev = 0 AND prev_rev = 0 THEN 1 ELSE 0 END), 0) AS documents_new,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev != ?2               THEN 1 ELSE 0 END), 0) AS documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev =  ?2 AND count > 1 THEN 1 ELSE 0 END), 0) AS documents_updated,
+                    IFNULL(SUM(CASE WHEN document_type != ?1  AND rev =  ?2 AND count = 1 THEN 1 ELSE 0 END), 0) AS documents_new,
 
-                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev > 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
-                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev = 0                  THEN 1 ELSE 0 END), 0) AS erased_documents_staged
-                FROM documents",
-                [ERASED_DOCUMENT_TYPE],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev != ?2               THEN 1 ELSE 0 END), 0) AS erased_documents_committed,
+                    IFNULL(SUM(CASE WHEN document_type  = ?1  AND rev =  ?2               THEN 1 ELSE 0 END), 0) AS erased_documents_staged,
+                    IFNULL(SUM(count), 0)                                                                        AS snapshots
+                FROM (SELECT *, COUNT(*) AS count FROM documents_snapshots GROUP BY id)",
+                [ERASED_DOCUMENT_TYPE, Revision::STAGED_STRING],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
             )
             .context("Failed to count documents")?;
-
-        let snapshots: u32 = conn
-            .query_row("SELECT COUNT(*) FROM documents_snapshots", [], |row| {
-                row.get(0)
-            })
-            .context("Failed to count documents_snapshots")?;
 
         Ok(DocumentsCount {
             documents_committed,
@@ -210,22 +216,37 @@ impl BazaConnection {
         })
     }
 
-    pub fn count_conflicts(&self) -> Result<u32> {
-        self.get_connection()
-            .query_row("SELECT COUNT(*) FROM conflicts", [], |row| row.get(0))
-            .context("failed to count conflicts")
-    }
-
     pub(crate) fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
-                "SELECT true FROM documents_snapshots WHERE rev = 0 LIMIT 1",
-                [],
+                "SELECT true FROM documents_snapshots WHERE rev = ?1 LIMIT 1",
+                [Revision::STAGED_STRING],
                 |_row| Ok(true),
             )
             .optional()
             .context("Failed to check for staged documents")
             .map(|value| value.unwrap_or(false))
+    }
+
+    pub fn get_instance_id(&self) -> Result<InstanceId> {
+        self.kvs_const_must_get(SETTING_INSTANCE_ID)
+    }
+
+    pub fn get_data_version(&self) -> Result<u8> {
+        self.kvs_const_must_get(SETTING_DATA_VERSION)
+    }
+
+    fn get_max_rev_version(&self, id: &InstanceId) -> Result<u32> {
+        self.get_connection()
+            .query_row(
+                &format!(
+                    "SELECT IFNULL(MAX(json_extract(rev, '$.{}')), 0) FROM documents_snapshots",
+                    id
+                ),
+                [],
+                |row| row.get::<usize, u32>(0),
+            )
+            .context("failed to get max rev version")
     }
 
     pub fn get_last_update_time(&self) -> Result<Timestamp> {
@@ -249,7 +270,7 @@ impl BazaConnection {
         qb.select("*", "documents");
 
         if let Some(true) = filter.conditions.only_staged {
-            qb.where_condition("documents.rev = 0");
+            qb.where_condition(format!("documents.rev = '{}'", Revision::STAGED_STRING));
         }
 
         if let Some(true) = filter.conditions.skip_erased {
@@ -375,23 +396,6 @@ impl BazaConnection {
         Ok(ListPage { items, has_more })
     }
 
-    pub(crate) fn get_new_snapshots_since(&self, min_rev: Revision) -> Result<Vec<Document>> {
-        let mut stmt = self
-            .get_connection()
-            .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1")?;
-
-        let rows = stmt
-            .query_and_then([min_rev], utils::extract_document)
-            .context(anyhow!("Failed to get new snapshots since {}", min_rev))?;
-
-        let mut documents = Vec::new();
-        for row in rows {
-            documents.push(row?);
-        }
-
-        Ok(documents)
-    }
-
     pub fn get_document(&self, id: &Id) -> Result<Option<Document>> {
         let mut stmt = self
             .get_connection()
@@ -436,6 +440,18 @@ impl BazaConnection {
         );
 
         Ok(documents)
+    }
+
+    pub fn get_coflicting_documents(&self) -> Result<Vec<Id>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT id FROM documents_with_conflicts")?;
+
+        let rows = stmt
+            .query_and_then([], |row| row.get("id").context("failed to get id"))
+            .context("failed to get documents")?;
+
+        rows.collect::<Result<Vec<_>>>()
     }
 
     fn get_document_by_rowid(&self, rowid: &i64) -> Result<Document> {
@@ -516,31 +532,15 @@ impl BazaConnection {
             .map(|value| value.unwrap_or(false))
     }
 
-    pub(crate) fn has_snapshot(&self, id: &Id, rev: Revision) -> Result<bool> {
+    pub(crate) fn has_snapshot(&self, id: &Id, rev: &Revision) -> Result<bool> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT true FROM documents_snapshots WHERE id = ?1 AND rev = ?2")?;
 
-        stmt.query_row(params![id, rev], |_row| Ok(true))
+        stmt.query_row(params![id, rev.serialize()], |_row| Ok(true))
             .optional()
             .context(anyhow!("Failed to check for snapshot {}", &id))
             .map(|value| value.unwrap_or(false))
-    }
-
-    pub(crate) fn get_last_snapshot(&self, id: &Id) -> Result<Option<Document>> {
-        let mut stmt = self.get_connection().prepare_cached(
-            "SELECT * FROM documents_snapshots WHERE id = ?1 ORDER BY rev DESC LIMIT 1",
-        )?;
-
-        let mut rows = stmt
-            .query_and_then([id], utils::extract_document)
-            .context(anyhow!("Failed to get last snapshot of document {}", &id))?;
-
-        if let Some(row) = rows.next() {
-            Ok(Some(row?))
-        } else {
-            Ok(None)
-        }
     }
 
     pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
@@ -555,8 +555,8 @@ impl BazaConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, prev_rev, document_type, subtype, created_at, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (id, rev, document_type, subtype, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?, ?)",
                 if force_update || document.is_staged() {
                     "OR REPLACE"
                 } else {
@@ -566,11 +566,9 @@ impl BazaConnection {
 
             stmt.execute(params![
                 document.id,
-                document.rev,
-                document.prev_rev,
+                Revision::to_string(&document.rev),
                 document.class.document_type,
                 document.class.subtype,
-                document.created_at,
                 document.updated_at,
                 document.data.to_string(),
             ])
@@ -584,7 +582,7 @@ impl BazaConnection {
 
             stmt.execute(params![
                 document.id,
-                document.rev,
+                Revision::to_string(&document.rev),
                 document.class.document_type,
                 document.class.subtype,
                 document.data.to_string(),
@@ -595,22 +593,28 @@ impl BazaConnection {
         Ok(())
     }
 
-    // delete all document versions except the latest one
-    pub(crate) fn erase_document_history(&self, id: &Id) -> Result<()> {
+    pub(crate) fn erase_document_history(&self, id: &Id, rev: &Revision) -> Result<()> {
         let rows_count = self.get_connection().execute(
             "DELETE FROM documents_snapshots
-             WHERE id = ?1 AND rev <> (SELECT MAX(rev) FROM documents_snapshots WHERE id = ?1)",
-            [id],
+             WHERE id = ?1 AND rev < ?2 COLLATE REV_CMP",
+            params![id, rev.serialize()],
         )?;
 
-        log::debug!("erased {} rows of history for document {}", rows_count, id);
+        log::debug!(
+            "erased {} rows of history for document {} up to the rev {}",
+            rows_count,
+            id,
+            rev.serialize()
+        );
 
         Ok(())
     }
 
-    pub fn delete_local_staged_changes(&self) -> Result<()> {
-        self.get_connection()
-            .execute("DELETE FROM documents_snapshots WHERE rev = 0", [])?;
+    fn delete_local_staged_changes(&self) -> Result<()> {
+        self.get_connection().execute(
+            "DELETE FROM documents_snapshots WHERE rev = ?1",
+            [Revision::STAGED_STRING],
+        )?;
 
         Ok(())
     }
@@ -637,7 +641,7 @@ impl BazaConnection {
                SELECT id, rev, extract_refs(document_type, subtype, data)
                FROM documents_snapshots ds
                WHERE NOT EXISTS (
-                 SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev
+                 SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev COLLATE REV_CMP
                )",
             [],
         )?;
@@ -671,33 +675,13 @@ impl BazaConnection {
         if let Some(prev_document) = prev_document {
             log::debug!("Updating existing document {}", &document.id);
 
-            document.rev = Revision::STAGING;
-
-            if prev_document.rev == Revision::STAGING {
-                ensure!(
-                    document.prev_rev == prev_document.prev_rev,
-                    "document prev_rev {} is different from the staged document prev_rev {}",
-                    document.prev_rev,
-                    prev_document.prev_rev
-                );
-            } else {
-                // we're going to modify committed document
-                // so we need to save its revision as prev_rev of the new document
-                document.prev_rev = prev_document.rev;
-            }
+            document.stage();
 
             ensure!(
                 document.class == prev_document.class,
                 "document class '{}' is different from the class '{}' of existing document",
                 document.class,
                 prev_document.class
-            );
-
-            ensure!(
-                document.created_at == prev_document.created_at,
-                "document created_at '{}' is different from the created_at '{}' of existing document",
-                document.created_at,
-                prev_document.created_at
             );
 
             ensure!(
@@ -711,12 +695,9 @@ impl BazaConnection {
         } else {
             log::debug!("Creating new document {}", &document.id);
 
-            document.rev = Revision::STAGING;
-            document.prev_rev = Revision::STAGING;
+            document.stage();
 
-            let now = now();
-            document.created_at = now;
-            document.updated_at = now;
+            document.updated_at = now();
         }
 
         self.put_document(document)?;
@@ -737,6 +718,7 @@ impl BazaConnection {
         );
 
         document.erase();
+        document.stage();
 
         self.put_document(&document)?;
 
@@ -745,77 +727,39 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn generate_changeset(&self) -> Result<Changeset> {
-        let base_rev = self.get_db_rev()?;
-        let documents = self.list_documents(&Filter::all_staged_documents())?.items;
+    pub fn list_document_revisions(&self, min_rev: &Revision) -> Result<Vec<Document>> {
+        let mut stmt = self
+            .get_connection()
+            .prepare_cached("SELECT * FROM documents_snapshots WHERE rev >= ?1 COLLATE REV_CMP")?;
 
-        let changeset = Changeset {
-            data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
-            base_rev,
-            documents,
-        };
+        let mut rows = stmt.query([min_rev.serialize()])?;
 
-        Ok(changeset)
-    }
+        let mut items = Vec::new();
+        while let Some(row) = rows.next()? {
+            let document = utils::extract_document(row)?;
 
-    pub fn generate_changeset_response(
-        &self,
-        base_rev: Revision,
-        conflicts: Vec<Document>,
-    ) -> Result<ChangesetResponse> {
-        let next_rev = base_rev.inc();
-
-        let new_snapshots = self.get_new_snapshots_since(next_rev)?;
-
-        let latest_rev = self.get_db_rev()?;
-
-        Ok(ChangesetResponse {
-            base_rev,
-            latest_rev,
-            new_snapshots,
-            conflicts,
-        })
-    }
-
-    pub fn apply_changeset_response(&mut self, response: ChangesetResponse) -> Result<()> {
-        let db_rev = self.get_db_rev()?;
-
-        ensure!(
-            response.base_rev == db_rev,
-            "base_rev {} isn't equal to current rev {}",
-            response.base_rev,
-            db_rev,
-        );
-
-        for document in response.new_snapshots {
-            self.put_document(&document)?;
-
-            // erase history of erased documents
-            if document.is_erased() {
-                self.erase_document_history(&document.id)?;
+            // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
+            // we don't need documents with revision equal to min_rev
+            if document.get_rev()? != min_rev {
+                items.push(document);
             }
         }
 
-        if !response.conflicts.is_empty() {
-            log::warn!(
-                "Got {} conflict(s) in changeset response",
-                response.conflicts.len()
-            );
-        }
+        Ok(items)
+    }
 
-        // save conflicts in documents table
-        for document in response.conflicts {
-            log::warn!("Conflict in {}", &document);
-            self.put_document(&document)?;
-        }
-
-        log::debug!("successfully applied a changeset response");
-
-        Ok(())
+    pub fn list_all_document_snapshots(&self) -> Result<Vec<Document>> {
+        self.list_document_revisions(&Revision::initial())
     }
 
     pub fn get_blob(&self, blob_id: &BLOBId) -> BLOB {
         BLOB::new(blob_id.clone(), &self.get_path_manager().data_dir)
+    }
+
+    pub fn get_existing_blob(&self, blob_id: &BLOBId) -> Result<Option<BLOB>> {
+        let blob = self.get_blob(blob_id);
+
+        Ok(blob.exists()?.then_some(blob))
     }
 
     pub fn get_local_blob_ids(&self) -> Result<HashSet<BLOBId>> {
@@ -899,7 +843,7 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub(crate) fn remove_orphaned_blobs(&mut self) -> Result<()> {
+    fn remove_orphaned_blobs(&mut self) -> Result<()> {
         if self.has_staged_documents()? {
             log::warn!("there are staged documents, skipping");
 
@@ -922,7 +866,7 @@ impl BazaConnection {
     }
 
     pub(crate) fn apply_data_migrations(&self, migrations: &DataMigrations) -> Result<()> {
-        let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
+        let data_version = self.get_data_version()?;
         let latest_data_version = get_latest_data_version(migrations);
 
         ensure!(
@@ -996,8 +940,44 @@ impl BazaConnection {
         Ok(documents)
     }
 
+    pub fn list_staged_documents(&self) -> Result<Vec<Document>> {
+        let documents = self.list_documents(&Filter::all_staged_documents())?.items;
+
+        Ok(documents)
+    }
+
     // FIXME pub fn get_blob_stream(&self, hash: &hash) -> Result<FileStream>
     // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
+
+    pub fn commit_staged_documents(&mut self) -> Result<usize> {
+        let mut max_rev = self.get_db_rev()?;
+
+        let instance_id = self.get_instance_id()?;
+        let max_local_version = self.get_max_rev_version(&instance_id)?;
+
+        max_rev.set_version(&instance_id, max_local_version + 1);
+
+        let mut staged_documents = self.list_staged_documents()?;
+
+        for document in &mut staged_documents {
+            document.rev = Some(max_rev.clone());
+
+            self.put_document(document)?;
+
+            if document.is_erased() {
+                self.erase_document_history(&document.id, &max_rev)?;
+            }
+        }
+
+        self.delete_local_staged_changes()?;
+        self.remove_orphaned_blobs()?;
+
+        Ok(staged_documents.len())
+    }
+
+    pub fn list_settings(&self) -> Result<Vec<KvsEntry>> {
+        self.kvs_list(Some(SETTINGS_NAMESPACE))
+    }
 }
 
 impl Drop for BazaConnection {

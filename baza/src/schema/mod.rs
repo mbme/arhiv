@@ -3,10 +3,12 @@ use serde::Serialize;
 
 use crate::entities::{DocumentClass, ERASED_DOCUMENT_TYPE};
 
+pub use attachment::*;
 pub use data_description::*;
 pub use data_migration::*;
 pub use field::*;
 
+mod attachment;
 mod data_description;
 mod data_migration;
 mod field;
@@ -19,15 +21,19 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct DataSchema {
+    name: String,
     modules: Vec<DataDescription>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(mut modules: Vec<DataDescription>) -> Self {
+    pub fn new(name: impl Into<String>, mut modules: Vec<DataDescription>) -> Self {
         modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
 
-        DataSchema { modules }
+        DataSchema {
+            name: name.into(),
+            modules,
+        }
     }
 
     pub fn get_data_description(&self, document_type: &DocumentClass) -> Result<&DataDescription> {

@@ -1,34 +1,24 @@
-use std::sync::Arc;
-
 use anyhow::Context;
-use hyper::{header, http::request::Parts, Body, Request, Response, Server, StatusCode};
-use routerify::{prelude::RequestExt, Middleware, Router, RouterService};
+use hyper::{header, http::request::Parts, Body, Request, Response, StatusCode};
+use routerify::{prelude::RequestExt, Middleware, Router};
 
-use arhiv_core::{prime_server::respond_with_blob, Arhiv};
-use baza::entities::BLOBId;
-use public_assets_handler::public_assets_handler;
-use rs_utils::{
-    http_server::{
-        error_handler, logger_middleware, not_found_handler, respond_moved_permanently,
-        respond_with_status, ServerResponse,
-    },
-    log,
+use arhiv_core::Arhiv;
+use baza::{entities::BLOBId, sync::respond_with_blob};
+use rs_utils::http_server::{
+    error_handler, logger_middleware, not_found_handler, respond_moved_permanently,
+    respond_with_status, ServerResponse,
 };
 
 use crate::dto::APIRequest;
 
-use api_handler::handle_api_request;
+use self::api_handler::handle_api_request;
+use self::public_assets_handler::public_assets_handler;
 
 mod api_handler;
 mod public_assets_handler;
 
-pub async fn start_ui_server() {
-    let arhiv = Arhiv::must_open();
-    let port = arhiv.get_config().ui_server_port;
-
-    let arhiv = Arc::new(arhiv);
-
-    let router = Router::builder()
+pub fn build_ui_router(arhiv: Arhiv) -> Router<Body, anyhow::Error> {
+    Router::builder()
         .data(arhiv)
         .middleware(Middleware::post_with_info(logger_middleware))
         //
@@ -42,25 +32,16 @@ pub async fn start_ui_server() {
         .err_handler_with_info(error_handler)
         //
         .build()
-        .expect("failed to build router");
-
-    let service = RouterService::new(router).expect("failed to build router service");
-
-    let server = Server::bind(&(std::net::Ipv4Addr::LOCALHOST, port).into()).serve(service);
-    let addr = server.local_addr();
-
-    log::info!("UI server listening on http://{}", addr);
-
-    if let Err(e) = server.with_graceful_shutdown(shutdown_signal()).await {
-        log::error!("UI server error: {}", e);
-    }
+        .expect("failed to build UI router")
 }
 
 async fn index_page(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
+
+    let base_path = "/ui";
 
     let content = format!(
         r#"
@@ -72,17 +53,18 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-                    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-                    <link rel="stylesheet" href="/index.css" />
+                    <link rel="icon" type="image/svg+xml" href="{base_path}/favicon.svg" />
+                    <link rel="stylesheet" href="{base_path}/index.css" />
                 </head>
                 <body>
                     <main></main>
 
                     <script>
+                        window.API_ENDPOINT = "{base_path}/api";
                         window.SCHEMA = {schema};
                     </script>
 
-                    <script src="/index.js"></script>
+                    <script src="{base_path}/index.js"></script>
                 </body>
             </html>"#
     );
@@ -93,13 +75,13 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
 async fn old_document_page_handler(req: Request<Body>) -> ServerResponse {
     let document_id = req.param("document_id").unwrap().as_str();
 
-    respond_moved_permanently(format!("/?id={document_id}"))
+    respond_moved_permanently(format!("/ui?id={document_id}"))
 }
 
 async fn api_handler(req: Request<Body>) -> ServerResponse {
     let (parts, body): (Parts, Body) = req.into_parts();
 
-    let arhiv: &Arc<Arhiv> = parts.data().unwrap();
+    let arhiv: &Arhiv = parts.data().unwrap();
 
     let content_type = parts
         .headers
@@ -125,12 +107,12 @@ async fn api_handler(req: Request<Body>) -> ServerResponse {
 }
 
 async fn blob_handler(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
+    let arhiv: &Arhiv = req.data().unwrap();
 
     let blob_id = req.param("blob_id").unwrap().as_str();
     let blob_id = BLOBId::from_string(blob_id);
 
-    respond_with_blob(arhiv, &blob_id, req.headers()).await
+    respond_with_blob(&arhiv.baza, &blob_id, req.headers()).await
 }
 
 fn build_response(status: StatusCode, content_type: &str, content: String) -> ServerResponse {
@@ -151,14 +133,4 @@ fn render_html(status: StatusCode, content: String) -> ServerResponse {
 
 fn render_json(status: StatusCode, content: String) -> ServerResponse {
     build_response(status, "application/json", content)
-}
-
-async fn shutdown_signal() {
-    // Wait for the CTRL+C signal
-    tokio::signal::ctrl_c()
-        .await
-        .expect("failed to install CTRL+C signal handler");
-
-    println!();
-    log::info!("Got Ctrl-C, stopping the server");
 }

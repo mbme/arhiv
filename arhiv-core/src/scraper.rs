@@ -3,13 +3,13 @@ use serde_json::json;
 
 use baza::{
     entities::{Document, DocumentClass},
+    schema::create_attachment,
     BazaConnection,
 };
 use rs_utils::{log, Download};
 pub use scraper::{ScrapedData, ScraperOptions};
 
 use crate::{
-    create_attachment,
     definitions::{BOOK_TYPE, FILM_TYPE, GAME_TYPE},
     Arhiv,
 };

@@ -1,21 +1,23 @@
-use anyhow::Result;
+use std::sync::Arc;
+
+use anyhow::{Context, Result};
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    Baza, BazaConnection, SETTING_DATA_VERSION,
+    sync::{SyncAgent, SyncService},
+    Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
-use rs_utils::{get_crate_version, MIN_TIMESTAMP};
+use rs_utils::get_crate_version;
 
 use crate::{
     config::Config,
     data_migrations::get_data_migrations,
     definitions::get_standard_schema,
-    settings::{SETTING_IS_PRIME, SETTING_LAST_SYNC_TIME},
     status::{DbStatus, Status},
 };
 
 pub struct Arhiv {
-    pub baza: Baza,
+    pub baza: Arc<Baza>,
     pub(crate) config: Config,
 }
 
@@ -32,43 +34,49 @@ impl Arhiv {
 
         let baza = Baza::open(config.arhiv_root.clone(), schema, data_migrations)?;
 
-        Ok(Arhiv { baza, config })
+        Ok(Arhiv {
+            baza: Arc::new(baza),
+            config,
+        })
     }
 
-    pub fn create(prime: bool) -> Result<Self> {
+    pub fn create() -> Result<Self> {
         let config = Config::read()?.0;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
-        Arhiv::create_with_options(config, schema, data_migrations, prime)
+        Arhiv::create_with_options(config, schema, data_migrations)
     }
 
     pub fn create_with_options(
         config: Config,
         schema: DataSchema,
         data_migrations: DataMigrations,
-        prime: bool,
     ) -> Result<Self> {
         let baza = Baza::create(config.arhiv_root.clone(), schema, data_migrations)?;
 
-        let tx = baza.get_tx()?;
-
-        tx.kvs_const_set(SETTING_IS_PRIME, &prime)?;
-        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
-
-        tx.commit()?;
-
-        Ok(Arhiv { baza, config })
-    }
-
-    pub fn is_prime(&self) -> Result<bool> {
-        let conn = self.baza.get_connection()?;
-
-        conn.kvs_const_must_get(SETTING_IS_PRIME)
+        Ok(Arhiv {
+            baza: Arc::new(baza),
+            config,
+        })
     }
 
     pub fn get_config(&self) -> &Config {
         &self.config
+    }
+
+    pub fn get_sync_service(&self) -> Result<SyncService> {
+        let mut sync_service = SyncService::new(&self.baza);
+
+        let agents = SyncAgent::parse_network_agents(
+            &self.config.static_peers,
+            &self.baza.get_path_manager().downloads_dir,
+        )
+        .context("failed to parse network agents")?;
+
+        sync_service.add_agents(agents);
+
+        Ok(sync_service)
     }
 }
 
@@ -81,7 +89,6 @@ pub trait BazaConnectionExt {
 impl BazaConnectionExt for BazaConnection {
     fn get_db_status(&self) -> Result<DbStatus> {
         Ok(DbStatus {
-            is_prime: self.kvs_const_must_get(SETTING_IS_PRIME)?,
             data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
             db_rev: self.get_db_rev()?,
             last_sync_time: self.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?,
@@ -97,7 +104,7 @@ impl BazaConnectionExt for BazaConnection {
         let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
         let documents_count = self.count_documents()?;
         let blobs_count = self.count_blobs()?;
-        let conflicts_count = self.count_conflicts()?;
+        let conflicts_count = self.get_coflicting_documents()?.len();
         let last_update_time = self.get_last_update_time()?;
 
         Ok(Status {

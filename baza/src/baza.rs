@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 
-use rs_utils::log;
+use rs_utils::{log, MIN_TIMESTAMP};
 
 use crate::{
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
@@ -10,14 +10,14 @@ use crate::{
     entities::*,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::instance_id::InstanceId,
-    SETTING_INSTANCE_ID,
+    sync::InstanceId,
+    SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    pub(crate) data_version: u8,
+    data_version: u8,
 }
 
 impl Baza {
@@ -73,7 +73,8 @@ impl Baza {
         let tx = baza.get_tx()?;
 
         tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
-        tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new().into())?;
+        tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new())?;
+        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
         tx.commit()?;
 
@@ -84,12 +85,6 @@ impl Baza {
         log::debug!("Initiating cleanup...");
 
         vacuum(&self.path_manager.db_file)?;
-
-        {
-            let mut tx = self.get_tx()?;
-            tx.remove_orphaned_blobs()?;
-            tx.commit()?;
-        }
 
         log::debug!("Cleanup completed");
 

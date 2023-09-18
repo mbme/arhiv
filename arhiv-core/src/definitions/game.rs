@@ -1,7 +1,6 @@
 use baza::schema::*;
 
 use super::fields::*;
-use super::ATTACHMENT_TYPE;
 
 pub const GAME_TYPE: &str = "game";
 pub const GAME_COLLECTION_TYPE: &str = "game collection";

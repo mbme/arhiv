@@ -1,25 +1,22 @@
 # vim: set ft=make :
 
-generate-fakes:
-  cd arhiv-tools; cargo run --bin generate-fakes
-
 remove-arhiv:
   cd arhiv-tools; cargo run --bin remove-arhiv
 
 init-arhiv:
-  cargo run --bin arhiv init test-arhiv --prime
+  cargo run --bin arhiv init test-arhiv
 
 arhiv *PARAMS:
   cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
-  just arhiv prime-server
+  just arhiv server
 
 reset-arhiv: remove-arhiv init-arhiv
 
 run:
   cd arhiv-ui; yarn run clean; tmux new-session -s arhiv-ui \
-     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 cargo run"' \; \
+     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 cargo run -p binutils --bin arhiv server"' \; \
      split-window -h 'yarn run watch:js' \; \
      split-window 'yarn run watch:css' \; \
      select-pane -t 0

@@ -2,7 +2,10 @@ use anyhow::{anyhow, Context, Result};
 use rusqlite::Row;
 use serde_json::Value;
 
-use crate::entities::{BLOBId, Document, DocumentClass};
+use crate::{
+    entities::{BLOBId, Document, DocumentClass},
+    sync::Revision,
+};
 
 pub fn extract_document(row: &Row) -> Result<Document> {
     let document_type: String = row.get("document_type")?;
@@ -10,10 +13,15 @@ pub fn extract_document(row: &Row) -> Result<Document> {
 
     Ok(Document {
         id: row.get("id")?,
-        rev: row.get("rev")?,
-        prev_rev: row.get("prev_rev")?,
+        rev: {
+            let rev: Value = row.get("rev")?;
+
+            let rev: Option<Revision> =
+                serde_json::from_value(rev).context("failed to parse document rev")?;
+
+            rev
+        },
         class: DocumentClass::new(document_type, subtype),
-        created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
         data: {
             let data: Value = row.get("data")?;

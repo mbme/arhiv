@@ -1,7 +1,6 @@
 use baza::schema::*;
 
 use super::fields::*;
-use super::ATTACHMENT_TYPE;
 
 pub const CONTACT_TYPE: &str = "contact";
 pub const CONTACT_COLLECTION_TYPE: &str = "contact collection";

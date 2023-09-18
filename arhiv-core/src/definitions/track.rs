@@ -5,7 +5,7 @@ use baza::{
     schema::*,
 };
 
-use super::{fields::*, ATTACHMENT_TYPE};
+use super::fields::*;
 
 pub const TRACK_TYPE: &str = "track";
 pub const TRACK_COLLECTION_TYPE: &str = "track collection";

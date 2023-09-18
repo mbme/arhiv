@@ -25,6 +25,12 @@ impl<'b> SyncService<'b> {
         self.agents.push(agent.into());
     }
 
+    pub fn add_agents(&mut self, agents: impl IntoIterator<Item = SyncAgent>) {
+        for agent in agents {
+            self.add_agent(agent);
+        }
+    }
+
     async fn collect_pings(&self) -> Result<Vec<(Rc<SyncAgent>, Ping)>> {
         let pings = self
             .agents

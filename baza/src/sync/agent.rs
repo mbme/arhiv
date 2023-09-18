@@ -13,7 +13,7 @@ pub enum SyncAgent {
 }
 
 impl SyncAgent {
-    pub fn parse_network_agents(urls: &[&str], downloads_dir: &str) -> Result<Vec<Self>> {
+    pub fn parse_network_agents(urls: &[String], downloads_dir: &str) -> Result<Vec<Self>> {
         urls.iter()
             .map(|url| {
                 let client = BazaClient::new(

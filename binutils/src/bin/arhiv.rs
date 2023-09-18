@@ -176,7 +176,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();
 
-            arhiv.get_sync_service().sync().await?;
+            arhiv.get_sync_service()?.sync().await?;
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();

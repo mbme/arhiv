@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::SyncService,
+    sync::{SyncAgent, SyncService},
     Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
 use rs_utils::get_crate_version;
@@ -65,10 +65,18 @@ impl Arhiv {
         &self.config
     }
 
-    pub fn get_sync_service(&self) -> SyncService {
-        let sync_service = SyncService::new(&self.baza);
+    pub fn get_sync_service(&self) -> Result<SyncService> {
+        let mut sync_service = SyncService::new(&self.baza);
 
-        sync_service
+        let agents = SyncAgent::parse_network_agents(
+            &self.config.static_peers,
+            &self.baza.get_path_manager().downloads_dir,
+        )
+        .context("failed to parse network agents")?;
+
+        sync_service.add_agents(agents);
+
+        Ok(sync_service)
     }
 }
 

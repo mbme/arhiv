@@ -15,6 +15,9 @@ pub struct Config {
 
     #[serde(default = "default_server_port")]
     pub server_port: u16,
+
+    #[serde(default)]
+    pub static_peers: Vec<String>,
 }
 
 fn default_server_port() -> u16 {

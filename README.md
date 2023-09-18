@@ -1,3 +1,8 @@
+# Installation
+* `just prod-build-install`
+* `sudo systemctl daemon-reload`
+* `sudo systemctl enable --now arhiv-service@<username>`
+
 # Build dependencies
 * `rust`
 * `cargo`

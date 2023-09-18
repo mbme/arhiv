@@ -141,6 +141,8 @@ export function setElementAttribute(
   el.removeAttribute(attribute);
 }
 
+// TODO get rid of any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const debounce = <Args extends any[], F extends (...args: Args) => void>(
   func: F,
   waitForMs: number
@@ -156,6 +158,8 @@ export const debounce = <Args extends any[], F extends (...args: Args) => void>(
 };
 
 // throttle with trailing execution
+// TODO get rid of any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const throttle = <Args extends any[], F extends (...args: Args) => void>(
   func: F,
   waitForMs: number

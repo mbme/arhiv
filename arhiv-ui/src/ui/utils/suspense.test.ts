@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+
 import 'global-jsdom/register';
 
 import assert from 'node:assert';

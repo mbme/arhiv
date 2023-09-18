@@ -161,6 +161,8 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
   }, [timeoutMs, enabled]);
 }
 
+// TODO get rid of any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebouncedCallback<Args extends any[]>(
   callback: (...args: Args) => void,
   waitFor: number

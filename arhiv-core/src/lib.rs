@@ -1,7 +1,6 @@
 #![deny(clippy::all)]
 
 mod arhiv;
-mod backup;
 mod config;
 mod data_migrations;
 pub mod definitions;

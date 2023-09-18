@@ -297,7 +297,10 @@ async fn main() {
 
             let backup_dir = backup_dir.unwrap_or_else(|| arhiv.get_config().backup_dir.clone());
 
-            arhiv.backup(&backup_dir).expect("must be able to backup");
+            arhiv
+                .baza
+                .backup(&backup_dir)
+                .expect("must be able to backup");
         }
         CLICommand::GenerateCompletions { shell } => {
             let mut cmd = CLIArgs::command();

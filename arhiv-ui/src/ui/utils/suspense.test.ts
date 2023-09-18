@@ -1,34 +1,41 @@
-import test from 'ava';
+import 'global-jsdom/register';
+
+import assert from 'node:assert';
+import { describe, it } from 'node:test';
 import { suspensify } from './suspense';
 
-test('suspensify() returns a value when promise resolved', async (t) => {
-  const suspender = suspensify<number>(new Promise((resolve) => resolve(1)));
+describe('suspensify()', () => {
+  it('returns a value when promise resolved', async () => {
+    const suspender = suspensify<number>(new Promise((resolve) => resolve(1)));
 
-  try {
-    // since promise.then() is always async, it will always throw on first execution
-    suspender.read();
+    try {
+      // since promise.then() is always async, it will always throw on first execution
+      suspender.read();
 
-    t.fail('must throw');
-  } catch (promise) {
-    await promise;
-  }
+      assert.fail('must throw');
+    } catch (promise) {
+      await promise;
+    }
 
-  t.is(suspender.read(), 1);
-});
+    assert.equal(suspender.read(), 1);
+  });
 
-test('suspensify() throws an error when promise rejected', async (t) => {
-  const suspender = suspensify<number>(
-    new Promise((_resolve, reject) => reject(new Error('test')))
-  );
+  it('throws an error when promise rejected', async () => {
+    const suspender = suspensify<number>(
+      new Promise((_resolve, reject) => reject(new Error('test')))
+    );
 
-  try {
-    // since promise.then() is always async, it will always throw on first execution
-    suspender.read();
+    try {
+      // since promise.then() is always async, it will always throw on first execution
+      suspender.read();
 
-    t.fail('must throw');
-  } catch (promise) {
-    await promise;
-  }
+      assert.fail('must throw');
+    } catch (promise) {
+      await promise;
+    }
 
-  t.throws(() => suspender.read(), { message: 'test' });
+    assert.throws(() => {
+      suspender.read();
+    }, /test/);
+  });
 });

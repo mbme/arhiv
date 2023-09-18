@@ -8,7 +8,6 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'prettier',
-    'plugin:ava/recommended',
   ],
   env: {
     'browser': true,
@@ -25,4 +24,5 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
     '@typescript-eslint/no-non-null-assertion': 0,
   },
+  root: true,
 };

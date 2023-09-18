@@ -92,7 +92,7 @@ export function RefInput({
       className={cx(
         'ref-input inline-block break-all border-none',
         multiple && 'is-multi',
-        className
+        className,
       )}
       name={name}
       defaultValue={defaultValueRaw}
@@ -132,7 +132,7 @@ export function RefInput({
                 onClick={() => {
                   updateIds(
                     ids.filter((id) => id !== item.id),
-                    true
+                    true,
                   );
                 }}
               />

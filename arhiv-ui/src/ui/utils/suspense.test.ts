@@ -24,7 +24,7 @@ describe('suspensify()', () => {
 
   it('throws an error when promise rejected', async () => {
     const suspender = suspensify<number>(
-      new Promise((_resolve, reject) => reject(new Error('test')))
+      new Promise((_resolve, reject) => reject(new Error('test'))),
     );
 
     try {

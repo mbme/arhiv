@@ -43,7 +43,7 @@ export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
         document
           .querySelector<HTMLElement>('.main__chars button.ui-btn-nav')
           ?.innerText.includes('Приховати') ?? false,
-      'collapse attributes button'
+      'collapse attributes button',
     );
 
     const table = getTable(document, '.product-chars .chars .char', '\n');

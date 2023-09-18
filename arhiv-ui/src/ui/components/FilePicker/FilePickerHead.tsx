@@ -23,7 +23,7 @@ export function FilePickerHead({ dir, entries }: Props) {
 
       return acc;
     },
-    { files: 0, dirs: 0, links: 0 }
+    { files: 0, dirs: 0, links: 0 },
   );
 
   return (

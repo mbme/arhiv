@@ -44,7 +44,7 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
                 {
                   'left-0 origin-top-left': align === 'bottom-left',
                   'right-0 origin-top-right': align === 'bottom-right',
-                }
+                },
               )}
             >
               {options.map((option, index) => {
@@ -63,7 +63,7 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
                             'text-blue-700 hover:bg-sky-100': !option.alarming,
                             'text-red-700 hover:bg-red-300': option.alarming,
                             'var-item-active-bg-color': active,
-                          }
+                          },
                         )}
                         onClick={() => option.onClick()}
                       >

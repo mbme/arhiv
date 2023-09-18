@@ -17,7 +17,7 @@ export function Badge({ label, checked, onClick, size = 'md', className }: Props
           'text-xs': size === 'sm',
           'text-sm': size === 'md',
         },
-        className
+        className,
       )}
       onClick={onClick}
     >

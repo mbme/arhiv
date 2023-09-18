@@ -115,7 +115,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
           'data-range-start': el.range.start,
           'data-range-end': el.range.end,
         } as Obj<unknown>,
-        ...el.children.map((child) => markupElementToJSX(child))
+        ...el.children.map((child) => markupElementToJSX(child)),
       );
     }
     case 'BlockQuote': {
@@ -149,7 +149,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
           'data-range-end': el.range.end,
         },
 
-        ...el.children.map((child) => markupElementToJSX(child))
+        ...el.children.map((child) => markupElementToJSX(child)),
       );
     }
     case 'TaskListMarker': {
@@ -316,7 +316,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
 
 function getFirstVisiblePosInMarkup(
   viewportEl: HTMLElement,
-  markupEl: HTMLElement
+  markupEl: HTMLElement,
 ): number | undefined {
   const MIN_EL_HEIGHT_PX = 12;
 
@@ -402,7 +402,7 @@ export const Markup = forwardRef<MarkupRef, MarkupProps>(({ markup }, innerRef) 
         scrollFirstVisiblePosIntoView(markupEl, pos);
       },
     }),
-    []
+    [],
   );
 
   return markupElementToJSX(value.ast, markupRef);

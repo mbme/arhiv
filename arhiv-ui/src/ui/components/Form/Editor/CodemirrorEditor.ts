@@ -38,7 +38,11 @@ class CodemirrorEditor {
   private editor: EditorView;
   private initialState: EditorState;
 
-  constructor(parent: HTMLElement, initialValue: string, private options: Options = {}) {
+  constructor(
+    parent: HTMLElement,
+    initialValue: string,
+    private options: Options = {},
+  ) {
     this.editor = new EditorView({
       parent,
       state: EditorState.create({
@@ -159,7 +163,7 @@ class CodemirrorEditor {
           range: EditorSelection.range(range.from + newValue.length, range.from + newValue.length),
           effects: EditorView.scrollIntoView(range.from + newValue.length, { y: 'center' }),
         };
-      })
+      }),
     );
 
     this.editor.dispatch(transaction);

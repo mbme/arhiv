@@ -58,7 +58,7 @@ type QueryHookResult<TResult> = {
 // inspired by https://swr.vercel.app/docs/api
 export function useQuery<TResult>(
   cb: (signal: AbortSignal) => Promise<TResult>,
-  options: Options<TResult> = {}
+  options: Options<TResult> = {},
 ): QueryHookResult<TResult> {
   const cbRef = useLatestRef(cb);
   const optionsRef = useLatestRef(options);
@@ -89,7 +89,7 @@ export function useQuery<TResult>(
         setResult(undefined);
         setError(error as Error | string);
         setInProgress(false);
-      }
+      },
     );
 
     return () => {
@@ -165,7 +165,7 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebouncedCallback<Args extends any[]>(
   callback: (...args: Args) => void,
-  waitFor: number
+  waitFor: number,
 ) {
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
@@ -185,7 +185,7 @@ export function useDebouncedCallback<Args extends any[]>(
 
 export function useSessionState<T extends JSONValue>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, StateUpdater<T>] {
   const initialKeyRef = useRef(key);
   if (initialKeyRef.current !== key) {

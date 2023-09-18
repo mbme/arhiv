@@ -20,10 +20,10 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
       onSuccess(result) {
         onSuccess(
           url,
-          result.documents.map((document) => document.id)
+          result.documents.map((document) => document.id),
         );
       },
-    }
+    },
   );
 
   const onHide = () => {

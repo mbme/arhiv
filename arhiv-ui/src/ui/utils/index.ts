@@ -126,7 +126,7 @@ export function formatBytes(bytes: number): string {
 export function setElementAttribute(
   el: HTMLElement,
   attribute: string,
-  value?: string | boolean | null
+  value?: string | boolean | null,
 ) {
   if (typeof value === 'string') {
     el.setAttribute(attribute, value);
@@ -145,7 +145,7 @@ export function setElementAttribute(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const debounce = <Args extends any[], F extends (...args: Args) => void>(
   func: F,
-  waitForMs: number
+  waitForMs: number,
 ): F => {
   let timeoutId: number;
 
@@ -162,7 +162,7 @@ export const debounce = <Args extends any[], F extends (...args: Args) => void>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const throttle = <Args extends any[], F extends (...args: Args) => void>(
   func: F,
-  waitForMs: number
+  waitForMs: number,
 ): F => {
   let timeoutId: number | undefined;
   let pendingArgs: Args | undefined;
@@ -230,7 +230,7 @@ export function copyTextToClipbard(text: string): Promise<void> {
     },
     (e) => {
       console.error('Failed to copy text "%s" to clipboard', text, e);
-    }
+    },
   );
 }
 

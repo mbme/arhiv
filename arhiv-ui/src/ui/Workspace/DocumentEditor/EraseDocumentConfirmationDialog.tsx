@@ -31,7 +31,7 @@ export function EraseDocumentConfirmationDialog({
     },
     {
       refreshOnMount: false,
-    }
+    },
   );
 
   const hideModal = () => {

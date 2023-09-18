@@ -197,6 +197,6 @@ export function FormField({
       name,
       tabindex: tabIndex,
     },
-    children
+    children,
   );
 }

@@ -93,7 +93,7 @@ export function Ref({ documentId, documentType, subtype, documentTitle, descript
       rel="noopen noreferer"
       className={cx(
         'font-semibold text-blue-700 hover:text-blue-600/90 break-words cursor-pointer',
-        documentType || 'line-through text-slate-700/50'
+        documentType || 'line-through text-slate-700/50',
       )}
       onClick={(e) => {
         e.preventDefault();

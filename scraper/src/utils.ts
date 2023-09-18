@@ -21,7 +21,7 @@ export const waitForTimeout = (timeoutMs: number) =>
 export const waitForFunction = async (
   callback: () => boolean,
   description: string,
-  timeoutMs = 30000
+  timeoutMs = 30000,
 ): Promise<void> => {
   if (timeoutMs === 0) {
     throw new Error('timeoutMs must be positive number');
@@ -51,7 +51,7 @@ export const waitForSelector = async <T extends Element = HTMLElement>(
   el: HTMLElement | Document,
   selector: string,
   description: string,
-  timeoutMs = 30000
+  timeoutMs = 30000,
 ): Promise<T> => {
   await waitForFunction(() => !!el.querySelector(selector), description, timeoutMs);
 
@@ -74,7 +74,7 @@ type GetEl = {
 export const getEl: GetEl = <T extends Element = HTMLElement>(
   arg1: string | HTMLElement | Document,
   arg2?: string,
-  arg3?: string
+  arg3?: string,
 ): T | null => {
   let selector: string;
   let root: HTMLElement | Document = document;
@@ -108,7 +108,7 @@ export const getEl: GetEl = <T extends Element = HTMLElement>(
 
 export const getAll = <T extends Element = HTMLElement>(
   root: HTMLElement | Document,
-  selector: string
+  selector: string,
 ): T[] => {
   const results = Array.from(root.querySelectorAll(selector));
 
@@ -147,14 +147,14 @@ export function getListValues(el: HTMLElement | Document | undefined, selector: 
 export function getTable(
   el: HTMLElement | Document,
   rowSelector: string,
-  split = ':'
+  split = ':',
 ): Obj<string | undefined> {
   const items = getListValues(el, rowSelector);
 
   const table = Object.fromEntries(
     items.map(
-      (item) => item.split(split).map((value) => value.trim()) as [string, string | undefined]
-    )
+      (item) => item.split(split).map((value) => value.trim()) as [string, string | undefined],
+    ),
   );
 
   return table;

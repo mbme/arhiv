@@ -17,7 +17,7 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
     },
     (err) => {
       status = { type: 'rejected', value: err };
-    }
+    },
   );
 
   return {
@@ -41,7 +41,7 @@ export const createSuspenseCache = () => new Map<string, Suspender<unknown>>();
 export const SuspenseCacheContext = createContext(createSuspenseCache());
 
 export function useSuspenseQuery<Request extends APIRequest>(
-  request: Request
+  request: Request,
 ): {
   value: RPCResponse<Request>;
   isUpdating: boolean;

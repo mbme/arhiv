@@ -28,7 +28,7 @@ export function FilePickerConfirmationDialog({
     },
     {
       refreshOnMount: false,
-    }
+    },
   );
 
   const onHide = () => {

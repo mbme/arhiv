@@ -10,7 +10,7 @@ const ALL_DOCUMENT_TYPES = [
 ];
 
 export const DEFAULT_DOCUMENT_TYPES = ALL_DOCUMENT_TYPES.filter(
-  (documentType) => !isErasedDocument(documentType)
+  (documentType) => !isErasedDocument(documentType),
 );
 
 type Props = {

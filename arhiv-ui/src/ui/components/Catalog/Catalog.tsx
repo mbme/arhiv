@@ -19,7 +19,7 @@ type CatalogProps = {
   onDocumentSelected: (
     id: DocumentId,
     documentType: DocumentType,
-    subtype: DocumentSubtype
+    subtype: DocumentSubtype,
   ) => void;
 };
 
@@ -37,7 +37,7 @@ export function Catalog({
   const [page, _setPage] = useState(initialPage);
   const [showSettings, toggleSettings] = useToggle(false);
   const [documentTypes, setDocumentTypes] = useState(
-    initialDocumentTypes ?? DEFAULT_DOCUMENT_TYPES
+    initialDocumentTypes ?? DEFAULT_DOCUMENT_TYPES,
   );
 
   const { value: result, isUpdating } = useSuspenseQuery({

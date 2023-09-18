@@ -9,7 +9,7 @@ export type RPCResponse<Request extends APIRequest> = Extract<
 export async function doRPC<Request extends APIRequest>(
   url: string,
   request: Request,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<RPCResponse<Request>> {
   console.debug('RPC: %s', request.typeName, request);
 
@@ -50,12 +50,12 @@ type SerdeEnum = {
 type ProxyHandlers<Request extends SerdeEnum, Response extends SerdeEnum> = {
   [key in Request['typeName']]: (
     request: Omit<Extract<Request, { typeName: key }>, 'typeName'>,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ) => Promise<Extract<Response, { typeName: key }>>;
 };
 
 function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
-  url: string
+  url: string,
 ): ProxyHandlers<Request, Response> {
   return new Proxy(
     {},
@@ -64,7 +64,7 @@ function createRPCProxy<Request extends SerdeEnum, Response extends SerdeEnum>(
         return (params: Obj, signal?: AbortSignal) =>
           doRPC(url, { typeName: prop, ...params } as APIRequest, signal);
       },
-    }
+    },
   ) as ProxyHandlers<Request, Response>;
 }
 

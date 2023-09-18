@@ -27,7 +27,7 @@ export function ImageUploadDialog({ file, onSuccess, onCancel }: Props) {
       onSuccess(result) {
         onSuccess(result.id);
       },
-    }
+    },
   );
 
   const onHide = () => {

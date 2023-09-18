@@ -18,7 +18,7 @@ export function FilePicker({ onFileSelected }: Props) {
     (abortSignal) => RPC.ListDir({ dir, showHidden }, abortSignal),
     {
       refreshIfChange: [dir, showHidden],
-    }
+    },
   );
 
   return (

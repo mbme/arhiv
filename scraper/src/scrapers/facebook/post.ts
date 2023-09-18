@@ -33,7 +33,7 @@ export class FBPostScraper extends Scraper<'FacebookPost', FacebookPost> {
     const dateISO = parseHumanDate(date)?.toISOString();
 
     const images = getAll<HTMLImageElement>(postEl, '[data-testid=post_message] ~ div a img').map(
-      (img) => img.src
+      (img) => img.src,
     );
 
     return {

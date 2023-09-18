@@ -27,7 +27,7 @@ describe('FormField', () => {
     const { container } = render(
       <form>
         <FormField name="test" defaultValue="initial" />
-      </form>
+      </form>,
     );
 
     const form = findBySelector<HTMLFormElement>(container, 'form');
@@ -51,7 +51,7 @@ describe('FormField', () => {
     const { container } = render(
       <form>
         <FormField name="test" defaultValue="initial" disabled />
-      </form>
+      </form>,
     );
 
     const form = findBySelector<HTMLFormElement>(container, 'form');
@@ -75,7 +75,7 @@ describe('FormField', () => {
     const { container } = render(
       <form>
         <FormField name="test" defaultValue="initial" />
-      </form>
+      </form>,
     );
 
     const form = findBySelector<HTMLFormElement>(container, 'form');
@@ -102,7 +102,7 @@ describe('FormField', () => {
     const { container } = render(
       <form>
         <FormField name="test" />
-      </form>
+      </form>,
     );
 
     const form = findBySelector<HTMLFormElement>(container, 'form');

@@ -111,7 +111,7 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
         const { documentId } = action.newCard;
 
         const isAlreadyOpen = state.cards.some(
-          (card) => card.variant === 'document' && card.documentId === documentId
+          (card) => card.variant === 'document' && card.documentId === documentId,
         );
 
         if (isAlreadyOpen) {
@@ -349,7 +349,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
         });
       },
     }),
-    [dispatch]
+    [dispatch],
   );
 }
 

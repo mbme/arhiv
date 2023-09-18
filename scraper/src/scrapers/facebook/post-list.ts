@@ -48,7 +48,7 @@ export class FBPostListScraper extends Scraper<'FacebookPostList', FacebookPostL
 
   readonly scrape = async (): Promise<FacebookPostList> => {
     const postsElements = getAll(document, '[role=article]').filter(
-      (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl)
+      (postEl) => !hasLoader(postEl) && !isInCommentSection(postEl),
     );
     console.log(`scraping ${postsElements.length} posts`);
 
@@ -71,7 +71,7 @@ export class FBPostListScraper extends Scraper<'FacebookPostList', FacebookPostL
       const dateISO = parseHumanDate(date)?.toISOString();
 
       const content = getSelectionString(
-        getEl(postEl, '[data-ad-preview=message]', 'content element')
+        getEl(postEl, '[data-ad-preview=message]', 'content element'),
       );
 
       const images = collectImages(postEl).map((img) => img.src);

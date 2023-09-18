@@ -48,7 +48,7 @@ export function getDocumentTypes(collections: boolean): DocumentType[] {
 
 export function getDataDescription(documentType: DocumentType): DataDescription {
   const dataDescription = window.SCHEMA.modules.find(
-    (module) => module.document_type === documentType
+    (module) => module.document_type === documentType,
   );
   if (!dataDescription) {
     throw new Error(`Can't find data description for "${documentType}"`);
@@ -79,7 +79,7 @@ export function getCollectionTypesForDocument(documentType: DocumentType) {
 
 export function getFieldDescriptions(
   documentType: DocumentType,
-  subtype?: DocumentSubtype
+  subtype?: DocumentSubtype,
 ): DataDescriptionField[] {
   const dataDescription = getDataDescription(documentType);
 

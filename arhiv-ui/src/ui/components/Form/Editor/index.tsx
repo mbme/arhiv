@@ -166,7 +166,7 @@ export function Editor({
             className="bg-indigo-100 drop-shadow-md"
             onDocumentSelected={({ id, documentType, subtype }) => {
               editorRef.current?.replaceSelections((value) =>
-                createLink(createRefUrl(id), value, canPreview(documentType, subtype))
+                createLink(createRefUrl(id), value, canPreview(documentType, subtype)),
               );
             }}
           />

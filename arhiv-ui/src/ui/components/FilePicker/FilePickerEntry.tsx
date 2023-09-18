@@ -15,7 +15,7 @@ export function FilePickerEntry({ entry, onClick }: Props) {
         {
           'focus:text-blue-700 hover:text-blue-700': entry.isReadable,
           'text-red-700 cursor-default ': !entry.isReadable,
-        }
+        },
       )}
     >
       {entry.typeName === 'Dir' ? (

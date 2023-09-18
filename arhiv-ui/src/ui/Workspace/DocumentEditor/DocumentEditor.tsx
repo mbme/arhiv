@@ -32,7 +32,7 @@ type DocumentEditorFormProps = {
   onSubmit: (
     data: JSONObj,
     subtype: DocumentSubtype,
-    collections: DocumentId[]
+    collections: DocumentId[],
   ) => Promise<SaveDocumentErrors | void>;
   formRef?: JSXRef<HTMLFormElement>;
 };

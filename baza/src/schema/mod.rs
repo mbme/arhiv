@@ -36,6 +36,11 @@ impl DataSchema {
         }
     }
 
+    #[must_use]
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
     pub fn get_data_description(&self, document_type: &DocumentClass) -> Result<&DataDescription> {
         self.modules
             .iter()

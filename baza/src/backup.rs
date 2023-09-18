@@ -16,7 +16,9 @@ impl Baza {
 
         log::debug!("backup_dir: {}", &backup_dir);
 
-        let backup = BackupPaths::new(backup_dir);
+        let app_name = self.get_schema().get_name();
+
+        let backup = BackupPaths::new(app_name, backup_dir);
         backup.check()?;
 
         // 1. cleanup the db
@@ -24,7 +26,7 @@ impl Baza {
 
         // 2. copy & compress db file
         zstd.compress(&self.get_path_manager().db_file, &backup.backup_db_file)?;
-        log::info!("Created arhiv backup {}", &backup.backup_db_file);
+        log::info!("Created {app_name} backup: {}", &backup.backup_db_file);
 
         // 3. copy all data files if needed
         let mut blob_count = 0;
@@ -63,11 +65,11 @@ struct BackupPaths {
 }
 
 impl BackupPaths {
-    pub fn new(backup_dir: String) -> Self {
-        let data_dir = format!("{}/data", &backup_dir);
+    pub fn new(file_name: &str, backup_dir: String) -> Self {
+        let data_dir = format!("{backup_dir}/data");
 
         let now = format_time(now(), "%Y-%m-%d_%H-%M-%S");
-        let backup_db_file = format!("{}/arhiv_{}.sqlite.zst", &backup_dir, now);
+        let backup_db_file = format!("{backup_dir}/{file_name}_{now}.sqlite.zst");
 
         BackupPaths {
             backup_dir,

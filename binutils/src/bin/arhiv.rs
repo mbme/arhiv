@@ -1,10 +1,6 @@
 use std::process;
 
-use baza::{
-    entities::{Document, DocumentClass, DocumentData, Id},
-    sync::build_rpc_router,
-    KvsEntry, KvsKey,
-};
+use anyhow::{Context, Result};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -12,6 +8,11 @@ use clap_complete::{generate, Shell};
 
 use arhiv_core::{definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config};
 use arhiv_ui::build_ui_router;
+use baza::{
+    entities::{Document, DocumentClass, DocumentData, Id},
+    sync::build_rpc_router,
+    KvsEntry, KvsKey,
+};
 use rs_utils::{get_crate_version, http_server::HttpServer, into_absolute_path, log};
 use scraper::ScraperOptions;
 
@@ -127,14 +128,18 @@ async fn main() {
         _ => log::setup_trace_logger(),
     };
 
-    match args.command {
+    handle_command(args.command).await.expect("command failed");
+}
+
+async fn handle_command(command: CLICommand) -> Result<()> {
+    match command {
         CLICommand::Init => {
-            Arhiv::create().expect("must be able to create arhiv");
+            Arhiv::create().context("must be able to create arhiv")?;
         }
         CLICommand::Status => {
             let arhiv = Arhiv::must_open();
-            let conn = arhiv.baza.get_connection().expect("must open connection");
-            let status = conn.get_status().expect("must be able to get status");
+            let conn = arhiv.baza.get_connection()?;
+            let status = conn.get_status()?;
 
             println!("{status}");
             // FIXME print number of unused temp attachments
@@ -142,25 +147,17 @@ async fn main() {
         CLICommand::Config { template } => {
             if template {
                 print!("{}", include_str!("../../resources/arhiv.json.template"));
-                return;
+                return Ok(());
             }
 
             let (config, path) = Config::must_read();
             println!("Arhiv config {path}:");
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&config).expect("must be able to serialize config")
-            );
+            println!("{}", serde_json::to_string_pretty(&config)?);
         }
         CLICommand::Settings => {
             let arhiv = Arhiv::must_open();
 
-            let settings = arhiv
-                .baza
-                .get_connection()
-                .expect("must be able to open connection")
-                .list_settings()
-                .expect("must list settings");
+            let settings = arhiv.baza.get_connection()?.list_settings()?;
 
             println!("Arhiv settings, {} entries:", settings.len());
             for KvsEntry(KvsKey { namespace: _, key }, value) in settings {
@@ -170,30 +167,24 @@ async fn main() {
         CLICommand::Commit => {
             let arhiv = Arhiv::must_open();
 
-            let mut tx = arhiv.baza.get_tx().expect("must open transaction");
-            let count = tx
-                .commit_staged_documents()
-                .expect("must commit staged documents");
-            tx.commit().expect("must commit");
+            let mut tx = arhiv.baza.get_tx()?;
+            let count = tx.commit_staged_documents()?;
+            tx.commit()?;
 
             println!("Committed {count} staged documents");
         }
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();
 
-            arhiv.get_sync_service().sync().await.expect("must sync");
+            arhiv.get_sync_service().sync().await?;
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
 
-            let document = arhiv
-                .baza
-                .get_document(&id)
-                .expect("must be able to query for a document");
+            let document = arhiv.baza.get_document(&id)?;
 
             if let Some(document) = document {
-                serde_json::to_writer_pretty(std::io::stdout(), &document)
-                    .expect("must be able to serialize document");
+                serde_json::to_writer_pretty(std::io::stdout(), &document)?;
             } else {
                 eprintln!("Document with id '{}' not found", &id);
                 process::exit(1);
@@ -205,7 +196,7 @@ async fn main() {
             data,
         } => {
             let data: DocumentData =
-                serde_json::from_str(&data).expect("data must be a JSON object");
+                serde_json::from_str(&data).context("data must be a JSON object")?;
 
             let mut document = Document::new_with_data(
                 DocumentClass::new(document_type, subtype.unwrap_or_default()),
@@ -214,12 +205,9 @@ async fn main() {
 
             let arhiv = Arhiv::must_open();
 
-            let tx = arhiv.baza.get_tx().expect("must open tx");
-
-            tx.stage_document(&mut document)
-                .expect("must be able to stage document");
-
-            tx.commit().expect("must commit");
+            let tx = arhiv.baza.get_tx()?;
+            tx.stage_document(&mut document)?;
+            tx.commit()?;
 
             let port = arhiv.get_config().server_port;
             print_document(&document, port);
@@ -243,7 +231,7 @@ async fn main() {
                     },
                 )
                 .await
-                .expect("failed to scrape");
+                .context("failed to scrape")?;
 
             for document in documents {
                 print_document(&document, port);
@@ -261,11 +249,11 @@ async fn main() {
 
             for file_path in file_paths {
                 let file_path = into_absolute_path(file_path, true)
-                    .expect("failed to convert path into absolute path");
+                    .context("failed to convert path into absolute path")?;
 
                 let document = arhiv
                     .import_document_from_file(&document_type, &file_path, move_file)
-                    .expect("failed to import file");
+                    .context("failed to import file")?;
 
                 print_document(&document, port);
             }
@@ -290,7 +278,7 @@ async fn main() {
             let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv)));
             let server = HttpServer::start(router, port);
 
-            server.join().await.expect("must join");
+            server.join().await?;
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();
@@ -300,7 +288,7 @@ async fn main() {
             arhiv
                 .baza
                 .backup(&backup_dir)
-                .expect("must be able to backup");
+                .context("must be able to backup")?;
         }
         CLICommand::GenerateCompletions { shell } => {
             let mut cmd = CLIArgs::command();
@@ -310,6 +298,8 @@ async fn main() {
             generate(shell, &mut cmd, name, &mut std::io::stdout());
         }
     }
+
+    Ok(())
 }
 
 fn get_document_url(id: &Option<&Id>, port: u16) -> String {

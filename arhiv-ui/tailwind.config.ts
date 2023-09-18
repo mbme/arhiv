@@ -1,5 +1,7 @@
 /* eslint-env node */
-module.exports = {
+import { Config } from 'tailwindcss';
+
+const config: Config = {
   content: ['./src/ui/**/*.tsx'],
   theme: {
     extend: {
@@ -23,3 +25,5 @@ module.exports = {
   },
   plugins: [require('@tailwindcss/forms')],
 };
+
+export default config;

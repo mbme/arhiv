@@ -19,7 +19,7 @@ tokio.workspace = true
 hyper.workspace = true
 routerify.workspace = true
 
-rust-embed= { version = "6", features = ["interpolate-folder-path"]}
+rust-embed= { version = "8", features = ["interpolate-folder-path"]}
 
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }

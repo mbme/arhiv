@@ -66,7 +66,7 @@ impl MultiSearch {
 
         MultiSearch {
             patterns_count: patterns.len(),
-            ac: AhoCorasick::new(patterns),
+            ac: AhoCorasick::new(patterns).expect("pattern must be valid"),
         }
     }
 
@@ -78,7 +78,7 @@ impl MultiSearch {
         let mut score = SearchScore::new(self.patterns_count);
         for pattern_match in self.ac.find_iter(data) {
             score.increment_value_at_pos(
-                pattern_match.pattern(),
+                pattern_match.pattern().as_usize(),
                 pattern_match.start(),
                 data.len(),
             );

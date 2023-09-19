@@ -28,6 +28,7 @@ mod http;
 pub mod http_server;
 mod json;
 pub mod log;
+pub mod mdns;
 mod string;
 mod time;
 mod tools;

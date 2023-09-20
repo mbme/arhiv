@@ -1,18 +1,19 @@
 use anyhow::Result;
 use tokio::signal;
 
-use rs_utils::{generate_random_id, log::setup_logger, mdns::MDNSNode};
+use rs_utils::{generate_random_id, log::setup_logger, mdns::MDNSService};
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
     setup_logger();
 
-    let node = MDNSNode::new("_mdns-tester")?;
+    let service = MDNSService::new("_mdns-tester")?;
 
     let instance_name = generate_random_id();
 
-    let server = node.start_server(&instance_name, 9999)?;
-    let client = node.start_client(move |event| {
+    let server = service.start_server(&instance_name, 9999)?;
+
+    let client = service.start_client(move |event| {
         if event.get_instance_name() != instance_name {
             println!("Event: {:#?}", event);
         }
@@ -22,7 +23,7 @@ pub async fn main() -> Result<()> {
 
     client.stop();
     server.stop();
-    node.shutdown();
+    service.shutdown();
 
     Ok(())
 }

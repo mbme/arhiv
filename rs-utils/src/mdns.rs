@@ -1,9 +1,9 @@
-use std::{collections::HashSet, net::Ipv4Addr};
+use std::net::Ipv4Addr;
 
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
 
-pub struct MDNSNode {
+pub struct MDNSService {
     mdns: ServiceDaemon,
     service_name: String,
 }
@@ -65,7 +65,7 @@ impl<'m> MDNSClient<'m> {
     }
 }
 
-impl MDNSNode {
+impl MDNSService {
     pub fn new(service_name: impl Into<String>) -> Result<Self> {
         let service_name = service_name.into();
 
@@ -76,7 +76,7 @@ impl MDNSNode {
 
         let mdns = ServiceDaemon::new().context("Failed to create daemon")?;
 
-        Ok(MDNSNode { mdns, service_name })
+        Ok(MDNSService { mdns, service_name })
     }
 
     fn get_service_type(&self) -> String {
@@ -133,7 +133,7 @@ impl MDNSNode {
                         log::info!("Registered an instance: {instance_name}");
 
                         handler(MDNSEvent::ServiceDiscovered {
-                            ips: info.get_addresses().clone(),
+                            ips: info.get_addresses().iter().cloned().collect(),
                             port: info.get_port(),
                             instance_name,
                         });
@@ -162,13 +162,13 @@ impl MDNSNode {
         loop {
             match self.mdns.shutdown() {
                 Ok(_) => {
-                    log::info!("Stopped MDNS node for service {}", self.service_name,);
+                    log::info!("Stopped MDNS service {}", self.service_name,);
                     return;
                 }
                 Err(MDNSError::Again) => {}
                 Err(err) => {
                     log::error!(
-                        "Error while stopping MDNS node for service {}: {err}",
+                        "Error while stopping MDNS service {}: {err}",
                         self.service_name,
                     );
                     return;
@@ -189,7 +189,7 @@ fn extract_instance_name_from_fullname(fullname: &str) -> String {
 #[derive(Debug)]
 pub enum MDNSEvent {
     ServiceDiscovered {
-        ips: HashSet<Ipv4Addr>,
+        ips: Vec<Ipv4Addr>,
         port: u16,
         instance_name: String,
     },

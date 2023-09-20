@@ -70,7 +70,7 @@ impl MDNSNode {
         let service_name = service_name.into();
 
         ensure!(
-            service_name.chars().next() == Some('_'),
+            service_name.starts_with('_'),
             "service_name must start with an underscore"
         );
 
@@ -112,7 +112,7 @@ impl MDNSNode {
         })
     }
 
-    pub fn start_client<F: Fn(MDNSEvent) -> () + Send + 'static>(
+    pub fn start_client<F: Fn(MDNSEvent) + Send + 'static>(
         &self,
         handler: F,
     ) -> Result<MDNSClient> {
@@ -201,8 +201,8 @@ pub enum MDNSEvent {
 impl MDNSEvent {
     pub fn get_instance_name(&self) -> &str {
         match self {
-            MDNSEvent::ServiceDiscovered { instance_name, .. } => &instance_name,
-            MDNSEvent::ServiceDisappeared { instance_name, .. } => &instance_name,
+            MDNSEvent::ServiceDiscovered { instance_name, .. } => instance_name,
+            MDNSEvent::ServiceDisappeared { instance_name, .. } => instance_name,
         }
     }
 }

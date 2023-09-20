@@ -11,63 +11,6 @@ pub struct MDNSService {
     instance_name: String,
 }
 
-pub struct MDNSServer<'m> {
-    fullname: String,
-    mdns: &'m ServiceDaemon,
-}
-
-impl<'m> MDNSServer<'m> {
-    pub fn get_instance_name(&self) -> String {
-        extract_instance_name_from_fullname(&self.fullname)
-    }
-
-    pub fn stop(self) {
-        loop {
-            match self.mdns.unregister(&self.fullname) {
-                Ok(channel) => {
-                    log::info!(
-                        "Stopped MDNS server for instance {}: {:?}",
-                        self.get_instance_name(),
-                        channel.recv().expect("must read result"),
-                    );
-                    return;
-                }
-                Err(MDNSError::Again) => {}
-                Err(err) => {
-                    log::error!(
-                        "Error while stopping MDNS server for instance {}: {err}",
-                        self.get_instance_name(),
-                    );
-                    return;
-                }
-            }
-        }
-    }
-}
-
-pub struct MDNSClient<'m> {
-    service_type: String,
-    mdns: &'m ServiceDaemon,
-}
-
-impl<'m> MDNSClient<'m> {
-    pub fn stop(self) {
-        loop {
-            match self.mdns.stop_browse(&self.service_type) {
-                Ok(_) => {
-                    log::info!("Stopped MDNS client");
-                    return;
-                }
-                Err(MDNSError::Again) => {}
-                Err(err) => {
-                    log::error!("Failed to stop MDNS client: {err}");
-                    return;
-                }
-            }
-        }
-    }
-}
-
 impl MDNSService {
     pub fn new(service_name: impl Into<String>, instance_name: impl Into<String>) -> Result<Self> {
         let service_name = service_name.into();
@@ -187,6 +130,63 @@ impl MDNSService {
                         "Error while stopping MDNS service {}: {err}",
                         self.service_name,
                     );
+                    return;
+                }
+            }
+        }
+    }
+}
+
+pub struct MDNSServer<'m> {
+    fullname: String,
+    mdns: &'m ServiceDaemon,
+}
+
+impl<'m> MDNSServer<'m> {
+    pub fn get_instance_name(&self) -> String {
+        extract_instance_name_from_fullname(&self.fullname)
+    }
+
+    pub fn stop(self) {
+        loop {
+            match self.mdns.unregister(&self.fullname) {
+                Ok(channel) => {
+                    log::info!(
+                        "Stopped MDNS server for instance {}: {:?}",
+                        self.get_instance_name(),
+                        channel.recv().expect("must read result"),
+                    );
+                    return;
+                }
+                Err(MDNSError::Again) => {}
+                Err(err) => {
+                    log::error!(
+                        "Error while stopping MDNS server for instance {}: {err}",
+                        self.get_instance_name(),
+                    );
+                    return;
+                }
+            }
+        }
+    }
+}
+
+pub struct MDNSClient<'m> {
+    service_type: String,
+    mdns: &'m ServiceDaemon,
+}
+
+impl<'m> MDNSClient<'m> {
+    pub fn stop(self) {
+        loop {
+            match self.mdns.stop_browse(&self.service_type) {
+                Ok(_) => {
+                    log::info!("Stopped MDNS client");
+                    return;
+                }
+                Err(MDNSError::Again) => {}
+                Err(err) => {
+                    log::error!("Failed to stop MDNS client: {err}");
                     return;
                 }
             }

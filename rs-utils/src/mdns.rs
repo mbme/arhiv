@@ -8,6 +8,7 @@ use crate::get_hostname;
 pub struct MDNSService {
     mdns: ServiceDaemon,
     service_name: String,
+    instance_name: String,
 }
 
 pub struct MDNSServer<'m> {
@@ -25,7 +26,7 @@ impl<'m> MDNSServer<'m> {
             match self.mdns.unregister(&self.fullname) {
                 Ok(channel) => {
                     log::info!(
-                        "Stopped MDNS service for instance {}: {:?}",
+                        "Stopped MDNS server for instance {}: {:?}",
                         self.get_instance_name(),
                         channel.recv().expect("must read result"),
                     );
@@ -34,7 +35,7 @@ impl<'m> MDNSServer<'m> {
                 Err(MDNSError::Again) => {}
                 Err(err) => {
                     log::error!(
-                        "Error while stopping MDNS service for instance {}: {err}",
+                        "Error while stopping MDNS server for instance {}: {err}",
                         self.get_instance_name(),
                     );
                     return;
@@ -68,8 +69,9 @@ impl<'m> MDNSClient<'m> {
 }
 
 impl MDNSService {
-    pub fn new(service_name: impl Into<String>) -> Result<Self> {
+    pub fn new(service_name: impl Into<String>, instance_name: impl Into<String>) -> Result<Self> {
         let service_name = service_name.into();
+        let instance_name = instance_name.into();
 
         ensure!(
             service_name.starts_with('_'),
@@ -78,19 +80,23 @@ impl MDNSService {
 
         let mdns = ServiceDaemon::new().context("Failed to create daemon")?;
 
-        Ok(MDNSService { mdns, service_name })
+        Ok(MDNSService {
+            mdns,
+            service_name,
+            instance_name,
+        })
     }
 
     fn get_service_type(&self) -> String {
         format!("{}._sub._http._tcp.local.", self.service_name)
     }
 
-    pub fn start_server(&self, instance_name: &str, port: u16) -> Result<MDNSServer> {
+    pub fn start_server(&self, port: u16) -> Result<MDNSServer> {
         let host_name = get_hostname()?;
 
         let my_service = ServiceInfo::new(
             &self.get_service_type(),
-            instance_name,
+            &self.instance_name,
             &host_name,
             "", // auto-discover is enabled
             port,
@@ -105,7 +111,7 @@ impl MDNSService {
             .register(my_service)
             .context("Failed to register service")?;
 
-        log::info!("started MDNS service for instance {instance_name}");
+        log::info!("started MDNS server for instance {}", self.instance_name);
 
         Ok(MDNSServer {
             fullname,
@@ -122,14 +128,19 @@ impl MDNSService {
             .browse(&self.get_service_type())
             .context("Failed to browse")?;
 
-        log::info!("started MDNS client");
+        log::info!("started MDNS client for instance {}", self.instance_name);
 
+        let local_instance_name = self.instance_name.clone();
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv_async().await {
                 match event {
                     ServiceEvent::ServiceResolved(info) => {
                         let instance_name =
                             extract_instance_name_from_fullname(info.get_fullname());
+
+                        if instance_name == local_instance_name {
+                            continue;
+                        }
 
                         log::info!("Registered an instance: {instance_name}");
 
@@ -141,6 +152,10 @@ impl MDNSService {
                     }
                     ServiceEvent::ServiceRemoved(_, fullname) => {
                         let instance_name = extract_instance_name_from_fullname(&fullname);
+
+                        if instance_name == local_instance_name {
+                            continue;
+                        }
 
                         log::info!("Unregistered an instance: {instance_name}");
 

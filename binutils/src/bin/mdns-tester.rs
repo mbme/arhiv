@@ -7,16 +7,14 @@ use rs_utils::{generate_random_id, log::setup_logger, mdns::MDNSService};
 pub async fn main() -> Result<()> {
     setup_logger();
 
-    let service = MDNSService::new("_mdns-tester")?;
-
     let instance_name = generate_random_id();
 
-    let server = service.start_server(&instance_name, 9999)?;
+    let service = MDNSService::new("_mdns-tester", instance_name)?;
 
-    let client = service.start_client(move |event| {
-        if event.get_instance_name() != instance_name {
-            println!("Event: {:#?}", event);
-        }
+    let server = service.start_server(9999)?;
+
+    let client = service.start_client(|event| {
+        println!("Event: {:#?}", event);
     })?;
 
     signal::ctrl_c().await.expect("failed to listen for event");

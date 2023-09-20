@@ -3,6 +3,8 @@ use std::net::Ipv4Addr;
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
 
+use crate::get_hostname;
+
 pub struct MDNSService {
     mdns: ServiceDaemon,
     service_name: String,
@@ -84,13 +86,12 @@ impl MDNSService {
     }
 
     pub fn start_server(&self, instance_name: &str, port: u16) -> Result<MDNSServer> {
-        // Create a service info.
-        let host_name = "mb-host-name.local"; // FIXME
+        let host_name = get_hostname()?;
 
         let my_service = ServiceInfo::new(
             &self.get_service_type(),
             instance_name,
-            host_name,
+            &host_name,
             "", // auto-discover is enabled
             port,
             None,

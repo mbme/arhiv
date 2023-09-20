@@ -5,7 +5,8 @@ use std::io::Write;
 use std::process;
 use std::process::{Command, Stdio};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
+use gethostname::gethostname;
 use regex::Regex;
 
 pub use crypto::*;
@@ -133,4 +134,13 @@ pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
 
 pub fn get_crate_version() -> &'static str {
     option_env!("TYPED_V_VERSION").unwrap_or("dev-build")
+}
+
+pub fn get_hostname() -> Result<String> {
+    gethostname().into_string().map_err(|err| {
+        anyhow!(
+            "failed to convert hostname into string: {}",
+            err.to_string_lossy()
+        )
+    })
 }

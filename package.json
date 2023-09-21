@@ -8,13 +8,13 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "arhiv-ui",
+    "arhiv",
     "scraper"
   ],
   "scripts": {
     "check-fmt": "prettier --check .",
     "fmt": "prettier --write .",
-    "check": "yarn workspaces run compiler-errors && yarn run check-fmt && yarn workspaces run lint && yarn workspace arhiv-ui run test"
+    "check": "yarn workspaces run compiler-errors && yarn run check-fmt && yarn workspaces run lint && yarn workspace arhiv run test"
   },
   "devDependencies": {
     "@types/node": "^20.2.1",

@@ -1,5 +1,5 @@
 [package]
-name = "arhiv-ui"
+name = "arhiv"
 version = "0.0.0"
 edition = "2021"
 authors = ["mbme"]

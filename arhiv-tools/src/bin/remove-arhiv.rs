@@ -1,6 +1,6 @@
 use std::fs;
 
-use arhiv_ui::Config;
+use arhiv::Config;
 use rs_utils::{
     dir_exists,
     log::{info, setup_logger},

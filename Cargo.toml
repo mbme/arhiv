@@ -6,7 +6,7 @@ debug = 0
 resolver = "2"
 members = [
   "baza",
-  "arhiv-ui",
+  "arhiv",
   "arhiv-tools",
   "binutils",
   "rs-utils",

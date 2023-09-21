@@ -5,10 +5,16 @@ edition = "2021"
 authors = ["mbme"]
 publish = false
 
+[lib]
+doctest = false
+
+[features]
+production-mode = []
+
 [dependencies]
 baza = { path = "../baza" }
-arhiv-core = { path = "../arhiv-core" }
 rs-utils = { path = "../rs-utils" }
+scraper = { path = "../scraper" }
 
 anyhow.workspace = true
 
@@ -16,6 +22,8 @@ serde.workspace = true
 serde_json.workspace = true
 
 tokio.workspace = true
+tokio-util.workspace = true
+
 hyper.workspace = true
 routerify.workspace = true
 

@@ -1,9 +1,10 @@
-use arhiv_core::Config;
+use std::fs;
+
+use arhiv_ui::Config;
 use rs_utils::{
     dir_exists,
     log::{info, setup_logger},
 };
-use std::fs;
 
 fn main() {
     setup_logger();

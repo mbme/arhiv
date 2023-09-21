@@ -2,7 +2,6 @@ use std::{cmp::Ordering, fs, path::Path};
 
 use anyhow::{Context, Result};
 
-use arhiv_core::{scraper::ScraperOptions, Arhiv, BazaConnectionExt};
 use baza::{
     entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
@@ -14,9 +13,13 @@ use rs_utils::{
     decode_base64, ensure_dir_exists, get_home_dir, get_symlink_target_path, is_readable,
     path_to_string, TempFile,
 };
+use scraper::ScraperOptions;
 
-use crate::dto::{
-    APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
+use crate::{
+    dto::{
+        APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
+    },
+    Arhiv, BazaConnectionExt,
 };
 
 const PAGE_SIZE: u8 = 10;

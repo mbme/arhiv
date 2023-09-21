@@ -7,7 +7,7 @@ use baza::{
     BazaConnection,
 };
 use rs_utils::{log, Download};
-pub use scraper::{ScrapedData, ScraperOptions};
+use scraper::{ScrapedData, ScraperOptions};
 
 use crate::{
     definitions::{BOOK_TYPE, FILM_TYPE, GAME_TYPE},

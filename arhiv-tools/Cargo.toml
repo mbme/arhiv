@@ -12,5 +12,5 @@ serde_json.workspace = true
 tokio.workspace = true
 
 baza = { path = "../baza" }
-arhiv-core = { path = "../arhiv-core" }
+arhiv-ui = { path = "../arhiv-ui" }
 rs-utils = { path = "../rs-utils" }

@@ -6,8 +6,9 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv_core::{definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config};
-use arhiv_ui::build_ui_router;
+use arhiv_ui::{
+    build_ui_router, definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config,
+};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     sync::build_rpc_router,

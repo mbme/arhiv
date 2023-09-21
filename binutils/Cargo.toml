@@ -6,7 +6,7 @@ authors = ["mbme"]
 publish = false
 
 [features]
-production-mode = ["arhiv-core/production-mode"]
+production-mode = ["arhiv-ui/production-mode"]
 
 [dependencies]
 anyhow.workspace = true
@@ -22,5 +22,4 @@ tokio.workspace = true
 baza = { path = "../baza" }
 rs-utils = { path = "../rs-utils" }
 scraper = { path = "../scraper" }
-arhiv-core = { path = "../arhiv-core" }
 arhiv-ui = { path = "../arhiv-ui" }

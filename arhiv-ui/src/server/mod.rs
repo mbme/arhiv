@@ -2,7 +2,6 @@ use anyhow::Context;
 use hyper::{header, http::request::Parts, Body, Request, Response, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router};
 
-use arhiv_core::Arhiv;
 use baza::{entities::BLOBId, sync::respond_with_blob};
 use rs_utils::http_server::{
     error_handler, logger_middleware, not_found_handler, respond_moved_permanently,
@@ -10,6 +9,7 @@ use rs_utils::http_server::{
 };
 
 use crate::dto::APIRequest;
+use crate::Arhiv;
 
 use self::api_handler::handle_api_request;
 use self::public_assets_handler::public_assets_handler;

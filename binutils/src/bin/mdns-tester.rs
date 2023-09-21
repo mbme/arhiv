@@ -11,9 +11,9 @@ pub async fn main() -> Result<()> {
 
     let service = MDNSService::new("_mdns-tester", instance_name)?;
 
-    let server = service.start_server(9999)?;
+    let mut server = service.start_server(9999)?;
 
-    let client = service.start_client(|event| {
+    let mut client = service.start_client(|event| {
         println!("Event: {:#?}", event);
     })?;
 
@@ -21,7 +21,6 @@ pub async fn main() -> Result<()> {
 
     client.stop();
     server.stop();
-    service.shutdown();
 
     Ok(())
 }

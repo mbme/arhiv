@@ -9,6 +9,7 @@ pub struct MDNSService {
     mdns: ServiceDaemon,
     service_name: String,
     instance_name: String,
+    started: bool,
 }
 
 impl MDNSService {
@@ -27,6 +28,7 @@ impl MDNSService {
             mdns,
             service_name,
             instance_name,
+            started: true,
         })
     }
 
@@ -35,6 +37,8 @@ impl MDNSService {
     }
 
     pub fn start_server(&self, port: u16) -> Result<MDNSServer> {
+        ensure!(self.started, "MDNS service must be started");
+
         let host_name = get_hostname()?;
 
         let my_service = ServiceInfo::new(
@@ -59,6 +63,7 @@ impl MDNSService {
         Ok(MDNSServer {
             fullname,
             mdns: &self.mdns,
+            started: true,
         })
     }
 
@@ -66,6 +71,8 @@ impl MDNSService {
         &self,
         handler: F,
     ) -> Result<MDNSClient> {
+        ensure!(self.started, "MDNS service must be started");
+
         let receiver = self
             .mdns
             .browse(&self.get_service_type())
@@ -114,13 +121,19 @@ impl MDNSService {
         Ok(MDNSClient {
             mdns: &self.mdns,
             service_type: self.get_service_type(),
+            started: true,
         })
     }
 
-    pub fn shutdown(self) {
+    pub fn shutdown(&mut self) {
+        if !self.started {
+            return;
+        }
+
         loop {
             match self.mdns.shutdown() {
                 Ok(_) => {
+                    self.started = false;
                     log::info!("Stopped MDNS service {}", self.service_name,);
                     return;
                 }
@@ -137,9 +150,16 @@ impl MDNSService {
     }
 }
 
+impl Drop for MDNSService {
+    fn drop(&mut self) {
+        self.shutdown();
+    }
+}
+
 pub struct MDNSServer<'m> {
     fullname: String,
     mdns: &'m ServiceDaemon,
+    started: bool,
 }
 
 impl<'m> MDNSServer<'m> {
@@ -147,10 +167,16 @@ impl<'m> MDNSServer<'m> {
         extract_instance_name_from_fullname(&self.fullname)
     }
 
-    pub fn stop(self) {
+    pub fn stop(&mut self) {
+        if !self.started {
+            return;
+        }
+
         loop {
             match self.mdns.unregister(&self.fullname) {
                 Ok(channel) => {
+                    self.started = false;
+
                     log::info!(
                         "Stopped MDNS server for instance {}: {:?}",
                         self.get_instance_name(),
@@ -171,16 +197,28 @@ impl<'m> MDNSServer<'m> {
     }
 }
 
+impl<'m> Drop for MDNSServer<'m> {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
 pub struct MDNSClient<'m> {
     service_type: String,
     mdns: &'m ServiceDaemon,
+    started: bool,
 }
 
 impl<'m> MDNSClient<'m> {
-    pub fn stop(self) {
+    pub fn stop(&mut self) {
+        if !self.started {
+            return;
+        }
+
         loop {
             match self.mdns.stop_browse(&self.service_type) {
                 Ok(_) => {
+                    self.started = false;
                     log::info!("Stopped MDNS client");
                     return;
                 }
@@ -191,6 +229,12 @@ impl<'m> MDNSClient<'m> {
                 }
             }
         }
+    }
+}
+
+impl<'m> Drop for MDNSClient<'m> {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 

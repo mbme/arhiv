@@ -1,12 +1,13 @@
-use std::rc::Rc;
+use std::{rc::Rc, str::FromStr};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+use reqwest::Url;
 
 use rs_utils::{log, now};
 
 use crate::{Baza, SETTING_LAST_SYNC_TIME};
 
-use super::{agent::SyncAgent, ping::Ping};
+use super::{agent::SyncAgent, ping::Ping, BazaClient};
 
 pub struct SyncService<'b> {
     agents: Vec<Rc<SyncAgent>>,
@@ -29,6 +30,27 @@ impl<'b> SyncService<'b> {
         for agent in agents {
             self.add_agent(agent);
         }
+    }
+
+    pub fn parse_network_agents(&mut self, urls: &[String]) -> Result<()> {
+        let agents = urls
+            .iter()
+            .map(|url| {
+                let client = BazaClient::new(
+                    Url::from_str(url).context("failed to parse url")?,
+                    &self.baza.get_path_manager().downloads_dir,
+                );
+
+                Ok(SyncAgent::new_in_network(client))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let count = agents.len();
+        self.add_agents(agents);
+
+        log::info!("added {count} network agents");
+
+        Ok(())
     }
 
     async fn collect_pings(&self) -> Result<Vec<(Rc<SyncAgent>, Ping)>> {

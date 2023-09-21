@@ -1,7 +1,6 @@
-use std::{rc::Rc, str::FromStr};
+use std::rc::Rc;
 
 use anyhow::{Context, Result};
-use reqwest::Url;
 
 use crate::{entities::BLOB, Baza};
 
@@ -13,19 +12,6 @@ pub enum SyncAgent {
 }
 
 impl SyncAgent {
-    pub fn parse_network_agents(urls: &[String], downloads_dir: &str) -> Result<Vec<Self>> {
-        urls.iter()
-            .map(|url| {
-                let client = BazaClient::new(
-                    Url::from_str(url).context("failed to parse url")?,
-                    downloads_dir,
-                );
-
-                Ok(Self::new_in_network(client))
-            })
-            .collect()
-    }
-
     pub fn new_in_memory(baza: Rc<Baza>) -> Result<Self> {
         Ok(SyncAgent::InMemory { baza })
     }

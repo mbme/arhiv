@@ -109,6 +109,11 @@ impl Baza {
         &self.schema
     }
 
+    #[must_use]
+    pub fn get_name(&self) -> &str {
+        self.schema.get_name()
+    }
+
     pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage> {
         let conn = self.get_connection()?;
 

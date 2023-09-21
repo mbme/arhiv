@@ -43,7 +43,11 @@ pub fn start_rpc_server(baza: Arc<Baza>, port: u16) -> HttpServer {
 
 #[allow(clippy::unused_async)]
 async fn health_handler(_req: Request<Body>) -> ServerResponse {
-    respond_with_status(StatusCode::OK)
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(hyper::header::CACHE_CONTROL, "no-cache")
+        .body(Body::empty())
+        .context("failed to build health response")
 }
 
 async fn get_blob_handler(req: Request<Body>) -> ServerResponse {

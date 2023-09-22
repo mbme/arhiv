@@ -1,4 +1,4 @@
-use std::process;
+use std::{process, sync::Arc};
 
 use anyhow::{Context, Result};
 use clap::{
@@ -6,13 +6,14 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{build_ui_router, definitions::get_standard_schema, Arhiv, BazaConnectionExt, Config};
+use arhiv::{
+    definitions::get_standard_schema, start_arhiv_server, Arhiv, BazaConnectionExt, Config,
+};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
-    sync::build_rpc_router,
     KvsEntry, KvsKey,
 };
-use rs_utils::{get_crate_version, http_server::HttpServer, into_absolute_path, log};
+use rs_utils::{get_crate_version, into_absolute_path, log};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -175,7 +176,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Sync => {
             let arhiv = Arhiv::must_open();
 
-            arhiv.get_sync_service()?.sync().await?;
+            arhiv.sync().await?;
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
@@ -270,14 +271,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::Server => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = Arc::new(Arhiv::must_open());
 
-            let port = arhiv.get_config().server_port;
-
-            let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv)));
-            let server = HttpServer::start(router, port);
-
-            server.join().await?;
+            start_arhiv_server(arhiv).await?;
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();

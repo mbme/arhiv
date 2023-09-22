@@ -48,9 +48,13 @@ impl<'b> SyncService<'b> {
         let count = agents.len();
         self.add_agents(agents);
 
-        log::info!("added {count} network agents");
+        log::debug!("added {count} network agents");
 
         Ok(())
+    }
+
+    pub fn get_agents_count(&self) -> usize {
+        self.agents.len()
     }
 
     async fn collect_pings(&self) -> Result<Vec<(Rc<SyncAgent>, Ping)>> {

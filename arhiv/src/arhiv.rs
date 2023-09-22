@@ -1,24 +1,37 @@
-use std::sync::Arc;
+use std::{
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
 use anyhow::Result;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::SyncService,
+    sync::{build_rpc_router, SyncService},
     Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
-use rs_utils::get_crate_version;
+use rs_utils::{
+    get_crate_version,
+    http_server::HttpServer,
+    log,
+    mdns::{MDNSService, PeerInfo},
+};
+use tokio::time::timeout;
 
 use crate::{
     config::Config,
     data_migrations::get_data_migrations,
     definitions::get_standard_schema,
     status::{DbStatus, Status},
+    ui_server::build_ui_router,
 };
+
+const PEER_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(8);
 
 pub struct Arhiv {
     pub baza: Arc<Baza>,
     pub(crate) config: Config,
+    mdns_service: OnceLock<MDNSService>,
 }
 
 impl Arhiv {
@@ -37,6 +50,7 @@ impl Arhiv {
         Ok(Arhiv {
             baza: Arc::new(baza),
             config,
+            mdns_service: Default::default(),
         })
     }
 
@@ -58,6 +72,7 @@ impl Arhiv {
         Ok(Arhiv {
             baza: Arc::new(baza),
             config,
+            mdns_service: Default::default(),
         })
     }
 
@@ -65,15 +80,77 @@ impl Arhiv {
         &self.config
     }
 
-    pub fn get_sync_service(&self) -> Result<SyncService> {
+    pub async fn sync(&self) -> Result<bool> {
+        log::info!("Starting arhiv sync");
+
         let mut sync_service = SyncService::new(&self.baza);
 
-        // TODO start MDNS client
+        let static_peers = &self.config.static_peers;
+        if !static_peers.is_empty() {
+            sync_service.parse_network_agents(static_peers)?;
+            log::info!("Added {} static peers", static_peers.len());
+        }
 
-        sync_service.parse_network_agents(&self.config.static_peers)?;
+        let mdns_service = self.get_mdns_service();
 
-        Ok(sync_service)
+        let rx = mdns_service.get_peers_rx();
+
+        log::info!("Collecting MDNS peers...");
+        if let Ok(Ok(peers)) = timeout(
+            PEER_DISCOVERY_TIMEOUT,
+            rx.clone().wait_for(|peers| !peers.is_empty()),
+        )
+        .await
+        {
+            let urls = peers
+                .values()
+                .flat_map(|PeerInfo { ips, port }| {
+                    ips.iter()
+                        .map(|ip| format!("http://{ip}:{port}"))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+
+            sync_service.parse_network_agents(&urls)?;
+            log::info!("Added {} MDNS peers", urls.len());
+        } else {
+            log::warn!(
+                "MDNS service couldn't discover any peers in {}s",
+                PEER_DISCOVERY_TIMEOUT.as_secs()
+            )
+        }
+
+        if sync_service.get_agents_count() == 0 {
+            log::warn!("Can't sync: no agents discovered");
+            return Ok(false);
+        }
+
+        sync_service.sync().await
     }
+
+    fn get_mdns_service(&self) -> &MDNSService {
+        self.mdns_service.get_or_init(|| {
+            self.baza
+                .init_mdns_service()
+                .expect("must init MDNS service")
+        })
+    }
+}
+
+pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
+    let port = arhiv.config.server_port;
+
+    let mdns_service = arhiv.get_mdns_service();
+    let mut mdns_server = mdns_service.start_server(port)?;
+
+    let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv.clone())));
+    let server = HttpServer::start(router, port);
+
+    server.join().await?;
+
+    mdns_server.stop();
+
+    Ok(())
 }
 
 pub trait BazaConnectionExt {

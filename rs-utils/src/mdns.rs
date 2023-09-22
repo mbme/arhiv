@@ -71,7 +71,7 @@ impl MDNSService {
             .register(my_service)
             .context("Failed to register service")?;
 
-        log::info!("started MDNS server for instance {}", self.instance_name);
+        log::info!("Started MDNS server for instance {}", self.instance_name);
 
         Ok(MDNSServer {
             fullname,
@@ -88,7 +88,7 @@ impl MDNSService {
             .browse(&self.get_service_type())
             .context("Failed to browse")?;
 
-        log::info!("started MDNS client for instance {}", self.instance_name);
+        log::info!("Started MDNS client for instance {}", self.instance_name);
 
         let local_instance_name = self.instance_name.clone();
 

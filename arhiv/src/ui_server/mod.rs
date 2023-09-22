@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Context;
 use hyper::{header, http::request::Parts, Body, Request, Response, StatusCode};
 use routerify::{prelude::RequestExt, Middleware, Router};
@@ -17,7 +19,7 @@ use self::public_assets_handler::public_assets_handler;
 mod api_handler;
 mod public_assets_handler;
 
-pub fn build_ui_router(arhiv: Arhiv) -> Router<Body, anyhow::Error> {
+pub fn build_ui_router(arhiv: Arc<Arhiv>) -> Router<Body, anyhow::Error> {
     Router::builder()
         .data(arhiv)
         .middleware(Middleware::post_with_info(logger_middleware))

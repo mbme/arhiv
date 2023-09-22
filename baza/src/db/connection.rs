@@ -742,14 +742,14 @@ impl BazaConnection {
         while let Some(row) = rows.next()? {
             let document = utils::extract_document(row)?;
 
-            // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
-            // we don't need documents with revision equal to min_rev
-            if document.get_rev()? == min_rev {
+            // TODO optimize
+            if skip_staged && document.is_staged() {
                 continue;
             }
 
-            // TODO optimize
-            if skip_staged && document.is_staged() {
+            // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
+            // we don't need documents with revision equal to min_rev
+            if document.get_rev()? == min_rev {
                 continue;
             }
 

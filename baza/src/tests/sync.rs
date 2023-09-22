@@ -52,19 +52,6 @@ fn test_sync_get_changeset() -> Result<()> {
         assert_eq!(changeset.documents.len(), 2);
     }
 
-    {
-        baza.add_document(Id::new(), Value::Null)?;
-
-        let tx = baza.get_connection()?;
-
-        let changeset = tx.get_changeset(&Revision::from_value(json!({ "0": 1, "1": 1 }))?);
-
-        assert!(
-            changeset.is_err(),
-            "expected an error if there are uncommitted changes"
-        );
-    }
-
     Ok(())
 }
 

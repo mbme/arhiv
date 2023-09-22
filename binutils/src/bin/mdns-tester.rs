@@ -11,15 +11,17 @@ pub async fn main() -> Result<()> {
 
     let service = MDNSService::new("_mdns-tester", instance_name)?;
 
-    let mut server = service.start_server(9999)?;
+    let mut rx = service.get_peers_rx().clone();
+    tokio::spawn(async move {
+        while rx.changed().await.is_ok() {
+            println!("Event: {:#?}", rx.borrow());
+        }
+    });
 
-    let mut client = service.start_client(|event| {
-        println!("Event: {:#?}", event);
-    })?;
+    let mut server = service.start_server(9999)?;
 
     signal::ctrl_c().await.expect("failed to listen for event");
 
-    client.stop();
     server.stop();
 
     Ok(())

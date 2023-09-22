@@ -1,15 +1,19 @@
-use std::net::Ipv4Addr;
+use std::{collections::HashMap, net::Ipv4Addr};
 
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
+use tokio::sync::watch::{self, Receiver};
 
 use crate::get_hostname;
+
+pub type Peers = HashMap<String, PeerInfo>;
 
 pub struct MDNSService {
     mdns: ServiceDaemon,
     service_name: String,
     instance_name: String,
     started: bool,
+    peers: Option<Receiver<Peers>>,
 }
 
 impl MDNSService {
@@ -24,12 +28,21 @@ impl MDNSService {
 
         let mdns = ServiceDaemon::new().context("Failed to create daemon")?;
 
-        Ok(MDNSService {
+        let mut service = MDNSService {
             mdns,
             service_name,
             instance_name,
             started: true,
-        })
+            peers: Default::default(),
+        };
+
+        service.start_client()?;
+
+        Ok(service)
+    }
+
+    pub fn get_peers_rx(&self) -> &Receiver<Peers> {
+        self.peers.as_ref().expect("peers must be initialized")
     }
 
     fn get_service_type(&self) -> String {
@@ -67,10 +80,7 @@ impl MDNSService {
         })
     }
 
-    pub fn start_client<F: Fn(MDNSEvent) + Send + 'static>(
-        &self,
-        handler: F,
-    ) -> Result<MDNSClient> {
+    fn start_client(&mut self) -> Result<()> {
         ensure!(self.started, "MDNS service must be started");
 
         let receiver = self
@@ -81,6 +91,10 @@ impl MDNSService {
         log::info!("started MDNS client for instance {}", self.instance_name);
 
         let local_instance_name = self.instance_name.clone();
+
+        let (tx, rx) = watch::channel::<Peers>(HashMap::new());
+        self.peers = Some(rx);
+
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv_async().await {
                 match event {
@@ -94,10 +108,14 @@ impl MDNSService {
 
                         log::info!("Registered an instance: {instance_name}");
 
-                        handler(MDNSEvent::ServiceDiscovered {
-                            ips: info.get_addresses().iter().cloned().collect(),
-                            port: info.get_port(),
-                            instance_name,
+                        tx.send_modify(|peers| {
+                            peers.insert(
+                                instance_name,
+                                PeerInfo {
+                                    ips: info.get_addresses().iter().cloned().collect(),
+                                    port: info.get_port(),
+                                },
+                            );
                         });
                     }
                     ServiceEvent::ServiceRemoved(_, fullname) => {
@@ -109,7 +127,9 @@ impl MDNSService {
 
                         log::info!("Unregistered an instance: {instance_name}");
 
-                        handler(MDNSEvent::ServiceDisappeared { instance_name });
+                        tx.send_modify(|peers| {
+                            peers.remove(&instance_name);
+                        });
                     }
                     other_event => {
                         log::debug!("Received other event: {:?}", &other_event);
@@ -118,17 +138,31 @@ impl MDNSService {
             }
         });
 
-        Ok(MDNSClient {
-            mdns: &self.mdns,
-            service_type: self.get_service_type(),
-            started: true,
-        })
+        Ok(())
+    }
+
+    fn stop_client(&self) {
+        loop {
+            match self.mdns.stop_browse(&self.get_service_type()) {
+                Ok(_) => {
+                    log::info!("Stopped MDNS client for instance {}", self.instance_name);
+                    return;
+                }
+                Err(MDNSError::Again) => {}
+                Err(err) => {
+                    log::error!("Failed to stop MDNS client: {err}");
+                    return;
+                }
+            }
+        }
     }
 
     pub fn shutdown(&mut self) {
         if !self.started {
             return;
         }
+
+        self.stop_client();
 
         loop {
             match self.mdns.shutdown() {
@@ -203,41 +237,6 @@ impl<'m> Drop for MDNSServer<'m> {
     }
 }
 
-pub struct MDNSClient<'m> {
-    service_type: String,
-    mdns: &'m ServiceDaemon,
-    started: bool,
-}
-
-impl<'m> MDNSClient<'m> {
-    pub fn stop(&mut self) {
-        if !self.started {
-            return;
-        }
-
-        loop {
-            match self.mdns.stop_browse(&self.service_type) {
-                Ok(_) => {
-                    self.started = false;
-                    log::info!("Stopped MDNS client");
-                    return;
-                }
-                Err(MDNSError::Again) => {}
-                Err(err) => {
-                    log::error!("Failed to stop MDNS client: {err}");
-                    return;
-                }
-            }
-        }
-    }
-}
-
-impl<'m> Drop for MDNSClient<'m> {
-    fn drop(&mut self) {
-        self.stop();
-    }
-}
-
 fn extract_instance_name_from_fullname(fullname: &str) -> String {
     fullname
         .split('.')
@@ -246,23 +245,8 @@ fn extract_instance_name_from_fullname(fullname: &str) -> String {
         .expect("failed to extract instance name")
 }
 
-#[derive(Debug)]
-pub enum MDNSEvent {
-    ServiceDiscovered {
-        ips: Vec<Ipv4Addr>,
-        port: u16,
-        instance_name: String,
-    },
-    ServiceDisappeared {
-        instance_name: String,
-    },
-}
-
-impl MDNSEvent {
-    pub fn get_instance_name(&self) -> &str {
-        match self {
-            MDNSEvent::ServiceDiscovered { instance_name, .. } => instance_name,
-            MDNSEvent::ServiceDisappeared { instance_name, .. } => instance_name,
-        }
-    }
+#[derive(Debug, Clone)]
+pub struct PeerInfo {
+    pub ips: Vec<Ipv4Addr>,
+    pub port: u16,
 }

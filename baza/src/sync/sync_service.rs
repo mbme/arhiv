@@ -1,6 +1,6 @@
 use std::{rc::Rc, str::FromStr};
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use reqwest::Url;
 
 use rs_utils::{log, now};
@@ -75,6 +75,11 @@ impl<'b> SyncService<'b> {
     }
 
     pub async fn sync(&self) -> Result<bool> {
+        ensure!(
+            !self.baza.get_connection()?.has_staged_documents()?,
+            "There are uncommitted changes"
+        );
+
         let pings = self.collect_pings().await?;
 
         log::info!("starting sync with {} other instances", pings.len());
@@ -112,6 +117,13 @@ impl<'b> SyncService<'b> {
                 tx.commit()?;
 
                 updated = updated || summary.has_changes();
+
+                log::info!(
+                    "got {} new snapshots and {} BLOBs from {}",
+                    summary.new_snapshots,
+                    summary.missing_blobs.len(),
+                    ping.instance_id.as_ref()
+                );
             } else {
                 log::debug!(
                     "instance {} has same or older revision",

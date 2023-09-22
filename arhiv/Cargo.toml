@@ -9,7 +9,7 @@ publish = false
 doctest = false
 
 [features]
-production-mode = []
+production-mode = ["baza/production-mode"]
 
 [dependencies]
 baza = { path = "../baza" }

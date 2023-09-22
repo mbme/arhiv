@@ -10,6 +10,8 @@ pub use rpc_server::{build_rpc_router, respond_with_blob, start_rpc_server};
 
 use crate::Baza;
 
+use super::DEBUG_MODE;
+
 impl Baza {
     pub fn init_mdns_service(&self) -> Result<MDNSService> {
         let instance_id = self
@@ -19,6 +21,11 @@ impl Baza {
 
         let app_name = self.get_name();
 
-        MDNSService::new(format!("_{app_name}-baza"), instance_id)
+        let mut service_name = format!("_{app_name}-baza");
+        if DEBUG_MODE {
+            service_name.push_str("-debug");
+        }
+
+        MDNSService::new(service_name, instance_id)
     }
 }

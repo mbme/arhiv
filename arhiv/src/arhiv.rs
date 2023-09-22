@@ -7,7 +7,7 @@ use anyhow::Result;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::{build_rpc_router, SyncService},
+    sync::{build_rpc_router, SyncService, DEBUG_MODE},
     Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
 use rs_utils::{
@@ -170,7 +170,6 @@ impl BazaConnectionExt for BazaConnection {
 
     fn get_status(&self) -> Result<Status> {
         let root_dir = self.get_path_manager().root_dir.clone();
-        let debug_mode = cfg!(not(feature = "production-mode"));
 
         let db_status = self.get_db_status()?;
         let db_version = self.get_db_version()?;
@@ -189,7 +188,7 @@ impl BazaConnectionExt for BazaConnection {
             blobs_count,
             conflicts_count,
             last_update_time,
-            debug_mode,
+            debug_mode: DEBUG_MODE,
             root_dir,
         })
     }

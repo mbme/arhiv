@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 
 use baza::{
     schema::{DataMigrations, DataSchema},
@@ -121,8 +121,7 @@ impl Arhiv {
         }
 
         if sync_service.get_agents_count() == 0 {
-            log::warn!("Can't sync: no agents discovered");
-            return Ok(false);
+            bail!("no agents discovered");
         }
 
         sync_service.sync().await

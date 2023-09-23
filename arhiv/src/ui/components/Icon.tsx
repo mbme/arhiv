@@ -343,6 +343,35 @@ const ICONS = {
       />
     </svg>
   ),
+  'save-all': (className: string) => (
+    // material design icons content-save-all-outline
+    <svg viewBox="0 0 24 24" className={cx('icon', className)}>
+      <path
+        fill="currentColor"
+        d="M1 7H3V21H17V23H3C1.9 23 1 22.11 1 21V7M19 1H7C5.89 1 5 1.9 5 3V17C5 18.1 5.89 19 7 19H21C22.1 19 23 18.1 23 17V5L19 1M21 17H7V3H18.17L21 5.83V17M14 10C12.34 10 11 11.34 11 13S12.34 16 14 16 17 14.66 17 13 15.66 10 14 10M8 4H17V8H8V4Z"
+      />
+    </svg>
+  ),
+  'sync': (className: string) => (
+    // heroicons mini arrow-path
+    <svg viewBox="0 0 20 20" fill="currentColor" className={cx('icon', className)}>
+      <path
+        fillRule="evenodd"
+        d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
+  'error-triangle': (className: string) => (
+    // heroicons mini exclamation-triangle
+    <svg viewBox="0 0 20 20" fill="currentColor" className={cx('icon', className)}>
+      <path
+        fillRule="evenodd"
+        d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
 };
 
 export type IconVariant = keyof typeof ICONS;

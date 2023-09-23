@@ -21,6 +21,7 @@ import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
+import { CommitOrSyncButton } from './CommitOrSyncButton';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -88,6 +89,8 @@ export function Workspace() {
           >
             Search
           </Button>
+
+          <CommitOrSyncButton />
 
           {showScraperDialog && (
             <ScraperDialog

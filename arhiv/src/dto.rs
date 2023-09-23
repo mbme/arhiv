@@ -59,6 +59,7 @@ pub enum APIRequest {
     Scrape {
         url: String,
     },
+    CommitOrSync {},
 }
 
 #[derive(Serialize)]
@@ -110,6 +111,7 @@ pub enum APIResponse {
     Scrape {
         documents: Vec<ListDocumentsResult>,
     },
+    CommitOrSync {},
 }
 
 #[derive(Serialize)]

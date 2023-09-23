@@ -1,4 +1,4 @@
-use std::{rc::Rc, str::FromStr};
+use std::{str::FromStr, sync::Arc};
 
 use anyhow::{ensure, Context, Result};
 use reqwest::Url;
@@ -10,7 +10,7 @@ use crate::{Baza, SETTING_LAST_SYNC_TIME};
 use super::{agent::SyncAgent, ping::Ping, BazaClient};
 
 pub struct SyncService<'b> {
-    agents: Vec<Rc<SyncAgent>>,
+    agents: Vec<Arc<SyncAgent>>,
     baza: &'b Baza,
 }
 
@@ -57,7 +57,7 @@ impl<'b> SyncService<'b> {
         self.agents.len()
     }
 
-    async fn collect_pings(&self) -> Result<Vec<(Rc<SyncAgent>, Ping)>> {
+    async fn collect_pings(&self) -> Result<Vec<(Arc<SyncAgent>, Ping)>> {
         let pings = self
             .agents
             .iter()
@@ -132,7 +132,11 @@ impl<'b> SyncService<'b> {
             }
         }
 
-        log::info!("finished sync");
+        if updated {
+            log::info!("finished sync, updated");
+        } else {
+            log::info!("finished sync, no updates");
+        }
 
         Ok(updated)
     }

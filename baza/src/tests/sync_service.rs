@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Result;
 use serde_json::{json, Value};
@@ -26,7 +26,7 @@ async fn test_sync_service() -> Result<()> {
         tx.commit()?;
     }
 
-    let baza1 = Rc::new(Baza::new_test_baza_with_id("1"));
+    let baza1 = Arc::new(Baza::new_test_baza_with_id("1"));
     {
         let mut tx = baza1.get_tx()?;
         tx.apply_changeset(create_changeset(vec![
@@ -81,7 +81,7 @@ async fn test_sync_blobs() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    let baza1 = Rc::new(Baza::new_test_baza_with_id("1"));
+    let baza1 = Arc::new(Baza::new_test_baza_with_id("1"));
 
     let blob_id = {
         let mut tx = baza1.get_tx()?;

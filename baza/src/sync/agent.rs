@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use anyhow::{Context, Result};
 
@@ -7,12 +7,12 @@ use crate::{entities::BLOB, Baza};
 use super::{changeset::Changeset, network::BazaClient, ping::Ping, Revision};
 
 pub enum SyncAgent {
-    InMemory { baza: Rc<Baza> },
+    InMemory { baza: Arc<Baza> },
     Network { client: BazaClient },
 }
 
 impl SyncAgent {
-    pub fn new_in_memory(baza: Rc<Baza>) -> Result<Self> {
+    pub fn new_in_memory(baza: Arc<Baza>) -> Result<Self> {
         Ok(SyncAgent::InMemory { baza })
     }
 

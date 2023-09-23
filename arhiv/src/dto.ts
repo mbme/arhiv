@@ -58,6 +58,9 @@ export type APIRequest =
   | {
       typeName: 'Scrape';
       url: string;
+    }
+  | {
+      typeName: 'CommitOrSync';
     };
 
 export type APIResponse =
@@ -117,6 +120,9 @@ export type APIResponse =
   | {
       typeName: 'Scrape';
       documents: ListDocumentsResult[];
+    }
+  | {
+      typeName: 'CommitOrSync';
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

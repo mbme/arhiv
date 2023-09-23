@@ -216,7 +216,7 @@ impl BazaConnection {
         })
     }
 
-    pub(crate) fn has_staged_documents(&self) -> Result<bool> {
+    pub fn has_staged_documents(&self) -> Result<bool> {
         self.get_connection()
             .query_row(
                 "SELECT true FROM documents_snapshots WHERE rev = ?1 LIMIT 1",

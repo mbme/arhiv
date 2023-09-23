@@ -71,7 +71,7 @@ impl MDNSService {
             .register(my_service)
             .context("Failed to register service")?;
 
-        log::info!("Started MDNS server for instance {}", self.instance_name);
+        log::debug!("Started MDNS server for instance {}", self.instance_name);
 
         Ok(MDNSServer {
             fullname,
@@ -88,7 +88,7 @@ impl MDNSService {
             .browse(&self.get_service_type())
             .context("Failed to browse")?;
 
-        log::info!("Started MDNS client for instance {}", self.instance_name);
+        log::debug!("Started MDNS client for instance {}", self.instance_name);
 
         let local_instance_name = self.instance_name.clone();
 
@@ -106,7 +106,7 @@ impl MDNSService {
                             continue;
                         }
 
-                        log::info!("Registered an instance: {instance_name}");
+                        log::debug!("Registered an instance: {instance_name}");
 
                         tx.send_modify(|peers| {
                             peers.insert(
@@ -125,7 +125,7 @@ impl MDNSService {
                             continue;
                         }
 
-                        log::info!("Unregistered an instance: {instance_name}");
+                        log::debug!("Unregistered an instance: {instance_name}");
 
                         tx.send_modify(|peers| {
                             peers.remove(&instance_name);
@@ -145,7 +145,7 @@ impl MDNSService {
         loop {
             match self.mdns.stop_browse(&self.get_service_type()) {
                 Ok(_) => {
-                    log::info!("Stopped MDNS client for instance {}", self.instance_name);
+                    log::debug!("Stopped MDNS client for instance {}", self.instance_name);
                     return;
                 }
                 Err(MDNSError::Again) => {}
@@ -168,7 +168,7 @@ impl MDNSService {
             match self.mdns.shutdown() {
                 Ok(_) => {
                     self.started = false;
-                    log::info!("Stopped MDNS service {}", self.service_name,);
+                    log::debug!("Stopped MDNS service {}", self.service_name,);
                     return;
                 }
                 Err(MDNSError::Again) => {}
@@ -211,7 +211,7 @@ impl<'m> MDNSServer<'m> {
                 Ok(channel) => {
                     self.started = false;
 
-                    log::info!(
+                    log::debug!(
                         "Stopped MDNS server for instance {}: {:?}",
                         self.get_instance_name(),
                         channel.recv().expect("must read result"),

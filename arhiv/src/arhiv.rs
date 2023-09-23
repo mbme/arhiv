@@ -142,7 +142,13 @@ pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     let mdns_service = arhiv.get_mdns_service();
     let mut mdns_server = mdns_service.start_server(port)?;
 
-    let router = build_rpc_router(arhiv.baza.clone(), Some(build_ui_router(arhiv.clone())));
+    let rpc_router = build_rpc_router();
+    let ui_router = build_ui_router();
+
+    let router = rpc_router
+        .nest("/ui", ui_router.with_state(arhiv.clone()))
+        .with_state(arhiv.baza.clone());
+
     let server = HttpServer::start(router, port);
 
     server.join().await?;

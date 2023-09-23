@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useDeferredValue, useRef } from
 import { APIRequest } from 'dto';
 import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
-import { doRPC, RPCResponse } from 'utils/rpc';
+import { API_ENDPOINT, doRPC, RPCResponse } from 'utils/rpc';
 
 type Suspender<T> = { read: () => T };
 
@@ -60,7 +60,7 @@ export function useSuspenseQuery<Request extends APIRequest>(
 
   let suspender = cache.get(queryName);
   if (!suspender) {
-    suspender = suspensify(doRPC(window.API_ENDPOINT, request));
+    suspender = suspensify(doRPC(API_ENDPOINT, request));
     cache.set(queryName, suspender);
   }
   const deferredSuspender = useDeferredValue(suspender);
@@ -95,7 +95,16 @@ export function useSuspenseImage(url: string): HTMLImageElement {
     const image = document.createElement('img');
     image.src = url;
 
-    suspender = suspensify(image.decode().then(() => image));
+    suspender = suspensify(
+      image.decode().then(
+        () => image,
+        (err) => {
+          console.warn('Failed to decode image', image, err);
+
+          return image;
+        },
+      ),
+    );
     cache.set(url, suspender);
   }
   const deferredSuspender = useDeferredValue(suspender);

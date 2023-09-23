@@ -1,5 +1,8 @@
 use anyhow::{bail, ensure, Context, Result};
-use hyper::Body;
+use axum::{
+    body::StreamBody,
+    response::{IntoResponse, Response},
+};
 use lazy_static::lazy_static;
 use regex::Regex;
 use tokio::{
@@ -159,7 +162,11 @@ pub fn parse_range_header(header: &str) -> Result<(u64, Option<u64>)> {
     Ok((start, end))
 }
 
-pub async fn create_body_from_file(path: &str, start_pos: u64, limit: Option<u64>) -> Result<Body> {
+pub async fn create_body_from_file(
+    path: &str,
+    start_pos: u64,
+    limit: Option<u64>,
+) -> Result<Response> {
     let mut file = tokio_fs::File::open(path).await?;
 
     let size = file.metadata().await?.len();
@@ -184,10 +191,10 @@ pub async fn create_body_from_file(path: &str, start_pos: u64, limit: Option<u64
 
         let stream = FramedRead::new(file.take(limit), BytesCodec::new());
 
-        Body::wrap_stream(stream)
+        StreamBody::new(stream).into_response()
     } else {
         let stream = FramedRead::new(file, BytesCodec::new());
-        Body::wrap_stream(stream)
+        StreamBody::new(stream).into_response()
     };
 
     Ok(body)

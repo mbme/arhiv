@@ -27,7 +27,9 @@ async-trait = "0.1.68"
 
 reqwest = { version = "0.11", features = ["json", "stream"] }
 hyper = { version = "0.14", features = ["http1", "server", "stream"] }
-routerify = "3"
+axum = { version = "0.6.20", features = ["headers", "tracing"]}
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 lazy_static = "1.4.0"
 rand = "0.8.2"

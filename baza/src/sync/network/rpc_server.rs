@@ -1,120 +1,112 @@
-use std::sync::Arc;
+use std::{ops::Bound, str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::Context;
-use hyper::{Body, HeaderMap, Request, Response, StatusCode};
-use routerify::{ext::RequestExt, Middleware, Router};
+use axum::{
+    extract::{Path, State, TypedHeader},
+    headers::{self, HeaderMapExt},
+    response::{IntoResponse, Response},
+    routing::get,
+    Json, Router,
+};
+use hyper::{header, HeaderMap, StatusCode};
 
-use rs_utils::{create_body_from_file, http_server::*, log, parse_range_header};
+use rs_utils::{create_body_from_file, http_server::ServerError, log};
 
-use crate::entities::BLOBId;
-use crate::sync::Revision;
-use crate::Baza;
+use crate::{entities::BLOBId, sync::Revision, Baza};
 
-pub fn build_rpc_router(
-    baza: Arc<Baza>,
-    ui_router: Option<Router<Body, anyhow::Error>>,
-) -> Router<Body, anyhow::Error> {
-    let mut builder = Router::builder()
-        .data(baza)
-        .middleware(Middleware::post_with_info(logger_middleware))
-        //
-        .get("/health", health_handler)
-        .get("/blobs/:blob_id", get_blob_handler)
-        .get("/ping", get_ping_handler)
-        .get("/changeset/:min_rev", get_changeset_handler);
+pub fn build_rpc_router() -> Router<Arc<Baza>> {
+    Router::new()
+        .route("/health", get(health_handler))
+        .route("/ping", get(get_ping_handler))
+        .route("/blobs/:blob_id", get(get_blob_handler))
+        .route("/changeset/:min_rev", get(get_changeset_handler))
 
-    if let Some(ui_router) = ui_router {
-        builder = builder.scope("/ui", ui_router);
-    }
-
-    builder
-        .any(not_found_handler)
-        .err_handler_with_info(error_handler)
-        //
-        .build()
-        .expect("router must work")
-}
-
-pub fn start_rpc_server(baza: Arc<Baza>, port: u16) -> HttpServer {
-    let router = build_rpc_router(baza, None);
-
-    HttpServer::start(router, port)
+    // TODO logger_middleware
+    // TODO not_found_handler
+    // TODO error_handler
 }
 
 #[allow(clippy::unused_async)]
-async fn health_handler(_req: Request<Body>) -> ServerResponse {
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(hyper::header::CACHE_CONTROL, "no-cache")
-        .body(Body::empty())
-        .context("failed to build health response")
+async fn health_handler() -> impl IntoResponse {
+    (StatusCode::OK, [(header::CACHE_CONTROL, "no-cache")])
 }
 
-async fn get_blob_handler(req: Request<Body>) -> ServerResponse {
-    let blob_id = req.param("blob_id").unwrap().as_str();
+async fn get_blob_handler(
+    State(baza): State<Arc<Baza>>,
+    Path(blob_id): Path<String>,
+    range: Option<TypedHeader<headers::Range>>,
+) -> impl IntoResponse {
     let blob_id = BLOBId::from_string(blob_id);
 
-    let baza: &Arc<Baza> = req.data().unwrap();
-
-    respond_with_blob(baza, &blob_id, req.headers()).await
+    respond_with_blob(&baza, &blob_id, &range.map(|range| range.0)).await
 }
 
-async fn get_ping_handler(req: Request<Body>) -> ServerResponse {
-    let baza: &Arc<Baza> = req.data().unwrap();
-
+async fn get_ping_handler(State(baza): State<Arc<Baza>>) -> Result<impl IntoResponse, ServerError> {
     let ping = baza.get_connection()?.get_ping()?;
 
-    json_response(ping)
+    Ok(Json(ping))
 }
 
-async fn get_changeset_handler(req: Request<Body>) -> ServerResponse {
-    let min_rev = req.param("min_rev").unwrap().as_str();
-    let min_rev = serde_json::from_str(min_rev).context("failed to parse min_rev")?;
+async fn get_changeset_handler(
+    State(baza): State<Arc<Baza>>,
+    Path(min_rev): Path<String>,
+) -> Result<impl IntoResponse, ServerError> {
+    let min_rev = serde_json::from_str(&min_rev).context("failed to parse min_rev")?;
     let min_rev = Revision::from_value(min_rev)?;
-
-    let baza: &Arc<Baza> = req.data().unwrap();
 
     let changeset = baza.get_connection()?.get_changeset(&min_rev)?;
 
-    json_response(changeset)
+    Ok(Json(changeset))
 }
 
 pub async fn respond_with_blob(
     baza: &Baza,
     blob_id: &BLOBId,
-    headers: &HeaderMap,
-) -> ServerResponse {
+    range: &Option<headers::Range>,
+) -> Result<Response, ServerError> {
     let conn = baza.get_connection()?;
     let blob = conn.get_blob(blob_id);
 
     if !blob.exists()? {
-        return respond_not_found();
+        return Ok(StatusCode::NOT_FOUND.into_response());
     }
-
-    let range_header = headers
-        .get(hyper::header::RANGE)
-        .map(hyper::header::HeaderValue::to_str)
-        .transpose()
-        .context("failed to convert HTTP Range header to string")?
-        .map(parse_range_header)
-        .transpose()
-        .context("failed to parse HTTP Range header")?;
 
     let size = blob.get_size()?;
 
-    let response_builder = Response::builder()
-        .header(
-            // max caching
-            hyper::header::CACHE_CONTROL,
-            "immutable, private, max-age=31536000",
-        )
-        .header(hyper::header::CONTENT_TYPE, blob.get_media_type()?)
-        .header(hyper::header::ACCEPT_RANGES, "bytes");
+    let mut headers = HeaderMap::new();
 
-    if let Some((start_pos, end_pos)) = range_header {
-        let end_pos = end_pos.unwrap_or(size - 1);
+    headers.typed_insert(headers::ContentLength(size));
+    headers.typed_insert(headers::AcceptRanges::bytes());
+    headers.typed_insert(headers::ContentType::from_str(&blob.get_media_type()?)?);
 
-        if start_pos >= size || start_pos >= end_pos || end_pos >= size {
+    // max caching
+    headers.typed_insert(
+        headers::CacheControl::new()
+            .with_immutable()
+            .with_private()
+            .with_max_age(Duration::from_secs(31536000)),
+    );
+
+    let ranges = range
+        .as_ref()
+        .map(|range| range.iter().collect::<Vec<_>>())
+        .unwrap_or_default();
+    if ranges.len() == 1 {
+        let (start_pos, end_pos) = ranges[0];
+
+        let start_pos = match start_pos {
+            Bound::Included(start_pos) => start_pos,
+            Bound::Excluded(start_pos) => start_pos + 1,
+            Bound::Unbounded => 0,
+        };
+
+        let end_pos = match end_pos {
+            Bound::Included(end_pos) => end_pos,
+            Bound::Excluded(end_pos) => end_pos - 1,
+            Bound::Unbounded => size - 1,
+        };
+
+        if start_pos >= size || end_pos >= size {
             log::warn!(
                 "blob {}: range {}-{} out of {} not satisfiable",
                 blob_id,
@@ -122,29 +114,21 @@ pub async fn respond_with_blob(
                 end_pos,
                 size
             );
-            return respond_with_status(StatusCode::RANGE_NOT_SATISFIABLE);
+
+            return Ok(StatusCode::RANGE_NOT_SATISFIABLE.into_response());
         }
 
         let range_size = end_pos + 1 - start_pos;
-
         let body = create_body_from_file(&blob.file_path, start_pos, Some(range_size)).await?;
 
-        response_builder
-            .status(StatusCode::PARTIAL_CONTENT)
-            .header(hyper::header::CONTENT_LENGTH, range_size)
-            .header(
-                hyper::header::CONTENT_RANGE,
-                format!("bytes {start_pos}-{end_pos}/{size}"),
-            )
-            .body(body)
-            .context("failed to build BLOB response")
+        let content_range = headers::ContentRange::bytes(start_pos..end_pos, size)?;
+
+        headers.typed_insert(content_range);
+
+        Ok((StatusCode::PARTIAL_CONTENT, headers, body).into_response())
     } else {
         let body = create_body_from_file(&blob.file_path, 0, None).await?;
 
-        response_builder
-            .status(StatusCode::OK)
-            .header(hyper::header::CONTENT_LENGTH, size)
-            .body(body)
-            .context("failed to build BLOB response")
+        Ok((StatusCode::OK, headers, body).into_response())
     }
 }

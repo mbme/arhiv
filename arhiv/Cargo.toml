@@ -25,7 +25,7 @@ tokio.workspace = true
 tokio-util.workspace = true
 
 hyper.workspace = true
-routerify.workspace = true
+axum.workspace = true
 
 rust-embed= { version = "8", features = ["interpolate-folder-path"]}
 

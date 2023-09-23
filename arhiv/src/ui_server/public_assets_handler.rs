@@ -1,42 +1,50 @@
+use std::str::FromStr;
+
 use anyhow::Context;
-use hyper::{header, Body, Request, Response, StatusCode};
-use routerify::ext::RequestExt;
+use axum::{
+    extract::Path,
+    headers::{self, ETag, HeaderMapExt},
+    response::{IntoResponse, Response},
+    TypedHeader,
+};
+use hyper::{HeaderMap, StatusCode};
 use rust_embed::RustEmbed;
 
-use rs_utils::{
-    bytes_to_hex_string, get_mime_from_path,
-    http_server::{respond_not_found, respond_with_status, ServerResponse},
-};
+use rs_utils::{bytes_to_hex_string, get_mime_from_path, http_server::ServerError};
 
 #[derive(RustEmbed)]
 #[folder = "$CARGO_MANIFEST_DIR/public"]
 struct PublicAssets;
 
-pub async fn public_assets_handler(req: Request<Body>) -> ServerResponse {
-    let asset = req.param("fileName").unwrap();
-
+pub async fn public_assets_handler(
+    Path(asset): Path<String>,
+    if_none_match: Option<TypedHeader<headers::IfNoneMatch>>,
+) -> Result<Response, ServerError> {
     let embedded_file = {
-        if let Some(data) = PublicAssets::get(asset) {
+        if let Some(data) = PublicAssets::get(&asset) {
             data
         } else {
-            return respond_not_found();
+            return Ok(StatusCode::NOT_FOUND.into_response());
         }
     };
 
     let hash = embedded_file.metadata.sha256_hash();
     let hash = bytes_to_hex_string(&hash);
 
-    if let Some(etag) = req.headers().get(header::IF_NONE_MATCH) {
-        if etag.to_str()? == hash {
-            return respond_with_status(StatusCode::NOT_MODIFIED);
+    let etag = ETag::from_str(&format!("\"{hash}\"")).context("failed to parse ETag")?;
+
+    if let Some(if_none_match) = if_none_match {
+        // TODO ensure it works
+        if !if_none_match.precondition_passes(&etag) {
+            return Ok(StatusCode::NOT_MODIFIED.into_response());
         }
     }
 
     let mime = get_mime_from_path(asset);
 
-    Response::builder()
-        .header(header::ETAG, hash)
-        .header(header::CONTENT_TYPE, mime)
-        .body(Body::from(embedded_file.data))
-        .context("failed to build response")
+    let mut headers = HeaderMap::new();
+    headers.typed_insert(etag);
+    headers.typed_insert(headers::ContentType::from_str(&mime)?);
+
+    Ok((StatusCode::OK, headers, embedded_file.data).into_response())
 }

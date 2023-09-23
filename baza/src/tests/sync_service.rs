@@ -3,14 +3,20 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde_json::{json, Value};
 
-use rs_utils::workspace_relpath;
+use rs_utils::{http_server::HttpServer, workspace_relpath};
 
 use crate::{
     entities::Id,
-    sync::{start_rpc_server, BazaClient, SyncAgent, SyncService},
+    sync::{build_rpc_router, BazaClient, SyncAgent, SyncService},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
     Baza,
 };
+
+fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
+    let router = build_rpc_router().with_state(baza);
+
+    HttpServer::start(router, 0)
+}
 
 #[tokio::test]
 async fn test_sync_service() -> Result<()> {
@@ -155,7 +161,7 @@ async fn test_sync_service_network_agent() -> Result<()> {
 
     let mut sync_service = SyncService::new(&baza0);
 
-    let server1 = start_rpc_server(baza1.clone(), 0);
+    let server1 = start_rpc_server(baza1.clone());
 
     let client1 = BazaClient::new(server1.get_url()?, &baza1.get_path_manager().downloads_dir);
     let agent1 = SyncAgent::new_in_network(client1);

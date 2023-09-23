@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use hyper::{header, http::request::Parts, Body, Request, Response, StatusCode};
-use routerify::{prelude::RequestExt, Middleware, Router};
+use axum::{
+    extract::{Path, State},
+    headers,
+    response::{Html, IntoResponse},
+    routing::{get, post},
+    Json, Router, TypedHeader,
+};
 
 use baza::{entities::BLOBId, sync::respond_with_blob};
-use rs_utils::http_server::{
-    error_handler, logger_middleware, not_found_handler, respond_moved_permanently,
-    respond_with_status, ServerResponse,
-};
+use rs_utils::http_server::{no_cache_headers, ServerError};
 
 use crate::dto::APIRequest;
 use crate::Arhiv;
@@ -19,27 +21,18 @@ use self::public_assets_handler::public_assets_handler;
 mod api_handler;
 mod public_assets_handler;
 
-pub fn build_ui_router(arhiv: Arc<Arhiv>) -> Router<Body, anyhow::Error> {
-    Router::builder()
-        .data(arhiv)
-        .middleware(Middleware::post_with_info(logger_middleware))
-        //
-        .get("/", index_page)
-        .post("/api", api_handler)
-        .get("/documents/:document_id", old_document_page_handler) // redirect for compatibility with the old UI
-        .get("/blobs/:blob_id", blob_handler)
-        .get("/:fileName", public_assets_handler)
-        //
-        .any(not_found_handler)
-        .err_handler_with_info(error_handler)
-        //
-        .build()
-        .expect("failed to build UI router")
+pub fn build_ui_router() -> Router<Arc<Arhiv>> {
+    // TODO logger_middleware
+    // TODO not_found_handler
+    // TODO error_handler
+    Router::new()
+        .route("/", get(index_page))
+        .route("/blobs/:blob_id", get(blob_handler))
+        .route("/*fileName", get(public_assets_handler))
+        .route("/api", post(api_handler))
 }
 
-async fn index_page(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
-
+async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
 
@@ -62,7 +55,7 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
                     <main></main>
 
                     <script>
-                        window.API_ENDPOINT = "{base_path}/api";
+                        window.BASE_PATH = "{base_path}";
                         window.SCHEMA = {schema};
                     </script>
 
@@ -71,68 +64,24 @@ async fn index_page(req: Request<Body>) -> ServerResponse {
             </html>"#
     );
 
-    render_html(StatusCode::OK, content)
+    Ok((no_cache_headers(), Html(content)))
 }
 
-async fn old_document_page_handler(req: Request<Body>) -> ServerResponse {
-    let document_id = req.param("document_id").unwrap().as_str();
+async fn api_handler(
+    State(arhiv): State<Arc<Arhiv>>,
+    Json(request): Json<APIRequest>,
+) -> Result<impl IntoResponse, ServerError> {
+    let response = handle_api_request(&arhiv, request).await?;
 
-    respond_moved_permanently(format!("/ui?id={document_id}"))
+    Ok((no_cache_headers(), Json(response)))
 }
 
-async fn api_handler(req: Request<Body>) -> ServerResponse {
-    let (parts, body): (Parts, Body) = req.into_parts();
-
-    let arhiv: &Arc<Arhiv> = parts.data().unwrap();
-
-    let content_type = parts
-        .headers
-        .get(header::CONTENT_TYPE)
-        .map(|value| value.to_str())
-        .transpose()?
-        .unwrap_or_default();
-
-    if content_type != "application/json" {
-        return respond_with_status(StatusCode::UNSUPPORTED_MEDIA_TYPE);
-    }
-
-    let body = hyper::body::to_bytes(body).await?;
-
-    let request: APIRequest =
-        serde_json::from_slice(&body).context("failed to parse api request")?;
-
-    let response = handle_api_request(arhiv, request).await?;
-
-    let content = serde_json::to_string(&response).context("failed to serialize response")?;
-
-    render_json(StatusCode::OK, content)
-}
-
-async fn blob_handler(req: Request<Body>) -> ServerResponse {
-    let arhiv: &Arc<Arhiv> = req.data().unwrap();
-
-    let blob_id = req.param("blob_id").unwrap().as_str();
+async fn blob_handler(
+    State(arhiv): State<Arc<Arhiv>>,
+    Path(blob_id): Path<String>,
+    range: Option<TypedHeader<headers::Range>>,
+) -> impl IntoResponse {
     let blob_id = BLOBId::from_string(blob_id);
 
-    respond_with_blob(&arhiv.baza, &blob_id, req.headers()).await
-}
-
-fn build_response(status: StatusCode, content_type: &str, content: String) -> ServerResponse {
-    Response::builder()
-        .status(status)
-        .header(header::CONTENT_TYPE, content_type)
-        // prevent page from caching
-        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-        .header(header::EXPIRES, "0")
-        // ---
-        .body(content.into())
-        .context("failed to build response")
-}
-
-fn render_html(status: StatusCode, content: String) -> ServerResponse {
-    build_response(status, "text/html", content)
-}
-
-fn render_json(status: StatusCode, content: String) -> ServerResponse {
-    build_response(status, "application/json", content)
+    respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }

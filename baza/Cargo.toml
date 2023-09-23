@@ -32,7 +32,7 @@ fslock = "0.2.1"
 
 reqwest.workspace = true
 hyper.workspace = true
-routerify.workspace = true
+axum.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

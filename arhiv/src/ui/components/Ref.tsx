@@ -184,7 +184,7 @@ export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentDat
   const filename = data['filename'] as string;
   const blobId = data['blob'] as string;
 
-  const blobUrl = `/blobs/${blobId}`;
+  const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
 
   if (isImageAttachment(subtype)) {
     return <SuspenseImage src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;

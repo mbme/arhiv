@@ -55,7 +55,7 @@ impl fmt::Display for Status {
 
         writeln!(
             f,
-            "       Has staged changes: {}",
+            "      Is modified: {}",
             self.documents_count.count_staged() > 0
         )?;
 

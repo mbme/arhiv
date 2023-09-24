@@ -31,7 +31,6 @@ rs-utils = { path = "../rs-utils" }
 fslock = "0.2.1"
 
 reqwest.workspace = true
-hyper.workspace = true
 axum.workspace = true
 
 [dev-dependencies]

@@ -376,7 +376,7 @@ impl BazaConnection {
         }
 
         let (query, params) = qb.build();
-        log::debug!("list_documents: {}", &query);
+        log::trace!("list_documents: {}", &query);
 
         let mut stmt = self.get_connection().prepare(&query)?;
 

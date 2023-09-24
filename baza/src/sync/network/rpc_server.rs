@@ -4,13 +4,17 @@ use anyhow::Context;
 use axum::{
     extract::{Path, State, TypedHeader},
     headers::{self, HeaderMapExt},
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
-use hyper::{header, HeaderMap, StatusCode};
 
-use rs_utils::{create_body_from_file, http_server::ServerError, log};
+use rs_utils::{
+    create_body_from_file,
+    http_server::{no_cache_headers, ServerError},
+    log,
+};
 
 use crate::{entities::BLOBId, sync::Revision, Baza};
 
@@ -20,15 +24,11 @@ pub fn build_rpc_router() -> Router<Arc<Baza>> {
         .route("/ping", get(get_ping_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
-
-    // TODO logger_middleware
-    // TODO not_found_handler
-    // TODO error_handler
 }
 
 #[allow(clippy::unused_async)]
 async fn health_handler() -> impl IntoResponse {
-    (StatusCode::OK, [(header::CACHE_CONTROL, "no-cache")])
+    (StatusCode::OK, no_cache_headers())
 }
 
 async fn get_blob_handler(

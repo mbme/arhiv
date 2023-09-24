@@ -10,7 +10,11 @@ use axum::{
 };
 
 use baza::{entities::BLOBId, sync::respond_with_blob};
-use rs_utils::http_server::{no_cache_headers, ServerError};
+use rs_utils::{
+    http_server::{no_cache_headers, ServerError},
+    log,
+};
+use serde_json::Value;
 
 use crate::dto::APIRequest;
 use crate::Arhiv;
@@ -22,9 +26,6 @@ mod api_handler;
 mod public_assets_handler;
 
 pub fn build_ui_router() -> Router<Arc<Arhiv>> {
-    // TODO logger_middleware
-    // TODO not_found_handler
-    // TODO error_handler
     Router::new()
         .route("/", get(index_page))
         .route("/blobs/:blob_id", get(blob_handler))
@@ -69,8 +70,15 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
 
 async fn api_handler(
     State(arhiv): State<Arc<Arhiv>>,
-    Json(request): Json<APIRequest>,
+    Json(request_value): Json<Value>,
 ) -> Result<impl IntoResponse, ServerError> {
+    log::info!(
+        "API request: {}",
+        request_value.get("typeName").unwrap_or(&Value::Null)
+    );
+
+    let request: APIRequest =
+        serde_json::from_value(request_value).context("failed to parse APIRequest")?;
     let response = handle_api_request(&arhiv, request).await?;
 
     Ok((no_cache_headers(), Json(response)))

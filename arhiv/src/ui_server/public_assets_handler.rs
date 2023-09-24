@@ -4,10 +4,10 @@ use anyhow::Context;
 use axum::{
     extract::Path,
     headers::{self, ETag, HeaderMapExt},
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     TypedHeader,
 };
-use hyper::{HeaderMap, StatusCode};
 use rust_embed::RustEmbed;
 
 use rs_utils::{bytes_to_hex_string, get_mime_from_path, http_server::ServerError};

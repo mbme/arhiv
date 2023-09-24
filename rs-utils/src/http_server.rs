@@ -2,12 +2,14 @@ use std::{net::SocketAddr, str::FromStr, time::UNIX_EPOCH};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use axum::{
+    body::{boxed, Body},
     headers::{self, HeaderMapExt},
+    http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
-    Router,
+    Router, Server,
 };
-use hyper::{header, http::HeaderValue, HeaderMap, Request, Server, StatusCode};
+use hyper::body::to_bytes;
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 
 pub struct ServerError(anyhow::Error);
@@ -57,9 +59,23 @@ pub async fn logger_middleware<B>(
 
     let response = next.run(request).await;
 
-    log::debug!("{method} {uri} -> {}", response.status());
+    let status = response.status();
+    if status.is_client_error() || status.is_server_error() {
+        let (parts, body) = response.into_parts();
 
-    Ok(response)
+        let bytes = to_bytes(body)
+            .await
+            .context("failed to convert body to bytes")
+            .unwrap_or_default();
+
+        let body_str = String::from_utf8_lossy(&bytes);
+        log::warn!("{method} {uri} -> {status}:\n{body_str}");
+
+        Ok(Response::from_parts(parts, boxed(Body::from(bytes))))
+    } else {
+        log::debug!("{method} {uri} -> {status}");
+        Ok(response)
+    }
 }
 
 pub struct HttpServer {
@@ -71,14 +87,14 @@ pub struct HttpServer {
 impl HttpServer {
     #[must_use]
     pub fn start(router: Router, port: u16) -> HttpServer {
-        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
-
         let router = router.layer(middleware::from_fn(logger_middleware));
 
         let server = Server::bind(&(std::net::Ipv4Addr::UNSPECIFIED, port).into())
             .serve(router.into_make_service());
 
         let address = server.local_addr();
+
+        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
         // Spawn the server into a runtime
         let join_handle = tokio::spawn(async {

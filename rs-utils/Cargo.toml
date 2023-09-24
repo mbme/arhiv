@@ -22,6 +22,7 @@ serde_json.workspace = true
 hyper.workspace = true
 reqwest.workspace = true
 axum.workspace = true
+time.workspace = true
 
 rand.workspace = true
 lazy_static.workspace = true

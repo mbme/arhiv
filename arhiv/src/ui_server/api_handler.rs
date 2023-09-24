@@ -311,6 +311,13 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::CommitOrSync {}
         }
+        APIRequest::GetIsModified {} => {
+            let has_staged_documents = arhiv.baza.get_connection()?.has_staged_documents()?;
+
+            APIResponse::GetIsModified {
+                is_modified: has_staged_documents,
+            }
+        }
     };
 
     Ok(response)

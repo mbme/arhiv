@@ -60,6 +60,7 @@ pub enum APIRequest {
         url: String,
     },
     CommitOrSync {},
+    GetIsModified {},
 }
 
 #[derive(Serialize)]
@@ -112,6 +113,10 @@ pub enum APIResponse {
         documents: Vec<ListDocumentsResult>,
     },
     CommitOrSync {},
+    #[serde(rename_all = "camelCase")]
+    GetIsModified {
+        is_modified: bool,
+    },
 }
 
 #[derive(Serialize)]

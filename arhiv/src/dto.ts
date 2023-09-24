@@ -61,6 +61,9 @@ export type APIRequest =
     }
   | {
       typeName: 'CommitOrSync';
+    }
+  | {
+      typeName: 'GetIsModified';
     };
 
 export type APIResponse =
@@ -123,7 +126,21 @@ export type APIResponse =
     }
   | {
       typeName: 'CommitOrSync';
+    }
+  | {
+      typeName: 'GetIsModified';
+      isModified: boolean;
     };
+
+export const MUTABLE_API_REQUESTS: ReadonlyArray<APIRequest['typeName']> = [
+  'CreateAttachment',
+  'CreateDocument',
+  'EraseDocument',
+  'SaveDocument',
+  'Scrape',
+  'UploadFile',
+  'CommitOrSync',
+];
 
 export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;

@@ -52,6 +52,7 @@ type QueryHookResult<TResult> = {
   inProgress: boolean;
   error?: Error | string;
   triggerRefresh: Callback;
+  requestTs: number; // millis
 };
 
 // TODO refetch on focus, refetch on reconnect, cache
@@ -66,6 +67,7 @@ export function useQuery<TResult>(
   const [inProgress, setInProgress] = useState(false);
   const [result, setResult] = useState<TResult>();
   const [error, setError] = useState<Error | string>();
+  const [requestTs, setRequestTs] = useState(0);
 
   const [counter, setCounter] = useState(0);
 
@@ -77,6 +79,7 @@ export function useQuery<TResult>(
 
     const controller = new AbortController();
     setInProgress(true);
+    setRequestTs(Date.now());
 
     cbRef.current(controller.signal).then(
       (result) => {
@@ -107,6 +110,7 @@ export function useQuery<TResult>(
     result,
     error,
     inProgress,
+    requestTs,
     triggerRefresh() {
       setCounter(counter + 1);
     },
@@ -291,4 +295,39 @@ export function useImmediateEffect(cb: Callback, deps: unknown[] = []): void {
     prevValueRef.current = deps;
     cb();
   }
+}
+
+export function useIsPageVisible(): boolean {
+  const [isPageVisible, setIsPageVisible] = useState(() => document.visibilityState === 'visible');
+
+  useEffect(() => {
+    const visibilityChangeHandler = () => {
+      setIsPageVisible(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', visibilityChangeHandler);
+
+    return () => {
+      document.removeEventListener('visibilitychange', visibilityChangeHandler);
+    };
+  }, []);
+
+  return isPageVisible;
+}
+
+export function usePageVisibilityTracker(onPageVisibilityChange: (visible: boolean) => void) {
+  const onPageVisibilityChangeRef = useRef(onPageVisibilityChange);
+  onPageVisibilityChangeRef.current = onPageVisibilityChange;
+
+  useEffect(() => {
+    const visibilityChangeHandler = () => {
+      onPageVisibilityChangeRef.current(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', visibilityChangeHandler);
+
+    return () => {
+      document.removeEventListener('visibilitychange', visibilityChangeHandler);
+    };
+  }, []);
 }

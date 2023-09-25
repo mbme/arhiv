@@ -7,7 +7,7 @@ use std::{
 use anyhow::{anyhow, ensure, Context, Result};
 use axum::{
     body::{boxed, Body},
-    headers::{self, CacheControl, HeaderMapExt},
+    headers::{self, HeaderMapExt},
     http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},

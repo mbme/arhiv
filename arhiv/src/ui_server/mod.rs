@@ -21,15 +21,18 @@ use crate::dto::APIRequest;
 use crate::Arhiv;
 
 use self::api_handler::handle_api_request;
+use self::image_handler::image_handler;
 use self::public_assets_handler::public_assets_handler;
 
 mod api_handler;
+mod image_handler;
 mod public_assets_handler;
 
 pub fn build_ui_router() -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
         .route("/blobs/:blob_id", get(blob_handler))
+        .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
         .route("/api", post(api_handler))
 }

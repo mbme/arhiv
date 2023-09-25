@@ -45,7 +45,7 @@ export function CardContainer({
   useScrollRestoration(el, `workspace-card-${card.id}`);
 
   const fallback = (
-    <div className="card-container flex items-center justify-center">
+    <div className="card-container flex items-center justify-center grow">
       <Icon variant="spinner" className="h-10 w-10 opacity-50" />
     </div>
   );

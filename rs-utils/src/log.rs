@@ -1,7 +1,7 @@
 use log::LevelFilter;
 use time::{macros::format_description, util::local_offset, UtcOffset};
 use tracing_subscriber::{
-    fmt::{self, time::OffsetTime},
+    fmt::{self, format::FmtSpan, time::OffsetTime},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
@@ -21,7 +21,12 @@ fn setup_logger_with_level(log_level: LevelFilter) {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| format!("{},hyper=info,mdns_sd=info", log_level).into()),
         )
-        .with(fmt::Layer::new().compact().with_timer(timer))
+        .with(
+            fmt::Layer::new()
+                .compact()
+                .with_timer(timer)
+                .with_span_events(FmtSpan::CLOSE),
+        )
         .init();
 }
 

@@ -17,6 +17,7 @@ rs-utils = { path = "../rs-utils" }
 scraper = { path = "../scraper" }
 
 anyhow.workspace = true
+tracing.workspace = true
 
 serde.workspace = true
 serde_json.workspace = true

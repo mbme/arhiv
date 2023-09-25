@@ -5,6 +5,7 @@ use anyhow::{ensure, Result};
 
 use rs_utils::{ensure_dir_exists, ensure_file_exists};
 
+#[derive(Debug)]
 pub struct PathManager {
     pub root_dir: String,
     pub data_dir: String,

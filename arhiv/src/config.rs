@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::{file_exists, get_config_home, locate_dominating_file, log};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
     pub arhiv_root: String,

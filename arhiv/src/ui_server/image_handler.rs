@@ -18,12 +18,13 @@ use rs_utils::{
 
 use crate::Arhiv;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct ImageParams {
     pub max_w: Option<u32>,
     pub max_h: Option<u32>,
 }
 
+#[tracing::instrument(skip(arhiv))]
 pub async fn image_handler(
     State(arhiv): State<Arc<Arhiv>>,
     Path(blob_id): Path<String>,

@@ -19,7 +19,7 @@ pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32)> {
     Ok(img.dimensions())
 }
 
-// returns png image
+// returns webp image
 pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> Result<Vec<u8>> {
     const MAX_THUMBNAIL_SIZE: u32 = 96;
 
@@ -38,7 +38,7 @@ pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> R
         img.resize(max_w, max_h, image::imageops::FilterType::Lanczos3)
     };
 
-    resized_img.write_to(&mut Cursor::new(&mut bytes), image::ImageOutputFormat::Png)?;
+    resized_img.write_to(&mut Cursor::new(&mut bytes), image::ImageOutputFormat::WebP)?;
 
     Ok(bytes)
 }

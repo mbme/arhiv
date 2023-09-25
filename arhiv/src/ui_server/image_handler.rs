@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
@@ -55,7 +55,7 @@ pub async fn image_handler(
 
     let mut headers = HeaderMap::new();
     add_max_cache_header(&mut headers);
-    headers.typed_insert(headers::ContentType::png());
+    headers.typed_insert(headers::ContentType::from_str("image/webp")?);
     headers.typed_insert(headers::ContentLength(body.len() as u64));
 
     Ok((StatusCode::OK, headers, body))

@@ -12,7 +12,8 @@ use serde::Deserialize;
 use baza::entities::BLOBId;
 use rs_utils::{
     http_server::{add_max_cache_header, ServerError},
-    log, scale_image,
+    image::scale_image,
+    log,
 };
 
 use crate::Arhiv;

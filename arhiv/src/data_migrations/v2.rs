@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
 use anyhow::Result;
-use rs_utils::{get_image_size, log};
 
 use baza::{
     entities::{BLOBId, Document, BLOB},
     schema::DataMigration,
     BazaConnection,
 };
+use rs_utils::{image::get_image_dimensions, log};
 
 pub struct DataSchema2;
 
@@ -31,7 +31,7 @@ impl DataMigration for DataSchema2 {
             let blob_id = BLOBId::from_string(document.data.get_mandatory_str("blob"));
             let blob = BLOB::new(blob_id, &conn.get_path_manager().data_dir);
 
-            match get_image_size(&blob.file_path) {
+            match get_image_dimensions(&blob.file_path) {
                 Ok((width, height)) => {
                     document.data.set("width", width);
                     document.data.set("height", height);

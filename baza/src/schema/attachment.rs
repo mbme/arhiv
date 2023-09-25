@@ -1,7 +1,9 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{get_file_name, get_file_size, get_image_size, get_media_type, log, FFProbe};
+use rs_utils::{
+    get_file_name, get_file_size, get_media_type, image::get_image_dimensions, log, FFProbe,
+};
 
 use crate::{
     entities::{BLOBId, Document, DocumentClass},
@@ -157,7 +159,7 @@ pub fn create_attachment(
     if attachment.data.is_image() {
         attachment.class.set_subtype(IMAGE_SUBTYPE);
 
-        match get_image_size(file_path) {
+        match get_image_dimensions(file_path) {
             Ok((width, height)) => {
                 attachment.data.width = Some(width as u64);
                 attachment.data.height = Some(height as u64);

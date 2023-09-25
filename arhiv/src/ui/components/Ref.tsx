@@ -148,10 +148,7 @@ export function RefPreview({
   }
 
   return (
-    <div
-      className="RefPreview w-full group"
-      title={`${formatDocumentType(documentType, subtype).toUpperCase()} ${documentTitle}`}
-    >
+    <div className="RefPreview w-full group">
       <div className="flex space-between items-center">
         <span className="text-blue-900 pointer font-serif pl-1">{description}</span>
 
@@ -181,13 +178,20 @@ export function canPreview(documentType: DocumentType, subtype: DocumentSubtype)
 }
 
 export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentData) {
-  const filename = data['filename'] as string;
   const blobId = data['blob'] as string;
-
+  const size = data['size'] as number;
   const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
 
   if (isImageAttachment(subtype)) {
-    return <SuspenseImage src={blobUrl} alt={filename} className="max-h-96 mx-auto" />;
+    const compressedImage = `${window.BASE_PATH}/blobs/images/${blobId}?max_w=600&max_h=500`;
+
+    return (
+      <SuspenseImage
+        src={size < 1_000_000 ? blobUrl : compressedImage}
+        alt=""
+        className="max-h-96 mx-auto"
+      />
+    );
   }
 
   if (isAudioAttachment(subtype)) {

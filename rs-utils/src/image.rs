@@ -1,9 +1,7 @@
-use std::{io::Cursor, time::SystemTime};
+use std::io::Cursor;
 
 use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImageView};
-
-use crate::get_file_size;
 
 fn open_image(file_path: &str) -> Result<DynamicImage> {
     image::io::Reader::open(file_path)
@@ -25,9 +23,6 @@ pub fn get_image_dimensions(file_path: &str) -> Result<(u32, u32)> {
 pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> Result<Vec<u8>> {
     const MAX_THUMBNAIL_SIZE: u32 = 96;
 
-    let start_time = SystemTime::now();
-
-    let img_size = get_file_size(file_path)?;
     let img = open_image(file_path)?;
 
     let mut bytes: Vec<u8> = Vec::new();
@@ -44,17 +39,6 @@ pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> R
     };
 
     resized_img.write_to(&mut Cursor::new(&mut bytes), image::ImageOutputFormat::Png)?;
-
-    let resized_img_size = resized_img.as_bytes().len();
-
-    let end_time = SystemTime::now();
-    let duration = end_time.duration_since(start_time)?;
-
-    log::debug!(
-        "scaled image from {img_size} bytes to {resized_img_size} bytes: to {}% in {} seconds",
-        resized_img_size as u64 * 100 / img_size,
-        duration.as_secs(),
-    );
 
     Ok(bytes)
 }

@@ -1915,6 +1915,7 @@ dependencies = [
  "mime_guess",
  "nanoid",
  "rand",
+ "rayon",
  "regex",
  "reqwest",
  "serde",

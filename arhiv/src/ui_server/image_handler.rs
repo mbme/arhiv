@@ -12,7 +12,7 @@ use serde::Deserialize;
 use baza::entities::BLOBId;
 use rs_utils::{
     http_server::{add_max_cache_header, ServerError},
-    image::scale_image,
+    image::scale_image_async,
 };
 
 use crate::Arhiv;
@@ -39,11 +39,9 @@ pub async fn image_handler(
 
     let original_size = blob.get_size()?;
 
-    let body = tokio::task::spawn_blocking(move || {
-        scale_image(&blob.file_path, params.max_w, params.max_h)
-    })
-    .await?
-    .context("failed to scale image")?;
+    let body = scale_image_async(&blob.file_path, params.max_w, params.max_h)
+        .await
+        .context("failed to scale image")?;
 
     let scaled_img_size = body.len();
 

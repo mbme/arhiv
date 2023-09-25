@@ -42,3 +42,20 @@ pub fn scale_image(file_path: &str, max_w: Option<u32>, max_h: Option<u32>) -> R
 
     Ok(bytes)
 }
+
+pub async fn scale_image_async(
+    file_path: &str,
+    max_w: Option<u32>,
+    max_h: Option<u32>,
+) -> Result<Vec<u8>> {
+    let (send, recv) = tokio::sync::oneshot::channel();
+
+    let file_path = file_path.to_string();
+    rayon::spawn_fifo(move || {
+        let result = scale_image(&file_path, max_w, max_h);
+
+        let _ = send.send(result);
+    });
+
+    recv.await.expect("Panic in rayon::spawn")
+}

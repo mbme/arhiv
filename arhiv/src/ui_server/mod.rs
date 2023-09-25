@@ -4,17 +4,18 @@ use anyhow::Context;
 use axum::{
     extract::{Path, State},
     headers,
+    http::HeaderMap,
     response::{Html, IntoResponse},
     routing::{get, post},
     Json, Router, TypedHeader,
 };
+use serde_json::Value;
 
 use baza::{entities::BLOBId, sync::respond_with_blob};
 use rs_utils::{
-    http_server::{no_cache_headers, ServerError},
+    http_server::{add_no_cache_headers, ServerError},
     log,
 };
-use serde_json::Value;
 
 use crate::dto::APIRequest;
 use crate::Arhiv;
@@ -65,7 +66,10 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
             </html>"#
     );
 
-    Ok((no_cache_headers(), Html(content)))
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    Ok((headers, Html(content)))
 }
 
 async fn api_handler(
@@ -81,7 +85,10 @@ async fn api_handler(
         serde_json::from_value(request_value).context("failed to parse APIRequest")?;
     let response = handle_api_request(&arhiv, request).await?;
 
-    Ok((no_cache_headers(), Json(response)))
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    Ok((headers, Json(response)))
 }
 
 async fn blob_handler(

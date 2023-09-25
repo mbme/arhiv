@@ -1,4 +1,4 @@
-use std::{ops::Bound, str::FromStr, sync::Arc, time::Duration};
+use std::{ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
@@ -12,7 +12,7 @@ use axum::{
 
 use rs_utils::{
     create_body_from_file,
-    http_server::{no_cache_headers, ServerError},
+    http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
     log,
 };
 
@@ -28,7 +28,10 @@ pub fn build_rpc_router() -> Router<Arc<Baza>> {
 
 #[allow(clippy::unused_async)]
 async fn health_handler() -> impl IntoResponse {
-    (StatusCode::OK, no_cache_headers())
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
 }
 
 async fn get_blob_handler(
@@ -74,18 +77,10 @@ pub async fn respond_with_blob(
     let size = blob.get_size()?;
 
     let mut headers = HeaderMap::new();
-
+    add_max_cache_header(&mut headers);
     headers.typed_insert(headers::ContentLength(size));
     headers.typed_insert(headers::AcceptRanges::bytes());
     headers.typed_insert(headers::ContentType::from_str(&blob.get_media_type()?)?);
-
-    // max caching
-    headers.typed_insert(
-        headers::CacheControl::new()
-            .with_immutable()
-            .with_private()
-            .with_max_age(Duration::from_secs(31536000)),
-    );
 
     let ranges = range
         .as_ref()

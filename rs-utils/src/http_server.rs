@@ -1,9 +1,13 @@
-use std::{net::SocketAddr, str::FromStr, time::UNIX_EPOCH};
+use std::{
+    net::SocketAddr,
+    str::FromStr,
+    time::{Duration, UNIX_EPOCH},
+};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use axum::{
     body::{boxed, Body},
-    headers::{self, HeaderMapExt},
+    headers::{self, CacheControl, HeaderMapExt},
     http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -38,16 +42,21 @@ where
 }
 
 // prevent page from caching
-pub fn no_cache_headers() -> HeaderMap {
-    let mut headers = HeaderMap::new();
-
+pub fn add_no_cache_headers(headers: &mut HeaderMap) {
     headers.insert(
         header::CACHE_CONTROL,
         HeaderValue::from_static("no-cache, no-store, must-revalidate"),
     );
     headers.typed_insert(headers::Expires::from(UNIX_EPOCH));
+}
 
-    headers
+pub fn add_max_cache_header(headers: &mut HeaderMap) {
+    headers.typed_insert(
+        headers::CacheControl::new()
+            .with_immutable()
+            .with_private()
+            .with_max_age(Duration::from_secs(31536000)),
+    );
 }
 
 pub async fn logger_middleware<B>(

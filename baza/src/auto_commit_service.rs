@@ -1,10 +1,10 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use tokio::{task::JoinHandle, time::sleep};
+use tokio_util::sync::CancellationToken;
 
 use rs_utils::{log, now, FakeTime, Timestamp};
-use tokio_util::sync::CancellationToken;
 
 use crate::{baza::BazaEvent, Baza};
 
@@ -14,6 +14,7 @@ pub struct AutoCommitService {
     auto_commit_timeout: Duration,
     cancellation_token: CancellationToken,
     fake_time: Option<FakeTime>,
+    started: bool,
 }
 
 impl AutoCommitService {
@@ -23,6 +24,7 @@ impl AutoCommitService {
             auto_commit_timeout,
             cancellation_token: CancellationToken::new(),
             fake_time: None,
+            started: false,
         }
     }
 
@@ -60,7 +62,13 @@ impl AutoCommitService {
         })
     }
 
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&mut self) -> Result<()> {
+        if self.started {
+            bail!("Already started");
+        }
+
+        self.started = true;
+
         self.try_auto_commit().context("Auto-commit failed")?;
 
         let mut events = self.baza.get_events_channel();

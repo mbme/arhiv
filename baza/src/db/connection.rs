@@ -4,12 +4,14 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde_json::Value;
+use tokio::sync::broadcast::Sender;
 
 use rs_utils::{
     file_exists, is_same_filesystem, log, now, FsTransaction, Timestamp, MIN_TIMESTAMP,
 };
 
 use crate::{
+    baza::BazaEvent,
     db_migrations::get_db_version,
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
@@ -39,6 +41,8 @@ pub enum BazaConnection {
         path_manager: Arc<PathManager>,
         schema: Arc<DataSchema>,
 
+        events: Sender<BazaEvent>,
+
         fs_tx: FsTransaction,
         lock_file: LockFile,
 
@@ -59,7 +63,11 @@ impl BazaConnection {
         })
     }
 
-    pub fn new_tx(path_manager: Arc<PathManager>, schema: Arc<DataSchema>) -> Result<Self> {
+    pub fn new_tx(
+        path_manager: Arc<PathManager>,
+        schema: Arc<DataSchema>,
+        events: Sender<BazaEvent>,
+    ) -> Result<Self> {
         let conn = open_connection(&path_manager.db_file, true)?;
 
         init_functions(&conn, &schema)?;
@@ -75,6 +83,7 @@ impl BazaConnection {
             path_manager,
             fs_tx: FsTransaction::new(),
             lock_file,
+            events,
         })
     }
 
@@ -152,6 +161,15 @@ impl BazaConnection {
                 Ok(fs_tx)
             }
             BazaConnection::ReadOnly { .. } => bail!("not a transaction"),
+        }
+    }
+
+    fn get_event_sender(&self) -> Result<&Sender<BazaEvent>> {
+        match self {
+            BazaConnection::ReadOnly { .. } => {
+                bail!("readonly connection doesn't have event sender")
+            }
+            BazaConnection::Transaction { events, .. } => Ok(events),
         }
     }
 
@@ -703,6 +721,8 @@ impl BazaConnection {
         self.put_document(document)?;
 
         log::info!("saved document {}", document);
+
+        self.get_event_sender()?.send(BazaEvent::DocumentStaged)?;
 
         Ok(())
     }

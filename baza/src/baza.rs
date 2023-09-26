@@ -3,6 +3,7 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 
 use rs_utils::{log, MIN_TIMESTAMP};
+use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 use crate::{
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
@@ -14,10 +15,16 @@ use crate::{
     SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
+#[derive(Debug, Clone)]
+pub enum BazaEvent {
+    DocumentStaged,
+}
+
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
     data_version: u8,
+    events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
 impl Baza {
@@ -33,6 +40,7 @@ impl Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
             data_version: get_latest_data_version(&migrations),
+            events: channel(42),
         };
 
         let tx = baza.get_tx()?;
@@ -67,6 +75,7 @@ impl Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
             data_version: get_latest_data_version(&migrations),
+            events: channel(42),
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -96,7 +105,11 @@ impl Baza {
     }
 
     pub fn get_tx(&self) -> Result<BazaConnection> {
-        BazaConnection::new_tx(self.path_manager.clone(), self.schema.clone())
+        BazaConnection::new_tx(
+            self.path_manager.clone(),
+            self.schema.clone(),
+            self.events.0.clone(),
+        )
     }
 
     #[must_use]
@@ -130,5 +143,10 @@ impl Baza {
         let conn = self.get_connection()?;
 
         Ok(conn.get_blob(id))
+    }
+
+    #[must_use]
+    pub fn get_events_channel(&self) -> Receiver<BazaEvent> {
+        self.events.0.subscribe()
     }
 }

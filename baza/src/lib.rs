@@ -1,6 +1,7 @@
 #![deny(clippy::all)]
 #![allow(clippy::module_inception)]
 
+mod auto_commit_service;
 mod backup;
 mod baza;
 mod db;
@@ -17,6 +18,7 @@ pub mod validator;
 #[cfg(test)]
 mod tests;
 
+pub use auto_commit_service::AutoCommitService;
 pub use baza::Baza;
 pub use db::*;
 pub use document_expert::DocumentExpert;

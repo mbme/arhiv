@@ -62,13 +62,21 @@ impl AutoCommitService {
         })
     }
 
-    pub async fn start(&mut self) -> Result<()> {
+    pub fn start(&mut self) -> Result<()> {
         if self.started {
             bail!("Already started");
         }
 
         self.started = true;
 
+        let service = self.clone();
+
+        tokio::spawn(async move { service._start().await });
+
+        Ok(())
+    }
+
+    async fn _start(&self) -> Result<()> {
         self.try_auto_commit().context("Auto-commit failed")?;
 
         let mut events = self.baza.get_events_channel();

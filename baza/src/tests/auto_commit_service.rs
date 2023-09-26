@@ -11,17 +11,14 @@ async fn test_auto_commit_on_start() -> Result<()> {
     let baza = Arc::new(Baza::new_test_baza());
     baza.add_document(Id::new(), Value::Null)?;
 
-    let service =
-        Arc::new(AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time());
+    let mut service =
+        AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time();
 
     assert!(baza.get_connection()?.has_staged_documents()?);
 
     advance(service.get_auto_commit_timeout() * 2).await;
 
-    {
-        let service = service.clone();
-        tokio::spawn(async move { service.start().await });
-    }
+    service.start()?;
 
     sleep(Duration::from_secs(1)).await;
 
@@ -33,17 +30,14 @@ async fn test_auto_commit_on_start() -> Result<()> {
 #[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn test_schedule_auto_commit_on_start() -> Result<()> {
     let baza = Arc::new(Baza::new_test_baza());
-    let service =
-        Arc::new(AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time());
+    let mut service =
+        AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time();
 
     baza.add_document(Id::new(), Value::Null)?;
 
     assert!(baza.get_connection()?.has_staged_documents()?);
 
-    {
-        let service = service.clone();
-        tokio::spawn(async move { service.start().await });
-    }
+    service.start()?;
 
     advance(service.get_auto_commit_timeout() * 2).await;
     sleep(Duration::from_secs(1)).await;
@@ -59,13 +53,11 @@ async fn test_schedule_auto_commit_on_start() -> Result<()> {
 #[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn test_schedule_auto_commit_on_staged_document() -> Result<()> {
     let baza = Arc::new(Baza::new_test_baza());
-    let service =
-        Arc::new(AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time());
+    let mut service =
+        AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time();
 
-    {
-        let service = service.clone();
-        tokio::spawn(async move { service.start().await });
-    }
+    service.start()?;
+
     sleep(Duration::from_secs(1)).await;
 
     {
@@ -89,13 +81,11 @@ async fn test_schedule_auto_commit_on_staged_document() -> Result<()> {
 #[tokio::test(flavor = "current_thread", start_paused = true)]
 async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
     let baza = Arc::new(Baza::new_test_baza());
-    let service =
-        Arc::new(AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time());
+    let mut service =
+        AutoCommitService::new(baza.clone(), Duration::from_secs(10)).with_fake_time();
 
-    {
-        let service = service.clone();
-        tokio::spawn(async move { service.start().await });
-    }
+    service.start()?;
+
     sleep(Duration::from_secs(1)).await;
 
     {

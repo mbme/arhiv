@@ -18,6 +18,9 @@ pub struct Config {
 
     #[serde(default)]
     pub static_peers: Vec<String>,
+
+    #[serde(default)]
+    pub auto_commit_delay_in_seconds: u64,
 }
 
 fn default_server_port() -> u16 {

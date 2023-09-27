@@ -159,3 +159,9 @@ impl AutoCommitService {
         Ok(())
     }
 }
+
+impl Drop for AutoCommitService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
+    }
+}

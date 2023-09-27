@@ -8,7 +8,7 @@ use anyhow::{bail, Result};
 use baza::{
     schema::{DataMigrations, DataSchema},
     sync::{build_rpc_router, SyncService, DEBUG_MODE},
-    Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
+    AutoCommitService, Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
 };
 use rs_utils::{
     get_crate_version,
@@ -32,6 +32,7 @@ pub struct Arhiv {
     pub baza: Arc<Baza>,
     pub(crate) config: Config,
     mdns_service: OnceLock<MDNSService>,
+    auto_commit_service: Option<AutoCommitService>,
 }
 
 impl Arhiv {
@@ -45,12 +46,22 @@ impl Arhiv {
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
-        let baza = Baza::open(config.arhiv_root.clone(), schema, data_migrations)?;
+        let baza = Arc::new(Baza::open(
+            config.arhiv_root.clone(),
+            schema,
+            data_migrations,
+        )?);
+
+        let auto_commit_service = Arhiv::maybe_init_auto_commit_service(
+            baza.clone(),
+            config.auto_commit_delay_in_seconds,
+        )?;
 
         Ok(Arhiv {
-            baza: Arc::new(baza),
+            baza,
             config,
             mdns_service: Default::default(),
+            auto_commit_service,
         })
     }
 
@@ -67,13 +78,37 @@ impl Arhiv {
         schema: DataSchema,
         data_migrations: DataMigrations,
     ) -> Result<Self> {
-        let baza = Baza::create(config.arhiv_root.clone(), schema, data_migrations)?;
+        let baza = Arc::new(Baza::create(
+            config.arhiv_root.clone(),
+            schema,
+            data_migrations,
+        )?);
+
+        let auto_commit_service = Arhiv::maybe_init_auto_commit_service(
+            baza.clone(),
+            config.auto_commit_delay_in_seconds,
+        )?;
 
         Ok(Arhiv {
-            baza: Arc::new(baza),
+            baza,
             config,
             mdns_service: Default::default(),
+            auto_commit_service,
         })
+    }
+
+    fn maybe_init_auto_commit_service(
+        baza: Arc<Baza>,
+        delay: u64,
+    ) -> Result<Option<AutoCommitService>> {
+        if delay > 0 {
+            let mut service = AutoCommitService::new(baza.clone(), Duration::from_secs(delay));
+            service.start()?;
+
+            Ok(Some(service))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn get_config(&self) -> &Config {
@@ -133,6 +168,16 @@ impl Arhiv {
                 .init_mdns_service()
                 .expect("must init MDNS service")
         })
+    }
+
+    pub fn stop(mut self) {
+        if let Some(auto_commit_service) = self.auto_commit_service {
+            auto_commit_service.stop();
+        }
+
+        if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {
+            mdns_service.shutdown();
+        }
     }
 }
 

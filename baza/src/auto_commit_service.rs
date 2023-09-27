@@ -105,7 +105,7 @@ impl AutoCommitService {
             tokio::select! {
                 event = events.recv() => {
                     match event {
-                        Ok(BazaEvent::DocumentStaged) => {
+                        Ok(BazaEvent::DocumentStaged {}) => {
                             if let Some(ref task) = task {
                                 log::debug!("Cancelled pending auto-commit task");
                                 task.abort();

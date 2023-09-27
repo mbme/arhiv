@@ -1,15 +1,19 @@
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use axum::{
     extract::{Path, State},
     headers,
     http::HeaderMap,
-    response::{Html, IntoResponse},
+    response::{
+        sse::{Event, KeepAlive},
+        Html, IntoResponse, Sse,
+    },
     routing::{get, post},
     Json, Router, TypedHeader,
 };
 use serde_json::Value;
+use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, sync::respond_with_blob};
 use rs_utils::{
@@ -31,10 +35,11 @@ mod public_assets_handler;
 pub fn build_ui_router() -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
+        .route("/api", post(api_handler))
+        .route("/events", get(events_handler))
         .route("/blobs/:blob_id", get(blob_handler))
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
-        .route("/api", post(api_handler))
 }
 
 async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
@@ -102,4 +107,20 @@ async fn blob_handler(
     let blob_id = BLOBId::from_string(blob_id);
 
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
+}
+
+async fn events_handler(
+    State(arhiv): State<Arc<Arhiv>>,
+) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
+    let stream = BroadcastStream::new(arhiv.baza.get_events_channel()).map(|result| {
+        result
+            .map_err(|err| anyhow!("Event stream failed: {err}"))
+            .and_then(|baza_event| {
+                Event::default()
+                    .json_data(baza_event)
+                    .context("Event serialization failed")
+            })
+    });
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }

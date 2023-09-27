@@ -722,7 +722,8 @@ impl BazaConnection {
 
         log::info!("saved document {}", document);
 
-        self.get_event_sender()?.send(BazaEvent::DocumentStaged)?;
+        self.get_event_sender()?
+            .send(BazaEvent::DocumentStaged {})?;
 
         Ok(())
     }
@@ -1006,7 +1007,7 @@ impl BazaConnection {
         log::info!("Committed {} documents", staged_documents.len());
 
         self.get_event_sender()?
-            .send(BazaEvent::DocumentsCommitted)?;
+            .send(BazaEvent::DocumentsCommitted {})?;
 
         Ok(staged_documents.len())
     }

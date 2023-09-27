@@ -19,6 +19,6 @@ pub mod validator;
 mod tests;
 
 pub use auto_commit_service::AutoCommitService;
-pub use baza::Baza;
+pub use baza::{Baza, BazaEvent};
 pub use db::*;
 pub use document_expert::DocumentExpert;

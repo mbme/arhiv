@@ -113,6 +113,7 @@ impl AutoCommitService {
 
                             task = Some(self.schedule_task(self.auto_commit_timeout));
                         },
+                        Ok(_) => {},
                         Err(_) => {
                             break;
                         },

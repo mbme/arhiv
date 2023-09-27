@@ -18,6 +18,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum BazaEvent {
     DocumentStaged,
+    DocumentsCommitted,
 }
 
 pub struct Baza {

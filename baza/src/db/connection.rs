@@ -1003,6 +1003,11 @@ impl BazaConnection {
         self.delete_local_staged_changes()?;
         self.remove_orphaned_blobs()?;
 
+        log::info!("Committed {} documents", staged_documents.len());
+
+        self.get_event_sender()?
+            .send(BazaEvent::DocumentsCommitted)?;
+
         Ok(staged_documents.len())
     }
 

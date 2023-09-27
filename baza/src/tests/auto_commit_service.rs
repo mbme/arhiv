@@ -37,15 +37,12 @@ async fn test_schedule_auto_commit_on_start() -> Result<()> {
 
     assert!(baza.get_connection()?.has_staged_documents()?);
 
-    service.start()?;
-
     advance(service.get_auto_commit_timeout() * 2).await;
     sleep(Duration::from_secs(1)).await;
 
-    assert!(!baza.get_connection()?.has_staged_documents()?);
+    service.start()?;
 
-    // should schedule auto commit on staged document
-    // should reschedule auto commit on staged document
+    assert!(!baza.get_connection()?.has_staged_documents()?);
 
     Ok(())
 }

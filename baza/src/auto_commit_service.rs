@@ -69,18 +69,16 @@ impl AutoCommitService {
 
         self.started = true;
 
+        self.try_auto_commit().context("Auto-commit failed")?;
+
         let service = self.clone();
 
-        tokio::spawn(async move { service._start().await });
+        tokio::spawn(async move { service.start_watch_task().await });
 
         Ok(())
     }
 
-    async fn _start(&self) -> Result<()> {
-        self.try_auto_commit().context("Auto-commit failed")?;
-
-        let mut events = self.baza.get_events_channel();
-
+    async fn start_watch_task(&self) -> Result<()> {
         let mut task: Option<JoinHandle<()>> = {
             let conn = self.baza.get_connection()?;
 
@@ -100,6 +98,8 @@ impl AutoCommitService {
                 None
             }
         };
+
+        let mut events = self.baza.get_events_channel();
 
         loop {
             tokio::select! {

@@ -1,12 +1,6 @@
 import { APIRequest, APIResponse } from 'dto';
 import { Obj } from './index';
 
-export class RPCEvent extends CustomEvent<APIRequest['typeName']> {
-  constructor(public readonly eventType: APIRequest['typeName']) {
-    super('rpcEvent', { detail: eventType });
-  }
-}
-
 export type RPCResponse<Request extends APIRequest> = Extract<
   APIResponse,
   { typeName: Request['typeName'] }
@@ -41,8 +35,6 @@ export async function doRPC<Request extends APIRequest>(
     }
 
     const parsedResponse = JSON.parse(message) as RPCResponse<Request>;
-
-    document.dispatchEvent(new RPCEvent(parsedResponse.typeName));
 
     return parsedResponse;
   } catch (e) {

@@ -132,16 +132,6 @@ export type APIResponse =
       isModified: boolean;
     };
 
-export const MUTABLE_API_REQUESTS: ReadonlyArray<APIRequest['typeName']> = [
-  'CreateAttachment',
-  'CreateDocument',
-  'EraseDocument',
-  'SaveDocument',
-  'Scrape',
-  'UploadFile',
-  'CommitOrSync',
-];
-
 export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;
 export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
@@ -354,3 +344,5 @@ export function throwBadMarkupElement(value: never): never;
 export function throwBadMarkupElement(value: MarkupElement) {
   throw new Error(`Unknown MarkupElement: ${value.typeName}`);
 }
+
+export type BazaEvent = { typeName: 'DocumentStaged' } | { typeName: 'DocumentsCommitted' };

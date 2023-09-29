@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { MUTABLE_API_REQUESTS } from 'dto';
 import { usePageVisibilityTracker, useQuery } from 'utils/hooks';
-import { RPC, RPCEvent } from 'utils/rpc';
+import { RPC } from 'utils/rpc';
+import { BazaEvent } from 'dto';
 import { Button } from 'components/Button';
 
 const useIsArhivModified = (): boolean => {
@@ -10,18 +10,24 @@ const useIsArhivModified = (): boolean => {
   );
 
   useEffect(() => {
-    const rpcEventHandler = (e: Event) => {
-      const typeName = (e as RPCEvent).eventType;
+    const bazaEvents = new EventSource(`${window.BASE_PATH}/events`);
 
-      if (MUTABLE_API_REQUESTS.includes(typeName)) {
-        triggerRefresh();
+    const rpcEventHandler = (e: MessageEvent<string>) => {
+      const event = JSON.parse(e.data) as BazaEvent;
+
+      switch (event.typeName) {
+        case 'DocumentStaged':
+        case 'DocumentsCommitted': {
+          triggerRefresh();
+        }
       }
     };
 
-    document.addEventListener('rpcEvent', rpcEventHandler);
+    bazaEvents.addEventListener('message', rpcEventHandler);
 
     return () => {
-      document.removeEventListener('rpcEvent', rpcEventHandler);
+      bazaEvents.removeEventListener('message', rpcEventHandler);
+      bazaEvents.close();
     };
   }, [triggerRefresh]);
 

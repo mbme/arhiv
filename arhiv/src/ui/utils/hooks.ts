@@ -106,14 +106,16 @@ export function useQuery<TResult>(
     setCounter(counter + 1);
   }, [inputsMemo]);
 
+  const triggerRefresh = useCallback(() => {
+    setCounter((counter) => counter + 1);
+  }, []);
+
   return {
     result,
     error,
     inProgress,
     requestTs,
-    triggerRefresh() {
-      setCounter(counter + 1);
-    },
+    triggerRefresh,
   };
 }
 

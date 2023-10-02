@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::{bail, Result};
+use axum::routing::get;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
@@ -12,7 +13,7 @@ use baza::{
 };
 use rs_utils::{
     get_crate_version,
-    http_server::HttpServer,
+    http_server::{health_handler, HttpServer},
     log,
     mdns::{MDNSService, PeerInfo},
 };
@@ -191,6 +192,7 @@ pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     let ui_router = build_ui_router();
 
     let router = rpc_router
+        .route("/health", get(health_handler))
         .nest("/ui", ui_router.with_state(arhiv.clone()))
         .with_state(arhiv.baza.clone());
 

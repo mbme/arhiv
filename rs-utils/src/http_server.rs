@@ -59,6 +59,14 @@ pub fn add_max_cache_header(headers: &mut HeaderMap) {
     );
 }
 
+#[allow(clippy::unused_async)]
+pub async fn health_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
+}
+
 pub async fn logger_middleware<B>(
     request: Request<B>,
     next: Next<B>,

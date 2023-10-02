@@ -12,7 +12,7 @@ use axum::{
 
 use rs_utils::{
     create_body_from_file,
-    http_server::{add_max_cache_header, add_no_cache_headers, ServerError},
+    http_server::{add_max_cache_header, ServerError},
     log,
 };
 
@@ -20,20 +20,12 @@ use crate::{entities::BLOBId, sync::Revision, Baza};
 
 pub fn build_rpc_router() -> Router<Arc<Baza>> {
     Router::new()
-        .route("/health", get(health_handler))
         .route("/ping", get(get_ping_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
 }
 
-#[allow(clippy::unused_async)]
-async fn health_handler() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    (StatusCode::OK, headers)
-}
-
+#[tracing::instrument(skip(baza), level = "debug")]
 async fn get_blob_handler(
     State(baza): State<Arc<Baza>>,
     Path(blob_id): Path<String>,
@@ -44,12 +36,14 @@ async fn get_blob_handler(
     respond_with_blob(&baza, &blob_id, &range.map(|range| range.0)).await
 }
 
+#[tracing::instrument(skip(baza), level = "debug")]
 async fn get_ping_handler(State(baza): State<Arc<Baza>>) -> Result<impl IntoResponse, ServerError> {
     let ping = baza.get_connection()?.get_ping()?;
 
     Ok(Json(ping))
 }
 
+#[tracing::instrument(skip(baza), level = "debug")]
 async fn get_changeset_handler(
     State(baza): State<Arc<Baza>>,
     Path(min_rev): Path<String>,

@@ -16,7 +16,7 @@ reset-arhiv: remove-arhiv init-arhiv
 
 run:
   cd arhiv; yarn run clean; tmux new-session -s arhiv \
-     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 RUST_LOG=debug,axum=trace,mdns_sd=info,rs_utils::mdns=info,hyper=info cargo run -p binutils --bin arhiv server"' \; \
+     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 RUST_LOG=debug,axum=trace,mdns_sd=info,rs_utils=info,hyper=info cargo run -p binutils --bin arhiv server"' \; \
      split-window -h 'yarn run watch:js' \; \
      split-window 'yarn run watch:css' \; \
      select-pane -t 0

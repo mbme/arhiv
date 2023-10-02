@@ -80,6 +80,7 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
     Ok((headers, Html(content)))
 }
 
+#[tracing::instrument(skip(arhiv, request_value), level = "debug")]
 async fn api_handler(
     State(arhiv): State<Arc<Arhiv>>,
     Json(request_value): Json<Value>,
@@ -109,6 +110,7 @@ async fn blob_handler(
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }
 
+#[tracing::instrument(skip(arhiv), level = "debug")]
 async fn events_handler(
     State(arhiv): State<Arc<Arhiv>>,
 ) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
@@ -116,6 +118,8 @@ async fn events_handler(
         result
             .map_err(|err| anyhow!("Event stream failed: {err}"))
             .and_then(|baza_event| {
+                log::debug!("Sending BazaEvent {baza_event}");
+
                 Event::default()
                     .json_data(baza_event)
                     .context("Event serialization failed")

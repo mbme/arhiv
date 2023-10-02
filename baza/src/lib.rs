@@ -8,6 +8,7 @@ mod db;
 mod db_migrations;
 mod document_expert;
 pub mod entities;
+mod events;
 pub mod markup;
 mod path_manager;
 pub mod schema;

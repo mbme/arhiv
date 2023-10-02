@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use serde::Serialize;
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 use rs_utils::{log, MIN_TIMESTAMP};
 
+pub use crate::events::BazaEvent;
 use crate::{
     db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
     db_migrations::{apply_db_migrations, create_db},
@@ -15,13 +15,6 @@ use crate::{
     sync::InstanceId,
     SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "typeName")]
-pub enum BazaEvent {
-    DocumentStaged {},
-    DocumentsCommitted {},
-}
 
 pub struct Baza {
     path_manager: Arc<PathManager>,

@@ -58,7 +58,7 @@ async fn test_schedule_auto_commit_on_staged_document() -> Result<()> {
     sleep(Duration::from_secs(1)).await;
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
         tx.stage_document(&mut document)?;
         tx.commit()?;
@@ -86,7 +86,7 @@ async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
     sleep(Duration::from_secs(1)).await;
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
         tx.stage_document(&mut document)?;
         tx.commit()?;
@@ -98,7 +98,7 @@ async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
     assert!(baza.get_connection()?.has_staged_documents()?);
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
         tx.stage_document(&mut document)?;
         tx.commit()?;

@@ -25,14 +25,14 @@ fn test_validation_mandatory() {
     ));
 
     {
-        let tx = baza.get_tx().unwrap();
+        let mut tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);
         assert!(result.is_err());
     }
 
     {
-        let tx = baza.get_tx().unwrap();
+        let mut tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
         assert!(result.is_ok());
@@ -57,7 +57,7 @@ fn test_validation_readonly() {
     ));
 
     {
-        let tx = baza.get_tx().unwrap();
+        let mut tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({ "test": "test" }));
         let result = tx.stage_document(&mut document);
@@ -69,7 +69,7 @@ fn test_validation_readonly() {
     }
 
     {
-        let tx = baza.get_tx().unwrap();
+        let mut tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({}));
         let result = tx.stage_document(&mut document);

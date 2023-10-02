@@ -205,7 +205,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let arhiv = Arhiv::must_open();
 
-            let tx = arhiv.baza.get_tx()?;
+            let mut tx = arhiv.baza.get_tx()?;
             tx.stage_document(&mut document)?;
             tx.commit()?;
 

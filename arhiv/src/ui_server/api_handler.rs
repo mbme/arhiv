@@ -136,7 +136,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             data,
             collections,
         } => {
-            let tx = arhiv.baza.get_tx()?;
+            let mut tx = arhiv.baza.get_tx()?;
 
             let mut document = tx.must_get_document(&id)?;
 
@@ -196,7 +196,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let document_type = DocumentClass::new(document_type, subtype);
             let mut document = Document::new_with_data(document_type, data);
 
-            let tx = arhiv.baza.get_tx()?;
+            let mut tx = arhiv.baza.get_tx()?;
 
             let validator = Validator::new(&tx);
             let validation_result = validator.validate(&document, None);

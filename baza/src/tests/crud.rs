@@ -12,7 +12,7 @@ fn test_crud_create() -> Result<()> {
     let baza = Baza::new_test_baza();
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         let mut document = new_document(json!({}));
         document.id = Id::from("1");
@@ -39,7 +39,7 @@ fn test_crud_read() -> Result<()> {
     baza.add_document(Id::from("1"), json!({ "0": 2, "2": 1 }))?;
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         let mut document = tx.get_document(&Id::from("1"))?.unwrap();
         assert_eq!(
@@ -68,7 +68,7 @@ fn test_crud_update() -> Result<()> {
     baza.add_document(Id::from("1"), json!({ "0": 1 }))?;
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         let mut document = tx.get_document(&Id::from("1"))?.unwrap();
         document.data.set("test", "value");
@@ -172,7 +172,7 @@ fn test_crud_add_blob() -> Result<()> {
     let baza = Baza::new_test_baza();
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         let mut document = new_document(json!({}));
         document.id = Id::from("1");

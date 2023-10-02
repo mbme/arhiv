@@ -45,7 +45,7 @@ fn test_modes() -> Result<()> {
 
     // staged
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
         tx.stage_document(&mut new_document(json!({ "test": "3" })))?;
         tx.commit()?;
     }
@@ -91,7 +91,7 @@ fn test_order_by_enum_field() -> Result<()> {
     ));
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
         tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
@@ -150,7 +150,7 @@ fn test_multiple_order_by() -> Result<()> {
     ));
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
         tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
@@ -192,7 +192,7 @@ fn test_conditions() -> Result<()> {
     let baza = Baza::new_test_baza();
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
         tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
@@ -289,7 +289,7 @@ fn test_backrefs() -> Result<()> {
         ],
     ));
 
-    let tx = baza.get_tx()?;
+    let mut tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
         DocumentClass::new("other_type", ""),
@@ -355,7 +355,7 @@ fn test_collections() -> Result<()> {
         ],
     ));
 
-    let tx = baza.get_tx()?;
+    let mut tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
         DocumentClass::new("other_type", ""),
@@ -484,7 +484,7 @@ fn test_count_documents_and_blobs() -> Result<()> {
     }
 
     {
-        let tx = baza.get_tx()?;
+        let mut tx = baza.get_tx()?;
 
         // update document
         tx.stage_document(&mut document)?;

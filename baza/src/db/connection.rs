@@ -41,7 +41,8 @@ pub enum BazaConnection {
         path_manager: Arc<PathManager>,
         schema: Arc<DataSchema>,
 
-        events: Sender<BazaEvent>,
+        event_sender: Sender<BazaEvent>,
+        events: Vec<BazaEvent>,
 
         fs_tx: FsTransaction,
         lock_file: LockFile,
@@ -66,7 +67,7 @@ impl BazaConnection {
     pub fn new_tx(
         path_manager: Arc<PathManager>,
         schema: Arc<DataSchema>,
-        events: Sender<BazaEvent>,
+        event_sender: Sender<BazaEvent>,
     ) -> Result<Self> {
         let conn = open_connection(&path_manager.db_file, true)?;
 
@@ -83,7 +84,8 @@ impl BazaConnection {
             path_manager,
             fs_tx: FsTransaction::new(),
             lock_file,
-            events,
+            event_sender,
+            events: Vec::new(),
         })
     }
 
@@ -93,6 +95,8 @@ impl BazaConnection {
                 completed,
                 fs_tx,
                 conn,
+                event_sender,
+                events,
                 ..
             } => {
                 ensure!(!*completed, "transaction must not be completed");
@@ -102,6 +106,12 @@ impl BazaConnection {
                 if commit {
                     fs_tx.commit()?;
                     conn.execute_batch("COMMIT")?;
+
+                    for event in events {
+                        if let Err(err) = event_sender.send(event.clone()) {
+                            log::warn!("failed to send event: {err}");
+                        }
+                    }
                 } else {
                     fs_tx.rollback()?;
                     conn.execute_batch("ROLLBACK")?;
@@ -164,13 +174,17 @@ impl BazaConnection {
         }
     }
 
-    fn get_event_sender(&self) -> Result<&Sender<BazaEvent>> {
-        match self {
+    fn register_event(&mut self, event: BazaEvent) -> Result<()> {
+        let events = match self {
             BazaConnection::ReadOnly { .. } => {
                 bail!("readonly connection doesn't have event sender")
             }
-            BazaConnection::Transaction { events, .. } => Ok(events),
-        }
+            BazaConnection::Transaction { events, .. } => events,
+        };
+
+        events.push(event);
+
+        Ok(())
     }
 
     pub fn get_db_version(&self) -> Result<u8> {
@@ -675,7 +689,7 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn stage_document(&self, document: &mut Document) -> Result<()> {
+    pub fn stage_document(&mut self, document: &mut Document) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
         ensure!(
@@ -720,10 +734,9 @@ impl BazaConnection {
 
         self.put_document(document)?;
 
-        log::info!("saved document {}", document);
+        self.register_event(BazaEvent::DocumentStaged {})?;
 
-        self.get_event_sender()?
-            .send(BazaEvent::DocumentStaged {})?;
+        log::info!("saved document {}", document);
 
         Ok(())
     }
@@ -1004,10 +1017,9 @@ impl BazaConnection {
         self.delete_local_staged_changes()?;
         self.remove_orphaned_blobs()?;
 
-        log::info!("Committed {} documents", staged_documents.len());
+        self.register_event(BazaEvent::DocumentsCommitted {})?;
 
-        self.get_event_sender()?
-            .send(BazaEvent::DocumentsCommitted {})?;
+        log::info!("Committed {} documents", staged_documents.len());
 
         Ok(staged_documents.len())
     }

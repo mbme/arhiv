@@ -1,38 +1,57 @@
 use std::fmt;
 
+use anyhow::Result;
 use serde::Serialize;
 
-use baza::{sync::Revision, BLOBSCount, DocumentsCount};
-use rs_utils::{format_time, Timestamp, MIN_TIMESTAMP};
-
-#[derive(Serialize, Debug)]
-pub struct DbStatus {
-    pub data_version: u8,
-
-    pub db_rev: Revision,
-    pub last_sync_time: Timestamp,
-}
+use baza::{
+    sync::{Revision, DEBUG_MODE},
+    BLOBSCount, BazaConnection, DocumentsCount, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
+};
+use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize)]
 pub struct Status {
     pub app_version: String,
 
-    pub db_status: DbStatus,
     pub db_version: u8,
     pub data_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: usize,
 
+    pub db_rev: Revision,
+    pub last_sync_time: Timestamp,
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
     pub root_dir: String,
 }
 
 impl Status {
-    pub fn is_sync_required(&self) -> bool {
-        self.documents_count.count_staged_documents() > 0
-            || self.documents_count.erased_documents_staged > 0
+    pub fn read(conn: &BazaConnection) -> Result<Self> {
+        let root_dir = conn.get_path_manager().root_dir.clone();
+
+        let db_rev = conn.get_db_rev()?;
+        let last_sync_time = conn.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?;
+        let db_version = conn.get_db_version()?;
+        let data_version = conn.kvs_const_must_get(SETTING_DATA_VERSION)?;
+        let documents_count = conn.count_documents()?;
+        let blobs_count = conn.count_blobs()?;
+        let conflicts_count = conn.get_coflicting_documents()?.len();
+        let last_update_time = conn.get_last_update_time()?;
+
+        Ok(Status {
+            app_version: get_crate_version().to_string(),
+            db_version,
+            data_version,
+            documents_count,
+            blobs_count,
+            conflicts_count,
+            db_rev,
+            last_sync_time,
+            last_update_time,
+            debug_mode: DEBUG_MODE,
+            root_dir,
+        })
     }
 }
 
@@ -41,7 +60,7 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "Arhiv (rev {}) in {}",
-            self.db_status.db_rev.serialize(),
+            self.db_rev.serialize(),
             self.root_dir,
         )?;
 
@@ -73,10 +92,10 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "   Last sync time: {}",
-            if self.db_status.last_sync_time == MIN_TIMESTAMP {
+            if self.last_sync_time == MIN_TIMESTAMP {
                 "NEVER".to_string()
             } else {
-                format_date(self.db_status.last_sync_time)
+                format_date(self.last_sync_time)
             }
         )?;
 

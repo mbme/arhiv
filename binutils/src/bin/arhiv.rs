@@ -6,9 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{
-    definitions::get_standard_schema, start_arhiv_server, Arhiv, BazaConnectionExt, Config,
-};
+use arhiv::{definitions::get_standard_schema, start_arhiv_server, Arhiv, Config, Status};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     KvsEntry, KvsKey,
@@ -139,9 +137,18 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Status => {
             let arhiv = Arhiv::must_open();
             let conn = arhiv.baza.get_connection()?;
-            let status = conn.get_status()?;
+            let status = Status::read(&conn)?;
 
+            let is_local_server_alive = arhiv.is_local_server_alive().await;
             println!("{status}");
+            println!(
+                "local server {}",
+                if is_local_server_alive {
+                    "is running"
+                } else {
+                    "is not running"
+                }
+            );
             // FIXME print number of unused temp attachments
         }
         CLICommand::Config { template } => {

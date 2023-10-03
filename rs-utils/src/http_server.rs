@@ -11,9 +11,11 @@ use axum::{
     http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
+    routing::get,
     Router, Server,
 };
 use hyper::body::to_bytes;
+use reqwest::Client;
 use tokio::{signal, sync::oneshot, task::JoinHandle};
 
 pub struct ServerError(anyhow::Error);
@@ -60,11 +62,32 @@ pub fn add_max_cache_header(headers: &mut HeaderMap) {
 }
 
 #[allow(clippy::unused_async)]
-pub async fn health_handler() -> impl IntoResponse {
+async fn health_handler() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     add_no_cache_headers(&mut headers);
 
     (StatusCode::OK, headers)
+}
+
+pub fn build_health_router() -> Router<()> {
+    Router::new().route("/health", get(health_handler))
+}
+
+pub async fn check_server_health(server_url: &str) -> Result<()> {
+    let url = reqwest::Url::from_str(&format!("http://{server_url}/health"))
+        .context("failed to create url from server address")?;
+
+    let response = Client::new().get(url).send().await?;
+
+    let status = response.status();
+
+    ensure!(
+        status.is_success(),
+        "expected status code 2xx, got {}",
+        status.to_string()
+    );
+
+    Ok(())
 }
 
 pub async fn logger_middleware<B>(

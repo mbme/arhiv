@@ -4,26 +4,21 @@ use std::{
 };
 
 use anyhow::{bail, Result};
-use axum::routing::get;
+use tokio::time::timeout;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::{build_rpc_router, SyncService, DEBUG_MODE},
-    AutoCommitService, Baza, BazaConnection, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
+    sync::{build_rpc_router, SyncService},
+    AutoCommitService, Baza,
 };
 use rs_utils::{
-    get_crate_version,
-    http_server::{health_handler, HttpServer},
+    http_server::{build_health_router, check_server_health, HttpServer},
     log,
     mdns::{MDNSService, PeerInfo},
 };
-use tokio::time::timeout;
 
 use crate::{
-    config::Config,
-    data_migrations::get_data_migrations,
-    definitions::get_standard_schema,
-    status::{DbStatus, Status},
+    config::Config, data_migrations::get_data_migrations, definitions::get_standard_schema,
     ui_server::build_ui_router,
 };
 
@@ -171,6 +166,13 @@ impl Arhiv {
         })
     }
 
+    pub async fn is_local_server_alive(&self) -> bool {
+        let port = self.config.server_port;
+        let local_server_url = format!("localhost:{port}");
+
+        check_server_health(&local_server_url).await.is_ok()
+    }
+
     pub fn stop(mut self) {
         if let Some(auto_commit_service) = self.auto_commit_service {
             auto_commit_service.stop();
@@ -188,13 +190,14 @@ pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     let mdns_service = arhiv.get_mdns_service();
     let mut mdns_server = mdns_service.start_server(port)?;
 
+    let health_router = build_health_router();
     let rpc_router = build_rpc_router();
     let ui_router = build_ui_router();
 
     let router = rpc_router
-        .route("/health", get(health_handler))
         .nest("/ui", ui_router.with_state(arhiv.clone()))
-        .with_state(arhiv.baza.clone());
+        .with_state(arhiv.baza.clone())
+        .merge(health_router);
 
     let server = HttpServer::start(router, port);
 
@@ -203,45 +206,4 @@ pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     mdns_server.stop();
 
     Ok(())
-}
-
-pub trait BazaConnectionExt {
-    fn get_db_status(&self) -> Result<DbStatus>;
-
-    fn get_status(&self) -> Result<Status>;
-}
-
-impl BazaConnectionExt for BazaConnection {
-    fn get_db_status(&self) -> Result<DbStatus> {
-        Ok(DbStatus {
-            data_version: self.kvs_const_must_get(SETTING_DATA_VERSION)?,
-            db_rev: self.get_db_rev()?,
-            last_sync_time: self.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?,
-        })
-    }
-
-    fn get_status(&self) -> Result<Status> {
-        let root_dir = self.get_path_manager().root_dir.clone();
-
-        let db_status = self.get_db_status()?;
-        let db_version = self.get_db_version()?;
-        let data_version = self.kvs_const_must_get(SETTING_DATA_VERSION)?;
-        let documents_count = self.count_documents()?;
-        let blobs_count = self.count_blobs()?;
-        let conflicts_count = self.get_coflicting_documents()?.len();
-        let last_update_time = self.get_last_update_time()?;
-
-        Ok(Status {
-            app_version: get_crate_version().to_string(),
-            db_status,
-            db_version,
-            data_version,
-            documents_count,
-            blobs_count,
-            conflicts_count,
-            last_update_time,
-            debug_mode: DEBUG_MODE,
-            root_dir,
-        })
-    }
 }

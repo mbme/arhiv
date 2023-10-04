@@ -64,6 +64,8 @@ impl ScraperOptions {
 
         let mut chromedriver_process = chromedriver.spawn()?;
 
+        chromedriver.wait_for_ready(10).await?;
+
         let client = ClientBuilder::native()
             .capabilities(
                 capabilities

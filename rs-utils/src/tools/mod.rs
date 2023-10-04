@@ -1,8 +1,12 @@
 use std::process::Stdio;
+use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
+use reqwest::Client;
+use serde::Deserialize;
 use serde_json::Value;
 use tokio::process::{Child, Command};
+use tokio::time::{sleep, Instant};
 use which::which_all;
 
 use crate::{path_to_string, run_command};
@@ -77,6 +81,63 @@ impl Chromedriver {
         }
 
         command.spawn().context("failed to spawn chromedriver")
+    }
+
+    pub async fn wait_for_ready(&self, timeout_secs: u64) -> Result<bool> {
+        let start_time = Instant::now();
+
+        while Instant::now().duration_since(start_time).as_secs() < timeout_secs {
+            match self.is_ready().await {
+                Ok(is_ready) => {
+                    if is_ready {
+                        return Ok(true);
+                    }
+                }
+                Err(err) => {
+                    if self.debug {
+                        println!("Chromedriver not ready yet: {err}")
+                    }
+                }
+            };
+
+            sleep(Duration::from_millis(500)).await;
+        }
+
+        Err(anyhow!(
+            "chromedriver failed to start in {timeout_secs} seconds"
+        ))
+    }
+
+    async fn is_ready(&self) -> Result<bool> {
+        let url = self.get_url();
+
+        // https://www.w3.org/TR/webdriver2/#dfn-status
+        let status_url = format!("{url}/status");
+
+        let response = Client::new().get(&status_url).send().await?;
+        let response = response.error_for_status()?;
+
+        let body = response.text().await?;
+        if self.debug {
+            println!("status body: {body}");
+        }
+
+        let mut body: Value = serde_json::from_str(&body).context("failed to parse status body")?;
+
+        #[derive(Deserialize)]
+        struct ChromedriverStatus {
+            ready: bool,
+            message: String,
+        }
+
+        let status: ChromedriverStatus =
+            serde_json::from_value(body["value"].take()).context("failed to parse status body")?;
+
+        if status.ready {
+            Ok(true)
+        } else {
+            Err(anyhow!("chromedriver not ready yet: {}", status.message))
+        }
     }
 
     pub fn get_url(&self) -> String {

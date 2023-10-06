@@ -736,7 +736,7 @@ impl BazaConnection {
 
         self.register_event(BazaEvent::DocumentStaged {})?;
 
-        log::info!("saved document {}", document);
+        log::info!("Saved document {}", document);
 
         Ok(())
     }

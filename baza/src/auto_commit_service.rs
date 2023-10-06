@@ -75,6 +75,8 @@ impl AutoCommitService {
 
         tokio::spawn(async move { service.start_watch_task().await });
 
+        log::info!("Started auto-commit service");
+
         Ok(())
     }
 
@@ -104,10 +106,12 @@ impl AutoCommitService {
         loop {
             tokio::select! {
                 event = events.recv() => {
+                    log::debug!("Watch task got Baza event {event:#?}");
+
                     match event {
                         Ok(BazaEvent::DocumentStaged {}) => {
                             if let Some(ref task) = task {
-                                log::debug!("Cancelled pending auto-commit task");
+                                log::debug!("Aborting pending auto-commit task");
                                 task.abort();
                             }
 
@@ -121,14 +125,18 @@ impl AutoCommitService {
                 },
 
                 _ = self.cancellation_token.cancelled() => {
+                    log::debug!("Watch task got cancelled");
                     break;
                 }
             }
         }
 
         if let Some(ref task) = task {
+            log::debug!("Aborting pending auto-commit task");
             task.abort();
         }
+
+        log::debug!("Watch task ended");
 
         Ok(())
     }

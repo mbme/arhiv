@@ -132,7 +132,7 @@ impl MDNSService {
                         });
                     }
                     other_event => {
-                        log::debug!("Received other event: {:?}", &other_event);
+                        log::trace!("Received other event: {:?}", &other_event);
                     }
                 }
             }

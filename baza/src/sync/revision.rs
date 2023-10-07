@@ -155,6 +155,7 @@ impl PartialEq for Revision {
     }
 }
 
+#[allow(clippy::incorrect_partial_ord_impl_on_ord_type)]
 impl PartialOrd for Revision {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match self.compare_vector_clocks(other) {

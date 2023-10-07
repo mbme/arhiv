@@ -110,10 +110,13 @@ impl AutoCommitService {
 
                     match event {
                         Ok(BazaEvent::DocumentStaged {}) => {
-                            if let Some(ref task) = task {
-                                log::debug!("Aborting pending auto-commit task");
-                                task.abort();
-                            }
+                            match task {
+                                Some(ref task) if !task.is_finished() => {
+                                    log::debug!("Aborting pending auto-commit task");
+                                    task.abort();
+                                },
+                                _ => {},
+                            };
 
                             task = Some(self.schedule_task(self.auto_commit_timeout));
                         },
@@ -142,6 +145,7 @@ impl AutoCommitService {
     }
 
     pub fn stop(self) {
+        log::debug!("Stopping auto-commit service");
         self.cancellation_token.cancel();
     }
 
@@ -171,6 +175,7 @@ impl AutoCommitService {
 
 impl Drop for AutoCommitService {
     fn drop(&mut self) {
+        log::debug!("Dropping auto-commit service");
         self.cancellation_token.cancel();
     }
 }

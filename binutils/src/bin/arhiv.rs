@@ -280,7 +280,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Server => {
             let arhiv = Arc::new(Arhiv::must_open());
 
-            start_arhiv_server(arhiv).await?;
+            start_arhiv_server(arhiv.clone()).await?;
+
+            Arc::into_inner(arhiv)
+                .context("failed to unwrap Arhiv instance")?
+                .stop();
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();

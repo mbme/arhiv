@@ -9,7 +9,7 @@ use tokio::time::timeout;
 use baza::{
     schema::{DataMigrations, DataSchema},
     sync::{build_rpc_router, SyncService},
-    AutoCommitService, Baza,
+    AutoCommitService, AutoCommitTask, Baza,
 };
 use rs_utils::{
     http_server::{build_health_router, check_server_health, HttpServer},
@@ -28,7 +28,7 @@ pub struct Arhiv {
     pub baza: Arc<Baza>,
     pub(crate) config: Config,
     mdns_service: OnceLock<MDNSService>,
-    auto_commit_service: Option<AutoCommitService>,
+    auto_commit_task: Option<AutoCommitTask>,
 }
 
 impl Arhiv {
@@ -48,7 +48,7 @@ impl Arhiv {
             data_migrations,
         )?);
 
-        let auto_commit_service = Arhiv::maybe_init_auto_commit_service(
+        let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
             baza.clone(),
             config.auto_commit_delay_in_seconds,
         )?;
@@ -57,7 +57,7 @@ impl Arhiv {
             baza,
             config,
             mdns_service: Default::default(),
-            auto_commit_service,
+            auto_commit_task,
         })
     }
 
@@ -80,7 +80,7 @@ impl Arhiv {
             data_migrations,
         )?);
 
-        let auto_commit_service = Arhiv::maybe_init_auto_commit_service(
+        let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
             baza.clone(),
             config.auto_commit_delay_in_seconds,
         )?;
@@ -89,19 +89,19 @@ impl Arhiv {
             baza,
             config,
             mdns_service: Default::default(),
-            auto_commit_service,
+            auto_commit_task,
         })
     }
 
     fn maybe_init_auto_commit_service(
         baza: Arc<Baza>,
         delay: u64,
-    ) -> Result<Option<AutoCommitService>> {
+    ) -> Result<Option<AutoCommitTask>> {
         if delay > 0 {
-            let mut service = AutoCommitService::new(baza.clone(), Duration::from_secs(delay));
-            service.start()?;
+            let service = AutoCommitService::new(baza.clone(), Duration::from_secs(delay));
+            let task = service.start()?;
 
-            Ok(Some(service))
+            Ok(Some(task))
         } else {
             Ok(None)
         }
@@ -174,8 +174,8 @@ impl Arhiv {
     }
 
     pub fn stop(mut self) {
-        if let Some(auto_commit_service) = self.auto_commit_service {
-            auto_commit_service.stop();
+        if let Some(auto_commit_task) = self.auto_commit_task {
+            auto_commit_task.abort();
         }
 
         if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {

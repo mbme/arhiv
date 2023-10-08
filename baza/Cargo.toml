@@ -20,7 +20,6 @@ serde_json.workspace = true
 
 futures.workspace = true
 tokio.workspace = true
-tokio-util.workspace = true
 
 aho-corasick = "1.1.0"
 

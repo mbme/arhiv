@@ -1,20 +1,18 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{bail, ensure, Context, Result};
-use tokio::{task::JoinHandle, time::sleep};
-use tokio_util::sync::CancellationToken;
+use anyhow::{ensure, Result};
+use tokio::{task::JoinHandle, time::interval};
 
 use rs_utils::{log, now, FakeTime, Timestamp};
 
-use crate::{baza::BazaEvent, Baza};
+use crate::Baza;
 
-#[derive(Clone)]
+pub type AutoCommitTask = JoinHandle<()>;
+
 pub struct AutoCommitService {
     baza: Arc<Baza>,
     auto_commit_timeout: Duration,
-    cancellation_token: CancellationToken,
     fake_time: Option<FakeTime>,
-    started: bool,
 }
 
 impl AutoCommitService {
@@ -22,9 +20,7 @@ impl AutoCommitService {
         AutoCommitService {
             baza,
             auto_commit_timeout,
-            cancellation_token: CancellationToken::new(),
             fake_time: None,
-            started: false,
         }
     }
 
@@ -32,10 +28,6 @@ impl AutoCommitService {
         self.fake_time = Some(FakeTime::new());
 
         self
-    }
-
-    pub fn get_auto_commit_timeout(&self) -> Duration {
-        self.auto_commit_timeout
     }
 
     fn get_time(&self) -> Timestamp {
@@ -46,107 +38,26 @@ impl AutoCommitService {
         }
     }
 
-    fn schedule_task(&self, duration: Duration) -> JoinHandle<()> {
-        let service = self.clone();
-        tokio::spawn(async move {
-            log::debug!(
-                "Scheduled auto-commit attempt in {} seconds",
-                duration.as_secs()
-            );
+    pub fn start(self) -> Result<AutoCommitTask> {
+        let task = tokio::spawn(async move {
+            let mut interval = interval(self.auto_commit_timeout / 2);
 
-            sleep(duration).await;
+            loop {
+                if let Err(err) = self.try_auto_commit() {
+                    log::warn!("Auto-commit failed: {err}");
+                    break;
+                }
 
-            if let Err(err) = service.try_auto_commit() {
-                log::warn!("Auto-commit failed: {err}");
+                interval.tick().await;
+                log::debug!("interval passed");
             }
-        })
-    }
 
-    pub fn start(&mut self) -> Result<()> {
-        if self.started {
-            bail!("Already started");
-        }
-
-        self.started = true;
-
-        self.try_auto_commit().context("Auto-commit failed")?;
-
-        let service = self.clone();
-
-        tokio::spawn(async move { service.start_watch_task().await });
+            log::debug!("Watch task ended");
+        });
 
         log::info!("Started auto-commit service");
 
-        Ok(())
-    }
-
-    async fn start_watch_task(&self) -> Result<()> {
-        let mut task: Option<JoinHandle<()>> = {
-            let conn = self.baza.get_connection()?;
-
-            let last_update_time = conn.get_last_update_time()?;
-            let is_modified = conn.has_staged_documents()?;
-
-            let time_since_last_update = (self.get_time() - last_update_time).to_std()?;
-
-            if is_modified {
-                ensure!(time_since_last_update < self.auto_commit_timeout);
-
-                let auto_commit_timeout =
-                    (self.auto_commit_timeout - time_since_last_update) + Duration::from_secs(1);
-
-                Some(self.schedule_task(auto_commit_timeout))
-            } else {
-                None
-            }
-        };
-
-        let mut events = self.baza.get_events_channel();
-
-        loop {
-            tokio::select! {
-                event = events.recv() => {
-                    log::debug!("Watch task got Baza event {event:#?}");
-
-                    match event {
-                        Ok(BazaEvent::DocumentStaged {}) => {
-                            match task {
-                                Some(ref task) if !task.is_finished() => {
-                                    log::debug!("Aborting pending auto-commit task");
-                                    task.abort();
-                                },
-                                _ => {},
-                            };
-
-                            task = Some(self.schedule_task(self.auto_commit_timeout));
-                        },
-                        Ok(_) => {},
-                        Err(_) => {
-                            break;
-                        },
-                    }
-                },
-
-                _ = self.cancellation_token.cancelled() => {
-                    log::debug!("Watch task got cancelled");
-                    break;
-                }
-            }
-        }
-
-        if let Some(ref task) = task {
-            log::debug!("Aborting pending auto-commit task");
-            task.abort();
-        }
-
-        log::debug!("Watch task ended");
-
-        Ok(())
-    }
-
-    pub fn stop(self) {
-        log::debug!("Stopping auto-commit service");
-        self.cancellation_token.cancel();
+        Ok(task)
     }
 
     fn try_auto_commit(&self) -> Result<()> {
@@ -155,7 +66,14 @@ impl AutoCommitService {
         let last_update_time = tx.get_last_update_time()?;
         let is_modified = tx.has_staged_documents()?;
 
-        if is_modified && last_update_time + self.auto_commit_timeout < self.get_time() {
+        let time_since_last_update = (self.get_time() - last_update_time).to_std()?;
+
+        if is_modified && time_since_last_update > self.auto_commit_timeout {
+            log::debug!(
+                "Starting auto-commit: {} seconds elapsed since last update",
+                time_since_last_update.as_secs()
+            );
+
             let documents_count = tx.commit_staged_documents()?;
             ensure!(
                 documents_count > 0,
@@ -170,12 +88,5 @@ impl AutoCommitService {
         }
 
         Ok(())
-    }
-}
-
-impl Drop for AutoCommitService {
-    fn drop(&mut self) {
-        log::debug!("Dropping auto-commit service");
-        self.cancellation_token.cancel();
     }
 }

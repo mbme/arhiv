@@ -19,7 +19,7 @@ pub mod validator;
 #[cfg(test)]
 mod tests;
 
-pub use auto_commit_service::AutoCommitService;
+pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
 pub use baza::{Baza, BazaEvent};
 pub use db::*;
 pub use document_expert::DocumentExpert;

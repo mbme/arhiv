@@ -4,7 +4,6 @@ use std::{
 };
 
 use anyhow::{bail, Result};
-use tokio::time::timeout;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
@@ -14,7 +13,7 @@ use baza::{
 use rs_utils::{
     http_server::{build_health_router, check_server_health, HttpServer},
     log,
-    mdns::{MDNSService, PeerInfo},
+    mdns::MDNSService,
 };
 
 use crate::{
@@ -124,31 +123,16 @@ impl Arhiv {
 
         let mdns_service = self.get_mdns_service();
 
-        let rx = mdns_service.get_peers_rx();
-
-        log::info!("Collecting MDNS peers...");
-        if let Ok(Ok(peers)) = timeout(
-            PEER_DISCOVERY_TIMEOUT,
-            rx.clone().wait_for(|peers| !peers.is_empty()),
-        )
-        .await
-        {
-            let urls = peers
-                .values()
-                .flat_map(|PeerInfo { ips, port }| {
-                    ips.iter()
-                        .map(|ip| format!("http://{ip}:{port}"))
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>();
-
-            sync_service.parse_network_agents(&urls)?;
-            log::info!("Added {} MDNS peers", urls.len());
+        let mdns_peers_count = sync_service
+            .discover_mdns_network_agents(mdns_service, PEER_DISCOVERY_TIMEOUT)
+            .await?;
+        if mdns_peers_count > 0 {
+            log::info!("Added {mdns_peers_count} MDNS peers");
         } else {
             log::warn!(
                 "MDNS service couldn't discover any peers in {}s",
                 PEER_DISCOVERY_TIMEOUT.as_secs()
-            )
+            );
         }
 
         if sync_service.get_agents_count() == 0 {

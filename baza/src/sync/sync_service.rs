@@ -1,9 +1,14 @@
-use std::{str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::{ensure, Context, Result};
 use reqwest::Url;
 
-use rs_utils::{log, now};
+use rs_utils::{
+    log,
+    mdns::{MDNSService, PeerInfo},
+    now,
+};
+use tokio::time::timeout;
 
 use crate::{Baza, SETTING_LAST_SYNC_TIME};
 
@@ -51,6 +56,38 @@ impl<'b> SyncService<'b> {
         log::debug!("added {count} network agents");
 
         Ok(())
+    }
+
+    pub async fn discover_mdns_network_agents(
+        &mut self,
+        mdns_service: &MDNSService,
+        peer_discovery_timeout: Duration,
+    ) -> Result<usize> {
+        log::info!("Collecting MDNS peers...");
+
+        let rx = mdns_service.get_peers_rx();
+
+        if let Ok(Ok(peers)) = timeout(
+            peer_discovery_timeout,
+            rx.clone().wait_for(|peers| !peers.is_empty()),
+        )
+        .await
+        {
+            let urls = peers
+                .values()
+                .flat_map(|PeerInfo { ips, port }| {
+                    ips.iter()
+                        .map(|ip| format!("http://{ip}:{port}"))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+
+            self.parse_network_agents(&urls)?;
+
+            Ok(urls.len())
+        } else {
+            Ok(0)
+        }
     }
 
     pub fn get_agents_count(&self) -> usize {

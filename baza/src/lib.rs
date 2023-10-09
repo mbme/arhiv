@@ -20,7 +20,7 @@ pub mod validator;
 mod tests;
 
 pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
-pub use baza::{Baza, BazaEvent};
+pub use baza::{Baza, BazaEvent, BazaOptions};
 pub use db::*;
 pub use document_expert::DocumentExpert;
 

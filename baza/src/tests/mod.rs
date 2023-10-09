@@ -9,7 +9,7 @@ use crate::{
     entities::{BLOBId, Document, DocumentClass, Id, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::{Changeset, Revision},
-    Baza, Filter, ListPage, SETTING_INSTANCE_ID,
+    Baza, BazaOptions, Filter, ListPage, SETTING_INSTANCE_ID,
 };
 
 mod attachment;
@@ -24,7 +24,13 @@ impl Baza {
     pub fn new_with_schema(schema: DataSchema) -> Self {
         let temp_dir = generate_temp_path("TestBaza", "");
 
-        Baza::create(temp_dir, schema, vec![]).expect("must create baza")
+        Baza::create(BazaOptions {
+            root_dir: temp_dir,
+            schema,
+            migrations: vec![],
+            static_network_peers: vec![],
+        })
+        .expect("must create baza")
     }
 
     pub fn new_test_baza() -> Self {

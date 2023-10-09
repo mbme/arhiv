@@ -203,7 +203,7 @@ async fn test_sync() -> Result<()> {
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert!(baza0.sync(agents1).await?);
+    assert!(baza0.sync_with_agents(agents1).await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 5);
@@ -228,7 +228,7 @@ async fn test_sync_fails_on_uncommitted_changes() -> Result<()> {
 
     baza0.add_document(Id::new(), Value::Null)?;
 
-    assert!(baza0.sync(Vec::new()).await.is_err());
+    assert!(baza0.sync_with_agents(Vec::new()).await.is_err());
 
     Ok(())
 }
@@ -257,7 +257,7 @@ async fn test_sync_blobs() -> Result<()> {
 
     let agents1 = create_in_mem_agent(baza1);
 
-    assert!(baza0.sync(agents1).await?);
+    assert!(baza0.sync_with_agents(agents1).await?);
 
     let blob = baza0.get_blob(&blob_id)?;
     let dst = &blob.file_path;
@@ -316,7 +316,7 @@ async fn test_sync_network_agent() -> Result<()> {
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert!(baza0.sync(agents0).await?);
+    assert!(baza0.sync_with_agents(agents0).await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 6);

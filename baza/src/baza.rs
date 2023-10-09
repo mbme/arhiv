@@ -1,4 +1,7 @@
-use std::sync::{Arc, OnceLock};
+use std::{
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
@@ -15,35 +18,46 @@ use crate::{
     DEBUG_MODE, SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
+const PEER_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(8);
+
+pub struct BazaOptions {
+    pub migrations: DataMigrations,
+    pub root_dir: String,
+    pub schema: DataSchema,
+    pub static_network_peers: Vec<String>,
+}
+
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
     data_version: u8,
     mdns_service: OnceLock<MDNSService>,
+    static_network_peers: Vec<String>,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
 impl Baza {
-    pub fn open(root_dir: String, schema: DataSchema, migrations: DataMigrations) -> Result<Baza> {
+    pub fn open(options: BazaOptions) -> Result<Baza> {
         // ensure DB schema is up to date
-        apply_db_migrations(&root_dir).context("failed to apply migrations to Baza db")?;
+        apply_db_migrations(&options.root_dir).context("failed to apply migrations to Baza db")?;
 
-        let path_manager = PathManager::new(root_dir);
+        let path_manager = PathManager::new(options.root_dir);
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
         let baza = Baza {
             path_manager: Arc::new(path_manager),
-            schema: Arc::new(schema),
-            data_version: get_latest_data_version(&migrations),
+            schema: Arc::new(options.schema),
+            data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
+            static_network_peers: options.static_network_peers,
         };
 
         let tx = baza.get_tx()?;
 
         // ensure data is up to date
-        tx.apply_data_migrations(&migrations)
+        tx.apply_data_migrations(&options.migrations)
             .context("failed to apply data migrations to Baza db")?;
 
         // ensure computed data is up to date
@@ -56,24 +70,21 @@ impl Baza {
         Ok(baza)
     }
 
-    pub fn create(
-        root_dir: String,
-        schema: DataSchema,
-        migrations: DataMigrations,
-    ) -> Result<Baza> {
-        log::info!("Initializing Baza in {root_dir}");
+    pub fn create(options: BazaOptions) -> Result<Baza> {
+        log::info!("Initializing Baza in {}", options.root_dir);
 
-        create_db(&root_dir)?;
-        log::info!("Created Baza in {}", root_dir);
+        create_db(&options.root_dir)?;
+        log::info!("Created Baza in {}", options.root_dir);
 
-        let path_manager = PathManager::new(root_dir);
+        let path_manager = PathManager::new(options.root_dir);
 
         let baza = Baza {
             path_manager: Arc::new(path_manager),
-            schema: Arc::new(schema),
-            data_version: get_latest_data_version(&migrations),
+            schema: Arc::new(options.schema),
+            data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
+            static_network_peers: options.static_network_peers,
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -144,6 +155,40 @@ impl Baza {
     pub fn get_mdns_service(&self) -> &MDNSService {
         self.mdns_service
             .get_or_init(|| self.init_mdns_service().expect("must init MDNS service"))
+    }
+
+    pub async fn sync(&self) -> Result<bool> {
+        log::info!("Starting sync");
+
+        let mut agent_list_builder = self.new_agent_list_builder();
+
+        let static_peers = &self.static_network_peers;
+        if !static_peers.is_empty() {
+            agent_list_builder.parse_network_agents(static_peers)?;
+            log::info!("Added {} static peers", static_peers.len());
+        }
+
+        let mdns_service = self.get_mdns_service();
+
+        let mdns_peers_count = agent_list_builder
+            .discover_mdns_network_agents(mdns_service, PEER_DISCOVERY_TIMEOUT)
+            .await?;
+        if mdns_peers_count > 0 {
+            log::info!("Added {mdns_peers_count} MDNS peers");
+        } else {
+            log::warn!(
+                "MDNS service couldn't discover any peers in {}s",
+                PEER_DISCOVERY_TIMEOUT.as_secs()
+            );
+        }
+
+        let agents = agent_list_builder.build();
+        if agents.is_empty() {
+            log::warn!("No agents discovered");
+            return Ok(false);
+        }
+
+        self.sync_with_agents(agents).await
     }
 
     pub fn stop(mut self) {

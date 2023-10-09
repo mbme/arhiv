@@ -37,7 +37,7 @@ impl Baza {
         Ok(pings)
     }
 
-    pub async fn sync(&self, agents: Vec<SyncAgent>) -> Result<bool> {
+    pub(crate) async fn sync_with_agents(&self, agents: Vec<SyncAgent>) -> Result<bool> {
         ensure!(
             !self.get_connection()?.has_staged_documents()?,
             "There are uncommitted changes"

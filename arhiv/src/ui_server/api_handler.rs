@@ -48,7 +48,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
 
             let schema = arhiv.baza.get_schema();
-            let page = arhiv.baza.list_documents(filter)?;
+            let page = arhiv.baza.get_connection()?.list_documents(&filter)?;
 
             APIResponse::ListDocuments {
                 has_more: page.has_more,

@@ -6,10 +6,10 @@ use serde_json::{json, Value};
 use rs_utils::generate_temp_path;
 
 use crate::{
-    entities::{Document, DocumentClass, Id},
+    entities::{BLOBId, Document, DocumentClass, Id, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::{Changeset, Revision},
-    Baza, ListPage, SETTING_INSTANCE_ID,
+    Baza, Filter, ListPage, SETTING_INSTANCE_ID,
 };
 
 mod attachment;
@@ -75,6 +75,24 @@ impl Baza {
         tx.commit()?;
 
         Ok(document)
+    }
+
+    pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage> {
+        let conn = self.get_connection()?;
+
+        conn.list_documents(filter.as_ref())
+    }
+
+    pub fn get_document(&self, id: impl Into<Id>) -> Result<Option<Document>> {
+        let conn = self.get_connection()?;
+
+        conn.get_document(&id.into())
+    }
+
+    pub fn get_blob(&self, id: &BLOBId) -> Result<BLOB> {
+        let conn = self.get_connection()?;
+
+        Ok(conn.get_blob(id))
     }
 }
 

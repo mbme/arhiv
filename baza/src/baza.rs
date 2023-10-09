@@ -7,9 +7,8 @@ use rs_utils::{log, mdns::MDNSService, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
-    db::{vacuum, BazaConnection, Filter, ListPage, SETTING_DATA_VERSION},
+    db::{vacuum, BazaConnection, SETTING_DATA_VERSION},
     db_migrations::{apply_db_migrations, create_db},
-    entities::*,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
@@ -135,24 +134,6 @@ impl Baza {
         if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {
             mdns_service.shutdown();
         }
-    }
-
-    pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage> {
-        let conn = self.get_connection()?;
-
-        conn.list_documents(filter.as_ref())
-    }
-
-    pub fn get_document(&self, id: impl Into<Id>) -> Result<Option<Document>> {
-        let conn = self.get_connection()?;
-
-        conn.get_document(&id.into())
-    }
-
-    pub fn get_blob(&self, id: &BLOBId) -> Result<BLOB> {
-        let conn = self.get_connection()?;
-
-        Ok(conn.get_blob(id))
     }
 
     #[must_use]

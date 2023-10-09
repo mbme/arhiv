@@ -188,7 +188,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
 
-            let document = arhiv.baza.get_document(&id)?;
+            let document = arhiv.baza.get_connection()?.get_document(&id)?;
 
             if let Some(document) = document {
                 serde_json::to_writer_pretty(std::io::stdout(), &document)?;

@@ -3,11 +3,11 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::{build_rpc_router, SyncService},
+    sync::{build_rpc_router, AgentListBuilder},
     AutoCommitService, AutoCommitTask, Baza,
 };
 use rs_utils::{
@@ -113,17 +113,18 @@ impl Arhiv {
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting arhiv sync");
 
-        let mut sync_service = SyncService::new(&self.baza);
+        let mut agent_list_builder =
+            AgentListBuilder::new(self.baza.get_path_manager().downloads_dir.clone());
 
         let static_peers = &self.config.static_peers;
         if !static_peers.is_empty() {
-            sync_service.parse_network_agents(static_peers)?;
+            agent_list_builder.parse_network_agents(static_peers)?;
             log::info!("Added {} static peers", static_peers.len());
         }
 
         let mdns_service = self.get_mdns_service();
 
-        let mdns_peers_count = sync_service
+        let mdns_peers_count = agent_list_builder
             .discover_mdns_network_agents(mdns_service, PEER_DISCOVERY_TIMEOUT)
             .await?;
         if mdns_peers_count > 0 {
@@ -135,11 +136,13 @@ impl Arhiv {
             );
         }
 
-        if sync_service.get_agents_count() == 0 {
-            bail!("no agents discovered");
+        let agents = agent_list_builder.build();
+        if agents.is_empty() {
+            log::warn!("No agents discovered");
+            return Ok(false);
         }
 
-        sync_service.sync().await
+        self.baza.sync(agents).await
     }
 
     fn get_mdns_service(&self) -> &MDNSService {

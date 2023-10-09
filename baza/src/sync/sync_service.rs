@@ -1,106 +1,23 @@
-use std::{str::FromStr, sync::Arc, time::Duration};
+use anyhow::{ensure, Result};
 
-use anyhow::{ensure, Context, Result};
-use reqwest::Url;
-
-use rs_utils::{
-    log,
-    mdns::{MDNSService, PeerInfo},
-    now,
-};
-use tokio::time::timeout;
+use rs_utils::{log, now};
 
 use crate::{Baza, SETTING_LAST_SYNC_TIME};
 
-use super::{agent::SyncAgent, ping::Ping, BazaClient};
+use super::{agent::SyncAgent, ping::Ping, AgentListBuilder};
 
-pub struct SyncService<'b> {
-    agents: Vec<Arc<SyncAgent>>,
-    baza: &'b Baza,
-}
-
-impl<'b> SyncService<'b> {
-    pub fn new(baza: &'b Baza) -> Self {
-        Self {
-            agents: Default::default(),
-            baza,
-        }
+impl Baza {
+    pub fn new_agent_list_builder(&self) -> AgentListBuilder {
+        AgentListBuilder::new(self.get_path_manager().downloads_dir.clone())
     }
 
-    pub fn add_agent(&mut self, agent: SyncAgent) {
-        self.agents.push(agent.into());
-    }
+    async fn collect_pings(&self, agents: Vec<SyncAgent>) -> Result<Vec<(SyncAgent, Ping)>> {
+        let ping = self.get_connection()?.get_ping()?;
 
-    pub fn add_agents(&mut self, agents: impl IntoIterator<Item = SyncAgent>) {
-        for agent in agents {
-            self.add_agent(agent);
-        }
-    }
-
-    pub fn parse_network_agents(&mut self, urls: &[String]) -> Result<()> {
-        let agents = urls
-            .iter()
-            .map(|url| {
-                let client = BazaClient::new(
-                    Url::from_str(url).context("failed to parse url")?,
-                    &self.baza.get_path_manager().downloads_dir,
-                );
-
-                Ok(SyncAgent::new_in_network(client))
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        let count = agents.len();
-        self.add_agents(agents);
-
-        log::debug!("added {count} network agents");
-
-        Ok(())
-    }
-
-    pub async fn discover_mdns_network_agents(
-        &mut self,
-        mdns_service: &MDNSService,
-        peer_discovery_timeout: Duration,
-    ) -> Result<usize> {
-        log::info!("Collecting MDNS peers...");
-
-        let rx = mdns_service.get_peers_rx();
-
-        if let Ok(Ok(peers)) = timeout(
-            peer_discovery_timeout,
-            rx.clone().wait_for(|peers| !peers.is_empty()),
-        )
-        .await
-        {
-            let urls = peers
-                .values()
-                .flat_map(|PeerInfo { ips, port }| {
-                    ips.iter()
-                        .map(|ip| format!("http://{ip}:{port}"))
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>();
-
-            self.parse_network_agents(&urls)?;
-
-            Ok(urls.len())
-        } else {
-            Ok(0)
-        }
-    }
-
-    pub fn get_agents_count(&self) -> usize {
-        self.agents.len()
-    }
-
-    async fn collect_pings(&self) -> Result<Vec<(Arc<SyncAgent>, Ping)>> {
-        let ping = self.baza.get_connection()?.get_ping()?;
-
-        let pings = self
-            .agents
-            .iter()
-            .map(|agent| async { (agent.clone(), agent.exchange_pings(&ping).await) });
+        let pings = agents.into_iter().map(|agent| async {
+            let ping = agent.exchange_pings(&ping).await;
+            (agent, ping)
+        });
 
         let mut pings = futures::future::join_all(pings)
             .await
@@ -113,19 +30,19 @@ impl<'b> SyncService<'b> {
         Ok(pings)
     }
 
-    pub async fn sync(&self) -> Result<bool> {
+    pub async fn sync(&self, agents: Vec<SyncAgent>) -> Result<bool> {
         ensure!(
-            !self.baza.get_connection()?.has_staged_documents()?,
+            !self.get_connection()?.has_staged_documents()?,
             "There are uncommitted changes"
         );
 
-        let pings = self.collect_pings().await?;
+        let pings = self.collect_pings(agents).await?;
 
         log::info!("starting sync with {} other instances", pings.len());
 
         let mut updated = false;
         for (agent, ping) in pings {
-            let local_rev = self.baza.get_connection()?.get_db_rev()?;
+            let local_rev = self.get_connection()?.get_db_rev()?;
 
             if local_rev.is_concurrent_or_older_than(&ping.rev) {
                 let changeset = agent.fetch_changes(&local_rev).await?;
@@ -136,7 +53,7 @@ impl<'b> SyncService<'b> {
                     ping.instance_id.as_ref()
                 );
 
-                let mut tx = self.baza.get_tx()?;
+                let mut tx = self.get_tx()?;
 
                 let summary = tx.apply_changeset(changeset)?;
 

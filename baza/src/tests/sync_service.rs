@@ -7,7 +7,7 @@ use rs_utils::{http_server::HttpServer, workspace_relpath};
 
 use crate::{
     entities::Id,
-    sync::{build_rpc_router, BazaClient, SyncAgent, SyncService},
+    sync::{build_rpc_router, SyncAgent},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
     Baza,
 };
@@ -16,6 +16,14 @@ fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
     let router = build_rpc_router().with_state(baza);
 
     HttpServer::start(router, 0)
+}
+
+fn create_in_mem_agent(baza: Arc<Baza>) -> Vec<SyncAgent> {
+    let mut agents_list_builder = baza.new_agent_list_builder();
+
+    agents_list_builder.add_in_mem_agent(baza).unwrap();
+
+    agents_list_builder.build()
 }
 
 #[tokio::test]
@@ -43,15 +51,12 @@ async fn test_sync_service() -> Result<()> {
         tx.commit()?;
     }
 
-    let mut sync_service = SyncService::new(&baza0);
-
-    let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
-    sync_service.add_agent(agent1);
+    let agents1 = create_in_mem_agent(baza1);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert!(sync_service.sync().await?);
+    assert!(baza0.sync(agents1).await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 5);
@@ -76,8 +81,7 @@ async fn test_sync_service_fails_on_uncommitted_changes() -> Result<()> {
 
     baza0.add_document(Id::new(), Value::Null)?;
 
-    let sync_service = SyncService::new(&baza0);
-    assert!(sync_service.sync().await.is_err());
+    assert!(baza0.sync(Vec::new()).await.is_err());
 
     Ok(())
 }
@@ -104,12 +108,9 @@ async fn test_sync_blobs() -> Result<()> {
         blob_id
     };
 
-    let mut sync_service = SyncService::new(&baza0);
+    let agents1 = create_in_mem_agent(baza1);
 
-    let agent1 = SyncAgent::new_in_memory(baza1.clone())?;
-    sync_service.add_agent(agent1);
-
-    assert!(sync_service.sync().await?);
+    assert!(baza0.sync(agents1).await?);
 
     let blob = baza0.get_blob(&blob_id)?;
     let dst = &blob.file_path;
@@ -159,18 +160,16 @@ async fn test_sync_service_network_agent() -> Result<()> {
         blob_id
     };
 
-    let mut sync_service = SyncService::new(&baza0);
-
     let server1 = start_rpc_server(baza1.clone());
 
-    let client1 = BazaClient::new(server1.get_url()?, &baza1.get_path_manager().downloads_dir);
-    let agent1 = SyncAgent::new_in_network(client1);
-    sync_service.add_agent(agent1);
+    let mut agent_list_builder = baza0.new_agent_list_builder();
+    agent_list_builder.add_network_agent(server1.get_url()?.as_str())?;
+    let agents0 = agent_list_builder.build();
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
-    assert!(sync_service.sync().await?);
+    assert!(baza0.sync(agents0).await?);
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 6);

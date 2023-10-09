@@ -8,9 +8,7 @@ mod rpc_server;
 pub use rpc_client::BazaClient;
 pub use rpc_server::{build_rpc_router, respond_with_blob};
 
-use crate::Baza;
-
-use super::DEBUG_MODE;
+use crate::{Baza, DEBUG_MODE};
 
 impl Baza {
     pub fn init_mdns_service(&self) -> Result<MDNSService> {

@@ -4,8 +4,8 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::{
-    sync::{Revision, DEBUG_MODE},
-    BLOBSCount, BazaConnection, DocumentsCount, SETTING_DATA_VERSION, SETTING_LAST_SYNC_TIME,
+    sync::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE, SETTING_DATA_VERSION,
+    SETTING_LAST_SYNC_TIME,
 };
 use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
 

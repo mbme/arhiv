@@ -23,3 +23,5 @@ pub use auto_commit_service::{AutoCommitService, AutoCommitTask};
 pub use baza::{Baza, BazaEvent};
 pub use db::*;
 pub use document_expert::DocumentExpert;
+
+pub const DEBUG_MODE: bool = cfg!(not(feature = "production-mode"));

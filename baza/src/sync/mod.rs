@@ -15,5 +15,3 @@ pub use instance_id::InstanceId;
 pub use network::{build_rpc_router, respond_with_blob, BazaClient};
 pub use ping::Ping;
 pub use revision::Revision;
-
-pub const DEBUG_MODE: bool = cfg!(not(feature = "production-mode")); // FIXME lift this

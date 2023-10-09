@@ -1,12 +1,12 @@
 mod agent;
 mod agent_list_builder;
+pub mod baza_sync;
 mod changeset;
 mod connection_ext;
 mod instance_id;
 mod network;
 mod ping;
 mod revision;
-pub mod sync_service;
 
 pub use agent::SyncAgent;
 pub use agent_list_builder::AgentListBuilder;

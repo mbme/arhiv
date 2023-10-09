@@ -17,7 +17,6 @@ mod auto_commit_service;
 mod crud;
 mod query;
 mod sync;
-mod sync_service;
 mod validation;
 
 #[cfg(test)]

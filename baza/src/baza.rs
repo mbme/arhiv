@@ -145,4 +145,13 @@ impl Baza {
     pub fn get_events_channel(&self) -> Receiver<BazaEvent> {
         self.events.0.subscribe()
     }
+
+    pub fn publish_event(&self, event: BazaEvent) -> Result<()> {
+        self.events
+            .0
+            .send(event)
+            .context("failed to publish baza event")?;
+
+        Ok(())
+    }
 }

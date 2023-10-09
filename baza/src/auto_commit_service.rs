@@ -39,7 +39,7 @@ impl AutoCommitService {
     }
 
     pub fn start(self) -> Result<AutoCommitTask> {
-        let timeout = self.auto_commit_timeout;
+        let auto_commit_timeout = self.auto_commit_timeout;
 
         let task = tokio::spawn(async move {
             let mut interval = interval(self.auto_commit_timeout / 2);
@@ -53,12 +53,12 @@ impl AutoCommitService {
                 }
             }
 
-            log::debug!("Watch task ended");
+            log::debug!("Auto-commit task ended");
         });
 
         log::info!(
             "Started auto-commit service, auto-commit timeout is {} seconds",
-            timeout.as_secs()
+            auto_commit_timeout.as_secs()
         );
 
         Ok(task)

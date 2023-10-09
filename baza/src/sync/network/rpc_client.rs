@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use reqwest::{Client, Url};
+use reqwest::{header, Client, Url};
 
 use rs_utils::{log, Download};
 
@@ -60,11 +60,14 @@ impl BazaClient {
         Ok(())
     }
 
-    pub async fn get_ping(&self) -> Result<Ping> {
-        log::debug!("Baza Server {}: fetching a ping", self.rpc_server_url);
+    pub async fn exchange_pings(&self, ping: &Ping) -> Result<Ping> {
+        log::debug!("Baza Server {}: exchanging pings", self.rpc_server_url);
 
+        let body = serde_json::to_vec(ping).context("failed to serialize ping")?;
         let response = Client::new()
-            .get(self.rpc_server_url.join("/ping")?)
+            .post(self.rpc_server_url.join("/ping")?)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(body)
             .send()
             .await?;
 

@@ -18,7 +18,7 @@ async fn test_auto_commit_on_start() -> Result<()> {
 
     advance(auto_commit_timeout * 2).await;
 
-    let _task = service.start()?;
+    service.start()?;
 
     sleep(Duration::from_secs(1)).await;
 

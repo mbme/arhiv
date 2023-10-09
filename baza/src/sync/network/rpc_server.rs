@@ -6,7 +6,7 @@ use axum::{
     headers::{self, HeaderMapExt},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 
@@ -16,11 +16,15 @@ use rs_utils::{
     log,
 };
 
-use crate::{entities::BLOBId, sync::Revision, Baza};
+use crate::{
+    entities::BLOBId,
+    sync::{Ping, Revision},
+    Baza, BazaEvent,
+};
 
 pub fn build_rpc_router() -> Router<Arc<Baza>> {
     Router::new()
-        .route("/ping", get(get_ping_handler))
+        .route("/ping", post(exchange_pings_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
 }
@@ -37,8 +41,16 @@ async fn get_blob_handler(
 }
 
 #[tracing::instrument(skip(baza), level = "debug")]
-async fn get_ping_handler(State(baza): State<Arc<Baza>>) -> Result<impl IntoResponse, ServerError> {
+async fn exchange_pings_handler(
+    State(baza): State<Arc<Baza>>,
+    Json(other_ping): Json<Ping>,
+) -> Result<impl IntoResponse, ServerError> {
     let ping = baza.get_connection()?.get_ping()?;
+
+    if other_ping.rev.is_concurrent_or_newer_than(&ping.rev) {
+        log::info!("Instance is outdated, comparing to {}", ping.instance_id);
+        baza.publish_event(BazaEvent::InstanceOutdated {})?;
+    }
 
     Ok(Json(ping))
 }

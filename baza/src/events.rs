@@ -7,6 +7,7 @@ use serde::Serialize;
 pub enum BazaEvent {
     DocumentStaged {},
     DocumentsCommitted {},
+    InstanceOutdated {},
 }
 
 impl Display for BazaEvent {
@@ -14,6 +15,7 @@ impl Display for BazaEvent {
         let name = match self {
             BazaEvent::DocumentStaged {} => "DocumentStaged",
             BazaEvent::DocumentsCommitted {} => "DocumentsCommitted",
+            BazaEvent::InstanceOutdated {} => "InstanceOutdated",
         };
 
         write!(f, "{}", name)

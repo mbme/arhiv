@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 
-use crate::{entities::BLOB, Baza};
+use crate::{entities::BLOB, Baza, BazaEvent};
 
 use super::{changeset::Changeset, network::BazaClient, ping::Ping, Revision};
 
@@ -20,10 +20,19 @@ impl SyncAgent {
         SyncAgent::Network { client }
     }
 
-    pub async fn fetch_ping(&self) -> Result<Ping> {
+    pub async fn exchange_pings(&self, ping: &Ping) -> Result<Ping> {
         match self {
-            SyncAgent::InMemory { baza, .. } => baza.get_connection()?.get_ping(),
-            SyncAgent::Network { client, .. } => client.get_ping().await,
+            SyncAgent::InMemory { baza, .. } => {
+                let other_ping = ping;
+                let ping = baza.get_connection()?.get_ping()?;
+
+                if other_ping.rev.is_concurrent_or_newer_than(&ping.rev) {
+                    baza.publish_event(BazaEvent::InstanceOutdated {})?;
+                }
+
+                Ok(ping)
+            }
+            SyncAgent::Network { client, .. } => client.exchange_pings(ping).await,
         }
     }
 

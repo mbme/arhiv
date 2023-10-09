@@ -58,10 +58,12 @@ impl<'b> SyncService<'b> {
     }
 
     async fn collect_pings(&self) -> Result<Vec<(Arc<SyncAgent>, Ping)>> {
+        let ping = self.baza.get_connection()?.get_ping()?;
+
         let pings = self
             .agents
             .iter()
-            .map(|agent| async { (agent.clone(), agent.fetch_ping().await) });
+            .map(|agent| async { (agent.clone(), agent.exchange_pings(&ping).await) });
 
         let mut pings = futures::future::join_all(pings)
             .await

@@ -1,19 +1,15 @@
-use std::{
-    sync::{Arc, OnceLock},
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::{build_rpc_router, AgentListBuilder},
+    sync::build_rpc_router,
     AutoCommitService, AutoCommitTask, Baza,
 };
 use rs_utils::{
     http_server::{build_health_router, check_server_health, HttpServer},
     log,
-    mdns::MDNSService,
 };
 
 use crate::{
@@ -26,7 +22,6 @@ const PEER_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(8);
 pub struct Arhiv {
     pub baza: Arc<Baza>,
     pub(crate) config: Config,
-    mdns_service: OnceLock<MDNSService>,
     auto_commit_task: Option<AutoCommitTask>,
 }
 
@@ -55,7 +50,6 @@ impl Arhiv {
         Ok(Arhiv {
             baza,
             config,
-            mdns_service: Default::default(),
             auto_commit_task,
         })
     }
@@ -87,7 +81,6 @@ impl Arhiv {
         Ok(Arhiv {
             baza,
             config,
-            mdns_service: Default::default(),
             auto_commit_task,
         })
     }
@@ -113,8 +106,7 @@ impl Arhiv {
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting arhiv sync");
 
-        let mut agent_list_builder =
-            AgentListBuilder::new(self.baza.get_path_manager().downloads_dir.clone());
+        let mut agent_list_builder = self.baza.new_agent_list_builder();
 
         let static_peers = &self.config.static_peers;
         if !static_peers.is_empty() {
@@ -122,7 +114,7 @@ impl Arhiv {
             log::info!("Added {} static peers", static_peers.len());
         }
 
-        let mdns_service = self.get_mdns_service();
+        let mdns_service = self.baza.get_mdns_service();
 
         let mdns_peers_count = agent_list_builder
             .discover_mdns_network_agents(mdns_service, PEER_DISCOVERY_TIMEOUT)
@@ -145,14 +137,6 @@ impl Arhiv {
         self.baza.sync(agents).await
     }
 
-    fn get_mdns_service(&self) -> &MDNSService {
-        self.mdns_service.get_or_init(|| {
-            self.baza
-                .init_mdns_service()
-                .expect("must init MDNS service")
-        })
-    }
-
     pub async fn is_local_server_alive(&self) -> bool {
         let port = self.config.server_port;
         let local_server_url = format!("localhost:{port}");
@@ -160,21 +144,21 @@ impl Arhiv {
         check_server_health(&local_server_url).await.is_ok()
     }
 
-    pub fn stop(mut self) {
+    pub fn stop(self) {
         if let Some(auto_commit_task) = self.auto_commit_task {
             auto_commit_task.abort();
         }
 
-        if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {
-            mdns_service.shutdown();
-        }
+        Arc::into_inner(self.baza)
+            .expect("must access inner baza instance")
+            .stop();
     }
 }
 
 pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     let port = arhiv.config.server_port;
 
-    let mdns_service = arhiv.get_mdns_service();
+    let mdns_service = arhiv.baza.get_mdns_service();
     let mut mdns_server = mdns_service.start_server(port)?;
 
     let health_router = build_health_router();

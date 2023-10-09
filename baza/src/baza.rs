@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, MIN_TIMESTAMP};
+use rs_utils::{log, mdns::MDNSService, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -20,6 +20,7 @@ pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
     data_version: u8,
+    mdns_service: OnceLock<MDNSService>,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
@@ -37,6 +38,7 @@ impl Baza {
             schema: Arc::new(schema),
             data_version: get_latest_data_version(&migrations),
             events: channel(42),
+            mdns_service: Default::default(),
         };
 
         let tx = baza.get_tx()?;
@@ -72,6 +74,7 @@ impl Baza {
             schema: Arc::new(schema),
             data_version: get_latest_data_version(&migrations),
             events: channel(42),
+            mdns_service: Default::default(),
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -121,6 +124,17 @@ impl Baza {
     #[must_use]
     pub fn get_name(&self) -> &str {
         self.schema.get_name()
+    }
+
+    pub fn get_mdns_service(&self) -> &MDNSService {
+        self.mdns_service
+            .get_or_init(|| self.init_mdns_service().expect("must init MDNS service"))
+    }
+
+    pub fn stop(mut self) {
+        if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {
+            mdns_service.shutdown();
+        }
     }
 
     pub fn list_documents(&self, filter: impl AsRef<Filter>) -> Result<ListPage> {

@@ -12,7 +12,7 @@ use crate::{
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
-    SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
+    DEBUG_MODE, SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
 pub struct Baza {
@@ -123,6 +123,22 @@ impl Baza {
     #[must_use]
     pub fn get_name(&self) -> &str {
         self.schema.get_name()
+    }
+
+    fn init_mdns_service(&self) -> Result<MDNSService> {
+        let instance_id = self
+            .get_connection()
+            .and_then(|conn| conn.get_instance_id())
+            .context("failed to read instance_id")?;
+
+        let app_name = self.get_name();
+
+        let mut service_name = format!("_{app_name}-baza");
+        if DEBUG_MODE {
+            service_name.push_str("-debug");
+        }
+
+        MDNSService::new(service_name, instance_id)
     }
 
     pub fn get_mdns_service(&self) -> &MDNSService {

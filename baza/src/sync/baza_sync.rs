@@ -1,28 +1,12 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{ensure, Result};
 
-use rs_utils::{log, mdns::MDNSService, now};
+use rs_utils::{log, now};
 
-use crate::{Baza, DEBUG_MODE, SETTING_LAST_SYNC_TIME};
+use crate::{Baza, SETTING_LAST_SYNC_TIME};
 
 use super::{agent::SyncAgent, ping::Ping, AgentListBuilder};
 
 impl Baza {
-    pub fn init_mdns_service(&self) -> Result<MDNSService> {
-        let instance_id = self
-            .get_connection()
-            .and_then(|conn| conn.get_instance_id())
-            .context("failed to read instance_id")?;
-
-        let app_name = self.get_name();
-
-        let mut service_name = format!("_{app_name}-baza");
-        if DEBUG_MODE {
-            service_name.push_str("-debug");
-        }
-
-        MDNSService::new(service_name, instance_id)
-    }
-
     pub fn new_agent_list_builder(&self) -> AgentListBuilder {
         AgentListBuilder::new(self.get_path_manager().downloads_dir.clone())
     }

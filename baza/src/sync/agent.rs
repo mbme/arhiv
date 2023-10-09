@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use anyhow::{Context, Result};
 
@@ -59,5 +59,21 @@ impl SyncAgent {
         }
 
         Ok(())
+    }
+}
+
+impl Display for SyncAgent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SyncAgent::InMemory { baza } => write!(
+                f,
+                "InMemoryAgent<{} {}>",
+                baza.get_name(),
+                baza.get_connection()
+                    .and_then(|conn| conn.get_instance_id())
+                    .expect("must read baza instance id")
+            ),
+            SyncAgent::Network { client } => write!(f, "NetworkAgent<{}>", client.get_url()),
+        }
     }
 }

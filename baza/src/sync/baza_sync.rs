@@ -38,8 +38,15 @@ impl Baza {
         let mut pings = futures::future::join_all(pings)
             .await
             .into_iter()
-            .map(|(agent, ping_result)| Ok((agent, ping_result?)))
-            .collect::<Result<Vec<_>>>()?;
+            .filter_map(|(agent, ping_result)| match ping_result {
+                Ok(ping) => Some((agent, ping)),
+                Err(err) => {
+                    log::warn!("Failed to exchange pings with agent {agent}: {err}");
+
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         pings.sort_by_cached_key(|(_agent, ping)| ping.rev.clone());
 
@@ -54,7 +61,7 @@ impl Baza {
 
         let pings = self.collect_pings(agents).await?;
 
-        log::info!("starting sync with {} other instances", pings.len());
+        log::info!("Starting sync with {} other instances", pings.len());
 
         let mut updated = false;
         for (agent, ping) in pings {
@@ -105,9 +112,9 @@ impl Baza {
         }
 
         if updated {
-            log::info!("finished sync, updated");
+            log::info!("Finished sync, updated");
         } else {
-            log::info!("finished sync, no updates");
+            log::info!("Finished sync, no updates");
         }
 
         Ok(updated)

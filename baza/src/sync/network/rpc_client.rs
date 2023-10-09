@@ -112,4 +112,8 @@ impl BazaClient {
 
         Ok(())
     }
+
+    pub fn get_url(&self) -> &str {
+        self.rpc_server_url.as_str()
+    }
 }

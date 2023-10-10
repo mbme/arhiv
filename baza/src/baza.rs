@@ -6,7 +6,11 @@ use std::{
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, mdns::MDNSService, MIN_TIMESTAMP};
+use rs_utils::{
+    log,
+    mdns::{MDNSEvent, MDNSService},
+    MIN_TIMESTAMP,
+};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -145,7 +149,24 @@ impl Baza {
             service_name.push_str("-debug");
         }
 
-        MDNSService::new(service_name, instance_id)
+        let service = MDNSService::new(service_name, instance_id)?;
+
+        let mut mdns_events = service.get_events();
+        let baza_events = self.events.0.clone();
+        tokio::spawn(async move {
+            match mdns_events.recv().await {
+                Ok(mdns_event) => {
+                    if let MDNSEvent::InstanceDiscovered(_) = mdns_event {
+                        baza_events
+                            .send(BazaEvent::PeerDiscovered {})
+                            .expect("failed to publish baza event");
+                    }
+                }
+                Err(err) => log::error!("Failed to receive MDNS event: {err}"),
+            }
+        });
+
+        Ok(service)
     }
 
     pub fn get_mdns_service(&self) -> &MDNSService {

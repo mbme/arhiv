@@ -11,7 +11,7 @@ pub async fn main() -> Result<()> {
 
     let service = MDNSService::new("_mdns-tester", instance_name)?;
 
-    let mut rx = service.get_peers_rx().clone();
+    let mut rx = service.get_peers_rx();
     tokio::spawn(async move {
         while rx.changed().await.is_ok() {
             println!("Event: {:#?}", rx.borrow());

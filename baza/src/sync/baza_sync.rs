@@ -7,7 +7,7 @@ use crate::{Baza, SETTING_LAST_SYNC_TIME};
 use super::{agent::SyncAgent, ping::Ping, AgentListBuilder};
 
 impl Baza {
-    pub fn new_agent_list_builder(&self) -> AgentListBuilder {
+    pub(crate) fn new_agent_list_builder(&self) -> AgentListBuilder {
         AgentListBuilder::new(self.get_path_manager().downloads_dir.clone())
     }
 

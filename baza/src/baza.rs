@@ -31,7 +31,6 @@ pub struct Baza {
     schema: Arc<DataSchema>,
     data_version: u8,
     mdns_service: OnceLock<MDNSService>,
-    static_network_peers: Vec<String>,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
@@ -50,7 +49,6 @@ impl Baza {
             data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
-            static_network_peers: vec![],
         };
 
         let tx = baza.get_tx()?;
@@ -83,7 +81,6 @@ impl Baza {
             data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
-            static_network_peers: vec![],
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -96,10 +93,6 @@ impl Baza {
         tx.commit()?;
 
         Ok(baza)
-    }
-
-    pub fn with_known_network_agents(&mut self, static_network_peers: Vec<String>) {
-        self.static_network_peers = static_network_peers;
     }
 
     pub fn cleanup(&self) -> Result<()> {
@@ -164,12 +157,6 @@ impl Baza {
         log::info!("Starting sync");
 
         let mut agent_list_builder = self.new_agent_list_builder();
-
-        let static_peers = &self.static_network_peers;
-        if !static_peers.is_empty() {
-            agent_list_builder.parse_network_agents(static_peers)?;
-            log::info!("Added {} static peers", static_peers.len());
-        }
 
         let mdns_service = self.get_mdns_service();
 

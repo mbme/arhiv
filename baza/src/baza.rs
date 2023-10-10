@@ -8,7 +8,7 @@ use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 use rs_utils::{
     log,
-    mdns::{MDNSEvent, MDNSService},
+    mdns::{MDNSEvent, MDNSServer, MDNSService},
     MIN_TIMESTAMP,
 };
 
@@ -169,9 +169,13 @@ impl Baza {
         Ok(service)
     }
 
-    pub fn get_mdns_service(&self) -> &MDNSService {
+    fn get_mdns_service(&self) -> &MDNSService {
         self.mdns_service
             .get_or_init(|| self.init_mdns_service().expect("must init MDNS service"))
+    }
+
+    pub fn start_mdns_server(&self, port: u16) -> Result<MDNSServer> {
+        self.get_mdns_service().start_server(port)
     }
 
     pub async fn sync(&self) -> Result<bool> {

@@ -121,8 +121,7 @@ impl Arhiv {
 pub async fn start_arhiv_server(arhiv: Arc<Arhiv>) -> Result<()> {
     let port = arhiv.config.server_port;
 
-    let mdns_service = arhiv.baza.get_mdns_service();
-    let mut mdns_server = mdns_service.start_server(port)?;
+    let mut mdns_server = arhiv.baza.start_mdns_server(port)?;
 
     let health_router = build_health_router();
     let rpc_router = build_rpc_router();

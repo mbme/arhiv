@@ -24,7 +24,6 @@ pub struct BazaOptions {
     pub migrations: DataMigrations,
     pub root_dir: String,
     pub schema: DataSchema,
-    pub static_network_peers: Vec<String>,
 }
 
 pub struct Baza {
@@ -51,7 +50,7 @@ impl Baza {
             data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
-            static_network_peers: options.static_network_peers,
+            static_network_peers: vec![],
         };
 
         let tx = baza.get_tx()?;
@@ -84,7 +83,7 @@ impl Baza {
             data_version: get_latest_data_version(&options.migrations),
             events: channel(42),
             mdns_service: Default::default(),
-            static_network_peers: options.static_network_peers,
+            static_network_peers: vec![],
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -97,6 +96,10 @@ impl Baza {
         tx.commit()?;
 
         Ok(baza)
+    }
+
+    pub fn with_known_network_agents(&mut self, static_network_peers: Vec<String>) {
+        self.static_network_peers = static_network_peers;
     }
 
     pub fn cleanup(&self) -> Result<()> {

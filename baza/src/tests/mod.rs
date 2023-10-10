@@ -28,7 +28,6 @@ impl Baza {
             root_dir: temp_dir,
             schema,
             migrations: vec![],
-            static_network_peers: vec![],
         })
         .expect("must create baza")
     }

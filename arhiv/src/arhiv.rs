@@ -31,12 +31,13 @@ impl Arhiv {
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
-        let baza = Arc::new(Baza::open(BazaOptions {
+        let mut baza = Baza::open(BazaOptions {
             root_dir: config.arhiv_root.clone(),
             schema,
             migrations: data_migrations,
-            static_network_peers: config.static_peers.clone(),
-        })?);
+        })?;
+        baza.with_known_network_agents(config.static_peers.clone());
+        let baza = Arc::new(baza);
 
         let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
             baza.clone(),
@@ -63,12 +64,13 @@ impl Arhiv {
         schema: DataSchema,
         data_migrations: DataMigrations,
     ) -> Result<Self> {
-        let baza = Arc::new(Baza::create(BazaOptions {
+        let mut baza = Baza::create(BazaOptions {
             root_dir: config.arhiv_root.clone(),
             schema,
             migrations: data_migrations,
-            static_network_peers: config.static_peers.clone(),
-        })?);
+        })?;
+        baza.with_known_network_agents(config.static_peers.clone());
+        let baza = Arc::new(baza);
 
         let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
             baza.clone(),

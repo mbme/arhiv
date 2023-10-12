@@ -122,6 +122,7 @@ impl MDNSService {
                         log::debug!("Registered an instance: {instance_name}");
 
                         let peer_info = PeerInfo {
+                            instance_name: instance_name.clone(),
                             ips: info.get_addresses().iter().cloned().collect(),
                             port: info.get_port(),
                         };
@@ -161,7 +162,7 @@ impl MDNSService {
         Ok(())
     }
 
-    fn stop_client(&self) {
+    pub fn stop_client(&self) {
         loop {
             match self.mdns.stop_browse(&self.get_service_type()) {
                 Ok(_) => {
@@ -181,8 +182,6 @@ impl MDNSService {
         if !self.started {
             return;
         }
-
-        self.stop_client();
 
         loop {
             match self.mdns.shutdown() {
@@ -267,6 +266,7 @@ fn extract_instance_name_from_fullname(fullname: &str) -> String {
 
 #[derive(Debug, Clone)]
 pub struct PeerInfo {
+    pub instance_name: String,
     pub ips: Vec<Ipv4Addr>,
     pub port: u16,
 }

@@ -1,4 +1,4 @@
-use std::{process, sync::Arc};
+use std::process;
 
 use anyhow::{Context, Result};
 use clap::{
@@ -6,7 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{definitions::get_standard_schema, start_arhiv_server, Arhiv, Config, Status};
+use arhiv::{definitions::get_standard_schema, Arhiv, Config, Status};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     KvsEntry, KvsKey,
@@ -181,9 +181,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Committed {count} staged documents");
         }
         CLICommand::Sync => {
-            let arhiv = Arhiv::must_open();
-
-            arhiv.baza.sync().await?;
+            let mut arhiv = Arhiv::must_open();
+            arhiv.start_mdns_client()?;
+            arhiv.sync().await?;
         }
         CLICommand::Get { id } => {
             let arhiv = Arhiv::must_open();
@@ -278,13 +278,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::Server => {
-            let arhiv = Arc::new(Arhiv::must_open());
+            let mut arhiv = Arhiv::must_open();
+            arhiv.start_mdns_client()?;
 
-            start_arhiv_server(arhiv.clone()).await?;
-
-            Arc::into_inner(arhiv)
-                .context("failed to unwrap Arhiv instance")?
-                .stop();
+            arhiv.start_server().await?;
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();

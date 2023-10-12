@@ -1,16 +1,9 @@
-use std::{
-    sync::{Arc, OnceLock},
-    time::Duration,
-};
+use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{
-    log,
-    mdns::{MDNSEvent, MDNSServer, MDNSService},
-    MIN_TIMESTAMP,
-};
+use rs_utils::{log, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -19,10 +12,8 @@ use crate::{
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
-    DEBUG_MODE, SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
+    SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
-
-const PEER_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(8);
 
 pub struct BazaOptions {
     pub migrations: DataMigrations,
@@ -34,7 +25,6 @@ pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
     data_version: u8,
-    mdns_service: OnceLock<MDNSService>,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
@@ -47,12 +37,12 @@ impl Baza {
         path_manager.assert_dirs_exist()?;
         path_manager.assert_db_file_exists()?;
 
+        let events = channel(42);
         let baza = Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(options.schema),
             data_version: get_latest_data_version(&options.migrations),
-            events: channel(42),
-            mdns_service: Default::default(),
+            events,
         };
 
         let tx = baza.get_tx()?;
@@ -79,12 +69,12 @@ impl Baza {
 
         let path_manager = PathManager::new(options.root_dir);
 
+        let events = channel(42);
         let baza = Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(options.schema),
             data_version: get_latest_data_version(&options.migrations),
-            events: channel(42),
-            mdns_service: Default::default(),
+            events,
         };
 
         // TODO remove created arhiv if settings tx fails
@@ -136,86 +126,14 @@ impl Baza {
         self.schema.get_name()
     }
 
-    fn init_mdns_service(&self) -> Result<MDNSService> {
-        let instance_id = self
-            .get_connection()
-            .and_then(|conn| conn.get_instance_id())
-            .context("failed to read instance_id")?;
-
-        let app_name = self.get_name();
-
-        let mut service_name = format!("_{app_name}-baza");
-        if DEBUG_MODE {
-            service_name.push_str("-debug");
-        }
-
-        let mut service = MDNSService::new(service_name, instance_id)?;
-        service.start_client()?;
-
-        let mut mdns_events = service.get_events();
-        let baza_events = self.events.0.clone();
-        tokio::spawn(async move {
-            match mdns_events.recv().await {
-                Ok(mdns_event) => {
-                    if let MDNSEvent::InstanceDiscovered(_) = mdns_event {
-                        baza_events
-                            .send(BazaEvent::PeerDiscovered {})
-                            .expect("failed to publish baza event");
-                    }
-                }
-                Err(err) => log::error!("Failed to receive MDNS event: {err}"),
-            }
-        });
-
-        Ok(service)
-    }
-
-    fn get_mdns_service(&self) -> &MDNSService {
-        self.mdns_service
-            .get_or_init(|| self.init_mdns_service().expect("must init MDNS service"))
-    }
-
-    pub fn start_mdns_server(&self, port: u16) -> Result<MDNSServer> {
-        self.get_mdns_service().start_server(port)
-    }
-
-    pub async fn sync(&self) -> Result<bool> {
-        log::info!("Starting sync");
-
-        let mut agent_list_builder = self.new_agent_list_builder();
-
-        let mdns_service = self.get_mdns_service();
-
-        let mdns_peers_count = agent_list_builder
-            .discover_mdns_network_agents(mdns_service, PEER_DISCOVERY_TIMEOUT)
-            .await?;
-        if mdns_peers_count > 0 {
-            log::info!("Added {mdns_peers_count} MDNS peers");
-        } else {
-            log::warn!(
-                "MDNS service couldn't discover any peers in {}s",
-                PEER_DISCOVERY_TIMEOUT.as_secs()
-            );
-        }
-
-        let agents = agent_list_builder.build();
-        if agents.is_empty() {
-            log::warn!("No agents discovered");
-            return Ok(false);
-        }
-
-        self.sync_with_agents(agents).await
-    }
-
-    pub fn stop(mut self) {
-        if let Some(ref mut mdns_service) = self.mdns_service.get_mut() {
-            mdns_service.shutdown();
-        }
-    }
-
     #[must_use]
     pub fn get_events_channel(&self) -> Receiver<BazaEvent> {
         self.events.0.subscribe()
+    }
+
+    #[must_use]
+    pub(crate) fn get_events_sender(&self) -> Sender<BazaEvent> {
+        self.events.0.clone()
     }
 
     pub fn publish_event(&self, event: BazaEvent) -> Result<()> {

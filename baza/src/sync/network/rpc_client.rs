@@ -8,7 +8,7 @@ use crate::{
     sync::{changeset::Changeset, ping::Ping, Revision},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BazaClient {
     rpc_server_url: Url,
     downloads_dir: String,

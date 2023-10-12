@@ -307,7 +307,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
                 tx.commit()?;
             } else {
-                arhiv.baza.sync().await?;
+                arhiv.sync().await?;
             }
 
             APIResponse::CommitOrSync {}

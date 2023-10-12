@@ -1,23 +1,48 @@
-use std::{fmt::Display, sync::Arc};
+use std::{fmt::Display, str::FromStr, sync::Arc};
 
 use anyhow::{Context, Result};
+use reqwest::Url;
 
 use crate::{entities::BLOB, Baza, BazaEvent};
 
-use super::{changeset::Changeset, network::BazaClient, ping::Ping, Revision};
+use super::{changeset::Changeset, network::BazaClient, ping::Ping, InstanceId, Revision};
 
+#[derive(Clone)]
 pub enum SyncAgent {
-    InMemory { baza: Arc<Baza> },
-    Network { client: BazaClient },
+    InMemory {
+        baza: Arc<Baza>,
+        instance_id: InstanceId,
+    },
+    Network {
+        client: BazaClient,
+        instance_id: InstanceId,
+    },
 }
 
 impl SyncAgent {
     pub fn new_in_memory(baza: Arc<Baza>) -> Result<Self> {
-        Ok(SyncAgent::InMemory { baza })
+        let instance_id = baza.get_connection()?.get_instance_id()?;
+
+        Ok(SyncAgent::InMemory { baza, instance_id })
     }
 
-    pub fn new_in_network(client: BazaClient) -> Self {
-        SyncAgent::Network { client }
+    pub fn new_in_network(instance_id: InstanceId, url: &str, downloads_dir: &str) -> Result<Self> {
+        let client = BazaClient::new(
+            Url::from_str(url).context("failed to parse url")?,
+            downloads_dir,
+        );
+
+        Ok(SyncAgent::Network {
+            client,
+            instance_id,
+        })
+    }
+
+    pub fn get_instance_id(&self) -> &InstanceId {
+        match self {
+            SyncAgent::InMemory { instance_id, .. } => instance_id,
+            SyncAgent::Network { instance_id, .. } => instance_id,
+        }
     }
 
     pub async fn exchange_pings(&self, ping: &Ping) -> Result<Ping> {
@@ -65,15 +90,13 @@ impl SyncAgent {
 impl Display for SyncAgent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SyncAgent::InMemory { baza } => write!(
-                f,
-                "InMemoryAgent<{} {}>",
-                baza.get_name(),
-                baza.get_connection()
-                    .and_then(|conn| conn.get_instance_id())
-                    .expect("must read baza instance id")
-            ),
-            SyncAgent::Network { client } => write!(f, "NetworkAgent<{}>", client.get_url()),
+            SyncAgent::InMemory { baza, instance_id } => {
+                write!(f, "InMemoryAgent<{} {}>", baza.get_name(), instance_id)
+            }
+            SyncAgent::Network {
+                client,
+                instance_id,
+            } => write!(f, "NetworkAgent<{} {}>", client.get_url(), instance_id),
         }
     }
 }

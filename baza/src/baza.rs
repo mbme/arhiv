@@ -149,7 +149,8 @@ impl Baza {
             service_name.push_str("-debug");
         }
 
-        let service = MDNSService::new(service_name, instance_id)?;
+        let mut service = MDNSService::new(service_name, instance_id)?;
+        service.start_client()?;
 
         let mut mdns_events = service.get_events();
         let baza_events = self.events.0.clone();

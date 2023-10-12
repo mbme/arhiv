@@ -36,18 +36,14 @@ impl MDNSService {
 
         let mdns = ServiceDaemon::new().context("Failed to create daemon")?;
 
-        let mut service = MDNSService {
+        Ok(MDNSService {
             mdns,
             service_name,
             instance_name,
             started: true,
             peers: Default::default(),
             events: broadcast::channel(42),
-        };
-
-        service.start_client()?;
-
-        Ok(service)
+        })
     }
 
     pub fn get_peers_rx(&self) -> watch::Receiver<Peers> {
@@ -96,7 +92,7 @@ impl MDNSService {
         })
     }
 
-    fn start_client(&mut self) -> Result<()> {
+    pub fn start_client(&mut self) -> Result<()> {
         ensure!(self.started, "MDNS service must be started");
 
         let receiver = self

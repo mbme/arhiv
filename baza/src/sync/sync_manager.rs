@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result};
 
 use rs_utils::{
     log,
@@ -167,10 +167,10 @@ impl SyncManager {
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting sync");
 
-        ensure!(
-            !self.baza.get_connection()?.has_staged_documents()?,
-            "There are uncommitted changes"
-        );
+        if self.baza.get_connection()?.has_staged_documents()? {
+            log::warn!("There are uncommitted changes");
+            return Ok(false);
+        }
 
         if let Some(mdns_client_discovery_complete) = self.mdns_client_discovery_complete {
             let time_left = mdns_client_discovery_complete - Instant::now();

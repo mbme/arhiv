@@ -222,7 +222,7 @@ async fn test_sync_fails_on_uncommitted_changes() -> Result<()> {
 
     baza0.add_document(Id::new(), Value::Null)?;
 
-    assert!(sync_manager0.sync().await.is_err());
+    assert!(sync_manager0.sync().await.is_ok_and(|synced| !synced));
 
     Ok(())
 }

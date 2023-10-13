@@ -136,7 +136,7 @@ impl Baza {
         self.events.0.clone()
     }
 
-    pub fn publish_event(&self, event: BazaEvent) -> Result<()> {
+    pub(crate) fn publish_event(&self, event: BazaEvent) -> Result<()> {
         self.events
             .0
             .send(event)

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::Ipv4Addr};
+use std::{collections::HashMap, net::Ipv4Addr, sync::OnceLock};
 
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
@@ -16,7 +16,7 @@ pub enum MDNSEvent {
 }
 
 pub struct MDNSService {
-    mdns: ServiceDaemon,
+    mdns: OnceLock<ServiceDaemon>,
     service_name: String,
     instance_name: InstanceName,
     started: bool,
@@ -34,16 +34,19 @@ impl MDNSService {
             "service_name must start with an underscore"
         );
 
-        let mdns = ServiceDaemon::new().context("Failed to create daemon")?;
-
         Ok(MDNSService {
-            mdns,
+            mdns: Default::default(),
             service_name,
             instance_name,
             started: true,
             peers: Default::default(),
             events: broadcast::channel(42),
         })
+    }
+
+    fn get_mdns_service(&self) -> &ServiceDaemon {
+        self.mdns
+            .get_or_init(|| ServiceDaemon::new().expect("Failed to create daemon"))
     }
 
     pub fn get_peers_rx(&self) -> watch::Receiver<Peers> {
@@ -79,15 +82,15 @@ impl MDNSService {
 
         let fullname = my_service.get_fullname().to_string();
 
-        self.mdns
-            .register(my_service)
+        let mdns = self.get_mdns_service();
+        mdns.register(my_service)
             .context("Failed to register service")?;
 
         log::debug!("Started MDNS server for instance {}", self.instance_name);
 
         Ok(MDNSServer {
             fullname,
-            mdns: &self.mdns,
+            mdns,
             started: true,
         })
     }
@@ -95,8 +98,8 @@ impl MDNSService {
     pub fn start_client(&mut self) -> Result<()> {
         ensure!(self.started, "MDNS service must be started");
 
-        let receiver = self
-            .mdns
+        let mdns = self.get_mdns_service();
+        let receiver = mdns
             .browse(&self.get_service_type())
             .context("Failed to browse")?;
 
@@ -163,8 +166,15 @@ impl MDNSService {
     }
 
     pub fn stop_client(&self) {
+        let mdns = match self.mdns.get() {
+            Some(mdns) => mdns,
+            None => {
+                return;
+            }
+        };
+
         loop {
-            match self.mdns.stop_browse(&self.get_service_type()) {
+            match mdns.stop_browse(&self.get_service_type()) {
                 Ok(_) => {
                     log::debug!("Stopped MDNS client for instance {}", self.instance_name);
                     return;
@@ -183,11 +193,18 @@ impl MDNSService {
             return;
         }
 
+        let mdns = match self.mdns.get() {
+            Some(mdns) => mdns,
+            None => {
+                return;
+            }
+        };
+
         loop {
-            match self.mdns.shutdown() {
+            match mdns.shutdown() {
                 Ok(_) => {
                     self.started = false;
-                    log::debug!("Stopped MDNS service {}", self.service_name,);
+                    log::debug!("Stopped MDNS service {}", self.service_name);
                     return;
                 }
                 Err(MDNSError::Again) => {}

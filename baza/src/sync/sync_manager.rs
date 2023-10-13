@@ -110,22 +110,30 @@ impl SyncManager {
         self.mdns_service.start_server(port)
     }
 
-    fn add_agent(&mut self, agent: SyncAgent) {
+    fn add_agent(&mut self, agent: SyncAgent) -> Result<()> {
         self.agents.lock().expect("must lock").push(agent);
+
+        self.baza.publish_event(BazaEvent::PeerDiscovered {})?;
+
+        Ok(())
     }
 
     pub fn add_network_agent(&mut self, instance_id: InstanceId, url: &str) -> Result<()> {
-        self.add_agent(SyncAgent::new_in_network(
+        let agent = SyncAgent::new_in_network(
             instance_id,
             url,
             &self.baza.get_path_manager().downloads_dir,
-        )?);
+        )?;
+
+        self.add_agent(agent)?;
 
         Ok(())
     }
 
     pub fn add_in_mem_agent(&mut self, other_baza: Arc<Baza>) -> Result<()> {
-        self.add_agent(SyncAgent::new_in_memory(other_baza)?);
+        let agent = SyncAgent::new_in_memory(other_baza)?;
+
+        self.add_agent(agent)?;
 
         Ok(())
     }

@@ -21,6 +21,7 @@ pub struct SyncManager {
     mdns_service: MDNSService,
     agents: Arc<Mutex<Vec<SyncAgent>>>,
     mdns_client_discovery_complete: Option<Instant>,
+    sync_in_progress: Arc<Mutex<bool>>,
 }
 
 impl SyncManager {
@@ -44,6 +45,7 @@ impl SyncManager {
             mdns_service,
             mdns_client_discovery_complete: None,
             agents: Default::default(),
+            sync_in_progress: Default::default(),
         })
     }
 
@@ -167,6 +169,13 @@ impl SyncManager {
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting sync");
 
+        if *self.sync_in_progress.lock().expect("must lock") {
+            log::warn!("Sync already in progress");
+            return Ok(false);
+        }
+
+        let _guard = SyncGuard::new(self.sync_in_progress.clone());
+
         if self.baza.get_connection()?.has_staged_documents()? {
             log::warn!("There are uncommitted changes");
             return Ok(false);
@@ -256,5 +265,26 @@ impl SyncManager {
         }
 
         self.mdns_service.shutdown();
+    }
+}
+
+struct SyncGuard(Arc<Mutex<bool>>);
+
+impl SyncGuard {
+    #[must_use]
+    pub fn new(sync_in_progress: Arc<Mutex<bool>>) -> Self {
+        *sync_in_progress.lock().expect("must lock") = true;
+
+        SyncGuard(sync_in_progress)
+    }
+
+    pub fn release(&self) {
+        *self.0.lock().expect("must lock") = false;
+    }
+}
+
+impl Drop for SyncGuard {
+    fn drop(&mut self) {
+        self.release();
     }
 }

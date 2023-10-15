@@ -9,6 +9,7 @@ pub enum BazaEvent {
     DocumentsCommitted {},
     InstanceOutdated {},
     PeerDiscovered {},
+    Synced {},
 }
 
 impl Display for BazaEvent {
@@ -18,6 +19,7 @@ impl Display for BazaEvent {
             BazaEvent::DocumentsCommitted {} => "DocumentsCommitted",
             BazaEvent::InstanceOutdated {} => "InstanceOutdated",
             BazaEvent::PeerDiscovered {} => "PeerDiscovered",
+            BazaEvent::Synced {} => "Synced",
         };
 
         write!(f, "{}", name)

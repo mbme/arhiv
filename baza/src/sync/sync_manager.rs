@@ -10,7 +10,10 @@ use rs_utils::{
     mdns::{MDNSEvent, MDNSServer, MDNSService},
     now,
 };
-use tokio::time::{sleep_until, Instant};
+use tokio::{
+    sync::broadcast::Sender,
+    time::{sleep_until, Instant},
+};
 
 use crate::{Baza, BazaEvent, DEBUG_MODE, SETTING_LAST_SYNC_TIME};
 
@@ -174,7 +177,7 @@ impl SyncManager {
             return Ok(false);
         }
 
-        let _guard = SyncGuard::new(self.sync_in_progress.clone());
+        let _guard = SyncGuard::new(self.sync_in_progress.clone(), self.baza.get_events_sender());
 
         if self.baza.get_connection()?.has_staged_documents()? {
             log::warn!("There are uncommitted changes");
@@ -268,18 +271,27 @@ impl SyncManager {
     }
 }
 
-struct SyncGuard(Arc<Mutex<bool>>);
+struct SyncGuard {
+    sync_in_progress: Arc<Mutex<bool>>,
+    baza_events: Sender<BazaEvent>,
+}
 
 impl SyncGuard {
     #[must_use]
-    pub fn new(sync_in_progress: Arc<Mutex<bool>>) -> Self {
+    pub fn new(sync_in_progress: Arc<Mutex<bool>>, baza_events: Sender<BazaEvent>) -> Self {
         *sync_in_progress.lock().expect("must lock") = true;
 
-        SyncGuard(sync_in_progress)
+        SyncGuard {
+            sync_in_progress,
+            baza_events,
+        }
     }
 
     pub fn release(&self) {
-        *self.0.lock().expect("must lock") = false;
+        if let Err(err) = self.baza_events.send(BazaEvent::Synced {}) {
+            log::error!("Failed to send baza event: {err}");
+        }
+        *self.sync_in_progress.lock().expect("must lock") = false;
     }
 }
 

@@ -1,5 +1,5 @@
 use std::{
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicBool, Arc, Mutex},
     time::Duration,
 };
 
@@ -24,7 +24,7 @@ pub struct SyncManager {
     mdns_service: MDNSService,
     agents: Arc<Mutex<Vec<SyncAgent>>>,
     mdns_client_discovery_complete: Option<Instant>,
-    sync_in_progress: Arc<Mutex<bool>>,
+    sync_in_progress: Arc<AtomicBool>,
 }
 
 impl SyncManager {
@@ -172,7 +172,10 @@ impl SyncManager {
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting sync");
 
-        if *self.sync_in_progress.lock().expect("must lock") {
+        if self
+            .sync_in_progress
+            .load(std::sync::atomic::Ordering::SeqCst)
+        {
             log::warn!("Sync already in progress");
             return Ok(false);
         }
@@ -272,14 +275,14 @@ impl SyncManager {
 }
 
 struct SyncGuard {
-    sync_in_progress: Arc<Mutex<bool>>,
+    sync_in_progress: Arc<AtomicBool>,
     baza_events: Sender<BazaEvent>,
 }
 
 impl SyncGuard {
     #[must_use]
-    pub fn new(sync_in_progress: Arc<Mutex<bool>>, baza_events: Sender<BazaEvent>) -> Self {
-        *sync_in_progress.lock().expect("must lock") = true;
+    pub fn new(sync_in_progress: Arc<AtomicBool>, baza_events: Sender<BazaEvent>) -> Self {
+        sync_in_progress.store(true, std::sync::atomic::Ordering::SeqCst);
 
         SyncGuard {
             sync_in_progress,
@@ -291,7 +294,9 @@ impl SyncGuard {
         if let Err(err) = self.baza_events.send(BazaEvent::Synced {}) {
             log::error!("Failed to send baza event: {err}");
         }
-        *self.sync_in_progress.lock().expect("must lock") = false;
+
+        self.sync_in_progress
+            .store(false, std::sync::atomic::Ordering::SeqCst);
     }
 }
 

@@ -37,6 +37,6 @@ image = { version = "0.24.7", features = ["webp-encoder"]}
 shellexpand = "3.0.0"
 which = "4.2.2"
 nanoid = "0.4.0"
-mdns-sd = "0.8.1"
+mdns-sd = "0.9"
 gethostname = "0.4.3"
 rayon = "1.8.0"

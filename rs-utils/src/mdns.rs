@@ -113,7 +113,7 @@ impl MDNSService {
 
                         let peer_info = PeerInfo {
                             instance_name: instance_name.clone(),
-                            ips: info.get_addresses().iter().cloned().collect(),
+                            ips: info.get_addresses_v4().into_iter().cloned().collect(),
                             port: info.get_port(),
                         };
 

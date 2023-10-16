@@ -1,7 +1,11 @@
 use anyhow::Result;
 use tokio::signal;
 
-use rs_utils::{generate_random_id, log::setup_logger, mdns::MDNSService};
+use rs_utils::{
+    generate_random_id,
+    log::setup_logger,
+    mdns::{MDNSEvent, MDNSService},
+};
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
@@ -12,10 +16,21 @@ pub async fn main() -> Result<()> {
     let mut service = MDNSService::new("_mdns-tester", instance_name)?;
     service.start_client()?;
 
-    let mut rx = service.get_peers_rx();
+    let mut rx = service.get_events();
     tokio::spawn(async move {
-        while rx.changed().await.is_ok() {
-            println!("Event: {:#?}", rx.borrow());
+        loop {
+            match rx.recv().await {
+                Ok(MDNSEvent::InstanceDiscovered(peer_info)) => {
+                    println!("discovered {:#?}", peer_info);
+                }
+                Ok(MDNSEvent::InstanceDisappeared(instance_name)) => {
+                    println!("lost instance {instance_name}");
+                }
+                Err(err) => {
+                    eprintln!("got error: {err}");
+                    break;
+                }
+            }
         }
     });
 

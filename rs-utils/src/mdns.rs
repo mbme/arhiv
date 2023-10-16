@@ -1,13 +1,12 @@
-use std::{collections::HashMap, net::Ipv4Addr, sync::OnceLock};
+use std::{net::Ipv4Addr, sync::OnceLock};
 
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
-use tokio::sync::{broadcast, watch};
+use tokio::sync::broadcast;
 
 use crate::get_hostname;
 
 pub type InstanceName = String;
-pub type Peers = HashMap<InstanceName, PeerInfo>;
 
 #[derive(Clone, Debug)]
 pub enum MDNSEvent {
@@ -20,7 +19,6 @@ pub struct MDNSService {
     service_name: String,
     instance_name: InstanceName,
     started: bool,
-    peers: Option<watch::Receiver<Peers>>,
     events: (broadcast::Sender<MDNSEvent>, broadcast::Receiver<MDNSEvent>),
 }
 
@@ -39,7 +37,6 @@ impl MDNSService {
             service_name,
             instance_name,
             started: true,
-            peers: Default::default(),
             events: broadcast::channel(42),
         })
     }
@@ -47,13 +44,6 @@ impl MDNSService {
     fn get_mdns_service(&self) -> &ServiceDaemon {
         self.mdns
             .get_or_init(|| ServiceDaemon::new().expect("Failed to create daemon"))
-    }
-
-    pub fn get_peers_rx(&self) -> watch::Receiver<Peers> {
-        self.peers
-            .as_ref()
-            .expect("peers must be initialized")
-            .clone()
     }
 
     pub fn get_events(&self) -> broadcast::Receiver<MDNSEvent> {
@@ -107,9 +97,6 @@ impl MDNSService {
 
         let local_instance_name = self.instance_name.clone();
 
-        let (tx, rx) = watch::channel::<Peers>(HashMap::new());
-        self.peers = Some(rx);
-
         let events = self.events.0.clone();
         tokio::spawn(async move {
             while let Ok(event) = receiver.recv_async().await {
@@ -130,10 +117,6 @@ impl MDNSService {
                             port: info.get_port(),
                         };
 
-                        tx.send_modify(|peers| {
-                            peers.insert(instance_name, peer_info.clone());
-                        });
-
                         events
                             .send(MDNSEvent::InstanceDiscovered(peer_info))
                             .expect("must send MDNS event");
@@ -146,10 +129,6 @@ impl MDNSService {
                         }
 
                         log::debug!("Unregistered an instance: {instance_name}");
-
-                        tx.send_modify(|peers| {
-                            peers.remove(&instance_name);
-                        });
 
                         events
                             .send(MDNSEvent::InstanceDisappeared(instance_name))
@@ -247,10 +226,11 @@ impl<'m> MDNSServer<'m> {
                 Ok(channel) => {
                     self.started = false;
 
+                    let status = channel.recv().expect("must read status");
                     log::debug!(
                         "Stopped MDNS server for instance {}: {:?}",
                         self.get_instance_name(),
-                        channel.recv().expect("must read result"),
+                        status,
                     );
                     return;
                 }

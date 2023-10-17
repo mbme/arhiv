@@ -85,7 +85,7 @@ impl MDNSService {
         })
     }
 
-    pub fn start_client(&mut self) -> Result<()> {
+    pub fn start_client(&self) -> Result<()> {
         ensure!(self.started, "MDNS service must be started");
 
         let mdns = self.get_mdns_service();

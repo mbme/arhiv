@@ -1,5 +1,11 @@
+use std::{sync::Mutex, time::Duration};
+
 use chrono::{DateTime, Local, Utc};
-use tokio::time::Instant;
+use futures::Future;
+use tokio::{
+    task::JoinHandle,
+    time::{sleep, Instant},
+};
 
 pub const MIN_TIMESTAMP: Timestamp = DateTime::<Utc>::MIN_UTC;
 
@@ -36,5 +42,44 @@ impl FakeTime {
 impl Default for FakeTime {
     fn default() -> Self {
         FakeTime::new()
+    }
+}
+
+pub struct ScheduledTask {
+    handle: Mutex<Option<JoinHandle<()>>>,
+}
+
+impl ScheduledTask {
+    pub fn new() -> Self {
+        ScheduledTask {
+            handle: Default::default(),
+        }
+    }
+
+    pub fn schedule<F: Future<Output = ()> + Send + 'static>(
+        &self,
+        future_timeout: Duration,
+        future: F,
+    ) {
+        self.cancel();
+
+        let handle = tokio::spawn(async move {
+            sleep(future_timeout).await;
+            future.await;
+        });
+
+        self.handle.lock().expect("must lock").replace(handle);
+    }
+
+    pub fn cancel(&self) {
+        if let Some(handle) = self.handle.lock().expect("must lock").take() {
+            handle.abort();
+        }
+    }
+}
+
+impl Default for ScheduledTask {
+    fn default() -> Self {
+        ScheduledTask::new()
     }
 }

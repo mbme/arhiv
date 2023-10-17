@@ -6,7 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, Config, Status};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, Config, Status};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     KvsEntry, KvsKey,
@@ -181,8 +181,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Committed {count} staged documents");
         }
         CLICommand::Sync => {
-            let mut arhiv = Arhiv::must_open();
-            arhiv.start_mdns_client()?;
+            let arhiv = Arhiv::open_with_options(ArhivOptions {
+                auto_commit: true,
+                discover_peers: true,
+            })?;
             arhiv.sync().await?;
         }
         CLICommand::Get { id } => {
@@ -210,7 +212,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 data,
             );
 
-            let arhiv = Arhiv::must_open();
+            let arhiv = Arhiv::open_with_options(ArhivOptions {
+                auto_commit: true,
+                ..Default::default()
+            })?;
 
             let mut tx = arhiv.baza.get_tx()?;
             tx.stage_document(&mut document)?;
@@ -224,7 +229,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             manual,
             mobile,
         } => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = Arhiv::open_with_options(ArhivOptions {
+                auto_commit: true,
+                ..Default::default()
+            })?;
             let port = arhiv.get_config().server_port;
 
             let documents = arhiv
@@ -249,7 +257,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             file_paths,
             move_file,
         } => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = Arhiv::open_with_options(ArhivOptions {
+                auto_commit: true,
+                ..Default::default()
+            })?;
             let port = arhiv.get_config().server_port;
 
             println!("Importing {} files", file_paths.len());
@@ -278,8 +289,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::Server => {
-            let mut arhiv = Arhiv::must_open();
-            arhiv.start_mdns_client()?;
+            let arhiv = Arhiv::open_with_options(ArhivOptions {
+                auto_commit: true,
+                discover_peers: true,
+            })?;
 
             arhiv.start_server().await?;
         }

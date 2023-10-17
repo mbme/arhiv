@@ -8,16 +8,19 @@ use anyhow::{Context, Result};
 use rs_utils::{
     log,
     mdns::{MDNSEvent, MDNSServer, MDNSService},
-    now,
+    now, ScheduledTask,
 };
 use tokio::{
     sync::broadcast::Sender,
+    task::JoinHandle,
     time::{sleep_until, Instant},
 };
 
 use crate::{Baza, BazaEvent, DEBUG_MODE, SETTING_LAST_SYNC_TIME};
 
 use super::{InstanceId, Ping, SyncAgent};
+
+pub type AutoSyncTask = JoinHandle<()>;
 
 pub struct SyncManager {
     baza: Arc<Baza>,
@@ -263,6 +266,47 @@ impl SyncManager {
         }
 
         Ok(updated)
+    }
+
+    pub fn start_auto_sync(self: Arc<Self>, auto_sync_interval: Duration) -> Result<AutoSyncTask> {
+        let task = tokio::spawn(async move {
+            let mut events = self.baza.get_events_channel();
+
+            let scheduled_sync = ScheduledTask::new();
+
+            loop {
+                let sync_manager = self.clone();
+
+                match events.recv().await {
+                    Ok(BazaEvent::InstanceOutdated {})
+                    | Ok(BazaEvent::DocumentsCommitted {})
+                    | Ok(BazaEvent::PeerDiscovered {}) => {
+                        scheduled_sync.schedule(auto_sync_interval, async move {
+                            if let Err(err) = sync_manager.sync().await {
+                                log::warn!("Auto-sync failed: {err}");
+                            }
+                        });
+                    }
+                    Ok(BazaEvent::Synced {}) => {
+                        scheduled_sync.cancel();
+                    }
+                    Ok(_) => {}
+                    Err(err) => {
+                        log::error!("Error while polling events: {err}");
+                        break;
+                    }
+                }
+            }
+
+            log::debug!("Auto-sync task ended");
+        });
+
+        log::info!(
+            "Started auto-sync service, auto-sync interval is {} seconds",
+            auto_sync_interval.as_secs()
+        );
+
+        Ok(task)
     }
 
     pub fn stop(mut self) {

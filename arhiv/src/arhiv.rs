@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 
 use baza::{
     schema::{DataMigrations, DataSchema},
-    sync::{build_rpc_router, SyncManager},
+    sync::{build_rpc_router, AutoSyncTask, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
 use rs_utils::http_server::{build_health_router, check_server_health, HttpServer};
@@ -16,20 +16,27 @@ use crate::{
 
 const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
 
+#[derive(Default)]
+pub struct ArhivOptions {
+    pub discover_peers: bool,
+    pub auto_commit: bool,
+}
+
 pub struct Arhiv {
     pub baza: Arc<Baza>,
-    pub(crate) config: Config,
+    config: Config,
     auto_commit_task: Option<AutoCommitTask>,
-    sync_manager: SyncManager,
+    auto_sync_task: Option<AutoSyncTask>,
+    sync_manager: Arc<SyncManager>,
 }
 
 impl Arhiv {
     #[must_use]
     pub fn must_open() -> Arhiv {
-        Arhiv::open().expect("must be able to open arhiv")
+        Arhiv::open_with_options(ArhivOptions::default()).expect("must be able to open arhiv")
     }
 
-    pub fn open() -> Result<Arhiv> {
+    pub fn open_with_options(options: ArhivOptions) -> Result<Arhiv> {
         let config = Config::read()?.0;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
@@ -41,22 +48,29 @@ impl Arhiv {
         })?;
         let baza = Arc::new(baza);
 
-        let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
-            baza.clone(),
-            config.auto_commit_delay_in_seconds,
-        )?;
+        let mut sync_manager = SyncManager::new(baza.clone())?;
+        if options.discover_peers {
+            sync_manager.start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
+        }
 
-        let sync_manager = SyncManager::new(baza.clone())?;
-
-        Ok(Arhiv {
+        let mut arhiv = Arhiv {
             baza,
             config,
-            auto_commit_task,
-            sync_manager,
-        })
+            sync_manager: Arc::new(sync_manager),
+            auto_commit_task: None,
+            auto_sync_task: None,
+        };
+        if options.auto_commit {
+            arhiv.maybe_init_auto_commit_service()?;
+        }
+        if options.discover_peers {
+            arhiv.maybe_init_auto_sync_service()?;
+        }
+
+        Ok(arhiv)
     }
 
-    pub fn create() -> Result<Self> {
+    pub fn create() -> Result<()> {
         let config = Config::read()?.0;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
@@ -68,53 +82,47 @@ impl Arhiv {
         config: Config,
         schema: DataSchema,
         data_migrations: DataMigrations,
-    ) -> Result<Self> {
-        let baza = Baza::create(BazaOptions {
+    ) -> Result<()> {
+        Baza::create(BazaOptions {
             root_dir: config.arhiv_root.clone(),
             schema,
             migrations: data_migrations,
         })?;
-        let baza = Arc::new(baza);
 
-        let auto_commit_task = Arhiv::maybe_init_auto_commit_service(
-            baza.clone(),
-            config.auto_commit_delay_in_seconds,
-        )?;
-
-        let sync_manager = SyncManager::new(baza.clone())?;
-
-        Ok(Arhiv {
-            baza,
-            config,
-            auto_commit_task,
-            sync_manager,
-        })
+        Ok(())
     }
 
-    fn maybe_init_auto_commit_service(
-        baza: Arc<Baza>,
-        delay: u64,
-    ) -> Result<Option<AutoCommitTask>> {
+    fn maybe_init_auto_commit_service(&mut self) -> Result<()> {
+        let delay = self.config.auto_commit_delay_in_seconds;
+
         if delay > 0 {
-            let service = AutoCommitService::new(baza.clone(), Duration::from_secs(delay));
+            let service = AutoCommitService::new(self.baza.clone(), Duration::from_secs(delay));
             let task = service.start()?;
 
-            Ok(Some(task))
-        } else {
-            Ok(None)
+            self.auto_commit_task = Some(task);
         }
+
+        Ok(())
+    }
+
+    fn maybe_init_auto_sync_service(&mut self) -> Result<()> {
+        let delay = self.config.auto_sync_delay_in_seconds;
+
+        if delay > 0 {
+            let task = self
+                .sync_manager
+                .clone()
+                .start_auto_sync(Duration::from_secs(delay))?;
+
+            self.auto_sync_task = Some(task);
+        }
+
+        Ok(())
     }
 
     #[must_use]
     pub fn get_config(&self) -> &Config {
         &self.config
-    }
-
-    pub fn start_mdns_client(&mut self) -> Result<()> {
-        self.sync_manager
-            .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
-
-        Ok(())
     }
 
     pub async fn sync(&self) -> Result<bool> {
@@ -164,6 +172,8 @@ impl Arhiv {
             auto_commit_task.abort();
         }
 
-        self.sync_manager.stop();
+        Arc::into_inner(self.sync_manager)
+            .expect("failed to unwrap a SyncManager instance")
+            .stop();
     }
 }

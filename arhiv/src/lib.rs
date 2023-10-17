@@ -10,6 +10,6 @@ pub mod scraper;
 mod status;
 mod ui_server;
 
-pub use arhiv::Arhiv;
+pub use arhiv::{Arhiv, ArhivOptions};
 pub use config::Config;
 pub use status::Status;

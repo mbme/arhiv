@@ -2,5 +2,6 @@
   "arhivRoot": "",
   "backupDir": "",
   "serverPort": 23421,
-  "autoCommitDelayInSeconds": 0
+  "autoCommitDelayInSeconds": 0,
+  "autoSyncDelayInSeconds": 0
 }

@@ -18,6 +18,9 @@ pub struct Config {
 
     #[serde(default)]
     pub auto_commit_delay_in_seconds: u64,
+
+    #[serde(default)]
+    pub auto_sync_delay_in_seconds: u64,
 }
 
 fn default_server_port() -> u16 {

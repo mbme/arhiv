@@ -48,7 +48,8 @@ impl Arhiv {
         })?;
         let baza = Arc::new(baza);
 
-        let mut sync_manager = SyncManager::new(baza.clone())?;
+        let sync_manager = SyncManager::new(baza.clone())?;
+        let sync_manager = Arc::new(sync_manager);
         if options.discover_peers {
             sync_manager.start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
         }
@@ -56,7 +57,7 @@ impl Arhiv {
         let mut arhiv = Arhiv {
             baza,
             config,
-            sync_manager: Arc::new(sync_manager),
+            sync_manager,
             auto_commit_task: None,
             auto_sync_task: None,
         };

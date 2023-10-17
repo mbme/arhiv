@@ -26,7 +26,7 @@ pub struct SyncManager {
     baza: Arc<Baza>,
     mdns_service: MDNSService,
     agents: Arc<Mutex<Vec<SyncAgent>>>,
-    mdns_client_discovery_complete: Option<Instant>,
+    mdns_client_discovery_complete: Mutex<Option<Instant>>,
     sync_in_progress: Arc<AtomicBool>,
 }
 
@@ -49,19 +49,27 @@ impl SyncManager {
         Ok(SyncManager {
             baza,
             mdns_service,
-            mdns_client_discovery_complete: None,
+            mdns_client_discovery_complete: Default::default(),
             agents: Default::default(),
             sync_in_progress: Default::default(),
         })
     }
 
-    pub fn start_mdns_client(&mut self, initial_discovery_duration: Duration) -> Result<()> {
-        if self.mdns_client_discovery_complete.is_some() {
+    pub fn start_mdns_client(&self, initial_discovery_duration: Duration) -> Result<()> {
+        if self
+            .mdns_client_discovery_complete
+            .lock()
+            .expect("must lock")
+            .is_some()
+        {
             log::warn!("MDNS client already started");
             return Ok(());
         }
 
-        self.mdns_client_discovery_complete = Some(Instant::now() + initial_discovery_duration);
+        self.mdns_client_discovery_complete
+            .lock()
+            .expect("must lock")
+            .replace(Instant::now() + initial_discovery_duration);
 
         self.mdns_service.start_client()?;
 
@@ -190,7 +198,11 @@ impl SyncManager {
             return Ok(false);
         }
 
-        if let Some(mdns_client_discovery_complete) = self.mdns_client_discovery_complete {
+        let mdns_client_discovery_complete = *self
+            .mdns_client_discovery_complete
+            .lock()
+            .expect("must lock");
+        if let Some(mdns_client_discovery_complete) = mdns_client_discovery_complete {
             let time_left = mdns_client_discovery_complete - Instant::now();
             if time_left.as_millis() > 0 {
                 log::info!(
@@ -310,7 +322,12 @@ impl SyncManager {
     }
 
     pub fn stop(mut self) {
-        if self.mdns_client_discovery_complete.is_some() {
+        if self
+            .mdns_client_discovery_complete
+            .lock()
+            .expect("must lock")
+            .is_some()
+        {
             self.mdns_service.stop_client();
         }
 

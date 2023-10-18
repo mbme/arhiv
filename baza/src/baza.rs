@@ -16,6 +16,7 @@ use crate::{
 };
 
 pub struct BazaOptions {
+    pub create: bool,
     pub migrations: DataMigrations,
     pub root_dir: String,
     pub schema: DataSchema,
@@ -30,12 +31,19 @@ pub struct Baza {
 
 impl Baza {
     pub fn open(options: BazaOptions) -> Result<Baza> {
-        // ensure DB schema is up to date
-        apply_db_migrations(&options.root_dir).context("failed to apply migrations to Baza db")?;
+        let path_manager = PathManager::new(options.root_dir.clone());
 
-        let path_manager = PathManager::new(options.root_dir);
-        path_manager.assert_dirs_exist()?;
-        path_manager.assert_db_file_exists()?;
+        if options.create {
+            log::info!("Initializing Baza in {}", options.root_dir);
+            create_db(&options.root_dir)?;
+        } else {
+            // ensure DB schema is up to date
+            apply_db_migrations(&options.root_dir)
+                .context("failed to apply migrations to Baza db")?;
+
+            path_manager.assert_dirs_exist()?;
+            path_manager.assert_db_file_exists()?;
+        }
 
         let events = channel(42);
         let baza = Baza {
@@ -45,46 +53,29 @@ impl Baza {
             events,
         };
 
-        let tx = baza.get_tx()?;
+        if options.create {
+            // TODO remove created arhiv if settings tx fails
+            let tx = baza.get_tx()?;
 
-        // ensure data is up to date
-        tx.apply_data_migrations(&options.migrations)
-            .context("failed to apply data migrations to Baza db")?;
+            tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
+            tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new())?;
+            tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
 
-        // ensure computed data is up to date
-        tx.compute_data().context("failed to compute data")?;
+            tx.commit()?;
+        } else {
+            let tx = baza.get_tx()?;
 
-        tx.commit()?;
+            // ensure data is up to date
+            tx.apply_data_migrations(&options.migrations)
+                .context("failed to apply data migrations to Baza db")?;
+
+            // ensure computed data is up to date
+            tx.compute_data().context("failed to compute data")?;
+
+            tx.commit()?;
+        }
 
         log::debug!("Open Baza in {}", &baza.path_manager.root_dir);
-
-        Ok(baza)
-    }
-
-    pub fn create(options: BazaOptions) -> Result<Baza> {
-        log::info!("Initializing Baza in {}", options.root_dir);
-
-        create_db(&options.root_dir)?;
-        log::info!("Created Baza in {}", options.root_dir);
-
-        let path_manager = PathManager::new(options.root_dir);
-
-        let events = channel(42);
-        let baza = Baza {
-            path_manager: Arc::new(path_manager),
-            schema: Arc::new(options.schema),
-            data_version: get_latest_data_version(&options.migrations),
-            events,
-        };
-
-        // TODO remove created arhiv if settings tx fails
-        let tx = baza.get_tx()?;
-
-        tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
-        tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new())?;
-        tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
-
-        tx.commit()?;
 
         Ok(baza)
     }

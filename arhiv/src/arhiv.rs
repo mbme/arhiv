@@ -3,7 +3,6 @@ use std::{sync::Arc, time::Duration};
 use anyhow::{Context, Result};
 
 use baza::{
-    schema::{DataMigrations, DataSchema},
     sync::{build_rpc_router, AutoSyncTask, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
@@ -18,6 +17,7 @@ const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
 
 #[derive(Default)]
 pub struct ArhivOptions {
+    pub create: bool,
     pub discover_peers: bool,
     pub auto_commit: bool,
 }
@@ -42,6 +42,7 @@ impl Arhiv {
         let data_migrations = get_data_migrations();
 
         let baza = Baza::open(BazaOptions {
+            create: options.create,
             root_dir: config.arhiv_root.clone(),
             schema,
             migrations: data_migrations,
@@ -69,28 +70,6 @@ impl Arhiv {
         }
 
         Ok(arhiv)
-    }
-
-    pub fn create() -> Result<()> {
-        let config = Config::read()?.0;
-        let schema = get_standard_schema();
-        let data_migrations = get_data_migrations();
-
-        Arhiv::create_with_options(config, schema, data_migrations)
-    }
-
-    pub fn create_with_options(
-        config: Config,
-        schema: DataSchema,
-        data_migrations: DataMigrations,
-    ) -> Result<()> {
-        Baza::create(BazaOptions {
-            root_dir: config.arhiv_root.clone(),
-            schema,
-            migrations: data_migrations,
-        })?;
-
-        Ok(())
     }
 
     fn maybe_init_auto_commit_service(&mut self) -> Result<()> {

@@ -24,7 +24,8 @@ impl Baza {
     pub fn new_with_schema(schema: DataSchema) -> Self {
         let temp_dir = generate_temp_path("TestBaza", "");
 
-        Baza::create(BazaOptions {
+        Baza::open(BazaOptions {
+            create: true,
             root_dir: temp_dir,
             schema,
             migrations: vec![],

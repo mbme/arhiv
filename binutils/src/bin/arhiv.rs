@@ -132,7 +132,11 @@ async fn main() {
 async fn handle_command(command: CLICommand) -> Result<()> {
     match command {
         CLICommand::Init => {
-            Arhiv::create().context("must be able to create arhiv")?;
+            Arhiv::open_with_options(ArhivOptions {
+                create: true,
+                ..Default::default()
+            })
+            .context("must be able to create arhiv")?;
         }
         CLICommand::Status => {
             let arhiv = Arhiv::must_open();
@@ -184,6 +188,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::open_with_options(ArhivOptions {
                 auto_commit: true,
                 discover_peers: true,
+                ..Default::default()
             })?;
             arhiv.sync().await?;
         }
@@ -292,6 +297,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = Arhiv::open_with_options(ArhivOptions {
                 auto_commit: true,
                 discover_peers: true,
+                ..Default::default()
             })?;
 
             arhiv.start_server().await?;

@@ -3,6 +3,7 @@ mod db;
 mod dto;
 mod filter;
 mod kvs;
+pub mod locks;
 mod query_builder;
 pub mod settings;
 mod utils;

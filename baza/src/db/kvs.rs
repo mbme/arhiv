@@ -43,7 +43,7 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn kvs_delete<T: Serialize + DeserializeOwned>(&self, key: &KvsKey) -> Result<bool> {
+    pub fn kvs_delete(&self, key: &KvsKey) -> Result<bool> {
         let key = key.to_string();
 
         let rows_count = self
@@ -131,6 +131,13 @@ impl ToString for KvsKey {
 }
 
 impl KvsKey {
+    pub fn new(namespace: impl Into<String>, key: impl Into<String>) -> Self {
+        KvsKey {
+            namespace: namespace.into(),
+            key: key.into(),
+        }
+    }
+
     pub fn parse(value: &str) -> Result<Self> {
         let (namespace, key): (String, String) =
             serde_json::from_str(value).context("failed to parse kvs key")?;

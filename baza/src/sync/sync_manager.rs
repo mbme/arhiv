@@ -56,12 +56,7 @@ impl SyncManager {
     }
 
     pub fn start_mdns_client(&self, initial_discovery_duration: Duration) -> Result<()> {
-        if self
-            .mdns_client_discovery_complete
-            .lock()
-            .expect("must lock")
-            .is_some()
-        {
+        if self.is_mdns_client_started() {
             log::warn!("MDNS client already started");
             return Ok(());
         }
@@ -321,13 +316,15 @@ impl SyncManager {
         Ok(task)
     }
 
-    pub fn stop(mut self) {
-        if self
-            .mdns_client_discovery_complete
+    pub fn is_mdns_client_started(&self) -> bool {
+        self.mdns_client_discovery_complete
             .lock()
             .expect("must lock")
             .is_some()
-        {
+    }
+
+    pub fn stop(mut self) {
+        if self.is_mdns_client_started() {
             self.mdns_service.stop_client();
         }
 

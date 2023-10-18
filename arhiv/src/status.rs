@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, time::Duration};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -24,6 +24,11 @@ pub struct Status {
     pub last_update_time: Timestamp,
     pub debug_mode: bool,
     pub root_dir: String,
+
+    pub local_server_is_running: Option<bool>,
+    pub mdns_discovery_timeout: Option<Duration>,
+    pub auto_sync_interval: Option<Duration>,
+    pub auto_commit_interval: Option<Duration>,
 }
 
 impl Status {
@@ -51,6 +56,11 @@ impl Status {
             last_update_time,
             debug_mode: DEBUG_MODE,
             root_dir,
+
+            local_server_is_running: None,
+            mdns_discovery_timeout: None,
+            auto_sync_interval: None,
+            auto_commit_interval: None,
         })
     }
 }
@@ -96,6 +106,42 @@ impl fmt::Display for Status {
                 "NEVER".to_string()
             } else {
                 format_date(self.last_sync_time)
+            }
+        )?;
+        writeln!(
+            f,
+            "      Auto-commit: {}",
+            if let Some(auto_commit_interval) = self.auto_commit_interval {
+                format!("{} seconds", auto_commit_interval.as_secs())
+            } else {
+                "disabled".to_string()
+            }
+        )?;
+        writeln!(
+            f,
+            "        Auto-sync: {}",
+            if let Some(auto_sync_interval) = self.auto_sync_interval {
+                format!("{} seconds", auto_sync_interval.as_secs())
+            } else {
+                "disabled".to_string()
+            }
+        )?;
+        writeln!(
+            f,
+            "   MDNS discovery: {}",
+            if let Some(mdns_discovery_timeout) = self.mdns_discovery_timeout {
+                format!("{} seconds", mdns_discovery_timeout.as_secs())
+            } else {
+                "disabled".to_string()
+            }
+        )?;
+        writeln!(
+            f,
+            "     Local server: {}",
+            if self.local_server_is_running.unwrap_or_default() {
+                "running"
+            } else {
+                "not running"
             }
         )?;
 

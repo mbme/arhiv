@@ -10,7 +10,7 @@ use rs_utils::http_server::{build_health_router, check_server_health, HttpServer
 
 use crate::{
     config::Config, data_migrations::get_data_migrations, definitions::get_standard_schema,
-    ui_server::build_ui_router,
+    ui_server::build_ui_router, Status,
 };
 
 const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
@@ -73,10 +73,10 @@ impl Arhiv {
     }
 
     fn maybe_init_auto_commit_service(&mut self) -> Result<()> {
-        let delay = self.config.auto_commit_delay_in_seconds;
+        let delay = self.config.get_auto_commit_delay();
 
-        if delay > 0 {
-            let service = AutoCommitService::new(self.baza.clone(), Duration::from_secs(delay));
+        if !delay.is_zero() {
+            let service = AutoCommitService::new(self.baza.clone(), delay);
             let task = service.start()?;
 
             self.auto_commit_task = Some(task);
@@ -86,13 +86,10 @@ impl Arhiv {
     }
 
     fn maybe_init_auto_sync_service(&mut self) -> Result<()> {
-        let delay = self.config.auto_sync_delay_in_seconds;
+        let delay = self.config.get_auto_sync_delay();
 
-        if delay > 0 {
-            let task = self
-                .sync_manager
-                .clone()
-                .start_auto_sync(Duration::from_secs(delay))?;
+        if !delay.is_zero() {
+            let task = self.sync_manager.clone().start_auto_sync(delay)?;
 
             self.auto_sync_task = Some(task);
         }
@@ -103,6 +100,37 @@ impl Arhiv {
     #[must_use]
     pub fn get_config(&self) -> &Config {
         &self.config
+    }
+
+    pub async fn get_status(&self) -> Result<Status> {
+        let conn = self.baza.get_connection()?;
+        let mut status = Status::read(&conn)?;
+
+        let is_local_server_alive = self.is_local_server_alive().await;
+
+        status.local_server_is_running = Some(is_local_server_alive);
+
+        status.mdns_discovery_timeout = if self.sync_manager.is_mdns_client_started() {
+            Some(MDNS_PEER_DISCOVERY_DURATION)
+        } else {
+            None
+        };
+
+        let auto_sync_delay = self.config.get_auto_sync_delay();
+        status.auto_sync_interval = if auto_sync_delay.is_zero() {
+            None
+        } else {
+            Some(auto_sync_delay)
+        };
+
+        let auto_commit_delay = self.config.get_auto_commit_delay();
+        status.auto_commit_interval = if auto_commit_delay.is_zero() {
+            None
+        } else {
+            Some(auto_commit_delay)
+        };
+
+        Ok(status)
     }
 
     pub async fn sync(&self) -> Result<bool> {

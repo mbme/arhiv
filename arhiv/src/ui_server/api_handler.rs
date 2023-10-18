@@ -19,7 +19,6 @@ use crate::{
     dto::{
         APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
     },
-    status::Status,
     Arhiv,
 };
 
@@ -70,8 +69,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetStatus {} => {
-            let conn = arhiv.baza.get_connection()?;
-            let status = Status::read(&conn)?;
+            let status = arhiv.get_status().await?;
 
             APIResponse::GetStatus {
                 status: status.to_string(),

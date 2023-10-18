@@ -962,13 +962,17 @@ impl BazaConnection {
     }
 
     pub fn list_document_backrefs(&self, id: &Id) -> Result<Vec<Document>> {
-        let documents = self.list_documents(&Filter::all_backrefs(id))?.items;
+        let documents = self
+            .list_documents(&Filter::all_backrefs(id.clone()))?
+            .items;
 
         Ok(documents)
     }
 
     pub fn list_document_collections(&self, id: &Id) -> Result<Vec<Document>> {
-        let documents = self.list_documents(&Filter::all_collections(id))?.items;
+        let documents = self
+            .list_documents(&Filter::all_collections(id.clone()))?
+            .items;
 
         Ok(documents)
     }

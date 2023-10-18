@@ -18,7 +18,7 @@ fn test_create_attachment() -> Result<()> {
     tx.commit()?;
 
     assert!(baza.get_blob(&attachment.data.blob)?.exists()?);
-    assert!(baza.get_document(&attachment.id)?.is_some());
+    assert!(baza.get_document(attachment.id)?.is_some());
 
     Ok(())
 }

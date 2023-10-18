@@ -317,7 +317,7 @@ fn test_backrefs() -> Result<()> {
 
     tx.commit()?;
 
-    let page = baza.list_documents(Filter::all_backrefs(&doc1.id))?;
+    let page = baza.list_documents(Filter::all_backrefs(doc1.id))?;
 
     assert_eq!(page.items.len(), 2);
 
@@ -383,7 +383,7 @@ fn test_collections() -> Result<()> {
 
     tx.commit()?;
 
-    let page = baza.list_documents(Filter::all_collections(&doc1.id))?;
+    let page = baza.list_documents(Filter::all_collections(doc1.id))?;
 
     assert_eq!(page.items.len(), 2);
 

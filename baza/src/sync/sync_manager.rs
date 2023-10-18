@@ -16,7 +16,7 @@ use tokio::{
     time::{sleep_until, Instant},
 };
 
-use crate::{Baza, BazaEvent, DEBUG_MODE, SETTING_LAST_SYNC_TIME};
+use crate::{Baza, BazaEvent, DEBUG_MODE};
 
 use super::{InstanceId, Ping, SyncAgent};
 
@@ -246,7 +246,7 @@ impl SyncManager {
                     agent.fetch_blob(blob).await?;
                 }
 
-                tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &now())?;
+                tx.set_last_sync_time(&now())?;
 
                 tx.commit()?;
 

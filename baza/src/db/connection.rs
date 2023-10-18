@@ -18,7 +18,6 @@ use crate::{
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::{InstanceId, Revision},
     validator::Validator,
-    KvsEntry, SETTINGS_NAMESPACE, SETTING_INSTANCE_ID,
 };
 
 use super::{
@@ -26,7 +25,6 @@ use super::{
     dto::{BLOBSCount, DocumentsCount, ListPage},
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
-    settings::{SETTING_COMPUTED_DATA_VERSION, SETTING_DATA_VERSION},
     utils,
 };
 
@@ -258,14 +256,6 @@ impl BazaConnection {
             .optional()
             .context("Failed to check for staged documents")
             .map(|value| value.unwrap_or(false))
-    }
-
-    pub fn get_instance_id(&self) -> Result<InstanceId> {
-        self.kvs_const_must_get(SETTING_INSTANCE_ID)
-    }
-
-    pub fn get_data_version(&self) -> Result<u8> {
-        self.kvs_const_must_get(SETTING_DATA_VERSION)
     }
 
     fn get_max_rev_version(&self, id: &InstanceId) -> Result<u32> {
@@ -652,9 +642,7 @@ impl BazaConnection {
     }
 
     pub(crate) fn compute_data(&self) -> Result<()> {
-        let computed_data_version = self
-            .kvs_const_get(SETTING_COMPUTED_DATA_VERSION)?
-            .unwrap_or(0);
+        let computed_data_version = self.get_computed_data_version()?;
 
         ensure!(
             computed_data_version <= Refs::VERSION,
@@ -663,7 +651,7 @@ impl BazaConnection {
         if computed_data_version < Refs::VERSION {
             self.get_connection()
                 .execute("DELETE FROM documents_refs", [])?;
-            self.kvs_const_set(SETTING_COMPUTED_DATA_VERSION, &Refs::VERSION)?;
+            self.set_computed_data_version(Refs::VERSION)?;
         }
 
         let now = Instant::now();
@@ -960,7 +948,7 @@ impl BazaConnection {
             }
 
             let version = migration.get_version();
-            self.kvs_const_set(SETTING_DATA_VERSION, &version)?;
+            self.set_data_version(version)?;
 
             log::info!(
                 "Migrated {rows_count} rows in {} seconds to version {version}",
@@ -1022,10 +1010,6 @@ impl BazaConnection {
         log::info!("Committed {} documents", staged_documents.len());
 
         Ok(staged_documents.len())
-    }
-
-    pub fn list_settings(&self) -> Result<Vec<KvsEntry>> {
-        self.kvs_list(Some(SETTINGS_NAMESPACE))
     }
 }
 

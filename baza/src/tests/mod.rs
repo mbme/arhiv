@@ -9,7 +9,7 @@ use crate::{
     entities::{BLOBId, Document, DocumentClass, Id, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::{Changeset, Revision},
-    Baza, BazaOptions, Filter, ListPage, SETTING_INSTANCE_ID,
+    Baza, BazaOptions, Filter, ListPage,
 };
 
 mod attachment;
@@ -67,7 +67,7 @@ impl Baza {
 
         let tx = baza.get_tx().unwrap();
         let id = id.try_into().unwrap();
-        tx.kvs_const_set(SETTING_INSTANCE_ID, &id).unwrap();
+        tx.set_instance_id(&id).unwrap();
         tx.commit().unwrap();
 
         baza

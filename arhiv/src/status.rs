@@ -3,10 +3,7 @@ use std::{fmt, time::Duration};
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::{
-    sync::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE, SETTING_DATA_VERSION,
-    SETTING_LAST_SYNC_TIME,
-};
+use baza::{sync::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE};
 use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize)]
@@ -36,9 +33,9 @@ impl Status {
         let root_dir = conn.get_path_manager().root_dir.clone();
 
         let db_rev = conn.get_db_rev()?;
-        let last_sync_time = conn.kvs_const_must_get(SETTING_LAST_SYNC_TIME)?;
+        let last_sync_time = conn.get_last_sync_time()?;
         let db_version = conn.get_db_version()?;
-        let data_version = conn.kvs_const_must_get(SETTING_DATA_VERSION)?;
+        let data_version = conn.get_data_version()?;
         let documents_count = conn.count_documents()?;
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.get_coflicting_documents()?.len();

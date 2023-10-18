@@ -7,12 +7,11 @@ use rs_utils::{log, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
-    db::{vacuum, BazaConnection, SETTING_DATA_VERSION},
+    db::{vacuum, BazaConnection},
     db_migrations::{apply_db_migrations, create_db},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
-    SETTING_INSTANCE_ID, SETTING_LAST_SYNC_TIME,
 };
 
 pub struct BazaOptions {
@@ -57,9 +56,9 @@ impl Baza {
             // TODO remove created arhiv if settings tx fails
             let tx = baza.get_tx()?;
 
-            tx.kvs_const_set(SETTING_DATA_VERSION, &baza.data_version)?;
-            tx.kvs_const_set(SETTING_INSTANCE_ID, &InstanceId::new())?;
-            tx.kvs_const_set(SETTING_LAST_SYNC_TIME, &MIN_TIMESTAMP)?;
+            tx.set_data_version(baza.data_version)?;
+            tx.set_instance_id(&InstanceId::new())?;
+            tx.set_last_sync_time(&MIN_TIMESTAMP)?;
 
             tx.commit()?;
         } else {

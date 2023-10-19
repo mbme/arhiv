@@ -12,6 +12,7 @@ use crate::{
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,
+    DB,
 };
 
 pub struct BazaOptions {
@@ -89,16 +90,21 @@ impl Baza {
         Ok(())
     }
 
-    pub fn get_connection(&self) -> Result<BazaConnection> {
-        BazaConnection::new(self.path_manager.clone(), self.schema.clone())
-    }
-
-    pub fn get_tx(&self) -> Result<BazaConnection> {
-        BazaConnection::new_tx(
+    #[must_use]
+    pub fn get_db(&self) -> DB {
+        DB::new(
             self.path_manager.clone(),
             self.schema.clone(),
             self.events.0.clone(),
         )
+    }
+
+    pub fn get_connection(&self) -> Result<BazaConnection> {
+        self.get_db().get_connection()
+    }
+
+    pub fn get_tx(&self) -> Result<BazaConnection> {
+        self.get_db().get_tx()
     }
 
     #[must_use]

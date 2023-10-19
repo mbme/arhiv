@@ -21,10 +21,10 @@ use crate::{
 };
 
 use super::{
-    db::{init_functions, open_connection},
     dto::{BLOBSCount, DocumentsCount, ListPage},
     filter::{Filter, OrderBy},
     query_builder::QueryBuilder,
+    sqlite_connection::{init_functions, open_connection},
     utils,
 };
 

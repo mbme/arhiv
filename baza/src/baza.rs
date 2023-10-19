@@ -3,14 +3,13 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, MIN_TIMESTAMP};
+use rs_utils::log;
 
 pub use crate::events::BazaEvent;
 use crate::{
-    db::{apply_db_migrations, create_db, vacuum, BazaConnection},
+    db::BazaConnection,
     path_manager::PathManager,
-    schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::InstanceId,
+    schema::{DataMigrations, DataSchema},
     DB,
 };
 
@@ -31,60 +30,28 @@ impl Baza {
     pub fn open(options: BazaOptions) -> Result<Baza> {
         let path_manager = PathManager::new(options.root_dir.clone());
 
-        if options.create {
-            log::info!("Initializing Baza in {}", options.root_dir);
-            create_db(&options.root_dir)?;
-        } else {
-            // ensure DB schema is up to date
-            apply_db_migrations(&options.root_dir)
-                .context("failed to apply migrations to Baza db")?;
-
-            path_manager.assert_dirs_exist()?;
-            path_manager.assert_db_file_exists()?;
-        }
-
-        let events = channel(42);
         let baza = Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(options.schema),
-            events,
+            events: channel(42),
         };
 
         if options.create {
-            // TODO remove created arhiv if settings tx fails
-            let tx = baza.get_tx()?;
-
-            tx.set_data_version(get_latest_data_version(&options.migrations))?;
-            tx.set_instance_id(&InstanceId::new())?;
-            tx.set_last_sync_time(&MIN_TIMESTAMP)?;
-
-            tx.commit()?;
+            log::info!("Initializing Baza in {}", options.root_dir);
+            baza.get_db().init(&options.migrations)?;
         } else {
-            let tx = baza.get_tx()?;
+            baza.path_manager.assert_dirs_exist()?;
+            baza.path_manager.assert_db_file_exists()?;
 
-            // ensure data is up to date
-            tx.apply_data_migrations(&options.migrations)
-                .context("failed to apply data migrations to Baza db")?;
+            let db = baza.get_db();
 
-            // ensure computed data is up to date
-            tx.compute_data().context("failed to compute data")?;
-
-            tx.commit()?;
+            db.apply_db_migrations()?;
+            db.apply_data_migrations(&options.migrations)?;
         }
 
         log::debug!("Open Baza in {}", &baza.path_manager.root_dir);
 
         Ok(baza)
-    }
-
-    pub fn cleanup(&self) -> Result<()> {
-        log::debug!("Initiating cleanup...");
-
-        vacuum(&self.path_manager.db_file)?;
-
-        log::debug!("Cleanup completed");
-
-        Ok(())
     }
 
     #[must_use]

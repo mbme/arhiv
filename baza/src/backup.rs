@@ -22,7 +22,7 @@ impl Baza {
         backup.check()?;
 
         // 1. cleanup the db
-        self.cleanup()?;
+        self.get_db().vacuum()?;
 
         // 2. copy & compress db file
         zstd.compress(&self.get_path_manager().db_file, &backup.backup_db_file)?;

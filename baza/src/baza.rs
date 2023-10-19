@@ -24,7 +24,6 @@ pub struct BazaOptions {
 pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
-    data_version: u8,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
 }
 
@@ -48,7 +47,6 @@ impl Baza {
         let baza = Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(options.schema),
-            data_version: get_latest_data_version(&options.migrations),
             events,
         };
 
@@ -56,7 +54,7 @@ impl Baza {
             // TODO remove created arhiv if settings tx fails
             let tx = baza.get_tx()?;
 
-            tx.set_data_version(baza.data_version)?;
+            tx.set_data_version(get_latest_data_version(&options.migrations))?;
             tx.set_instance_id(&InstanceId::new())?;
             tx.set_last_sync_time(&MIN_TIMESTAMP)?;
 

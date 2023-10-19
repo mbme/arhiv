@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(tag = "typeName")]
 pub enum BazaEvent {
     DocumentStaged {},

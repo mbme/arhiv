@@ -15,6 +15,7 @@ use crate::{
 mod attachment;
 mod auto_commit_service;
 mod crud;
+mod events;
 mod locks;
 mod query;
 mod sync;

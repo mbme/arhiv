@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use rs_utils::Timestamp;
 
-use crate::sync::InstanceId;
+use crate::entities::InstanceId;
 
 use super::kvs::{KvsConstKey, KvsEntry};
 use super::BazaConnection;

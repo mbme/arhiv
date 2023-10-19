@@ -3,7 +3,10 @@ use serde_json::{json, Value};
 
 use rs_utils::{workspace_relpath, TempFile};
 
-use crate::{entities::Id, sync::Revision, Baza};
+use crate::{
+    entities::{Id, Revision},
+    Baza,
+};
 
 use super::new_document;
 

@@ -16,9 +16,9 @@ use tokio::{
     time::{sleep_until, Instant},
 };
 
-use crate::{Baza, BazaEvent, DEBUG_MODE};
+use crate::{entities::InstanceId, Baza, BazaEvent, DEBUG_MODE};
 
-use super::{InstanceId, Ping, SyncAgent};
+use super::{Ping, SyncAgent};
 
 pub type AutoSyncTask = JoinHandle<()>;
 

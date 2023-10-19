@@ -2,10 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use rusqlite::Row;
 use serde_json::Value;
 
-use crate::{
-    entities::{BLOBId, Document, DocumentClass},
-    sync::Revision,
-};
+use crate::entities::{BLOBId, Document, DocumentClass, Revision};
 
 pub fn extract_document(row: &Row) -> Result<Document> {
     let document_type: String = row.get("document_type")?;

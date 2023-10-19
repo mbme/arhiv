@@ -5,11 +5,11 @@ use anyhow::{ensure, Result};
 use rs_utils::{log, now};
 
 use crate::{
-    entities::{Id, BLOB},
+    entities::{Id, Revision, BLOB},
     BazaConnection, DocumentExpert,
 };
 
-use super::{Changeset, Ping, Revision};
+use super::{Changeset, Ping};
 
 #[derive(Default)]
 pub struct ChangesetSummary {

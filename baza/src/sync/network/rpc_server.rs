@@ -17,8 +17,8 @@ use rs_utils::{
 };
 
 use crate::{
-    entities::BLOBId,
-    sync::{Ping, Revision},
+    entities::{BLOBId, Revision},
+    sync::Ping,
     Baza, BazaEvent,
 };
 

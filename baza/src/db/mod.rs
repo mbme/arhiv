@@ -24,9 +24,9 @@ use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};
 
 use crate::{
+    entities::InstanceId,
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::InstanceId,
     BazaEvent,
 };
 

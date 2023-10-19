@@ -4,8 +4,8 @@ use reqwest::{header, Client, Url};
 use rs_utils::{log, Download};
 
 use crate::{
-    entities::BLOB,
-    sync::{changeset::Changeset, ping::Ping, Revision},
+    entities::{Revision, BLOB},
+    sync::{changeset::Changeset, ping::Ping},
 };
 
 #[derive(Debug, Clone)]

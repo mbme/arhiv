@@ -3,7 +3,7 @@ use std::{fmt, time::Duration};
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::{sync::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE};
+use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE};
 use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize)]

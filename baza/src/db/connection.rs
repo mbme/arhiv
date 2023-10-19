@@ -12,10 +12,9 @@ use rs_utils::{
 
 use crate::{
     baza::BazaEvent,
-    entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
+    entities::{BLOBId, Document, Id, InstanceId, Refs, Revision, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
-    sync::{InstanceId, Revision},
     validator::Validator,
 };
 

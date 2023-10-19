@@ -3,9 +3,12 @@ use std::{fmt::Display, str::FromStr, sync::Arc};
 use anyhow::{Context, Result};
 use reqwest::Url;
 
-use crate::{entities::BLOB, Baza, BazaEvent};
+use crate::{
+    entities::{InstanceId, Revision, BLOB},
+    Baza, BazaEvent,
+};
 
-use super::{changeset::Changeset, network::BazaClient, ping::Ping, InstanceId, Revision};
+use super::{changeset::Changeset, network::BazaClient, ping::Ping};
 
 #[derive(Clone)]
 pub enum SyncAgent {

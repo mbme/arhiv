@@ -4,7 +4,9 @@ mod document;
 mod document_class;
 mod document_data;
 mod id;
+mod instance_id;
 mod refs;
+mod revision;
 
 pub use blob::BLOB;
 pub use blob_id::BLOBId;
@@ -12,4 +14,6 @@ pub use document::Document;
 pub use document_class::{DocumentClass, ERASED_DOCUMENT_TYPE};
 pub use document_data::DocumentData;
 pub use id::Id;
+pub use instance_id::InstanceId;
 pub use refs::Refs;
+pub use revision::Revision;

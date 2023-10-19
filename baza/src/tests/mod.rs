@@ -6,9 +6,9 @@ use serde_json::{json, Value};
 use rs_utils::generate_temp_path;
 
 use crate::{
-    entities::{BLOBId, Document, DocumentClass, Id, BLOB},
+    entities::{BLOBId, Document, DocumentClass, Id, Revision, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
-    sync::{Changeset, Revision},
+    sync::Changeset,
     Baza, BazaOptions, Filter, ListPage,
 };
 

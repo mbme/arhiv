@@ -12,9 +12,8 @@ use rs_utils::log;
 
 use crate::{
     document_expert::DocumentExpert,
-    entities::{BLOBId, DocumentClass, DocumentData, Id},
+    entities::{BLOBId, DocumentClass, DocumentData, Id, Revision},
     schema::DataSchema,
-    sync::Revision,
 };
 
 pub fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {

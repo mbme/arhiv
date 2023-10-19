@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use rs_utils::Timestamp;
 
-use super::{instance_id::InstanceId, revision::Revision};
+use crate::entities::{InstanceId, Revision};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(deny_unknown_fields)]

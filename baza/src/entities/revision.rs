@@ -182,7 +182,7 @@ mod tests {
     use anyhow::Result;
     use serde_json::json;
 
-    use crate::sync::{instance_id::InstanceId, revision::VectorClockOrder};
+    use crate::entities::{revision::VectorClockOrder, InstanceId};
 
     use super::Revision;
 

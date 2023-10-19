@@ -7,8 +7,8 @@ use tokio::time::{advance, sleep};
 use rs_utils::{http_server::HttpServer, workspace_relpath};
 
 use crate::{
-    entities::Id,
-    sync::{build_rpc_router, Revision, SyncManager},
+    entities::{Id, Revision},
+    sync::{build_rpc_router, SyncManager},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
     Baza,
 };

@@ -188,9 +188,19 @@ impl SyncManager {
 
         let _guard = SyncGuard::new(self.sync_in_progress.clone(), self.baza.get_events_sender());
 
-        if self.baza.get_connection()?.has_staged_documents()? {
-            log::warn!("There are uncommitted changes");
-            return Ok(false);
+        {
+            let conn = self.baza.get_connection()?;
+
+            if conn.has_staged_documents()? {
+                log::warn!("There are uncommitted changes");
+                return Ok(false);
+            }
+
+            let locks = conn.list_locks()?;
+            if !locks.is_empty() {
+                log::warn!("There are {} pending locks", locks.len());
+                return Ok(false);
+            }
         }
 
         let mdns_client_discovery_complete = *self

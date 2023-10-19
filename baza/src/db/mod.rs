@@ -19,6 +19,7 @@ pub use connection::BazaConnection;
 pub use dto::{BLOBSCount, DocumentsCount, ListPage};
 pub use filter::{Conditions, Filter, OrderBy};
 pub use kvs::{KvsConstKey, KvsEntry, KvsKey};
+pub use locks::Locks;
 
 use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};

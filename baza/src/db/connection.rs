@@ -986,6 +986,11 @@ impl BazaConnection {
     // FIXME pub fn write_blob_stream(&self, hash: &hash, stream: FileStream) -> Result<()>
 
     pub fn commit_staged_documents(&mut self) -> Result<usize> {
+        ensure!(
+            self.list_locks()?.is_empty(),
+            "There must be no pending locks"
+        );
+
         let mut max_rev = self.get_db_rev()?;
 
         let instance_id = self.get_instance_id()?;

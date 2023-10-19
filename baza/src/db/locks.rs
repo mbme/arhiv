@@ -1,30 +1,46 @@
-use anyhow::Result;
+use std::collections::HashMap;
+
+use anyhow::{ensure, Result};
 
 use crate::entities::Id;
 
 use super::kvs::{KvsEntry, KvsKey};
 use super::BazaConnection;
 
-const SETTINGS_NAMESPACE: &str = "locks";
+const LOCKS_NAMESPACE: &str = "locks";
+
+pub type Locks = HashMap<Id, String>;
 
 impl BazaConnection {
-    pub fn list_locks(&self) -> Result<Vec<KvsEntry>> {
-        self.kvs_list(Some(SETTINGS_NAMESPACE))
+    pub fn list_locks(&self) -> Result<Locks> {
+        let map = self
+            .kvs_list(Some(LOCKS_NAMESPACE))?
+            .into_iter()
+            .map(|KvsEntry(key, value)| {
+                (
+                    Id::from(key.key),
+                    serde_json::from_value::<String>(value).expect("must parse lock value"),
+                )
+            })
+            .collect::<HashMap<_, _>>();
+
+        Ok(map)
     }
 
-    pub fn lock_document(&self, id: &Id, reason: &String) -> Result<()> {
-        let key = KvsKey::new(SETTINGS_NAMESPACE, id);
+    pub fn lock_document(&self, id: &Id, reason: String) -> Result<()> {
+        let document = self.get_document(id)?;
+        ensure!(document.is_some(), "document {id} doesn't exist");
 
-        self.kvs_set(&key, reason)?;
+        let key = KvsKey::new(LOCKS_NAMESPACE, id);
+
+        self.kvs_set(&key, &reason)?;
 
         Ok(())
     }
 
-    pub fn unlock_document(&self, id: &Id) -> Result<()> {
-        let key = KvsKey::new(SETTINGS_NAMESPACE, id);
+    pub fn unlock_document(&self, id: &Id) -> Result<bool> {
+        let key = KvsKey::new(LOCKS_NAMESPACE, id);
 
-        self.kvs_delete(&key)?;
-
-        Ok(())
+        self.kvs_delete(&key)
     }
 }

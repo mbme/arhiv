@@ -61,6 +61,22 @@ enum CLICommand {
     },
     /// Print settings
     Settings,
+    /// List document locks
+    Locks,
+    /// Lock document
+    Lock {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+        #[arg()]
+        reason: Option<String>,
+    },
+    /// Unlock document
+    Unlock {
+        /// Id of the document
+        #[arg()]
+        id: Id,
+    },
     /// Commit pending changes
     Commit,
     /// Get document by id
@@ -160,9 +176,43 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let settings = arhiv.baza.get_connection()?.list_settings()?;
 
-            println!("Arhiv settings, {} entries:", settings.len());
+            println!("Arhiv settings, {} entries", settings.len());
             for KvsEntry(KvsKey { namespace: _, key }, value) in settings {
                 println!("  {:>25}: {value}", key);
+            }
+        }
+        CLICommand::Locks => {
+            let arhiv = Arhiv::must_open();
+
+            let locks = arhiv.baza.get_connection()?.list_locks()?;
+
+            println!("Arhiv locks, {} entries", locks.len());
+            for (id, reason) in locks {
+                println!("  {:>25}: {reason}", id);
+            }
+        }
+        CLICommand::Lock { id, reason } => {
+            let reason = reason.unwrap_or("locked by CLI".to_string());
+
+            let arhiv = Arhiv::must_open();
+
+            let tx = arhiv.baza.get_tx()?;
+            tx.lock_document(&id, reason)?;
+            tx.commit()?;
+
+            println!("Locked document {id}");
+        }
+        CLICommand::Unlock { id } => {
+            let arhiv = Arhiv::must_open();
+
+            let tx = arhiv.baza.get_tx()?;
+            let unlocked = tx.unlock_document(&id)?;
+            tx.commit()?;
+
+            if unlocked {
+                println!("Unlocked document {id}");
+            } else {
+                println!("Document {id} isn't locked");
             }
         }
         CLICommand::Commit => {

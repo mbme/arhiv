@@ -3,7 +3,7 @@ use std::{fmt, time::Duration};
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, DEBUG_MODE};
+use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
 use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize)]
@@ -15,6 +15,7 @@ pub struct Status {
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: usize,
+    pub locks: Locks,
 
     pub db_rev: Revision,
     pub last_sync_time: Timestamp,
@@ -40,6 +41,7 @@ impl Status {
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.get_coflicting_documents()?.len();
         let last_update_time = conn.get_last_update_time()?;
+        let locks = conn.list_locks()?;
 
         Ok(Status {
             app_version: get_crate_version().to_string(),
@@ -53,6 +55,7 @@ impl Status {
             last_update_time,
             debug_mode: DEBUG_MODE,
             root_dir,
+            locks,
 
             local_server_is_running: None,
             mdns_discovery_timeout: None,
@@ -174,6 +177,12 @@ impl fmt::Display for Status {
             self.blobs_count.local_blobs_count,
             self.blobs_count.local_blobs_count - self.blobs_count.local_used_blobs_count,
         )?;
+
+        writeln!(f)?;
+        writeln!(f, "            Locks: {}", self.locks.len())?;
+        for (id, reason) in &self.locks {
+            writeln!(f, "   {:>30}: {reason}", id)?;
+        }
 
         if self.conflicts_count > 0 {
             writeln!(f)?;

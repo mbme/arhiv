@@ -3,9 +3,7 @@ use rusqlite::Connection;
 
 use rs_utils::{generate_random_id, FsTransaction};
 
-use crate::db_migrations::migration::get_rows_count;
-
-use super::migration::{ensure_snapshots_count_stay_the_same, DBMigration};
+use super::migration::{ensure_snapshots_count_stay_the_same, get_rows_count, DBMigration};
 
 pub struct MigrationV4;
 

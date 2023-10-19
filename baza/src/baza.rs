@@ -7,8 +7,7 @@ use rs_utils::{log, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
-    db::{vacuum, BazaConnection},
-    db_migrations::{apply_db_migrations, create_db},
+    db::{apply_db_migrations, create_db, vacuum, BazaConnection},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     sync::InstanceId,

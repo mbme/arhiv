@@ -5,7 +5,6 @@ mod auto_commit_service;
 mod backup;
 mod baza;
 mod db;
-mod db_migrations;
 mod document_expert;
 pub mod entities;
 mod events;

@@ -12,7 +12,6 @@ use rs_utils::{
 
 use crate::{
     baza::BazaEvent,
-    db_migrations::get_db_version,
     entities::{BLOBId, Document, Id, Refs, BLOB, ERASED_DOCUMENT_TYPE},
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
@@ -23,6 +22,7 @@ use crate::{
 use super::{
     dto::{BLOBSCount, DocumentsCount, ListPage},
     filter::{Filter, OrderBy},
+    migrations::get_db_version,
     query_builder::QueryBuilder,
     sqlite_connection::{init_functions, open_connection},
     utils,

@@ -3,6 +3,7 @@ mod dto;
 mod filter;
 mod kvs;
 pub mod locks;
+mod migrations;
 mod query_builder;
 pub mod settings;
 mod sqlite_connection;
@@ -17,6 +18,7 @@ pub use connection::BazaConnection;
 pub use dto::{BLOBSCount, DocumentsCount, ListPage};
 pub use filter::{Conditions, Filter, OrderBy};
 pub use kvs::{KvsConstKey, KvsEntry, KvsKey};
+pub use migrations::{apply_db_migrations, create_db};
 
 pub(crate) use sqlite_connection::{open_connection, vacuum};
 

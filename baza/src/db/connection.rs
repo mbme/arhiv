@@ -171,7 +171,7 @@ impl BazaConnection {
         }
     }
 
-    fn register_event(&mut self, event: BazaEvent) -> Result<()> {
+    pub(crate) fn register_event(&mut self, event: BazaEvent) -> Result<()> {
         let events = match self {
             BazaConnection::ReadOnly { .. } => {
                 bail!("readonly connection doesn't have event sender")

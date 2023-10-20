@@ -196,7 +196,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let arhiv = Arhiv::must_open();
 
-            let tx = arhiv.baza.get_tx()?;
+            let mut tx = arhiv.baza.get_tx()?;
             tx.lock_document(&id, reason)?;
             tx.commit()?;
 
@@ -205,7 +205,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Unlock { id } => {
             let arhiv = Arhiv::must_open();
 
-            let tx = arhiv.baza.get_tx()?;
+            let mut tx = arhiv.baza.get_tx()?;
             let unlocked = tx.unlock_document(&id)?;
             tx.commit()?;
 

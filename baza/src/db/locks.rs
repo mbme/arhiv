@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use anyhow::{ensure, Result};
 
 use crate::entities::Id;
+use crate::BazaEvent;
 
 use super::kvs::{KvsEntry, KvsKey};
 use super::BazaConnection;
@@ -27,7 +28,7 @@ impl BazaConnection {
         Ok(map)
     }
 
-    pub fn lock_document(&self, id: &Id, reason: String) -> Result<()> {
+    pub fn lock_document(&mut self, id: &Id, reason: String) -> Result<()> {
         let document = self.get_document(id)?;
         ensure!(document.is_some(), "document {id} doesn't exist");
 
@@ -35,12 +36,23 @@ impl BazaConnection {
 
         self.kvs_set(&key, &reason)?;
 
+        self.register_event(BazaEvent::DocumentLocked {
+            id: id.clone(),
+            reason,
+        })?;
+
         Ok(())
     }
 
-    pub fn unlock_document(&self, id: &Id) -> Result<bool> {
+    pub fn unlock_document(&mut self, id: &Id) -> Result<bool> {
         let key = KvsKey::new(LOCKS_NAMESPACE, id);
 
-        self.kvs_delete(&key)
+        let unlocked = self.kvs_delete(&key)?;
+
+        if unlocked {
+            self.register_event(BazaEvent::DocumentUnlocked { id: id.clone() })?;
+        }
+
+        Ok(unlocked)
     }
 }

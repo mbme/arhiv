@@ -124,7 +124,9 @@ pub fn create_attachment(
     let media_type = get_media_type(file_path)?;
     let size = get_file_size(file_path)?;
 
-    let blob = tx.add_blob(file_path, move_file)?;
+    let blob_id = tx.add_blob(file_path, move_file)?;
+    let blob = tx.get_blob(&blob_id);
+    let file_path = &blob.file_path;
 
     let mut attachment = Document::new_with_data(
         DocumentClass::new(ATTACHMENT_TYPE, ""),
@@ -132,7 +134,7 @@ pub fn create_attachment(
             filename,
             media_type,
             size,
-            blob,
+            blob: blob_id,
             duration: None,
             bit_rate: None,
             width: None,

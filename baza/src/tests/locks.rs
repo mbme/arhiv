@@ -20,6 +20,9 @@ fn test_locks() -> Result<()> {
 
     assert!(tx.list_locks()?.contains_key(&id));
 
+    // double lock returns an error
+    assert!(tx.lock_document(&id, "test".to_string()).is_err());
+
     // if can modify document when locked
     let mut document = tx.get_document(&id)?.unwrap();
     tx.stage_document(&mut document)?;

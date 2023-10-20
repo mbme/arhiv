@@ -28,7 +28,20 @@ impl BazaConnection {
         Ok(map)
     }
 
+    pub fn is_document_locked(&self, id: &Id) -> Result<bool> {
+        let key = KvsKey::new(LOCKS_NAMESPACE, id);
+
+        let is_locked = self.kvs_get::<String>(&key)?.is_some();
+
+        Ok(is_locked)
+    }
+
     pub fn lock_document(&mut self, id: &Id, reason: String) -> Result<()> {
+        ensure!(
+            !self.is_document_locked(id)?,
+            "document {id} already locked"
+        );
+
         let document = self.get_document(id)?;
         ensure!(document.is_some(), "document {id} doesn't exist");
 

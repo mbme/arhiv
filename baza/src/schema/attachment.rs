@@ -173,7 +173,7 @@ pub fn create_attachment(
     }
 
     let mut document = attachment.into_document()?;
-    tx.stage_document(&mut document)?;
+    tx.stage_document(&mut document, None)?;
 
     document.convert()
 }

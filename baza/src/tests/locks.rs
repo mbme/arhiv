@@ -16,19 +16,69 @@ fn test_locks() -> Result<()> {
 
     assert!(tx.list_locks()?.is_empty());
 
-    tx.lock_document(&id, "test".to_string())?;
+    let lock = tx.lock_document(&id, "test")?;
 
     assert!(tx.list_locks()?.contains_key(&id));
 
     // double lock returns an error
-    assert!(tx.lock_document(&id, "test".to_string()).is_err());
+    assert!(tx.lock_document(&id, "test").is_err());
 
-    // if can modify document when locked
-    let mut document = tx.get_document(&id)?.unwrap();
-    tx.stage_document(&mut document)?;
-
-    assert!(tx.unlock_document(&id)?);
+    assert!(tx.unlock_document(&id, lock.get_key()).is_ok());
     assert!(tx.list_locks()?.is_empty());
+
+    tx.commit()?;
+
+    Ok(())
+}
+
+#[test]
+fn test_lock_stage_document() -> Result<()> {
+    let baza = Baza::new_test_baza();
+
+    let id = Id::from("1");
+    baza.add_document(id.clone(), Value::Null)?;
+
+    let mut tx = baza.get_tx()?;
+
+    let lock = tx.lock_document(&id, "test")?;
+
+    // if can modify locked document without a key
+    {
+        let mut document = tx.get_document(&id)?.unwrap();
+        assert!(tx.stage_document(&mut document, None).is_err());
+    }
+
+    // if can modify locked document with an invalid key
+    {
+        let mut document = tx.get_document(&id)?.unwrap();
+        assert!(tx
+            .stage_document(&mut document, Some("invalid key".to_string()))
+            .is_err());
+    }
+
+    // if can modify locked document with a valid key
+    {
+        let mut document = tx.get_document(&id)?.unwrap();
+        assert!(tx
+            .stage_document(&mut document, Some(lock.get_key().clone()))
+            .is_ok());
+    }
+
+    tx.unlock_document(&id, lock.get_key())?;
+
+    // if can modify unlocked document without a key
+    {
+        let mut document = tx.get_document(&id)?.unwrap();
+        assert!(tx.stage_document(&mut document, None).is_ok());
+    }
+
+    // if can modify unlocked document with an invalid key
+    {
+        let mut document = tx.get_document(&id)?.unwrap();
+        assert!(tx
+            .stage_document(&mut document, Some("invalid key".to_string()))
+            .is_err());
+    }
 
     tx.commit()?;
 
@@ -44,7 +94,7 @@ fn test_lock_blocks_commit() -> Result<()> {
 
     let mut tx = baza.get_tx()?;
 
-    tx.lock_document(&id, "test".to_string())?;
+    tx.lock_document(&id, "test")?;
 
     assert!(tx.commit_staged_documents().is_err());
 
@@ -63,7 +113,7 @@ async fn test_lock_blocks_sync() -> Result<()> {
     {
         let mut tx = baza0.get_tx()?;
         tx.commit_staged_documents()?;
-        tx.lock_document(&id, "test".to_string())?;
+        tx.lock_document(&id, "test")?;
         tx.commit()?;
     }
 

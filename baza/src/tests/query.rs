@@ -38,7 +38,7 @@ fn test_modes() -> Result<()> {
     // committed
     {
         let mut tx = baza.get_tx()?;
-        tx.stage_document(&mut new_document(json!({ "test": "1" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "1" })), None)?;
         tx.commit_staged_documents()?;
         tx.commit()?;
     }
@@ -46,7 +46,7 @@ fn test_modes() -> Result<()> {
     // staged
     {
         let mut tx = baza.get_tx()?;
-        tx.stage_document(&mut new_document(json!({ "test": "3" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "3" })), None)?;
         tx.commit()?;
     }
 
@@ -93,10 +93,10 @@ fn test_order_by_enum_field() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
 
-        tx.stage_document(&mut new_document(json!({ "enum": "low" })))?;
-        tx.stage_document(&mut new_document(json!({ "enum": "high" })))?;
-        tx.stage_document(&mut new_document(json!({ "enum": "other" })))?;
-        tx.stage_document(&mut new_document(json!({ "enum": "medium" })))?;
+        tx.stage_document(&mut new_document(json!({ "enum": "low" })), None)?;
+        tx.stage_document(&mut new_document(json!({ "enum": "high" })), None)?;
+        tx.stage_document(&mut new_document(json!({ "enum": "other" })), None)?;
+        tx.stage_document(&mut new_document(json!({ "enum": "medium" })), None)?;
 
         tx.commit()?;
     }
@@ -152,10 +152,22 @@ fn test_multiple_order_by() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
 
-        tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "2" })))?;
-        tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "1" })))?;
-        tx.stage_document(&mut new_document(json!({ "prop": "a", "other": "2" })))?;
-        tx.stage_document(&mut new_document(json!({ "prop": "b", "other": "1" })))?;
+        tx.stage_document(
+            &mut new_document(json!({ "prop": "b", "other": "2" })),
+            None,
+        )?;
+        tx.stage_document(
+            &mut new_document(json!({ "prop": "a", "other": "1" })),
+            None,
+        )?;
+        tx.stage_document(
+            &mut new_document(json!({ "prop": "a", "other": "2" })),
+            None,
+        )?;
+        tx.stage_document(
+            &mut new_document(json!({ "prop": "b", "other": "1" })),
+            None,
+        )?;
 
         tx.commit()?;
     }
@@ -194,11 +206,11 @@ fn test_conditions() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
 
-        tx.stage_document(&mut new_document(json!({ "test": "value" })))?;
-        tx.stage_document(&mut new_document(json!({ "test": "value1" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "value" })), None)?;
+        tx.stage_document(&mut new_document(json!({ "test": "value1" })), None)?;
 
         let mut document3 = new_document(json!({ "test": "value2" }));
-        tx.stage_document(&mut document3)?;
+        tx.stage_document(&mut document3, None)?;
         tx.erase_document(&document3.id)?;
 
         tx.commit()?;
@@ -296,24 +308,30 @@ fn test_backrefs() -> Result<()> {
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
-    tx.stage_document(&mut doc1)?;
+    tx.stage_document(&mut doc1, None)?;
 
-    tx.stage_document(&mut Document::new_with_data(
-        DocumentClass::new("test_type", ""),
-        json!({
-            "ref": &doc1.id,
-        })
-        .try_into()
-        .unwrap(),
-    ))?;
-    tx.stage_document(&mut Document::new_with_data(
-        DocumentClass::new("test_type", ""),
-        json!({
-            "ref": &doc1.id,
-        })
-        .try_into()
-        .unwrap(),
-    ))?;
+    tx.stage_document(
+        &mut Document::new_with_data(
+            DocumentClass::new("test_type", ""),
+            json!({
+                "ref": &doc1.id,
+            })
+            .try_into()
+            .unwrap(),
+        ),
+        None,
+    )?;
+    tx.stage_document(
+        &mut Document::new_with_data(
+            DocumentClass::new("test_type", ""),
+            json!({
+                "ref": &doc1.id,
+            })
+            .try_into()
+            .unwrap(),
+        ),
+        None,
+    )?;
 
     tx.commit()?;
 
@@ -362,24 +380,30 @@ fn test_collections() -> Result<()> {
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
-    tx.stage_document(&mut doc1)?;
+    tx.stage_document(&mut doc1, None)?;
 
-    tx.stage_document(&mut Document::new_with_data(
-        DocumentClass::new("collection_type", ""),
-        json!({
-            "items": vec![&doc1.id],
-        })
-        .try_into()
-        .unwrap(),
-    ))?;
-    tx.stage_document(&mut Document::new_with_data(
-        DocumentClass::new("collection_type", ""),
-        json!({
-            "items": vec![&doc1.id],
-        })
-        .try_into()
-        .unwrap(),
-    ))?;
+    tx.stage_document(
+        &mut Document::new_with_data(
+            DocumentClass::new("collection_type", ""),
+            json!({
+                "items": vec![&doc1.id],
+            })
+            .try_into()
+            .unwrap(),
+        ),
+        None,
+    )?;
+    tx.stage_document(
+        &mut Document::new_with_data(
+            DocumentClass::new("collection_type", ""),
+            json!({
+                "items": vec![&doc1.id],
+            })
+            .try_into()
+            .unwrap(),
+        ),
+        None,
+    )?;
 
     tx.commit()?;
 
@@ -430,7 +454,7 @@ fn test_count_documents_and_blobs() -> Result<()> {
             "test": "test",
             "blob": blob_id,
         }));
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
 
@@ -487,10 +511,10 @@ fn test_count_documents_and_blobs() -> Result<()> {
         let mut tx = baza.get_tx()?;
 
         // update document
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         // create another document
-        tx.stage_document(&mut new_document(json!({ "test": "test" })))?;
+        tx.stage_document(&mut new_document(json!({ "test": "test" })), None)?;
 
         tx.commit()?;
     }

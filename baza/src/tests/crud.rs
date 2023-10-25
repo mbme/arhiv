@@ -19,7 +19,7 @@ fn test_crud_create() -> Result<()> {
 
         let mut document = new_document(json!({}));
         document.id = Id::from("1");
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
     }
@@ -50,7 +50,7 @@ fn test_crud_read() -> Result<()> {
             &Revision::from_value(json!({ "0": 2, "2": 1 }))?
         );
 
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit()?;
     }
 
@@ -75,7 +75,7 @@ fn test_crud_update() -> Result<()> {
 
         let mut document = tx.get_document(&Id::from("1"))?.unwrap();
         document.data.set("test", "value");
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
     }
@@ -129,7 +129,7 @@ fn test_crud_commit() -> Result<()> {
     let mut tx = baza.get_tx()?;
 
     let mut document = new_document(json!({}));
-    tx.stage_document(&mut document)?;
+    tx.stage_document(&mut document, None)?;
 
     assert_eq!(tx.get_db_rev()?, Revision::initial());
 
@@ -156,7 +156,7 @@ fn test_crud_commit_deduce_version() -> Result<()> {
         let mut tx = baza.get_tx()?;
 
         let mut document = new_document(json!({}));
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit_staged_documents()?;
 
         let document = tx.must_get_document(&document.id)?;
@@ -179,7 +179,7 @@ fn test_crud_add_blob() -> Result<()> {
 
         let mut document = new_document(json!({}));
         document.id = Id::from("1");
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
     }
@@ -228,7 +228,7 @@ fn test_crud_remove_orphaned_blob() -> Result<()> {
         let blob_id = tx.add_blob(&workspace_relpath("resources/k2.jpg"), false)?;
 
         let mut document = new_document(json!({ "blob": blob_id }));
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
 

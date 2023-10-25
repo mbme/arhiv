@@ -68,6 +68,7 @@ enum CLICommand {
         /// Id of the document
         #[arg()]
         id: Id,
+        /// Reason why the document is being locked
         #[arg()]
         reason: Option<String>,
     },
@@ -76,6 +77,9 @@ enum CLICommand {
         /// Id of the document
         #[arg()]
         id: Id,
+        /// Lock key to be checked before unlocking
+        #[arg()]
+        key: Option<String>,
     },
     /// Commit pending changes
     Commit,
@@ -187,8 +191,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let locks = arhiv.baza.get_connection()?.list_locks()?;
 
             println!("Arhiv locks, {} entries", locks.len());
-            for (id, reason) in locks {
-                println!("  {:>25}: {reason}", id);
+            for (id, lock) in locks {
+                println!("  document {id}: {lock}");
             }
         }
         CLICommand::Lock { id, reason } => {
@@ -202,18 +206,19 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("Locked document {id}");
         }
-        CLICommand::Unlock { id } => {
+        CLICommand::Unlock { id, key } => {
             let arhiv = Arhiv::must_open();
 
             let mut tx = arhiv.baza.get_tx()?;
-            let unlocked = tx.unlock_document(&id)?;
+            if let Some(key) = key {
+                tx.unlock_document(&id, &key)?;
+            } else {
+                println!("Lock key wasn't provided, unlocking without key check");
+                tx.unlock_document_without_key(&id)?;
+            }
             tx.commit()?;
 
-            if unlocked {
-                println!("Unlocked document {id}");
-            } else {
-                println!("Document {id} isn't locked");
-            }
+            println!("Unlocked document {id}");
         }
         CLICommand::Commit => {
             let arhiv = Arhiv::must_open();
@@ -263,7 +268,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             })?;
 
             let mut tx = arhiv.baza.get_tx()?;
-            tx.stage_document(&mut document)?;
+            tx.stage_document(&mut document, None)?;
             tx.commit()?;
 
             let port = arhiv.get_config().server_port;

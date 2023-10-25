@@ -27,14 +27,14 @@ fn test_validation_mandatory() {
     {
         let mut tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({}));
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_err());
     }
 
     {
         let mut tx = baza.get_tx().unwrap();
         let mut document = new_document(json!({ "test": "test" }));
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_ok());
     }
 }
@@ -60,11 +60,11 @@ fn test_validation_readonly() {
         let mut tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({ "test": "test" }));
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_ok());
 
         document.data = json!({ "test": None::<String> }).try_into().unwrap();
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_err());
     }
 
@@ -72,15 +72,15 @@ fn test_validation_readonly() {
         let mut tx = baza.get_tx().unwrap();
 
         let mut document = new_document(json!({}));
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_ok());
 
         document.data = json!({ "test": "test" }).try_into().unwrap();
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_err());
 
         document.data = json!({ "test": None::<String> }).try_into().unwrap();
-        let result = tx.stage_document(&mut document);
+        let result = tx.stage_document(&mut document, None);
         assert!(result.is_ok());
     }
 }

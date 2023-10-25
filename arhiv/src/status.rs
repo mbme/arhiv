@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
-use rs_utils::{format_time, get_crate_version, Timestamp, MIN_TIMESTAMP};
+use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 #[derive(Serialize)]
 pub struct Status {
@@ -96,7 +96,7 @@ impl fmt::Display for Status {
             if self.last_update_time == MIN_TIMESTAMP {
                 "NEVER".to_string()
             } else {
-                format_date(self.last_update_time)
+                default_date_time_format(self.last_update_time)
             }
         )?;
         writeln!(
@@ -105,7 +105,7 @@ impl fmt::Display for Status {
             if self.last_sync_time == MIN_TIMESTAMP {
                 "NEVER".to_string()
             } else {
-                format_date(self.last_sync_time)
+                default_date_time_format(self.last_sync_time)
             }
         )?;
         writeln!(
@@ -197,8 +197,4 @@ impl fmt::Display for Status {
 
         Ok(())
     }
-}
-
-fn format_date(date: Timestamp) -> String {
-    format_time(date, "%a %b %e %T %Y")
 }

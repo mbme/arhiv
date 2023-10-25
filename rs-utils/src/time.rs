@@ -19,6 +19,11 @@ pub fn format_time(timestamp: Timestamp, fmt: &str) -> String {
     timestamp.with_timezone(&Local).format(fmt).to_string()
 }
 
+// Mon Oct 23 11:23:39 2023 local time
+pub fn default_date_time_format(timestamp: Timestamp) -> String {
+    format_time(timestamp, "%a %b %e %T %Y")
+}
+
 // For use in tests, compatible with tokio::time::advance()
 #[derive(Clone, Debug)]
 pub struct FakeTime {

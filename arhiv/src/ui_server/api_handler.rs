@@ -150,7 +150,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let errors = if let Err(error) = validation_result {
                 Some(error.into())
             } else {
-                tx.stage_document(&mut document)?;
+                tx.stage_document(&mut document, None)?;
 
                 None
             };
@@ -163,7 +163,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             for old_collection in &mut old_collections {
                 if !collections.contains(&old_collection.id) {
                     document_expert.remove_document_from_collection(&document, old_collection)?;
-                    tx.stage_document(old_collection)?;
+                    tx.stage_document(old_collection, None)?;
                 }
             }
 
@@ -176,7 +176,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 if !old_collections_ids.contains(&&collection_id) {
                     let mut collection = tx.must_get_document(&collection_id)?;
                     document_expert.add_document_to_collection(&document, &mut collection)?;
-                    tx.stage_document(&mut collection)?;
+                    tx.stage_document(&mut collection, None)?;
                 }
             }
 
@@ -203,7 +203,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let (id, errors) = if let Err(error) = validation_result {
                 (None, Some(error.into()))
             } else {
-                tx.stage_document(&mut document)?;
+                tx.stage_document(&mut document, None)?;
 
                 (Some(document.id.clone()), None)
             };
@@ -214,7 +214,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             for collection_id in collections {
                 let mut collection = tx.must_get_document(&collection_id)?;
                 document_expert.add_document_to_collection(&document, &mut collection)?;
-                tx.stage_document(&mut collection)?;
+                tx.stage_document(&mut collection, None)?;
             }
 
             if errors.is_none() {

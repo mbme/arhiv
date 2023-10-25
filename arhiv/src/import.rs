@@ -61,7 +61,7 @@ impl Arhiv {
         let class = DocumentClass::new(TRACK_TYPE, "");
         let mut document = Document::new_with_data(class, data);
 
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit()?;
 

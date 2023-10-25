@@ -18,7 +18,7 @@ async fn test_events() -> Result<()> {
         let mut tx = baza0.get_tx()?;
         let mut document = new_document(json!({}));
         document.id = id.clone();
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit()?;
 
         let event0 = event_future0.await?;
@@ -30,7 +30,7 @@ async fn test_events() -> Result<()> {
         let event_future0 = events0.recv();
 
         let mut tx = baza0.get_tx()?;
-        tx.lock_document(&id, "test".to_string())?;
+        tx.lock_document(&id, "test")?;
         tx.commit()?;
 
         let event0 = event_future0.await?;
@@ -48,7 +48,7 @@ async fn test_events() -> Result<()> {
         let event_future0 = events0.recv();
 
         let mut tx = baza0.get_tx()?;
-        tx.unlock_document(&id)?;
+        tx.unlock_document_without_key(&id)?;
         tx.commit()?;
 
         let event0 = event_future0.await?;

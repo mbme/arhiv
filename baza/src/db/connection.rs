@@ -12,7 +12,10 @@ use rs_utils::{
 
 use crate::{
     baza::BazaEvent,
-    entities::{BLOBId, Document, Id, InstanceId, Refs, Revision, BLOB, ERASED_DOCUMENT_TYPE},
+    entities::{
+        BLOBId, Document, DocumentLockKey, Id, InstanceId, Refs, Revision, BLOB,
+        ERASED_DOCUMENT_TYPE,
+    },
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     validator::Validator,
@@ -676,8 +679,36 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub fn stage_document(&mut self, document: &mut Document) -> Result<()> {
+    pub fn stage_document(
+        &mut self,
+        document: &mut Document,
+        lock_key: Option<DocumentLockKey>,
+    ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
+
+        let lock = self.get_document_lock(&document.id)?;
+
+        match (lock, lock_key) {
+            (Some(lock), Some(lock_key)) => {
+                if lock.is_valid_key(&lock_key) {
+                    log::debug!("Document is locked, a valid lock key has been provided");
+                } else {
+                    log::error!("Document is locked, but an invalid lock key has been provided");
+                    bail!("Invalid lock key");
+                }
+            }
+            (Some(_), None) => {
+                log::error!("Document is locked, but no lock key has been provided");
+                bail!("Missing lock key");
+            }
+            (None, Some(_)) => {
+                log::error!("Document isn't locked, but lock key has been provided");
+                bail!("Unexpected lock key");
+            }
+            (None, None) => {
+                log::trace!("Document isn't locked, no lock key provided");
+            }
+        };
 
         ensure!(
             !document.is_erased(),

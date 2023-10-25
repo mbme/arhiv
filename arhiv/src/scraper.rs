@@ -74,7 +74,7 @@ impl Arhiv {
                             .try_into()?,
                         );
 
-                        tx.stage_document(&mut document)?;
+                        tx.stage_document(&mut document, None)?;
 
                         documents.push(cover);
                         documents.push(document);
@@ -112,7 +112,7 @@ impl Arhiv {
                             .try_into()?,
                         );
 
-                        tx.stage_document(&mut document)?;
+                        tx.stage_document(&mut document, None)?;
 
                         documents.push(cover);
                         documents.push(document);
@@ -142,7 +142,7 @@ impl Arhiv {
                             .try_into()?,
                         );
 
-                        tx.stage_document(&mut document)?;
+                        tx.stage_document(&mut document, None)?;
 
                         documents.push(cover);
                         documents.push(document);
@@ -168,7 +168,7 @@ impl Arhiv {
                             .try_into()?,
                         );
 
-                        tx.stage_document(&mut document)?;
+                        tx.stage_document(&mut document, None)?;
 
                         documents.push(cover);
                         documents.push(document);

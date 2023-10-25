@@ -143,7 +143,7 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
         ]))?;
 
         let mut document = tx.must_get_document(&Id::from("3"))?;
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         let ids = tx.get_coflicting_documents()?;
         assert_eq!(ids.len(), 2);
@@ -241,7 +241,7 @@ async fn test_sync_blobs() -> Result<()> {
         let blob_id = tx.add_blob(src, false)?;
 
         let mut document = new_document(json!({ "blob": &blob_id }));
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit_staged_documents()?;
 
@@ -294,7 +294,7 @@ async fn test_sync_network_agent() -> Result<()> {
         let blob_id = tx.add_blob(src, false)?;
 
         let mut document = new_document(json!({ "blob": &blob_id }));
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         tx.commit_staged_documents()?;
 
@@ -345,7 +345,7 @@ async fn test_auto_sync_on_commit() -> Result<()> {
     {
         let mut tx = baza0.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit_staged_documents()?;
         tx.commit()?;
     }

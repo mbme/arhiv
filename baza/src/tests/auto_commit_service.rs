@@ -61,7 +61,7 @@ async fn test_schedule_auto_commit_on_staged_document() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit()?;
     }
 
@@ -90,7 +90,7 @@ async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
         tx.commit()?;
     }
 
@@ -102,7 +102,7 @@ async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
     {
         let mut tx = baza.get_tx()?;
         let mut document = new_document_snapshot(Id::new(), Value::Null);
-        tx.stage_document(&mut document)?;
+        tx.stage_document(&mut document, None)?;
 
         // modify updated_at to take elapsed tokio time into account
         document.updated_at += Instant::now().duration_since(start_instant);

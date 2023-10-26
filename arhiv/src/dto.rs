@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::entities::{DocumentData, Id};
+use baza::entities::{DocumentData, DocumentLockKey, Id};
 use rs_utils::Timestamp;
 
 #[derive(Deserialize, Debug)]
@@ -32,7 +32,9 @@ pub enum APIRequest {
         data: DocumentData,
         collections: Vec<Id>,
     },
+    #[serde(rename_all = "camelCase")]
     SaveDocument {
+        lock_key: DocumentLockKey,
         id: Id,
         subtype: String,
         data: DocumentData,
@@ -61,6 +63,14 @@ pub enum APIRequest {
     },
     CommitOrSync {},
     GetIsModified {},
+    LockDocument {
+        id: Id,
+    },
+    #[serde(rename_all = "camelCase")]
+    UnlockDocument {
+        id: Id,
+        lock_key: DocumentLockKey,
+    },
 }
 
 #[derive(Serialize)]
@@ -117,6 +127,11 @@ pub enum APIResponse {
     GetIsModified {
         is_modified: bool,
     },
+    #[serde(rename_all = "camelCase")]
+    LockDocument {
+        lock_key: DocumentLockKey,
+    },
+    UnlockDocument {},
 }
 
 #[derive(Serialize)]

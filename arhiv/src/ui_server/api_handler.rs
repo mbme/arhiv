@@ -130,6 +130,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::ParseMarkup { ast }
         }
         APIRequest::SaveDocument {
+            lock_key,
             id,
             subtype,
             data,
@@ -150,7 +151,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let errors = if let Err(error) = validation_result {
                 Some(error.into())
             } else {
-                tx.stage_document(&mut document, None)?;
+                tx.stage_document(&mut document, Some(lock_key))?;
 
                 None
             };
@@ -316,6 +317,22 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             APIResponse::GetIsModified {
                 is_modified: has_staged_documents,
             }
+        }
+        APIRequest::LockDocument { id } => {
+            let mut tx = arhiv.baza.get_tx()?;
+            let lock = tx.lock_document(&id, "UI editor lock".to_string())?;
+            tx.commit()?;
+
+            APIResponse::LockDocument {
+                lock_key: lock.get_key().clone(),
+            }
+        }
+        APIRequest::UnlockDocument { id, lock_key } => {
+            let mut tx = arhiv.baza.get_tx()?;
+            tx.unlock_document(&id, &lock_key)?;
+            tx.commit()?;
+
+            APIResponse::UnlockDocument {}
         }
     };
 

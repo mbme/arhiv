@@ -15,6 +15,7 @@ import { useCardContext, useCardLock } from './workspace-reducer';
 import { EraseDocumentConfirmationDialog } from './DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from './DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
+import { useLockDocument } from './useLockDocument';
 
 type Props = {
   documentId: DocumentId;
@@ -30,6 +31,8 @@ export function DocumentCard({ documentId }: Props) {
 
   useUnsavedChangesWarning(isDirty);
   useCardLock(isDirty);
+
+  const lockKey = useLockDocument(documentId);
 
   const {
     value: document,
@@ -136,7 +139,12 @@ export function DocumentCard({ documentId }: Props) {
         data={document.data}
         collections={document.collections.map((item) => item.id)}
         onSubmit={async (data, subtype, collections) => {
+          if (!lockKey) {
+            throw new Error('lock key is missing');
+          }
+
           const submitResult = await RPC.SaveDocument({
+            lockKey,
             id: document.id,
             subtype,
             data,

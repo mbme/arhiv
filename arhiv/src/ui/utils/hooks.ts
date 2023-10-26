@@ -17,7 +17,6 @@ import {
   setSessionValue,
   throttle,
 } from './index';
-import { StateUpdater } from './jsx';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -192,7 +191,7 @@ export function useDebouncedCallback<Args extends any[]>(
 export function useSessionState<T extends JSONValue>(
   key: string,
   initialValue: T,
-): [T, StateUpdater<T>] {
+): [T, (newValue: T) => void] {
   const initialKeyRef = useRef(key);
   if (initialKeyRef.current !== key) {
     throw new Error(`key changed from "${initialKeyRef.current}" to "${key}"`);
@@ -200,11 +199,19 @@ export function useSessionState<T extends JSONValue>(
 
   const [value, setValue] = useState<T>(() => getSessionValue(key, initialValue));
 
-  useEffect(() => {
-    setSessionValue(key, value);
-  }, [key, value]);
+  const updateValue = useCallback(
+    (newValue: T) => {
+      if (newValue === null) {
+        removeSessionValue(key);
+      } else {
+        setSessionValue(key, newValue);
+      }
+      setValue(newValue);
+    },
+    [key],
+  );
 
-  return [value, setValue];
+  return [value, updateValue];
 }
 
 export function useToggle(initialValue: boolean): [boolean, Callback] {

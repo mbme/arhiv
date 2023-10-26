@@ -24,6 +24,7 @@ export type APIRequest =
     }
   | {
       typeName: 'SaveDocument';
+      lockKey: DocumentLockKey;
       id: DocumentId;
       subtype: DocumentSubtype;
       data: DocumentData;
@@ -64,6 +65,15 @@ export type APIRequest =
     }
   | {
       typeName: 'GetIsModified';
+    }
+  | {
+      typeName: 'LockDocument';
+      id: DocumentId;
+    }
+  | {
+      typeName: 'UnlockDocument';
+      id: DocumentId;
+      lockKey: DocumentLockKey;
     };
 
 export type APIResponse =
@@ -130,11 +140,19 @@ export type APIResponse =
   | {
       typeName: 'GetIsModified';
       isModified: boolean;
+    }
+  | {
+      typeName: 'LockDocument';
+      lockKey: DocumentLockKey;
+    }
+  | {
+      typeName: 'UnlockDocument';
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;
 export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
+export type DocumentLockKey = NominalType<string, 'DocumentLockKey'>;
 
 export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>, 'typeName'>;
 

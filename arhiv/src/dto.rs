@@ -61,7 +61,8 @@ pub enum APIRequest {
     Scrape {
         url: String,
     },
-    CommitOrSync {},
+    Commit {},
+    Sync {},
     GetIsModified {},
     LockDocument {
         id: Id,
@@ -122,7 +123,8 @@ pub enum APIResponse {
     Scrape {
         documents: Vec<ListDocumentsResult>,
     },
-    CommitOrSync {},
+    Commit {},
+    Sync {},
     #[serde(rename_all = "camelCase")]
     GetIsModified {
         is_modified: bool,

@@ -46,11 +46,9 @@ const useIsArhivModified = (): boolean => {
   return result?.isModified ?? false;
 };
 
-export function CommitOrSyncButton() {
-  const isArhivModified = useIsArhivModified();
-
+function CommitButton() {
   const { error, inProgress, triggerRefresh } = useQuery(
-    (abortSignal) => RPC.CommitOrSync({}, abortSignal),
+    (abortSignal) => RPC.Commit({}, abortSignal),
     {
       refreshOnMount: false,
     },
@@ -59,13 +57,45 @@ export function CommitOrSyncButton() {
   return (
     <Button
       variant="text"
-      leadingIcon={isArhivModified ? 'save-all' : 'sync'}
+      leadingIcon="save-all"
       busy={inProgress}
       onClick={triggerRefresh}
       trailingIcon={error ? 'error-triangle' : undefined}
-      title={error ? `${isArhivModified ? 'Save' : 'Sync'} failed` : undefined}
+      title={error ? 'Commit failed' : undefined}
     >
-      {isArhivModified ? 'Save' : 'Sync'}
+      Save
     </Button>
   );
+}
+
+function SyncButton() {
+  const { error, inProgress, triggerRefresh } = useQuery(
+    (abortSignal) => RPC.Sync({}, abortSignal),
+    {
+      refreshOnMount: false,
+    },
+  );
+
+  return (
+    <Button
+      variant="text"
+      leadingIcon="sync"
+      busy={inProgress}
+      onClick={triggerRefresh}
+      trailingIcon={error ? 'error-triangle' : undefined}
+      title={error ? 'Sync failed' : undefined}
+    >
+      Sync
+    </Button>
+  );
+}
+
+export function CommitOrSyncButton() {
+  const isArhivModified = useIsArhivModified();
+
+  if (isArhivModified) {
+    return <CommitButton />;
+  }
+
+  return <SyncButton />;
 }

@@ -61,7 +61,10 @@ export type APIRequest =
       url: string;
     }
   | {
-      typeName: 'CommitOrSync';
+      typeName: 'Commit';
+    }
+  | {
+      typeName: 'Sync';
     }
   | {
       typeName: 'GetIsModified';
@@ -135,7 +138,10 @@ export type APIResponse =
       documents: ListDocumentsResult[];
     }
   | {
-      typeName: 'CommitOrSync';
+      typeName: 'Commit';
+    }
+  | {
+      typeName: 'Sync';
     }
   | {
       typeName: 'GetIsModified';

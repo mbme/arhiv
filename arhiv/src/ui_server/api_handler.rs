@@ -296,20 +296,19 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 documents: documents_into_results(documents, schema)?,
             }
         }
-        APIRequest::CommitOrSync {} => {
-            let has_staged_documents = arhiv.baza.get_connection()?.has_staged_documents()?;
+        APIRequest::Commit {} => {
+            let mut tx = arhiv.baza.get_tx()?;
 
-            if has_staged_documents {
-                let mut tx = arhiv.baza.get_tx()?;
+            tx.commit_staged_documents()?;
 
-                tx.commit_staged_documents()?;
+            tx.commit()?;
 
-                tx.commit()?;
-            } else {
-                arhiv.sync().await?;
-            }
+            APIResponse::Commit {}
+        }
+        APIRequest::Sync {} => {
+            arhiv.sync().await?;
 
-            APIResponse::CommitOrSync {}
+            APIResponse::Sync {}
         }
         APIRequest::GetIsModified {} => {
             let has_staged_documents = arhiv.baza.get_connection()?.has_staged_documents()?;

@@ -3,7 +3,7 @@ import { DocumentId, DocumentLockKey } from 'dto';
 import { useSessionState } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 
-export function useLockDocument(id: DocumentId): DocumentLockKey | null {
+export function useLockDocument(id: DocumentId, lock: boolean): DocumentLockKey | null {
   const [lockKey, setLockKey] = useSessionState<DocumentLockKey | null>(
     `document-lock-key-${id}`,
     null,
@@ -17,6 +17,10 @@ export function useLockDocument(id: DocumentId): DocumentLockKey | null {
   }
 
   useEffect(() => {
+    if (!lock) {
+      return;
+    }
+
     let mounted = true;
 
     if (!lockKey) {
@@ -44,18 +48,18 @@ export function useLockDocument(id: DocumentId): DocumentLockKey | null {
     return () => {
       mounted = false;
 
+      setLockKey(null);
+
       void RPC.UnlockDocument({ id, lockKey }).then(
         () => {
           console.debug(`Unlocked document ${id}`);
-          setLockKey(null);
         },
         (e) => {
           console.error(`Failed to unlock document ${id}`, e);
-          setLockKey(null); // local lock key is most likely invalid anyway
         },
       );
     };
-  }, [id, lockKey, setLockKey]);
+  }, [id, lock, lockKey, setLockKey]);
 
   return lockKey;
 }

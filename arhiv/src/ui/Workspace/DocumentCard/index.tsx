@@ -11,10 +11,10 @@ import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { getAttachmentPreview } from 'components/Ref';
 import { ProgressLocker } from 'components/ProgressLocker';
-import { useCardContext, useCardLock } from './workspace-reducer';
-import { EraseDocumentConfirmationDialog } from './DocumentEditor/EraseDocumentConfirmationDialog';
-import { DocumentViewerHead } from './DocumentEditor/DocumentViewerHead';
-import { DocumentEditor } from './DocumentEditor/DocumentEditor';
+import { useCardContext, useCardLock } from '../workspace-reducer';
+import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
+import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
+import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 
 type Props = {
@@ -32,7 +32,7 @@ export function DocumentCard({ documentId }: Props) {
   useUnsavedChangesWarning(isDirty);
   useCardLock(isDirty);
 
-  const lockKey = useLockDocument(documentId);
+  const lockKey = useLockDocument(documentId, isDirty);
 
   const {
     value: document,

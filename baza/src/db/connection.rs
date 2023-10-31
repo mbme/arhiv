@@ -1018,7 +1018,7 @@ impl BazaConnection {
 
     pub fn commit_staged_documents(&mut self) -> Result<usize> {
         ensure!(
-            self.list_locks()?.is_empty(),
+            self.list_document_locks()?.is_empty(),
             "There must be no pending locks"
         );
 

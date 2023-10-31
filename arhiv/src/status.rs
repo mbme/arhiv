@@ -41,7 +41,7 @@ impl Status {
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.get_coflicting_documents()?.len();
         let last_update_time = conn.get_last_update_time()?;
-        let locks = conn.list_locks()?;
+        let locks = conn.list_document_locks()?;
 
         Ok(Status {
             app_version: get_crate_version().to_string(),

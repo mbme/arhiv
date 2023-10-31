@@ -196,7 +196,7 @@ impl SyncManager {
                 return Ok(false);
             }
 
-            let locks = conn.list_locks()?;
+            let locks = conn.list_document_locks()?;
             if !locks.is_empty() {
                 log::warn!("There are {} pending locks", locks.len());
                 return Ok(false);

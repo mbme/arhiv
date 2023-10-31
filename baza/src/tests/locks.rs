@@ -14,17 +14,17 @@ fn test_locks() -> Result<()> {
 
     let mut tx = baza.get_tx()?;
 
-    assert!(tx.list_locks()?.is_empty());
+    assert!(tx.list_document_locks()?.is_empty());
 
     let lock = tx.lock_document(&id, "test")?;
 
-    assert!(tx.list_locks()?.contains_key(&id));
+    assert!(tx.list_document_locks()?.contains_key(&id));
 
     // double lock returns an error
     assert!(tx.lock_document(&id, "test").is_err());
 
     assert!(tx.unlock_document(&id, lock.get_key()).is_ok());
-    assert!(tx.list_locks()?.is_empty());
+    assert!(tx.list_document_locks()?.is_empty());
 
     tx.commit()?;
 

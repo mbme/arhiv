@@ -13,7 +13,7 @@ const LOCKS_NAMESPACE: &str = "locks";
 pub type Locks = HashMap<Id, DocumentLock>;
 
 impl BazaConnection {
-    pub fn list_locks(&self) -> Result<Locks> {
+    pub fn list_document_locks(&self) -> Result<Locks> {
         let map = self
             .kvs_list(Some(LOCKS_NAMESPACE))?
             .into_iter()

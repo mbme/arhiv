@@ -188,7 +188,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Locks => {
             let arhiv = Arhiv::must_open();
 
-            let locks = arhiv.baza.get_connection()?.list_locks()?;
+            let locks = arhiv.baza.get_connection()?.list_document_locks()?;
 
             println!("Arhiv locks, {} entries", locks.len());
             for (id, lock) in locks {

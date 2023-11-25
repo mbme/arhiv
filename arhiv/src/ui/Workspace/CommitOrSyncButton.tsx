@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
 import { usePageVisibilityTracker, useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
-import { BazaEvent } from 'dto';
 import { Button } from 'components/Button';
+import { useBazaEvent } from './events';
 
 type SaveState = {
   canCommit: boolean;
@@ -14,29 +13,16 @@ const useSaveState = (): SaveState => {
     RPC.GetSaveState({}, abortSignal),
   );
 
-  useEffect(() => {
-    const bazaEvents = new EventSource(`${window.BASE_PATH}/events`);
-
-    const rpcEventHandler = (e: MessageEvent<string>) => {
-      const event = JSON.parse(e.data) as BazaEvent;
-
-      switch (event.typeName) {
-        case 'DocumentStaged':
-        case 'DocumentsCommitted':
-        case 'DocumentLocked':
-        case 'DocumentUnlocked': {
-          triggerRefresh();
-        }
+  useBazaEvent((event) => {
+    switch (event.typeName) {
+      case 'DocumentStaged':
+      case 'DocumentsCommitted':
+      case 'DocumentLocked':
+      case 'DocumentUnlocked': {
+        triggerRefresh();
       }
-    };
-
-    bazaEvents.addEventListener('message', rpcEventHandler);
-
-    return () => {
-      bazaEvents.removeEventListener('message', rpcEventHandler);
-      bazaEvents.close();
-    };
-  }, [triggerRefresh]);
+    }
+  });
 
   usePageVisibilityTracker((isPageVisible) => {
     const secondsSinceLastSync = (Date.now() - requestTs) / 1000;

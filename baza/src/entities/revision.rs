@@ -21,7 +21,7 @@ pub enum VectorClockOrder {
 }
 
 impl Revision {
-    pub const STAGED_STRING: &str = "null";
+    pub const STAGED_STRING: &'static str = "null";
 
     pub fn initial() -> Self {
         Revision(BTreeMap::new())
@@ -155,7 +155,7 @@ impl PartialEq for Revision {
     }
 }
 
-#[allow(clippy::incorrect_partial_ord_impl_on_ord_type)]
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Revision {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match self.compare_vector_clocks(other) {

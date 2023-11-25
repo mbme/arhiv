@@ -1,5 +1,3 @@
-#![deny(clippy::all)]
-
 use std::env;
 
 use clap::{Parser, ValueHint};

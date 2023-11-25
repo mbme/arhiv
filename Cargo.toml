@@ -12,6 +12,8 @@ members = [
   "rs-utils",
   "scraper"
 ]
+[workspace.lints.clippy]
+all = "deny"
 
 [workspace.dependencies]
 anyhow = "1"

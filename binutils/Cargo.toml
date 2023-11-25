@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["mbme"]
 publish = false
 
+[lints]
+workspace = true
+
 [features]
 production-mode = ["arhiv/production-mode"]
 

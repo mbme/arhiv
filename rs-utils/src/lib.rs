@@ -1,5 +1,3 @@
-#![deny(clippy::all)]
-
 use std::collections::HashMap;
 use std::io::Write;
 use std::process;

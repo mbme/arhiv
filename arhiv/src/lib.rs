@@ -1,5 +1,3 @@
-#![deny(clippy::all)]
-
 mod arhiv;
 mod config;
 mod data_migrations;

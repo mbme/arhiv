@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["mbme"]
 publish = false
 
+[lints]
+workspace = true
+
 [dependencies]
 log = "0.4"
 tracing.workspace = true

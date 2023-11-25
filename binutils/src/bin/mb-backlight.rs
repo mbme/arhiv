@@ -1,5 +1,3 @@
-#![deny(clippy::all)]
-
 use clap::{Parser, Subcommand};
 
 use rs_utils::{get_crate_version, log, Backlight};

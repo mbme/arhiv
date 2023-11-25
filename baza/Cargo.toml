@@ -8,6 +8,9 @@ publish = false
 [lib]
 doctest = false
 
+[lints]
+workspace = true
+
 [features]
 production-mode = []
 

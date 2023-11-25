@@ -1,5 +1,3 @@
-#![deny(clippy::all)]
-
 use std::time::Duration;
 
 use anyhow::{ensure, Context, Result};

@@ -1,6 +1,3 @@
-#![deny(clippy::all)]
-#![allow(clippy::module_inception)]
-
 mod auto_commit_service;
 mod backup;
 mod baza;

@@ -17,7 +17,7 @@
     "prod:build:css": "NODE_ENV=production yarn run build:css",
     "prod:build": "yarn run prod:build:js && yarn run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
-    "test": "glob './src/ui/**/*.test.{ts,tsx}' --cmd='node --loader tsx --no-warnings=ExperimentalWarning --test --test-reporter spec'",
+    "test": "glob './src/ui/**/*.test.{ts,tsx}' --cmd='node --import tsx --no-warnings=ExperimentalWarning --test --test-reporter spec'",
     "fmt": "prettier --write src/"
   },
   "dependencies": {

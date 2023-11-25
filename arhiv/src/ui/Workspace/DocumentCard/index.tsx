@@ -8,6 +8,7 @@ import { useSuspenseQuery } from 'utils/suspense';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
+import { useBazaEvent } from 'Workspace/events';
 import { useIsFormDirty } from 'components/Form/Form';
 import { getAttachmentPreview } from 'components/Ref';
 import { ProgressLocker } from 'components/ProgressLocker';
@@ -39,6 +40,14 @@ export function DocumentCard({ documentId }: Props) {
     isUpdating,
     triggerRefresh,
   } = useSuspenseQuery({ typeName: 'GetDocument', id: documentId });
+
+  useBazaEvent((event) => {
+    if (event.typeName === 'Synced') {
+      triggerRefresh();
+    } else if (event.typeName === 'DocumentUnlocked' && event.id === documentId) {
+      triggerRefresh();
+    }
+  });
 
   return (
     <CardContainer
@@ -154,8 +163,6 @@ export function DocumentCard({ documentId }: Props) {
           if (submitResult.errors) {
             return submitResult.errors;
           }
-
-          triggerRefresh();
         }}
       />
 

@@ -1,4 +1,4 @@
-use std::{net::Ipv4Addr, sync::OnceLock};
+use std::{net::IpAddr, sync::OnceLock};
 
 use anyhow::{ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
@@ -113,13 +113,13 @@ impl MDNSService {
 
                         let peer_info = PeerInfo {
                             instance_name: instance_name.clone(),
-                            ips: info.get_addresses_v4().into_iter().cloned().collect(),
+                            ips: info.get_addresses().into_iter().cloned().collect(),
                             port: info.get_port(),
                         };
 
                         if peer_info.ips.is_empty() {
                             log::debug!(
-                                "No known ipv4 addresses for instance {instance_name}, ignoring"
+                                "No known IP addresses for instance {instance_name}, ignoring"
                             );
                             continue;
                         }
@@ -271,6 +271,6 @@ fn extract_instance_name_from_fullname(fullname: &str) -> String {
 #[derive(Debug, Clone)]
 pub struct PeerInfo {
     pub instance_name: String,
-    pub ips: Vec<Ipv4Addr>,
+    pub ips: Vec<IpAddr>,
     pub port: u16,
 }

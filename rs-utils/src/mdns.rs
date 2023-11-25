@@ -117,6 +117,13 @@ impl MDNSService {
                             port: info.get_port(),
                         };
 
+                        if peer_info.ips.is_empty() {
+                            log::debug!(
+                                "No known ipv4 addresses for instance {instance_name}, ignoring"
+                            );
+                            continue;
+                        }
+
                         events
                             .send(MDNSEvent::InstanceDiscovered(peer_info))
                             .expect("must send MDNS event");

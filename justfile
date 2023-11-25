@@ -24,6 +24,9 @@ run:
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}
 
+mdns-tester:
+  cargo run --bin mdns-tester
+
 bump-version:
   ./bump-version.sh
 

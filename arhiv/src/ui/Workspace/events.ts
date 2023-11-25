@@ -17,6 +17,10 @@ function subscribeToBazaEvents(cb: (event: BazaEvent) => void): Callback {
   };
 }
 
+subscribeToBazaEvents((event) => {
+  console.debug('Baza Event:', event);
+});
+
 export function useBazaEvent(cb: (event: BazaEvent) => void) {
   const cbRef = useRef(cb);
   cbRef.current = cb;

@@ -38,7 +38,12 @@ export async function doRPC<Request extends APIRequest>(
 
     return parsedResponse;
   } catch (e) {
-    console.error(e);
+    const isAbortError = e instanceof Error && e.name === 'AbortError';
+
+    // we log the abort error in the signal event handler above
+    if (!isAbortError) {
+      console.error(e);
+    }
     throw e;
   } finally {
     signal?.removeEventListener('abort', onAbort);

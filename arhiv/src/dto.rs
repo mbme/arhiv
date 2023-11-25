@@ -63,7 +63,7 @@ pub enum APIRequest {
     },
     Commit {},
     Sync {},
-    GetIsModified {},
+    GetSaveState {},
     LockDocument {
         id: Id,
     },
@@ -126,8 +126,9 @@ pub enum APIResponse {
     Commit {},
     Sync {},
     #[serde(rename_all = "camelCase")]
-    GetIsModified {
-        is_modified: bool,
+    GetSaveState {
+        can_commit: bool,
+        can_sync: bool,
     },
     #[serde(rename_all = "camelCase")]
     LockDocument {

@@ -310,11 +310,16 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::Sync {}
         }
-        APIRequest::GetIsModified {} => {
-            let has_staged_documents = arhiv.baza.get_connection()?.has_staged_documents()?;
+        APIRequest::GetSaveState {} => {
+            let conn = arhiv.baza.get_connection()?;
 
-            APIResponse::GetIsModified {
-                is_modified: has_staged_documents,
+            let has_locks = !conn.list_document_locks()?.is_empty();
+            let has_staged_documents = conn.has_staged_documents()?;
+            let has_agents = arhiv.has_sync_agents();
+
+            APIResponse::GetSaveState {
+                can_commit: has_staged_documents && !has_locks,
+                can_sync: !has_staged_documents && !has_locks && has_agents,
             }
         }
         APIRequest::LockDocument { id } => {

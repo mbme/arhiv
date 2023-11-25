@@ -149,6 +149,10 @@ impl SyncManager {
         Ok(())
     }
 
+    pub fn count_agents(&self) -> usize {
+        self.agents.lock().expect("must lock").len()
+    }
+
     async fn collect_pings(&self, agents: Vec<SyncAgent>) -> Result<Vec<(SyncAgent, Ping)>> {
         let ping = self.baza.get_connection()?.get_ping()?;
 

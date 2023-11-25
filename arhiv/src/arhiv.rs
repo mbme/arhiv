@@ -137,6 +137,10 @@ impl Arhiv {
         self.sync_manager.sync().await
     }
 
+    pub fn has_sync_agents(&self) -> bool {
+        self.sync_manager.count_agents() > 0
+    }
+
     #[must_use]
     pub async fn is_local_server_alive(&self) -> bool {
         let port = self.config.server_port;

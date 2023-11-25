@@ -67,7 +67,7 @@ export type APIRequest =
       typeName: 'Sync';
     }
   | {
-      typeName: 'GetIsModified';
+      typeName: 'GetSaveState';
     }
   | {
       typeName: 'LockDocument';
@@ -144,8 +144,9 @@ export type APIResponse =
       typeName: 'Sync';
     }
   | {
-      typeName: 'GetIsModified';
-      isModified: boolean;
+      typeName: 'GetSaveState';
+      canCommit: boolean;
+      canSync: boolean;
     }
   | {
       typeName: 'LockDocument';
@@ -369,4 +370,11 @@ export function throwBadMarkupElement(value: MarkupElement) {
   throw new Error(`Unknown MarkupElement: ${value.typeName}`);
 }
 
-export type BazaEvent = { typeName: 'DocumentStaged' } | { typeName: 'DocumentsCommitted' };
+export type BazaEvent =
+  | { typeName: 'DocumentStaged' }
+  | { typeName: 'DocumentsCommitted' }
+  | { typeName: 'InstanceOutdated' }
+  | { typeName: 'PeerDiscovered' }
+  | { typeName: 'Synced' }
+  | { typeName: 'DocumentLocked'; id: DocumentId; reason: string }
+  | { typeName: 'DocumentUnlocked'; id: DocumentId };

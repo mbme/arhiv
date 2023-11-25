@@ -4,9 +4,14 @@ import { RPC } from 'utils/rpc';
 import { BazaEvent } from 'dto';
 import { Button } from 'components/Button';
 
-const useIsArhivModified = (): boolean => {
+type SaveState = {
+  canCommit: boolean;
+  canSync: boolean;
+};
+
+const useSaveState = (): SaveState => {
   const { result, triggerRefresh, requestTs } = useQuery((abortSignal) =>
-    RPC.GetIsModified({}, abortSignal),
+    RPC.GetSaveState({}, abortSignal),
   );
 
   useEffect(() => {
@@ -17,7 +22,9 @@ const useIsArhivModified = (): boolean => {
 
       switch (event.typeName) {
         case 'DocumentStaged':
-        case 'DocumentsCommitted': {
+        case 'DocumentsCommitted':
+        case 'DocumentLocked':
+        case 'DocumentUnlocked': {
           triggerRefresh();
         }
       }
@@ -43,7 +50,7 @@ const useIsArhivModified = (): boolean => {
     }
   });
 
-  return result?.isModified ?? false;
+  return result ?? { canCommit: false, canSync: false };
 };
 
 function CommitButton() {
@@ -68,7 +75,10 @@ function CommitButton() {
   );
 }
 
-function SyncButton() {
+interface SyncButtonProps {
+  disabled: boolean;
+}
+function SyncButton({ disabled }: SyncButtonProps) {
   const { error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.Sync({}, abortSignal),
     {
@@ -84,6 +94,7 @@ function SyncButton() {
       onClick={triggerRefresh}
       trailingIcon={error ? 'error-triangle' : undefined}
       title={error ? 'Sync failed' : undefined}
+      disabled={disabled}
     >
       Sync
     </Button>
@@ -91,11 +102,11 @@ function SyncButton() {
 }
 
 export function CommitOrSyncButton() {
-  const isArhivModified = useIsArhivModified();
+  const { canCommit, canSync } = useSaveState();
 
-  if (isArhivModified) {
+  if (canCommit) {
     return <CommitButton />;
   }
 
-  return <SyncButton />;
+  return <SyncButton disabled={!canSync} />;
 }

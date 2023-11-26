@@ -15,9 +15,15 @@ jobs:
 
     steps:
       # toolchain must be selected before the rust-cache init
-      - run: rustup toolchain install stable --profile minimal
+      - name: Use Rust
+        run: rustup toolchain install stable --profile minimal
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '21.x'
+
       - uses: Swatinem/rust-cache@v2
 
       - name: Install JS modules

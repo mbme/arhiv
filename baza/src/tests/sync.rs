@@ -337,8 +337,8 @@ async fn test_auto_sync_on_commit() -> Result<()> {
     sync_manager0.add_in_mem_agent(baza1.clone())?;
     let sync_manager0 = Arc::new(sync_manager0);
 
-    let auto_sync_timeout = Duration::from_secs(10);
-    sync_manager0.clone().start_auto_sync(auto_sync_timeout)?;
+    let auto_sync_delay = Duration::from_secs(10);
+    sync_manager0.clone().start_auto_sync(auto_sync_delay)?;
 
     sleep(Duration::from_secs(1)).await;
 
@@ -354,7 +354,7 @@ async fn test_auto_sync_on_commit() -> Result<()> {
     assert_eq!(snapshots_count, 1);
 
     sleep(Duration::from_secs(1)).await;
-    advance(auto_sync_timeout).await;
+    advance(auto_sync_delay).await;
     sleep(Duration::from_secs(1)).await;
 
     let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();

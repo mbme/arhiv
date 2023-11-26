@@ -289,7 +289,7 @@ impl SyncManager {
         Ok(updated)
     }
 
-    pub fn start_auto_sync(self: Arc<Self>, auto_sync_interval: Duration) -> Result<AutoSyncTask> {
+    pub fn start_auto_sync(self: Arc<Self>, auto_sync_delay: Duration) -> Result<AutoSyncTask> {
         let task = tokio::spawn(async move {
             let mut events = self.baza.get_events_channel();
 
@@ -302,7 +302,7 @@ impl SyncManager {
                     Ok(BazaEvent::InstanceOutdated {})
                     | Ok(BazaEvent::DocumentsCommitted {})
                     | Ok(BazaEvent::PeerDiscovered {}) => {
-                        scheduled_sync.schedule(auto_sync_interval, async move {
+                        scheduled_sync.schedule(auto_sync_delay, async move {
                             if let Err(err) = sync_manager.sync().await {
                                 log::warn!("Auto-sync failed: {err}");
                             }
@@ -323,8 +323,8 @@ impl SyncManager {
         });
 
         log::info!(
-            "Started auto-sync service, auto-sync interval is {} seconds",
-            auto_sync_interval.as_secs()
+            "Started auto-sync service, auto-sync delay is {} seconds",
+            auto_sync_delay.as_secs()
         );
 
         Ok(task)

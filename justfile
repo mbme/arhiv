@@ -1,18 +1,10 @@
 # vim: set ft=make :
 
-remove-arhiv:
-  cd arhiv-tools; cargo run --bin remove-arhiv
-
-init-arhiv:
-  cargo run --bin arhiv init test-arhiv
-
 arhiv *PARAMS:
   cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
   just arhiv server
-
-reset-arhiv: remove-arhiv init-arhiv
 
 run:
   cd arhiv; yarn run clean; tmux new-session -s arhiv \

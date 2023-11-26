@@ -59,11 +59,6 @@ impl Config {
     }
 
     #[must_use]
-    pub fn must_read() -> (Config, String) {
-        Config::read().expect("must be able to read arhiv config")
-    }
-
-    #[must_use]
     pub fn get_auto_sync_delay(&self) -> Duration {
         Duration::from_secs(self.auto_sync_delay_in_seconds)
     }

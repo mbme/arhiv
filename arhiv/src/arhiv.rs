@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 
 use baza::{
     sync::{build_rpc_router, AutoSyncTask, SyncManager},
@@ -73,26 +73,38 @@ impl Arhiv {
     }
 
     fn maybe_init_auto_commit_service(&mut self) -> Result<()> {
-        let delay = self.config.get_auto_commit_delay();
-
-        if !delay.is_zero() {
-            let service = AutoCommitService::new(self.baza.clone(), delay);
-            let task = service.start()?;
-
-            self.auto_commit_task = Some(task);
+        if !self.config.auto_commit {
+            return Ok(());
         }
+
+        let auto_commit_delay = self.config.get_auto_commit_delay();
+        ensure!(
+            !auto_commit_delay.is_zero(),
+            "Config auto-commit delay must not be zero"
+        );
+
+        let service = AutoCommitService::new(self.baza.clone(), auto_commit_delay);
+        let task = service.start()?;
+
+        self.auto_commit_task = Some(task);
 
         Ok(())
     }
 
     fn maybe_init_auto_sync_service(&mut self) -> Result<()> {
-        let delay = self.config.get_auto_sync_delay();
-
-        if !delay.is_zero() {
-            let task = self.sync_manager.clone().start_auto_sync(delay)?;
-
-            self.auto_sync_task = Some(task);
+        if !self.config.auto_sync {
+            return Ok(());
         }
+
+        let auto_sync_delay = self.config.get_auto_sync_delay();
+        ensure!(
+            !auto_sync_delay.is_zero(),
+            "Config auto-sync delay must not be zero"
+        );
+
+        let task = self.sync_manager.clone().start_auto_sync(auto_sync_delay)?;
+
+        self.auto_sync_task = Some(task);
 
         Ok(())
     }
@@ -116,18 +128,16 @@ impl Arhiv {
             None
         };
 
-        let auto_sync_delay = self.config.get_auto_sync_delay();
-        status.auto_sync_interval = if auto_sync_delay.is_zero() {
-            None
+        status.auto_sync_delay = if self.config.auto_sync {
+            Some(self.config.get_auto_sync_delay())
         } else {
-            Some(auto_sync_delay)
+            None
         };
 
-        let auto_commit_delay = self.config.get_auto_commit_delay();
-        status.auto_commit_interval = if auto_commit_delay.is_zero() {
-            None
+        status.auto_commit_delay = if self.config.auto_commit {
+            Some(self.config.get_auto_commit_delay())
         } else {
-            Some(auto_commit_delay)
+            None
         };
 
         Ok(status)

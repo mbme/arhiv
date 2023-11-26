@@ -57,7 +57,7 @@ impl AutoCommitService {
         });
 
         log::info!(
-            "Started auto-commit service, auto-commit timeout is {} seconds",
+            "Started auto-commit service, auto-commit delay is {} seconds",
             auto_commit_timeout.as_secs()
         );
 

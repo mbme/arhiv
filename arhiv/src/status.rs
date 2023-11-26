@@ -25,8 +25,8 @@ pub struct Status {
 
     pub local_server_is_running: Option<bool>,
     pub mdns_discovery_timeout: Option<Duration>,
-    pub auto_sync_interval: Option<Duration>,
-    pub auto_commit_interval: Option<Duration>,
+    pub auto_sync_delay: Option<Duration>,
+    pub auto_commit_delay: Option<Duration>,
 }
 
 impl Status {
@@ -59,8 +59,8 @@ impl Status {
 
             local_server_is_running: None,
             mdns_discovery_timeout: None,
-            auto_sync_interval: None,
-            auto_commit_interval: None,
+            auto_sync_delay: None,
+            auto_commit_delay: None,
         })
     }
 }
@@ -111,8 +111,8 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "      Auto-commit: {}",
-            if let Some(auto_commit_interval) = self.auto_commit_interval {
-                format!("{} seconds", auto_commit_interval.as_secs())
+            if let Some(auto_commit_interval) = self.auto_commit_delay {
+                format!("after {} seconds", auto_commit_interval.as_secs())
             } else {
                 "disabled".to_string()
             }
@@ -120,8 +120,8 @@ impl fmt::Display for Status {
         writeln!(
             f,
             "        Auto-sync: {}",
-            if let Some(auto_sync_interval) = self.auto_sync_interval {
-                format!("{} seconds", auto_sync_interval.as_secs())
+            if let Some(auto_sync_interval) = self.auto_sync_delay {
+                format!("after {} seconds", auto_sync_interval.as_secs())
             } else {
                 "disabled".to_string()
             }

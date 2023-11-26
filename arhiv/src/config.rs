@@ -10,9 +10,6 @@ use rs_utils::{file_exists, get_config_home, locate_dominating_file, log};
 pub struct Config {
     pub arhiv_root: String,
 
-    #[serde(default)]
-    pub backup_dir: String,
-
     #[serde(default = "default_server_port")]
     pub server_port: u16,
 

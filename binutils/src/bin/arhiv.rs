@@ -34,9 +34,9 @@ enum CLICommand {
     Sync,
     /// Backup Arhiv data
     Backup {
-        /// Directory to store backup. Will take precendence over config.backup_dir option.
+        /// Directory to store backup.
         #[clap(long, value_hint = ValueHint::DirPath)]
-        backup_dir: Option<String>,
+        backup_dir: String,
     },
     /// Open UI for a document
     #[clap(name = "ui-open")]
@@ -349,8 +349,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = Arhiv::must_open();
-
-            let backup_dir = backup_dir.unwrap_or_else(|| arhiv.get_config().backup_dir.clone());
 
             arhiv
                 .baza

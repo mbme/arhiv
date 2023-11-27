@@ -1,7 +1,5 @@
 {
   "serverPort": 23421,
-  "autoCommit": true,
   "autoCommitDelayInSeconds": 600,
-  "autoSync": true,
   "autoSyncDelayInSeconds": 20
 }

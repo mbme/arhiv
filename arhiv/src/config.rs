@@ -9,14 +9,8 @@ pub struct Config {
     #[serde(default = "default_server_port")]
     pub server_port: u16,
 
-    #[serde(default = "default_auto_commit")]
-    pub auto_commit: bool,
-
     #[serde(default = "default_auto_commit_delay_in_seconds")]
     pub auto_commit_delay_in_seconds: u64,
-
-    #[serde(default = "default_auto_sync")]
-    pub auto_sync: bool,
 
     #[serde(default = "default_auto_sync_delay_in_seconds")]
     pub auto_sync_delay_in_seconds: u64,
@@ -26,16 +20,8 @@ fn default_server_port() -> u16 {
     23421
 }
 
-fn default_auto_commit() -> bool {
-    true
-}
-
 fn default_auto_commit_delay_in_seconds() -> u64 {
     600
-}
-
-fn default_auto_sync() -> bool {
-    true
 }
 
 fn default_auto_sync_delay_in_seconds() -> u64 {

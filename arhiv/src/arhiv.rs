@@ -77,20 +77,16 @@ impl Arhiv {
             auto_sync_task: None,
         };
         if options.auto_commit {
-            arhiv.maybe_init_auto_commit_service()?;
+            arhiv.init_auto_commit_service()?;
         }
         if options.discover_peers {
-            arhiv.maybe_init_auto_sync_service()?;
+            arhiv.init_auto_sync_service()?;
         }
 
         Ok(arhiv)
     }
 
-    fn maybe_init_auto_commit_service(&mut self) -> Result<()> {
-        if !self.config.auto_commit {
-            return Ok(());
-        }
-
+    fn init_auto_commit_service(&mut self) -> Result<()> {
         let auto_commit_delay = self.config.get_auto_commit_delay();
         ensure!(
             !auto_commit_delay.is_zero(),
@@ -105,11 +101,7 @@ impl Arhiv {
         Ok(())
     }
 
-    fn maybe_init_auto_sync_service(&mut self) -> Result<()> {
-        if !self.config.auto_sync {
-            return Ok(());
-        }
-
+    fn init_auto_sync_service(&mut self) -> Result<()> {
         let auto_sync_delay = self.config.get_auto_sync_delay();
         ensure!(
             !auto_sync_delay.is_zero(),
@@ -142,13 +134,13 @@ impl Arhiv {
             None
         };
 
-        status.auto_sync_delay = if self.config.auto_sync {
+        status.auto_sync_delay = if self.auto_sync_task.is_some() {
             Some(self.config.get_auto_sync_delay())
         } else {
             None
         };
 
-        status.auto_commit_delay = if self.config.auto_commit {
+        status.auto_commit_delay = if self.auto_commit_task.is_some() {
             Some(self.config.get_auto_commit_delay())
         } else {
             None

@@ -96,14 +96,15 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     }
 }
 
-pub fn run_yarn(command: &str) {
-    let command_status = Command::new("yarn")
+pub fn run_npm(command: &str) {
+    let command_status = Command::new("npm")
+        .arg("run")
         .arg(command)
         .status()
-        .expect("failed to run yarn command");
+        .expect("failed to run npm command");
 
     if !command_status.success() {
-        println!("cargo:warning=yarn {command} exit status is {command_status}");
+        println!("cargo:warning=npm {command} exit status is {command_status}");
         process::exit(1);
     }
 }

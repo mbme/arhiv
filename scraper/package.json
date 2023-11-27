@@ -7,9 +7,10 @@
   "scripts": {
     "compiler-errors": "tsc --noEmit --project tsconfig.json",
     "build": "tsx build.ts",
-    "prod:build": "NODE_ENV=production yarn run build",
+    "prod:build": "NODE_ENV=production npm run build",
     "lint": "eslint --cache --ext .ts src/",
-    "fmt": "prettier --write src/"
+    "fmt": "prettier --write src/",
+    "test": ""
   },
   "author": "mbme",
   "license": "ISC",

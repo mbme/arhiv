@@ -13,9 +13,9 @@
     "build:css": "TAILWIND_MODE=build postcss ./src/ui/index.css --dir public/",
     "watch:js": "tsx build.ts --watch",
     "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/ui/index.css --dir public/",
-    "prod:build:js": "NODE_ENV=production yarn run build:js",
-    "prod:build:css": "NODE_ENV=production yarn run build:css",
-    "prod:build": "yarn run prod:build:js && yarn run prod:build:css",
+    "prod:build:js": "NODE_ENV=production npm run build:js",
+    "prod:build:css": "NODE_ENV=production npm run build:css",
+    "prod:build": "npm run prod:build:js && npm run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
     "test": "glob './src/ui/**/*.test.{ts,tsx}' --cmd='node --import tsx --no-warnings=ExperimentalWarning --test --test-reporter spec'",
     "fmt": "prettier --write src/"

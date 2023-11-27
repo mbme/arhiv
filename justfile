@@ -7,10 +7,10 @@ arhiv-server:
   just arhiv server
 
 run:
-  cd arhiv; yarn run clean; tmux new-session -s arhiv \
-     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; RUST_BACKTRACE=1 RUST_LOG=debug,axum=trace,mdns_sd=info,rs_utils=info,hyper=info cargo run -p binutils --bin arhiv server"' \; \
-     split-window -h 'yarn run watch:js' \; \
-     split-window 'yarn run watch:css' \; \
+  cd arhiv; npm run clean; tmux new-session -s arhiv \
+     'watchexec -r --debounce=4000 --exts rs -- "notify-send Restarting... -t 2000; DEBUG_ARHIV_ROOT=~/temp/arhiv  RUST_BACKTRACE=1 RUST_LOG=debug,axum=trace,mdns_sd=info,rs_utils=info,hyper=info cargo run -p binutils --bin arhiv server"' \; \
+     split-window -h 'npm run watch:js' \; \
+     split-window 'npm run watch:css' \; \
      select-pane -t 0
 
 scrape *PARAMS:
@@ -45,7 +45,7 @@ check-rs:
   cargo test
 
 check-ts:
-  yarn run check
+  npm run check
 
 check: check-rs check-ts
 

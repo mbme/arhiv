@@ -96,15 +96,18 @@ pub fn run_js_script(script: impl AsRef<str>, args: Vec<&str>) -> Result<String>
     }
 }
 
-pub fn run_npm(command: &str) {
+pub fn run_npm<'a>(commands: impl AsRef<[&'a str]>) {
+    let commands = commands.as_ref();
     let command_status = Command::new("npm")
-        .arg("run")
-        .arg(command)
+        .args(commands)
         .status()
         .expect("failed to run npm command");
 
     if !command_status.success() {
-        println!("cargo:warning=npm {command} exit status is {command_status}");
+        println!(
+            "cargo:warning=npm {:?} exit status is {command_status}",
+            commands
+        );
         process::exit(1);
     }
 }

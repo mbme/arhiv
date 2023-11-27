@@ -105,8 +105,8 @@ pub fn run_npm<'a>(commands: impl AsRef<[&'a str]>) {
 
     if !command_status.success() {
         println!(
-            "cargo:warning=npm {:?} exit status is {command_status}",
-            commands
+            "cargo:warning=npm {} exit status is {command_status}",
+            commands.join(" ")
         );
         process::exit(1);
     }

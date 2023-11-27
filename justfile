@@ -1,7 +1,7 @@
 # vim: set ft=make :
 
 arhiv *PARAMS:
-  cargo run --bin arhiv {{PARAMS}}
+  DEBUG_ARHIV_ROOT=~/temp/arhiv cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
   just arhiv server

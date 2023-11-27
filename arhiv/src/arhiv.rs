@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{env, sync::Arc, time::Duration};
 
 use anyhow::{ensure, Context, Result};
 
@@ -6,7 +6,10 @@ use baza::{
     sync::{build_rpc_router, AutoSyncTask, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
-use rs_utils::http_server::{build_health_router, check_server_health, HttpServer};
+use rs_utils::{
+    http_server::{build_health_router, check_server_health, HttpServer},
+    log,
+};
 
 use crate::{
     config::Config, data_migrations::get_data_migrations, definitions::get_standard_schema,
@@ -31,19 +34,30 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
+    pub fn find_root_dir() -> Result<String> {
+        if cfg!(feature = "production-mode") {
+            env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")
+        } else {
+            env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")
+        }
+    }
+
     #[must_use]
     pub fn must_open() -> Arhiv {
         Arhiv::open_with_options(ArhivOptions::default()).expect("must be able to open arhiv")
     }
 
     pub fn open_with_options(options: ArhivOptions) -> Result<Arhiv> {
-        let config = Config::read()?.0;
+        let root_dir = Arhiv::find_root_dir()?;
+        log::debug!("Arhiv root dir: {root_dir}");
+
+        let config = Config::read(&format!("{root_dir}/arhiv.json"))?;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
         let baza = Baza::open(BazaOptions {
             create: options.create,
-            root_dir: config.arhiv_root.clone(),
+            root_dir,
             schema,
             migrations: data_migrations,
         })?;

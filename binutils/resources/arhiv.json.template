@@ -1,5 +1,4 @@
 {
-  "arhivRoot": "",
   "serverPort": 23421,
   "autoCommit": true,
   "autoCommitDelayInSeconds": 600,

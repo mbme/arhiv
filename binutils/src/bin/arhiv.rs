@@ -171,8 +171,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 return Ok(());
             }
 
-            let (config, path) = Config::read()?;
-            println!("Arhiv config {path}:");
+            let root_dir = Arhiv::find_root_dir()?;
+            let config = Config::read(&root_dir)?;
+            println!("Arhiv config {root_dir}:");
             println!("{}", serde_json::to_string_pretty(&config)?);
         }
         CLICommand::Settings => {
@@ -329,7 +330,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
-            let port = Config::read()?.0.server_port;
+            let root_dir = Arhiv::find_root_dir()?;
+            let port = Config::read(&root_dir)?.server_port;
 
             process::Command::new(&browser)
                 .arg(get_document_url(&id.as_ref(), port))

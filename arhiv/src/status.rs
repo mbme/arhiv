@@ -1,4 +1,4 @@
-use std::{fmt, time::Duration};
+use std::fmt;
 
 use anyhow::Result;
 use serde::Serialize;
@@ -24,9 +24,6 @@ pub struct Status {
     pub root_dir: String,
 
     pub local_server_is_running: Option<bool>,
-    pub mdns_discovery_timeout: Option<Duration>,
-    pub auto_sync_delay: Option<Duration>,
-    pub auto_commit_delay: Option<Duration>,
 }
 
 impl Status {
@@ -58,9 +55,6 @@ impl Status {
             locks,
 
             local_server_is_running: None,
-            mdns_discovery_timeout: None,
-            auto_sync_delay: None,
-            auto_commit_delay: None,
         })
     }
 }
@@ -108,33 +102,8 @@ impl fmt::Display for Status {
                 default_date_time_format(self.last_sync_time)
             }
         )?;
-        writeln!(
-            f,
-            "      Auto-commit: {}",
-            if let Some(auto_commit_interval) = self.auto_commit_delay {
-                format!("after {} seconds", auto_commit_interval.as_secs())
-            } else {
-                "disabled".to_string()
-            }
-        )?;
-        writeln!(
-            f,
-            "        Auto-sync: {}",
-            if let Some(auto_sync_interval) = self.auto_sync_delay {
-                format!("after {} seconds", auto_sync_interval.as_secs())
-            } else {
-                "disabled".to_string()
-            }
-        )?;
-        writeln!(
-            f,
-            "   MDNS discovery: {}",
-            if let Some(mdns_discovery_timeout) = self.mdns_discovery_timeout {
-                format!("{} seconds", mdns_discovery_timeout.as_secs())
-            } else {
-                "disabled".to_string()
-            }
-        )?;
+
+        writeln!(f)?;
         writeln!(
             f,
             "     Local server: {}",

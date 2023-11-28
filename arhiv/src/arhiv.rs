@@ -128,24 +128,6 @@ impl Arhiv {
 
         status.local_server_is_running = Some(is_local_server_alive);
 
-        status.mdns_discovery_timeout = if self.sync_manager.is_mdns_client_started() {
-            Some(MDNS_PEER_DISCOVERY_DURATION)
-        } else {
-            None
-        };
-
-        status.auto_sync_delay = if self.auto_sync_task.is_some() {
-            Some(self.config.get_auto_sync_delay())
-        } else {
-            None
-        };
-
-        status.auto_commit_delay = if self.auto_commit_task.is_some() {
-            Some(self.config.get_auto_commit_delay())
-        } else {
-            None
-        };
-
         Ok(status)
     }
 

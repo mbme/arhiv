@@ -57,6 +57,9 @@ impl BazaConnection {
             "there must be no staged changes"
         );
 
+        let locks = self.list_document_locks()?;
+        ensure!(locks.is_empty(), "there are {} pending locks", locks.len());
+
         let schema = self.get_schema();
         let document_expert = DocumentExpert::new(&schema);
 

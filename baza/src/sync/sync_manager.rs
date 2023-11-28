@@ -4,16 +4,16 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use tokio::{
+    sync::broadcast::Sender,
+    task::JoinHandle,
+    time::{sleep_until, Instant},
+};
 
 use rs_utils::{
     log,
     mdns::{MDNSEvent, MDNSServer, MDNSService},
     now, ScheduledTask,
-};
-use tokio::{
-    sync::broadcast::Sender,
-    task::JoinHandle,
-    time::{sleep_until, Instant},
 };
 
 use crate::{entities::InstanceId, Baza, BazaEvent, DEBUG_MODE};

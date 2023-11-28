@@ -131,7 +131,7 @@ export function Workspace() {
                 onClick: () => open({ variant: 'status' }),
               },
 
-              {
+              process.env.NODE_ENV === 'development' && {
                 text: 'Components Demo',
                 onClick: () => {
                   window.location.search = 'DEMO';

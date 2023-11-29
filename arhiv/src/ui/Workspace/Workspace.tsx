@@ -16,7 +16,7 @@ import {
 } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
-import { DocumentCard } from './DocumentCard';
+import { DocumentCardContainer } from './DocumentCard';
 import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
@@ -168,7 +168,7 @@ function renderCard(card: Card) {
       );
 
     case 'document':
-      return <DocumentCard documentId={card.documentId} />;
+      return <DocumentCardContainer documentId={card.documentId} />;
 
     case 'status':
       return <StatusCard />;

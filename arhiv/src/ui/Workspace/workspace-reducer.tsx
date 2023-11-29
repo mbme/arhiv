@@ -43,6 +43,7 @@ export type Card = CardVariant & {
   id: CardId;
   previousCard?: CardVariant;
   restored?: boolean;
+  locked?: boolean;
 };
 
 export function throwBadCardVariant(value: never): never;
@@ -102,7 +103,6 @@ export type WorkspaceDispatch = (action: ActionType) => void;
 
 type WorkspaceState = {
   cards: Card[];
-  lockedCardIds: Set<CardId>;
 };
 function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceState {
   switch (action.type) {
@@ -205,27 +205,37 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
       return {
         ...state,
         // keep only locked cards
-        cards: state.cards.filter((card) => state.lockedCardIds.has(card.id)),
+        cards: state.cards.filter((card) => card.locked),
       };
     }
 
     case 'lock-card': {
-      const lockedCardIds = new Set(state.lockedCardIds);
-      lockedCardIds.add(action.id);
-
       return {
         ...state,
-        lockedCardIds,
+        cards: state.cards.map((card) => {
+          if (card.id === action.id) {
+            return {
+              ...card,
+              locked: true,
+            };
+          }
+          return card;
+        }),
       };
     }
 
     case 'unlock-card': {
-      const lockedCardIds = new Set(state.lockedCardIds);
-      lockedCardIds.delete(action.id);
-
       return {
         ...state,
-        lockedCardIds,
+        cards: state.cards.map((card) => {
+          if (card.id === action.id) {
+            return {
+              ...card,
+              locked: false,
+            };
+          }
+          return card;
+        }),
       };
     }
 
@@ -236,10 +246,16 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
 }
 
 function cardUpdateConfirmed(state: WorkspaceState, id: CardId) {
-  return (
-    !state.lockedCardIds.has(id) ||
-    window.confirm('The card may contain unsaved changes. Continue?')
-  );
+  const card = state.cards.find((item) => item.id === id);
+  if (!card) {
+    throw new Error(`Can't find card ${id}`);
+  }
+
+  if (!card.locked) {
+    return true;
+  }
+
+  return window.confirm('The card may contain unsaved changes. Continue?');
 }
 
 const SESSION_STORAGE_KEY = 'workspace-state';

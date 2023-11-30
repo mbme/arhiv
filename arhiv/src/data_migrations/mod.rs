@@ -2,6 +2,7 @@ mod v1;
 mod v2;
 mod v3;
 mod v4;
+mod v5;
 
 use baza::schema::DataMigrations;
 
@@ -9,6 +10,7 @@ use self::v1::DataSchema1;
 use self::v2::DataSchema2;
 use self::v3::DataSchema3;
 use self::v4::DataSchema4;
+use self::v5::DataSchema5;
 
 pub(crate) fn get_data_migrations() -> DataMigrations {
     vec![
@@ -16,5 +18,6 @@ pub(crate) fn get_data_migrations() -> DataMigrations {
         Box::new(DataSchema2),
         Box::new(DataSchema3),
         Box::new(DataSchema4),
+        Box::new(DataSchema5),
     ]
 }

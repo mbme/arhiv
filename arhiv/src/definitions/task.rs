@@ -4,15 +4,7 @@ pub const PROJECT_TYPE: &str = "project";
 
 pub const TASK_TYPE: &str = "task";
 
-pub const TASK_STATUS: &[&str] = &[
-    "Inbox",
-    "InProgress",
-    "Paused",
-    "Todo",
-    "Later",
-    "Done",
-    "Cancelled",
-];
+pub const TASK_STATUS: &[&str] = &["Todo", "InProgress", "Done", "Cancelled"];
 
 pub fn get_task_definitions() -> Vec<DataDescription> {
     vec![

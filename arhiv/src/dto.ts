@@ -174,6 +174,7 @@ export type ListDocumentsResult = {
   subtype: DocumentSubtype;
   title: string;
   updatedAt: string;
+  data: DocumentData;
 };
 
 export type DocumentData = JSONObj;

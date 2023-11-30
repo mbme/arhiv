@@ -455,6 +455,7 @@ fn documents_into_results(
                 document_type: item.class.document_type,
                 subtype: item.class.subtype,
                 updated_at: item.updated_at,
+                data: item.data,
             })
         })
         .collect::<Result<_>>()

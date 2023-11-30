@@ -145,6 +145,7 @@ pub struct ListDocumentsResult {
     pub subtype: String,
     pub title: String,
     pub updated_at: Timestamp,
+    pub data: DocumentData,
 }
 
 #[derive(Serialize, Default)]

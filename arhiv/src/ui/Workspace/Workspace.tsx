@@ -160,7 +160,7 @@ export function Workspace() {
 function renderCard(card: Card) {
   switch (card.variant) {
     case 'catalog':
-      return <CatalogCard query={card.query} page={card.page} documentType={card.documentType} />;
+      return <CatalogCard query={card.query} page={card.page} />;
 
     case 'new-document':
       return (

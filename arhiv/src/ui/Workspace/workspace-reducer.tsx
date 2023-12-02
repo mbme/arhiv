@@ -16,7 +16,6 @@ type CardVariant =
       variant: 'catalog';
       query?: string;
       page?: number;
-      documentType?: DocumentType;
     }
   | {
       variant: 'status';

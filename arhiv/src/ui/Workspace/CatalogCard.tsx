@@ -1,4 +1,4 @@
-import { DocumentId, DocumentType } from 'dto';
+import { DocumentId } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
 import { useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -6,9 +6,8 @@ import { CardContainer } from './CardContainer';
 type Props = {
   query?: string;
   page?: number;
-  documentType?: DocumentType;
 };
-export function CatalogCard({ query, page, documentType }: Props) {
+export function CatalogCard({ query, page }: Props) {
   const { card, actions } = useCardContext();
 
   const updateQuery = (query: string) => {
@@ -24,16 +23,9 @@ export function CatalogCard({ query, page, documentType }: Props) {
   };
 
   return (
-    <CardContainer
-      leftToolbar={
-        <span className="section-heading text-lg">
-          {documentType === undefined ? 'Catalog' : `Catalog: ${documentType || 'ERASED'}`}
-        </span>
-      }
-    >
+    <CardContainer leftToolbar={<span className="section-heading text-lg">Catalog</span>}>
       <Catalog
         autofocus={!card.restored}
-        documentTypes={documentType === undefined ? undefined : [documentType]}
         initialQuery={query}
         initialPage={page}
         onQueryChange={updateQuery}

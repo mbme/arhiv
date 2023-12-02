@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollRestoration } from 'utils/hooks';
@@ -36,13 +36,11 @@ export function CardContainer({
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
+  useScrollRestoration(el, `workspace-card-${card.id}`, () => {
     if (el && !restored) {
       el.scrollIntoView({ inline: 'center' });
     }
-  }, [el, restored]);
-
-  useScrollRestoration(el, `workspace-card-${card.id}`);
+  });
 
   const fallback = (
     <div className="card-container flex items-center justify-center grow">

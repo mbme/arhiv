@@ -244,7 +244,9 @@ export function useUnsavedChangesWarning(warn: boolean) {
   }, [warn]);
 }
 
-export function useScrollRestoration(el: HTMLElement | null, key: string) {
+export function useScrollRestoration(el: HTMLElement | null, key: string, onDone?: Callback) {
+  const onDoneRef = useLatestRef(onDone);
+
   useEffect(() => {
     if (!el) {
       return;
@@ -262,6 +264,8 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
 
     el.style.scrollBehavior = originalScrollBehavior;
 
+    onDoneRef.current?.();
+
     const onScroll = throttle(() => {
       setSessionValue(key, [el.scrollTop, el.scrollLeft]);
     }, 350);
@@ -274,7 +278,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
       el.removeEventListener('scroll', onScroll);
       removeSessionValue(key);
     };
-  }, [el, key]);
+  }, [el, key, onDoneRef]);
 }
 
 export function useForceRender(): Callback {

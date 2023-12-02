@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Catalog } from 'components/Catalog/Catalog';
@@ -19,6 +19,9 @@ type Props = {
 export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSelect }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  const [page, setPage] = useState(0);
+  const [query, setQuery] = useState('');
+
   return (
     <Dialog
       innerRef={dialogRef}
@@ -29,6 +32,10 @@ export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSele
         className="px-2"
         autofocus
         documentTypes={documentTypes}
+        query={query}
+        page={page}
+        onQueryChange={setQuery}
+        onPageChange={setPage}
         onDocumentSelected={(id, documentType, subtype) => {
           if (!dialogRef.current) {
             throw new Error('dialog element is missing');

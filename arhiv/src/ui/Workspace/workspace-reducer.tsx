@@ -1,17 +1,10 @@
-import {
-  useEffect,
-  useReducer,
-  createContext,
-  startTransition,
-  useRef,
-  useContext,
-  useMemo,
-} from 'react';
+import { useEffect, useReducer, createContext, startTransition, useContext, useMemo } from 'react';
 import { newId, getSessionValue, setSessionValue } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
+import { useShallowMemo } from 'utils/hooks';
 
-export type CardVariant =
+type CardVariant =
   | {
       variant: 'catalog';
       query?: string;
@@ -49,8 +42,6 @@ export function throwBadCardVariant(value: never): never;
 export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
-
-export type CatalogCardProps = Omit<Extract<CardVariant, { variant: 'catalog' }>, 'variant'>;
 
 function createCard(variant: CardVariant, previousCard?: CardVariant): Card {
   return {
@@ -392,16 +383,9 @@ type CardContextProviderProps = {
   children: JSXChildren;
 };
 export function CardContextProvider({ card, dispatch, children }: CardContextProviderProps) {
-  const cardContextRef = useRef({ card, dispatch });
+  const value = useShallowMemo({ card, dispatch });
 
-  useEffect(() => {
-    cardContextRef.current = {
-      card,
-      dispatch,
-    };
-  }, [card, dispatch]);
-
-  return <CardContext.Provider value={cardContextRef.current}>{children}</CardContext.Provider>;
+  return <CardContext.Provider value={value}>{children}</CardContext.Provider>;
 }
 
 export function useCardContext<C extends Card = Card>() {

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useToggle } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
-import { CatalogCardProps } from 'Workspace/workspace-reducer';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
@@ -13,9 +12,10 @@ type CatalogProps = {
   autofocus?: boolean;
   className?: string;
   documentTypes?: DocumentType[];
-  initialQuery?: string;
-  initialPage?: number;
-  onPropChange?: (props: Partial<CatalogCardProps>) => void;
+  query: string;
+  page: number;
+  onQueryChange: (query: string) => void;
+  onPageChange: (page: number) => void;
   onDocumentSelected: (
     id: DocumentId,
     documentType: DocumentType,
@@ -27,13 +27,12 @@ export function Catalog({
   autofocus = false,
   className,
   documentTypes: initialDocumentTypes,
-  initialQuery = '',
-  initialPage = 0,
-  onPropChange,
+  query,
+  page,
+  onQueryChange,
+  onPageChange,
   onDocumentSelected,
 }: CatalogProps) {
-  const [query, _setQuery] = useState(initialQuery);
-  const [page, _setPage] = useState(initialPage);
   const [showSettings, toggleSettings] = useToggle(false);
   const [documentTypes, setDocumentTypes] = useState(
     initialDocumentTypes ?? DEFAULT_DOCUMENT_TYPES,
@@ -45,16 +44,6 @@ export function Catalog({
     page,
     documentTypes,
   });
-
-  const setQuery = (query: string) => {
-    _setQuery(query);
-    onPropChange?.({ query });
-  };
-
-  const setPage = (page: number) => {
-    _setPage(page);
-    onPropChange?.({ page });
-  };
 
   const items = result.documents.map((item) => (
     <div
@@ -83,8 +72,8 @@ export function Catalog({
           className="flex-auto"
           initialValue={query}
           onSearch={(newQuery) => {
-            setQuery(newQuery);
-            setPage(0);
+            onQueryChange(newQuery);
+            onPageChange(0);
           }}
           busy={isUpdating}
           autofocus={autofocus}
@@ -108,7 +97,7 @@ export function Catalog({
         {items.length === 0 && <div className="text-center">No results 😿</div>}
       </div>
 
-      <Pagination page={page} hasMore={result.hasMore} onClick={(newPage) => setPage(newPage)} />
+      <Pagination page={page} hasMore={result.hasMore} onClick={onPageChange} />
     </div>
   );
 }

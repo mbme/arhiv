@@ -36,7 +36,7 @@ export function CardContainer({
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
-  useScrollRestoration(el, `workspace-card-${card.id}`, () => {
+  useScrollRestoration(el, `workspace-card-${card.id}-scroll`, () => {
     if (el && !restored) {
       el.scrollIntoView({ inline: 'center' });
     }

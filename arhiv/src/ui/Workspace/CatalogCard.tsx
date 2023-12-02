@@ -1,6 +1,6 @@
 import { DocumentId } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
-import { useCardContext } from './workspace-reducer';
+import { CatalogCardProps, useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
 type Props = {
@@ -10,12 +10,8 @@ type Props = {
 export function CatalogCard({ query, page }: Props) {
   const { card, actions } = useCardContext();
 
-  const updateQuery = (query: string) => {
-    actions.update(card.id, { query });
-  };
-
-  const updatePage = (page: number) => {
-    actions.update(card.id, { page });
+  const updateProps = (props: CatalogCardProps) => {
+    actions.update(card.id, props);
   };
 
   const openDocument = (documentId: DocumentId) => {
@@ -28,8 +24,7 @@ export function CatalogCard({ query, page }: Props) {
         autofocus={!card.restored}
         initialQuery={query}
         initialPage={page}
-        onQueryChange={updateQuery}
-        onPageChange={updatePage}
+        onPropChange={updateProps}
         onDocumentSelected={openDocument}
       />
     </CardContainer>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useToggle } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
+import { CatalogCardProps } from 'Workspace/workspace-reducer';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
@@ -14,8 +15,7 @@ type CatalogProps = {
   documentTypes?: DocumentType[];
   initialQuery?: string;
   initialPage?: number;
-  onQueryChange?: (query: string) => void;
-  onPageChange?: (page: number) => void;
+  onPropChange?: (props: Partial<CatalogCardProps>) => void;
   onDocumentSelected: (
     id: DocumentId,
     documentType: DocumentType,
@@ -29,8 +29,7 @@ export function Catalog({
   documentTypes: initialDocumentTypes,
   initialQuery = '',
   initialPage = 0,
-  onQueryChange,
-  onPageChange,
+  onPropChange,
   onDocumentSelected,
 }: CatalogProps) {
   const [query, _setQuery] = useState(initialQuery);
@@ -49,12 +48,12 @@ export function Catalog({
 
   const setQuery = (query: string) => {
     _setQuery(query);
-    onQueryChange?.(query);
+    onPropChange?.({ query });
   };
 
   const setPage = (page: number) => {
     _setPage(page);
-    onPageChange?.(page);
+    onPropChange?.({ page });
   };
 
   const items = result.documents.map((item) => (

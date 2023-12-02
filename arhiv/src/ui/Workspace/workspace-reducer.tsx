@@ -11,7 +11,7 @@ import { newId, getSessionValue, setSessionValue } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 
-type CardVariant =
+export type CardVariant =
   | {
       variant: 'catalog';
       query?: string;
@@ -49,6 +49,8 @@ export function throwBadCardVariant(value: never): never;
 export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
+
+export type CatalogCardProps = Omit<Extract<CardVariant, { variant: 'catalog' }>, 'variant'>;
 
 function createCard(variant: CardVariant, previousCard?: CardVariant): Card {
   return {

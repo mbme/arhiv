@@ -20,6 +20,12 @@ export function CatalogCard() {
         onQueryChange={(query) => actions.update(card.id, { query })}
         page={card.page ?? 0}
         onPageChange={(page) => actions.update(card.id, { page })}
+        showSettings={card.showSettings ?? false}
+        onToggleSettings={(showSettings) => actions.update(card.id, { showSettings })}
+        documentTypes={card.documentTypes ?? []}
+        onIncludedDocumentTypesChange={(documentTypes) =>
+          actions.update(card.id, { documentTypes })
+        }
         onDocumentSelected={openDocument}
       />
     </CardContainer>

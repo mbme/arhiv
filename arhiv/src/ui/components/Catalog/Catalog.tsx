@@ -1,21 +1,22 @@
-import { useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
-import { useToggle } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
 import { Pagination } from './Pagination';
-import { DEFAULT_DOCUMENT_TYPES, DocumentTypeSettings } from './DocumentTypeSettings';
+import { DocumentTypeSettings } from './DocumentTypeSettings';
 
 type CatalogProps = {
   autofocus?: boolean;
   className?: string;
-  documentTypes?: DocumentType[];
+  documentTypes: DocumentType[];
   query: string;
   page: number;
+  showSettings: boolean;
   onQueryChange: (query: string) => void;
   onPageChange: (page: number) => void;
+  onToggleSettings: (showSettings: boolean) => void;
+  onIncludedDocumentTypesChange: (documentTypes: DocumentType[]) => void;
   onDocumentSelected: (
     id: DocumentId,
     documentType: DocumentType,
@@ -26,18 +27,16 @@ type CatalogProps = {
 export function Catalog({
   autofocus = false,
   className,
-  documentTypes: initialDocumentTypes,
+  documentTypes,
   query,
   page,
+  showSettings,
   onQueryChange,
   onPageChange,
+  onToggleSettings,
+  onIncludedDocumentTypesChange,
   onDocumentSelected,
 }: CatalogProps) {
-  const [showSettings, toggleSettings] = useToggle(false);
-  const [documentTypes, setDocumentTypes] = useState(
-    initialDocumentTypes ?? DEFAULT_DOCUMENT_TYPES,
-  );
-
   const { value: result, isUpdating } = useSuspenseQuery({
     typeName: 'ListDocuments',
     query,
@@ -80,15 +79,15 @@ export function Catalog({
           debounceMs={400}
         />
 
-        <IconButton icon="cog" size="sm" onClick={toggleSettings} />
+        <IconButton icon="cog" size="sm" onClick={() => onToggleSettings(!showSettings)} />
       </div>
 
       {showSettings && (
         <DocumentTypeSettings
           className="mb-4 px-2 py-2 bg-zinc-50"
-          selectableTypes={initialDocumentTypes}
+          selectableTypes={documentTypes}
           selected={documentTypes}
-          onChange={setDocumentTypes}
+          onChange={onIncludedDocumentTypesChange}
         />
       )}
 

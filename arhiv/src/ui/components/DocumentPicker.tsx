@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Catalog } from 'components/Catalog/Catalog';
+import { noop } from 'utils';
 
 export type DocumentInfo = {
   id: DocumentId;
@@ -21,6 +22,7 @@ export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSele
 
   const [page, setPage] = useState(0);
   const [query, setQuery] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <Dialog
@@ -31,11 +33,14 @@ export function DocumentPicker({ documentTypes, onSelected, onCancel, hideOnSele
       <Catalog
         className="px-2"
         autofocus
-        documentTypes={documentTypes}
+        documentTypes={documentTypes ?? []}
         query={query}
         page={page}
+        showSettings={showSettings}
         onQueryChange={setQuery}
         onPageChange={setPage}
+        onToggleSettings={setShowSettings}
+        onIncludedDocumentTypesChange={noop}
         onDocumentSelected={(id, documentType, subtype) => {
           if (!dialogRef.current) {
             throw new Error('dialog element is missing');

@@ -13,20 +13,12 @@ const ALL_DOCUMENT_TYPES_EXCEPT_ERASED = ALL_DOCUMENT_TYPES.filter(
   (documentType) => !isErasedDocument(documentType),
 );
 
-export const DEFAULT_DOCUMENT_TYPES: DocumentType[] = [];
-
 type Props = {
   className?: string;
-  selectableTypes?: readonly DocumentType[];
   selected: readonly DocumentType[];
   onChange: (documentTypes: DocumentType[]) => void;
 };
-export function DocumentTypeSettings({
-  className,
-  selected,
-  onChange,
-  selectableTypes = ALL_DOCUMENT_TYPES,
-}: Props) {
+export function DocumentTypeSettings({ className, selected, onChange }: Props) {
   const onClick = (documentType: DocumentType) => {
     if (selected.includes(documentType)) {
       onChange(selected.filter((item) => item !== documentType));
@@ -53,10 +45,6 @@ export function DocumentTypeSettings({
               return null;
             }
 
-            if (!selectableTypes.includes(documentType)) {
-              return null;
-            }
-
             return (
               <Badge
                 key={documentType}
@@ -68,16 +56,14 @@ export function DocumentTypeSettings({
             );
           })}
 
-          {selectableTypes.includes(ERASED_DOCUMENT_TYPE) && (
-            <Badge
-              key={ERASED_DOCUMENT_TYPE}
-              size="sm"
-              className="line-through"
-              label="ERASED"
-              checked={selected.includes(ERASED_DOCUMENT_TYPE)}
-              onClick={() => onClick(ERASED_DOCUMENT_TYPE)}
-            />
-          )}
+          <Badge
+            key={ERASED_DOCUMENT_TYPE}
+            size="sm"
+            className="line-through"
+            label="ERASED"
+            checked={selected.includes(ERASED_DOCUMENT_TYPE)}
+            onClick={() => onClick(ERASED_DOCUMENT_TYPE)}
+          />
         </div>
       </section>
 
@@ -85,10 +71,6 @@ export function DocumentTypeSettings({
         <h1 className="section-heading ml-1 mb-2">Collections</h1>
         <div className="flex flex-wrap gap-x-2 gap-y-1">
           {getDocumentTypes(true).map((documentType) => {
-            if (!selectableTypes.includes(documentType)) {
-              return null;
-            }
-
             return (
               <Badge
                 key={documentType}

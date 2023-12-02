@@ -404,7 +404,7 @@ export function CardContextProvider({ card, dispatch, children }: CardContextPro
   return <CardContext.Provider value={cardContextRef.current}>{children}</CardContext.Provider>;
 }
 
-export function useCardContext() {
+export function useCardContext<C extends Card = Card>() {
   const context = useContext(CardContext);
 
   if (!context) {
@@ -414,7 +414,7 @@ export function useCardContext() {
   const { card, dispatch } = context;
 
   return {
-    card,
+    card: card as C,
     actions: useWorkspaceActions(dispatch),
   };
 }

@@ -1,14 +1,12 @@
 import { DocumentId } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
-import { CatalogCardProps, useCardContext } from './workspace-reducer';
+import { Card, CatalogCardProps, useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 
-type Props = {
-  query?: string;
-  page?: number;
-};
-export function CatalogCard({ query, page }: Props) {
-  const { card, actions } = useCardContext();
+type CatalogCard = Extract<Card, { variant: 'catalog' }>;
+
+export function CatalogCard() {
+  const { card, actions } = useCardContext<CatalogCard>();
 
   const updateProps = (props: CatalogCardProps) => {
     actions.update(card.id, props);
@@ -22,8 +20,8 @@ export function CatalogCard({ query, page }: Props) {
     <CardContainer leftToolbar={<span className="section-heading text-lg">Catalog</span>}>
       <Catalog
         autofocus={!card.restored}
-        initialQuery={query}
-        initialPage={page}
+        initialQuery={card.query}
+        initialPage={card.page}
         onPropChange={updateProps}
         onDocumentSelected={openDocument}
       />

@@ -19,8 +19,8 @@ export function CatalogCard({ query, page, documentType }: Props) {
     actions.update(card.id, { page });
   };
 
-  const updateDocumentId = (documentId: DocumentId) => {
-    actions.pushStack(card.id, { variant: 'document', documentId });
+  const openDocument = (documentId: DocumentId) => {
+    actions.pushDocument(card.id, documentId);
   };
 
   return (
@@ -38,7 +38,7 @@ export function CatalogCard({ query, page, documentType }: Props) {
         initialPage={page}
         onQueryChange={updateQuery}
         onPageChange={updatePage}
-        onDocumentSelected={updateDocumentId}
+        onDocumentSelected={openDocument}
       />
     </CardContainer>
   );

@@ -325,6 +325,16 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
           });
         });
       },
+      pushDocument: (cardId: CardId, documentId: DocumentId) => {
+        startTransition(() => {
+          dispatch({
+            type: 'replace',
+            id: cardId,
+            newCard: { variant: 'document', documentId },
+            stackPrevious: true,
+          });
+        });
+      },
       update: (id: CardId, props: UpdateActionProps) => {
         dispatch({
           type: 'update',

@@ -16,6 +16,7 @@ import { Icon, ICON_VARIANTS } from 'components/Icon';
 import { Link } from 'components/Link';
 import { QueryError } from 'components/QueryError';
 import { Ref } from 'components/Ref';
+import { Spoiler } from 'components/Spoiler';
 
 export function ComponentsDemo() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -189,6 +190,15 @@ export function ComponentsDemo() {
             >
               Hello world!
             </DialogExample>
+          </div>
+        </div>
+
+        <div>
+          <h1>Spoiler</h1>
+          <div className="examples">
+            <Spoiler heading={<div>Spoiler 1</div>}>
+              <h1>CONTENT</h1>
+            </Spoiler>
           </div>
         </div>
 

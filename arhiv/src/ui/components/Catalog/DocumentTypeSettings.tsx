@@ -9,9 +9,11 @@ const ALL_DOCUMENT_TYPES = [
   ...getDocumentTypes(true),
 ];
 
-export const DEFAULT_DOCUMENT_TYPES = ALL_DOCUMENT_TYPES.filter(
+const ALL_DOCUMENT_TYPES_EXCEPT_ERASED = ALL_DOCUMENT_TYPES.filter(
   (documentType) => !isErasedDocument(documentType),
 );
+
+export const DEFAULT_DOCUMENT_TYPES: DocumentType[] = [];
 
 type Props = {
   className?: string;
@@ -34,8 +36,9 @@ export function DocumentTypeSettings({
   };
 
   const selectAll = () => {
-    onChange([...DEFAULT_DOCUMENT_TYPES]);
+    onChange([...ALL_DOCUMENT_TYPES_EXCEPT_ERASED]);
   };
+
   const selectNone = () => {
     onChange([]);
   };

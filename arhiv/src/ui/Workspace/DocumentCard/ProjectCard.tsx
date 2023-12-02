@@ -15,9 +15,10 @@ type TaskGroupProps = {
   title: string;
   tasks: ListDocumentsResult<TaskData>[];
   defaultOpen?: boolean;
+  sessionKey: string;
 };
 
-function TaskGroup({ title, tasks, defaultOpen = false }: TaskGroupProps) {
+function TaskGroup({ title, tasks, defaultOpen = false, sessionKey }: TaskGroupProps) {
   const { card, actions } = useCardContext();
 
   return (
@@ -28,6 +29,7 @@ function TaskGroup({ title, tasks, defaultOpen = false }: TaskGroupProps) {
           {title} <span className="text-slate-300 ml-2">{tasks.length}</span>
         </h2>
       }
+      sessionKey={sessionKey}
       open={defaultOpen}
     >
       <ul className="list-disc list-inside marker:text-slate-400">
@@ -139,9 +141,22 @@ export function ProjectCard({ document, isUpdating, onForceEditor }: ProjectCard
         <Markup markup={projectData.description} />
       </div>
 
-      <TaskGroup title="In progress" tasks={tasksInProgress} defaultOpen />
-      <TaskGroup title="Todo" tasks={tasksTodo} />
-      <TaskGroup title="Completed" tasks={tasksCompleted} />
+      <TaskGroup
+        title="In progress"
+        tasks={tasksInProgress}
+        defaultOpen
+        sessionKey={`workspace-project-card-${document.id}-spoiler-in-progress`}
+      />
+      <TaskGroup
+        title="Todo"
+        tasks={tasksTodo}
+        sessionKey={`workspace-project-card-${document.id}-spoiler-todo`}
+      />
+      <TaskGroup
+        title="Completed"
+        tasks={tasksCompleted}
+        sessionKey={`workspace-project-card-${document.id}-spoiler-completed`}
+      />
     </CardContainer>
   );
 }

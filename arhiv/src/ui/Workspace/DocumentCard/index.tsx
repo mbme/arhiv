@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { DocumentId } from 'dto';
-import { isAttachment, isErasedDocument } from 'utils/schema';
+import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useBazaEvent } from 'Workspace/events';
@@ -7,12 +8,15 @@ import { ProgressLocker } from 'components/ProgressLocker';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AttachmentCard } from './AttachmentCard';
+import { ProjectCard } from './ProjectCard';
 
 type Props = {
   documentId: DocumentId;
 };
 
 export function DocumentCardContainer({ documentId }: Props) {
+  const [forceEditor, setForceEditor] = useState(false);
+
   const {
     value: document,
     isUpdating,
@@ -35,6 +39,12 @@ export function DocumentCardContainer({ documentId }: Props) {
     );
   }
 
+  if (forceEditor) {
+    return (
+      <DocumentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
+    );
+  }
+
   if (isErasedDocument(document.documentType)) {
     return <ErasedDocumentCard document={document} isUpdating={isUpdating} />;
   }
@@ -42,6 +52,16 @@ export function DocumentCardContainer({ documentId }: Props) {
   if (isAttachment(document.documentType)) {
     return (
       <AttachmentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
+    );
+  }
+
+  if (isProject(document.documentType)) {
+    return (
+      <ProjectCard
+        document={document}
+        isUpdating={isUpdating}
+        onForceEditor={() => setForceEditor(true)}
+      />
     );
   }
 

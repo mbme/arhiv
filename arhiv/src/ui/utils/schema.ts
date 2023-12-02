@@ -4,6 +4,7 @@ import {
   DocumentSubtype,
   DocumentType,
   ERASED_DOCUMENT_TYPE,
+  PROJECT_DOCUMENT_TYPE,
 } from 'dto';
 import { EmptyObj } from './index';
 
@@ -102,6 +103,10 @@ export function getDefaultSubtype(documentType: DocumentType): DocumentSubtype {
 
 export function isAttachment(documentType: DocumentType) {
   return documentType === ATTACHMENT_DOCUMENT_TYPE;
+}
+
+export function isProject(documentType: DocumentType) {
+  return documentType === PROJECT_DOCUMENT_TYPE;
 }
 
 export function isErasedDocument(documentType: DocumentType) {

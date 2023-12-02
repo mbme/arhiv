@@ -61,6 +61,14 @@
 }
 
 @layer components {
+  .heading-1 {
+    @apply text-xl font-bold tracking-tight text-slate-900;
+  }
+
+  .heading-2 {
+    @apply text-lg font-semibold tracking-tight text-slate-900;
+  }
+
   .section-heading {
     @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
   }

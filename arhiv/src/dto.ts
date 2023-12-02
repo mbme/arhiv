@@ -165,16 +165,17 @@ export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>
 
 export const ERASED_DOCUMENT_TYPE = '' as DocumentType;
 export const ATTACHMENT_DOCUMENT_TYPE = 'attachment' as DocumentType;
+export const PROJECT_DOCUMENT_TYPE = 'project' as DocumentType;
 export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
 export const EMPTY_DATA: DocumentData = {};
 
-export type ListDocumentsResult = {
+export type ListDocumentsResult<D = DocumentData> = {
   id: DocumentId;
   documentType: DocumentType;
   subtype: DocumentSubtype;
   title: string;
   updatedAt: string;
-  data: DocumentData;
+  data: D;
 };
 
 export type DocumentData = JSONObj;
@@ -379,3 +380,16 @@ export type BazaEvent =
   | { typeName: 'Synced' }
   | { typeName: 'DocumentLocked'; id: DocumentId; reason: string }
   | { typeName: 'DocumentUnlocked'; id: DocumentId };
+
+export type ProjectData = {
+  name: string;
+  description: string;
+  tasks: DocumentId[];
+};
+
+export type TaskStatus = 'InProgress' | 'Todo' | 'Done' | 'Cancelled';
+
+export type TaskData = {
+  title: string;
+  status: TaskStatus;
+};

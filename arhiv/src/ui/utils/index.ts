@@ -90,7 +90,7 @@ export function px(value: number) {
 }
 
 export function getDocumentUrl(documentId: string): string {
-  return `${window.location.origin}/?id=${documentId}`;
+  return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
 }
 
 export function getSessionValue<T extends JSONValue>(key: string, defaultValue: T): T {

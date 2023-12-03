@@ -37,7 +37,6 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
 
 export const createSuspenseCache = () => new Map<string, Suspender<unknown>>();
 
-// FIXME remove stale values from cache
 export const SuspenseCacheContext = createContext(createSuspenseCache());
 
 export function useSuspenseQuery<Request extends APIRequest>(

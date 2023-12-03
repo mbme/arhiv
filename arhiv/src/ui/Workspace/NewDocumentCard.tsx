@@ -50,6 +50,7 @@ export function NewDocumentCard() {
         documentType={documentType}
         subtype={card.subtype ?? DEFAULT_SUBTYPE}
         data={card.data ?? EMPTY_DATA}
+        collections={card.collections ?? []}
         onSubmit={async (data, subtype, collections) => {
           const submitResult = await RPC.CreateDocument({
             documentType,

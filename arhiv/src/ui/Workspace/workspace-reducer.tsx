@@ -25,6 +25,7 @@ type CardVariant =
       documentType: DocumentType;
       subtype?: DocumentSubtype;
       data?: DocumentData;
+      collections?: DocumentId[];
     }
   | {
       variant: 'document';

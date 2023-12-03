@@ -28,7 +28,7 @@ type DocumentEditorFormProps = {
   documentType: DocumentType;
   subtype: DocumentSubtype;
   data: DocumentData;
-  collections?: DocumentId[];
+  collections: DocumentId[];
   onSubmit: (
     data: JSONObj,
     subtype: DocumentSubtype,

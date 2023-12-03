@@ -1,7 +1,7 @@
 import { usePageVisibilityTracker, useQuery } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
+import { useBazaEvent } from 'baza-events';
 import { Button } from 'components/Button';
-import { useBazaEvent } from './events';
 
 type SaveState = {
   canCommit: boolean;

@@ -752,7 +752,9 @@ impl BazaConnection {
 
         self.put_document(document)?;
 
-        self.register_event(BazaEvent::DocumentStaged {})?;
+        self.register_event(BazaEvent::DocumentStaged {
+            id: document.id.clone(),
+        })?;
 
         log::info!("Saved document {}", document);
 

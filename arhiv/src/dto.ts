@@ -374,7 +374,7 @@ export function throwBadMarkupElement(value: MarkupElement) {
 }
 
 export type BazaEvent =
-  | { typeName: 'DocumentStaged' }
+  | { typeName: 'DocumentStaged'; id: DocumentId }
   | { typeName: 'DocumentsCommitted' }
   | { typeName: 'InstanceOutdated' }
   | { typeName: 'PeerDiscovered' }

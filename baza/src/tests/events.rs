@@ -23,7 +23,7 @@ async fn test_events() -> Result<()> {
 
         let event0 = event_future0.await?;
 
-        assert_eq!(event0, BazaEvent::DocumentStaged {});
+        assert_eq!(event0, BazaEvent::DocumentStaged { id: id.clone() });
     }
 
     {

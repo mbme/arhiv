@@ -7,7 +7,7 @@ use crate::entities::Id;
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(tag = "typeName")]
 pub enum BazaEvent {
-    DocumentStaged {},
+    DocumentStaged { id: Id },
     DocumentsCommitted {},
     InstanceOutdated {},
     PeerDiscovered {},
@@ -19,7 +19,7 @@ pub enum BazaEvent {
 impl Display for BazaEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BazaEvent::DocumentStaged {} => write!(f, "DocumentStaged"),
+            BazaEvent::DocumentStaged { id } => write!(f, "DocumentStaged {id}"),
             BazaEvent::DocumentsCommitted {} => write!(f, "DocumentsCommitted"),
             BazaEvent::InstanceOutdated {} => write!(f, "InstanceOutdated"),
             BazaEvent::PeerDiscovered {} => write!(f, "PeerDiscovered"),

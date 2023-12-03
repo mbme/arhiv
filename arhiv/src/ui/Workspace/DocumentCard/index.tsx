@@ -1,32 +1,29 @@
-import { useState } from 'react';
-import { DocumentId } from 'dto';
 import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { useBazaEvent } from 'baza-events';
 import { CardContainer } from 'Workspace/CardContainer';
+import { Card, useCardContext } from 'Workspace/workspace-reducer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AttachmentCard } from './AttachmentCard';
 import { ProjectCard } from './ProjectCard';
 
-type Props = {
-  documentId: DocumentId;
-};
+type DocumentCard = Extract<Card, { variant: 'document' }>;
 
-export function DocumentCardContainer({ documentId }: Props) {
-  const [forceEditor, setForceEditor] = useState(false);
+export function DocumentCardContainer() {
+  const { card, actions } = useCardContext<DocumentCard>();
 
   const {
     value: document,
     isUpdating,
     triggerRefresh,
-  } = useSuspenseQuery({ typeName: 'GetDocument', id: documentId });
+  } = useSuspenseQuery({ typeName: 'GetDocument', id: card.documentId });
 
   useBazaEvent((event) => {
     if (event.typeName === 'Synced') {
       triggerRefresh();
-    } else if (event.typeName === 'DocumentUnlocked' && event.id === documentId) {
+    } else if (event.typeName === 'DocumentUnlocked' && event.id === card.documentId) {
       triggerRefresh();
     }
   });
@@ -39,7 +36,7 @@ export function DocumentCardContainer({ documentId }: Props) {
     );
   }
 
-  if (forceEditor) {
+  if (card.forceEditor) {
     return (
       <DocumentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
     );
@@ -60,7 +57,13 @@ export function DocumentCardContainer({ documentId }: Props) {
       <ProjectCard
         document={document}
         isUpdating={isUpdating}
-        onForceEditor={() => setForceEditor(true)}
+        onForceEditor={() =>
+          actions.pushStack(card.id, {
+            variant: 'document',
+            documentId: card.documentId,
+            forceEditor: true,
+          })
+        }
       />
     );
   }

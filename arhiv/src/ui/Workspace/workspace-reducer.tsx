@@ -29,6 +29,7 @@ type CardVariant =
   | {
       variant: 'document';
       documentId: DocumentId;
+      forceEditor?: boolean;
     };
 
 export type CardId = string;

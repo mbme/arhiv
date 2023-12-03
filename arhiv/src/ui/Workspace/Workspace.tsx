@@ -168,7 +168,7 @@ function renderCard(card: Card) {
       );
 
     case 'document':
-      return <DocumentCardContainer documentId={card.documentId} />;
+      return <DocumentCardContainer />;
 
     case 'status':
       return <StatusCard />;

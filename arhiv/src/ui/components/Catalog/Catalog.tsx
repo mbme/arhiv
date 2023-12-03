@@ -85,7 +85,6 @@ export function Catalog({
       {showSettings && (
         <DocumentTypeSettings
           className="mb-4 px-2 py-2 bg-zinc-50"
-          selectableTypes={documentTypes}
           selected={documentTypes}
           onChange={onIncludedDocumentTypesChange}
         />

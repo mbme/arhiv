@@ -166,6 +166,7 @@ export type DocumentDTO = Omit<Extract<APIResponse, { typeName: 'GetDocument' }>
 export const ERASED_DOCUMENT_TYPE = '' as DocumentType;
 export const ATTACHMENT_DOCUMENT_TYPE = 'attachment' as DocumentType;
 export const PROJECT_DOCUMENT_TYPE = 'project' as DocumentType;
+export const TASK_DOCUMENT_TYPE = 'task' as DocumentType;
 export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
 export const EMPTY_DATA: DocumentData = {};
 

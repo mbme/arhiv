@@ -6,7 +6,7 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { Markup } from 'components/Markup';
-import { IconButton } from 'components/Button';
+import { Button, IconButton } from 'components/Button';
 import { Spoiler } from 'components/Spoiler';
 import { useCardContext } from 'Workspace/workspace-reducer';
 
@@ -72,9 +72,10 @@ type ProjectCardProps = {
   document: DocumentDTO;
   isUpdating: boolean;
   onForceEditor: Callback;
+  onAddTask: Callback;
 };
 
-export function ProjectCard({ document, isUpdating, onForceEditor }: ProjectCardProps) {
+export function ProjectCard({ document, isUpdating, onForceEditor, onAddTask }: ProjectCardProps) {
   const projectData = document.data as ProjectData;
 
   const ids = useShallowMemo(projectData.tasks);
@@ -95,51 +96,56 @@ export function ProjectCard({ document, isUpdating, onForceEditor }: ProjectCard
   return (
     <CardContainer
       leftToolbar={
-        <>
-          <DropdownMenu
-            icon="dots-horizontal"
-            align="bottom-left"
-            options={[
-              {
-                text: `ID ${document.id}`,
-                icon: 'clipboard',
-                onClick: () => {
-                  void copyTextToClipbard(document.id);
-                },
+        <DropdownMenu
+          icon="dots-horizontal"
+          align="bottom-left"
+          options={[
+            {
+              text: `ID ${document.id}`,
+              icon: 'clipboard',
+              onClick: () => {
+                void copyTextToClipbard(document.id);
               },
-              {
-                text: 'Copy link',
-                icon: 'clipboard',
-                onClick: () => {
-                  void copyTextToClipbard(getDocumentUrl(document.id));
-                },
+            },
+            {
+              text: 'Copy link',
+              icon: 'clipboard',
+              onClick: () => {
+                void copyTextToClipbard(getDocumentUrl(document.id));
               },
-            ]}
-          />
-
-          <span className="font-medium text-xs text-slate-400 uppercase tracking-wider">
-            PROJECT
-            {document.backrefs.length > 0 && `${document.backrefs.length} backrefs`}
-          </span>
-        </>
+            },
+          ]}
+        />
       }
       rightToolbar={
-        <IconButton
-          icon="pencil-square"
-          size="lg"
-          title="Open editor"
-          onClick={onForceEditor}
-          className="relative"
-        />
+        <>
+          <Button leadingIcon="add-document" variant="simple" size="sm" onClick={onAddTask}>
+            Add task
+          </Button>
+
+          <IconButton
+            icon="pencil-square"
+            size="lg"
+            title="Open editor"
+            onClick={onForceEditor}
+            className="relative"
+          />
+        </>
       }
     >
       {isUpdating && <ProgressLocker />}
 
-      <h1 className="heading-1 mb-8 mt-8 text-center text-sky-900 tracking-wider">
+      <h1 className="heading-1 text-2xl mt-4 text-center text-sky-900 tracking-wider">
         {projectData.name}
       </h1>
+      <div className="font-medium text-xs text-slate-400 uppercase tracking-wider text-center mb-8">
+        PROJECT
+      </div>
+
       <div className="mb-8">
         <Markup markup={projectData.description} />
+
+        {document.backrefs.length > 0 && <div>{document.backrefs.length} backrefs</div>}
       </div>
 
       <TaskGroup

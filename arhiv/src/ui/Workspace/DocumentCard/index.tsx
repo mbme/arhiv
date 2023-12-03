@@ -1,5 +1,6 @@
 import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
+import { TASK_DOCUMENT_TYPE } from 'dto';
 import { useBazaEvent } from 'baza-events';
 import { CardContainer } from 'Workspace/CardContainer';
 import { Card, useCardContext } from 'Workspace/workspace-reducer';
@@ -64,6 +65,13 @@ export function DocumentCardContainer() {
             forceEditor: true,
           })
         }
+        onAddTask={() => {
+          actions.open({
+            variant: 'new-document',
+            documentType: TASK_DOCUMENT_TYPE,
+            collections: [card.documentId],
+          });
+        }}
       />
     );
   }

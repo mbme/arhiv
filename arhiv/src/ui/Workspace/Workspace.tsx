@@ -163,9 +163,7 @@ function renderCard(card: Card) {
       return <CatalogCard />;
 
     case 'new-document':
-      return (
-        <NewDocumentCard documentType={card.documentType} subtype={card.subtype} data={card.data} />
-      );
+      return <NewDocumentCard />;
 
     case 'document':
       return <DocumentCardContainer />;

@@ -1,22 +1,17 @@
 import { useRef } from 'react';
-import { DEFAULT_SUBTYPE, DocumentData, DocumentSubtype, DocumentType, EMPTY_DATA } from 'dto';
+import { DEFAULT_SUBTYPE, EMPTY_DATA } from 'dto';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
-import { useCardContext } from './workspace-reducer';
+import { Card, useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
 import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 
-type NewDocumentCardProps = {
-  documentType: DocumentType;
-  subtype?: DocumentSubtype;
-  data?: DocumentData;
-};
-export function NewDocumentCard({
-  documentType,
-  subtype = DEFAULT_SUBTYPE,
-  data = EMPTY_DATA,
-}: NewDocumentCardProps) {
-  const { card, actions } = useCardContext();
+type NewDocumentCard = Extract<Card, { variant: 'new-document' }>;
+
+export function NewDocumentCard() {
+  const { card, actions } = useCardContext<NewDocumentCard>();
+
+  const documentType = card.documentType;
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -53,8 +48,8 @@ export function NewDocumentCard({
         autofocus
         formRef={formRef}
         documentType={documentType}
-        subtype={subtype}
-        data={data}
+        subtype={card.subtype ?? DEFAULT_SUBTYPE}
+        data={card.data ?? EMPTY_DATA}
         onSubmit={async (data, subtype, collections) => {
           const submitResult = await RPC.CreateDocument({
             documentType,

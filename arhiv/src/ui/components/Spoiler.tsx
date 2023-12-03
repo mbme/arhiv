@@ -42,7 +42,7 @@ export function Spoiler({
       <summary className="cursor-pointer flex flex-row items-center gap-3 bg-neutral-100 px-2 py-2 rounded-sm">
         <Icon
           variant="chevron-up"
-          className={cx('text-slate-500', isOpen ? '' : 'rotate-180 transform')}
+          className={cx('text-slate-500', isOpen ? 'rotate-180 transform' : '')}
         />
 
         {heading}

@@ -38,7 +38,10 @@ export function CardContainer({
 
   useScrollRestoration(el, `workspace-card-${card.id}-scroll`, () => {
     if (el && !restored) {
-      el.scrollIntoView({ inline: 'center' });
+      // requestAnimationFrame is needed for more reliable scrolling
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ inline: 'center' });
+      });
     }
   });
 

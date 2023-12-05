@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Context, Result};
 
 use crate::{
-    entities::{Document, DocumentClass, DocumentData, Refs},
+    entities::{Document, DocumentClass, DocumentData, Id, Refs},
     schema::{DataSchema, Field},
     search::MultiSearch,
+    BazaConnection,
 };
 
 pub struct DocumentExpert<'s> {
@@ -109,7 +110,7 @@ impl<'s> DocumentExpert<'s> {
             ))
     }
 
-    pub fn add_document_to_collection(
+    fn add_document_to_collection(
         &self,
         document: &Document,
         collection: &mut Document,
@@ -121,7 +122,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(())
     }
 
-    pub fn remove_document_from_collection(
+    fn remove_document_from_collection(
         &self,
         document: &Document,
         collection: &mut Document,
@@ -131,6 +132,37 @@ impl<'s> DocumentExpert<'s> {
         collection
             .data
             .remove_from_ref_list(field.name, &document.id)?;
+
+        Ok(())
+    }
+
+    pub fn set_document_collections(
+        &self,
+        document: &Document,
+        collections: &Vec<Id>,
+        tx: &mut BazaConnection,
+    ) -> Result<()> {
+        let mut old_collections = tx.list_document_collections(&document.id)?;
+
+        for old_collection in &mut old_collections {
+            if !collections.contains(&old_collection.id) {
+                self.remove_document_from_collection(document, old_collection)?;
+                tx.stage_document(old_collection, None)?;
+            }
+        }
+
+        let old_collections_ids = old_collections
+            .iter()
+            .map(|collection| &collection.id)
+            .collect::<Vec<_>>();
+
+        for collection_id in collections {
+            if !old_collections_ids.contains(&collection_id) {
+                let mut collection = tx.must_get_document(collection_id)?;
+                self.add_document_to_collection(document, &mut collection)?;
+                tx.stage_document(&mut collection, None)?;
+            }
+        }
 
         Ok(())
     }

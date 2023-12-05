@@ -156,32 +156,12 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 None
             };
 
-            let schema = arhiv.baza.get_schema();
-            let document_expert = DocumentExpert::new(schema);
-
-            let mut old_collections = tx.list_document_collections(&id)?;
-
-            for old_collection in &mut old_collections {
-                if !collections.contains(&old_collection.id) {
-                    document_expert.remove_document_from_collection(&document, old_collection)?;
-                    tx.stage_document(old_collection, None)?;
-                }
-            }
-
-            let old_collections_ids = old_collections
-                .iter()
-                .map(|collection| &collection.id)
-                .collect::<Vec<_>>();
-
-            for collection_id in collections {
-                if !old_collections_ids.contains(&&collection_id) {
-                    let mut collection = tx.must_get_document(&collection_id)?;
-                    document_expert.add_document_to_collection(&document, &mut collection)?;
-                    tx.stage_document(&mut collection, None)?;
-                }
-            }
-
             if errors.is_none() {
+                let schema = arhiv.baza.get_schema();
+                let document_expert = DocumentExpert::new(schema);
+
+                document_expert.set_document_collections(&document, &collections, &mut tx)?;
+
                 tx.commit()?;
             }
 
@@ -209,16 +189,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 (Some(document.id.clone()), None)
             };
 
-            let schema = arhiv.baza.get_schema();
-            let document_expert = DocumentExpert::new(schema);
-
-            for collection_id in collections {
-                let mut collection = tx.must_get_document(&collection_id)?;
-                document_expert.add_document_to_collection(&document, &mut collection)?;
-                tx.stage_document(&mut collection, None)?;
-            }
-
             if errors.is_none() {
+                let schema = arhiv.baza.get_schema();
+                let document_expert = DocumentExpert::new(schema);
+                document_expert.set_document_collections(&document, &collections, &mut tx)?;
+
                 tx.commit()?;
             }
 

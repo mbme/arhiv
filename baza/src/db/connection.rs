@@ -19,6 +19,7 @@ use crate::{
     path_manager::PathManager,
     schema::{get_latest_data_version, DataMigrations, DataSchema},
     validator::Validator,
+    DocumentExpert,
 };
 
 use super::{
@@ -1051,6 +1052,38 @@ impl BazaConnection {
         log::info!("Committed {} documents", staged_documents.len());
 
         Ok(staged_documents.len())
+    }
+
+    pub fn update_document_collections(
+        &mut self,
+        document: &Document,
+        collections: &Vec<Id>,
+    ) -> Result<()> {
+        let schema = self.get_schema();
+        let document_expert = DocumentExpert::new(&schema);
+        let mut old_collections = self.list_document_collections(&document.id)?;
+
+        for old_collection in &mut old_collections {
+            if !collections.contains(&old_collection.id) {
+                document_expert.remove_document_from_collection(document, old_collection)?;
+                self.stage_document(old_collection, None)?;
+            }
+        }
+
+        let old_collections_ids = old_collections
+            .iter()
+            .map(|collection| &collection.id)
+            .collect::<Vec<_>>();
+
+        for collection_id in collections {
+            if !old_collections_ids.contains(&collection_id) {
+                let mut collection = self.must_get_document(collection_id)?;
+                document_expert.add_document_to_collection(document, &mut collection)?;
+                self.stage_document(&mut collection, None)?;
+            }
+        }
+
+        Ok(())
     }
 }
 

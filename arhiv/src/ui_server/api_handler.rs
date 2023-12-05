@@ -157,10 +157,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             };
 
             if errors.is_none() {
-                let schema = arhiv.baza.get_schema();
-                let document_expert = DocumentExpert::new(schema);
-
-                document_expert.set_document_collections(&document, &collections, &mut tx)?;
+                tx.update_document_collections(&document, &collections)?;
 
                 tx.commit()?;
             }
@@ -190,9 +187,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             };
 
             if errors.is_none() {
-                let schema = arhiv.baza.get_schema();
-                let document_expert = DocumentExpert::new(schema);
-                document_expert.set_document_collections(&document, &collections, &mut tx)?;
+                tx.update_document_collections(&document, &collections)?;
 
                 tx.commit()?;
             }

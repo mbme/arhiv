@@ -188,9 +188,10 @@ impl MDNSService {
 
         loop {
             match mdns.shutdown() {
-                Ok(_) => {
+                Ok(res) => {
+                    let status = res.recv().expect("must read shutdown status");
                     self.started = false;
-                    log::debug!("Stopped MDNS service {}", self.service_name);
+                    log::debug!("Stopped MDNS service {}: {:?}", self.service_name, status);
                     return;
                 }
                 Err(MDNSError::Again) => {}

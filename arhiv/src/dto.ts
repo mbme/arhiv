@@ -103,6 +103,7 @@ export type APIResponse =
       data: DocumentData;
       backrefs: DocumentBackref[];
       collections: DocumentBackref[];
+      refs: DocumentId[];
     }
   | {
       typeName: 'ParseMarkup';

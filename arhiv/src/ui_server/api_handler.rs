@@ -110,6 +110,8 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let title = document_expert.get_title(&document.class, &document.data)?;
 
+            let refs = document_expert.extract_refs(&document.class, &document.data)?;
+
             APIResponse::GetDocument {
                 id: document.id,
                 title,
@@ -119,6 +121,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 data: document.data,
                 backrefs,
                 collections,
+                refs: refs.get_all_document_refs(),
             }
         }
         APIRequest::ParseMarkup { markup } => {

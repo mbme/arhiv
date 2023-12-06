@@ -26,6 +26,14 @@ export function DocumentCardContainer() {
       triggerRefresh();
     } else if (event.typeName === 'DocumentUnlocked' && event.id === card.documentId) {
       triggerRefresh();
+    } else if (event.typeName === 'DocumentStaged') {
+      if (
+        document.refs.includes(event.id) ||
+        document.backrefs.some((backref) => backref.id === event.id) ||
+        document.collections.some((backref) => backref.id === event.id)
+      ) {
+        triggerRefresh(true);
+      }
     }
   });
 

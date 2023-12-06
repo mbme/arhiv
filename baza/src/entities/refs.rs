@@ -14,6 +14,10 @@ pub struct Refs {
 
 impl Refs {
     pub const VERSION: u8 = 1;
+
+    pub fn get_all_document_refs(&self) -> Vec<Id> {
+        self.collection.union(&self.documents).cloned().collect()
+    }
 }
 
 impl fmt::Display for Refs {

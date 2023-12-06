@@ -96,6 +96,7 @@ pub enum APIResponse {
         subtype: String,
         updated_at: Timestamp,
         data: DocumentData,
+        refs: Vec<Id>,
         backrefs: Vec<DocumentBackref>,
         collections: Vec<DocumentBackref>,
     },

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
+import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
@@ -149,7 +150,7 @@ export function Workspace() {
 
         {cards.map((card) => (
           <CardContextProvider key={card.id} card={card} dispatch={dispatch}>
-            {renderCard(card)}
+            <SuspenseCacheProvider cacheId={card.id}>{renderCard(card)}</SuspenseCacheProvider>
           </CardContextProvider>
         ))}
       </div>

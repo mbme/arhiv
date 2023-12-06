@@ -37,7 +37,7 @@ export type CardId = string;
 
 export type Card = CardVariant & {
   id: CardId;
-  previousCard?: CardVariant;
+  previousCard?: Card;
   restored?: boolean;
   locked?: boolean;
 };
@@ -47,19 +47,10 @@ export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
 
-function createCard(variant: CardVariant, previousCard?: CardVariant): Card {
-  return {
-    id: newId(),
-    previousCard,
-    restored: false,
-    ...variant,
-  };
-}
-
 type ActionType =
   | {
       type: 'open';
-      newCard: CardVariant;
+      newCard: Card;
       skipDocumentIfAlreadyOpen?: boolean;
     }
   | {
@@ -69,7 +60,7 @@ type ActionType =
   | {
       type: 'replace';
       id: CardId;
-      newCard: CardVariant;
+      newCard: Card;
       stackPrevious?: boolean;
     }
   | {
@@ -117,7 +108,7 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
 
       return {
         ...state,
-        cards: [...state.cards, createCard(action.newCard)],
+        cards: [...state.cards, action.newCard],
       };
     }
 
@@ -145,7 +136,10 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
       const prevCard = action.stackPrevious ? state.cards[pos] : undefined;
 
       const newCards = [...state.cards];
-      newCards[pos] = createCard(action.newCard, prevCard);
+      newCards[pos] = {
+        previousCard: prevCard,
+        ...action.newCard,
+      };
 
       return {
         ...state,
@@ -169,7 +163,7 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
       }
 
       const newCards = [...state.cards];
-      newCards[pos] = createCard(card.previousCard);
+      newCards[pos] = card.previousCard;
 
       return {
         ...state,
@@ -299,7 +293,10 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
           dispatch({
             type: 'replace',
             id,
-            newCard,
+            newCard: {
+              ...newCard,
+              id: newId(),
+            },
           });
         });
       },
@@ -308,7 +305,10 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
           dispatch({
             type: 'replace',
             id,
-            newCard,
+            newCard: {
+              ...newCard,
+              id: newId(),
+            },
             stackPrevious: true,
           });
         });
@@ -326,7 +326,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
           dispatch({
             type: 'replace',
             id: cardId,
-            newCard: { variant: 'document', documentId },
+            newCard: { variant: 'document', documentId, id: newId() },
             stackPrevious: true,
           });
         });
@@ -342,7 +342,10 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
         startTransition(() => {
           dispatch({
             type: 'open',
-            newCard,
+            newCard: {
+              ...newCard,
+              id: newId(),
+            },
           });
         });
       },
@@ -351,7 +354,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
         startTransition(() => {
           dispatch({
             type: 'open',
-            newCard: { variant: 'document', documentId },
+            newCard: { variant: 'document', documentId, id: newId() },
             skipDocumentIfAlreadyOpen,
           });
         });

@@ -1,6 +1,12 @@
-import { createContext, useCallback, useContext, useDeferredValue, useRef } from 'react';
+import {
+  createContext,
+  startTransition,
+  useCallback,
+  useContext,
+  useDeferredValue,
+  useRef,
+} from 'react';
 import { APIRequest } from 'dto';
-import { Callback } from 'utils';
 import { useForceRender } from 'utils/hooks';
 import { API_ENDPOINT, doRPC, RPCResponse } from 'utils/rpc';
 
@@ -36,17 +42,21 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
 }
 
 export const createSuspenseCache = () => new Map<string, Suspender<unknown>>();
+type CardCache = ReturnType<typeof createSuspenseCache>;
 
-export const SuspenseCacheContext = createContext(createSuspenseCache());
+export const SuspenseCacheContext = createContext<CardCache | undefined>(undefined);
 
 export function useSuspenseQuery<Request extends APIRequest>(
   request: Request,
 ): {
   value: RPCResponse<Request>;
   isUpdating: boolean;
-  triggerRefresh: Callback;
+  triggerRefresh: (clearCache?: boolean) => void;
 } {
   const cache = useContext(SuspenseCacheContext);
+  if (!cache) {
+    throw new Error('Suspense cache context is empty');
+  }
 
   const queryName = JSON.stringify(request);
 
@@ -67,10 +77,20 @@ export function useSuspenseQuery<Request extends APIRequest>(
   const value = deferredSuspender.read() as RPCResponse<Request>;
 
   const forceRender = useForceRender();
-  const triggerRefresh = useCallback(() => {
-    cache.delete(queryName);
-    forceRender();
-  }, [cache, queryName, forceRender]);
+  const triggerRefresh = useCallback(
+    (clearCache = false) => {
+      if (clearCache) {
+        cache.clear();
+      } else {
+        cache.delete(queryName);
+      }
+
+      startTransition(() => {
+        forceRender();
+      });
+    },
+    [cache, queryName, forceRender],
+  );
 
   return {
     value,
@@ -81,6 +101,9 @@ export function useSuspenseQuery<Request extends APIRequest>(
 
 export function useSuspenseImage(url: string): HTMLImageElement {
   const cache = useContext(SuspenseCacheContext);
+  if (!cache) {
+    throw new Error('Suspense cache context is empty');
+  }
 
   // delete stale cache value if key changed
   const prevUrl = useRef(url);

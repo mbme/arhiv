@@ -80,7 +80,7 @@ export function CardContainer({
         </div>
       </div>
 
-      <SuspenseBoundary cacheId={card.id} fallback={fallback} renderError={renderError}>
+      <SuspenseBoundary fallback={fallback} renderError={renderError}>
         <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
           {children}
         </div>

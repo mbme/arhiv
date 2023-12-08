@@ -8,8 +8,8 @@
 @import './components/Form/Editor/index.css';
 @import './components/Form/Form.css';
 @import './components/Toaster.css';
-@import './components/ComponentsDemo.css';
 
+@import './ComponentsDemo.css';
 @import './Workspace/CardContainer.css';
 
 @layer utilities {

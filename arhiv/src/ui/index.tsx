@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { ComponentsDemo } from 'components/ComponentsDemo';
+import { ComponentsDemo } from 'ComponentsDemo';
 import { Workspace } from 'Workspace/Workspace';
 
 const rootEl = document.querySelector('main');

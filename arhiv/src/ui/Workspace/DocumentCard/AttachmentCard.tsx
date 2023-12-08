@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { DocumentDTO } from 'dto';
-import { Callback, copyTextToClipbard, getDocumentUrl } from 'utils';
+import { Callback } from 'utils';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
-import { DropdownMenu } from 'components/DropdownMenu';
+import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { getAttachmentPreview } from 'components/Ref';
@@ -19,9 +19,10 @@ type Props = {
   document: DocumentDTO;
   isUpdating: boolean;
   triggerRefresh: Callback;
+  options: DropdownOptions;
 };
 
-export function AttachmentCard({ document, isUpdating, triggerRefresh }: Props) {
+export function AttachmentCard({ document, isUpdating, triggerRefresh, options }: Props) {
   const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
 
   const [form, setForm] = useState<HTMLFormElement | null>(null);
@@ -40,20 +41,7 @@ export function AttachmentCard({ document, isUpdating, triggerRefresh }: Props) 
           icon="dots-horizontal"
           align="bottom-left"
           options={[
-            {
-              text: `ID ${document.id}`,
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(document.id);
-              },
-            },
-            {
-              text: 'Copy link',
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(getDocumentUrl(document.id));
-              },
-            },
+            ...options,
             {
               text: `Erase ${document.documentType}`,
               icon: 'erase-document',

@@ -1,10 +1,12 @@
 import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
+import { copyTextToClipbard, getDocumentUrl } from 'utils';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { useBazaEvent } from 'baza-events';
 import { CardContainer } from 'Workspace/CardContainer';
 import { Card, useCardContext } from 'Workspace/workspace-reducer';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { DropdownOptions } from 'components/DropdownMenu';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AttachmentCard } from './AttachmentCard';
@@ -45,9 +47,31 @@ export function DocumentCardContainer() {
     );
   }
 
+  const documentActions: DropdownOptions = [
+    {
+      text: `ID ${document.id}`,
+      icon: 'clipboard',
+      onClick: () => {
+        void copyTextToClipbard(document.id);
+      },
+    },
+    {
+      text: 'Copy link',
+      icon: 'clipboard',
+      onClick: () => {
+        void copyTextToClipbard(getDocumentUrl(document.id));
+      },
+    },
+  ];
+
   if (card.forceEditor) {
     return (
-      <DocumentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
+      <DocumentCard
+        document={document}
+        isUpdating={isUpdating}
+        triggerRefresh={triggerRefresh}
+        options={documentActions}
+      />
     );
   }
 
@@ -57,7 +81,12 @@ export function DocumentCardContainer() {
 
   if (isAttachment(document.documentType)) {
     return (
-      <AttachmentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
+      <AttachmentCard
+        document={document}
+        isUpdating={isUpdating}
+        triggerRefresh={triggerRefresh}
+        options={documentActions}
+      />
     );
   }
 
@@ -80,11 +109,17 @@ export function DocumentCardContainer() {
             collections: [card.documentId],
           });
         }}
+        options={documentActions}
       />
     );
   }
 
   return (
-    <DocumentCard document={document} isUpdating={isUpdating} triggerRefresh={triggerRefresh} />
+    <DocumentCard
+      document={document}
+      isUpdating={isUpdating}
+      triggerRefresh={triggerRefresh}
+      options={documentActions}
+    />
   );
 }

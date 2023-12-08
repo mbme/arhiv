@@ -1,10 +1,11 @@
-import { DocumentBackref, DocumentType, DocumentSubtype } from 'dto';
+import { DocumentBackref, DocumentType, DocumentSubtype, DocumentId } from 'dto';
 import { cx } from 'utils';
 import { formatDocumentType } from 'utils/schema';
 import { Ref } from 'components/Ref';
 import { DateTime } from 'components/DateTime';
 
 type DocumentViewerHeadProps = {
+  id?: DocumentId;
   documentType: DocumentType;
   subtype: DocumentSubtype;
   updatedAt: string;
@@ -12,6 +13,7 @@ type DocumentViewerHeadProps = {
 };
 
 export function DocumentViewerHead({
+  id,
   documentType,
   subtype,
   updatedAt,
@@ -38,6 +40,12 @@ export function DocumentViewerHead({
 
       <table id="document-head">
         <tbody>
+          {id && (
+            <tr>
+              <td className="section-heading">id:</td>
+              <td>{id}</td>
+            </tr>
+          )}
           <tr>
             <td className="section-heading">type:</td>
             <td>{formatDocumentType(documentType, subtype)}</td>

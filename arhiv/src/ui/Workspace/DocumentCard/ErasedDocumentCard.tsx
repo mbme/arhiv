@@ -1,6 +1,4 @@
 import { DocumentDTO } from 'dto';
-import { copyTextToClipbard, getDocumentUrl } from 'utils';
-import { DropdownMenu } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
@@ -12,33 +10,11 @@ type Props = {
 
 export function ErasedDocumentCard({ document, isUpdating }: Props) {
   return (
-    <CardContainer
-      leftToolbar={
-        <DropdownMenu
-          icon="dots-horizontal"
-          align="bottom-left"
-          options={[
-            {
-              text: `ID ${document.id}`,
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(document.id);
-              },
-            },
-            {
-              text: 'Copy link',
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(getDocumentUrl(document.id));
-              },
-            },
-          ]}
-        />
-      }
-    >
+    <CardContainer>
       {isUpdating && <ProgressLocker />}
 
       <DocumentViewerHead
+        id={document.id}
         documentType={document.documentType}
         subtype={document.subtype}
         updatedAt={document.updatedAt}

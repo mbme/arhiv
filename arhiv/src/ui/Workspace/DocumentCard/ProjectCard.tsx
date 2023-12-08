@@ -1,8 +1,8 @@
 import { DocumentDTO, ListDocumentsResult, ProjectData, TaskData, TaskStatus } from 'dto';
-import { Callback, copyTextToClipbard, cx, getDocumentUrl } from 'utils';
+import { Callback, cx } from 'utils';
 import { useShallowMemo } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
-import { DropdownMenu } from 'components/DropdownMenu';
+import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { Markup } from 'components/Markup';
@@ -73,9 +73,16 @@ type ProjectCardProps = {
   isUpdating: boolean;
   onForceEditor: Callback;
   onAddTask: Callback;
+  options: DropdownOptions;
 };
 
-export function ProjectCard({ document, isUpdating, onForceEditor, onAddTask }: ProjectCardProps) {
+export function ProjectCard({
+  document,
+  isUpdating,
+  onForceEditor,
+  onAddTask,
+  options,
+}: ProjectCardProps) {
   const projectData = document.data as ProjectData;
 
   const ids = useShallowMemo(projectData.tasks);
@@ -95,28 +102,7 @@ export function ProjectCard({ document, isUpdating, onForceEditor, onAddTask }: 
 
   return (
     <CardContainer
-      leftToolbar={
-        <DropdownMenu
-          icon="dots-horizontal"
-          align="bottom-left"
-          options={[
-            {
-              text: `ID ${document.id}`,
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(document.id);
-              },
-            },
-            {
-              text: 'Copy link',
-              icon: 'clipboard',
-              onClick: () => {
-                void copyTextToClipbard(getDocumentUrl(document.id));
-              },
-            },
-          ]}
-        />
-      }
+      leftToolbar={<DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />}
       rightToolbar={
         <>
           <Button leadingIcon="add-document" variant="simple" size="sm" onClick={onAddTask}>

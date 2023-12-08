@@ -11,9 +11,11 @@ type MenuItem = {
   onClick: Callback;
 };
 
+export type DropdownOptions = ReadonlyArray<MenuItem | false>;
+
 type DropdownMenuProps = {
   icon?: IconVariant;
-  options: ReadonlyArray<MenuItem | false>;
+  options: DropdownOptions;
   align: 'bottom-left' | 'bottom-right';
 };
 

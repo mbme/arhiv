@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
-import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
+import { SuspenseCacheProvider, useSuspenseCacheCleaner } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
@@ -30,6 +30,8 @@ export function Workspace() {
   useScrollRestoration(wrapperEl, 'workspace-scroll');
 
   const [{ cards }, dispatch] = useWorkspaceReducer();
+
+  useRemoveUnusedCardCaches(cards);
 
   const { openDocument, open, closeAll } = useWorkspaceActions(dispatch);
 
@@ -180,4 +182,18 @@ function renderCard(card: Card) {
   }
 
   throwBadCardVariant(card);
+}
+
+function collectCardIds(card: Card, collection: string[]) {
+  collection.push(card.id);
+
+  if (card.previousCard) {
+    collectCardIds(card.previousCard, collection);
+  }
+}
+
+function useRemoveUnusedCardCaches(cards: Card[]) {
+  const ids: string[] = [];
+  cards.forEach((card) => collectCardIds(card, ids));
+  useSuspenseCacheCleaner(ids);
 }

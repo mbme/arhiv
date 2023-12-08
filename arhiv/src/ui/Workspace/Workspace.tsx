@@ -23,6 +23,7 @@ import { ScrapeResultCard } from './ScrapeResultCard';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CommitOrSyncButton } from './CommitOrSyncButton';
+import { Toaster } from 'components/Toaster';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -154,6 +155,8 @@ export function Workspace() {
           </CardContextProvider>
         ))}
       </div>
+
+      <Toaster />
     </RefClickHandlerContext.Provider>
   );
 }

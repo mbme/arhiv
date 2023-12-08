@@ -7,6 +7,7 @@ import { CardContainer } from 'Workspace/CardContainer';
 import { Card, useCardContext } from 'Workspace/workspace-reducer';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DropdownOptions } from 'components/DropdownMenu';
+import { showToast } from 'components/Toaster';
 import { DocumentCard } from './DocumentCard';
 import { ErasedDocumentCard } from './ErasedDocumentCard';
 import { AttachmentCard } from './AttachmentCard';
@@ -52,14 +53,24 @@ export function DocumentCardContainer() {
       text: `ID ${document.id}`,
       icon: 'clipboard',
       onClick: () => {
-        void copyTextToClipbard(document.id);
+        void copyTextToClipbard(document.id).then(() => {
+          showToast({
+            level: 'info',
+            message: 'Copied document id to clipboard!',
+          });
+        });
       },
     },
     {
       text: 'Copy link',
       icon: 'clipboard',
       onClick: () => {
-        void copyTextToClipbard(getDocumentUrl(document.id));
+        void copyTextToClipbard(getDocumentUrl(document.id)).then(() => {
+          showToast({
+            level: 'info',
+            message: 'Copied document url to clipboard!',
+          });
+        });
       },
     },
   ];

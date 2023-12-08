@@ -17,6 +17,11 @@ import { Link } from 'components/Link';
 import { QueryError } from 'components/QueryError';
 import { Ref } from 'components/Ref';
 import { Spoiler } from 'components/Spoiler';
+import { Toaster, showToast } from 'components/Toaster';
+import { SuspenseBoundary } from 'components/SuspenseBoundary';
+import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
+
+const renderError = (error: unknown) => <QueryError error={error} />;
 
 export function ComponentsDemo() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -24,255 +29,285 @@ export function ComponentsDemo() {
   useScrollRestoration(wrapperEl, 'components-demo-scroll');
 
   return (
-    <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>
-      <IconButton
-        icon="x"
-        className="fixed top-2 right-4"
-        onClick={() => {
-          setQueryParam('DEMO', undefined);
-          window.location.reload();
-        }}
-      />
-      <div className="components-demo">
-        <div>
-          <h1>Form controls</h1>
-          <FormControlsDemo />
-        </div>
-        <div>
-          <h1>Button</h1>
-          <div className="examples">
-            <Button variant="primary">Primary</Button>
-            <Button variant="simple">Simple</Button>
-            <Button variant="text">Text</Button>
-          </div>
-
-          <h1>Button: with leading icon</h1>
-          <div className="examples">
-            <Button variant="primary" leadingIcon="web">
-              Primary
-            </Button>
-            <Button variant="simple" leadingIcon="web">
-              Simple
-            </Button>
-            <Button variant="text" leadingIcon="web">
-              Text
-            </Button>
-          </div>
-
-          <h1>Button: with trailing icon</h1>
-          <div className="examples">
-            <Button variant="primary" trailingIcon="web">
-              Primary
-            </Button>
-            <Button variant="simple" trailingIcon="web">
-              Simple
-            </Button>
-            <Button variant="text" trailingIcon="web">
-              Text
-            </Button>
-          </div>
-
-          <h1>Button: disabled</h1>
-          <div className="examples">
-            <Button variant="primary" disabled>
-              Primary
-            </Button>
-            <Button variant="simple" disabled>
-              Simple
-            </Button>
-            <Button variant="text" disabled>
-              Text
-            </Button>
-          </div>
-
-          <h1>Button: busy</h1>
-          <div className="examples">
-            <Button variant="primary" busy>
-              Primary
-            </Button>
-            <Button variant="simple" busy>
-              Simple
-            </Button>
-            <Button variant="text" busy>
-              Text
-            </Button>
-          </div>
-
-          <h1>Button: alarming</h1>
-          <div className="examples">
-            <Button variant="primary" alarming>
-              Primary
-            </Button>
-            <Button variant="simple" alarming>
-              Simple
-            </Button>
-            <Button variant="text" alarming>
-              Text
-            </Button>
-          </div>
-
-          <h1>Icon Button</h1>
-          <div className="examples">
-            <IconButton icon="web" className="text-red-700" />
-
-            <IconButton icon="web" size="lg" title="lg" />
-
-            <IconButton icon="web" size="xl" title="xl" />
-          </div>
-        </div>
-
-        <div>
-          <h1>Badges</h1>
-          <div className="examples">
-            <Badge label="unchecked" />
-            <Badge label="checked" checked />
-            <Badge label="unchecked sm" size="sm" />
-          </div>
-        </div>
-
-        <div>
-          <h1>QueryError</h1>
-          <div className="examples">
-            <QueryError error="Something is wrong :(" />
-          </div>
-        </div>
-
-        <div>
-          <h1>DateTime</h1>
-          <div className="examples">
-            <DateTime datetime={new Date().toISOString()} />
-          </div>
-
-          <h1>DateTime: relative</h1>
-          <div className="examples">
-            <DateTime datetime={new Date(Date.now() - 9999000).toISOString()} relative />
-          </div>
-        </div>
-
-        <div>
-          <h1>{ICON_VARIANTS.length} Icons</h1>
-          <div className="examples-grid mt-8">
-            {ICON_VARIANTS.map((variant) => (
-              <div key={variant} className="flex flex-col gap-4 items-center text-center">
-                <Icon variant={variant} className="w-12 h-12 block" />
-                <div className="font-mono text-xs">{variant}</div>
+    <SuspenseCacheProvider cacheId="components-demo">
+      <SuspenseBoundary renderError={renderError} fallback={<div />}>
+        <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>
+          <IconButton
+            icon="x"
+            className="fixed top-2 right-4"
+            onClick={() => {
+              setQueryParam('DEMO', undefined);
+              window.location.reload();
+            }}
+          />
+          <div className="components-demo">
+            <div>
+              <h1>Form controls</h1>
+              <FormControlsDemo />
+            </div>
+            <div>
+              <h1>Button</h1>
+              <div className="examples">
+                <Button variant="primary">Primary</Button>
+                <Button variant="simple">Simple</Button>
+                <Button variant="text">Text</Button>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div>
-          <h1>Dialog</h1>
-          <div className="examples">
-            <DialogExample
-              buttonText="Dialog with buttons"
-              buttons={
-                <>
-                  <Button variant="simple">Cancel</Button>
-                  <Button variant="primary">Test</Button>
-                </>
-              }
-            >
-              Hello world!
-            </DialogExample>
+              <h1>Button: with leading icon</h1>
+              <div className="examples">
+                <Button variant="primary" leadingIcon="web">
+                  Primary
+                </Button>
+                <Button variant="simple" leadingIcon="web">
+                  Simple
+                </Button>
+                <Button variant="text" leadingIcon="web">
+                  Text
+                </Button>
+              </div>
 
-            <DialogExample
-              buttonText="Alarming dialog"
-              alarming
-              buttons={
-                <>
-                  <Button variant="simple">Cancel</Button>
-                  <Button variant="primary" alarming>
-                    Test
-                  </Button>
-                </>
-              }
-            >
-              Hello world!
-            </DialogExample>
-          </div>
-        </div>
+              <h1>Button: with trailing icon</h1>
+              <div className="examples">
+                <Button variant="primary" trailingIcon="web">
+                  Primary
+                </Button>
+                <Button variant="simple" trailingIcon="web">
+                  Simple
+                </Button>
+                <Button variant="text" trailingIcon="web">
+                  Text
+                </Button>
+              </div>
 
-        <div>
-          <h1>Spoiler</h1>
-          <div className="examples">
-            <Spoiler heading={<div>Spoiler 1</div>}>
-              <h1>CONTENT</h1>
-            </Spoiler>
-          </div>
-        </div>
+              <h1>Button: disabled</h1>
+              <div className="examples">
+                <Button variant="primary" disabled>
+                  Primary
+                </Button>
+                <Button variant="simple" disabled>
+                  Simple
+                </Button>
+                <Button variant="text" disabled>
+                  Text
+                </Button>
+              </div>
 
-        <div>
-          <h1>Ref</h1>
+              <h1>Button: busy</h1>
+              <div className="examples">
+                <Button variant="primary" busy>
+                  Primary
+                </Button>
+                <Button variant="simple" busy>
+                  Simple
+                </Button>
+                <Button variant="text" busy>
+                  Text
+                </Button>
+              </div>
 
-          <div className="examples">
-            <Ref
-              documentId={'test123' as DocumentId}
-              documentType={'note' as DocumentType}
-              subtype={DEFAULT_SUBTYPE}
-              documentTitle="Very important note"
-            />
-          </div>
+              <h1>Button: alarming</h1>
+              <div className="examples">
+                <Button variant="primary" alarming>
+                  Primary
+                </Button>
+                <Button variant="simple" alarming>
+                  Simple
+                </Button>
+                <Button variant="text" alarming>
+                  Text
+                </Button>
+              </div>
 
-          <h1>Ref with subtype</h1>
+              <h1>Icon Button</h1>
+              <div className="examples">
+                <IconButton icon="web" className="text-red-700" />
 
-          <div className="examples">
-            <Ref
-              documentId={'test123' as DocumentId}
-              documentType={'note' as DocumentType}
-              subtype={'other' as DocumentSubtype}
-              documentTitle="Very important note"
-            />
-          </div>
+                <IconButton icon="web" size="lg" title="lg" />
 
-          <h1>Ref to erased document</h1>
+                <IconButton icon="web" size="xl" title="xl" />
+              </div>
+            </div>
 
-          <div className="examples">
-            <Ref
-              documentId={'test123' as DocumentId}
-              documentType={'' as DocumentType}
-              subtype={DEFAULT_SUBTYPE}
-              documentTitle="12342321"
-            />
-          </div>
+            <div>
+              <h1>Badges</h1>
+              <div className="examples">
+                <Badge label="unchecked" />
+                <Badge label="checked" checked />
+                <Badge label="unchecked sm" size="sm" />
+              </div>
+            </div>
 
-          <h1>Ref with custom description</h1>
+            <div>
+              <h1>QueryError</h1>
+              <div className="examples">
+                <QueryError error="Something is wrong :(" />
+              </div>
+            </div>
 
-          <div className="examples">
-            <Ref
-              documentId={'test123' as DocumentId}
-              documentType={'note' as DocumentType}
-              documentTitle=""
-              subtype={'other' as DocumentSubtype}
-              description="Note with custom description"
-            />
-          </div>
+            <div>
+              <h1>DateTime</h1>
+              <div className="examples">
+                <DateTime datetime={new Date().toISOString()} />
+              </div>
 
-          <h1>Long Ref line wrap</h1>
+              <h1>DateTime: relative</h1>
+              <div className="examples">
+                <DateTime datetime={new Date(Date.now() - 9999000).toISOString()} relative />
+              </div>
+            </div>
 
-          <div className="examples">
-            <div className="w-8/12 overflow-auto block border border-indigo-500">
-              Some looooooooooong text and{' '}
-              <Ref
-                documentId={'test123' as DocumentId}
-                documentType={'attachment' as DocumentType}
-                subtype={'image' as DocumentSubtype}
-                documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
-              />{' '}
-              and lorem ipsum
+            <div>
+              <h1>{ICON_VARIANTS.length} Icons</h1>
+              <div className="examples-grid mt-8">
+                {ICON_VARIANTS.map((variant) => (
+                  <div key={variant} className="flex flex-col gap-4 items-center text-center">
+                    <Icon variant={variant} className="w-12 h-12 block" />
+                    <div className="font-mono text-xs">{variant}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h1>Dialog</h1>
+              <div className="examples">
+                <DialogExample
+                  buttonText="Dialog with buttons"
+                  buttons={
+                    <>
+                      <Button variant="simple">Cancel</Button>
+                      <Button variant="primary">Test</Button>
+                    </>
+                  }
+                >
+                  Hello world!
+                </DialogExample>
+
+                <DialogExample
+                  buttonText="Alarming dialog"
+                  alarming
+                  buttons={
+                    <>
+                      <Button variant="simple">Cancel</Button>
+                      <Button variant="primary" alarming>
+                        Test
+                      </Button>
+                    </>
+                  }
+                >
+                  Hello world!
+                </DialogExample>
+              </div>
+            </div>
+
+            <div>
+              <h1>Spoiler</h1>
+              <div className="examples">
+                <Spoiler heading={<div>Spoiler 1</div>}>
+                  <h1>CONTENT</h1>
+                </Spoiler>
+              </div>
+            </div>
+
+            <div>
+              <h1>Toaster</h1>
+              <div className="examples">
+                <Toaster />
+
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    showToast({ level: 'info', message: 'Info message ' });
+                  }}
+                >
+                  Add info toast
+                </Button>
+
+                <Button
+                  variant="primary"
+                  alarming
+                  onClick={() => {
+                    showToast({ level: 'warn', message: 'Warn message ' });
+                  }}
+                >
+                  Add warn toast
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h1>Ref</h1>
+
+              <div className="examples">
+                <Ref
+                  documentId={'test123' as DocumentId}
+                  documentType={'note' as DocumentType}
+                  subtype={DEFAULT_SUBTYPE}
+                  documentTitle="Very important note"
+                />
+              </div>
+
+              <h1>Ref with subtype</h1>
+
+              <div className="examples">
+                <Ref
+                  documentId={'test123' as DocumentId}
+                  documentType={'note' as DocumentType}
+                  subtype={'other' as DocumentSubtype}
+                  documentTitle="Very important note"
+                />
+              </div>
+
+              <h1>Ref to erased document</h1>
+
+              <div className="examples">
+                <Ref
+                  documentId={'test123' as DocumentId}
+                  documentType={'' as DocumentType}
+                  subtype={DEFAULT_SUBTYPE}
+                  documentTitle="12342321"
+                />
+              </div>
+
+              <h1>Ref with custom description</h1>
+
+              <div className="examples">
+                <Ref
+                  documentId={'test123' as DocumentId}
+                  documentType={'note' as DocumentType}
+                  documentTitle=""
+                  subtype={'other' as DocumentSubtype}
+                  description="Note with custom description"
+                />
+              </div>
+
+              <h1>Long Ref line wrap</h1>
+
+              <div className="examples">
+                <div className="w-8/12 overflow-auto block border border-indigo-500">
+                  Some looooooooooong text and{' '}
+                  <Ref
+                    documentId={'test123' as DocumentId}
+                    documentType={'attachment' as DocumentType}
+                    subtype={'image' as DocumentSubtype}
+                    documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
+                  />{' '}
+                  and lorem ipsum
+                </div>
+              </div>
+
+              <h1>External link</h1>
+
+              <div className="examples">
+                <Link url="https://example.com" title="some title">
+                  Goto link
+                </Link>
+              </div>
             </div>
           </div>
-
-          <h1>External link</h1>
-
-          <div className="examples">
-            <Link url="https://example.com" title="some title">
-              Goto link
-            </Link>
-          </div>
         </div>
-      </div>
-    </div>
+      </SuspenseBoundary>
+    </SuspenseCacheProvider>
   );
 }
 

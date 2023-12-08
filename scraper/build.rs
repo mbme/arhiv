@@ -8,7 +8,6 @@ fn main() {
 
     // build app in release mode
     if env::var("PROFILE").unwrap() == "release" {
-        run_npm(["ci"]);
         run_npm(["run", "prod:build"]);
         return;
     }

@@ -12,6 +12,5 @@ fn main() {
     }
 
     // build web app in release mode
-    run_npm(["ci"]);
     run_npm(["run", "prod:build"]);
 }

@@ -377,7 +377,7 @@ type MarkupProps = {
   markup: string;
 };
 
-export const Markup = forwardRef<MarkupRef, MarkupProps>(({ markup }, innerRef) => {
+export const Markup = forwardRef<MarkupRef, MarkupProps>(function Markup({ markup }, innerRef) {
   const { value } = useSuspenseQuery({ typeName: 'ParseMarkup', markup });
 
   const markupRef = useRef<HTMLDivElement | null>(null);

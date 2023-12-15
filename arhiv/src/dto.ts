@@ -77,6 +77,12 @@ export type APIRequest =
       typeName: 'UnlockDocument';
       id: DocumentId;
       lockKey: DocumentLockKey;
+    }
+  | {
+      typeName: 'ReorderCollectionRefs';
+      collectionId: DocumentId;
+      id: DocumentId;
+      newPos: number;
     };
 
 export type APIResponse =
@@ -155,6 +161,9 @@ export type APIResponse =
     }
   | {
       typeName: 'UnlockDocument';
+    }
+  | {
+      typeName: 'ReorderCollectionRefs';
     };
 
 export type DocumentId = NominalType<string, 'DocumentId'>;

@@ -10,7 +10,7 @@ use crate::{
     db::BazaConnection,
     path_manager::PathManager,
     schema::{DataMigrations, DataSchema},
-    DB,
+    DocumentExpert, DB,
 };
 
 pub struct BazaOptions {
@@ -79,6 +79,11 @@ impl Baza {
     #[must_use]
     pub fn get_schema(&self) -> &DataSchema {
         &self.schema
+    }
+
+    #[must_use]
+    pub fn get_document_expert(&self) -> DocumentExpert {
+        DocumentExpert::new(self.get_schema())
     }
 
     #[must_use]

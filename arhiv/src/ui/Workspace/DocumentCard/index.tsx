@@ -27,7 +27,7 @@ export function DocumentCardContainer() {
   useBazaEvent((event) => {
     if (event.typeName === 'Synced') {
       triggerRefresh();
-    } else if (event.typeName === 'DocumentUnlocked' && event.id === card.documentId) {
+    } else if (event.typeName === 'DocumentStaged' && event.id === card.documentId) {
       triggerRefresh();
     } else if (event.typeName === 'DocumentStaged') {
       if (
@@ -76,14 +76,7 @@ export function DocumentCardContainer() {
   ];
 
   if (card.forceEditor) {
-    return (
-      <DocumentCard
-        document={document}
-        isUpdating={isUpdating}
-        triggerRefresh={triggerRefresh}
-        options={documentActions}
-      />
-    );
+    return <DocumentCard document={document} isUpdating={isUpdating} options={documentActions} />;
   }
 
   if (isErasedDocument(document.documentType)) {
@@ -91,14 +84,7 @@ export function DocumentCardContainer() {
   }
 
   if (isAttachment(document.documentType)) {
-    return (
-      <AttachmentCard
-        document={document}
-        isUpdating={isUpdating}
-        triggerRefresh={triggerRefresh}
-        options={documentActions}
-      />
-    );
+    return <AttachmentCard document={document} isUpdating={isUpdating} options={documentActions} />;
   }
 
   if (isProject(document.documentType)) {
@@ -125,12 +111,5 @@ export function DocumentCardContainer() {
     );
   }
 
-  return (
-    <DocumentCard
-      document={document}
-      isUpdating={isUpdating}
-      triggerRefresh={triggerRefresh}
-      options={documentActions}
-    />
-  );
+  return <DocumentCard document={document} isUpdating={isUpdating} options={documentActions} />;
 }

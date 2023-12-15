@@ -1,24 +1,103 @@
-import { DocumentDTO, ListDocumentsResult, ProjectData, TaskData, TaskStatus } from 'dto';
+import { useMemo } from 'react';
+import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  DocumentDTO,
+  DocumentId,
+  ListDocumentsResult,
+  ProjectData,
+  TaskData,
+  TaskStatus,
+} from 'dto';
 import { Callback, cx } from 'utils';
 import { useShallowMemo } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
-import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
+import { RPC } from 'utils/rpc';
 import { CardContainer } from 'Workspace/CardContainer';
+import { useCardContext } from 'Workspace/workspace-reducer';
+import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { Markup } from 'components/Markup';
 import { Button, IconButton } from 'components/Button';
 import { Spoiler } from 'components/Spoiler';
-import { useCardContext } from 'Workspace/workspace-reducer';
+import { Icon } from 'components/Icon';
+
+type TaskItemProps = {
+  id: DocumentId;
+  data: TaskData;
+};
+function TaskItem({ id, data }: TaskItemProps) {
+  const { card, actions } = useCardContext();
+
+  const {
+    attributes, //
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+    active,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      {...attributes}
+      style={style}
+      className={cx(
+        'pr-2 py-2 group hover:bg-amber-100 cursor-default font-medium touch-none relative flex flex-row items-center',
+        data.status === 'Cancelled' && 'line-through',
+      )}
+      onClick={() => {
+        actions.pushDocument(card.id, id);
+      }}
+    >
+      <div
+        ref={setActivatorNodeRef}
+        className={cx('invisible', {
+          'group-hover:visible': !active || isDragging,
+          'cursor-grab': !isDragging,
+          'cursor-grabbing': isDragging,
+        })}
+        {...listeners}
+      >
+        <Icon variant="drag" className="h-7 w-7" />
+      </div>
+
+      <div>{data.title}</div>
+
+      <IconButton
+        icon="link-arrow"
+        size="sm"
+        className="invisible group-hover:visible inline-block ml-3"
+        onClick={(e) => {
+          e.stopPropagation();
+          actions.openDocument(id, true);
+        }}
+      />
+    </li>
+  );
+}
 
 type TaskGroupProps = {
   title: string;
   tasks: ListDocumentsResult<TaskData>[];
   defaultOpen?: boolean;
   sessionKey: string;
+  onDrop: (taskId: DocumentId, targetId: DocumentId) => void;
 };
 
-function TaskGroup({ title, tasks, defaultOpen = false, sessionKey }: TaskGroupProps) {
-  const { card, actions } = useCardContext();
+function TaskGroup({ title, tasks, defaultOpen = false, sessionKey, onDrop }: TaskGroupProps) {
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const ids = tasks.map((task) => task.id);
 
   return (
     <Spoiler
@@ -31,32 +110,26 @@ function TaskGroup({ title, tasks, defaultOpen = false, sessionKey }: TaskGroupP
       sessionKey={sessionKey}
       open={defaultOpen}
     >
-      <ul className="list-disc list-inside marker:text-slate-400">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className={cx(
-              'p-2 group hover:bg-amber-100 cursor-pointer font-medium',
-              task.data.status === 'Cancelled' && 'line-through',
-            )}
-            onClick={() => {
-              actions.pushDocument(card.id, task.id);
-            }}
-          >
-            {task.data.title}
+      <DndContext
+        sensors={sensors}
+        onDragEnd={(e) => {
+          const activeId = e.active.id;
+          const overId = e.over?.id;
+          if (!overId || activeId === overId) {
+            return;
+          }
 
-            <IconButton
-              icon="link-arrow"
-              size="sm"
-              className="invisible group-hover:visible inline-block ml-3"
-              onClick={(e) => {
-                e.stopPropagation();
-                actions.openDocument(task.id, true);
-              }}
-            />
-          </li>
-        ))}
-      </ul>
+          onDrop(activeId as DocumentId, overId as DocumentId);
+        }}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <ul>
+            {tasks.map((task) => (
+              <TaskItem key={task.id} id={task.id} data={task.data} />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
     </Spoiler>
   );
 }
@@ -84,8 +157,10 @@ export function ProjectCard({
   options,
 }: ProjectCardProps) {
   const projectData = document.data as ProjectData;
+  const orderedTaskIds = projectData.tasks;
+  const sortedTaskIds = useMemo(() => orderedTaskIds.toSorted(), [orderedTaskIds]);
 
-  const ids = useShallowMemo(projectData.tasks);
+  const ids = useShallowMemo(sortedTaskIds);
 
   const {
     value: { documents },
@@ -94,11 +169,28 @@ export function ProjectCard({
     ids,
   });
 
-  const tasks = documents as ListDocumentsResult<TaskData>[];
+  const orderedTasks = (documents as ListDocumentsResult<TaskData>[]).toSorted(
+    (a, b) => orderedTaskIds.indexOf(a.id) - orderedTaskIds.indexOf(b.id),
+  );
 
-  const tasksInProgress = filterTasks(tasks, 'InProgress');
-  const tasksTodo = filterTasks(tasks, 'Todo');
-  const tasksCompleted = filterTasks(tasks, 'Done', 'Cancelled');
+  const tasksInProgress = filterTasks(orderedTasks, 'InProgress');
+  const tasksTodo = filterTasks(orderedTasks, 'Todo');
+  const tasksCompleted = filterTasks(orderedTasks, 'Done', 'Cancelled');
+
+  const onDrop = (taskId: DocumentId, targetId: DocumentId) => {
+    const newPos = orderedTaskIds.indexOf(targetId);
+    if (newPos === -1) {
+      throw new Error(`Can't find task ${targetId}`);
+    }
+
+    // TODO optimistic reorder
+
+    void RPC.ReorderCollectionRefs({
+      collectionId: document.id,
+      id: taskId,
+      newPos,
+    });
+  };
 
   return (
     <CardContainer
@@ -139,16 +231,19 @@ export function ProjectCard({
         tasks={tasksInProgress}
         defaultOpen
         sessionKey={`workspace-project-card-${document.id}-spoiler-in-progress`}
+        onDrop={onDrop}
       />
       <TaskGroup
         title="Todo"
         tasks={tasksTodo}
         sessionKey={`workspace-project-card-${document.id}-spoiler-todo`}
+        onDrop={onDrop}
       />
       <TaskGroup
         title="Completed"
         tasks={tasksCompleted}
         sessionKey={`workspace-project-card-${document.id}-spoiler-completed`}
+        onDrop={onDrop}
       />
     </CardContainer>
   );

@@ -72,6 +72,12 @@ pub enum APIRequest {
         id: Id,
         lock_key: DocumentLockKey,
     },
+    #[serde(rename_all = "camelCase")]
+    ReorderCollectionRefs {
+        collection_id: Id,
+        id: Id,
+        new_pos: usize,
+    },
 }
 
 #[derive(Serialize)]
@@ -136,6 +142,7 @@ pub enum APIResponse {
         lock_key: DocumentLockKey,
     },
     UnlockDocument {},
+    ReorderCollectionRefs {},
 }
 
 #[derive(Serialize)]

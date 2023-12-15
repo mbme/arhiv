@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { DocumentDTO } from 'dto';
-import { Callback } from 'utils';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
@@ -17,11 +16,10 @@ import { useLockDocument } from './useLockDocument';
 type Props = {
   document: DocumentDTO;
   isUpdating: boolean;
-  triggerRefresh: Callback;
   options: DropdownOptions;
 };
 
-export function DocumentCard({ document, isUpdating, triggerRefresh, options }: Props) {
+export function DocumentCard({ document, isUpdating, options }: Props) {
   const { actions } = useCardContext();
   const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
 
@@ -128,7 +126,6 @@ export function DocumentCard({ document, isUpdating, triggerRefresh, options }: 
           documentId={document.id}
           documentType={document.documentType}
           title={document.title}
-          onErase={triggerRefresh}
           onCancel={() => setShowErasetConfirmation(false)}
         />
       )}

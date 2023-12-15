@@ -134,4 +134,37 @@ impl<'s> DocumentExpert<'s> {
 
         Ok(())
     }
+
+    pub fn reorder_refs(
+        &self,
+        collection: &mut Document,
+        document: &Document,
+        new_pos: usize,
+    ) -> Result<()> {
+        let field = self.find_collection_field_for(&collection.class, &document.class)?;
+
+        let mut ref_list = collection.data.get_ref_list(field.name)?.context(format!(
+            "collection {} field {} is empty",
+            collection.id, field.name
+        ))?;
+
+        let pos = ref_list
+            .iter()
+            .position(|id| id == &document.id)
+            .context(format!(
+                "collection {} field {} doesn't include document {}",
+                collection.id, field.name, document.id
+            ))?;
+
+        if pos == new_pos {
+            return Ok(());
+        }
+
+        let ref_to_move = ref_list.remove(pos);
+        ref_list.insert(new_pos, ref_to_move);
+
+        collection.data.set(field.name, ref_list);
+
+        Ok(())
+    }
 }

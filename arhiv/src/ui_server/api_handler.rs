@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs, path::Path};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 
 use baza::{
     entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
@@ -310,6 +310,28 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             tx.commit()?;
 
             APIResponse::UnlockDocument {}
+        }
+        APIRequest::ReorderCollectionRefs {
+            collection_id,
+            id,
+            new_pos,
+        } => {
+            let mut tx = arhiv.baza.get_tx()?;
+            if tx.is_document_locked(&collection_id)? {
+                bail!("Collection {collection_id} is locked")
+            }
+
+            let mut collection = tx.must_get_document(&collection_id)?;
+            let document = tx.must_get_document(&id)?;
+            let document_expert = arhiv.baza.get_document_expert();
+
+            document_expert.reorder_refs(&mut collection, &document, new_pos)?;
+
+            tx.stage_document(&mut collection, None)?;
+
+            tx.commit()?;
+
+            APIResponse::ReorderCollectionRefs {}
         }
     };
 

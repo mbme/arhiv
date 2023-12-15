@@ -11,14 +11,12 @@ type EraseDocumentButtonProps = {
   documentId: DocumentId;
   documentType: DocumentType;
   title: string;
-  onErase: Callback;
   onCancel: Callback;
 };
 export function EraseDocumentConfirmationDialog({
   documentId,
   documentType,
   title,
-  onErase,
   onCancel,
 }: EraseDocumentButtonProps) {
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -27,7 +25,6 @@ export function EraseDocumentConfirmationDialog({
     async (abortSignal) => {
       await RPC.EraseDocument({ id: documentId }, abortSignal);
       hideModal();
-      onErase();
     },
     {
       refreshOnMount: false,

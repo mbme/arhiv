@@ -9,7 +9,8 @@ members = [
   "arhiv",
   "binutils",
   "rs-utils",
-  "scraper"
+  "scraper",
+  "arhiv-android"
 ]
 [workspace.lints.clippy]
 all = "deny"

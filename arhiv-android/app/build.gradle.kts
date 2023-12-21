@@ -6,6 +6,8 @@ plugins {
 android {
     namespace = "me.mbsoftware.arhiv"
     compileSdk = 34
+    // Pin NDK version to assure compatibility with cargo-ndk build
+    ndkVersion = "25.2.9519653"
 
     defaultConfig {
         applicationId = "me.mbsoftware.arhiv"

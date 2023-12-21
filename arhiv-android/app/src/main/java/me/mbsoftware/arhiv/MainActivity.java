@@ -1,11 +1,17 @@
 package me.mbsoftware.arhiv;
 
-
-
 import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
+
+class ArhivServer {
+  public static native void startServer();
+
+  static {
+    System.loadLibrary("arhiv_android");
+  }
+}
 
 public class MainActivity extends AppCompatActivity {
 
@@ -13,6 +19,8 @@ public class MainActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    ArhivServer.startServer();
 
     // Find the WebView by its unique ID
     WebView webView = findViewById(R.id.web);

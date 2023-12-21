@@ -53,3 +53,6 @@ clean-all:
   cargo clean
   cargo clean --release
   rm -rf .log
+
+build-android-libs:
+  cd arhiv-android; rm -rf ./app/src/main/jniLibs; ANDROID_NDK_HOME=~/Android/Sdk/ndk/ cargo ndk -t x86_64 -o ./app/src/main/jniLibs build # --release

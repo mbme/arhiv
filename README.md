@@ -22,3 +22,14 @@
 ## Special switches
 * `JSON_ARG_MOODE` env variable for some CLIs allows to receive arguments as a JSON object
 * `production-mode` feature flag
+
+# Android app
+
+## Prerequisites
+* `cargo-ndk` to build android JNI libraries
+* JDK - `jdk-openjdk`
+* Android SDK & NDK
+* Add rust targets for Android: 
+```
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
+```

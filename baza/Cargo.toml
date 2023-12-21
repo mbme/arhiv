@@ -28,7 +28,7 @@ aho-corasick = "1.1.0"
 
 pulldown-cmark = { version = "0.9", default-features = false, features = ["simd", "serde"] }
 
-rusqlite = { version = "0.30", features = ["chrono", "serde_json", "functions", "collation"] }
+rusqlite = { version = "0.30", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
 
 rs-utils = { path = "../rs-utils" }
 

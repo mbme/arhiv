@@ -1,0 +1,24 @@
+[package]
+name = "arhiv-android"
+version = "0.0.0"
+edition = "2021"
+authors = ["mbme"]
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+crate_type = ["cdylib"]
+
+[features]
+production-mode = ["arhiv/production-mode"]
+
+[dependencies]
+tokio.workspace = true
+openssl = { version = "*", features = ["vendored"] }
+
+arhiv = { path = "../arhiv" }
+
+[build-dependencies]
+rs-utils = { path = "../rs-utils" }

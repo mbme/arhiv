@@ -3,10 +3,10 @@ use std::env;
 use rs_utils::ensure_dir_exists;
 
 /// Pinned NDK version, needs to be installed on machine.
-const ANDROID_NDK_VERSION: &'static str = "25.2.9519653";
+const ANDROID_NDK_VERSION: &str = "25.2.9519653";
 
 /// x86-64 linux standard library path inside NDK directory.
-const LINUX_X86_64_LIB_DIR: &'static str =
+const LINUX_X86_64_LIB_DIR: &str =
     "/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/14.0.7/lib/linux/";
 
 fn main() {

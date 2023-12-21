@@ -18,7 +18,8 @@
     "prod:build": "npm run prod:build:js && npm run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
     "test": "glob './src/ui/**/*.test.{ts,tsx}' --cmd='node --import tsx --no-warnings=ExperimentalWarning --test --test-reporter spec'",
-    "fmt": "prettier --write src/"
+    "fmt": "prettier --write src/",
+    "check-fmt": "prettier --check src/"
   },
   "dependencies": {
     "@codemirror/commands": "^6.0.0",

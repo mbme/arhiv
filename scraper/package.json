@@ -10,6 +10,7 @@
     "prod:build": "NODE_ENV=production npm run build",
     "lint": "eslint --cache --ext .ts src/",
     "fmt": "prettier --write src/",
+    "check-fmt": "prettier --check src/",
     "test": ""
   },
   "author": "mbme",

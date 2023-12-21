@@ -1463,15 +1463,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num_threads"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "object"
 version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1901,7 +1892,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shellexpand",
- "time",
  "tokio",
  "tokio-util",
  "tracing",
@@ -2319,8 +2309,6 @@ checksum = "f657ba42c3f86e7680e53c8cd3af8abbe56b5491790b46e22e19c0d57463583e"
 dependencies = [
  "deranged",
  "itoa",
- "libc",
- "num_threads",
  "powerfmt",
  "serde",
  "time-core",
@@ -2501,6 +2489,7 @@ version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad0f048c97dbd9faa9b7df56362b8ebcaa52adb06b498c050d2f4e32f90a7a8b"
 dependencies = [
+ "chrono",
  "matchers",
  "nu-ansi-term",
  "once_cell",
@@ -2508,7 +2497,6 @@ dependencies = [
  "sharded-slab",
  "smallvec",
  "thread_local",
- "time",
  "tracing",
  "tracing-core",
  "tracing-log",

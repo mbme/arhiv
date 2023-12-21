@@ -25,13 +25,12 @@ serde_json.workspace = true
 hyper.workspace = true
 reqwest.workspace = true
 axum.workspace = true
-time.workspace = true
 
 rand.workspace = true
 lazy_static.workspace = true
+chrono.workspace = true
 blake3 = "1.2.0"
 base64 = "0.21.0"
-chrono = { version = "0.4.19", features = ["serde"] }
 mime_guess = "2"
 infer = "0.15"
 url = "2.2.2"

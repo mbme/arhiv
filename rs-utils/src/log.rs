@@ -1,7 +1,6 @@
 use log::LevelFilter;
-use time::{macros::format_description, util::local_offset, UtcOffset};
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan, time::OffsetTime},
+    fmt::{self, format::FmtSpan, time::ChronoLocal},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
@@ -9,13 +8,6 @@ use tracing_subscriber::{
 pub use log::{debug, error, info, trace, warn, Level};
 
 fn setup_logger_with_level(log_level: LevelFilter) {
-    unsafe {
-        // otherwise local offset cannot be determined in multithreaded environment (i.e. inside tokio)
-        local_offset::set_soundness(local_offset::Soundness::Unsound);
-    }
-    let offset = UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC);
-    let timer = OffsetTime::new(offset, format_description!("[hour]:[minute]:[second]"));
-
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -24,7 +16,7 @@ fn setup_logger_with_level(log_level: LevelFilter) {
         .with(
             fmt::Layer::new()
                 .compact()
-                .with_timer(timer)
+                .with_timer(ChronoLocal::new("[%Y-%m-%d][%H:%M:%S]".to_string()))
                 .with_span_events(FmtSpan::CLOSE),
         )
         .init();

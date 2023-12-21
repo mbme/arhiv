@@ -19,6 +19,7 @@ tokio.workspace = true
 openssl = { version = "*", features = ["vendored"] }
 
 arhiv = { path = "../arhiv" }
+rs-utils = { path = "../rs-utils" }
 
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }

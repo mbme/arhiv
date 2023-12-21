@@ -7,6 +7,18 @@ use tracing_subscriber::{
 
 pub use log::{debug, error, info, trace, warn, Level};
 
+#[cfg(target_os = "android")]
+pub fn setup_android_logger(package: &str) {
+    tracing_subscriber::registry()
+        .with(tracing_android::layer(package).expect("failed to build android tracing subscriber"))
+        .init();
+}
+
+#[cfg(not(target_os = "android"))]
+pub fn setup_android_logger(_package: &str) {
+    unreachable!()
+}
+
 fn setup_logger_with_level(log_level: LevelFilter) {
     tracing_subscriber::registry()
         .with(

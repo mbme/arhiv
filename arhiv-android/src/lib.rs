@@ -1,18 +1,21 @@
 // use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivOptions};
+use rs_utils::log;
 
 #[no_mangle]
 pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer() {
-    eprintln!("HELLO WORLD!");
+    log::setup_android_logger("me.mbsoftware.arhiv");
+
+    log::debug!("HELLO WORLD!");
     let arhiv = Arhiv::open_with_options(ArhivOptions {
         auto_commit: true,
         discover_peers: true,
         ..Default::default()
     });
 
-    if arhiv.is_err() {
-        eprintln!("ERR");
+    if let Err(err) = arhiv {
+        log::error!("ERR: {err}");
     }
 
     // let rt = Runtime::new().expect("failed to create tokio runtime");

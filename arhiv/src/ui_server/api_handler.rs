@@ -13,7 +13,6 @@ use rs_utils::{
     decode_base64, ensure_dir_exists, get_home_dir, get_symlink_target_path, is_readable,
     path_to_string, TempFile,
 };
-use scraper::ScraperOptions;
 
 use crate::{
     dto::{
@@ -250,7 +249,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::UploadFile { id: attachment.id }
         }
+        #[cfg(feature = "scraper")]
         APIRequest::Scrape { url } => {
+            use scraper::ScraperOptions;
             let documents = arhiv
                 .scrape(
                     url,

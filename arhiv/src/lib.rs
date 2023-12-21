@@ -4,6 +4,7 @@ mod data_migrations;
 pub mod definitions;
 mod dto;
 mod import;
+#[cfg(feature = "scraper")]
 pub mod scraper;
 mod status;
 mod ui_server;

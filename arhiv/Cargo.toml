@@ -17,7 +17,7 @@ production-mode = ["baza/production-mode"]
 [dependencies]
 baza = { path = "../baza" }
 rs-utils = { path = "../rs-utils" }
-scraper = { path = "../scraper" }
+scraper = { path = "../scraper", optional = true }
 
 anyhow.workspace = true
 tracing.workspace = true

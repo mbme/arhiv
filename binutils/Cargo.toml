@@ -25,4 +25,4 @@ tokio.workspace = true
 baza = { path = "../baza" }
 rs-utils = { path = "../rs-utils" }
 scraper = { path = "../scraper" }
-arhiv = { path = "../arhiv" }
+arhiv = { path = "../arhiv", features = ["scraper"] }

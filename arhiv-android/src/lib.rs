@@ -30,7 +30,7 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
         .into();
     log::debug!("Files dir: {files_dir}");
 
-    let arhiv = Arhiv::open_with_options(
+    let arhiv = Arhiv::open(
         get_root_dir(&files_dir),
         ArhivOptions {
             auto_commit: true,

@@ -160,14 +160,14 @@ fn find_root_dir() -> Result<String> {
 fn must_open_arhiv() -> Arhiv {
     let root_dir = find_root_dir().expect("must find root dir");
 
-    Arhiv::open_with_options(root_dir, ArhivOptions::default()).expect("must be able to open arhiv")
+    Arhiv::open(root_dir, ArhivOptions::default()).expect("must be able to open arhiv")
 }
 
 async fn handle_command(command: CLICommand) -> Result<()> {
     match command {
         CLICommand::Init => {
             let root_dir = find_root_dir()?;
-            Arhiv::open_with_options(
+            Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     create: true,
@@ -250,7 +250,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Sync => {
             let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open_with_options(
+            let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     auto_commit: true,
@@ -286,7 +286,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             );
 
             let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open_with_options(
+            let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     auto_commit: true,
@@ -307,7 +307,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             mobile,
         } => {
             let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open_with_options(
+            let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     auto_commit: true,
@@ -339,7 +339,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             move_file,
         } => {
             let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open_with_options(
+            let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     auto_commit: true,
@@ -376,7 +376,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Server => {
             let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open_with_options(
+            let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     auto_commit: true,

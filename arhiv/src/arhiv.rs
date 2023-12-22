@@ -34,7 +34,7 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn open_with_options(root_dir: impl Into<String>, options: ArhivOptions) -> Result<Arhiv> {
+    pub fn open(root_dir: impl Into<String>, options: ArhivOptions) -> Result<Arhiv> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 

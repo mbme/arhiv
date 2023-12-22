@@ -17,6 +17,7 @@ production-mode = ["arhiv/production-mode"]
 [dependencies]
 tokio.workspace = true
 openssl = { version = "*", features = ["vendored"] }
+jni = "0.21"
 
 arhiv = { path = "../arhiv" }
 rs-utils = { path = "../rs-utils" }

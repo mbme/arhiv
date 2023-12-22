@@ -6,7 +6,7 @@ import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 
 class ArhivServer {
-  public static native void startServer();
+  public static native void startServer(String filesDir);
 
   static {
     System.loadLibrary("arhiv_android");
@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    ArhivServer.startServer();
+    ArhivServer.startServer(this.getFilesDir().getAbsolutePath());
 
     // Find the WebView by its unique ID
     WebView webView = findViewById(R.id.web);
@@ -36,4 +36,3 @@ public class MainActivity extends AppCompatActivity {
     webView.setWebViewClient(new WebViewClient());
   }
 }
-

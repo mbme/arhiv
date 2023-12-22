@@ -1,4 +1,4 @@
-use std::{env, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use anyhow::{ensure, Context, Result};
 
@@ -34,21 +34,8 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn find_root_dir() -> Result<String> {
-        if cfg!(feature = "production-mode") {
-            env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")
-        } else {
-            env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")
-        }
-    }
-
-    #[must_use]
-    pub fn must_open() -> Arhiv {
-        Arhiv::open_with_options(ArhivOptions::default()).expect("must be able to open arhiv")
-    }
-
-    pub fn open_with_options(options: ArhivOptions) -> Result<Arhiv> {
-        let root_dir = Arhiv::find_root_dir()?;
+    pub fn open_with_options(root_dir: impl Into<String>, options: ArhivOptions) -> Result<Arhiv> {
+        let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 
         let config = Config::read(&format!("{root_dir}/arhiv.json"))?;

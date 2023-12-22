@@ -1,4 +1,4 @@
-use std::process;
+use std::{env, process};
 
 use anyhow::{Context, Result};
 use clap::{
@@ -149,17 +149,35 @@ async fn main() {
     handle_command(args.command).await.expect("command failed");
 }
 
+fn find_root_dir() -> Result<String> {
+    if cfg!(feature = "production-mode") {
+        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")
+    } else {
+        env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")
+    }
+}
+
+fn must_open_arhiv() -> Arhiv {
+    let root_dir = find_root_dir().expect("must find root dir");
+
+    Arhiv::open_with_options(root_dir, ArhivOptions::default()).expect("must be able to open arhiv")
+}
+
 async fn handle_command(command: CLICommand) -> Result<()> {
     match command {
         CLICommand::Init => {
-            Arhiv::open_with_options(ArhivOptions {
-                create: true,
-                ..Default::default()
-            })
+            let root_dir = find_root_dir()?;
+            Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    create: true,
+                    ..Default::default()
+                },
+            )
             .context("must be able to create arhiv")?;
         }
         CLICommand::Status => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
             let status = arhiv.get_status().await?;
 
             println!("{status}");
@@ -171,13 +189,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 return Ok(());
             }
 
-            let root_dir = Arhiv::find_root_dir()?;
+            let root_dir = find_root_dir()?;
             let config = Config::read(&root_dir)?;
             println!("Arhiv config {root_dir}:");
             println!("{}", serde_json::to_string_pretty(&config)?);
         }
         CLICommand::Settings => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let settings = arhiv.baza.get_connection()?.list_settings()?;
 
@@ -187,7 +205,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             }
         }
         CLICommand::Locks => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let locks = arhiv.baza.get_connection()?.list_document_locks()?;
 
@@ -199,7 +217,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Lock { id, reason } => {
             let reason = reason.unwrap_or("locked by CLI".to_string());
 
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let mut tx = arhiv.baza.get_tx()?;
             tx.lock_document(&id, reason)?;
@@ -208,7 +226,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Locked document {id}");
         }
         CLICommand::Unlock { id, key } => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let mut tx = arhiv.baza.get_tx()?;
             if let Some(key) = key {
@@ -222,7 +240,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Unlocked document {id}");
         }
         CLICommand::Commit => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let mut tx = arhiv.baza.get_tx()?;
             let count = tx.commit_staged_documents()?;
@@ -231,15 +249,19 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Committed {count} staged documents");
         }
         CLICommand::Sync => {
-            let arhiv = Arhiv::open_with_options(ArhivOptions {
-                auto_commit: true,
-                discover_peers: true,
-                ..Default::default()
-            })?;
+            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    auto_commit: true,
+                    discover_peers: true,
+                    ..Default::default()
+                },
+            )?;
             arhiv.sync().await?;
         }
         CLICommand::Get { id } => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             let document = arhiv.baza.get_connection()?.get_document(&id)?;
 
@@ -263,10 +285,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 data,
             );
 
-            let arhiv = Arhiv::open_with_options(ArhivOptions {
-                auto_commit: true,
-                ..Default::default()
-            })?;
+            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    auto_commit: true,
+                    ..Default::default()
+                },
+            )?;
 
             let mut tx = arhiv.baza.get_tx()?;
             tx.stage_document(&mut document, None)?;
@@ -280,10 +306,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             manual,
             mobile,
         } => {
-            let arhiv = Arhiv::open_with_options(ArhivOptions {
-                auto_commit: true,
-                ..Default::default()
-            })?;
+            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    auto_commit: true,
+                    ..Default::default()
+                },
+            )?;
             let port = arhiv.get_config().server_port;
 
             let documents = arhiv
@@ -308,10 +338,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             file_paths,
             move_file,
         } => {
-            let arhiv = Arhiv::open_with_options(ArhivOptions {
-                auto_commit: true,
-                ..Default::default()
-            })?;
+            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    auto_commit: true,
+                    ..Default::default()
+                },
+            )?;
             let port = arhiv.get_config().server_port;
 
             println!("Importing {} files", file_paths.len());
@@ -330,7 +364,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
-            let root_dir = Arhiv::find_root_dir()?;
+            let root_dir = find_root_dir()?;
             let port = Config::read(&root_dir)?.server_port;
 
             process::Command::new(&browser)
@@ -341,16 +375,20 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
         CLICommand::Server => {
-            let arhiv = Arhiv::open_with_options(ArhivOptions {
-                auto_commit: true,
-                discover_peers: true,
-                ..Default::default()
-            })?;
+            let root_dir = find_root_dir()?;
+            let arhiv = Arhiv::open_with_options(
+                root_dir,
+                ArhivOptions {
+                    auto_commit: true,
+                    discover_peers: true,
+                    ..Default::default()
+                },
+            )?;
 
             arhiv.start_server().await?;
         }
         CLICommand::Backup { backup_dir } => {
-            let arhiv = Arhiv::must_open();
+            let arhiv = must_open_arhiv();
 
             arhiv
                 .baza

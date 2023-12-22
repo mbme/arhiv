@@ -6,7 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions, Config};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     KvsEntry, KvsKey,
@@ -189,10 +189,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 return Ok(());
             }
 
-            let root_dir = find_root_dir()?;
-            let config = Config::read(&root_dir)?;
-            println!("Arhiv config {root_dir}:");
-            println!("{}", serde_json::to_string_pretty(&config)?);
+            let arhiv = must_open_arhiv();
+            let config = arhiv.get_config()?;
+            println!("Arhiv config:");
+            println!("{:#?}", config);
         }
         CLICommand::Settings => {
             let arhiv = must_open_arhiv();
@@ -298,7 +298,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             tx.stage_document(&mut document, None)?;
             tx.commit()?;
 
-            let port = arhiv.get_config().server_port;
+            let port = arhiv.get_server_port()?;
             print_document(&document, port);
         }
         CLICommand::Scrape {
@@ -314,7 +314,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.get_config().server_port;
+            let port = arhiv.get_server_port()?;
 
             let documents = arhiv
                 .scrape(
@@ -346,7 +346,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.get_config().server_port;
+            let port = arhiv.get_server_port()?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -364,8 +364,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
-            let root_dir = find_root_dir()?;
-            let port = Config::read(&root_dir)?.server_port;
+            let arhiv = must_open_arhiv();
+            let port = arhiv.get_server_port()?;
 
             process::Command::new(&browser)
                 .arg(get_document_url(&id.as_ref(), port))

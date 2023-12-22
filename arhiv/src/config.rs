@@ -1,49 +1,76 @@
-use std::{fs, time::Duration};
+use std::time::Duration;
 
-use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use anyhow::Result;
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+use baza::{BazaConnection, KvsConstKey};
+
+use crate::Arhiv;
+
+const DEFAULT_SERVER_PORT: u16 = 23421;
+const DEFAULT_AUTO_COMMIT_DELAY_IN_SECONDS: u64 = 600;
+const DEFAULT_AUTO_SYNC_DELAY_IN_SECONDS: u64 = 20;
+
+const CONFIG_NAMESPACE: &str = "arhiv-config";
+
+const CONFIG_SERVER_PORT: &KvsConstKey<u16> = &KvsConstKey::new(CONFIG_NAMESPACE, "server_port");
+
+const CONFIG_AUTO_SYNC_DELAY: &KvsConstKey<u64> =
+    &KvsConstKey::new(CONFIG_NAMESPACE, "auto_sync_delay_in_seconds");
+
+const CONFIG_AUTO_COMMIT_DELAY: &KvsConstKey<u64> =
+    &KvsConstKey::new(CONFIG_NAMESPACE, "auto_commit_delay_in_seconds");
+
+pub trait ArhivConfigExt {
+    fn get_server_port(&self) -> Result<u16>;
+
+    fn get_auto_sync_delay(&self) -> Result<Duration>;
+
+    fn get_auto_commit_delay(&self) -> Result<Duration>;
+}
+
+impl ArhivConfigExt for BazaConnection {
+    fn get_server_port(&self) -> Result<u16> {
+        let port = self
+            .kvs_const_get(CONFIG_SERVER_PORT)?
+            .unwrap_or(DEFAULT_SERVER_PORT);
+
+        Ok(port)
+    }
+
+    fn get_auto_sync_delay(&self) -> Result<Duration> {
+        let delay = self
+            .kvs_const_get(CONFIG_AUTO_SYNC_DELAY)?
+            .unwrap_or(DEFAULT_AUTO_SYNC_DELAY_IN_SECONDS);
+
+        Ok(Duration::from_secs(delay))
+    }
+
+    fn get_auto_commit_delay(&self) -> Result<Duration> {
+        let delay = self
+            .kvs_const_get(CONFIG_AUTO_COMMIT_DELAY)?
+            .unwrap_or(DEFAULT_AUTO_COMMIT_DELAY_IN_SECONDS);
+
+        Ok(Duration::from_secs(delay))
+    }
+}
+
+#[derive(Debug)]
 pub struct Config {
-    #[serde(default = "default_server_port")]
     pub server_port: u16,
 
-    #[serde(default = "default_auto_commit_delay_in_seconds")]
     pub auto_commit_delay_in_seconds: u64,
 
-    #[serde(default = "default_auto_sync_delay_in_seconds")]
     pub auto_sync_delay_in_seconds: u64,
 }
 
-fn default_server_port() -> u16 {
-    23421
-}
+impl Arhiv {
+    pub fn get_config(&self) -> Result<Config> {
+        let conn = self.baza.get_connection()?;
 
-fn default_auto_commit_delay_in_seconds() -> u64 {
-    600
-}
-
-fn default_auto_sync_delay_in_seconds() -> u64 {
-    20
-}
-
-impl Config {
-    pub fn read(config_path: &str) -> Result<Config> {
-        let data = fs::read_to_string(config_path).context("Failed to read config file")?;
-
-        let config = serde_json::from_str(&data).context("Failed to parse config json")?;
-
-        Ok(config)
-    }
-
-    #[must_use]
-    pub fn get_auto_sync_delay(&self) -> Duration {
-        Duration::from_secs(self.auto_sync_delay_in_seconds)
-    }
-
-    #[must_use]
-    pub fn get_auto_commit_delay(&self) -> Duration {
-        Duration::from_secs(self.auto_commit_delay_in_seconds)
+        Ok(Config {
+            server_port: conn.get_server_port()?,
+            auto_commit_delay_in_seconds: conn.get_auto_commit_delay()?.as_secs(),
+            auto_sync_delay_in_seconds: conn.get_auto_sync_delay()?.as_secs(),
+        })
     }
 }

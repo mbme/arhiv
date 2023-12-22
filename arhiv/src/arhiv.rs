@@ -12,7 +12,7 @@ use rs_utils::{
 };
 
 use crate::{
-    config::Config, data_migrations::get_data_migrations, definitions::get_standard_schema,
+    config::ArhivConfigExt, data_migrations::get_data_migrations, definitions::get_standard_schema,
     ui_server::build_ui_router, Status,
 };
 
@@ -27,7 +27,6 @@ pub struct ArhivOptions {
 
 pub struct Arhiv {
     pub baza: Arc<Baza>,
-    config: Config,
     auto_commit_task: Option<AutoCommitTask>,
     auto_sync_task: Option<AutoSyncTask>,
     sync_manager: Arc<SyncManager>,
@@ -38,7 +37,6 @@ impl Arhiv {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 
-        let config = Config::read(&format!("{root_dir}/arhiv.json"))?;
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
@@ -58,7 +56,6 @@ impl Arhiv {
 
         let mut arhiv = Arhiv {
             baza,
-            config,
             sync_manager,
             auto_commit_task: None,
             auto_sync_task: None,
@@ -74,7 +71,7 @@ impl Arhiv {
     }
 
     fn init_auto_commit_service(&mut self) -> Result<()> {
-        let auto_commit_delay = self.config.get_auto_commit_delay();
+        let auto_commit_delay = self.baza.get_connection()?.get_auto_commit_delay()?;
         ensure!(
             !auto_commit_delay.is_zero(),
             "Config auto-commit delay must not be zero"
@@ -89,7 +86,7 @@ impl Arhiv {
     }
 
     fn init_auto_sync_service(&mut self) -> Result<()> {
-        let auto_sync_delay = self.config.get_auto_sync_delay();
+        let auto_sync_delay = self.baza.get_connection()?.get_auto_sync_delay()?;
         ensure!(
             !auto_sync_delay.is_zero(),
             "Config auto-sync delay must not be zero"
@@ -102,16 +99,11 @@ impl Arhiv {
         Ok(())
     }
 
-    #[must_use]
-    pub fn get_config(&self) -> &Config {
-        &self.config
-    }
-
     pub async fn get_status(&self) -> Result<Status> {
         let conn = self.baza.get_connection()?;
         let mut status = Status::read(&conn)?;
 
-        let is_local_server_alive = self.is_local_server_alive().await;
+        let is_local_server_alive = self.is_local_server_alive().await?;
 
         status.local_server_is_running = Some(is_local_server_alive);
 
@@ -126,16 +118,19 @@ impl Arhiv {
         self.sync_manager.count_agents() > 0
     }
 
-    #[must_use]
-    pub async fn is_local_server_alive(&self) -> bool {
-        let port = self.config.server_port;
+    pub async fn is_local_server_alive(&self) -> Result<bool> {
+        let port = self.get_server_port()?;
         let local_server_url = format!("localhost:{port}");
 
-        check_server_health(&local_server_url).await.is_ok()
+        Ok(check_server_health(&local_server_url).await.is_ok())
+    }
+
+    pub fn get_server_port(&self) -> Result<u16> {
+        self.baza.get_connection()?.get_server_port()
     }
 
     pub async fn start_server(self) -> Result<()> {
-        let port = self.config.server_port;
+        let port = self.get_server_port()?;
 
         let arhiv = Arc::new(self);
         {

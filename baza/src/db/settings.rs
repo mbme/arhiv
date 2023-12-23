@@ -4,7 +4,7 @@ use rs_utils::Timestamp;
 
 use crate::entities::InstanceId;
 
-use super::kvs::{KvsConstKey, KvsEntry};
+use super::kvs::KvsConstKey;
 use super::BazaConnection;
 
 const SETTINGS_NAMESPACE: &str = "settings";
@@ -22,10 +22,6 @@ const SETTING_LAST_SYNC_TIME: &KvsConstKey<Timestamp> =
     &KvsConstKey::new(SETTINGS_NAMESPACE, "last_sync_time");
 
 impl BazaConnection {
-    pub fn list_settings(&self) -> Result<Vec<KvsEntry>> {
-        self.kvs_list(Some(SETTINGS_NAMESPACE))
-    }
-
     pub fn get_instance_id(&self) -> Result<InstanceId> {
         self.kvs_const_must_get(SETTING_INSTANCE_ID)
     }
@@ -38,7 +34,7 @@ impl BazaConnection {
         self.kvs_const_set(SETTING_DATA_VERSION, &version)
     }
 
-    pub(crate) fn get_computed_data_version(&self) -> Result<u8> {
+    pub fn get_computed_data_version(&self) -> Result<u8> {
         let computed_data_version = self
             .kvs_const_get(SETTING_COMPUTED_DATA_VERSION)?
             .unwrap_or(0);

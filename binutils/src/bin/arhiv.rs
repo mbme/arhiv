@@ -7,10 +7,7 @@ use clap::{
 use clap_complete::{generate, Shell};
 
 use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions};
-use baza::{
-    entities::{Document, DocumentClass, DocumentData, Id},
-    KvsEntry, KvsKey,
-};
+use baza::entities::{Document, DocumentClass, DocumentData, Id};
 use rs_utils::{get_crate_version, into_absolute_path, log};
 use scraper::ScraperOptions;
 
@@ -66,8 +63,6 @@ enum CLICommand {
         #[arg(long)]
         auto_sync_delay: Option<u64>,
     },
-    /// Print settings
-    Settings,
     /// List document locks
     Locks,
     /// Lock document
@@ -222,16 +217,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             );
 
             tx.commit()?;
-        }
-        CLICommand::Settings => {
-            let arhiv = must_open_arhiv();
-
-            let settings = arhiv.baza.get_connection()?.list_settings()?;
-
-            println!("Arhiv settings, {} entries", settings.len());
-            for KvsEntry(KvsKey { namespace: _, key }, value) in settings {
-                println!("  {:>25}: {value}", key);
-            }
         }
         CLICommand::Locks => {
             let arhiv = must_open_arhiv();

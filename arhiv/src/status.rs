@@ -9,9 +9,11 @@ use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMES
 #[derive(Serialize)]
 pub struct Status {
     pub app_version: String,
+    pub instance_id: String,
 
     pub db_version: u8,
     pub data_version: u8,
+    pub computed_data_version: u8,
     pub documents_count: DocumentsCount,
     pub blobs_count: BLOBSCount,
     pub conflicts_count: usize,
@@ -30,10 +32,12 @@ impl Status {
     pub fn read(conn: &BazaConnection) -> Result<Self> {
         let root_dir = conn.get_path_manager().root_dir.clone();
 
+        let instance_id = conn.get_instance_id()?.to_string();
         let db_rev = conn.get_db_rev()?;
         let last_sync_time = conn.get_last_sync_time()?;
         let db_version = conn.get_db_version()?;
         let data_version = conn.get_data_version()?;
+        let computed_data_version = conn.get_computed_data_version()?;
         let documents_count = conn.count_documents()?;
         let blobs_count = conn.count_blobs()?;
         let conflicts_count = conn.get_coflicting_documents()?.len();
@@ -41,9 +45,11 @@ impl Status {
         let locks = conn.list_document_locks()?;
 
         Ok(Status {
+            instance_id,
             app_version: get_crate_version().to_string(),
             db_version,
             data_version,
+            computed_data_version,
             documents_count,
             blobs_count,
             conflicts_count,
@@ -61,18 +67,18 @@ impl Status {
 
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(
-            f,
-            "Arhiv (rev {}) in {}",
-            self.db_rev.serialize(),
-            self.root_dir,
-        )?;
+        writeln!(f)?;
+
+        writeln!(f, "             Root dir: {}", self.root_dir)?;
+        writeln!(f, "          Instance id: {}", self.instance_id)?;
 
         writeln!(f)?;
 
-        writeln!(f, "      App version: {}", self.app_version)?;
-        writeln!(f, "       DB version: {}", self.db_version)?;
-        writeln!(f, "   Schema version: {}", self.data_version)?;
+        writeln!(f, "          App version: {}", self.app_version)?;
+        writeln!(f, "           DB version: {}", self.db_version)?;
+        writeln!(f, "       Schema version: {}", self.data_version)?;
+        writeln!(f, "Computed data version: {}", self.computed_data_version)?;
+        writeln!(f, "          DB revision: {}", self.db_rev.serialize())?;
 
         writeln!(f)?;
 

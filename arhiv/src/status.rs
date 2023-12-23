@@ -4,7 +4,12 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
-use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
+use rs_utils::{
+    default_date_time_format, get_crate_version, http_server::check_server_health, Timestamp,
+    MIN_TIMESTAMP,
+};
+
+use crate::ArhivConfigExt;
 
 #[derive(Serialize)]
 pub struct Status {
@@ -25,6 +30,7 @@ pub struct Status {
     pub debug_mode: bool,
     pub root_dir: String,
 
+    pub server_port: u16,
     pub local_server_is_running: Option<bool>,
 }
 
@@ -43,6 +49,7 @@ impl Status {
         let conflicts_count = conn.get_coflicting_documents()?.len();
         let last_update_time = conn.get_last_update_time()?;
         let locks = conn.list_document_locks()?;
+        let server_port = conn.get_server_port()?;
 
         Ok(Status {
             instance_id,
@@ -59,14 +66,30 @@ impl Status {
             debug_mode: DEBUG_MODE,
             root_dir,
             locks,
-
+            server_port,
             local_server_is_running: None,
         })
+    }
+
+    pub async fn check_if_local_server_is_running(&mut self) -> Result<()> {
+        let local_server_is_running = is_local_server_alive(self.server_port).await?;
+
+        self.local_server_is_running = Some(local_server_is_running);
+
+        Ok(())
     }
 }
 
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.debug_mode {
+            writeln!(f)?;
+            writeln!(
+                f,
+                "----------------------------- DEBUG MODE -----------------------------"
+            )?;
+        }
+
         writeln!(f)?;
 
         writeln!(f, "             Root dir: {}", self.root_dir)?;
@@ -110,13 +133,18 @@ impl fmt::Display for Status {
         )?;
 
         writeln!(f)?;
+        writeln!(f, "      Server port: {}", self.server_port)?;
         writeln!(
             f,
             "     Local server: {}",
-            if self.local_server_is_running.unwrap_or_default() {
-                "running"
+            if let Some(local_server_is_running) = self.local_server_is_running {
+                if local_server_is_running {
+                    "running"
+                } else {
+                    "not running"
+                }
             } else {
-                "not running"
+                "didn't check"
             }
         )?;
 
@@ -165,11 +193,12 @@ impl fmt::Display for Status {
             writeln!(f)?;
         }
 
-        if self.debug_mode {
-            writeln!(f)?;
-            writeln!(f, "  Debug Mode")?;
-        }
-
         Ok(())
     }
+}
+
+async fn is_local_server_alive(server_port: u16) -> Result<bool> {
+    let local_server_url = format!("localhost:{server_port}");
+
+    Ok(check_server_health(&local_server_url).await.is_ok())
 }

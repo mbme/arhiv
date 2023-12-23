@@ -7,7 +7,7 @@ use baza::{
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
 use rs_utils::{
-    http_server::{build_health_router, check_server_health, HttpServer},
+    http_server::{build_health_router, HttpServer},
     log,
 };
 
@@ -101,11 +101,9 @@ impl Arhiv {
 
     pub async fn get_status(&self) -> Result<Status> {
         let conn = self.baza.get_connection()?;
+
         let mut status = Status::read(&conn)?;
-
-        let is_local_server_alive = self.is_local_server_alive().await?;
-
-        status.local_server_is_running = Some(is_local_server_alive);
+        status.check_if_local_server_is_running().await?;
 
         Ok(status)
     }
@@ -116,14 +114,6 @@ impl Arhiv {
 
     pub fn has_sync_agents(&self) -> bool {
         self.sync_manager.count_agents() > 0
-    }
-
-    pub async fn is_local_server_alive(&self) -> Result<bool> {
-        let port = self.baza.get_connection()?.get_server_port()?;
-
-        let local_server_url = format!("localhost:{port}");
-
-        Ok(check_server_health(&local_server_url).await.is_ok())
     }
 
     pub async fn start_server(self) -> Result<()> {

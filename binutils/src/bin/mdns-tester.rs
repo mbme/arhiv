@@ -13,7 +13,7 @@ pub async fn main() -> Result<()> {
 
     let instance_name = generate_random_id();
 
-    let service = MDNSService::new("_mdns-tester", instance_name)?;
+    let mut service = MDNSService::new("_mdns-tester", instance_name)?;
     service.start_client()?;
 
     let mut rx = service.get_events();
@@ -34,11 +34,11 @@ pub async fn main() -> Result<()> {
         }
     });
 
-    let mut server = service.start_server(9999)?;
+    service.start_server(9999)?;
 
     signal::ctrl_c().await.expect("failed to listen for event");
 
-    server.stop();
+    service.shutdown();
 
     Ok(())
 }

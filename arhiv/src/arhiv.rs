@@ -121,7 +121,7 @@ impl Arhiv {
 
         let arhiv = Arc::new(self);
         {
-            let mut mdns_server = arhiv.sync_manager.start_mdns_server(port)?;
+            arhiv.sync_manager.start_mdns_server(port)?;
 
             let health_router = build_health_router();
             let rpc_router = build_rpc_router();
@@ -135,8 +135,6 @@ impl Arhiv {
             let server = HttpServer::start(router, port);
 
             server.join().await?;
-
-            mdns_server.stop();
         }
 
         Arc::into_inner(arhiv)

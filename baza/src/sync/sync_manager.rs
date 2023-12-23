@@ -12,7 +12,7 @@ use tokio::{
 
 use rs_utils::{
     log,
-    mdns::{MDNSEvent, MDNSServer, MDNSService},
+    mdns::{MDNSEvent, MDNSService},
     now, ScheduledTask,
 };
 
@@ -56,15 +56,17 @@ impl SyncManager {
     }
 
     pub fn start_mdns_client(&self, initial_discovery_duration: Duration) -> Result<()> {
-        if self.is_mdns_client_started() {
+        let mut mdns_client_discovery_complete = self
+            .mdns_client_discovery_complete
+            .lock()
+            .expect("must lock");
+
+        if mdns_client_discovery_complete.is_some() {
             log::warn!("MDNS client already started");
             return Ok(());
         }
 
-        self.mdns_client_discovery_complete
-            .lock()
-            .expect("must lock")
-            .replace(Instant::now() + initial_discovery_duration);
+        mdns_client_discovery_complete.replace(Instant::now() + initial_discovery_duration);
 
         self.mdns_service.start_client()?;
 
@@ -117,7 +119,7 @@ impl SyncManager {
         Ok(())
     }
 
-    pub fn start_mdns_server(&self, port: u16) -> Result<MDNSServer> {
+    pub fn start_mdns_server(&self, port: u16) -> Result<()> {
         self.mdns_service.start_server(port)
     }
 
@@ -330,18 +332,7 @@ impl SyncManager {
         Ok(task)
     }
 
-    pub fn is_mdns_client_started(&self) -> bool {
-        self.mdns_client_discovery_complete
-            .lock()
-            .expect("must lock")
-            .is_some()
-    }
-
     pub fn stop(mut self) {
-        if self.is_mdns_client_started() {
-            self.mdns_service.stop_client();
-        }
-
         self.mdns_service.shutdown();
     }
 }

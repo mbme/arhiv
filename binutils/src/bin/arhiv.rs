@@ -6,7 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivOptions};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions};
 use baza::{
     entities::{Document, DocumentClass, DocumentData, Id},
     KvsEntry, KvsKey,
@@ -49,15 +49,22 @@ enum CLICommand {
         browser: String,
     },
     /// Run server
-    #[clap(name = "server")]
     Server,
     /// Print current status
     Status,
-    /// Print config
+    /// Print or update config
     Config {
-        /// Prints config template
-        #[clap(short, long)]
-        template: bool,
+        /// Server port
+        #[arg(long)]
+        server_port: Option<u16>,
+
+        /// Auto-commit delay in seconds
+        #[arg(long)]
+        auto_commit_delay: Option<u64>,
+
+        /// Auto-sync delay in seconds
+        #[arg(long)]
+        auto_sync_delay: Option<u64>,
     },
     /// Print settings
     Settings,
@@ -183,16 +190,38 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("{status}");
             // FIXME print number of unused temp attachments
         }
-        CLICommand::Config { template } => {
-            if template {
-                print!("{}", include_str!("../../resources/arhiv.json.template"));
-                return Ok(());
+        CLICommand::Config {
+            server_port,
+            auto_commit_delay,
+            auto_sync_delay,
+        } => {
+            let arhiv = must_open_arhiv();
+
+            let tx = arhiv.baza.get_tx()?;
+
+            if let Some(server_port) = server_port {
+                tx.set_server_port(server_port)?;
             }
 
-            let arhiv = must_open_arhiv();
-            let config = arhiv.get_config()?;
-            println!("Arhiv config:");
-            println!("{:#?}", config);
+            if let Some(auto_commit_delay) = auto_commit_delay {
+                tx.set_auto_commit_delay(auto_commit_delay)?;
+            }
+
+            if let Some(auto_sync_delay) = auto_sync_delay {
+                tx.set_auto_sync_delay(auto_sync_delay)?;
+            }
+
+            println!("      Server port: {}", tx.get_server_port()?);
+            println!(
+                "  Auto-sync delay: {} seconds",
+                tx.get_auto_sync_delay()?.as_secs()
+            );
+            println!(
+                "Auto-commit delay: {} seconds",
+                tx.get_auto_commit_delay()?.as_secs()
+            );
+
+            tx.commit()?;
         }
         CLICommand::Settings => {
             let arhiv = must_open_arhiv();
@@ -296,9 +325,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let mut tx = arhiv.baza.get_tx()?;
             tx.stage_document(&mut document, None)?;
+
+            let port = tx.get_server_port()?;
+
             tx.commit()?;
 
-            let port = arhiv.get_server_port()?;
             print_document(&document, port);
         }
         CLICommand::Scrape {
@@ -314,7 +345,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.get_server_port()?;
+            let port = arhiv.baza.get_connection()?.get_server_port()?;
 
             let documents = arhiv
                 .scrape(
@@ -346,7 +377,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.get_server_port()?;
+            let port = arhiv.baza.get_connection()?.get_server_port()?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -365,7 +396,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             log::info!("Opening arhiv UI in {}", browser);
 
             let arhiv = must_open_arhiv();
-            let port = arhiv.get_server_port()?;
+            let port = arhiv.baza.get_connection()?.get_server_port()?;
 
             process::Command::new(&browser)
                 .arg(get_document_url(&id.as_ref(), port))

@@ -119,18 +119,15 @@ impl Arhiv {
     }
 
     pub async fn is_local_server_alive(&self) -> Result<bool> {
-        let port = self.get_server_port()?;
+        let port = self.baza.get_connection()?.get_server_port()?;
+
         let local_server_url = format!("localhost:{port}");
 
         Ok(check_server_health(&local_server_url).await.is_ok())
     }
 
-    pub fn get_server_port(&self) -> Result<u16> {
-        self.baza.get_connection()?.get_server_port()
-    }
-
     pub async fn start_server(self) -> Result<()> {
-        let port = self.get_server_port()?;
+        let port = self.baza.get_connection()?.get_server_port()?;
 
         let arhiv = Arc::new(self);
         {

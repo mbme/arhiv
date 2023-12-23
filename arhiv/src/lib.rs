@@ -10,4 +10,5 @@ mod status;
 mod ui_server;
 
 pub use arhiv::{Arhiv, ArhivOptions};
+pub use config::ArhivConfigExt;
 pub use status::Status;

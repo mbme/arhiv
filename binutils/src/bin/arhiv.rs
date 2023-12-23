@@ -32,7 +32,7 @@ enum CLICommand {
     /// Backup Arhiv data
     Backup {
         /// Directory to store backup.
-        #[clap(long, value_hint = ValueHint::DirPath)]
+        #[arg(value_hint = ValueHint::DirPath)]
         backup_dir: String,
     },
     /// Open UI for a document

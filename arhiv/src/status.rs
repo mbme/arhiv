@@ -30,6 +30,9 @@ pub struct Status {
     pub debug_mode: bool,
     pub root_dir: String,
 
+    pub auto_sync_delay_in_seconds: u64,
+    pub auto_commit_delay_in_seconds: u64,
+
     pub server_port: u16,
     pub local_server_is_running: Option<bool>,
 }
@@ -50,6 +53,8 @@ impl Status {
         let last_update_time = conn.get_last_update_time()?;
         let locks = conn.list_document_locks()?;
         let server_port = conn.get_server_port()?;
+        let auto_sync_delay_in_seconds = conn.get_auto_sync_delay()?.as_secs();
+        let auto_commit_delay_in_seconds = conn.get_auto_commit_delay()?.as_secs();
 
         Ok(Status {
             instance_id,
@@ -66,6 +71,8 @@ impl Status {
             debug_mode: DEBUG_MODE,
             root_dir,
             locks,
+            auto_sync_delay_in_seconds,
+            auto_commit_delay_in_seconds,
             server_port,
             local_server_is_running: None,
         })
@@ -130,6 +137,18 @@ impl fmt::Display for Status {
             } else {
                 default_date_time_format(self.last_sync_time)
             }
+        )?;
+
+        writeln!(f)?;
+        writeln!(
+            f,
+            "Auto-commit delay: {} seconds",
+            self.auto_commit_delay_in_seconds
+        )?;
+        writeln!(
+            f,
+            "  Auto-sync delay: {} seconds",
+            self.auto_sync_delay_in_seconds
         )?;
 
         writeln!(f)?;

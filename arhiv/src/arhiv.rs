@@ -1,19 +1,16 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{ensure, Result};
 
 use baza::{
-    sync::{build_rpc_router, AutoSyncTask, SyncManager},
+    sync::{AutoSyncTask, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
-use rs_utils::{
-    http_server::{build_health_router, HttpServer},
-    log,
-};
+use rs_utils::log;
 
 use crate::{
     config::ArhivConfigExt, data_migrations::get_data_migrations, definitions::get_standard_schema,
-    ui_server::build_ui_router, Status,
+    Status,
 };
 
 const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
@@ -29,7 +26,7 @@ pub struct Arhiv {
     pub baza: Arc<Baza>,
     auto_commit_task: Option<AutoCommitTask>,
     auto_sync_task: Option<AutoSyncTask>,
-    sync_manager: Arc<SyncManager>,
+    pub(crate) sync_manager: Arc<SyncManager>,
 }
 
 impl Arhiv {
@@ -114,34 +111,6 @@ impl Arhiv {
 
     pub fn has_sync_agents(&self) -> bool {
         self.sync_manager.count_agents() > 0
-    }
-
-    pub async fn start_server(self) -> Result<()> {
-        let port = self.baza.get_connection()?.get_server_port()?;
-
-        let arhiv = Arc::new(self);
-        {
-            arhiv.sync_manager.start_mdns_server(port)?;
-
-            let health_router = build_health_router();
-            let rpc_router = build_rpc_router();
-            let ui_router = build_ui_router();
-
-            let router = rpc_router
-                .nest("/ui", ui_router.with_state(arhiv.clone()))
-                .with_state(arhiv.baza.clone())
-                .merge(health_router);
-
-            let server = HttpServer::start(router, port);
-
-            server.join().await?;
-        }
-
-        Arc::into_inner(arhiv)
-            .context("failed to unwrap Arhiv instance")?
-            .stop();
-
-        Ok(())
     }
 
     pub fn stop(self) {

@@ -6,7 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions};
+use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
 use baza::entities::{Document, DocumentClass, DocumentData, Id};
 use rs_utils::{get_crate_version, into_absolute_path, log};
 use scraper::ScraperOptions;
@@ -401,7 +401,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 },
             )?;
 
-            arhiv.start_server().await?;
+            let server = ArhivServer::start(arhiv)?;
+
+            server.join().await?;
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = must_open_arhiv();

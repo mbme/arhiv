@@ -15,11 +15,13 @@ crate_type = ["cdylib"]
 production-mode = ["arhiv/production-mode"]
 
 [dependencies]
+anyhow.workspace = true
 tokio.workspace = true
 openssl = { version = "*", features = ["vendored"] }
 jni = "0.21"
+lazy_static.workspace = true
 
-arhiv = { path = "../arhiv" }
+arhiv = { path = "../arhiv", features = ["debug-embed"] }
 rs-utils = { path = "../rs-utils" }
 
 [build-dependencies]

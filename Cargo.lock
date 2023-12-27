@@ -140,8 +140,10 @@ dependencies = [
 name = "arhiv-android"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "arhiv",
  "jni",
+ "lazy_static",
  "openssl",
  "rs-utils",
  "tokio",

@@ -11,6 +11,7 @@
     "clean": "rm -f public/*.js* public/*.css*",
     "build:js": "tsx build.ts",
     "build:css": "TAILWIND_MODE=build postcss ./src/ui/index.css --dir public/",
+    "build": "npm run build:js && npm run build:css",
     "watch:js": "tsx build.ts --watch",
     "watch:css": "TAILWIND_MODE=watch postcss --watch ./src/ui/index.css --dir public/",
     "prod:build:js": "NODE_ENV=production npm run build:js",

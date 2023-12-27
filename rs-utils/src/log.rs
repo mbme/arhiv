@@ -10,6 +10,9 @@ pub use log::{debug, error, info, trace, warn, Level};
 #[cfg(target_os = "android")]
 pub fn setup_android_logger(package: &str) {
     tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            "debug,hyper=info,mdns_sd=info",
+        ))
         .with(tracing_android::layer(package).expect("failed to build android tracing subscriber"))
         .init();
 }

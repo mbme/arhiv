@@ -16,7 +16,12 @@ use axum::{
 };
 use hyper::body::to_bytes;
 use reqwest::Client;
-use tokio::{signal, sync::oneshot, task::JoinHandle};
+use tokio::{
+    signal,
+    signal::unix::{self, SignalKind},
+    sync::oneshot,
+    task::JoinHandle,
+};
 
 pub struct ServerError(anyhow::Error);
 
@@ -138,11 +143,22 @@ impl HttpServer {
 
         // Spawn the server into a runtime
         let join_handle = tokio::spawn(async {
+            let mut sigint = unix::signal(SignalKind::interrupt())?;
+            let mut sigterm = unix::signal(SignalKind::terminate())?;
+
             server
                 .with_graceful_shutdown(async {
                     tokio::select! {
                         _ = signal::ctrl_c() => {
                             log::info!("got Ctrl-C");
+                        }
+
+                        _ = sigint.recv() => {
+                            log::info!("got SIGINT");
+                        }
+
+                        _ = sigterm.recv() => {
+                            log::info!("got SIGTERM");
                         }
 
                         Ok(_) = shutdown_receiver => {

@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use tokio::{
     sync::broadcast::Sender,
     task::JoinHandle,
@@ -21,6 +21,7 @@ use crate::{entities::InstanceId, Baza, BazaEvent, DEBUG_MODE};
 use super::{Ping, SyncAgent};
 
 pub type AutoSyncTask = JoinHandle<()>;
+pub type MDNSClientTask = JoinHandle<()>;
 
 pub struct SyncManager {
     baza: Arc<Baza>,
@@ -55,16 +56,19 @@ impl SyncManager {
         })
     }
 
-    pub fn start_mdns_client(&self, initial_discovery_duration: Duration) -> Result<()> {
+    pub fn start_mdns_client(
+        &self,
+        initial_discovery_duration: Duration,
+    ) -> Result<MDNSClientTask> {
         let mut mdns_client_discovery_complete = self
             .mdns_client_discovery_complete
             .lock()
             .expect("must lock");
 
-        if mdns_client_discovery_complete.is_some() {
-            log::warn!("MDNS client already started");
-            return Ok(());
-        }
+        ensure!(
+            mdns_client_discovery_complete.is_none(),
+            "MDNS client already started"
+        );
 
         mdns_client_discovery_complete.replace(Instant::now() + initial_discovery_duration);
 
@@ -74,7 +78,7 @@ impl SyncManager {
         let baza_events = self.baza.get_events_sender();
         let agents = self.agents.clone();
         let downloads_dir = self.baza.get_path_manager().downloads_dir.clone();
-        tokio::spawn(async move {
+        let task = tokio::spawn(async move {
             match mdns_events.recv().await {
                 Ok(mdns_event) => match mdns_event {
                     MDNSEvent::InstanceDiscovered(peer_info) => {
@@ -121,9 +125,11 @@ impl SyncManager {
                 },
                 Err(err) => log::error!("Failed to receive MDNS event: {err}"),
             }
+
+            log::debug!("MDNS client task ended");
         });
 
-        Ok(())
+        Ok(task)
     }
 
     pub fn start_mdns_server(&self, port: u16) -> Result<()> {
@@ -313,7 +319,7 @@ impl SyncManager {
                     | Ok(BazaEvent::PeerDiscovered {}) => {
                         scheduled_sync.schedule(auto_sync_delay, async move {
                             if let Err(err) = sync_manager.sync().await {
-                                log::warn!("Auto-sync failed: {err}");
+                                log::error!("Auto-sync failed: {err}");
                             }
                         });
                     }

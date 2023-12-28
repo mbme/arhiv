@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use anyhow::{ensure, Result};
 
 use baza::{
-    sync::{AutoSyncTask, SyncManager},
+    sync::{AutoSyncTask, MDNSClientTask, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
 use rs_utils::log;
@@ -26,6 +26,7 @@ pub struct Arhiv {
     pub baza: Arc<Baza>,
     auto_commit_task: Option<AutoCommitTask>,
     auto_sync_task: Option<AutoSyncTask>,
+    mdns_client_task: Option<MDNSClientTask>,
     sync_manager: Arc<SyncManager>,
 }
 
@@ -47,21 +48,24 @@ impl Arhiv {
 
         let sync_manager = SyncManager::new(baza.clone())?;
         let sync_manager = Arc::new(sync_manager);
-        if options.discover_peers {
-            sync_manager.start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
-        }
 
         let mut arhiv = Arhiv {
             baza,
             sync_manager,
             auto_commit_task: None,
             auto_sync_task: None,
+            mdns_client_task: None,
         };
         if options.auto_commit {
             arhiv.init_auto_commit_service()?;
         }
         if options.discover_peers {
             arhiv.init_auto_sync_service()?;
+        }
+        if options.discover_peers {
+            arhiv
+                .sync_manager
+                .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
         }
 
         Ok(arhiv)
@@ -126,9 +130,15 @@ impl Arhiv {
             auto_commit_task.abort();
         }
 
+        if let Some(mdns_client_task) = self.mdns_client_task.take() {
+            mdns_client_task.abort();
+        }
+
         if let Some(auto_sync_task) = self.auto_sync_task.take() {
             auto_sync_task.abort();
         }
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
 
         Arc::into_inner(self.sync_manager)
             .expect("failed to unwrap a SyncManager instance")

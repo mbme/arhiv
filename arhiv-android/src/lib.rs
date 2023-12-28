@@ -53,16 +53,14 @@ fn start_server(files_dir: &str) -> Result<String> {
 
             arhiv
         } else {
-            let arhiv = Arhiv::open(
+            Arhiv::open(
                 root_dir,
                 ArhivOptions {
                     create: !root_dir_exists,
                     auto_commit: true,
                     discover_peers: true,
                 },
-            )?;
-
-            arhiv
+            )?
         }
     };
 

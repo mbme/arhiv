@@ -228,8 +228,8 @@ impl MDNSService {
             return;
         }
 
-        self.stop_client();
-        self.stop_server();
+        // self.stop_client();
+        // self.stop_server();
 
         let mdns = match self.mdns.get() {
             Some(mdns) => mdns,

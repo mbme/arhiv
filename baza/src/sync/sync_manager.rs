@@ -79,7 +79,14 @@ impl SyncManager {
                 Ok(mdns_event) => match mdns_event {
                     MDNSEvent::InstanceDiscovered(peer_info) => {
                         let instance_id = InstanceId::from_string(peer_info.instance_name);
-                        let address = format!("http://{}:{}", peer_info.ips[0], peer_info.port);
+
+                        let ip_address = peer_info.ips[0];
+
+                        let address = if ip_address.is_ipv6() {
+                            format!("http://[{ip_address}]:{}", peer_info.port)
+                        } else {
+                            format!("http://{ip_address}:{}", peer_info.port)
+                        };
 
                         match SyncAgent::new_in_network(
                             instance_id.clone(),
@@ -88,7 +95,7 @@ impl SyncManager {
                         ) {
                             Ok(agent) => {
                                 agents.lock().expect("must lock").push(agent);
-                                log::debug!("Added network agent {instance_id} {address}");
+                                log::info!("Added network agent {instance_id} {address}");
 
                                 baza_events
                                     .send(BazaEvent::PeerDiscovered {})
@@ -109,7 +116,7 @@ impl SyncManager {
                             .expect("must lock")
                             .retain(|agent| agent.get_instance_id() != &instance_id);
 
-                        log::debug!("Removed network agent {instance_id}");
+                        log::info!("Removed network agent {instance_id}");
                     }
                 },
                 Err(err) => log::error!("Failed to receive MDNS event: {err}"),

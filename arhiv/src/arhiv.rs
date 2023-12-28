@@ -26,7 +26,7 @@ pub struct Arhiv {
     pub baza: Arc<Baza>,
     auto_commit_task: Option<AutoCommitTask>,
     auto_sync_task: Option<AutoSyncTask>,
-    pub(crate) sync_manager: Arc<SyncManager>,
+    sync_manager: Arc<SyncManager>,
 }
 
 impl Arhiv {
@@ -96,6 +96,14 @@ impl Arhiv {
         Ok(())
     }
 
+    pub(crate) fn start_mdns_server(&self) -> Result<()> {
+        let port = self.baza.get_connection()?.get_server_port()?;
+
+        self.sync_manager.start_mdns_server(port)?;
+
+        Ok(())
+    }
+
     pub async fn get_status(&self) -> Result<Status> {
         let conn = self.baza.get_connection()?;
 
@@ -113,9 +121,13 @@ impl Arhiv {
         self.sync_manager.count_agents() > 0
     }
 
-    pub fn stop(self) {
-        if let Some(auto_commit_task) = self.auto_commit_task {
+    pub fn stop(mut self) {
+        if let Some(auto_commit_task) = self.auto_commit_task.take() {
             auto_commit_task.abort();
+        }
+
+        if let Some(auto_sync_task) = self.auto_sync_task.take() {
+            auto_sync_task.abort();
         }
 
         Arc::into_inner(self.sync_manager)

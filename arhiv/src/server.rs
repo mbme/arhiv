@@ -18,7 +18,7 @@ impl ArhivServer {
 
         let port = arhiv.baza.get_connection()?.get_server_port()?;
 
-        arhiv.sync_manager.start_mdns_server(port)?;
+        arhiv.start_mdns_server()?;
 
         let health_router = build_health_router();
         let rpc_router = build_rpc_router();

@@ -295,3 +295,10 @@ export function fileAsBase64(file: File) {
     reader.readAsDataURL(file);
   });
 }
+
+export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[] {
+  const clone = [...items];
+  clone.sort(compareFn);
+
+  return clone;
+}

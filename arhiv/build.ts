@@ -11,7 +11,7 @@ const options: BuildOptions = {
   },
   outdir: './public',
 
-  target: ['es2020'],
+  target: ['es2019'],
   bundle: true,
   minify: isProduction,
   sourcemap: true,

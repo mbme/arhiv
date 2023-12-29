@@ -2,11 +2,11 @@
   "compilerOptions": {
     "incremental": true,
     "esModuleInterop": true,
-    "lib": ["esnext", "dom", "dom.iterable"],
+    "lib": ["es2019", "dom", "dom.iterable"],
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "module": "ESNext",
-    "target": "esnext",
+    "target": "es2019",
 
     "sourceMap": true,
 

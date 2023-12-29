@@ -10,7 +10,7 @@ import {
   TaskData,
   TaskStatus,
 } from 'dto';
-import { Callback, cx } from 'utils';
+import { Callback, cx, toSorted } from 'utils';
 import { useShallowMemo } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { RPC } from 'utils/rpc';
@@ -158,7 +158,7 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const projectData = document.data as ProjectData;
   const orderedTaskIds = projectData.tasks;
-  const sortedTaskIds = useMemo(() => orderedTaskIds.toSorted(), [orderedTaskIds]);
+  const sortedTaskIds = useMemo(() => toSorted(orderedTaskIds), [orderedTaskIds]);
 
   const ids = useShallowMemo(sortedTaskIds);
 
@@ -169,7 +169,8 @@ export function ProjectCard({
     ids,
   });
 
-  const orderedTasks = (documents as ListDocumentsResult<TaskData>[]).toSorted(
+  const orderedTasks = toSorted(
+    documents as ListDocumentsResult<TaskData>[],
     (a, b) => orderedTaskIds.indexOf(a.id) - orderedTaskIds.indexOf(b.id),
   );
 

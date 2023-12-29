@@ -8,7 +8,7 @@ await esbuild.build({
   entryPoints: ['./src/browser-scraper.ts'],
   outfile: './dist/browser-scraper.js',
 
-  target: ['es2020'],
+  target: ['es2019'],
   bundle: true,
   minify: false, // ease of debugging is more important than size
   sourcemap: true,

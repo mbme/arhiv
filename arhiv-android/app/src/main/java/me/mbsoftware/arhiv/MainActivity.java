@@ -1,11 +1,12 @@
 package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
-import android.content.pm.ApplicationInfo;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 class ArhivServer {
   public static native String startServer(String filesDir);
@@ -27,22 +28,27 @@ public class MainActivity extends AppCompatActivity {
 
     String url = ArhivServer.startServer(this.getFilesDir().getAbsolutePath());
 
-    // Find the WebView by its unique ID
     WebView webView = findViewById(R.id.web);
+    webView.getSettings().setJavaScriptEnabled(true);
+    webView.getSettings().setDomStorageEnabled(true);
+
+    SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+    swipeRefreshLayout.setOnRefreshListener(webView::reload);
+
+    webView.setWebViewClient(new WebViewClient() {
+      @Override
+      public void onPageFinished(WebView view, String url) {
+        super.onPageFinished(view, url);
+        swipeRefreshLayout.setRefreshing(false);
+      }
+    });
 
     // loading url in the WebView.
     webView.loadUrl(url);
 
-    // this will enable the javascript.
-    webView.getSettings().setJavaScriptEnabled(true);
-
     // enable WebView debugging if app is debuggable
-   if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)
-    { WebView.setWebContentsDebuggingEnabled(true); }
-
-    // WebViewClient allows you to handle
-    // onPageFinished and override Url loading.
-    webView.setWebViewClient(new WebViewClient());
+    if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)
+      { WebView.setWebContentsDebuggingEnabled(true); }
   }
 
   @Override

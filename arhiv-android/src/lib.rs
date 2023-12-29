@@ -1,6 +1,6 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Duration};
 
-use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
     objects::{JClass, JString},
     sys::jstring,
@@ -13,8 +13,8 @@ use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
 use rs_utils::{dir_exists, log};
 
 lazy_static! {
-    static ref RUNTIME: Runtime = Runtime::new().expect("failed to create tokio runtime");
-    static ref ARHIV: Mutex<Option<ArhivServer>> = Mutex::new(None);
+    static ref RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
+    static ref ARHIV_SERVER: Mutex<Option<ArhivServer>> = Mutex::new(None);
 }
 
 fn get_root_dir(files_dir: &str) -> String {
@@ -26,15 +26,22 @@ fn get_root_dir(files_dir: &str) -> String {
 }
 
 fn start_server(files_dir: &str) -> Result<String> {
-    let mut server = ARHIV
+    let mut runtime_lock = RUNTIME
         .lock()
-        .map_err(|err| anyhow!("Failed to lock ARHIV: {err}"))?;
-    ensure!(server.is_none(), "server already started");
+        .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
+    ensure!(runtime_lock.is_none(), "Runtime already started");
+
+    let mut server_lock = ARHIV_SERVER
+        .lock()
+        .map_err(|err| anyhow!("Failed to lock ARHIV_SERVER: {err}"))?;
+    ensure!(server_lock.is_none(), "Server already started");
 
     let root_dir = get_root_dir(files_dir);
     let root_dir_exists = dir_exists(&root_dir)?;
 
-    let _guard = RUNTIME.enter();
+    let runtime = Runtime::new().context("failed to create tokio runtime")?;
+
+    let _guard = runtime.enter();
 
     let arhiv = {
         if cfg!(test) {
@@ -64,25 +71,30 @@ fn start_server(files_dir: &str) -> Result<String> {
         }
     };
 
-    let instance = ArhivServer::start(arhiv)?;
-    let ui_url = instance.get_ui_url();
-    *server = Some(instance);
+    let server = ArhivServer::start(arhiv)?;
+    let ui_url = server.get_ui_url();
+
+    *server_lock = Some(server);
+    *runtime_lock = Some(runtime);
 
     Ok(ui_url)
 }
 
 fn stop_server() -> Result<()> {
-    let mut lock = ARHIV
+    let mut server_lock = ARHIV_SERVER
         .lock()
-        .map_err(|err| anyhow!("Failed to lock ARHIV: {err}"))?;
+        .map_err(|err| anyhow!("Failed to lock ARHIV_SERVER: {err}"))?;
 
-    let server = lock.take();
+    let server = server_lock.take().context("Server is missing")?;
 
-    if let Some(server) = server {
-        RUNTIME.block_on(server.stop())?;
-    } else {
-        bail!("Server not started");
-    }
+    let mut runtime_lock = RUNTIME
+        .lock()
+        .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
+
+    let runtime = runtime_lock.take().context("Runtime is missing")?;
+
+    runtime.block_on(server.stop())?;
+    runtime.shutdown_timeout(Duration::from_millis(500));
 
     Ok(())
 }

@@ -167,7 +167,11 @@ impl HttpServer {
                     }
                 })
                 .await
-                .context("HTTP Server failed to start")
+                .context("HTTP Server failed to start")?;
+
+            log::info!("HTTP Server exited");
+
+            Ok(())
         });
 
         log::info!("HTTP Server: started on {}", address);

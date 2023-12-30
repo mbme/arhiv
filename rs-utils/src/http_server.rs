@@ -150,15 +150,15 @@ impl HttpServer {
                 .with_graceful_shutdown(async {
                     tokio::select! {
                         _ = signal::ctrl_c() => {
-                            log::info!("got Ctrl-C");
+                            log::info!("HTTP Server: got Ctrl-C");
                         }
 
                         _ = sigint.recv() => {
-                            log::info!("got SIGINT");
+                            log::info!("HTTP Server: got SIGINT");
                         }
 
                         _ = sigterm.recv() => {
-                            log::info!("got SIGTERM");
+                            log::info!("HTTP Server: got SIGTERM");
                         }
 
                         Ok(_) = shutdown_receiver => {

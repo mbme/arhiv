@@ -63,9 +63,7 @@ impl Arhiv {
             arhiv.init_auto_sync_service()?;
         }
         if options.discover_peers {
-            arhiv
-                .sync_manager
-                .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
+            arhiv.init_mdns_client_service()?;
         }
 
         Ok(arhiv)
@@ -100,6 +98,15 @@ impl Arhiv {
         Ok(())
     }
 
+    fn init_mdns_client_service(&mut self) -> Result<()> {
+        let task = self
+            .sync_manager
+            .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
+        self.mdns_client_task = Some(task);
+
+        Ok(())
+    }
+
     pub(crate) fn start_mdns_server(&self) -> Result<()> {
         let port = self.baza.get_connection()?.get_server_port()?;
 
@@ -126,12 +133,12 @@ impl Arhiv {
     }
 
     pub fn stop(mut self) {
-        if let Some(auto_commit_task) = self.auto_commit_task.take() {
-            auto_commit_task.abort();
-        }
-
         if let Some(mdns_client_task) = self.mdns_client_task.take() {
             mdns_client_task.abort();
+        }
+
+        if let Some(auto_commit_task) = self.auto_commit_task.take() {
+            auto_commit_task.abort();
         }
 
         if let Some(auto_sync_task) = self.auto_sync_task.take() {

@@ -88,3 +88,9 @@ impl Default for ScheduledTask {
         ScheduledTask::new()
     }
 }
+
+impl Drop for ScheduledTask {
+    fn drop(&mut self) {
+        self.cancel();
+    }
+}

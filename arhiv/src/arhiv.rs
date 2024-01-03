@@ -147,8 +147,6 @@ impl Arhiv {
 
         std::thread::sleep(std::time::Duration::from_millis(100));
 
-        Arc::into_inner(self.sync_manager)
-            .expect("failed to unwrap a SyncManager instance")
-            .stop();
+        self.sync_manager.stop();
     }
 }

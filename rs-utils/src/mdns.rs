@@ -21,7 +21,6 @@ pub struct MDNSService {
     mdns: OnceLock<ServiceDaemon>,
     service_name: String,
     instance_name: InstanceName,
-    started: bool,
     server_fullname: Mutex<Option<String>>,
     client_started: Mutex<bool>,
     events: (broadcast::Sender<MDNSEvent>, broadcast::Receiver<MDNSEvent>),
@@ -41,7 +40,6 @@ impl MDNSService {
             mdns: Default::default(),
             service_name,
             instance_name,
-            started: true,
             client_started: Mutex::new(false),
             server_fullname: Mutex::new(None),
             events: broadcast::channel(42),
@@ -62,8 +60,6 @@ impl MDNSService {
     }
 
     pub fn start_server(&self, port: u16) -> Result<()> {
-        ensure!(self.started, "MDNS service must be started");
-
         let mut server_fullname = self.server_fullname.try_lock().expect("must lock");
         ensure!(server_fullname.is_none(), "MDNS server already started");
 
@@ -124,8 +120,6 @@ impl MDNSService {
     }
 
     pub fn start_client(&self) -> Result<()> {
-        ensure!(self.started, "MDNS service must be started");
-
         let mut client_started = self.client_started.try_lock().expect("must lock");
         ensure!(!*client_started, "MDNS client already started");
 
@@ -223,11 +217,7 @@ impl MDNSService {
         *client_started = false;
     }
 
-    pub fn shutdown(&mut self) {
-        if !self.started {
-            return;
-        }
-
+    pub fn shutdown(&self) {
         // self.stop_client();
         // self.stop_server();
 
@@ -242,7 +232,6 @@ impl MDNSService {
             match mdns.shutdown() {
                 Ok(res) => {
                     let status = res.recv().expect("must read shutdown status");
-                    self.started = false;
                     log::debug!("Stopped MDNS service {}: {:?}", self.service_name, status);
                     return;
                 }

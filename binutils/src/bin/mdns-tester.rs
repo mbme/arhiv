@@ -13,7 +13,7 @@ pub async fn main() -> Result<()> {
 
     let instance_name = generate_random_id();
 
-    let mut service = MDNSService::new("_mdns-tester", instance_name)?;
+    let service = MDNSService::new("_mdns-tester", instance_name)?;
     service.start_client()?;
 
     let mut rx = service.get_events();

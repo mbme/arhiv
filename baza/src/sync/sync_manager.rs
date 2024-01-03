@@ -345,7 +345,7 @@ impl SyncManager {
         Ok(task)
     }
 
-    pub fn stop(mut self) {
+    pub fn stop(&self) {
         self.mdns_service.shutdown();
     }
 }

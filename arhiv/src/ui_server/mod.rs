@@ -3,15 +3,15 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use axum::{
     extract::{Path, State},
-    headers,
     http::HeaderMap,
     response::{
         sse::{Event, KeepAlive},
         Html, IntoResponse, Sse,
     },
     routing::{get, post},
-    Json, Router, TypedHeader,
+    Json, Router,
 };
+use axum_extra::{headers, TypedHeader};
 use serde_json::Value;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 

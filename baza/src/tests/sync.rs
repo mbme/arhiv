@@ -13,10 +13,12 @@ use crate::{
     Baza,
 };
 
-fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
+async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
     let router = build_rpc_router().with_state(baza);
 
     HttpServer::start(router, 0)
+        .await
+        .expect("must start rpc server")
 }
 
 #[test]
@@ -305,7 +307,7 @@ async fn test_sync_network_agent() -> Result<()> {
 
     let sync_manager0 = SyncManager::new(baza0.clone());
 
-    let server1 = start_rpc_server(baza1.clone());
+    let server1 = start_rpc_server(baza1.clone()).await;
     sync_manager0.add_network_agent(
         baza1.get_connection()?.get_instance_id()?,
         server1.get_url()?.as_str(),

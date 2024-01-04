@@ -6,17 +6,18 @@ use std::{
 
 use anyhow::{anyhow, ensure, Context, Result};
 use axum::{
-    body::{boxed, Body},
-    headers::{self, HeaderMapExt},
-    http::{header, HeaderMap, HeaderValue, Request, StatusCode},
+    body::{to_bytes, Body},
+    extract::Request,
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
-    Router, Server,
+    Router,
 };
-use hyper::body::to_bytes;
+use axum_extra::headers::{self, HeaderMapExt};
 use reqwest::Client;
 use tokio::{
+    net::TcpListener,
     signal,
     signal::unix::{self, SignalKind},
     sync::oneshot,
@@ -95,10 +96,7 @@ pub async fn check_server_health(server_url: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn logger_middleware<B>(
-    request: Request<B>,
-    next: Next<B>,
-) -> Result<Response, StatusCode> {
+pub async fn logger_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
     let method = request.method().to_string();
     let uri = request.uri().path().to_string();
 
@@ -108,7 +106,7 @@ pub async fn logger_middleware<B>(
     if status.is_client_error() || status.is_server_error() {
         let (parts, body) = response.into_parts();
 
-        let bytes = to_bytes(body)
+        let bytes = to_bytes(body, 10_000_000)
             .await
             .context("failed to convert body to bytes")
             .unwrap_or_default();
@@ -116,7 +114,7 @@ pub async fn logger_middleware<B>(
         let body_str = String::from_utf8_lossy(&bytes);
         log::warn!("{method} {uri} -> {status}:\n{body_str}");
 
-        Ok(Response::from_parts(parts, boxed(Body::from(bytes))))
+        Ok(Response::from_parts(parts, Body::from(bytes)))
     } else {
         log::debug!("{method} {uri} -> {status}");
         Ok(response)
@@ -130,24 +128,25 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    #[must_use]
-    pub fn start(router: Router, port: u16) -> HttpServer {
-        let router = router.layer(middleware::from_fn(logger_middleware));
-
-        let server = Server::bind(&(std::net::Ipv4Addr::UNSPECIFIED, port).into())
-            .serve(router.into_make_service());
-
-        let address = server.local_addr();
-
+    pub async fn start(router: Router, port: u16) -> Result<HttpServer> {
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+
+        let listener = TcpListener::bind((std::net::Ipv4Addr::UNSPECIFIED, port))
+            .await
+            .context("failed to bind TCP listener")?;
+        let address = listener.local_addr()?;
 
         // Spawn the server into a runtime
         let join_handle = tokio::spawn(async {
+            let router = router.layer(middleware::from_fn(logger_middleware));
+
+            let server = axum::serve(listener, router.into_make_service());
+
             let mut sigint = unix::signal(SignalKind::interrupt())?;
             let mut sigterm = unix::signal(SignalKind::terminate())?;
 
             server
-                .with_graceful_shutdown(async {
+                .with_graceful_shutdown(async move {
                     tokio::select! {
                         _ = signal::ctrl_c() => {
                             log::info!("HTTP Server: got Ctrl-C");
@@ -176,11 +175,11 @@ impl HttpServer {
 
         log::info!("HTTP Server: started on {}", address);
 
-        HttpServer {
+        Ok(HttpServer {
             join_handle,
             shutdown_sender,
             address,
-        }
+        })
     }
 
     #[must_use]

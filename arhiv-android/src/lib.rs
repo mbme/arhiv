@@ -73,7 +73,7 @@ fn start_server(files_dir: &str) -> Result<String> {
         }
     };
 
-    let server = ArhivServer::start(arhiv)?;
+    let server = runtime.block_on(ArhivServer::start(arhiv))?;
     let ui_url = server.get_ui_url();
 
     *server_lock = Some(server);

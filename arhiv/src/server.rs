@@ -13,7 +13,7 @@ pub struct ArhivServer {
 }
 
 impl ArhivServer {
-    pub fn start(arhiv: Arhiv) -> Result<Self> {
+    pub async fn start(arhiv: Arhiv) -> Result<Self> {
         let arhiv = Arc::new(arhiv);
 
         let health_router = build_health_router();
@@ -26,7 +26,7 @@ impl ArhivServer {
             .merge(health_router);
 
         let port = arhiv.baza.get_connection()?.get_server_port()?;
-        let server = HttpServer::start(router, port);
+        let server = HttpServer::start(router, port).await?;
 
         Ok(ArhivServer { arhiv, server })
     }

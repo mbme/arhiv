@@ -1,6 +1,6 @@
 use anyhow::{bail, ensure, Context, Result};
 use axum::{
-    body::StreamBody,
+    body::Body,
     response::{IntoResponse, Response},
 };
 use lazy_static::lazy_static;
@@ -190,11 +190,10 @@ pub async fn create_body_from_file(
         );
 
         let stream = FramedRead::new(file.take(limit), BytesCodec::new());
-
-        StreamBody::new(stream).into_response()
+        Body::from_stream(stream).into_response()
     } else {
         let stream = FramedRead::new(file, BytesCodec::new());
-        StreamBody::new(stream).into_response()
+        Body::from_stream(stream).into_response()
     };
 
     Ok(body)
@@ -204,7 +203,7 @@ pub async fn create_body_from_file(
 mod tests {
     use std::fs;
 
-    use hyper::body::to_bytes;
+    use axum::body::to_bytes;
 
     use crate::workspace_relpath;
 
@@ -300,22 +299,22 @@ mod tests {
         let orig_data = fs::read(&file_path)?;
 
         {
-            let body = create_body_from_file(&file_path, 0, None).await?;
-            let data = to_bytes(body).await?;
+            let response = create_body_from_file(&file_path, 0, None).await?;
+            let data = to_bytes(response.into_body(), 999999999999).await?;
 
             assert_eq!(&orig_data, &data);
         }
 
         {
-            let body = create_body_from_file(&file_path, 10, None).await?;
-            let data = to_bytes(body).await?;
+            let response = create_body_from_file(&file_path, 10, None).await?;
+            let data = to_bytes(response.into_body(), 99999999999).await?;
 
             assert_eq!(&orig_data[10..], &data);
         }
 
         {
-            let body = create_body_from_file(&file_path, 10, Some(10)).await?;
-            let data = to_bytes(body).await?;
+            let response = create_body_from_file(&file_path, 10, Some(10)).await?;
+            let data = to_bytes(response.into_body(), 999999999999).await?;
 
             assert_eq!(data.len(), 10);
             assert_eq!(&orig_data[10..20], &data);

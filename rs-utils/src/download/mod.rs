@@ -4,10 +4,6 @@ use std::time::Duration;
 
 use anyhow::{bail, ensure, Context, Result};
 use futures::stream::TryStreamExt;
-use hyper::{
-    header::{CONTENT_DISPOSITION, CONTENT_RANGE, CONTENT_TYPE, RANGE},
-    StatusCode,
-};
 use reqwest::Response;
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
@@ -99,7 +95,7 @@ impl Download {
             .get(self.url.clone());
 
         if start_pos > 0 {
-            request = request.header(RANGE, format!("bytes={start_pos}-"));
+            request = request.header(reqwest::header::RANGE, format!("bytes={start_pos}-"));
         }
 
         request.send().await.context("failed to send request")
@@ -136,7 +132,7 @@ impl Download {
         log::debug!("HTTP response status: {}", &status);
 
         match status {
-            StatusCode::OK => {
+            reqwest::StatusCode::OK => {
                 if start_pos > 0 {
                     log::warn!("Sent Partial HTTP request but server returned regular response");
 
@@ -144,7 +140,7 @@ impl Download {
                 }
             }
 
-            StatusCode::PARTIAL_CONTENT => {
+            reqwest::StatusCode::PARTIAL_CONTENT => {
                 if start_pos == 0 {
                     log::warn!("Sent regular HTTP request but server returned Partial response");
                 }
@@ -156,7 +152,7 @@ impl Download {
 
         let mut expected_file_size = response.content_length();
 
-        if let Some(content_range) = response.headers().get(CONTENT_RANGE) {
+        if let Some(content_range) = response.headers().get(reqwest::header::CONTENT_RANGE) {
             let content_range = content_range.to_str()?;
 
             let (start, end, size) = parse_content_range_header(content_range)?;
@@ -178,22 +174,24 @@ impl Download {
             expected_file_size = Some(size);
         }
 
-        let content_type = if let Some(content_type) = response.headers().get(CONTENT_TYPE) {
-            let content_type = content_type.to_str()?;
+        let content_type =
+            if let Some(content_type) = response.headers().get(reqwest::header::CONTENT_TYPE) {
+                let content_type = content_type.to_str()?;
 
-            Some(parse_content_type_header(content_type)?.0)
-        } else {
-            None
-        };
-
-        let attachment_file_name =
-            if let Some(content_disposition) = response.headers().get(CONTENT_DISPOSITION) {
-                let content_disposition = content_disposition.to_str()?;
-
-                parse_content_disposition_header(content_disposition)?
+                Some(parse_content_type_header(content_type)?.0)
             } else {
                 None
             };
+
+        let attachment_file_name = if let Some(content_disposition) =
+            response.headers().get(reqwest::header::CONTENT_DISPOSITION)
+        {
+            let content_disposition = content_disposition.to_str()?;
+
+            parse_content_disposition_header(content_disposition)?
+        } else {
+            None
+        };
 
         let mut stream = response
             .bytes_stream()

@@ -3,9 +3,11 @@ use std::str::FromStr;
 use anyhow::Context;
 use axum::{
     extract::Path,
-    headers::{self, ETag, HeaderMapExt},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
+};
+use axum_extra::{
+    headers::{self, HeaderMapExt},
     TypedHeader,
 };
 use rust_embed::RustEmbed;
@@ -31,7 +33,7 @@ pub async fn public_assets_handler(
     let hash = embedded_file.metadata.sha256_hash();
     let hash = bytes_to_hex_string(&hash);
 
-    let etag = ETag::from_str(&format!("\"{hash}\"")).context("failed to parse ETag")?;
+    let etag = headers::ETag::from_str(&format!("\"{hash}\"")).context("failed to parse ETag")?;
 
     if let Some(if_none_match) = if_none_match {
         // TODO ensure it works

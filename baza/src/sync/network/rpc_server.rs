@@ -2,12 +2,15 @@ use std::{ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
-    extract::{Path, State, TypedHeader},
-    headers::{self, HeaderMapExt},
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
+};
+use axum_extra::{
+    headers::{self, HeaderMapExt},
+    TypedHeader,
 };
 
 use rs_utils::{
@@ -90,7 +93,7 @@ pub async fn respond_with_blob(
 
     let ranges = range
         .as_ref()
-        .map(|range| range.iter().collect::<Vec<_>>())
+        .map(|range| range.satisfiable_ranges(size).collect::<Vec<_>>())
         .unwrap_or_default();
     if ranges.len() == 1 {
         let (start_pos, end_pos) = ranges[0];

@@ -415,7 +415,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 },
             )?;
 
-            let server = ArhivServer::start(arhiv)?;
+            let server = ArhivServer::start(arhiv).await?;
 
             server.join().await?;
         }

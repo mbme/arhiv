@@ -3,10 +3,10 @@ use std::{str::FromStr, sync::Arc};
 use anyhow::Context;
 use axum::{
     extract::{Path, Query, State},
-    headers::{self, HeaderMapExt},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
+use axum_extra::headers::{self, HeaderMapExt};
 use serde::Deserialize;
 
 use baza::entities::BLOBId;

@@ -36,6 +36,7 @@ fslock = "0.2.1"
 
 reqwest.workspace = true
 axum.workspace = true
+axum-extra.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

@@ -169,7 +169,7 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
 #[tokio::test]
 async fn test_sync() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    let mut sync_manager0 = SyncManager::new(baza0.clone())?;
+    let mut sync_manager0 = SyncManager::new(baza0.clone());
 
     {
         let mut tx = baza0.get_tx()?;
@@ -208,7 +208,7 @@ async fn test_sync() -> Result<()> {
 #[tokio::test]
 async fn test_sync_fails_on_uncommitted_changes() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    let sync_manager0 = SyncManager::new(baza0.clone())?;
+    let sync_manager0 = SyncManager::new(baza0.clone());
 
     {
         let mut tx = baza0.get_tx()?;
@@ -250,7 +250,7 @@ async fn test_sync_blobs() -> Result<()> {
         blob_id
     };
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone())?;
+    let mut sync_manager0 = SyncManager::new(baza0.clone());
     sync_manager0.add_in_mem_agent(baza1)?;
 
     assert!(sync_manager0.sync().await?);
@@ -303,7 +303,7 @@ async fn test_sync_network_agent() -> Result<()> {
         blob_id
     };
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone())?;
+    let sync_manager0 = SyncManager::new(baza0.clone());
 
     let server1 = start_rpc_server(baza1.clone());
     sync_manager0.add_network_agent(
@@ -333,7 +333,7 @@ async fn test_auto_sync_on_commit() -> Result<()> {
     let baza1 = Arc::new(Baza::new_test_baza());
     baza1.add_document(Id::new(), json!({ "0": 3, "1": 2 }))?;
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone())?;
+    let mut sync_manager0 = SyncManager::new(baza0.clone());
     sync_manager0.add_in_mem_agent(baza1.clone())?;
     let sync_manager0 = Arc::new(sync_manager0);
 

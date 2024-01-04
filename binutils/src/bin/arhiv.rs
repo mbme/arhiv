@@ -1,10 +1,11 @@
-use std::{env, process};
+use std::{env, process, time::Duration};
 
 use anyhow::{Context, Result};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
 use clap_complete::{generate, Shell};
+use tokio::time::sleep;
 
 use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
 use baza::entities::{Document, DocumentClass, DocumentData, Id};
@@ -272,6 +273,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
+
+            let mdns_discovery_timeout_s = 7;
+            log::info!(
+                    "waiting {mdns_discovery_timeout_s}s until initial MDNS client discovery is complete"
+                );
+            sleep(Duration::from_secs(mdns_discovery_timeout_s)).await;
+
             arhiv.sync().await?;
         }
         CLICommand::Get { id } => {

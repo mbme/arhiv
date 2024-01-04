@@ -1,9 +1,9 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use anyhow::{ensure, Result};
 
 use baza::{
-    sync::{AutoSyncTask, MDNSClientTask, SyncManager},
+    sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
 use rs_utils::log;
@@ -12,8 +12,6 @@ use crate::{
     config::ArhivConfigExt, data_migrations::get_data_migrations, definitions::get_standard_schema,
     Status,
 };
-
-const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
 
 #[derive(Default)]
 pub struct ArhivOptions {
@@ -29,6 +27,7 @@ pub struct Arhiv {
     auto_sync_task: Option<AutoSyncTask>,
     mdns_client_task: Option<MDNSClientTask>,
     sync_manager: Arc<SyncManager>,
+    mdns_discovery_service: MDNSDiscoveryService,
 }
 
 impl Arhiv {
@@ -47,8 +46,10 @@ impl Arhiv {
         })?;
         let baza = Arc::new(baza);
 
-        let sync_manager = SyncManager::new(baza.clone())?;
+        let sync_manager = SyncManager::new(baza.clone());
         let sync_manager = Arc::new(sync_manager);
+
+        let mdns_discovery_service = MDNSDiscoveryService::new(&baza)?;
 
         let mut arhiv = Arhiv {
             baza,
@@ -56,6 +57,7 @@ impl Arhiv {
             auto_commit_task: None,
             auto_sync_task: None,
             mdns_client_task: None,
+            mdns_discovery_service,
         };
         if options.auto_commit {
             arhiv.init_auto_commit_service()?;
@@ -66,7 +68,7 @@ impl Arhiv {
         }
         if options.mdns_server {
             let port = arhiv.baza.get_connection()?.get_server_port()?;
-            arhiv.sync_manager.start_mdns_server(port)?;
+            arhiv.mdns_discovery_service.start_mdns_server(port)?;
         }
 
         Ok(arhiv)
@@ -103,8 +105,8 @@ impl Arhiv {
 
     fn init_mdns_client_service(&mut self) -> Result<()> {
         let task = self
-            .sync_manager
-            .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
+            .mdns_discovery_service
+            .start_mdns_client(self.sync_manager.clone())?;
         self.mdns_client_task = Some(task);
 
         Ok(())
@@ -141,7 +143,5 @@ impl Arhiv {
         }
 
         std::thread::sleep(std::time::Duration::from_millis(100));
-
-        self.sync_manager.stop();
     }
 }

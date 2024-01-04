@@ -117,7 +117,7 @@ async fn test_lock_blocks_sync() -> Result<()> {
         tx.commit()?;
     }
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone())?;
+    let mut sync_manager0 = SyncManager::new(baza0.clone());
 
     let baza1 = Arc::new(Baza::new_test_baza());
     sync_manager0.add_in_mem_agent(baza1)?;

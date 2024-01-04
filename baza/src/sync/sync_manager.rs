@@ -3,20 +3,12 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{ensure, Context, Result};
-use tokio::{
-    sync::broadcast::Sender,
-    task::JoinHandle,
-    time::{sleep_until, Instant},
-};
+use anyhow::Result;
+use tokio::{sync::broadcast::Sender, task::JoinHandle};
 
-use rs_utils::{
-    log,
-    mdns::{MDNSEvent, MDNSService},
-    now, ScheduledTask,
-};
+use rs_utils::{log, now, ScheduledTask};
 
-use crate::{entities::InstanceId, Baza, BazaEvent, DEBUG_MODE};
+use crate::{entities::InstanceId, Baza, BazaEvent};
 
 use super::{Ping, SyncAgent};
 
@@ -25,118 +17,20 @@ pub type MDNSClientTask = JoinHandle<()>;
 
 pub struct SyncManager {
     baza: Arc<Baza>,
-    mdns_service: MDNSService,
     agents: Arc<Mutex<Vec<SyncAgent>>>,
-    mdns_client_discovery_complete: Mutex<Option<Instant>>,
     sync_in_progress: Arc<AtomicBool>,
 }
 
 impl SyncManager {
-    pub fn new(baza: Arc<Baza>) -> Result<Self> {
-        let instance_id = baza
-            .get_connection()
-            .and_then(|conn| conn.get_instance_id())
-            .context("failed to read instance_id")?;
-
-        let app_name = baza.get_name();
-
-        let mut service_name = format!("_{app_name}-baza");
-        if DEBUG_MODE {
-            service_name.push_str("-debug");
-        }
-
-        let mdns_service = MDNSService::new(service_name, instance_id)?;
-
-        Ok(SyncManager {
+    pub fn new(baza: Arc<Baza>) -> Self {
+        SyncManager {
             baza,
-            mdns_service,
-            mdns_client_discovery_complete: Default::default(),
             agents: Default::default(),
             sync_in_progress: Default::default(),
-        })
+        }
     }
 
-    pub fn start_mdns_client(
-        &self,
-        initial_discovery_duration: Duration,
-    ) -> Result<MDNSClientTask> {
-        let mut mdns_client_discovery_complete = self
-            .mdns_client_discovery_complete
-            .lock()
-            .expect("must lock");
-
-        ensure!(
-            mdns_client_discovery_complete.is_none(),
-            "MDNS client already started"
-        );
-
-        mdns_client_discovery_complete.replace(Instant::now() + initial_discovery_duration);
-
-        self.mdns_service.start_client()?;
-
-        let mut mdns_events = self.mdns_service.get_events();
-        let baza_events = self.baza.get_events_sender();
-        let agents = self.agents.clone();
-        let downloads_dir = self.baza.get_path_manager().downloads_dir.clone();
-        let task = tokio::spawn(async move {
-            match mdns_events.recv().await {
-                Ok(mdns_event) => match mdns_event {
-                    MDNSEvent::InstanceDiscovered(peer_info) => {
-                        let instance_id = InstanceId::from_string(peer_info.instance_name);
-
-                        let ip_address = peer_info.ips[0];
-
-                        let address = if ip_address.is_ipv6() {
-                            format!("http://[{ip_address}]:{}", peer_info.port)
-                        } else {
-                            format!("http://{ip_address}:{}", peer_info.port)
-                        };
-
-                        match SyncAgent::new_in_network(
-                            instance_id.clone(),
-                            &address,
-                            &downloads_dir,
-                        ) {
-                            Ok(agent) => {
-                                agents.lock().expect("must lock").push(agent);
-                                log::info!("Added network agent {instance_id} {address}");
-
-                                baza_events
-                                    .send(BazaEvent::PeerDiscovered {})
-                                    .expect("failed to publish baza event");
-                            }
-                            Err(err) => {
-                                log::error!(
-                                    "Failed to add network agent {instance_id} {address}: {err}"
-                                );
-                            }
-                        }
-                    }
-                    MDNSEvent::InstanceDisappeared(instance_name) => {
-                        let instance_id = InstanceId::from_string(instance_name);
-
-                        agents
-                            .lock()
-                            .expect("must lock")
-                            .retain(|agent| agent.get_instance_id() != &instance_id);
-
-                        log::info!("Removed network agent {instance_id}");
-                    }
-                },
-                Err(err) => log::error!("Failed to receive MDNS event: {err}"),
-            }
-
-            log::debug!("MDNS client task ended");
-        });
-
-        Ok(task)
-    }
-
-    pub fn start_mdns_server(&self, port: u16) -> Result<()> {
-        self.mdns_service.start_server(port)
-    }
-
-    fn add_agent(&mut self, agent: SyncAgent) -> Result<()> {
+    fn add_agent(&self, agent: SyncAgent) -> Result<()> {
         self.agents.lock().expect("must lock").push(agent);
 
         self.baza.publish_event(BazaEvent::PeerDiscovered {})?;
@@ -144,14 +38,16 @@ impl SyncManager {
         Ok(())
     }
 
-    pub fn add_network_agent(&mut self, instance_id: InstanceId, url: &str) -> Result<()> {
+    pub fn add_network_agent(&self, instance_id: InstanceId, url: &str) -> Result<()> {
         let agent = SyncAgent::new_in_network(
-            instance_id,
+            instance_id.clone(),
             url,
             &self.baza.get_path_manager().downloads_dir,
         )?;
 
         self.add_agent(agent)?;
+
+        log::info!("Added network agent {instance_id} {url}");
 
         Ok(())
     }
@@ -166,6 +62,15 @@ impl SyncManager {
 
     pub fn count_agents(&self) -> usize {
         self.agents.lock().expect("must lock").len()
+    }
+
+    pub fn remove_agent(&self, instance_id: &InstanceId) {
+        self.agents
+            .lock()
+            .expect("must lock")
+            .retain(|agent| agent.get_instance_id() != instance_id);
+
+        log::info!("Removed network agent {instance_id}");
     }
 
     async fn collect_pings(&self, agents: Vec<SyncAgent>) -> Result<Vec<(SyncAgent, Ping)>> {
@@ -219,21 +124,6 @@ impl SyncManager {
             if !locks.is_empty() {
                 log::warn!("There are {} pending locks", locks.len());
                 return Ok(false);
-            }
-        }
-
-        let mdns_client_discovery_complete = *self
-            .mdns_client_discovery_complete
-            .lock()
-            .expect("must lock");
-        if let Some(mdns_client_discovery_complete) = mdns_client_discovery_complete {
-            let time_left = mdns_client_discovery_complete - Instant::now();
-            if time_left.as_millis() > 0 {
-                log::info!(
-                    "waiting {}s until initial MDNS client discovery is complete",
-                    time_left.as_secs()
-                );
-                sleep_until(mdns_client_discovery_complete).await;
             }
         }
 
@@ -343,10 +233,6 @@ impl SyncManager {
         );
 
         Ok(task)
-    }
-
-    pub fn stop(&self) {
-        // self.mdns_service.shutdown();
     }
 }
 

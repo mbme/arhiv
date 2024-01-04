@@ -17,7 +17,6 @@ production-mode = ["arhiv/production-mode"]
 [dependencies]
 anyhow.workspace = true
 tokio.workspace = true
-openssl = { version = "*", features = ["vendored"] }
 jni = "0.21"
 lazy_static.workspace = true
 
@@ -26,3 +25,6 @@ rs-utils = { path = "../rs-utils" }
 
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }
+
+[target.'cfg(target_os="android")'.dependencies]
+openssl = { version = "*", features = ["vendored"] }

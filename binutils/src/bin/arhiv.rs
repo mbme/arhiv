@@ -397,6 +397,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 ArhivOptions {
                     auto_commit: true,
                     discover_peers: true,
+                    mdns_server: true,
                     ..Default::default()
                 },
             )?;

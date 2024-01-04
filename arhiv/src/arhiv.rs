@@ -19,6 +19,7 @@ const MDNS_PEER_DISCOVERY_DURATION: Duration = Duration::from_secs(8);
 pub struct ArhivOptions {
     pub create: bool,
     pub discover_peers: bool,
+    pub mdns_server: bool,
     pub auto_commit: bool,
 }
 
@@ -61,9 +62,11 @@ impl Arhiv {
         }
         if options.discover_peers {
             arhiv.init_auto_sync_service()?;
-        }
-        if options.discover_peers {
             arhiv.init_mdns_client_service()?;
+        }
+        if options.mdns_server {
+            let port = arhiv.baza.get_connection()?.get_server_port()?;
+            arhiv.sync_manager.start_mdns_server(port)?;
         }
 
         Ok(arhiv)
@@ -103,14 +106,6 @@ impl Arhiv {
             .sync_manager
             .start_mdns_client(MDNS_PEER_DISCOVERY_DURATION)?;
         self.mdns_client_task = Some(task);
-
-        Ok(())
-    }
-
-    pub(crate) fn start_mdns_server(&self) -> Result<()> {
-        let port = self.baza.get_connection()?.get_server_port()?;
-
-        self.sync_manager.start_mdns_server(port)?;
 
         Ok(())
     }

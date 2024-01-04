@@ -16,10 +16,6 @@ impl ArhivServer {
     pub fn start(arhiv: Arhiv) -> Result<Self> {
         let arhiv = Arc::new(arhiv);
 
-        let port = arhiv.baza.get_connection()?.get_server_port()?;
-
-        arhiv.start_mdns_server()?;
-
         let health_router = build_health_router();
         let rpc_router = build_rpc_router();
         let ui_router = build_ui_router();
@@ -29,6 +25,7 @@ impl ArhivServer {
             .with_state(arhiv.baza.clone())
             .merge(health_router);
 
+        let port = arhiv.baza.get_connection()?.get_server_port()?;
         let server = HttpServer::start(router, port);
 
         Ok(ArhivServer { arhiv, server })

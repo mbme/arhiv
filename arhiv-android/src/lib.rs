@@ -51,6 +51,7 @@ fn start_server(files_dir: &str) -> Result<String> {
                     create: true,
                     auto_commit: false,
                     discover_peers: false,
+                    mdns_server: false,
                 },
             )?;
 
@@ -66,6 +67,7 @@ fn start_server(files_dir: &str) -> Result<String> {
                     create: !root_dir_exists,
                     auto_commit: true,
                     discover_peers: true,
+                    mdns_server: true,
                 },
             )?
         }

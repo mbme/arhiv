@@ -33,7 +33,8 @@ export class YakabooBookScraper extends Scraper<'YakabooBook', YakabooBook> {
       .innerText.substring('Книга '.length) // remove the prefix that Yakaboo adds to all titles
       .trim();
 
-    getEl('.description__btn', 'expand description button').click();
+    // expand description if button is present
+    getEl('.description__btn')?.click();
 
     const description = getEl('.description__content', 'description').innerText;
 

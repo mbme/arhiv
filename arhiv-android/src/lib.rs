@@ -39,7 +39,9 @@ fn start_server(files_dir: &str) -> Result<String> {
     let root_dir = get_root_dir(files_dir);
     let root_dir_exists = dir_exists(&root_dir)?;
 
-    let runtime = Runtime::new().context("failed to create tokio runtime")?;
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder.enable_all();
+    let runtime = builder.build().context("failed to create tokio runtime")?;
 
     let _guard = runtime.enter();
 

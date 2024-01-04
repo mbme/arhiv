@@ -29,7 +29,11 @@ enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init,
     /// One-shot sync without starting a server
-    Sync,
+    Sync {
+        /// Number of seconds to wait for peers before sync
+        #[clap(long, default_value = "8")]
+        peer_discovery_timeout: u8,
+    },
     /// Backup Arhiv data
     Backup {
         /// Directory to store backup.
@@ -263,7 +267,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("Committed {count} staged documents");
         }
-        CLICommand::Sync => {
+        CLICommand::Sync {
+            peer_discovery_timeout,
+        } => {
             let root_dir = find_root_dir()?;
             let arhiv = Arhiv::open(
                 root_dir,
@@ -274,11 +280,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 },
             )?;
 
-            let mdns_discovery_timeout_s = 7;
             log::info!(
-                    "waiting {mdns_discovery_timeout_s}s until initial MDNS client discovery is complete"
-                );
-            sleep(Duration::from_secs(mdns_discovery_timeout_s)).await;
+                "waiting {peer_discovery_timeout}s until initial MDNS client discovery is complete"
+            );
+            sleep(Duration::from_secs(peer_discovery_timeout.into())).await;
 
             arhiv.sync().await?;
         }

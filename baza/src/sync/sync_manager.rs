@@ -346,7 +346,7 @@ impl SyncManager {
     }
 
     pub fn stop(&self) {
-        self.mdns_service.shutdown();
+        // self.mdns_service.shutdown();
     }
 }
 

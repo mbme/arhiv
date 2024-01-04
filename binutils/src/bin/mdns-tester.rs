@@ -38,7 +38,5 @@ pub async fn main() -> Result<()> {
 
     signal::ctrl_c().await.expect("failed to listen for event");
 
-    service.shutdown();
-
     Ok(())
 }

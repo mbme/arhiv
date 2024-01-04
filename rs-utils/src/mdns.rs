@@ -1,8 +1,11 @@
-use std::{net::IpAddr, sync::OnceLock};
+use std::{
+    net::IpAddr,
+    sync::{Mutex, OnceLock},
+};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use mdns_sd::{Error as MDNSError, ServiceDaemon, ServiceEvent, ServiceInfo};
-use tokio::sync::broadcast;
+use tokio::{sync::broadcast, task::JoinHandle};
 
 use crate::get_hostname;
 
@@ -18,6 +21,7 @@ pub struct MDNSService {
     mdns: OnceLock<ServiceDaemon>,
     service_name: String,
     instance_name: InstanceName,
+    events_task: Mutex<Option<JoinHandle<()>>>,
     events: (broadcast::Sender<MDNSEvent>, broadcast::Receiver<MDNSEvent>),
 }
 
@@ -35,6 +39,7 @@ impl MDNSService {
             mdns: Default::default(),
             service_name,
             instance_name,
+            events_task: Default::default(),
             events: broadcast::channel(42),
         })
     }
@@ -86,7 +91,7 @@ impl MDNSService {
         let local_instance_name = self.instance_name.clone();
 
         let events = self.events.0.clone();
-        tokio::spawn(async move {
+        let task = tokio::spawn(async move {
             while let Ok(event) = receiver.recv_async().await {
                 match event {
                     ServiceEvent::ServiceResolved(info) => {
@@ -136,16 +141,28 @@ impl MDNSService {
             }
         });
 
+        let mut events_task = self
+            .events_task
+            .lock()
+            .map_err(|err| anyhow!("Failed to lock .events_task: {err}"))?;
+
+        *events_task = Some(task);
+
         Ok(())
     }
 
-    pub fn shutdown(&self) {
+    fn shutdown(&self) {
         let mdns = match self.mdns.get() {
             Some(mdns) => mdns,
             None => {
                 return;
             }
         };
+
+        let events_task = self.events_task.lock().expect("must lock .events_task");
+        if let Some(events_task) = events_task.as_ref() {
+            events_task.abort();
+        }
 
         loop {
             match mdns.shutdown() {

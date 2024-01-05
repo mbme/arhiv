@@ -74,6 +74,10 @@
       @apply my-4;
     }
 
+    pre {
+      @apply text-balance;
+    }
+
     table {
       @apply mb-2 w-full text-left table-auto;
 

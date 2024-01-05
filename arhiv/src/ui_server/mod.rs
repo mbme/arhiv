@@ -32,6 +32,8 @@ mod api_handler;
 mod image_handler;
 mod public_assets_handler;
 
+pub const UI_BASE_PATH: &str = "/ui";
+
 pub fn build_ui_router() -> Router<Arc<Arhiv>> {
     Router::new()
         .route("/", get(index_page))
@@ -46,8 +48,6 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
 
-    let base_path = "/ui";
-
     let content = format!(
         r#"
             <!DOCTYPE html>
@@ -58,18 +58,18 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-                    <link rel="icon" type="image/svg+xml" href="{base_path}/favicon.svg" />
-                    <link rel="stylesheet" href="{base_path}/index.css" />
+                    <link rel="icon" type="image/svg+xml" href="{UI_BASE_PATH}/favicon.svg" />
+                    <link rel="stylesheet" href="{UI_BASE_PATH}/index.css" />
                 </head>
                 <body>
                     <main></main>
 
                     <script>
-                        window.BASE_PATH = "{base_path}";
+                        window.BASE_PATH = "{UI_BASE_PATH}";
                         window.SCHEMA = {schema};
                     </script>
 
-                    <script src="{base_path}/index.js"></script>
+                    <script src="{UI_BASE_PATH}/index.js"></script>
                 </body>
             </html>"#
     );

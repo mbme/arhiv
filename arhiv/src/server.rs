@@ -5,7 +5,10 @@ use anyhow::{Context, Result};
 use baza::sync::build_rpc_router;
 use rs_utils::http_server::{build_health_router, HttpServer};
 
-use crate::{ui_server::build_ui_router, Arhiv, ArhivConfigExt};
+use crate::{
+    ui_server::{build_ui_router, UI_BASE_PATH},
+    Arhiv, ArhivConfigExt,
+};
 
 pub struct ArhivServer {
     arhiv: Arc<Arhiv>,
@@ -21,7 +24,7 @@ impl ArhivServer {
         let ui_router = build_ui_router();
 
         let router = rpc_router
-            .nest("/ui", ui_router.with_state(arhiv.clone()))
+            .nest(UI_BASE_PATH, ui_router.with_state(arhiv.clone()))
             .with_state(arhiv.baza.clone())
             .merge(health_router);
 

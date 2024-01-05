@@ -16,7 +16,7 @@ use axum_extra::{
 use rs_utils::{
     create_body_from_file,
     http_server::{add_max_cache_header, ServerError},
-    log,
+    log, now,
 };
 
 use crate::{
@@ -66,7 +66,10 @@ async fn get_changeset_handler(
     let min_rev = serde_json::from_str(&min_rev).context("failed to parse min_rev")?;
     let min_rev = Revision::from_value(min_rev)?;
 
-    let changeset = baza.get_connection()?.get_changeset(&min_rev)?;
+    let tx = baza.get_tx()?;
+    let changeset = tx.get_changeset(&min_rev)?;
+    tx.set_last_sync_time(&now())?;
+    tx.commit()?;
 
     Ok(Json(changeset))
 }

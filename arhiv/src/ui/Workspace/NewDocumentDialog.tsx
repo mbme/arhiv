@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrayElement, fuzzySearch } from 'utils';
+import { fuzzySearch } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
@@ -55,12 +55,16 @@ const clickActive = (root: HTMLElement) => {
   activeItem?.click();
 };
 
-const ACTIONS = ['Scrape URL', 'Attach file'] as const;
-type ActionType = ArrayElement<typeof ACTIONS>;
+type ActionType = 'Scrape URL' | 'Attach file';
+
+const ACTIONS: ActionType[] = ['Attach file'];
+if (window.FEATURES.scraper) {
+  ACTIONS.unshift('Scrape URL');
+}
 
 function throwBadAction(value: never): never;
 function throwBadAction(value: ActionType) {
-  throw new Error(`Unknown CardVariant: ${value}`);
+  throw new Error(`Unknown ActionType: ${value}`);
 }
 
 const ACTION_ICONS: Record<ActionType, IconVariant> = {

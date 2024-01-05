@@ -12,6 +12,7 @@ use axum::{
     Json, Router,
 };
 use axum_extra::{headers, TypedHeader};
+use serde::Serialize;
 use serde_json::Value;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
@@ -44,9 +45,19 @@ pub fn build_ui_router() -> Router<Arc<Arhiv>> {
         .route("/*fileName", get(public_assets_handler))
 }
 
+#[derive(Serialize)]
+struct Features {
+    scraper: bool,
+}
+
 async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
+
+    let features = Features {
+        scraper: cfg!(feature = "scraper"),
+    };
+    let features = serde_json::to_string(&features).context("failed to serialize features")?;
 
     let content = format!(
         r#"
@@ -67,6 +78,7 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
                     <script>
                         window.BASE_PATH = "{UI_BASE_PATH}";
                         window.SCHEMA = {schema};
+                        window.FEATURES = {features};
                     </script>
 
                     <script src="{UI_BASE_PATH}/index.js"></script>

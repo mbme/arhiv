@@ -56,7 +56,7 @@ function CommitButton() {
       trailingIcon={error ? 'error-triangle' : undefined}
       title={error ? 'Commit failed' : undefined}
     >
-      Save
+      <span className="hidden md:inline">Save</span>
     </Button>
   );
 }
@@ -82,7 +82,7 @@ function SyncButton({ disabled }: SyncButtonProps) {
       title={error ? 'Sync failed' : undefined}
       disabled={disabled}
     >
-      Sync
+      <span className="hidden md:inline">Sync</span>
     </Button>
   );
 }

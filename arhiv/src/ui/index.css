@@ -18,6 +18,7 @@
 
   .var-card-width {
     width: 39rem;
+    max-width: 98vw;
   }
 
   .var-active-color {

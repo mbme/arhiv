@@ -86,8 +86,11 @@ type IconButtonProps = {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   title?: string;
 };
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, icon, onClick, size = 'md', title }, ref) => (
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  { className, icon, onClick, size = 'md', title },
+  ref,
+) {
+  return (
     <button
       ref={ref}
       type="button"
@@ -109,5 +112,5 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         })}
       />
     </button>
-  ),
-);
+  );
+});

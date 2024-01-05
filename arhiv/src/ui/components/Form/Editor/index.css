@@ -34,4 +34,18 @@
       min-height: 19rem;
     }
   }
+
+  .edit-btn {
+    @apply bg-indigo-100 drop-shadow-md;
+  }
+
+  @media (hover: hover) {
+    & .edit-btn {
+      @apply invisible opacity-0 transition-opacity;
+    }
+
+    &:hover .edit-btn {
+      @apply visible opacity-100;
+    }
+  }
 }

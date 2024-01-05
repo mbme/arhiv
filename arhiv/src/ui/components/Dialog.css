@@ -11,7 +11,7 @@
     }
 
     .modal-dialog-container {
-      @apply fixed inset-0 flex items-center justify-center z-20;
+      @apply fixed inset-0 flex items-start md:items-center justify-center z-20;
     }
 
     .modal-dialog {

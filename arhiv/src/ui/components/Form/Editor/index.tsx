@@ -140,7 +140,7 @@ export function Editor({
   }, [preview]);
 
   return (
-    <div className={cx('editor-container group', className)}>
+    <div className={cx('editor-container', className)}>
       <FormField
         id={id}
         hidden={preview}
@@ -175,7 +175,7 @@ export function Editor({
         {preview ? (
           <IconButton
             icon="pencil-square"
-            className="bg-indigo-100 drop-shadow-md invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity"
+            className="edit-btn"
             onClick={() => {
               startTransition(() => {
                 setPreview(false);

@@ -149,7 +149,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
 
       <div
         ref={resultsRef}
-        className="flex flex-col gap-1 min-h-[20vh] max-h-[70vh] overflow-y-auto"
+        className="flex flex-col gap-1 min-h-[20vh] md:max-h-[70vh] overflow-y-auto"
       >
         {actions.length > 0 && <h1 className={headingClass}>Actions</h1>}
         {actions.map((action) => (

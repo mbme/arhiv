@@ -75,7 +75,7 @@
     }
 
     pre {
-      @apply text-balance;
+      @apply whitespace-pre-line;
     }
 
     table {

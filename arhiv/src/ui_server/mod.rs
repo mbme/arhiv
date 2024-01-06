@@ -48,6 +48,7 @@ pub fn build_ui_router() -> Router<Arc<Arhiv>> {
 #[derive(Serialize)]
 struct Features {
     scraper: bool,
+    use_local_storage: bool,
 }
 
 async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
@@ -56,6 +57,7 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
 
     let features = Features {
         scraper: cfg!(feature = "scraper"),
+        use_local_storage: cfg!(target_os = "android"),
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
 

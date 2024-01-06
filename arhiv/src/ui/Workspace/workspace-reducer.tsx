@@ -1,8 +1,9 @@
 import { useEffect, useReducer, createContext, startTransition, useContext, useMemo } from 'react';
-import { newId, getSessionValue, setSessionValue } from 'utils';
+import { newId } from 'utils';
 import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { useShallowMemo } from 'utils/hooks';
+import { storage } from 'utils/storage';
 
 type CardVariant =
   | {
@@ -248,11 +249,11 @@ function cardUpdateConfirmed(state: WorkspaceState, id: CardId) {
   return window.confirm('The card may contain unsaved changes. Continue?');
 }
 
-const SESSION_STORAGE_KEY = 'workspace-state';
+const STORAGE_KEY = 'workspace-state';
 
 export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
   const [state, dispatch] = useReducer(workspaceReducer, undefined, () => {
-    const cards = getSessionValue<Card[]>(SESSION_STORAGE_KEY, []).map((card) => ({
+    const cards = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
       ...card,
       restored: true,
     }));
@@ -264,7 +265,7 @@ export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
   });
 
   useEffect(() => {
-    setSessionValue(SESSION_STORAGE_KEY, state.cards);
+    storage.setValue(STORAGE_KEY, state.cards);
   }, [state.cards]);
 
   return [state, dispatch];

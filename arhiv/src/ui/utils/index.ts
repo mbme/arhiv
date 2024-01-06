@@ -93,24 +93,6 @@ export function getDocumentUrl(documentId: string): string {
   return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
 }
 
-export function getSessionValue<T extends JSONValue>(key: string, defaultValue: T): T {
-  const value = sessionStorage.getItem(key);
-
-  if (value === null) {
-    return defaultValue;
-  }
-
-  return JSON.parse(value) as T;
-}
-
-export function setSessionValue(key: string, value: JSONValue) {
-  sessionStorage.setItem(key, JSON.stringify(value));
-}
-
-export function removeSessionValue(key: string) {
-  sessionStorage.removeItem(key);
-}
-
 const BYTES_SIZES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 export function formatBytes(bytes: number): string {
   if (!bytes) {

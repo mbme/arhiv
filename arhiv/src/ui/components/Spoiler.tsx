@@ -1,5 +1,6 @@
 import { forwardRef, useState } from 'react';
-import { cx, getSessionValue, setSessionValue } from 'utils';
+import { cx } from 'utils';
+import { storage } from 'utils/storage';
 import { JSXChildren, JSXElement } from 'utils/jsx';
 import { Icon } from './Icon';
 
@@ -17,7 +18,7 @@ export const Spoiler = forwardRef<HTMLDetailsElement, Props>(function Spoiler(
 ) {
   const [isOpen, setIsOpen] = useState(() => {
     if (sessionKey) {
-      return getSessionValue(sessionKey, defaultOpen);
+      return storage.getValue(sessionKey, defaultOpen);
     }
 
     return defaultOpen;
@@ -30,7 +31,7 @@ export const Spoiler = forwardRef<HTMLDetailsElement, Props>(function Spoiler(
 
     setIsOpen(!isOpen);
     if (sessionKey) {
-      setSessionValue(sessionKey, !isOpen);
+      storage.setValue(sessionKey, !isOpen);
     }
   };
 

@@ -8,15 +8,8 @@ import {
   useState,
 } from 'react';
 import { shallowEqual } from 'shallow-equal';
-import {
-  Callback,
-  debounce,
-  getSessionValue,
-  JSONValue,
-  removeSessionValue,
-  setSessionValue,
-  throttle,
-} from './index';
+import { Callback, debounce, JSONValue, throttle } from './index';
+import { storage } from './storage';
 
 type Inputs = ReadonlyArray<unknown>;
 
@@ -197,14 +190,14 @@ export function useSessionState<T extends JSONValue>(
     throw new Error(`key changed from "${initialKeyRef.current}" to "${key}"`);
   }
 
-  const [value, setValue] = useState<T>(() => getSessionValue(key, initialValue));
+  const [value, setValue] = useState<T>(() => storage.getValue(key, initialValue));
 
   const updateValue = useCallback(
     (newValue: T) => {
       if (newValue === null) {
-        removeSessionValue(key);
+        storage.removeValue(key);
       } else {
-        setSessionValue(key, newValue);
+        storage.setValue(key, newValue);
       }
       setValue(newValue);
     },
@@ -252,7 +245,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string, onDone
       return;
     }
 
-    const [scrollTop, scrollLeft] = getSessionValue(key, [0, 0]);
+    const [scrollTop, scrollLeft] = storage.getValue(key, [0, 0]);
 
     const originalScrollBehavior = el.style.scrollBehavior;
 
@@ -267,7 +260,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string, onDone
     onDoneRef.current?.();
 
     const onScroll = throttle(() => {
-      setSessionValue(key, [el.scrollTop, el.scrollLeft]);
+      storage.setValue(key, [el.scrollTop, el.scrollLeft]);
     }, 350);
 
     // TODO also listen for resize?
@@ -276,7 +269,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string, onDone
 
     return () => {
       el.removeEventListener('scroll', onScroll);
-      removeSessionValue(key);
+      storage.removeValue(key);
     };
   }, [el, key, onDoneRef]);
 }

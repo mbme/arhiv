@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 
-import 'global-jsdom/register';
-global.Event = window.Event; // override nodejs built-in
-global.FormData = window.FormData; // override nodejs built-in
+import 'utils/test-env-setup';
 
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert';

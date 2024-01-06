@@ -1,7 +1,7 @@
-import { startTransition, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
-import { useImmediateEffect, useUpdateEffect } from 'utils/hooks';
+import { useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { canPreview } from 'components/Ref';
@@ -31,11 +31,12 @@ export function Editor({
   required,
 }: Props) {
   const defaultPreview = defaultValue.length > 0;
-  const [preview, setPreview] = useState(defaultPreview);
+  const [preview, _setPreview] = useState(defaultPreview);
 
   const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
   const markupRef = useRef<MarkupRef | null>(null);
   const editorRef = useRef<CodemirrorEditor | null>(null);
+  const posRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -76,6 +77,39 @@ export function Editor({
     }
   }, [preview]);
 
+  const setPreview = useCallback((newPreview: boolean) => {
+    _setPreview((oldPreview) => {
+      if (oldPreview === newPreview) {
+        return oldPreview;
+      }
+
+      const fieldEl = fieldRef.current;
+      if (!fieldEl) {
+        throw new Error('field is missing');
+      }
+
+      const viewportEl = fieldEl.closest<HTMLElement>(`.${FORM_VIEWPORT_CLASSNAME}`);
+      if (!viewportEl) {
+        throw new Error('form viewport element is missing');
+      }
+
+      if (newPreview) {
+        posRef.current = editorRef.current?.getFirstVisiblePos(viewportEl);
+        console.debug('first visible pos from editor', posRef.current);
+      } else {
+        const markupEl = markupRef.current;
+        if (!markupEl) {
+          throw new Error('markup element is missing');
+        }
+
+        posRef.current = markupEl.getFirstVisiblePos(viewportEl);
+        console.debug('first visible pos from preview', posRef.current);
+      }
+
+      return newPreview;
+    });
+  }, []);
+
   useEffect(() => {
     const fieldEl = fieldRef.current;
     if (!fieldEl) {
@@ -88,43 +122,21 @@ export function Editor({
     }
 
     const onFormSubmit = () => {
-      startTransition(() => {
-        setPreview(defaultPreview);
-      });
+      setPreview((editorRef.current?.getValue().length ?? 0) > 0);
+    };
+
+    const onFormReset = () => {
+      setPreview(defaultPreview);
     };
 
     form.addEventListener('submit', onFormSubmit);
+    form.addEventListener('reset', onFormReset);
 
     return () => {
       form.removeEventListener('submit', onFormSubmit);
+      form.removeEventListener('reset', onFormReset);
     };
-  }, [defaultPreview]);
-
-  const posRef = useRef<number | undefined>(undefined);
-  useImmediateEffect(() => {
-    const fieldEl = fieldRef.current;
-    if (!fieldEl) {
-      throw new Error('field is missing');
-    }
-
-    const viewportEl = fieldEl.closest<HTMLElement>(`.${FORM_VIEWPORT_CLASSNAME}`);
-    if (!viewportEl) {
-      throw new Error('form viewport element is missing');
-    }
-
-    if (preview) {
-      posRef.current = editorRef.current?.getFirstVisiblePos(viewportEl);
-      console.debug('first visible pos from editor', posRef.current);
-    } else {
-      const markupEl = markupRef.current;
-      if (!markupEl) {
-        throw new Error('markup element is missing');
-      }
-
-      posRef.current = markupEl.getFirstVisiblePos(viewportEl);
-      console.debug('first visible pos from preview', posRef.current);
-    }
-  }, [preview]);
+  }, [defaultPreview, setPreview]);
 
   useEffect(() => {
     const pos = posRef.current;
@@ -154,7 +166,7 @@ export function Editor({
           editorRef.current?.focus();
         }}
         onReset={() => {
-          editorRef.current?.reset();
+          editorRef.current?.setValue(defaultValue);
         }}
       />
 
@@ -177,9 +189,7 @@ export function Editor({
             icon="pencil-square"
             className="edit-btn"
             onClick={() => {
-              startTransition(() => {
-                setPreview(false);
-              });
+              setPreview(false);
             }}
           />
         ) : (
@@ -187,9 +197,7 @@ export function Editor({
             icon="eye"
             className="bg-indigo-100 drop-shadow-md"
             onClick={() => {
-              startTransition(() => {
-                setPreview(true);
-              });
+              setPreview(true);
             }}
           />
         )}

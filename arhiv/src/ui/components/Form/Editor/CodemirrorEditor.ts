@@ -36,7 +36,6 @@ class CodemirrorEditor {
   private placeholderCompartment = new Compartment();
 
   private editor: EditorView;
-  private initialState: EditorState;
 
   constructor(
     parent: HTMLElement,
@@ -77,8 +76,6 @@ class CodemirrorEditor {
         ],
       }),
     });
-
-    this.initialState = this.editor.state;
   }
 
   private onBlur = () => {
@@ -119,10 +116,6 @@ class CodemirrorEditor {
         head: cursorPos,
       },
     });
-  }
-
-  reset() {
-    this.editor.setState(this.initialState);
   }
 
   setDisabled(disabled: boolean) {

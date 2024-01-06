@@ -280,29 +280,6 @@ export function useForceRender(): Callback {
   return useCallback(() => setCounter((value) => value + 1), []);
 }
 
-function isShallowEqualArray(arr1: unknown[], arr2: unknown[]): boolean {
-  if (arr1.length !== arr2.length) {
-    return false;
-  }
-
-  for (let i = 0; i < arr1.length; i += 1) {
-    if (arr1[i] !== arr2[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export function useImmediateEffect(cb: Callback, deps: unknown[] = []): void {
-  const prevValueRef = useRef(deps);
-
-  if (!isShallowEqualArray(prevValueRef.current, deps)) {
-    prevValueRef.current = deps;
-    cb();
-  }
-}
-
 export function useIsPageVisible(): boolean {
   const [isPageVisible, setIsPageVisible] = useState(() => document.visibilityState === 'visible');
 

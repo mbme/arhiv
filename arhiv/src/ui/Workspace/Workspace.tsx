@@ -49,10 +49,7 @@ export function Workspace() {
 
   return (
     <RefClickHandlerContext.Provider value={openDocument}>
-      <div
-        className="flex flex-row items-start gap-6 h-full overflow-x-auto pt-12 pb-2 px-1 md:px-8 scroll-smooth custom-scrollbar"
-        ref={setWrapperEl}
-      >
+      <div className="workspace-cards" ref={setWrapperEl}>
         <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
           <Button variant="text" disabled>
             Player

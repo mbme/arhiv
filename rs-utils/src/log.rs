@@ -11,7 +11,7 @@ pub use log::{debug, error, info, trace, warn, Level};
 pub fn setup_android_logger(package: &str) {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            "debug,hyper=info,mdns_sd=info",
+            "debug,hyper=info,mdns_sd=info,axum::rejection=trace",
         ))
         .with(tracing_android::layer(package).expect("failed to build android tracing subscriber"))
         .init();
@@ -25,8 +25,13 @@ pub fn setup_android_logger(_package: &str) {
 fn setup_logger_with_level(log_level: LevelFilter) {
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| format!("{},hyper=info,mdns_sd=info", log_level).into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                format!(
+                    "{},hyper=info,mdns_sd=info,axum::rejection=trace",
+                    log_level
+                )
+                .into()
+            }),
         )
         .with(
             fmt::Layer::new()

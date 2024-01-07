@@ -1,8 +1,12 @@
 package me.mbsoftware.arhiv;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +23,7 @@ class ArhivServer {
 }
 
 public class MainActivity extends AppCompatActivity {
+  private static final String TAG = "MainActivity";
 
   @SuppressLint("SetJavaScriptEnabled")
   @Override
@@ -26,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    String url = ArhivServer.startServer(this.getFilesDir().getAbsolutePath());
+    String arhivUrl = ArhivServer.startServer(this.getFilesDir().getAbsolutePath());
+    Log.i(TAG, "Started Arhiv server");
 
     WebView webView = findViewById(R.id.web);
     webView.getSettings().setJavaScriptEnabled(true);
@@ -41,10 +47,27 @@ public class MainActivity extends AppCompatActivity {
         super.onPageFinished(view, url);
         swipeRefreshLayout.setRefreshing(false);
       }
+
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        Uri requestUrl = request.getUrl();
+
+        if (requestUrl.toString().startsWith(arhivUrl)) {
+          return false;
+        }
+
+        Log.d(TAG, "Open external URL: " +  requestUrl);
+
+        // Open the URL in an external browser
+        Intent intent = new Intent(Intent.ACTION_VIEW, requestUrl);
+        view.getContext().startActivity(intent);
+
+        return true;
+      }
     });
 
     // loading url in the WebView.
-    webView.loadUrl(url);
+    webView.loadUrl(arhivUrl);
 
     // enable WebView debugging if app is debuggable
     if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)
@@ -54,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onDestroy() {
     ArhivServer.stopServer();
+
+    Log.i(TAG, "Stopped Arhiv server");
 
     super.onDestroy();
   }

@@ -16,7 +16,7 @@ use axum::{
 };
 use axum_extra::headers::{self, HeaderMapExt};
 use reqwest::Client;
-use tokio::{net::TcpListener, sync::broadcast, task::JoinHandle};
+use tokio::{net::TcpListener, sync::oneshot, task::JoinHandle};
 
 pub struct ServerError(anyhow::Error);
 
@@ -117,13 +117,13 @@ pub async fn logger_middleware(request: Request, next: Next) -> Result<Response,
 
 pub struct HttpServer {
     address: SocketAddr,
-    shutdown_sender: broadcast::Sender<()>,
+    shutdown_sender: oneshot::Sender<()>,
     join_handle: JoinHandle<Result<()>>,
 }
 
 impl HttpServer {
     pub async fn start(router: Router, port: u16) -> Result<HttpServer> {
-        let (shutdown_sender, mut shutdown_receiver) = broadcast::channel(1);
+        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
         let listener = TcpListener::bind((std::net::Ipv4Addr::UNSPECIFIED, port))
             .await
@@ -138,7 +138,7 @@ impl HttpServer {
 
             server
                 .with_graceful_shutdown(async move {
-                    if let Err(err) = shutdown_receiver.recv().await {
+                    if let Err(err) = shutdown_receiver.await {
                         log::error!("HTTP Server: failed to get shutdown signal: {err}");
                     } else {
                         log::info!("HTTP Server: got shutdown signal");

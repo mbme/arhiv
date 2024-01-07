@@ -76,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onDestroy() {
+    Log.i(TAG, "Stopping Arhiv server");
+
     ArhivServer.stopServer();
 
     Log.i(TAG, "Stopped Arhiv server");

@@ -139,9 +139,9 @@ impl HttpServer {
             server
                 .with_graceful_shutdown(async move {
                     if let Err(err) = shutdown_receiver.await {
-                        log::error!("HTTP Server: failed to get shutdown signal: {err}");
+                        log::error!("HTTP Server failed to get shutdown signal: {err}");
                     } else {
-                        log::info!("HTTP Server: got shutdown signal");
+                        log::info!("HTTP Server got shutdown signal");
                     }
                 })
                 .await
@@ -152,7 +152,7 @@ impl HttpServer {
             Ok(())
         });
 
-        log::info!("HTTP Server: started on {}", address);
+        log::info!("HTTP Server started on {}", address);
 
         Ok(HttpServer {
             join_handle,
@@ -174,7 +174,7 @@ impl HttpServer {
     pub async fn shutdown(self) -> Result<()> {
         self.shutdown_sender
             .send(())
-            .map_err(|_err| anyhow!("receiver dropped"))?;
+            .map_err(|_err| anyhow!("HTTP Server shutdown receiver dropped"))?;
 
         self.join_handle.await.context("failed to join")??;
 

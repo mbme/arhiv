@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
@@ -9,11 +9,13 @@ use axum::{
         Html, IntoResponse, Sse,
     },
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use axum_extra::{headers, TypedHeader};
+use futures::{future::Shared, FutureExt};
 use serde::Serialize;
 use serde_json::Value;
+use tokio::sync::oneshot;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, sync::respond_with_blob};
@@ -35,7 +37,9 @@ mod public_assets_handler;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router() -> Router<Arc<Arhiv>> {
+pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<Arhiv>> {
+    let shutdown_receiver = shutdown_receiver.shared();
+
     Router::new()
         .route("/", get(index_page))
         .route("/api", post(api_handler))
@@ -43,6 +47,7 @@ pub fn build_ui_router() -> Router<Arc<Arhiv>> {
         .route("/blobs/:blob_id", get(blob_handler))
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
+        .layer(Extension(shutdown_receiver))
 }
 
 #[derive(Serialize)]
@@ -127,18 +132,24 @@ async fn blob_handler(
 #[tracing::instrument(skip(arhiv), level = "debug")]
 async fn events_handler(
     State(arhiv): State<Arc<Arhiv>>,
+    Extension(shutdown_receiver): Extension<Shared<oneshot::Receiver<()>>>,
 ) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
-    let stream = BroadcastStream::new(arhiv.baza.get_events_channel()).map(|result| {
-        result
-            .map_err(|err| anyhow!("Event stream failed: {err}"))
-            .and_then(|baza_event| {
-                log::debug!("Sending BazaEvent {baza_event}");
+    let events_stream = BroadcastStream::new(arhiv.baza.get_events_channel()).map(|result| {
+        let baza_event = result.context("Event stream failed")?;
 
-                Event::default()
-                    .json_data(baza_event)
-                    .context("Event serialization failed")
-            })
+        log::debug!("Sending BazaEvent {baza_event}");
+
+        let event = Event::default()
+            .json_data(baza_event)
+            .context("Event serialization failed")?;
+
+        Ok(Some(event))
     });
+
+    let shutdown_stream = shutdown_receiver.clone().into_stream().map(|_| Ok(None));
+
+    let stream = futures::stream::select(events_stream, shutdown_stream)
+        .map_while(|value| value.transpose());
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }

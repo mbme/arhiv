@@ -127,6 +127,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "baza",
+ "futures",
  "rs-utils",
  "rust-embed",
  "scraper",

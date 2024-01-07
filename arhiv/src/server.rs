@@ -39,7 +39,7 @@ impl ArhivServer {
     }
 
     pub async fn join(self) -> Result<()> {
-        self.server.join().await?;
+        self.server.wait_for_shutdown().await?;
 
         Arc::into_inner(self.arhiv)
             .context("failed to unwrap Arhiv instance")?

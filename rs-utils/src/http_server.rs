@@ -16,13 +16,7 @@ use axum::{
 };
 use axum_extra::headers::{self, HeaderMapExt};
 use reqwest::Client;
-use tokio::{
-    net::TcpListener,
-    signal,
-    signal::unix::{self, SignalKind},
-    sync::oneshot,
-    task::JoinHandle,
-};
+use tokio::{net::TcpListener, signal, sync::oneshot, task::JoinHandle};
 
 pub struct ServerError(anyhow::Error);
 
@@ -189,38 +183,51 @@ impl HttpServer {
         Ok(())
     }
 
-    pub async fn join(self) -> Result<()> {
-        let mut sigint = unix::signal(SignalKind::interrupt())?;
-        let mut sigterm = unix::signal(SignalKind::terminate())?;
+    pub async fn wait_for_shutdown(self) -> Result<()> {
+        shutdown_signal().await;
 
-        tokio::select! {
-            _ = signal::ctrl_c() => {
-                log::info!("HTTP Server: got Ctrl-C");
+        self.shutdown().await
+    }
+}
 
-                self.shutdown_sender
-                    .send(())
-                    .map_err(|_err| anyhow!("receiver dropped"))?;
-            }
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
 
-            _ = sigint.recv() => {
-                log::info!("HTTP Server: got SIGINT");
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM signal handler")
+            .recv()
+            .await;
+    };
 
-                self.shutdown_sender
-                    .send(())
-                    .map_err(|_err| anyhow!("receiver dropped"))?;
-            }
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
 
-            _ = sigterm.recv() => {
-                log::info!("HTTP Server: got SIGTERM");
+    #[cfg(unix)]
+    let interrupt = async {
+        signal::unix::signal(signal::unix::SignalKind::interrupt())
+            .expect("failed to install SIGINT signal handler")
+            .recv()
+            .await;
+    };
 
-                self.shutdown_sender
-                    .send(())
-                    .map_err(|_err| anyhow!("receiver dropped"))?;
-            }
-        };
+    #[cfg(not(unix))]
+    let interrupt = std::future::pending::<()>();
 
-        self.join_handle.await.context("failed to join")??;
-
-        Ok(())
+    tokio::select! {
+        _ = ctrl_c => {
+            log::info!("HTTP Server: got Ctrl-C");
+        },
+        _ = terminate => {
+            log::info!("HTTP Server: got SIGTERM");
+        },
+        _ = interrupt => {
+            log::info!("HTTP Server: got SIGINT");
+        },
     }
 }

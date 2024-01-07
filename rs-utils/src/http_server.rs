@@ -142,27 +142,12 @@ impl HttpServer {
 
             let server = axum::serve(listener, router.into_make_service());
 
-            let mut sigint = unix::signal(SignalKind::interrupt())?;
-            let mut sigterm = unix::signal(SignalKind::terminate())?;
-
             server
                 .with_graceful_shutdown(async move {
-                    tokio::select! {
-                        _ = signal::ctrl_c() => {
-                            log::info!("HTTP Server: got Ctrl-C");
-                        }
-
-                        _ = sigint.recv() => {
-                            log::info!("HTTP Server: got SIGINT");
-                        }
-
-                        _ = sigterm.recv() => {
-                            log::info!("HTTP Server: got SIGTERM");
-                        }
-
-                        Ok(_) = shutdown_receiver => {
-                            log::info!("HTTP Server: got shutdown signal");
-                        }
+                    if let Err(err) = shutdown_receiver.await {
+                        log::error!("HTTP Server: failed to get shutdown signal: {err}");
+                    } else {
+                        log::info!("HTTP Server: got shutdown signal");
                     }
                 })
                 .await
@@ -205,6 +190,35 @@ impl HttpServer {
     }
 
     pub async fn join(self) -> Result<()> {
+        let mut sigint = unix::signal(SignalKind::interrupt())?;
+        let mut sigterm = unix::signal(SignalKind::terminate())?;
+
+        tokio::select! {
+            _ = signal::ctrl_c() => {
+                log::info!("HTTP Server: got Ctrl-C");
+
+                self.shutdown_sender
+                    .send(())
+                    .map_err(|_err| anyhow!("receiver dropped"))?;
+            }
+
+            _ = sigint.recv() => {
+                log::info!("HTTP Server: got SIGINT");
+
+                self.shutdown_sender
+                    .send(())
+                    .map_err(|_err| anyhow!("receiver dropped"))?;
+            }
+
+            _ = sigterm.recv() => {
+                log::info!("HTTP Server: got SIGTERM");
+
+                self.shutdown_sender
+                    .send(())
+                    .map_err(|_err| anyhow!("receiver dropped"))?;
+            }
+        };
+
         self.join_handle.await.context("failed to join")??;
 
         Ok(())

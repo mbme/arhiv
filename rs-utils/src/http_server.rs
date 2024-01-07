@@ -16,7 +16,7 @@ use axum::{
 };
 use axum_extra::headers::{self, HeaderMapExt};
 use reqwest::Client;
-use tokio::{net::TcpListener, signal, sync::oneshot, task::JoinHandle};
+use tokio::{net::TcpListener, sync::broadcast, task::JoinHandle};
 
 pub struct ServerError(anyhow::Error);
 
@@ -117,13 +117,13 @@ pub async fn logger_middleware(request: Request, next: Next) -> Result<Response,
 
 pub struct HttpServer {
     address: SocketAddr,
-    shutdown_sender: oneshot::Sender<()>,
+    shutdown_sender: broadcast::Sender<()>,
     join_handle: JoinHandle<Result<()>>,
 }
 
 impl HttpServer {
     pub async fn start(router: Router, port: u16) -> Result<HttpServer> {
-        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+        let (shutdown_sender, mut shutdown_receiver) = broadcast::channel(1);
 
         let listener = TcpListener::bind((std::net::Ipv4Addr::UNSPECIFIED, port))
             .await
@@ -138,7 +138,7 @@ impl HttpServer {
 
             server
                 .with_graceful_shutdown(async move {
-                    if let Err(err) = shutdown_receiver.await {
+                    if let Err(err) = shutdown_receiver.recv().await {
                         log::error!("HTTP Server: failed to get shutdown signal: {err}");
                     } else {
                         log::info!("HTTP Server: got shutdown signal");
@@ -172,8 +172,6 @@ impl HttpServer {
     }
 
     pub async fn shutdown(self) -> Result<()> {
-        ensure!(!self.shutdown_sender.is_closed(), "already closed");
-
         self.shutdown_sender
             .send(())
             .map_err(|_err| anyhow!("receiver dropped"))?;
@@ -181,53 +179,5 @@ impl HttpServer {
         self.join_handle.await.context("failed to join")??;
 
         Ok(())
-    }
-
-    pub async fn wait_for_shutdown(self) -> Result<()> {
-        shutdown_signal().await;
-
-        self.shutdown().await
-    }
-}
-
-async fn shutdown_signal() {
-    let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install SIGTERM signal handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
-
-    #[cfg(unix)]
-    let interrupt = async {
-        signal::unix::signal(signal::unix::SignalKind::interrupt())
-            .expect("failed to install SIGINT signal handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let interrupt = std::future::pending::<()>();
-
-    tokio::select! {
-        _ = ctrl_c => {
-            log::info!("HTTP Server: got Ctrl-C");
-        },
-        _ = terminate => {
-            log::info!("HTTP Server: got SIGTERM");
-        },
-        _ = interrupt => {
-            log::info!("HTTP Server: got SIGINT");
-        },
     }
 }

@@ -38,17 +38,7 @@ impl ArhivServer {
         format!("http://{}/ui", self.server.get_address())
     }
 
-    pub async fn join(self) -> Result<()> {
-        self.server.wait_for_shutdown().await?;
-
-        Arc::into_inner(self.arhiv)
-            .context("failed to unwrap Arhiv instance")?
-            .stop();
-
-        Ok(())
-    }
-
-    pub async fn stop(self) -> Result<()> {
+    pub async fn shutdown(self) -> Result<()> {
         self.server.shutdown().await?;
 
         Arc::into_inner(self.arhiv)

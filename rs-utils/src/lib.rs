@@ -6,6 +6,7 @@ use std::process::{Command, Stdio};
 use anyhow::{anyhow, bail, Context, Result};
 use gethostname::gethostname;
 use regex::Regex;
+use tokio::signal;
 
 pub use crypto::*;
 pub use download::*;
@@ -139,4 +140,46 @@ pub fn get_hostname() -> Result<String> {
             err.to_string_lossy()
         )
     })
+}
+
+pub async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    #[cfg(unix)]
+    let interrupt = async {
+        signal::unix::signal(signal::unix::SignalKind::interrupt())
+            .expect("failed to install SIGINT signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let interrupt = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            log::info!("Signals: got Ctrl-C");
+        },
+        _ = terminate => {
+            log::info!("Signals: got SIGTERM");
+        },
+        _ = interrupt => {
+            log::info!("Signals: got SIGINT");
+        },
+    }
 }

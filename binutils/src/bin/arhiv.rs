@@ -9,7 +9,7 @@ use tokio::time::sleep;
 
 use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
 use baza::entities::{Document, DocumentClass, DocumentData, Id};
-use rs_utils::{get_crate_version, into_absolute_path, log};
+use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -417,7 +417,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let server = ArhivServer::start(arhiv).await?;
 
-            server.join().await?;
+            shutdown_signal().await;
+
+            server.shutdown().await?;
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = must_open_arhiv();

@@ -97,7 +97,7 @@ fn stop_server() -> Result<()> {
 
     let runtime = runtime_lock.take().context("Runtime is missing")?;
 
-    runtime.block_on(server.stop())?;
+    runtime.block_on(server.shutdown())?;
     runtime.shutdown_timeout(Duration::from_millis(500));
 
     Ok(())

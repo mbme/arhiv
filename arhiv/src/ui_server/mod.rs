@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use axum::{
-    extract::{Path, State},
+    extract::{DefaultBodyLimit, Path, State},
     http::HeaderMap,
     response::{
         sse::{Event, KeepAlive},
@@ -48,6 +48,7 @@ pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<A
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
         .layer(Extension(shutdown_receiver))
+        .layer(DefaultBodyLimit::disable())
 }
 
 #[derive(Serialize)]

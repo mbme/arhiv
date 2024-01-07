@@ -2,7 +2,7 @@ use std::{ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::Context;
 use axum::{
-    extract::{Path, State},
+    extract::{DefaultBodyLimit, Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -30,6 +30,7 @@ pub fn build_rpc_router() -> Router<Arc<Baza>> {
         .route("/ping", post(exchange_pings_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
+        .layer(DefaultBodyLimit::disable())
 }
 
 #[tracing::instrument(skip(baza), level = "debug")]

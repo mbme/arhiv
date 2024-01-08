@@ -5,15 +5,19 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 class ArhivServer {
-  public static native String startServer(String filesDir);
+  public static native String startServer(String filesDir, String storageDir);
 
   public static native void stopServer();
 
@@ -24,14 +28,39 @@ class ArhivServer {
 
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
+  private static final int REQUEST_STORAGE_PERMISSION = 99;
 
-  @SuppressLint("SetJavaScriptEnabled")
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    String arhivUrl = ArhivServer.startServer(this.getFilesDir().getAbsolutePath());
+    if (Environment.isExternalStorageManager()) {
+      initApp();
+    } else {
+      ActivityCompat.requestPermissions(
+        this,
+        new String[]{
+          android.Manifest.permission.READ_EXTERNAL_STORAGE,
+          android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
+        },
+        REQUEST_STORAGE_PERMISSION
+      );
+    }
+  }
+
+  @SuppressLint("MissingSuperCall")
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                         @NonNull int[] grantResults) {
+    if (requestCode == REQUEST_STORAGE_PERMISSION) {
+        initApp();
+    }
+  }
+
+  @SuppressLint("SetJavaScriptEnabled")
+  private void initApp() {
+    String arhivUrl = ArhivServer.startServer(this.getFilesDir().getAbsolutePath(), Environment.getExternalStorageDirectory().getAbsolutePath());
     Log.i(TAG, "Started Arhiv server");
 
     WebView webView = findViewById(R.id.web);
@@ -56,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
           return false;
         }
 
-        Log.d(TAG, "Open external URL: " +  requestUrl);
+        Log.d(TAG, "Open external URL: " + requestUrl);
 
         // Open the URL in an external browser
         Intent intent = new Intent(Intent.ACTION_VIEW, requestUrl);
@@ -70,8 +99,9 @@ public class MainActivity extends AppCompatActivity {
     webView.loadUrl(arhivUrl);
 
     // enable WebView debugging if app is debuggable
-    if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0)
-      { WebView.setWebContentsDebuggingEnabled(true); }
+    if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
   }
 
   @Override

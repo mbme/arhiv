@@ -25,7 +25,7 @@ fn get_root_dir(files_dir: &str) -> String {
     }
 }
 
-fn start_server(files_dir: &str) -> Result<String> {
+fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Result<String> {
     let mut runtime_lock = RUNTIME
         .lock()
         .map_err(|err| anyhow!("Failed to lock RUNTIME: {err}"))?;
@@ -54,6 +54,7 @@ fn start_server(files_dir: &str) -> Result<String> {
                     auto_commit: false,
                     discover_peers: false,
                     mdns_server: false,
+                    file_browser_root_dir,
                 },
             )?;
 
@@ -70,6 +71,7 @@ fn start_server(files_dir: &str) -> Result<String> {
                     auto_commit: true,
                     discover_peers: true,
                     mdns_server: true,
+                    file_browser_root_dir,
                 },
             )?
         }
@@ -108,16 +110,23 @@ pub extern "C" fn Java_me_mbsoftware_arhiv_ArhivServer_startServer(
     mut env: JNIEnv,
     _class: JClass,
     files_dir: JString,
+    storage_dir: JString,
 ) -> jstring {
     log::setup_android_logger("me.mbsoftware.arhiv");
 
     let files_dir: String = env
         .get_string(&files_dir)
-        .expect("Must read JNI string")
+        .expect("Must read JNI string files_dir")
         .into();
     log::debug!("Files dir: {files_dir}");
 
-    let url = start_server(&files_dir).expect("must start server");
+    let storage_dir: String = env
+        .get_string(&storage_dir)
+        .expect("Must read JNI string storage_dir")
+        .into();
+    log::debug!("Storage dir: {storage_dir}");
+
+    let url = start_server(&files_dir, Some(storage_dir)).expect("must start server");
     log::info!("Started server: {url}");
 
     let output = env.new_string(url).expect("Couldn't create java string!");
@@ -145,7 +154,7 @@ mod tests {
         let temp_dir = TempFile::new_with_details("AndroidTest", "");
         temp_dir.mkdir().expect("must create temp dir");
 
-        start_server(temp_dir.as_ref()).expect("must start server");
+        start_server(temp_dir.as_ref(), None).expect("must start server");
 
         thread::sleep(time::Duration::from_secs(1));
 

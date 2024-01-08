@@ -6,7 +6,7 @@ use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions,
 };
-use rs_utils::log;
+use rs_utils::{get_home_dir, log};
 
 use crate::{
     config::ArhivConfigExt, data_migrations::get_data_migrations, definitions::get_standard_schema,
@@ -19,6 +19,7 @@ pub struct ArhivOptions {
     pub discover_peers: bool,
     pub mdns_server: bool,
     pub auto_commit: bool,
+    pub file_browser_root_dir: Option<String>,
 }
 
 pub struct Arhiv {
@@ -28,6 +29,7 @@ pub struct Arhiv {
     mdns_client_task: Option<MDNSClientTask>,
     sync_manager: Arc<SyncManager>,
     mdns_discovery_service: MDNSDiscoveryService,
+    file_browser_root_dir: String,
 }
 
 impl Arhiv {
@@ -58,6 +60,10 @@ impl Arhiv {
             auto_sync_task: None,
             mdns_client_task: None,
             mdns_discovery_service,
+            file_browser_root_dir: options
+                .file_browser_root_dir
+                .or_else(get_home_dir)
+                .unwrap_or_else(|| "/".to_string()),
         };
         if options.auto_commit {
             arhiv.init_auto_commit_service()?;
@@ -127,6 +133,10 @@ impl Arhiv {
 
     pub fn has_sync_agents(&self) -> bool {
         self.sync_manager.count_agents() > 0
+    }
+
+    pub fn get_file_browser_root_dir(&self) -> &str {
+        &self.file_browser_root_dir
     }
 
     pub fn stop(mut self) {

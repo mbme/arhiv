@@ -10,7 +10,7 @@ import { QueryError } from 'components/QueryError';
 import { useCardContext } from './workspace-reducer';
 
 const renderError = (error: unknown) => (
-  <div className="card-container">
+  <div className="card-content">
     <QueryError error={error} />
   </div>
 );
@@ -46,7 +46,7 @@ export function CardContainer({
   });
 
   const fallback = (
-    <div className="card-container flex items-center justify-center grow">
+    <div className="card-content flex items-center justify-center grow">
       <Icon variant="spinner" className="h-10 w-10 opacity-50" />
     </div>
   );

@@ -6,6 +6,8 @@ interface Storage {
   setValue(key: string, value: JSONValue): void;
 
   removeValue(key: string): void;
+
+  clear(): void;
 }
 
 class SessionStorage implements Storage {
@@ -26,6 +28,10 @@ class SessionStorage implements Storage {
   removeValue(key: string): void {
     sessionStorage.removeItem(key);
   }
+
+  clear(): void {
+    sessionStorage.clear();
+  }
 }
 
 class LocalStorage implements Storage {
@@ -45,6 +51,10 @@ class LocalStorage implements Storage {
 
   removeValue(key: string): void {
     localStorage.removeItem(key);
+  }
+
+  clear(): void {
+    localStorage.clear();
   }
 }
 

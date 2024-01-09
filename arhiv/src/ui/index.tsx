@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
+import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
-import { Workspace } from 'Workspace/Workspace';
 
 const rootEl = document.querySelector('main');
 if (!rootEl) {
@@ -12,7 +12,7 @@ function renderApp() {
   if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
     root.render(<ComponentsDemo />);
   } else {
-    root.render(<Workspace />);
+    root.render(<App />);
   }
 }
 

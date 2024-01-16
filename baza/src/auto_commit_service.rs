@@ -72,7 +72,9 @@ impl AutoCommitService {
 
         let time_since_last_update = (self.get_time() - last_update_time).to_std()?;
 
-        if is_modified && time_since_last_update > self.auto_commit_timeout {
+        let has_locks = tx.list_document_locks()?.len() > 0;
+
+        if is_modified && !has_locks && time_since_last_update > self.auto_commit_timeout {
             log::debug!(
                 "Starting auto-commit: {} seconds elapsed since last update",
                 time_since_last_update.as_secs()

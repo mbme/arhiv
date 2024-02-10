@@ -39,7 +39,7 @@ url = "2.2.2"
 regex = "1.5.4"
 image = { version = "0.24.7", features = ["webp-encoder"]}
 shellexpand = "3.0.0"
-which = "5.0"
+which = "6.0"
 nanoid = "0.4.0"
 mdns-sd = "0.10"
 gethostname = "0.4.3"

@@ -31,8 +31,8 @@ impl<'a> MarkupStr<'a> {
 
         let parser = self.parse();
         for event in parser {
-            if let Event::Start(Tag::Link(_, ref destination, _)) = event {
-                if let Some(id) = extract_id(destination) {
+            if let Event::Start(Tag::Link { ref dest_url, .. }) = event {
+                if let Some(id) = extract_id(dest_url) {
                     refs.insert(id);
                 }
             }
@@ -129,7 +129,7 @@ impl<'a> MarkupStr<'a> {
                             children: vec![],
                             range,
                         },
-                        Tag::Heading(level, ..) => MarkupElement::Heading {
+                        Tag::Heading { level, .. } => MarkupElement::Heading {
                             range,
                             level,
                             children: vec![],
@@ -188,19 +188,33 @@ impl<'a> MarkupStr<'a> {
                             range,
                         },
 
-                        Tag::Link(link_type, url, _title) => MarkupElement::Link {
+                        Tag::Link {
                             link_type,
-                            url,
+                            dest_url,
+                            ..
+                        } => MarkupElement::Link {
+                            link_type,
+                            url: dest_url,
                             children: vec![],
                             range,
                         },
 
-                        Tag::Image(link_type, url, _title) => MarkupElement::Image {
+                        Tag::Image {
                             link_type,
-                            url,
+                            dest_url,
+                            ..
+                        } => MarkupElement::Image {
+                            link_type,
+                            url: dest_url,
                             children: vec![],
                             range,
                         },
+                        Tag::HtmlBlock => {
+                            break;
+                        }
+                        Tag::MetadataBlock(_) => {
+                            break;
+                        }
                     };
 
                     stack.push(el);
@@ -213,6 +227,7 @@ impl<'a> MarkupStr<'a> {
                         .context("stack must not be empty")?
                         .add_child(el)?;
                 }
+                Event::InlineHtml(_) => {}
             }
         }
 

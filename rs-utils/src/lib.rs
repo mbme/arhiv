@@ -5,7 +5,6 @@ use std::process::{Command, Stdio};
 
 use anyhow::{anyhow, bail, Context, Result};
 use gethostname::gethostname;
-use regex::Regex;
 use tokio::signal;
 
 pub use crypto::*;
@@ -111,22 +110,6 @@ pub fn run_npm<'a>(commands: impl AsRef<[&'a str]>) {
         );
         process::exit(1);
     }
-}
-
-pub fn send_notification(message: &str) {
-    run_command("notify-send", vec!["-u", "low", message])
-        .expect("must be able to send notification");
-}
-
-#[must_use]
-pub fn match_str(regex: &Regex, s: &str) -> Option<String> {
-    regex.captures(s).map(|captures| {
-        captures
-            .get(1)
-            .expect("group 1 must be present")
-            .as_str()
-            .to_string()
-    })
 }
 
 pub fn get_crate_version() -> &'static str {

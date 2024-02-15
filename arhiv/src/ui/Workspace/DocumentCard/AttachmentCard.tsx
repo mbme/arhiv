@@ -6,7 +6,7 @@ import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
-import { getAttachmentPreview } from 'components/Ref';
+import { getAttachmentPreview } from 'components/AttachmentPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { useCardLock } from '../workspace-reducer';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';

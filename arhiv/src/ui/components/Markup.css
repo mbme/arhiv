@@ -120,12 +120,6 @@
       }
     }
 
-    .RefPreview {
-      img {
-        margin-top: 0;
-      }
-    }
-
     hyphens: auto;
     overflow-wrap: break-word;
   }

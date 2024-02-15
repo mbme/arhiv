@@ -3,10 +3,11 @@ import { cx } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { DocumentId, DocumentType } from 'dto';
-import { Ref, RefPreview, canPreview } from 'components/Ref';
+import { Ref } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
+import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
 
 function normalizeIds(defaultValue: DocumentId | DocumentId[] | undefined | null): DocumentId[] {
   if (!defaultValue) {
@@ -139,7 +140,7 @@ export function RefInput({
           </div>
 
           {canPreview(item.documentType, item.subtype) && (
-            <RefPreview documentId={item.id} subtype={item.subtype} data={item.data} />
+            <AttachmentPreview documentId={item.id} subtype={item.subtype} data={item.data} />
           )}
         </div>
       ))}

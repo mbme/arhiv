@@ -4,7 +4,7 @@ import { createLink, createRefUrl } from 'utils/markup';
 import { useUpdateEffect } from 'utils/hooks';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
-import { canPreview } from 'components/Ref';
+import { canPreview } from 'components/AttachmentPreview';
 import { Markup, MarkupRef } from 'components/Markup';
 import { IconButton } from 'components/Button';
 import { CodemirrorEditor } from './CodemirrorEditor';

@@ -1,17 +1,9 @@
 import { createContext, useContext } from 'react';
-import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
+import { DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, getDocumentUrl } from 'utils';
-import {
-  formatDocumentType,
-  isAttachment,
-  isAudioAttachment,
-  isErasedDocument,
-  isImageAttachment,
-} from 'utils/schema';
+import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
-import { Button } from 'components/Button';
-import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
-import { SuspenseImage } from 'components/SuspenseImage';
+import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);
@@ -27,7 +19,7 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
 
   if (attachmentPreview && canPreview(result.documentType, result.subtype)) {
     return (
-      <RefPreview
+      <AttachmentPreview
         documentId={result.id}
         subtype={result.subtype}
         data={result.data}
@@ -84,73 +76,4 @@ export function Ref({ documentId, documentType, subtype, documentTitle, descript
       {description || documentTitle}
     </a>
   );
-}
-
-type RefPreviewProps = {
-  documentId: DocumentId;
-  subtype: DocumentSubtype;
-  data: DocumentData;
-  description?: string;
-};
-export function RefPreview({ documentId, subtype, data, description }: RefPreviewProps) {
-  const refClickHandler = useContext(RefClickHandlerContext);
-
-  const preview = getAttachmentPreview(subtype, data);
-
-  if (!preview) {
-    throw new Error(`Can't preview ${subtype} attachment ${documentId}`);
-  }
-
-  return (
-    <span className="RefPreview block w-full group">
-      <span className="flex space-between items-center">
-        <span className="text-blue-900 pointer font-serif pl-1">{description}</span>
-
-        <Button
-          variant="text"
-          onClick={() => {
-            refClickHandler(documentId);
-          }}
-          className="ml-auto text-sm  transition invisible opacity-0 group-hover:visible group-hover:opacity-100"
-          trailingIcon="link-arrow"
-          size="sm"
-        >
-          open
-        </Button>
-      </span>
-      {preview}
-    </span>
-  );
-}
-
-export function canPreview(documentType: DocumentType, subtype: DocumentSubtype): boolean {
-  if (!isAttachment(documentType)) {
-    return false;
-  }
-
-  return isImageAttachment(subtype) || isAudioAttachment(subtype);
-}
-
-export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentData) {
-  const blobId = data['blob'] as string;
-  const size = data['size'] as number;
-  const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
-
-  if (isImageAttachment(subtype)) {
-    const compressedImage = `${window.BASE_PATH}/blobs/images/${blobId}?max_w=600&max_h=500`;
-
-    return (
-      <SuspenseImage
-        src={size < 1_000_000 ? blobUrl : compressedImage}
-        alt=""
-        className="max-h-96 mx-auto"
-      />
-    );
-  }
-
-  if (isAudioAttachment(subtype)) {
-    return <AudioPlayer url={blobUrl} title="" artist="" />;
-  }
-
-  return null;
 }

@@ -6,25 +6,19 @@ import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';
 import { RefClickHandlerContext } from 'components/Ref';
 
-type AttachmentPreviewProps = {
+type AttachmentPreviewBlockProps = {
   documentId: DocumentId;
   subtype: DocumentSubtype;
   data: DocumentData;
   description?: string;
 };
-export function AttachmentPreview({
+export function AttachmentPreviewBlock({
   documentId,
   subtype,
   data,
   description,
-}: AttachmentPreviewProps) {
+}: AttachmentPreviewBlockProps) {
   const refClickHandler = useContext(RefClickHandlerContext);
-
-  const preview = getAttachmentPreview(subtype, data);
-
-  if (!preview) {
-    throw new Error(`Can't preview ${subtype} attachment ${documentId}`);
-  }
 
   return (
     <span className="block w-full group">
@@ -43,20 +37,17 @@ export function AttachmentPreview({
           open
         </Button>
       </span>
-      {preview}
+
+      <AttachmentPreview subtype={subtype} data={data} />
     </span>
   );
 }
 
-export function canPreview(documentType: DocumentType, subtype: DocumentSubtype): boolean {
-  if (!isAttachment(documentType)) {
-    return false;
-  }
-
-  return isImageAttachment(subtype) || isAudioAttachment(subtype);
-}
-
-export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentData) {
+type AttachmentPreviewProps = {
+  subtype: DocumentSubtype;
+  data: DocumentData;
+};
+export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
   const blobId = data['blob'] as string;
   const size = data['size'] as number;
   const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
@@ -78,4 +69,12 @@ export function getAttachmentPreview(subtype: DocumentSubtype, data: DocumentDat
   }
 
   return null;
+}
+
+export function canPreview(documentType: DocumentType, subtype: DocumentSubtype): boolean {
+  if (!isAttachment(documentType)) {
+    return false;
+  }
+
+  return isImageAttachment(subtype) || isAudioAttachment(subtype);
 }

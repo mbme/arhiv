@@ -6,7 +6,7 @@ import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
-import { getAttachmentPreview } from 'components/AttachmentPreview';
+import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { useCardLock } from '../workspace-reducer';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
@@ -83,9 +83,11 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
         backrefs={document.backrefs}
       />
 
-      <div className="mb-8 empty:hidden">
-        {getAttachmentPreview(document.subtype, document.data)}
-      </div>
+      {canPreview(document.documentType, document.subtype) && (
+        <div className="mb-8 empty:hidden">
+          <AttachmentPreview subtype={document.subtype} data={document.data} />
+        </div>
+      )}
 
       <DocumentEditor
         formRef={setForm}

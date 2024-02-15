@@ -7,7 +7,7 @@ import { Ref } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
-import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
+import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';
 
 function normalizeIds(defaultValue: DocumentId | DocumentId[] | undefined | null): DocumentId[] {
   if (!defaultValue) {
@@ -140,7 +140,7 @@ export function RefInput({
           </div>
 
           {canPreview(item.documentType, item.subtype) && (
-            <AttachmentPreview documentId={item.id} subtype={item.subtype} data={item.data} />
+            <AttachmentPreviewBlock documentId={item.id} subtype={item.subtype} data={item.data} />
           )}
         </div>
       ))}

@@ -3,7 +3,7 @@ import { DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { cx, getDocumentUrl } from 'utils';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
-import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
+import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);
@@ -19,7 +19,7 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
 
   if (attachmentPreview && canPreview(result.documentType, result.subtype)) {
     return (
-      <AttachmentPreview
+      <AttachmentPreviewBlock
         documentId={result.id}
         subtype={result.subtype}
         data={result.data}

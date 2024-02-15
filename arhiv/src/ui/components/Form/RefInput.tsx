@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { useLatestRef } from 'utils/hooks';
-import { isAttachment } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { DocumentId, DocumentType } from 'dto';
-import { Ref, RefContainer } from 'components/Ref';
+import { Ref, RefPreview, canPreview } from 'components/Ref';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { Button, IconButton } from 'components/Button';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
@@ -139,7 +138,9 @@ export function RefInput({
             )}
           </div>
 
-          {isAttachment(item.documentType) && <RefContainer id={item.id} attachmentPreview />}
+          {canPreview(item.documentType, item.subtype) && (
+            <RefPreview documentId={item.id} subtype={item.subtype} data={item.data} />
+          )}
         </div>
       ))}
 

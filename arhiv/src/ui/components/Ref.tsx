@@ -25,14 +25,12 @@ type RefContainerProps = {
 export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
   const { value: result } = useSuspenseQuery({ typeName: 'GetDocument', id });
 
-  if (attachmentPreview) {
+  if (attachmentPreview && canPreview(result.documentType, result.subtype)) {
     return (
       <RefPreview
         documentId={result.id}
-        documentType={result.documentType}
         subtype={result.subtype}
         data={result.data}
-        documentTitle={result.title}
         description={description}
       />
     );
@@ -90,42 +88,22 @@ export function Ref({ documentId, documentType, subtype, documentTitle, descript
 
 type RefPreviewProps = {
   documentId: DocumentId;
-  documentType: DocumentType;
   subtype: DocumentSubtype;
   data: DocumentData;
-  documentTitle: string;
   description?: string;
 };
-export function RefPreview({
-  documentId,
-  documentType,
-  subtype,
-  data,
-  documentTitle,
-  description,
-}: RefPreviewProps) {
+export function RefPreview({ documentId, subtype, data, description }: RefPreviewProps) {
   const refClickHandler = useContext(RefClickHandlerContext);
 
-  let preview;
-  if (isAttachment(documentType)) {
-    preview = getAttachmentPreview(subtype, data);
-  }
+  const preview = getAttachmentPreview(subtype, data);
 
   if (!preview) {
-    return (
-      <Ref
-        documentId={documentId}
-        documentType={documentType}
-        subtype={subtype}
-        documentTitle={documentTitle}
-        description={description}
-      />
-    );
+    throw new Error(`Can't preview ${subtype} attachment ${documentId}`);
   }
 
   return (
-    <div className="RefPreview w-full group">
-      <div className="flex space-between items-center">
+    <span className="RefPreview block w-full group">
+      <span className="flex space-between items-center">
         <span className="text-blue-900 pointer font-serif pl-1">{description}</span>
 
         <Button
@@ -139,9 +117,9 @@ export function RefPreview({
         >
           open
         </Button>
-      </div>
+      </span>
       {preview}
-    </div>
+    </span>
   );
 }
 

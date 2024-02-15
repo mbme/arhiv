@@ -12,7 +12,8 @@ export function SuspenseImage({ src, alt, className }: Props) {
   img.className = className;
 
   return (
-    <div
+    <span
+      className="block"
       ref={(el) => {
         if (el && !el.contains(img)) {
           el.appendChild(img);

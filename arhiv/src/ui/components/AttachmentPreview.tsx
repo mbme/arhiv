@@ -1,10 +1,11 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
 import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
 import { Button } from 'components/Button';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';
 import { RefClickHandlerContext } from 'components/Ref';
+import { Dialog } from 'components/Dialog';
 
 type AttachmentPreviewBlockProps = {
   documentId: DocumentId;
@@ -48,11 +49,25 @@ type AttachmentPreviewProps = {
   data: DocumentData;
 };
 export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
+  const [showImageModal, setShowImageModal] = useState(false);
+
   const blobId = data['blob'] as string;
   const size = data['size'] as number;
   const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
 
   if (isImageAttachment(subtype)) {
+    if (showImageModal) {
+      return (
+        <Dialog
+          className="w-fit max-w-none"
+          title={data['filename'] as string}
+          onHide={() => setShowImageModal(false)}
+        >
+          <img className="min-w-[90vw]" src={blobUrl} />
+        </Dialog>
+      );
+    }
+
     const compressedImage = `${window.BASE_PATH}/blobs/images/${blobId}?max_w=600&max_h=500`;
 
     return (
@@ -60,6 +75,7 @@ export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
         src={size < 1_000_000 ? blobUrl : compressedImage}
         alt=""
         className="max-h-96 mx-auto"
+        onClick={() => setShowImageModal(true)}
       />
     );
   }

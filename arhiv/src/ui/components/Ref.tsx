@@ -49,30 +49,6 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
   );
 }
 
-type RefListContainerProps = {
-  ids: DocumentId[];
-};
-export function RefListContainer({ ids }: RefListContainerProps) {
-  const { value } = useSuspenseQuery({
-    typeName: 'GetDocuments',
-    ids,
-  });
-
-  return (
-    <>
-      {value?.documents.map((item) => (
-        <Ref
-          key={item.id}
-          documentId={item.id}
-          documentType={item.documentType}
-          subtype={item.subtype}
-          documentTitle={item.title}
-        />
-      ))}
-    </>
-  );
-}
-
 type RefProps = {
   documentId: DocumentId;
   documentType: DocumentType;

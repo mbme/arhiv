@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
-import { SuspenseCacheProvider, useSuspenseCacheCleaner } from 'components/SuspenseCacheProvider';
+import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { RefClickHandlerContext } from 'components/Ref';
 import { Toaster } from 'components/Toaster';
 import {
@@ -24,8 +24,6 @@ export function Workspace() {
   useScrollRestoration(wrapperEl, 'workspace-scroll');
 
   const [{ cards }, dispatch] = useWorkspaceReducer();
-
-  useRemoveUnusedCardCaches(cards);
 
   const { openDocument } = useWorkspaceActions(dispatch);
 
@@ -73,18 +71,4 @@ function renderCard(card: Card) {
   }
 
   throwBadCardVariant(card);
-}
-
-function collectCardIds(card: Card, collection: string[]) {
-  collection.push(card.id);
-
-  if (card.previousCard) {
-    collectCardIds(card.previousCard, collection);
-  }
-}
-
-function useRemoveUnusedCardCaches(cards: Card[]) {
-  const ids: string[] = [];
-  cards.forEach((card) => collectCardIds(card, ids));
-  useSuspenseCacheCleaner(ids);
 }

@@ -14,6 +14,7 @@ type Props = {
   onSelected: (info: DocumentInfo) => void;
   onCancel: () => void;
   hideOnSelect?: boolean;
+  title?: string;
 };
 
 export function DocumentPicker({
@@ -21,6 +22,7 @@ export function DocumentPicker({
   onSelected,
   onCancel,
   hideOnSelect,
+  title,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +34,8 @@ export function DocumentPicker({
   return (
     <Dialog
       innerRef={dialogRef}
-      title={`Pick ${documentTypes?.join(', ') ?? 'document'}`}
+      darkBg
+      title={title || `Pick ${documentTypes?.join(', ') ?? 'document'}`}
       onHide={onCancel}
     >
       <Catalog

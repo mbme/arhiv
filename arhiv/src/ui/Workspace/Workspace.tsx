@@ -3,11 +3,8 @@ import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration } from 'utils/hooks';
 import { SuspenseCacheProvider, useSuspenseCacheCleaner } from 'components/SuspenseCacheProvider';
-import { Button } from 'components/Button';
-import { DropdownMenu } from 'components/DropdownMenu';
-import { ScraperDialog } from 'components/ScraperDialog';
-import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { RefClickHandlerContext } from 'components/Ref';
+import { Toaster } from 'components/Toaster';
 import {
   Card,
   useWorkspaceActions,
@@ -20,10 +17,7 @@ import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCardContainer } from './DocumentCard';
 import { StatusCard } from './StatusCard';
 import { ScrapeResultCard } from './ScrapeResultCard';
-import { NewDocumentDialog } from './NewDocumentDialog';
-import { ImagePasteHandler } from './ImagePasteHandler';
-import { CommitOrSyncButton } from './CommitOrSyncButton';
-import { Toaster } from 'components/Toaster';
+import { WorkspaceHeader } from './WorkspaceHeader';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -33,7 +27,7 @@ export function Workspace() {
 
   useRemoveUnusedCardCaches(cards);
 
-  const { openDocument, open, closeAll } = useWorkspaceActions(dispatch);
+  const { openDocument } = useWorkspaceActions(dispatch);
 
   useEffect(() => {
     const documentId = getQueryParam('id');
@@ -43,110 +37,10 @@ export function Workspace() {
     }
   }, [openDocument]);
 
-  const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
-  const [showScraperDialog, setShowScraperDialog] = useState(false);
-  const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
-
   return (
     <RefClickHandlerContext.Provider value={openDocument}>
       <div className="workspace-cards" ref={setWrapperEl}>
-        <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
-          <Button variant="text" disabled>
-            Player
-          </Button>
-
-          <Button
-            variant="text"
-            leadingIcon="add-document"
-            onClick={() => setShowNewDocumentDialog(true)}
-            className="ml-auto"
-          >
-            <span className="hidden md:inline">New...</span>
-          </Button>
-          {showNewDocumentDialog && (
-            <NewDocumentDialog
-              onNewDocument={(documentType) => {
-                open({ variant: 'new-document', documentType });
-                setShowNewDocumentDialog(false);
-              }}
-              onScrape={() => {
-                setShowScraperDialog(true);
-                setShowNewDocumentDialog(false);
-              }}
-              onAttach={() => {
-                setShowFilePickerDialog(true);
-                setShowNewDocumentDialog(false);
-              }}
-              onCancel={() => {
-                setShowNewDocumentDialog(false);
-              }}
-            />
-          )}
-
-          <Button
-            variant="text"
-            leadingIcon="search-catalog"
-            onClick={() => open({ variant: 'catalog' })}
-          >
-            <span className="hidden md:inline">Search</span>
-          </Button>
-
-          <CommitOrSyncButton />
-
-          {showScraperDialog && (
-            <ScraperDialog
-              onSuccess={(url, ids) => {
-                open({ variant: 'scrape-result', url, ids });
-                setShowScraperDialog(false);
-              }}
-              onCancel={() => {
-                setShowScraperDialog(false);
-              }}
-            />
-          )}
-
-          {showFilePickerDialog && (
-            <FilePickerDialog
-              onAttachmentCreated={(documentId) => {
-                open({ variant: 'document', documentId });
-                setShowFilePickerDialog(false);
-              }}
-              onCancel={() => {
-                setShowFilePickerDialog(false);
-              }}
-            />
-          )}
-
-          <ImagePasteHandler
-            onSuccess={(documentId) => {
-              open({ variant: 'document', documentId });
-            }}
-          />
-
-          <DropdownMenu
-            align="bottom-right"
-            options={[
-              {
-                text: 'Status',
-                icon: 'info',
-                onClick: () => open({ variant: 'status' }),
-              },
-
-              process.env.NODE_ENV === 'development' && {
-                text: 'Components Demo',
-                onClick: () => {
-                  window.location.search = 'DEMO';
-                },
-              },
-
-              {
-                text: 'Close cards',
-                icon: 'x',
-                onClick: closeAll,
-              },
-            ]}
-          />
-        </nav>
+        <WorkspaceHeader dispatch={dispatch} />
 
         {cards.map((card) => (
           <CardContextProvider key={card.id} card={card} dispatch={dispatch}>

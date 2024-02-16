@@ -117,6 +117,12 @@ export function WorkspaceHeader({ dispatch }: Props) {
               onClick: () => open({ variant: 'status' }),
             },
 
+            {
+              text: 'Catalog',
+              icon: 'search-catalog',
+              onClick: () => open({ variant: 'catalog' }),
+            },
+
             process.env.NODE_ENV === 'development' && {
               text: 'Components Demo',
               onClick: () => {

@@ -5,6 +5,10 @@
     }
 
     @apply fixed z-50 inset-0 flex flex-col bg-white/95;
+
+    &.is-dark {
+      @apply bg-zinc-800/90;
+    }
   }
 
   .modal-overlay {
@@ -30,7 +34,7 @@
   }
 
   .modal-content {
-    @apply p-2 sm:p-4 md:p-6 break-words overflow-y-auto custom-scrollbar;
+    @apply p-2 sm:p-4 md:p-6 break-words overflow-y-auto overflow-x-auto max-w-full custom-scrollbar;
   }
 
   .modal-buttons {

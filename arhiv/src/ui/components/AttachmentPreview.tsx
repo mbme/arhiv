@@ -59,11 +59,12 @@ export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
     if (showImageModal) {
       return (
         <Dialog
-          className="w-fit max-w-none"
+          className="w-fit max-w-full"
+          darkBg
           title={data['filename'] as string}
           onHide={() => setShowImageModal(false)}
         >
-          <img className="min-w-[90vw]" src={blobUrl} />
+          <img className="max-w-full" src={blobUrl} />
         </Dialog>
       );
     }

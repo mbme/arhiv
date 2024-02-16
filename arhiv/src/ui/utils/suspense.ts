@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useDeferredValue,
+  useEffect,
   useRef,
 } from 'react';
 import { APIRequest } from 'dto';
@@ -60,12 +61,11 @@ export function useSuspenseQuery<Request extends APIRequest>(
 
   const queryName = JSON.stringify(request);
 
-  // delete stale cache value if key changed
-  const prevQueryName = useRef(queryName);
-  if (prevQueryName.current !== queryName) {
-    cache.delete(prevQueryName.current);
-    prevQueryName.current = queryName;
-  }
+  useEffect(() => {
+    return () => {
+      cache.delete(queryName);
+    };
+  }, [cache, queryName]);
 
   let suspender = cache.get(queryName);
   if (!suspender) {

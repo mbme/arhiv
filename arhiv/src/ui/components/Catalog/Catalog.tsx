@@ -76,7 +76,7 @@ export function Catalog({
           }}
           busy={isUpdating}
           autofocus={autofocus}
-          debounceMs={400}
+          debounceMs={700}
           onKeyDown={(key) => {
             return selectionManager.handleKey(key);
           }}

@@ -101,6 +101,12 @@
       }
     }
   }
+
+  .sm-selectable {
+    &[data-selected='true'] {
+      @apply var-item-active-bg-color;
+    }
+  }
 }
 
 @layer base {

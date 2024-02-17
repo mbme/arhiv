@@ -11,7 +11,7 @@ import { shallowEqual } from 'shallow-equal';
 import { Callback, debounce, JSONValue, throttle } from './index';
 import { storage } from './storage';
 
-type Inputs = ReadonlyArray<unknown>;
+export type Inputs = ReadonlyArray<unknown>;
 
 export function useShallowMemo<T>(value: T): T {
   const valueRef = useRef(value);

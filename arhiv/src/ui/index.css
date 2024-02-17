@@ -103,6 +103,8 @@
   }
 
   .sm-selectable {
+    @apply transition-colors;
+
     &[data-selected='true'] {
       @apply var-item-active-bg-color;
     }

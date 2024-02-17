@@ -1,5 +1,6 @@
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
 import { useSuspenseQuery } from 'utils/suspense';
+import { useSelectionManager } from 'utils/selection-manager';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
@@ -44,16 +45,15 @@ export function Catalog({
     documentTypes,
   });
 
+  const { selectionManager, rootRef } = useSelectionManager([result]);
+
   const items = result.documents.map((item) => (
     <div
-      className="cursor-pointer px-2 py-3 transition-colors hover:bg-sky-100"
       key={item.id}
+      className="cursor-pointer px-2 py-3 sm-selectable"
       onClick={() => onDocumentSelected(item.id, item.documentType, item.subtype)}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.currentTarget.click();
-        }
+      onMouseOver={(e) => {
+        selectionManager.activateElement(e.currentTarget);
       }}
     >
       <div className="font-bold text-lg break-all">
@@ -77,6 +77,9 @@ export function Catalog({
           busy={isUpdating}
           autofocus={autofocus}
           debounceMs={400}
+          onKeyDown={(key) => {
+            return selectionManager.handleKey(key);
+          }}
         />
 
         <IconButton icon="cog" size="sm" onClick={() => onToggleSettings(!showSettings)} />
@@ -90,7 +93,7 @@ export function Catalog({
         />
       )}
 
-      <div className="divide-y mb-6">
+      <div ref={rootRef} className="divide-y mb-6">
         {items}
         {items.length === 0 && <div className="text-center">No results 😿</div>}
       </div>

@@ -4,11 +4,7 @@
       display: none;
     }
 
-    @apply fixed z-50 inset-0 flex flex-col bg-white/95;
-
-    &.is-dark {
-      @apply bg-zinc-800/90;
-    }
+    @apply fixed z-50 inset-0 flex flex-col bg-zinc-800/90;
   }
 
   .modal-overlay {

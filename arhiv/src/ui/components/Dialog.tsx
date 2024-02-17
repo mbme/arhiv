@@ -5,7 +5,6 @@ import { IconButton } from 'components/Button';
 
 type DialogProps = {
   innerRef?: JSXRef<HTMLDivElement>;
-  darkBg?: boolean;
   className?: string;
   onHide: Callback;
   alarming?: boolean;
@@ -15,7 +14,6 @@ type DialogProps = {
 };
 export function Dialog({
   innerRef,
-  darkBg,
   className,
   onHide,
   alarming,
@@ -24,13 +22,7 @@ export function Dialog({
   buttons,
 }: DialogProps) {
   return (
-    <HeadlessDialog
-      ref={innerRef}
-      open
-      static
-      onClose={onHide}
-      className={cx('modal-container', darkBg && 'is-dark')}
-    >
+    <HeadlessDialog ref={innerRef} open static onClose={onHide} className="modal-container">
       <div className="modal-overlay" />
 
       <div className="modal-dialog-container">

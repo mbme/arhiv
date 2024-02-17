@@ -34,7 +34,6 @@ export function DocumentPicker({
   return (
     <Dialog
       innerRef={dialogRef}
-      darkBg
       title={title || `Pick ${documentTypes?.join(', ') ?? 'document'}`}
       onHide={onCancel}
     >

@@ -10,6 +10,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: BOOK_TYPE,
+            title_format: "{authors} - {title}",
             fields: vec![
                 Field {
                     name: "title",
@@ -123,6 +124,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: BOOK_COLLECTION_TYPE,
+            title_format: "{name}",
             fields: vec![
                 Field {
                     name: "name",

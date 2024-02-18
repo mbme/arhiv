@@ -10,6 +10,7 @@ pub fn get_game_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: GAME_TYPE,
+            title_format: "{name} ({release_date})",
             fields: vec![
                 Field {
                     name: "name",
@@ -79,6 +80,7 @@ pub fn get_game_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: GAME_COLLECTION_TYPE,
+            title_format: "{name}",
             fields: vec![
                 Field {
                     name: "name",

@@ -10,6 +10,7 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: CONTACT_TYPE,
+            title_format: "{name}",
             fields: vec![
                 Field {
                     name: "name",
@@ -79,6 +80,7 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: CONTACT_COLLECTION_TYPE,
+            title_format: "{name}",
             fields: vec![
                 Field {
                     name: "name",

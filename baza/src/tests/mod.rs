@@ -45,6 +45,7 @@ impl Baza {
             vec![
                 DataDescription {
                     document_type: "test_type",
+                    title_format: "{test}",
                     fields: vec![
                         Field {
                             name: "test",

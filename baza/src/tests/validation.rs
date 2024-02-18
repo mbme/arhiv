@@ -13,6 +13,7 @@ fn test_validation_mandatory() {
         "test",
         vec![DataDescription {
             document_type: "test_type",
+            title_format: "title",
             fields: vec![Field {
                 name: "test",
                 field_type: FieldType::String {},
@@ -45,6 +46,7 @@ fn test_validation_readonly() {
         "test",
         vec![DataDescription {
             document_type: "test_type",
+            title_format: "title",
             fields: vec![Field {
                 name: "test",
                 field_type: FieldType::String {},

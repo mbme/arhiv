@@ -15,6 +15,7 @@ mod field;
 
 const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     document_type: ERASED_DOCUMENT_TYPE,
+    title_format: "Erased document",
     fields: vec![],
     subtypes: None,
 };

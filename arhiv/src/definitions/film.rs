@@ -10,6 +10,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
     vec![
         DataDescription {
             document_type: FILM_TYPE,
+            title_format: "{title} ({release_date})",
             fields: vec![
                 Field {
                     name: "title",
@@ -121,6 +122,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
         },
         DataDescription {
             document_type: FILM_COLLECTION_TYPE,
+            title_format: "{name}",
             fields: vec![
                 Field {
                     name: "name",

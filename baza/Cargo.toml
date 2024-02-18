@@ -28,15 +28,17 @@ aho-corasick = "1.1.0"
 
 pulldown-cmark = { version = "0.10", default-features = false, features = ["simd", "serde"] }
 
-rusqlite = { version = "0.30", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
+tinytemplate = "1"
 
-rs-utils = { path = "../rs-utils" }
+rusqlite = { version = "0.30", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
 
 fslock = "0.2.1"
 
 reqwest.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
+
+rs-utils = { path = "../rs-utils" }
 
 [dev-dependencies]
 insta.workspace = true

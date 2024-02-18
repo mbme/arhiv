@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use tinytemplate::TinyTemplate;
 
 use crate::{
     entities::{Document, DocumentClass, DocumentData, Refs},
@@ -29,25 +30,21 @@ impl<'s> DocumentExpert<'s> {
         Ok(refs)
     }
 
-    fn pick_title_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
-        let field = self
-            .schema
-            .iter_fields(document_type)?
-            .find(|field| field.could_be_title());
-
-        Ok(field)
-    }
-
     pub fn get_title(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<String> {
-        let title_field = if let Some(title_field) = self.pick_title_field(document_type)? {
-            title_field
-        } else {
-            return Ok(format!("Untitled {document_type}"));
-        };
+        let mut tt = TinyTemplate::new();
 
-        data.get_str(title_field.name)
-            .map(ToString::to_string)
-            .ok_or_else(|| anyhow!("title field {} is missing", title_field.name))
+        tt.add_template(
+            "title",
+            self.schema
+                .get_data_description(document_type)?
+                .title_format,
+        )
+        .context(anyhow!(
+            "failed to compile title template for {document_type}"
+        ))?;
+
+        tt.render("title", data)
+            .context(anyhow!("failed to render title for {document_type}"))
     }
 
     pub fn is_editable(&self, document_type: &DocumentClass) -> Result<bool> {

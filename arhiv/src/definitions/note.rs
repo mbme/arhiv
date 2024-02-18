@@ -5,8 +5,8 @@ pub const NOTE_TYPE: &str = "note";
 pub fn get_note_definitions() -> Vec<DataDescription> {
     vec![DataDescription {
         document_type: NOTE_TYPE,
+        title_format: "{title}",
         fields: vec![
-            //
             Field {
                 name: "title",
                 field_type: FieldType::String {},

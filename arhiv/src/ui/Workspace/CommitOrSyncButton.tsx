@@ -39,7 +39,10 @@ const useSaveState = (): SaveState => {
   return result ?? { canCommit: false, canSync: false };
 };
 
-function CommitButton() {
+interface CommitButtonProps {
+  disabled?: boolean;
+}
+function CommitButton({ disabled }: CommitButtonProps) {
   const { error, inProgress, triggerRefresh } = useQuery(
     (abortSignal) => RPC.Commit({}, abortSignal),
     {
@@ -52,6 +55,7 @@ function CommitButton() {
       variant="text"
       leadingIcon="save-all"
       busy={inProgress}
+      disabled={disabled}
       onClick={triggerRefresh}
       trailingIcon={error ? 'error-triangle' : undefined}
       title={error ? 'Commit failed' : undefined}
@@ -62,7 +66,7 @@ function CommitButton() {
 }
 
 interface SyncButtonProps {
-  disabled: boolean;
+  disabled?: boolean;
 }
 function SyncButton({ disabled }: SyncButtonProps) {
   const { error, inProgress, triggerRefresh } = useQuery(
@@ -90,9 +94,9 @@ function SyncButton({ disabled }: SyncButtonProps) {
 export function CommitOrSyncButton() {
   const { canCommit, canSync } = useSaveState();
 
-  if (canCommit) {
-    return <CommitButton />;
+  if (canSync) {
+    return <SyncButton disabled={!canSync} />;
   }
 
-  return <SyncButton disabled={!canSync} />;
+  return <CommitButton disabled={!canCommit} />;
 }

@@ -237,9 +237,7 @@ export function useUnsavedChangesWarning(warn: boolean) {
   }, [warn]);
 }
 
-export function useScrollRestoration(el: HTMLElement | null, key: string, onDone?: Callback) {
-  const onDoneRef = useLatestRef(onDone);
-
+export function useScrollRestoration(el: HTMLElement | null, key: string) {
   useEffect(() => {
     if (!el) {
       return;
@@ -257,8 +255,6 @@ export function useScrollRestoration(el: HTMLElement | null, key: string, onDone
 
     el.style.scrollBehavior = originalScrollBehavior;
 
-    onDoneRef.current?.();
-
     const onScroll = throttle(() => {
       storage.setValue(key, [el.scrollTop, el.scrollLeft]);
     }, 350);
@@ -271,7 +267,7 @@ export function useScrollRestoration(el: HTMLElement | null, key: string, onDone
       el.removeEventListener('scroll', onScroll);
       storage.removeValue(key);
     };
-  }, [el, key, onDoneRef]);
+  }, [el, key]);
 }
 
 export function useForceRender(): Callback {

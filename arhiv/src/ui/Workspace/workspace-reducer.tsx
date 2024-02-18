@@ -41,6 +41,7 @@ export type Card = CardVariant & {
   previousCard?: Card;
   restored?: boolean;
   locked?: boolean;
+  openTime: number;
 };
 
 export function throwBadCardVariant(value: never): never;
@@ -96,14 +97,26 @@ function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceS
   switch (action.type) {
     case 'open': {
       if (action.skipDocumentIfAlreadyOpen && action.newCard.variant === 'document') {
-        const { documentId } = action.newCard;
+        const { documentId, openTime } = action.newCard;
 
         const isAlreadyOpen = state.cards.some(
           (card) => card.variant === 'document' && card.documentId === documentId,
         );
 
         if (isAlreadyOpen) {
-          return state;
+          return {
+            ...state,
+            cards: state.cards.map((card) => {
+              if (card.variant === 'document' && card.documentId === documentId) {
+                return {
+                  ...card,
+                  openTime,
+                };
+              }
+
+              return card;
+            }),
+          };
         }
       }
 
@@ -296,6 +309,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
             id,
             newCard: {
               ...newCard,
+              openTime: Date.now(),
               id: newId(),
             },
           });
@@ -308,6 +322,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
             id,
             newCard: {
               ...newCard,
+              openTime: Date.now(),
               id: newId(),
             },
             stackPrevious: true,
@@ -327,7 +342,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
           dispatch({
             type: 'replace',
             id: cardId,
-            newCard: { variant: 'document', documentId, id: newId() },
+            newCard: { variant: 'document', documentId, id: newId(), openTime: Date.now() },
             stackPrevious: true,
           });
         });
@@ -345,6 +360,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
             type: 'open',
             newCard: {
               ...newCard,
+              openTime: Date.now(),
               id: newId(),
             },
           });
@@ -355,7 +371,7 @@ export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
         startTransition(() => {
           dispatch({
             type: 'open',
-            newCard: { variant: 'document', documentId, id: newId() },
+            newCard: { variant: 'document', documentId, id: newId(), openTime: Date.now() },
             skipDocumentIfAlreadyOpen,
           });
         });

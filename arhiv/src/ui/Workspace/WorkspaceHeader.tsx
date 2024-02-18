@@ -14,7 +14,7 @@ type Props = {
   dispatch: WorkspaceDispatch;
 };
 export function WorkspaceHeader({ dispatch }: Props) {
-  const { open, closeAll } = useWorkspaceActions(dispatch);
+  const { open, closeAll, openDocument } = useWorkspaceActions(dispatch);
 
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
@@ -81,7 +81,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
         {showFilePickerDialog && (
           <FilePickerDialog
             onAttachmentCreated={(documentId) => {
-              open({ variant: 'document', documentId });
+              openDocument(documentId);
               setShowFilePickerDialog(false);
             }}
             onCancel={() => {
@@ -96,7 +96,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
             hideOnSelect
             onSelected={(info) => {
               setShowSearchDialog(false);
-              open({ variant: 'document', documentId: info.id });
+              openDocument(info.id, true);
             }}
             onCancel={() => setShowSearchDialog(false)}
           />
@@ -104,7 +104,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
 
         <ImagePasteHandler
           onSuccess={(documentId) => {
-            open({ variant: 'document', documentId });
+            openDocument(documentId);
           }}
         />
 

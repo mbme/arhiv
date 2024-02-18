@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollRestoration } from 'utils/hooks';
@@ -32,18 +32,28 @@ export function CardContainer({
   const { card, actions } = useCardContext();
 
   const restored = card.restored;
+  const openTime = card.openTime;
   const hasStackedCards = Boolean(card.previousCard);
 
   const [el, setEl] = useState<HTMLElement | null>(null);
 
-  useScrollRestoration(el, `workspace-card-${card.id}-scroll`, () => {
-    if (el && !restored) {
-      // requestAnimationFrame is needed for more reliable scrolling
-      requestAnimationFrame(() => {
-        el.scrollIntoView({ inline: 'center' });
-      });
+  useScrollRestoration(el, `workspace-card-${card.id}-scroll`);
+
+  const isFirstRef = useRef(true);
+  useEffect(() => {
+    if (!el) {
+      return;
     }
-  });
+
+    const isFirstUpdate = isFirstRef.current;
+    isFirstRef.current = false;
+
+    if (isFirstUpdate && restored) {
+      return;
+    }
+
+    el.scrollIntoView({ inline: 'center' });
+  }, [el, restored, openTime]);
 
   const fallback = (
     <div className="card-content flex items-center justify-center grow">

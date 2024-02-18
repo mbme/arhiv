@@ -11,7 +11,6 @@
 * `npm`
 
 # Dev dependencies
-* `watchexec` to run commands in response to file modifications
 * `cargo-insta` to manage snapshot tests
 * `tmux` for running dev servers in parallel
 

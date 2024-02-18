@@ -29,7 +29,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(refs)
     }
 
-    pub fn pick_title_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
+    fn pick_title_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
         let field = self
             .schema
             .iter_fields(document_type)?
@@ -65,10 +65,14 @@ impl<'s> DocumentExpert<'s> {
         data: &DocumentData,
         pattern: &str,
     ) -> Result<usize> {
-        let title_field = self.pick_title_field(document_type)?;
+        let title = self.get_title(document_type, data)?;
 
         let mut final_score = 0;
         let multi_search = MultiSearch::new(pattern);
+
+        // increase score if field is a title
+        let title_score = multi_search.search(&title) * 3;
+        final_score += title_score;
 
         for field in self.schema.iter_fields(document_type)? {
             let value = if let Some(value) = data.get(field.name) {
@@ -83,14 +87,7 @@ impl<'s> DocumentExpert<'s> {
                 continue;
             };
 
-            let mut score = multi_search.search(&search_data);
-
-            // increase score if field is a title
-            if title_field.map_or(false, |title_field| title_field == field) {
-                score *= 3;
-            }
-
-            final_score += score;
+            final_score += multi_search.search(&search_data);
         }
 
         Ok(final_score)

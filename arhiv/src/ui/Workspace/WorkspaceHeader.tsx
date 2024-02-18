@@ -1,4 +1,5 @@
 import { startTransition, useState } from 'react';
+import { useDocumentKeydown } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
@@ -20,6 +21,16 @@ export function WorkspaceHeader({ dispatch }: Props) {
   const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+
+  useDocumentKeydown((e) => {
+    // Search with Ctrl-K
+    if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
+      e.preventDefault();
+      startTransition(() => {
+        setShowSearchDialog(true);
+      });
+    }
+  });
 
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
@@ -61,7 +72,9 @@ export function WorkspaceHeader({ dispatch }: Props) {
           leadingIcon="search-catalog"
           onClick={() => startTransition(() => setShowSearchDialog(true))}
         >
-          <span className="hidden md:inline">Search</span>
+          <span className="hidden md:inline" title="Ctrl-K">
+            Search
+          </span>
         </Button>
 
         <CommitOrSyncButton />

@@ -295,8 +295,7 @@ export function useIsPageVisible(): boolean {
 }
 
 export function usePageVisibilityTracker(onPageVisibilityChange: (visible: boolean) => void) {
-  const onPageVisibilityChangeRef = useRef(onPageVisibilityChange);
-  onPageVisibilityChangeRef.current = onPageVisibilityChange;
+  const onPageVisibilityChangeRef = useLatestRef(onPageVisibilityChange);
 
   useEffect(() => {
     const visibilityChangeHandler = () => {
@@ -308,5 +307,21 @@ export function usePageVisibilityTracker(onPageVisibilityChange: (visible: boole
     return () => {
       document.removeEventListener('visibilitychange', visibilityChangeHandler);
     };
-  }, []);
+  }, [onPageVisibilityChangeRef]);
+}
+
+export function useDocumentKeydown(onKeyDown: (e: KeyboardEvent) => void) {
+  const onKeydown = useLatestRef(onKeyDown);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      onKeydown.current(e);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onKeydown]);
 }

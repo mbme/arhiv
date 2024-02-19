@@ -59,6 +59,10 @@
       border-radius: 10px;
     }
   }
+
+  .break-anywhere {
+    overflow-wrap: anywhere;
+  }
 }
 
 @layer components {

@@ -1,9 +1,11 @@
 import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { getScaledImageUrl } from 'utils';
 import { useSuspenseQuery } from 'utils/suspense';
 import { useSelectionManager } from 'utils/selection-manager';
 import { DateTime } from 'components/DateTime';
 import { SearchInput } from 'components/SearchInput';
 import { IconButton } from 'components/Button';
+import { DocumentIcon } from 'components/DocumentIcon';
 import { Pagination } from './Pagination';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
 
@@ -50,17 +52,35 @@ export function Catalog({
   const items = result.documents.map((item) => (
     <div
       key={item.id}
-      className="cursor-pointer px-2 py-3 sm-selectable"
+      className="cursor-pointer pr-2 py-3 sm-selectable"
       onClick={() => onDocumentSelected(item.id, item.documentType, item.subtype)}
       onMouseOver={(e) => {
         selectionManager.activateElement(e.currentTarget);
       }}
     >
-      <div className="font-bold text-lg break-all">
-        [{item.documentType || 'erased'}] {item.title}
-      </div>
+      <div className="flex gap-3">
+        <div className="shrink-0 w-[64px] h-[80px]">
+          {item.cover ? (
+            <img src={getScaledImageUrl(item.cover, 64, 80)} alt="cover" className="pl-2" />
+          ) : (
+            <DocumentIcon documentType={item.documentType} />
+          )}
+        </div>
 
-      <DateTime className="font-mono text-sm" datetime={item.updatedAt} relative />
+        <div className="grow">
+          <div className="flex justify-between">
+            <div className="section-heading">{item.documentType || 'erased'}</div>
+
+            <DateTime
+              className="font-mono text-sm shrink-0 text-gray-400"
+              datetime={item.updatedAt}
+              relative
+            />
+          </div>
+
+          <div className="font-bold text-lg break-anywhere">{item.title}</div>
+        </div>
+      </div>
     </div>
   ));
 

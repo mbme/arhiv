@@ -1,3 +1,5 @@
+import { BLOBId } from 'dto';
+
 export type Obj<T = string> = Record<string, T | undefined>;
 export type EmptyObj = Obj<never>;
 
@@ -91,6 +93,14 @@ export function px(value: number) {
 
 export function getDocumentUrl(documentId: string): string {
   return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
+}
+
+export function getBlobUrl(blobId: BLOBId): string {
+  return `${window.BASE_PATH}/blobs/${blobId}`;
+}
+
+export function getScaledImageUrl(blobId: BLOBId, maxWidth: number, maxHeight: number): string {
+  return `${window.BASE_PATH}/blobs/images/${blobId}?max_w=${maxWidth}&max_h=${maxHeight}`;
 }
 
 const BYTES_SIZES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];

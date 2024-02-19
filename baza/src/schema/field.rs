@@ -7,6 +7,7 @@ use serde_json::Value;
 use crate::{
     entities::{BLOBId, DocumentClass, Id},
     markup::MarkupStr,
+    schema::ATTACHMENT_TYPE,
 };
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -38,6 +39,11 @@ impl Field {
     #[must_use]
     pub fn could_be_title(&self) -> bool {
         matches!(self.field_type, FieldType::String {})
+    }
+
+    #[must_use]
+    pub fn could_be_cover(&self) -> bool {
+        matches!(self.field_type, FieldType::Ref(ATTACHMENT_TYPE)) && self.name == "cover"
     }
 
     #[must_use]

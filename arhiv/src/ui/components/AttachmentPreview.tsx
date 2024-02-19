@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
-import { DocumentData, DocumentId, DocumentType, DocumentSubtype } from 'dto';
+import { DocumentData, DocumentId, DocumentType, DocumentSubtype, BLOBId } from 'dto';
 import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
+import { getBlobUrl, getScaledImageUrl } from 'utils';
 import { Button } from 'components/Button';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';
@@ -51,9 +52,10 @@ type AttachmentPreviewProps = {
 export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
   const [showImageModal, setShowImageModal] = useState(false);
 
-  const blobId = data['blob'] as string;
+  const blobId = data['blob'] as BLOBId;
   const size = data['size'] as number;
-  const blobUrl = `${window.BASE_PATH}/blobs/${blobId}`;
+
+  const blobUrl = getBlobUrl(blobId);
 
   if (isImageAttachment(subtype)) {
     if (showImageModal) {
@@ -68,7 +70,7 @@ export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
       );
     }
 
-    const compressedImage = `${window.BASE_PATH}/blobs/images/${blobId}?max_w=600&max_h=500`;
+    const compressedImage = getScaledImageUrl(blobId, 600, 500);
 
     return (
       <SuspenseImage

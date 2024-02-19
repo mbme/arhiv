@@ -101,6 +101,10 @@ export function getDefaultSubtype(documentType: DocumentType): DocumentSubtype {
   return dataDescription.subtypes?.[0] ?? DEFAULT_SUBTYPE;
 }
 
+export function isCollection(documentType: DocumentType): boolean {
+  return getDocumentTypes(true).includes(documentType);
+}
+
 export function isAttachment(documentType: DocumentType) {
   return documentType === ATTACHMENT_DOCUMENT_TYPE;
 }

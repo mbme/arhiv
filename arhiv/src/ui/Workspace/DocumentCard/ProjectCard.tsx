@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   DocumentDTO,
   DocumentId,
-  ListDocumentsResult,
+  GetDocumentsResult,
   ProjectData,
   TaskData,
   TaskStatus,
@@ -88,7 +88,7 @@ function TaskItem({ id, data }: TaskItemProps) {
 
 type TaskGroupProps = {
   title: string;
-  tasks: ListDocumentsResult<TaskData>[];
+  tasks: GetDocumentsResult<TaskData>[];
   defaultOpen?: boolean;
   sessionKey: string;
   onDrop: (taskId: DocumentId, targetId: DocumentId) => void;
@@ -135,9 +135,9 @@ function TaskGroup({ title, tasks, defaultOpen = false, sessionKey, onDrop }: Ta
 }
 
 function filterTasks(
-  allTasks: ListDocumentsResult<TaskData>[],
+  allTasks: GetDocumentsResult<TaskData>[],
   ...statuses: TaskStatus[]
-): ListDocumentsResult<TaskData>[] {
+): GetDocumentsResult<TaskData>[] {
   return allTasks.filter((task) => statuses.includes(task.data.status));
 }
 
@@ -170,7 +170,7 @@ export function ProjectCard({
   });
 
   const orderedTasks = toSorted(
-    documents as ListDocumentsResult<TaskData>[],
+    documents as GetDocumentsResult<TaskData>[],
     (a, b) => orderedTaskIds.indexOf(a.id) - orderedTaskIds.indexOf(b.id),
   );
 

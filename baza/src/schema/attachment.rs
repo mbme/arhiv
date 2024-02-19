@@ -178,3 +178,7 @@ pub fn create_attachment(
 
     document.convert()
 }
+
+pub fn is_image_attachment(class: &DocumentClass) -> bool {
+    class.document_type == ATTACHMENT_TYPE && class.subtype == IMAGE_SUBTYPE
+}

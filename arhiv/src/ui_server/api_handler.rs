@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use baza::{
     entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
-    schema::{create_attachment, DataSchema},
+    schema::{create_attachment, Attachment, DataSchema},
     validator::{ValidationError, Validator},
     DocumentExpert, Filter,
 };
@@ -16,7 +16,8 @@ use rs_utils::{
 
 use crate::{
     dto::{
-        APIRequest, APIResponse, DirEntry, DocumentBackref, ListDocumentsResult, SaveDocumentErrors,
+        APIRequest, APIResponse, DirEntry, DocumentBackref, GetDocumentsResult,
+        ListDocumentsResult, SaveDocumentErrors,
     },
     Arhiv,
 };
@@ -46,11 +47,41 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
 
             let schema = arhiv.baza.get_schema();
-            let page = arhiv.baza.get_connection()?.list_documents(&filter)?;
+            let document_expert = DocumentExpert::new(schema);
+
+            let conn = arhiv.baza.get_connection()?;
+            let page = conn.list_documents(&filter)?;
+
+            let documents = page
+                .items
+                .into_iter()
+                .map(|item| {
+                    let attachment_id = document_expert.get_cover_attachment_id(&item)?;
+
+                    let cover = if let Some(ref attachment_id) = attachment_id {
+                        let attachment: Attachment =
+                            conn.must_get_document(attachment_id)?.convert()?;
+
+                        Some(attachment.data.blob)
+                    } else {
+                        None
+                    };
+
+                    Ok(ListDocumentsResult {
+                        title: document_expert.get_title(&item.class, &item.data)?,
+                        cover,
+                        id: item.id,
+                        document_type: item.class.document_type,
+                        subtype: item.class.subtype,
+                        updated_at: item.updated_at,
+                        data: item.data,
+                    })
+                })
+                .collect::<Result<_>>()?;
 
             APIResponse::ListDocuments {
                 has_more: page.has_more,
-                documents: documents_into_results(page.items, schema)?,
+                documents,
             }
         }
         APIRequest::GetDocuments { ids } => {
@@ -439,13 +470,13 @@ fn sort_entries(entries: &mut [DirEntry]) {
 fn documents_into_results(
     documents: Vec<Document>,
     schema: &DataSchema,
-) -> Result<Vec<ListDocumentsResult>> {
+) -> Result<Vec<GetDocumentsResult>> {
     let document_expert = DocumentExpert::new(schema);
 
     documents
         .into_iter()
         .map(|item| {
-            Ok(ListDocumentsResult {
+            Ok(GetDocumentsResult {
                 title: document_expert.get_title(&item.class, &item.data)?,
                 id: item.id,
                 document_type: item.class.document_type,

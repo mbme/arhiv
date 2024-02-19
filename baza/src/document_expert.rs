@@ -2,8 +2,8 @@ use anyhow::{anyhow, Context, Result};
 use tinytemplate::TinyTemplate;
 
 use crate::{
-    entities::{Document, DocumentClass, DocumentData, Refs},
-    schema::{DataSchema, Field},
+    entities::{Document, DocumentClass, DocumentData, Id, Refs},
+    schema::{is_image_attachment, DataSchema, Field},
     search::MultiSearch,
 };
 
@@ -45,6 +45,29 @@ impl<'s> DocumentExpert<'s> {
 
         tt.render("title", data)
             .context(anyhow!("failed to render title for {document_type}"))
+    }
+
+    fn pick_cover_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
+        let field = self
+            .schema
+            .iter_fields(document_type)?
+            .find(|field| field.could_be_cover());
+
+        Ok(field)
+    }
+
+    pub fn get_cover_attachment_id(&self, document: &Document) -> Result<Option<Id>> {
+        if is_image_attachment(&document.class) {
+            return Ok(Some(document.id.clone()));
+        }
+
+        let cover_field = if let Some(cover_field) = self.pick_cover_field(&document.class)? {
+            cover_field
+        } else {
+            return Ok(None);
+        };
+
+        Ok(document.data.get_str(cover_field.name).map(From::from))
     }
 
     pub fn is_editable(&self, document_type: &DocumentClass) -> Result<bool> {

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use baza::entities::{DocumentData, DocumentLockKey, Id};
+use baza::entities::{BLOBId, DocumentData, DocumentLockKey, Id};
 use rs_utils::Timestamp;
 
 #[derive(Deserialize, Debug)]
@@ -90,7 +90,7 @@ pub enum APIResponse {
         has_more: bool,
     },
     GetDocuments {
-        documents: Vec<ListDocumentsResult>,
+        documents: Vec<GetDocumentsResult>,
     },
     GetStatus {
         status: String,
@@ -130,7 +130,7 @@ pub enum APIResponse {
     },
     #[cfg(feature = "scraper")]
     Scrape {
-        documents: Vec<ListDocumentsResult>,
+        documents: Vec<GetDocumentsResult>,
     },
     Commit {},
     Sync {},
@@ -150,6 +150,18 @@ pub enum APIResponse {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListDocumentsResult {
+    pub id: Id,
+    pub document_type: String,
+    pub subtype: String,
+    pub title: String,
+    pub updated_at: Timestamp,
+    pub data: DocumentData,
+    pub cover: Option<BLOBId>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetDocumentsResult {
     pub id: Id,
     pub document_type: String,
     pub subtype: String,

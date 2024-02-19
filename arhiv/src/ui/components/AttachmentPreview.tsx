@@ -65,7 +65,7 @@ export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
           title={data['filename'] as string}
           onHide={() => setShowImageModal(false)}
         >
-          <img className="max-w-full" src={blobUrl} />
+          <img className="max-w-full mx-auto" src={blobUrl} />
         </Dialog>
       );
     }

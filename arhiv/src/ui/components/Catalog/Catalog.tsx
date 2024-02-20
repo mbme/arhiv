@@ -48,7 +48,7 @@ export function Catalog({
     documentTypes,
   });
 
-  const { selectionManager, rootRef } = useSelectionManager([result]);
+  const { setRootEl } = useSelectionManager([result]);
 
   const items = result.documents.map((item) => (
     <div
@@ -85,7 +85,7 @@ export function Catalog({
   ));
 
   return (
-    <div className={className}>
+    <div ref={(el) => setRootEl(el ?? undefined)} className={className}>
       <div className="flex gap-4 items-center mb-4">
         <SearchInput
           className="flex-auto"
@@ -97,9 +97,6 @@ export function Catalog({
           busy={isUpdating}
           autofocus={autofocus}
           debounceMs={700}
-          onKeyDown={(key) => {
-            return selectionManager.handleKey(key);
-          }}
         />
 
         <IconButton icon="cog" size="sm" onClick={() => onToggleSettings(!showSettings)} />
@@ -116,7 +113,7 @@ export function Catalog({
         />
       )}
 
-      <div ref={rootRef} className="divide-y">
+      <div className="divide-y">
         {items}
         {items.length === 0 && <div className="text-center">No results 😿</div>}
       </div>

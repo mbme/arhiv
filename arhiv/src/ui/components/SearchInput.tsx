@@ -7,7 +7,6 @@ type SearchInputProps = {
   autofocus?: boolean;
   initialValue: string;
   onSearch: (query: string) => void;
-  onKeyDown?: (key: string) => boolean | void;
   busy?: boolean;
   placeholder?: string;
   debounceMs?: number;
@@ -19,7 +18,6 @@ export function SearchInput({
   autofocus,
   initialValue,
   onSearch,
-  onKeyDown,
   busy,
   placeholder = 'Type something',
   debounceMs = 0,
@@ -54,11 +52,6 @@ export function SearchInput({
         defaultValue={initialValue}
         onChange={(e) => {
           onSearchDebounced(e.currentTarget.value);
-        }}
-        onKeyDown={(e) => {
-          if (onKeyDown?.(e.key)) {
-            e.preventDefault();
-          }
         }}
         placeholder={placeholder}
         autoComplete="off"

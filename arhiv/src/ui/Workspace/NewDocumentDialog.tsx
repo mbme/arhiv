@@ -35,7 +35,7 @@ type Props = {
 export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel }: Props) {
   const [query, setQuery] = useState('');
 
-  const { selectionManager, rootRef } = useSelectionManager([query]);
+  const { selectionManager, setRootEl } = useSelectionManager([query]);
 
   const matchesQuery = (item: string) => fuzzySearch(query, item);
 
@@ -51,27 +51,20 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
   };
 
   return (
-    <Dialog onHide={onCancel} title="Create new document">
+    <Dialog
+      innerRef={(el) => setRootEl(el ?? undefined)}
+      onHide={onCancel}
+      title="Create new document"
+    >
       <SearchInput
         className="mb-8"
         autofocus
         initialValue=""
         placeholder="Filter actions"
         onSearch={setQuery}
-        onKeyDown={(key) => {
-          if (key === 'Escape') {
-            onCancel();
-            return true;
-          }
-
-          return selectionManager.handleKey(key);
-        }}
       />
 
-      <div
-        ref={rootRef}
-        className="flex flex-col gap-1 min-h-[20vh] md:max-h-[70vh] overflow-y-auto"
-      >
+      <div className="flex flex-col gap-1 min-h-[20vh] md:max-h-[70vh] overflow-y-auto">
         {actions.length > 0 && <h1 className={headingClass}>Actions</h1>}
         {actions.map((action) => (
           <Button

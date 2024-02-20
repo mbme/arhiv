@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { Inputs } from 'utils/hooks';
+import { useEffect, useMemo, useState } from 'react';
+import { Inputs, useKeydown } from 'utils/hooks';
 
 export class SelectionManager {
-  constructor(private rootRef: React.RefObject<HTMLElement>) {}
+  constructor(private rootEl?: HTMLElement) {}
+
+  setRootEl(rootEl?: HTMLElement): void {
+    this.rootEl = rootEl;
+  }
+
+  hasRootEl(): boolean {
+    return !!this.rootEl;
+  }
 
   private getItems() {
-    const root = this.rootRef.current;
+    const root = this.rootEl;
     if (!root) {
       throw new Error('root element is missing');
     }
@@ -88,16 +96,30 @@ export class SelectionManager {
 }
 
 export function useSelectionManager(deps: Inputs = []) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [rootEl, setRootEl] = useState<HTMLElement>();
 
-  const selectionManager = useMemo(() => new SelectionManager(rootRef), [rootRef]);
+  const selectionManager = useMemo(() => new SelectionManager(), []);
 
   useEffect(() => {
-    selectionManager.activateItem(0);
+    selectionManager.setRootEl(rootEl);
+  }, [selectionManager, rootEl]);
+
+  useEffect(() => {
+    if (selectionManager.hasRootEl()) {
+      selectionManager.activateItem(0);
+    }
   }, [selectionManager, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useKeydown(rootEl, (e) => {
+    const handled = selectionManager.handleKey(e.code);
+
+    if (handled) {
+      e.preventDefault();
+    }
+  });
 
   return {
     selectionManager,
-    rootRef,
+    setRootEl,
   };
 }

@@ -1,5 +1,5 @@
 import { startTransition, useState } from 'react';
-import { useDocumentKeydown } from 'utils/hooks';
+import { useKeydown } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
@@ -22,7 +22,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
 
-  useDocumentKeydown((e) => {
+  useKeydown(document.body, (e) => {
     // Search with Ctrl-K
     if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
       e.preventDefault();

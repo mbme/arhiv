@@ -310,18 +310,22 @@ export function usePageVisibilityTracker(onPageVisibilityChange: (visible: boole
   }, [onPageVisibilityChangeRef]);
 }
 
-export function useDocumentKeydown(onKeyDown: (e: KeyboardEvent) => void) {
-  const onKeydown = useLatestRef(onKeyDown);
+export function useKeydown(el: HTMLElement | undefined, onKeyDown: (e: KeyboardEvent) => void) {
+  const onKeyDownRef = useLatestRef(onKeyDown);
 
   useEffect(() => {
+    if (!el) {
+      return;
+    }
+
     const onKeyDown = (e: KeyboardEvent) => {
-      onKeydown.current(e);
+      onKeyDownRef.current(e);
     };
 
-    document.addEventListener('keydown', onKeyDown);
+    el.addEventListener('keydown', onKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      el.removeEventListener('keydown', onKeyDown);
     };
-  }, [onKeydown]);
+  }, [el, onKeyDownRef]);
 }

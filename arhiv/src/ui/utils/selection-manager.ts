@@ -19,7 +19,7 @@ export class SelectionManager {
       el.dataset['selected'] = isActive ? 'true' : '';
 
       if (isActive) {
-        el.scrollIntoView({ block: 'nearest' });
+        el.scrollIntoView({ block: 'nearest', behavior: 'instant' });
       }
     });
   };

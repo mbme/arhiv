@@ -6,6 +6,7 @@ import { IconButton } from 'components/Button';
 type DialogProps = {
   innerRef?: JSXRef<HTMLDivElement>;
   className?: string;
+  contentClassName?: string;
   onHide: Callback;
   alarming?: boolean;
   title: JSXChildren;
@@ -15,6 +16,7 @@ type DialogProps = {
 export function Dialog({
   innerRef,
   className,
+  contentClassName,
   onHide,
   alarming,
   title,
@@ -37,7 +39,7 @@ export function Dialog({
             <IconButton icon="x" size="sm" onClick={onHide} />
           </HeadlessDialog.Title>
 
-          <div className="modal-content">{children}</div>
+          <div className={cx('modal-content', contentClassName)}>{children}</div>
 
           {buttons && <div className="modal-buttons">{buttons}</div>}
         </HeadlessDialog.Panel>

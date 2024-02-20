@@ -13,7 +13,10 @@ export function CatalogCard() {
   };
 
   return (
-    <CardContainer leftToolbar={<span className="section-heading text-lg">Catalog</span>}>
+    <CardContainer
+      className="pb-0"
+      leftToolbar={<span className="section-heading text-lg">Catalog</span>}
+    >
       <Catalog
         autofocus={!card.restored}
         query={card.query ?? ''}

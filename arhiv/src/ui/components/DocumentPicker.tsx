@@ -36,9 +36,9 @@ export function DocumentPicker({
       innerRef={dialogRef}
       title={title || `Pick ${documentTypes?.join(', ') ?? 'document'}`}
       onHide={onCancel}
+      contentClassName="px-3 pb-0"
     >
       <Catalog
-        className="px-2"
         autofocus
         documentTypes={documentTypes ?? []}
         query={query}

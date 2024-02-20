@@ -21,6 +21,7 @@ type CardContainerProps = {
   rightToolbar?: JSXChildren;
   skipBack?: boolean;
   skipClose?: boolean;
+  className?: string;
 };
 export function CardContainer({
   children,
@@ -28,6 +29,7 @@ export function CardContainer({
   rightToolbar,
   skipBack,
   skipClose,
+  className,
 }: CardContainerProps) {
   const { card, actions } = useCardContext();
 
@@ -91,7 +93,7 @@ export function CardContainer({
       </div>
 
       <SuspenseBoundary fallback={fallback} renderError={renderError}>
-        <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME)} ref={setEl}>
+        <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME, className)} ref={setEl}>
           {children}
         </div>
       </SuspenseBoundary>

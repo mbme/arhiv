@@ -16,11 +16,11 @@
   "author": "mbme",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.20.1",
     "tsx": "^4.5.0"
   },
   "dependencies": {
     "chrono-node": "^2.3.9",
-    "urlpattern-polyfill": "^9.0.0"
+    "urlpattern-polyfill": "^10.0.0"
   }
 }

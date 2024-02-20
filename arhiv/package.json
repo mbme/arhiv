@@ -40,12 +40,12 @@
     "@tailwindcss/forms": "^0.5.0",
     "@testing-library/react": "^14.0.0",
     "autoprefixer": "^10.2.6",
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.20.1",
     "glob": "^10.3.4",
-    "global-jsdom": "^9.1.0",
-    "jsdom": "^23.0.0",
+    "global-jsdom": "^24.0.0",
+    "jsdom": "^24.0.0",
     "postcss": "^8.3.0",
-    "postcss-cli": "^10.0.0",
+    "postcss-cli": "^11.0.0",
     "tailwindcss": "^3.0.7",
     "tsx": "^4.5.0"
   }

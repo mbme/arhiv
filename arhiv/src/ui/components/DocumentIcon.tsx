@@ -1,6 +1,5 @@
 import {
   DocumentType,
-  DocumentSubtype,
   TASK_DOCUMENT_TYPE,
   NOTE_DOCUMENT_TYPE,
   PROJECT_DOCUMENT_TYPE,

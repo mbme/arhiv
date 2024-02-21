@@ -1,4 +1,4 @@
-import { DocumentId } from 'dto';
+import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
 import { Card, useCardContext } from './workspace-reducer';
 import { CardContainer } from './CardContainer';
@@ -7,10 +7,6 @@ type CatalogCard = Extract<Card, { variant: 'catalog' }>;
 
 export function CatalogCard() {
   const { card, actions } = useCardContext<CatalogCard>();
-
-  const openDocument = (documentId: DocumentId) => {
-    actions.pushDocument(card.id, documentId);
-  };
 
   return (
     <CardContainer
@@ -29,7 +25,16 @@ export function CatalogCard() {
         onIncludedDocumentTypesChange={(documentTypes) =>
           actions.update(card.id, { documentTypes })
         }
-        onDocumentSelected={openDocument}
+        onDocumentSelected={(documentId) => {
+          actions.pushDocument(card.id, documentId);
+        }}
+        onCreateNote={(title) => {
+          actions.open({
+            variant: 'new-document',
+            documentType: NOTE_DOCUMENT_TYPE,
+            data: { title },
+          });
+        }}
       />
     </CardContainer>
   );

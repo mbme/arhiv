@@ -62,5 +62,9 @@
 
   .icon-btn {
     @apply p-3 flex items-center max-w-max hover:shadow-sm hover:bg-blue-50 rounded-full transition-colors var-active-color;
+
+    &[disabled] {
+      @apply text-slate-300 hover:text-slate-300;
+    }
   }
 }

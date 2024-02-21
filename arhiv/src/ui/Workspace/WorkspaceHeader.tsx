@@ -1,4 +1,5 @@
 import { startTransition, useState } from 'react';
+import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { useKeydown } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
@@ -112,6 +113,14 @@ export function WorkspaceHeader({ dispatch }: Props) {
               openDocument(info.id, true);
             }}
             onCancel={() => setShowSearchDialog(false)}
+            onCreateNote={(title) => {
+              setShowSearchDialog(false);
+              open({
+                variant: 'new-document',
+                documentType: NOTE_DOCUMENT_TYPE,
+                data: { title },
+              });
+            }}
           />
         )}
 

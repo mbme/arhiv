@@ -26,6 +26,7 @@ type CatalogProps = {
     documentType: DocumentType,
     subtype: DocumentSubtype,
   ) => void;
+  onCreateNote?: (title: string) => void;
 };
 
 export function Catalog({
@@ -40,6 +41,7 @@ export function Catalog({
   onToggleSettings,
   onIncludedDocumentTypesChange,
   onDocumentSelected,
+  onCreateNote,
 }: CatalogProps) {
   const { value: result, isUpdating } = useSuspenseQuery({
     typeName: 'ListDocuments',
@@ -100,6 +102,16 @@ export function Catalog({
         />
 
         <IconButton icon="cog" size="sm" onClick={() => onToggleSettings(!showSettings)} />
+
+        {onCreateNote && (
+          <IconButton
+            icon="add-document"
+            size="sm"
+            title="Create note"
+            disabled={query.trim().length === 0}
+            onClick={() => onCreateNote(query.trim())}
+          />
+        )}
       </div>
 
       {showSettings && (
@@ -115,7 +127,7 @@ export function Catalog({
 
       <div className="divide-y">
         {items}
-        {items.length === 0 && <div className="text-center">No results 😿</div>}
+        {items.length === 0 && <div className="text-center mb-4">No results 😿</div>}
       </div>
 
       <Pagination page={page} hasMore={result.hasMore} onClick={onPageChange} />

@@ -15,6 +15,7 @@ type Props = {
   onCancel: () => void;
   hideOnSelect?: boolean;
   title?: string;
+  onCreateNote?: (title: string) => void;
 };
 
 export function DocumentPicker({
@@ -23,6 +24,7 @@ export function DocumentPicker({
   onCancel,
   hideOnSelect,
   title,
+  onCreateNote,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +65,7 @@ export function DocumentPicker({
             subtype,
           });
         }}
+        onCreateNote={onCreateNote}
       />
     </Dialog>
   );

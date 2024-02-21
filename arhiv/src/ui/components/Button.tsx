@@ -85,9 +85,10 @@ type IconButtonProps = {
   icon: IconVariant;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   title?: string;
+  disabled?: boolean;
 };
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  { className, icon, onClick, size = 'md', title },
+  { className, icon, onClick, size = 'md', title, disabled },
   ref,
 ) {
   return (
@@ -102,6 +103,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       })}
       onClick={onClick}
       title={title}
+      disabled={disabled}
     >
       <Icon
         variant={icon}

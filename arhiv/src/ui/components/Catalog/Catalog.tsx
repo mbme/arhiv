@@ -85,7 +85,7 @@ export function Catalog({
   ));
 
   return (
-    <div ref={(el) => setRootEl(el ?? undefined)} className={className}>
+    <div ref={setRootEl} className={className}>
       <div className="flex gap-4 items-center mb-4">
         <SearchInput
           className="flex-auto"

@@ -310,7 +310,10 @@ export function usePageVisibilityTracker(onPageVisibilityChange: (visible: boole
   }, [onPageVisibilityChangeRef]);
 }
 
-export function useKeydown(el: HTMLElement | undefined, onKeyDown: (e: KeyboardEvent) => void) {
+export function useKeydown(
+  el: HTMLElement | undefined | null,
+  onKeyDown: (e: KeyboardEvent) => void,
+) {
   const onKeyDownRef = useLatestRef(onKeyDown);
 
   useEffect(() => {

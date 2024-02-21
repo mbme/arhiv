@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Inputs, useKeydown } from 'utils/hooks';
 
 export class SelectionManager {
-  constructor(private rootEl?: HTMLElement) {}
+  constructor(private rootEl: HTMLElement | null = null) {}
 
-  setRootEl(rootEl?: HTMLElement): void {
+  setRootEl(rootEl: HTMLElement | null): void {
     this.rootEl = rootEl;
   }
 
@@ -96,7 +96,7 @@ export class SelectionManager {
 }
 
 export function useSelectionManager(deps: Inputs = []) {
-  const [rootEl, setRootEl] = useState<HTMLElement>();
+  const [rootEl, setRootEl] = useState<HTMLElement | null>(null);
 
   const selectionManager = useMemo(() => new SelectionManager(), []);
 

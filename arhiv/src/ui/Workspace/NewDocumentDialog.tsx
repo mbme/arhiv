@@ -51,11 +51,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
   };
 
   return (
-    <Dialog
-      innerRef={(el) => setRootEl(el ?? undefined)}
-      onHide={onCancel}
-      title="Create new document"
-    >
+    <Dialog innerRef={setRootEl} onHide={onCancel} title="Create new document">
       <SearchInput
         className="mb-8"
         autofocus

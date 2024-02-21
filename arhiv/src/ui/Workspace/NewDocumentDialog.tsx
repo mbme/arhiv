@@ -60,7 +60,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
         onSearch={setQuery}
       />
 
-      <div className="flex flex-col gap-1 min-h-[20vh] md:max-h-[70vh] overflow-y-auto">
+      <div className="flex flex-col gap-1 min-h-[20vh] overflow-y-auto">
         {actions.length > 0 && <h1 className={headingClass}>Actions</h1>}
         {actions.map((action) => (
           <Button

@@ -53,7 +53,7 @@ export function Catalog({
   const items = result.documents.map((item) => (
     <div
       key={item.id}
-      className="cursor-pointer pr-2 py-3 sm-selectable hover:bg-sky-100"
+      className="cursor-pointer pr-2 py-2 sm-selectable hover:bg-sky-100"
       onClick={() => onDocumentSelected(item.id, item.documentType, item.subtype)}
     >
       <div className="flex gap-3">

@@ -12,11 +12,14 @@
   }
 
   .modal-dialog-container {
-    @apply fixed inset-0 flex items-start md:items-center justify-center z-20;
+    @apply fixed inset-0 flex flex-col items-center justify-start z-20;
   }
 
   .modal-dialog {
-    @apply z-10 mx-auto my-4 rounded-md shadow-md var-card-width bg-white max-h-full flex flex-col;
+    @apply z-10 mx-auto rounded-md shadow-md var-card-width bg-white flex flex-col;
+
+    margin-top: 1rem;
+    max-height: calc(100% - 2rem);
   }
 
   .modal-title {

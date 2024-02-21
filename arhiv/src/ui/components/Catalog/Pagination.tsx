@@ -8,7 +8,7 @@ type PaginationProps = {
 };
 export function Pagination({ page, hasMore, onClick }: PaginationProps) {
   return (
-    <div className="flex items-center justify-center gap-6 font-mono py-3 bg-white sticky bottom-0">
+    <div className="flex items-center justify-center gap-6 font-mono py-3 bg-white sticky bottom-0 empty:hidden">
       {page > 0 && (
         <>
           <Button variant="text" onClick={() => onClick(page - 1)}>

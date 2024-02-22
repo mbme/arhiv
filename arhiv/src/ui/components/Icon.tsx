@@ -391,13 +391,13 @@ const ICONS = {
       />
     </svg>
   ),
-  'note-text-outline': (className: string) => (
-    // material design icons note-text-outline
+  'document': (className: string) => (
+    // material design icons text-box-outline
     <svg className={cx('icon', className)} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M15 3H5A2 2 0 0 0 3 5V19A2 2 0 0 0 5 21H19A2 2 0 0 0 21 19V9L15 3M19 19H5V5H14V10H19M17 14H7V12H17M14 17H7V15H14" />
+      <path d="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z" />
     </svg>
   ),
-  'checkbox-marked-outline': (className: string) => (
+  'checkbox-marked': (className: string) => (
     // material design icons checkbox-marked-outline
     <svg className={cx('icon', className)} viewBox="0 0 24 24" fill="currentColor">
       <path d="M19,19H5V5H15V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V11H19M7.91,10.08L6.5,11.5L11,16L21,6L19.59,4.58L11,13.17L7.91,10.08Z" />
@@ -415,7 +415,7 @@ const ICONS = {
       <path d="M14,8H10V6H14V8M20,4V20C20,21.11 19.11,22 18,22H6C4.89,22 4,21.11 4,20V4A2,2 0 0,1 6,2H18C19.11,2 20,2.9 20,4M18,13H6V20H18V13M18,4H6V11H18V4M14,15H10V17H14V15Z" />
     </svg>
   ),
-  'file-outline': (className: string) => (
+  'file': (className: string) => (
     // material design icons file-outline
     <svg className={cx('icon', className)} viewBox="0 0 24 24" fill="currentColor">
       <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />

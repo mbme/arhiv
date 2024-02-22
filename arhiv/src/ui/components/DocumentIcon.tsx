@@ -17,14 +17,14 @@ type Props = {
   documentType: DocumentType;
 };
 export function DocumentIcon({ documentType }: Props) {
-  let variant: IconVariant = isCollection(documentType) ? 'file-cabinet' : 'file-outline';
+  let variant: IconVariant = isCollection(documentType) ? 'file-cabinet' : 'file';
 
   if (documentType === NOTE_DOCUMENT_TYPE) {
-    variant = 'note-text-outline';
+    variant = 'document';
   }
 
   if (documentType === TASK_DOCUMENT_TYPE) {
-    variant = 'checkbox-marked-outline';
+    variant = 'checkbox-marked';
   }
 
   if (documentType === PROJECT_DOCUMENT_TYPE) {

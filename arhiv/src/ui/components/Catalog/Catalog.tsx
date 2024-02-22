@@ -9,6 +9,7 @@ import { IconButton } from 'components/Button';
 import { DocumentIcon } from 'components/DocumentIcon';
 import { Pagination } from './Pagination';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
+import { CatalogItemBadges } from './CatalogItemBadges';
 
 type CatalogProps = {
   autofocus?: boolean;
@@ -81,6 +82,10 @@ export function Catalog({
           </div>
 
           <div className="font-bold text-lg break-anywhere">{item.title}</div>
+
+          <div className="empty:hidden mt-1 flex gap-2">
+            <CatalogItemBadges documentType={item.documentType} data={item.data} />
+          </div>
         </div>
       </div>
     </div>

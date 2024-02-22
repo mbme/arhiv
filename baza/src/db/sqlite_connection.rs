@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Instant};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
     types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
@@ -87,9 +87,11 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
         move |ctx| {
             assert_eq!(ctx.len(), 4, "called with unexpected number of arguments");
 
-            calculate_search_score(ctx)
-                .context("calculate_search_score() failed")
-                .map_err(|e| RusqliteError::UserFunctionError(e.into()))
+            calculate_search_score(ctx).map_err(|e| {
+                RusqliteError::UserFunctionError(
+                    anyhow!("calculate_search_score() failed: {e}").into(),
+                )
+            })
         },
     )
     .context("Failed to define function 'calculate_search_score'")

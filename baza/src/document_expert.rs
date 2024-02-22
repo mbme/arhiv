@@ -45,7 +45,7 @@ impl<'s> DocumentExpert<'s> {
         ))?;
 
         tt.render("title", data)
-            .context(anyhow!("failed to render title for {document_type}"))
+            .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
     }
 
     fn pick_cover_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {

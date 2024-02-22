@@ -248,6 +248,17 @@ fn test_conditions() -> Result<()> {
     }
 
     {
+        // test Search & Document type
+        let page = baza.list_documents(
+            Filter::default()
+                .with_document_type("test_type")
+                .search("Val"),
+        )?;
+
+        assert_eq!(get_values(page).len(), 2);
+    }
+
+    {
         // test Skip erased
         let page = baza.list_documents(Filter::default().skip_erased(true))?;
 

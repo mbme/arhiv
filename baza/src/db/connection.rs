@@ -310,16 +310,7 @@ impl BazaConnection {
             ));
         }
 
-        if let Some(ref pattern) = filter.conditions.search {
-            qb.and_select(format!(
-                "calculate_search_score(documents.document_type, documents.subtype, documents.data, {}) AS search_score",
-                qb.param(pattern)
-            ));
-            qb.where_condition("search_score > 0");
-
-            qb.order_by("search_score", false);
-        }
-
+        // order of conditions matters!
         if !filter.conditions.document_types.is_empty() {
             let list = filter
                 .conditions
@@ -330,6 +321,16 @@ impl BazaConnection {
                 .join(", ");
 
             qb.where_condition(format!("documents.document_type IN ({list})"));
+        }
+
+        if let Some(ref pattern) = filter.conditions.search {
+            qb.and_select(format!(
+                "calculate_search_score(documents.document_type, documents.subtype, documents.data, {}) AS search_score",
+                qb.param(pattern)
+            ));
+            qb.where_condition("search_score > 0");
+
+            qb.order_by("search_score", false);
         }
 
         if let Some(ref id) = filter.conditions.document_ref {

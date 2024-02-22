@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use tinytemplate::TinyTemplate;
+use tinytemplate::{format_unescaped, TinyTemplate};
 
 use crate::{
     entities::{Document, DocumentClass, DocumentData, Id, Refs},
@@ -32,6 +32,7 @@ impl<'s> DocumentExpert<'s> {
 
     pub fn get_title(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<String> {
         let mut tt = TinyTemplate::new();
+        tt.set_default_formatter(&format_unescaped);
 
         tt.add_template(
             "title",

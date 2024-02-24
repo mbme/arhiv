@@ -15,8 +15,9 @@ import { isCollection } from 'utils/schema';
 
 type Props = {
   documentType: DocumentType;
+  className?: string;
 };
-export function DocumentIcon({ documentType }: Props) {
+export function DocumentIcon({ documentType, className }: Props) {
   let variant: IconVariant = isCollection(documentType) ? 'file-cabinet' : 'file';
 
   if (documentType === NOTE_DOCUMENT_TYPE) {
@@ -55,5 +56,5 @@ export function DocumentIcon({ documentType }: Props) {
     variant = 'erase-document';
   }
 
-  return <Icon variant={variant} className="w-auto h-auto text-zinc-500" />;
+  return <Icon variant={variant} className={className} />;
 }

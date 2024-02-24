@@ -4,6 +4,7 @@ import { cx, getDocumentUrl } from 'utils';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';
+import { DocumentIcon } from './DocumentIcon';
 
 export const RefClickHandlerContext = createContext((documentId: DocumentId) => {
   console.log('Ref clicked:', documentId);
@@ -67,12 +68,8 @@ export function Ref({ documentId, documentType, subtype, documentTitle, descript
         refClickHandler(documentId);
       }}
     >
-      <span
-        className="text-[smaller] font-normal font-mono tracking-tight bg-slate-100 px-0.5 mr-1 align-middle"
-        hidden={isErasedDocument(documentType)}
-      >
-        {typeStr}
-      </span>
+      <DocumentIcon documentType={documentType} className="align-text-bottom" />
+
       {description || documentTitle}
     </a>
   );

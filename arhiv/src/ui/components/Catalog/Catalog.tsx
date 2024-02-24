@@ -64,7 +64,10 @@ export function Catalog({
           {item.cover ? (
             <img src={getScaledImageUrl(item.cover, 64, 80)} alt="cover" className="pl-2" />
           ) : (
-            <DocumentIcon documentType={item.documentType} />
+            <DocumentIcon
+              documentType={item.documentType}
+              className="w-auto h-auto text-zinc-500"
+            />
           )}
         </div>
 

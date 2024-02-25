@@ -26,14 +26,12 @@ export type APIRequest =
       typeName: 'SaveDocument';
       lockKey: DocumentLockKey;
       id: DocumentId;
-      subtype: DocumentSubtype;
       data: DocumentData;
       collections: DocumentId[];
     }
   | {
       typeName: 'CreateDocument';
       documentType: DocumentType;
-      subtype: DocumentSubtype;
       data: DocumentData;
       collections: DocumentId[];
     }
@@ -104,7 +102,6 @@ export type APIResponse =
       id: DocumentId;
       documentType: DocumentType;
       title: string;
-      subtype: DocumentSubtype;
       updatedAt: string;
       data: DocumentData;
       backrefs: DocumentBackref[];
@@ -168,7 +165,6 @@ export type APIResponse =
 
 export type DocumentId = NominalType<string, 'DocumentId'>;
 export type DocumentType = NominalType<string, 'DocumentType'>;
-export type DocumentSubtype = NominalType<string, 'DocumentSubtype'>;
 export type DocumentLockKey = NominalType<string, 'DocumentLockKey'>;
 export type BLOBId = NominalType<string, 'BLOBId'>;
 
@@ -184,13 +180,11 @@ export const GAME_DOCUMENT_TYPE = 'game' as DocumentType;
 export const CONTACT_DOCUMENT_TYPE = 'contact' as DocumentType;
 export const FILM_DOCUMENT_TYPE = 'film' as DocumentType;
 export const TRACK_DOCUMENT_TYPE = 'track' as DocumentType;
-export const DEFAULT_SUBTYPE = '' as DocumentSubtype;
 export const EMPTY_DATA: DocumentData = {};
 
 export type GetDocumentsResult<D = DocumentData> = {
   id: DocumentId;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   title: string;
   updatedAt: string;
   data: D;
@@ -199,7 +193,6 @@ export type GetDocumentsResult<D = DocumentData> = {
 export type ListDocumentsResult<D = DocumentData> = {
   id: DocumentId;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   title: string;
   updatedAt: string;
   data: D;
@@ -211,7 +204,6 @@ export type DocumentData = JSONObj;
 export type DocumentBackref = {
   id: DocumentId;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   title: string;
 };
 

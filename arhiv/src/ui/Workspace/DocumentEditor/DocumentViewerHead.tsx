@@ -1,4 +1,4 @@
-import { DocumentBackref, DocumentType, DocumentSubtype, DocumentId } from 'dto';
+import { DocumentBackref, DocumentType, DocumentId } from 'dto';
 import { cx } from 'utils';
 import { formatDocumentType } from 'utils/schema';
 import { Ref } from 'components/Ref';
@@ -7,7 +7,6 @@ import { DateTime } from 'components/DateTime';
 type DocumentViewerHeadProps = {
   id?: DocumentId;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   updatedAt: string;
   backrefs: DocumentBackref[];
 };
@@ -15,12 +14,11 @@ type DocumentViewerHeadProps = {
 export function DocumentViewerHead({
   id,
   documentType,
-  subtype,
   updatedAt,
   backrefs,
 }: DocumentViewerHeadProps) {
   return (
-    <div className="flex justify-between pl-2 mb-6">
+    <div className="flex justify-between items-start pl-2 mb-6">
       <div
         className={cx('flex flex-col gap-2', {
           'invisible': backrefs.length === 0,
@@ -32,13 +30,12 @@ export function DocumentViewerHead({
             key={backref.id}
             documentId={backref.id}
             documentType={backref.documentType}
-            subtype={backref.subtype}
             documentTitle={backref.title}
           />
         ))}
       </div>
 
-      <table id="document-head">
+      <table className="document-head">
         <tbody>
           {id && (
             <tr>
@@ -48,12 +45,12 @@ export function DocumentViewerHead({
           )}
           <tr>
             <td className="section-heading">type:</td>
-            <td>{formatDocumentType(documentType, subtype)}</td>
+            <td>{formatDocumentType(documentType)}</td>
           </tr>
           <tr>
             <td className="section-heading">modified:</td>
             <td>
-              <DateTime datetime={updatedAt} />
+              <DateTime datetime={updatedAt} className="whitespace-nowrap" />
             </td>
           </tr>
         </tbody>

@@ -16,7 +16,6 @@ export function ErasedDocumentCard({ document, isUpdating }: Props) {
       <DocumentViewerHead
         id={document.id}
         documentType={document.documentType}
-        subtype={document.subtype}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
       />

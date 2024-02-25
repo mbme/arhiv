@@ -25,8 +25,8 @@ export function CatalogCard() {
         onIncludedDocumentTypesChange={(documentTypes) =>
           actions.update(card.id, { documentTypes })
         }
-        onDocumentSelected={(documentId) => {
-          actions.pushDocument(card.id, documentId);
+        onDocumentSelected={(info) => {
+          actions.pushDocument(card.id, info.id);
         }}
         onCreateNote={(title) => {
           actions.open({

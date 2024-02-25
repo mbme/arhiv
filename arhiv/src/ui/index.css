@@ -86,6 +86,21 @@
     @apply inline h-5 w-5;
   }
 
+  .document-head {
+    @apply relative text-sm;
+
+    & td {
+      @apply pb-1 tracking-wide;
+    }
+
+    & td:first-child {
+      text-align: right;
+      padding-right: 0.6rem;
+      padding-bottom: 0;
+      vertical-align: middle;
+    }
+  }
+
   .audio-player {
     @apply bg-stone-100;
 
@@ -149,20 +164,5 @@
     overflow: hidden;
     position: relative;
     z-index: 1;
-  }
-
-  #document-head {
-    @apply relative text-sm;
-
-    & td {
-      @apply pb-1 tracking-wide;
-    }
-
-    & td:first-child {
-      text-align: right;
-      padding-right: 0.6rem;
-      padding-bottom: 0;
-      vertical-align: middle;
-    }
   }
 }

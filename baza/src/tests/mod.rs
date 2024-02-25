@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use rs_utils::generate_temp_path;
 
 use crate::{
-    entities::{BLOBId, Document, DocumentClass, Id, Revision, BLOB},
+    entities::{BLOBId, Document, DocumentType, Id, Revision, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::Changeset,
     Baza, BazaOptions, Filter, ListPage,
@@ -52,17 +52,14 @@ impl Baza {
                             field_type: FieldType::String {},
                             mandatory: false,
                             readonly: false,
-                            for_subtypes: None,
                         },
                         Field {
                             name: "blob",
                             field_type: FieldType::BLOBId {},
                             mandatory: false,
                             readonly: false,
-                            for_subtypes: None,
                         },
                     ],
-                    subtypes: None,
                 },
                 get_attachment_definition(),
             ],
@@ -115,10 +112,7 @@ impl Drop for Baza {
 }
 
 pub fn new_document(value: Value) -> Document {
-    Document::new_with_data(
-        DocumentClass::new("test_type", ""),
-        value.try_into().unwrap(),
-    )
+    Document::new_with_data(DocumentType::new("test_type"), value.try_into().unwrap())
 }
 
 pub fn new_document_snapshot(id: impl Into<Id>, revision: Value) -> Document {

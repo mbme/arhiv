@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    entities::{BLOBId, DocumentClass, Id},
+    entities::{BLOBId, DocumentType, Id},
     markup::MarkupStr,
     schema::ATTACHMENT_TYPE,
 };
@@ -32,7 +32,6 @@ pub struct Field {
     pub field_type: FieldType,
     pub mandatory: bool,
     pub readonly: bool,
-    pub for_subtypes: Option<&'static [&'static str]>,
 }
 
 impl Field {
@@ -242,16 +241,7 @@ impl Field {
     }
 
     #[must_use]
-    pub fn for_subtype(&self, subtype: &str) -> bool {
-        if let Some(for_subtypes) = self.for_subtypes {
-            for_subtypes.contains(&subtype)
-        } else {
-            true
-        }
-    }
-
-    #[must_use]
-    pub fn can_collect(&self, document_type: &DocumentClass) -> bool {
-        matches!(self.field_type, FieldType::RefList(ref_list_document_type) if ref_list_document_type == document_type.document_type)
+    pub fn can_collect(&self, document_type: &DocumentType) -> bool {
+        matches!(self.field_type, FieldType::RefList(ref_list_document_type) if document_type.is(ref_list_document_type))
     }
 }

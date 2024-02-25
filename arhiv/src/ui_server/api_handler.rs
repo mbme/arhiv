@@ -3,7 +3,7 @@ use std::{cmp::Ordering, fs, path::Path};
 use anyhow::{bail, Context, Result};
 
 use baza::{
-    entities::{Document, DocumentClass, ERASED_DOCUMENT_TYPE},
+    entities::{Document, DocumentType, ERASED_DOCUMENT_TYPE},
     markup::MarkupStr,
     schema::{create_attachment, Attachment, DataSchema},
     validator::{ValidationError, Validator},
@@ -68,11 +68,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                     };
 
                     Ok(ListDocumentsResult {
-                        title: document_expert.get_title(&item.class, &item.data)?,
+                        title: document_expert.get_title(&item.document_type, &item.data)?,
                         cover,
                         id: item.id,
-                        document_type: item.class.document_type,
-                        subtype: item.class.subtype,
+                        document_type: item.document_type.into(),
                         updated_at: item.updated_at,
                         data: item.data,
                     })
@@ -117,10 +116,9 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: document_expert.get_title(&item.class, &item.data)?,
+                        title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
-                        document_type: item.class.document_type,
-                        subtype: item.class.subtype,
+                        document_type: item.document_type.into(),
                     })
                 })
                 .collect::<Result<_>>()?;
@@ -130,23 +128,21 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 .into_iter()
                 .map(|item| {
                     Ok(DocumentBackref {
-                        title: document_expert.get_title(&item.class, &item.data)?,
+                        title: document_expert.get_title(&item.document_type, &item.data)?,
                         id: item.id,
-                        document_type: item.class.document_type,
-                        subtype: item.class.subtype,
+                        document_type: item.document_type.into(),
                     })
                 })
                 .collect::<Result<_>>()?;
 
-            let title = document_expert.get_title(&document.class, &document.data)?;
+            let title = document_expert.get_title(&document.document_type, &document.data)?;
 
-            let refs = document_expert.extract_refs(&document.class, &document.data)?;
+            let refs = document_expert.extract_refs(&document.document_type, &document.data)?;
 
             APIResponse::GetDocument {
                 id: document.id,
                 title,
-                document_type: document.class.document_type,
-                subtype: document.class.subtype,
+                document_type: document.document_type.into(),
                 updated_at: document.updated_at,
                 data: document.data,
                 backrefs,
@@ -165,7 +161,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         APIRequest::SaveDocument {
             lock_key,
             id,
-            subtype,
             data,
             collections,
         } => {
@@ -175,7 +170,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             let prev_data = document.data;
 
-            document.class.set_subtype(subtype);
             document.data = data;
 
             let validator = Validator::new(&tx);
@@ -199,11 +193,10 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
         }
         APIRequest::CreateDocument {
             document_type,
-            subtype,
             data,
             collections,
         } => {
-            let document_type = DocumentClass::new(document_type, subtype);
+            let document_type = DocumentType::new(document_type);
             let mut document = Document::new_with_data(document_type, data);
 
             let mut tx = arhiv.baza.get_tx()?;
@@ -477,10 +470,9 @@ fn documents_into_results(
         .into_iter()
         .map(|item| {
             Ok(GetDocumentsResult {
-                title: document_expert.get_title(&item.class, &item.data)?,
+                title: document_expert.get_title(&item.document_type, &item.data)?,
                 id: item.id,
-                document_type: item.class.document_type,
-                subtype: item.class.subtype,
+                document_type: item.document_type.into(),
                 updated_at: item.updated_at,
                 data: item.data,
             })

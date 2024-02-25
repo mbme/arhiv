@@ -294,3 +294,11 @@ export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[]
 
   return clone;
 }
+
+export function isImage(mediaType: string) {
+  return mediaType.startsWith('image/');
+}
+
+export function isAudio(mediaType: string) {
+  return mediaType.startsWith('audio/');
+}

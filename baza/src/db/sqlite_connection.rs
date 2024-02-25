@@ -12,7 +12,7 @@ use rs_utils::log;
 
 use crate::{
     document_expert::DocumentExpert,
-    entities::{BLOBId, DocumentClass, DocumentData, Id, Revision},
+    entities::{BLOBId, DocumentData, DocumentType, Id, Revision},
     schema::DataSchema,
 };
 
@@ -52,20 +52,18 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
             .as_str()
             .context("document_type must be str")?;
 
-        let subtype = ctx.get_raw(1).as_str().context("subtype must be str")?;
-
         let document_data = ctx
-            .get_raw(2)
+            .get_raw(1)
             .as_str()
             .context("document_data must be str")?;
 
-        let pattern = ctx.get_raw(3).as_str().context("pattern must be str")?;
+        let pattern = ctx.get_raw(2).as_str().context("pattern must be str")?;
 
         if pattern.is_empty() {
             return Ok(1);
         }
 
-        let document_type = DocumentClass::new(document_type, subtype);
+        let document_type = DocumentType::new(document_type);
 
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
@@ -82,10 +80,10 @@ fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) ->
 
     conn.create_scalar_function(
         "calculate_search_score",
-        4,
+        3,
         FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
         move |ctx| {
-            assert_eq!(ctx.len(), 4, "called with unexpected number of arguments");
+            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
 
             calculate_search_score(ctx).map_err(|e| {
                 RusqliteError::UserFunctionError(
@@ -126,14 +124,12 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
             .as_str()
             .context("document_type must be str")?;
 
-        let subtype = ctx.get_raw(1).as_str().context("subtype must be str")?;
-
         let document_data = ctx
-            .get_raw(2)
+            .get_raw(1)
             .as_str()
             .context("document_data must be str")?;
 
-        let document_type = DocumentClass::new(document_type, subtype);
+        let document_type = DocumentType::new(document_type);
 
         let document_data: DocumentData = serde_json::from_str(document_data)?;
 
@@ -146,10 +142,10 @@ fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()
 
     conn.create_scalar_function(
         "extract_refs",
-        3,
+        2,
         FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
         move |ctx| {
-            assert_eq!(ctx.len(), 3, "called with unexpected number of arguments");
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
 
             let result = extract_refs(ctx);
 
@@ -302,6 +298,18 @@ impl FromSql for BLOBId {
 }
 
 impl ToSql for BLOBId {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self as &str))
+    }
+}
+
+impl FromSql for DocumentType {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        value.as_str().map(DocumentType::new)
+    }
+}
+
+impl ToSql for DocumentType {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self as &str))
     }

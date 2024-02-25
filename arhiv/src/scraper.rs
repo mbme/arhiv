@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use serde_json::json;
 
 use baza::{
-    entities::{Document, DocumentClass},
+    entities::{Document, DocumentType},
     schema::create_attachment,
     BazaConnection,
 };
@@ -59,7 +59,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            DocumentClass::new(BOOK_TYPE, ""),
+                            DocumentType::new(BOOK_TYPE),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -95,7 +95,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            DocumentClass::new(FILM_TYPE, ""),
+                            DocumentType::new(FILM_TYPE),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -128,7 +128,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            DocumentClass::new(FILM_TYPE, ""),
+                            DocumentType::new(FILM_TYPE),
                             json!({
                                 "cover": &cover.id,
                                 "title": title,
@@ -157,7 +157,7 @@ impl Arhiv {
                         let cover = download_attachment(cover_url, &mut tx).await?;
 
                         let mut document = Document::new_with_data(
-                            DocumentClass::new(GAME_TYPE, ""),
+                            DocumentType::new(GAME_TYPE),
                             json!({
                                 "cover": &cover.id,
                                 "name": name,

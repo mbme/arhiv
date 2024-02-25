@@ -78,14 +78,13 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
 
       <DocumentViewerHead
         documentType={document.documentType}
-        subtype={document.subtype}
         updatedAt={document.updatedAt}
         backrefs={document.backrefs}
       />
 
-      {canPreview(document.documentType, document.subtype) && (
+      {canPreview(document.documentType, document.data) && (
         <div className="mb-8 empty:hidden">
-          <AttachmentPreview subtype={document.subtype} data={document.data} />
+          <AttachmentPreview data={document.data} />
         </div>
       )}
 
@@ -93,10 +92,9 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
         formRef={setForm}
         documentId={document.id}
         documentType={document.documentType}
-        subtype={document.subtype}
         data={document.data}
         collections={document.collections.map((item) => item.id)}
-        onSubmit={async (data, subtype, collections) => {
+        onSubmit={async (data, collections) => {
           if (!lockKey) {
             throw new Error('lock key is missing');
           }
@@ -104,7 +102,6 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
           const submitResult = await RPC.SaveDocument({
             lockKey,
             id: document.id,
-            subtype,
             data,
             collections,
           });

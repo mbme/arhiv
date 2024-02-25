@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { DocumentId, DocumentType, DocumentSubtype } from 'dto';
+import { DocumentId, DocumentType } from 'dto';
 import { cx, getDocumentUrl } from 'utils';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
@@ -18,14 +18,9 @@ type RefContainerProps = {
 export function RefContainer({ id, description, attachmentPreview }: RefContainerProps) {
   const { value: result } = useSuspenseQuery({ typeName: 'GetDocument', id });
 
-  if (attachmentPreview && canPreview(result.documentType, result.subtype)) {
+  if (attachmentPreview && canPreview(result.documentType, result.data)) {
     return (
-      <AttachmentPreviewBlock
-        documentId={result.id}
-        subtype={result.subtype}
-        data={result.data}
-        description={description}
-      />
+      <AttachmentPreviewBlock documentId={result.id} data={result.data} description={description} />
     );
   }
 
@@ -33,7 +28,6 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
     <Ref
       documentId={result.id}
       documentType={result.documentType}
-      subtype={result.subtype}
       documentTitle={result.title}
       description={description}
     />
@@ -43,14 +37,13 @@ export function RefContainer({ id, description, attachmentPreview }: RefContaine
 type RefProps = {
   documentId: DocumentId;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   documentTitle: string;
   description?: string;
 };
-export function Ref({ documentId, documentType, subtype, documentTitle, description }: RefProps) {
+export function Ref({ documentId, documentType, documentTitle, description }: RefProps) {
   const refClickHandler = useContext(RefClickHandlerContext);
 
-  const typeStr = formatDocumentType(documentType, subtype).toUpperCase();
+  const typeStr = formatDocumentType(documentType).toUpperCase();
 
   return (
     <a

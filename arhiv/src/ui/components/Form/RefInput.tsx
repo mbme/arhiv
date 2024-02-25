@@ -118,12 +118,7 @@ export function RefInput({
       {value?.documents.map((item) => (
         <div key={item.id}>
           <div className="flex items-center gap-4">
-            <Ref
-              documentId={item.id}
-              documentType={item.documentType}
-              subtype={item.subtype}
-              documentTitle={item.title}
-            />
+            <Ref documentId={item.id} documentType={item.documentType} documentTitle={item.title} />
 
             {!readonly && !disabled && (
               <IconButton
@@ -139,8 +134,8 @@ export function RefInput({
             )}
           </div>
 
-          {canPreview(item.documentType, item.subtype) && (
-            <AttachmentPreviewBlock documentId={item.id} subtype={item.subtype} data={item.data} />
+          {canPreview(item.documentType, item.data) && (
+            <AttachmentPreviewBlock documentId={item.id} data={item.data} />
           )}
         </div>
       ))}

@@ -19,3 +19,12 @@ pub fn get_latest_data_version(migrations: &DataMigrations) -> u8 {
         migration.get_version().max(latest_version)
     })
 }
+
+#[must_use]
+pub fn get_min_data_migration_version(migrations: &DataMigrations) -> u8 {
+    migrations
+        .iter()
+        .fold(u8::MAX, |latest_version, migration| {
+            migration.get_version().min(latest_version)
+        })
+}

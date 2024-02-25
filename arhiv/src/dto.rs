@@ -28,7 +28,6 @@ pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     CreateDocument {
         document_type: String,
-        subtype: String,
         data: DocumentData,
         collections: Vec<Id>,
     },
@@ -36,7 +35,6 @@ pub enum APIRequest {
     SaveDocument {
         lock_key: DocumentLockKey,
         id: Id,
-        subtype: String,
         data: DocumentData,
         collections: Vec<Id>,
     },
@@ -100,7 +98,6 @@ pub enum APIResponse {
         id: Id,
         title: String,
         document_type: String,
-        subtype: String,
         updated_at: Timestamp,
         data: DocumentData,
         refs: Vec<Id>,
@@ -152,7 +149,6 @@ pub enum APIResponse {
 pub struct ListDocumentsResult {
     pub id: Id,
     pub document_type: String,
-    pub subtype: String,
     pub title: String,
     pub updated_at: Timestamp,
     pub data: DocumentData,
@@ -164,7 +160,6 @@ pub struct ListDocumentsResult {
 pub struct GetDocumentsResult {
     pub id: Id,
     pub document_type: String,
-    pub subtype: String,
     pub title: String,
     pub updated_at: Timestamp,
     pub data: DocumentData,
@@ -182,7 +177,6 @@ pub struct SaveDocumentErrors {
 pub struct DocumentBackref {
     pub id: Id,
     pub document_type: String,
-    pub subtype: String,
     pub title: String,
 }
 

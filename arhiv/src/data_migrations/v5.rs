@@ -13,7 +13,7 @@ impl DataMigration for DataSchema5 {
     }
 
     fn update(&self, document: &mut Cow<Document>, _conn: &BazaConnection) -> Result<()> {
-        if document.class.document_type == "task" {
+        if document.document_type.is("task") {
             let status = document
                 .data
                 .get_str("status")

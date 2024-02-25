@@ -79,7 +79,7 @@ impl BazaConnection {
             }
 
             for blob_id in document_expert
-                .extract_refs(&document.class, &document.data)?
+                .extract_refs(&document.document_type, &document.data)?
                 .blobs
             {
                 let blob = self.get_blob(&blob_id);

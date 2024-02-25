@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { DEFAULT_SUBTYPE, EMPTY_DATA } from 'dto';
+import { EMPTY_DATA } from 'dto';
 import { RPC } from 'utils/rpc';
 import { Button } from 'components/Button';
 import { Card, useCardContext } from './workspace-reducer';
@@ -48,13 +48,11 @@ export function NewDocumentCard() {
         autofocus
         formRef={formRef}
         documentType={documentType}
-        subtype={card.subtype ?? DEFAULT_SUBTYPE}
         data={card.data ?? EMPTY_DATA}
         collections={card.collections ?? []}
-        onSubmit={async (data, subtype, collections) => {
+        onSubmit={async (data, collections) => {
           const submitResult = await RPC.CreateDocument({
             documentType,
-            subtype,
             data,
             collections,
           });

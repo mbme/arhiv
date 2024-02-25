@@ -8,7 +8,7 @@ use clap_complete::{generate, Shell};
 use tokio::time::sleep;
 
 use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
-use baza::entities::{Document, DocumentClass, DocumentData, Id};
+use baza::entities::{Document, DocumentData, DocumentType, Id};
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal};
 use scraper::ScraperOptions;
 
@@ -103,9 +103,6 @@ enum CLICommand {
                             get_standard_schema().get_document_types(),
                         ))]
         document_type: String,
-        /// Document subtype
-        #[clap(long)]
-        subtype: Option<String>,
         /// JSON object with document props
         #[arg()]
         data: String,
@@ -301,16 +298,12 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Add {
             document_type,
-            subtype,
             data,
         } => {
             let data: DocumentData =
                 serde_json::from_str(&data).context("data must be a JSON object")?;
 
-            let mut document = Document::new_with_data(
-                DocumentClass::new(document_type, subtype.unwrap_or_default()),
-                data,
-            );
+            let mut document = Document::new_with_data(DocumentType::new(document_type), data);
 
             let root_dir = find_root_dir()?;
             let arhiv = Arhiv::open(
@@ -454,7 +447,7 @@ fn get_document_url(id: &Option<&Id>, port: u16) -> String {
 fn print_document(document: &Document, port: u16) {
     println!(
         "[{} {}] {}",
-        document.class,
+        document.document_type,
         document.id,
         get_document_url(&Some(&document.id), port)
     );

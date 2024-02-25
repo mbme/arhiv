@@ -1,13 +1,9 @@
 import { useRef, useState } from 'react';
-import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
-import { Catalog } from 'components/Catalog/Catalog';
+import { Catalog, DocumentInfo } from 'components/Catalog/Catalog';
 
-export type DocumentInfo = {
-  id: DocumentId;
-  documentType: DocumentType;
-  subtype: DocumentSubtype;
-};
+export { DocumentInfo };
 
 type Props = {
   documentTypes?: DocumentType[];
@@ -50,7 +46,7 @@ export function DocumentPicker({
         onPageChange={setPage}
         onToggleSettings={setShowSettings}
         onIncludedDocumentTypesChange={setDocumentTypes}
-        onDocumentSelected={(id, documentType, subtype) => {
+        onDocumentSelected={(info) => {
           if (!dialogRef.current) {
             throw new Error('dialog element is missing');
           }
@@ -59,11 +55,7 @@ export function DocumentPicker({
             dialogRef.current.setAttribute('hidden', '');
           }
 
-          onSelected({
-            id,
-            documentType,
-            subtype,
-          });
+          onSelected(info);
         }}
         onCreateNote={onCreateNote}
       />

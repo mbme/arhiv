@@ -1,7 +1,7 @@
 use anyhow::{bail, ensure, Context, Result};
 
 use baza::{
-    entities::{Document, DocumentClass, DocumentData},
+    entities::{Document, DocumentData, DocumentType},
     schema::{create_attachment, ATTACHMENT_TYPE},
 };
 use rs_utils::{ensure_file_exists, remove_file_extension};
@@ -58,8 +58,7 @@ impl Arhiv {
         data.set("title", title);
         data.set("track", &attachment.id);
 
-        let class = DocumentClass::new(TRACK_TYPE, "");
-        let mut document = Document::new_with_data(class, data);
+        let mut document = Document::new_with_data(DocumentType::new(TRACK_TYPE), data);
 
         tx.stage_document(&mut document, None)?;
 

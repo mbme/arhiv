@@ -1,7 +1,5 @@
 import {
   ATTACHMENT_DOCUMENT_TYPE,
-  DEFAULT_SUBTYPE,
-  DocumentSubtype,
   DocumentType,
   ERASED_DOCUMENT_TYPE,
   PROJECT_DOCUMENT_TYPE,
@@ -14,7 +12,6 @@ export type DataSchema = {
 
 export type DataDescription = {
   document_type: DocumentType;
-  subtypes?: DocumentSubtype[];
   fields: DataDescriptionField[];
 };
 
@@ -23,7 +20,6 @@ export type DataDescriptionField = {
   field_type: FieldType;
   mandatory: boolean;
   readonly: boolean;
-  for_subtypes?: DocumentSubtype[];
 };
 
 export type FieldType =
@@ -78,29 +74,6 @@ export function getCollectionTypesForDocument(documentType: DocumentType) {
     .map((module) => module.document_type);
 }
 
-export function getFieldDescriptions(
-  documentType: DocumentType,
-  subtype?: DocumentSubtype,
-): DataDescriptionField[] {
-  const dataDescription = getDataDescription(documentType);
-
-  if (subtype === undefined) {
-    return dataDescription.fields;
-  }
-
-  return dataDescription.fields.filter((field) => isFieldActive(field, subtype));
-}
-
-export function isFieldActive(field: DataDescriptionField, subtype: DocumentSubtype): boolean {
-  return field.for_subtypes?.includes(subtype) ?? true;
-}
-
-export function getDefaultSubtype(documentType: DocumentType): DocumentSubtype {
-  const dataDescription = getDataDescription(documentType);
-
-  return dataDescription.subtypes?.[0] ?? DEFAULT_SUBTYPE;
-}
-
 export function isCollection(documentType: DocumentType): boolean {
   return getDocumentTypes(true).includes(documentType);
 }
@@ -117,21 +90,9 @@ export function isErasedDocument(documentType: DocumentType) {
   return documentType === ERASED_DOCUMENT_TYPE;
 }
 
-export function isImageAttachment(subtype: DocumentSubtype) {
-  return subtype === 'image';
-}
-
-export function isAudioAttachment(subtype: DocumentSubtype) {
-  return subtype === 'audio';
-}
-
-export function formatDocumentType(documentType: DocumentType, subtype?: DocumentSubtype): string {
+export function formatDocumentType(documentType: DocumentType): string {
   if (isErasedDocument(documentType)) {
     return 'erased';
-  }
-
-  if (subtype) {
-    return `${documentType}/${subtype}`;
   }
 
   return documentType;

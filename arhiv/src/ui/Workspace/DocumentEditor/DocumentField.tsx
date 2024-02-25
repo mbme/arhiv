@@ -14,7 +14,7 @@ type ValueEditorProps = {
   initialValue?: JSONValue;
   required: boolean;
   readonly: boolean;
-  disabled: boolean;
+  disabled?: boolean;
 };
 function ValueEditor({
   id,
@@ -23,7 +23,7 @@ function ValueEditor({
   initialValue,
   required,
   readonly,
-  disabled,
+  disabled = false,
 }: ValueEditorProps) {
   if ('MarkupString' in fieldType) {
     return (
@@ -136,7 +136,6 @@ type DocumentFieldProps = {
   initialValue?: JSONValue;
   autofocus: boolean;
   ignoreReadonly: boolean;
-  disabled: boolean;
   errors?: string[];
 };
 export function DocumentField({
@@ -144,7 +143,6 @@ export function DocumentField({
   initialValue,
   autofocus,
   ignoreReadonly,
-  disabled,
   errors = [],
 }: DocumentFieldProps) {
   const id = useId();
@@ -160,7 +158,6 @@ export function DocumentField({
     <div
       className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
         'has-errors': errors.length > 0,
-        'hidden': disabled,
       })}
     >
       <label ref={labelRef} htmlFor={id}>
@@ -179,7 +176,6 @@ export function DocumentField({
         initialValue={initialValue}
         readonly={field.readonly && !ignoreReadonly}
         required={field.mandatory}
-        disabled={disabled}
       />
 
       {errors.map((error, index) => (

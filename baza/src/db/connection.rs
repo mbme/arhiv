@@ -17,7 +17,7 @@ use crate::{
         ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
-    schema::{get_latest_data_version, DataMigrations, DataSchema},
+    schema::{get_latest_data_version, get_min_data_migration_version, DataMigrations, DataSchema},
     validator::Validator,
     DocumentExpert,
 };
@@ -325,7 +325,7 @@ impl BazaConnection {
 
         if let Some(ref pattern) = filter.conditions.search {
             qb.and_select(format!(
-                "calculate_search_score(documents.document_type, documents.subtype, documents.data, {}) AS search_score",
+                "calculate_search_score(documents.document_type, documents.data, {}) AS search_score",
                 qb.param(pattern)
             ));
             qb.where_condition("search_score > 0");
@@ -581,8 +581,8 @@ impl BazaConnection {
         {
             let mut stmt = self.get_connection().prepare_cached(&format!(
                 "INSERT {} INTO documents_snapshots
-                    (id, rev, document_type, subtype, updated_at, data)
-                    VALUES (?, ?, ?, ?, ?, ?)",
+                    (id, rev, document_type, updated_at, data)
+                    VALUES (?, ?, ?, ?, ?)",
                 if force_update || document.is_staged() {
                     "OR REPLACE"
                 } else {
@@ -593,8 +593,7 @@ impl BazaConnection {
             stmt.execute(params![
                 document.id,
                 Revision::to_string(&document.rev),
-                document.class.document_type,
-                document.class.subtype,
+                document.document_type,
                 document.updated_at,
                 document.data.to_string(),
             ])
@@ -603,14 +602,13 @@ impl BazaConnection {
 
         {
             let mut stmt = self.get_connection().prepare_cached(
-                "INSERT OR REPLACE INTO documents_refs (id, rev, refs) VALUES (?, ?, extract_refs(?, ?, ?))"
+                "INSERT OR REPLACE INTO documents_refs (id, rev, refs) VALUES (?, ?, extract_refs(?, ?))"
             )?;
 
             stmt.execute(params![
                 document.id,
                 Revision::to_string(&document.rev),
-                document.class.document_type,
-                document.class.subtype,
+                document.document_type,
                 document.data.to_string(),
             ])
             .context(anyhow!("Failed to put document refs {}", &document.id))?;
@@ -662,7 +660,7 @@ impl BazaConnection {
 
         let rows_count = self.get_connection().execute(
             "INSERT INTO documents_refs(id, rev, refs)
-               SELECT id, rev, extract_refs(document_type, subtype, data)
+               SELECT id, rev, extract_refs(document_type, data)
                FROM documents_snapshots ds
                WHERE NOT EXISTS (
                  SELECT 1 FROM documents_refs dr WHERE dr.id = ds.id AND dr.rev = ds.rev COLLATE REV_CMP
@@ -730,10 +728,10 @@ impl BazaConnection {
             document.stage();
 
             ensure!(
-                document.class == prev_document.class,
-                "document class '{}' is different from the class '{}' of existing document",
-                document.class,
-                prev_document.class
+                document.document_type == prev_document.document_type,
+                "document type '{}' is different from the type '{}' of existing document",
+                document.document_type,
+                prev_document.document_type
             );
 
             ensure!(
@@ -935,12 +933,20 @@ impl BazaConnection {
     pub(crate) fn apply_data_migrations(&self, migrations: &DataMigrations) -> Result<()> {
         let data_version = self.get_data_version()?;
         let latest_data_version = get_latest_data_version(migrations);
+        let min_data_migration_version = get_min_data_migration_version(migrations);
 
         ensure!(
             data_version <= latest_data_version,
             "data_version {} is bigger than latest data version {}",
             data_version,
             latest_data_version
+        );
+
+        ensure!(
+            data_version >= min_data_migration_version - 1,
+            "data_version {} is smaller than a minimum upgradable version {}",
+            data_version,
+            min_data_migration_version - 1
         );
 
         let migrations = migrations

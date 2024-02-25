@@ -1,12 +1,10 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{
-    get_file_name, get_file_size, get_media_type, image::get_image_dimensions, log, FFProbe,
-};
+use rs_utils::{get_file_name, get_file_size, get_media_type};
 
 use crate::{
-    entities::{BLOBId, Document, DocumentClass},
+    entities::{BLOBId, Document, DocumentType},
     schema::{Field, FieldType},
     BazaConnection,
 };
@@ -14,8 +12,6 @@ use crate::{
 use super::DataDescription;
 
 pub const ATTACHMENT_TYPE: &str = "attachment";
-pub const AUDIO_SUBTYPE: &str = "audio";
-pub const IMAGE_SUBTYPE: &str = "image";
 
 pub fn get_attachment_definition() -> DataDescription {
     DataDescription {
@@ -27,59 +23,26 @@ pub fn get_attachment_definition() -> DataDescription {
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: false,
-                for_subtypes: None,
             },
             Field {
                 name: "media_type",
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: false,
-                for_subtypes: None,
             },
             Field {
                 name: "blob",
                 field_type: FieldType::BLOBId {},
                 mandatory: true,
                 readonly: true,
-                for_subtypes: None,
             },
             Field {
                 name: "size", // in bytes
                 field_type: FieldType::NaturalNumber {},
                 mandatory: true,
                 readonly: true,
-                for_subtypes: None,
-            },
-            Field {
-                name: "duration", // in milliseconds
-                field_type: FieldType::NaturalNumber {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: Some(&[AUDIO_SUBTYPE]),
-            },
-            Field {
-                name: "bit_rate",
-                field_type: FieldType::NaturalNumber {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: Some(&[AUDIO_SUBTYPE]),
-            },
-            Field {
-                name: "width",
-                field_type: FieldType::NaturalNumber {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: Some(&[IMAGE_SUBTYPE]),
-            },
-            Field {
-                name: "height",
-                field_type: FieldType::NaturalNumber {},
-                mandatory: false,
-                readonly: false,
-                for_subtypes: Some(&[IMAGE_SUBTYPE]),
             },
         ],
-        subtypes: Some(&["", AUDIO_SUBTYPE, IMAGE_SUBTYPE]),
     }
 }
 
@@ -90,14 +53,6 @@ pub struct AttachmentData {
     pub media_type: String,
     pub blob: BLOBId,
     pub size: u64,
-
-    // if audio
-    pub duration: Option<u64>,
-    pub bit_rate: Option<u64>,
-
-    // if image
-    pub width: Option<u64>,
-    pub height: Option<u64>,
 }
 
 impl AttachmentData {
@@ -126,59 +81,19 @@ pub fn create_attachment(
     let size = get_file_size(file_path)?;
 
     let blob_id = tx.add_blob(file_path, move_file)?;
-    let blob = tx.get_blob(&blob_id);
-    let file_path = &blob.file_path;
 
-    let mut attachment = Document::new_with_data(
-        DocumentClass::new(ATTACHMENT_TYPE, ""),
+    let attachment = Document::new_with_data(
+        DocumentType::new(ATTACHMENT_TYPE),
         AttachmentData {
             filename,
             media_type,
             size,
             blob: blob_id,
-            duration: None,
-            bit_rate: None,
-            width: None,
-            height: None,
         },
     );
-
-    if attachment.data.is_audio() {
-        attachment.class.set_subtype(AUDIO_SUBTYPE);
-
-        let stats = FFProbe::check().and_then(|ffprobe| ffprobe.get_stats(file_path));
-
-        match stats {
-            Ok(stats) => {
-                attachment.data.duration = Some(stats.duration_ms as u64);
-                attachment.data.bit_rate = Some(stats.bit_rate as u64);
-            }
-            Err(err) => {
-                log::warn!("Failed to get audio stats from file {}: {}", file_path, err);
-            }
-        }
-    }
-
-    if attachment.data.is_image() {
-        attachment.class.set_subtype(IMAGE_SUBTYPE);
-
-        match get_image_dimensions(file_path) {
-            Ok((width, height)) => {
-                attachment.data.width = Some(width as u64);
-                attachment.data.height = Some(height as u64);
-            }
-            Err(err) => {
-                log::warn!("Failed to get image size from file {}: {}", file_path, err);
-            }
-        }
-    }
 
     let mut document = attachment.into_document()?;
     tx.stage_document(&mut document, None)?;
 
     document.convert()
-}
-
-pub fn is_image_attachment(class: &DocumentClass) -> bool {
-    class.document_type == ATTACHMENT_TYPE && class.subtype == IMAGE_SUBTYPE
 }

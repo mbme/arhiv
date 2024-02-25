@@ -1,4 +1,4 @@
-import { DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { getScaledImageUrl } from 'utils';
 import { useSuspenseQuery } from 'utils/suspense';
 import { useSelectionManager } from 'utils/selection-manager';
@@ -11,6 +11,12 @@ import { Pagination } from './Pagination';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
 import { CatalogItemBadges } from './CatalogItemBadges';
 
+export type DocumentInfo = {
+  id: DocumentId;
+  documentType: DocumentType;
+  data: DocumentData;
+};
+
 type CatalogProps = {
   autofocus?: boolean;
   className?: string;
@@ -22,11 +28,7 @@ type CatalogProps = {
   onPageChange: (page: number) => void;
   onToggleSettings: (showSettings: boolean) => void;
   onIncludedDocumentTypesChange: (documentTypes: DocumentType[]) => void;
-  onDocumentSelected: (
-    id: DocumentId,
-    documentType: DocumentType,
-    subtype: DocumentSubtype,
-  ) => void;
+  onDocumentSelected: (info: DocumentInfo) => void;
   onCreateNote?: (title: string) => void;
 };
 
@@ -57,7 +59,13 @@ export function Catalog({
     <div
       key={item.id}
       className="cursor-pointer pr-2 py-2 sm-selectable hover:bg-sky-100"
-      onClick={() => onDocumentSelected(item.id, item.documentType, item.subtype)}
+      onClick={() =>
+        onDocumentSelected({
+          id: item.id,
+          documentType: item.documentType,
+          data: item.data,
+        })
+      }
     >
       <div className="flex gap-3">
         <div className="shrink-0 w-[64px] h-[80px]">
@@ -73,9 +81,7 @@ export function Catalog({
 
         <div className="grow">
           <div className="flex justify-between">
-            <div className="section-heading">
-              {formatDocumentType(item.documentType, item.subtype)}
-            </div>
+            <div className="section-heading">{formatDocumentType(item.documentType)}</div>
 
             <DateTime
               className="font-mono text-sm shrink-0 text-gray-400"

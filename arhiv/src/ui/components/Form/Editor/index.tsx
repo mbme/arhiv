@@ -179,9 +179,9 @@ export function Editor({
         {!preview && (
           <AddRefButton
             className="bg-indigo-100 drop-shadow-md"
-            onDocumentSelected={({ id, documentType, subtype }) => {
+            onDocumentSelected={({ id, documentType, data }) => {
               editorRef.current?.replaceSelections((value) =>
-                createLink(createRefUrl(id), value, canPreview(documentType, subtype)),
+                createLink(createRefUrl(id), value, canPreview(documentType, data)),
               );
             }}
           />

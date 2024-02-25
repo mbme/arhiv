@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use rs_utils::workspace_relpath;
 
 use crate::{
-    entities::{Document, DocumentClass, Id},
+    entities::{Document, DocumentType, Id},
     schema::{DataDescription, DataSchema, Field, FieldType},
     tests::{get_values, new_document},
     BLOBSCount, Baza, DocumentsCount, Filter, OrderBy,
@@ -85,9 +85,7 @@ fn test_order_by_enum_field() -> Result<()> {
                 field_type: FieldType::Enum(&["low", "high", "medium", "other"]),
                 mandatory: false,
                 readonly: false,
-                for_subtypes: None,
             }],
-            subtypes: None,
         }],
     ));
 
@@ -137,17 +135,14 @@ fn test_multiple_order_by() -> Result<()> {
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: None,
                 },
                 Field {
                     name: "other",
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: None,
                 },
             ],
-            subtypes: None,
         }],
     ));
 
@@ -297,9 +292,7 @@ fn test_backrefs() -> Result<()> {
                     field_type: FieldType::Ref("other_type"),
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: None,
                 }],
-                subtypes: None,
             },
             DataDescription {
                 document_type: "other_type",
@@ -309,9 +302,7 @@ fn test_backrefs() -> Result<()> {
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: None,
                 }],
-                subtypes: None,
             },
         ],
     ));
@@ -319,7 +310,7 @@ fn test_backrefs() -> Result<()> {
     let mut tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
-        DocumentClass::new("other_type", ""),
+        DocumentType::new("other_type"),
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
@@ -327,7 +318,7 @@ fn test_backrefs() -> Result<()> {
 
     tx.stage_document(
         &mut Document::new_with_data(
-            DocumentClass::new("test_type", ""),
+            DocumentType::new("test_type"),
             json!({
                 "ref": &doc1.id,
             })
@@ -338,7 +329,7 @@ fn test_backrefs() -> Result<()> {
     )?;
     tx.stage_document(
         &mut Document::new_with_data(
-            DocumentClass::new("test_type", ""),
+            DocumentType::new("test_type"),
             json!({
                 "ref": &doc1.id,
             })
@@ -371,9 +362,7 @@ fn test_collections() -> Result<()> {
                     field_type: FieldType::RefList("other_type"),
                     mandatory: true,
                     readonly: false,
-                    for_subtypes: None,
                 }],
-                subtypes: None,
             },
             DataDescription {
                 document_type: "other_type",
@@ -383,9 +372,7 @@ fn test_collections() -> Result<()> {
                     field_type: FieldType::String {},
                     mandatory: false,
                     readonly: false,
-                    for_subtypes: None,
                 }],
-                subtypes: None,
             },
         ],
     ));
@@ -393,7 +380,7 @@ fn test_collections() -> Result<()> {
     let mut tx = baza.get_tx()?;
 
     let mut doc1 = Document::new_with_data(
-        DocumentClass::new("other_type", ""),
+        DocumentType::new("other_type"),
         json!({ "field": "value" }).try_into().unwrap(),
     );
 
@@ -401,7 +388,7 @@ fn test_collections() -> Result<()> {
 
     tx.stage_document(
         &mut Document::new_with_data(
-            DocumentClass::new("collection_type", ""),
+            DocumentType::new("collection_type"),
             json!({
                 "items": vec![&doc1.id],
             })
@@ -412,7 +399,7 @@ fn test_collections() -> Result<()> {
     )?;
     tx.stage_document(
         &mut Document::new_with_data(
-            DocumentClass::new("collection_type", ""),
+            DocumentType::new("collection_type"),
             json!({
                 "items": vec![&doc1.id],
             })

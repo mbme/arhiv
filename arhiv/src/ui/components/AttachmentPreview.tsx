@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
-import { DocumentData, DocumentId, DocumentType, DocumentSubtype, BLOBId } from 'dto';
-import { isAttachment, isAudioAttachment, isImageAttachment } from 'utils/schema';
-import { getBlobUrl, getScaledImageUrl } from 'utils';
+import { DocumentData, DocumentId, DocumentType, BLOBId } from 'dto';
+import { isAttachment } from 'utils/schema';
+import { getBlobUrl, getScaledImageUrl, isAudio, isImage } from 'utils';
 import { Button } from 'components/Button';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';
@@ -10,13 +10,11 @@ import { Dialog } from 'components/Dialog';
 
 type AttachmentPreviewBlockProps = {
   documentId: DocumentId;
-  subtype: DocumentSubtype;
   data: DocumentData;
   description?: string;
 };
 export function AttachmentPreviewBlock({
   documentId,
-  subtype,
   data,
   description,
 }: AttachmentPreviewBlockProps) {
@@ -40,24 +38,24 @@ export function AttachmentPreviewBlock({
         </Button>
       </span>
 
-      <AttachmentPreview subtype={subtype} data={data} />
+      <AttachmentPreview data={data} />
     </span>
   );
 }
 
 type AttachmentPreviewProps = {
-  subtype: DocumentSubtype;
   data: DocumentData;
 };
-export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
+export function AttachmentPreview({ data }: AttachmentPreviewProps) {
   const [showImageModal, setShowImageModal] = useState(false);
 
   const blobId = data['blob'] as BLOBId;
   const size = data['size'] as number;
+  const mediaType = data['media_type'] as string;
 
   const blobUrl = getBlobUrl(blobId);
 
-  if (isImageAttachment(subtype)) {
+  if (isImage(mediaType)) {
     if (showImageModal) {
       return (
         <Dialog
@@ -82,17 +80,19 @@ export function AttachmentPreview({ subtype, data }: AttachmentPreviewProps) {
     );
   }
 
-  if (isAudioAttachment(subtype)) {
+  if (isAudio(mediaType)) {
     return <AudioPlayer url={blobUrl} title="" artist="" />;
   }
 
   return null;
 }
 
-export function canPreview(documentType: DocumentType, subtype: DocumentSubtype): boolean {
+export function canPreview(documentType: DocumentType, data: DocumentData): boolean {
   if (!isAttachment(documentType)) {
     return false;
   }
 
-  return isImageAttachment(subtype) || isAudioAttachment(subtype);
+  const mediaType = data['media_type'] as string;
+
+  return isImage(mediaType) || isAudio(mediaType);
 }

@@ -28,7 +28,6 @@ export function ScrapeResultCard({ url, ids }: Props) {
             key={item.id}
             documentId={item.id}
             documentType={item.documentType}
-            subtype={item.subtype}
             documentTitle={item.title}
           />
         ))}

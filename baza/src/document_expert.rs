@@ -2,8 +2,8 @@ use anyhow::{anyhow, Context, Result};
 use tinytemplate::{format_unescaped, TinyTemplate};
 
 use crate::{
-    entities::{Document, DocumentClass, DocumentData, Id, Refs},
-    schema::{is_image_attachment, DataSchema, Field},
+    entities::{Document, DocumentData, DocumentType, Id, Refs},
+    schema::{Attachment, DataSchema, Field, ATTACHMENT_TYPE},
     search::MultiSearch,
 };
 
@@ -16,7 +16,7 @@ impl<'s> DocumentExpert<'s> {
         DocumentExpert { schema }
     }
 
-    pub fn extract_refs(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<Refs> {
+    pub fn extract_refs(&self, document_type: &DocumentType, data: &DocumentData) -> Result<Refs> {
         let mut refs = Refs::default();
 
         for field in self.schema.iter_fields(document_type)? {
@@ -30,7 +30,7 @@ impl<'s> DocumentExpert<'s> {
         Ok(refs)
     }
 
-    pub fn get_title(&self, document_type: &DocumentClass, data: &DocumentData) -> Result<String> {
+    pub fn get_title(&self, document_type: &DocumentType, data: &DocumentData) -> Result<String> {
         let mut tt = TinyTemplate::new();
         tt.set_default_formatter(&format_unescaped);
 
@@ -48,7 +48,7 @@ impl<'s> DocumentExpert<'s> {
             .map_err(|err| anyhow!("failed to render title for {document_type}: {err}"))
     }
 
-    fn pick_cover_field(&self, document_type: &DocumentClass) -> Result<Option<&Field>> {
+    fn pick_cover_field(&self, document_type: &DocumentType) -> Result<Option<&Field>> {
         let field = self
             .schema
             .iter_fields(document_type)?
@@ -58,20 +58,25 @@ impl<'s> DocumentExpert<'s> {
     }
 
     pub fn get_cover_attachment_id(&self, document: &Document) -> Result<Option<Id>> {
-        if is_image_attachment(&document.class) {
-            return Ok(Some(document.id.clone()));
+        if document.document_type.is(ATTACHMENT_TYPE) {
+            let attachment: Attachment = document.clone().convert()?;
+
+            if attachment.data.is_image() {
+                return Ok(Some(attachment.id));
+            }
         }
 
-        let cover_field = if let Some(cover_field) = self.pick_cover_field(&document.class)? {
-            cover_field
-        } else {
-            return Ok(None);
-        };
+        let cover_field =
+            if let Some(cover_field) = self.pick_cover_field(&document.document_type)? {
+                cover_field
+            } else {
+                return Ok(None);
+            };
 
         Ok(document.data.get_str(cover_field.name).map(From::from))
     }
 
-    pub fn is_editable(&self, document_type: &DocumentClass) -> Result<bool> {
+    pub fn is_editable(&self, document_type: &DocumentType) -> Result<bool> {
         let is_editable = self
             .schema
             .iter_fields(document_type)?
@@ -82,7 +87,7 @@ impl<'s> DocumentExpert<'s> {
 
     pub fn search(
         &self,
-        document_type: &DocumentClass,
+        document_type: &DocumentType,
         data: &DocumentData,
         pattern: &str,
     ) -> Result<usize> {
@@ -116,8 +121,8 @@ impl<'s> DocumentExpert<'s> {
 
     fn find_collection_field_for(
         &self,
-        collection_type: &DocumentClass,
-        document_type: &DocumentClass,
+        collection_type: &DocumentType,
+        document_type: &DocumentType,
     ) -> Result<&Field> {
         self.schema
             .iter_fields(collection_type)?
@@ -132,7 +137,8 @@ impl<'s> DocumentExpert<'s> {
         document: &Document,
         collection: &mut Document,
     ) -> Result<()> {
-        let field = self.find_collection_field_for(&collection.class, &document.class)?;
+        let field =
+            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
 
         collection.data.add_to_ref_list(field.name, &document.id)?;
 
@@ -144,7 +150,8 @@ impl<'s> DocumentExpert<'s> {
         document: &Document,
         collection: &mut Document,
     ) -> Result<()> {
-        let field = self.find_collection_field_for(&collection.class, &document.class)?;
+        let field =
+            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
 
         collection
             .data
@@ -159,7 +166,8 @@ impl<'s> DocumentExpert<'s> {
         document: &Document,
         new_pos: usize,
     ) -> Result<()> {
-        let field = self.find_collection_field_for(&collection.class, &document.class)?;
+        let field =
+            self.find_collection_field_for(&collection.document_type, &document.document_type)?;
 
         let mut ref_list = collection.data.get_ref_list(field.name)?.context(format!(
             "collection {} field {} is empty",

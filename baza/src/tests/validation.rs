@@ -19,9 +19,7 @@ fn test_validation_mandatory() {
                 field_type: FieldType::String {},
                 mandatory: true,
                 readonly: false,
-                for_subtypes: None,
             }],
-            subtypes: None,
         }],
     ));
 
@@ -52,9 +50,7 @@ fn test_validation_readonly() {
                 field_type: FieldType::String {},
                 mandatory: false,
                 readonly: true,
-                for_subtypes: None,
             }],
-            subtypes: None,
         }],
     ));
 

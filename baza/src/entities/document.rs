@@ -5,26 +5,25 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use rs_utils::{now, Timestamp};
 
-use super::{DocumentClass, DocumentData, Id, Revision};
+use super::{DocumentData, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,
     pub rev: Option<Revision>,
-    #[serde(flatten)]
-    pub class: DocumentClass,
+    pub document_type: DocumentType,
     pub updated_at: Timestamp,
     pub data: D,
 }
 
 impl<D> Document<D> {
     #[must_use]
-    pub fn new_with_data(class: DocumentClass, data: D) -> Self {
+    pub fn new_with_data(document_type: DocumentType, data: D) -> Self {
         Document {
             id: Id::new(),
             rev: None,
-            class,
+            document_type,
             updated_at: now(),
             data,
         }
@@ -33,13 +32,13 @@ impl<D> Document<D> {
 
 impl Document {
     #[must_use]
-    pub fn new(class: DocumentClass) -> Self {
-        Document::new_with_data(class, DocumentData::new())
+    pub fn new(document_type: DocumentType) -> Self {
+        Document::new_with_data(document_type, DocumentData::new())
     }
 
     #[must_use]
     pub fn is_erased(&self) -> bool {
-        self.class.is_erased()
+        self.document_type.is(ERASED_DOCUMENT_TYPE)
     }
 
     #[must_use]
@@ -57,7 +56,7 @@ impl Document {
     }
 
     pub(crate) fn erase(&mut self) {
-        self.class = DocumentClass::erased();
+        self.document_type = DocumentType::erased();
         self.data = DocumentData::new();
         self.updated_at = now();
     }
@@ -72,7 +71,7 @@ impl Document {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            class: self.class,
+            document_type: self.document_type,
             updated_at: self.updated_at,
             data,
         })
@@ -88,7 +87,7 @@ impl<D: Serialize> Document<D> {
         Ok(Document {
             id: self.id,
             rev: self.rev,
-            class: self.class,
+            document_type: self.document_type,
             updated_at: self.updated_at,
             data,
         })
@@ -108,7 +107,7 @@ impl fmt::Display for Document {
         write!(
             f,
             "[Document {} {} {}]",
-            self.class,
+            self.document_type,
             self.id,
             Revision::to_string(&self.rev),
         )

@@ -1,6 +1,6 @@
 import { useEffect, useReducer, createContext, startTransition, useContext, useMemo } from 'react';
 import { newId } from 'utils';
-import { DocumentData, DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { useShallowMemo } from 'utils/hooks';
 import { storage } from 'utils/storage';
@@ -24,7 +24,6 @@ type CardVariant =
   | {
       variant: 'new-document';
       documentType: DocumentType;
-      subtype?: DocumentSubtype;
       data?: DocumentData;
       collections?: DocumentId[];
     }

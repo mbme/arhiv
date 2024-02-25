@@ -5,42 +5,30 @@ import {
   DocumentFieldErrors,
   DocumentId,
   DocumentType,
-  DocumentSubtype,
   SaveDocumentErrors,
 } from 'dto';
-import {
-  getCollectionTypesForDocument,
-  getDataDescription,
-  getDefaultSubtype,
-  getFieldDescriptions,
-  isFieldActive,
-} from 'utils/schema';
+import { getCollectionTypesForDocument, getDataDescription } from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
 import { Form } from 'components/Form/Form';
 import { RefInput } from 'components/Form/RefInput';
-import { Select } from 'components/Form/Select';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentField } from './DocumentField';
+
+const COLLECTIONS_FIELD_NAME = '@collections';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
   documentId?: string;
   documentType: DocumentType;
-  subtype: DocumentSubtype;
   data: DocumentData;
   collections: DocumentId[];
-  onSubmit: (
-    data: JSONObj,
-    subtype: DocumentSubtype,
-    collections: DocumentId[],
-  ) => Promise<SaveDocumentErrors | void>;
+  onSubmit: (data: JSONObj, collections: DocumentId[]) => Promise<SaveDocumentErrors | void>;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
 export function DocumentEditor({
   documentId,
   documentType,
-  subtype: initialSubtype,
   data: initialData,
   collections: initialCollections,
   onSubmit,
@@ -49,24 +37,19 @@ export function DocumentEditor({
 }: DocumentEditorFormProps) {
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
-  const [subtype, setSubtype] = useState(initialSubtype ?? getDefaultSubtype(documentType));
   const [collections, setCollections] = useState(initialCollections ?? []);
 
   const collectionTypes = getCollectionTypesForDocument(documentType);
-  const subtypes = getDataDescription(documentType).subtypes || [];
 
   const hasCollections = collections.length > 0;
   const canAddCollections = collectionTypes.length > 0;
-  const canChooseSubtype = subtypes.length > 1;
 
   const showCollectionPicker = hasCollections || canAddCollections;
-  const showSubtypeSelect = canChooseSubtype;
 
   const submitDocument = async (data: JSONObj) => {
-    delete data['@collections'];
-    delete data['@subtypes'];
+    delete data[COLLECTIONS_FIELD_NAME];
 
-    const errors = await onSubmit(data, subtype, collections);
+    const errors = await onSubmit(data, collections);
 
     if (errors) {
       setDocumentErrors(errors.documentErrors);
@@ -78,7 +61,7 @@ export function DocumentEditor({
   };
 
   const ignoreReadonly = !documentId;
-  const fields = getFieldDescriptions(documentType);
+  const fields = getDataDescription(documentType).fields;
 
   const fieldToFocus = autofocus
     ? fields.find((field) => ignoreReadonly || !field.readonly)
@@ -88,31 +71,17 @@ export function DocumentEditor({
     <Form onSubmit={submitDocument} formRef={formRef}>
       <PreventImplicitSubmissionOnEnter />
 
-      <div className="grid grid-cols-2 mb-8" hidden={!showCollectionPicker && !showSubtypeSelect}>
-        <label className={cx(showCollectionPicker || 'invisible')}>
-          <RefInput
-            className="field"
-            name="@collections"
-            documentTypes={collectionTypes}
-            defaultValue={initialCollections}
-            multiple
-            readonly={!canAddCollections}
-            onChange={setCollections}
-          />
-        </label>
-
-        <label className={cx('justify-self-end', showSubtypeSelect || 'invisible')}>
-          Subtype &nbsp;
-          <Select
-            className="field"
-            name="@subtypes"
-            readonly={!canChooseSubtype}
-            initialValue={subtype}
-            options={subtypes}
-            onChange={(value) => setSubtype(value as DocumentSubtype)}
-          />
-        </label>
-      </div>
+      <label className={cx(showCollectionPicker || 'invisible')}>
+        <RefInput
+          className="field"
+          name={COLLECTIONS_FIELD_NAME}
+          documentTypes={collectionTypes}
+          defaultValue={initialCollections}
+          multiple
+          readonly={!canAddCollections}
+          onChange={setCollections}
+        />
+      </label>
 
       {documentErrors.map((error, index) => (
         <div key={index} className="text-red-500 text-xl pl-1 my-2">
@@ -128,7 +97,6 @@ export function DocumentEditor({
             autofocus={field === fieldToFocus}
             ignoreReadonly={ignoreReadonly}
             initialValue={initialData[field.name]}
-            disabled={!isFieldActive(field, subtype)}
             errors={fieldErrors[field.name]}
           />
         ))}

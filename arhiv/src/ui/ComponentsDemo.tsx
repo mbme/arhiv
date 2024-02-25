@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DEFAULT_SUBTYPE, DocumentId, DocumentSubtype, DocumentType } from 'dto';
+import { DocumentId, DocumentType } from 'dto';
 import { setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
 import { JSXChildren } from 'utils/jsx';
@@ -242,18 +242,6 @@ export function ComponentsDemo() {
                 <Ref
                   documentId={'test123' as DocumentId}
                   documentType={'note' as DocumentType}
-                  subtype={DEFAULT_SUBTYPE}
-                  documentTitle="Very important note"
-                />
-              </div>
-
-              <h1>Ref with subtype</h1>
-
-              <div className="examples">
-                <Ref
-                  documentId={'test123' as DocumentId}
-                  documentType={'note' as DocumentType}
-                  subtype={'other' as DocumentSubtype}
                   documentTitle="Very important note"
                 />
               </div>
@@ -264,7 +252,6 @@ export function ComponentsDemo() {
                 <Ref
                   documentId={'test123' as DocumentId}
                   documentType={'' as DocumentType}
-                  subtype={DEFAULT_SUBTYPE}
                   documentTitle="12342321"
                 />
               </div>
@@ -276,7 +263,6 @@ export function ComponentsDemo() {
                   documentId={'test123' as DocumentId}
                   documentType={'note' as DocumentType}
                   documentTitle=""
-                  subtype={'other' as DocumentSubtype}
                   description="Note with custom description"
                 />
               </div>
@@ -289,7 +275,6 @@ export function ComponentsDemo() {
                   <Ref
                     documentId={'test123' as DocumentId}
                     documentType={'attachment' as DocumentType}
-                    subtype={'image' as DocumentSubtype}
                     documentTitle="298099334_5292996204070913_386679234432423424242432234323333333333333333_32423-4061939409_n.jpg"
                   />{' '}
                   and lorem ipsum

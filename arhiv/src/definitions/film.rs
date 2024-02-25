@@ -20,7 +20,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "cover",
-                    field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },
@@ -122,7 +122,7 @@ pub fn get_film_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "films",
-                    field_type: FieldType::RefList(FILM_TYPE),
+                    field_type: FieldType::RefList(&[FILM_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

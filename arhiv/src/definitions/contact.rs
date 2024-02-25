@@ -20,7 +20,7 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "cover",
-                    field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },
@@ -86,7 +86,7 @@ pub fn get_contact_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "contacts",
-                    field_type: FieldType::RefList(CONTACT_TYPE),
+                    field_type: FieldType::RefList(&[CONTACT_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

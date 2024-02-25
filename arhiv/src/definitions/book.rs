@@ -26,7 +26,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "cover",
-                    field_type: FieldType::Ref(ATTACHMENT_TYPE),
+                    field_type: FieldType::Ref(&[ATTACHMENT_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },
@@ -124,7 +124,7 @@ pub fn get_book_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "books",
-                    field_type: FieldType::RefList(BOOK_TYPE),
+                    field_type: FieldType::RefList(&[BOOK_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

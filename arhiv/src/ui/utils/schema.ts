@@ -27,8 +27,8 @@ export type FieldType =
   | { MarkupString: EmptyObj }
   | { Flag: EmptyObj }
   | { NaturalNumber: EmptyObj }
-  | { Ref: DocumentType }
-  | { RefList: DocumentType }
+  | { Ref: DocumentType[] }
+  | { RefList: DocumentType[] }
   | { BLOBId: EmptyObj }
   | { Enum: string[] }
   | { Date: EmptyObj }
@@ -61,7 +61,9 @@ function isModuleCollection(module: DataDescription): boolean {
 function isModuleCollectionForDocument(module: DataDescription, documentType: DocumentType) {
   return module.fields.some((field) => {
     if ('RefList' in field.field_type) {
-      return field.field_type.RefList === documentType;
+      const possibleDocumentTypes = field.field_type.RefList;
+
+      return possibleDocumentTypes.length === 0 || possibleDocumentTypes.includes(documentType);
     }
 
     return false;

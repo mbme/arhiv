@@ -74,7 +74,7 @@ function ValueEditor({
       <RefInput
         id={id}
         className="field"
-        documentTypes={[fieldType.Ref]}
+        documentTypes={fieldType.Ref}
         name={name}
         defaultValue={initialValue as DocumentId | undefined}
         readonly={readonly}
@@ -89,7 +89,7 @@ function ValueEditor({
       <RefInput
         id={id}
         className="field"
-        documentTypes={[fieldType.RefList]}
+        documentTypes={fieldType.RefList}
         name={name}
         defaultValue={initialValue as DocumentId[] | undefined}
         readonly={readonly}

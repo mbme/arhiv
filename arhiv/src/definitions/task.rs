@@ -26,7 +26,7 @@ pub fn get_task_definitions() -> Vec<DataDescription> {
                 },
                 Field {
                     name: "tasks",
-                    field_type: FieldType::RefList(TASK_TYPE),
+                    field_type: FieldType::RefList(&[TASK_TYPE]),
                     mandatory: false,
                     readonly: false,
                 },

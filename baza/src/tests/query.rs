@@ -289,7 +289,7 @@ fn test_backrefs() -> Result<()> {
                 title_format: "title",
                 fields: vec![Field {
                     name: "ref",
-                    field_type: FieldType::Ref("other_type"),
+                    field_type: FieldType::Ref(&["other_type"]),
                     mandatory: false,
                     readonly: false,
                 }],
@@ -359,7 +359,7 @@ fn test_collections() -> Result<()> {
                 title_format: "title",
                 fields: vec![Field {
                     name: "items",
-                    field_type: FieldType::RefList("other_type"),
+                    field_type: FieldType::RefList(&["other_type"]),
                     mandatory: true,
                     readonly: false,
                 }],

@@ -70,21 +70,23 @@ impl<'c> Validator<'c> {
         }
     }
 
-    fn validate_ref(&self, id: &Id, expected_document_type: Option<&str>) -> Result<()> {
+    fn validate_ref(&self, id: &Id, expected_document_types: Option<&[&str]>) -> Result<()> {
         let document = if let Some(document) = self.conn.get_document(id)? {
             document
         } else {
             bail!("unknown document ref '{}'", id);
         };
 
-        if let Some(document_type) = expected_document_type {
-            ensure!(
-                document.document_type.is(document_type),
-                "document '{}' expected to be '{}' but has type '{}'",
-                id,
-                document_type,
-                document.document_type,
-            );
+        if let Some(document_types) = expected_document_types {
+            if !document_types.is_empty() {
+                ensure!(
+                    document_types.contains(&document.document_type.as_ref()),
+                    "document '{}' expected to be '{}' but has type '{}'",
+                    id,
+                    document_types.join(", "),
+                    document.document_type,
+                );
+            }
         }
 
         Ok(())
@@ -208,11 +210,11 @@ impl<'c> Validator<'c> {
                 }
             };
 
-            let expected_document_type = field.get_expected_ref_type();
+            let expected_document_types = field.get_expected_ref_types();
 
             // then check field refs
             for id in refs {
-                let validation_result = self.validate_ref(&id, expected_document_type);
+                let validation_result = self.validate_ref(&id, expected_document_types);
 
                 self.track_err(field, validation_result);
             }

@@ -12,13 +12,16 @@ use crate::{
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub enum FieldType {
-    String {},                     // string
-    MarkupString {},               // string
-    Flag {},                       // bool
-    NaturalNumber {},              // u64
-    Ref(&'static str),             // string
-    RefList(&'static str),         // string[]
-    BLOBId {},                     // string
+    String {},        // string
+    MarkupString {},  // string
+    Flag {},          // bool
+    NaturalNumber {}, // u64
+    // DocumentType[], empty array means any document type
+    Ref(&'static [&'static str]), // string
+    // DocumentType[], empty array means any document type
+    RefList(&'static [&'static str]), // string[]
+    BLOBId {},                        // string
+    // string[], possible enum values
     Enum(&'static [&'static str]), // string
     Date {},                       // string
     Duration {},                   // string
@@ -42,7 +45,7 @@ impl Field {
 
     #[must_use]
     pub fn could_be_cover(&self) -> bool {
-        matches!(self.field_type, FieldType::Ref(ATTACHMENT_TYPE)) && self.name == "cover"
+        matches!(self.field_type, FieldType::Ref(&[ATTACHMENT_TYPE])) && self.name == "cover"
     }
 
     #[must_use]
@@ -231,10 +234,10 @@ impl Field {
     }
 
     #[must_use]
-    pub fn get_expected_ref_type(&self) -> Option<&str> {
+    pub fn get_expected_ref_types(&self) -> Option<&[&str]> {
         match self.field_type {
-            FieldType::Ref(document_type) | FieldType::RefList(document_type) => {
-                Some(document_type)
+            FieldType::Ref(document_types) | FieldType::RefList(document_types) => {
+                Some(document_types)
             }
             _ => None,
         }
@@ -242,6 +245,11 @@ impl Field {
 
     #[must_use]
     pub fn can_collect(&self, document_type: &DocumentType) -> bool {
-        matches!(self.field_type, FieldType::RefList(ref_list_document_type) if document_type.is(ref_list_document_type))
+        match self.field_type {
+            FieldType::RefList(ref_types) => {
+                ref_types.is_empty() || ref_types.contains(&document_type.as_ref())
+            }
+            _ => false,
+        }
     }
 }

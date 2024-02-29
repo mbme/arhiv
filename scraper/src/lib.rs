@@ -64,7 +64,7 @@ impl ScraperOptions {
 
         chromedriver.wait_for_ready(10).await?;
 
-        let client = ClientBuilder::native()
+        let client = ClientBuilder::rustls()
             .capabilities(
                 capabilities
                     .as_object()

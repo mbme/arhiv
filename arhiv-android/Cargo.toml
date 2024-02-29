@@ -25,6 +25,3 @@ rs-utils = { path = "../rs-utils" }
 
 [build-dependencies]
 rs-utils = { path = "../rs-utils" }
-
-[target.'cfg(target_os="android")'.dependencies]
-openssl = { version = "*", features = ["vendored"] }

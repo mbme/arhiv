@@ -42,8 +42,10 @@ impl ArhivServer {
         })
     }
 
-    pub fn get_ui_url(&self) -> String {
-        format!("http://{}/ui", self.server.get_address())
+    pub fn get_ui_url(&self) -> Result<String> {
+        let url = self.server.get_url()?;
+
+        Ok(format!("{url}{UI_BASE_PATH}"))
     }
 
     pub async fn shutdown(self) -> Result<()> {

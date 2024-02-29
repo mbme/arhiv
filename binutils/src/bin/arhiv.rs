@@ -7,7 +7,10 @@ use clap::{
 use clap_complete::{generate, Shell};
 use tokio::time::sleep;
 
-use arhiv::{definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
+use arhiv::{
+    definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer,
+    UI_BASE_PATH,
+};
 use baza::entities::{Document, DocumentData, DocumentType, Id};
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal};
 use scraper::ScraperOptions;
@@ -435,7 +438,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 }
 
 fn get_document_url(id: &Option<&Id>, port: u16) -> String {
-    let base = format!("http://localhost:{port}/ui");
+    let base = format!("https://localhost:{port}{UI_BASE_PATH}");
 
     if let Some(id) = id {
         format!("{base}?id={id}")

@@ -78,7 +78,7 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
     };
 
     let server = runtime.block_on(ArhivServer::start(arhiv))?;
-    let ui_url = server.get_ui_url();
+    let ui_url = server.get_ui_url()?;
 
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);

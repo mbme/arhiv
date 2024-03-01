@@ -8,7 +8,7 @@ arhiv-server:
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEBUG_ARHIV_ROOT=~/temp/arhiv RUST_BACKTRACE=1 RUST_LOG=debug,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server' \; \
+     'DEBUG_ARHIV_ROOT=~/temp/arhiv RUST_BACKTRACE=1 RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0

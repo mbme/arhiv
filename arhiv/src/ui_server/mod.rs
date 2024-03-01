@@ -130,7 +130,7 @@ async fn blob_handler(
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }
 
-#[tracing::instrument(skip(arhiv), level = "debug")]
+#[tracing::instrument(skip(arhiv, shutdown_receiver), level = "debug")]
 async fn events_handler(
     State(arhiv): State<Arc<Arhiv>>,
     Extension(shutdown_receiver): Extension<Shared<oneshot::Receiver<()>>>,

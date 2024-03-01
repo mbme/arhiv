@@ -30,11 +30,13 @@ reqwest = { version = "0.11", default-features = false, features = ["json", "str
 hyper = "1"
 axum = { version = "0.7", features = ["tracing", "tokio", "http1"] }
 axum-extra = { version = "0.9", features = ["typed-header"]}
+axum-server = { version= "0.6", features = ["tls-rustls"]}
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 lazy_static = "1.4"
 rand = "0.8"
+rustls = "0.23"
 
 insta = { version = "1", features = ["redactions", "json"] }

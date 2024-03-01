@@ -16,7 +16,7 @@ use crate::{
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
     let router = build_rpc_router().with_state(baza);
 
-    HttpServer::start(router, 0)
+    HttpServer::start(router, 0, None)
         .await
         .expect("must start rpc server")
 }

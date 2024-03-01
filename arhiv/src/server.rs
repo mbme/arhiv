@@ -33,7 +33,7 @@ impl ArhivServer {
             .merge(health_router);
 
         let port = arhiv.baza.get_connection()?.get_server_port()?;
-        let server = HttpServer::start(router, port).await?;
+        let server = HttpServer::start(router, port, None).await?;
 
         Ok(ArhivServer {
             arhiv,

@@ -27,6 +27,7 @@ hyper.workspace = true
 reqwest.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
+axum-server.workspace = true
 
 rand.workspace = true
 lazy_static.workspace = true
@@ -44,3 +45,4 @@ nanoid = "0.4.0"
 mdns-sd = "0.10"
 gethostname = "0.4.3"
 rayon = "1.8.0"
+rcgen = "0.12"

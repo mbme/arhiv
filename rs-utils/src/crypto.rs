@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use base64::{engine, Engine};
+use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -57,6 +58,33 @@ pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
     }
 
     result
+}
+
+pub struct SelfSignedCertificate {
+    pub private_key_der: Vec<u8>,
+    pub certificate_der: Vec<u8>,
+}
+
+impl SelfSignedCertificate {
+    pub fn new_x509(identifier: &str) -> Result<Self> {
+        let mut params = CertificateParams::default();
+        params.distinguished_name = DistinguishedName::new();
+        params
+            .distinguished_name
+            .push(DnType::CommonName, identifier);
+
+        let certificate =
+            Certificate::from_params(params).context("Failed to generate certificate")?;
+
+        let certificate_der = certificate.serialize_der()?;
+
+        let private_key_der = certificate.serialize_private_key_der();
+
+        Ok(Self {
+            certificate_der,
+            private_key_der,
+        })
+    }
 }
 
 #[cfg(test)]

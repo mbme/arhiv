@@ -4,7 +4,7 @@ use std::{
     time::{Duration, UNIX_EPOCH},
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use axum::{
     body::{to_bytes, Body},
     extract::Request,
@@ -15,8 +15,11 @@ use axum::{
     Router,
 };
 use axum_extra::headers::{self, HeaderMapExt};
+use axum_server::{tls_rustls::RustlsConfig, Handle};
 use reqwest::Client;
-use tokio::{net::TcpListener, sync::oneshot, task::JoinHandle};
+use tokio::task::JoinHandle;
+
+use crate::SelfSignedCertificate;
 
 pub struct ServerError(anyhow::Error);
 
@@ -74,7 +77,7 @@ pub fn build_health_router() -> Router<()> {
 }
 
 pub async fn check_server_health(server_url: &str) -> Result<()> {
-    let url = reqwest::Url::from_str(&format!("http://{server_url}/health"))
+    let url = reqwest::Url::from_str(&format!("https://{server_url}/health"))
         .context("failed to create url from server address")?;
 
     let response = Client::new().get(url).send().await?;
@@ -117,33 +120,36 @@ pub async fn logger_middleware(request: Request, next: Next) -> Result<Response,
 
 pub struct HttpServer {
     address: SocketAddr,
-    shutdown_sender: oneshot::Sender<()>,
     join_handle: JoinHandle<Result<()>>,
+    server_handle: Handle,
+    secure: bool,
 }
 
 impl HttpServer {
-    pub async fn start(router: Router, port: u16) -> Result<HttpServer> {
-        let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+    pub async fn start(
+        router: Router,
+        port: u16,
+        https_cert: Option<SelfSignedCertificate>,
+    ) -> Result<HttpServer> {
+        let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
 
-        let listener = TcpListener::bind((std::net::Ipv4Addr::UNSPECIFIED, port))
-            .await
-            .context("failed to bind TCP listener")?;
-        let address = listener.local_addr()?;
+        if let Some(https_cert) = https_cert {
+            Self::new_https(addr, router, https_cert).await
+        } else {
+            Self::new_http(addr, router).await
+        }
+    }
+
+    async fn new_http(addr: SocketAddr, router: Router) -> Result<Self> {
+        let server_handle = Handle::new();
+        let server = axum_server::Server::bind(addr).handle(server_handle.clone());
 
         // Spawn the server into a runtime
         let join_handle = tokio::spawn(async {
             let router = router.layer(middleware::from_fn(logger_middleware));
 
-            let server = axum::serve(listener, router.into_make_service());
-
             server
-                .with_graceful_shutdown(async move {
-                    if let Err(err) = shutdown_receiver.await {
-                        log::error!("HTTP Server failed to get shutdown signal: {err}");
-                    } else {
-                        log::info!("HTTP Server got shutdown signal");
-                    }
-                })
+                .serve(router.into_make_service())
                 .await
                 .context("HTTP Server failed to start")?;
 
@@ -152,12 +158,60 @@ impl HttpServer {
             Ok(())
         });
 
+        let address = server_handle
+            .listening()
+            .await
+            .context("HTTP Server failed to bind address")?;
+
         log::info!("HTTP Server started on {}", address);
 
         Ok(HttpServer {
+            server_handle,
             join_handle,
-            shutdown_sender,
             address,
+            secure: false,
+        })
+    }
+
+    async fn new_https(
+        addr: SocketAddr,
+        router: Router,
+        https_cert: SelfSignedCertificate,
+    ) -> Result<Self> {
+        let config =
+            RustlsConfig::from_der(vec![https_cert.certificate_der], https_cert.private_key_der)
+                .await?;
+
+        let server_handle = Handle::new();
+
+        let server = axum_server::bind_rustls(addr, config).handle(server_handle.clone());
+
+        // Spawn the server into a runtime
+        let join_handle = tokio::spawn(async {
+            let router = router.layer(middleware::from_fn(logger_middleware));
+
+            server
+                .serve(router.into_make_service())
+                .await
+                .context("HTTPS Server failed to start")?;
+
+            log::info!("HTTPS Server exited");
+
+            Ok(())
+        });
+
+        let address = server_handle
+            .listening()
+            .await
+            .context("HTTPS Server failed to bind address")?;
+
+        log::info!("HTTPS Server started on {}", address);
+
+        Ok(HttpServer {
+            server_handle,
+            join_handle,
+            address,
+            secure: true,
         })
     }
 
@@ -166,15 +220,22 @@ impl HttpServer {
         &self.address
     }
 
+    fn get_protocol(&self) -> &str {
+        if self.secure {
+            "https"
+        } else {
+            "http"
+        }
+    }
+
     pub fn get_url(&self) -> Result<reqwest::Url> {
-        reqwest::Url::from_str(&format!("http://{}/", self.address))
+        reqwest::Url::from_str(&format!("{}://{}/", self.get_protocol(), self.address))
             .context("failed to create url from server address")
     }
 
     pub async fn shutdown(self) -> Result<()> {
-        self.shutdown_sender
-            .send(())
-            .map_err(|_err| anyhow!("HTTP Server shutdown receiver dropped"))?;
+        self.server_handle
+            .graceful_shutdown(Some(Duration::from_secs(5)));
 
         self.join_handle.await.context("failed to join")??;
 

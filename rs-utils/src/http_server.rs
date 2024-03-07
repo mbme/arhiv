@@ -1,6 +1,7 @@
 use std::{
     net::SocketAddr,
     str::FromStr,
+    sync::Arc,
     time::{Duration, UNIX_EPOCH},
 };
 
@@ -17,6 +18,10 @@ use axum::{
 use axum_extra::headers::{self, HeaderMapExt};
 use axum_server::{tls_rustls::RustlsConfig, Handle};
 use reqwest::Client;
+use rustls::{
+    server::{ClientCertVerifier, NoClientAuth},
+    Certificate, PrivateKey, ServerConfig,
+};
 use tokio::task::JoinHandle;
 
 use crate::SelfSignedCertificate;
@@ -126,21 +131,8 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub async fn start(
-        router: Router,
-        port: u16,
-        https_cert: Option<SelfSignedCertificate>,
-    ) -> Result<HttpServer> {
+    pub async fn new_http(port: u16, router: Router) -> Result<Self> {
         let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
-
-        if let Some(https_cert) = https_cert {
-            Self::new_https(addr, router, https_cert).await
-        } else {
-            Self::new_http(addr, router).await
-        }
-    }
-
-    async fn new_http(addr: SocketAddr, router: Router) -> Result<Self> {
         let server_handle = Handle::new();
         let server = axum_server::Server::bind(addr).handle(server_handle.clone());
 
@@ -173,17 +165,26 @@ impl HttpServer {
         })
     }
 
-    async fn new_https(
-        addr: SocketAddr,
+    pub async fn new_https(
+        port: u16,
         router: Router,
-        https_cert: SelfSignedCertificate,
+        server_cert: SelfSignedCertificate,
+        client_cert_verifier: Option<Arc<dyn ClientCertVerifier>>,
     ) -> Result<Self> {
-        let config =
-            RustlsConfig::from_der(vec![https_cert.certificate_der], https_cert.private_key_der)
-                .await?;
+        let certificate = Certificate(server_cert.certificate_der);
+        let private_key = PrivateKey(server_cert.private_key_der);
+        let config = ServerConfig::builder()
+            .with_safe_defaults()
+            .with_client_cert_verifier(
+                client_cert_verifier.unwrap_or_else(|| NoClientAuth::boxed()),
+            )
+            .with_single_cert(vec![certificate], private_key)?;
+
+        let config = RustlsConfig::from_config(Arc::new(config));
 
         let server_handle = Handle::new();
 
+        let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
         let server = axum_server::bind_rustls(addr, config).handle(server_handle.clone());
 
         // Spawn the server into a runtime

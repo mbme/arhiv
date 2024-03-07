@@ -46,3 +46,4 @@ mdns-sd = "0.10"
 gethostname = "0.4.3"
 rayon = "1.8.0"
 rcgen = "0.12"
+rustls.workspace = true

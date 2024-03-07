@@ -37,6 +37,8 @@ chrono = { version = "0.4", features = ["serde"] }
 
 lazy_static = "1.4"
 rand = "0.8"
-rustls = "0.23"
+
+# version should match axum-server rustls version
+rustls = { version = "0.21.10", features = ["dangerous_configuration"] }
 
 insta = { version = "1", features = ["redactions", "json"] }

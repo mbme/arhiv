@@ -4,7 +4,10 @@ use anyhow::{anyhow, Context, Result};
 use tokio::sync::oneshot;
 
 use baza::sync::build_rpc_router;
-use rs_utils::http_server::{build_health_router, HttpServer};
+use rs_utils::{
+    http_server::{build_health_router, HttpServer},
+    SelfSignedCertificate,
+};
 
 use crate::{
     ui_server::{build_ui_router, UI_BASE_PATH},
@@ -33,7 +36,7 @@ impl ArhivServer {
             .merge(health_router);
 
         let port = arhiv.baza.get_connection()?.get_server_port()?;
-        let server = HttpServer::start(router, port, None).await?;
+        let server = HttpServer::new_http(port, router).await?;
 
         Ok(ArhivServer {
             arhiv,

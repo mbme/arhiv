@@ -4,10 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use tokio::sync::oneshot;
 
 use baza::sync::build_rpc_router;
-use rs_utils::{
-    http_server::{build_health_router, HttpServer},
-    SelfSignedCertificate,
-};
+use rs_utils::http_server::{build_health_router, HttpServer};
 
 use crate::{
     ui_server::{build_ui_router, UI_BASE_PATH},

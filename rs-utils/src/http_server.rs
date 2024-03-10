@@ -1,11 +1,12 @@
 use std::{
+    collections::HashSet,
     net::SocketAddr,
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::{Duration, UNIX_EPOCH},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use axum::{
     body::{to_bytes, Body},
     extract::Request,
@@ -23,8 +24,6 @@ use rustls::{
     Certificate, PrivateKey, ServerConfig,
 };
 use tokio::task::JoinHandle;
-
-use crate::SelfSignedCertificate;
 
 pub struct ServerError(anyhow::Error);
 
@@ -168,11 +167,12 @@ impl HttpServer {
     pub async fn new_https(
         port: u16,
         router: Router,
-        server_cert: SelfSignedCertificate,
+        server_cert: Vec<u8>,
+        server_private_key: Vec<u8>,
         client_cert_verifier: Option<Arc<dyn ClientCertVerifier>>,
     ) -> Result<Self> {
-        let certificate = Certificate(server_cert.certificate_der);
-        let private_key = PrivateKey(server_cert.private_key_der);
+        let certificate = Certificate(server_cert);
+        let private_key = PrivateKey(server_private_key);
         let config = ServerConfig::builder()
             .with_safe_defaults()
             .with_client_cert_verifier(
@@ -241,5 +241,69 @@ impl HttpServer {
         self.join_handle.await.context("failed to join")??;
 
         Ok(())
+    }
+}
+
+pub struct AllowWhiteListedClients {
+    clients: Mutex<HashSet<Certificate>>,
+}
+
+impl AllowWhiteListedClients {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
+            clients: Default::default(),
+        })
+    }
+
+    pub fn add_client(&self, certificate: Vec<u8>) -> Result<()> {
+        let certificate = Certificate(certificate);
+
+        self.clients
+            .lock()
+            .map_err(|err| anyhow!("Failed to lock clients map: {err}"))?
+            .insert(certificate);
+
+        Ok(())
+    }
+
+    fn is_familiar_certificate(&self, certificate: &Certificate) -> Result<bool> {
+        let is_familiar = self
+            .clients
+            .lock()
+            .map_err(|err| anyhow!("Failed to lock clients map: {err}"))?
+            .contains(certificate);
+
+        Ok(is_familiar)
+    }
+}
+
+impl ClientCertVerifier for AllowWhiteListedClients {
+    fn client_auth_root_subjects(&self) -> &[rustls::DistinguishedName] {
+        &[]
+    }
+
+    fn verify_client_cert(
+        &self,
+        end_entity: &Certificate,
+        intermediates: &[Certificate],
+        _now: std::time::SystemTime,
+    ) -> std::prelude::v1::Result<rustls::server::ClientCertVerified, rustls::Error> {
+        if !intermediates.is_empty() {
+            return Err(rustls::Error::General(
+                "intermidiate certificates not supported".to_string(),
+            ));
+        }
+
+        let is_familiar = self
+            .is_familiar_certificate(end_entity)
+            .map_err(|err| rustls::Error::General(err.to_string()))?;
+
+        if is_familiar {
+            return Ok(rustls::server::ClientCertVerified::assertion());
+        }
+
+        Err(rustls::Error::InvalidCertificate(
+            rustls::CertificateError::ApplicationVerificationFailure,
+        ))
     }
 }

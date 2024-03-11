@@ -61,8 +61,8 @@ export function Ref({ documentId, documentType, documentTitle, description }: Re
         refClickHandler(documentId);
       }}
     >
-      <DocumentIcon documentType={documentType} className="align-text-bottom mr-1" />
-
+      <DocumentIcon documentType={documentType} className="align-text-bottom" />
+      &nbsp;
       {description || documentTitle}
     </a>
   );

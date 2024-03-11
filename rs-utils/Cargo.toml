@@ -47,3 +47,5 @@ gethostname = "0.4.3"
 rayon = "1.8.0"
 rcgen = "0.12"
 rustls.workspace = true
+tokio-rustls.workspace = true
+tower.workspace = true

@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    io,
     net::SocketAddr,
     str::FromStr,
     sync::{Arc, Mutex},
@@ -11,19 +12,29 @@ use axum::{
     body::{to_bytes, Body},
     extract::Request,
     http::{header, HeaderMap, HeaderValue, StatusCode},
-    middleware::{self, Next},
+    middleware::{self, AddExtension, Next},
     response::{IntoResponse, Response},
     routing::get,
-    Router,
+    Extension, Router,
 };
 use axum_extra::headers::{self, HeaderMapExt};
-use axum_server::{tls_rustls::RustlsConfig, Handle};
+use axum_server::{
+    accept::Accept,
+    tls_rustls::{RustlsAcceptor, RustlsConfig},
+    Handle, Server,
+};
+use futures::future::BoxFuture;
 use reqwest::Client;
 use rustls::{
     server::{ClientCertVerifier, NoClientAuth},
     Certificate, PrivateKey, ServerConfig,
 };
-use tokio::task::JoinHandle;
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    task::JoinHandle,
+};
+use tokio_rustls::server::TlsStream;
+use tower::Layer;
 
 pub struct ServerError(anyhow::Error);
 
@@ -97,7 +108,7 @@ pub async fn check_server_health(server_url: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn logger_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
+async fn logger_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
     let method = request.method().to_string();
     let uri = request.uri().path().to_string();
 
@@ -185,7 +196,11 @@ impl HttpServer {
         let server_handle = Handle::new();
 
         let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
-        let server = axum_server::bind_rustls(addr, config).handle(server_handle.clone());
+
+        let acceptor = CustomAcceptor::new(RustlsAcceptor::new(config));
+        let server = Server::bind(addr)
+            .acceptor(acceptor)
+            .handle(server_handle.clone());
 
         // Spawn the server into a runtime
         let join_handle = tokio::spawn(async {
@@ -305,5 +320,55 @@ impl ClientCertVerifier for AllowWhiteListedClients {
         Err(rustls::Error::InvalidCertificate(
             rustls::CertificateError::ApplicationVerificationFailure,
         ))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TlsData {
+    pub certificates: Arc<Vec<Vec<u8>>>,
+}
+
+#[derive(Debug, Clone)]
+struct CustomAcceptor {
+    inner: RustlsAcceptor,
+}
+
+impl CustomAcceptor {
+    fn new(inner: RustlsAcceptor) -> Self {
+        Self { inner }
+    }
+}
+
+// based on https://github.com/programatik29/axum-server/blob/master/examples/rustls_session.rs
+impl<I, S> Accept<I, S> for CustomAcceptor
+where
+    I: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    S: Send + 'static,
+{
+    type Stream = TlsStream<I>;
+    type Service = AddExtension<S, TlsData>;
+    type Future = BoxFuture<'static, io::Result<(Self::Stream, Self::Service)>>;
+
+    fn accept(&self, stream: I, service: S) -> Self::Future {
+        let acceptor = self.inner.clone();
+
+        Box::pin(async move {
+            let (stream, service) = acceptor.accept(stream, service).await?;
+            let server_conn = stream.get_ref().1;
+            let certificates = server_conn
+                .peer_certificates()
+                .unwrap_or_default()
+                .iter()
+                .cloned()
+                .map(|cert| cert.0)
+                .collect();
+
+            let tls_data = TlsData {
+                certificates: Arc::new(certificates),
+            };
+            let service = Extension(tls_data).layer(service);
+
+            Ok((stream, service))
+        })
     }
 }

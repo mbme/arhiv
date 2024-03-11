@@ -31,6 +31,7 @@ hyper = "1"
 axum = { version = "0.7", features = ["tracing", "tokio", "http1"] }
 axum-extra = { version = "0.9", features = ["typed-header"]}
 axum-server = { version= "0.6", features = ["tls-rustls"]}
+tower = { version = "0.4" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -39,6 +40,7 @@ lazy_static = "1.4"
 rand = "0.8"
 
 # version should match axum-server rustls version
-rustls = { version = "0.21.10", features = ["dangerous_configuration"] }
+rustls = { version = "0.21", features = ["dangerous_configuration"] }
+tokio-rustls = { version = "0.24" }
 
 insta = { version = "1", features = ["redactions", "json"] }

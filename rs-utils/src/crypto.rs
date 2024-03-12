@@ -1,11 +1,10 @@
-use core::fmt::Write;
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
 };
 
 use anyhow::{Context, Result};
-use base64::{engine, Engine};
+use data_encoding::{BASE64, BASE64URL, HEXUPPER};
 use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
@@ -42,22 +41,28 @@ pub fn get_string_hash_blake3(data: &str) -> String {
 
 #[must_use]
 pub fn to_url_safe_base64(bytes: &[u8]) -> String {
-    engine::general_purpose::URL_SAFE.encode(bytes)
+    BASE64URL.encode(bytes)
 }
 
 #[must_use]
 pub fn is_valid_base64(value: &str) -> bool {
-    engine::general_purpose::URL_SAFE.decode(value).is_ok()
+    BASE64URL.decode(value.as_bytes()).is_ok()
 }
 
-#[must_use]
-pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
-    let mut result = String::with_capacity(2 * bytes.len());
-    for byte in bytes {
-        write!(result, "{byte:02X}").expect("failed to write data into String");
-    }
+pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
+    BASE64
+        .decode(data.as_bytes())
+        .context("Failed to decode base64 string")
+}
 
-    result
+pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
+    HEXUPPER.encode(bytes)
+}
+
+pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
+    HEXUPPER
+        .decode(hex.as_bytes())
+        .context("Failed to decode hex string")
 }
 
 pub struct SelfSignedCertificate {
@@ -89,6 +94,8 @@ impl SelfSignedCertificate {
 
 #[cfg(test)]
 mod tests {
+    use rand::RngCore;
+
     use super::*;
     use crate::workspace_relpath;
 
@@ -110,5 +117,16 @@ mod tests {
             get_string_hash_blake3("test"),
             "4878ca0425c739fa427f7eda20fe845f6b2e46ba5fe2a14df5b1e32f50603215"
         );
+    }
+
+    #[test]
+    fn test_hex_encode_decode() {
+        let mut data = [0u8; 150];
+        rand::thread_rng().fill_bytes(&mut data);
+
+        let result = bytes_to_hex_string(&data);
+        let result = hex_string_to_bytes(&result).unwrap();
+
+        assert_eq!(data, result.as_slice());
     }
 }

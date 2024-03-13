@@ -12,7 +12,6 @@ workspace = true
 log = "0.4"
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tracing-android = "0.2"
 
 anyhow.workspace = true
 
@@ -49,3 +48,6 @@ rcgen = "0.12"
 rustls.workspace = true
 tokio-rustls.workspace = true
 tower.workspace = true
+
+[target.'cfg(android)'.dependencies]
+tracing-android = "0.2"

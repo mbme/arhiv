@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{bail, ensure, Context, Result};
 use futures::stream::TryStreamExt;
-use reqwest::Response;
+use reqwest::{Client, Response};
 use tokio::fs as tokio_fs;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 use url::Url;
@@ -32,6 +32,7 @@ pub struct Download {
     download_file_path: String,
     keep_download_file: bool,
     keep_completed_file: bool,
+    client: Client,
 }
 
 impl Download {
@@ -58,12 +59,18 @@ impl Download {
 
         let url = Url::parse(url).context("failed to parse url")?;
 
+        let client = reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(30))
+            .build()
+            .context("failed to build client")?;
+
         Ok(Download {
             url,
             completed_file_path,
             download_file_path,
             keep_download_file: false,
             keep_completed_file: false,
+            client,
         })
     }
 
@@ -73,6 +80,10 @@ impl Download {
 
     pub fn keep_completed_file(&mut self, keep: bool) {
         self.keep_completed_file = keep;
+    }
+
+    pub fn use_custom_http_client(&mut self, client: Client) {
+        self.client = client;
     }
 
     fn deduce_start_pos(&self) -> Result<u64> {
@@ -88,11 +99,7 @@ impl Download {
     }
 
     async fn send_request(&self, start_pos: u64) -> Result<Response> {
-        let mut request = reqwest::Client::builder()
-            .connect_timeout(Duration::from_secs(30))
-            .build()
-            .context("failed to build client")?
-            .get(self.url.clone());
+        let mut request = self.client.get(self.url.clone());
 
         if start_pos > 0 {
             request = request.header(reqwest::header::RANGE, format!("bytes={start_pos}-"));
@@ -127,6 +134,8 @@ impl Download {
         let mut start_pos = self.deduce_start_pos()?;
 
         let response = self.send_request(start_pos).await?;
+
+        // FIXME validate response
 
         let status = response.status();
         log::debug!("HTTP response status: {}", &status);

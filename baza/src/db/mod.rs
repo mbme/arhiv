@@ -55,6 +55,7 @@ impl DB {
 
         let tx = self.get_tx()?;
 
+        // FIXME set schema name
         tx.set_data_version(get_latest_data_version(migrations))?;
         tx.set_instance_id(&InstanceId::new())?;
         tx.set_last_sync_time(&MIN_TIMESTAMP)?;

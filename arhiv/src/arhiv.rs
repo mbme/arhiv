@@ -40,12 +40,16 @@ impl Arhiv {
         let schema = get_standard_schema();
         let data_migrations = get_data_migrations();
 
-        let baza = Baza::open(BazaOptions {
-            create: options.create,
+        let baza_options = BazaOptions {
             root_dir,
             schema,
             migrations: data_migrations,
-        })?;
+        };
+        let baza = if options.create {
+            Baza::create(baza_options)?
+        } else {
+            Baza::open(baza_options)?
+        };
         let baza = Arc::new(baza);
 
         let sync_manager = SyncManager::new(baza.clone());

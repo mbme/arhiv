@@ -14,7 +14,6 @@ use crate::{
 };
 
 pub struct BazaOptions {
-    pub create: bool,
     pub migrations: DataMigrations,
     pub root_dir: String,
     pub schema: DataSchema,
@@ -27,29 +26,45 @@ pub struct Baza {
 }
 
 impl Baza {
-    pub fn open(options: BazaOptions) -> Result<Baza> {
-        let path_manager = PathManager::new(options.root_dir.clone());
+    fn new(root_dir: String, schema: DataSchema) -> Self {
+        let path_manager = PathManager::new(root_dir);
 
-        let baza = Baza {
+        Baza {
             path_manager: Arc::new(path_manager),
-            schema: Arc::new(options.schema),
+            schema: Arc::new(schema),
             events: channel(42),
-        };
-
-        if options.create {
-            log::info!("Initializing Baza in {}", options.root_dir);
-            baza.get_db().init(&options.migrations)?;
-        } else {
-            baza.path_manager.assert_dirs_exist()?;
-            baza.path_manager.assert_db_file_exists()?;
-
-            let db = baza.get_db();
-
-            db.apply_db_migrations()?;
-            db.apply_data_migrations(&options.migrations)?;
         }
+    }
 
-        log::debug!("Open Baza in {}", &baza.path_manager.root_dir);
+    pub fn create(options: BazaOptions) -> Result<Baza> {
+        let baza = Baza::new(options.root_dir, options.schema);
+
+        log::info!(
+            "Initializing {} Baza in {}",
+            baza.get_name(),
+            baza.path_manager.root_dir
+        );
+        baza.get_db().init(&options.migrations)?;
+
+        Ok(baza)
+    }
+
+    pub fn open(options: BazaOptions) -> Result<Baza> {
+        let baza = Baza::new(options.root_dir, options.schema);
+
+        baza.path_manager.assert_dirs_exist()?;
+        baza.path_manager.assert_db_file_exists()?;
+
+        let db = baza.get_db();
+
+        db.apply_db_migrations()?;
+        db.apply_data_migrations(&options.migrations)?;
+
+        log::debug!(
+            "Opened {} Baza in {}",
+            baza.get_name(),
+            baza.path_manager.root_dir
+        );
 
         Ok(baza)
     }

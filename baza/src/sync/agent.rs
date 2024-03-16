@@ -94,7 +94,7 @@ impl Display for SyncAgent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             SyncAgent::InMemory { baza, instance_id } => {
-                write!(f, "InMemoryAgent<{} {}>", baza.get_name(), instance_id)
+                write!(f, "InMemoryAgent<{} {}>", baza.get_app_name(), instance_id)
             }
             SyncAgent::Network {
                 client,

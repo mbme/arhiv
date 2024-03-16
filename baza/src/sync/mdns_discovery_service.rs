@@ -23,7 +23,7 @@ impl MDNSDiscoveryService {
             .and_then(|conn| conn.get_instance_id())
             .context("failed to read instance_id")?;
 
-        let app_name = baza.get_name();
+        let app_name = baza.get_app_name();
 
         let mut service_name = format!("_{app_name}-baza");
         if DEBUG_MODE {

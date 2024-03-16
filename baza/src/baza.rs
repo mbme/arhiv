@@ -41,7 +41,7 @@ impl Baza {
 
         log::info!(
             "Initializing {} Baza in {}",
-            baza.get_name(),
+            baza.get_app_name(),
             baza.path_manager.root_dir
         );
         baza.get_db().init(&options.migrations)?;
@@ -62,7 +62,7 @@ impl Baza {
 
         log::debug!(
             "Opened {} Baza in {}",
-            baza.get_name(),
+            baza.get_app_name(),
             baza.path_manager.root_dir
         );
 
@@ -102,8 +102,8 @@ impl Baza {
     }
 
     #[must_use]
-    pub fn get_name(&self) -> &str {
-        self.schema.get_name()
+    pub fn get_app_name(&self) -> &str {
+        self.schema.get_app_name()
     }
 
     #[must_use]

@@ -37,7 +37,7 @@ impl DataSchema {
     }
 
     #[must_use]
-    pub fn get_name(&self) -> &str {
+    pub fn get_app_name(&self) -> &str {
         &self.name
     }
 

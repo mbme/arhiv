@@ -16,7 +16,7 @@ impl Baza {
 
         log::debug!("backup_dir: {}", &backup_dir);
 
-        let app_name = self.get_schema().get_name();
+        let app_name = self.get_schema().get_app_name();
 
         let backup = BackupPaths::new(app_name, backup_dir);
         backup.check()?;

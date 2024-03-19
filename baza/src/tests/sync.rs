@@ -10,7 +10,7 @@ use crate::{
     entities::{Id, Revision},
     sync::{build_rpc_router, SyncManager},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
-    Baza,
+    Baza, BazaAuth,
 };
 
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
@@ -325,6 +325,44 @@ async fn test_sync_network_agent() -> Result<()> {
 
     let blob0 = baza0.get_blob(&blob_id)?;
     assert!(are_equal_files(src, &blob0.file_path)?);
+
+    sync_manager0.remove_all_agents(); // clears network connections pool
+    server1.shutdown().await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
+    let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
+    baza0.update_auth(BazaAuth {
+        login: baza0.get_connection()?.get_login()?,
+        password: "other password".to_string(),
+    })?;
+
+    let baza1 = Arc::new(Baza::new_test_baza_with_id("1"));
+    {
+        let mut tx = baza1.get_tx()?;
+        tx.apply_changeset(create_changeset(vec![
+            new_document_snapshot("1", json!({ "0": 1, "1": 1 })),
+            new_document_snapshot("1", json!({ "0": 2, "1": 1 })),
+            new_document_snapshot("2", json!({ "0": 2 })),
+        ]))?;
+        tx.commit()?;
+    }
+
+    let sync_manager0 = SyncManager::new(baza0.clone());
+
+    let server1 = start_rpc_server(baza1.clone()).await;
+    sync_manager0.add_network_agent(
+        baza1.get_connection()?.get_instance_id()?,
+        server1.get_url()?.as_str(),
+    )?;
+
+    assert!(!sync_manager0.sync().await?);
+
+    let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
+    assert_eq!(snapshots_count, 0);
 
     sync_manager0.remove_all_agents(); // clears network connections pool
     server1.shutdown().await?;

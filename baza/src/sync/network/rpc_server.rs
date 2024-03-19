@@ -1,12 +1,13 @@
 use std::{ops::Bound, str::FromStr, sync::Arc};
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use axum::{
     extract::{DefaultBodyLimit, Path, State},
     http::{HeaderMap, StatusCode},
+    middleware,
     response::{IntoResponse, Response},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use axum_extra::{
     headers::{self, HeaderMapExt},
@@ -14,7 +15,7 @@ use axum_extra::{
 };
 
 use rs_utils::{
-    create_body_from_file,
+    bytes_to_hex_string, create_body_from_file,
     http_server::{add_max_cache_header, ServerError},
     log, now,
 };
@@ -25,12 +26,27 @@ use crate::{
     Baza, BazaEvent,
 };
 
-pub fn build_rpc_router() -> Router<Arc<Baza>> {
-    Router::new()
+use super::auth::{client_cert_validator, create_shared_network_key, AuthInfo};
+
+pub fn build_rpc_router(baza: Arc<Baza>) -> Result<Router> {
+    let hmac = create_shared_network_key(&baza)?;
+
+    let certificate = baza.get_connection()?.get_certificate()?;
+    let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(&certificate.certificate_der));
+
+    let router = Router::new()
         .route("/ping", post(exchange_pings_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
         .layer(DefaultBodyLimit::disable())
+        .layer(middleware::from_fn(client_cert_validator))
+        .layer(Extension(AuthInfo {
+            hmac: Arc::new(hmac),
+            server_cert_hmac_tag,
+        }))
+        .with_state(baza);
+
+    Ok(router)
 }
 
 #[tracing::instrument(skip(baza), level = "debug")]

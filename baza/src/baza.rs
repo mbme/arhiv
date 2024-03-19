@@ -3,13 +3,14 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::log;
+use rs_utils::{log, now, SelfSignedCertificate, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
     db::BazaConnection,
+    entities::InstanceId,
     path_manager::PathManager,
-    schema::{DataMigrations, DataSchema},
+    schema::{get_latest_data_version, DataMigrations, DataSchema},
     DocumentExpert, DB,
 };
 
@@ -17,6 +18,11 @@ pub struct BazaOptions {
     pub migrations: DataMigrations,
     pub root_dir: String,
     pub schema: DataSchema,
+}
+
+pub struct BazaAuth {
+    pub login: String,
+    pub password: String, // FIXME use secstr
 }
 
 pub struct Baza {
@@ -36,7 +42,7 @@ impl Baza {
         }
     }
 
-    pub fn create(options: BazaOptions) -> Result<Baza> {
+    pub fn create(options: BazaOptions, auth: BazaAuth) -> Result<Baza> {
         let baza = Baza::new(options.root_dir, options.schema);
 
         log::info!(
@@ -44,9 +50,41 @@ impl Baza {
             baza.get_app_name(),
             baza.path_manager.root_dir
         );
-        baza.get_db().init(&options.migrations)?;
+
+        baza.get_db().create()?;
+
+        let tx = baza.get_tx()?;
+
+        // FIXME set & assert schema name on open
+        tx.set_data_version(get_latest_data_version(&options.migrations))?;
+        tx.set_instance_id(&InstanceId::new())?;
+        tx.set_last_sync_time(&MIN_TIMESTAMP)?;
+
+        tx.commit()?;
+
+        baza.update_auth(auth)?;
 
         Ok(baza)
+    }
+
+    // FIXME remove this after release
+    pub fn update_auth(&self, auth: BazaAuth) -> Result<()> {
+        let tx = self.get_tx()?;
+
+        tx.set_login(&auth.login)?;
+        tx.set_password(&auth.password)?;
+
+        let app_name = self.get_app_name();
+        let instance_id = tx.get_instance_id()?;
+        let timestamp = now();
+        let certificate_id = format!("{}@{app_name}[{instance_id}] {timestamp}", auth.login);
+        let certificate = SelfSignedCertificate::new_x509(&certificate_id)?;
+
+        tx.set_certificate(&certificate)?;
+
+        tx.commit()?;
+
+        Ok(())
     }
 
     pub fn open(options: BazaOptions) -> Result<Baza> {
@@ -104,6 +142,16 @@ impl Baza {
     #[must_use]
     pub fn get_app_name(&self) -> &str {
         self.schema.get_app_name()
+    }
+
+    pub fn get_certificate_pfx_der(&self, password: &str) -> Result<Vec<u8>> {
+        let conn = self.get_connection()?;
+
+        let login = conn.get_login()?;
+        let app_name = self.get_app_name();
+        let friendly_name = format!("{login}@{app_name} key");
+
+        conn.get_certificate()?.to_pfx_der(password, &friendly_name)
     }
 
     #[must_use]

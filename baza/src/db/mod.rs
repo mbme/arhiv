@@ -1,3 +1,4 @@
+pub mod auth;
 mod connection;
 mod dto;
 mod filter;
@@ -12,7 +13,6 @@ mod utils;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use rs_utils::MIN_TIMESTAMP;
 use tokio::sync::broadcast::Sender;
 
 pub use connection::BazaConnection;
@@ -25,9 +25,8 @@ use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};
 
 use crate::{
-    entities::InstanceId,
     path_manager::PathManager,
-    schema::{get_latest_data_version, DataMigrations, DataSchema},
+    schema::{DataMigrations, DataSchema},
     BazaEvent,
 };
 
@@ -50,19 +49,8 @@ impl DB {
         }
     }
 
-    pub(crate) fn init(&self, migrations: &DataMigrations) -> Result<()> {
-        create_db(&self.path_manager.root_dir)?;
-
-        let tx = self.get_tx()?;
-
-        // FIXME set schema name
-        tx.set_data_version(get_latest_data_version(migrations))?;
-        tx.set_instance_id(&InstanceId::new())?;
-        tx.set_last_sync_time(&MIN_TIMESTAMP)?;
-
-        tx.commit()?;
-
-        Ok(())
+    pub(crate) fn create(&self) -> Result<()> {
+        create_db(&self.path_manager.root_dir)
     }
 
     /// ensure DB schema is up to date

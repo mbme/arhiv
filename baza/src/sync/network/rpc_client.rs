@@ -1,28 +1,66 @@
-use anyhow::{bail, Context, Result};
-use reqwest::{header, Client, Url};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
-use rs_utils::{log, Download};
+use anyhow::{bail, Context, Result};
+use reqwest::{header, Client, Identity, Url};
+
+use rs_utils::{bytes_to_hex_string, log, Download, ResponseVerifier};
 
 use crate::{
     entities::{Revision, BLOB},
-    sync::{changeset::Changeset, ping::Ping},
+    sync::{changeset::Changeset, network::auth::CERTIFICATE_HMAC_HEADER, ping::Ping},
+    Baza,
 };
+
+use super::auth::{create_shared_network_key, ServerCertVerifier};
 
 #[derive(Debug, Clone)]
 pub struct BazaClient {
     rpc_server_url: Url,
+    client: Client,
+    response_verifier: Arc<ServerCertVerifier>,
     downloads_dir: String,
 }
 
-// TODO support timeouts
 impl BazaClient {
-    pub fn new(rpc_server_url: Url, downloads_dir: impl Into<String>) -> Self {
-        let downloads_dir = downloads_dir.into();
+    pub fn new(url: &str, baza: &Baza) -> Result<Self> {
+        let downloads_dir = baza.get_path_manager().downloads_dir.clone();
 
-        BazaClient {
+        let conn = baza.get_connection()?;
+        let certificate = conn.get_certificate()?;
+
+        let hmac = create_shared_network_key(baza)?;
+
+        let rpc_server_url = Url::from_str(url).context("failed to parse url")?;
+        let certificate_hmac = bytes_to_hex_string(&hmac.sign(&certificate.certificate_der));
+
+        let mut default_headers = header::HeaderMap::new();
+        default_headers.insert(
+            CERTIFICATE_HMAC_HEADER,
+            header::HeaderValue::from_str(&certificate_hmac)?,
+        );
+
+        let cert_and_key_pem = certificate.to_pem();
+        let identity = Identity::from_pem(cert_and_key_pem.as_bytes())
+            .context("Failed to prepare client TLS identity")?;
+
+        let client = Client::builder()
+            .https_only(true)
+            .danger_accept_invalid_certs(true) // TODO find another way, since this allows expired certificates
+            .identity(identity)
+            .tls_info(true)
+            .default_headers(default_headers)
+            .connect_timeout(Duration::from_secs(30))
+            .build()
+            .context("Failed to build HTTPS client")?;
+
+        let response_verifier = Arc::new(ServerCertVerifier::new(hmac));
+
+        Ok(BazaClient {
             rpc_server_url,
+            client,
+            response_verifier,
             downloads_dir,
-        }
+        })
     }
 
     pub async fn download_blob(&self, blob: &BLOB) -> Result<()> {
@@ -44,6 +82,8 @@ impl BazaClient {
         let mut download = Download::new_with_path(blob_url.as_str(), &self.downloads_dir)?;
         download.keep_completed_file(true);
         download.keep_download_file(true);
+        download.use_custom_http_client(self.client.clone());
+        download.use_response_verifier(self.response_verifier.clone());
 
         let download_result = download.start().await?;
 
@@ -64,12 +104,16 @@ impl BazaClient {
         log::debug!("Baza Server {}: exchanging pings", self.rpc_server_url);
 
         let body = serde_json::to_vec(ping).context("failed to serialize ping")?;
-        let response = Client::new()
+
+        let response = self
+            .client
             .post(self.rpc_server_url.join("/ping")?)
             .header(header::CONTENT_TYPE, "application/json")
             .body(body)
             .send()
             .await?;
+
+        self.response_verifier.verify(&response)?;
 
         let status = response.status();
         let body = response.text().await?;
@@ -88,10 +132,13 @@ impl BazaClient {
             self.rpc_server_url,
         );
 
-        let response = Client::new()
+        let response = self
+            .client
             .get(self.rpc_server_url.join("/changeset/")?.join(&min_rev)?)
             .send()
             .await?;
+
+        self.response_verifier.verify(&response)?;
 
         let status = response.status();
         let body = response.text().await?;
@@ -101,16 +148,6 @@ impl BazaClient {
         } else {
             bail!("Server responded with error: {}\n{}", status, body);
         }
-    }
-
-    pub async fn check_connection(&self) -> Result<()> {
-        Client::new()
-            .get(self.rpc_server_url.join("/status")?)
-            .send()
-            .await?
-            .error_for_status()?;
-
-        Ok(())
     }
 
     pub fn get_url(&self) -> &str {

@@ -14,9 +14,11 @@ use crate::{
 };
 
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
-    let router = build_rpc_router().with_state(baza);
+    let router = build_rpc_router(baza.clone()).expect("must create RPC router");
 
-    HttpServer::new_http(0, router)
+    let certificate = baza.get_connection().unwrap().get_certificate().unwrap();
+
+    HttpServer::new_https(0, router, certificate)
         .await
         .expect("must start rpc server")
 }
@@ -324,6 +326,7 @@ async fn test_sync_network_agent() -> Result<()> {
     let blob0 = baza0.get_blob(&blob_id)?;
     assert!(are_equal_files(src, &blob0.file_path)?);
 
+    sync_manager0.remove_all_agents(); // clears network connections pool
     server1.shutdown().await?;
 
     Ok(())

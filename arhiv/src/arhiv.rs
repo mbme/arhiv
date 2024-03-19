@@ -4,7 +4,7 @@ use anyhow::{ensure, Result};
 
 use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
-    AutoCommitService, AutoCommitTask, Baza, BazaOptions,
+    AutoCommitService, AutoCommitTask, Baza, BazaAuth, BazaOptions,
 };
 use rs_utils::{get_home_dir, log};
 
@@ -45,10 +45,24 @@ impl Arhiv {
             schema,
             migrations: data_migrations,
         };
+
+        // FIXME provide real data
+        let auth = BazaAuth {
+            login: "arhiv".to_string(),
+            password: "arhiv123".to_string(),
+        };
+
         let baza = if options.create {
-            Baza::create(baza_options)?
+            Baza::create(baza_options, auth)?
         } else {
-            Baza::open(baza_options)?
+            let baza = Baza::open(baza_options)?;
+
+            // FIXME remove this after release
+            if baza.get_connection()?.get_login().is_err() {
+                baza.update_auth(auth)?;
+            }
+
+            baza
         };
         let baza = Arc::new(baza);
 

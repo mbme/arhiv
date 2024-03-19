@@ -7,7 +7,7 @@ use crate::entities::InstanceId;
 use super::kvs::KvsConstKey;
 use super::BazaConnection;
 
-const SETTINGS_NAMESPACE: &str = "settings";
+pub const SETTINGS_NAMESPACE: &str = "settings";
 
 const SETTING_DATA_VERSION: &KvsConstKey<u8> =
     &KvsConstKey::new(SETTINGS_NAMESPACE, "data_version");

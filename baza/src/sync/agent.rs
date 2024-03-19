@@ -1,7 +1,6 @@
-use std::{fmt::Display, str::FromStr, sync::Arc};
+use std::{fmt::Display, sync::Arc};
 
 use anyhow::{Context, Result};
-use reqwest::Url;
 
 use crate::{
     entities::{InstanceId, Revision, BLOB},
@@ -29,11 +28,8 @@ impl SyncAgent {
         Ok(SyncAgent::InMemory { baza, instance_id })
     }
 
-    pub fn new_in_network(instance_id: InstanceId, url: &str, downloads_dir: &str) -> Result<Self> {
-        let client = BazaClient::new(
-            Url::from_str(url).context("failed to parse url")?,
-            downloads_dir,
-        );
+    pub fn new_in_network(instance_id: InstanceId, url: &str, baza: Arc<Baza>) -> Result<Self> {
+        let client = BazaClient::new(url, &baza)?;
 
         Ok(SyncAgent::Network {
             client,

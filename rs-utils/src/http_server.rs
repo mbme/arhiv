@@ -1,20 +1,18 @@
 use std::{
-    collections::HashSet,
     io,
     net::SocketAddr,
     str::FromStr,
-    sync::{Arc, Mutex},
+    sync::Arc,
     time::{Duration, UNIX_EPOCH},
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result};
 use axum::{
     body::{to_bytes, Body},
     extract::Request,
     http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, AddExtension, Next},
     response::{IntoResponse, Response},
-    routing::get,
     Extension, Router,
 };
 use axum_extra::headers::{self, HeaderMapExt};
@@ -24,17 +22,20 @@ use axum_server::{
     Handle, Server,
 };
 use futures::future::BoxFuture;
-use reqwest::Client;
-use rustls::{
-    server::{ClientCertVerifier, NoClientAuth},
-    Certificate, PrivateKey, ServerConfig,
-};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     task::JoinHandle,
 };
-use tokio_rustls::server::TlsStream;
+use tokio_rustls::{
+    rustls::{
+        server::{ClientCertVerified, ClientCertVerifier},
+        Certificate, PrivateKey, ServerConfig,
+    },
+    server::TlsStream,
+};
 use tower::Layer;
+
+use crate::SelfSignedCertificate;
 
 pub struct ServerError(anyhow::Error);
 
@@ -77,35 +78,6 @@ pub fn add_max_cache_header(headers: &mut HeaderMap) {
             .with_private()
             .with_max_age(Duration::from_secs(31536000)),
     );
-}
-
-#[allow(clippy::unused_async)]
-async fn health_handler() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-
-    (StatusCode::OK, headers)
-}
-
-pub fn build_health_router() -> Router<()> {
-    Router::new().route("/health", get(health_handler))
-}
-
-pub async fn check_server_health(server_url: &str) -> Result<()> {
-    let url = reqwest::Url::from_str(&format!("https://{server_url}/health"))
-        .context("failed to create url from server address")?;
-
-    let response = Client::new().get(url).send().await?;
-
-    let status = response.status();
-
-    ensure!(
-        status.is_success(),
-        "expected status code 2xx, got {}",
-        status.to_string()
-    );
-
-    Ok(())
 }
 
 async fn logger_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
@@ -178,18 +150,16 @@ impl HttpServer {
     pub async fn new_https(
         port: u16,
         router: Router,
-        server_cert: Vec<u8>,
-        server_private_key: Vec<u8>,
-        client_cert_verifier: Option<Arc<dyn ClientCertVerifier>>,
+        server_certificate: SelfSignedCertificate,
     ) -> Result<Self> {
-        let certificate = Certificate(server_cert);
-        let private_key = PrivateKey(server_private_key);
-        let config = ServerConfig::builder()
+        let mut config = ServerConfig::builder()
             .with_safe_defaults()
-            .with_client_cert_verifier(
-                client_cert_verifier.unwrap_or_else(|| NoClientAuth::boxed()),
-            )
-            .with_single_cert(vec![certificate], private_key)?;
+            .with_client_cert_verifier(Arc::new(RequireAnyClientCertificate))
+            .with_single_cert(
+                vec![Certificate(server_certificate.certificate_der)],
+                PrivateKey(server_certificate.private_key_der),
+            )?;
+        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
 
         let config = RustlsConfig::from_config(Arc::new(config));
 
@@ -259,70 +229,6 @@ impl HttpServer {
     }
 }
 
-pub struct AllowWhiteListedClients {
-    clients: Mutex<HashSet<Certificate>>,
-}
-
-impl AllowWhiteListedClients {
-    pub fn new() -> Arc<Self> {
-        Arc::new(Self {
-            clients: Default::default(),
-        })
-    }
-
-    pub fn add_client(&self, certificate: Vec<u8>) -> Result<()> {
-        let certificate = Certificate(certificate);
-
-        self.clients
-            .lock()
-            .map_err(|err| anyhow!("Failed to lock clients map: {err}"))?
-            .insert(certificate);
-
-        Ok(())
-    }
-
-    fn is_familiar_certificate(&self, certificate: &Certificate) -> Result<bool> {
-        let is_familiar = self
-            .clients
-            .lock()
-            .map_err(|err| anyhow!("Failed to lock clients map: {err}"))?
-            .contains(certificate);
-
-        Ok(is_familiar)
-    }
-}
-
-impl ClientCertVerifier for AllowWhiteListedClients {
-    fn client_auth_root_subjects(&self) -> &[rustls::DistinguishedName] {
-        &[]
-    }
-
-    fn verify_client_cert(
-        &self,
-        end_entity: &Certificate,
-        intermediates: &[Certificate],
-        _now: std::time::SystemTime,
-    ) -> std::prelude::v1::Result<rustls::server::ClientCertVerified, rustls::Error> {
-        if !intermediates.is_empty() {
-            return Err(rustls::Error::General(
-                "intermidiate certificates not supported".to_string(),
-            ));
-        }
-
-        let is_familiar = self
-            .is_familiar_certificate(end_entity)
-            .map_err(|err| rustls::Error::General(err.to_string()))?;
-
-        if is_familiar {
-            return Ok(rustls::server::ClientCertVerified::assertion());
-        }
-
-        Err(rustls::Error::InvalidCertificate(
-            rustls::CertificateError::ApplicationVerificationFailure,
-        ))
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TlsData {
     pub certificates: Arc<Vec<Vec<u8>>>,
@@ -370,5 +276,25 @@ where
 
             Ok((stream, service))
         })
+    }
+}
+
+struct RequireAnyClientCertificate;
+
+impl ClientCertVerifier for RequireAnyClientCertificate {
+    fn client_auth_root_subjects(&self) -> &[tokio_rustls::rustls::DistinguishedName] {
+        &[]
+    }
+
+    fn verify_client_cert(
+        &self,
+        _end_entity: &Certificate,
+        _intermediates: &[Certificate],
+        _now: std::time::SystemTime,
+    ) -> std::prelude::v1::Result<
+        tokio_rustls::rustls::server::ClientCertVerified,
+        tokio_rustls::rustls::Error,
+    > {
+        Ok(ClientCertVerified::assertion())
     }
 }

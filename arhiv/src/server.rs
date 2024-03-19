@@ -1,10 +1,15 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
+use axum::{
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+    routing::get,
+};
 use tokio::sync::oneshot;
 
 use baza::sync::build_rpc_router;
-use rs_utils::http_server::{build_health_router, HttpServer};
+use rs_utils::http_server::{add_no_cache_headers, HttpServer};
 
 use crate::{
     ui_server::{build_ui_router, UI_BASE_PATH},
@@ -21,19 +26,20 @@ impl ArhivServer {
     pub async fn start(arhiv: Arhiv) -> Result<Self> {
         let arhiv = Arc::new(arhiv);
 
+        let conn = arhiv.baza.get_connection()?;
+        let server_port = conn.get_server_port()?;
+        let certificate = conn.get_certificate()?;
+
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
-        let health_router = build_health_router();
-        let rpc_router = build_rpc_router();
-        let ui_router = build_ui_router(shutdown_receiver);
+        let rpc_router = build_rpc_router(arhiv.baza.clone())?;
+        let ui_router = build_ui_router(shutdown_receiver).with_state(arhiv.clone());
 
         let router = rpc_router
-            .nest(UI_BASE_PATH, ui_router.with_state(arhiv.clone()))
-            .with_state(arhiv.baza.clone())
-            .merge(health_router);
+            .nest(UI_BASE_PATH, ui_router)
+            .route("/health", get(health_handler));
 
-        let port = arhiv.baza.get_connection()?.get_server_port()?;
-        let server = HttpServer::new_http(port, router).await?;
+        let server = HttpServer::new_https(server_port, router, certificate).await?;
 
         Ok(ArhivServer {
             arhiv,
@@ -61,4 +67,12 @@ impl ArhivServer {
 
         Ok(())
     }
+}
+
+#[allow(clippy::unused_async)]
+async fn health_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
 }

@@ -31,7 +31,9 @@ axum-server.workspace = true
 rand.workspace = true
 lazy_static.workspace = true
 chrono.workspace = true
-blake3 = "1.2.0"
+blake3 = "1.2.0" # fast file hash
+ring.workspace = true
+p12 = "0.6" # create PKCS#12 .pfx HTTPS/TLS certificates for browsers
 data-encoding = "2" # base64, hex encodings
 mime_guess = "2"
 infer = "0.15"
@@ -40,12 +42,12 @@ regex = "1.5.4"
 image = { version = "0.24.7", features = ["webp-encoder"]}
 shellexpand = "3.0.0"
 which = "6.0"
-nanoid = "0.4.0"
+nanoid = "0.4.0" # generate short unique global ids
 mdns-sd = "0.10"
 gethostname = "0.4.3"
 rayon = "1.8.0"
-rcgen = "0.12"
-rustls.workspace = true
+rcgen = "0.12" # generate self-signed certificates
+pem = "*" # serialize TLS private key & certificate into PEM file
 tokio-rustls.workspace = true
 tower.workspace = true
 

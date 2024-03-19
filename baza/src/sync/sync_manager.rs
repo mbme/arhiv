@@ -39,11 +39,7 @@ impl SyncManager {
     }
 
     pub fn add_network_agent(&self, instance_id: InstanceId, url: &str) -> Result<()> {
-        let agent = SyncAgent::new_in_network(
-            instance_id.clone(),
-            url,
-            &self.baza.get_path_manager().downloads_dir,
-        )?;
+        let agent = SyncAgent::new_in_network(instance_id.clone(), url, self.baza.clone())?;
 
         self.add_agent(agent)?;
 
@@ -71,6 +67,12 @@ impl SyncManager {
             .retain(|agent| agent.get_instance_id() != instance_id);
 
         log::info!("Removed network agent {instance_id}");
+    }
+
+    pub fn remove_all_agents(&self) {
+        self.agents.lock().expect("must lock").clear();
+
+        log::info!("Removed all network agents");
     }
 
     async fn collect_pings(&self, agents: Vec<SyncAgent>) -> Result<Vec<(SyncAgent, Ping)>> {

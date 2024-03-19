@@ -33,6 +33,8 @@ tokio-stream.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
 
+reqwest.workspace = true
+
 rust-embed= { version = "8", features = ["interpolate-folder-path"]}
 
 [build-dependencies]

@@ -1,6 +1,6 @@
-use std::{env, process, time::Duration};
+use std::{env, io::Write, process, time::Duration};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -12,7 +12,7 @@ use arhiv::{
     UI_BASE_PATH,
 };
 use baza::entities::{Document, DocumentData, DocumentType, Id};
-use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal};
+use rs_utils::{get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -57,6 +57,15 @@ enum CLICommand {
     Server,
     /// Print current status
     Status,
+    /// Export Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate.
+    #[clap(name = "export-certificate")]
+    ExportCertificate {
+        /// Path to file in which certificate should be stored
+        file: Option<String>,
+        /// Protect the generated file with a password (empty password if not specified).
+        #[arg(long)]
+        password: Option<String>,
+    },
     /// Print or update config
     Config {
         /// Server port
@@ -189,6 +198,21 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("{status}");
             // FIXME print number of unused temp attachments
+        }
+        CLICommand::ExportCertificate { file, password } => {
+            let path = into_absolute_path(file.unwrap_or("certificate.pfx".to_string()), false)?;
+            let password = password.unwrap_or_default();
+
+            let mut file = must_create_file(&path)
+                .context(anyhow!("Failed to create certificate file {path}"))?;
+
+            let arhiv = must_open_arhiv();
+            let cert = arhiv.baza.get_certificate_pfx_der(&password)?;
+
+            file.write_all(&cert)?;
+            file.flush()?;
+
+            println!("Exported certificate to {path}");
         }
         CLICommand::Config {
             server_port,

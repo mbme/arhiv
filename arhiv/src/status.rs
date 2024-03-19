@@ -1,13 +1,11 @@
 use std::fmt;
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
+use reqwest::Client;
 use serde::Serialize;
 
 use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
-use rs_utils::{
-    default_date_time_format, get_crate_version, http_server::check_server_health, Timestamp,
-    MIN_TIMESTAMP,
-};
+use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 use crate::ArhivConfigExt;
 
@@ -79,9 +77,20 @@ impl Status {
     }
 
     pub async fn check_if_local_server_is_running(&mut self) -> Result<()> {
-        let local_server_is_running = is_local_server_alive(self.server_port).await?;
+        let response = Client::new()
+            .get(&format!("https://localhost:{}/health", self.server_port))
+            .send()
+            .await?;
 
-        self.local_server_is_running = Some(local_server_is_running);
+        let status = response.status();
+
+        ensure!(
+            status.is_success(),
+            "expected status code 2xx, got {}",
+            status.to_string()
+        );
+
+        self.local_server_is_running = Some(true);
 
         Ok(())
     }
@@ -214,10 +223,4 @@ impl fmt::Display for Status {
 
         Ok(())
     }
-}
-
-async fn is_local_server_alive(server_port: u16) -> Result<bool> {
-    let local_server_url = format!("localhost:{server_port}");
-
-    Ok(check_server_health(&local_server_url).await.is_ok())
 }

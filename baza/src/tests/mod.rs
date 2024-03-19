@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use rs_utils::generate_temp_path;
 
 use crate::{
+    baza::BazaAuth,
     entities::{BLOBId, Document, DocumentType, Id, Revision, BLOB},
     schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
     sync::Changeset,
@@ -26,11 +27,17 @@ impl Baza {
     pub fn new_with_schema(schema: DataSchema) -> Self {
         let temp_dir = generate_temp_path("TestBaza", "");
 
-        Baza::create(BazaOptions {
-            root_dir: temp_dir,
-            schema,
-            migrations: vec![],
-        })
+        Baza::create(
+            BazaOptions {
+                root_dir: temp_dir,
+                schema,
+                migrations: vec![],
+            },
+            BazaAuth {
+                login: "test".to_string(),
+                password: "test1234".to_string(),
+            },
+        )
         .expect("must create baza")
     }
 

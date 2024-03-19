@@ -1,11 +1,18 @@
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
+    num::NonZeroU32,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
 use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType};
+use ring::{
+    digest,
+    hmac::{self, HMAC_SHA256},
+    pbkdf2,
+};
+use serde::{Deserialize, Serialize};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -65,6 +72,7 @@ pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
         .context("Failed to decode hex string")
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct SelfSignedCertificate {
     pub private_key_der: Vec<u8>,
     pub certificate_der: Vec<u8>,
@@ -72,7 +80,7 @@ pub struct SelfSignedCertificate {
 
 impl SelfSignedCertificate {
     pub fn new_x509(identifier: &str) -> Result<Self> {
-        let mut params = CertificateParams::default();
+        let mut params = CertificateParams::default(); // PKCS_ECDSA_P256_SHA256
         params.distinguished_name = DistinguishedName::new();
         params
             .distinguished_name
@@ -89,6 +97,104 @@ impl SelfSignedCertificate {
             certificate_der,
             private_key_der,
         })
+    }
+
+    pub fn new(private_key_der: Vec<u8>, certificate_der: Vec<u8>) -> Self {
+        Self {
+            private_key_der,
+            certificate_der,
+        }
+    }
+
+    pub fn to_pem(&self) -> String {
+        pem::encode_many(&[
+            pem::Pem::new("PRIVATE KEY", self.private_key_der.clone()),
+            pem::Pem::new("CERTIFICATE", self.certificate_der.clone()),
+        ])
+    }
+
+    pub fn to_pfx_der(&self, password: &str, friendly_name: &str) -> Result<Vec<u8>> {
+        let pfx = p12::PFX::new(
+            &self.certificate_der,
+            &self.private_key_der,
+            None,
+            password,
+            friendly_name,
+        )
+        .context("Failed to convert certificate to PKCS#12 pfx")?;
+
+        Ok(pfx.to_der())
+    }
+}
+
+type PBKDF2Key = [u8; digest::SHA512_256_OUTPUT_LEN];
+
+// Derive secure key from password & salt
+pub struct PBKDF2 {
+    key: PBKDF2Key,
+}
+
+impl PBKDF2 {
+    pub fn derive(password: &str, salt: &str) -> Result<Self> {
+        ensure!(
+            password.len() >= 8,
+            "password must contain at least 8 characters"
+        );
+        ensure!(salt.len() >= 8, "salt must contain at least 8 characters");
+
+        let key = Self::generate(password.as_bytes(), salt.as_bytes())?;
+        Ok(Self { key })
+    }
+
+    fn generate(password: &[u8], salt: &[u8]) -> Result<PBKDF2Key> {
+        let mut key = [0u8; digest::SHA512_256_OUTPUT_LEN];
+
+        pbkdf2::derive(
+            pbkdf2::PBKDF2_HMAC_SHA256,
+            NonZeroU32::new(100_000).expect("iterations count must be non-zero"),
+            salt,
+            password,
+            &mut key,
+        );
+
+        Ok(key)
+    }
+
+    pub fn get(&self) -> &PBKDF2Key {
+        &self.key
+    }
+}
+
+// Sign & verify data
+#[derive(Debug)]
+pub struct HMAC {
+    key: hmac::Key,
+}
+
+impl HMAC {
+    pub fn new_from_password(password: &str, salt: &str) -> Result<Self> {
+        let key = PBKDF2::derive(password, salt)?;
+
+        Ok(Self::new(&key))
+    }
+
+    pub fn new(key: &PBKDF2) -> Self {
+        let key = hmac::Key::new(HMAC_SHA256, key.get());
+
+        Self { key }
+    }
+
+    pub fn sign(&self, msg: &[u8]) -> Vec<u8> {
+        let mut context = hmac::Context::with_key(&self.key);
+        context.update(msg);
+
+        let tag = context.sign();
+
+        tag.as_ref().to_vec()
+    }
+
+    pub fn verify(&self, msg: &[u8], tag: &[u8]) -> bool {
+        hmac::verify(&self.key, msg, tag).is_ok()
     }
 }
 

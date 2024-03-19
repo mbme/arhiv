@@ -1,3 +1,4 @@
+mod auth;
 mod rpc_client;
 mod rpc_server;
 

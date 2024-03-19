@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use rs_utils::{
     log,
@@ -18,14 +18,15 @@ pub struct MDNSDiscoveryService {
 
 impl MDNSDiscoveryService {
     pub fn new(baza: &Baza) -> Result<MDNSDiscoveryService> {
-        let instance_id = baza
-            .get_connection()
-            .and_then(|conn| conn.get_instance_id())
-            .context("failed to read instance_id")?;
+        let conn = baza.get_connection()?;
+
+        let instance_id = conn.get_instance_id()?;
+
+        let login = conn.get_login()?;
 
         let app_name = baza.get_app_name();
 
-        let mut service_name = format!("_{app_name}-baza");
+        let mut service_name = format!("_{login}@{app_name}");
         if DEBUG_MODE {
             service_name.push_str("-debug");
         }

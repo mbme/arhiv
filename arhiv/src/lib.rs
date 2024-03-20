@@ -14,3 +14,5 @@ pub use config::ArhivConfigExt;
 pub use server::ArhivServer;
 pub use status::Status;
 pub use ui_server::UI_BASE_PATH;
+
+pub use baza::BazaAuth;

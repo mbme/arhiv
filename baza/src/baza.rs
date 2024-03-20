@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, now, SelfSignedCertificate, MIN_TIMESTAMP};
+use rs_utils::{log, now, SelfSignedCertificate, MIN_TIMESTAMP, PBKDF2};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -17,8 +17,34 @@ pub struct BazaOptions {
 }
 
 pub struct BazaAuth {
-    pub login: String,
-    pub password: String, // FIXME use secstr
+    login: String,
+    password: String, // FIXME use secstr
+}
+
+impl BazaAuth {
+    pub const MIN_PASSWORD_LENGTH: usize = PBKDF2::MIN_PASSWORD_LENGTH;
+
+    pub fn new(login: impl Into<String>, password: impl Into<String>) -> Result<Self> {
+        let login = login.into();
+        let password = password.into();
+
+        ensure!(!login.is_empty(), "Login cannot be empty");
+        ensure!(
+            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            "Password should be at least {} characters long",
+            Self::MIN_PASSWORD_LENGTH
+        );
+
+        Ok(BazaAuth { login, password })
+    }
+
+    pub fn get_login(&self) -> &str {
+        &self.login
+    }
+
+    pub fn get_password(&self) -> &str {
+        &self.password
+    }
 }
 
 pub struct Baza {

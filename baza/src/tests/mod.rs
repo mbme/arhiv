@@ -32,10 +32,7 @@ impl Baza {
                 root_dir: temp_dir,
                 schema,
             },
-            BazaAuth {
-                login: "test".to_string(),
-                password: "test1234".to_string(),
-            },
+            BazaAuth::new("test", "test1234").expect("must create BazaAuth"),
         )
         .expect("must create baza")
     }

@@ -5,13 +5,17 @@ use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
 use clap_complete::{generate, Shell};
+use dialoguer::{theme::ColorfulTheme, Input, Password};
 use tokio::time::sleep;
 
 use arhiv::{
     definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer,
     UI_BASE_PATH,
 };
-use baza::entities::{Document, DocumentData, DocumentType, Id};
+use baza::{
+    entities::{Document, DocumentData, DocumentType, Id},
+    BazaAuth,
+};
 use rs_utils::{get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal};
 use scraper::ScraperOptions;
 
@@ -31,6 +35,9 @@ struct CLIArgs {
 enum CLICommand {
     /// Initialize Arhiv instance on local machine
     Init,
+    /// Update Arhiv credentials
+    #[clap(name = "update-credentials")]
+    UpdateCredentials,
     /// One-shot sync without starting a server
     Sync {
         /// Number of seconds to wait for peers before sync
@@ -183,14 +190,20 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     match command {
         CLICommand::Init => {
             let root_dir = find_root_dir()?;
-            Arhiv::open(
-                root_dir,
-                ArhivOptions {
-                    create: true,
-                    ..Default::default()
-                },
-            )
-            .context("must be able to create arhiv")?;
+
+            let auth = prompt_auth()?;
+
+            Arhiv::create(root_dir, auth).context("must be able to create arhiv")?;
+        }
+        CLICommand::UpdateCredentials => {
+            let arhiv = must_open_arhiv();
+
+            println!("Please enter new credentials");
+            let auth = prompt_auth()?;
+
+            arhiv.baza.update_auth(auth)?;
+
+            println!("Credentials updated");
         }
         CLICommand::Status => {
             let arhiv = must_open_arhiv();
@@ -478,4 +491,36 @@ fn print_document(document: &Document, port: u16) {
         document.id,
         get_document_url(&Some(&document.id), port)
     );
+}
+
+fn prompt_password() -> Result<String> {
+    Password::with_theme(&ColorfulTheme::default())
+        .with_prompt(format!(
+            "Password (min {} symbols):",
+            BazaAuth::MIN_PASSWORD_LENGTH
+        ))
+        .with_confirmation("Repeat password", "Error: the passwords don't match.")
+        .validate_with(|input: &String| -> Result<(), &str> {
+            if input.chars().count() >= BazaAuth::MIN_PASSWORD_LENGTH {
+                Ok(())
+            } else {
+                Err("Password must be longer than 3")
+            }
+        })
+        .interact()
+        .context("Failed to prompt password")
+}
+
+fn prompt_login() -> Result<String> {
+    Input::<String>::with_theme(&ColorfulTheme::default())
+        .with_prompt("Login:")
+        .interact()
+        .context("Failed to prompt login")
+}
+
+fn prompt_auth() -> Result<BazaAuth> {
+    let login = prompt_login()?;
+    let password = prompt_password()?;
+
+    BazaAuth::new(login, password)
 }

@@ -135,10 +135,13 @@ pub struct PBKDF2 {
 }
 
 impl PBKDF2 {
+    pub const MIN_PASSWORD_LENGTH: usize = 8;
+
     pub fn derive(password: &str, salt: &str) -> Result<Self> {
         ensure!(
-            password.len() >= 8,
-            "password must contain at least 8 characters"
+            password.len() >= Self::MIN_PASSWORD_LENGTH,
+            "password must contain at least {} characters",
+            Self::MIN_PASSWORD_LENGTH,
         );
         ensure!(salt.len() >= 8, "salt must contain at least 8 characters");
 

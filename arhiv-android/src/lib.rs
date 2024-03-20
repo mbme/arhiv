@@ -9,7 +9,7 @@ use jni::{
 use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer};
+use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, BazaAuth};
 use rs_utils::{dir_exists, log};
 
 lazy_static! {
@@ -47,10 +47,13 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let arhiv = {
         if cfg!(test) {
+            let auth = BazaAuth::new("test", "test1234")?;
+
+            Arhiv::create(root_dir.clone(), auth)?;
+
             let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
-                    create: true,
                     auto_commit: false,
                     discover_peers: false,
                     mdns_server: false,
@@ -64,10 +67,14 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
             arhiv
         } else {
+            if !root_dir_exists {
+                // FIXME create arhiv on android
+                todo!();
+            }
+
             Arhiv::open(
                 root_dir,
                 ArhivOptions {
-                    create: !root_dir_exists,
                     auto_commit: true,
                     discover_peers: true,
                     mdns_server: true,

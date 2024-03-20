@@ -12,7 +12,6 @@ use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
 #[derive(Default)]
 pub struct ArhivOptions {
-    pub create: bool,
     pub discover_peers: bool,
     pub mdns_server: bool,
     pub auto_commit: bool,
@@ -30,6 +29,18 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
+    pub fn create(root_dir: impl Into<String>, auth: BazaAuth) -> Result<()> {
+        let root_dir = root_dir.into();
+        log::debug!("Arhiv root dir: {root_dir}");
+
+        let schema = get_standard_schema();
+
+        Baza::create(BazaOptions { root_dir, schema }, auth)?;
+        log::debug!("Created new Arhiv");
+
+        Ok(())
+    }
+
     pub fn open(root_dir: impl Into<String>, options: ArhivOptions) -> Result<Arhiv> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
@@ -38,25 +49,18 @@ impl Arhiv {
 
         let baza_options = BazaOptions { root_dir, schema };
 
-        // FIXME provide real data
-        let auth = BazaAuth {
-            login: "arhiv".to_string(),
-            password: "arhiv123".to_string(),
-        };
-
-        let baza = if options.create {
-            Baza::create(baza_options, auth)?
-        } else {
-            let baza = Baza::open(baza_options)?;
-
-            // FIXME remove this after release
-            if baza.get_connection()?.get_login().is_err() {
-                baza.update_auth(auth)?;
-            }
-
-            baza
-        };
+        let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
+        // let baza = {
+        //     let baza = Baza::open(baza_options)?;
+
+        //     // FIXME remove this after release
+        //     if baza.get_connection()?.get_login().is_err() {
+        //         baza.update_auth(auth)?;
+        //     }
+
+        //     baza
+        // };
 
         let sync_manager = SyncManager::new(baza.clone());
         let sync_manager = Arc::new(sync_manager);

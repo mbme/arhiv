@@ -16,12 +16,12 @@ pub struct BazaOptions {
     pub schema: DataSchema,
 }
 
-pub struct BazaAuth {
+pub struct Credentials {
     login: String,
     password: String, // FIXME use secstr
 }
 
-impl BazaAuth {
+impl Credentials {
     pub const MIN_PASSWORD_LENGTH: usize = PBKDF2::MIN_PASSWORD_LENGTH;
 
     pub fn new(login: impl Into<String>, password: impl Into<String>) -> Result<Self> {
@@ -35,7 +35,7 @@ impl BazaAuth {
             Self::MIN_PASSWORD_LENGTH
         );
 
-        Ok(BazaAuth { login, password })
+        Ok(Credentials { login, password })
     }
 
     pub fn get_login(&self) -> &str {
@@ -64,7 +64,7 @@ impl Baza {
         }
     }
 
-    pub fn create(options: BazaOptions, auth: BazaAuth) -> Result<Baza> {
+    pub fn create(options: BazaOptions, auth: Credentials) -> Result<Baza> {
         let baza = Baza::new(options.root_dir, options.schema);
 
         log::info!(
@@ -84,13 +84,13 @@ impl Baza {
 
         tx.commit()?;
 
-        baza.update_auth(auth)?;
+        baza.update_credentials(auth)?;
 
         Ok(baza)
     }
 
     // FIXME remove this after release
-    pub fn update_auth(&self, auth: BazaAuth) -> Result<()> {
+    pub fn update_credentials(&self, auth: Credentials) -> Result<()> {
         let tx = self.get_tx()?;
 
         tx.set_login(&auth.login)?;

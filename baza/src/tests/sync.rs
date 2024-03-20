@@ -10,7 +10,7 @@ use crate::{
     entities::{Id, Revision},
     sync::{build_rpc_router, SyncManager},
     tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
-    Baza, BazaAuth,
+    Baza, Credentials,
 };
 
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
@@ -335,7 +335,7 @@ async fn test_sync_network_agent() -> Result<()> {
 #[tokio::test]
 async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    baza0.update_auth(BazaAuth::new(
+    baza0.update_credentials(Credentials::new(
         baza0.get_connection()?.get_login()?,
         "other password",
     )?)?;

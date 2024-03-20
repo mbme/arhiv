@@ -4,7 +4,7 @@ use anyhow::{ensure, Result};
 
 use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
-    AutoCommitService, AutoCommitTask, Baza, BazaAuth, BazaOptions,
+    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials,
 };
 use rs_utils::{get_home_dir, log};
 
@@ -29,7 +29,7 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
-    pub fn create(root_dir: impl Into<String>, auth: BazaAuth) -> Result<()> {
+    pub fn create(root_dir: impl Into<String>, auth: Credentials) -> Result<()> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
 

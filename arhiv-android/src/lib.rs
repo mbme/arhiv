@@ -9,7 +9,7 @@ use jni::{
 use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, BazaAuth};
+use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, Credentials};
 use rs_utils::{dir_exists, log};
 
 lazy_static! {
@@ -47,7 +47,7 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let arhiv = {
         if cfg!(test) {
-            let auth = BazaAuth::new("test", "test1234")?;
+            let auth = Credentials::new("test", "test1234")?;
 
             Arhiv::create(root_dir.clone(), auth)?;
 

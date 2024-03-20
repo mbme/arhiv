@@ -7,15 +7,11 @@ use rs_utils::{log, now, SelfSignedCertificate, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{
-    db::BazaConnection,
-    entities::InstanceId,
-    path_manager::PathManager,
-    schema::{get_latest_data_version, DataMigrations, DataSchema},
+    db::BazaConnection, entities::InstanceId, path_manager::PathManager, schema::DataSchema,
     DocumentExpert, DB,
 };
 
 pub struct BazaOptions {
-    pub migrations: DataMigrations,
     pub root_dir: String,
     pub schema: DataSchema,
 }
@@ -56,7 +52,7 @@ impl Baza {
         let tx = baza.get_tx()?;
 
         // FIXME set & assert schema name on open
-        tx.set_data_version(get_latest_data_version(&options.migrations))?;
+        tx.set_data_version(baza.schema.get_latest_data_version())?;
         tx.set_instance_id(&InstanceId::new())?;
         tx.set_last_sync_time(&MIN_TIMESTAMP)?;
 
@@ -96,7 +92,7 @@ impl Baza {
         let db = baza.get_db();
 
         db.apply_db_migrations()?;
-        db.apply_data_migrations(&options.migrations)?;
+        db.apply_data_migrations()?;
 
         log::debug!(
             "Opened {} Baza in {}",

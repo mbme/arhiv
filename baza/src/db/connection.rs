@@ -17,7 +17,7 @@ use crate::{
         ERASED_DOCUMENT_TYPE,
     },
     path_manager::PathManager,
-    schema::{get_latest_data_version, get_min_data_migration_version, DataMigrations, DataSchema},
+    schema::DataSchema,
     validator::Validator,
     DocumentExpert,
 };
@@ -930,10 +930,11 @@ impl BazaConnection {
         Ok(())
     }
 
-    pub(crate) fn apply_data_migrations(&self, migrations: &DataMigrations) -> Result<()> {
+    pub(crate) fn apply_data_migrations(&self) -> Result<()> {
         let data_version = self.get_data_version()?;
-        let latest_data_version = get_latest_data_version(migrations);
-        let min_data_migration_version = get_min_data_migration_version(migrations);
+        let schema = self.get_schema();
+        let latest_data_version = schema.get_latest_data_version();
+        let min_data_migration_version = schema.get_min_data_migration_version();
 
         ensure!(
             data_version <= latest_data_version,
@@ -949,7 +950,8 @@ impl BazaConnection {
             min_data_migration_version - 1
         );
 
-        let migrations = migrations
+        let migrations = schema
+            .migrations
             .iter()
             .filter(|migration| migration.get_version() > data_version)
             .collect::<Vec<_>>();

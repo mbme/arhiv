@@ -31,7 +31,6 @@ impl Baza {
             BazaOptions {
                 root_dir: temp_dir,
                 schema,
-                migrations: vec![],
             },
             BazaAuth {
                 login: "test".to_string(),

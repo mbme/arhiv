@@ -1,6 +1,5 @@
 mod arhiv;
 mod config;
-mod data_migrations;
 pub mod definitions;
 mod dto;
 mod import;

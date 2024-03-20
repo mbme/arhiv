@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 
@@ -19,20 +21,31 @@ const ERASED_DOCUMENT_DATA_DESCRIPTION: &DataDescription = &DataDescription {
     fields: vec![],
 };
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Clone)]
 pub struct DataSchema {
     name: String,
     modules: Vec<DataDescription>,
+    #[serde(skip)]
+    pub(crate) migrations: Arc<DataMigrations>,
 }
 
 impl DataSchema {
     #[must_use]
-    pub fn new(name: impl Into<String>, mut modules: Vec<DataDescription>) -> Self {
+    pub fn new(name: impl Into<String>, modules: Vec<DataDescription>) -> Self {
+        Self::with_migrations(name, modules, vec![])
+    }
+
+    pub fn with_migrations(
+        name: impl Into<String>,
+        mut modules: Vec<DataDescription>,
+        migrations: DataMigrations,
+    ) -> Self {
         modules.push(ERASED_DOCUMENT_DATA_DESCRIPTION.clone());
 
         DataSchema {
             name: name.into(),
             modules,
+            migrations: Arc::new(migrations),
         }
     }
 
@@ -71,5 +84,21 @@ impl DataSchema {
             .iter()
             .map(|module| module.document_type)
             .collect()
+    }
+
+    #[must_use]
+    pub fn get_latest_data_version(&self) -> u8 {
+        self.migrations.iter().fold(0, |latest_version, migration| {
+            migration.get_version().max(latest_version)
+        })
+    }
+
+    #[must_use]
+    pub fn get_min_data_migration_version(&self) -> u8 {
+        self.migrations
+            .iter()
+            .fold(u8::MAX, |latest_version, migration| {
+                migration.get_version().min(latest_version)
+            })
     }
 }

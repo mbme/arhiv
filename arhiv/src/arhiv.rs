@@ -8,10 +8,7 @@ use baza::{
 };
 use rs_utils::{get_home_dir, log};
 
-use crate::{
-    config::ArhivConfigExt, data_migrations::get_data_migrations, definitions::get_standard_schema,
-    Status,
-};
+use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
 #[derive(Default)]
 pub struct ArhivOptions {
@@ -38,13 +35,8 @@ impl Arhiv {
         log::debug!("Arhiv root dir: {root_dir}");
 
         let schema = get_standard_schema();
-        let data_migrations = get_data_migrations();
 
-        let baza_options = BazaOptions {
-            root_dir,
-            schema,
-            migrations: data_migrations,
-        };
+        let baza_options = BazaOptions { root_dir, schema };
 
         // FIXME provide real data
         let auth = BazaAuth {

@@ -24,11 +24,7 @@ pub use locks::Locks;
 use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};
 
-use crate::{
-    path_manager::PathManager,
-    schema::{DataMigrations, DataSchema},
-    BazaEvent,
-};
+use crate::{path_manager::PathManager, schema::DataSchema, BazaEvent};
 
 pub struct DB {
     path_manager: Arc<PathManager>,
@@ -61,11 +57,11 @@ impl DB {
         Ok(())
     }
 
-    pub(crate) fn apply_data_migrations(&self, data_migrations: &DataMigrations) -> Result<()> {
+    pub(crate) fn apply_data_migrations(&self) -> Result<()> {
         let tx = self.get_tx()?;
 
         // ensure data is up to date
-        tx.apply_data_migrations(data_migrations)
+        tx.apply_data_migrations()
             .context("failed to apply data migrations to Baza db")?;
 
         // ensure computed data is up to date

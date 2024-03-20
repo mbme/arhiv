@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Instant};
+use std::{panic::AssertUnwindSafe, sync::Arc, time::Instant};
 
 use anyhow::{anyhow, bail, Context, Result};
 use rusqlite::{
@@ -45,6 +45,8 @@ pub fn init_functions(conn: &Connection, schema: &Arc<DataSchema>) -> Result<()>
 
 fn init_calculate_search_score_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()> {
     // WARN: schema MUST be an Arc and MUST be moved into the closure in order for sqlite to work correctly
+
+    let schema = AssertUnwindSafe(schema);
 
     let calculate_search_score = move |ctx: &FunctionContext| -> Result<usize> {
         let document_type = ctx
@@ -117,6 +119,8 @@ fn init_json_contains(conn: &Connection) -> Result<()> {
 
 fn init_extract_refs_fn(conn: &Connection, schema: Arc<DataSchema>) -> Result<()> {
     // WARN: schema MUST be an Arc and MUST be moved into the closure in order for sqlite to work correctly
+
+    let schema = AssertUnwindSafe(schema);
 
     let extract_refs = move |ctx: &FunctionContext| -> Result<String> {
         let document_type = ctx

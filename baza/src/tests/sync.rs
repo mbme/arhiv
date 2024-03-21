@@ -267,7 +267,7 @@ async fn test_sync_blobs() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_sync_network_agent() -> Result<()> {
+async fn test_sync_network_agent_success() -> Result<()> {
     let src = &workspace_relpath("resources/k2.jpg");
 
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
@@ -315,12 +315,12 @@ async fn test_sync_network_agent() -> Result<()> {
         server1.get_url()?.as_str(),
     )?;
 
-    let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
+    let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);
 
     assert!(sync_manager0.sync().await?);
 
-    let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
+    let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 6);
 
     let blob0 = baza0.get_blob(&blob_id)?;

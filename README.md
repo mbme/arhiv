@@ -11,6 +11,8 @@
 * `npm`
 
 # Dev dependencies
+* `cargo-outdated` to find out which packages to upgrade
+* `cargo-upgrades` to find out which packages to upgrade
 * `cargo-insta` to manage snapshot tests
 * `tmux` for running dev servers in parallel
 

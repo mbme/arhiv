@@ -40,7 +40,7 @@ mime_guess = "2"
 infer = "0.15"
 url = "2.2.2"
 regex = "1.5.4"
-image = { version = "0.24.7", features = ["webp-encoder"]}
+image = "0.25" # encode/decode/scale images, guess image types
 shellexpand = "3.0.0"
 which = "6.0"
 nanoid = "0.4.0" # generate short unique global ids

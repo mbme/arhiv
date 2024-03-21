@@ -337,7 +337,7 @@ async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
     baza0.update_credentials(Credentials::new(
         baza0.get_connection()?.get_login()?,
-        "other password",
+        "other password".to_string(),
     )?)?;
 
     let baza1 = Arc::new(Baza::new_test_baza_with_id("1"));

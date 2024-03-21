@@ -47,7 +47,7 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let arhiv = {
         if cfg!(test) {
-            let auth = Credentials::new("test", "test1234")?;
+            let auth = Credentials::new("test", "test1234".to_string())?;
 
             Arhiv::create(root_dir.clone(), auth)?;
 

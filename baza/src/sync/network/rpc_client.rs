@@ -40,7 +40,7 @@ impl BazaClient {
         );
 
         let cert_and_key_pem = certificate.to_pem();
-        let identity = Identity::from_pem(cert_and_key_pem.as_bytes())
+        let identity = Identity::from_pem(cert_and_key_pem.as_ref())
             .context("Failed to prepare client TLS identity")?;
 
         let client = Client::builder()

@@ -157,7 +157,7 @@ impl HttpServer {
             .with_client_cert_verifier(Arc::new(RequireAnyClientCertificate))
             .with_single_cert(
                 vec![Certificate(server_certificate.certificate_der)],
-                PrivateKey(server_certificate.private_key_der),
+                PrivateKey(server_certificate.private_key_der.as_bytes().to_vec()),
             )?;
         config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
 

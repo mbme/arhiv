@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, now, SelfSignedCertificate, MIN_TIMESTAMP, PBKDF2};
+use rs_utils::{log, now, SecretBytes, SecretString, SelfSignedCertificate, MIN_TIMESTAMP, PBKDF2};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -18,13 +18,13 @@ pub struct BazaOptions {
 
 pub struct Credentials {
     login: String,
-    password: String, // FIXME use secstr
+    password: SecretString,
 }
 
 impl Credentials {
     pub const MIN_PASSWORD_LENGTH: usize = PBKDF2::MIN_PASSWORD_LENGTH;
 
-    pub fn new(login: impl Into<String>, password: impl Into<String>) -> Result<Self> {
+    pub fn new(login: impl Into<String>, password: impl Into<SecretString>) -> Result<Self> {
         let login = login.into();
         let password = password.into();
 
@@ -40,10 +40,6 @@ impl Credentials {
 
     pub fn get_login(&self) -> &str {
         &self.login
-    }
-
-    pub fn get_password(&self) -> &str {
-        &self.password
     }
 }
 
@@ -94,7 +90,7 @@ impl Baza {
         let tx = self.get_tx()?;
 
         tx.set_login(&auth.login)?;
-        tx.set_password(&auth.password)?;
+        tx.set_password(auth.password)?;
 
         let app_name = self.get_app_name();
         let instance_id = tx.get_instance_id()?;
@@ -105,6 +101,8 @@ impl Baza {
         tx.set_certificate(&certificate)?;
 
         tx.commit()?;
+
+        log::debug!("Updated login, password, and a self-signed HTTPS/TLS certificate");
 
         Ok(())
     }
@@ -166,7 +164,7 @@ impl Baza {
         self.schema.get_app_name()
     }
 
-    pub fn get_certificate_pfx_der(&self, password: &str) -> Result<Vec<u8>> {
+    pub fn get_certificate_pfx_der(&self, password: &str) -> Result<SecretBytes> {
         let conn = self.get_connection()?;
 
         let login = conn.get_login()?;

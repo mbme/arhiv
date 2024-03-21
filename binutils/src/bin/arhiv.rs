@@ -222,7 +222,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let arhiv = must_open_arhiv();
             let cert = arhiv.baza.get_certificate_pfx_der(&password)?;
 
-            file.write_all(&cert)?;
+            file.write_all(cert.as_bytes())?;
             file.flush()?;
 
             println!("Exported certificate to {path}");

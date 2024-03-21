@@ -51,16 +51,6 @@ impl Arhiv {
 
         let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
-        // let baza = {
-        //     let baza = Baza::open(baza_options)?;
-
-        //     // FIXME remove this after release
-        //     if baza.get_connection()?.get_login().is_err() {
-        //         baza.update_auth(auth)?;
-        //     }
-
-        //     baza
-        // };
 
         let sync_manager = SyncManager::new(baza.clone());
         let sync_manager = Arc::new(sync_manager);

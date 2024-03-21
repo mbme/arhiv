@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     fs::File,
     io::{prelude::*, BufReader},
     num::NonZeroU32,
@@ -12,7 +13,7 @@ use ring::{
     hmac::{self, HMAC_SHA256},
     pbkdf2,
 };
-use serde::{Deserialize, Serialize};
+use secstr::{SecUtf8, SecVec};
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -72,9 +73,76 @@ pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
         .context("Failed to decode hex string")
 }
 
-#[derive(Serialize, Deserialize)]
+pub struct SecretBytes(SecVec<u8>);
+
+impl SecretBytes {
+    pub fn new(value: Vec<u8>) -> Self {
+        Self(SecVec::new(value))
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.borrow()
+    }
+
+    pub fn len(&self) -> usize {
+        self.as_bytes().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.as_bytes().is_empty()
+    }
+}
+
+impl AsRef<[u8]> for SecretBytes {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl From<Vec<u8>> for SecretBytes {
+    fn from(value: Vec<u8>) -> Self {
+        Self::new(value)
+    }
+}
+
+pub struct SecretString(SecUtf8);
+
+impl SecretString {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(SecUtf8::from(value))
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.unsecure()
+    }
+
+    pub fn into_unsecure_string(self) -> String {
+        self.0.into_unsecure()
+    }
+
+    pub fn len(&self) -> usize {
+        self.as_str().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.as_str().is_empty()
+    }
+}
+
+impl From<String> for SecretString {
+    fn from(value: String) -> Self {
+        Self::new(value)
+    }
+}
+
+impl AsRef<[u8]> for SecretString {
+    fn as_ref(&self) -> &[u8] {
+        self.as_str().as_bytes()
+    }
+}
+
 pub struct SelfSignedCertificate {
-    pub private_key_der: Vec<u8>,
+    pub private_key_der: SecretBytes,
     pub certificate_der: Vec<u8>,
 }
 
@@ -92,6 +160,7 @@ impl SelfSignedCertificate {
         let certificate_der = certificate.serialize_der()?;
 
         let private_key_der = certificate.serialize_private_key_der();
+        let private_key_der = SecretBytes::new(private_key_der);
 
         Ok(Self {
             certificate_der,
@@ -99,31 +168,32 @@ impl SelfSignedCertificate {
         })
     }
 
-    pub fn new(private_key_der: Vec<u8>, certificate_der: Vec<u8>) -> Self {
+    pub fn new(private_key_der: SecretBytes, certificate_der: Vec<u8>) -> Self {
         Self {
             private_key_der,
             certificate_der,
         }
     }
 
-    pub fn to_pem(&self) -> String {
+    pub fn to_pem(&self) -> SecretString {
         pem::encode_many(&[
-            pem::Pem::new("PRIVATE KEY", self.private_key_der.clone()),
+            pem::Pem::new("PRIVATE KEY", self.private_key_der.as_bytes().to_vec()),
             pem::Pem::new("CERTIFICATE", self.certificate_der.clone()),
         ])
+        .into()
     }
 
-    pub fn to_pfx_der(&self, password: &str, friendly_name: &str) -> Result<Vec<u8>> {
+    pub fn to_pfx_der(&self, password: &str, friendly_name: &str) -> Result<SecretBytes> {
         let pfx = p12::PFX::new(
             &self.certificate_der,
-            &self.private_key_der,
+            self.private_key_der.as_bytes(),
             None,
             password,
             friendly_name,
         )
         .context("Failed to convert certificate to PKCS#12 pfx")?;
 
-        Ok(pfx.to_der())
+        Ok(pfx.to_der().into())
     }
 }
 
@@ -136,20 +206,27 @@ pub struct PBKDF2 {
 
 impl PBKDF2 {
     pub const MIN_PASSWORD_LENGTH: usize = 8;
+    pub const MIN_SALT_LENGTH: usize = 8;
 
-    pub fn derive(password: &str, salt: &str) -> Result<Self> {
+    pub fn derive(password: &[u8], salt: &[u8]) -> Result<Self> {
         ensure!(
             password.len() >= Self::MIN_PASSWORD_LENGTH,
-            "password must contain at least {} characters",
+            "password must consist of at least {} bytes",
             Self::MIN_PASSWORD_LENGTH,
         );
-        ensure!(salt.len() >= 8, "salt must contain at least 8 characters");
 
-        let key = Self::generate(password.as_bytes(), salt.as_bytes())?;
+        ensure!(
+            salt.len() >= Self::MIN_SALT_LENGTH,
+            "salt must consist of at least {} bytes",
+            Self::MIN_SALT_LENGTH
+        );
+
+        let key = Self::generate(password, salt);
+
         Ok(Self { key })
     }
 
-    fn generate(password: &[u8], salt: &[u8]) -> Result<PBKDF2Key> {
+    fn generate(password: &[u8], salt: &[u8]) -> PBKDF2Key {
         let mut key = [0u8; digest::SHA512_256_OUTPUT_LEN];
 
         pbkdf2::derive(
@@ -160,7 +237,7 @@ impl PBKDF2 {
             &mut key,
         );
 
-        Ok(key)
+        key
     }
 
     pub fn get(&self) -> &PBKDF2Key {
@@ -175,8 +252,8 @@ pub struct HMAC {
 }
 
 impl HMAC {
-    pub fn new_from_password(password: &str, salt: &str) -> Result<Self> {
-        let key = PBKDF2::derive(password, salt)?;
+    pub fn new_from_password(password: impl AsRef<[u8]>, salt: impl AsRef<[u8]>) -> Result<Self> {
+        let key = PBKDF2::derive(password.as_ref(), salt.as_ref())?;
 
         Ok(Self::new(&key))
     }

@@ -32,7 +32,7 @@ impl Baza {
                 root_dir: temp_dir,
                 schema,
             },
-            Credentials::new("test", "test1234").unwrap(),
+            Credentials::new("test", "test1234".to_string()).unwrap(),
         )
         .expect("must create baza")
     }

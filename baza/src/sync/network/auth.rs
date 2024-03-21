@@ -22,7 +22,7 @@ pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
     let login = conn.get_login()?;
     let password = conn.get_password()?;
 
-    let hmac = HMAC::new_from_password(&password, &format!("{login}@{app_name}"))?;
+    let hmac = HMAC::new_from_password(password, format!("{login}@{app_name}"))?;
 
     Ok(hmac)
 }

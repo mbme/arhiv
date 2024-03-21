@@ -18,7 +18,7 @@ export function DocumentViewerHead({
   backrefs,
 }: DocumentViewerHeadProps) {
   return (
-    <div className="flex justify-between items-start pl-2 mb-6">
+    <div className="flex justify-between items-start gap-2 pl-2 mb-6">
       <div
         className={cx('flex flex-col gap-2', {
           'invisible': backrefs.length === 0,

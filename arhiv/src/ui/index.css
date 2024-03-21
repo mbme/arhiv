@@ -87,7 +87,7 @@
   }
 
   .document-head {
-    @apply relative text-sm;
+    @apply relative text-sm grow-0 shrink-0;
 
     & td {
       @apply pb-1 tracking-wide;

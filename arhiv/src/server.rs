@@ -28,11 +28,11 @@ impl ArhivServer {
 
         let conn = arhiv.baza.get_connection()?;
         let server_port = conn.get_server_port()?;
-        let certificate = conn.get_certificate()?;
 
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
-        let rpc_router = build_rpc_router(arhiv.baza.clone())?;
+        let certificate = arhiv.get_certificate().clone();
+        let rpc_router = build_rpc_router(arhiv.baza.clone(), &certificate.certificate_der)?;
         let ui_router = build_ui_router(shutdown_receiver).with_state(arhiv.clone());
 
         let router = rpc_router

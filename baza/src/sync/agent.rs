@@ -2,6 +2,8 @@ use std::{fmt::Display, sync::Arc};
 
 use anyhow::{Context, Result};
 
+use rs_utils::SelfSignedCertificate;
+
 use crate::{
     entities::{InstanceId, Revision, BLOB},
     Baza, BazaEvent,
@@ -28,8 +30,13 @@ impl SyncAgent {
         Ok(SyncAgent::InMemory { baza, instance_id })
     }
 
-    pub fn new_in_network(instance_id: InstanceId, url: &str, baza: Arc<Baza>) -> Result<Self> {
-        let client = BazaClient::new(url, &baza)?;
+    pub fn new_in_network(
+        instance_id: InstanceId,
+        url: &str,
+        certificate: &SelfSignedCertificate,
+        baza: Arc<Baza>,
+    ) -> Result<Self> {
+        let client = BazaClient::new(url, certificate, &baza)?;
 
         Ok(SyncAgent::Network {
             client,

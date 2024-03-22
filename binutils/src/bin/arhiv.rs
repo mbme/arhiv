@@ -226,7 +226,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .context(anyhow!("Failed to create certificate file {path}"))?;
 
             let arhiv = must_open_arhiv();
-            let cert = arhiv.baza.get_certificate_pfx_der(&password)?;
+            let cert = arhiv.get_certificate().to_pfx_der(&password, "Arhiv")?;
 
             file.write_all(cert.as_bytes())?;
             file.flush()?;

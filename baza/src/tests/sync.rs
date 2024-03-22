@@ -9,14 +9,16 @@ use rs_utils::{http_server::HttpServer, workspace_relpath};
 use crate::{
     entities::{Id, Revision},
     sync::{build_rpc_router, SyncManager},
-    tests::{are_equal_files, create_changeset, new_document, new_document_snapshot},
+    tests::{
+        are_equal_files, create_changeset, new_certificate, new_document, new_document_snapshot,
+    },
     Baza, Credentials,
 };
 
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
-    let router = build_rpc_router(baza.clone()).expect("must create RPC router");
-
-    let certificate = baza.get_connection().unwrap().get_certificate().unwrap();
+    let certificate = new_certificate();
+    let router = build_rpc_router(baza.clone(), &certificate.certificate_der)
+        .expect("must create RPC router");
 
     HttpServer::new_https(0, router, certificate)
         .await
@@ -313,6 +315,7 @@ async fn test_sync_network_agent_success() -> Result<()> {
     sync_manager0.add_network_agent(
         baza1.get_connection()?.get_instance_id()?,
         server1.get_url()?.as_str(),
+        &new_certificate(),
     )?;
 
     let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
@@ -357,6 +360,7 @@ async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
     sync_manager0.add_network_agent(
         baza1.get_connection()?.get_instance_id()?,
         server1.get_url()?.as_str(),
+        &new_certificate(),
     )?;
 
     assert!(!sync_manager0.sync().await?);

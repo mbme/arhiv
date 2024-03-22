@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use tokio::{sync::broadcast::Sender, task::JoinHandle};
 
-use rs_utils::{log, now, ScheduledTask};
+use rs_utils::{log, now, ScheduledTask, SelfSignedCertificate};
 
 use crate::{entities::InstanceId, Baza, BazaEvent};
 
@@ -38,8 +38,14 @@ impl SyncManager {
         Ok(())
     }
 
-    pub fn add_network_agent(&self, instance_id: InstanceId, url: &str) -> Result<()> {
-        let agent = SyncAgent::new_in_network(instance_id.clone(), url, self.baza.clone())?;
+    pub fn add_network_agent(
+        &self,
+        instance_id: InstanceId,
+        url: &str,
+        certificate: &SelfSignedCertificate,
+    ) -> Result<()> {
+        let agent =
+            SyncAgent::new_in_network(instance_id.clone(), url, certificate, self.baza.clone())?;
 
         self.add_agent(agent)?;
 

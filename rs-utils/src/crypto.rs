@@ -73,6 +73,7 @@ pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
         .context("Failed to decode hex string")
 }
 
+#[derive(Clone)]
 pub struct SecretBytes(SecVec<u8>);
 
 impl SecretBytes {
@@ -141,6 +142,7 @@ impl AsRef<[u8]> for SecretString {
     }
 }
 
+#[derive(Clone)]
 pub struct SelfSignedCertificate {
     pub private_key_der: SecretBytes,
     pub certificate_der: Vec<u8>,

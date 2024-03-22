@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 
-use rs_utils::generate_temp_path;
+use rs_utils::{generate_temp_path, SelfSignedCertificate};
 
 use crate::{
     baza::Credentials,
@@ -143,4 +143,8 @@ pub fn get_values(page: ListPage) -> Vec<Value> {
         .into_iter()
         .map(|item| item.data.into())
         .collect()
+}
+
+pub fn new_certificate() -> SelfSignedCertificate {
+    SelfSignedCertificate::new_x509("test").unwrap()
 }

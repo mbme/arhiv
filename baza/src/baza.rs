@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, now, SecretBytes, SecretString, SelfSignedCertificate, MIN_TIMESTAMP, PBKDF2};
+use rs_utils::{log, SecretString, MIN_TIMESTAMP, PBKDF2};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -92,17 +92,9 @@ impl Baza {
         tx.set_login(&auth.login)?;
         tx.set_password(auth.password)?;
 
-        let app_name = self.get_app_name();
-        let instance_id = tx.get_instance_id()?;
-        let timestamp = now();
-        let certificate_id = format!("{}@{app_name}[{instance_id}] {timestamp}", auth.login);
-        let certificate = SelfSignedCertificate::new_x509(&certificate_id)?;
-
-        tx.set_certificate(&certificate)?;
-
         tx.commit()?;
 
-        log::debug!("Updated login, password, and a self-signed HTTPS/TLS certificate");
+        log::debug!("Updated login & password");
 
         Ok(())
     }
@@ -169,16 +161,6 @@ impl Baza {
     #[must_use]
     pub fn get_app_name(&self) -> &str {
         self.schema.get_app_name()
-    }
-
-    pub fn get_certificate_pfx_der(&self, password: &SecretString) -> Result<SecretBytes> {
-        let conn = self.get_connection()?;
-
-        let login = conn.get_login()?;
-        let app_name = self.get_app_name();
-        let friendly_name = format!("{login}@{app_name} key");
-
-        conn.get_certificate()?.to_pfx_der(password, &friendly_name)
     }
 
     #[must_use]

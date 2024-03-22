@@ -6,7 +6,7 @@ use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials,
 };
-use rs_utils::{get_home_dir, log};
+use rs_utils::{get_home_dir, log, now, SelfSignedCertificate};
 
 use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
@@ -16,10 +16,12 @@ pub struct ArhivOptions {
     pub mdns_server: bool,
     pub auto_commit: bool,
     pub file_browser_root_dir: Option<String>,
+    pub certificate: Option<SelfSignedCertificate>,
 }
 
 pub struct Arhiv {
     pub baza: Arc<Baza>,
+    certificate: Arc<SelfSignedCertificate>,
     auto_commit_task: Option<AutoCommitTask>,
     auto_sync_task: Option<AutoSyncTask>,
     mdns_client_task: Option<MDNSClientTask>,
@@ -52,6 +54,13 @@ impl Arhiv {
         let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
 
+        let certificate = if let Some(certificate) = options.certificate {
+            certificate
+        } else {
+            generate_certificate()?
+        };
+        let certificate = Arc::new(certificate);
+
         let sync_manager = SyncManager::new(baza.clone());
         let sync_manager = Arc::new(sync_manager);
 
@@ -59,6 +68,7 @@ impl Arhiv {
 
         let mut arhiv = Arhiv {
             baza,
+            certificate,
             sync_manager,
             auto_commit_task: None,
             auto_sync_task: None,
@@ -116,7 +126,7 @@ impl Arhiv {
     fn init_mdns_client_service(&mut self) -> Result<()> {
         let task = self
             .mdns_discovery_service
-            .start_mdns_client(self.sync_manager.clone())?;
+            .start_mdns_client(self.sync_manager.clone(), self.certificate.clone())?;
         self.mdns_client_task = Some(task);
 
         Ok(())
@@ -143,6 +153,10 @@ impl Arhiv {
         &self.file_browser_root_dir
     }
 
+    pub fn get_certificate(&self) -> &SelfSignedCertificate {
+        &self.certificate
+    }
+
     pub fn stop(mut self) {
         if let Some(mdns_client_task) = self.mdns_client_task.take() {
             mdns_client_task.abort();
@@ -160,4 +174,11 @@ impl Arhiv {
 
         log::info!("Stopped Arhiv");
     }
+}
+
+fn generate_certificate() -> Result<SelfSignedCertificate> {
+    let timestamp = now();
+    let certificate_id = format!("Arhiv Server {timestamp}");
+
+    SelfSignedCertificate::new_x509(&certificate_id)
 }

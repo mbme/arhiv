@@ -54,10 +54,8 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
             let arhiv = Arhiv::open(
                 root_dir,
                 ArhivOptions {
-                    auto_commit: false,
-                    discover_peers: false,
-                    mdns_server: false,
                     file_browser_root_dir,
+                    ..Default::default()
                 },
             )?;
 
@@ -79,6 +77,7 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
                     discover_peers: true,
                     mdns_server: true,
                     file_browser_root_dir,
+                    certificate: None,
                 },
             )?
         }

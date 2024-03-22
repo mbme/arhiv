@@ -5,6 +5,7 @@ use anyhow::Result;
 use rs_utils::{
     log,
     mdns::{MDNSEvent, MDNSService},
+    SelfSignedCertificate,
 };
 use tokio::task::JoinHandle;
 
@@ -40,7 +41,11 @@ impl MDNSDiscoveryService {
         self.mdns_service.start_server(port)
     }
 
-    pub fn start_mdns_client(&self, sync_manager: Arc<SyncManager>) -> Result<JoinHandle<()>> {
+    pub fn start_mdns_client(
+        &self,
+        sync_manager: Arc<SyncManager>,
+        certificate: Arc<SelfSignedCertificate>,
+    ) -> Result<JoinHandle<()>> {
         self.mdns_service.start_client()?;
 
         let mut mdns_events = self.mdns_service.get_events();
@@ -58,9 +63,11 @@ impl MDNSDiscoveryService {
                             format!("http://{ip_address}:{}", peer_info.port)
                         };
 
-                        if let Err(err) =
-                            sync_manager.add_network_agent(instance_id.clone(), &address)
-                        {
+                        if let Err(err) = sync_manager.add_network_agent(
+                            instance_id.clone(),
+                            &address,
+                            &certificate,
+                        ) {
                             log::error!(
                                 "Failed to add network agent {instance_id} {address}: {err}"
                             );

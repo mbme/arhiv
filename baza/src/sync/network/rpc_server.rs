@@ -28,11 +28,10 @@ use crate::{
 
 use super::auth::{client_cert_validator, create_shared_network_key, AuthInfo};
 
-pub fn build_rpc_router(baza: Arc<Baza>) -> Result<Router> {
+pub fn build_rpc_router(baza: Arc<Baza>, server_certificate_der: &[u8]) -> Result<Router> {
     let hmac = create_shared_network_key(&baza)?;
 
-    let certificate = baza.get_connection()?.get_certificate()?;
-    let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(&certificate.certificate_der));
+    let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_certificate_der));
 
     let router = Router::new()
         .route("/ping", post(exchange_pings_handler))

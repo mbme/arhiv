@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc, time::Duration};
 use anyhow::{bail, Context, Result};
 use reqwest::{header, Client, Identity, Url};
 
-use rs_utils::{bytes_to_hex_string, log, Download, ResponseVerifier};
+use rs_utils::{bytes_to_hex_string, log, Download, ResponseVerifier, SelfSignedCertificate};
 
 use crate::{
     entities::{Revision, BLOB},
@@ -22,11 +22,8 @@ pub struct BazaClient {
 }
 
 impl BazaClient {
-    pub fn new(url: &str, baza: &Baza) -> Result<Self> {
+    pub fn new(url: &str, certificate: &SelfSignedCertificate, baza: &Baza) -> Result<Self> {
         let downloads_dir = baza.get_path_manager().downloads_dir.clone();
-
-        let conn = baza.get_connection()?;
-        let certificate = conn.get_certificate()?;
 
         let hmac = create_shared_network_key(baza)?;
 

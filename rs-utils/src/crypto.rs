@@ -195,6 +195,36 @@ impl SelfSignedCertificate {
 
         Ok(pfx.to_der().into())
     }
+
+    pub fn from_pfx_der(&self, password: &str, bytes: SecretBytes) -> Result<Self> {
+        let pfx = p12::PFX::parse(bytes.as_ref()).context("Failed to parse PFX")?;
+
+        let mut cert_bags = pfx
+            .cert_x509_bags(password)
+            .context("Failed to decrypt the PFX with provided password")?;
+        ensure!(
+            cert_bags.len() == 1,
+            "Expected exactly 1 x509 certificate, got {}",
+            cert_bags.len()
+        );
+        let certificate_der = cert_bags.remove(0);
+
+        let mut key_bags = pfx
+            .key_bags(password)
+            .context("Failed to decrypt the PFX with provided password")?;
+        ensure!(
+            key_bags.len() == 1,
+            "Expected exactly 1 private key, got {}",
+            key_bags.len()
+        );
+
+        let private_key_der = SecretBytes::new(key_bags.remove(0));
+
+        Ok(Self {
+            private_key_der,
+            certificate_der,
+        })
+    }
 }
 
 type PBKDF2Key = [u8; digest::SHA512_256_OUTPUT_LEN];

@@ -171,7 +171,7 @@ impl Baza {
         self.schema.get_app_name()
     }
 
-    pub fn get_certificate_pfx_der(&self, password: &str) -> Result<SecretBytes> {
+    pub fn get_certificate_pfx_der(&self, password: &SecretString) -> Result<SecretBytes> {
         let conn = self.get_connection()?;
 
         let login = conn.get_login()?;

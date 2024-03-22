@@ -183,12 +183,12 @@ impl SelfSignedCertificate {
         .into()
     }
 
-    pub fn to_pfx_der(&self, password: &str, friendly_name: &str) -> Result<SecretBytes> {
+    pub fn to_pfx_der(&self, password: &SecretString, friendly_name: &str) -> Result<SecretBytes> {
         let pfx = p12::PFX::new(
             &self.certificate_der,
             self.private_key_der.as_bytes(),
             None,
-            password,
+            password.as_str(),
             friendly_name,
         )
         .context("Failed to convert certificate to PKCS#12 pfx")?;
@@ -196,11 +196,11 @@ impl SelfSignedCertificate {
         Ok(pfx.to_der().into())
     }
 
-    pub fn from_pfx_der(&self, password: &str, bytes: SecretBytes) -> Result<Self> {
+    pub fn from_pfx_der(&self, password: &SecretString, bytes: SecretBytes) -> Result<Self> {
         let pfx = p12::PFX::parse(bytes.as_ref()).context("Failed to parse PFX")?;
 
         let mut cert_bags = pfx
-            .cert_x509_bags(password)
+            .cert_x509_bags(password.as_str())
             .context("Failed to decrypt the PFX with provided password")?;
         ensure!(
             cert_bags.len() == 1,
@@ -210,7 +210,7 @@ impl SelfSignedCertificate {
         let certificate_der = cert_bags.remove(0);
 
         let mut key_bags = pfx
-            .key_bags(password)
+            .key_bags(password.as_str())
             .context("Failed to decrypt the PFX with provided password")?;
         ensure!(
             key_bags.len() == 1,

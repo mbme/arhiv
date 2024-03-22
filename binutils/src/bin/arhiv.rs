@@ -16,7 +16,9 @@ use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
     Credentials,
 };
-use rs_utils::{get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal};
+use rs_utils::{
+    get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal, SecretString,
+};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -69,9 +71,9 @@ enum CLICommand {
     ExportCertificate {
         /// Path to file in which certificate should be stored
         file: Option<String>,
-        /// Protect the generated file with a password (empty password if not specified).
+        /// Ask for password to protect the generated file (empty password if not specified).
         #[arg(long)]
-        password: Option<String>,
+        ask_password: Option<bool>,
     },
     /// Print or update config
     Config {
@@ -212,9 +214,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("{status}");
             // FIXME print number of unused temp attachments
         }
-        CLICommand::ExportCertificate { file, password } => {
+        CLICommand::ExportCertificate { file, ask_password } => {
             let path = into_absolute_path(file.unwrap_or("certificate.pfx".to_string()), false)?;
-            let password = password.unwrap_or_default();
+            let password = if ask_password.unwrap_or_default() {
+                prompt_password(8)?
+            } else {
+                SecretString::new("")
+            };
 
             let mut file = must_create_file(&path)
                 .context(anyhow!("Failed to create certificate file {path}"))?;
@@ -493,21 +499,19 @@ fn print_document(document: &Document, port: u16) {
     );
 }
 
-fn prompt_password() -> Result<String> {
+fn prompt_password(min_length: usize) -> Result<SecretString> {
     Password::with_theme(&ColorfulTheme::default())
-        .with_prompt(format!(
-            "Password (min {} symbols):",
-            Credentials::MIN_PASSWORD_LENGTH
-        ))
+        .with_prompt(format!("Password (min {min_length} symbols):"))
         .with_confirmation("Repeat password", "Error: the passwords don't match.")
         .validate_with(|input: &String| -> Result<(), &str> {
-            if input.chars().count() >= Credentials::MIN_PASSWORD_LENGTH {
+            if input.chars().count() >= min_length {
                 Ok(())
             } else {
-                Err("Password must be longer than 3")
+                Err("Password must be longer than {min_length}")
             }
         })
         .interact()
+        .map(SecretString::new)
         .context("Failed to prompt password")
 }
 
@@ -520,7 +524,7 @@ fn prompt_login() -> Result<String> {
 
 fn prompt_credentials() -> Result<Credentials> {
     let login = prompt_login()?;
-    let password = prompt_password()?;
+    let password = prompt_password(Credentials::MIN_PASSWORD_LENGTH)?;
 
     Credentials::new(login, password)
 }

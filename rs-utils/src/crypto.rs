@@ -198,7 +198,7 @@ impl SelfSignedCertificate {
         Ok(pfx.to_der().into())
     }
 
-    pub fn from_pfx_der(&self, password: &SecretString, bytes: SecretBytes) -> Result<Self> {
+    pub fn from_pfx_der(password: &SecretString, bytes: SecretBytes) -> Result<Self> {
         let pfx = p12::PFX::parse(bytes.as_ref()).context("Failed to parse PFX")?;
 
         let mut cert_bags = pfx

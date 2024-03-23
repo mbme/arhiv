@@ -1,5 +1,8 @@
 # vim: set ft=make :
 
+dev_cert_nickname := "arhiv-dev-server"
+dev_cert_path := justfile_directory() + "/certificate.pfx"
+
 arhiv *PARAMS:
   DEBUG_ARHIV_ROOT=~/temp/arhiv cargo run --bin arhiv {{PARAMS}}
 
@@ -8,10 +11,18 @@ arhiv-server:
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEBUG_ARHIV_ROOT=~/temp/arhiv RUST_BACKTRACE=1 RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server' \; \
+     'DEBUG_ARHIV_ROOT=~/temp/arhiv ARHIV_SERVER_CERTIFICATE="{{dev_cert_path}}" RUST_BACKTRACE=1 RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
+
+export-certificate:
+  rm {{dev_cert_path}} 2> /dev/null || true
+  just arhiv export-certificate "{{dev_cert_path}}" --name "{{dev_cert_nickname}}"
+
+update-browser-certificates:
+  certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true
+  pk12util -d sql:$HOME/.pki/nssdb -i "{{dev_cert_path}}"
 
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}

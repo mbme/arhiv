@@ -97,10 +97,11 @@ enum CLICommand {
     #[clap(name = "export-certificate")]
     ExportCertificate {
         /// Path to file in which certificate should be stored
-        file: Option<String>,
+        #[arg(value_hint = ValueHint::FilePath, default_value = "certificate.pfx")]
+        file: String,
         /// A friendly name of the certificate
-        #[arg(long)]
-        name: Option<String>,
+        #[arg(long, default_value = "Arhiv")]
+        friendly_name: String,
     },
     /// Print or update config
     Config {
@@ -127,8 +128,8 @@ enum CLICommand {
         #[arg()]
         id: Id,
         /// Reason why the document is being locked
-        #[arg()]
-        reason: Option<String>,
+        #[arg(default_value = "locked by CLI")]
+        reason: String,
     },
     /// Unlock document
     Unlock {
@@ -244,8 +245,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("{status}");
             // FIXME print number of unused temp attachments
         }
-        CLICommand::ExportCertificate { file, name } => {
-            let path = into_absolute_path(file.unwrap_or("certificate.pfx".to_string()), false)?;
+        CLICommand::ExportCertificate {
+            file,
+            friendly_name,
+        } => {
+            let path = into_absolute_path(file, false)?;
             let password = SecretString::new("");
 
             let mut file = must_create_file(&path)
@@ -253,7 +257,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let arhiv = must_open_arhiv();
 
-            let friendly_name = name.unwrap_or("Arhiv".to_string());
             let cert = arhiv
                 .get_certificate()
                 .to_pfx_der(&password, &friendly_name)?;
@@ -356,8 +359,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             }
         }
         CLICommand::Lock { id, reason } => {
-            let reason = reason.unwrap_or("locked by CLI".to_string());
-
             let arhiv = must_open_arhiv();
 
             let mut tx = arhiv.baza.get_tx()?;

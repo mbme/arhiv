@@ -157,16 +157,16 @@ impl Arhiv {
         &self.certificate
     }
 
-    pub fn stop(mut self) {
-        if let Some(mdns_client_task) = self.mdns_client_task.take() {
+    pub fn stop(&self) {
+        if let Some(ref mdns_client_task) = self.mdns_client_task {
             mdns_client_task.abort();
         }
 
-        if let Some(auto_commit_task) = self.auto_commit_task.take() {
+        if let Some(ref auto_commit_task) = self.auto_commit_task {
             auto_commit_task.abort();
         }
 
-        if let Some(auto_sync_task) = self.auto_sync_task.take() {
+        if let Some(ref auto_sync_task) = self.auto_sync_task {
             auto_sync_task.abort();
         }
 

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use axum::{
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
@@ -61,9 +61,7 @@ impl ArhivServer {
 
         self.server.shutdown().await?;
 
-        Arc::into_inner(self.arhiv)
-            .context("failed to unwrap Arhiv instance")?
-            .stop();
+        self.arhiv.stop();
 
         Ok(())
     }

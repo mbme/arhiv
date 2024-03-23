@@ -44,6 +44,3 @@ lazy_static = "1.4"
 rand = "0.8"
 
 insta = { version = "1", features = ["redactions", "json"] }
-
-[patch.crates-io]
-reqwest = { git = "https://github.com/mbme/reqwest.git" }

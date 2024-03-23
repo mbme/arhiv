@@ -6,6 +6,7 @@ use clap::{
 };
 use clap_complete::{generate, Shell};
 use dialoguer::{theme::ColorfulTheme, Input, Password};
+use serde_json::Value;
 use tokio::time::sleep;
 
 use arhiv::{
@@ -14,7 +15,7 @@ use arhiv::{
 };
 use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
-    Credentials,
+    Credentials, KvsEntry, KvsKey,
 };
 use rs_utils::{
     get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal, SecretString,
@@ -31,6 +32,31 @@ struct CLIArgs {
     /// Increases logging verbosity each use for up to 2 times
     #[clap(global= true, short, action = ArgAction::Count)]
     verbose: u8,
+}
+
+#[derive(Subcommand, Debug)]
+enum KVSCommand {
+    /// List all entries
+    List {
+        /// Optional namespace of the entries
+        namespace: Option<String>,
+    },
+    /// Get entry
+    Get {
+        /// Namespace of the entry
+        namespace: String,
+        /// Key of the entry
+        key: String,
+    },
+    /// Set entry
+    Set {
+        /// Namespace of the entry
+        namespace: String,
+        /// Key of the entry
+        key: String,
+        /// Value of the entry, serialized as JSON. If not provided, the entry will be removed.
+        value: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -89,6 +115,9 @@ enum CLICommand {
         #[arg(long)]
         auto_sync_delay: Option<u64>,
     },
+    /// Operations with KVS entries
+    #[clap(subcommand)]
+    Kvs(KVSCommand),
     /// List document locks
     Locks,
     /// Lock document
@@ -265,6 +294,55 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             );
 
             tx.commit()?;
+        }
+        CLICommand::Kvs(command) => {
+            let arhiv = must_open_arhiv();
+
+            match command {
+                KVSCommand::List { namespace } => {
+                    let conn = arhiv.baza.get_connection()?;
+
+                    let kvs_entries = conn.kvs_list(namespace.as_deref())?;
+
+                    println!("{} entries", kvs_entries.len());
+                    for KvsEntry(kvs_key, value) in kvs_entries {
+                        println!("{kvs_key}: {value}");
+                    }
+                }
+                KVSCommand::Get { namespace, key } => {
+                    let conn = arhiv.baza.get_connection()?;
+
+                    let kvs_key = KvsKey::new(namespace, key);
+                    let value = conn.kvs_get_raw(&kvs_key)?;
+
+                    if let Some(value) = value {
+                        println!("{kvs_key}: {value}");
+                    } else {
+                        println!("{kvs_key} not found");
+                    }
+                }
+                KVSCommand::Set {
+                    namespace,
+                    key,
+                    value,
+                } => {
+                    let tx = arhiv.baza.get_tx()?;
+
+                    let kvs_key = &KvsKey::new(namespace, key);
+                    if let Some(value) = value {
+                        let value: Value = serde_json::from_str(&value)
+                            .context("Failed to parse provided value as JSON")?;
+
+                        tx.kvs_set(kvs_key, &value)?;
+                        println!("{kvs_key}: {value}");
+                    } else {
+                        tx.kvs_delete(kvs_key)?;
+                        println!("Deleted {kvs_key}");
+                    }
+
+                    tx.commit()?;
+                }
+            };
         }
         CLICommand::Locks => {
             let arhiv = must_open_arhiv();

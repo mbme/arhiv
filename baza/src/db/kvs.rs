@@ -1,24 +1,28 @@
 use std::{fmt::Display, marker::PhantomData};
 
 use anyhow::{anyhow, ensure, Context, Result};
-use rusqlite::OptionalExtension;
+use rusqlite::{params, OptionalExtension};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 
 use super::BazaConnection;
 
 impl BazaConnection {
-    pub fn kvs_get<T: Serialize + DeserializeOwned>(&self, key: &KvsKey) -> Result<Option<T>> {
+    pub fn kvs_get_raw(&self, key: &KvsKey) -> Result<Option<String>> {
         let mut stmt = self
             .get_connection()
             .prepare_cached("SELECT value FROM kvs WHERE key = ?1")?;
 
-        let key = key.to_string();
-
-        let value: Option<String> = stmt
+        let value = stmt
             .query_row([&key], |row| row.get(0))
             .optional()
             .context(anyhow!("failed to read kvs {key}"))?;
+
+        Ok(value)
+    }
+
+    pub fn kvs_get<T: Serialize + DeserializeOwned>(&self, key: &KvsKey) -> Result<Option<T>> {
+        let value = self.kvs_get_raw(key)?;
 
         if let Some(value) = value {
             serde_json::from_str(&value).context(anyhow!("failed to parse kvs value for {key}"))
@@ -28,15 +32,13 @@ impl BazaConnection {
     }
 
     pub fn kvs_set<T: Serialize + DeserializeOwned>(&self, key: &KvsKey, value: &T) -> Result<()> {
-        let key = key.to_string();
-
         let value =
             serde_json::to_string(value).context(anyhow!("failed to serialize kvs {key}"))?;
 
         self.get_connection()
             .execute(
                 "INSERT OR REPLACE INTO kvs(key, value) VALUES (?, ?)",
-                [&key, &value],
+                params![&key, &value],
             )
             .context(anyhow!("failed to save kvs {key}"))?;
 
@@ -44,8 +46,6 @@ impl BazaConnection {
     }
 
     pub fn kvs_delete(&self, key: &KvsKey) -> Result<bool> {
-        let key = key.to_string();
-
         let rows_count = self
             .get_connection()
             .execute("DELETE FROM kvs WHERE key = ?1", [&key])
@@ -63,15 +63,13 @@ impl BazaConnection {
 
         let rows = stmt
             .query_and_then([], |row| -> Result<KvsEntry> {
-                let key_str = row.get::<_, String>(0).expect("must read 0 index");
+                let key = row.get::<_, KvsKey>(0).expect("must read 0 index");
                 let value = row.get::<_, String>(1).expect("must read 0 index");
 
-                let key = KvsKey::parse(&key_str)?;
-                Ok(KvsEntry(
-                    key,
-                    serde_json::from_str(&value)
-                        .context(anyhow!("failed to parse kvs value for {key_str}"))?,
-                ))
+                let value = serde_json::from_str(&value)
+                    .context(anyhow!("failed to parse kvs value for {key}"))?;
+
+                Ok(KvsEntry(key, value))
             })
             .context("failed to list kvs entries")?;
 
@@ -123,10 +121,9 @@ pub struct KvsKey {
     pub key: String,
 }
 
-impl ToString for KvsKey {
-    fn to_string(&self) -> String {
-        serde_json::to_string(&vec![&self.namespace, &self.key])
-            .expect("failed to serialize kvs key")
+impl Display for KvsKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}/{}]", self.namespace, self.key)
     }
 }
 
@@ -136,13 +133,6 @@ impl KvsKey {
             namespace: namespace.into(),
             key: key.into(),
         }
-    }
-
-    pub fn parse(value: &str) -> Result<Self> {
-        let (namespace, key): (String, String) =
-            serde_json::from_str(value).context("failed to parse kvs key")?;
-
-        Ok(KvsKey { namespace, key })
     }
 }
 

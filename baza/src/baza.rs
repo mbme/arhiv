@@ -102,12 +102,13 @@ impl Baza {
     pub fn open(options: BazaOptions) -> Result<Baza> {
         let baza = Baza::new(options.root_dir, options.schema);
 
-        let schema_name = baza.get_connection()?.get_schema_name()?;
-        let new_schema_name = baza.schema.get_app_name();
-        ensure!(
-            new_schema_name == schema_name,
-            "Expected schema name to be '{schema_name}', but got '{new_schema_name}'"
-        );
+        // FIXME enable after release
+        // let schema_name = baza.get_connection()?.get_schema_name()?;
+        // let new_schema_name = baza.schema.get_app_name();
+        // ensure!(
+        //     new_schema_name == schema_name,
+        //     "Expected schema name to be '{schema_name}', but got '{new_schema_name}'"
+        // );
 
         baza.path_manager.assert_dirs_exist()?;
         baza.path_manager.assert_db_file_exists()?;

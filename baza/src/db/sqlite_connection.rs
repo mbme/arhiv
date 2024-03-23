@@ -3,7 +3,7 @@ use std::{panic::AssertUnwindSafe, sync::Arc, time::Instant};
 use anyhow::{anyhow, bail, Context, Result};
 use rusqlite::{
     functions::{Context as FunctionContext, FunctionFlags},
-    types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
+    types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef},
     Connection, Error as RusqliteError, OpenFlags,
 };
 use serde_json::Value;
@@ -14,6 +14,7 @@ use crate::{
     document_expert::DocumentExpert,
     entities::{BLOBId, DocumentData, DocumentType, Id, Revision},
     schema::DataSchema,
+    KvsKey,
 };
 
 pub fn open_connection(db_file: &str, mutable: bool) -> Result<Connection> {
@@ -316,5 +317,23 @@ impl FromSql for DocumentType {
 impl ToSql for DocumentType {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::from(self as &str))
+    }
+}
+
+impl FromSql for KvsKey {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let (namespace, key): (String, String) =
+            serde_json::from_str(value.as_str()?).map_err(|err| FromSqlError::Other(err.into()))?;
+
+        Ok(KvsKey { namespace, key })
+    }
+}
+
+impl ToSql for KvsKey {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        let key = serde_json::to_string(&vec![&self.namespace, &self.key])
+            .expect("failed to serialize kvs key");
+
+        Ok(ToSqlOutput::Owned(key.into()))
     }
 }

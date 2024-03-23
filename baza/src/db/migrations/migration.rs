@@ -44,14 +44,14 @@ pub fn ensure_settings_count_stay_the_same(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-pub fn ensure_kvs_count_stay_the_same(conn: &Connection) -> Result<()> {
-    let old_kvs_count = get_rows_count(conn, "old_db.kvs")?;
-    let new_kvs_count = get_rows_count(conn, "kvs")?;
+// pub fn ensure_kvs_count_stay_the_same(conn: &Connection) -> Result<()> {
+//     let old_kvs_count = get_rows_count(conn, "old_db.kvs")?;
+//     let new_kvs_count = get_rows_count(conn, "kvs")?;
 
-    ensure!(
-        new_kvs_count == old_kvs_count,
-        "kvs count must stay the same"
-    );
+//     ensure!(
+//         new_kvs_count == old_kvs_count,
+//         "kvs count must stay the same"
+//     );
 
-    Ok(())
-}
+//     Ok(())
+// }

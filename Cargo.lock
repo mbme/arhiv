@@ -2371,6 +2371,7 @@ dependencies = [
  "blake3",
  "chrono",
  "data-encoding",
+ "fslock",
  "futures",
  "gethostname",
  "hyper 1.2.0",

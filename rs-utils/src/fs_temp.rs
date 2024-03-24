@@ -90,7 +90,7 @@ impl fmt::Display for TempFile {
     }
 }
 
-fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
+pub fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
     let mut path = env::temp_dir();
 
     path.push(file_name.as_ref());

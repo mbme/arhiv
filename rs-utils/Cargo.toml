@@ -51,6 +51,7 @@ rcgen = "0.12" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file
 tokio-rustls.workspace = true
 tower.workspace = true
+fslock = "0.2"
 
 [target.'cfg(android)'.dependencies]
 tracing-android = "0.2"

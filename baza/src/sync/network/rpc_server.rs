@@ -2,7 +2,7 @@ use std::{ops::Bound, str::FromStr, sync::Arc};
 
 use anyhow::{Context, Result};
 use axum::{
-    extract::{DefaultBodyLimit, Path, State},
+    extract::{DefaultBodyLimit, Path},
     http::{HeaderMap, StatusCode},
     middleware,
     response::{IntoResponse, Response},
@@ -15,7 +15,7 @@ use axum_extra::{
 };
 
 use rs_utils::{
-    bytes_to_hex_string, create_body_from_file,
+    create_body_from_file,
     http_server::{add_max_cache_header, ServerError},
     log, now,
 };
@@ -26,31 +26,24 @@ use crate::{
     Baza, BazaEvent,
 };
 
-use super::auth::{client_cert_validator, create_shared_network_key, AuthInfo};
+use super::auth::{client_cert_validator, ServerCertificate};
 
-pub fn build_rpc_router(baza: Arc<Baza>, server_certificate_der: &[u8]) -> Result<Router> {
-    let hmac = create_shared_network_key(&baza)?;
-
-    let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_certificate_der));
-
+/// This router requires Extension<Arc<Baza>> to be available
+pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
     let router = Router::new()
         .route("/ping", post(exchange_pings_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_cert_validator))
-        .layer(Extension(AuthInfo {
-            hmac: Arc::new(hmac),
-            server_cert_hmac_tag,
-        }))
-        .with_state(baza);
+        .layer(Extension(ServerCertificate::new(server_certificate_der)));
 
     Ok(router)
 }
 
 #[tracing::instrument(skip(baza), level = "debug")]
 async fn get_blob_handler(
-    State(baza): State<Arc<Baza>>,
+    Extension(baza): Extension<Arc<Baza>>,
     Path(blob_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> impl IntoResponse {
@@ -61,7 +54,7 @@ async fn get_blob_handler(
 
 #[tracing::instrument(skip(baza), level = "debug")]
 async fn exchange_pings_handler(
-    State(baza): State<Arc<Baza>>,
+    Extension(baza): Extension<Arc<Baza>>,
     Json(other_ping): Json<Ping>,
 ) -> Result<impl IntoResponse, ServerError> {
     let ping = baza.get_connection()?.get_ping()?;
@@ -76,7 +69,7 @@ async fn exchange_pings_handler(
 
 #[tracing::instrument(skip(baza), level = "debug")]
 async fn get_changeset_handler(
-    State(baza): State<Arc<Baza>>,
+    Extension(baza): Extension<Arc<Baza>>,
     Path(min_rev): Path<String>,
 ) -> Result<impl IntoResponse, ServerError> {
     let min_rev = serde_json::from_str(&min_rev).context("failed to parse min_rev")?;

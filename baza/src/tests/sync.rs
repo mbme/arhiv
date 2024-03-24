@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
+use axum::Extension;
 use serde_json::{json, Value};
 use tokio::time::{advance, sleep};
 
@@ -17,8 +18,9 @@ use crate::{
 
 async fn start_rpc_server(baza: Arc<Baza>) -> HttpServer {
     let certificate = new_certificate();
-    let router = build_rpc_router(baza.clone(), &certificate.certificate_der)
-        .expect("must create RPC router");
+    let router = build_rpc_router(certificate.certificate_der.clone())
+        .expect("must create RPC router")
+        .layer(Extension(baza));
 
     HttpServer::new_https(0, router, certificate)
         .await

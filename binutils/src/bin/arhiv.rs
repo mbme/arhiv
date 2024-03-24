@@ -541,8 +541,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 None
             };
 
-            let arhiv = Arhiv::open(
-                root_dir,
+            let server = ArhivServer::start(
+                &root_dir,
                 ArhivOptions {
                     auto_commit: true,
                     discover_peers: true,
@@ -550,9 +550,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     certificate,
                     ..Default::default()
                 },
-            )?;
-
-            let server = ArhivServer::start(arhiv).await?;
+            )
+            .await?;
 
             shutdown_signal().await;
 

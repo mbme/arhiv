@@ -12,37 +12,35 @@ use baza::sync::build_rpc_router;
 use rs_utils::http_server::{add_no_cache_headers, HttpServer};
 
 use crate::{
-    ui_server::{build_ui_router, UI_BASE_PATH},
-    Arhiv, ArhivConfigExt,
+    ui_server::{build_ui_router, UIState, UI_BASE_PATH},
+    ArhivOptions,
 };
 
 pub struct ArhivServer {
-    arhiv: Arc<Arhiv>,
+    state: Arc<UIState>,
     server: HttpServer,
     shutdown_sender: oneshot::Sender<()>,
 }
 
 impl ArhivServer {
-    pub async fn start(arhiv: Arhiv) -> Result<Self> {
-        let arhiv = Arc::new(arhiv);
-
-        let conn = arhiv.baza.get_connection()?;
-        let server_port = conn.get_server_port()?;
+    pub async fn start(root_dir: &str, options: ArhivOptions) -> Result<Self> {
+        let server_port = 0; // FIXME
 
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+        let state = Arc::new(UIState::new(root_dir, options)?);
 
-        let certificate = arhiv.get_certificate().clone();
-        let rpc_router = build_rpc_router(arhiv.baza.clone(), &certificate.certificate_der)?;
-        let ui_router = build_ui_router(shutdown_receiver).with_state(arhiv.clone());
+        let rpc_router = build_rpc_router(state.get_certificate().certificate_der.clone())?;
+        let ui_router = build_ui_router(shutdown_receiver).with_state(state.clone());
 
         let router = rpc_router
             .nest(UI_BASE_PATH, ui_router)
             .route("/health", get(health_handler));
 
-        let server = HttpServer::new_https(server_port, router, certificate).await?;
+        let server =
+            HttpServer::new_https(server_port, router, state.get_certificate().clone()).await?;
 
         Ok(ArhivServer {
-            arhiv,
+            state,
             server,
             shutdown_sender,
         })
@@ -61,7 +59,7 @@ impl ArhivServer {
 
         self.server.shutdown().await?;
 
-        self.arhiv.stop();
+        self.state.stop_arhiv()?;
 
         Ok(())
     }

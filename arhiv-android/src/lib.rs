@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, Credentials};
-use rs_utils::{dir_exists, log};
+use rs_utils::log;
 
 lazy_static! {
     static ref RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
@@ -37,7 +37,6 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
     ensure!(server_lock.is_none(), "Server already started");
 
     let root_dir = get_root_dir(files_dir);
-    let root_dir_exists = dir_exists(&root_dir)?;
 
     let mut builder = tokio::runtime::Builder::new_multi_thread();
     builder.enable_all();
@@ -45,45 +44,35 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
     let _guard = runtime.enter();
 
-    let arhiv = {
+    let arhiv_options = {
         if cfg!(test) {
             let auth = Credentials::new("test", "test1234".to_string())?;
 
             Arhiv::create(root_dir.clone(), auth)?;
 
-            let arhiv = Arhiv::open(
-                root_dir,
-                ArhivOptions {
-                    file_browser_root_dir,
-                    ..Default::default()
-                },
-            )?;
+            let arhiv_options = ArhivOptions {
+                file_browser_root_dir,
+                ..Default::default()
+            };
+            let arhiv = Arhiv::open(&root_dir, arhiv_options.clone())?;
 
             let tx = arhiv.baza.get_tx()?;
             tx.set_server_port(0)?;
             tx.commit()?;
 
-            arhiv
+            arhiv_options
         } else {
-            if !root_dir_exists {
-                // FIXME create arhiv on android
-                todo!();
+            ArhivOptions {
+                auto_commit: true,
+                discover_peers: true,
+                mdns_server: true,
+                file_browser_root_dir,
+                certificate: None,
             }
-
-            Arhiv::open(
-                root_dir,
-                ArhivOptions {
-                    auto_commit: true,
-                    discover_peers: true,
-                    mdns_server: true,
-                    file_browser_root_dir,
-                    certificate: None,
-                },
-            )?
         }
     };
 
-    let server = runtime.block_on(ArhivServer::start(arhiv))?;
+    let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options))?;
     let ui_url = server.get_ui_url()?;
 
     *server_lock = Some(server);

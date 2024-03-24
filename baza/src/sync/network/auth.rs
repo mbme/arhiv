@@ -9,7 +9,9 @@ use axum::{
     Extension,
 };
 
-use rs_utils::{hex_string_to_bytes, http_server::TlsData, log, ResponseVerifier, HMAC};
+use rs_utils::{
+    bytes_to_hex_string, hex_string_to_bytes, http_server::TlsData, log, ResponseVerifier, HMAC,
+};
 
 use crate::Baza;
 
@@ -28,20 +30,30 @@ pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
 }
 
 #[derive(Clone)]
-pub struct AuthInfo {
-    pub hmac: Arc<HMAC>,
-    pub server_cert_hmac_tag: String,
+pub struct ServerCertificate(Arc<Vec<u8>>);
+
+impl ServerCertificate {
+    pub fn new(server_certificate: Vec<u8>) -> Self {
+        Self(Arc::new(server_certificate))
+    }
+}
+
+impl AsRef<[u8]> for ServerCertificate {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
 }
 
 pub async fn client_cert_validator(
-    Extension(AuthInfo {
-        hmac,
-        server_cert_hmac_tag,
-    }): Extension<AuthInfo>,
+    Extension(baza): Extension<Arc<Baza>>,
+    Extension(server_cert): Extension<ServerCertificate>,
     tls_data: Extension<TlsData>,
     request: Request,
     next: Next,
 ) -> Response {
+    let hmac = create_shared_network_key(&baza).unwrap();
+    let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_cert.as_ref()));
+
     if tls_data.certificates.len() != 1 {
         return with_hmac_tag_header(
             (

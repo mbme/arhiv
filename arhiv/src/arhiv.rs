@@ -6,11 +6,11 @@ use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
     AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials,
 };
-use rs_utils::{get_home_dir, log, now, SelfSignedCertificate};
+use rs_utils::{get_home_dir, log, now, path_exists, SelfSignedCertificate};
 
 use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ArhivOptions {
     pub discover_peers: bool,
     pub mdns_server: bool,
@@ -31,6 +31,10 @@ pub struct Arhiv {
 }
 
 impl Arhiv {
+    pub fn exists(root_dir: &str) -> bool {
+        path_exists(root_dir)
+    }
+
     pub fn create(root_dir: impl Into<String>, auth: Credentials) -> Result<()> {
         let root_dir = root_dir.into();
         log::debug!("Arhiv root dir: {root_dir}");
@@ -54,11 +58,9 @@ impl Arhiv {
         let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
 
-        let certificate = if let Some(certificate) = options.certificate {
-            certificate
-        } else {
-            generate_certificate()?
-        };
+        let certificate = options
+            .certificate
+            .unwrap_or_else(Arhiv::generate_certificate);
         let certificate = Arc::new(certificate);
 
         let sync_manager = SyncManager::new(baza.clone());
@@ -174,11 +176,11 @@ impl Arhiv {
 
         log::info!("Stopped Arhiv");
     }
-}
 
-fn generate_certificate() -> Result<SelfSignedCertificate> {
-    let timestamp = now();
-    let certificate_id = format!("Arhiv Server {timestamp}");
+    pub fn generate_certificate() -> SelfSignedCertificate {
+        let timestamp = now();
+        let certificate_id = format!("Arhiv Server {timestamp}");
 
-    SelfSignedCertificate::new_x509(&certificate_id)
+        SelfSignedCertificate::new_x509(&certificate_id).expect("Certificate generation must work")
+    }
 }

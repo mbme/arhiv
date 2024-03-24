@@ -25,19 +25,20 @@ use rs_utils::{
 };
 
 use crate::dto::APIRequest;
-use crate::Arhiv;
 
 use self::api_handler::handle_api_request;
 use self::image_handler::image_handler;
 use self::public_assets_handler::public_assets_handler;
+pub use self::state::UIState;
 
 mod api_handler;
 mod image_handler;
 mod public_assets_handler;
+mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<Arhiv>> {
+pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<UIState>> {
     let shutdown_receiver = shutdown_receiver.shared();
 
     Router::new()
@@ -57,7 +58,9 @@ struct Features {
     use_local_storage: bool,
 }
 
-async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse, ServerError> {
+async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = state.must_get_arhiv()?;
+
     let schema =
         serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
 
@@ -100,11 +103,13 @@ async fn index_page(State(arhiv): State<Arc<Arhiv>>) -> Result<impl IntoResponse
     Ok((headers, Html(content)))
 }
 
-#[tracing::instrument(skip(arhiv, request_value), level = "debug")]
+#[tracing::instrument(skip(state, request_value), level = "debug")]
 async fn api_handler(
-    State(arhiv): State<Arc<Arhiv>>,
+    state: State<Arc<UIState>>,
     Json(request_value): Json<Value>,
 ) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = state.must_get_arhiv()?;
+
     log::info!(
         "API request: {}",
         request_value.get("typeName").unwrap_or(&Value::Null)
@@ -121,20 +126,24 @@ async fn api_handler(
 }
 
 async fn blob_handler(
-    State(arhiv): State<Arc<Arhiv>>,
+    state: State<Arc<UIState>>,
     Path(blob_id): Path<String>,
     range: Option<TypedHeader<headers::Range>>,
 ) -> impl IntoResponse {
+    let arhiv = state.must_get_arhiv()?;
+
     let blob_id = BLOBId::from_string(blob_id);
 
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }
 
-#[tracing::instrument(skip(arhiv, shutdown_receiver), level = "debug")]
+#[tracing::instrument(skip(state, shutdown_receiver), level = "debug")]
 async fn events_handler(
-    State(arhiv): State<Arc<Arhiv>>,
+    state: State<Arc<UIState>>,
     Extension(shutdown_receiver): Extension<Shared<oneshot::Receiver<()>>>,
-) -> Sse<impl Stream<Item = Result<Event, anyhow::Error>>> {
+) -> Result<Sse<impl Stream<Item = anyhow::Result<Event>>>, ServerError> {
+    let arhiv = state.must_get_arhiv()?;
+
     let events_stream = BroadcastStream::new(arhiv.baza.get_events_channel()).map(|result| {
         let baza_event = result.context("Event stream failed")?;
 
@@ -152,5 +161,5 @@ async fn events_handler(
     let stream = futures::stream::select(events_stream, shutdown_stream)
         .map_while(|value| value.transpose());
 
-    Sse::new(stream).keep_alive(KeepAlive::default())
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
 }

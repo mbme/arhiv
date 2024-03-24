@@ -19,6 +19,7 @@ const CONFIG_AUTO_COMMIT_DELAY: &KvsConstKey<u64> =
     &KvsConstKey::new(CONFIG_NAMESPACE, "auto_commit_delay_in_seconds");
 
 pub trait ArhivConfigExt {
+    // FIXME remove this
     fn get_server_port(&self) -> Result<u16>;
     fn set_server_port(&self, port: u16) -> Result<()>;
 

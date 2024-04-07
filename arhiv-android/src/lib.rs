@@ -50,12 +50,10 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
 
             Arhiv::create(root_dir.clone(), auth)?;
 
-            let arhiv_options = ArhivOptions {
+            ArhivOptions {
                 file_browser_root_dir,
                 ..Default::default()
-            };
-
-            arhiv_options
+            }
         } else {
             ArhivOptions {
                 auto_commit: true,

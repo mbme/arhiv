@@ -303,3 +303,18 @@ impl ClientCertVerifier for RequireAnyClientCertificate {
         Ok(ClientCertVerified::assertion())
     }
 }
+
+#[derive(Clone)]
+pub struct ServerCertificate(Arc<Vec<u8>>);
+
+impl ServerCertificate {
+    pub fn new(server_certificate: Vec<u8>) -> Self {
+        Self(Arc::new(server_certificate))
+    }
+}
+
+impl AsRef<[u8]> for ServerCertificate {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}

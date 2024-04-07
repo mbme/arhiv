@@ -16,7 +16,7 @@ use axum_extra::{
 
 use rs_utils::{
     create_body_from_file,
-    http_server::{add_max_cache_header, ServerError},
+    http_server::{add_max_cache_header, ServerCertificate, ServerError},
     log, now,
 };
 
@@ -26,7 +26,7 @@ use crate::{
     Baza, BazaEvent,
 };
 
-use super::auth::{client_cert_validator, ServerCertificate};
+use super::auth::client_cert_validator;
 
 /// This router requires Extension<Arc<Baza>> to be available
 pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {

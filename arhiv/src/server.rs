@@ -77,7 +77,8 @@ impl ArhivServer {
         let state = Arc::new(UIState::new(root_dir, options.clone())?);
 
         let rpc_router = build_rpc_router(certificate.certificate_der.clone())?;
-        let ui_router = build_ui_router(shutdown_receiver).with_state(state.clone());
+        let ui_router = build_ui_router(certificate.certificate_der.clone(), shutdown_receiver)
+            .with_state(state.clone());
 
         let router = Router::new()
             .merge(rpc_router)

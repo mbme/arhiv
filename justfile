@@ -18,7 +18,7 @@ run:
 
 export-certificate:
   rm {{dev_cert_path}} 2> /dev/null || true
-  just arhiv export-certificate "{{dev_cert_path}}" --name "{{dev_cert_nickname}}"
+  just arhiv export-certificate "{{dev_cert_path}}" --friendly-name "{{dev_cert_nickname}}"
 
 update-browser-certificates:
   certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true

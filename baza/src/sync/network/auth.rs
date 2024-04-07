@@ -10,7 +10,9 @@ use axum::{
 };
 
 use rs_utils::{
-    bytes_to_hex_string, hex_string_to_bytes, http_server::TlsData, log, ResponseVerifier, HMAC,
+    bytes_to_hex_string, hex_string_to_bytes,
+    http_server::{ServerCertificate, TlsData},
+    log, ResponseVerifier, HMAC,
 };
 
 use crate::Baza;
@@ -27,21 +29,6 @@ pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
     let hmac = HMAC::new_from_password(password, format!("{login}@{app_name}"))?;
 
     Ok(hmac)
-}
-
-#[derive(Clone)]
-pub struct ServerCertificate(Arc<Vec<u8>>);
-
-impl ServerCertificate {
-    pub fn new(server_certificate: Vec<u8>) -> Self {
-        Self(Arc::new(server_certificate))
-    }
-}
-
-impl AsRef<[u8]> for ServerCertificate {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
 }
 
 pub async fn client_cert_validator(

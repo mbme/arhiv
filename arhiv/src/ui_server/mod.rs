@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use axum::{
-    extract::{DefaultBodyLimit, Path, State},
-    http::HeaderMap,
+    extract::{DefaultBodyLimit, Path, Request, State},
+    http::{HeaderMap, StatusCode},
+    middleware::{self, Next},
     response::{
         sse::{Event, KeepAlive},
-        Html, IntoResponse, Sse,
+        Html, IntoResponse, Response, Sse,
     },
     routing::{get, post},
     Extension, Json, Router,
@@ -20,7 +21,7 @@ use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, sync::respond_with_blob, Credentials};
 use rs_utils::{
-    http_server::{add_no_cache_headers, ServerError},
+    http_server::{add_no_cache_headers, ServerCertificate, ServerError, TlsData},
     log, SecretString,
 };
 
@@ -38,7 +39,10 @@ mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<UIState>> {
+pub fn build_ui_router(
+    server_certificate_der: Vec<u8>,
+    shutdown_receiver: oneshot::Receiver<()>,
+) -> Router<Arc<UIState>> {
     let shutdown_receiver = shutdown_receiver.shared();
 
     Router::new()
@@ -51,6 +55,8 @@ pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<U
         .route("/*fileName", get(public_assets_handler))
         .layer(Extension(shutdown_receiver))
         .layer(DefaultBodyLimit::disable())
+        .layer(middleware::from_fn(client_cert_validator))
+        .layer(Extension(ServerCertificate::new(server_certificate_der)))
 }
 
 #[derive(Deserialize)]
@@ -191,4 +197,35 @@ async fn events_handler(
         .map_while(|value| value.transpose());
 
     Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+}
+
+async fn client_cert_validator(
+    tls_data: Extension<TlsData>,
+    Extension(server_cert): Extension<ServerCertificate>,
+    request: Request,
+    next: Next,
+) -> Response {
+    if tls_data.certificates.len() != 1 {
+        return (
+            StatusCode::BAD_REQUEST,
+            format!(
+                "Expected 1 TLS certificate, got {}",
+                tls_data.certificates.len()
+            ),
+        )
+            .into_response();
+    }
+
+    let client_cert = tls_data
+        .certificates
+        .first()
+        .expect("certificate must be present");
+
+    if client_cert != server_cert.as_ref() {
+        log::warn!("Got unknown client certificate");
+
+        return (StatusCode::UNAUTHORIZED, "Invalid client TLS certificate").into_response();
+    }
+
+    next.run(request).await
 }

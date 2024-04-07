@@ -90,7 +90,11 @@ enum CLICommand {
         browser: String,
     },
     /// Run server
-    Server,
+    Server {
+        /// The port to listen on
+        #[arg(long, default_value = "0")]
+        port: u16,
+    },
     /// Print current status
     Status,
     /// Export Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
@@ -105,10 +109,6 @@ enum CLICommand {
     },
     /// Print or update config
     Config {
-        /// Server port
-        #[arg(long)]
-        server_port: Option<u16>,
-
         /// Auto-commit delay in seconds
         #[arg(long)]
         auto_commit_delay: Option<u64>,
@@ -240,7 +240,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Status => {
             let arhiv = must_open_arhiv();
-            let status = arhiv.get_status().await?;
+            let status = arhiv.get_status()?;
 
             println!("{status}");
             // FIXME print number of unused temp attachments
@@ -267,17 +267,12 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("Exported certificate to {path}");
         }
         CLICommand::Config {
-            server_port,
             auto_commit_delay,
             auto_sync_delay,
         } => {
             let arhiv = must_open_arhiv();
 
             let tx = arhiv.baza.get_tx()?;
-
-            if let Some(server_port) = server_port {
-                tx.set_server_port(server_port)?;
-            }
 
             if let Some(auto_commit_delay) = auto_commit_delay {
                 tx.set_auto_commit_delay(auto_commit_delay)?;
@@ -287,7 +282,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 tx.set_auto_sync_delay(auto_sync_delay)?;
             }
 
-            println!("      Server port: {}", tx.get_server_port()?);
             println!(
                 "  Auto-sync delay: {} seconds",
                 tx.get_auto_sync_delay()?.as_secs()
@@ -443,9 +437,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let mut tx = arhiv.baza.get_tx()?;
             tx.stage_document(&mut document, None)?;
 
-            let port = tx.get_server_port()?;
-
             tx.commit()?;
+
+            let port = ArhivServer::get_server_port()?;
 
             print_document(&document, port);
         }
@@ -462,7 +456,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.baza.get_connection()?.get_server_port()?;
 
             let documents = arhiv
                 .scrape(
@@ -477,6 +470,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .await
                 .context("failed to scrape")?;
 
+            let port = ArhivServer::get_server_port()?;
             for document in documents {
                 print_document(&document, port);
             }
@@ -494,7 +488,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = arhiv.baza.get_connection()?.get_server_port()?;
+            let port = ArhivServer::get_server_port()?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -512,17 +506,20 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
-            let arhiv = must_open_arhiv();
-            let port = arhiv.baza.get_connection()?.get_server_port()?;
+            let port = ArhivServer::get_server_port()?.context("ArhivServer isn't running")?;
+
+            let url = id
+                .map(|id| get_document_url(&id, port))
+                .unwrap_or(get_base_url(port));
 
             process::Command::new(&browser)
-                .arg(get_document_url(&id.as_ref(), port))
+                .arg(url)
                 .stdout(process::Stdio::null())
                 .stderr(process::Stdio::null())
                 .spawn()
                 .unwrap_or_else(|_| panic!("failed to run browser {browser}"));
         }
-        CLICommand::Server => {
+        CLICommand::Server { port } => {
             let root_dir = find_root_dir()?;
 
             let certificate_path = env::var("ARHIV_SERVER_CERTIFICATE").unwrap_or_default();
@@ -546,10 +543,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 ArhivOptions {
                     auto_commit: true,
                     discover_peers: true,
-                    mdns_server: true,
                     certificate,
                     ..Default::default()
                 },
+                port,
             )
             .await?;
 
@@ -577,22 +574,24 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     Ok(())
 }
 
-fn get_document_url(id: &Option<&Id>, port: u16) -> String {
-    let base = format!("https://localhost:{port}{UI_BASE_PATH}");
-
-    if let Some(id) = id {
-        format!("{base}?id={id}")
-    } else {
-        base
-    }
+fn get_base_url(port: u16) -> String {
+    format!("https://localhost:{port}{UI_BASE_PATH}")
 }
 
-fn print_document(document: &Document, port: u16) {
+fn get_document_url(id: &Id, port: u16) -> String {
+    let base = get_base_url(port);
+
+    format!("{base}?id={id}")
+}
+
+fn print_document(document: &Document, port: Option<u16>) {
+    let document_url = port
+        .map(|port| get_document_url(&document.id, port))
+        .unwrap_or_default();
+
     println!(
         "[{} {}] {}",
-        document.document_type,
-        document.id,
-        get_document_url(&Some(&document.id), port)
+        document.document_type, document.id, document_url
     );
 }
 

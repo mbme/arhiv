@@ -1,13 +1,12 @@
 use std::fmt;
 
-use anyhow::{ensure, Result};
-use reqwest::Client;
+use anyhow::Result;
 use serde::Serialize;
 
 use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
 use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
-use crate::ArhivConfigExt;
+use crate::{ArhivConfigExt, ArhivServer};
 
 #[derive(Serialize)]
 pub struct Status {
@@ -31,8 +30,7 @@ pub struct Status {
     pub auto_sync_delay_in_seconds: u64,
     pub auto_commit_delay_in_seconds: u64,
 
-    pub server_port: u16,
-    pub local_server_is_running: Option<bool>,
+    pub server_port: Option<u16>,
 }
 
 impl Status {
@@ -50,7 +48,7 @@ impl Status {
         let conflicts_count = conn.get_coflicting_documents()?.len();
         let last_update_time = conn.get_last_update_time()?;
         let locks = conn.list_document_locks()?;
-        let server_port = conn.get_server_port()?;
+        let server_port = ArhivServer::get_server_port()?;
         let auto_sync_delay_in_seconds = conn.get_auto_sync_delay()?.as_secs();
         let auto_commit_delay_in_seconds = conn.get_auto_commit_delay()?.as_secs();
 
@@ -72,27 +70,7 @@ impl Status {
             auto_sync_delay_in_seconds,
             auto_commit_delay_in_seconds,
             server_port,
-            local_server_is_running: None,
         })
-    }
-
-    pub async fn check_if_local_server_is_running(&mut self) -> Result<()> {
-        let response = Client::new()
-            .get(&format!("https://localhost:{}/health", self.server_port))
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        ensure!(
-            status.is_success(),
-            "expected status code 2xx, got {}",
-            status.to_string()
-        );
-
-        self.local_server_is_running = Some(true);
-
-        Ok(())
     }
 }
 
@@ -161,21 +139,11 @@ impl fmt::Display for Status {
         )?;
 
         writeln!(f)?;
-        writeln!(f, "      Server port: {}", self.server_port)?;
-        writeln!(
-            f,
-            "     Local server: {}",
-            if let Some(local_server_is_running) = self.local_server_is_running {
-                if local_server_is_running {
-                    "running"
-                } else {
-                    "not running"
-                }
-            } else {
-                "didn't check"
-            }
-        )?;
-
+        if let Some(server_port) = self.server_port {
+            writeln!(f, "   Local Server: running on port {server_port}")?;
+        } else {
+            writeln!(f, "   Local Server: not running")?;
+        }
         writeln!(f)?;
 
         writeln!(

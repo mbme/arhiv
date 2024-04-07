@@ -98,7 +98,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             }
         }
         APIRequest::GetStatus {} => {
-            let status = arhiv.get_status().await?;
+            let status = arhiv.get_status()?;
 
             APIResponse::GetStatus {
                 status: status.to_string(),

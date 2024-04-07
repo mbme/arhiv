@@ -13,7 +13,6 @@ use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 #[derive(Default, Clone)]
 pub struct ArhivOptions {
     pub discover_peers: bool,
-    pub mdns_server: bool,
     pub auto_commit: bool,
     pub file_browser_root_dir: Option<String>,
     pub certificate: Option<SelfSignedCertificate>,
@@ -88,12 +87,12 @@ impl Arhiv {
             arhiv.init_auto_sync_service()?;
             arhiv.init_mdns_client_service()?;
         }
-        if options.mdns_server {
-            let port = arhiv.baza.get_connection()?.get_server_port()?;
-            arhiv.mdns_discovery_service.start_mdns_server(port)?;
-        }
 
         Ok(arhiv)
+    }
+
+    pub(crate) fn start_mdns_server(&self, server_port: u16) -> Result<()> {
+        self.mdns_discovery_service.start_mdns_server(server_port)
     }
 
     fn init_auto_commit_service(&mut self) -> Result<()> {
@@ -134,13 +133,10 @@ impl Arhiv {
         Ok(())
     }
 
-    pub async fn get_status(&self) -> Result<Status> {
+    pub fn get_status(&self) -> Result<Status> {
         let conn = self.baza.get_connection()?;
 
-        let mut status = Status::read(&conn)?;
-        status.check_if_local_server_is_running().await?;
-
-        Ok(status)
+        Status::read(&conn)
     }
 
     pub async fn sync(&self) -> Result<bool> {

@@ -10,5 +10,8 @@ declare global {
     BASE_PATH: string;
     SCHEMA: DataSchema;
     FEATURES: Features;
+    MIN_LOGIN_LENGTH: number;
+    MIN_PASSWORD_LENGTH: number;
+    CREATE_ARHIV: boolean;
   }
 }

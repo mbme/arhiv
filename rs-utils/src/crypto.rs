@@ -14,6 +14,7 @@ use ring::{
     pbkdf2,
 };
 use secstr::{SecUtf8, SecVec};
+use serde::Deserialize;
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -106,6 +107,7 @@ impl From<Vec<u8>> for SecretBytes {
     }
 }
 
+#[derive(Deserialize)]
 pub struct SecretString(SecUtf8);
 
 impl SecretString {

@@ -22,6 +22,7 @@ use axum_server::{
     Handle, Server,
 };
 use futures::future::BoxFuture;
+use hyper::Uri;
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     task::JoinHandle,
@@ -103,6 +104,10 @@ async fn logger_middleware(request: Request, next: Next) -> Result<Response, Sta
         log::debug!("{method} {uri} -> {status}");
         Ok(response)
     }
+}
+
+pub async fn fallback_route(uri: Uri) -> (StatusCode, String) {
+    (StatusCode::NOT_FOUND, format!("No route for {uri}"))
 }
 
 pub struct HttpServer {

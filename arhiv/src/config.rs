@@ -4,13 +4,10 @@ use anyhow::Result;
 
 use baza::{BazaConnection, KvsConstKey};
 
-const DEFAULT_SERVER_PORT: u16 = 23421;
 const DEFAULT_AUTO_COMMIT_DELAY_IN_SECONDS: u64 = 600;
 const DEFAULT_AUTO_SYNC_DELAY_IN_SECONDS: u64 = 20;
 
 const CONFIG_NAMESPACE: &str = "arhiv-config";
-
-const CONFIG_SERVER_PORT: &KvsConstKey<u16> = &KvsConstKey::new(CONFIG_NAMESPACE, "server_port");
 
 const CONFIG_AUTO_SYNC_DELAY: &KvsConstKey<u64> =
     &KvsConstKey::new(CONFIG_NAMESPACE, "auto_sync_delay_in_seconds");
@@ -19,10 +16,6 @@ const CONFIG_AUTO_COMMIT_DELAY: &KvsConstKey<u64> =
     &KvsConstKey::new(CONFIG_NAMESPACE, "auto_commit_delay_in_seconds");
 
 pub trait ArhivConfigExt {
-    // FIXME remove this
-    fn get_server_port(&self) -> Result<u16>;
-    fn set_server_port(&self, port: u16) -> Result<()>;
-
     fn get_auto_sync_delay(&self) -> Result<Duration>;
     fn set_auto_sync_delay(&self, delay_in_seconds: u64) -> Result<()>;
 
@@ -31,18 +24,6 @@ pub trait ArhivConfigExt {
 }
 
 impl ArhivConfigExt for BazaConnection {
-    fn get_server_port(&self) -> Result<u16> {
-        let port = self
-            .kvs_const_get(CONFIG_SERVER_PORT)?
-            .unwrap_or(DEFAULT_SERVER_PORT);
-
-        Ok(port)
-    }
-
-    fn set_server_port(&self, port: u16) -> Result<()> {
-        self.kvs_const_set(CONFIG_SERVER_PORT, &port)
-    }
-
     fn get_auto_sync_delay(&self) -> Result<Duration> {
         let delay = self
             .kvs_const_get(CONFIG_AUTO_SYNC_DELAY)?

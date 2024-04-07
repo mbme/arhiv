@@ -9,7 +9,7 @@ use jni::{
 use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, Credentials};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials};
 use rs_utils::log;
 
 lazy_static! {
@@ -54,25 +54,19 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
                 file_browser_root_dir,
                 ..Default::default()
             };
-            let arhiv = Arhiv::open(&root_dir, arhiv_options.clone())?;
-
-            let tx = arhiv.baza.get_tx()?;
-            tx.set_server_port(0)?;
-            tx.commit()?;
 
             arhiv_options
         } else {
             ArhivOptions {
                 auto_commit: true,
                 discover_peers: true,
-                mdns_server: true,
                 file_browser_root_dir,
                 certificate: None,
             }
         }
     };
 
-    let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options))?;
+    let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options, 0))?;
     let ui_url = server.get_ui_url()?;
 
     *server_lock = Some(server);

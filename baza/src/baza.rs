@@ -22,13 +22,18 @@ pub struct Credentials {
 }
 
 impl Credentials {
+    pub const MIN_LOGIN_LENGTH: usize = 3;
     pub const MIN_PASSWORD_LENGTH: usize = PBKDF2::MIN_PASSWORD_LENGTH;
 
     pub fn new(login: impl Into<String>, password: impl Into<SecretString>) -> Result<Self> {
         let login = login.into();
         let password = password.into();
 
-        ensure!(!login.is_empty(), "Login cannot be empty");
+        ensure!(
+            login.len() >= Self::MIN_LOGIN_LENGTH,
+            "Login should be at least {} characters long",
+            Self::MIN_LOGIN_LENGTH
+        );
         ensure!(
             password.len() >= Self::MIN_PASSWORD_LENGTH,
             "Password should be at least {} characters long",

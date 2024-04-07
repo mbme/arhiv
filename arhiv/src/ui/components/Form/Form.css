@@ -4,7 +4,7 @@
       display: block;
       min-width: 65%;
 
-      &:invalid {
+      &:user-invalid {
         @apply border border-red-500;
       }
 

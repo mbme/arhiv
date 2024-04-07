@@ -23,11 +23,14 @@ impl DBMigration for MigrationV6 {
             "INSERT INTO kvs
                        SELECT * FROM old_db.kvs;
 
-            INSERT INTO kvs(key, value) 
-            VALUES 
+            INSERT INTO kvs(key, value)
+            VALUES
                 (json_array('settings', 'schema_name'), json_quote('arhiv')),
                 (json_array('settings', 'login'), json_quote('arhiv')),
                 (json_array('settings', 'password'), json_quote('arhiv12345678'));
+
+            -- remove arhiv-config.server_port
+            DELETE FROM kvs WHERE key = json_array('arhiv-config', 'server_port');
 
             INSERT INTO documents_snapshots
                        SELECT id, rev, document_type, updated_at, data FROM old_db.documents_snapshots;
@@ -43,7 +46,9 @@ impl DBMigration for MigrationV6 {
         let old_kvs_count = get_rows_count(conn, "old_db.kvs")?;
         let new_kvs_count = get_rows_count(conn, "kvs")?;
 
-        ensure!(new_kvs_count == old_kvs_count + 3);
+        let expected_kvs_count = old_kvs_count + 3;
+
+        ensure!(new_kvs_count == expected_kvs_count - 1 || new_kvs_count == expected_kvs_count);
 
         Ok(())
     }

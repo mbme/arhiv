@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use axum::{
     extract::{DefaultBodyLimit, Path, State},
     http::HeaderMap,
@@ -13,18 +13,18 @@ use axum::{
 };
 use axum_extra::{headers, TypedHeader};
 use futures::{future::Shared, FutureExt};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::sync::oneshot;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
-use baza::{entities::BLOBId, sync::respond_with_blob};
+use baza::{entities::BLOBId, sync::respond_with_blob, Credentials};
 use rs_utils::{
     http_server::{add_no_cache_headers, ServerError},
-    log,
+    log, SecretString,
 };
 
-use crate::dto::APIRequest;
+use crate::{definitions::get_standard_schema, dto::APIRequest};
 
 use self::api_handler::handle_api_request;
 use self::image_handler::image_handler;
@@ -43,6 +43,7 @@ pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<U
 
     Router::new()
         .route("/", get(index_page))
+        .route("/create", post(create_arhiv_handler))
         .route("/api", post(api_handler))
         .route("/events", get(events_handler))
         .route("/blobs/:blob_id", get(blob_handler))
@@ -52,6 +53,29 @@ pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<U
         .layer(DefaultBodyLimit::disable())
 }
 
+#[derive(Deserialize)]
+struct CreateArhivRequest {
+    login: String,
+    password: SecretString,
+}
+
+async fn create_arhiv_handler(
+    state: State<Arc<UIState>>,
+    Json(create_arhiv_request): Json<CreateArhivRequest>,
+) -> Result<impl IntoResponse, ServerError> {
+    if state.arhiv_exists()? {
+        return Err(anyhow!("Arhiv already exists").into());
+    }
+
+    log::info!("Creating new arhiv");
+
+    let auth = Credentials::new(create_arhiv_request.login, create_arhiv_request.password)?;
+
+    state.create_arhiv(auth)?;
+
+    Ok(())
+}
+
 #[derive(Serialize)]
 struct Features {
     scraper: bool,
@@ -59,16 +83,18 @@ struct Features {
 }
 
 async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, ServerError> {
-    let arhiv = state.must_get_arhiv()?;
+    let create_arhiv = !state.arhiv_exists()?;
 
     let schema =
-        serde_json::to_string(arhiv.baza.get_schema()).context("failed to serialize schema")?;
+        serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
 
     let features = Features {
         scraper: cfg!(feature = "scraper"),
         use_local_storage: cfg!(target_os = "android"),
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
+    let min_login_length = Credentials::MIN_LOGIN_LENGTH;
+    let min_password_length = Credentials::MIN_PASSWORD_LENGTH;
 
     let content = format!(
         r#"
@@ -90,6 +116,9 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
                         window.BASE_PATH = "{UI_BASE_PATH}";
                         window.SCHEMA = {schema};
                         window.FEATURES = {features};
+                        window.MIN_LOGIN_LENGTH = {min_login_length};
+                        window.MIN_PASSWORD_LENGTH = {min_password_length};
+                        window.CREATE_ARHIV = {create_arhiv};
                     </script>
 
                     <script src="{UI_BASE_PATH}/index.js"></script>

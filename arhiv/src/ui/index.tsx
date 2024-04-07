@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
+import { CreateArhiv } from 'CreateArhiv';
 
 const rootEl = document.querySelector('main');
 if (!rootEl) {
@@ -9,7 +10,9 @@ if (!rootEl) {
 const root = createRoot(rootEl);
 
 function renderApp() {
-  if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
+  if (window.CREATE_ARHIV) {
+    root.render(<CreateArhiv />);
+  } else if (process.env.NODE_ENV === 'development' && location.search.includes('DEMO')) {
     root.render(<ComponentsDemo />);
   } else {
     root.render(<App />);

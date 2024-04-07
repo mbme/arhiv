@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::{ensure, Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType};
+use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair};
 use ring::{
     digest,
     hmac::{self, HMAC_SHA256},
@@ -152,18 +152,22 @@ pub struct SelfSignedCertificate {
 
 impl SelfSignedCertificate {
     pub fn new_x509(identifier: &str) -> Result<Self> {
-        let mut params = CertificateParams::default(); // PKCS_ECDSA_P256_SHA256
+        let mut params = CertificateParams::default();
         params.distinguished_name = DistinguishedName::new();
         params
             .distinguished_name
             .push(DnType::CommonName, identifier);
 
-        let certificate =
-            Certificate::from_params(params).context("Failed to generate certificate")?;
+        let key_pair = KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256)
+            .context("failed to generate a key pair")?;
 
-        let certificate_der = certificate.serialize_der()?;
+        let certificate = params
+            .self_signed(&key_pair)
+            .context("Failed to generate certificate")?;
 
-        let private_key_der = certificate.serialize_private_key_der();
+        let certificate_der = certificate.der().to_vec();
+
+        let private_key_der = key_pair.serialize_der();
         let private_key_der = SecretBytes::new(private_key_der);
 
         Ok(Self {

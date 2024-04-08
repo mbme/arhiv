@@ -1,24 +1,26 @@
 # vim: set ft=make :
 
 dev_cert_nickname := "arhiv-dev-server"
-dev_cert_path := justfile_directory() + "/certificate.pfx"
+home := env("HOME")
+root := home + "/temp/arhiv"
+dev_cert_path := root + "/certificate.pfx"
 
 arhiv *PARAMS:
-  DEBUG_ARHIV_ROOT=~/temp/arhiv cargo run --bin arhiv {{PARAMS}}
+  DEBUG_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
   just arhiv server
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEBUG_ARHIV_ROOT=~/temp/arhiv ARHIV_SERVER_CERTIFICATE="{{dev_cert_path}}" RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server --port 8443' \; \
+     'DEBUG_ARHIV_ROOT={{root}} RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server --port 8443' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
 
-export-certificate:
+save-certificate:
   rm {{dev_cert_path}} 2> /dev/null || true
-  just arhiv export-certificate "{{dev_cert_path}}" --friendly-name "{{dev_cert_nickname}}"
+  just arhiv save-certificate --friendly-name "{{dev_cert_nickname}}"
 
 update-browser-certificates:
   certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true

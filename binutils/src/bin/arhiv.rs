@@ -15,11 +15,11 @@ use arhiv::{
 };
 use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
-    Credentials, KvsEntry, KvsKey, DEBUG_MODE,
+    Credentials, KvsEntry, KvsKey,
 };
 use rs_utils::{
-    get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal, SecretBytes,
-    SecretString, SelfSignedCertificate,
+    file_exists, get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal,
+    SecretBytes, SecretString, SelfSignedCertificate,
 };
 use scraper::ScraperOptions;
 
@@ -97,12 +97,9 @@ enum CLICommand {
     },
     /// Print current status
     Status,
-    /// Export Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
-    #[clap(name = "export-certificate")]
-    ExportCertificate {
-        /// Path to file in which certificate should be stored
-        #[arg(value_hint = ValueHint::FilePath, default_value = "certificate.pfx")]
-        file: String,
+    /// Save Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
+    #[clap(name = "save-certificate")]
+    SaveCertificate {
         /// A friendly name of the certificate
         #[arg(long, default_value = "Arhiv")]
         friendly_name: String,
@@ -206,11 +203,17 @@ async fn main() {
 }
 
 fn find_root_dir() -> Result<String> {
-    if cfg!(feature = "production-mode") {
-        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")
+    let dir = if cfg!(feature = "production-mode") {
+        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")?
     } else {
-        env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")
-    }
+        env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")?
+    };
+
+    into_absolute_path(dir, false)
+}
+
+fn find_certificate(root_dir: &str) -> String {
+    format!("{root_dir}/certificate.pfx")
 }
 
 fn must_open_arhiv() -> Arhiv {
@@ -245,15 +248,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             println!("{status}");
             // FIXME print number of unused temp attachments
         }
-        CLICommand::ExportCertificate {
-            file,
-            friendly_name,
-        } => {
-            let path = into_absolute_path(file, false)?;
+        CLICommand::SaveCertificate { friendly_name } => {
             let password = SecretString::new("");
 
-            let mut file = must_create_file(&path)
-                .context(anyhow!("Failed to create certificate file {path}"))?;
+            let root_dir = find_root_dir()?;
+            let certificate_path = find_certificate(&root_dir);
+            let mut file = must_create_file(&certificate_path).context(anyhow!(
+                "Failed to create certificate file {certificate_path}"
+            ))?;
 
             let arhiv = must_open_arhiv();
 
@@ -264,7 +266,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             file.write_all(cert.as_bytes())?;
             file.flush()?;
 
-            println!("Exported certificate to {path}");
+            println!("Exported certificate to {certificate_path}");
         }
         CLICommand::Config {
             auto_commit_delay,
@@ -522,8 +524,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Server { port } => {
             let root_dir = find_root_dir()?;
 
-            let certificate_path = env::var("ARHIV_SERVER_CERTIFICATE").unwrap_or_default();
-            let certificate = if DEBUG_MODE && !certificate_path.is_empty() {
+            let certificate_path = find_certificate(&root_dir);
+            let certificate = if !certificate_path.is_empty() && file_exists(&certificate_path)? {
                 let certificate_path = into_absolute_path(&certificate_path, true)?;
                 let data =
                     fs::read(&certificate_path).context("Failed to read certificate file")?;
@@ -556,6 +558,8 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         }
         CLICommand::Backup { backup_dir } => {
             let arhiv = must_open_arhiv();
+
+            let backup_dir = into_absolute_path(backup_dir, true)?;
 
             arhiv
                 .baza

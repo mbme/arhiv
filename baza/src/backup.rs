@@ -2,23 +2,19 @@ use std::{fs, path::Path};
 
 use anyhow::{bail, ensure, Result};
 
-use rs_utils::{ensure_dir_exists, file_exists, format_time, into_absolute_path, log, now, ZStd};
+use rs_utils::{ensure_dir_exists, file_exists, format_time, log, now, ZStd};
 
 use crate::{entities::BLOBId, Baza};
 
 impl Baza {
     pub fn backup(&self, backup_dir: &str) -> Result<()> {
+        log::debug!("backup_dir: {backup_dir}");
+
         let zstd = ZStd::check()?;
-
-        ensure!(!backup_dir.is_empty(), "coudn't determine backup dir");
-
-        let backup_dir = into_absolute_path(backup_dir, true)?;
-
-        log::debug!("backup_dir: {}", &backup_dir);
 
         let app_name = self.get_schema().get_app_name();
 
-        let backup = BackupPaths::new(app_name, backup_dir);
+        let backup = BackupPaths::new(app_name, backup_dir.to_string());
         backup.check()?;
 
         // 1. cleanup the db

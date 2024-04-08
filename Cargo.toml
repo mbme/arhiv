@@ -5,7 +5,7 @@ debug = 0
 [profile.release]
 lto = true
 codegen-units = 1
-panic = "abort"
+panic = "unwind"
 
 [workspace]
 resolver = "2"

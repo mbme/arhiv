@@ -200,7 +200,13 @@ async fn test_sync() -> Result<()> {
         tx.commit()?;
     }
 
+    sync_manager0.add_in_mem_agent(baza1.clone())?;
     sync_manager0.add_in_mem_agent(baza1)?;
+    assert_eq!(
+        sync_manager0.count_agents(),
+        1,
+        "sync manager must keep only one agent per instance_id"
+    );
 
     let snapshots_count = baza0.get_tx()?.list_all_document_snapshots()?.len();
     assert_eq!(snapshots_count, 3);

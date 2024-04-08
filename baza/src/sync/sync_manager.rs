@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::Duration,
 };
@@ -17,7 +18,7 @@ pub type MDNSClientTask = JoinHandle<()>;
 
 pub struct SyncManager {
     baza: Arc<Baza>,
-    agents: Arc<Mutex<Vec<SyncAgent>>>,
+    agents: Arc<Mutex<HashMap<InstanceId, SyncAgent>>>,
     sync_in_progress: Arc<AtomicBool>,
 }
 
@@ -30,8 +31,11 @@ impl SyncManager {
         }
     }
 
-    fn add_agent(&self, agent: SyncAgent) -> Result<()> {
-        self.agents.lock().expect("must lock").push(agent);
+    fn add_agent(&self, new_agent: SyncAgent) -> Result<()> {
+        self.agents
+            .lock()
+            .expect("must lock")
+            .insert(new_agent.get_instance_id().clone(), new_agent);
 
         self.baza.publish_event(BazaEvent::PeerDiscovered {})?;
 
@@ -67,12 +71,18 @@ impl SyncManager {
     }
 
     pub fn remove_agent(&self, instance_id: &InstanceId) {
-        self.agents
+        let removed = self
+            .agents
             .lock()
             .expect("must lock")
-            .retain(|agent| agent.get_instance_id() != instance_id);
+            .remove(instance_id)
+            .is_some();
 
-        log::info!("Removed network agent {instance_id}");
+        if removed {
+            log::info!("Removed sync agent {instance_id}");
+        } else {
+            log::warn!("Couldn't remove sync agent {instance_id}: not found");
+        }
     }
 
     pub fn remove_all_agents(&self) {
@@ -81,7 +91,10 @@ impl SyncManager {
         log::info!("Removed all network agents");
     }
 
-    async fn collect_pings(&self, agents: Vec<SyncAgent>) -> Result<Vec<(SyncAgent, Ping)>> {
+    async fn collect_pings(
+        &self,
+        agents: impl IntoIterator<Item = SyncAgent>,
+    ) -> Result<Vec<(SyncAgent, Ping)>> {
         let ping = self.baza.get_connection()?.get_ping()?;
 
         let pings = agents.into_iter().map(|agent| async {
@@ -141,7 +154,7 @@ impl SyncManager {
             return Ok(false);
         }
 
-        let pings = self.collect_pings(agents).await?;
+        let pings = self.collect_pings(agents.values().cloned()).await?;
 
         log::info!("Starting sync with {} other instances", pings.len());
 

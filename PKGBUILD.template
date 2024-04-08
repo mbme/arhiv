@@ -6,7 +6,7 @@ pkgver="0.0.0"
 pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
-depends=(sqlite zstd libwebp)
+depends=(sqlite zstd)
 makedepends=(git cargo npm lld)
 options=(!buildflags !debug) # some of the build flags seem to break linking with native libs sqlite & libwebp
 

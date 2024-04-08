@@ -50,39 +50,37 @@ impl MDNSDiscoveryService {
 
         let mut mdns_events = self.mdns_service.get_events();
         let task = tokio::spawn(async move {
-            match mdns_events.recv().await {
-                Ok(mdns_event) => match mdns_event {
-                    MDNSEvent::InstanceDiscovered(peer_info) => {
-                        let instance_id = InstanceId::from_string(peer_info.instance_name);
+            loop {
+                match mdns_events.recv().await {
+                    Ok(mdns_event) => match mdns_event {
+                        MDNSEvent::InstanceDiscovered(peer_info) => {
+                            let instance_id = InstanceId::from_string(peer_info.instance_name);
 
-                        let ip_address = peer_info.ips[0];
+                            let ip_address = peer_info.ips[0];
 
-                        let address = if ip_address.is_ipv6() {
-                            format!("https://[{ip_address}]:{}", peer_info.port)
-                        } else {
-                            format!("https://{ip_address}:{}", peer_info.port)
-                        };
+                            let address = format!("https://{ip_address}:{}", peer_info.port);
 
-                        if let Err(err) = sync_manager.add_network_agent(
-                            instance_id.clone(),
-                            &address,
-                            &certificate,
-                        ) {
-                            log::error!(
-                                "Failed to add network agent {instance_id} {address}: {err}"
-                            );
+                            if let Err(err) = sync_manager.add_network_agent(
+                                instance_id.clone(),
+                                &address,
+                                &certificate,
+                            ) {
+                                log::error!(
+                                    "Failed to add network agent {instance_id} {address}: {err}"
+                                );
+                            }
                         }
-                    }
-                    MDNSEvent::InstanceDisappeared(instance_name) => {
-                        let instance_id = InstanceId::from_string(instance_name);
+                        MDNSEvent::InstanceDisappeared(instance_name) => {
+                            let instance_id = InstanceId::from_string(instance_name);
 
-                        sync_manager.remove_agent(&instance_id);
-                    }
-                },
-                Err(err) => log::error!("Failed to receive MDNS event: {err}"),
+                            sync_manager.remove_agent(&instance_id);
+                        }
+                    },
+                    Err(err) => log::error!("Failed to receive MDNS event: {err}"),
+                }
+
+                log::debug!("MDNS client task ended");
             }
-
-            log::debug!("MDNS client task ended");
         });
 
         Ok(task)

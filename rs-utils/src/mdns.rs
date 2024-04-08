@@ -1,5 +1,5 @@
 use std::{
-    net::IpAddr,
+    net::Ipv4Addr,
     sync::{Mutex, OnceLock},
 };
 
@@ -106,7 +106,7 @@ impl MDNSService {
 
                         let peer_info = PeerInfo {
                             instance_name: instance_name.clone(),
-                            ips: info.get_addresses().iter().cloned().collect(),
+                            ips: info.get_addresses_v4().into_iter().cloned().collect(),
                             port: info.get_port(),
                         };
 
@@ -201,6 +201,6 @@ fn extract_instance_name_from_fullname(fullname: &str) -> String {
 #[derive(Debug, Clone)]
 pub struct PeerInfo {
     pub instance_name: String,
-    pub ips: Vec<IpAddr>,
+    pub ips: Vec<Ipv4Addr>,
     pub port: u16,
 }

@@ -4,11 +4,11 @@ use anyhow::{anyhow, Context, Result};
 use axum::Router;
 use tokio::sync::oneshot;
 
-use baza::sync::build_rpc_router;
+use baza::{sync::build_rpc_router, DEBUG_MODE};
 use rs_utils::{
     file_in_temp_dir,
     http_server::{fallback_route, HttpServer},
-    LockFile,
+    log, LockFile,
 };
 
 use crate::{
@@ -23,7 +23,12 @@ struct ArhivServerLock {
 
 impl ArhivServerLock {
     pub fn new() -> Self {
-        let lock_file = file_in_temp_dir("arhiv-server.lock");
+        let lock_file = file_in_temp_dir(if DEBUG_MODE {
+            "arhiv-server-debug.lock"
+        } else {
+            "arhiv-server.lock"
+        });
+        log::debug!("Arhiv server lock file: {lock_file}");
 
         Self {
             lock_file,

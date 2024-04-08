@@ -58,9 +58,9 @@ impl MDNSDiscoveryService {
                         let ip_address = peer_info.ips[0];
 
                         let address = if ip_address.is_ipv6() {
-                            format!("http://[{ip_address}]:{}", peer_info.port)
+                            format!("https://[{ip_address}]:{}", peer_info.port)
                         } else {
-                            format!("http://{ip_address}:{}", peer_info.port)
+                            format!("https://{ip_address}:{}", peer_info.port)
                         };
 
                         if let Err(err) = sync_manager.add_network_agent(

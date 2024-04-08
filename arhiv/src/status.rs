@@ -12,6 +12,7 @@ use crate::{ArhivConfigExt, ArhivServer};
 pub struct Status {
     pub app_version: String,
     pub instance_id: String,
+    pub login: String,
 
     pub db_version: u8,
     pub data_version: u8,
@@ -38,6 +39,7 @@ impl Status {
         let root_dir = conn.get_path_manager().root_dir.clone();
 
         let instance_id = conn.get_instance_id()?.to_string();
+        let login = conn.get_login()?;
         let db_rev = conn.get_db_rev()?;
         let last_sync_time = conn.get_last_sync_time()?;
         let db_version = conn.get_db_version()?;
@@ -54,6 +56,7 @@ impl Status {
 
         Ok(Status {
             instance_id,
+            login,
             app_version: get_crate_version().to_string(),
             db_version,
             data_version,
@@ -88,6 +91,7 @@ impl fmt::Display for Status {
 
         writeln!(f, "             Root dir: {}", self.root_dir)?;
         writeln!(f, "          Instance id: {}", self.instance_id)?;
+        writeln!(f, "                Login: {}", self.login)?;
 
         writeln!(f)?;
 

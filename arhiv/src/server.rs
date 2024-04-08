@@ -6,7 +6,6 @@ use tokio::sync::oneshot;
 
 use baza::{sync::build_rpc_router, DEBUG_MODE};
 use rs_utils::{
-    file_in_temp_dir,
     http_server::{fallback_route, HttpServer},
     log, LockFile,
 };
@@ -22,12 +21,14 @@ struct ArhivServerLock {
 }
 
 impl ArhivServerLock {
-    pub fn new() -> Self {
-        let lock_file = file_in_temp_dir(if DEBUG_MODE {
+    pub fn new(root_dir: &str) -> Self {
+        let file_name = if DEBUG_MODE {
             "arhiv-server-debug.lock"
         } else {
             "arhiv-server.lock"
-        });
+        };
+
+        let lock_file = format!("{root_dir}/{file_name}");
         log::debug!("Arhiv server lock file: {lock_file}");
 
         Self {
@@ -70,7 +71,7 @@ impl ArhivServer {
         mut options: ArhivOptions,
         server_port: u16,
     ) -> Result<Self> {
-        let mut lock = ArhivServerLock::new();
+        let mut lock = ArhivServerLock::new(root_dir);
         lock.acquire()?;
 
         let certificate = options
@@ -125,8 +126,8 @@ impl ArhivServer {
         Ok(())
     }
 
-    pub fn get_server_port() -> Result<Option<u16>> {
-        let mut lock = ArhivServerLock::new();
+    pub fn get_server_port(root_dir: &str) -> Result<Option<u16>> {
+        let mut lock = ArhivServerLock::new(root_dir);
 
         // server isn't running
         if lock.acquire().is_ok() {

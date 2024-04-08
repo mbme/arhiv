@@ -429,7 +429,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let root_dir = find_root_dir()?;
             let arhiv = Arhiv::open(
-                root_dir,
+                root_dir.clone(),
                 ArhivOptions {
                     auto_commit: true,
                     ..Default::default()
@@ -441,7 +441,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             tx.commit()?;
 
-            let port = ArhivServer::get_server_port()?;
+            let port = ArhivServer::get_server_port(&root_dir)?;
 
             print_document(&document, port);
         }
@@ -452,7 +452,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         } => {
             let root_dir = find_root_dir()?;
             let arhiv = Arhiv::open(
-                root_dir,
+                root_dir.clone(),
                 ArhivOptions {
                     auto_commit: true,
                     ..Default::default()
@@ -472,7 +472,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .await
                 .context("failed to scrape")?;
 
-            let port = ArhivServer::get_server_port()?;
+            let port = ArhivServer::get_server_port(&root_dir)?;
             for document in documents {
                 print_document(&document, port);
             }
@@ -484,13 +484,13 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         } => {
             let root_dir = find_root_dir()?;
             let arhiv = Arhiv::open(
-                root_dir,
+                root_dir.clone(),
                 ArhivOptions {
                     auto_commit: true,
                     ..Default::default()
                 },
             )?;
-            let port = ArhivServer::get_server_port()?;
+            let port = ArhivServer::get_server_port(&root_dir)?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -508,7 +508,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
-            let port = ArhivServer::get_server_port()?.context("ArhivServer isn't running")?;
+            let root_dir = find_root_dir()?;
+            let port =
+                ArhivServer::get_server_port(&root_dir)?.context("ArhivServer isn't running")?;
 
             let url = id
                 .map(|id| get_document_url(&id, port))

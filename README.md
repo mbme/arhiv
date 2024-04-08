@@ -9,6 +9,7 @@
 * `just` command runner https://github.com/casey/just
 * `nodejs`
 * `npm`
+* `lld` - a fast linker from the LLVM project
 
 # Dev dependencies
 * `cargo-outdated` to find out which packages to upgrade

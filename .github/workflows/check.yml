@@ -18,6 +18,9 @@ jobs:
       - name: Use Rust
         run: rustup toolchain install stable --profile minimal
 
+      - name: Install LLD (fast linker)
+        run: sudo apt-get install lld
+
       - uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v4

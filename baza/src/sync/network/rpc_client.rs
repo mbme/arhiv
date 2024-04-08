@@ -108,7 +108,8 @@ impl BazaClient {
             .header(header::CONTENT_TYPE, "application/json")
             .body(body)
             .send()
-            .await?;
+            .await
+            .context("failed to send request")?;
 
         self.response_verifier.verify(&response)?;
 

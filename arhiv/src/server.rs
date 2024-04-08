@@ -1,7 +1,13 @@
 use std::{fs, sync::Arc};
 
 use anyhow::{anyhow, Context, Result};
-use axum::Router;
+use axum::{
+    extract::{Request, State},
+    middleware::{self, Next},
+    response::{IntoResponse, Response},
+    Router,
+};
+use reqwest::StatusCode;
 use tokio::sync::oneshot;
 
 use baza::{sync::build_rpc_router, DEBUG_MODE};
@@ -82,7 +88,9 @@ impl ArhivServer {
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
         let state = Arc::new(UIState::new(root_dir, options.clone())?);
 
-        let rpc_router = build_rpc_router(certificate.certificate_der.clone())?;
+        let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
+            middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
+        );
         let ui_router = build_ui_router(certificate.certificate_der.clone(), shutdown_receiver)
             .with_state(state.clone());
 
@@ -136,4 +144,27 @@ impl ArhivServer {
 
         lock.read_server_port().map(Some)
     }
+}
+
+async fn extract_baza_from_state(
+    State(state): State<Arc<UIState>>,
+    mut request: Request,
+    next: Next,
+) -> Response {
+    let baza = match state.must_get_arhiv() {
+        Ok(arhiv) => arhiv.baza.clone(),
+        Err(err) => {
+            log::error!("Attempt to access Arhiv that isn't initialized yet: {err}");
+
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Arhiv not initialized: {err}"),
+            )
+                .into_response();
+        }
+    };
+
+    request.extensions_mut().insert(baza);
+
+    next.run(request).await
 }

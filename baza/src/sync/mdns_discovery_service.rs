@@ -8,7 +8,7 @@ use rs_utils::{
 };
 use tokio::task::JoinHandle;
 
-use crate::{entities::InstanceId, Baza, DEBUG_MODE};
+use crate::{entities::InstanceId, Baza, DEV_MODE};
 
 use super::SyncManager;
 
@@ -27,8 +27,8 @@ impl MDNSDiscoveryService {
         let app_name = baza.get_app_name();
 
         let mut service_name = format!("_{login}@{app_name}");
-        if DEBUG_MODE {
-            service_name.push_str("-debug");
+        if DEV_MODE {
+            service_name.push_str("-dev");
         }
 
         let mdns_service = MDNSService::new(service_name, instance_id)?;

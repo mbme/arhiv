@@ -4,7 +4,7 @@ use anyhow::{anyhow, ensure, Context, Result};
 
 use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
-    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials, DEBUG_MODE,
+    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials, DEV_MODE,
 };
 use rs_utils::{
     file_exists, get_home_dir, log, must_create_file, now, path_exists, SecretBytes, SecretString,
@@ -190,7 +190,7 @@ impl Arhiv {
         } else {
             let certificate = generate_certificate()?;
 
-            let friendly_name = if DEBUG_MODE { "arhiv-dev" } else { "arhiv" };
+            let friendly_name = if DEV_MODE { "arhiv-dev" } else { "arhiv" };
 
             let data = certificate.to_pfx_der(&password, friendly_name)?;
 

@@ -15,7 +15,7 @@ use arhiv::{
 };
 use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
-    Credentials, KvsEntry, KvsKey,
+    Credentials, KvsEntry, KvsKey, DEV_MODE,
 };
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
 use scraper::ScraperOptions;
@@ -193,10 +193,10 @@ async fn main() {
 }
 
 fn find_root_dir() -> Result<String> {
-    let dir = if cfg!(feature = "production-mode") {
-        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")?
+    let dir = if DEV_MODE {
+        env::var("DEV_ARHIV_ROOT").context("env variable DEV_ARHIV_ROOT is missing")?
     } else {
-        env::var("DEBUG_ARHIV_ROOT").context("env variable DEBUG_ARHIV_ROOT is missing")?
+        env::var("ARHIV_ROOT").context("env variable ARHIV_ROOT is missing")?
     };
 
     into_absolute_path(dir, false)

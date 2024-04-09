@@ -20,4 +20,4 @@ pub use baza::{Baza, BazaEvent, BazaOptions, Credentials};
 pub use db::*;
 pub use document_expert::DocumentExpert;
 
-pub const DEBUG_MODE: bool = cfg!(not(feature = "production-mode"));
+pub const DEV_MODE: bool = cfg!(not(feature = "production-mode"));

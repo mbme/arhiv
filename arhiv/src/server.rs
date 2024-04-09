@@ -10,7 +10,7 @@ use axum::{
 use reqwest::StatusCode;
 use tokio::sync::oneshot;
 
-use baza::{sync::build_rpc_router, DEBUG_MODE};
+use baza::{sync::build_rpc_router, DEV_MODE};
 use rs_utils::{
     http_server::{fallback_route, HttpServer},
     log, LockFile,
@@ -28,8 +28,8 @@ struct ArhivServerLock {
 
 impl ArhivServerLock {
     pub fn new(root_dir: &str) -> Self {
-        let file_name = if DEBUG_MODE {
-            "arhiv-server-debug.lock"
+        let file_name = if DEV_MODE {
+            "arhiv-server-dev.lock"
         } else {
             "arhiv-server.lock"
         };

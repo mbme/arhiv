@@ -3,7 +3,7 @@ use std::fmt;
 use anyhow::Result;
 use serde::Serialize;
 
-use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEBUG_MODE};
+use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEV_MODE};
 use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
 use crate::{ArhivConfigExt, ArhivServer};
@@ -25,7 +25,7 @@ pub struct Status {
     pub db_rev: Revision,
     pub last_sync_time: Timestamp,
     pub last_update_time: Timestamp,
-    pub debug_mode: bool,
+    pub dev_mode: bool,
     pub root_dir: String,
 
     pub auto_sync_delay_in_seconds: u64,
@@ -67,7 +67,7 @@ impl Status {
             db_rev,
             last_sync_time,
             last_update_time,
-            debug_mode: DEBUG_MODE,
+            dev_mode: DEV_MODE,
             root_dir,
             locks,
             auto_sync_delay_in_seconds,
@@ -79,11 +79,11 @@ impl Status {
 
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.debug_mode {
+        if self.dev_mode {
             writeln!(f)?;
             writeln!(
                 f,
-                "----------------------------- DEBUG MODE -----------------------------"
+                "------------------------------ DEV MODE ------------------------------"
             )?;
         }
 

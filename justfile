@@ -6,14 +6,14 @@ root := home + "/temp/arhiv"
 dev_cert_path := root + "/certificate.pfx"
 
 arhiv *PARAMS:
-  DEBUG_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
+  DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
 
 arhiv-server:
   just arhiv server
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEBUG_ARHIV_ROOT={{root}} RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server --port 8443' \; \
+     'DEV_ARHIV_ROOT={{root}} RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server --port 8443' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0

@@ -1,6 +1,6 @@
-use std::{env, fs, io::Write, process, time::Duration};
+use std::{env, process, time::Duration};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use clap::{
     builder::PossibleValuesParser, ArgAction, CommandFactory, Parser, Subcommand, ValueHint,
 };
@@ -17,10 +17,7 @@ use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
     Credentials, KvsEntry, KvsKey,
 };
-use rs_utils::{
-    file_exists, get_crate_version, into_absolute_path, log, must_create_file, shutdown_signal,
-    SecretBytes, SecretString, SelfSignedCertificate,
-};
+use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
 use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
@@ -97,13 +94,6 @@ enum CLICommand {
     },
     /// Print current status
     Status,
-    /// Save Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
-    #[clap(name = "save-certificate")]
-    SaveCertificate {
-        /// A friendly name of the certificate
-        #[arg(long, default_value = "Arhiv")]
-        friendly_name: String,
-    },
     /// Print or update config
     Config {
         /// Auto-commit delay in seconds
@@ -212,10 +202,6 @@ fn find_root_dir() -> Result<String> {
     into_absolute_path(dir, false)
 }
 
-fn find_certificate(root_dir: &str) -> String {
-    format!("{root_dir}/certificate.pfx")
-}
-
 fn must_open_arhiv() -> Arhiv {
     let root_dir = find_root_dir().expect("must find root dir");
 
@@ -247,26 +233,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             println!("{status}");
             // FIXME print number of unused temp attachments
-        }
-        CLICommand::SaveCertificate { friendly_name } => {
-            let password = SecretString::new("");
-
-            let root_dir = find_root_dir()?;
-            let certificate_path = find_certificate(&root_dir);
-            let mut file = must_create_file(&certificate_path).context(anyhow!(
-                "Failed to create certificate file {certificate_path}"
-            ))?;
-
-            let arhiv = must_open_arhiv();
-
-            let cert = arhiv
-                .get_certificate()
-                .to_pfx_der(&password, &friendly_name)?;
-
-            file.write_all(cert.as_bytes())?;
-            file.flush()?;
-
-            println!("Exported certificate to {certificate_path}");
         }
         CLICommand::Config {
             auto_commit_delay,
@@ -526,28 +492,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
         CLICommand::Server { port } => {
             let root_dir = find_root_dir()?;
 
-            let certificate_path = find_certificate(&root_dir);
-            let certificate = if !certificate_path.is_empty() && file_exists(&certificate_path)? {
-                let certificate_path = into_absolute_path(&certificate_path, true)?;
-                let data =
-                    fs::read(&certificate_path).context("Failed to read certificate file")?;
-                let data = SecretBytes::new(data);
-                let password = SecretString::new("");
-
-                let certificate = SelfSignedCertificate::from_pfx_der(&password, data)?;
-                log::warn!("Using provided certificate from {certificate_path}");
-
-                Some(certificate)
-            } else {
-                None
-            };
-
             let server = ArhivServer::start(
                 &root_dir,
                 ArhivOptions {
                     auto_commit: true,
                     discover_peers: true,
-                    certificate,
                     ..Default::default()
                 },
                 port,

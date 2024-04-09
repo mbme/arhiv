@@ -18,14 +18,16 @@ pub type MDNSClientTask = JoinHandle<()>;
 
 pub struct SyncManager {
     baza: Arc<Baza>,
+    certificate: Arc<SelfSignedCertificate>,
     agents: Arc<Mutex<HashMap<InstanceId, SyncAgent>>>,
     sync_in_progress: Arc<AtomicBool>,
 }
 
 impl SyncManager {
-    pub fn new(baza: Arc<Baza>) -> Self {
+    pub fn new(baza: Arc<Baza>, certificate: Arc<SelfSignedCertificate>) -> Self {
         SyncManager {
             baza,
+            certificate,
             agents: Default::default(),
             sync_in_progress: Default::default(),
         }
@@ -42,14 +44,13 @@ impl SyncManager {
         Ok(())
     }
 
-    pub fn add_network_agent(
-        &self,
-        instance_id: InstanceId,
-        url: &str,
-        certificate: &SelfSignedCertificate,
-    ) -> Result<()> {
-        let agent =
-            SyncAgent::new_in_network(instance_id.clone(), url, certificate, self.baza.clone())?;
+    pub fn add_network_agent(&self, instance_id: InstanceId, url: &str) -> Result<()> {
+        let agent = SyncAgent::new_in_network(
+            instance_id.clone(),
+            url,
+            &self.certificate,
+            self.baza.clone(),
+        )?;
 
         self.add_agent(agent)?;
 

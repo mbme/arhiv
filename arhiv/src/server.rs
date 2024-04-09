@@ -72,22 +72,14 @@ pub struct ArhivServer {
 }
 
 impl ArhivServer {
-    pub async fn start(
-        root_dir: &str,
-        mut options: ArhivOptions,
-        server_port: u16,
-    ) -> Result<Self> {
+    pub async fn start(root_dir: &str, options: ArhivOptions, server_port: u16) -> Result<Self> {
         let mut lock = ArhivServerLock::new(root_dir);
         lock.acquire()?;
-
-        let certificate = options
-            .certificate
-            .unwrap_or_else(Arhiv::generate_certificate);
-        options.certificate = Some(certificate.clone());
 
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
         let state = Arc::new(UIState::new(root_dir, options.clone())?);
 
+        let certificate = Arhiv::read_or_generate_certificate(root_dir)?;
         let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
             middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
         );

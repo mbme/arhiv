@@ -1,4 +1,9 @@
 # Installation
+
+## Using cargo
+* `just cargo-install`
+
+## On ArchLinux, using makepkg
 * `just prod-build-install`
 * `sudo systemctl daemon-reload`
 * `sudo systemctl enable --now arhiv-service@<username>`
@@ -6,10 +11,10 @@
 # Build dependencies
 * `rust`
 * `cargo`
-* `just` command runner https://github.com/casey/just
 * `nodejs`
 * `npm`
 * `lld` - a fast linker from the LLVM project
+* `just` command runner https://github.com/casey/just
 
 # Dev dependencies
 * `cargo-outdated` to find out which packages to upgrade
@@ -31,3 +36,5 @@
 ```
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
 ```
+
+# ARCHITECTURE

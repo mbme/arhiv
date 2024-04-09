@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{entities::Id, sync::SyncManager, Baza};
+use crate::{entities::Id, sync::SyncManager, tests::new_certificate, Baza};
 
 #[test]
 fn test_locks() -> Result<()> {
@@ -117,7 +117,7 @@ async fn test_lock_blocks_sync() -> Result<()> {
         tx.commit()?;
     }
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone());
+    let mut sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
 
     let baza1 = Arc::new(Baza::new_test_baza());
     sync_manager0.add_in_mem_agent(baza1)?;

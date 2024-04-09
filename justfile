@@ -1,6 +1,6 @@
 # vim: set ft=make :
 
-dev_cert_nickname := "arhiv-dev-server"
+dev_cert_nickname := "arhiv-dev"
 home := env("HOME")
 root := home + "/temp/arhiv"
 dev_cert_path := root + "/certificate.pfx"
@@ -17,10 +17,6 @@ run:
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
-
-save-certificate:
-  rm {{dev_cert_path}} 2> /dev/null || true
-  just arhiv save-certificate --friendly-name "{{dev_cert_nickname}}"
 
 update-browser-certificates:
   certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true
@@ -43,6 +39,11 @@ prod-build-install:
   rm PKGBUILD
   systemctl --user daemon-reload
   systemctl --user restart arhiv-server.service
+
+# install the arhiv locally using Cargo
+cargo-install:
+  npm install
+  cargo install --path binutils --bin arhiv --bin mb-scraper --features production-mode
 
 test-scrapers *PARAMS:
   cd scraper; cargo test -- --ignored --test-threads 1 {{PARAMS}}

@@ -177,7 +177,7 @@ fn test_sync_get_conflicting_documents() -> Result<()> {
 #[tokio::test]
 async fn test_sync() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    let mut sync_manager0 = SyncManager::new(baza0.clone());
+    let mut sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
 
     {
         let mut tx = baza0.get_tx()?;
@@ -222,7 +222,7 @@ async fn test_sync() -> Result<()> {
 #[tokio::test]
 async fn test_sync_fails_on_uncommitted_changes() -> Result<()> {
     let baza0 = Arc::new(Baza::new_test_baza_with_id("0"));
-    let sync_manager0 = SyncManager::new(baza0.clone());
+    let sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
 
     {
         let mut tx = baza0.get_tx()?;
@@ -264,7 +264,7 @@ async fn test_sync_blobs() -> Result<()> {
         blob_id
     };
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone());
+    let mut sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
     sync_manager0.add_in_mem_agent(baza1)?;
 
     assert!(sync_manager0.sync().await?);
@@ -317,13 +317,12 @@ async fn test_sync_network_agent_success() -> Result<()> {
         blob_id
     };
 
-    let sync_manager0 = SyncManager::new(baza0.clone());
+    let sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
 
     let server1 = start_rpc_server(baza1.clone()).await;
     sync_manager0.add_network_agent(
         baza1.get_connection()?.get_instance_id()?,
         server1.get_url()?.as_str(),
-        &new_certificate(),
     )?;
 
     let snapshots_count = baza0.get_connection()?.list_all_document_snapshots()?.len();
@@ -362,13 +361,12 @@ async fn test_sync_network_agent_fails_with_wrong_auth() -> Result<()> {
         tx.commit()?;
     }
 
-    let sync_manager0 = SyncManager::new(baza0.clone());
+    let sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
 
     let server1 = start_rpc_server(baza1.clone()).await;
     sync_manager0.add_network_agent(
         baza1.get_connection()?.get_instance_id()?,
         server1.get_url()?.as_str(),
-        &new_certificate(),
     )?;
 
     assert!(!sync_manager0.sync().await?);
@@ -388,7 +386,7 @@ async fn test_auto_sync_on_commit() -> Result<()> {
     let baza1 = Arc::new(Baza::new_test_baza());
     baza1.add_document(Id::new(), json!({ "0": 3, "1": 2 }))?;
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone());
+    let mut sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
     sync_manager0.add_in_mem_agent(baza1.clone())?;
     let sync_manager0 = Arc::new(sync_manager0);
 

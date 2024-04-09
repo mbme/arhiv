@@ -1,12 +1,15 @@
-use std::sync::Arc;
+use std::{fs, io::Write, sync::Arc};
 
-use anyhow::{ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 
 use baza::{
     sync::{AutoSyncTask, MDNSClientTask, MDNSDiscoveryService, SyncManager},
-    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials,
+    AutoCommitService, AutoCommitTask, Baza, BazaOptions, Credentials, DEBUG_MODE,
 };
-use rs_utils::{get_home_dir, log, now, path_exists, SelfSignedCertificate};
+use rs_utils::{
+    file_exists, get_home_dir, log, must_create_file, now, path_exists, SecretBytes, SecretString,
+    SelfSignedCertificate,
+};
 
 use crate::{config::ArhivConfigExt, definitions::get_standard_schema, Status};
 
@@ -15,7 +18,6 @@ pub struct ArhivOptions {
     pub discover_peers: bool,
     pub auto_commit: bool,
     pub file_browser_root_dir: Option<String>,
-    pub certificate: Option<SelfSignedCertificate>,
 }
 
 pub struct Arhiv {
@@ -52,17 +54,15 @@ impl Arhiv {
 
         let schema = get_standard_schema();
 
+        let certificate = Arhiv::read_or_generate_certificate(&root_dir)?;
+        let certificate = Arc::new(certificate);
+
         let baza_options = BazaOptions { root_dir, schema };
 
         let baza = Baza::open(baza_options)?;
         let baza = Arc::new(baza);
 
-        let certificate = options
-            .certificate
-            .unwrap_or_else(Arhiv::generate_certificate);
-        let certificate = Arc::new(certificate);
-
-        let sync_manager = SyncManager::new(baza.clone());
+        let sync_manager = SyncManager::new(baza.clone(), certificate.clone());
         let sync_manager = Arc::new(sync_manager);
 
         let mdns_discovery_service = MDNSDiscoveryService::new(&baza)?;
@@ -127,7 +127,7 @@ impl Arhiv {
     fn init_mdns_client_service(&mut self) -> Result<()> {
         let task = self
             .mdns_discovery_service
-            .start_mdns_client(self.sync_manager.clone(), self.certificate.clone())?;
+            .start_mdns_client(self.sync_manager.clone())?;
         self.mdns_client_task = Some(task);
 
         Ok(())
@@ -173,10 +173,43 @@ impl Arhiv {
         log::info!("Stopped Arhiv");
     }
 
-    pub fn generate_certificate() -> SelfSignedCertificate {
-        let timestamp = now();
-        let certificate_id = format!("Arhiv Server {timestamp}");
+    pub(crate) fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
+        let cert_path = format!("{root_dir}/certificate.pfx");
+        let password = SecretString::new("");
 
-        SelfSignedCertificate::new_x509(&certificate_id).expect("Certificate generation must work")
+        if file_exists(&cert_path)? {
+            let data = fs::read(&cert_path).context("Failed to read certificate file")?;
+
+            let data = SecretBytes::new(data);
+
+            let certificate = SelfSignedCertificate::from_pfx_der(&password, data)?;
+
+            log::info!("Read arhiv certificate from {cert_path}");
+
+            Ok(certificate)
+        } else {
+            let certificate = generate_certificate()?;
+
+            let friendly_name = if DEBUG_MODE { "arhiv-dev" } else { "arhiv" };
+
+            let data = certificate.to_pfx_der(&password, friendly_name)?;
+
+            // Save Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
+            let mut file = must_create_file(&cert_path)
+                .context(anyhow!("Failed to create certificate file {cert_path}"))?;
+            file.write_all(data.as_bytes())?;
+            file.flush()?;
+
+            log::info!("Wrote arhiv certificate into {cert_path}");
+
+            Ok(certificate)
+        }
     }
+}
+
+fn generate_certificate() -> Result<SelfSignedCertificate> {
+    let timestamp = now();
+    let certificate_id = format!("Arhiv {timestamp}");
+
+    SelfSignedCertificate::new_x509(&certificate_id)
 }

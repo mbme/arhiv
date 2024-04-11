@@ -1,0 +1,24 @@
+{
+  "name": "arhiv-desktop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.cjs",
+  "type": "module",
+  "scripts": {
+    "compiler-errors": "tsc --noEmit --project tsconfig.json",
+    "build": "tsx build.ts",
+    "prod:build": "NODE_ENV=production npm run build",
+    "start": "electron dist/index.cjs",
+    "lint": "eslint --cache --ext .ts src/",
+    "fmt": "prettier --write src/",
+    "check-fmt": "prettier --check src/",
+    "test": ""
+  },
+  "author": "mbme",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.2.0",
+    "esbuild": "^0.20.1",
+    "tsx": "^4.5.0"
+  }
+}

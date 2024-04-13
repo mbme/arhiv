@@ -35,7 +35,8 @@ fn setup_logger_with_level(log_level: LevelFilter) {
             fmt::Layer::new()
                 .compact()
                 .with_timer(ChronoLocal::new("[%Y-%m-%d][%H:%M:%S]".to_string()))
-                .with_span_events(FmtSpan::CLOSE),
+                .with_span_events(FmtSpan::CLOSE)
+                .with_writer(std::io::stderr),
         )
         .init();
 }

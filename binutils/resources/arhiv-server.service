@@ -6,7 +6,7 @@ Type=simple
 StandardOutput=journal
 Environment=WAYLAND_DISPLAY=wayland-1
 Environment=ARHIV_ROOT=%h/arhiv
-ExecStart=arhiv server --port 23421
+ExecStart=arhiv server --port 23421 -v
 Restart=always
 RestartSec=30
 

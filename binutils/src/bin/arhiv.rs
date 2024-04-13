@@ -27,7 +27,8 @@ struct CLIArgs {
     #[clap(subcommand)]
     command: CLICommand,
 
-    /// Increases logging verbosity each use for up to 2 times
+    /// Increases logging verbosity each use for up to 3 times. Default level is WARN.
+    /// Logs are written to stderr.
     #[clap(global= true, short, action = ArgAction::Count)]
     verbose: u8,
 }
@@ -184,8 +185,9 @@ async fn main() {
     let args = CLIArgs::parse();
 
     match args.verbose {
-        0 => log::setup_logger(),
-        1 => log::setup_debug_logger(),
+        0 => log::setup_warn_logger(),
+        1 => log::setup_logger(),
+        2 => log::setup_debug_logger(),
         _ => log::setup_trace_logger(),
     };
 

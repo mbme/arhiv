@@ -193,42 +193,20 @@ impl SelfSignedCertificate {
         .into()
     }
 
-    pub fn to_pfx_der(&self, password: &SecretString, friendly_name: &str) -> Result<SecretBytes> {
-        let pfx = p12::PFX::new(
-            &self.certificate_der,
-            self.private_key_der.as_bytes(),
-            None,
-            password.as_str(),
-            friendly_name,
-        )
-        .context("Failed to convert certificate to PKCS#12 pfx")?;
+    pub fn from_pem(data: &SecretString) -> Result<Self> {
+        let items = pem::parse_many(data.as_str().as_bytes()).context("Failed to parse .pem")?;
 
-        Ok(pfx.to_der().into())
-    }
+        let private_key = items
+            .iter()
+            .find(|item| item.tag() == "PRIVATE KEY")
+            .context("PRIVATE KEY must be present in .pem")?;
+        let private_key_der = SecretBytes::new(private_key.contents().to_vec());
 
-    pub fn from_pfx_der(password: &SecretString, bytes: SecretBytes) -> Result<Self> {
-        let pfx = p12::PFX::parse(bytes.as_ref()).context("Failed to parse PFX")?;
-
-        let mut cert_bags = pfx
-            .cert_x509_bags(password.as_str())
-            .context("Failed to decrypt the PFX with provided password")?;
-        ensure!(
-            cert_bags.len() == 1,
-            "Expected exactly 1 x509 certificate, got {}",
-            cert_bags.len()
-        );
-        let certificate_der = cert_bags.remove(0);
-
-        let mut key_bags = pfx
-            .key_bags(password.as_str())
-            .context("Failed to decrypt the PFX with provided password")?;
-        ensure!(
-            key_bags.len() == 1,
-            "Expected exactly 1 private key, got {}",
-            key_bags.len()
-        );
-
-        let private_key_der = SecretBytes::new(key_bags.remove(0));
+        let certificate = items
+            .iter()
+            .find(|item| item.tag() == "CERTIFICATE")
+            .context("CERTIFICATE must be present in .pem")?;
+        let certificate_der = certificate.contents().to_vec();
 
         Ok(Self {
             private_key_der,

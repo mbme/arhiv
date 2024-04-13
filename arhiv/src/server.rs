@@ -14,7 +14,7 @@ use baza::{sync::build_rpc_router, DEV_MODE};
 use rs_utils::{
     file_exists,
     http_server::{fallback_route, HttpServer},
-    log, must_create_file, now, LockFile, SecretBytes, SecretString, SelfSignedCertificate,
+    log, must_create_file, now, LockFile, SecretString, SelfSignedCertificate,
 };
 
 use crate::{
@@ -162,15 +162,13 @@ async fn extract_baza_from_state(
 }
 
 fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
-    let cert_path = format!("{root_dir}/certificate.pfx");
-    let password = SecretString::new("");
+    let cert_path = format!("{root_dir}/arhiv-server.pem");
 
     if file_exists(&cert_path)? {
-        let data = fs::read(&cert_path).context("Failed to read certificate file")?;
+        let data = fs::read_to_string(&cert_path).context("Failed to read certificate file")?;
+        let data = SecretString::new(data);
 
-        let data = SecretBytes::new(data);
-
-        let certificate = SelfSignedCertificate::from_pfx_der(&password, data)?;
+        let certificate = SelfSignedCertificate::from_pem(&data)?;
 
         log::info!("Read arhiv certificate from {cert_path}");
 
@@ -178,14 +176,11 @@ fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate>
     } else {
         let certificate = generate_certificate()?;
 
-        let friendly_name = if DEV_MODE { "arhiv-dev" } else { "arhiv" };
+        let data = certificate.to_pem();
 
-        let data = certificate.to_pfx_der(&password, friendly_name)?;
-
-        // Save Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
         let mut file = must_create_file(&cert_path)
             .context(anyhow!("Failed to create certificate file {cert_path}"))?;
-        file.write_all(data.as_bytes())?;
+        file.write_all(data.as_ref())?;
         file.flush()?;
 
         log::info!("Wrote arhiv certificate into {cert_path}");

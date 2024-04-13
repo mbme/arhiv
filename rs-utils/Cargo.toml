@@ -33,7 +33,6 @@ lazy_static.workspace = true
 chrono.workspace = true
 blake3 = "1.2.0" # fast file hash
 ring.workspace = true
-p12 = "0.6" # create PKCS#12 .pfx HTTPS/TLS certificates for browsers
 secstr = { version = "0.5", features = ["serde"] } # securely store secrets in memory
 data-encoding = "2" # base64, hex encodings
 mime_guess = "2"

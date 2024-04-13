@@ -37,6 +37,7 @@ impl ArhivServer {
     pub async fn start(root_dir: &str, options: ArhivOptions, server_port: u16) -> Result<Self> {
         let mut lock = ArhivServerLock::new(root_dir);
         lock.acquire()?;
+        lock.write_server_port(server_port)?;
 
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
         let state = Arc::new(UIState::new(root_dir, options.clone(), shutdown_receiver)?);

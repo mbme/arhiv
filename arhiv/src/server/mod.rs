@@ -16,13 +16,14 @@ use rs_utils::{
     log,
 };
 
-use self::ui_server::{build_ui_router, UIState};
+use self::ui_server::{build_ui_router, UIState, UI_BASE_PATH};
 use self::{certificate::read_or_generate_certificate, server_lock::ArhivServerLock};
 use crate::ArhivOptions;
 
-pub use self::ui_server::UI_BASE_PATH;
+pub use self::server_info::ServerInfo;
 
 mod certificate;
+mod server_info;
 mod server_lock;
 mod ui_server;
 
@@ -70,12 +71,6 @@ impl ArhivServer {
         })
     }
 
-    pub fn get_ui_url(&self) -> Result<String> {
-        let url = self.server.get_url()?;
-
-        Ok(format!("{url}{UI_BASE_PATH}"))
-    }
-
     pub async fn shutdown(self) -> Result<()> {
         self.shutdown_sender
             .send(())
@@ -86,17 +81,6 @@ impl ArhivServer {
         self.state.stop_arhiv()?;
 
         Ok(())
-    }
-
-    pub fn get_server_port(root_dir: &str) -> Result<Option<u16>> {
-        let mut lock = ArhivServerLock::new(root_dir);
-
-        // server isn't running
-        if lock.acquire().is_ok() {
-            return Ok(None);
-        }
-
-        lock.read_server_port().map(Some)
     }
 }
 

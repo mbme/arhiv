@@ -10,8 +10,7 @@ use serde_json::Value;
 use tokio::time::sleep;
 
 use arhiv::{
-    definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer,
-    UI_BASE_PATH,
+    definitions::get_standard_schema, Arhiv, ArhivConfigExt, ArhivOptions, ArhivServer, ServerInfo,
 };
 use baza::{
     entities::{Document, DocumentData, DocumentType, Id},
@@ -93,6 +92,9 @@ enum CLICommand {
         #[arg(long, default_value = "0")]
         port: u16,
     },
+    /// Print server info, in JSON format
+    #[clap(name = "server-info")]
+    ServerInfo,
     /// Print current status
     Status,
     /// Print or update config
@@ -409,7 +411,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             tx.commit()?;
 
-            let port = ArhivServer::get_server_port(&root_dir)?;
+            let port = ServerInfo::get_server_port(&root_dir)?;
 
             print_document(&document, port);
         }
@@ -440,7 +442,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 .await
                 .context("failed to scrape")?;
 
-            let port = ArhivServer::get_server_port(&root_dir)?;
+            let port = ServerInfo::get_server_port(&root_dir)?;
             for document in documents {
                 print_document(&document, port);
             }
@@ -458,7 +460,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = ArhivServer::get_server_port(&root_dir)?;
+            let port = ServerInfo::get_server_port(&root_dir)?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -478,11 +480,11 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             let root_dir = find_root_dir()?;
             let port =
-                ArhivServer::get_server_port(&root_dir)?.context("ArhivServer isn't running")?;
+                ServerInfo::get_server_port(&root_dir)?.context("ArhivServer isn't running")?;
 
             let url = id
-                .map(|id| get_document_url(&id, port))
-                .unwrap_or(get_base_url(port));
+                .map(|id| ServerInfo::get_document_url(&id, port))
+                .unwrap_or(ServerInfo::get_ui_base_url(port));
 
             process::Command::new(&browser)
                 .arg(url)
@@ -509,6 +511,14 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             server.shutdown().await?;
         }
+        CLICommand::ServerInfo => {
+            let root_dir = find_root_dir()?;
+            let server_info = ServerInfo::collect(&root_dir)?;
+
+            let server_info =
+                serde_json::to_string(&server_info).context("Failed to serialize ServerInfo")?;
+            println!("{}", server_info);
+        }
         CLICommand::Backup { backup_dir } => {
             let arhiv = must_open_arhiv();
 
@@ -531,19 +541,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     Ok(())
 }
 
-fn get_base_url(port: u16) -> String {
-    format!("https://localhost:{port}{UI_BASE_PATH}")
-}
-
-fn get_document_url(id: &Id, port: u16) -> String {
-    let base = get_base_url(port);
-
-    format!("{base}?id={id}")
-}
-
 fn print_document(document: &Document, port: Option<u16>) {
     let document_url = port
-        .map(|port| get_document_url(&document.id, port))
+        .map(|port| ServerInfo::get_document_url(&document.id, port))
         .unwrap_or_default();
 
     println!(

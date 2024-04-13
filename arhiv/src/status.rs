@@ -6,7 +6,7 @@ use serde::Serialize;
 use baza::{entities::Revision, BLOBSCount, BazaConnection, DocumentsCount, Locks, DEV_MODE};
 use rs_utils::{default_date_time_format, get_crate_version, Timestamp, MIN_TIMESTAMP};
 
-use crate::{ArhivConfigExt, ArhivServer};
+use crate::{ArhivConfigExt, ServerInfo};
 
 #[derive(Serialize)]
 pub struct Status {
@@ -50,7 +50,7 @@ impl Status {
         let conflicts_count = conn.get_coflicting_documents()?.len();
         let last_update_time = conn.get_last_update_time()?;
         let locks = conn.list_document_locks()?;
-        let server_port = ArhivServer::get_server_port(&root_dir)?;
+        let server_port = ServerInfo::get_server_port(&root_dir)?;
         let auto_sync_delay_in_seconds = conn.get_auto_sync_delay()?.as_secs();
         let auto_commit_delay_in_seconds = conn.get_auto_commit_delay()?.as_secs();
 

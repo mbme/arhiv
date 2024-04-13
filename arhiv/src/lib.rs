@@ -10,7 +10,7 @@ mod status;
 
 pub use arhiv::{Arhiv, ArhivOptions};
 pub use config::ArhivConfigExt;
-pub use server::{ArhivServer, UI_BASE_PATH};
+pub use server::{ArhivServer, ServerInfo};
 pub use status::Status;
 
 pub use baza::Credentials;

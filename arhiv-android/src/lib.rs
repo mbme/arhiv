@@ -9,7 +9,7 @@ use jni::{
 use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
-use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials};
+use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials, ServerInfo};
 use rs_utils::log;
 
 lazy_static! {
@@ -64,7 +64,8 @@ fn start_server(files_dir: &str, file_browser_root_dir: Option<String>) -> Resul
     };
 
     let server = runtime.block_on(ArhivServer::start(&root_dir, arhiv_options, 0))?;
-    let ui_url = server.get_ui_url()?;
+    let port = ServerInfo::get_server_port(&root_dir)?.context("Can't find server port")?;
+    let ui_url = ServerInfo::get_ui_base_url(port);
 
     *server_lock = Some(server);
     *runtime_lock = Some(runtime);

@@ -9,13 +9,12 @@ use axum::{
         Html, IntoResponse, Sse,
     },
     routing::{get, post},
-    Extension, Json, Router,
+    Json, Router,
 };
 use axum_extra::{headers, TypedHeader};
-use futures::{future::Shared, FutureExt};
+use futures::FutureExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tokio::sync::oneshot;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, sync::respond_with_blob, Credentials};
@@ -38,9 +37,7 @@ mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<UIState>> {
-    let shutdown_receiver = shutdown_receiver.shared();
-
+pub fn build_ui_router() -> Router<Arc<UIState>> {
     Router::new()
         .route("/", get(index_page))
         .route("/create", post(create_arhiv_handler))
@@ -49,7 +46,6 @@ pub fn build_ui_router(shutdown_receiver: oneshot::Receiver<()>) -> Router<Arc<U
         .route("/blobs/:blob_id", get(blob_handler))
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
-        .layer(Extension(shutdown_receiver))
         .layer(DefaultBodyLimit::disable())
 }
 
@@ -166,10 +162,9 @@ async fn blob_handler(
     respond_with_blob(&arhiv.baza, &blob_id, &range.map(|val| val.0)).await
 }
 
-#[tracing::instrument(skip(state, shutdown_receiver), level = "debug")]
+#[tracing::instrument(skip(state), level = "debug")]
 async fn events_handler(
     state: State<Arc<UIState>>,
-    Extension(shutdown_receiver): Extension<Shared<oneshot::Receiver<()>>>,
 ) -> Result<Sse<impl Stream<Item = anyhow::Result<Event>>>, ServerError> {
     let arhiv = state.must_get_arhiv()?;
 
@@ -185,7 +180,12 @@ async fn events_handler(
         Ok(Some(event))
     });
 
-    let shutdown_stream = shutdown_receiver.clone().into_stream().map(|_| Ok(None));
+    let shutdown_stream = state
+        .shutdown_receiver
+        .clone()
+        .into_stream()
+        .map(|_| Ok(None))
+        .take(1);
 
     let stream = futures::stream::select(events_stream, shutdown_stream)
         .map_while(|value| value.transpose());

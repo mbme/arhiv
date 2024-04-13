@@ -27,22 +27,18 @@ app
 
 const args = process.argv.slice(2);
 
-app.importCertificate({ certificate: '~/arhiv/certificate.pfx', password: '' }, (result) => {});
+const arhivBin = process.env.ARHIV_BIN ?? 'arhiv';
+console.log('arhiv bin: ', arhivBin);
 
 console.log('args:', ...args);
 if (args[0] === 'search') {
   // SSL/TSL: this is the self signed certificate support
-  app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  app.on('certificate-error', (event, _webContents, _url, _error, certificate, callback) => {
     console.error('certificate', certificate);
     // On certificate error we disable default behaviour (stop loading the page)
     // and we then say "it is all fine - true" to the callback
     event.preventDefault();
     callback(true);
-  });
-
-  app.on('select-client-certificate', (event, _webContents, _url, list, callback) => {
-    event.preventDefault();
-    callback(list[0]);
   });
 
   app.whenReady().then(() => {
@@ -51,7 +47,7 @@ if (args[0] === 'search') {
       height: 600,
     });
 
-    win.loadURL('https://localhost:23421/ui').catch((e) => {
+    win.loadURL('https://localhost:23421/ui').catch(() => {
       console.error('failed to open Arhiv');
     });
   });

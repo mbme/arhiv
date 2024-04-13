@@ -22,6 +22,10 @@ update-browser-certificates:
   certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true
   pk12util -d sql:$HOME/.pki/nssdb -i "{{dev_cert_path}}"
 
+desktop *ARGS:
+  npm run build --workspace arhiv-desktop
+  npm run start --workspace arhiv-desktop {{ARGS}}
+
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}
 

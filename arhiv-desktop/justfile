@@ -1,3 +1,0 @@
-run *ARGS:
-  npm run build
-  npm run start {{ARGS}}

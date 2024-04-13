@@ -1,4 +1,4 @@
-use std::{fs, sync::Arc};
+use std::{fs, io::Write, sync::Arc};
 
 use anyhow::{anyhow, Context, Result};
 use axum::{
@@ -12,13 +12,14 @@ use tokio::sync::oneshot;
 
 use baza::{sync::build_rpc_router, DEV_MODE};
 use rs_utils::{
+    file_exists,
     http_server::{fallback_route, HttpServer},
-    log, LockFile,
+    log, must_create_file, now, LockFile, SecretBytes, SecretString, SelfSignedCertificate,
 };
 
 use crate::{
     ui_server::{build_ui_router, UIState, UI_BASE_PATH},
-    Arhiv, ArhivOptions,
+    ArhivOptions,
 };
 
 struct ArhivServerLock {
@@ -79,7 +80,7 @@ impl ArhivServer {
         let (shutdown_sender, shutdown_receiver) = oneshot::channel();
         let state = Arc::new(UIState::new(root_dir, options.clone(), shutdown_receiver)?);
 
-        let certificate = Arhiv::read_or_generate_certificate(root_dir)?;
+        let certificate = read_or_generate_certificate(root_dir)?;
         let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
             middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
         );
@@ -158,4 +159,44 @@ async fn extract_baza_from_state(
     request.extensions_mut().insert(baza);
 
     next.run(request).await
+}
+
+fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
+    let cert_path = format!("{root_dir}/certificate.pfx");
+    let password = SecretString::new("");
+
+    if file_exists(&cert_path)? {
+        let data = fs::read(&cert_path).context("Failed to read certificate file")?;
+
+        let data = SecretBytes::new(data);
+
+        let certificate = SelfSignedCertificate::from_pfx_der(&password, data)?;
+
+        log::info!("Read arhiv certificate from {cert_path}");
+
+        Ok(certificate)
+    } else {
+        let certificate = generate_certificate()?;
+
+        let friendly_name = if DEV_MODE { "arhiv-dev" } else { "arhiv" };
+
+        let data = certificate.to_pfx_der(&password, friendly_name)?;
+
+        // Save Arhiv's certificate in PKCS#12 format (.pfx). Browsers can use it as a client HTTPS/TLS certificate. Password is empty.
+        let mut file = must_create_file(&cert_path)
+            .context(anyhow!("Failed to create certificate file {cert_path}"))?;
+        file.write_all(data.as_bytes())?;
+        file.flush()?;
+
+        log::info!("Wrote arhiv certificate into {cert_path}");
+
+        Ok(certificate)
+    }
+}
+
+fn generate_certificate() -> Result<SelfSignedCertificate> {
+    let timestamp = now();
+    let certificate_id = format!("Arhiv {timestamp}");
+
+    SelfSignedCertificate::new_x509(&certificate_id)
 }

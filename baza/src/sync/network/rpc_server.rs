@@ -26,7 +26,7 @@ use crate::{
     Baza, BazaEvent,
 };
 
-use super::auth::client_cert_validator;
+use super::auth::client_authenticator;
 
 /// This router requires Extension<Arc<Baza>> to be available
 pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
@@ -35,7 +35,7 @@ pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
         .route("/blobs/:blob_id", get(get_blob_handler))
         .route("/changeset/:min_rev", get(get_changeset_handler))
         .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(client_cert_validator))
+        .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(ServerCertificate::new(server_certificate_der)));
 
     Ok(router)

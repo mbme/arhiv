@@ -83,8 +83,7 @@ impl ArhivServer {
         let rpc_router = build_rpc_router(certificate.certificate_der.clone())?.route_layer(
             middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
         );
-        let ui_router = build_ui_router(certificate.certificate_der.clone(), shutdown_receiver)
-            .with_state(state.clone());
+        let ui_router = build_ui_router(shutdown_receiver).with_state(state.clone());
 
         let router = Router::new()
             .merge(rpc_router)

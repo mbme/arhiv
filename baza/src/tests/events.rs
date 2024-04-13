@@ -3,12 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde_json::json;
 
-use crate::{
-    entities::Id,
-    sync::SyncManager,
-    tests::{new_certificate, new_document},
-    Baza, BazaEvent,
-};
+use crate::{entities::Id, sync::SyncManager, tests::new_document, Baza, BazaEvent};
 
 #[tokio::test]
 async fn test_events() -> Result<()> {
@@ -73,7 +68,7 @@ async fn test_events() -> Result<()> {
         assert_eq!(event0, BazaEvent::DocumentsCommitted {});
     }
 
-    let mut sync_manager0 = SyncManager::new(baza0.clone(), new_certificate().into());
+    let mut sync_manager0 = SyncManager::new(baza0.clone());
     let baza1 = Arc::new(Baza::new_test_baza());
     {
         let event_future0 = events0.recv();

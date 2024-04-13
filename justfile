@@ -1,9 +1,7 @@
 # vim: set ft=make :
 
-dev_cert_nickname := "arhiv-dev"
 home := env("HOME")
 root := home + "/temp/arhiv"
-dev_cert_path := root + "/certificate.pfx"
 
 arhiv *PARAMS:
   DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
@@ -17,10 +15,6 @@ run:
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
-
-update-browser-certificates:
-  certutil -d sql:$HOME/.pki/nssdb -D -n "{{dev_cert_nickname}}" || true
-  pk12util -d sql:$HOME/.pki/nssdb -i "{{dev_cert_path}}"
 
 desktop *ARGS:
   npm run build --workspace arhiv-desktop

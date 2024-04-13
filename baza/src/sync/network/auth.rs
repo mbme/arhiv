@@ -10,14 +10,14 @@ use axum::{
 };
 
 use rs_utils::{
-    bytes_to_hex_string, hex_string_to_bytes,
-    http_server::{ServerCertificate, TlsData},
-    log, ResponseVerifier, HMAC,
+    bytes_to_hex_string, hex_string_to_bytes, http_server::ServerCertificate, log, AuthToken,
+    ResponseVerifier, HMAC,
 };
 
 use crate::Baza;
 
 pub const CERTIFICATE_HMAC_HEADER: &str = "X-Certificate-HMAC-Tag";
+pub const CLIENT_AUTH_TOKEN_HEADER: &str = "X-Client-Auth-Token";
 
 pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
     let conn = baza.get_connection()?;
@@ -31,66 +31,44 @@ pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
     Ok(hmac)
 }
 
-pub async fn client_cert_validator(
+pub async fn client_authenticator(
     Extension(baza): Extension<Arc<Baza>>,
     Extension(server_cert): Extension<ServerCertificate>,
-    tls_data: Extension<TlsData>,
     request: Request,
     next: Next,
 ) -> Response {
     let hmac = create_shared_network_key(&baza).unwrap();
     let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_cert.as_ref()));
 
-    if tls_data.certificates.len() != 1 {
-        return with_hmac_tag_header(
-            (
-                StatusCode::BAD_REQUEST,
-                format!(
-                    "Expected 1 TLS certificate, got {}",
-                    tls_data.certificates.len()
-                ),
-            ),
-            server_cert_hmac_tag,
-        );
-    }
-
-    let client_cert = tls_data
-        .certificates
-        .first()
-        .expect("certificate must be present");
-
-    let client_cert_hmac = request
+    let client_auth_token = request
         .headers()
-        .get(CERTIFICATE_HMAC_HEADER)
-        .context(format!("{CERTIFICATE_HMAC_HEADER} header is missing"))
+        .get(CLIENT_AUTH_TOKEN_HEADER)
+        .context(format!("{CLIENT_AUTH_TOKEN_HEADER} header is missing"))
         .and_then(|value| {
             value.to_str().context(format!(
-                "Failed to read {CERTIFICATE_HMAC_HEADER} header as string"
+                "Failed to read {CLIENT_AUTH_TOKEN_HEADER} header as string"
             ))
         })
-        .and_then(hex_string_to_bytes);
+        .and_then(AuthToken::parse);
 
-    let client_cert_hmac = match client_cert_hmac {
-        Ok(client_cert_hmac) => client_cert_hmac,
+    let client_auth_token = match client_auth_token {
+        Ok(client_auth_token) => client_auth_token,
         Err(err) => {
             return with_hmac_tag_header(
                 (
                     StatusCode::BAD_REQUEST,
-                    format!("Failed to read {CERTIFICATE_HMAC_HEADER} header: {err}"),
+                    format!("Failed to read {CLIENT_AUTH_TOKEN_HEADER} header: {err}"),
                 ),
                 server_cert_hmac_tag,
             )
         }
     };
 
-    if !hmac.verify(client_cert, &client_cert_hmac) {
-        log::warn!("Got unknown client certificate");
+    if let Err(err) = client_auth_token.assert_is_valid(&hmac) {
+        log::warn!("Got unauthenticated client: {err}");
 
         return with_hmac_tag_header(
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid HMAC tag for client TLS certificate",
-            ),
+            (StatusCode::UNAUTHORIZED, "Invalid client auth token"),
             server_cert_hmac_tag,
         );
     }

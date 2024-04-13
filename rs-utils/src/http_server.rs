@@ -27,13 +27,7 @@ use tokio::{
     io::{AsyncRead, AsyncWrite},
     task::JoinHandle,
 };
-use tokio_rustls::{
-    rustls::{
-        server::{ClientCertVerified, ClientCertVerifier},
-        Certificate, PrivateKey, ServerConfig,
-    },
-    server::TlsStream,
-};
+use tokio_rustls::server::TlsStream;
 use tower::Layer;
 
 use crate::SelfSignedCertificate;
@@ -157,16 +151,11 @@ impl HttpServer {
         router: Router,
         server_certificate: SelfSignedCertificate,
     ) -> Result<Self> {
-        let mut config = ServerConfig::builder()
-            .with_safe_defaults()
-            .with_client_cert_verifier(Arc::new(RequireAnyClientCertificate))
-            .with_single_cert(
-                vec![Certificate(server_certificate.certificate_der)],
-                PrivateKey(server_certificate.private_key_der.as_bytes().to_vec()),
-            )?;
-        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-
-        let config = RustlsConfig::from_config(Arc::new(config));
+        let config = RustlsConfig::from_der(
+            vec![server_certificate.certificate_der],
+            server_certificate.private_key_der.as_bytes().to_vec(),
+        )
+        .await?;
 
         let server_handle = Handle::new();
 
@@ -281,26 +270,6 @@ where
 
             Ok((stream, service))
         })
-    }
-}
-
-struct RequireAnyClientCertificate;
-
-impl ClientCertVerifier for RequireAnyClientCertificate {
-    fn client_auth_root_subjects(&self) -> &[tokio_rustls::rustls::DistinguishedName] {
-        &[]
-    }
-
-    fn verify_client_cert(
-        &self,
-        _end_entity: &Certificate,
-        _intermediates: &[Certificate],
-        _now: std::time::SystemTime,
-    ) -> std::prelude::v1::Result<
-        tokio_rustls::rustls::server::ClientCertVerified,
-        tokio_rustls::rustls::Error,
-    > {
-        Ok(ClientCertVerified::assertion())
     }
 }
 

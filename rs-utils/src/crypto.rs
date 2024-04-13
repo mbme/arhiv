@@ -14,7 +14,9 @@ use ring::{
     pbkdf2,
 };
 use secstr::{SecUtf8, SecVec};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+use crate::generate_alpanumeric_string;
 
 pub fn get_file_hash_blake3(file_path: &str) -> Result<Vec<u8>> {
     let mut hasher = blake3::Hasher::new();
@@ -313,6 +315,50 @@ impl HMAC {
 
     pub fn verify(&self, msg: &[u8], tag: &[u8]) -> bool {
         hmac::verify(&self.key, msg, tag).is_ok()
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AuthToken {
+    plain_text: String,
+    signature: Vec<u8>,
+}
+
+impl AuthToken {
+    pub const PLAIN_TEXT_LENGTH: usize = 256;
+
+    pub fn generate(hmac: &HMAC) -> Self {
+        let plain_text = generate_alpanumeric_string(AuthToken::PLAIN_TEXT_LENGTH);
+
+        let signature = hmac.sign(plain_text.as_bytes());
+
+        Self {
+            plain_text,
+            signature,
+        }
+    }
+
+    pub fn assert_is_valid(&self, hmac: &HMAC) -> Result<()> {
+        ensure!(
+            self.plain_text.len() == AuthToken::PLAIN_TEXT_LENGTH,
+            "plain text must be {} chars long",
+            AuthToken::PLAIN_TEXT_LENGTH
+        );
+
+        let is_valid = hmac.verify(self.plain_text.as_bytes(), &self.signature);
+
+        ensure!(is_valid, "Auth token is invalid");
+
+        Ok(())
+    }
+
+    pub fn serialize(&self) -> String {
+        serde_json::to_string(self).expect("must serialize AuthToken")
+    }
+
+    pub fn parse(value: &str) -> Result<Self> {
+        serde_json::from_str(value).context("failed to parse AuthToken")
     }
 }
 

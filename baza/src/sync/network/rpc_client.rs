@@ -1,17 +1,17 @@
 use std::{str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::{bail, Context, Result};
-use reqwest::{header, Client, Identity, Url};
+use reqwest::{header, Client, Url};
 
-use rs_utils::{bytes_to_hex_string, log, Download, ResponseVerifier, SelfSignedCertificate};
+use rs_utils::{log, AuthToken, Download, ResponseVerifier};
 
 use crate::{
     entities::{Revision, BLOB},
-    sync::{changeset::Changeset, network::auth::CERTIFICATE_HMAC_HEADER, ping::Ping},
+    sync::{changeset::Changeset, ping::Ping},
     Baza,
 };
 
-use super::auth::{create_shared_network_key, ServerCertVerifier};
+use super::auth::{create_shared_network_key, ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
 
 #[derive(Debug, Clone)]
 pub struct BazaClient {
@@ -22,28 +22,24 @@ pub struct BazaClient {
 }
 
 impl BazaClient {
-    pub fn new(url: &str, certificate: &SelfSignedCertificate, baza: &Baza) -> Result<Self> {
+    pub fn new(url: &str, baza: &Baza) -> Result<Self> {
         let downloads_dir = baza.get_path_manager().downloads_dir.clone();
 
         let hmac = create_shared_network_key(baza)?;
 
         let rpc_server_url = Url::from_str(url).context("failed to parse url")?;
-        let certificate_hmac = bytes_to_hex_string(&hmac.sign(&certificate.certificate_der));
 
         let mut default_headers = header::HeaderMap::new();
-        default_headers.insert(
-            CERTIFICATE_HMAC_HEADER,
-            header::HeaderValue::from_str(&certificate_hmac)?,
-        );
 
-        let cert_and_key_pem = certificate.to_pem();
-        let identity = Identity::from_pem(cert_and_key_pem.as_ref())
-            .context("Failed to prepare client TLS identity")?;
+        let auth_token = AuthToken::generate(&hmac).serialize();
+        default_headers.insert(
+            CLIENT_AUTH_TOKEN_HEADER,
+            header::HeaderValue::from_str(&auth_token)?,
+        );
 
         let client = Client::builder()
             .https_only(true)
             .danger_accept_invalid_certs(true) // TODO find another way, since this allows expired certificates
-            .identity(identity)
             .tls_info(true)
             .default_headers(default_headers)
             .connect_timeout(Duration::from_secs(30))

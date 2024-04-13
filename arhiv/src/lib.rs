@@ -7,12 +7,10 @@ mod import;
 pub mod scraper;
 mod server;
 mod status;
-mod ui_server;
 
 pub use arhiv::{Arhiv, ArhivOptions};
 pub use config::ArhivConfigExt;
-pub use server::ArhivServer;
+pub use server::{ArhivServer, UI_BASE_PATH};
 pub use status::Status;
-pub use ui_server::UI_BASE_PATH;
 
 pub use baza::Credentials;

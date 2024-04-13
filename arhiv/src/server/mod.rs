@@ -17,10 +17,11 @@ use rs_utils::{
     log, must_create_file, now, LockFile, SecretString, SelfSignedCertificate,
 };
 
-use crate::{
-    ui_server::{build_ui_router, UIState, UI_BASE_PATH},
-    ArhivOptions,
-};
+use crate::ArhivOptions;
+pub use ui_server::UI_BASE_PATH;
+use ui_server::{build_ui_router, UIState};
+
+mod ui_server;
 
 struct ArhivServerLock {
     lock_file: String,

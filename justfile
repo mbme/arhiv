@@ -18,7 +18,7 @@ run:
 
 desktop *ARGS:
   npm run build --workspace arhiv-desktop
-  ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop {{ARGS}}
+  DEV_ARHIV_ROOT={{root}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop {{ARGS}}
 
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}

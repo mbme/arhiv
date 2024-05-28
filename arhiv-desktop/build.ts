@@ -13,6 +13,7 @@ await esbuild.build({
   platform: 'node',
   target: ['node18.12'],
   external: ['electron'],
+  loader: { '.png': 'dataurl' },
 
   bundle: true,
   minify: false, // ease of debugging is more important than size

@@ -2,6 +2,11 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+const execFileAsync = promisify(execFile);
+
+const arhivBin = process.env.ARHIV_BIN ?? 'arhiv';
+console.log('arhiv bin:', arhivBin);
+
 type ServerInfo = {
   url: string;
   certificate: number[];
@@ -11,8 +16,8 @@ type ExtendedServerInfo = ServerInfo & {
   fingerprint: string;
 };
 
-export async function getServerInfo(arhivBin: string): Promise<ExtendedServerInfo> {
-  const result = await promisify(execFile)(arhivBin, ['server-info'], { encoding: 'utf8' });
+export async function getServerInfo(): Promise<ExtendedServerInfo> {
+  const result = await execFileAsync(arhivBin, ['server-info'], { encoding: 'utf8' });
 
   if (!result.stdout) {
     throw new Error("arhiv server-info didn't return any output");

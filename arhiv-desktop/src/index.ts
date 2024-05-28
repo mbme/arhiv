@@ -85,10 +85,7 @@ async function start(args: string[]) {
     return;
   }
 
-  const arhivBin = process.env.ARHIV_BIN ?? 'arhiv';
-  console.log('arhiv bin:', arhivBin);
-
-  const serverInfo = await getServerInfo(arhivBin);
+  const serverInfo = await getServerInfo();
   console.log('server base url:', serverInfo.url);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {

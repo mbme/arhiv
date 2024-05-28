@@ -1,7 +1,5 @@
-import { execFile } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { promisify } from 'node:util';
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
+import { getServerInfo } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
 // run arhiv server if not running
@@ -9,34 +7,6 @@ import favicon from '../../resources/favicon-16x16.png';
 // if command "open" / "search" -> show window
 // do not close app if last window closed
 // https://www.electronjs.org/docs/latest/api/app#apprequestsingleinstancelockadditionaldata
-
-type ServerInfo = {
-  url: string;
-  certificate: number[];
-};
-
-async function getServerInfo(arhivBin: string): Promise<ServerInfo> {
-  const result = await promisify(execFile)(arhivBin, ['server-info'], { encoding: 'utf8' });
-
-  if (!result.stdout) {
-    throw new Error("arhiv server-info didn't return any output");
-  }
-
-  const serverInfo = JSON.parse(result.stdout.toString()) as ServerInfo | null;
-  if (!serverInfo) {
-    throw new Error("arhiv server isn't running");
-  }
-
-  return serverInfo;
-}
-
-function getCertificateFingerprint(certificate: number[]): string {
-  const hash = createHash('sha256');
-  hash.update(Buffer.from(certificate));
-  const base64Hash = hash.digest('base64');
-
-  return `sha256/${base64Hash}`;
-}
 
 function showTrayIcon() {
   const icon = nativeImage.createFromDataURL(favicon);
@@ -130,11 +100,9 @@ async function start(args: string[]) {
     });
   });
 
-  const expectedFingerprint = getCertificateFingerprint(serverInfo.certificate);
-
   // SSL/TSL: self signed certificate support
   app.on('certificate-error', (event, _webContents, _url, _error, certificate, callback) => {
-    const isValidHash = certificate.fingerprint === expectedFingerprint;
+    const isValidHash = certificate.fingerprint === serverInfo.fingerprint;
     if (isValidHash) {
       // disable default behaviour (stop loading the page)
       event.preventDefault();
@@ -143,7 +111,7 @@ async function start(args: string[]) {
       callback(true);
     } else {
       console.error('Invalid certificate fingerprint', certificate.fingerprint);
-      console.error('Expected fingerprint', expectedFingerprint);
+      console.error('Expected fingerprint', serverInfo.fingerprint);
     }
   });
 

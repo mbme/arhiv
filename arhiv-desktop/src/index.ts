@@ -1,5 +1,5 @@
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
-import { getServerInfo } from './arhiv';
+import { getServerInfo, startServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
 // run arhiv server if not running
@@ -49,17 +49,15 @@ async function handleAction(action: Action, baseUrl: string) {
     return;
   }
 
-  if (args[0] === 'search') {
-    win = new BrowserWindow({
-      autoHideMenuBar: true,
-      width: 800,
-      height: 600,
-    });
+  win = new BrowserWindow({
+    autoHideMenuBar: true,
+    width: 800,
+    height: 600,
+  });
 
-    await win.loadURL(baseUrl).catch(() => {
-      console.error('failed to open Arhiv');
-    });
-  }
+  await win.loadURL(baseUrl).catch(() => {
+    console.error('failed to open Arhiv');
+  });
 
   switch (action.type) {
     case 'search': {
@@ -83,6 +81,12 @@ async function start(args: string[]) {
   if (!app.requestSingleInstanceLock(action)) {
     app.quit();
     return;
+  }
+
+  if (args.includes('--start-server')) {
+    startServer(() => {
+      app.quit();
+    });
   }
 
   const serverInfo = await getServerInfo();

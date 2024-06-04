@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -40,4 +40,24 @@ function getCertificateFingerprint(certificate: number[]): string {
   const base64Hash = hash.digest('base64');
 
   return `sha256/${base64Hash}`;
+}
+
+export function startServer(onError: () => void): void {
+  console.log('starting arhiv server');
+  const result = spawn(arhivBin, ['server', '--port', '8443'], { stdio: 'inherit' });
+
+  // TODO wait for server on port
+
+  result.on('close', (code) => {
+    console.log(`Arhiv server: Process exited with code ${code}`);
+  });
+
+  result.on('error', (err) => {
+    console.error('Arhiv server: Failed to start process:', err);
+    onError();
+  });
+
+  process.on('exit', () => {
+    result.kill();
+  });
 }

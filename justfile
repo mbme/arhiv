@@ -2,6 +2,7 @@
 
 home := env("HOME")
 root := home + "/temp/arhiv"
+debug_log_level := "debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace"
 
 arhiv *PARAMS:
   DEV_ARHIV_ROOT="{{root}}" cargo run --bin arhiv {{PARAMS}}
@@ -11,14 +12,14 @@ arhiv-server:
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEV_ARHIV_ROOT={{root}} RUST_LOG=debug,h2=info,rustls=info,mdns_sd=info,rs_utils=info,hyper=info,axum::rejection=trace cargo run -p binutils --bin arhiv server --port 8443' \; \
+     'DEV_ARHIV_ROOT={{root}} RUST_LOG={{debug_log_level}} cargo run -p binutils --bin arhiv server --port 8443' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
 
 desktop *ARGS:
   npm run build --workspace arhiv-desktop
-  DEV_ARHIV_ROOT={{root}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop {{ARGS}}
+  DEV_ARHIV_ROOT={{root}} RUST_LOG={{debug_log_level}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop -- {{ARGS}}
 
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}

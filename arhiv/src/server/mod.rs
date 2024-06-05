@@ -3,8 +3,10 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use axum::{
     extract::{Request, State},
+    http::HeaderMap,
     middleware::{self, Next},
     response::{IntoResponse, Response},
+    routing::get,
     Router,
 };
 use reqwest::StatusCode;
@@ -12,7 +14,7 @@ use tokio::sync::oneshot;
 
 use baza::sync::build_rpc_router;
 use rs_utils::{
-    http_server::{fallback_route, HttpServer},
+    http_server::{add_no_cache_headers, fallback_route, HttpServer},
     log,
 };
 
@@ -52,6 +54,7 @@ impl ArhivServer {
         let router = Router::new()
             .merge(rpc_router)
             .nest(UI_BASE_PATH, ui_router)
+            .route("/health", get(health_handler))
             .fallback(fallback_route);
 
         let server = HttpServer::new_https(server_port, router, certificate).await?;
@@ -105,4 +108,12 @@ async fn extract_baza_from_state(
     request.extensions_mut().insert(baza);
 
     next.run(request).await
+}
+
+#[allow(clippy::unused_async)]
+async fn health_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+
+    (StatusCode::OK, headers)
 }

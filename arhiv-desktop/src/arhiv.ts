@@ -1,3 +1,4 @@
+import https from 'node:https';
 import { createHash } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -60,4 +61,51 @@ export function startServer(onError: () => void): void {
   process.on('exit', () => {
     result.kill();
   });
+}
+
+async function isServerRunning(url: string) {
+  return new Promise((resolve) => {
+    const req = https.request(
+      url,
+      {
+        rejectUnauthorized: false,
+      },
+      (res) => {
+        if (res.statusCode === 200) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      },
+    );
+
+    req.on('error', () => {
+      resolve(false);
+    });
+
+    req.end();
+  });
+}
+
+function promiseTimeout(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, timeoutMs));
+}
+
+export async function waitForServer(url: string): Promise<void> {
+  const MAX_ATTEMPTS = 20;
+
+  for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
+    const running = await isServerRunning(url);
+
+    if (running) {
+      console.log('waitForServer: Server is running');
+      return;
+    }
+
+    console.log('waitForServer: attempt %s failed, waiting', i);
+
+    await promiseTimeout(150);
+  }
+
+  throw new Error('Waiting for server timed out');
 }

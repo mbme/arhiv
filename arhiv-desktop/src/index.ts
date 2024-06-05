@@ -1,5 +1,5 @@
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
-import { getServerInfo, startServer } from './arhiv';
+import { getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
 // run arhiv server if not running
@@ -91,6 +91,8 @@ async function start(args: string[]) {
 
   const serverInfo = await getServerInfo();
   console.log('server base url:', serverInfo.url);
+
+  await waitForServer('https://localhost:8443/health');
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {
     const actionFromSecondInstance = additionalData as Action;

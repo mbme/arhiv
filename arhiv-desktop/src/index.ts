@@ -2,17 +2,20 @@ import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
 import { getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
-// run arhiv server if not running
-// add tray icon by default, with open,search,quit
-// if command "open" / "search" -> show window
-// do not close app if last window closed
-// https://www.electronjs.org/docs/latest/api/app#apprequestsingleinstancelockadditionaldata
+// TODO handle open/search signals in arhiv UI
 
-function showTrayIcon() {
+function showTrayIcon(baseUrl: string) {
   const icon = nativeImage.createFromDataURL(favicon);
   const tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, baseUrl) },
+    {
+      label: 'Search',
+      type: 'normal',
+      click: () => void handleAction({ type: 'search', query: '' }, baseUrl),
+    },
+    { type: 'separator' },
     { label: 'Quit', type: 'normal', click: () => app.quit() },
   ]);
 
@@ -22,7 +25,7 @@ function showTrayIcon() {
 
 type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
-function parseAction(args: string[]): Action {
+function parseAction(args: string[]): Action | undefined {
   switch (args[0]) {
     case 'search':
       return { type: 'search', query: args[1] ?? '' };
@@ -32,32 +35,38 @@ function parseAction(args: string[]): Action {
       }
       return { type: 'open', documentId: args[1] };
     default:
-      return { type: 'open' };
+      return undefined;
   }
 }
 
-let win: BrowserWindow;
+let win: BrowserWindow | undefined;
 
 async function handleAction(action: Action, baseUrl: string) {
+  console.log('Handling action', action);
+
   // if window already open - restore & focus
   if (win) {
+    console.log('Window already open, reusing');
     if (win.isMinimized()) {
       win.restore();
     }
     win.focus();
-    console.log('Another instance already running');
-    return;
+  } else {
+    console.log('Opening new window');
+    win = new BrowserWindow({
+      autoHideMenuBar: true,
+      width: 800,
+      height: 600,
+    });
+
+    win.on('closed', () => {
+      win = undefined;
+    });
+
+    await win.loadURL(baseUrl).catch(() => {
+      console.error('failed to open Arhiv');
+    });
   }
-
-  win = new BrowserWindow({
-    autoHideMenuBar: true,
-    width: 800,
-    height: 600,
-  });
-
-  await win.loadURL(baseUrl).catch(() => {
-    console.error('failed to open Arhiv');
-  });
 
   switch (action.type) {
     case 'search': {
@@ -118,11 +127,18 @@ async function start(args: string[]) {
     }
   });
 
+  // needed to prevent quiting the app when last window is closed
+  app.on('window-all-closed', () => {
+    console.log('last window closed');
+  });
+
   await app.whenReady();
 
-  showTrayIcon();
+  showTrayIcon(serverInfo.url);
 
-  await handleAction(action, serverInfo.url);
+  if (action) {
+    await handleAction(action, serverInfo.url);
+  }
 }
 
 const args = process.argv.slice(2);

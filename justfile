@@ -12,14 +12,14 @@ arhiv-server:
 
 run:
   cd arhiv; npm run clean; tmux new-session -s arhiv \
-     'DEV_ARHIV_ROOT={{root}} RUST_LOG={{debug_log_level}} cargo run -p binutils --bin arhiv server --port 8443' \; \
+     'DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} cargo run -p binutils --bin arhiv server' \; \
      split-window -h 'npm run watch:js' \; \
      split-window 'npm run watch:css' \; \
      select-pane -t 0
 
 desktop *ARGS:
   npm run build --workspace arhiv-desktop
-  DEV_ARHIV_ROOT={{root}} RUST_LOG={{debug_log_level}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop -- {{ARGS}}
+  DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop -- {{ARGS}}
 
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}

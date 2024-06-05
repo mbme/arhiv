@@ -89,7 +89,7 @@ enum CLICommand {
     /// Run server
     Server {
         /// The port to listen on
-        #[arg(long, default_value = "0")]
+        #[arg(long, env = "SERVER_PORT", default_value = "0")]
         port: u16,
     },
     /// Print server info, in JSON format

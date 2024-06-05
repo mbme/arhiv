@@ -44,7 +44,7 @@ function getCertificateFingerprint(certificate: number[]): string {
 
 export function startServer(onError: () => void): void {
   console.log('starting arhiv server');
-  const result = spawn(arhivBin, ['server', '--port', '8443'], { stdio: 'inherit' });
+  const result = spawn(arhivBin, ['server'], { stdio: 'inherit' });
 
   // TODO wait for server on port
 

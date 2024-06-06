@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
 import { getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
@@ -23,7 +24,7 @@ function showTrayIcon(baseUrl: string) {
   tray.setContextMenu(contextMenu);
 }
 
-type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
+export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
 function parseAction(args: string[]): Action | undefined {
   switch (args[0]) {
@@ -57,6 +58,9 @@ async function handleAction(action: Action, baseUrl: string) {
       autoHideMenuBar: true,
       width: 800,
       height: 600,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+      },
     });
 
     win.on('closed', () => {
@@ -68,18 +72,7 @@ async function handleAction(action: Action, baseUrl: string) {
     });
   }
 
-  switch (action.type) {
-    case 'search': {
-      win.webContents.send('search', action.query);
-      break;
-    }
-    case 'open': {
-      if (action.documentId) {
-        win.webContents.send('open', action.documentId);
-      }
-      break;
-    }
-  }
+  win.webContents.send('action', action);
 }
 
 async function start(args: string[]) {

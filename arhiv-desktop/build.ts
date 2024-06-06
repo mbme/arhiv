@@ -19,3 +19,16 @@ await esbuild.build({
   minify: false, // ease of debugging is more important than size
   sourcemap: true,
 });
+
+await esbuild.build({
+  entryPoints: ['./src/preload.ts'],
+  outfile: './dist/preload.cjs',
+
+  format: 'cjs',
+  platform: 'node',
+  target: ['node18.12'],
+
+  bundle: false,
+  minify: false, // ease of debugging is more important than size
+  sourcemap: true,
+});

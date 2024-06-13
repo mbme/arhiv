@@ -7,7 +7,7 @@ import { Icon } from 'components/Icon';
 import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { QueryError } from 'components/QueryError';
-import { useCardContext } from './workspace-reducer';
+import { useCardContext } from './controller';
 
 const renderError = (error: unknown) => (
   <div className="card-content">

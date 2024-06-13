@@ -15,7 +15,7 @@ import { useShallowMemo } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { RPC } from 'utils/rpc';
 import { CardContainer } from 'Workspace/CardContainer';
-import { useCardContext } from 'Workspace/workspace-reducer';
+import { useCardContext } from 'Workspace/controller';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { Markup } from 'components/Markup';

@@ -1,6 +1,6 @@
 import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { Catalog } from 'components/Catalog/Catalog';
-import { Card, useCardContext } from './workspace-reducer';
+import { Card, useCardContext } from './controller';
 import { CardContainer } from './CardContainer';
 
 type CatalogCard = Extract<Card, { variant: 'catalog' }>;

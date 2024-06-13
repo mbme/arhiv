@@ -8,7 +8,7 @@ import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
-import { useCardLock } from '../workspace-reducer';
+import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';

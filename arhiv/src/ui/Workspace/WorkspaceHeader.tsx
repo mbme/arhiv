@@ -7,7 +7,7 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
-import { WorkspaceController } from './workspace-reducer';
+import { WorkspaceController } from './controller';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CommitOrSyncButton } from './CommitOrSyncButton';

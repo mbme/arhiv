@@ -4,7 +4,7 @@ import { copyTextToClipbard, getDocumentUrl } from 'utils';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { useBazaEvent } from 'baza-events';
 import { CardContainer } from 'Workspace/CardContainer';
-import { Card, useCardContext } from 'Workspace/workspace-reducer';
+import { Card, useCardContext } from 'Workspace/controller';
 import { ProgressLocker } from 'components/ProgressLocker';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';

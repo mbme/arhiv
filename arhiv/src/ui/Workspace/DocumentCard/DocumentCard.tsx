@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { ProgressLocker } from 'components/ProgressLocker';
-import { useCardContext, useCardLock } from '../workspace-reducer';
+import { useCardContext, useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';

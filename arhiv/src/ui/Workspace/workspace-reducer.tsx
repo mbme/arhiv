@@ -1,4 +1,5 @@
-import { useEffect, useReducer, createContext, startTransition, useContext, useMemo } from 'react';
+import { useEffect, createContext, useContext } from 'react';
+import { effect, signal } from '@preact/signals-core';
 import { newId } from 'utils';
 import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
@@ -48,365 +49,193 @@ export function throwBadCardVariant(value: CardVariant) {
   throw new Error(`Unknown CardVariant: ${value.variant}`);
 }
 
-type ActionType =
-  | {
-      type: 'open';
-      newCard: Card;
-      skipDocumentIfAlreadyOpen?: boolean;
-    }
-  | {
-      type: 'close';
-      id: CardId;
-    }
-  | {
-      type: 'replace';
-      id: CardId;
-      newCard: Card;
-      stackPrevious?: boolean;
-    }
-  | {
-      type: 'pop';
-      id: CardId;
-    }
-  | {
-      type: 'update';
-      id: CardId;
-      props: UpdateActionProps;
-    }
-  | {
-      type: 'close-all';
-    }
-  | {
-      type: 'lock-card';
-      id: CardId;
-    }
-  | {
-      type: 'unlock-card';
-      id: CardId;
-    };
-
 type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
 
-export type WorkspaceDispatch = (action: ActionType) => void;
+export class WorkspaceController {
+  readonly $cards = signal<Card[]>([]);
 
-type WorkspaceState = {
-  cards: Card[];
-};
-function workspaceReducer(state: WorkspaceState, action: ActionType): WorkspaceState {
-  switch (action.type) {
-    case 'open': {
-      if (action.skipDocumentIfAlreadyOpen && action.newCard.variant === 'document') {
-        const { documentId, openTime } = action.newCard;
-
-        const isAlreadyOpen = state.cards.some(
-          (card) => card.variant === 'document' && card.documentId === documentId,
-        );
-
-        if (isAlreadyOpen) {
-          return {
-            ...state,
-            cards: state.cards.map((card) => {
-              if (card.variant === 'document' && card.documentId === documentId) {
-                return {
-                  ...card,
-                  openTime,
-                };
-              }
-
-              return card;
-            }),
-          };
-        }
-      }
-
-      return {
-        ...state,
-        cards: [...state.cards, action.newCard],
-      };
-    }
-
-    case 'close': {
-      if (!cardUpdateConfirmed(state, action.id)) {
-        return state;
-      }
-
-      return {
-        ...state,
-        cards: state.cards.filter((card) => card.id !== action.id),
-      };
-    }
-
-    case 'replace': {
-      if (!cardUpdateConfirmed(state, action.id)) {
-        return state;
-      }
-
-      const pos = state.cards.findIndex((card) => card.id === action.id);
-      if (pos === -1) {
-        throw new Error(`can't replace card: can't find card with id ${action.id}`);
-      }
-
-      const prevCard = action.stackPrevious ? state.cards[pos] : undefined;
-
-      const newCards = [...state.cards];
-      newCards[pos] = {
-        previousCard: prevCard,
-        ...action.newCard,
-      };
-
-      return {
-        ...state,
-        cards: newCards,
-      };
-    }
-
-    case 'pop': {
-      if (!cardUpdateConfirmed(state, action.id)) {
-        return state;
-      }
-
-      const pos = state.cards.findIndex((card) => card.id === action.id);
-      if (pos === -1) {
-        throw new Error(`can't pop: can't find card with id ${action.id}`);
-      }
-      const card = state.cards[pos];
-
-      if (!card.previousCard) {
-        throw new Error("can't pop: there is no previousCard");
-      }
-
-      const newCards = [...state.cards];
-      newCards[pos] = card.previousCard;
-
-      return {
-        ...state,
-        cards: newCards,
-      };
-    }
-
-    case 'update': {
-      if (!cardUpdateConfirmed(state, action.id)) {
-        return state;
-      }
-
-      return {
-        ...state,
-        cards: state.cards.map((card) => {
-          if (card.id === action.id) {
-            return {
-              ...card,
-              ...action.props,
-            };
-          }
-
-          return card;
-        }),
-      };
-    }
-
-    case 'close-all': {
-      return {
-        ...state,
-        // keep only locked cards
-        cards: state.cards.filter((card) => card.locked),
-      };
-    }
-
-    case 'lock-card': {
-      return {
-        ...state,
-        cards: state.cards.map((card) => {
-          if (card.id === action.id) {
-            return {
-              ...card,
-              locked: true,
-            };
-          }
-          return card;
-        }),
-      };
-    }
-
-    case 'unlock-card': {
-      return {
-        ...state,
-        cards: state.cards.map((card) => {
-          if (card.id === action.id) {
-            return {
-              ...card,
-              locked: false,
-            };
-          }
-          return card;
-        }),
-      };
-    }
-
-    default: {
-      return state;
-    }
-  }
-}
-
-function cardUpdateConfirmed(state: WorkspaceState, id: CardId) {
-  const card = state.cards.find((item) => item.id === id);
-  if (!card) {
-    throw new Error(`Can't find card ${id}`);
-  }
-
-  if (!card.locked) {
-    return true;
-  }
-
-  return window.confirm('The card may contain unsaved changes. Continue?');
-}
-
-const STORAGE_KEY = 'workspace-state';
-
-export function useWorkspaceReducer(): [WorkspaceState, WorkspaceDispatch] {
-  const [state, dispatch] = useReducer(workspaceReducer, undefined, () => {
-    const cards = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
+  constructor() {
+    this.$cards.value = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
       ...card,
       restored: true,
     }));
 
-    return {
-      cards,
-      lockedCardIds: new Set([]),
+    effect(() => {
+      storage.setValue(STORAGE_KEY, this.$cards.value);
+    });
+  }
+
+  open(newCardVariant: CardVariant, skipDocumentIfAlreadyOpen = false) {
+    const newCard = {
+      ...newCardVariant,
+      id: newId(),
+      openTime: Date.now(),
     };
-  });
 
-  useEffect(() => {
-    storage.setValue(STORAGE_KEY, state.cards);
-  }, [state.cards]);
+    const cards = this.$cards.value;
 
-  return [state, dispatch];
+    if (skipDocumentIfAlreadyOpen && newCard.variant === 'document') {
+      const { documentId, openTime } = newCard;
+
+      const isAlreadyOpen = cards.some(
+        (card) => card.variant === 'document' && card.documentId === documentId,
+      );
+
+      if (isAlreadyOpen) {
+        this.$cards.value = cards.map((card) => {
+          if (card.variant === 'document' && card.documentId === documentId) {
+            return {
+              ...card,
+              openTime,
+            };
+          }
+
+          return card;
+        });
+      }
+    }
+
+    this.$cards.value = [...cards, newCard];
+  }
+
+  openDocument = (documentId: DocumentId, skipDocumentIfAlreadyOpen = false) => {
+    this.open(
+      {
+        variant: 'document',
+        documentId,
+      },
+      skipDocumentIfAlreadyOpen, // FIXME dont pass through
+    );
+  };
+
+  pushStack(id: CardId, newCardVariant: CardVariant) {
+    this.replace(id, newCardVariant, true);
+  }
+
+  pushDocument(id: CardId, documentId: DocumentId) {
+    this.pushStack(id, {
+      variant: 'document',
+      documentId,
+    });
+  }
+
+  popStack(id: CardId) {
+    if (!this.cardUpdateConfirmed(id)) {
+      return;
+    }
+
+    const cards = this.$cards.value;
+    const pos = cards.findIndex((card) => card.id === id);
+    if (pos === -1) {
+      throw new Error(`can't pop: can't find card with id ${id}`);
+    }
+    const card = cards[pos];
+
+    if (!card.previousCard) {
+      throw new Error("can't pop: there is no previousCard");
+    }
+
+    const newCards = [...cards];
+    newCards[pos] = card.previousCard;
+
+    this.$cards.value = newCards;
+  }
+
+  update(id: CardId, props: UpdateActionProps) {
+    if (!this.cardUpdateConfirmed(id)) {
+      return;
+    }
+
+    this.$cards.value = this.$cards.value.map((card) => {
+      if (card.id === id) {
+        return {
+          ...card,
+          ...props,
+        };
+      }
+
+      return card;
+    });
+  }
+
+  lockCard(id: CardId) {
+    this.update(id, { locked: true });
+  }
+
+  unlockCard(id: CardId) {
+    this.update(id, { locked: false });
+  }
+
+  close(id: CardId) {
+    if (!this.cardUpdateConfirmed(id)) {
+      return;
+    }
+
+    this.$cards.value = this.$cards.value.filter((card) => card.id !== id);
+  }
+
+  closeAll() {
+    // keep only locked cards
+    this.$cards.value = this.$cards.value.filter((card) => card.locked);
+  }
+
+  replace(id: CardId, newCardVariant: CardVariant, stackPrevious = false) {
+    if (!this.cardUpdateConfirmed(id)) {
+      return;
+    }
+
+    const newCard = {
+      ...newCardVariant,
+      id: newId(),
+      openTime: Date.now(),
+    };
+
+    const cards = this.$cards.value;
+    const pos = cards.findIndex((card) => card.id === id);
+    if (pos === -1) {
+      throw new Error(`can't replace card: can't find card with id ${id}`);
+    }
+
+    const prevCard = stackPrevious ? cards[pos] : undefined;
+
+    const newCards = [...cards];
+    newCards[pos] = {
+      previousCard: prevCard,
+      ...newCard,
+    };
+
+    this.$cards.value = newCards;
+  }
+
+  private cardUpdateConfirmed(id: CardId): boolean {
+    const card = this.$cards.value.find((item) => item.id === id);
+    if (!card) {
+      throw new Error(`Can't find card ${id}`);
+    }
+
+    if (!card.locked) {
+      return true;
+    }
+
+    return window.confirm('The card may contain unsaved changes. Continue?');
+  }
 }
 
-export function useWorkspaceActions(dispatch: WorkspaceDispatch) {
-  return useMemo(
-    () => ({
-      close: (id: CardId) => {
-        startTransition(() => {
-          dispatch({
-            type: 'close',
-            id,
-          });
-        });
-      },
-      closeAll: () => {
-        startTransition(() => {
-          dispatch({
-            type: 'close-all',
-          });
-        });
-      },
-      replace: (id: CardId, newCard: CardVariant) => {
-        startTransition(() => {
-          dispatch({
-            type: 'replace',
-            id,
-            newCard: {
-              ...newCard,
-              openTime: Date.now(),
-              id: newId(),
-            },
-          });
-        });
-      },
-      pushStack: (id: CardId, newCard: CardVariant) => {
-        startTransition(() => {
-          dispatch({
-            type: 'replace',
-            id,
-            newCard: {
-              ...newCard,
-              openTime: Date.now(),
-              id: newId(),
-            },
-            stackPrevious: true,
-          });
-        });
-      },
-      popStack: (id: CardId) => {
-        startTransition(() => {
-          dispatch({
-            type: 'pop',
-            id,
-          });
-        });
-      },
-      pushDocument: (cardId: CardId, documentId: DocumentId) => {
-        startTransition(() => {
-          dispatch({
-            type: 'replace',
-            id: cardId,
-            newCard: { variant: 'document', documentId, id: newId(), openTime: Date.now() },
-            stackPrevious: true,
-          });
-        });
-      },
-      update: (id: CardId, props: UpdateActionProps) => {
-        dispatch({
-          type: 'update',
-          id,
-          props,
-        });
-      },
-      open: (newCard: CardVariant) => {
-        startTransition(() => {
-          dispatch({
-            type: 'open',
-            newCard: {
-              ...newCard,
-              openTime: Date.now(),
-              id: newId(),
-            },
-          });
-        });
-      },
-
-      openDocument: (documentId: DocumentId, skipDocumentIfAlreadyOpen = false) => {
-        startTransition(() => {
-          dispatch({
-            type: 'open',
-            newCard: { variant: 'document', documentId, id: newId(), openTime: Date.now() },
-            skipDocumentIfAlreadyOpen,
-          });
-        });
-      },
-
-      lock: (id: CardId) => {
-        dispatch({
-          type: 'lock-card',
-          id,
-        });
-      },
-
-      unlock: (id: CardId) => {
-        dispatch({
-          type: 'unlock-card',
-          id,
-        });
-      },
-    }),
-    [dispatch],
-  );
-}
+const STORAGE_KEY = 'workspace-state';
 
 type CardContextType = {
   card: Card;
-  dispatch: WorkspaceDispatch;
+  controller: WorkspaceController;
 };
 const CardContext = createContext<CardContextType | undefined>(undefined);
 
 type CardContextProviderProps = {
   card: Card;
-  dispatch: WorkspaceDispatch;
+  controller: WorkspaceController;
   children: JSXChildren;
 };
-export function CardContextProvider({ card, dispatch, children }: CardContextProviderProps) {
-  const value = useShallowMemo({ card, dispatch });
+export function CardContextProvider({ card, controller, children }: CardContextProviderProps) {
+  const value = useShallowMemo({ card, controller });
 
   return <CardContext.Provider value={value}>{children}</CardContext.Provider>;
 }
@@ -418,29 +247,26 @@ export function useCardContext<C extends Card = Card>() {
     throw new Error('CardContext is missing');
   }
 
-  const { card, dispatch } = context;
+  const { card, controller } = context;
 
   return {
     card: card as C,
-    actions: useWorkspaceActions(dispatch),
+    controller,
   };
 }
 
 export function useCardLock(lockCard: boolean) {
-  const {
-    card,
-    actions: { lock, unlock },
-  } = useCardContext();
+  const { card, controller } = useCardContext();
 
   useEffect(() => {
     if (!lockCard) {
       return;
     }
 
-    lock(card.id);
+    controller.lockCard(card.id);
 
     return () => {
-      unlock(card.id);
+      controller.unlockCard(card.id);
     };
-  }, [lockCard, card.id, lock, unlock]);
+  }, [lockCard, card.id, controller]);
 }

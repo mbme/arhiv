@@ -28,7 +28,7 @@ type TaskItemProps = {
   data: TaskData;
 };
 function TaskItem({ id, data }: TaskItemProps) {
-  const { card, actions } = useCardContext();
+  const { card, controller } = useCardContext();
 
   const {
     attributes, //
@@ -56,7 +56,7 @@ function TaskItem({ id, data }: TaskItemProps) {
         data.status === 'Cancelled' && 'line-through',
       )}
       onClick={() => {
-        actions.pushDocument(card.id, id);
+        controller.pushDocument(card.id, id);
       }}
     >
       <div
@@ -79,7 +79,7 @@ function TaskItem({ id, data }: TaskItemProps) {
         className="invisible group-hover:visible inline-block ml-3"
         onClick={(e) => {
           e.stopPropagation();
-          actions.openDocument(id, true);
+          controller.openDocument(id, true);
         }}
       />
     </li>

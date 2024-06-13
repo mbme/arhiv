@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
-import { useScrollRestoration } from 'utils/hooks';
+import { useScrollRestoration, useSignal } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { RefClickHandlerContext } from 'components/Ref';
 import { Toaster } from 'components/Toaster';
 import {
   Card,
-  useWorkspaceActions,
   CardContextProvider,
   throwBadCardVariant,
-  useWorkspaceReducer,
+  WorkspaceController,
 } from './workspace-reducer';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
@@ -23,25 +22,24 @@ export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(wrapperEl, 'workspace-scroll');
 
-  const [{ cards }, dispatch] = useWorkspaceReducer();
-
-  const { openDocument } = useWorkspaceActions(dispatch);
+  const [controller] = useState(() => new WorkspaceController());
+  const cards = useSignal(controller.$cards);
 
   useEffect(() => {
     const documentId = getQueryParam('id');
 
     if (documentId) {
-      openDocument(documentId as DocumentId, true);
+      controller.openDocument(documentId as DocumentId, true);
     }
-  }, [openDocument]);
+  }, [controller]);
 
   return (
-    <RefClickHandlerContext.Provider value={openDocument}>
+    <RefClickHandlerContext.Provider value={controller.openDocument}>
       <div className="workspace-cards" ref={setWrapperEl}>
-        <WorkspaceHeader dispatch={dispatch} />
+        <WorkspaceHeader controller={controller} />
 
         {cards.map((card) => (
-          <CardContextProvider key={card.id} card={card} dispatch={dispatch}>
+          <CardContextProvider key={card.id} card={card} controller={controller}>
             <SuspenseCacheProvider cacheId={card.id}>{renderCard(card)}</SuspenseCacheProvider>
           </CardContextProvider>
         ))}

@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  startTransition,
 } from 'react';
+import { Signal, effect } from '@preact/signals-core';
 import { shallowEqual } from 'shallow-equal';
 import { Callback, debounce, JSONValue, throttle } from './index';
 import { storage } from './storage';
@@ -331,4 +333,25 @@ export function useKeydown(
       el.removeEventListener('keydown', onKeyDown);
     };
   }, [el, onKeyDownRef]);
+}
+
+export function useSignal<T>(signal: Signal<T>): T {
+  const [value, setValue] = useState(signal.value);
+
+  useEffect(() => {
+    setValue(signal.value);
+
+    const unsub = effect(() => {
+      startTransition(() => {
+        // FIXME remove this
+        setValue(signal.value);
+      });
+    });
+
+    return () => {
+      unsub();
+    };
+  }, [signal]);
+
+  return value;
 }

@@ -6,7 +6,7 @@ import { CardContainer } from './CardContainer';
 type CatalogCard = Extract<Card, { variant: 'catalog' }>;
 
 export function CatalogCard() {
-  const { card, actions } = useCardContext<CatalogCard>();
+  const { card, controller } = useCardContext<CatalogCard>();
 
   return (
     <CardContainer
@@ -16,20 +16,20 @@ export function CatalogCard() {
       <Catalog
         autofocus={!card.restored}
         query={card.query ?? ''}
-        onQueryChange={(query) => actions.update(card.id, { query })}
+        onQueryChange={(query) => controller.update(card.id, { query })}
         page={card.page ?? 0}
-        onPageChange={(page) => actions.update(card.id, { page })}
+        onPageChange={(page) => controller.update(card.id, { page })}
         showSettings={card.showSettings ?? false}
-        onToggleSettings={(showSettings) => actions.update(card.id, { showSettings })}
+        onToggleSettings={(showSettings) => controller.update(card.id, { showSettings })}
         documentTypes={card.documentTypes ?? []}
         onIncludedDocumentTypesChange={(documentTypes) =>
-          actions.update(card.id, { documentTypes })
+          controller.update(card.id, { documentTypes })
         }
         onDocumentSelected={(info) => {
-          actions.pushDocument(card.id, info.id);
+          controller.pushDocument(card.id, info.id);
         }}
         onCreateNote={(title) => {
-          actions.open({
+          controller.open({
             variant: 'new-document',
             documentType: NOTE_DOCUMENT_TYPE,
             data: { title },

@@ -16,7 +16,7 @@ import { ProjectCard } from './ProjectCard';
 type DocumentCard = Extract<Card, { variant: 'document' }>;
 
 export function DocumentCardContainer() {
-  const { card, actions } = useCardContext<DocumentCard>();
+  const { card, controller } = useCardContext<DocumentCard>();
 
   const {
     value: document,
@@ -93,14 +93,14 @@ export function DocumentCardContainer() {
         document={document}
         isUpdating={isUpdating}
         onForceEditor={() =>
-          actions.pushStack(card.id, {
+          controller.pushStack(card.id, {
             variant: 'document',
             documentId: card.documentId,
             forceEditor: true,
           })
         }
         onAddTask={() => {
-          actions.open({
+          controller.open({
             variant: 'new-document',
             documentType: TASK_DOCUMENT_TYPE,
             collections: [card.documentId],

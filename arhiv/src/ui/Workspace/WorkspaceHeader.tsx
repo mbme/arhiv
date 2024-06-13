@@ -7,17 +7,15 @@ import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
-import { WorkspaceDispatch, useWorkspaceActions } from './workspace-reducer';
+import { WorkspaceController } from './workspace-reducer';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CommitOrSyncButton } from './CommitOrSyncButton';
 
 type Props = {
-  dispatch: WorkspaceDispatch;
+  controller: WorkspaceController;
 };
-export function WorkspaceHeader({ dispatch }: Props) {
-  const { open, closeAll, openDocument } = useWorkspaceActions(dispatch);
-
+export function WorkspaceHeader({ controller }: Props) {
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
@@ -51,7 +49,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
         {showNewDocumentDialog && (
           <NewDocumentDialog
             onNewDocument={(documentType) => {
-              open({ variant: 'new-document', documentType });
+              controller.open({ variant: 'new-document', documentType });
               setShowNewDocumentDialog(false);
             }}
             onScrape={() => {
@@ -83,7 +81,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
         {showScraperDialog && (
           <ScraperDialog
             onSuccess={(url, ids) => {
-              open({ variant: 'scrape-result', url, ids });
+              controller.open({ variant: 'scrape-result', url, ids });
               setShowScraperDialog(false);
             }}
             onCancel={() => {
@@ -95,7 +93,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
         {showFilePickerDialog && (
           <FilePickerDialog
             onAttachmentCreated={(documentId) => {
-              openDocument(documentId);
+              controller.openDocument(documentId);
               setShowFilePickerDialog(false);
             }}
             onCancel={() => {
@@ -110,12 +108,12 @@ export function WorkspaceHeader({ dispatch }: Props) {
             hideOnSelect
             onSelected={(info) => {
               setShowSearchDialog(false);
-              openDocument(info.id, true);
+              controller.openDocument(info.id, true);
             }}
             onCancel={() => setShowSearchDialog(false)}
             onCreateNote={(title) => {
               setShowSearchDialog(false);
-              open({
+              controller.open({
                 variant: 'new-document',
                 documentType: NOTE_DOCUMENT_TYPE,
                 data: { title },
@@ -126,7 +124,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
 
         <ImagePasteHandler
           onSuccess={(documentId) => {
-            openDocument(documentId);
+            controller.openDocument(documentId);
           }}
         />
 
@@ -136,13 +134,13 @@ export function WorkspaceHeader({ dispatch }: Props) {
             {
               text: 'Status',
               icon: 'info',
-              onClick: () => open({ variant: 'status' }),
+              onClick: () => controller.open({ variant: 'status' }),
             },
 
             {
               text: 'Catalog',
               icon: 'search-catalog',
-              onClick: () => open({ variant: 'catalog' }),
+              onClick: () => controller.open({ variant: 'catalog' }),
             },
 
             process.env.NODE_ENV === 'development' && {
@@ -155,7 +153,7 @@ export function WorkspaceHeader({ dispatch }: Props) {
             {
               text: 'Close cards',
               icon: 'x',
-              onClick: closeAll,
+              onClick: () => controller.closeAll(),
             },
           ]}
         />

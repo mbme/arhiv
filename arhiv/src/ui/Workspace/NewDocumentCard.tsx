@@ -9,14 +9,14 @@ import { DocumentEditor } from './DocumentEditor/DocumentEditor';
 type NewDocumentCard = Extract<Card, { variant: 'new-document' }>;
 
 export function NewDocumentCard() {
-  const { card, actions } = useCardContext<NewDocumentCard>();
+  const { card, controller } = useCardContext<NewDocumentCard>();
 
   const documentType = card.documentType;
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const onCancel = () => {
-    actions.close(card.id);
+    controller.close(card.id);
   };
 
   return (
@@ -61,8 +61,8 @@ export function NewDocumentCard() {
             return submitResult.errors;
           }
 
-          actions.unlock(card.id);
-          actions.replace(card.id, { variant: 'document', documentId: submitResult.id! });
+          controller.unlockCard(card.id);
+          controller.replace(card.id, { variant: 'document', documentId: submitResult.id! });
         }}
       />
     </CardContainer>

@@ -31,7 +31,7 @@ export function CardContainer({
   skipClose,
   className,
 }: CardContainerProps) {
-  const { card, actions } = useCardContext();
+  const { card, controller } = useCardContext();
 
   const restored = card.restored;
   const openTime = card.openTime;
@@ -73,7 +73,7 @@ export function CardContainer({
               icon="arrow-left"
               size="lg"
               title="Go back"
-              onClick={() => actions.popStack(card.id)}
+              onClick={() => controller.popStack(card.id)}
               className="relative right-2"
             />
           )}
@@ -85,7 +85,7 @@ export function CardContainer({
               icon="x"
               size="lg"
               title="Close"
-              onClick={() => actions.close(card.id)}
+              onClick={() => controller.close(card.id)}
               className="relative left-1"
             />
           )}

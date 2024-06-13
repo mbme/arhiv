@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function DocumentCard({ document, isUpdating, options }: Props) {
-  const { actions } = useCardContext();
+  const { controller } = useCardContext();
   const [showEraseConfirmation, setShowErasetConfirmation] = useState(false);
 
   const [form, setForm] = useState<HTMLFormElement | null>(null);
@@ -44,7 +44,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
               text: `Clone ${document.documentType}`,
               icon: 'duplicate-document',
               onClick: () => {
-                actions.open({
+                controller.open({
                   variant: 'new-document',
                   documentType: document.documentType,
                   data: document.data,

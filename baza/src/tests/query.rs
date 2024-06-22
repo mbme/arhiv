@@ -14,14 +14,8 @@ use crate::{
 fn test_pagination() -> Result<()> {
     let baza = Baza::new_test_baza();
 
-    {
-        let tx = baza.get_tx()?;
-
-        baza.add_document(Id::new(), Value::Null)?;
-        baza.add_document(Id::new(), Value::Null)?;
-
-        tx.commit()?;
-    }
+    baza.add_document(Id::new(), Value::Null)?;
+    baza.add_document(Id::new(), Value::Null)?;
 
     let page = baza.list_documents(Filter::default().page_size(1))?;
 

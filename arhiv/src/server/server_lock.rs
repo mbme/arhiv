@@ -2,7 +2,6 @@ use std::fs;
 
 use anyhow::{Context, Result};
 
-use baza::DEV_MODE;
 use rs_utils::{log, LockFile};
 
 pub struct ArhivServerLock {
@@ -12,13 +11,7 @@ pub struct ArhivServerLock {
 
 impl ArhivServerLock {
     pub fn new(root_dir: &str) -> Self {
-        let file_name = if DEV_MODE {
-            "arhiv-server-dev.lock"
-        } else {
-            "arhiv-server.lock"
-        };
-
-        let lock_file = format!("{root_dir}/{file_name}");
+        let lock_file = format!("{root_dir}/arhiv-server.lock");
         log::debug!("Arhiv server lock file: {lock_file}");
 
         Self {

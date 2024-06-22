@@ -1,13 +1,12 @@
 use std::{borrow::Cow, collections::HashSet, fs, sync::Arc, time::Instant};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use fslock::LockFile;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde_json::Value;
 use tokio::sync::broadcast::Sender;
 
 use rs_utils::{
-    file_exists, is_same_filesystem, log, now, FsTransaction, Timestamp, MIN_TIMESTAMP,
+    file_exists, is_same_filesystem, log, now, FsTransaction, LockFile, Timestamp, MIN_TIMESTAMP,
 };
 
 use crate::{
@@ -76,7 +75,7 @@ impl BazaConnection {
 
         conn.execute_batch("BEGIN DEFERRED")?;
 
-        let lock_file = LockFile::open(&path_manager.lock_file)?;
+        let lock_file = LockFile::new(&path_manager.lock_file)?;
 
         Ok(BazaConnection::Transaction {
             conn,
@@ -158,19 +157,7 @@ impl BazaConnection {
 
     fn get_fs_tx(&mut self) -> Result<&mut FsTransaction> {
         match self {
-            BazaConnection::Transaction {
-                lock_file,
-                ref mut fs_tx,
-                ..
-            } => {
-                if !lock_file.owns_lock() {
-                    lock_file
-                        .lock()
-                        .context("failed to lock on arhiv lock file")?;
-                }
-
-                Ok(fs_tx)
-            }
+            BazaConnection::Transaction { ref mut fs_tx, .. } => Ok(fs_tx),
             BazaConnection::ReadOnly { .. } => bail!("not a transaction"),
         }
     }
@@ -1099,17 +1086,7 @@ impl BazaConnection {
 impl Drop for BazaConnection {
     fn drop(&mut self) {
         match self {
-            BazaConnection::Transaction {
-                lock_file,
-                completed,
-                ..
-            } => {
-                if lock_file.owns_lock() {
-                    if let Err(err) = lock_file.unlock() {
-                        log::error!("Failed to unlock arhiv lock file: {}", err);
-                    }
-                }
-
+            BazaConnection::Transaction { completed, .. } => {
                 if *completed {
                     return;
                 }

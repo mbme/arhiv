@@ -11,6 +11,19 @@ use crate::{
 use super::new_document;
 
 #[test]
+fn test_open_tx_inside_tx() -> Result<()> {
+    let baza = Baza::new_test_baza();
+
+    let tx = baza.get_tx()?;
+
+    assert!(baza.add_document(Id::new(), Value::Null).is_err());
+
+    tx.commit()?;
+
+    Ok(())
+}
+
+#[test]
 fn test_crud_create() -> Result<()> {
     let baza = Baza::new_test_baza();
 

@@ -134,7 +134,7 @@ impl<'a> MarkupStr<'a> {
                             level,
                             children: vec![],
                         },
-                        Tag::BlockQuote => MarkupElement::BlockQuote {
+                        Tag::BlockQuote(_) => MarkupElement::BlockQuote {
                             children: vec![],
                             range,
                         },
@@ -228,6 +228,8 @@ impl<'a> MarkupStr<'a> {
                         .add_child(el)?;
                 }
                 Event::InlineHtml(_) => {}
+                Event::InlineMath(_) => {}
+                Event::DisplayMath(_) => {}
             }
         }
 

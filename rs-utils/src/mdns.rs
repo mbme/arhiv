@@ -58,7 +58,8 @@ impl MDNSService {
     }
 
     pub fn start_server(&self, port: u16) -> Result<()> {
-        let host_name = get_hostname()?;
+        let mut host_name = get_hostname()?;
+        host_name += ".local.";
 
         let my_service = ServiceInfo::new(
             &self.get_service_type(),

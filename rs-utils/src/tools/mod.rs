@@ -19,6 +19,11 @@ impl NodeJS {
             .map(Self)
             .context("NodeJS must be available")
     }
+
+    #[must_use]
+    pub fn get_bin_path(&self) -> &str {
+        &self.0
+    }
 }
 
 pub struct Chromium(String);

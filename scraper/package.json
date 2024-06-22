@@ -16,7 +16,7 @@
   "author": "mbme",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "^0.20.1",
+    "esbuild": "^0.21.1",
     "tsx": "^4.5.0"
   },
   "dependencies": {

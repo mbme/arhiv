@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  startTransition,
 } from 'react';
 import { Signal, effect } from '@preact/signals-core';
 import { shallowEqual } from 'shallow-equal';
@@ -342,10 +341,7 @@ export function useSignal<T>(signal: Signal<T>): T {
     setValue(signal.value);
 
     const unsub = effect(() => {
-      startTransition(() => {
-        // FIXME remove this
-        setValue(signal.value);
-      });
+      setValue(signal.value);
     });
 
     return () => {

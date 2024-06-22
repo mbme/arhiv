@@ -1,4 +1,4 @@
-import { useEffect, createContext, useContext } from 'react';
+import { useEffect, createContext, useContext, startTransition } from 'react';
 import { effect, signal } from '@preact/signals-core';
 import { newId } from 'utils';
 import { DocumentData, DocumentId, DocumentType } from 'dto';
@@ -95,7 +95,9 @@ export class WorkspaceController {
       }
     }
 
-    this.$cards.value = [...cards, newCard];
+    startTransition(() => {
+      this.$cards.value = [...cards, newCard];
+    });
   }
 
   openDocument = (documentId: DocumentId, skipDocumentIfAlreadyOpen = false) => {
@@ -138,11 +140,13 @@ export class WorkspaceController {
     const newCards = [...cards];
     newCards[pos] = card.previousCard;
 
-    this.$cards.value = newCards;
+    startTransition(() => {
+      this.$cards.value = newCards;
+    });
   }
 
-  update(id: CardId, props: UpdateActionProps) {
-    if (!this.cardUpdateConfirmed(id)) {
+  update(id: CardId, props: UpdateActionProps, confirm = true) {
+    if (confirm && !this.cardUpdateConfirmed(id)) {
       return;
     }
 
@@ -159,11 +163,11 @@ export class WorkspaceController {
   }
 
   lockCard(id: CardId) {
-    this.update(id, { locked: true });
+    this.update(id, { locked: true }, false);
   }
 
   unlockCard(id: CardId) {
-    this.update(id, { locked: false });
+    this.update(id, { locked: false }, false);
   }
 
   close(id: CardId) {
@@ -204,7 +208,9 @@ export class WorkspaceController {
       ...newCard,
     };
 
-    this.$cards.value = newCards;
+    startTransition(() => {
+      this.$cards.value = newCards;
+    });
   }
 
   private cardUpdateConfirmed(id: CardId): boolean {

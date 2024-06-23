@@ -77,14 +77,14 @@ async function handleAction(action: Action, uiUrl: string) {
     }
     case 'open': {
       if (action.documentId) {
-        win.webContents.executeJavaScript(
+        await win.webContents.executeJavaScript(
           `window.WORKSPACE.openDocument(${JSON.stringify(action.documentId)}, true)`,
         );
       }
       break;
     }
     default: {
-      throw new Error(`Unhandled action ${action}`);
+      throw new Error('Unhandled action');
     }
   }
 }

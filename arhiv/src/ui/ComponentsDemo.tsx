@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { DocumentId, DocumentType } from 'dto';
 import { setQueryParam, JSONObj } from 'utils';
 import { useScrollRestoration, useSessionState } from 'utils/hooks';
@@ -18,10 +18,7 @@ import { QueryError } from 'components/QueryError';
 import { Ref } from 'components/Ref';
 import { Spoiler } from 'components/Spoiler';
 import { Toaster, showToast } from 'components/Toaster';
-import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
-
-const renderError = (error: unknown) => <QueryError error={error} />;
 
 export function ComponentsDemo() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
@@ -30,7 +27,7 @@ export function ComponentsDemo() {
 
   return (
     <SuspenseCacheProvider cacheId="components-demo">
-      <SuspenseBoundary renderError={renderError} fallback={<div />}>
+      <Suspense fallback={<div />}>
         <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>
           <IconButton
             icon="x"
@@ -291,7 +288,7 @@ export function ComponentsDemo() {
             </div>
           </div>
         </div>
-      </SuspenseBoundary>
+      </Suspense>
     </SuspenseCacheProvider>
   );
 }

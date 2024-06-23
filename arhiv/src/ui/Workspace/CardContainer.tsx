@@ -1,19 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
-import { SuspenseBoundary } from 'components/SuspenseBoundary';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
-import { QueryError } from 'components/QueryError';
 import { useCardContext } from './controller';
-
-const renderError = (error: unknown) => (
-  <div className="card-content">
-    <QueryError error={error} />
-  </div>
-);
 
 type CardContainerProps = {
   children: JSXChildren;
@@ -92,11 +84,11 @@ export function CardContainer({
         </div>
       </div>
 
-      <SuspenseBoundary fallback={fallback} renderError={renderError}>
+      <Suspense fallback={fallback}>
         <div className={cx('card-content', FORM_VIEWPORT_CLASSNAME, className)} ref={setEl}>
           {children}
         </div>
-      </SuspenseBoundary>
+      </Suspense>
     </div>
   );
 }

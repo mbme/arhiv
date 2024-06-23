@@ -65,7 +65,7 @@ export class WorkspaceController {
     });
   }
 
-  open(newCardVariant: CardVariant, skipDocumentIfAlreadyOpen = false) {
+  open(newCardVariant: CardVariant) {
     const newCard = {
       ...newCardVariant,
       id: newId(),
@@ -74,40 +74,26 @@ export class WorkspaceController {
 
     const cards = this.$cards.value;
 
-    if (skipDocumentIfAlreadyOpen && newCard.variant === 'document') {
-      const { documentId, openTime } = newCard;
-
-      const isAlreadyOpen = cards.some(
-        (card) => card.variant === 'document' && card.documentId === documentId,
-      );
-
-      if (isAlreadyOpen) {
-        this.$cards.value = cards.map((card) => {
-          if (card.variant === 'document' && card.documentId === documentId) {
-            return {
-              ...card,
-              openTime,
-            };
-          }
-
-          return card;
-        });
-      }
-    }
-
     startTransition(() => {
       this.$cards.value = [...cards, newCard];
     });
   }
 
   openDocument = (documentId: DocumentId, skipDocumentIfAlreadyOpen = false) => {
-    this.open(
-      {
+    const existingCard = this.$cards.value.find(
+      (card) => card.variant === 'document' && card.documentId === documentId,
+    );
+
+    if (existingCard && skipDocumentIfAlreadyOpen) {
+      this.update(existingCard.id, {
+        openTime: Date.now(),
+      });
+    } else {
+      this.open({
         variant: 'document',
         documentId,
-      },
-      skipDocumentIfAlreadyOpen, // FIXME dont pass through
-    );
+      });
+    }
   };
 
   pushStack(id: CardId, newCardVariant: CardVariant) {

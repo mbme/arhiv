@@ -72,7 +72,9 @@ async function handleAction(action: Action, uiUrl: string) {
 
   switch (action.type) {
     case 'search': {
-      // FIXME A.search(action.query);
+      await win.webContents.executeJavaScript(
+        `window.WORKSPACE.showSearchDialog(${JSON.stringify(action.query)})`,
+      );
       break;
     }
     case 'open': {

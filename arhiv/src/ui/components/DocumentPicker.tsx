@@ -12,6 +12,7 @@ type Props = {
   hideOnSelect?: boolean;
   title?: string;
   onCreateNote?: (title: string) => void;
+  initialQuery?: string;
 };
 
 export function DocumentPicker({
@@ -21,12 +22,13 @@ export function DocumentPicker({
   hideOnSelect,
   title,
   onCreateNote,
+  initialQuery = '',
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const [documentTypes, setDocumentTypes] = useState(initialDocumentTypes);
   const [page, setPage] = useState(0);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [showSettings, setShowSettings] = useState(false);
 
   return (

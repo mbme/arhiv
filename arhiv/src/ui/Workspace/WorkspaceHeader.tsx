@@ -1,6 +1,6 @@
 import { startTransition, useState } from 'react';
 import { NOTE_DOCUMENT_TYPE } from 'dto';
-import { useKeydown } from 'utils/hooks';
+import { useKeydown, useSignal } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
@@ -19,15 +19,14 @@ export function WorkspaceHeader({ controller }: Props) {
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
-  const [showSearchDialog, setShowSearchDialog] = useState(false);
+
+  const [showSearchDialog, initialSearchQuery] = useSignal(controller.$showSearchDialog);
 
   useKeydown(document.body, (e) => {
     // Search with Ctrl-K
     if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
       e.preventDefault();
-      startTransition(() => {
-        setShowSearchDialog(true);
-      });
+      controller.showSearchDialog();
     }
   });
 
@@ -69,7 +68,7 @@ export function WorkspaceHeader({ controller }: Props) {
         <Button
           variant="text"
           leadingIcon="search-catalog"
-          onClick={() => startTransition(() => setShowSearchDialog(true))}
+          onClick={() => startTransition(() => controller.showSearchDialog())}
         >
           <span className="hidden md:inline" title="Ctrl-K">
             Search
@@ -107,18 +106,19 @@ export function WorkspaceHeader({ controller }: Props) {
             title="Search"
             hideOnSelect
             onSelected={(info) => {
-              setShowSearchDialog(false);
+              controller.hideSearchDialog();
               controller.openDocument(info.id, true);
             }}
-            onCancel={() => setShowSearchDialog(false)}
+            onCancel={() => controller.hideSearchDialog()}
             onCreateNote={(title) => {
-              setShowSearchDialog(false);
+              controller.hideSearchDialog();
               controller.open({
                 variant: 'new-document',
                 documentType: NOTE_DOCUMENT_TYPE,
                 data: { title },
               });
             }}
+            initialQuery={initialSearchQuery}
           />
         )}
 

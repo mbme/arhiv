@@ -53,6 +53,7 @@ type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
 
 export class WorkspaceController {
   readonly $cards = signal<Card[]>([]);
+  readonly $showSearchDialog = signal<[boolean, string]>([false, '']);
 
   constructor() {
     this.$cards.value = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
@@ -210,6 +211,18 @@ export class WorkspaceController {
     }
 
     return window.confirm('The card may contain unsaved changes. Continue?');
+  }
+
+  showSearchDialog(query = '') {
+    startTransition(() => {
+      this.$showSearchDialog.value = [true, query];
+    });
+  }
+
+  hideSearchDialog() {
+    startTransition(() => {
+      this.$showSearchDialog.value = [false, ''];
+    });
   }
 }
 

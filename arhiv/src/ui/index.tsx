@@ -2,6 +2,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
 import { CreateArhiv } from 'CreateArhiv';
+import { WorkspaceController } from 'Workspace/controller';
+
+window.WORKSPACE = new WorkspaceController();
 
 const rootEl = document.querySelector('main');
 if (!rootEl) {

@@ -1,20 +1,17 @@
-import path from 'node:path';
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
 import { getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
-// TODO handle open/search signals in arhiv UI
-
-function showTrayIcon(baseUrl: string) {
+function showTrayIcon(uiUrl: string) {
   const icon = nativeImage.createFromDataURL(favicon);
   const tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, baseUrl) },
+    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, uiUrl) },
     {
       label: 'Search',
       type: 'normal',
-      click: () => void handleAction({ type: 'search', query: '' }, baseUrl),
+      click: () => void handleAction({ type: 'search', query: '' }, uiUrl),
     },
     { type: 'separator' },
     { label: 'Quit', type: 'normal', click: () => app.quit() },
@@ -27,22 +24,26 @@ function showTrayIcon(baseUrl: string) {
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
 function parseAction(args: string[]): Action | undefined {
-  switch (args[0]) {
-    case 'search':
-      return { type: 'search', query: args[1] ?? '' };
-    case 'open':
-      if (!args[1]) {
-        throw new Error(`Empty documentId for open action`);
-      }
-      return { type: 'open', documentId: args[1] };
-    default:
-      return undefined;
+  const searchArg = args.find((item) => item.startsWith('search='));
+  if (searchArg) {
+    const query = searchArg.substring('search='.length);
+    return { type: 'search', query };
+  }
+
+  const openArg = args.find((item) => item.startsWith('open='));
+  if (openArg) {
+    const documentId = openArg.substring('open='.length);
+    if (!documentId) {
+      throw new Error(`Empty documentId for open action`);
+    }
+
+    return { type: 'open', documentId };
   }
 }
 
 let win: BrowserWindow | undefined;
 
-async function handleAction(action: Action, baseUrl: string) {
+async function handleAction(action: Action, uiUrl: string) {
   console.log('Handling action', action);
 
   // if window already open - restore & focus
@@ -58,27 +59,41 @@ async function handleAction(action: Action, baseUrl: string) {
       autoHideMenuBar: true,
       width: 800,
       height: 600,
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.cjs'),
-      },
     });
 
     win.on('closed', () => {
       win = undefined;
     });
 
-    await win.loadURL(baseUrl).catch(() => {
+    await win.loadURL(uiUrl).catch(() => {
       console.error('failed to open Arhiv');
     });
   }
 
-  win.webContents.send('action', action);
+  switch (action.type) {
+    case 'search': {
+      // FIXME A.search(action.query);
+      break;
+    }
+    case 'open': {
+      if (action.documentId) {
+        win.webContents.executeJavaScript(
+          `window.WORKSPACE.openDocument(${JSON.stringify(action.documentId)}, true)`,
+        );
+      }
+      break;
+    }
+    default: {
+      throw new Error(`Unhandled action ${action}`);
+    }
+  }
 }
 
 async function start(args: string[]) {
   console.log('args:', ...args);
 
   const action = parseAction(args);
+  console.log('action:', action);
 
   if (!app.requestSingleInstanceLock(action)) {
     app.quit();
@@ -89,18 +104,21 @@ async function start(args: string[]) {
     startServer(() => {
       app.quit();
     });
+
+    await waitForServer();
   }
 
   const serverInfo = await getServerInfo();
-  console.log('server base url:', serverInfo.url);
-
-  await waitForServer('https://localhost:8443/health');
+  if (!serverInfo) {
+    throw new Error("arhiv server isn't running");
+  }
+  console.log('server base url:', serverInfo.uiUrl);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {
     const actionFromSecondInstance = additionalData as Action;
     console.log('Got action from second instance:', actionFromSecondInstance);
 
-    handleAction(actionFromSecondInstance, serverInfo.url).catch((e) => {
+    handleAction(actionFromSecondInstance, serverInfo.uiUrl).catch((e) => {
       console.error('Action from second instance failed', e);
     });
   });
@@ -127,10 +145,10 @@ async function start(args: string[]) {
 
   await app.whenReady();
 
-  showTrayIcon(serverInfo.url);
+  showTrayIcon(serverInfo.uiUrl);
 
   if (action) {
-    await handleAction(action, serverInfo.url);
+    await handleAction(action, serverInfo.uiUrl);
   }
 }
 

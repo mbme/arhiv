@@ -29,6 +29,8 @@ mod server_info;
 mod server_lock;
 mod ui_server;
 
+pub const HEALTH_PATH: &str = "/health";
+
 pub struct ArhivServer {
     state: Arc<UIState>,
     server: HttpServer,
@@ -54,7 +56,7 @@ impl ArhivServer {
         let router = Router::new()
             .merge(rpc_router)
             .nest(UI_BASE_PATH, ui_router)
-            .route("/health", get(health_handler))
+            .route(HEALTH_PATH, get(health_handler))
             .fallback(fallback_route);
 
         let server = HttpServer::new_https(server_port, router, certificate).await?;

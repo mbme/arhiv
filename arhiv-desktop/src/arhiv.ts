@@ -9,7 +9,8 @@ const arhivBin = process.env.ARHIV_BIN ?? 'arhiv';
 console.log('arhiv bin:', arhivBin);
 
 type ServerInfo = {
-  url: string;
+  uiUrl: string;
+  healthUrl: string;
   certificate: number[];
 };
 
@@ -17,7 +18,7 @@ type ExtendedServerInfo = ServerInfo & {
   fingerprint: string;
 };
 
-export async function getServerInfo(): Promise<ExtendedServerInfo> {
+export async function getServerInfo(): Promise<ExtendedServerInfo | undefined> {
   const result = await execFileAsync(arhivBin, ['server-info'], { encoding: 'utf8' });
 
   if (!result.stdout) {
@@ -26,7 +27,7 @@ export async function getServerInfo(): Promise<ExtendedServerInfo> {
 
   const serverInfo = JSON.parse(result.stdout.toString()) as ServerInfo | null;
   if (!serverInfo) {
-    throw new Error("arhiv server isn't running");
+    return undefined;
   }
 
   return {
@@ -91,15 +92,19 @@ function promiseTimeout(timeoutMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, timeoutMs));
 }
 
-export async function waitForServer(url: string): Promise<void> {
+export async function waitForServer(): Promise<void> {
   const MAX_ATTEMPTS = 20;
 
   for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
-    const running = await isServerRunning(url);
+    const serverInfo = await getServerInfo();
+    if (serverInfo) {
+      console.log('waitForServer: checking server url %s', serverInfo.healthUrl);
+      const running = await isServerRunning(serverInfo.healthUrl);
 
-    if (running) {
-      console.log('waitForServer: Server is running');
-      return;
+      if (running) {
+        console.log('waitForServer: Server is running');
+        return;
+      }
     }
 
     console.log('waitForServer: attempt %s failed, waiting', i);

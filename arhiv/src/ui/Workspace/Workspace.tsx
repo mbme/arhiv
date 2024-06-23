@@ -5,7 +5,7 @@ import { useScrollRestoration, useSignal } from 'utils/hooks';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { RefClickHandlerContext } from 'components/Ref';
 import { Toaster } from 'components/Toaster';
-import { Card, CardContextProvider, throwBadCardVariant, WorkspaceController } from './controller';
+import { Card, CardContextProvider, throwBadCardVariant } from './controller';
 import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCardContainer } from './DocumentCard';
@@ -17,7 +17,7 @@ export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(wrapperEl, 'workspace-scroll');
 
-  const [controller] = useState(() => new WorkspaceController());
+  const controller = window.WORKSPACE;
   const cards = useSignal(controller.$cards);
 
   useEffect(() => {

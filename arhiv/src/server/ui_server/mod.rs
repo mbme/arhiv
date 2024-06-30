@@ -86,7 +86,7 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
 
     let features = Features {
         scraper: cfg!(feature = "scraper"),
-        use_local_storage: cfg!(target_os = "android"),
+        use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
     let min_login_length = Credentials::MIN_LOGIN_LENGTH;

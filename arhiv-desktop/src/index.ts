@@ -21,7 +21,7 @@ function showTrayIcon(uiUrl: string) {
   tray.setContextMenu(contextMenu);
 }
 
-export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
+export type Action = { type: 'open'; documentId: string } | { type: 'search'; query: string };
 
 function parseAction(args: string[]): Action | undefined {
   const searchArg = args.find((item) => item.startsWith('search='));
@@ -30,12 +30,9 @@ function parseAction(args: string[]): Action | undefined {
     return { type: 'search', query };
   }
 
-  const openArg = args.find((item) => item.startsWith('open='));
+  const openArg = args.find((item) => item.match(/^open=?/));
   if (openArg) {
     const documentId = openArg.substring('open='.length);
-    if (!documentId) {
-      throw new Error(`Empty documentId for open action`);
-    }
 
     return { type: 'open', documentId };
   }

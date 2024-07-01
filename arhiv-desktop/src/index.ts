@@ -21,7 +21,7 @@ function showTrayIcon(uiUrl: string) {
   tray.setContextMenu(contextMenu);
 }
 
-export type Action = { type: 'open'; documentId: string } | { type: 'search'; query: string };
+export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
 function parseAction(args: string[]): Action | undefined {
   const searchArg = args.find((item) => item.startsWith('search='));

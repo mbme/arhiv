@@ -9,6 +9,10 @@ await esbuild.build({
   entryPoints: ['./src/index.ts'],
   outfile: './dist/index.cjs',
 
+  banner: {
+    js: '#!/usr/bin/env electron',
+  },
+
   format: 'cjs',
   platform: 'node',
   target: ['node18.12'],

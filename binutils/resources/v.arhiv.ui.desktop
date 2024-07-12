@@ -2,5 +2,5 @@
 Type=Application
 Name=Arhiv UI
 Comment=UI for Arhiv - personal database
-Exec=arhiv ui-open
+Exec=arhiv-desktop
 Keywords=Arhiv;Архів;архів;

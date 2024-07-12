@@ -7,7 +7,10 @@ pkgdesc='Personal computing environment'
 arch=(x86_64)
 license=(MIT)
 depends=(sqlite zstd)
-makedepends=(git cargo npm lld)
+optdepends=(
+    'electron31: to run Arhiv desktop app'
+)
+makedepends=(git cargo lld nodejs npm)
 options=(!buildflags !debug) # some of the build flags seem to break linking with native libs sqlite & libwebp
 
 pkgver() {
@@ -32,6 +35,8 @@ build() {
   export TYPED_V_VERSION=$(git describe --tags)
 
   cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin mb-scraper
+
+  npm run build --workspace arhiv-desktop
 }
 
 check() {
@@ -47,10 +52,13 @@ package() {
   cd ..
 
   # scraper
-  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/mb-scraper"
+  install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/mb-scraper"
 
   # arhiv
-  install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
+  install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
+
+  # arhiv desktop app
+  install -Dm 755 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/bin/arhiv-desktop"
 
   install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
   install -Dm 755 "binutils/resources/arhiv-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-server.service"

@@ -5,8 +5,21 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
-const arhivBin = process.env.ARHIV_BIN ?? 'arhiv';
-console.log('arhiv bin:', arhivBin);
+function getArhivBin(): string {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    return 'arhiv';
+  }
+
+  const arhivBin = process.env.ARHIV_BIN;
+  if (!arhivBin) {
+    throw new Error('ARHIV_BIN must be specified in development mode');
+  }
+
+  console.log('arhiv bin:', arhivBin);
+
+  return arhivBin;
+}
 
 type ServerInfo = {
   uiUrl: string;
@@ -19,7 +32,7 @@ type ExtendedServerInfo = ServerInfo & {
 };
 
 export async function getServerInfo(): Promise<ExtendedServerInfo | undefined> {
-  const result = await execFileAsync(arhivBin, ['server-info'], { encoding: 'utf8' });
+  const result = await execFileAsync(getArhivBin(), ['server-info'], { encoding: 'utf8' });
 
   if (!result.stdout) {
     throw new Error("arhiv server-info didn't return any output");
@@ -46,7 +59,7 @@ function getCertificateFingerprint(certificate: number[]): string {
 
 export function startServer(onError: () => void): void {
   console.log('starting arhiv server');
-  const result = spawn(arhivBin, ['server'], { stdio: 'inherit' });
+  const result = spawn(getArhivBin(), ['server'], { stdio: 'inherit' });
 
   // TODO wait for server on port
 

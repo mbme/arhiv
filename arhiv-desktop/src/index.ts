@@ -1,6 +1,5 @@
-import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { getServerInfo, startServer, waitForServer } from './arhiv';
-import favicon from '../../resources/favicon-16x16.png';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
@@ -20,26 +19,6 @@ function parseAction(args: string[]): Action | undefined {
 }
 
 let win: BrowserWindow | undefined;
-let tray: Tray | undefined;
-
-function showTrayIcon(uiUrl: string) {
-  const icon = nativeImage.createFromDataURL(favicon);
-  tray = new Tray(icon);
-
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, uiUrl) },
-    {
-      label: 'Search',
-      type: 'normal',
-      click: () => void handleAction({ type: 'search', query: '' }, uiUrl),
-    },
-    { type: 'separator' },
-    { label: 'Quit', type: 'normal', click: () => app.quit() },
-  ]);
-
-  tray.setToolTip('Arhiv Desktop App');
-  tray.setContextMenu(contextMenu);
-}
 
 async function handleAction(action: Action, uiUrl: string) {
   console.log('Handling action', action);
@@ -138,19 +117,9 @@ async function start(args: string[]) {
     }
   });
 
-  // needed to prevent quiting the app when last window is closed
-  app.on('window-all-closed', () => {
-    console.log('last window closed');
-    if (!tray) {
-      app.quit();
-    }
-  });
-
   await app.whenReady();
 
-  if (args.includes('--tray')) {
-    showTrayIcon(serverInfo.uiUrl);
-  } else if (!action) {
+  if (!action) {
     action = { type: 'open' };
   }
 

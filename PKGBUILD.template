@@ -32,6 +32,8 @@ build() {
   export RUSTUP_TOOLCHAIN=stable
   export CARGO_TARGET_DIR=target
 
+  export NODE_ENV=production
+
   export TYPED_V_VERSION=$(git describe --tags)
 
   cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin mb-scraper
@@ -58,7 +60,9 @@ package() {
   install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/arhiv"
 
   # arhiv desktop app
-  install -Dm 755 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/bin/arhiv-desktop"
+  install -Dm 755 "arhiv-desktop/arhiv-desktop" "$pkgdir/usr/bin/arhiv-desktop"
+  install -Dm 644 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/share/arhiv-desktop/dist/index.cjs"
+  install -Dm 644 "arhiv-desktop/package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
 
   install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
   install -Dm 755 "binutils/resources/arhiv-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-server.service"

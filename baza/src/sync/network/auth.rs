@@ -37,6 +37,7 @@ pub async fn client_authenticator(
     request: Request,
     next: Next,
 ) -> Response {
+    // FIXME do not recreate the HMAC on each request
     let hmac = create_shared_network_verifier(&baza).unwrap();
     let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_cert.as_ref()));
 

@@ -1,10 +1,10 @@
 use std::io::Cursor;
 
 use anyhow::{Context, Result};
-use image::{DynamicImage, GenericImageView};
+use image::{DynamicImage, GenericImageView, ImageReader};
 
 fn open_image(file_path: &str) -> Result<DynamicImage> {
-    image::io::Reader::open(file_path)
+    ImageReader::open(file_path)
         .context("failed to open image")?
         .with_guessed_format()
         .context("failed to guess format")?

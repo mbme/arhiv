@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{ensure, Context, Result};
-use cookie::Cookie;
-use fantoccini::{Client, ClientBuilder};
+use fantoccini::{cookies::Cookie, Client, ClientBuilder};
 use full_page_screenshot::cdp_capture_full_page_screenshot;
 use serde_json::json;
 use tokio::fs as tokio_fs;
@@ -64,7 +63,7 @@ impl ScraperOptions {
 
         chromedriver.wait_for_ready(10).await?;
 
-        let client = ClientBuilder::rustls()
+        let client = ClientBuilder::native()
             .capabilities(
                 capabilities
                     .as_object()
@@ -143,13 +142,12 @@ impl ScraperOptions {
         if url.host_str().unwrap_or_default() == "store.steampowered.com"
             && url.path().starts_with("/agecheck/")
         {
-            let cookie = Cookie::build("birthtime", "628466401")
+            let cookie = Cookie::build(("birthtime", "628466401"))
                 .domain("store.steampowered.com")
                 .path("/")
                 .secure(false)
                 .http_only(true)
-                .same_site(cookie::SameSite::Strict)
-                .finish();
+                .build();
 
             client
                 .add_cookie(cookie)

@@ -14,7 +14,7 @@ use ring::{
     pbkdf2,
 };
 use secstr::{SecUtf8, SecVec};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::generate_alpanumeric_string;
 
@@ -296,18 +296,19 @@ impl HMAC {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Debug, PartialEq)]
 pub struct AuthToken {
     plain_text: String,
     signature: Vec<u8>,
 }
 
 impl AuthToken {
-    pub const PLAIN_TEXT_LENGTH: usize = 256;
-
     pub fn generate(hmac: &HMAC) -> Self {
-        let plain_text = generate_alpanumeric_string(AuthToken::PLAIN_TEXT_LENGTH);
+        AuthToken::generate_with_length(hmac, 256)
+    }
+
+    pub fn generate_with_length(hmac: &HMAC, plain_text_length: usize) -> Self {
+        let plain_text = generate_alpanumeric_string(plain_text_length);
 
         let signature = hmac.sign(plain_text.as_bytes());
 
@@ -318,12 +319,6 @@ impl AuthToken {
     }
 
     pub fn assert_is_valid(&self, hmac: &HMAC) -> Result<()> {
-        ensure!(
-            self.plain_text.len() == AuthToken::PLAIN_TEXT_LENGTH,
-            "plain text must be {} chars long",
-            AuthToken::PLAIN_TEXT_LENGTH
-        );
-
         let is_valid = hmac.verify(self.plain_text.as_bytes(), &self.signature);
 
         ensure!(is_valid, "Auth token is invalid");
@@ -332,11 +327,24 @@ impl AuthToken {
     }
 
     pub fn serialize(&self) -> String {
-        serde_json::to_string(self).expect("must serialize AuthToken")
+        format!(
+            "{}-{}",
+            self.plain_text,
+            bytes_to_hex_string(&self.signature)
+        )
     }
 
     pub fn parse(value: &str) -> Result<Self> {
-        serde_json::from_str(value).context("failed to parse AuthToken")
+        let parts: Vec<&str> = value.splitn(2, '-').collect();
+        ensure!(parts.len() == 2, "Invalid input string");
+
+        let plain_text = parts[0].to_string();
+        let signature = hex_string_to_bytes(parts[1])?;
+
+        Ok(AuthToken {
+            plain_text,
+            signature,
+        })
     }
 }
 
@@ -376,5 +384,18 @@ mod tests {
         let result = hex_string_to_bytes(&result).unwrap();
 
         assert_eq!(data, result.as_slice());
+    }
+
+    #[test]
+    fn test_auth_token_parse_serialize() {
+        let hmac = HMAC::new_from_password("test1234", "test1234").unwrap();
+
+        let token = AuthToken::generate(&hmac);
+
+        let token_str = token.serialize();
+
+        let parsed_token = AuthToken::parse(&token_str).unwrap();
+
+        assert_eq!(parsed_token, token);
     }
 }

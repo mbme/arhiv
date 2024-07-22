@@ -2,7 +2,9 @@ use std::{fs, io::Write};
 
 use anyhow::{anyhow, Context, Result};
 
-use rs_utils::{file_exists, log, must_create_file, now, SecretString, SelfSignedCertificate};
+use rs_utils::{
+    file_exists, log, must_create_file, now, SecretBytes, SecretString, SelfSignedCertificate, HMAC,
+};
 
 pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
     let cert_path = format!("{root_dir}/arhiv-server.pem");
@@ -37,4 +39,8 @@ fn generate_certificate() -> Result<SelfSignedCertificate> {
     let certificate_id = format!("Arhiv {timestamp}");
 
     SelfSignedCertificate::new_x509(&certificate_id)
+}
+
+pub fn generate_ui_key_verifier(certificate_private_key: &SecretBytes) -> Result<HMAC> {
+    HMAC::new_from_password(certificate_private_key, "arhiv-server auth token")
 }

@@ -19,7 +19,7 @@ use crate::Baza;
 pub const CERTIFICATE_HMAC_HEADER: &str = "X-Certificate-HMAC-Tag";
 pub const CLIENT_AUTH_TOKEN_HEADER: &str = "X-Client-Auth-Token";
 
-pub fn create_shared_network_key(baza: &Baza) -> Result<HMAC> {
+pub fn create_shared_network_verifier(baza: &Baza) -> Result<HMAC> {
     let conn = baza.get_connection()?;
 
     let app_name = baza.get_app_name();
@@ -37,7 +37,7 @@ pub async fn client_authenticator(
     request: Request,
     next: Next,
 ) -> Response {
-    let hmac = create_shared_network_key(&baza).unwrap();
+    let hmac = create_shared_network_verifier(&baza).unwrap();
     let server_cert_hmac_tag = bytes_to_hex_string(&hmac.sign(server_cert.as_ref()));
 
     let client_auth_token = request

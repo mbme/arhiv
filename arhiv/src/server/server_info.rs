@@ -2,8 +2,9 @@ use anyhow::Result;
 use serde::Serialize;
 
 use baza::entities::Id;
+use rs_utils::AuthToken;
 
-use super::certificate::read_or_generate_certificate;
+use super::certificate::{generate_ui_key_verifier, read_or_generate_certificate};
 use super::server_lock::ArhivServerLock;
 use super::ui_server::UI_BASE_PATH;
 use super::HEALTH_PATH;
@@ -14,6 +15,7 @@ pub struct ServerInfo {
     ui_url: String,
     health_url: String,
     certificate: Vec<u8>,
+    auth_token: String,
 }
 
 impl ServerInfo {
@@ -27,12 +29,16 @@ impl ServerInfo {
         let ui_url = Self::get_ui_base_url(port);
         let health_url = Self::get_health_url(port);
 
-        let certificate = read_or_generate_certificate(root_dir)?.certificate_der;
+        let certificate = read_or_generate_certificate(root_dir)?;
+
+        let ui_hmac = generate_ui_key_verifier(&certificate.private_key_der)?;
+        let auth_token = AuthToken::generate_with_length(&ui_hmac, 32).serialize();
 
         Ok(Some(Self {
             ui_url,
             health_url,
-            certificate,
+            certificate: certificate.certificate_der,
+            auth_token,
         }))
     }
 

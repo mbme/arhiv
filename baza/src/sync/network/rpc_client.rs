@@ -11,7 +11,7 @@ use crate::{
     Baza,
 };
 
-use super::auth::{create_shared_network_key, ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
+use super::auth::{create_shared_network_verifier, ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
 
 #[derive(Debug, Clone)]
 pub struct BazaClient {
@@ -25,7 +25,7 @@ impl BazaClient {
     pub fn new(url: &str, baza: &Baza) -> Result<Self> {
         let downloads_dir = baza.get_path_manager().downloads_dir.clone();
 
-        let hmac = create_shared_network_key(baza)?;
+        let hmac = create_shared_network_verifier(baza)?;
 
         let rpc_server_url = Url::from_str(url).context("failed to parse url")?;
 

@@ -25,9 +25,10 @@ type ServerInfo = {
   uiUrl: string;
   healthUrl: string;
   certificate: number[];
+  authToken: string;
 };
 
-type ExtendedServerInfo = ServerInfo & {
+export type ExtendedServerInfo = ServerInfo & {
   fingerprint: string;
 };
 

@@ -1,5 +1,5 @@
-import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
-import { getServerInfo, startServer, waitForServer } from './arhiv';
+import { app, Tray, Menu, nativeImage, BrowserWindow, session } from 'electron';
+import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
@@ -22,16 +22,16 @@ function parseAction(args: string[]): Action | undefined {
 let win: BrowserWindow | undefined;
 let tray: Tray | undefined;
 
-function showTrayIcon(uiUrl: string) {
+function showTrayIcon(serverInfo: ExtendedServerInfo) {
   const icon = nativeImage.createFromDataURL(favicon);
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, uiUrl) },
+    { label: 'Open', type: 'normal', click: () => void handleAction({ type: 'open' }, serverInfo) },
     {
       label: 'Search',
       type: 'normal',
-      click: () => void handleAction({ type: 'search', query: '' }, uiUrl),
+      click: () => void handleAction({ type: 'search', query: '' }, serverInfo),
     },
     { type: 'separator' },
     { label: 'Quit', type: 'normal', click: () => app.quit() },
@@ -41,7 +41,7 @@ function showTrayIcon(uiUrl: string) {
   tray.setContextMenu(contextMenu);
 }
 
-async function handleAction(action: Action, uiUrl: string) {
+async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
   console.log('Handling action', action);
 
   // if window already open - restore & focus
@@ -63,7 +63,15 @@ async function handleAction(action: Action, uiUrl: string) {
       win = undefined;
     });
 
-    await win.loadURL(uiUrl).catch(() => {
+    await session.defaultSession.cookies.set({
+      url: serverInfo.uiUrl,
+      name: 'AuthToken',
+      value: serverInfo.authToken,
+      secure: true,
+      sameSite: 'strict',
+    });
+
+    await win.loadURL(`${serverInfo.uiUrl}?AuthToken=${serverInfo.authToken}`).catch(() => {
       console.error('failed to open Arhiv');
     });
   }
@@ -118,7 +126,7 @@ async function start(args: string[]) {
     const actionFromSecondInstance = additionalData as Action;
     console.log('Got action from second instance:', actionFromSecondInstance);
 
-    handleAction(actionFromSecondInstance, serverInfo.uiUrl).catch((e) => {
+    handleAction(actionFromSecondInstance, serverInfo).catch((e) => {
       console.error('Action from second instance failed', e);
     });
   });
@@ -149,13 +157,13 @@ async function start(args: string[]) {
   await app.whenReady();
 
   if (args.includes('--tray')) {
-    showTrayIcon(serverInfo.uiUrl);
+    showTrayIcon(serverInfo);
   } else if (!action) {
     action = { type: 'open' };
   }
 
   if (action) {
-    await handleAction(action, serverInfo.uiUrl);
+    await handleAction(action, serverInfo);
   }
 }
 

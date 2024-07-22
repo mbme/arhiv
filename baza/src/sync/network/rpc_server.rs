@@ -28,7 +28,7 @@ use crate::{
 
 use super::auth::client_authenticator;
 
-/// This router requires Extension<Arc<Baza>> to be available
+/// WARN: This router requires Extension<Arc<Baza>> to be available
 pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
     let router = Router::new()
         .route("/ping", post(exchange_pings_handler))

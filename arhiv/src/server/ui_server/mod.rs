@@ -2,17 +2,22 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use axum::{
-    extract::{DefaultBodyLimit, Path, State},
+    extract::{DefaultBodyLimit, Path, Query, Request, State},
     http::HeaderMap,
+    middleware::{self, Next},
     response::{
         sse::{Event, KeepAlive},
-        Html, IntoResponse, Sse,
+        Html, IntoResponse, Response, Sse,
     },
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
-use axum_extra::{headers, TypedHeader};
+use axum_extra::{
+    extract::{cookie::Cookie, CookieJar},
+    headers, TypedHeader,
+};
 use futures::FutureExt;
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
@@ -20,7 +25,7 @@ use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 use baza::{entities::BLOBId, sync::respond_with_blob, Credentials};
 use rs_utils::{
     http_server::{add_no_cache_headers, ServerError},
-    log, SecretString,
+    log, AuthToken, SecretString, HMAC,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest};
@@ -37,7 +42,7 @@ mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router() -> Router<Arc<UIState>> {
+pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
     Router::new()
         .route("/", get(index_page))
         .route("/create", post(create_arhiv_handler))
@@ -47,6 +52,8 @@ pub fn build_ui_router() -> Router<Arc<UIState>> {
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
+        .layer(middleware::from_fn(client_authenticator))
+        .layer(Extension(Arc::new(ui_hmac)))
 }
 
 #[derive(Deserialize)]
@@ -191,4 +198,75 @@ async fn events_handler(
         .map_while(|value| value.transpose());
 
     Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+}
+
+#[derive(Deserialize)]
+struct AuthTokenQuery {
+    #[serde(rename = "AuthToken")]
+    auth_token: String,
+}
+
+async fn client_authenticator(
+    jar: CookieJar,
+    auth_token_query: Option<Query<AuthTokenQuery>>,
+    Extension(ui_hmac): Extension<Arc<HMAC>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let auth_token: Option<AuthToken> =
+        if let Some(Query(AuthTokenQuery { auth_token })) = auth_token_query {
+            match AuthToken::parse(&auth_token) {
+                Ok(auth_token) => Some(auth_token),
+                Err(err) => {
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        format!("Failed to parse AuthToken query param: {err}"),
+                    )
+                        .into_response();
+                }
+            }
+        } else if let Some(auth_token) = jar.get("AuthToken") {
+            match AuthToken::parse(auth_token.value()) {
+                Ok(auth_token) => Some(auth_token),
+                Err(err) => {
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        format!("Failed to parse AuthToken cookie: {err}"),
+                    )
+                        .into_response();
+                }
+            }
+        } else {
+            None
+        };
+
+    let auth_token = if let Some(auth_token) = auth_token {
+        auth_token
+    } else {
+        return (StatusCode::UNAUTHORIZED, "AuthToken is missing").into_response();
+    };
+
+    if let Err(err) = auth_token.assert_is_valid(&ui_hmac) {
+        log::warn!("Got unauthenticated client: {err}");
+
+        return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();
+    }
+
+    let auth_token_cookie = Cookie::build(("AuthToken", auth_token.serialize()))
+        .path("/")
+        .http_only(true)
+        .secure(true)
+        .build()
+        .to_string();
+
+    let mut response = next.run(request).await;
+
+    response.headers_mut().append(
+        axum::http::header::SET_COOKIE,
+        auth_token_cookie
+            .parse()
+            .expect("Failed to convert AuthToken cookie into header value"),
+    );
+
+    response
 }

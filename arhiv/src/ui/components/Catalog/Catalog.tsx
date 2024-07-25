@@ -58,7 +58,7 @@ export function Catalog({
   const items = result.documents.map((item) => (
     <div
       key={item.id}
-      className="cursor-pointer pr-2 py-2 sm-selectable hover:bg-sky-100"
+      className="cursor-pointer pr-2 py-2 sm-selectable hover:var-item-active-bg-color"
       onClick={() =>
         onDocumentSelected({
           id: item.id,

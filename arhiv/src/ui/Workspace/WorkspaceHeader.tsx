@@ -32,7 +32,7 @@ export function WorkspaceHeader({ controller }: Props) {
 
   return (
     <SuspenseCacheProvider cacheId="workspace-header">
-      <nav className="fixed inset-x-0 top-0 z-20 bg-zinc-200 var-bg-color pl-8 pr-4 flex flex-row gap-8">
+      <nav className="fixed inset-x-0 top-0 z-20 var-bg-secondary-color pl-8 pr-4 flex flex-row gap-8">
         <Button variant="text" disabled>
           Player
         </Button>

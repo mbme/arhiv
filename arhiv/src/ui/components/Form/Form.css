@@ -4,6 +4,8 @@
       display: block;
       min-width: 65%;
 
+      @apply var-bg-color;
+
       &:user-invalid {
         @apply border border-red-500;
       }
@@ -25,11 +27,11 @@
       }
 
       &[disabled] {
-        @apply bg-gray-100;
+        @apply bg-gray-100 dark:bg-gray-600;
       }
 
       &[readonly] {
-        @apply bg-gray-100;
+        @apply bg-gray-100 dark:bg-gray-600;
 
         &:is(select) option {
           display: none;

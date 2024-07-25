@@ -13,7 +13,11 @@
 
 @layer utilities {
   .var-bg-color {
-    @apply bg-zinc-100;
+    @apply bg-white dark:bg-gray-900;
+  }
+
+  .var-bg-secondary-color {
+    @apply bg-zinc-100 dark:bg-gray-800;
   }
 
   .var-card-width {
@@ -22,11 +26,23 @@
   }
 
   .var-active-color {
-    @apply text-blue-800 hover:text-blue-600;
+    @apply text-blue-800 dark:text-blue-300;
+  }
+
+  .var-active-color-hover {
+    @apply hover:text-blue-600;
   }
 
   .var-item-active-bg-color {
-    @apply bg-blue-100;
+    @apply bg-blue-100 dark:bg-blue-900;
+  }
+
+  .var-placeholder-color {
+    @apply text-gray-500;
+  }
+
+  .var-form-border-color {
+    @apply border-gray-200 dark:border-zinc-700;
   }
 
   .buttons {
@@ -131,6 +147,36 @@
 }
 
 @layer base {
+  *,
+  ::before,
+  ::after {
+    @apply border-solid var-form-border-color;
+  }
+
+  /* override @tailwind forms plugin border */
+  [type='text'],
+  input:where(:not([type])),
+  [type='email'],
+  [type='url'],
+  [type='password'],
+  [type='number'],
+  [type='date'],
+  [type='datetime-local'],
+  [type='month'],
+  [type='search'],
+  [type='tel'],
+  [type='time'],
+  [type='week'],
+  [multiple],
+  textarea,
+  select {
+    @apply border-2 border-solid var-form-border-color;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    @apply var-placeholder-color;
+  }
+
   /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */
   a,
   button {
@@ -152,8 +198,8 @@
     text-rendering: optimizeLegibility;
     @apply antialiased;
 
-    color: #333;
-    @apply var-bg-color;
+    @apply text-slate-800 dark:text-slate-100;
+    @apply var-bg-secondary-color;
 
     font-size: 16px;
   }

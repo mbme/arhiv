@@ -33,18 +33,33 @@
     & .cm-content {
       min-height: 19rem;
     }
+
+    & .cm-activeLine {
+      @apply bg-transparent;
+    }
+    &.cm-focused .cm-activeLine {
+      @apply var-item-active-bg-color;
+    }
+    & .cm-placeholder {
+      @apply var-placeholder-color;
+    }
+    & .cm-cursor {
+      @apply border-slate-800 dark:border-slate-100;
+      border-width: 1.4px;
+    }
   }
 
-  .edit-btn {
-    @apply bg-indigo-100 drop-shadow-md;
+  .editor-btn,
+  .editor-edit-btn {
+    @apply bg-indigo-100 dark:bg-indigo-900 drop-shadow-md;
   }
 
   @media (hover: hover) {
-    & .edit-btn {
+    & .editor-edit-btn {
       @apply invisible opacity-0 transition-opacity;
     }
 
-    &:hover .edit-btn {
+    &:hover .editor-edit-btn {
       @apply visible opacity-100;
     }
   }

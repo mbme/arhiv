@@ -28,7 +28,7 @@ export function ComponentsDemo() {
   return (
     <SuspenseCacheProvider cacheId="components-demo">
       <Suspense fallback={<div />}>
-        <div className="bg-white h-full overflow-auto" ref={setWrapperEl}>
+        <div className="var-bg-color h-full overflow-auto" ref={setWrapperEl}>
           <IconButton
             icon="x"
             className="fixed top-2 right-4"
@@ -336,7 +336,7 @@ function FormControlsDemo() {
         setData(JSON.stringify(values, null, 2));
       }}
     >
-      <div className="flex gap-4 bg-rose-50 px-2 py-4">
+      <div className="flex gap-4 bg-rose-50 dark:bg-slate-900 px-2 py-4">
         <label className="flex gap-1 items-center">
           <input type="checkbox" checked={disabled} onChange={() => setDisabled(!disabled)} />
           Disabled
@@ -381,6 +381,7 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Number input
         <input
+          className="field"
           name="number"
           type="number"
           placeholder="numbers"

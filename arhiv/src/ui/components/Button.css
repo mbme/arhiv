@@ -23,33 +23,36 @@
 
   .btn-simple {
     @apply border-opacity-0;
-    @apply text-blue-700 hover:bg-blue-300 hover:bg-opacity-20;
+    @apply text-blue-700 dark:hover:text-blue-300 hover:bg-blue-300 hover:bg-opacity-20;
 
     &.btn-alarming {
       @apply text-red-700 hover:bg-red-300;
     }
 
     &[disabled] {
-      @apply bg-blue-50 text-blue-300;
+      @apply bg-blue-50 dark:bg-blue-800/50 text-blue-300;
+      @apply dark:text-cyan-800 dark:hover:text-cyan-800;
     }
   }
 
   .btn-primary {
     @apply text-white bg-blue-500 hover:bg-blue-600;
+    @apply dark:bg-blue-900 dark:hover:bg-blue-950;
 
     &.btn-alarming {
       @apply bg-red-500 hover:bg-red-600;
     }
 
     &[disabled] {
-      @apply bg-blue-200 hover:bg-blue-200;
+      @apply bg-blue-200 hover:bg-blue-200 dark:bg-blue-500 dark:hover:bg-blue-500;
+      @apply dark:text-cyan-800 dark:hover:text-cyan-800;
     }
   }
 
   .btn-text {
     font-weight: inherit;
     @apply p-0 border-0 hover:bg-inherit;
-    @apply var-active-color;
+    @apply var-active-color var-active-color-hover;
 
     &.btn-alarming {
       @apply text-red-700 hover:text-red-600;
@@ -57,11 +60,12 @@
 
     &[disabled] {
       @apply text-blue-300 hover:text-blue-300;
+      @apply dark:text-cyan-800 dark:hover:text-cyan-800;
     }
   }
 
   .icon-btn {
-    @apply p-3 flex items-center max-w-max hover:shadow-sm hover:bg-blue-50 rounded-full transition-colors var-active-color;
+    @apply p-3 flex items-center max-w-max hover:shadow-sm hover:bg-blue-50 dark:hover:bg-blue-950 rounded-full transition-colors var-active-color;
 
     &[disabled] {
       @apply text-slate-300 hover:text-slate-300;

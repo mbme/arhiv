@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Menu, Transition } from '@headlessui/react';
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { Callback, cx } from 'utils';
 import { Icon, IconVariant } from './Icon';
 import { IconButton } from './Button';
@@ -24,7 +24,7 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
     <Menu as="div" className="relative z-10">
       {({ open }) => (
         <>
-          <Menu.Button
+          <MenuButton
             as={IconButton}
             icon={icon}
             size="lg"
@@ -40,9 +40,9 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items
+            <MenuItems
               className={cx(
-                'rounded w-max flex flex-col gap-2 drop-shadow py-2 absolute mt-2 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+                'rounded w-max flex flex-col gap-2 drop-shadow py-2 absolute mt-2 var-bg-color shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
                 {
                   'left-0 origin-top-left': align === 'bottom-left',
                   'right-0 origin-top-right': align === 'bottom-right',
@@ -55,16 +55,16 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
                 }
 
                 return (
-                  <Menu.Item key={index}>
-                    {({ active }) => (
+                  <MenuItem key={index}>
+                    {({ focus }) => (
                       <button
                         type="button"
                         className={cx(
                           'flex items-center gap-5 cursor-pointer px-4 py-2 whitespace-nowrap',
                           {
-                            'text-blue-700 hover:bg-sky-100': !option.alarming,
+                            'var-active-color hover:var-item-active-bg-color': !option.alarming,
                             'text-red-700 hover:bg-red-300': option.alarming,
-                            'var-item-active-bg-color': active,
+                            'var-item-active-bg-color': focus,
                           },
                         )}
                         onClick={() => option.onClick()}
@@ -74,10 +74,10 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
                         {option.text}
                       </button>
                     )}
-                  </Menu.Item>
+                  </MenuItem>
                 );
               })}
-            </Menu.Items>
+            </MenuItems>
           </Transition>
         </>
       )}

@@ -178,7 +178,7 @@ export function Editor({
       <div className="sticky bottom-8 float-right mr-4 mt-1 flex gap-3">
         {!preview && (
           <AddRefButton
-            className="bg-indigo-100 drop-shadow-md"
+            className="editor-btn"
             onDocumentSelected={({ id, documentType, data }) => {
               editorRef.current?.replaceSelections((value) =>
                 createLink(createRefUrl(id), value, canPreview(documentType, data)),
@@ -190,7 +190,7 @@ export function Editor({
         {preview ? (
           <IconButton
             icon="pencil-square"
-            className="edit-btn"
+            className="editor-edit-btn"
             onClick={() => {
               setPreview(false);
             }}
@@ -198,7 +198,7 @@ export function Editor({
         ) : (
           <IconButton
             icon="eye"
-            className="bg-indigo-100 drop-shadow-md"
+            className="editor-btn"
             onClick={() => {
               setPreview(true);
             }}

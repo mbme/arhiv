@@ -79,14 +79,14 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
   switch (action.type) {
     case 'search': {
       await win.webContents.executeJavaScript(
-        `window.WORKSPACE.showSearchDialog(${JSON.stringify(action.query)})`,
+        `window.APP.workspace.showSearchDialog(${JSON.stringify(action.query)})`,
       );
       break;
     }
     case 'open': {
       if (action.documentId) {
         await win.webContents.executeJavaScript(
-          `window.WORKSPACE.openDocument(${JSON.stringify(action.documentId)}, true)`,
+          `window.APP.workspace.openDocument(${JSON.stringify(action.documentId)}, true)`,
         );
       }
       break;

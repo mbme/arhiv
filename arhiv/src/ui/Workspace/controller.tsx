@@ -5,6 +5,7 @@ import { DocumentData, DocumentId, DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { useShallowMemo } from 'utils/hooks';
 import { storage } from 'utils/storage';
+import { useAppController } from 'controller';
 
 type CardVariant =
   | {
@@ -236,11 +237,11 @@ const CardContext = createContext<CardContextType | undefined>(undefined);
 
 type CardContextProviderProps = {
   card: Card;
-  controller: WorkspaceController;
   children: JSXChildren;
 };
-export function CardContextProvider({ card, controller, children }: CardContextProviderProps) {
-  const value = useShallowMemo({ card, controller });
+export function CardContextProvider({ card, children }: CardContextProviderProps) {
+  const app = useAppController();
+  const value = useShallowMemo({ card, controller: app.workspace });
 
   return <CardContext.Provider value={value}>{children}</CardContext.Provider>;
 }

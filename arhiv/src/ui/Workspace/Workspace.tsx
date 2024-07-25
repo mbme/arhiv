@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DocumentId } from 'dto';
 import { getQueryParam } from 'utils';
 import { useScrollRestoration, useSignal } from 'utils/hooks';
+import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { RefClickHandlerContext } from 'components/Ref';
 import { Toaster } from 'components/Toaster';
@@ -20,24 +21,24 @@ export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(wrapperEl, 'workspace-scroll');
 
-  const controller = window.WORKSPACE;
-  const cards = useSignal(controller.$cards);
+  const app = useAppController();
+  const cards = useSignal(app.workspace.$cards);
 
   useEffect(() => {
     const documentId = getQueryParam('id');
 
     if (documentId) {
-      controller.openDocument(documentId as DocumentId, true);
+      app.workspace.openDocument(documentId as DocumentId, true);
     }
-  }, [controller]);
+  }, [app]);
 
   return (
-    <RefClickHandlerContext.Provider value={controller.openDocument}>
+    <RefClickHandlerContext.Provider value={app.workspace.openDocument}>
       <div className="workspace-cards" ref={setWrapperEl}>
-        <WorkspaceHeader controller={controller} />
+        <WorkspaceHeader />
 
         {cards.map((card) => (
-          <CardContextProvider key={card.id} card={card} controller={controller}>
+          <CardContextProvider key={card.id} card={card}>
             <SuspenseCacheProvider cacheId={card.id}>
               <ErrorBoundary renderError={renderError}>{renderCard(card)}</ErrorBoundary>
             </SuspenseCacheProvider>

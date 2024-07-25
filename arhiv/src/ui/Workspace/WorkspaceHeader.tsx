@@ -1,32 +1,31 @@
 import { startTransition, useState } from 'react';
 import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { useKeydown, useSignal } from 'utils/hooks';
+import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
-import { Button } from 'components/Button';
+import { Button, IconButton } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { ScraperDialog } from 'components/ScraperDialog';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
-import { WorkspaceController } from './controller';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CommitOrSyncButton } from './CommitOrSyncButton';
 
-type Props = {
-  controller: WorkspaceController;
-};
-export function WorkspaceHeader({ controller }: Props) {
+export function WorkspaceHeader() {
+  const app = useAppController();
+
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
-  const [showSearchDialog, initialSearchQuery] = useSignal(controller.$showSearchDialog);
+  const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
 
   useKeydown(document.body, (e) => {
     // Search with Ctrl-K
     if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
       e.preventDefault();
-      controller.showSearchDialog();
+      app.workspace.showSearchDialog();
     }
   });
 
@@ -37,18 +36,24 @@ export function WorkspaceHeader({ controller }: Props) {
           Player
         </Button>
 
+        <IconButton
+          icon="circle-half"
+          title="Toggle light/dark theme"
+          onClick={() => app.toggleTheme()}
+          className="ml-auto"
+        />
+
         <Button
           variant="text"
           leadingIcon="add-document"
           onClick={() => setShowNewDocumentDialog(true)}
-          className="ml-auto"
         >
           <span className="hidden md:inline">New...</span>
         </Button>
         {showNewDocumentDialog && (
           <NewDocumentDialog
             onNewDocument={(documentType) => {
-              controller.open({ variant: 'new-document', documentType });
+              app.workspace.open({ variant: 'new-document', documentType });
               setShowNewDocumentDialog(false);
             }}
             onScrape={() => {
@@ -68,7 +73,7 @@ export function WorkspaceHeader({ controller }: Props) {
         <Button
           variant="text"
           leadingIcon="search-catalog"
-          onClick={() => startTransition(() => controller.showSearchDialog())}
+          onClick={() => startTransition(() => app.workspace.showSearchDialog())}
         >
           <span className="hidden md:inline" title="Ctrl-K">
             Search
@@ -80,7 +85,7 @@ export function WorkspaceHeader({ controller }: Props) {
         {showScraperDialog && (
           <ScraperDialog
             onSuccess={(url, ids) => {
-              controller.open({ variant: 'scrape-result', url, ids });
+              app.workspace.open({ variant: 'scrape-result', url, ids });
               setShowScraperDialog(false);
             }}
             onCancel={() => {
@@ -92,7 +97,7 @@ export function WorkspaceHeader({ controller }: Props) {
         {showFilePickerDialog && (
           <FilePickerDialog
             onAttachmentCreated={(documentId) => {
-              controller.openDocument(documentId);
+              app.workspace.openDocument(documentId);
               setShowFilePickerDialog(false);
             }}
             onCancel={() => {
@@ -106,13 +111,13 @@ export function WorkspaceHeader({ controller }: Props) {
             title="Search"
             hideOnSelect
             onSelected={(info) => {
-              controller.hideSearchDialog();
-              controller.openDocument(info.id, true);
+              app.workspace.hideSearchDialog();
+              app.workspace.openDocument(info.id, true);
             }}
-            onCancel={() => controller.hideSearchDialog()}
+            onCancel={() => app.workspace.hideSearchDialog()}
             onCreateNote={(title) => {
-              controller.hideSearchDialog();
-              controller.open({
+              app.workspace.hideSearchDialog();
+              app.workspace.open({
                 variant: 'new-document',
                 documentType: NOTE_DOCUMENT_TYPE,
                 data: { title },
@@ -124,7 +129,7 @@ export function WorkspaceHeader({ controller }: Props) {
 
         <ImagePasteHandler
           onSuccess={(documentId) => {
-            controller.openDocument(documentId);
+            app.workspace.openDocument(documentId);
           }}
         />
 
@@ -134,13 +139,13 @@ export function WorkspaceHeader({ controller }: Props) {
             {
               text: 'Status',
               icon: 'info',
-              onClick: () => controller.open({ variant: 'status' }),
+              onClick: () => app.workspace.open({ variant: 'status' }),
             },
 
             {
               text: 'Catalog',
               icon: 'search-catalog',
-              onClick: () => controller.open({ variant: 'catalog' }),
+              onClick: () => app.workspace.open({ variant: 'catalog' }),
             },
 
             process.env.NODE_ENV === 'development' && {
@@ -153,7 +158,7 @@ export function WorkspaceHeader({ controller }: Props) {
             {
               text: 'Close cards',
               icon: 'x',
-              onClick: () => controller.closeAll(),
+              onClick: () => app.workspace.closeAll(),
             },
           ]}
         />

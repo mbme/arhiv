@@ -1,15 +1,21 @@
 import { createRoot } from 'react-dom/client';
+import { effect } from '@preact/signals-core';
 import { App } from 'App';
 import { ComponentsDemo } from 'ComponentsDemo';
 import { CreateArhiv } from 'CreateArhiv';
-import { WorkspaceController } from 'Workspace/controller';
+import { appController } from 'controller';
 
-window.WORKSPACE = new WorkspaceController();
+window.APP = appController;
+
+effect(() => {
+  document.documentElement.classList.toggle('dark', appController.$theme.value === 'dark');
+});
 
 const rootEl = document.querySelector('main');
 if (!rootEl) {
   throw new Error('render root not found');
 }
+
 const root = createRoot(rootEl);
 
 function renderApp() {

@@ -3,6 +3,7 @@ import { Config } from 'tailwindcss';
 
 const config: Config = {
   content: ['./src/ui/**/*.tsx'],
+  darkMode: 'selector',
   theme: {
     extend: {
       fontFamily: {

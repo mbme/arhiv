@@ -20,6 +20,10 @@
     @apply bg-zinc-100 dark:bg-gray-800;
   }
 
+  .var-bg-tertiary-color {
+    @apply bg-zinc-100 dark:bg-zinc-900;
+  }
+
   .var-card-width {
     width: 39rem;
     max-width: 98vw;
@@ -43,6 +47,10 @@
 
   .var-form-border-color {
     @apply border-gray-200 dark:border-zinc-700;
+  }
+
+  .var-text-heading-color {
+    @apply text-slate-900 dark:text-slate-100
   }
 
   .buttons {
@@ -83,11 +91,11 @@
 
 @layer components {
   .heading-1 {
-    @apply text-xl font-bold tracking-tight text-slate-900;
+    @apply text-xl font-bold tracking-tight var-text-heading-color;
   }
 
   .heading-2 {
-    @apply text-lg font-semibold tracking-tight text-slate-900;
+    @apply text-lg font-semibold tracking-tight var-text-heading-color;
   }
 
   .section-heading {

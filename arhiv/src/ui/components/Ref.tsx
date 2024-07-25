@@ -52,7 +52,7 @@ export function Ref({ documentId, documentType, documentTitle, description }: Re
       target="_blank"
       rel="noopen noreferer"
       className={cx(
-        'font-semibold text-blue-700 hover:text-blue-600/90 break-words cursor-pointer',
+        'font-semibold var-active-color var-active-color-hover break-words cursor-pointer',
         isErasedDocument(documentType) && 'line-through text-slate-700/50',
       )}
       onClick={(e) => {

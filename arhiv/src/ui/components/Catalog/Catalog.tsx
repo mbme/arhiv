@@ -130,7 +130,7 @@ export function Catalog({
 
       {showSettings && (
         <DocumentTypeSettings
-          className="mb-4 px-2 py-2 bg-zinc-50"
+          className="mb-4 px-2 py-2 var-bg-tertiary-color"
           selected={documentTypes}
           onChange={(newDocumentTypes) => {
             onIncludedDocumentTypesChange(newDocumentTypes);

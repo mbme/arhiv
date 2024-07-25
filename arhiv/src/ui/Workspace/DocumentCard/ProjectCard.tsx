@@ -52,7 +52,7 @@ function TaskItem({ id, data }: TaskItemProps) {
       {...attributes}
       style={style}
       className={cx(
-        'pr-2 py-2 group hover:bg-amber-100 cursor-default font-medium touch-none relative flex flex-row items-center',
+        'pr-2 py-2 group hover:var-item-active-bg-color cursor-default font-medium touch-none relative flex flex-row items-center',
         data.status === 'Cancelled' && 'line-through',
       )}
       onClick={() => {
@@ -214,7 +214,7 @@ export function ProjectCard({
     >
       {isUpdating && <ProgressLocker />}
 
-      <h1 className="heading-1 text-2xl mt-4 text-center text-sky-900 tracking-wider">
+      <h1 className="heading-1 text-2xl mt-4 text-center text-sky-900 dark:text-sky-300 tracking-wider">
         {projectData.name}
       </h1>
       <div className="font-medium text-xs text-slate-400 uppercase tracking-wider text-center mb-8">

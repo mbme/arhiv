@@ -13,10 +13,10 @@ export function Badge({ label, checked, onClick, size = 'md', className }: Props
       className={cx(
         'font-medium px-2.5 py-0.5 rounded-full border select-none',
         {
-          'bg-blue-100 text-blue-800 border-blue-400': checked,
+          'var-item-active-bg-color var-active-color border-blue-400 dark:border-blue-600': checked,
           'text-xs': size === 'sm',
           'text-sm': size === 'md',
-          'cursor-pointer hover:bg-blue-100/40': Boolean(onClick),
+          'cursor-pointer hover:var-item-active-bg-color hover:!bg-opacity-40': Boolean(onClick),
         },
         className,
       )}

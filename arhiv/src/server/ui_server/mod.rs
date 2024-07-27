@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::HeaderMap,
+    http::{header, HeaderMap, HeaderValue},
     middleware::{self, Next},
     response::{
         sse::{Event, KeepAlive},
@@ -54,6 +54,7 @@ pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(Arc::new(ui_hmac)))
+        .route("/scraper.js", get(scraper_js))
 }
 
 #[derive(Deserialize)]
@@ -81,7 +82,6 @@ async fn create_arhiv_handler(
 
 #[derive(Serialize)]
 struct Features {
-    scraper: bool,
     use_local_storage: bool,
 }
 
@@ -92,7 +92,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
         serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
 
     let features = Features {
-        scraper: cfg!(feature = "scraper"),
         use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;
@@ -131,6 +130,22 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
 
     let mut headers = HeaderMap::new();
     add_no_cache_headers(&mut headers);
+
+    Ok((headers, Html(content)))
+}
+
+async fn scraper_js() -> Result<impl IntoResponse, ServerError> {
+    let content = "console.error('SCRAPER JS', W.model);".to_string();
+    let mut headers = HeaderMap::new();
+    add_no_cache_headers(&mut headers);
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/javascript"),
+    );
+    headers.insert(
+        header::ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
 
     Ok((headers, Html(content)))
 }

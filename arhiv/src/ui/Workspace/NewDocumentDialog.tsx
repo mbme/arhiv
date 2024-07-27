@@ -11,9 +11,10 @@ import { IconVariant } from 'components/Icon';
 type ActionType = 'Scrape URL' | 'Attach file';
 
 const ACTIONS: ActionType[] = ['Attach file'];
-if (window.FEATURES.scraper) {
-  ACTIONS.unshift('Scrape URL');
-}
+// FIXME remove this
+// if (window.FEATURES.scraper) {
+//   ACTIONS.unshift('Scrape URL');
+// }
 
 function throwBadAction(value: never): never;
 function throwBadAction(value: ActionType) {

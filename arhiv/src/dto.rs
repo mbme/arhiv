@@ -56,10 +56,6 @@ pub enum APIRequest {
         base64_data: String,
         file_name: String,
     },
-    #[cfg(feature = "scraper")]
-    Scrape {
-        url: String,
-    },
     Commit {},
     Sync {},
     GetSaveState {},
@@ -124,10 +120,6 @@ pub enum APIResponse {
     },
     UploadFile {
         id: Id,
-    },
-    #[cfg(feature = "scraper")]
-    Scrape {
-        documents: Vec<GetDocumentsResult>,
     },
     Commit {},
     Sync {},

@@ -283,27 +283,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             APIResponse::UploadFile { id: attachment.id }
         }
-        #[cfg(feature = "scraper")]
-        APIRequest::Scrape { url } => {
-            use scraper::ScraperOptions;
-            let documents = arhiv
-                .scrape(
-                    url,
-                    ScraperOptions {
-                        manual: false,
-                        emulate_mobile: false,
-                        debug: false,
-                        screenshot_file: None,
-                    },
-                )
-                .await?;
-
-            let schema = arhiv.baza.get_schema();
-
-            APIResponse::Scrape {
-                documents: documents_into_results(documents, schema)?,
-            }
-        }
         APIRequest::Commit {} => {
             let mut tx = arhiv.baza.get_tx()?;
 

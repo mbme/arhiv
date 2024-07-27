@@ -2,7 +2,6 @@ import { DataSchema } from 'utils/schema';
 import { AppController } from 'controller';
 
 type Features = {
-  scraper: boolean;
   use_local_storage: boolean;
 };
 

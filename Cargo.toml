@@ -45,7 +45,6 @@ chrono = { version = "0.4", features = ["serde"] }
 
 ring = "*" # audited Crypto library
 
-lazy_static = "1.4"
 rand = "0.8"
 
 insta = { version = "1", features = ["redactions", "json"] }

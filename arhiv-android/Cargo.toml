@@ -18,7 +18,6 @@ production-mode = ["arhiv/production-mode"]
 anyhow.workspace = true
 tokio.workspace = true
 jni = "0.21"
-lazy_static.workspace = true
 
 arhiv = { path = "../arhiv", features = ["debug-embed"] }
 rs-utils = { path = "../rs-utils" }

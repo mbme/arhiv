@@ -1,4 +1,7 @@
-use std::{sync::Mutex, time::Duration};
+use std::{
+    sync::{LazyLock, Mutex},
+    time::Duration,
+};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use jni::{
@@ -6,16 +9,13 @@ use jni::{
     sys::jstring,
     JNIEnv,
 };
-use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 
 use arhiv::{Arhiv, ArhivOptions, ArhivServer, Credentials, ServerInfo};
 use rs_utils::log;
 
-lazy_static! {
-    static ref RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
-    static ref ARHIV_SERVER: Mutex<Option<ArhivServer>> = Mutex::new(None);
-}
+static RUNTIME: LazyLock<Mutex<Option<Runtime>>> = LazyLock::new(|| Mutex::new(None));
+static ARHIV_SERVER: LazyLock<Mutex<Option<ArhivServer>>> = LazyLock::new(|| Mutex::new(None));
 
 fn get_root_dir(files_dir: &str) -> String {
     if cfg!(feature = "production-mode") {

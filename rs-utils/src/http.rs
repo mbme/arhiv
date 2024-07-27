@@ -1,9 +1,10 @@
+use std::sync::LazyLock;
+
 use anyhow::{bail, ensure, Context, Result};
 use axum::{
     body::Body,
     response::{IntoResponse, Response},
 };
-use lazy_static::lazy_static;
 use regex::Regex;
 use tokio::{
     fs as tokio_fs,
@@ -28,10 +29,10 @@ pub fn extract_file_name_from_url(url: &Url) -> String {
 }
 
 pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r#"^attachment; filename="(.+)"$"#)
-            .expect("failed to create Content-Disposition regex");
-    }
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r#"^attachment; filename="(.+)"$"#)
+            .expect("failed to create Content-Disposition regex")
+    });
 
     if header == "inline" || header == "attachment" {
         return Ok(None);
@@ -55,11 +56,10 @@ pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> 
 }
 
 pub fn parse_content_type_header(header: &str) -> Result<(String, Option<String>, Option<String>)> {
-    lazy_static! {
-        static ref RE: Regex =
-            Regex::new(r"^([[:alnum:]-]+/[[:alnum:]-]+)(?:; (charset|boundary)=(.+))?$")
-                .expect("failed to create Content-Type regex");
-    }
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^([[:alnum:]-]+/[[:alnum:]-]+)(?:; (charset|boundary)=(.+))?$")
+            .expect("failed to create Content-Type regex")
+    });
 
     let captures = RE
         .captures(header)
@@ -89,10 +89,9 @@ pub fn parse_content_type_header(header: &str) -> Result<(String, Option<String>
 }
 
 pub fn parse_content_range_header(header: &str) -> Result<(u64, u64, u64)> {
-    lazy_static! {
-        static ref RE: Regex =
-            Regex::new(r"^bytes (\d+)-(\d+)/(\d+)$").expect("failed to create Content-Range regex");
-    }
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^bytes (\d+)-(\d+)/(\d+)$").expect("failed to create Content-Range regex")
+    });
 
     let captures = RE
         .captures(header)
@@ -137,10 +136,9 @@ pub fn parse_content_range_header(header: &str) -> Result<(u64, u64, u64)> {
 }
 
 pub fn parse_range_header(header: &str) -> Result<(u64, Option<u64>)> {
-    lazy_static! {
-        static ref RE: Regex =
-            Regex::new(r"^bytes=(\d+)-(\d+)?$").expect("failed to create Range regex");
-    }
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^bytes=(\d+)-(\d+)?$").expect("failed to create Range regex")
+    });
 
     let captures = RE
         .captures(header)

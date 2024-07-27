@@ -7,7 +7,7 @@
   "author": "mbme",
   "license": "MIT",
   "private": true,
-  "workspaces": ["arhiv", "arhiv-desktop", "scraper"],
+  "workspaces": ["arhiv", "arhiv-desktop"],
   "scripts": {
     "check": "npm run compiler-errors --workspaces && npm run check-fmt --workspaces && npm run lint --workspaces && npm run test --workspaces"
   },

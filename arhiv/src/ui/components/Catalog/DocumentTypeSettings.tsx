@@ -51,7 +51,9 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
                 size="sm"
                 label={documentType}
                 checked={selected.includes(documentType)}
-                onClick={() => onClick(documentType)}
+                onClick={() => {
+                  onClick(documentType);
+                }}
               />
             );
           })}
@@ -62,7 +64,9 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
             className="line-through"
             label="ERASED"
             checked={selected.includes(ERASED_DOCUMENT_TYPE)}
-            onClick={() => onClick(ERASED_DOCUMENT_TYPE)}
+            onClick={() => {
+              onClick(ERASED_DOCUMENT_TYPE);
+            }}
           />
         </div>
       </section>
@@ -77,7 +81,9 @@ export function DocumentTypeSettings({ className, selected, onChange }: Props) {
                 size="sm"
                 label={documentType}
                 checked={selected.includes(documentType)}
-                onClick={() => onClick(documentType)}
+                onClick={() => {
+                  onClick(documentType);
+                }}
               />
             );
           })}

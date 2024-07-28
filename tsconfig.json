@@ -24,7 +24,8 @@
     "strict": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true
   },
   "exclude": ["node_modules", "*/**/FLYCHECK_XXY_*"]
 }

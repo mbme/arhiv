@@ -38,7 +38,7 @@ export function useLockDocument(id: DocumentId, lock: boolean): DocumentLockKey 
             setError(e);
           },
         )
-        .catch((e) => {
+        .catch((e: unknown) => {
           console.error(`Failed to unlock document ${id}`, e);
         });
 

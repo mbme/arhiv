@@ -13,7 +13,7 @@ export function ImagePasteHandler({ onSuccess }: Props) {
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
       for (const item of event.clipboardData?.items ?? []) {
-        if (item.type?.includes('image/')) {
+        if (item.type.includes('image/')) {
           setFile(item.getAsFile());
           return;
         }
@@ -38,7 +38,9 @@ export function ImagePasteHandler({ onSuccess }: Props) {
         setFile(null);
         onSuccess(documentId);
       }}
-      onCancel={() => setFile(null)}
+      onCancel={() => {
+        setFile(null);
+      }}
     />
   );
 }

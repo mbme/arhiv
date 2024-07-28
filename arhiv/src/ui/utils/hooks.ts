@@ -94,7 +94,7 @@ export function useQuery<TResult>(
     };
   }, [counter, cbRef, optionsRef]);
 
-  const inputsMemo = useShallowMemo(options?.refreshIfChange ?? []);
+  const inputsMemo = useShallowMemo(options.refreshIfChange ?? []);
   useUpdateEffect(() => {
     setCounter(counter + 1);
   }, [inputsMemo]);
@@ -152,7 +152,9 @@ export function useTimeout(cb: Callback, timeoutMs: number, enabled: boolean): v
       return;
     }
 
-    const timeoutId = setTimeout(() => cbRef.current(), timeoutMs);
+    const timeoutId = setTimeout(() => {
+      cbRef.current();
+    }, timeoutMs);
 
     return () => {
       clearTimeout(timeoutId);
@@ -171,7 +173,9 @@ export function useDebouncedCallback<Args extends any[]>(
 
   const debouncedCallback = useMemo(() => {
     if (waitFor < 1) {
-      return (...args: Args) => callbackRef.current(...args);
+      return (...args: Args) => {
+        callbackRef.current(...args);
+      };
     }
 
     return debounce<Args, (...args: Args) => void>((...args) => {
@@ -274,7 +278,9 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
 export function useForceRender(): Callback {
   const [, setCounter] = useState(0);
 
-  return useCallback(() => setCounter((value) => value + 1), []);
+  return useCallback(() => {
+    setCounter((value) => value + 1);
+  }, []);
 }
 
 export function useIsPageVisible(): boolean {

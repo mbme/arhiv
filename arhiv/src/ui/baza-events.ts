@@ -2,7 +2,7 @@ import { BazaEvent } from 'dto';
 import { useEffect, useRef } from 'react';
 import { Callback } from 'utils';
 
-let bazaEvents: EventSource;
+let bazaEvents: EventSource | undefined;
 
 function subscribeToBazaEvents(cb: (event: BazaEvent) => void): Callback {
   if (!bazaEvents) {
@@ -17,7 +17,7 @@ function subscribeToBazaEvents(cb: (event: BazaEvent) => void): Callback {
   bazaEvents.addEventListener('message', rpcEventHandler);
 
   return () => {
-    bazaEvents.removeEventListener('message', rpcEventHandler);
+    bazaEvents!.removeEventListener('message', rpcEventHandler);
   };
 }
 

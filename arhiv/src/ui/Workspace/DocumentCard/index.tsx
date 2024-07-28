@@ -3,9 +3,7 @@ import { useSuspenseQuery } from 'utils/suspense';
 import { copyTextToClipbard, getDocumentUrl } from 'utils';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { useBazaEvent } from 'baza-events';
-import { CardContainer } from 'Workspace/CardContainer';
 import { Card, useCardContext } from 'Workspace/controller';
-import { ProgressLocker } from 'components/ProgressLocker';
 import { DropdownOptions } from 'components/DropdownMenu';
 import { showToast } from 'components/Toaster';
 import { DocumentCard } from './DocumentCard';
@@ -39,14 +37,6 @@ export function DocumentCardContainer() {
       }
     }
   });
-
-  if (!document) {
-    return (
-      <CardContainer>
-        <ProgressLocker />
-      </CardContainer>
-    );
-  }
 
   const documentActions: DropdownOptions = [
     {
@@ -92,13 +82,13 @@ export function DocumentCardContainer() {
       <ProjectCard
         document={document}
         isUpdating={isUpdating}
-        onForceEditor={() =>
+        onForceEditor={() => {
           controller.pushStack(card.id, {
             variant: 'document',
             documentId: card.documentId,
             forceEditor: true,
-          })
-        }
+          });
+        }}
         onAddTask={() => {
           controller.open({
             variant: 'new-document',

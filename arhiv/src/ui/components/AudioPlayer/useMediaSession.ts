@@ -32,7 +32,7 @@ export function useMediaSession(audio: HTMLAudioElement, options: Options) {
 
     mediaSession.setActionHandler('play', () => {
       console.info('media session: play');
-      audio.play().catch((e) => {
+      audio.play().catch((e: unknown) => {
         console.error('Failed to play', e);
       });
     });
@@ -44,17 +44,17 @@ export function useMediaSession(audio: HTMLAudioElement, options: Options) {
 
     mediaSession.setActionHandler('stop', () => {
       console.info('media session: stop');
-      optionsRef.current?.onStop?.();
+      optionsRef.current.onStop?.();
     });
 
     mediaSession.setActionHandler('nexttrack', () => {
       console.info('media session: nexttrack');
-      optionsRef.current?.nextTrack?.();
+      optionsRef.current.nextTrack?.();
     });
 
     mediaSession.setActionHandler('previoustrack', () => {
       console.info('media session: previoustrack');
-      optionsRef.current?.prevTrack?.();
+      optionsRef.current.prevTrack?.();
     });
 
     mediaSession.setActionHandler('seekforward', (e) => {

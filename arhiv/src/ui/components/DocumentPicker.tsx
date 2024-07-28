@@ -34,13 +34,13 @@ export function DocumentPicker({
   return (
     <Dialog
       innerRef={dialogRef}
-      title={title || `Pick ${documentTypes?.join(', ') ?? 'document'}`}
+      title={title || `Pick ${documentTypes.join(', ') || 'document'}`}
       onHide={onCancel}
       contentClassName="px-3 pb-0"
     >
       <Catalog
         autofocus
-        documentTypes={documentTypes ?? []}
+        documentTypes={documentTypes}
         query={query}
         page={page}
         showSettings={showSettings}

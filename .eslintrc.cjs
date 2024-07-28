@@ -6,7 +6,9 @@ module.exports = {
     'eslint:recommended',
     'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:@typescript-eslint/strict',
+    'plugin:@typescript-eslint/strict-type-checked',
     'prettier',
   ],
   env: {
@@ -23,6 +25,7 @@ module.exports = {
     'no-prototype-builtins': 0,
     '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
     '@typescript-eslint/no-non-null-assertion': 0,
+    '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
   },
   root: true,
 };

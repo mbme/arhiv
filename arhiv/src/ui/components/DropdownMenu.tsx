@@ -67,7 +67,9 @@ export function DropdownMenu({ icon = 'more', align, options }: DropdownMenuProp
                             'var-item-active-bg-color': focus,
                           },
                         )}
-                        onClick={() => option.onClick()}
+                        onClick={() => {
+                          option.onClick();
+                        }}
                       >
                         {option.icon ? <Icon variant={option.icon} /> : <div className="w-5" />}
 

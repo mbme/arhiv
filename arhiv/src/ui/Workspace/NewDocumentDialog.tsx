@@ -74,6 +74,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
                 return;
               }
 
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               if (action === 'Attach file') {
                 onAttach();
                 return;
@@ -98,7 +99,9 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
             <Button
               key={documentType}
               variant="simple"
-              onClick={() => onNewDocument(documentType)}
+              onClick={() => {
+                onNewDocument(documentType);
+              }}
               onHover={activateOnHover}
               className={searchResultClass}
             >
@@ -112,7 +115,9 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
           <Button
             key={documentType}
             variant="simple"
-            onClick={() => onNewDocument(documentType)}
+            onClick={() => {
+              onNewDocument(documentType);
+            }}
             onHover={activateOnHover}
             className={searchResultClass}
           >

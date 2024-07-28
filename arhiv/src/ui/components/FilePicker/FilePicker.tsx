@@ -26,14 +26,21 @@ export function FilePicker({ onFileSelected }: Props) {
       <div className="flex justify-between mb-6 mx-4">
         <FilePickerHead dir={result?.dir ?? dir} entries={result?.entries} />
 
-        <form className="form" onSubmit={(e) => e.preventDefault()}>
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+        >
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               name="show_hidden"
               type="checkbox"
               className="field"
               checked={showHidden}
-              onChange={() => setShowHidden(!showHidden)}
+              onChange={() => {
+                setShowHidden(!showHidden);
+              }}
             />
             Show hidden
           </label>

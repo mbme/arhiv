@@ -61,7 +61,9 @@ export function AttachmentPreview({ data }: AttachmentPreviewProps) {
         <Dialog
           className="w-fit max-w-full"
           title={data['filename'] as string}
-          onHide={() => setShowImageModal(false)}
+          onHide={() => {
+            setShowImageModal(false);
+          }}
         >
           <img className="max-w-full mx-auto" src={blobUrl} />
         </Dialog>
@@ -75,7 +77,9 @@ export function AttachmentPreview({ data }: AttachmentPreviewProps) {
         src={size < 1_000_000 ? blobUrl : compressedImage}
         alt=""
         className="max-h-96 mx-auto"
-        onClick={() => setShowImageModal(true)}
+        onClick={() => {
+          setShowImageModal(true);
+        }}
       />
     );
   }

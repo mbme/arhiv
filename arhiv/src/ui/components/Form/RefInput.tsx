@@ -75,7 +75,7 @@ export function RefInput({
       throw new Error('v-form-field element is missing');
     }
 
-    const value = multiple ? newRefs : newRefs[0];
+    const value = multiple ? newRefs : (newRefs[0] ?? null);
     if (triggerChange) {
       el.inputValue(value);
     } else {
@@ -118,11 +118,13 @@ export function RefInput({
             }
             setShowDocumentPicker(false);
           }}
-          onCancel={() => setShowDocumentPicker(false)}
+          onCancel={() => {
+            setShowDocumentPicker(false);
+          }}
         />
       )}
 
-      {value?.documents.map((item) => (
+      {value.documents.map((item) => (
         <div key={item.id}>
           <div className="flex items-center gap-4">
             <RefComponent
@@ -154,7 +156,9 @@ export function RefInput({
       {canAdd && (
         <Button
           variant="text"
-          onClick={() => setShowDocumentPicker(true)}
+          onClick={() => {
+            setShowDocumentPicker(true);
+          }}
           disabled={readonly || disabled}
           busy={isUpdating}
           leadingIcon="eye"
@@ -173,7 +177,9 @@ export function RefInput({
             }
             setShowUrlPicker(false);
           }}
-          onCancel={() => setShowUrlPicker(false)}
+          onCancel={() => {
+            setShowUrlPicker(false);
+          }}
         />
       )}
 
@@ -201,7 +207,9 @@ export function RefInput({
       {canAddUrls && (
         <Button
           variant="text"
-          onClick={() => setShowUrlPicker(true)}
+          onClick={() => {
+            setShowUrlPicker(true);
+          }}
           disabled={readonly || disabled}
           busy={isUpdating}
           leadingIcon="link"

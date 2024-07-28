@@ -48,7 +48,9 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
             placeholder="Enter URL"
             className="field grow"
             value={url}
-            onChange={(e) => setUrl(e.currentTarget.value)}
+            onChange={(e) => {
+              setUrl(e.currentTarget.value);
+            }}
             disabled={inProgress}
             autoComplete="off"
             autoFocus

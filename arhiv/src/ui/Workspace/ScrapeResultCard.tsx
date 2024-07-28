@@ -23,7 +23,7 @@ export function ScrapeResultCard({ url, ids }: Props) {
 
       <div className="font-semibold text-sky-800 uppercase mb-2">{ids.length} new documents</div>
       <div className="flex flex-col gap-2">
-        {value?.documents.map((item) => (
+        {value.documents.map((item) => (
           <Ref
             key={item.id}
             documentId={item.id}

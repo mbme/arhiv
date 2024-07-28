@@ -20,7 +20,7 @@ type DocumentEditorFormProps = {
   documentType: DocumentType;
   data: DocumentData;
   collections: DocumentId[];
-  onSubmit: (data: JSONObj, collections: DocumentId[]) => Promise<SaveDocumentErrors | void>;
+  onSubmit: (data: JSONObj, collections: DocumentId[]) => Promise<SaveDocumentErrors | undefined>;
   formRef?: JSXRef<HTMLFormElement>;
 };
 
@@ -35,7 +35,7 @@ export function DocumentEditor({
 }: DocumentEditorFormProps) {
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
-  const [collections, setCollections] = useState(initialCollections ?? []);
+  const [collections, setCollections] = useState(initialCollections);
 
   const collectionTypes = getCollectionTypesForDocument(documentType);
 

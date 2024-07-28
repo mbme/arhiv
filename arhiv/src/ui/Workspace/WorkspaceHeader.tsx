@@ -39,14 +39,18 @@ export function WorkspaceHeader() {
         <IconButton
           icon="circle-half"
           title="Toggle light/dark theme"
-          onClick={() => app.toggleTheme()}
+          onClick={() => {
+            app.toggleTheme();
+          }}
           className="ml-auto"
         />
 
         <Button
           variant="text"
           leadingIcon="add-document"
-          onClick={() => setShowNewDocumentDialog(true)}
+          onClick={() => {
+            setShowNewDocumentDialog(true);
+          }}
         >
           <span className="hidden md:inline">New...</span>
         </Button>
@@ -73,7 +77,11 @@ export function WorkspaceHeader() {
         <Button
           variant="text"
           leadingIcon="search-catalog"
-          onClick={() => startTransition(() => app.workspace.showSearchDialog())}
+          onClick={() => {
+            startTransition(() => {
+              app.workspace.showSearchDialog();
+            });
+          }}
         >
           <span className="hidden md:inline" title="Ctrl-K">
             Search
@@ -114,7 +122,9 @@ export function WorkspaceHeader() {
               app.workspace.hideSearchDialog();
               app.workspace.openDocument(info.id, true);
             }}
-            onCancel={() => app.workspace.hideSearchDialog()}
+            onCancel={() => {
+              app.workspace.hideSearchDialog();
+            }}
             onCreateNote={(title) => {
               app.workspace.hideSearchDialog();
               app.workspace.open({
@@ -139,13 +149,17 @@ export function WorkspaceHeader() {
             {
               text: 'Status',
               icon: 'info',
-              onClick: () => app.workspace.open({ variant: 'status' }),
+              onClick: () => {
+                app.workspace.open({ variant: 'status' });
+              },
             },
 
             {
               text: 'Catalog',
               icon: 'search-catalog',
-              onClick: () => app.workspace.open({ variant: 'catalog' }),
+              onClick: () => {
+                app.workspace.open({ variant: 'catalog' });
+              },
             },
 
             process.env.NODE_ENV === 'development' && {
@@ -158,7 +172,9 @@ export function WorkspaceHeader() {
             {
               text: 'Close cards',
               icon: 'x',
-              onClick: () => app.workspace.closeAll(),
+              onClick: () => {
+                app.workspace.closeAll();
+              },
             },
           ]}
         />

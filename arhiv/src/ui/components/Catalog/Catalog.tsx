@@ -59,13 +59,13 @@ export function Catalog({
     <div
       key={item.id}
       className="cursor-pointer pr-2 py-2 sm-selectable hover:var-item-active-bg-color"
-      onClick={() =>
+      onClick={() => {
         onDocumentSelected({
           id: item.id,
           documentType: item.documentType,
           data: item.data,
-        })
-      }
+        });
+      }}
     >
       <div className="flex gap-3">
         <div className="shrink-0 w-[64px] h-[80px]">
@@ -115,7 +115,13 @@ export function Catalog({
           debounceMs={700}
         />
 
-        <IconButton icon="cog" size="sm" onClick={() => onToggleSettings(!showSettings)} />
+        <IconButton
+          icon="cog"
+          size="sm"
+          onClick={() => {
+            onToggleSettings(!showSettings);
+          }}
+        />
 
         {onCreateNote && (
           <IconButton
@@ -123,7 +129,9 @@ export function Catalog({
             size="sm"
             title="Create note"
             disabled={query.trim().length === 0}
-            onClick={() => onCreateNote(query.trim())}
+            onClick={() => {
+              onCreateNote(query.trim());
+            }}
           />
         )}
       </div>

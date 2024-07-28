@@ -36,7 +36,13 @@ function showTrayIcon(serverInfo: ExtendedServerInfo) {
       click: () => void handleAction({ type: 'search', query: '' }, serverInfo),
     },
     { type: 'separator' },
-    { label: 'Quit', type: 'normal', click: () => app.quit() },
+    {
+      label: 'Quit',
+      type: 'normal',
+      click: () => {
+        app.quit();
+      },
+    },
   ]);
 
   tray.setToolTip('Arhiv Desktop App');
@@ -177,7 +183,7 @@ async function start(args: string[]) {
 }
 
 const args = process.argv.slice(2);
-start(args).catch((e) => {
+start(args).catch((e: unknown) => {
   console.error('Failed to start', e);
   app.quit();
 });

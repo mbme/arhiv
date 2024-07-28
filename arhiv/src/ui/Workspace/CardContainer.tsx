@@ -65,7 +65,9 @@ export function CardContainer({
               icon="arrow-left"
               size="lg"
               title="Go back"
-              onClick={() => controller.popStack(card.id)}
+              onClick={() => {
+                controller.popStack(card.id);
+              }}
               className="relative right-2"
             />
           )}
@@ -77,7 +79,9 @@ export function CardContainer({
               icon="x"
               size="lg"
               title="Close"
-              onClick={() => controller.close(card.id)}
+              onClick={() => {
+                controller.close(card.id);
+              }}
               className="relative left-1"
             />
           )}

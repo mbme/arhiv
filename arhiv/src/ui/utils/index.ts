@@ -143,7 +143,9 @@ export const debounce = <Args extends any[], F extends (...args: Args) => void>(
 
   const debounced = (...args: Args) => {
     window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => func(...args), waitForMs);
+    timeoutId = window.setTimeout(() => {
+      func(...args);
+    }, waitForMs);
   };
 
   return debounced as F;

@@ -17,7 +17,9 @@ export function FilePickerDialog({ onAttachmentCreated, onCancel }: Props) {
         filePath={selectedFile.path}
         size={selectedFile.size}
         onAttachmentCreated={onAttachmentCreated}
-        onCancel={() => setSelectedFile(undefined)}
+        onCancel={() => {
+          setSelectedFile(undefined);
+        }}
       />
     );
   }

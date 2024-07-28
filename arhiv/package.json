@@ -18,7 +18,7 @@
     "prod:build:css": "NODE_ENV=production npm run build:css",
     "prod:build": "npm run prod:build:js && npm run prod:build:css",
     "lint": "eslint --cache --ext .ts --ext .tsx src/",
-    "test": "glob './src/ui/**/*.test.{ts,tsx}' --cmd='node --import tsx --no-warnings=ExperimentalWarning --test --test-reporter spec'",
+    "test": "node --import tsx --test 'src/ui/**/*.test.ts' 'src/ui/**/*.test.tsx' --test-reporter spec",
     "fmt": "prettier --write src/",
     "check-fmt": "prettier --check src/"
   },
@@ -47,7 +47,6 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.2.6",
     "esbuild": "^0.23.0",
-    "glob": "^11.0.0",
     "global-jsdom": "^24.0.0",
     "jsdom": "^24.0.0",
     "postcss": "^8.3.0",

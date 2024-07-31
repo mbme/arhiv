@@ -4,6 +4,8 @@ import favicon from '../../resources/favicon-16x16.png';
 
 export type Action = { type: 'open'; documentId?: string } | { type: 'search'; query: string };
 
+const DEFAULT_ACTION: Action = { type: 'open' };
+
 function parseAction(args: string[]): Action | undefined {
   const searchArg = args.find((item) => item.startsWith('search='));
   if (searchArg) {
@@ -51,6 +53,7 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
       win.restore();
     }
     win.focus();
+    win.flashFrame(true);
   } else {
     console.log('Opening new window');
     win = new BrowserWindow({
@@ -100,10 +103,11 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
 async function start(args: string[]) {
   console.log('args:', ...args);
 
-  let action = parseAction(args);
+  const action = parseAction(args);
   console.log('action:', action);
 
   if (!app.requestSingleInstanceLock(action)) {
+    console.log('The other instance already running, quiting');
     app.quit();
     return;
   }
@@ -123,10 +127,10 @@ async function start(args: string[]) {
   console.log('server base url:', serverInfo.uiUrl);
 
   app.on('second-instance', (_event, _commandLine, _workingDirectory, additionalData) => {
-    const actionFromSecondInstance = additionalData as Action;
+    const actionFromSecondInstance = additionalData as Action | undefined;
     console.log('Got action from second instance:', actionFromSecondInstance);
 
-    handleAction(actionFromSecondInstance, serverInfo).catch((e) => {
+    handleAction(actionFromSecondInstance ?? DEFAULT_ACTION, serverInfo).catch((e: unknown) => {
       console.error('Action from second instance failed', e);
     });
   });
@@ -158,12 +162,11 @@ async function start(args: string[]) {
 
   if (args.includes('--tray')) {
     showTrayIcon(serverInfo);
-  } else if (!action) {
-    action = { type: 'open' };
-  }
-
-  if (action) {
-    await handleAction(action, serverInfo);
+    if (action) {
+      await handleAction(action, serverInfo);
+    }
+  } else {
+    await handleAction(action ?? DEFAULT_ACTION, serverInfo);
   }
 }
 

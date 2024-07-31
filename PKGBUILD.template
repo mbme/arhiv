@@ -38,7 +38,7 @@ build() {
 
   cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin mb-scraper
 
-  npm run build --workspace arhiv-desktop
+  npm run prod:build --workspace arhiv-desktop
 }
 
 check() {

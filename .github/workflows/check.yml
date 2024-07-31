@@ -30,7 +30,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install JS modules
-        run: npm ci
+        run: ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci
 
       - name: Lint & test Rust
         run: cargo clippy --all-targets --all-features -- -D warnings && cargo test

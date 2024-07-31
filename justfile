@@ -21,7 +21,13 @@ run:
 
 desktop *ARGS:
   npm run build --workspace arhiv-desktop
-  DEV_ARHIV_ROOT={{root}} SERVER_PORT=8443 RUST_LOG={{debug_log_level}} ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" npm run start --workspace arhiv-desktop -- {{ARGS}}
+
+  DEV_ARHIV_ROOT={{root}} \
+  SERVER_PORT=8443 \
+  RUST_LOG={{debug_log_level}} \
+  ARHIV_BIN="{{justfile_directory()}}/target/debug/arhiv" \
+  ELECTRON_OZONE_PLATFORM_HINT=wayland \
+  npm run start --workspace arhiv-desktop -- {{ARGS}}
 
 scrape *PARAMS:
   cargo run --bin mb-scraper {{PARAMS}}

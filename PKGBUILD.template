@@ -62,7 +62,7 @@ package() {
   # arhiv desktop app
   install -Dm 755 "arhiv-desktop/arhiv-desktop" "$pkgdir/usr/bin/arhiv-desktop"
   install -Dm 644 "arhiv-desktop/dist/index.cjs" "$pkgdir/usr/share/arhiv-desktop/dist/index.cjs"
-  install -Dm 644 "arhiv-desktop/package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
+  install -Dm 644 "arhiv-desktop/electron-package.json" "$pkgdir/usr/share/arhiv-desktop/package.json"
 
   install -Dm 644 "binutils/resources/v.arhiv.ui.desktop" "${pkgdir}/usr/share/applications/v.arhiv.ui.desktop"
   install -Dm 755 "binutils/resources/arhiv-server.service" "${pkgdir}/usr/lib/systemd/user/arhiv-server.service"

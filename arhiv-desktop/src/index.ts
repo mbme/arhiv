@@ -1,4 +1,4 @@
-import { app, Tray, Menu, nativeImage, BrowserWindow, session } from 'electron';
+import { app, Tray, Menu, nativeImage, BrowserWindow, session, Notification } from 'electron';
 import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
@@ -52,8 +52,14 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
     if (win.isMinimized()) {
       win.restore();
     }
-    win.focus();
     win.flashFrame(true);
+    win.show();
+    win.focus();
+    new Notification({
+      title: 'Arhiv Desktop',
+      body: 'The other instance already running',
+      urgency: 'critical',
+    }).show();
   } else {
     console.log('Opening new window');
     win = new BrowserWindow({

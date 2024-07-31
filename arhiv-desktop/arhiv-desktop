@@ -2,4 +2,4 @@
 
 export ELECTRON_OZONE_PLATFORM_HINT=wayland
 
-exec electron /usr/share/arhiv-desktop/ "$@"
+exec electron31 /usr/share/arhiv-desktop/ "$@"

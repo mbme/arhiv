@@ -46,7 +46,7 @@ export function RefInput({
   disabled = false,
   onChange,
 }: Props) {
-  const fieldRef = useRef<HTMLVFormFieldElement>(null);
+  const fieldRef = useRef<HTMLVFormFieldElement<DocumentId | DocumentId[]>>(null);
 
   const defaultValue = normalizeIds(defaultValueRaw);
   const [ids, setIds] = useState(defaultValue);

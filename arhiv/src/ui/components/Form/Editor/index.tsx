@@ -33,7 +33,7 @@ export function Editor({
   const defaultPreview = defaultValue.length > 0;
   const [preview, _setPreview] = useState(defaultPreview);
 
-  const fieldRef = useRef<HTMLVFormFieldElement | null>(null);
+  const fieldRef = useRef<HTMLVFormFieldElement<string> | null>(null);
   const markupRef = useRef<MarkupRef | null>(null);
   const editorRef = useRef<CodemirrorEditor | null>(null);
   const posRef = useRef<number | undefined>(undefined);

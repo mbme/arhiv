@@ -1,11 +1,12 @@
 import 'element-internals-polyfill';
 import React, { useEffect, useRef } from 'react';
+import deepEqual from 'deep-eql';
 import { JSONValue } from 'utils';
 import { useLatestRef } from 'utils/hooks';
 import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 
 // This is a helper component that allows to build custom form fields, with validation!
-export class HTMLVFormFieldElement extends HTMLElement {
+export class HTMLVFormFieldElement<V extends JSONValue> extends HTMLElement {
   static get formAssociated() {
     return true;
   }
@@ -15,7 +16,7 @@ export class HTMLVFormFieldElement extends HTMLElement {
   }
 
   private internals = this.attachInternals();
-  private _value: JSONValue = null;
+  private _value: V | null = null;
 
   protected connectedCallback() {
     this._value = this.getDefaultValue();
@@ -36,7 +37,7 @@ export class HTMLVFormFieldElement extends HTMLElement {
   }
 
   protected formStateRestoreCallback(state: string) {
-    this._value = JSON.parse(state) as JSONValue;
+    this._value = JSON.parse(state) as V;
     this.updateFormValue();
     this.dispatchEvent(new Event('reset'));
   }
@@ -70,7 +71,7 @@ export class HTMLVFormFieldElement extends HTMLElement {
   private getDefaultValue() {
     const value = this.getAttribute('defaultValue') ?? 'null';
 
-    return JSON.parse(value) as JSONValue;
+    return JSON.parse(value) as V;
   }
 
   get disabled() {
@@ -81,18 +82,17 @@ export class HTMLVFormFieldElement extends HTMLElement {
     return this.hasAttribute('required');
   }
 
-  get value(): JSONValue {
+  get value(): V | null {
     return this._value;
   }
 
-  set value(value: JSONValue) {
+  set value(value: V) {
     this._value = value;
     this.updateFormValue();
   }
 
-  inputValue(value: JSONValue) {
-    // TODO deep equality check
-    if (this._value === value) {
+  inputValue(value: V) {
+    if (deepEqual(this._value, value)) {
       return;
     }
 
@@ -132,14 +132,14 @@ export class HTMLVFormFieldElement extends HTMLElement {
 
 customElements.define('v-form-field', HTMLVFormFieldElement);
 
-type Props = {
-  innerRef?: JSXRef<HTMLVFormFieldElement>;
+type Props<V extends JSONValue> = {
+  innerRef?: JSXRef<HTMLVFormFieldElement<V>>;
   id?: string;
   className?: string;
   required?: boolean;
   disabled?: boolean;
   hidden?: boolean;
-  defaultValue?: JSONValue;
+  defaultValue?: V;
   onFocus?: () => void;
   onReset?: () => void;
   name: string;
@@ -147,7 +147,7 @@ type Props = {
   tabIndex?: number;
 };
 
-export function FormField({
+export function FormField<V extends JSONValue>({
   innerRef,
   id,
   className,
@@ -160,8 +160,8 @@ export function FormField({
   name,
   children,
   tabIndex,
-}: Props) {
-  const ref = useRef<HTMLVFormFieldElement>(null);
+}: Props<V>) {
+  const ref = useRef<HTMLVFormFieldElement<V>>(null);
 
   const onFocusRef = useLatestRef(onFocus);
   const onResetRef = useLatestRef(onReset);

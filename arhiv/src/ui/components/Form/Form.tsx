@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { JSONObj, formDataToObject, cx } from 'utils';
+import { JSONObj, formDataToObject, cx, JSONValue } from 'utils';
 import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
@@ -25,7 +25,7 @@ function collectValues(form: HTMLFormElement): JSONObj {
     }
 
     if (control instanceof HTMLVFormFieldElement) {
-      result[name] = control.value;
+      result[name] = control.value as JSONValue;
       continue;
     }
 

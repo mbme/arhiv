@@ -36,7 +36,7 @@ describe('FormField', () => {
       assert.equal(JSON.parse(result['test']!), 'initial');
     }
 
-    const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
+    const field = findBySelector<HTMLVFormFieldElement<number>>(container, 'v-form-field');
     field.value = 123;
 
     {
@@ -60,7 +60,7 @@ describe('FormField', () => {
     }
 
     // value assignment also must not update the form value
-    const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
+    const field = findBySelector<HTMLVFormFieldElement<number>>(container, 'v-form-field');
     field.value = 123;
 
     {
@@ -78,7 +78,7 @@ describe('FormField', () => {
 
     const form = findBySelector<HTMLFormElement>(container, 'form');
 
-    const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
+    const field = findBySelector<HTMLVFormFieldElement<string>>(container, 'v-form-field');
     field.value = '123';
 
     await waitFor(() => field.value === '123');
@@ -110,7 +110,7 @@ describe('FormField', () => {
       assert.equal(JSON.parse(result['test']!), null);
     }
 
-    const field = findBySelector<HTMLVFormFieldElement>(container, 'v-form-field');
+    const field = findBySelector<HTMLVFormFieldElement<string>>(container, 'v-form-field');
     field.setAttribute('required', '');
 
     await waitFor(() => !form.checkValidity());

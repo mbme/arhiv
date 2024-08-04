@@ -52,6 +52,7 @@ export function ScraperDialog({ onSuccess, onCancel }: Props) {
             disabled={inProgress}
             autoComplete="off"
             autoFocus
+            data-autofocus
           />
 
           <Button type="submit" variant="primary" busy={inProgress}>

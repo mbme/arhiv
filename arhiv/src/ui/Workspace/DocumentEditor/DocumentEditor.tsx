@@ -9,12 +9,10 @@ import {
 } from 'dto';
 import { getCollectionTypesForDocument, getDataDescription } from 'utils/schema';
 import { JSXRef } from 'utils/jsx';
+import { CollectionPicker } from 'components/CollectionPicker';
 import { Form } from 'components/Form/Form';
-import { RefInput } from 'components/Form/RefInput';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentField } from './DocumentField';
-
-const COLLECTIONS_FIELD_NAME = '@collections';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
@@ -47,8 +45,6 @@ export function DocumentEditor({
   const showCollectionPicker = hasCollections || canAddCollections;
 
   const submitDocument = async (data: JSONObj) => {
-    delete data[COLLECTIONS_FIELD_NAME];
-
     const errors = await onSubmit(data, collections);
 
     if (errors) {
@@ -72,15 +68,13 @@ export function DocumentEditor({
       <PreventImplicitSubmissionOnEnter />
 
       <label className={cx(showCollectionPicker || 'invisible')}>
-        <RefInput
-          className="field"
-          name={COLLECTIONS_FIELD_NAME}
-          documentTypes={collectionTypes}
-          defaultValue={initialCollections}
-          multiple
-          readonly={!canAddCollections}
-          onChange={setCollections}
-        />
+        {showCollectionPicker && (
+          <CollectionPicker
+            collectionTypes={collectionTypes}
+            ids={collections}
+            onChange={setCollections}
+          />
+        )}
       </label>
 
       {documentErrors.map((error, index) => (

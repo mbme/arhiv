@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { cx } from 'utils';
-import { useLatestRef } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
 import { DocumentId, DocumentType } from 'dto';
 import { Ref } from 'components/Ref';
@@ -31,7 +30,6 @@ type Props = {
   readonly?: boolean;
   required?: boolean;
   disabled?: boolean;
-  onChange?: (ids: DocumentId[]) => void;
 };
 
 export function RefInput({
@@ -44,7 +42,6 @@ export function RefInput({
   readonly = false,
   required = false,
   disabled = false,
-  onChange,
 }: Props) {
   const fieldRef = useRef<HTMLVFormFieldElement<DocumentId | DocumentId[]>>(null);
 
@@ -72,11 +69,6 @@ export function RefInput({
 
     setIds(newIds);
   };
-
-  const onChangeRef = useLatestRef(onChange);
-  useEffect(() => {
-    onChangeRef.current?.(ids);
-  }, [onChangeRef, ids]);
 
   const { value, isUpdating } = useSuspenseQuery({
     typeName: 'GetDocuments',

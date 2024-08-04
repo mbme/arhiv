@@ -384,8 +384,8 @@ pub fn current_dir_relpath(subpath: &str) -> PathBuf {
 }
 
 #[must_use]
-pub fn is_image_filename(filename: impl AsRef<str>) -> bool {
-    let ext = filename.as_ref().rsplit('.').next().unwrap_or_default();
+pub fn is_image_path(path: impl AsRef<str>) -> bool {
+    let ext = path.as_ref().rsplit('.').next().unwrap_or_default();
 
     ext.eq_ignore_ascii_case("png")
         || ext.eq_ignore_ascii_case("jpg")

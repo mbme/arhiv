@@ -28,31 +28,30 @@ pub fn extract_file_name_from_url(url: &Url) -> String {
     file_name
 }
 
-pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> {
-    static RE: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r#"^attachment; filename="(.+)"$"#)
-            .expect("failed to create Content-Disposition regex")
-    });
+pub fn is_http_url(s: &str) -> bool {
+    Url::parse(s).is_ok_and(|value| value.scheme() == "http" || value.scheme() == "https")
+}
 
+pub fn parse_content_disposition_header(header: &str) -> Result<Option<String>> {
     if header == "inline" || header == "attachment" {
         return Ok(None);
     }
 
-    let captures = RE
-        .captures(header)
-        .with_context(|| format!("Unsupported Content-Disposition header: {header}"))?;
-
-    let filename = captures
-        .get(1)
-        .context("failed to capture filename group")?
-        .as_str()
-        .to_string();
-
-    if filename.is_empty() {
-        Ok(None)
+    let filename = if let Some(values) = header.split_once("=") {
+        values.1
     } else {
-        Ok(Some(filename))
-    }
+        bail!("Failed to parse Content-Disposition header: {header}");
+    };
+
+    let filename = if let Some((_, filename)) = filename.split_once('"') {
+        filename
+    } else if let Some((_, filename)) = filename.split_once("''") {
+        filename
+    } else {
+        bail!("Failed to parse Content-Disposition header: {header}");
+    };
+
+    Ok(Some(filename.trim_end_matches('"').to_string()))
 }
 
 pub fn parse_content_type_header(header: &str) -> Result<(String, Option<String>, Option<String>)> {
@@ -251,9 +250,13 @@ mod tests {
             parse_content_disposition_header("attachment; filename=\"test\"").unwrap(),
             Some("test".to_string())
         );
-
-        // no double quotes in file names
-        assert!(parse_content_disposition_header(r#"attachment; filename="test\"1"#).is_err());
+        assert_eq!(
+            parse_content_disposition_header(
+                "inline;filename*=UTF-8''Olha_Kharlan_2014_European_Championships_SFS-EQ_t164825.jpg"
+            )
+            .unwrap(),
+            Some("Olha_Kharlan_2014_European_Championships_SFS-EQ_t164825.jpg".to_string())
+        );
 
         assert!(parse_content_disposition_header("wrong").is_err());
     }

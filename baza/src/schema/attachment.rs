@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{get_file_name, get_file_size, get_media_type};
+use rs_utils::{get_file_name, get_file_size, get_media_type, Download};
 
 use crate::{
     entities::{BLOBId, Document, DocumentType},
@@ -96,4 +96,17 @@ pub fn create_attachment(
     tx.stage_document(&mut document, None)?;
 
     document.convert()
+}
+
+pub async fn download_attachment(url: &str, tx: &mut BazaConnection) -> Result<Document> {
+    let download_result = Download::new(url)?.start().await?;
+
+    let attachment = create_attachment(
+        tx,
+        &download_result.file_path,
+        true,
+        Some(download_result.original_file_name.clone()),
+    )?;
+
+    attachment.into_document()
 }

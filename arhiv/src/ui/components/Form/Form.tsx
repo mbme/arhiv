@@ -121,6 +121,7 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
       className={cx('form', className)}
       onSubmit={(e) => {
         e.preventDefault();
+        e.stopPropagation();
 
         const form = e.currentTarget;
 

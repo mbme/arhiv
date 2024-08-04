@@ -172,6 +172,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
 
             document.data = data;
 
+            let document_expert = arhiv.baza.get_document_expert();
+            document_expert
+                .prepare_attachments(&mut document, &mut tx)
+                .await?;
+
             let validator = Validator::new(&tx);
             let validation_result = validator.validate(&document, Some(&prev_data));
 
@@ -200,6 +205,11 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             let mut document = Document::new_with_data(document_type, data);
 
             let mut tx = arhiv.baza.get_tx()?;
+
+            let document_expert = arhiv.baza.get_document_expert();
+            document_expert
+                .prepare_attachments(&mut document, &mut tx)
+                .await?;
 
             let validator = Validator::new(&tx);
             let validation_result = validator.validate(&document, None);

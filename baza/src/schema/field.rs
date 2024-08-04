@@ -49,6 +49,14 @@ impl Field {
     }
 
     #[must_use]
+    pub fn could_ref_attachments(&self) -> bool {
+        match self.field_type {
+            FieldType::Ref(a) | FieldType::RefList(a) => a.contains(&ATTACHMENT_TYPE),
+            _ => false,
+        }
+    }
+
+    #[must_use]
     pub fn extract_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
 

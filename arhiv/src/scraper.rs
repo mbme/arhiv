@@ -3,10 +3,9 @@ use serde_json::json;
 
 use baza::{
     entities::{Document, DocumentType},
-    schema::create_attachment,
-    BazaConnection,
+    schema::download_attachment,
 };
-use rs_utils::{log, Download};
+use rs_utils::log;
 use scraper::{ScrapedData, ScraperOptions};
 
 use crate::{
@@ -191,17 +190,4 @@ impl Arhiv {
 
         Ok(documents)
     }
-}
-
-async fn download_attachment(url: &str, tx: &mut BazaConnection) -> Result<Document> {
-    let download_result = Download::new(url)?.start().await?;
-
-    let attachment = create_attachment(
-        tx,
-        &download_result.file_path,
-        true,
-        Some(download_result.original_file_name.clone()),
-    )?;
-
-    attachment.into_document()
 }

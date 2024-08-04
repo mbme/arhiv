@@ -1,10 +1,13 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use tinytemplate::{format_unescaped, TinyTemplate};
+
+use rs_utils::{is_http_url, is_image_path};
 
 use crate::{
     entities::{Document, DocumentData, DocumentType, Id, Refs},
-    schema::{Attachment, DataSchema, Field, ATTACHMENT_TYPE},
+    schema::{download_attachment, Attachment, DataSchema, Field, FieldType, ATTACHMENT_TYPE},
     search::MultiSearch,
+    BazaConnection,
 };
 
 pub struct DocumentExpert<'s> {
@@ -169,14 +172,20 @@ impl<'s> DocumentExpert<'s> {
         let field =
             self.find_collection_field_for(&collection.document_type, &document.document_type)?;
 
-        let mut ref_list = collection.data.get_ref_list(field.name)?.context(format!(
-            "collection {} field {} is empty",
-            collection.id, field.name
-        ))?;
+        let mut ref_list = collection
+            .data
+            .get_ref_list(field.name)?
+            .context(format!(
+                "collection {} field {} is empty",
+                collection.id, field.name
+            ))?
+            .into_iter()
+            .map(Id::from)
+            .collect::<Vec<_>>();
 
         let pos = ref_list
             .iter()
-            .position(|id| id == &document.id)
+            .position(|id| *id == document.id)
             .context(format!(
                 "collection {} field {} doesn't include document {}",
                 collection.id, field.name, document.id
@@ -190,6 +199,69 @@ impl<'s> DocumentExpert<'s> {
         ref_list.insert(new_pos, ref_to_move);
 
         collection.data.set(field.name, ref_list);
+
+        Ok(())
+    }
+
+    pub async fn prepare_attachments(
+        &self,
+        document: &mut Document,
+        tx: &mut BazaConnection,
+    ) -> Result<()> {
+        let fields = self
+            .schema
+            .iter_fields(&document.document_type)?
+            .filter(|field| field.could_ref_attachments());
+
+        for field in fields {
+            match field.field_type {
+                FieldType::Ref(_) => {
+                    let value = document.data.get_str(field.name);
+                    if let Some(value) = value {
+                        if !is_http_url(value) {
+                            continue;
+                        }
+
+                        if !is_image_path(value) {
+                            bail!("Only image attachment URLs are supported, got '{value}'");
+                        }
+
+                        let attachment = download_attachment(value, tx).await?;
+
+                        document.data.set(field.name, attachment.id);
+                    }
+                }
+
+                FieldType::RefList(_) => {
+                    let mut values = document
+                        .data
+                        .get_ref_list(field.name)?
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|value| value.to_string())
+                        .collect::<Vec<_>>();
+
+                    for value in values.iter_mut() {
+                        if !is_http_url(value) {
+                            continue;
+                        }
+
+                        if !is_image_path(value.clone()) {
+                            bail!("Only image attachment URLs are supported, got '{value}'");
+                        }
+
+                        let attachment = download_attachment(value, tx).await?;
+
+                        *value = attachment.id.to_string();
+                    }
+
+                    document.data.set(field.name, values);
+                }
+                _ => {
+                    unreachable!("only ref fields might reference attachments");
+                }
+            }
+        }
 
         Ok(())
     }

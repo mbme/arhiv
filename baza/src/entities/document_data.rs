@@ -85,15 +85,29 @@ impl DocumentData {
         self.get(field).and_then(serde_json::Value::as_u64)
     }
 
-    pub fn get_ref_list(&self, field: &str) -> Result<Option<Vec<Id>>> {
-        if let Some(value) = self.get(field) {
-            let ref_list: Vec<Id> =
-                serde_json::from_value(value.clone()).context("failed to parse ref list")?;
-
-            Ok(Some(ref_list))
+    pub fn get_ref_list(&self, field: &str) -> Result<Option<Vec<&str>>> {
+        let value = if let Some(value) = self.get(field) {
+            value
         } else {
-            Ok(None)
-        }
+            return Ok(None);
+        };
+
+        let arr = if let Some(value) = value.as_array() {
+            value
+        } else {
+            bail!("Field '{field}' expected to be an array")
+        };
+
+        let arr = arr
+            .iter()
+            .map(|value| {
+                value.as_str().context(anyhow!(
+                    "Field '{field}' expected to be an array of strings"
+                ))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Some(arr))
     }
 
     pub fn add_to_ref_list(&mut self, field: &str, id: &Id) -> Result<()> {
@@ -192,7 +206,10 @@ mod tests {
         // can't add the same id
         assert!(data.add_to_ref_list("list", &id).is_err());
 
-        assert_eq!(data.get_ref_list("list")?.unwrap(), vec![id]);
+        assert_eq!(
+            data.get_ref_list("list")?.unwrap(),
+            vec![id.to_string().as_str()]
+        );
 
         Ok(())
     }
@@ -210,7 +227,7 @@ mod tests {
         // can't remove the same id
         assert!(data.remove_from_ref_list("list", &id).is_err());
 
-        assert_eq!(data.get_ref_list("list")?.unwrap(), vec![]);
+        assert_eq!(data.get_ref_list("list")?.unwrap(), Vec::<&str>::new());
 
         Ok(())
     }

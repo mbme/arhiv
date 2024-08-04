@@ -14,8 +14,16 @@
         width: 100%;
       }
 
+      &:is(.ref-input) {
+        @apply inline-block break-all border-none;
+      }
+
       &:is(.ref-input.is-multi) {
         width: 100%;
+      }
+
+      &:is(.ref-input.is-empty) {
+        @apply inline-flex justify-around;
       }
 
       &:is(select, input[type='number']) {

@@ -45,7 +45,10 @@ export function DocumentEditor({
   const showCollectionPicker = hasCollections || canAddCollections;
 
   const submitDocument = async (data: JSONObj) => {
-    const errors = await onSubmit(data, collections);
+    const errors = await onSubmit(data, collections).catch((e) => ({
+      documentErrors: [String(e)],
+      fieldErrors: {},
+    }));
 
     if (errors) {
       setDocumentErrors(errors.documentErrors);

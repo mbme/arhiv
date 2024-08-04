@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef } from 'react';
 import { cx, JSONValue } from 'utils';
 import { DataDescriptionField, FieldType } from 'utils/schema';
-import { DocumentId } from 'dto';
 import { Checkbox } from 'components/Form/Checkbox';
 import { Select } from 'components/Form/Select';
 import { Editor } from 'components/Form/Editor';
-import { RefInput } from 'components/Form/RefInput';
+import { Ref, RefInput } from 'components/Form/RefInput';
 
 type ValueEditorProps = {
   id: string;
@@ -75,7 +74,7 @@ function ValueEditor({
         className="field"
         documentTypes={fieldType.Ref}
         name={name}
-        defaultValue={initialValue as DocumentId | undefined}
+        defaultValue={initialValue as Ref | undefined}
         readonly={readonly}
         required={required}
         disabled={disabled}
@@ -90,7 +89,7 @@ function ValueEditor({
         className="field"
         documentTypes={fieldType.RefList}
         name={name}
-        defaultValue={initialValue as DocumentId[] | undefined}
+        defaultValue={initialValue as Ref[] | undefined}
         readonly={readonly}
         required={required}
         disabled={disabled}

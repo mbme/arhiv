@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';
@@ -30,6 +30,11 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
   useCardLock(isDirty);
 
   const lockKey = useLockDocument(document.id, isDirty);
+
+  // force form fields to use fresh values from the document
+  useEffect(() => {
+    form?.reset();
+  }, [form, document]);
 
   return (
     <CardContainer

@@ -357,3 +357,21 @@ export function useSignal<T>(signal: Signal<T>): T {
 
   return value;
 }
+
+export function useClipboardPasteHandler(handler: (data: DataTransfer) => Promise<void> | void) {
+  const handlerRef = useLatestRef(handler);
+
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      if (event.clipboardData?.items) {
+        void handlerRef.current(event.clipboardData);
+      }
+    };
+
+    document.addEventListener('paste', onPaste);
+
+    return () => {
+      document.removeEventListener('paste', onPaste);
+    };
+  }, [handlerRef]);
+}

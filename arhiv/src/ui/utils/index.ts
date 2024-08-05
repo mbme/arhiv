@@ -297,6 +297,10 @@ export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[]
   return clone;
 }
 
+export function isDefined<T>(value: T | null | undefined): value is T {
+  return Boolean(value);
+}
+
 export function isImage(mediaType: string) {
   return mediaType.startsWith('image/');
 }

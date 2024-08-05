@@ -5,8 +5,8 @@
 
 ## On ArchLinux, using makepkg
 * `just prod-build-install`
-* `sudo systemctl daemon-reload`
-* `sudo systemctl enable --now arhiv-service@<username>`
+* `sudo systemctl --user daemon-reload`
+* `sudo systemctl --uesr enable --now arhiv-service
 
 # Build dependencies
 * `rust`
@@ -23,7 +23,6 @@
 * `tmux` for running dev servers in parallel
 
 ## Special switches
-* `JSON_ARG_MOODE` env variable for some CLIs allows to receive arguments as a JSON object
 * `production-mode` feature flag
 
 # Android app
@@ -37,4 +36,6 @@
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
 ```
 
-# ARCHITECTURE
+# Scraper
+Arhiv UI supports pasting scraped data from the [Scraper](https://github.com/mbme/scraper) userscript or bookmarklet.
+

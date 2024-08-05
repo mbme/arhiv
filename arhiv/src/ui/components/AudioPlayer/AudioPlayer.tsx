@@ -59,7 +59,7 @@ export function AudioPlayer({
   });
 
   const play = () => {
-    audio.play().catch((e) => {
+    audio.play().catch((e: unknown) => {
       console.error('Failed to play', e);
     });
   };
@@ -77,6 +77,8 @@ export function AudioPlayer({
 
     console.info('player: seeking to', seekTime);
 
+    // https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/fastSeek
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (audio.fastSeek) {
       audio.fastSeek(seekTime);
     } else {
@@ -146,7 +148,9 @@ export function AudioPlayer({
             max="100"
             step="1"
             value={Math.round(volume * 100)}
-            onInput={(e) => onVolumeRangeInput(e.currentTarget)}
+            onInput={(e) => {
+              onVolumeRangeInput(e.currentTarget);
+            }}
           />
         </div>
       </div>
@@ -164,7 +168,9 @@ export function AudioPlayer({
           max={durationS}
           step="1"
           value={currentTimeS}
-          onInput={(e) => onDurationRangeInput(e.currentTarget)}
+          onInput={(e) => {
+            onDurationRangeInput(e.currentTarget);
+          }}
         />
 
         <output title="Duration" className="cursor-default min-w-[3rem] text-center">

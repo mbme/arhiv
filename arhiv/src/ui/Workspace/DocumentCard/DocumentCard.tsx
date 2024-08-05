@@ -49,18 +49,16 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
               text: `Clone ${document.documentType}`,
               icon: 'duplicate-document',
               onClick: () => {
-                controller.open({
-                  variant: 'new-document',
-                  documentType: document.documentType,
-                  data: document.data,
-                });
+                controller.newDocument(document.documentType, document.data);
               },
             },
             {
               text: `Erase ${document.documentType}`,
               icon: 'erase-document',
               alarming: true,
-              onClick: () => setShowErasetConfirmation(true),
+              onClick: () => {
+                setShowErasetConfirmation(true);
+              },
             },
           ]}
         />
@@ -127,7 +125,9 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
           documentId={document.id}
           documentType={document.documentType}
           title={document.title}
-          onCancel={() => setShowErasetConfirmation(false)}
+          onCancel={() => {
+            setShowErasetConfirmation(false);
+          }}
         />
       )}
     </CardContainer>

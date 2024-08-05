@@ -185,7 +185,7 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
     case 'Table': {
       // TODO handle alignments
 
-      const head = el.children[0];
+      const head = el.children[0]!;
       if (head.typeName !== 'TableHead') {
         throw new Error(`Expected TableHead, got ${head.typeName}`);
       }

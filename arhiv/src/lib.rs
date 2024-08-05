@@ -3,8 +3,6 @@ mod config;
 pub mod definitions;
 mod dto;
 mod import;
-#[cfg(feature = "scraper")]
-pub mod scraper;
 mod server;
 mod status;
 

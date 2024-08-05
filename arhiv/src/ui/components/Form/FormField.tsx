@@ -86,12 +86,12 @@ export class HTMLVFormFieldElement<V extends JSONValue> extends HTMLElement {
     return this._value;
   }
 
-  set value(value: V) {
+  set value(value: V | null) {
     this._value = value;
     this.updateFormValue();
   }
 
-  inputValue(value: V) {
+  inputValue(value: V | null) {
     if (deepEqual(this._value, value)) {
       return;
     }

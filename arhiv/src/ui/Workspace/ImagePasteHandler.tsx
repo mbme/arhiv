@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DocumentId } from 'dto';
+import { useClipboardPasteHandler } from 'utils/hooks';
 import { ImageUploadDialog } from 'components/ImageUploadDialog';
 
 type Props = {
@@ -10,22 +11,14 @@ export function ImagePasteHandler({ onSuccess }: Props) {
 
   // TODO: handle drop events https://www.smashingmagazine.com/2018/01/drag-drop-file-uploader-vanilla-js/
   // TODO: upload multiple files
-  useEffect(() => {
-    const onPaste = (event: ClipboardEvent) => {
-      for (const item of event.clipboardData?.items ?? []) {
-        if (item.type?.includes('image/')) {
-          setFile(item.getAsFile());
-          return;
-        }
+  useClipboardPasteHandler((data) => {
+    for (const item of data.items) {
+      if (item.type.includes('image/')) {
+        setFile(item.getAsFile());
+        return;
       }
-    };
-
-    document.addEventListener('paste', onPaste);
-
-    return () => {
-      document.removeEventListener('paste', onPaste);
-    };
-  }, []);
+    }
+  });
 
   if (!file) {
     return null;
@@ -38,7 +31,9 @@ export function ImagePasteHandler({ onSuccess }: Props) {
         setFile(null);
         onSuccess(documentId);
       }}
-      onCancel={() => setFile(null)}
+      onCancel={() => {
+        setFile(null);
+      }}
     />
   );
 }

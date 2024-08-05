@@ -56,14 +56,21 @@ export function FilePickerConfirmationDialog({
         <b>{formatBytes(size)}</b>?
       </div>
 
-      <form className="form" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             name="move_file"
             type="checkbox"
             className="field"
             checked={moveFile}
-            onChange={() => setMoveFile(!moveFile)}
+            onChange={() => {
+              setMoveFile(!moveFile);
+            }}
           />
           Remove original file
         </label>

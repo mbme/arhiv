@@ -16,24 +16,26 @@ export function CatalogCard() {
       <Catalog
         autofocus={!card.restored}
         query={card.query ?? ''}
-        onQueryChange={(query) => controller.update(card.id, { query })}
+        onQueryChange={(query) => {
+          controller.update(card.id, { query });
+        }}
         page={card.page ?? 0}
-        onPageChange={(page) => controller.update(card.id, { page })}
+        onPageChange={(page) => {
+          controller.update(card.id, { page });
+        }}
         showSettings={card.showSettings ?? false}
-        onToggleSettings={(showSettings) => controller.update(card.id, { showSettings })}
+        onToggleSettings={(showSettings) => {
+          controller.update(card.id, { showSettings });
+        }}
         documentTypes={card.documentTypes ?? []}
-        onIncludedDocumentTypesChange={(documentTypes) =>
-          controller.update(card.id, { documentTypes })
-        }
+        onIncludedDocumentTypesChange={(documentTypes) => {
+          controller.update(card.id, { documentTypes });
+        }}
         onDocumentSelected={(info) => {
           controller.pushDocument(card.id, info.id);
         }}
         onCreateNote={(title) => {
-          controller.open({
-            variant: 'new-document',
-            documentType: NOTE_DOCUMENT_TYPE,
-            data: { title },
-          });
+          controller.newDocument(NOTE_DOCUMENT_TYPE, { title });
         }}
       />
     </CardContainer>

@@ -304,14 +304,22 @@ function DialogExample({ buttonText, children, alarming, buttons }: DialogExampl
 
   return (
     <>
-      <Button variant="primary" onClick={() => setShowModal(true)} alarming={alarming}>
+      <Button
+        variant="primary"
+        onClick={() => {
+          setShowModal(true);
+        }}
+        alarming={alarming}
+      >
         {buttonText}
       </Button>
 
       {showModal && (
         <Dialog
           title="Dialog example"
-          onHide={() => setShowModal(false)}
+          onHide={() => {
+            setShowModal(false);
+          }}
           alarming={alarming}
           buttons={buttons}
         >
@@ -338,17 +346,35 @@ function FormControlsDemo() {
     >
       <div className="flex gap-4 bg-rose-50 dark:bg-slate-900 px-2 py-4">
         <label className="flex gap-1 items-center">
-          <input type="checkbox" checked={disabled} onChange={() => setDisabled(!disabled)} />
+          <input
+            type="checkbox"
+            checked={disabled}
+            onChange={() => {
+              setDisabled(!disabled);
+            }}
+          />
           Disabled
         </label>
 
         <label className="flex gap-1 items-center">
-          <input type="checkbox" checked={readonly} onChange={() => setReadonly(!readonly)} />
+          <input
+            type="checkbox"
+            checked={readonly}
+            onChange={() => {
+              setReadonly(!readonly);
+            }}
+          />
           Readonly
         </label>
 
         <label className="flex gap-1 items-center">
-          <input type="checkbox" checked={required} onChange={() => setRequired(!required)} />
+          <input
+            type="checkbox"
+            checked={required}
+            onChange={() => {
+              setRequired(!required);
+            }}
+          />
           Required
         </label>
       </div>

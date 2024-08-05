@@ -109,7 +109,9 @@ export function Toaster() {
             icon="x"
             size="sm"
             className="invisible group-hover:visible"
-            onClick={() => dispatch({ type: 'close', id: toast.id })}
+            onClick={() => {
+              dispatch({ type: 'close', id: toast.id });
+            }}
           />
         </div>
       ))}

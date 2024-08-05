@@ -18,10 +18,20 @@ export function AddRefButton({ className, onDocumentSelected }: Props) {
           setShowPicker(false);
           onDocumentSelected(info);
         }}
-        onCancel={() => setShowPicker(false)}
+        onCancel={() => {
+          setShowPicker(false);
+        }}
       />
     );
   }
 
-  return <IconButton icon="link" className={className} onClick={() => setShowPicker(true)} />;
+  return (
+    <IconButton
+      icon="link"
+      className={className}
+      onClick={() => {
+        setShowPicker(true);
+      }}
+    />
+  );
 }

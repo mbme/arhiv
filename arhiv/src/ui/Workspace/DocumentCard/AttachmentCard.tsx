@@ -44,7 +44,9 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
               text: `Erase ${document.documentType}`,
               icon: 'erase-document',
               alarming: true,
-              onClick: () => setShowErasetConfirmation(true),
+              onClick: () => {
+                setShowErasetConfirmation(true);
+              },
             },
           ]}
         />
@@ -117,7 +119,9 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
           documentId={document.id}
           documentType={document.documentType}
           title={document.title}
-          onCancel={() => setShowErasetConfirmation(false)}
+          onCancel={() => {
+            setShowErasetConfirmation(false);
+          }}
         />
       )}
     </CardContainer>

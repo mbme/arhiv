@@ -17,7 +17,6 @@ use baza::{
     Credentials, KvsEntry, KvsKey, DEV_MODE,
 };
 use rs_utils::{get_crate_version, into_absolute_path, log, shutdown_signal, SecretString};
-use scraper::ScraperOptions;
 
 #[derive(Parser, Debug)]
 #[clap(version = get_crate_version(), about, long_about = None, arg_required_else_help = true, disable_help_subcommand = true)]
@@ -148,18 +147,6 @@ enum CLICommand {
         /// JSON object with document props
         #[arg()]
         data: String,
-    },
-    /// Scrape remote resource and create document
-    Scrape {
-        /// url to scrape
-        #[arg(value_hint = ValueHint::Url)]
-        url: String,
-        /// Manual scraper mode
-        #[clap(long, default_value = "false")]
-        manual: bool,
-        /// Emulate mobile mode
-        #[clap(long, default_value = "false")]
-        mobile: bool,
     },
     /// Import files and create documents. Will hard link or copy files to Arhiv.
     Import {
@@ -414,38 +401,6 @@ async fn handle_command(command: CLICommand) -> Result<()> {
             let port = ServerInfo::get_server_port(&root_dir)?;
 
             print_document(&document, port);
-        }
-        CLICommand::Scrape {
-            url,
-            manual,
-            mobile,
-        } => {
-            let root_dir = find_root_dir()?;
-            let arhiv = Arhiv::open(
-                root_dir.clone(),
-                ArhivOptions {
-                    auto_commit: true,
-                    ..Default::default()
-                },
-            )?;
-
-            let documents = arhiv
-                .scrape(
-                    url,
-                    ScraperOptions {
-                        manual,
-                        emulate_mobile: mobile,
-                        debug: false,
-                        screenshot_file: None,
-                    },
-                )
-                .await
-                .context("failed to scrape")?;
-
-            let port = ServerInfo::get_server_port(&root_dir)?;
-            for document in documents {
-                print_document(&document, port);
-            }
         }
         CLICommand::Import {
             document_type,

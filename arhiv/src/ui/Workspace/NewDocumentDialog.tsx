@@ -8,12 +8,9 @@ import { Button } from 'components/Button';
 import { SearchInput } from 'components/SearchInput';
 import { IconVariant } from 'components/Icon';
 
-type ActionType = 'Scrape URL' | 'Attach file';
+type ActionType = 'Attach file';
 
 const ACTIONS: ActionType[] = ['Attach file'];
-if (window.FEATURES.scraper) {
-  ACTIONS.unshift('Scrape URL');
-}
 
 function throwBadAction(value: never): never;
 function throwBadAction(value: ActionType) {
@@ -21,18 +18,16 @@ function throwBadAction(value: ActionType) {
 }
 
 const ACTION_ICONS: Record<ActionType, IconVariant> = {
-  'Scrape URL': 'web',
   'Attach file': 'paperclip',
 };
 
 type Props = {
   onNewDocument: (documentType: DocumentType) => void;
-  onScrape: () => void;
   onAttach: () => void;
   onCancel: () => void;
 };
 
-export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel }: Props) {
+export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) {
   const [query, setQuery] = useState('');
 
   const { selectionManager, setRootEl } = useSelectionManager([query]);
@@ -68,11 +63,7 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
             variant="simple"
             leadingIcon={ACTION_ICONS[action]}
             onClick={() => {
-              if (action === 'Scrape URL') {
-                onScrape();
-                return;
-              }
-
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               if (action === 'Attach file') {
                 onAttach();
                 return;
@@ -97,7 +88,9 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
             <Button
               key={documentType}
               variant="simple"
-              onClick={() => onNewDocument(documentType)}
+              onClick={() => {
+                onNewDocument(documentType);
+              }}
               onHover={activateOnHover}
               className={searchResultClass}
             >
@@ -111,7 +104,9 @@ export function NewDocumentDialog({ onNewDocument, onScrape, onAttach, onCancel 
           <Button
             key={documentType}
             variant="simple"
-            onClick={() => onNewDocument(documentType)}
+            onClick={() => {
+              onNewDocument(documentType);
+            }}
             onHover={activateOnHover}
             className={searchResultClass}
           >

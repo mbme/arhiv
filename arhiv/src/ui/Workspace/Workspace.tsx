@@ -13,13 +13,20 @@ import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCardContainer } from './DocumentCard';
 import { StatusCard } from './StatusCard';
-import { ScrapeResultCard } from './ScrapeResultCard';
 import { WorkspaceHeader } from './WorkspaceHeader';
+import { ImagePasteHandler } from './ImagePasteHandler';
 import { CardContainer } from './CardContainer';
+import { useScrapedDataPasteHandler } from './useScrapedDataPasteHandler';
 
 export function Workspace() {
   const [wrapperEl, setWrapperEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(wrapperEl, 'workspace-scroll');
+
+  useScrapedDataPasteHandler((items) => {
+    for (const item of items) {
+      app.workspace.newDocument(item.documentType, item.data);
+    }
+  });
 
   const app = useAppController();
   const cards = useSignal(app.workspace.$cards);
@@ -46,6 +53,12 @@ export function Workspace() {
         ))}
       </div>
 
+      <ImagePasteHandler
+        onSuccess={(documentId) => {
+          app.workspace.openDocument(documentId);
+        }}
+      />
+
       <Toaster />
     </RefClickHandlerContext.Provider>
   );
@@ -64,9 +77,6 @@ function renderCard(card: Card) {
 
     case 'status':
       return <StatusCard />;
-
-    case 'scrape-result':
-      return <ScrapeResultCard url={card.url} ids={card.ids} />;
   }
 
   throwBadCardVariant(card);

@@ -81,7 +81,7 @@ export function Button({
 
 type IconButtonProps = {
   className?: string;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   icon: IconVariant;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   title?: string;

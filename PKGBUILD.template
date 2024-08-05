@@ -36,7 +36,7 @@ build() {
 
   export TYPED_V_VERSION=$(git describe --tags)
 
-  cargo build --frozen --release --features production-mode -p binutils --bin arhiv --bin mb-scraper
+  cargo build --frozen --release --features production-mode -p binutils --bin arhiv
 
   npm run prod:build --workspace arhiv-desktop
 }
@@ -52,9 +52,6 @@ check() {
 
 package() {
   cd ..
-
-  # scraper
-  install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/mb-scraper"
 
   # arhiv
   install -Dm 755 -t "$pkgdir/usr/bin/" "target/release/arhiv"

@@ -143,7 +143,9 @@ export const debounce = <Args extends any[], F extends (...args: Args) => void>(
 
   const debounced = (...args: Args) => {
     window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => func(...args), waitForMs);
+    timeoutId = window.setTimeout(() => {
+      func(...args);
+    }, waitForMs);
   };
 
   return debounced as F;
@@ -293,6 +295,10 @@ export function toSorted<T>(items: T[], compareFn?: (a: T, b: T) => number): T[]
   clone.sort(compareFn);
 
   return clone;
+}
+
+export function isDefined<T>(value: T | null | undefined): value is T {
+  return Boolean(value);
 }
 
 export function isImage(mediaType: string) {

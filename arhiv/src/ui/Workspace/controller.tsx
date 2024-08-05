@@ -19,11 +19,6 @@ type CardVariant =
       variant: 'status';
     }
   | {
-      variant: 'scrape-result';
-      url: string;
-      ids: DocumentId[];
-    }
-  | {
       variant: 'new-document';
       documentType: DocumentType;
       data?: DocumentData;
@@ -98,6 +93,15 @@ export class WorkspaceController {
     }
   };
 
+  newDocument(documentType: DocumentType, data?: DocumentData, collections?: DocumentId[]) {
+    this.open({
+      variant: 'new-document',
+      documentType,
+      data,
+      collections,
+    });
+  }
+
   pushStack(id: CardId, newCardVariant: CardVariant) {
     this.replace(id, newCardVariant, true);
   }
@@ -119,7 +123,7 @@ export class WorkspaceController {
     if (pos === -1) {
       throw new Error(`can't pop: can't find card with id ${id}`);
     }
-    const card = cards[pos];
+    const card = cards[pos]!;
 
     if (!card.previousCard) {
       throw new Error("can't pop: there is no previousCard");

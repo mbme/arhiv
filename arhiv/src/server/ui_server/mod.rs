@@ -81,7 +81,6 @@ async fn create_arhiv_handler(
 
 #[derive(Serialize)]
 struct Features {
-    scraper: bool,
     use_local_storage: bool,
 }
 
@@ -92,7 +91,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
         serde_json::to_string(&get_standard_schema()).context("failed to serialize schema")?;
 
     let features = Features {
-        scraper: cfg!(feature = "scraper"),
         use_local_storage: true,
     };
     let features = serde_json::to_string(&features).context("failed to serialize features")?;

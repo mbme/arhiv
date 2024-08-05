@@ -30,6 +30,7 @@ export function suspensify<T>(promise: Promise<T>): Suspender<T> {
   return {
     read() {
       if (!status) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw pendingPromise;
       }
 

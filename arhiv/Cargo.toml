@@ -18,7 +18,6 @@ debug-embed = ["rust-embed/debug-embed"]
 [dependencies]
 baza = { path = "../baza" }
 rs-utils = { path = "../rs-utils" }
-scraper = { path = "../scraper", optional = true }
 
 anyhow.workspace = true
 tracing.workspace = true

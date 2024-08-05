@@ -98,6 +98,15 @@ export class WorkspaceController {
     }
   };
 
+  newDocument(documentType: DocumentType, data?: DocumentData, collections?: DocumentId[]) {
+    this.open({
+      variant: 'new-document',
+      documentType,
+      data,
+      collections,
+    });
+  }
+
   pushStack(id: CardId, newCardVariant: CardVariant) {
     this.replace(id, newCardVariant, true);
   }

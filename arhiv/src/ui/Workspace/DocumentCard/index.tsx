@@ -90,11 +90,7 @@ export function DocumentCardContainer() {
           });
         }}
         onAddTask={() => {
-          controller.open({
-            variant: 'new-document',
-            documentType: TASK_DOCUMENT_TYPE,
-            collections: [card.documentId],
-          });
+          controller.newDocument(TASK_DOCUMENT_TYPE, undefined, [card.documentId]);
         }}
         options={documentActions}
       />

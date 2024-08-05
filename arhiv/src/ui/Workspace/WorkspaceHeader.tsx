@@ -9,7 +9,6 @@ import { ScraperDialog } from 'components/ScraperDialog';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { NewDocumentDialog } from './NewDocumentDialog';
-import { ImagePasteHandler } from './ImagePasteHandler';
 import { CommitOrSyncButton } from './CommitOrSyncButton';
 
 export function WorkspaceHeader() {
@@ -57,7 +56,7 @@ export function WorkspaceHeader() {
         {showNewDocumentDialog && (
           <NewDocumentDialog
             onNewDocument={(documentType) => {
-              app.workspace.open({ variant: 'new-document', documentType });
+              app.workspace.newDocument(documentType);
               setShowNewDocumentDialog(false);
             }}
             onScrape={() => {
@@ -127,21 +126,11 @@ export function WorkspaceHeader() {
             }}
             onCreateNote={(title) => {
               app.workspace.hideSearchDialog();
-              app.workspace.open({
-                variant: 'new-document',
-                documentType: NOTE_DOCUMENT_TYPE,
-                data: { title },
-              });
+              app.workspace.newDocument(NOTE_DOCUMENT_TYPE, { title });
             }}
             initialQuery={initialSearchQuery}
           />
         )}
-
-        <ImagePasteHandler
-          onSuccess={(documentId) => {
-            app.workspace.openDocument(documentId);
-          }}
-        />
 
         <DropdownMenu
           align="bottom-right"

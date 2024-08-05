@@ -35,11 +35,7 @@ export function CatalogCard() {
           controller.pushDocument(card.id, info.id);
         }}
         onCreateNote={(title) => {
-          controller.open({
-            variant: 'new-document',
-            documentType: NOTE_DOCUMENT_TYPE,
-            data: { title },
-          });
+          controller.newDocument(NOTE_DOCUMENT_TYPE, { title });
         }}
       />
     </CardContainer>

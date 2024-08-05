@@ -55,7 +55,7 @@ function isFormDirty(form: HTMLFormElement) {
   return form.dataset['isDirty'] === 'true';
 }
 
-function markFormDirty(form: HTMLFormElement, isDirty: boolean) {
+export function markFormDirty(form: HTMLFormElement, isDirty: boolean) {
   form.dataset['isDirty'] = isDirty ? 'true' : undefined;
   form.dispatchEvent(new FormDirtyEvent(isDirty));
 }
@@ -89,7 +89,7 @@ type FormProps = {
   className?: string;
   children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void> | void;
-  formRef?: JSXRef<HTMLFormElement>;
+  formRef?: React.Ref<HTMLFormElement>;
 };
 
 export function Form({ className, children, onSubmit, formRef }: FormProps) {

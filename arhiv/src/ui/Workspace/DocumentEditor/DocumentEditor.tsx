@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { cx, JSONObj } from 'utils';
 import {
   DocumentData,
@@ -8,11 +8,12 @@ import {
   SaveDocumentErrors,
 } from 'dto';
 import { getCollectionTypesForDocument, getDataDescription } from 'utils/schema';
-import { JSXRef } from 'utils/jsx';
+import { JSXRef, mergeRefs } from 'utils/jsx';
 import { CollectionPicker } from 'components/CollectionPicker';
-import { Form } from 'components/Form/Form';
+import { Form, markFormDirty } from 'components/Form/Form';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentField } from './DocumentField';
+import { useUpdateEffect } from 'utils/hooks';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
@@ -30,9 +31,11 @@ export function DocumentEditor({
   data: initialData,
   collections: initialCollections,
   onSubmit,
-  formRef,
+  formRef: outerFormRef,
   autofocus = false,
 }: DocumentEditorFormProps) {
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   const [documentErrors, setDocumentErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<DocumentFieldErrors>({});
   const [collections, setCollections] = useState(initialCollections);
@@ -66,8 +69,14 @@ export function DocumentEditor({
     ? fields.find((field) => ignoreReadonly || !field.readonly)
     : undefined;
 
+  useUpdateEffect(() => {
+    if (formRef.current) {
+      markFormDirty(formRef.current, true);
+    }
+  }, [collections]);
+
   return (
-    <Form onSubmit={submitDocument} formRef={formRef}>
+    <Form onSubmit={submitDocument} formRef={mergeRefs(formRef, outerFormRef)}>
       <PreventImplicitSubmissionOnEnter />
 
       <label className={cx(showCollectionPicker || 'invisible')}>

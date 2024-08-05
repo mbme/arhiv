@@ -32,11 +32,13 @@ export function CollectionPicker({ collectionTypes, ids, onChange }: Props) {
             }
             setShowPicker(false);
           }}
-          onCancel={() => setShowPicker(false)}
+          onCancel={() => {
+            setShowPicker(false);
+          }}
         />
       )}
 
-      {value?.documents.map((item) => (
+      {value.documents.map((item) => (
         <div key={item.id}>
           <div className="flex items-center gap-4">
             <Ref documentId={item.id} documentType={item.documentType} documentTitle={item.title} />
@@ -52,7 +54,13 @@ export function CollectionPicker({ collectionTypes, ids, onChange }: Props) {
         </div>
       ))}
 
-      <Button variant="text" onClick={() => setShowPicker(true)} busy={isUpdating}>
+      <Button
+        variant="text"
+        onClick={() => {
+          setShowPicker(true);
+        }}
+        busy={isUpdating}
+      >
         Pick {collectionTypes.join(', ')}...
       </Button>
     </>

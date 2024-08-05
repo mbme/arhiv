@@ -1,4 +1,13 @@
-import { app, Tray, Menu, nativeImage, BrowserWindow, session, Notification } from 'electron';
+import {
+  app,
+  Tray,
+  Menu,
+  nativeImage,
+  BrowserWindow,
+  session,
+  Notification,
+  shell,
+} from 'electron';
 import { ExtendedServerInfo, getServerInfo, startServer, waitForServer } from './arhiv';
 import favicon from '../../resources/favicon-16x16.png';
 
@@ -76,6 +85,13 @@ async function handleAction(action: Action, serverInfo: ExtendedServerInfo) {
 
     win.on('closed', () => {
       win = undefined;
+    });
+
+    // open external links in default system browser instead of a new electron window
+    win.webContents.setWindowOpenHandler((details) => {
+      void shell.openExternal(details.url);
+
+      return { action: 'deny' };
     });
 
     await session.defaultSession.cookies.set({

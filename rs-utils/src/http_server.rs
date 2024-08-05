@@ -1,5 +1,4 @@
 use std::{
-    io,
     net::SocketAddr,
     str::FromStr,
     sync::Arc,
@@ -11,24 +10,17 @@ use axum::{
     body::{to_bytes, Body},
     extract::Request,
     http::{header, HeaderMap, HeaderValue, StatusCode},
-    middleware::{self, AddExtension, Next},
+    middleware::{self, Next},
     response::{IntoResponse, Response},
-    Extension, Router,
+    Router,
 };
 use axum_extra::headers::{self, HeaderMapExt};
 use axum_server::{
-    accept::Accept,
     tls_rustls::{RustlsAcceptor, RustlsConfig},
     Handle, Server,
 };
-use futures::future::BoxFuture;
 use hyper::Uri;
-use tokio::{
-    io::{AsyncRead, AsyncWrite},
-    task::JoinHandle,
-};
-use tokio_rustls::server::TlsStream;
-use tower::Layer;
+use tokio::task::JoinHandle;
 
 use crate::SelfSignedCertificate;
 
@@ -161,7 +153,7 @@ impl HttpServer {
 
         let addr: SocketAddr = (std::net::Ipv4Addr::UNSPECIFIED, port).into();
 
-        let acceptor = CustomAcceptor::new(RustlsAcceptor::new(config));
+        let acceptor = RustlsAcceptor::new(config);
         let server = Server::bind(addr)
             .acceptor(acceptor)
             .handle(server_handle.clone());
@@ -220,56 +212,6 @@ impl HttpServer {
         self.join_handle.await.context("failed to join")??;
 
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TlsData {
-    pub certificates: Arc<Vec<Vec<u8>>>,
-}
-
-#[derive(Debug, Clone)]
-struct CustomAcceptor {
-    inner: RustlsAcceptor,
-}
-
-impl CustomAcceptor {
-    fn new(inner: RustlsAcceptor) -> Self {
-        Self { inner }
-    }
-}
-
-// based on https://github.com/programatik29/axum-server/blob/master/examples/rustls_session.rs
-impl<I, S> Accept<I, S> for CustomAcceptor
-where
-    I: AsyncRead + AsyncWrite + Unpin + Send + 'static,
-    S: Send + 'static,
-{
-    type Stream = TlsStream<I>;
-    type Service = AddExtension<S, TlsData>;
-    type Future = BoxFuture<'static, io::Result<(Self::Stream, Self::Service)>>;
-
-    fn accept(&self, stream: I, service: S) -> Self::Future {
-        let acceptor = self.inner.clone();
-
-        Box::pin(async move {
-            let (stream, service) = acceptor.accept(stream, service).await?;
-            let server_conn = stream.get_ref().1;
-            let certificates = server_conn
-                .peer_certificates()
-                .unwrap_or_default()
-                .iter()
-                .cloned()
-                .map(|cert| cert.0)
-                .collect();
-
-            let tls_data = TlsData {
-                certificates: Arc::new(certificates),
-            };
-            let service = Extension(tls_data).layer(service);
-
-            Ok((stream, service))
-        })
     }
 }
 

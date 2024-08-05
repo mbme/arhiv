@@ -13,7 +13,6 @@ import { CatalogCard } from './CatalogCard';
 import { NewDocumentCard } from './NewDocumentCard';
 import { DocumentCardContainer } from './DocumentCard';
 import { StatusCard } from './StatusCard';
-import { ScrapeResultCard } from './ScrapeResultCard';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { ImagePasteHandler } from './ImagePasteHandler';
 import { CardContainer } from './CardContainer';
@@ -78,9 +77,6 @@ function renderCard(card: Card) {
 
     case 'status':
       return <StatusCard />;
-
-    case 'scrape-result':
-      return <ScrapeResultCard url={card.url} ids={card.ids} />;
   }
 
   throwBadCardVariant(card);

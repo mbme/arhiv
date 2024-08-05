@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use axum::{
     extract::{DefaultBodyLimit, Path, Query, Request, State},
-    http::{header, HeaderMap, HeaderValue},
+    http::HeaderMap,
     middleware::{self, Next},
     response::{
         sse::{Event, KeepAlive},
@@ -54,7 +54,6 @@ pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(Arc::new(ui_hmac)))
-        .route("/scraper.js", get(scraper_js))
 }
 
 #[derive(Deserialize)]
@@ -130,22 +129,6 @@ async fn index_page(state: State<Arc<UIState>>) -> Result<impl IntoResponse, Ser
 
     let mut headers = HeaderMap::new();
     add_no_cache_headers(&mut headers);
-
-    Ok((headers, Html(content)))
-}
-
-async fn scraper_js() -> Result<impl IntoResponse, ServerError> {
-    let content = "console.error('SCRAPER JS', W.model);".to_string();
-    let mut headers = HeaderMap::new();
-    add_no_cache_headers(&mut headers);
-    headers.insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("text/javascript"),
-    );
-    headers.insert(
-        header::ACCESS_CONTROL_ALLOW_ORIGIN,
-        HeaderValue::from_static("*"),
-    );
 
     Ok((headers, Html(content)))
 }

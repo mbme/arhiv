@@ -29,9 +29,6 @@ desktop *ARGS:
   ELECTRON_OZONE_PLATFORM_HINT=wayland \
   npm run start --workspace arhiv-desktop -- {{ARGS}}
 
-scrape *PARAMS:
-  cargo run --bin mb-scraper {{PARAMS}}
-
 mdns-tester:
   cargo run --bin mdns-tester
 
@@ -50,10 +47,7 @@ prod-build-install:
 # install the arhiv locally using Cargo
 cargo-install:
   npm install
-  cargo install --path binutils --bin arhiv --bin mb-scraper --features production-mode
-
-test-scrapers *PARAMS:
-  cd scraper; cargo test -- --ignored --test-threads 1 {{PARAMS}}
+  cargo install --path binutils --bin arhiv --features production-mode
 
 build-timings:
   cd {{invocation_directory()}}; cargo +nightly build -Ztimings

@@ -19,11 +19,6 @@ type CardVariant =
       variant: 'status';
     }
   | {
-      variant: 'scrape-result';
-      url: string;
-      ids: DocumentId[];
-    }
-  | {
       variant: 'new-document';
       documentType: DocumentType;
       data?: DocumentData;

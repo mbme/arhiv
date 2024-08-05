@@ -5,7 +5,6 @@ import { useAppController } from 'controller';
 import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button, IconButton } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
-import { ScraperDialog } from 'components/ScraperDialog';
 import { DocumentPicker } from 'components/DocumentPicker';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { NewDocumentDialog } from './NewDocumentDialog';
@@ -15,7 +14,6 @@ export function WorkspaceHeader() {
   const app = useAppController();
 
   const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
-  const [showScraperDialog, setShowScraperDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
   const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
@@ -59,10 +57,6 @@ export function WorkspaceHeader() {
               app.workspace.newDocument(documentType);
               setShowNewDocumentDialog(false);
             }}
-            onScrape={() => {
-              setShowScraperDialog(true);
-              setShowNewDocumentDialog(false);
-            }}
             onAttach={() => {
               setShowFilePickerDialog(true);
               setShowNewDocumentDialog(false);
@@ -88,18 +82,6 @@ export function WorkspaceHeader() {
         </Button>
 
         <CommitOrSyncButton />
-
-        {showScraperDialog && (
-          <ScraperDialog
-            onSuccess={(url, ids) => {
-              app.workspace.open({ variant: 'scrape-result', url, ids });
-              setShowScraperDialog(false);
-            }}
-            onCancel={() => {
-              setShowScraperDialog(false);
-            }}
-          />
-        )}
 
         {showFilePickerDialog && (
           <FilePickerDialog

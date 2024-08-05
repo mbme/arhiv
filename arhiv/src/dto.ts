@@ -55,10 +55,6 @@ export type APIRequest =
       fileName: string;
     }
   | {
-      typeName: 'Scrape';
-      url: string;
-    }
-  | {
       typeName: 'Commit';
     }
   | {
@@ -136,10 +132,6 @@ export type APIResponse =
   | {
       typeName: 'UploadFile';
       id: DocumentId;
-    }
-  | {
-      typeName: 'Scrape';
-      documents: GetDocumentsResult[];
     }
   | {
       typeName: 'Commit';

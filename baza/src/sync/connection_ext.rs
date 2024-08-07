@@ -2,14 +2,14 @@ use std::collections::HashSet;
 
 use anyhow::{ensure, Result};
 
-use rs_utils::{log, now};
+use rs_utils::log;
 
 use crate::{
     entities::{Id, Revision, BLOB},
     BazaConnection, DocumentExpert,
 };
 
-use super::{Changeset, Ping};
+use super::{Changeset, ChangesetRequest};
 
 #[derive(Default)]
 pub struct ChangesetSummary {
@@ -25,15 +25,14 @@ impl ChangesetSummary {
 }
 
 impl BazaConnection {
-    pub fn get_ping(&self) -> Result<Ping> {
-        let ping = Ping {
+    pub fn get_changeset_request(&self) -> Result<ChangesetRequest> {
+        let request = ChangesetRequest {
             instance_id: self.get_instance_id()?,
             data_version: self.get_data_version()?,
             rev: self.get_db_rev()?,
-            timestamp: now(),
         };
 
-        Ok(ping)
+        Ok(request)
     }
 
     pub fn apply_changeset(&mut self, changeset: Changeset) -> Result<ChangesetSummary> {

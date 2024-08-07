@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Callback, cx } from 'utils';
 import { useSuspenseImage } from 'utils/suspense';
 
@@ -13,17 +14,28 @@ export function SuspenseImage({ src, alt, className, onClick }: Props) {
   img.alt = alt;
   img.className = className;
 
+  const containerRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const containerEl = containerRef.current;
+    if (!containerEl) {
+      return;
+    }
+
+    containerEl.appendChild(img);
+
+    return () => {
+      containerEl.removeChild(img);
+    };
+  }, [img]);
+
   return (
     <span
+      ref={containerRef}
       className={cx('block', {
-        'hover:scale-105 hover:translate-y-2 transition-transform': Boolean(onClick),
+        'cursor-pointer': Boolean(onClick),
       })}
       onClick={onClick}
-      ref={(el) => {
-        if (el && !el.contains(img)) {
-          el.appendChild(img);
-        }
-      }}
     />
   );
 }

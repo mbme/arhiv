@@ -7,6 +7,7 @@ import {
   keymap,
   placeholder,
   rectangularSelection,
+  crosshairCursor,
   ViewUpdate,
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
@@ -14,9 +15,9 @@ import {
   cursorLineEnd,
   cursorLineStart,
   defaultKeymap,
-  deleteToLineEnd,
   history,
   historyKeymap,
+  simplifySelection,
 } from '@codemirror/commands';
 import { searchKeymap, search } from '@codemirror/search';
 import {
@@ -43,6 +44,16 @@ class CodemirrorEditor {
     initialValue: string,
     private options: Options = {},
   ) {
+    const cancelSelectionOrBlur = (view: EditorView) => {
+      // cancel selection if any, otherwise blur the editor
+      if (view.state.selection.ranges.some((range) => !range.empty)) {
+        simplifySelection(view);
+      } else {
+        view.contentDOM.blur();
+      }
+      return true;
+    };
+
     this.editor = new EditorView({
       parent,
       state: EditorState.create({
@@ -58,6 +69,7 @@ class CodemirrorEditor {
             EditorView.lineWrapping,
             bracketMatching(),
             rectangularSelection(),
+            crosshairCursor(),
             this.readonlyCompartment.of(EditorState.readOnly.of(false)),
             this.editableCompartment.of(EditorView.editable.of(true)),
             this.placeholderCompartment.of(placeholder('')),
@@ -66,13 +78,13 @@ class CodemirrorEditor {
               this.onChange(viewUpdate);
             }),
             keymap.of([
-              ...defaultKeymap, //
-              ...historyKeymap,
-              { key: 'Ctrl-a', run: cursorLineStart },
+              { key: 'Ctrl-a', run: cursorLineStart, preventDefault: true },
               { key: 'Ctrl-e', run: cursorLineEnd },
-              { key: 'Ctrl-k', run: deleteToLineEnd },
+              { key: 'Escape', run: cancelSelectionOrBlur },
+              ...defaultKeymap,
+              ...historyKeymap,
+              ...searchKeymap,
             ]),
-            keymap.of(searchKeymap),
             search({ top: true }),
           ],
           markdown(),

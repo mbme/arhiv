@@ -6,8 +6,8 @@ use reqwest::{header, Client, Url};
 use rs_utils::{log, AuthToken, Download, ResponseVerifier};
 
 use crate::{
-    entities::{Revision, BLOB},
-    sync::{changeset::Changeset, ping::Ping},
+    entities::BLOB,
+    sync::changeset::{Changeset, ChangesetRequest},
     Baza,
 };
 
@@ -93,42 +93,13 @@ impl BazaClient {
         Ok(())
     }
 
-    pub async fn exchange_pings(&self, ping: &Ping) -> Result<Ping> {
-        log::debug!("Baza Server {}: exchanging pings", self.rpc_server_url);
-
-        let body = serde_json::to_vec(ping).context("failed to serialize ping")?;
+    pub async fn fetch_changes(&self, request: &ChangesetRequest) -> Result<Changeset> {
+        log::debug!("Baza Server {}: fetching changes", self.rpc_server_url,);
 
         let response = self
             .client
-            .post(self.rpc_server_url.join("/ping")?)
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(body)
-            .send()
-            .await
-            .context("failed to send request")?;
-
-        self.response_verifier.verify(&response)?;
-
-        let status = response.status();
-        let body = response.text().await?;
-
-        if status.is_success() {
-            serde_json::from_str(&body).context("failed to parse server response")
-        } else {
-            bail!("Server responded with error: {}\n{}", status, body);
-        }
-    }
-
-    pub async fn get_changeset(&self, min_rev: &Revision) -> Result<Changeset> {
-        let min_rev = min_rev.serialize();
-        log::debug!(
-            "Baza Server {}: fetching a changeset since {min_rev}",
-            self.rpc_server_url,
-        );
-
-        let response = self
-            .client
-            .get(self.rpc_server_url.join("/changeset/")?.join(&min_rev)?)
+            .post(self.rpc_server_url.join("/changeset")?)
+            .json(request)
             .send()
             .await?;
 

@@ -1,6 +1,6 @@
 use std::{ops::Bound, str::FromStr, sync::Arc};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use axum::{
     extract::{DefaultBodyLimit, Path},
     http::{HeaderMap, StatusCode},
@@ -20,20 +20,15 @@ use rs_utils::{
     log, now,
 };
 
-use crate::{
-    entities::{BLOBId, Revision},
-    sync::Ping,
-    Baza, BazaEvent,
-};
+use crate::{entities::BLOBId, sync::changeset::ChangesetRequest, Baza, BazaEvent};
 
 use super::auth::client_authenticator;
 
 /// WARN: This router requires Extension<Arc<Baza>> to be available
 pub fn build_rpc_router(server_certificate_der: Vec<u8>) -> Result<Router> {
     let router = Router::new()
-        .route("/ping", post(exchange_pings_handler))
+        .route("/changeset", post(fetch_changes_handler))
         .route("/blobs/:blob_id", get(get_blob_handler))
-        .route("/changeset/:min_rev", get(get_changeset_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
         .layer(Extension(ServerCertificate::new(server_certificate_der)));
@@ -53,34 +48,35 @@ async fn get_blob_handler(
 }
 
 #[tracing::instrument(skip(baza), level = "debug")]
-async fn exchange_pings_handler(
+async fn fetch_changes_handler(
     Extension(baza): Extension<Arc<Baza>>,
-    Json(other_ping): Json<Ping>,
+    Json(request): Json<ChangesetRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
-    let ping = baza.get_connection()?.get_ping()?;
+    let tx = baza.get_tx()?;
+    let rev = tx.get_db_rev()?;
+    let data_version = tx.get_data_version()?;
 
-    if other_ping.rev.is_concurrent_or_newer_than(&ping.rev) {
-        log::info!("Instance is outdated, comparing to {}", ping.instance_id);
-        baza.publish_event(BazaEvent::InstanceOutdated {})?;
+    if request.data_version != data_version {
+        return Ok((
+            StatusCode::CONFLICT,
+            format!(
+                "Requested data version {} doesn't match the data version {} of this instance",
+                request.data_version, data_version
+            ),
+        )
+            .into_response());
     }
 
-    Ok(Json(ping))
-}
-
-#[tracing::instrument(skip(baza), level = "debug")]
-async fn get_changeset_handler(
-    Extension(baza): Extension<Arc<Baza>>,
-    Path(min_rev): Path<String>,
-) -> Result<impl IntoResponse, ServerError> {
-    let min_rev = serde_json::from_str(&min_rev).context("failed to parse min_rev")?;
-    let min_rev = Revision::from_value(min_rev)?;
-
-    let tx = baza.get_tx()?;
-    let changeset = tx.get_changeset(&min_rev)?;
+    let changeset = tx.get_changeset(&request.rev)?;
     tx.set_last_sync_time(&now())?;
     tx.commit()?;
 
-    Ok(Json(changeset))
+    if request.rev.is_concurrent_or_newer_than(&rev) {
+        log::info!("Instance is outdated, comparing to {}", request.instance_id);
+        baza.publish_event(BazaEvent::InstanceOutdated {})?;
+    }
+
+    Ok(Json(changeset).into_response())
 }
 
 pub async fn respond_with_blob(

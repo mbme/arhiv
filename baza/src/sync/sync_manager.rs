@@ -11,7 +11,7 @@ use rs_utils::{log, now, ScheduledTask};
 
 use crate::{entities::InstanceId, Baza, BazaEvent};
 
-use super::{Ping, SyncAgent};
+use super::SyncAgent;
 
 pub type AutoSyncTask = JoinHandle<()>;
 pub type MDNSClientTask = JoinHandle<()>;
@@ -85,35 +85,6 @@ impl SyncManager {
         log::info!("Removed all network agents");
     }
 
-    async fn collect_pings(
-        &self,
-        agents: impl IntoIterator<Item = SyncAgent>,
-    ) -> Result<Vec<(SyncAgent, Ping)>> {
-        let ping = self.baza.get_connection()?.get_ping()?;
-
-        let pings = agents.into_iter().map(|agent| async {
-            let ping = agent.exchange_pings(&ping).await;
-            (agent, ping)
-        });
-
-        let mut pings = futures::future::join_all(pings)
-            .await
-            .into_iter()
-            .filter_map(|(agent, ping_result)| match ping_result {
-                Ok(ping) => Some((agent, ping)),
-                Err(err) => {
-                    log::warn!("Failed to exchange pings with agent {agent}: {err}");
-
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-
-        pings.sort_by_cached_key(|(_agent, ping)| ping.rev.clone());
-
-        Ok(pings)
-    }
-
     pub async fn sync(&self) -> Result<bool> {
         log::info!("Starting sync");
 
@@ -148,56 +119,48 @@ impl SyncManager {
             return Ok(false);
         }
 
-        let pings = self.collect_pings(agents.values().cloned()).await?;
-
-        log::info!("Starting sync with {} other instances", pings.len());
+        log::info!("Starting sync with {} other instances", agents.len());
 
         let mut updated = false;
-        for (agent, ping) in pings {
-            let local_rev = self.baza.get_connection()?.get_db_rev()?;
+        for (instance_id, agent) in agents {
+            let request = self.baza.get_connection()?.get_changeset_request()?;
 
-            if local_rev.is_concurrent_or_older_than(&ping.rev) {
-                let changeset = agent.fetch_changes(&local_rev).await?;
-
-                log::info!(
-                    "applying changeset {} from {}",
-                    &changeset,
-                    ping.instance_id.as_ref()
-                );
-
-                let mut tx = self.baza.get_tx()?;
-
-                let summary = tx.apply_changeset(changeset)?;
-
-                // TODO parallel file download
-                for (index, blob) in summary.missing_blobs.iter().enumerate() {
-                    log::info!(
-                        "downloading BLOB {} of {} from {}",
-                        index + 1,
-                        summary.missing_blobs.len(),
-                        ping.instance_id.as_ref(),
-                    );
-                    agent.fetch_blob(blob).await?;
+            let changeset = match agent.fetch_changes(&request).await {
+                Ok(changeset) => changeset,
+                Err(err) => {
+                    log::warn!("Failed to fetch changes from agent {instance_id}: {err}");
+                    continue;
                 }
+            };
 
-                tx.set_last_sync_time(&now())?;
+            log::info!("Applying changeset {changeset} from {instance_id}");
 
-                tx.commit()?;
+            let mut tx = self.baza.get_tx()?;
 
-                updated = updated || summary.has_changes();
+            let summary = tx.apply_changeset(changeset)?;
 
+            // TODO parallel file download
+            for (index, blob) in summary.missing_blobs.iter().enumerate() {
                 log::info!(
-                    "got {} new snapshots and {} BLOBs from {}",
-                    summary.new_snapshots,
+                    "Downloading BLOB {} of {} from {instance_id}",
+                    index + 1,
                     summary.missing_blobs.len(),
-                    ping.instance_id.as_ref()
                 );
-            } else {
-                log::debug!(
-                    "instance {} has same or older revision",
-                    ping.instance_id.as_ref()
-                );
+                agent.fetch_blob(blob).await?;
             }
+
+            tx.set_last_sync_time(&now())?;
+
+            tx.commit()?;
+
+            updated = updated || summary.has_changes();
+
+            log::info!(
+                "Got {} new snapshots and {} BLOBs from {}",
+                summary.new_snapshots,
+                summary.missing_blobs.len(),
+                &instance_id
+            );
         }
 
         if updated {

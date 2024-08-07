@@ -3,11 +3,14 @@ use std::{fmt::Display, sync::Arc};
 use anyhow::{Context, Result};
 
 use crate::{
-    entities::{InstanceId, Revision, BLOB},
+    entities::{InstanceId, BLOB},
     Baza, BazaEvent,
 };
 
-use super::{changeset::Changeset, network::BazaClient, ping::Ping};
+use super::{
+    changeset::{Changeset, ChangesetRequest},
+    network::BazaClient,
+};
 
 #[derive(Clone)]
 pub enum SyncAgent {
@@ -44,26 +47,20 @@ impl SyncAgent {
         }
     }
 
-    pub async fn exchange_pings(&self, ping: &Ping) -> Result<Ping> {
+    pub async fn fetch_changes(&self, request: &ChangesetRequest) -> Result<Changeset> {
         match self {
             SyncAgent::InMemory { baza, .. } => {
-                let other_ping = ping;
-                let ping = baza.get_connection()?.get_ping()?;
+                let conn = baza.get_connection()?;
 
-                if other_ping.rev.is_concurrent_or_newer_than(&ping.rev) {
+                let rev = conn.get_db_rev()?;
+
+                if request.rev.is_concurrent_or_newer_than(&rev) {
                     baza.publish_event(BazaEvent::InstanceOutdated {})?;
                 }
 
-                Ok(ping)
+                conn.get_changeset(&request.rev)
             }
-            SyncAgent::Network { client, .. } => client.exchange_pings(ping).await,
-        }
-    }
-
-    pub async fn fetch_changes(&self, min_rev: &Revision) -> Result<Changeset> {
-        match self {
-            SyncAgent::InMemory { baza, .. } => baza.get_connection()?.get_changeset(min_rev),
-            SyncAgent::Network { client, .. } => client.get_changeset(min_rev).await,
+            SyncAgent::Network { client, .. } => client.fetch_changes(request).await,
         }
     }
 

@@ -6,8 +6,8 @@ import {
   FILM_DOCUMENT_TYPE,
   GAME_DOCUMENT_TYPE,
 } from 'dto';
-import { isDefined } from 'utils';
 import { useClipboardPasteHandler } from 'utils/hooks';
+import { showToast } from 'components/Toaster';
 
 const SCRAPE_RESULTS_TYPE = 'scrape-results-container';
 
@@ -43,9 +43,14 @@ export type ScrapedData = {
 
 function scrapeResultToScrapedData(result: ScrapeResult): ScrapedData | undefined {
   console.log('Got scrape result:', result);
+
   switch (result.data?.typeName) {
     case 'YakabooBook': {
       const { data } = result;
+
+      if (data.version !== 1) {
+        return;
+      }
 
       return {
         documentType: BOOK_DOCUMENT_TYPE,
@@ -64,6 +69,10 @@ function scrapeResultToScrapedData(result: ScrapeResult): ScrapedData | undefine
     }
     case 'IMDBFilm': {
       const { data } = result;
+
+      if (data.version !== 1) {
+        return;
+      }
 
       return {
         documentType: FILM_DOCUMENT_TYPE,
@@ -85,6 +94,10 @@ function scrapeResultToScrapedData(result: ScrapeResult): ScrapedData | undefine
     case 'MyAnimeListAnime': {
       const { data } = result;
 
+      if (data.version !== 1) {
+        return;
+      }
+
       return {
         documentType: FILM_DOCUMENT_TYPE,
         data: {
@@ -102,6 +115,10 @@ function scrapeResultToScrapedData(result: ScrapeResult): ScrapedData | undefine
     case 'SteamGame': {
       const { data } = result;
 
+      if (data.version !== 1) {
+        return;
+      }
+
       return {
         documentType: GAME_DOCUMENT_TYPE,
         data: {
@@ -114,8 +131,7 @@ function scrapeResultToScrapedData(result: ScrapeResult): ScrapedData | undefine
       };
     }
     default:
-      console.warn('Unsupported scrape result: %s', result.scraperName);
-      return undefined;
+      return;
   }
 }
 
@@ -132,11 +148,43 @@ export function useScrapedDataPasteHandler(handler: (data: ScrapedData[]) => voi
         ),
     );
 
-    const scrapedData = textItems
-      .flatMap(tryParseScraperResultsContainer)
-      .map(scrapeResultToScrapedData)
-      .filter(isDefined);
+    const allResults = textItems.flatMap(tryParseScraperResultsContainer);
 
-    handler(scrapedData);
+    const errorResults: ScrapeResult[] = [];
+    const uncapturedResults: ScrapeResult[] = [];
+    const capturedResults: ScrapedData[] = [];
+
+    for (const scrapeResult of allResults) {
+      if (scrapeResult.error) {
+        errorResults.push(scrapeResult);
+        continue;
+      }
+
+      const capturedData = scrapeResultToScrapedData(scrapeResult);
+      if (capturedData) {
+        capturedResults.push(capturedData);
+      } else {
+        uncapturedResults.push(scrapeResult);
+      }
+    }
+
+    showToast({
+      level: 'info',
+      message: `Captured ${capturedResults.length} out of ${allResults.length} scraper results`,
+    });
+
+    if (uncapturedResults.length > 0) {
+      console.warn('Uncaptured scraper results:', uncapturedResults);
+    }
+
+    if (errorResults.length > 0) {
+      console.error('Scraper errors:', errorResults);
+      showToast({
+        level: 'warn',
+        message: `Got ${errorResults.length} scraper errors`,
+      });
+    }
+
+    handler(capturedResults);
   });
 }

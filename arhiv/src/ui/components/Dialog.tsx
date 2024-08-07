@@ -1,4 +1,4 @@
-import { Dialog as HeadlessDialog } from '@headlessui/react';
+import { DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react';
 import { Callback, cx } from 'utils';
 import { JSXChildren, JSXRef } from 'utils/jsx';
 import { IconButton } from 'components/Button';
@@ -28,8 +28,8 @@ export function Dialog({
       <div className="modal-overlay" />
 
       <div className="modal-dialog-container">
-        <HeadlessDialog.Panel className={cx('modal-dialog', className)}>
-          <HeadlessDialog.Title
+        <DialogPanel className={cx('modal-dialog', className)}>
+          <DialogTitle
             className={cx('modal-title', {
               'is-alarming': alarming,
             })}
@@ -37,12 +37,12 @@ export function Dialog({
             {title}
 
             <IconButton icon="x" size="sm" onClick={onHide} />
-          </HeadlessDialog.Title>
+          </DialogTitle>
 
           <div className={cx('modal-content', contentClassName)}>{children}</div>
 
           {buttons && <div className="modal-buttons">{buttons}</div>}
-        </HeadlessDialog.Panel>
+        </DialogPanel>
       </div>
     </HeadlessDialog>
   );

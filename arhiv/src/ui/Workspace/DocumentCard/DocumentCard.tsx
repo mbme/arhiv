@@ -31,11 +31,6 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
 
   const lockKey = useLockDocument(document.id, isDirty);
 
-  // force form fields to use fresh values from the document
-  useEffect(() => {
-    form?.reset();
-  }, [form, document]);
-
   return (
     <CardContainer
       skipBack={isDirty}
@@ -97,6 +92,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
       />
 
       <DocumentEditor
+        key={document.updatedAt} // force form fields to use fresh values from the document after save
         formRef={setForm}
         documentId={document.id}
         documentType={document.documentType}

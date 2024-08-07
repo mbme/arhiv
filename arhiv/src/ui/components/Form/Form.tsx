@@ -56,7 +56,11 @@ function isFormDirty(form: HTMLFormElement) {
 }
 
 export function markFormDirty(form: HTMLFormElement, isDirty: boolean) {
-  form.dataset['isDirty'] = isDirty ? 'true' : undefined;
+  if (isDirty) {
+    form.dataset['isDirty'] = 'true';
+  } else {
+    delete form.dataset['isDirty'];
+  }
   form.dispatchEvent(new FormDirtyEvent(isDirty));
 }
 

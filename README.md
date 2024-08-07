@@ -6,7 +6,7 @@
 ## On ArchLinux, using makepkg
 * `just prod-build-install`
 * `sudo systemctl --user daemon-reload`
-* `sudo systemctl --uesr enable --now arhiv-service
+* `sudo systemctl --user enable --now arhiv-service`
 
 # Build dependencies
 * `rust`

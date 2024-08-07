@@ -229,6 +229,10 @@ export class WorkspaceController {
       this.$showSearchDialog.value = [false, ''];
     });
   }
+
+  reload() {
+    window.location.reload();
+  }
 }
 
 const STORAGE_KEY = 'workspace-state';

@@ -118,6 +118,13 @@ export function WorkspaceHeader() {
           align="bottom-right"
           options={[
             {
+              text: 'Reload',
+              icon: 'refresh',
+              onClick: () => {
+                app.workspace.reload();
+              },
+            },
+            {
               text: 'Status',
               icon: 'info',
               onClick: () => {

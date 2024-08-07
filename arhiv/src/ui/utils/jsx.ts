@@ -12,7 +12,9 @@ export function setJSXRef<T>(ref: JSXRef<T> | null, value: T | null) {
   }
 }
 
-export function mergeRefs<T, R extends T>(...refs: ReadonlyArray<JSXRef<T> | undefined>): Ref<R> {
+export function mergeRefs<T, R extends T>(
+  ...refs: ReadonlyArray<JSXRef<T> | Ref<T> | undefined>
+): Ref<R> {
   return (value) => {
     for (const ref of refs) {
       if (ref) {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { JSONObj, formDataToObject, cx, JSONValue } from 'utils';
-import { JSXChildren, JSXRef, mergeRefs } from 'utils/jsx';
+import { JSXChildren, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
 export const FORM_VIEWPORT_CLASSNAME = 'form-viewport';

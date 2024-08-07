@@ -18,6 +18,7 @@ import {
   history,
   historyKeymap,
 } from '@codemirror/commands';
+import { searchKeymap, search } from '@codemirror/search';
 import {
   indentOnInput,
   bracketMatching,
@@ -71,6 +72,8 @@ class CodemirrorEditor {
               { key: 'Ctrl-e', run: cursorLineEnd },
               { key: 'Ctrl-k', run: deleteToLineEnd },
             ]),
+            keymap.of(searchKeymap),
+            search({ top: true }),
           ],
           markdown(),
         ],

@@ -13,6 +13,10 @@
   .cm-editor {
     @apply border-2;
 
+    & .cm-panels {
+      z-index: 1;
+    }
+
     &.cm-focused {
       @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
     }

@@ -56,6 +56,7 @@ impl Field {
         }
     }
 
+    /// Extract ids of the documents that are referenced by current document
     #[must_use]
     pub fn extract_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
@@ -79,6 +80,7 @@ impl Field {
         result
     }
 
+    /// Extract ids of the documents that are collected by current document (collection)
     #[must_use]
     pub fn extract_collection_refs(&self, value: &Value) -> HashSet<Id> {
         let mut result = HashSet::new();
@@ -92,6 +94,7 @@ impl Field {
         result
     }
 
+    /// Extract ids of the BLOBs that are referenced by current document
     #[must_use]
     pub fn extract_blob_ids(&self, value: &Value) -> HashSet<BLOBId> {
         let mut result = HashSet::new();

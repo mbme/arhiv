@@ -22,10 +22,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
-use baza::{entities::BLOBId, sync::respond_with_blob, Credentials};
+use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Credentials};
 use rs_utils::{
     http_server::{add_no_cache_headers, ServerError},
-    log, AuthToken, SecretString, HMAC,
+    log, stream_to_file, AuthToken, SecretString, HMAC,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest};
@@ -48,6 +48,7 @@ pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
         .route("/create", post(create_arhiv_handler))
         .route("/api", post(api_handler))
         .route("/events", get(events_handler))
+        .route("/blobs", post(create_blob_handler))
         .route("/blobs/:blob_id", get(blob_handler))
         .route("/blobs/images/:blob_id", get(image_handler))
         .route("/*fileName", get(public_assets_handler))
@@ -153,6 +154,35 @@ async fn api_handler(
     add_no_cache_headers(&mut headers);
 
     Ok((headers, Json(response)))
+}
+
+#[tracing::instrument(skip(state, request), level = "debug")]
+async fn create_blob_handler(
+    state: State<Arc<UIState>>,
+    request: Request,
+) -> Result<impl IntoResponse, ServerError> {
+    let arhiv = state.must_get_arhiv()?;
+
+    let file_name = request
+        .headers()
+        .get("X-File-Name")
+        .context("X-File-Name header is missing")?
+        .to_str()
+        .context("Failed to read X-File-Name header as a string")?
+        .to_string();
+
+    let temp_file = arhiv.baza.get_path_manager().new_temp_file("arhiv-blob");
+    let stream = request.into_body().into_data_stream();
+
+    stream_to_file(temp_file.open_tokio_file(0).await?, stream).await?;
+
+    let mut tx = arhiv.baza.get_tx()?;
+
+    let attachment = create_attachment(&mut tx, &temp_file.path, true, Some(file_name))?;
+
+    tx.commit()?;
+
+    Ok(attachment.id.to_string())
 }
 
 async fn blob_handler(

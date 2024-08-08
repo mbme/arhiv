@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { DocumentId } from 'dto';
-import { Callback, fileAsBase64, formatBytes } from 'utils';
+import { Callback, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { uploadFile } from 'utils/rpc';
 import { Dialog } from 'components/Dialog';
 import { Button } from 'components/Button';
 import { Link } from 'components/Link';
@@ -18,14 +18,12 @@ export function ImageUploadDialog({ file, onSuccess, onCancel }: Props) {
 
   const { error, inProgress, triggerRefresh } = useQuery(
     async (abortSignal) => {
-      const base64Data = await fileAsBase64(file);
-
-      return RPC.UploadFile({ fileName: file.name, base64Data }, abortSignal);
+      return uploadFile(file, abortSignal);
     },
     {
       refreshOnMount: false,
       onSuccess(result) {
-        onSuccess(result.id);
+        onSuccess(result);
       },
     },
   );

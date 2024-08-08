@@ -28,6 +28,7 @@ axum.workspace = true
 axum-extra.workspace = true
 axum-server.workspace = true
 
+bytes.workspace = true
 rand.workspace = true
 chrono.workspace = true
 blake3 = "1.2.0" # fast file hash

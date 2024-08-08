@@ -3,10 +3,8 @@ mod file_name_expert;
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{bail, ensure, Context, Result};
-use futures::stream::TryStreamExt;
 use reqwest::{Client, Response};
 use tokio::fs as tokio_fs;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 use url::Url;
 
 use crate::{
@@ -15,7 +13,7 @@ use crate::{
     http::{
         parse_content_disposition_header, parse_content_range_header, parse_content_type_header,
     },
-    log, remove_file_if_exists,
+    log, remove_file_if_exists, stream_to_file,
 };
 
 pub trait ResponseVerifier: Send + Sync {
@@ -216,18 +214,10 @@ impl Download {
             None
         };
 
-        let mut stream = response
-            .bytes_stream()
-            // Convert the stream into an futures::io::AsyncRead.
-            // We must first convert the reqwest::Error into an futures::io::Error.
-            .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
-            .into_async_read()
-            .compat();
+        let file = self.open_download_file(start_pos).await?;
+        let stream = response.bytes_stream();
 
-        let mut file = self.open_download_file(start_pos).await?;
-
-        // Invoke tokio::io::copy to actually perform the download.
-        tokio::io::copy(&mut stream, &mut file).await?;
+        stream_to_file(file, stream).await?;
 
         if let Some(expected_file_size) = expected_file_size {
             let file_size = get_file_size(&self.download_file_path)?;

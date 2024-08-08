@@ -9,10 +9,7 @@ use baza::{
     validator::{ValidationError, Validator},
     DocumentExpert, Filter,
 };
-use rs_utils::{
-    decode_base64, ensure_dir_exists, get_symlink_target_path, is_readable, path_to_string,
-    TempFile,
-};
+use rs_utils::{ensure_dir_exists, get_symlink_target_path, is_readable, path_to_string};
 
 use crate::{
     dto::{
@@ -251,7 +248,7 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             sort_entries(&mut entries);
 
             APIResponse::ListDir {
-                dir: path_to_string(dir)?,
+                dir: path_to_string(dir),
                 entries,
             }
         }
@@ -264,24 +261,6 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
             tx.commit()?;
 
             APIResponse::CreateAttachment { id: attachment.id }
-        }
-        APIRequest::UploadFile {
-            ref base64_data,
-            file_name,
-        } => {
-            let temp_file = TempFile::new();
-            temp_file.create_file()?;
-            temp_file
-                .write(&decode_base64(base64_data)?)
-                .context("failed to write data into temp file")?;
-
-            let mut tx = arhiv.baza.get_tx()?;
-
-            let attachment = create_attachment(&mut tx, &temp_file.path, true, Some(file_name))?;
-
-            tx.commit()?;
-
-            APIResponse::UploadFile { id: attachment.id }
         }
         APIRequest::Commit {} => {
             let mut tx = arhiv.baza.get_tx()?;
@@ -371,7 +350,7 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
     let mut result = vec![];
 
     if let Some(parent) = dir.parent() {
-        let path = path_to_string(parent)?;
+        let path = path_to_string(parent);
 
         let metadata = fs::metadata(&path).context("failed to read path metadata")?;
 
@@ -385,14 +364,14 @@ fn list_entries(dir: &Path, show_hidden: bool) -> Result<Vec<DirEntry>> {
     for entry in fs::read_dir(dir).context("failed to read directory entries")? {
         let entry = entry.context("failed to read an entry")?;
 
-        let name = path_to_string(entry.file_name())?;
+        let name = path_to_string(entry.file_name());
 
         // skip hidden files
         if !show_hidden && name.starts_with('.') {
             continue;
         }
 
-        let path = path_to_string(entry.path())?;
+        let path = path_to_string(entry.path());
 
         let file_type = entry.file_type()?;
         let metadata =

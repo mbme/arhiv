@@ -13,14 +13,16 @@ pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
 }
 
-pub fn path_to_string(path: impl Into<PathBuf>) -> Result<String> {
-    let result = path
-        .into()
-        .to_str()
-        .context("Failed to convert file path to string")?
-        .to_string();
+pub fn path_to_string(path: impl Into<PathBuf>) -> String {
+    let path: PathBuf = path.into();
 
-    Ok(result)
+    path.to_string_lossy().to_string()
+}
+
+pub fn build_path(a: impl AsRef<str>, b: impl AsRef<str>) -> String {
+    let path: PathBuf = [a.as_ref(), b.as_ref()].into_iter().collect();
+
+    path_to_string(path)
 }
 
 /// This won't follow symlinks
@@ -64,7 +66,7 @@ pub fn ensure_file_exists(path: &str) -> Result<()> {
 pub fn get_symlink_target_path(path: &str) -> Result<String> {
     let target_path = fs::read_link(path).context("failed to read a symlink")?;
 
-    path_to_string(target_path)
+    Ok(path_to_string(target_path))
 }
 
 /// check if path1 and path2 belong to the same filesystem or not
@@ -118,7 +120,7 @@ pub fn remove_file_extension(path: &str) -> Result<String> {
         .file_stem()
         .context("failed to remove file extension")?;
 
-    path_to_string(filename)
+    Ok(path_to_string(filename))
 }
 
 #[must_use]
@@ -244,7 +246,7 @@ pub fn into_absolute_path(path: impl AsRef<str>, canonicalize: bool) -> Result<S
             .with_context(|| format!("failed to canonicalize path {}", path.to_string_lossy()))?;
     }
 
-    path_to_string(path)
+    Ok(path_to_string(path))
 }
 
 #[must_use]
@@ -301,9 +303,9 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
     for entry in fs::read_dir(path.as_ref())? {
         let entry = entry?;
 
-        let name = path_to_string(entry.file_name())?;
+        let name = path_to_string(entry.file_name());
 
-        let path = path_to_string(entry.path())?;
+        let path = path_to_string(entry.path());
 
         let hash = if fs::metadata(&path)?.is_dir() {
             get_dir_checksum(&path)?
@@ -429,7 +431,7 @@ impl Drop for LockFile {
 
 #[cfg(test)]
 mod tests {
-    use crate::{file_in_temp_dir, workspace_relpath};
+    use crate::{get_temp_dir, workspace_relpath};
 
     use super::*;
 
@@ -451,7 +453,7 @@ mod tests {
 
     #[test]
     fn test_lock_file() {
-        let lock_file = file_in_temp_dir("test-lock-file.lock");
+        let lock_file = build_path(get_temp_dir(), "test-lock-file.lock");
 
         let lock = LockFile::new(&lock_file).unwrap();
         assert!(file_exists(&lock_file).unwrap());

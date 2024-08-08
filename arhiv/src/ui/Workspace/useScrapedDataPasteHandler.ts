@@ -149,6 +149,9 @@ export function useScrapedDataPasteHandler(handler: (data: ScrapedData[]) => voi
     );
 
     const allResults = textItems.flatMap(tryParseScraperResultsContainer);
+    if (allResults.length === 0) {
+      return;
+    }
 
     const errorResults: ScrapeResult[] = [];
     const uncapturedResults: ScrapeResult[] = [];

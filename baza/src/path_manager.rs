@@ -3,7 +3,7 @@ use std::path::Path;
 
 use anyhow::{ensure, Result};
 
-use rs_utils::{ensure_dir_exists, ensure_file_exists};
+use rs_utils::{ensure_dir_exists, ensure_file_exists, TempFile};
 
 #[derive(Debug)]
 pub struct PathManager {
@@ -60,5 +60,9 @@ impl PathManager {
         fs::create_dir(&self.downloads_dir)?;
 
         Ok(())
+    }
+
+    pub fn new_temp_file(&self, prefix: &str) -> TempFile {
+        TempFile::new_in_dir(&self.downloads_dir, prefix)
     }
 }

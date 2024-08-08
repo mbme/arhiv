@@ -3,7 +3,9 @@ use std::env;
 use std::fs;
 
 use anyhow::{Context, Result};
+use tokio::fs as tokio_fs;
 
+use crate::build_path;
 use crate::path_to_string;
 use crate::{generate_alpanumeric_string, path_exists};
 
@@ -18,8 +20,18 @@ impl TempFile {
     }
 
     pub fn new_with_details(prefix: impl AsRef<str>, suffix: impl AsRef<str>) -> Self {
+        let file_name = generate_temp_file_name(prefix.as_ref(), suffix.as_ref());
+
         TempFile {
-            path: generate_temp_path(prefix.as_ref(), suffix.as_ref()),
+            path: build_path(get_temp_dir(), file_name),
+        }
+    }
+
+    pub fn new_in_dir(dir: impl AsRef<str>, prefix: impl AsRef<str>) -> Self {
+        let file_name = generate_temp_file_name(prefix.as_ref(), "");
+
+        TempFile {
+            path: build_path(dir, file_name),
         }
     }
 
@@ -43,6 +55,22 @@ impl TempFile {
         fs::File::create(&self.path).context("failed to create file")?;
 
         Ok(())
+    }
+
+    pub async fn open_tokio_file(&self, start_pos: u64) -> Result<tokio_fs::File> {
+        let mut options = tokio_fs::OpenOptions::new();
+        options.write(true).create(true);
+
+        if start_pos == 0 {
+            options.truncate(true);
+        } else {
+            options.append(true);
+        }
+
+        options
+            .open(&self.path)
+            .await
+            .context("failed to open download file for write")
     }
 
     #[must_use]
@@ -90,17 +118,22 @@ impl fmt::Display for TempFile {
     }
 }
 
-pub fn file_in_temp_dir(file_name: impl AsRef<str>) -> String {
-    let mut path = env::temp_dir();
+#[must_use]
+pub fn get_temp_dir() -> String {
+    let path = env::temp_dir();
 
-    path.push(file_name.as_ref());
-
-    path_to_string(path).expect("must be able to convert path to string")
+    path_to_string(path)
 }
 
 #[must_use]
-pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
+pub fn generate_temp_file_name(prefix: &str, suffix: &str) -> String {
     let name = generate_alpanumeric_string(8);
 
-    file_in_temp_dir(format!("{prefix}{name}{suffix}"))
+    format!("{prefix}{name}{suffix}")
+}
+
+pub fn generate_temp_path(prefix: &str, suffix: &str) -> String {
+    let file_name = generate_temp_file_name(prefix, suffix);
+
+    build_path(get_temp_dir(), file_name)
 }

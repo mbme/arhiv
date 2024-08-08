@@ -213,8 +213,7 @@ fn find_bin(bin_name: &str) -> Result<Option<String>> {
     let bin_path = which_all(bin_name)
         .context("failed to look for binary")?
         .next()
-        .map(path_to_string)
-        .transpose()?;
+        .map(path_to_string);
 
     Ok(bin_path)
 }

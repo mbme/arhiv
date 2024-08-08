@@ -51,11 +51,6 @@ pub enum APIRequest {
         file_path: String,
         move_file: bool,
     },
-    #[serde(rename_all = "camelCase")]
-    UploadFile {
-        base64_data: String,
-        file_name: String,
-    },
     Commit {},
     Sync {},
     GetSaveState {},
@@ -116,9 +111,6 @@ pub enum APIResponse {
         entries: Vec<DirEntry>,
     },
     CreateAttachment {
-        id: Id,
-    },
-    UploadFile {
         id: Id,
     },
     Commit {},

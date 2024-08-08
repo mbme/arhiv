@@ -2226,6 +2226,7 @@ dependencies = [
  "axum-extra",
  "axum-server",
  "blake3",
+ "bytes",
  "chrono",
  "data-encoding",
  "fslock",

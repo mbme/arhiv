@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/rpc';

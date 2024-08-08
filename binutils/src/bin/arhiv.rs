@@ -398,9 +398,9 @@ async fn handle_command(command: CLICommand) -> Result<()> {
 
             tx.commit()?;
 
-            let port = ServerInfo::get_server_port(&root_dir)?;
+            let server_info = ServerInfo::collect(&root_dir)?;
 
-            print_document(&document, port);
+            print_document(&document, &server_info);
         }
         CLICommand::Import {
             document_type,
@@ -415,7 +415,7 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     ..Default::default()
                 },
             )?;
-            let port = ServerInfo::get_server_port(&root_dir)?;
+            let server_info = ServerInfo::collect(&root_dir)?;
 
             println!("Importing {} files", file_paths.len());
 
@@ -427,19 +427,19 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                     .import_document_from_file(&document_type, &file_path, move_file)
                     .context("failed to import file")?;
 
-                print_document(&document, port);
+                print_document(&document, &server_info);
             }
         }
         CLICommand::UIOpen { id, browser } => {
             log::info!("Opening arhiv UI in {}", browser);
 
             let root_dir = find_root_dir()?;
-            let port =
-                ServerInfo::get_server_port(&root_dir)?.context("ArhivServer isn't running")?;
+            let server_info =
+                ServerInfo::collect(&root_dir)?.context("Failed to collect server info")?;
 
             let url = id
-                .map(|id| ServerInfo::get_document_url(&id, port))
-                .unwrap_or(ServerInfo::get_ui_base_url(port));
+                .map(|id| server_info.get_document_url(&id))
+                .unwrap_or(server_info.ui_url);
 
             process::Command::new(&browser)
                 .arg(url)
@@ -461,6 +461,12 @@ async fn handle_command(command: CLICommand) -> Result<()> {
                 port,
             )
             .await?;
+
+            if DEV_MODE {
+                let server_info =
+                    ServerInfo::collect(&root_dir)?.context("Failed to collect server info")?;
+                log::info!("Dev server url: {}", server_info.ui_url_with_auth_token);
+            }
 
             shutdown_signal().await;
 
@@ -496,9 +502,10 @@ async fn handle_command(command: CLICommand) -> Result<()> {
     Ok(())
 }
 
-fn print_document(document: &Document, port: Option<u16>) {
-    let document_url = port
-        .map(|port| ServerInfo::get_document_url(&document.id, port))
+fn print_document(document: &Document, server_info: &Option<ServerInfo>) {
+    let document_url = server_info
+        .as_ref()
+        .map(|server_info| server_info.get_document_url(&document.id))
         .unwrap_or_default();
 
     println!(

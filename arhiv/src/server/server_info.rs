@@ -12,10 +12,11 @@ use super::HEALTH_PATH;
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerInfo {
-    ui_url: String,
-    health_url: String,
-    certificate: Vec<u8>,
-    auth_token: String,
+    pub ui_url: String,
+    pub ui_url_with_auth_token: String,
+    pub health_url: String,
+    pub certificate: Vec<u8>,
+    pub auth_token: String,
 }
 
 impl ServerInfo {
@@ -35,6 +36,7 @@ impl ServerInfo {
         let auth_token = AuthToken::generate_with_length(&ui_hmac, 32).serialize();
 
         Ok(Some(Self {
+            ui_url_with_auth_token: format!("{ui_url}?AuthToken={auth_token}"),
             ui_url,
             health_url,
             certificate: certificate.certificate_der,
@@ -67,9 +69,7 @@ impl ServerInfo {
         format!("https://localhost:{port}{HEALTH_PATH}")
     }
 
-    pub fn get_document_url(id: &Id, port: u16) -> String {
-        let base = Self::get_ui_base_url(port);
-
-        format!("{base}?id={id}")
+    pub fn get_document_url(&self, id: &Id) -> String {
+        format!("{}&id={id}", self.ui_url_with_auth_token)
     }
 }

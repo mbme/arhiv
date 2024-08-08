@@ -1,5 +1,5 @@
 import { DocumentData, DocumentId, DocumentType } from 'dto';
-import { getScaledImageUrl } from 'utils';
+import { getScaledImageUrl } from 'utils/network';
 import { useSuspenseQuery } from 'utils/suspense';
 import { useSelectionManager } from 'utils/selection-manager';
 import { formatDocumentType } from 'utils/schema';

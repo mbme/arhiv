@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DocumentId } from 'dto';
 import { Callback, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { Dialog } from 'components/Dialog';
 import { QueryError } from 'components/QueryError';

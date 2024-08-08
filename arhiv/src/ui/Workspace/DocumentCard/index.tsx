@@ -1,6 +1,7 @@
 import { isAttachment, isErasedDocument, isProject } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
-import { copyTextToClipbard, getDocumentUrl } from 'utils';
+import { copyTextToClipbard } from 'utils';
+import { getDocumentUrl } from 'utils/network';
 import { TASK_DOCUMENT_TYPE } from 'dto';
 import { useBazaEvent } from 'baza-events';
 import { Card, useCardContext } from 'Workspace/controller';

@@ -1,7 +1,8 @@
 import { useContext, useState } from 'react';
 import { DocumentData, DocumentId, DocumentType, BLOBId } from 'dto';
 import { isAttachment } from 'utils/schema';
-import { getBlobUrl, getScaledImageUrl, isAudio, isImage } from 'utils';
+import { isAudio, isImage } from 'utils';
+import { getBlobUrl, getScaledImageUrl } from 'utils/network';
 import { Button } from 'components/Button';
 import { AudioPlayer } from 'components/AudioPlayer/AudioPlayer';
 import { SuspenseImage } from 'components/SuspenseImage';

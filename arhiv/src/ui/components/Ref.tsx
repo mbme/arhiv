@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { DocumentId, DocumentType } from 'dto';
-import { cx, getDocumentUrl } from 'utils';
+import { cx } from 'utils';
+import { getDocumentUrl } from 'utils/network';
 import { formatDocumentType, isErasedDocument } from 'utils/schema';
 import { useSuspenseQuery } from 'utils/suspense';
 import { AttachmentPreviewBlock, canPreview } from 'components/AttachmentPreview';

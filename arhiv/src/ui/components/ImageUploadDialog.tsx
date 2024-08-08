@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { DocumentId } from 'dto';
 import { Callback, formatBytes } from 'utils';
 import { useQuery } from 'utils/hooks';
-import { uploadFile } from 'utils/rpc';
+import { uploadFile } from 'utils/network';
 import { Dialog } from 'components/Dialog';
 import { Button } from 'components/Button';
 import { Link } from 'components/Link';

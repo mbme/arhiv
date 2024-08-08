@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { JSONObj } from 'utils';
+import { createArhiv } from 'utils/network';
 import { Form } from 'components/Form/Form';
 import { Button } from 'components/Button';
 
@@ -10,7 +11,7 @@ export function CreateArhiv() {
 
   const onSubmit = async (values: JSONObj) => {
     const { login, password, passwordRepeat } = values;
-    console.error('ON SUBMIT', values);
+
     if (password !== passwordRepeat) {
       passwordRepeatInputRef.current?.setCustomValidity(
         'Password confirmation is not the same as password',
@@ -22,24 +23,12 @@ export function CreateArhiv() {
     setInProgress(true);
 
     try {
-      const response = await fetch(`${window.BASE_PATH}/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ login, password }),
-      });
+      await createArhiv(login as string, password as string);
 
-      const message = await response.text();
-
-      if (response.ok) {
-        location.reload();
-      } else {
-        console.error(`Failed to create arhiv: ${response.status}\n${message}`);
-        setError(`Failed to create arhiv: ${message}`);
-      }
+      location.reload();
     } catch (err) {
       console.error('Failed to create arhiv:', err);
+      setError(`Failed to create arhiv: ${String(err)}`);
     } finally {
       setInProgress(false);
     }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';

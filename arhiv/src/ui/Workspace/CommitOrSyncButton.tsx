@@ -1,5 +1,5 @@
 import { usePageVisibilityTracker, useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { useBazaEvent } from 'baza-events';
 import { Button } from 'components/Button';
 

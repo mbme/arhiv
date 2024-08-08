@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { APIRequest } from 'dto';
 import { useForceRender } from 'utils/hooks';
-import { API_ENDPOINT, doRPC, RPCResponse } from 'utils/rpc';
+import { API_ENDPOINT, doRPC, RPCResponse } from 'utils/network';
 
 type Suspender<T> = { read: () => T };
 

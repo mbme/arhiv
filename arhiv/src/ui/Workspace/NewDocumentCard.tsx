@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { EMPTY_DATA } from 'dto';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { Card, useCardContext } from './controller';
 import { CardContainer } from './CardContainer';

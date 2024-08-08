@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { DocumentId, DocumentType } from 'dto';
 import { Callback } from 'utils';
 import { useQuery } from 'utils/hooks';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { Button } from 'components/Button';
 import { Dialog } from 'components/Dialog';
 import { QueryError } from 'components/QueryError';

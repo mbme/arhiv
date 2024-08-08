@@ -1,4 +1,4 @@
-import { APIRequest, APIResponse, DocumentId } from 'dto';
+import { APIRequest, APIResponse, BLOBId, DocumentId } from 'dto';
 import { formatBytes, Obj } from './index';
 
 export type RPCResponse<Request extends APIRequest> = Extract<
@@ -116,4 +116,33 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<Docu
   } finally {
     signal?.removeEventListener('abort', onAbort);
   }
+}
+
+export async function createArhiv(login: string, password: string) {
+  const response = await fetch(`${window.BASE_PATH}/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ login, password }),
+  });
+
+  const message = await response.text();
+
+  if (!response.ok) {
+    console.error(`Failed to create arhiv: ${response.status}\n${message}`);
+    throw new Error(`Failed to create arhiv: ${message}`);
+  }
+}
+
+export function getDocumentUrl(documentId: string): string {
+  return `${window.location.origin}${window.BASE_PATH}?id=${documentId}`;
+}
+
+export function getBlobUrl(blobId: BLOBId): string {
+  return `${window.BASE_PATH}/blobs/${blobId}`;
+}
+
+export function getScaledImageUrl(blobId: BLOBId, maxWidth: number, maxHeight: number): string {
+  return `${window.BASE_PATH}/blobs/images/${blobId}?max_w=${maxWidth}&max_h=${maxHeight}`;
 }

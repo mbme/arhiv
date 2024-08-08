@@ -13,7 +13,7 @@ import {
 import { Callback, cx, toSorted } from 'utils';
 import { useShallowMemo } from 'utils/hooks';
 import { useSuspenseQuery } from 'utils/suspense';
-import { RPC } from 'utils/rpc';
+import { RPC } from 'utils/network';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useCardContext } from 'Workspace/controller';
 import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';

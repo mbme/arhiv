@@ -50,6 +50,7 @@ type UpdateActionProps = Omit<Partial<CardVariant>, 'variant'>;
 export class WorkspaceController {
   readonly $cards = signal<Card[]>([]);
   readonly $showSearchDialog = signal<[boolean, string]>([false, '']);
+  readonly $showNewDocumentDialog = signal(false);
 
   constructor() {
     this.$cards.value = storage.getValue<Card[]>(STORAGE_KEY, []).map((card) => ({
@@ -227,6 +228,18 @@ export class WorkspaceController {
   hideSearchDialog() {
     startTransition(() => {
       this.$showSearchDialog.value = [false, ''];
+    });
+  }
+
+  showNewDocumentDialog() {
+    startTransition(() => {
+      this.$showNewDocumentDialog.value = true;
+    });
+  }
+
+  hideNewDocumentDialog() {
+    startTransition(() => {
+      this.$showNewDocumentDialog.value = false;
     });
   }
 

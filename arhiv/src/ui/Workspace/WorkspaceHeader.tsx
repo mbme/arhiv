@@ -13,16 +13,22 @@ import { CommitOrSyncButton } from './CommitOrSyncButton';
 export function WorkspaceHeader() {
   const app = useAppController();
 
-  const [showNewDocumentDialog, setShowNewDocumentDialog] = useState(false);
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
   const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
+  const showNewDocumentDialog = useSignal(app.workspace.$showNewDocumentDialog);
 
   useKeydown(document.body, (e) => {
     // Search with Ctrl-K
     if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
       e.preventDefault();
       app.workspace.showSearchDialog();
+    }
+
+    // Create new document with Ctrl-N
+    if (e.ctrlKey && e.code === 'KeyN' && !showNewDocumentDialog) {
+      e.preventDefault();
+      app.workspace.showNewDocumentDialog();
     }
   });
 
@@ -46,23 +52,25 @@ export function WorkspaceHeader() {
           variant="text"
           leadingIcon="add-document"
           onClick={() => {
-            setShowNewDocumentDialog(true);
+            app.workspace.showNewDocumentDialog();
           }}
         >
-          <span className="hidden md:inline">New...</span>
+          <span className="hidden md:inline" title="Ctrl-N">
+            New...
+          </span>
         </Button>
         {showNewDocumentDialog && (
           <NewDocumentDialog
             onNewDocument={(documentType) => {
               app.workspace.newDocument(documentType);
-              setShowNewDocumentDialog(false);
+              app.workspace.hideNewDocumentDialog();
             }}
             onAttach={() => {
               setShowFilePickerDialog(true);
-              setShowNewDocumentDialog(false);
+              app.workspace.hideNewDocumentDialog();
             }}
             onCancel={() => {
-              setShowNewDocumentDialog(false);
+              app.workspace.hideNewDocumentDialog();
             }}
           />
         )}

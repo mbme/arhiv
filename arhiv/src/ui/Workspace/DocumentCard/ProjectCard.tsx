@@ -196,6 +196,7 @@ export function ProjectCard({
   return (
     <CardContainer
       leftToolbar={<DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />}
+      title={document.title}
       rightToolbar={
         <>
           <Button leadingIcon="add-document" variant="simple" size="sm" onClick={onAddTask}>

@@ -18,6 +18,10 @@
 
     & .card-toolbar-left {
       @apply flex items-center gap-4 justify-start grow;
+
+      & .card-toolbar-title {
+        @apply cursor-default text-gray-400 dark:text-gray-600 text-sm tracking-wide truncate max-w-72;
+      }
     }
 
     & .card-toolbar-right {

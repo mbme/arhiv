@@ -275,6 +275,28 @@ export function useScrollRestoration(el: HTMLElement | null, key: string) {
   }, [el, key]);
 }
 
+export function useScrollHandler(el: HTMLElement | null, handler: (x: number, y: number) => void) {
+  const handlerRef = useLatestRef(handler);
+
+  useEffect(() => {
+    if (!el) {
+      return;
+    }
+
+    const onScroll = () => {
+      handlerRef.current(el.scrollLeft, el.scrollTop);
+    };
+
+    onScroll();
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [el, handlerRef]);
+}
+
 export function useForceRender(): Callback {
   const [, setCounter] = useState(0);
 

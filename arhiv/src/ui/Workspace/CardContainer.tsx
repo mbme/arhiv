@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { JSXChildren } from 'utils/jsx';
-import { useScrollRestoration } from 'utils/hooks';
+import { useScrollHandler, useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
@@ -11,6 +11,7 @@ type CardContainerProps = {
   children: JSXChildren;
   leftToolbar?: JSXChildren;
   rightToolbar?: JSXChildren;
+  title?: string;
   skipBack?: boolean;
   skipClose?: boolean;
   className?: string;
@@ -19,6 +20,7 @@ export function CardContainer({
   children,
   leftToolbar,
   rightToolbar,
+  title,
   skipBack,
   skipClose,
   className,
@@ -49,6 +51,11 @@ export function CardContainer({
     el.scrollIntoView({ inline: 'center' });
   }, [el, restored, openTime]);
 
+  const [showTitle, setShowTitle] = useState(false);
+  useScrollHandler(el, (_scrollX, scrollY) => {
+    setShowTitle(scrollY > 50);
+  });
+
   const fallback = (
     <div className="card-content flex items-center justify-center grow">
       <Icon variant="spinner" className="h-10 w-10 opacity-50" />
@@ -58,7 +65,14 @@ export function CardContainer({
   return (
     <div className="card-container flex flex-col">
       <div className="card-toolbar">
-        <div className="card-toolbar-left">{leftToolbar}</div>
+        <div className="card-toolbar-left">
+          {leftToolbar}
+          {showTitle && (
+            <span className="card-toolbar-title" title={title}>
+              {title}
+            </span>
+          )}
+        </div>
         <div className="card-toolbar-right">
           {hasStackedCards && !skipBack && (
             <IconButton

@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react';
+import { startTransition } from 'react';
 import { NOTE_DOCUMENT_TYPE } from 'dto';
 import { useKeydown, useSignal } from 'utils/hooks';
 import { useAppController } from 'controller';
@@ -6,14 +6,11 @@ import { SuspenseCacheProvider } from 'components/SuspenseCacheProvider';
 import { Button, IconButton } from 'components/Button';
 import { DropdownMenu } from 'components/DropdownMenu';
 import { DocumentPicker } from 'components/DocumentPicker';
-import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { CommitOrSyncButton } from './CommitOrSyncButton';
 
 export function WorkspaceHeader() {
   const app = useAppController();
-
-  const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
 
   const [showSearchDialog, initialSearchQuery] = useSignal(app.workspace.$showSearchDialog);
   const showNewDocumentDialog = useSignal(app.workspace.$showNewDocumentDialog);
@@ -65,8 +62,8 @@ export function WorkspaceHeader() {
               app.workspace.newDocument(documentType);
               app.workspace.hideNewDocumentDialog();
             }}
-            onAttach={() => {
-              setShowFilePickerDialog(true);
+            onAttach={(attachmentId) => {
+              app.workspace.openDocument(attachmentId);
               app.workspace.hideNewDocumentDialog();
             }}
             onCancel={() => {
@@ -90,18 +87,6 @@ export function WorkspaceHeader() {
         </Button>
 
         <CommitOrSyncButton />
-
-        {showFilePickerDialog && (
-          <FilePickerDialog
-            onAttachmentCreated={(documentId) => {
-              app.workspace.openDocument(documentId);
-              setShowFilePickerDialog(false);
-            }}
-            onCancel={() => {
-              setShowFilePickerDialog(false);
-            }}
-          />
-        )}
 
         {showSearchDialog && (
           <DocumentPicker

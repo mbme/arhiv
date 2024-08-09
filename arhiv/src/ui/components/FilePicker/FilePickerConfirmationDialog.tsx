@@ -50,7 +50,7 @@ export function FilePickerConfirmationDialog({
   );
 
   return (
-    <Dialog onHide={onHide} title="Add file" buttons={buttons}>
+    <Dialog onHide={onHide} title="Attach file" buttons={buttons}>
       <div className="mb-6">
         Do you really want to create attachment from the file <code>{filePath}</code> of size{' '}
         <b>{formatBytes(size)}</b>?

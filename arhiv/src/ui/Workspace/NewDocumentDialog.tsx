@@ -7,6 +7,7 @@ import { Dialog } from 'components/Dialog';
 import { Button } from 'components/Button';
 import { SearchInput } from 'components/SearchInput';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
+import { FileUploadDialog } from 'components/FileUploadDialog';
 
 type Props = {
   onNewDocument: (documentType: DocumentType) => void;
@@ -18,6 +19,7 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
   const [query, setQuery] = useState('');
 
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
+  const [showFileUploadDialog, setShowFileUploadDialog] = useState(false);
 
   const { selectionManager, setRootEl } = useSelectionManager([query]);
 
@@ -36,6 +38,20 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
   if (showFilePickerDialog) {
     return (
       <FilePickerDialog
+        onAttachmentCreated={(documentId) => {
+          onAttach(documentId);
+          setShowFilePickerDialog(false);
+        }}
+        onCancel={() => {
+          onCancel();
+        }}
+      />
+    );
+  }
+
+  if (showFileUploadDialog) {
+    return (
+      <FileUploadDialog
         onAttachmentCreated={(documentId) => {
           onAttach(documentId);
           setShowFilePickerDialog(false);
@@ -70,6 +86,18 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
           className={searchResultClass}
         >
           &nbsp; Attach file
+        </Button>
+
+        <Button
+          variant="simple"
+          leadingIcon="upload"
+          onClick={() => {
+            setShowFileUploadDialog(true);
+          }}
+          onHover={activateOnHover}
+          className={searchResultClass}
+        >
+          &nbsp; Upload file
         </Button>
 
         {documentTypes.length > 0 && <h1 className={headingClass}>Documents</h1>}

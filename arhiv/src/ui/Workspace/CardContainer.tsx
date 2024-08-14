@@ -1,10 +1,12 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
+import { DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollHandler, useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
+import { DocumentIcon } from 'components/DocumentIcon';
 import { useCardContext } from './controller';
 
 type CardContainerProps = {
@@ -12,6 +14,7 @@ type CardContainerProps = {
   leftToolbar?: JSXChildren;
   rightToolbar?: JSXChildren;
   title?: string;
+  documentType?: DocumentType;
   skipBack?: boolean;
   skipClose?: boolean;
   className?: string;
@@ -21,6 +24,7 @@ export function CardContainer({
   leftToolbar,
   rightToolbar,
   title,
+  documentType,
   skipBack,
   skipClose,
   className,
@@ -53,7 +57,7 @@ export function CardContainer({
 
   const [showTitle, setShowTitle] = useState(false);
   useScrollHandler(el, (_scrollX, scrollY) => {
-    setShowTitle(scrollY > 50);
+    setShowTitle(Boolean(title) && scrollY > 50);
   });
 
   const fallback = (
@@ -68,7 +72,10 @@ export function CardContainer({
         <div className="card-toolbar-left">
           {leftToolbar}
           {showTitle && (
-            <span className="card-toolbar-title" title={title}>
+            <span className="card-toolbar-title" title={`${documentType?.toUpperCase()} ${title}`}>
+              {documentType && (
+                <DocumentIcon className="size-4 mr-1 mb-1" documentType={documentType} />
+              )}
               {title}
             </span>
           )}

@@ -58,6 +58,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
           ]}
         />
       }
+      documentType={document.documentType}
       title={document.title}
       rightToolbar={
         isDirty && (

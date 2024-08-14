@@ -1,13 +1,52 @@
 import { useState } from 'react';
-import { fuzzySearch } from 'utils';
+import { Callback, fuzzySearch } from 'utils';
 import { getDocumentTypes, isErasedDocument } from 'utils/schema';
 import { useSelectionManager } from 'utils/selection-manager';
 import { DocumentId, DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
 import { Button } from 'components/Button';
+import { IconVariant } from 'components/Icon';
 import { SearchInput } from 'components/SearchInput';
 import { FilePickerDialog } from 'components/FilePicker/FilePickerDialog';
 import { FileUploadDialog } from 'components/FileUploadDialog';
+
+type Item = {
+  name: string;
+  leadingIcon?: IconVariant;
+  onClick: Callback;
+};
+
+type ResultsSectionProps = {
+  heading: string;
+  filter: string;
+  items: Item[];
+};
+function ResultsSection({ heading, filter, items }: ResultsSectionProps) {
+  const visibleItems = items.filter((item) => fuzzySearch(filter, item.name));
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <h1 className="section-heading ml-4 mt-8 first:mt-0">{heading}</h1>
+
+      {visibleItems.map((item) => (
+        <Button
+          key={item.name}
+          variant="simple"
+          leadingIcon={item.leadingIcon}
+          onClick={item.onClick}
+          className="justify-start capitalize sm-selectable"
+        >
+          {item.leadingIcon && <>&nbsp;</>}
+          {item.name}
+        </Button>
+      ))}
+    </>
+  );
+}
 
 type Props = {
   onNewDocument: (documentType: DocumentType) => void;
@@ -16,24 +55,17 @@ type Props = {
 };
 
 export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) {
-  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('');
 
   const [showFilePickerDialog, setShowFilePickerDialog] = useState(false);
   const [showFileUploadDialog, setShowFileUploadDialog] = useState(false);
 
-  const { selectionManager, setRootEl } = useSelectionManager([query]);
+  const { setRootEl } = useSelectionManager([filter]);
 
-  const matchesQuery = (item: string) => fuzzySearch(query, item);
-
-  const documentTypes = getDocumentTypes(false).filter(matchesQuery);
-  const collectionTypes = getDocumentTypes(true).filter(matchesQuery);
-
-  const searchResultClass = 'justify-start capitalize sm-selectable';
-  const headingClass = 'section-heading ml-4 mt-8 first:mt-0';
-
-  const activateOnHover = (el: HTMLElement) => {
-    selectionManager.activateElement(el);
-  };
+  const documentTypes = getDocumentTypes(false).filter(
+    (documentType) => !isErasedDocument(documentType),
+  );
+  const collectionTypes = getDocumentTypes(true);
 
   if (showFilePickerDialog) {
     return (
@@ -70,71 +102,52 @@ export function NewDocumentDialog({ onNewDocument, onAttach, onCancel }: Props) 
         autofocus
         initialValue=""
         placeholder="Filter actions"
-        onSearch={setQuery}
+        onSearch={setFilter}
       />
 
       <div className="flex flex-col gap-1 min-h-[20vh] overflow-y-auto">
-        <h1 className={headingClass}>Actions</h1>
+        <ResultsSection
+          heading="Actions"
+          filter={filter}
+          items={[
+            {
+              name: 'Attach file',
+              leadingIcon: 'paperclip',
+              onClick: () => {
+                setShowFilePickerDialog(true);
+              },
+            },
+            {
+              name: 'Upload file',
+              leadingIcon: 'upload',
+              onClick: () => {
+                setShowFileUploadDialog(true);
+              },
+            },
+          ]}
+        />
 
-        <Button
-          variant="simple"
-          leadingIcon="paperclip"
-          onClick={() => {
-            setShowFilePickerDialog(true);
-          }}
-          onHover={activateOnHover}
-          className={searchResultClass}
-        >
-          &nbsp; Attach file
-        </Button>
-
-        <Button
-          variant="simple"
-          leadingIcon="upload"
-          onClick={() => {
-            setShowFileUploadDialog(true);
-          }}
-          onHover={activateOnHover}
-          className={searchResultClass}
-        >
-          &nbsp; Upload file
-        </Button>
-
-        {documentTypes.length > 0 && <h1 className={headingClass}>Documents</h1>}
-        {documentTypes.map((documentType) => {
-          if (isErasedDocument(documentType)) {
-            return null;
-          }
-
-          return (
-            <Button
-              key={documentType}
-              variant="simple"
-              onClick={() => {
-                onNewDocument(documentType);
-              }}
-              onHover={activateOnHover}
-              className={searchResultClass}
-            >
-              {documentType}
-            </Button>
-          );
-        })}
-
-        {collectionTypes.length > 0 && <h1 className={headingClass}>Collections</h1>}
-        {collectionTypes.map((documentType) => (
-          <Button
-            key={documentType}
-            variant="simple"
-            onClick={() => {
+        <ResultsSection
+          heading="Documents"
+          filter={filter}
+          items={documentTypes.map((documentType) => ({
+            name: documentType,
+            onClick() {
               onNewDocument(documentType);
-            }}
-            onHover={activateOnHover}
-            className={searchResultClass}
-          >
-            {documentType}
-          </Button>
-        ))}
+            },
+          }))}
+        />
+
+        <ResultsSection
+          heading="Collections"
+          filter={filter}
+          items={collectionTypes.map((documentType) => ({
+            name: documentType,
+            onClick() {
+              onNewDocument(documentType);
+            },
+          }))}
+        />
       </div>
     </Dialog>
   );

@@ -1,24 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
+import { effect, signal } from '@preact/signals-core';
 import { Inputs, useKeydown } from 'utils/hooks';
 
+const SELECTABLE_ELEMENT_SELECTOR = '.sm-selectable';
+
 export class SelectionManager {
-  constructor(private rootEl: HTMLElement | null = null) {}
+  private $rootEl = signal<HTMLElement | null>(null);
+
+  constructor() {
+    // activate selectable element on hover
+    effect(() => {
+      const rootEl = this.$rootEl.value;
+      if (!rootEl) {
+        return;
+      }
+
+      const onMouseOver = (e: MouseEvent) => {
+        if (e.target instanceof HTMLElement && e.target.matches(SELECTABLE_ELEMENT_SELECTOR)) {
+          this.activateElement(e.target);
+        }
+      };
+
+      rootEl.addEventListener('mouseover', onMouseOver, { passive: true });
+
+      return () => {
+        rootEl.removeEventListener('mouseover', onMouseOver);
+      };
+    });
+  }
 
   setRootEl(rootEl: HTMLElement | null): void {
-    this.rootEl = rootEl;
+    this.$rootEl.value = rootEl;
   }
 
   hasRootEl(): boolean {
-    return !!this.rootEl;
+    return !!this.$rootEl.value;
   }
 
   private getItems() {
-    const root = this.rootEl;
+    const root = this.$rootEl.value;
     if (!root) {
       throw new Error('root element is missing');
     }
 
-    return root.querySelectorAll<HTMLElement>('.sm-selectable');
+    return root.querySelectorAll<HTMLElement>(SELECTABLE_ELEMENT_SELECTOR);
   }
 
   activateItem = (index: number) => {

@@ -49,6 +49,10 @@
     @apply border-gray-200 dark:border-zinc-700;
   }
 
+  .var-form-error-border {
+    @apply border border-red-500;
+  }
+
   .var-text-heading-color {
     @apply text-slate-900 dark:text-slate-100;
   }
@@ -56,6 +60,10 @@
   .buttons {
     @apply flex justify-end gap-8;
     @apply p-2 sm:p-4 md:p-6;
+  }
+
+  .custom-focus {
+    @apply outline-none ring-2 ring-blue-600 ring-opacity-75;
   }
 
   .custom-scrollbar {
@@ -100,10 +108,6 @@
 
   .section-heading {
     @apply uppercase font-mono text-gray-400 text-xs tracking-widest;
-  }
-
-  .form-field-heading {
-    @apply font-semibold text-sky-800 uppercase text-sm;
   }
 
   .icon {
@@ -161,28 +165,8 @@
     @apply border-solid var-form-border-color;
   }
 
-  /* override @tailwind forms plugin border */
-  [type='text'],
-  input:where(:not([type])),
-  [type='email'],
-  [type='url'],
-  [type='password'],
-  [type='number'],
-  [type='date'],
-  [type='datetime-local'],
-  [type='month'],
-  [type='search'],
-  [type='tel'],
-  [type='time'],
-  [type='week'],
-  [multiple],
-  textarea,
-  select {
-    @apply border-2 border-solid var-form-border-color;
-  }
-  input::placeholder,
-  textarea::placeholder {
-    @apply var-placeholder-color;
+  :focus-visible {
+    @apply custom-focus;
   }
 
   /* make taps faster - browser doesn't wait 300ms for double-tap to zoom */

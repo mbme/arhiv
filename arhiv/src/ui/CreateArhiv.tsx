@@ -50,7 +50,6 @@ export function CreateArhiv() {
           <input
             type="text"
             name="login"
-            className="field"
             required
             minLength={window.MIN_LOGIN_LENGTH}
             autoFocus
@@ -63,7 +62,6 @@ export function CreateArhiv() {
           <input
             type="password"
             name="password"
-            className="field"
             required
             minLength={window.MIN_PASSWORD_LENGTH}
             autoComplete="off"
@@ -76,7 +74,6 @@ export function CreateArhiv() {
             type="password"
             name="passwordRepeat"
             ref={passwordRepeatInputRef}
-            className="field"
             required
             minLength={window.MIN_PASSWORD_LENGTH}
             autoComplete="off"

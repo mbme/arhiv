@@ -1,68 +1,68 @@
+@layer base {
+  input,
+  textarea,
+  select,
+  v-form-field {
+    min-width: 65%;
+
+    @apply border border-2 border-solid rounded-none var-form-border-color;
+    @apply block var-bg-color text-gray-900 dark:text-white text-sm p-2.5;
+
+    &:user-invalid {
+      @apply var-form-error-border;
+    }
+
+    &:focus {
+      @apply custom-focus;
+    }
+
+    &[disabled] {
+      @apply bg-gray-100 dark:bg-gray-600;
+    }
+
+    &[readonly] {
+      @apply bg-gray-100 dark:bg-gray-600;
+
+      &:is(select) option {
+        display: none;
+      }
+    }
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply var-placeholder-color;
+  }
+
+  v-form-field {
+    min-width: auto;
+  }
+
+  select,
+  input[type='number'] {
+    min-width: 10rem;
+  }
+
+  input[type='checkbox'] {
+    min-width: auto;
+    border-radius: 0;
+  }
+
+  textarea {
+    @apply p-2;
+
+    resize: none;
+    min-height: 19rem;
+    overflow-y: hidden;
+  }
+}
+
 @layer components {
-  .form {
-    & .field {
-      display: block;
-      min-width: 65%;
+  .form-field-heading {
+    @apply font-semibold text-sky-800 uppercase text-sm;
 
-      @apply var-bg-color;
-
-      &:user-invalid {
-        @apply border border-red-500;
-      }
-
-      &:is(.editor-container) {
-        width: 100%;
-      }
-
-      &:is(.ref-input) {
-        @apply inline-block break-all border-none;
-      }
-
-      &:is(.ref-input.is-multi) {
-        width: 100%;
-      }
-
-      &:is(.ref-input.is-empty) {
-        @apply inline-flex justify-around;
-      }
-
-      &:is(select, input[type='number']) {
-        min-width: 10rem;
-      }
-
-      &:is(input[type='checkbox']) {
-        min-width: auto;
-      }
-
-      &[disabled] {
-        @apply bg-gray-100 dark:bg-gray-600;
-      }
-
-      &[readonly] {
-        @apply bg-gray-100 dark:bg-gray-600;
-
-        &:is(select) option {
-          display: none;
-        }
-      }
-    }
-
-    & .has-errors {
-      & .field {
-        @apply border-red-500;
-      }
-
-      & h5 {
-        @apply text-red-500;
-      }
-    }
-
-    & textarea {
-      @apply p-2;
-
-      resize: none;
-      min-height: 19rem;
-      overflow-y: hidden;
+    &.has-errors {
+      @apply text-red-500;
     }
   }
 }

@@ -9,6 +9,7 @@ import { Ref, RefInput } from 'components/Form/RefInput';
 type ValueEditorProps = {
   id: string;
   name: string;
+  className?: string;
   fieldType: FieldType;
   initialValue?: JSONValue;
   required: boolean;
@@ -18,6 +19,7 @@ type ValueEditorProps = {
 function ValueEditor({
   id,
   name,
+  className,
   fieldType,
   initialValue,
   required,
@@ -28,8 +30,8 @@ function ValueEditor({
     return (
       <Editor
         id={id}
-        className="field"
         name={name}
+        className={className}
         defaultValue={initialValue as string | undefined}
         readonly={readonly}
         required={required}
@@ -42,8 +44,8 @@ function ValueEditor({
     return (
       <Select
         id={id}
-        className="field"
         name={name}
+        className={className}
         initialValue={(initialValue as string | undefined) ?? ''}
         options={['', ...fieldType.Enum]}
         readonly={readonly}
@@ -57,8 +59,8 @@ function ValueEditor({
     return (
       <Checkbox
         id={id}
-        className="field"
         name={name}
+        className={className}
         initialValue={initialValue === 'true'}
         readonly={readonly}
         required={required}
@@ -71,9 +73,9 @@ function ValueEditor({
     return (
       <RefInput
         id={id}
-        className="field"
         documentTypes={fieldType.Ref}
         name={name}
+        className={className}
         defaultValue={initialValue as Ref | undefined}
         readonly={readonly}
         required={required}
@@ -86,9 +88,9 @@ function ValueEditor({
     return (
       <RefInput
         id={id}
-        className="field"
         documentTypes={fieldType.RefList}
         name={name}
+        className={className}
         defaultValue={initialValue as Ref[] | undefined}
         readonly={readonly}
         required={required}
@@ -103,10 +105,10 @@ function ValueEditor({
       <input
         id={id}
         type="number"
-        className="field"
         min={0}
         step={1}
         name={name}
+        className={className}
         defaultValue={(initialValue as number | undefined)?.toString()}
         readOnly={readonly}
         required={required}
@@ -118,9 +120,9 @@ function ValueEditor({
   return (
     <input
       id={id}
-      className="field"
       type="text"
       name={name}
+      className={className}
       defaultValue={initialValue as string}
       readOnly={readonly}
       required={required}
@@ -152,14 +154,16 @@ export function DocumentField({
     }
   }, [autofocus]);
 
+  const hasErrors = errors.length > 0;
+
   return (
-    <div
-      className={cx('flex flex-wrap justify-between items-center gap-y-3 py-3', {
-        'has-errors': errors.length > 0,
-      })}
-    >
+    <div className="flex flex-wrap justify-between items-center gap-y-3 py-3">
       <label ref={labelRef} htmlFor={id}>
-        <h5 className="form-field-heading mr-8 relative">
+        <h5
+          className={cx('form-field-heading mr-8 relative', {
+            'has-errors': hasErrors,
+          })}
+        >
           {field.name}
           {field.mandatory && (
             <span className="text-blue-500 text-xl absolute top-[-5px] pl-1">*</span>
@@ -170,6 +174,9 @@ export function DocumentField({
       <ValueEditor
         id={id}
         name={field.name}
+        className={cx({
+          'var-form-error-border': hasErrors,
+        })}
         fieldType={field.field_type}
         initialValue={initialValue}
         readonly={field.readonly && !ignoreReadonly}

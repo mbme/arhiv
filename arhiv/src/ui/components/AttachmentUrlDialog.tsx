@@ -19,7 +19,7 @@ export function AttachmentUrlDialog({ onConfirm, onCancel }: Props) {
             type="url"
             name="url"
             placeholder="Enter URL"
-            className="field grow"
+            className="grow"
             autoComplete="off"
             autoFocus
             data-autofocus

@@ -97,9 +97,9 @@ export function RefInput({
     <FormField
       innerRef={fieldRef}
       id={id}
-      className={cx('ref-input', className, {
-        'is-multi': multiple,
-        'is-empty': refs.length === 0,
+      className={cx('inline-block break-all border-none', className, {
+        'w-full': multiple,
+        'inline-flex justify-around': refs.length === 0,
       })}
       name={name}
       defaultValue={defaultValueRaw}

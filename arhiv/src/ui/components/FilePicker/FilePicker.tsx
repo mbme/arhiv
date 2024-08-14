@@ -27,7 +27,6 @@ export function FilePicker({ onFileSelected }: Props) {
         <FilePickerHead dir={result?.dir ?? dir} entries={result?.entries} />
 
         <form
-          className="form"
           onSubmit={(e) => {
             e.preventDefault();
           }}
@@ -36,7 +35,6 @@ export function FilePicker({ onFileSelected }: Props) {
             <input
               name="show_hidden"
               type="checkbox"
-              className="field"
               checked={showHidden}
               onChange={() => {
                 setShowHidden(!showHidden);

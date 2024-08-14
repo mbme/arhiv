@@ -34,7 +34,7 @@ export function SearchInput({
 
   return (
     <form
-      className={cx('form relative', className)}
+      className={cx('relative', className)}
       onSubmit={(e) => {
         e.preventDefault();
       }}
@@ -47,7 +47,7 @@ export function SearchInput({
       <input
         type="search"
         name="pattern"
-        className="field w-full pl-10"
+        className="w-full pl-10"
         autoFocus={autofocus || undefined}
         defaultValue={initialValue}
         onChange={(e) => {

@@ -1,6 +1,10 @@
 .editor-container {
-  display: block;
+  display: contents;
   position: relative;
+
+  & > v-form-field {
+    padding: 0;
+  }
 
   &[readonly] .cm-editor .cm-cursorLayer {
     display: none;
@@ -11,14 +15,12 @@
   }
 
   .cm-editor {
-    @apply border-2;
-
     & .cm-panels {
       z-index: 1;
     }
 
     &.cm-focused {
-      @apply outline-none ring-2 ring-blue-600 ring-opacity-75 border-opacity-0 !important;
+      @apply custom-focus border-opacity-0;
     }
 
     & .cm-scroller {

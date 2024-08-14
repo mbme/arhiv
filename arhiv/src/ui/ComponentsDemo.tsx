@@ -382,7 +382,6 @@ function FormControlsDemo() {
       <label>
         Editor
         <Editor
-          className="field"
           name="editor"
           required={required}
           disabled={disabled}
@@ -394,7 +393,7 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Text input
         <input
-          className="field flex-1"
+          className="flex-1"
           name="text"
           type="text"
           placeholder="Type something"
@@ -407,7 +406,6 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Number input
         <input
-          className="field"
           name="number"
           type="number"
           placeholder="numbers"
@@ -423,7 +421,6 @@ function FormControlsDemo() {
       <label className="flex items-center gap-2">
         Select
         <Select
-          className="field"
           name="select"
           required={required}
           disabled={disabled}
@@ -433,13 +430,7 @@ function FormControlsDemo() {
       </label>
 
       <label className="flex items-center gap-2">
-        <Checkbox
-          className="field"
-          name="checkbox"
-          required={required}
-          disabled={disabled}
-          readonly={readonly}
-        />
+        <Checkbox name="checkbox" required={required} disabled={disabled} readonly={readonly} />
         Checkbox
       </label>
 

@@ -57,7 +57,6 @@ export function FilePickerConfirmationDialog({
       </div>
 
       <form
-        className="form"
         onSubmit={(e) => {
           e.preventDefault();
         }}
@@ -66,7 +65,6 @@ export function FilePickerConfirmationDialog({
           <input
             name="move_file"
             type="checkbox"
-            className="field"
             checked={moveFile}
             onChange={() => {
               setMoveFile(!moveFile);

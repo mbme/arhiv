@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { JSONObj, formDataToObject, cx, JSONValue } from 'utils';
+import { JSONObj, formDataToObject, JSONValue } from 'utils';
 import { JSXChildren, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
@@ -122,7 +122,7 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
   return (
     <form
       ref={mergeRefs(ref, formRef)}
-      className={cx('form', className)}
+      className={className}
       onSubmit={(e) => {
         e.preventDefault();
         e.stopPropagation();

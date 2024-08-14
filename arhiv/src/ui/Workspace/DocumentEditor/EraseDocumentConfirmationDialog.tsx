@@ -61,7 +61,6 @@ export function EraseDocumentConfirmationDialog({
   return (
     <Dialog onHide={hideModal} alarming title={`Erase ${documentType}`} buttons={buttons}>
       <form
-        className="form"
         ref={formRef}
         onSubmit={(e) => {
           e.preventDefault();
@@ -75,7 +74,7 @@ export function EraseDocumentConfirmationDialog({
             type="text"
             autoComplete="off"
             name="confirmation_text"
-            className="field mt-2"
+            className="mt-2"
             required
             pattern={confirmationText}
             defaultValue=""

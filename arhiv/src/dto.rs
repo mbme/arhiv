@@ -60,7 +60,8 @@ pub enum APIRequest {
     #[serde(rename_all = "camelCase")]
     UnlockDocument {
         id: Id,
-        lock_key: DocumentLockKey,
+        lock_key: Option<DocumentLockKey>,
+        force_unlock: Option<bool>,
     },
     #[serde(rename_all = "camelCase")]
     ReorderCollectionRefs {

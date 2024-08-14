@@ -3,10 +3,7 @@ import { DocumentId, DocumentLockKey } from 'dto';
 import { useSessionState } from 'utils/hooks';
 import { RPC } from 'utils/network';
 
-export function useLockDocument(
-  id: DocumentId,
-  lock: boolean,
-): { lockKey: DocumentLockKey | null; error: unknown } {
+export function useLockDocument(id: DocumentId, lock: boolean) {
   const [lockKey, setLockKey] = useSessionState<DocumentLockKey | null>(
     `document-lock-key-${id}`,
     null,
@@ -14,7 +11,7 @@ export function useLockDocument(
   const [error, setError] = useState<unknown>();
 
   useEffect(() => {
-    if (!lock) {
+    if (!lock || error) {
       return;
     }
 
@@ -55,10 +52,13 @@ export function useLockDocument(
         },
       );
     };
-  }, [id, lock, lockKey, setLockKey]);
+  }, [id, lock, error, lockKey, setLockKey]);
 
   return {
     lockKey,
-    error,
+    lockError: error,
+    resetLockError: () => {
+      setError(undefined);
+    },
   };
 }

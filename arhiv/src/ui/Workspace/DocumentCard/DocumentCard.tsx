@@ -7,12 +7,12 @@ import { DropdownMenu, DropdownOptions } from 'components/DropdownMenu';
 import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { ProgressLocker } from 'components/ProgressLocker';
-import { QueryError } from 'components/QueryError';
 import { useCardContext, useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
+import { LockError } from './LockError';
 
 type Props = {
   document: DocumentDTO;
@@ -30,7 +30,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
   useUnsavedChangesWarning(isDirty);
   useCardLock(isDirty);
 
-  const { lockKey, error: lockError } = useLockDocument(document.id, isDirty);
+  const { lockKey, lockError, resetLockError } = useLockDocument(document.id, isDirty);
 
   useEffect(() => {
     if (form && lockError) {
@@ -100,9 +100,14 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
         backrefs={document.backrefs}
       />
 
-      {lockError ? (
-        <QueryError error={`Failed to lock document: ${String(lockError)}`} />
-      ) : undefined}
+      {Boolean(lockError) && (
+        <LockError
+          error={lockError}
+          documentId={document.id}
+          documentType={document.documentType}
+          onForceUnlock={resetLockError}
+        />
+      )}
 
       <DocumentEditor
         key={document.updatedAt} // force form fields to use fresh values from the document after save

@@ -65,7 +65,8 @@ export type APIRequest =
   | {
       typeName: 'UnlockDocument';
       id: DocumentId;
-      lockKey: DocumentLockKey;
+      lockKey?: DocumentLockKey;
+      forceUnlock?: boolean;
     }
   | {
       typeName: 'ReorderCollectionRefs';

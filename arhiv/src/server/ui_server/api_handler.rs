@@ -297,9 +297,20 @@ pub async fn handle_api_request(arhiv: &Arhiv, request: APIRequest) -> Result<AP
                 lock_key: lock.get_key().clone(),
             }
         }
-        APIRequest::UnlockDocument { id, lock_key } => {
+        APIRequest::UnlockDocument {
+            id,
+            lock_key,
+            force_unlock,
+        } => {
             let mut tx = arhiv.baza.get_tx()?;
-            tx.unlock_document(&id, &lock_key)?;
+
+            if force_unlock.unwrap_or_default() {
+                tx.unlock_document_without_key(&id)?;
+            } else if let Some(lock_key) = lock_key {
+                tx.unlock_document(&id, &lock_key)?;
+            } else {
+                bail!("Can't unlock document {id} without a key");
+            }
             tx.commit()?;
 
             APIResponse::UnlockDocument {}

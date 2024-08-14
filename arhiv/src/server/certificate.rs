@@ -26,7 +26,7 @@ pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertific
         let mut file = must_create_file(&cert_path)
             .context(anyhow!("Failed to create certificate file {cert_path}"))?;
         file.write_all(data.as_ref())?;
-        file.flush()?;
+        file.sync_all()?;
 
         log::info!("Wrote arhiv certificate into {cert_path}");
 

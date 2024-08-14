@@ -219,6 +219,8 @@ pub fn move_file(src: impl AsRef<str>, dest: impl AsRef<str>) -> Result<()> {
     // if error is due to src and dest being on different file systems
     // then copy src into dest, and remove src
 
+    // FIXME check number of written bytes
+    // FIXME add sync_all() where apropriate
     fs::copy(src, dest).context("failed to copy file data")?;
 
     if let Err(err) = fs::remove_file(src) {

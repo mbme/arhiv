@@ -106,7 +106,7 @@ async fn test_reschedule_auto_commit_on_staged_document() -> Result<()> {
 
         // modify updated_at to take elapsed tokio time into account
         document.updated_at += Instant::now().duration_since(start_instant);
-        tx.put_document(&document)?;
+        tx.put_document(&document, None)?;
 
         tx.commit()?;
     }

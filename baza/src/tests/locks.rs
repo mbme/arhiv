@@ -56,6 +56,9 @@ fn test_lock_stage_document() -> Result<()> {
             .is_err());
     }
 
+    // if can erase locked document
+    assert!(tx.erase_document(&id).is_err());
+
     // if can modify locked document with a valid key
     {
         let mut document = tx.get_document(&id)?.unwrap();

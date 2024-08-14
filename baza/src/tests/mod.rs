@@ -79,7 +79,7 @@ impl Baza {
         let tx = self.get_tx()?;
 
         let document = new_document_snapshot(id, rev);
-        tx.put_document(&document)?;
+        tx.put_document(&document, None)?;
         tx.commit()?;
 
         Ok(document)

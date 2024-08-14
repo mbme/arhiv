@@ -556,7 +556,35 @@ impl BazaConnection {
             .map(|value| value.unwrap_or(false))
     }
 
-    pub(crate) fn put_document(&self, document: &Document) -> Result<()> {
+    pub(crate) fn put_document(
+        &self,
+        document: &Document,
+        lock_key: Option<DocumentLockKey>,
+    ) -> Result<()> {
+        let lock = self.get_document_lock(&document.id)?;
+
+        match (lock, lock_key) {
+            (Some(lock), Some(lock_key)) => {
+                if lock.is_valid_key(&lock_key) {
+                    log::debug!("Document is locked, a valid lock key has been provided");
+                } else {
+                    log::error!("Document is locked, but an invalid lock key has been provided");
+                    bail!("Invalid lock key");
+                }
+            }
+            (Some(_), None) => {
+                log::error!("Document is locked, but no lock key has been provided");
+                bail!("Missing lock key");
+            }
+            (None, Some(_)) => {
+                log::error!("Document isn't locked, but lock key has been provided");
+                bail!("Unexpected lock key");
+            }
+            (None, None) => {
+                log::trace!("Document isn't locked, no lock key provided");
+            }
+        };
+
         self.put_or_replace_document(document, false)
     }
 
@@ -673,30 +701,6 @@ impl BazaConnection {
     ) -> Result<()> {
         log::debug!("Staging document {}", &document.id);
 
-        let lock = self.get_document_lock(&document.id)?;
-
-        match (lock, lock_key) {
-            (Some(lock), Some(lock_key)) => {
-                if lock.is_valid_key(&lock_key) {
-                    log::debug!("Document is locked, a valid lock key has been provided");
-                } else {
-                    log::error!("Document is locked, but an invalid lock key has been provided");
-                    bail!("Invalid lock key");
-                }
-            }
-            (Some(_), None) => {
-                log::error!("Document is locked, but no lock key has been provided");
-                bail!("Missing lock key");
-            }
-            (None, Some(_)) => {
-                log::error!("Document isn't locked, but lock key has been provided");
-                bail!("Unexpected lock key");
-            }
-            (None, None) => {
-                log::trace!("Document isn't locked, no lock key provided");
-            }
-        };
-
         ensure!(
             !document.is_erased(),
             "erased documents must not be updated"
@@ -737,7 +741,7 @@ impl BazaConnection {
             document.updated_at = now();
         }
 
-        self.put_document(document)?;
+        self.put_document(document, lock_key)?;
 
         self.register_event(BazaEvent::DocumentStaged {
             id: document.id.clone(),
@@ -761,7 +765,7 @@ impl BazaConnection {
         document.erase();
         document.stage();
 
-        self.put_document(&document)?;
+        self.put_document(&document, None)?;
 
         log::info!("erased document {}", document);
 
@@ -1033,7 +1037,7 @@ impl BazaConnection {
         for document in &mut staged_documents {
             document.rev = Some(max_rev.clone());
 
-            self.put_document(document)?;
+            self.put_document(document, None)?;
 
             if document.is_erased() {
                 self.erase_document_history(&document.id, &max_rev)?;

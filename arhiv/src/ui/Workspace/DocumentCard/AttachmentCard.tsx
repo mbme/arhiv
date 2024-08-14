@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DocumentDTO } from 'dto';
 import { useUnsavedChangesWarning } from 'utils/hooks';
 import { RPC } from 'utils/network';
@@ -8,6 +8,7 @@ import { CardContainer } from 'Workspace/CardContainer';
 import { useIsFormDirty } from 'components/Form/Form';
 import { AttachmentPreview, canPreview } from 'components/AttachmentPreview';
 import { ProgressLocker } from 'components/ProgressLocker';
+import { QueryError } from 'components/QueryError';
 import { useCardLock } from '../controller';
 import { EraseDocumentConfirmationDialog } from '../DocumentEditor/EraseDocumentConfirmationDialog';
 import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
@@ -29,7 +30,13 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
   useUnsavedChangesWarning(isDirty);
   useCardLock(isDirty);
 
-  const lockKey = useLockDocument(document.id, isDirty);
+  const { lockKey, error: lockError } = useLockDocument(document.id, isDirty);
+
+  useEffect(() => {
+    if (form && lockError) {
+      form.reset();
+    }
+  }, [form, lockError]);
 
   return (
     <CardContainer
@@ -84,6 +91,10 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
         backrefs={document.backrefs}
       />
 
+      {lockError ? (
+        <QueryError error={`Failed to lock attachment: ${String(lockError)}`} />
+      ) : undefined}
+
       {canPreview(document.documentType, document.data) && (
         <div className="mb-8 empty:hidden">
           <AttachmentPreview data={document.data} />
@@ -91,7 +102,9 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
       )}
 
       <DocumentEditor
+        key={document.updatedAt} // force form fields to use fresh values from the document after save
         formRef={setForm}
+        readonly={Boolean(lockError)}
         documentId={document.id}
         documentType={document.documentType}
         data={document.data}

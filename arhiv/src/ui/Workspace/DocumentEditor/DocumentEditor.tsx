@@ -23,6 +23,7 @@ type DocumentEditorFormProps = {
   collections: DocumentId[];
   onSubmit: (data: JSONObj, collections: DocumentId[]) => Promise<SaveDocumentErrors | undefined>;
   formRef?: JSXRef<HTMLFormElement>;
+  readonly?: boolean;
 };
 
 export function DocumentEditor({
@@ -33,6 +34,7 @@ export function DocumentEditor({
   onSubmit,
   formRef: outerFormRef,
   autofocus = false,
+  readonly = false,
 }: DocumentEditorFormProps) {
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -101,9 +103,9 @@ export function DocumentEditor({
             key={field.name}
             field={field}
             autofocus={field === fieldToFocus}
-            ignoreReadonly={ignoreReadonly}
             initialValue={initialData[field.name]}
             errors={fieldErrors[field.name]}
+            readonly={ignoreReadonly ? false : readonly}
           />
         ))}
       </div>

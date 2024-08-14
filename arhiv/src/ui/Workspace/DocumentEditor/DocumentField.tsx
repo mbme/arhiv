@@ -135,14 +135,14 @@ type DocumentFieldProps = {
   field: DataDescriptionField;
   initialValue?: JSONValue;
   autofocus: boolean;
-  ignoreReadonly: boolean;
   errors?: string[];
+  readonly?: boolean;
 };
 export function DocumentField({
   field,
   initialValue,
   autofocus,
-  ignoreReadonly,
+  readonly,
   errors = [],
 }: DocumentFieldProps) {
   const id = useId();
@@ -179,7 +179,7 @@ export function DocumentField({
         })}
         fieldType={field.field_type}
         initialValue={initialValue}
-        readonly={field.readonly && !ignoreReadonly}
+        readonly={readonly ?? field.readonly}
         required={field.mandatory}
       />
 

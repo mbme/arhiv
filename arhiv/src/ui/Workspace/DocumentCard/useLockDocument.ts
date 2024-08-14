@@ -3,18 +3,15 @@ import { DocumentId, DocumentLockKey } from 'dto';
 import { useSessionState } from 'utils/hooks';
 import { RPC } from 'utils/network';
 
-export function useLockDocument(id: DocumentId, lock: boolean): DocumentLockKey | null {
+export function useLockDocument(
+  id: DocumentId,
+  lock: boolean,
+): { lockKey: DocumentLockKey | null; error: unknown } {
   const [lockKey, setLockKey] = useSessionState<DocumentLockKey | null>(
     `document-lock-key-${id}`,
     null,
   );
   const [error, setError] = useState<unknown>();
-
-  if (error) {
-    console.error(`Failed to lock document ${id}`, error);
-
-    throw new Error(`Failed to lock document ${id}`);
-  }
 
   useEffect(() => {
     if (!lock) {
@@ -24,23 +21,22 @@ export function useLockDocument(id: DocumentId, lock: boolean): DocumentLockKey 
     let mounted = true;
 
     if (!lockKey) {
-      void RPC.LockDocument({ id })
-        .then(
-          ({ lockKey }) => {
-            if (mounted) {
-              setLockKey(lockKey);
-            } else {
-              return RPC.UnlockDocument({ id, lockKey });
-            }
-          },
-          (e) => {
-            console.error(`Failed to lock document ${id}`, e);
-            setError(e);
-          },
-        )
-        .catch((e: unknown) => {
-          console.error(`Failed to unlock document ${id}`, e);
-        });
+      void RPC.LockDocument({ id }).then(
+        ({ lockKey }) => {
+          if (mounted) {
+            setLockKey(lockKey);
+            setError(undefined);
+          } else {
+            return RPC.UnlockDocument({ id, lockKey }).catch((e: unknown) => {
+              console.error(`Failed to unlock document ${id}`, e);
+            });
+          }
+        },
+        (e) => {
+          console.error(`Failed to lock document ${id}`, e);
+          setError(e);
+        },
+      );
 
       return;
     }
@@ -61,5 +57,8 @@ export function useLockDocument(id: DocumentId, lock: boolean): DocumentLockKey 
     };
   }, [id, lock, lockKey, setLockKey]);
 
-  return lockKey;
+  return {
+    lockKey,
+    error,
+  };
 }

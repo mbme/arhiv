@@ -9,7 +9,7 @@ export function Link({ url, title, children }: Props) {
   return (
     <a
       href={url}
-      title={title}
+      title={title ?? url}
       target="_blank"
       rel="noopen noreferer"
       className="text-orange-600/70 hover:text-orange-700/100 transition-colors"

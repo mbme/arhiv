@@ -1,7 +1,8 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
 import { createLink, createRefUrl } from 'utils/markup';
-import { useUpdateEffect } from 'utils/hooks';
+import { useSignal, useUpdateEffect } from 'utils/hooks';
+import { useAppController } from 'controller';
 import { HTMLVFormFieldElement, FormField } from 'components/Form/FormField';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
 import { canPreview } from 'components/AttachmentPreview';
@@ -30,6 +31,8 @@ export function Editor({
   readonly,
   required,
 }: Props) {
+  const app = useAppController();
+
   const defaultPreview = defaultValue.length > 0;
   const [preview, _setPreview] = useState(defaultPreview);
 
@@ -37,6 +40,7 @@ export function Editor({
   const markupRef = useRef<MarkupRef | null>(null);
   const editorRef = useRef<CodemirrorEditor | null>(null);
   const posRef = useRef<number | undefined>(undefined);
+  const theme = useSignal(app.$theme);
 
   useEffect(() => {
     const fieldEl = fieldRef.current;
@@ -68,7 +72,8 @@ export function Editor({
     editor.setDisabled(disabled);
     editor.setReadonly(readonly);
     editor.setPlaceholder(placeholder ?? '');
-  }, [disabled, readonly, placeholder]);
+    editor.setDarkMode(theme === 'dark');
+  }, [disabled, readonly, placeholder, theme]);
 
   // focus editor if editing except when the preview is initially false
   useUpdateEffect(() => {

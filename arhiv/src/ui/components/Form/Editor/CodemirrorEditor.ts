@@ -26,8 +26,13 @@ import {
   defaultHighlightStyle,
   syntaxHighlighting,
 } from '@codemirror/language';
+import { oneDark } from '@codemirror/theme-one-dark';
+
+const lightTheme = EditorView.theme({}, { dark: false });
+const darkTheme = oneDark;
 
 type Options = {
+  darkMode?: boolean;
   onBlur?: () => void;
   onChange?: () => void;
 };
@@ -36,6 +41,7 @@ class CodemirrorEditor {
   private readonlyCompartment = new Compartment();
   private editableCompartment = new Compartment();
   private placeholderCompartment = new Compartment();
+  private themeCompartment = new Compartment();
 
   private editor: EditorView;
 
@@ -59,6 +65,7 @@ class CodemirrorEditor {
       state: EditorState.create({
         doc: initialValue,
         extensions: [
+          this.themeCompartment.of(options.darkMode ? darkTheme : lightTheme),
           [
             highlightActiveLine(),
             highlightSpecialChars(),
@@ -150,6 +157,12 @@ class CodemirrorEditor {
   setPlaceholder(value: string) {
     this.editor.dispatch({
       effects: [this.placeholderCompartment.reconfigure(placeholder(value))],
+    });
+  }
+
+  setDarkMode(darkMode: boolean) {
+    this.editor.dispatch({
+      effects: [this.themeCompartment.reconfigure(darkMode ? darkTheme : lightTheme)],
     });
   }
 

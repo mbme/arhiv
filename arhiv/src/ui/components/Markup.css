@@ -57,14 +57,10 @@
     }
 
     li {
-      @apply mb-2;
+      @apply mb-1;
 
       & > :is(ul, ol) {
         @apply mt-2;
-      }
-
-      & > input[type='checkbox'] {
-        @apply inline-block align-middle;
       }
     }
 

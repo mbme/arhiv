@@ -44,8 +44,9 @@
   }
 
   input[type='checkbox'] {
+    @apply size-4 rounded-none inline-block align-middle;
+    @apply text-blue-600 bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600;
     min-width: auto;
-    border-radius: 0;
   }
 
   textarea {

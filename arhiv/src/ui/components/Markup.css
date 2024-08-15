@@ -62,6 +62,10 @@
       & > :is(ul, ol) {
         @apply mt-2;
       }
+
+      & > input[type='checkbox'] {
+        @apply inline-block align-middle;
+      }
     }
 
     blockquote {

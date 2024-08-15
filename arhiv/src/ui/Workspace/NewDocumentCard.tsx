@@ -21,9 +21,7 @@ export function NewDocumentCard() {
 
   return (
     <CardContainer
-      leftToolbar={
-        <span className="section-heading text-lg">{`New ${documentType || 'document'}`}</span>
-      }
+      title={`New ${documentType || 'document'}`}
       rightToolbar={
         <>
           <Button variant="simple" onClick={onCancel}>

@@ -22,6 +22,7 @@ import { Markup } from 'components/Markup';
 import { Button, IconButton } from 'components/Button';
 import { Spoiler } from 'components/Spoiler';
 import { Icon } from 'components/Icon';
+import { DocumentTitle } from './DocumentTitle';
 
 type TaskItemProps = {
   id: DocumentId;
@@ -196,8 +197,8 @@ export function ProjectCard({
   return (
     <CardContainer
       leftToolbar={<DropdownMenu icon="dots-horizontal" align="bottom-left" options={options} />}
-      documentType={document.documentType}
-      title={document.title}
+      title={<DocumentTitle documentType={document.documentType} title={document.title} />}
+      showTitleOnScroll
       rightToolbar={
         <>
           <Button leadingIcon="add-document" variant="simple" size="sm" onClick={onAddTask}>

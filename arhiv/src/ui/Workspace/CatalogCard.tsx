@@ -9,10 +9,7 @@ export function CatalogCard() {
   const { card, controller } = useCardContext<CatalogCard>();
 
   return (
-    <CardContainer
-      className="pb-0"
-      leftToolbar={<span className="section-heading text-lg">Catalog</span>}
-    >
+    <CardContainer className="pb-0" title="Catalog">
       <Catalog
         autofocus={!card.restored}
         query={card.query ?? ''}

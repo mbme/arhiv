@@ -10,7 +10,7 @@ type Props = {
 
 export function ErasedDocumentCard({ document, isUpdating }: Props) {
   return (
-    <CardContainer>
+    <CardContainer title="ERASED DOCUMENT">
       {isUpdating && <ProgressLocker />}
 
       <DocumentViewerHead

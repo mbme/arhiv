@@ -14,6 +14,7 @@ import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
+import { DocumentTitle } from './DocumentTitle';
 
 type Props = {
   document: DocumentDTO;
@@ -58,6 +59,8 @@ export function AttachmentCard({ document, isUpdating, options }: Props) {
           ]}
         />
       }
+      title={<DocumentTitle documentType={document.documentType} title={document.title} />}
+      showTitleOnScroll
       rightToolbar={
         isDirty && (
           <>

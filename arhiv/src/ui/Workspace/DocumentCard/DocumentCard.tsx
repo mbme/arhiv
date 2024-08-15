@@ -13,6 +13,7 @@ import { DocumentViewerHead } from '../DocumentEditor/DocumentViewerHead';
 import { DocumentEditor } from '../DocumentEditor/DocumentEditor';
 import { useLockDocument } from './useLockDocument';
 import { LockError } from './LockError';
+import { DocumentTitle } from './DocumentTitle';
 
 type Props = {
   document: DocumentDTO;
@@ -42,31 +43,33 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
     <CardContainer
       skipBack={isDirty}
       leftToolbar={
-        <DropdownMenu
-          icon="dots-horizontal"
-          align="bottom-left"
-          options={[
-            ...options,
-            {
-              text: `Clone ${document.documentType}`,
-              icon: 'duplicate-document',
-              onClick: () => {
-                controller.newDocument(document.documentType, document.data);
+        <>
+          <DropdownMenu
+            icon="dots-horizontal"
+            align="bottom-left"
+            options={[
+              ...options,
+              {
+                text: `Clone ${document.documentType}`,
+                icon: 'duplicate-document',
+                onClick: () => {
+                  controller.newDocument(document.documentType, document.data);
+                },
               },
-            },
-            {
-              text: `Erase ${document.documentType}`,
-              icon: 'erase-document',
-              alarming: true,
-              onClick: () => {
-                setShowErasetConfirmation(true);
+              {
+                text: `Erase ${document.documentType}`,
+                icon: 'erase-document',
+                alarming: true,
+                onClick: () => {
+                  setShowErasetConfirmation(true);
+                },
               },
-            },
-          ]}
-        />
+            ]}
+          />
+        </>
       }
-      documentType={document.documentType}
-      title={document.title}
+      title={<DocumentTitle documentType={document.documentType} title={document.title} />}
+      showTitleOnScroll
       rightToolbar={
         isDirty && (
           <>

@@ -14,18 +14,23 @@
   }
 
   .card-toolbar {
-    @apply flex items-center gap-4 var-bg-color bg-opacity-95 px-4 py-2;
+    @apply var-bg-color bg-opacity-95 px-4 py-2;
+
+    @apply grid gap-4 items-center;
+    grid-template-columns: min-content auto auto;
 
     & .card-toolbar-left {
       @apply flex items-center gap-4 justify-start grow;
+      justify-self: start;
+    }
 
-      & .card-toolbar-title {
-        @apply cursor-default text-gray-400 dark:text-gray-600 text-sm tracking-wide truncate max-w-72;
-      }
+    & .card-toolbar-title {
+      @apply cursor-default text-gray-400 dark:text-gray-600 text-sm tracking-wide truncate;
     }
 
     & .card-toolbar-right {
       @apply flex items-center gap-1 justify-end grow;
+      justify-self: end;
     }
   }
 }

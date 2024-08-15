@@ -1,20 +1,18 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { cx } from 'utils';
-import { DocumentType } from 'dto';
 import { JSXChildren } from 'utils/jsx';
 import { useScrollHandler, useScrollRestoration } from 'utils/hooks';
 import { IconButton } from 'components/Button';
 import { Icon } from 'components/Icon';
 import { FORM_VIEWPORT_CLASSNAME } from 'components/Form/Form';
-import { DocumentIcon } from 'components/DocumentIcon';
 import { useCardContext } from './controller';
 
 type CardContainerProps = {
   children: JSXChildren;
   leftToolbar?: JSXChildren;
   rightToolbar?: JSXChildren;
-  title?: string;
-  documentType?: DocumentType;
+  title?: JSXChildren;
+  showTitleOnScroll?: boolean;
   skipBack?: boolean;
   skipClose?: boolean;
   className?: string;
@@ -24,7 +22,7 @@ export function CardContainer({
   leftToolbar,
   rightToolbar,
   title,
-  documentType,
+  showTitleOnScroll = false,
   skipBack,
   skipClose,
   className,
@@ -55,9 +53,9 @@ export function CardContainer({
     el.scrollIntoView({ inline: 'center' });
   }, [el, restored, openTime]);
 
-  const [showTitle, setShowTitle] = useState(false);
+  const [showTitle, setShowTitle] = useState(showTitleOnScroll ? false : true);
   useScrollHandler(el, (_scrollX, scrollY) => {
-    setShowTitle(Boolean(title) && scrollY > 50);
+    setShowTitle(showTitleOnScroll ? scrollY > 50 : true);
   });
 
   const fallback = (
@@ -69,17 +67,8 @@ export function CardContainer({
   return (
     <div className="card-container flex flex-col">
       <div className="card-toolbar">
-        <div className="card-toolbar-left">
-          {leftToolbar}
-          {showTitle && (
-            <span className="card-toolbar-title" title={`${documentType?.toUpperCase()} ${title}`}>
-              {documentType && (
-                <DocumentIcon className="size-4 mr-1 mb-1" documentType={documentType} />
-              )}
-              {title}
-            </span>
-          )}
-        </div>
+        <div className="card-toolbar-left">{leftToolbar}</div>
+        <div className="card-toolbar-title">{showTitle && title}</div>
         <div className="card-toolbar-right">
           {hasStackedCards && !skipBack && (
             <IconButton

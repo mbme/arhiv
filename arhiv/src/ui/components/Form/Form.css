@@ -6,7 +6,7 @@
     min-width: 65%;
 
     @apply border border-2 border-solid rounded-none var-form-border-color;
-    @apply block var-bg-color text-gray-900 dark:text-white text-sm p-2.5;
+    @apply block var-bg-color text-gray-900 dark:text-white p-2.5;
 
     &:user-invalid {
       @apply var-form-error-border;

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { shallowEqualArrays } from 'shallow-equal';
 import { cx, JSONObj } from 'utils';
 import {
   DocumentData,
@@ -9,11 +10,11 @@ import {
 } from 'dto';
 import { getCollectionTypesForDocument, getDataDescription } from 'utils/schema';
 import { JSXRef, mergeRefs } from 'utils/jsx';
+import { useUpdateEffect } from 'utils/hooks';
 import { CollectionPicker } from 'components/CollectionPicker';
 import { Form, markFormDirty } from 'components/Form/Form';
 import { PreventImplicitSubmissionOnEnter } from 'components/Form/PreventImplicitSubmissionOnEnter';
 import { DocumentField } from './DocumentField';
-import { useUpdateEffect } from 'utils/hooks';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
@@ -72,16 +73,22 @@ export function DocumentEditor({
     : undefined;
 
   useUpdateEffect(() => {
-    if (formRef.current) {
+    if (formRef.current && !shallowEqualArrays(collections, initialCollections)) {
       markFormDirty(formRef.current, true);
     }
-  }, [collections]);
+  }, [collections, initialCollections]);
 
   return (
-    <Form onSubmit={submitDocument} formRef={mergeRefs(formRef, outerFormRef)}>
+    <Form
+      onSubmit={submitDocument}
+      onReset={() => {
+        setCollections(initialCollections);
+      }}
+      formRef={mergeRefs(formRef, outerFormRef)}
+    >
       <PreventImplicitSubmissionOnEnter />
 
-      <label className={cx(showCollectionPicker || 'invisible')}>
+      <label className={cx('inline-block', showCollectionPicker || 'invisible')}>
         {showCollectionPicker && (
           <CollectionPicker
             collectionTypes={collectionTypes}

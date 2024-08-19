@@ -39,18 +39,16 @@ export function CollectionPicker({ collectionTypes, ids, onChange }: Props) {
       )}
 
       {value.documents.map((item) => (
-        <div key={item.id}>
-          <div className="flex items-center gap-4">
-            <Ref documentId={item.id} documentType={item.documentType} documentTitle={item.title} />
+        <div key={item.id} className="flex items-center gap-4">
+          <Ref documentId={item.id} documentType={item.documentType} documentTitle={item.title} />
 
-            <IconButton
-              icon="x"
-              size="sm"
-              onClick={() => {
-                onChange(ids.filter((id) => id !== item.id));
-              }}
-            />
-          </div>
+          <IconButton
+            icon="x"
+            size="sm"
+            onClick={() => {
+              onChange(ids.filter((id) => id !== item.id));
+            }}
+          />
         </div>
       ))}
 

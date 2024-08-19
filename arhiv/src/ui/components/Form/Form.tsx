@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { JSONObj, formDataToObject, JSONValue } from 'utils';
+import { JSONObj, formDataToObject, JSONValue, Callback } from 'utils';
 import { JSXChildren, mergeRefs } from 'utils/jsx';
 import { HTMLVFormFieldElement } from 'components/Form/FormField';
 
@@ -93,10 +93,11 @@ type FormProps = {
   className?: string;
   children: JSXChildren;
   onSubmit: (values: JSONObj) => Promise<void> | void;
+  onReset?: Callback;
   formRef?: React.Ref<HTMLFormElement>;
 };
 
-export function Form({ className, children, onSubmit, formRef }: FormProps) {
+export function Form({ className, children, onSubmit, onReset, formRef }: FormProps) {
   const ref = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
@@ -136,6 +137,7 @@ export function Form({ className, children, onSubmit, formRef }: FormProps) {
       }}
       onReset={(e) => {
         markFormDirty(e.currentTarget, false);
+        onReset?.();
       }}
     >
       {children}

@@ -158,8 +158,12 @@ function markupElementToJSX(el: MarkupElement, ref?: JSXRef<HTMLDivElement>): JS
           key={rangeToString(el.range)}
           type="checkbox"
           className="mr-2"
-          checked={el.checked}
-          disabled
+          defaultChecked={el.checked}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          tabIndex={-1}
           data-range-start={el.range.start}
           data-range-end={el.range.end}
         />

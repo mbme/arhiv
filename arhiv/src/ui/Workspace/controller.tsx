@@ -220,27 +220,19 @@ export class WorkspaceController {
   }
 
   showSearchDialog(query = '') {
-    startTransition(() => {
-      this.$showSearchDialog.value = [true, query];
-    });
+    this.$showSearchDialog.value = [true, query];
   }
 
   hideSearchDialog() {
-    startTransition(() => {
-      this.$showSearchDialog.value = [false, ''];
-    });
+    this.$showSearchDialog.value = [false, ''];
   }
 
   showNewDocumentDialog() {
-    startTransition(() => {
-      this.$showNewDocumentDialog.value = true;
-    });
+    this.$showNewDocumentDialog.value = true;
   }
 
   hideNewDocumentDialog() {
-    startTransition(() => {
-      this.$showNewDocumentDialog.value = false;
-    });
+    this.$showNewDocumentDialog.value = false;
   }
 
   reload() {

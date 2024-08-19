@@ -59,12 +59,12 @@ export function WorkspaceHeader() {
         {showNewDocumentDialog && (
           <NewDocumentDialog
             onNewDocument={(documentType) => {
-              app.workspace.newDocument(documentType);
               app.workspace.hideNewDocumentDialog();
+              app.workspace.newDocument(documentType);
             }}
             onAttach={(attachmentId) => {
-              app.workspace.openDocument(attachmentId);
               app.workspace.hideNewDocumentDialog();
+              app.workspace.openDocument(attachmentId);
             }}
             onCancel={() => {
               app.workspace.hideNewDocumentDialog();

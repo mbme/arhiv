@@ -37,7 +37,7 @@ export function Checkbox({
           e.preventDefault();
         }
       }}
-      checked={initialValue}
+      defaultChecked={initialValue}
     />
   );
 }

@@ -115,8 +115,7 @@ export function DocumentCard({ document, isUpdating, options }: Props) {
       <DocumentEditor
         key={document.updatedAt} // force form fields to use fresh values from the document after save
         formRef={setForm}
-        readonly={Boolean(lockError)}
-        documentId={document.id}
+        readonlyOverride={lockError ? true : undefined}
         documentType={document.documentType}
         data={document.data}
         collections={document.collections.map((item) => item.id)}

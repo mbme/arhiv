@@ -18,24 +18,22 @@ import { DocumentField } from './DocumentField';
 
 type DocumentEditorFormProps = {
   autofocus?: boolean;
-  documentId?: string;
   documentType: DocumentType;
   data: DocumentData;
   collections: DocumentId[];
   onSubmit: (data: JSONObj, collections: DocumentId[]) => Promise<SaveDocumentErrors | undefined>;
   formRef?: JSXRef<HTMLFormElement>;
-  readonly?: boolean;
+  readonlyOverride?: boolean;
 };
 
 export function DocumentEditor({
-  documentId,
   documentType,
   data: initialData,
   collections: initialCollections,
   onSubmit,
   formRef: outerFormRef,
   autofocus = false,
-  readonly = false,
+  readonlyOverride,
 }: DocumentEditorFormProps) {
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -65,11 +63,10 @@ export function DocumentEditor({
     }
   };
 
-  const ignoreReadonly = !documentId;
   const fields = getDataDescription(documentType).fields;
 
   const fieldToFocus = autofocus
-    ? fields.find((field) => ignoreReadonly || !field.readonly)
+    ? fields.find((field) => readonlyOverride === false || !field.readonly)
     : undefined;
 
   useUpdateEffect(() => {
@@ -112,7 +109,7 @@ export function DocumentEditor({
             autofocus={field === fieldToFocus}
             initialValue={initialData[field.name]}
             errors={fieldErrors[field.name]}
-            readonly={ignoreReadonly ? false : readonly}
+            readonly={readonlyOverride ?? field.readonly}
           />
         ))}
       </div>

@@ -45,6 +45,7 @@ export function NewDocumentCard() {
         key={documentType}
         autofocus
         formRef={formRef}
+        readonlyOverride={false}
         documentType={documentType}
         data={card.data ?? EMPTY_DATA}
         collections={card.collections ?? []}

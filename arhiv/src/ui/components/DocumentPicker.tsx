@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { DocumentType } from 'dto';
 import { Dialog } from 'components/Dialog';
-import { Catalog, DocumentInfo } from 'components/Catalog/Catalog';
+import { Catalog, CatalogInfo, DocumentInfo } from 'components/Catalog/Catalog';
 
 export { DocumentInfo };
 
@@ -12,6 +12,7 @@ type Props = {
   hideOnSelect?: boolean;
   title?: string;
   onCreateNote?: (title: string) => void;
+  onConvertToCard?: (info: CatalogInfo) => void;
   initialQuery?: string;
 };
 
@@ -22,6 +23,7 @@ export function DocumentPicker({
   hideOnSelect,
   title,
   onCreateNote,
+  onConvertToCard,
   initialQuery = '',
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,7 @@ export function DocumentPicker({
           onSelected(info);
         }}
         onCreateNote={onCreateNote}
+        onConvertToCard={onConvertToCard}
       />
     </Dialog>
   );

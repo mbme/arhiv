@@ -34,14 +34,14 @@ export function SearchInput({
 
   return (
     <form
-      className={cx('relative', className)}
+      className={cx('relative pt-1', className)}
       onSubmit={(e) => {
         e.preventDefault();
       }}
     >
       <Icon
         variant={busy ? 'spinner' : 'search'}
-        className="absolute top-3 left-3 pointer-events-none"
+        className="absolute top-4 left-3 pointer-events-none"
       />
 
       <input

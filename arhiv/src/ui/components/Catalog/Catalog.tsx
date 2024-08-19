@@ -17,6 +17,12 @@ export type DocumentInfo = {
   data: DocumentData;
 };
 
+export type CatalogInfo = {
+  query: string;
+  page: number;
+  documentTypes: DocumentType[];
+};
+
 type CatalogProps = {
   autofocus?: boolean;
   className?: string;
@@ -30,6 +36,7 @@ type CatalogProps = {
   onIncludedDocumentTypesChange: (documentTypes: DocumentType[]) => void;
   onDocumentSelected: (info: DocumentInfo) => void;
   onCreateNote?: (title: string) => void;
+  onConvertToCard?: (info: CatalogInfo) => void;
 };
 
 export function Catalog({
@@ -45,6 +52,7 @@ export function Catalog({
   onIncludedDocumentTypesChange,
   onDocumentSelected,
   onCreateNote,
+  onConvertToCard,
 }: CatalogProps) {
   const { value: result, isUpdating } = useSuspenseQuery({
     typeName: 'ListDocuments',
@@ -131,6 +139,18 @@ export function Catalog({
             disabled={query.trim().length === 0}
             onClick={() => {
               onCreateNote(query.trim());
+            }}
+          />
+        )}
+
+        {onConvertToCard && (
+          <IconButton
+            icon="link-arrow"
+            size="sm"
+            title="Convert to card"
+            disabled={query.trim().length === 0}
+            onClick={() => {
+              onConvertToCard({ query, page, documentTypes });
             }}
           />
         )}

@@ -19,7 +19,9 @@ export function WorkspaceHeader() {
     // Search with Ctrl-K
     if (e.ctrlKey && e.code === 'KeyK' && !showSearchDialog) {
       e.preventDefault();
-      app.workspace.showSearchDialog();
+      startTransition(() => {
+        app.workspace.showSearchDialog();
+      });
     }
 
     // Create new document with Ctrl-N

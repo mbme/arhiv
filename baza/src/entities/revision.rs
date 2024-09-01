@@ -9,7 +9,8 @@ use serde_json::Value;
 
 use super::instance_id::InstanceId;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq)]
+#[allow(clippy::derived_hash_with_manual_eq)]
+#[derive(Serialize, Deserialize, Hash, Clone, Debug, Eq)]
 pub struct Revision(BTreeMap<InstanceId, u32>);
 
 #[derive(Debug, PartialEq)]
@@ -23,7 +24,9 @@ pub enum VectorClockOrder {
 impl Revision {
     pub const STAGED_STRING: &'static str = "null";
 
-    pub fn initial() -> Self {
+    pub const INITIAL: &'static Self = &Self::initial();
+
+    pub const fn initial() -> Self {
         Revision(BTreeMap::new())
     }
 
@@ -95,6 +98,14 @@ impl Revision {
         )
     }
 
+    #[must_use]
+    pub fn is_concurrent_or_equal(&self, other: &Self) -> bool {
+        matches!(
+            self.compare_vector_clocks(other),
+            VectorClockOrder::Equal | VectorClockOrder::Concurrent
+        )
+    }
+
     pub fn serialize(&self) -> String {
         let mut keys: Vec<_> = self.0.keys().collect();
 
@@ -146,6 +157,51 @@ impl Revision {
         }
 
         Ok(result)
+    }
+
+    pub fn merge(&mut self, other: &Self) {
+        for (key, value) in &other.0 {
+            if let Some(local_value) = self.0.get_mut(key) {
+                *local_value = (*local_value).max(*value);
+            } else {
+                self.0.insert(key.clone(), *value);
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn merge_all(revs: &[&Revision]) -> Revision {
+        revs.iter().fold(Revision::initial(), |mut acc, rev| {
+            acc.merge(rev);
+
+            acc
+        })
+    }
+
+    #[must_use]
+    pub fn get_latest_rev<'r>(revs: &[&'r Revision]) -> HashSet<&'r Revision> {
+        revs.iter().fold(HashSet::new(), |mut acc, rev| {
+            if acc.is_empty() {
+                acc.insert(rev);
+
+                return acc;
+            }
+
+            let max_rev = acc.iter().next().expect("acc isn't empty");
+
+            if rev > max_rev {
+                acc.clear();
+                acc.insert(rev);
+
+                return acc;
+            }
+
+            if rev.is_concurrent_or_equal(max_rev) {
+                acc.insert(rev);
+            }
+
+            acc
+        })
     }
 }
 
@@ -336,6 +392,47 @@ mod tests {
         {
             let rev = Revision::from_value(json!({ "1": 0, "2": 1 }))?;
             assert_eq!(rev.serialize(), r#"{"2":1}"#);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_merge() -> Result<()> {
+        {
+            let mut rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+
+            rev1.merge(&rev2);
+
+            assert_eq!(rev1, Revision::from_value(json!({ "1": 2, "2": 2 }))?);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_get_latest_rev() -> Result<()> {
+        let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
+        let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+        let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+
+        {
+            let refs = vec![&rev1, &rev2, &rev3];
+
+            assert_eq!(
+                Revision::get_latest_rev(refs.as_slice()),
+                vec![&rev2, &rev3].into_iter().collect(),
+            );
+        }
+
+        {
+            let refs = vec![&rev1, &rev3];
+
+            assert_eq!(
+                Revision::get_latest_rev(refs.as_slice()),
+                vec![&rev3].into_iter().collect()
+            );
         }
 
         Ok(())

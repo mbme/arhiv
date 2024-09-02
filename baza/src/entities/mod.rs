@@ -18,4 +18,4 @@ pub use document_type::{DocumentType, ERASED_DOCUMENT_TYPE};
 pub use id::Id;
 pub use instance_id::InstanceId;
 pub use refs::Refs;
-pub use revision::Revision;
+pub use revision::{LatestRevComputer, Revision};

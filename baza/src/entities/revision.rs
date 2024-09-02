@@ -233,6 +233,60 @@ impl Ord for Revision {
     }
 }
 
+impl Default for &Revision {
+    fn default() -> Self {
+        Revision::INITIAL
+    }
+}
+
+pub struct LatestRevComputer<'r>(HashSet<&'r Revision>);
+
+impl<'r> LatestRevComputer<'r> {
+    pub fn new() -> Self {
+        let mut revs = HashSet::new();
+        revs.insert(Revision::INITIAL);
+
+        Self(revs)
+    }
+}
+
+impl<'r> Default for LatestRevComputer<'r> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'r> LatestRevComputer<'r> {
+    pub fn update(&mut self, new_revs: impl IntoIterator<Item = &'r Revision>) -> Result<()> {
+        let mut new_revs = new_revs.into_iter();
+        let new_rev = new_revs.next().context("new revs must not be empty")?;
+
+        let latest_rev = self
+            .0
+            .iter()
+            .next()
+            .context("latest revs must not be empty")?;
+
+        if latest_rev > &new_rev {
+            return Ok(());
+        }
+
+        if latest_rev < &new_rev {
+            self.0.clear();
+        }
+
+        self.0.insert(new_rev); // need to insert the first element since we've removed it from the iterator
+        self.0.extend(new_revs);
+
+        Ok(())
+    }
+
+    #[must_use]
+    pub fn get(self) -> HashSet<&'r Revision> {
+        self.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;

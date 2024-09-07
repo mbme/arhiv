@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, HashSet},
 };
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -142,6 +142,42 @@ impl Revision {
         rev.as_ref()
             .map(|rev| rev.serialize())
             .unwrap_or(Revision::STAGED_STRING.to_string())
+    }
+
+    pub fn to_file_name(&self) -> String {
+        let mut items: Vec<_> = self
+            .0
+            .iter()
+            .map(|(id, version)| format!("{id}:{version}"))
+            .collect();
+
+        items.sort();
+
+        items.join("-")
+    }
+
+    pub fn from_file_name(value: &str) -> Result<Self> {
+        let map = value
+            .split("-")
+            .map(|segment| {
+                let mut parts = segment.split(":");
+
+                let id = parts
+                    .next()
+                    .context("Failed to extract id from the segment")?;
+                let version = parts
+                    .next()
+                    .context("Failed to extract version from the segment")?;
+                ensure!(parts.next().is_none(), "Got invalid segment {segment}");
+
+                let id: InstanceId = id.try_into().context("Failed to parse instance id")?;
+                let version: u32 = version.parse().context("Failed to parse version")?;
+
+                Ok((id, version))
+            })
+            .collect::<Result<_>>()?;
+
+        Ok(Revision(map))
     }
 
     pub fn from_value(value: Value) -> Result<Revision> {
@@ -487,6 +523,32 @@ mod tests {
                 Revision::get_latest_rev(refs.as_slice()),
                 vec![&rev3].into_iter().collect()
             );
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_to_file_name() -> Result<()> {
+        {
+            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "2": 2, "1": 1 }))?;
+
+            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
+            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_from_file_name() -> Result<()> {
+        {
+            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "2": 2, "1": 1 }))?;
+
+            assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
+            assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
         }
 
         Ok(())

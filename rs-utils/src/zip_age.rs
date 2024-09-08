@@ -1,15 +1,19 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufReader, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     path::Path,
 };
 
 use anyhow::{bail, Context, Result};
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipArchive, ZipWriter};
 
+type ZipAgeReader = ZipArchive<BufReader<File>>;
+
+type ZipAgeWriter = ZipWriter<BufWriter<File>>;
+
 pub struct ZipAge {
-    archive: ZipArchive<BufReader<File>>,
+    archive: ZipAgeReader,
     file_path: String,
 }
 
@@ -25,21 +29,8 @@ impl ZipAge {
         })
     }
 
-    pub fn get_path(&self) -> &str {
-        &self.file_path
-    }
-
-    fn write_file(zip: &mut ZipWriter<File>, file_name: &str, data: &[u8]) -> Result<()> {
-        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
-        zip.start_file(file_name, options)?;
-        zip.write_all(data)?;
-
-        Ok(())
-    }
-
     pub fn create(file_path: &str, data: &HashMap<&str, &[u8]>) -> Result<()> {
-        let new_file = File::create(file_path)?;
-        let mut new_archive = ZipWriter::new(new_file);
+        let mut new_archive = Self::create_writer(file_path)?;
 
         for (file_name, value) in data {
             ZipAge::write_file(&mut new_archive, file_name, value)?;
@@ -55,8 +46,7 @@ impl ZipAge {
         file_path: &str,
         mut data: HashMap<&str, Option<&[u8]>>,
     ) -> Result<()> {
-        let new_file = File::create(file_path)?;
-        let mut new_archive = ZipWriter::new(new_file);
+        let mut new_archive = Self::create_writer(file_path)?;
 
         for i in 0..self.archive.len() {
             let file = self.archive.by_index_raw(i)?;
@@ -86,6 +76,25 @@ impl ZipAge {
         }
 
         new_archive.finish()?;
+
+        Ok(())
+    }
+
+    pub fn get_path(&self) -> &str {
+        &self.file_path
+    }
+
+    fn create_writer(file_path: &str) -> Result<ZipAgeWriter> {
+        let new_file = File::create(file_path)?;
+        let buffered_writer = BufWriter::new(new_file);
+
+        Ok(ZipWriter::new(buffered_writer))
+    }
+
+    fn write_file(zip: &mut ZipAgeWriter, file_name: &str, data: &[u8]) -> Result<()> {
+        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+        zip.start_file(file_name, options)?;
+        zip.write_all(data)?;
 
         Ok(())
     }

@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
     path::Path,
@@ -44,16 +44,19 @@ impl ZipAge {
     pub fn update_and_save(
         &mut self,
         file_path: &str,
-        mut data: HashMap<&str, Option<&[u8]>>,
+        data: &HashMap<&str, Option<&[u8]>>,
     ) -> Result<()> {
         let mut new_archive = Self::create_writer(file_path)?;
 
+        let mut processed_updates: HashSet<String> = HashSet::new();
         for i in 0..self.archive.len() {
             let file = self.archive.by_index_raw(i)?;
             let file_name = file.name();
 
             // replace existing file with a new value
-            if let Some(new_value) = data.remove(file_name) {
+            if let Some(new_value) = data.get(file_name) {
+                processed_updates.insert(file_name.to_string());
+
                 if let Some(new_value) = new_value {
                     ZipAge::write_file(&mut new_archive, file_name, new_value)?;
                 } else {
@@ -68,6 +71,10 @@ impl ZipAge {
 
         // add remaining (new) files to the zip archive
         for (file_name, value) in data {
+            if processed_updates.contains(*file_name) {
+                continue;
+            }
+
             if let Some(value) = value {
                 ZipAge::write_file(&mut new_archive, file_name, value)?;
             } else {
@@ -235,7 +242,7 @@ mod tests {
             let mut zip = ZipAge::open(&temp1.path)?;
             zip.update_and_save(
                 &temp2.path,
-                HashMap::from([
+                &HashMap::from([
                     ("/dir", None), //
                     ("/dir/test1", Some("test2".as_bytes())),
                 ]),

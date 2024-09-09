@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use tokio::fs as tokio_fs;
 
 use crate::build_path;
+use crate::get_file_size;
 use crate::path_to_string;
 use crate::{generate_alpanumeric_string, path_exists};
 
@@ -80,6 +81,10 @@ impl TempFile {
 
     pub fn str_contents(&self) -> Result<String> {
         fs::read_to_string(&self.path).context("failed to read file contents")
+    }
+
+    pub fn size(&self) -> Result<u64> {
+        get_file_size(&self.path)
     }
 }
 

@@ -6,11 +6,11 @@ use rs_utils::{format_bytes, generate_alpanumeric_string, TempFile, ZipAge};
 fn create_agezip(data: &HashMap<&str, &[u8]>) {
     let temp1 = TempFile::new();
 
-    ZipAge::create(&temp1.path, &data).unwrap();
+    ZipAge::create(&temp1.path, data).unwrap();
 }
 
 fn read_agezip(path: &str, data: &HashMap<&str, &[u8]>) {
-    let mut zip = ZipAge::open(&path).unwrap();
+    let mut zip = ZipAge::open(path).unwrap();
     let all_files = zip
         .list_files()
         .map(ToString::to_string)
@@ -26,7 +26,7 @@ fn read_agezip(path: &str, data: &HashMap<&str, &[u8]>) {
 
 fn update_agezip(path: &str, updates: &HashMap<&str, Option<&[u8]>>) {
     let temp1 = TempFile::new();
-    let mut zip = ZipAge::open(&path).unwrap();
+    let mut zip = ZipAge::open(path).unwrap();
 
     zip.update_and_save(&temp1.path, updates).unwrap();
 }
@@ -37,23 +37,20 @@ fn generate_blobs(count: usize, size: usize) -> Vec<Vec<u8>> {
         .collect()
 }
 
-fn create_data<'b>(blobs: &'b Vec<Vec<u8>>) -> HashMap<String, &'b [u8]> {
+fn create_data(blobs: &[Vec<u8>]) -> HashMap<String, &[u8]> {
     let mut map = HashMap::new();
 
-    for (i, blob) in blobs.into_iter().enumerate() {
+    for (i, blob) in blobs.iter().enumerate() {
         map.insert(format!("/blob-{i}"), blob.as_slice());
     }
 
     map
 }
 
-fn create_updates<'b>(
-    new_blobs: &'b Vec<Vec<u8>>,
-    delete_count: usize,
-) -> HashMap<String, Option<&'b [u8]>> {
+fn create_updates(new_blobs: &[Vec<u8>], delete_count: usize) -> HashMap<String, Option<&[u8]>> {
     let mut map = HashMap::new();
 
-    for (i, blob) in new_blobs.into_iter().enumerate() {
+    for (i, blob) in new_blobs.iter().enumerate() {
         map.insert(format!("/blob-{i}"), Some(blob.as_slice()));
     }
 
@@ -88,7 +85,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         .collect();
 
     group.bench_function("create_agezip", |b| {
-        b.iter(|| black_box(create_agezip(black_box(&data))))
+        b.iter(|| create_agezip(black_box(&data)))
     });
 
     let temp1 = TempFile::new();
@@ -96,11 +93,11 @@ fn criterion_benchmark(c: &mut Criterion) {
     println!("Created file size: {}", format_bytes(temp1.size().unwrap()));
 
     group.bench_function("read_agezip", |b| {
-        b.iter(|| black_box(read_agezip(black_box(&temp1.path), black_box(&data))))
+        b.iter(|| read_agezip(black_box(&temp1.path), black_box(&data)))
     });
 
     group.bench_function("update_agezip", |b| {
-        b.iter(|| black_box(update_agezip(black_box(&temp1.path), black_box(&updates))))
+        b.iter(|| update_agezip(black_box(&temp1.path), black_box(&updates)))
     });
 
     group.finish();

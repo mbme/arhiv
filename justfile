@@ -71,3 +71,9 @@ clean-all:
 
 build-android-libs:
   cd arhiv-android; rm -rf ./app/src/main/jniLibs; ANDROID_NDK_HOME=~/Android/Sdk/ndk/ cargo ndk -t x86_64 -t arm64-v8a -o ./app/src/main/jniLibs build # --release
+
+benchmark:
+  cargo bench zip_age_benchmark
+
+profile-benchmark:
+  cargo flamegraph --dev --root --bench zip_age_benchmark -- --bench

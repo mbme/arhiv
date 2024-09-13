@@ -7,6 +7,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use gethostname::gethostname;
 use tokio::signal;
 
+pub use container::*;
 pub use crypto::*;
 pub use download::*;
 pub use fs::*;
@@ -20,6 +21,7 @@ pub use time::*;
 pub use tools::*;
 pub use zip_age::ZipAge;
 
+mod container;
 mod crypto;
 mod download;
 mod fs;

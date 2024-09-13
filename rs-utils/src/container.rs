@@ -4,10 +4,11 @@ use std::{
 };
 
 use anyhow::{anyhow, ensure, Context, Result};
+use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 
 type LineIndex = Vec<String>;
 
-pub fn create_file_reader(file_path: &str) -> Result<BufReader<File>> {
+pub fn create_file_reader(file_path: &str) -> Result<impl BufRead> {
     let file = File::open(file_path)?;
 
     let data_reader = BufReader::new(file);
@@ -15,11 +16,21 @@ pub fn create_file_reader(file_path: &str) -> Result<BufReader<File>> {
     Ok(data_reader)
 }
 
-pub fn create_file_writer(file_path: &str) -> Result<BufWriter<File>> {
+pub fn create_gz_reader(reader: impl BufRead) -> impl BufRead {
+    let gz_reader = GzDecoder::new(reader);
+
+    BufReader::new(gz_reader)
+}
+
+pub fn create_file_writer(file_path: &str) -> Result<impl Write> {
     let new_file = File::create(file_path)?;
     let data_writer = BufWriter::new(new_file);
 
     Ok(data_writer)
+}
+
+pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {
+    GzEncoder::new(writer, Compression::fast())
 }
 
 struct TakeExactly<I> {
@@ -75,18 +86,17 @@ where
 
 pub fn read_container_lines(
     mut reader: impl BufRead,
-) -> Result<(LineIndex, impl Iterator<Item = Result<(usize, String)>>)> {
+) -> Result<(LineIndex, impl Iterator<Item = Result<String>>)> {
     let mut line = String::new();
     reader.read_line(&mut line)?;
 
     let index: LineIndex =
         serde_json::from_str(&line).context("Failed to parse container index")?;
 
-    let lines = reader.lines().enumerate().map(|(i, result)| {
-        let line = result.with_context(|| format!("Failed to read line {i}"))?;
-
-        Ok((i, line))
-    });
+    let lines = reader
+        .lines()
+        .enumerate()
+        .map(|(i, result)| result.with_context(|| format!("Failed to read line {i}")));
 
     let lines = TakeExactly::new(lines, index.len());
 
@@ -128,18 +138,9 @@ mod tests {
     use anyhow::Result;
     use rand::Rng;
 
-    use super::{read_container_lines, write_container_lines};
+    use crate::create_gz_reader;
 
-    fn collect_container_lines(
-        iter: impl Iterator<Item = Result<(usize, String)>>,
-    ) -> Result<Vec<String>> {
-        iter.map(|result| {
-            let (_, value) = result?;
-
-            Ok(value)
-        })
-        .collect::<Result<Vec<_>>>()
-    }
+    use super::{create_gz_writer, read_container_lines, write_container_lines};
 
     #[test]
     fn test_read_container_lines() -> Result<()> {
@@ -153,7 +154,7 @@ mod tests {
 
             assert_eq!(index, vec!["1", "2", "3"]);
 
-            let new_lines = collect_container_lines(iter)?;
+            let new_lines = iter.collect::<Result<Vec<_>>>()?;
             assert_eq!(new_lines, vec!["1", "2", "3"]);
         }
 
@@ -164,7 +165,7 @@ mod tests {
             let data = Cursor::new(raw_data.as_bytes());
             let (_index, iter) = read_container_lines(data)?;
 
-            assert!(collect_container_lines(iter).is_err());
+            assert!(iter.collect::<Result<Vec<_>>>().is_err());
         }
 
         {
@@ -176,7 +177,7 @@ mod tests {
             let data = Cursor::new(raw_data.as_bytes());
             let (_index, iter) = read_container_lines(data)?;
 
-            assert!(collect_container_lines(iter).is_err());
+            assert!(iter.collect::<Result<Vec<_>>>().is_err());
         }
 
         Ok(())
@@ -239,13 +240,17 @@ mod tests {
         Ok(())
     }
 
+    fn gen_lines() -> Vec<String> {
+        let mut rng = rand::thread_rng();
+
+        (0..30).map(|_| rng.gen_range(1..101).to_string()).collect()
+    }
+
     #[test]
     fn test_read_write_container_lines() -> Result<()> {
         let mut data = Cursor::new(Vec::new());
 
-        let mut rng = rand::thread_rng();
-
-        let lines: Vec<_> = (0..30).map(|_| rng.gen_range(1..101).to_string()).collect();
+        let lines = gen_lines();
 
         {
             let iter = lines.iter().map(|value| value.as_str());
@@ -259,7 +264,37 @@ mod tests {
 
             assert_eq!(index, lines);
 
-            let new_lines = collect_container_lines(iter)?;
+            let new_lines = iter.collect::<Result<Vec<_>>>()?;
+            assert_eq!(new_lines, lines);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_write_gz_container_lines() -> Result<()> {
+        let mut data = Cursor::new(Vec::new());
+
+        let lines = gen_lines();
+
+        {
+            let iter = lines.iter().map(|value| value.as_str());
+
+            let mut writer = create_gz_writer(data);
+            write_container_lines(&mut writer, &lines, iter)?;
+
+            data = writer.finish()?;
+
+            data.set_position(0);
+        }
+
+        {
+            let mut reader = create_gz_reader(&mut data);
+            let (index, iter) = read_container_lines(&mut reader)?;
+
+            assert_eq!(index, lines);
+
+            let new_lines = iter.collect::<Result<Vec<_>>>()?;
             assert_eq!(new_lines, lines);
         }
 

@@ -19,7 +19,6 @@ pub use streams::*;
 pub use string::*;
 pub use time::*;
 pub use tools::*;
-pub use zip_age::ZipAge;
 
 mod container;
 mod crypto;
@@ -37,7 +36,6 @@ mod streams;
 mod string;
 mod time;
 mod tools;
-mod zip_age;
 
 pub fn run_command(command: &str, args: Vec<&str>) -> Result<String> {
     run_command_with_envs(command, args, HashMap::new())

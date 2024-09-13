@@ -9,7 +9,7 @@ publish = false
 workspace = true
 
 [[bench]]
-name = "zip_age_benchmark"
+name = "container_benchmark"
 harness = false
 
 [dependencies]
@@ -53,7 +53,7 @@ rayon = "1.8.0"
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file
 fslock = "0.2"
-zip = { version = "2.2", default-features = false, features = ["deflate"] }
+flate2 = "1" # for compressed container
 
 [target.'cfg(android)'.dependencies]
 tracing-android = "0.2"

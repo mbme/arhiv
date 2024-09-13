@@ -13,7 +13,7 @@ use crate::{
 
 use super::auth::{create_shared_network_verifier, ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BazaClient {
     rpc_server_url: Url,
     client: Client,

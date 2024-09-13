@@ -2397,7 +2397,6 @@ dependencies = [
  "rcgen",
  "regex",
  "reqwest",
- "ring",
  "secstr",
  "serde",
  "serde_json",

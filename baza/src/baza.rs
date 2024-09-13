@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, SecretString, MIN_TIMESTAMP, PBKDF2};
+use rs_utils::{log, SecretString, MIN_TIMESTAMP, PBKDF};
 
 pub use crate::events::BazaEvent;
 use crate::{
@@ -23,7 +23,7 @@ pub struct Credentials {
 
 impl Credentials {
     pub const MIN_LOGIN_LENGTH: usize = 3;
-    pub const MIN_PASSWORD_LENGTH: usize = PBKDF2::MIN_PASSWORD_LENGTH;
+    pub const MIN_PASSWORD_LENGTH: usize = PBKDF::MIN_PASSWORD_LENGTH;
 
     pub fn new(login: impl Into<String>, password: impl Into<SecretString>) -> Result<Self> {
         let login = login.into();

@@ -92,7 +92,6 @@ fn with_hmac_tag_header(response: impl IntoResponse, hmac_tag: String) -> Respon
     response
 }
 
-#[derive(Debug)]
 pub struct ServerCertVerifier {
     hmac: HMAC,
 }

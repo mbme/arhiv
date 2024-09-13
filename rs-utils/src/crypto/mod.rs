@@ -1,16 +1,10 @@
 use std::{
     fs::File,
     io::{BufReader, Read},
-    num::NonZeroU32,
 };
 
 use anyhow::{ensure, Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use ring::{
-    digest,
-    hmac::{self, HMAC_SHA256},
-    pbkdf2,
-};
 
 mod auth_token;
 mod certificate;
@@ -77,18 +71,16 @@ pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
         .context("Failed to decode hex string")
 }
 
-type PBKDF2Key = [u8; digest::SHA512_256_OUTPUT_LEN];
-
 // Derive secure key from password & salt
-pub struct PBKDF2 {
-    key: PBKDF2Key,
+pub struct PBKDF {
+    key: SecretBytes,
 }
 
-impl PBKDF2 {
+impl PBKDF {
     pub const MIN_PASSWORD_LENGTH: usize = 8;
     pub const MIN_SALT_LENGTH: usize = 8;
 
-    pub fn derive(password: &[u8], salt: &[u8]) -> Result<Self> {
+    pub fn derive(password: &[u8], salt: &str) -> Result<Self> {
         ensure!(
             password.len() >= Self::MIN_PASSWORD_LENGTH,
             "password must consist of at least {} bytes",
@@ -101,60 +93,59 @@ impl PBKDF2 {
             Self::MIN_SALT_LENGTH
         );
 
-        let key = Self::generate(password, salt);
-
-        Ok(Self { key })
+        Ok(Self::generate(password, salt))
     }
 
-    fn generate(password: &[u8], salt: &[u8]) -> PBKDF2Key {
-        let mut key = [0u8; digest::SHA512_256_OUTPUT_LEN];
+    fn generate(password: &[u8], salt: &str) -> Self {
+        let key = SecretBytes::new(blake3::derive_key(salt, password).into());
 
-        pbkdf2::derive(
-            pbkdf2::PBKDF2_HMAC_SHA256,
-            NonZeroU32::new(100_000).expect("iterations count must be non-zero"),
-            salt,
-            password,
-            &mut key,
-        );
-
-        key
+        Self { key }
     }
 
-    pub fn get(&self) -> &PBKDF2Key {
+    pub fn get(&self) -> &SecretBytes {
         &self.key
     }
 }
 
 // Sign & verify data
-#[derive(Debug)]
 pub struct HMAC {
-    key: hmac::Key,
+    key: PBKDF,
 }
 
 impl HMAC {
-    pub fn new_from_password(password: impl AsRef<[u8]>, salt: impl AsRef<[u8]>) -> Result<Self> {
-        let key = PBKDF2::derive(password.as_ref(), salt.as_ref())?;
+    pub fn new_from_password(password: impl AsRef<[u8]>, salt: impl AsRef<str>) -> Result<Self> {
+        let key = PBKDF::derive(password.as_ref(), salt.as_ref())?;
 
-        Ok(Self::new(&key))
+        Ok(Self { key })
     }
 
-    pub fn new(key: &PBKDF2) -> Self {
-        let key = hmac::Key::new(HMAC_SHA256, key.get());
-
+    pub fn new(key: PBKDF) -> Self {
         Self { key }
     }
 
-    pub fn sign(&self, msg: &[u8]) -> Vec<u8> {
-        let mut context = hmac::Context::with_key(&self.key);
-        context.update(msg);
+    pub fn sign(&self, msg: &[u8]) -> [u8; 32] {
+        let key = self
+            .key
+            .get()
+            .as_bytes()
+            .try_into()
+            .expect("key must have correct length");
 
-        let tag = context.sign();
+        let hash = blake3::keyed_hash(key, msg);
 
-        tag.as_ref().to_vec()
+        hash.into()
     }
 
     pub fn verify(&self, msg: &[u8], tag: &[u8]) -> bool {
-        hmac::verify(&self.key, msg, tag).is_ok()
+        let original_hash = if let Ok(tag) = TryInto::<&[u8; 32]>::try_into(tag) {
+            blake3::Hash::from_bytes(*tag)
+        } else {
+            return false;
+        };
+
+        let hash = blake3::Hash::from_bytes(self.sign(msg));
+
+        hash == original_hash
     }
 }
 

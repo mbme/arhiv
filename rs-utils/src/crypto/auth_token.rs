@@ -22,7 +22,7 @@ impl AuthToken {
 
         Self {
             plain_text,
-            signature,
+            signature: signature.into(),
         }
     }
 

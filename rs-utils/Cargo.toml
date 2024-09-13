@@ -35,9 +35,12 @@ axum-server.workspace = true
 bytes.workspace = true
 rand.workspace = true
 chrono.workspace = true
-blake3 = "1.2.0" # fast file hash
-ring.workspace = true
+
+blake3 = "1.2" # fast file hash
 secstr = { version = "0.5", features = ["serde"] } # securely store secrets in memory
+rcgen = "0.13" # generate self-signed certificates
+pem = "*" # serialize TLS private key & certificate into PEM file
+
 data-encoding = "2" # base64, hex encodings
 mime_guess = "2"
 infer = "0.16"
@@ -50,8 +53,6 @@ nanoid = "0.4.0" # generate short unique global ids
 mdns-sd = "0.11" # for MDNS discovery
 gethostname = "0.5" # for MDNS discovery
 rayon = "1.8.0"
-rcgen = "0.13" # generate self-signed certificates
-pem = "*" # serialize TLS private key & certificate into PEM file
 fslock = "0.2"
 flate2 = "1" # for compressed container
 

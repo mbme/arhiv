@@ -36,7 +36,7 @@ bytes.workspace = true
 rand.workspace = true
 chrono.workspace = true
 
-blake3 = "1.2" # fast file hash
+blake3 = "1.2" # fast crypto hash, PBKDF, HMAC
 secstr = { version = "0.5", features = ["serde"] } # securely store secrets in memory
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file

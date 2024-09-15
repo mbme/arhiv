@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
@@ -52,6 +52,7 @@ pub struct Baza {
     path_manager: Arc<PathManager>,
     schema: Arc<DataSchema>,
     events: (Sender<BazaEvent>, Receiver<BazaEvent>),
+    key: OnceLock<CryptoKey>,
 }
 
 impl Baza {
@@ -62,6 +63,7 @@ impl Baza {
             path_manager: Arc::new(path_manager),
             schema: Arc::new(schema),
             events: channel(42),
+            key: Default::default(),
         }
     }
 
@@ -128,6 +130,23 @@ impl Baza {
         );
 
         Ok(baza)
+    }
+
+    fn create_key(&self) -> Result<CryptoKey> {
+        let conn = self.get_connection()?;
+
+        let app_name = self.get_app_name();
+        let login = conn.get_login()?;
+        let password = conn.get_password()?.into();
+
+        CryptoKey::derive_from_password_with_argon2(&password, &format!("{login}@{app_name}"))
+    }
+
+    pub fn get_key(&self) -> &CryptoKey {
+        self.key.get_or_init(|| {
+            self.create_key()
+                .expect("Baza crypto key must be created successfully")
+        })
     }
 
     #[must_use]

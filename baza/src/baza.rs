@@ -139,7 +139,7 @@ impl Baza {
         let login = conn.get_login()?;
         let password = conn.get_password()?.into();
 
-        CryptoKey::derive_from_password_with_argon2(&password, &format!("{login}@{app_name}"))
+        CryptoKey::derive_from_password_with_argon2(&password, format!("{login}@{app_name}"))
     }
 
     pub fn get_key(&self) -> &CryptoKey {

@@ -56,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_hmac() -> Result<()> {
-        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice())?;
+        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice(), None)?;
         let hmac = HMAC::new(key)?;
 
         let msg1 = b"message1";

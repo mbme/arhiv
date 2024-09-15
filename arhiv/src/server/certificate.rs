@@ -43,7 +43,7 @@ fn generate_certificate() -> Result<SelfSignedCertificate> {
 }
 
 pub fn generate_ui_key_verifier(certificate_private_key: SecretBytes) -> Result<HMAC> {
-    let key = CryptoKey::from_crypto_bytes(certificate_private_key)?;
+    let key = CryptoKey::from_crypto_bytes(certificate_private_key, None)?;
 
     let subkey = key.derive_subkey("arhiv-server auth token")?;
 

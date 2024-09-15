@@ -1,14 +1,14 @@
 use std::borrow::Borrow;
 
-use secstr::{SecUtf8, SecVec};
 use serde::Deserialize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
-#[derive(Clone)]
-pub struct SecretBytes(SecVec<u8>);
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct SecretBytes(Vec<u8>);
 
 impl SecretBytes {
     pub fn new(value: Vec<u8>) -> Self {
-        Self(SecVec::new(value))
+        Self(value)
     }
 
     pub fn as_bytes(&self) -> &[u8] {
@@ -54,20 +54,20 @@ impl From<SecretString> for SecretBytes {
     }
 }
 
-#[derive(Deserialize)]
-pub struct SecretString(SecUtf8);
+#[derive(Deserialize, Zeroize, ZeroizeOnDrop)]
+pub struct SecretString(String);
 
 impl SecretString {
-    pub fn new(value: impl Into<String>) -> Self {
-        Self(SecUtf8::from(value))
+    pub fn new(value: String) -> Self {
+        Self(value)
     }
 
     pub fn as_str(&self) -> &str {
-        self.0.unsecure()
+        &self.0
     }
 
-    pub fn into_unsecure_string(self) -> String {
-        self.0.into_unsecure()
+    pub fn as_string_ref(&self) -> &String {
+        &self.0
     }
 
     pub fn len(&self) -> usize {

@@ -16,7 +16,7 @@ impl BazaConnection {
     }
 
     pub(crate) fn set_password(&self, password: SecretString) -> Result<()> {
-        self.kvs_const_set(SETTING_PASSWORD, &password.into_unsecure_string())
+        self.kvs_const_set(SETTING_PASSWORD, password.as_string_ref())
     }
 
     pub(crate) fn get_password(&self) -> Result<SecretString> {

@@ -2437,7 +2437,6 @@ dependencies = [
  "rcgen",
  "regex",
  "reqwest",
- "secstr",
  "serde",
  "serde_json",
  "shellexpand",
@@ -2448,6 +2447,7 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "which",
+ "zeroize",
 ]
 
 [[package]]
@@ -2593,16 +2593,6 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "secstr"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e04f657244f605c4cf38f6de5993e8bd050c8a303f86aeabff142d5c7c113e12"
-dependencies = [
- "libc",
- "serde",
-]
 
 [[package]]
 name = "serde"
@@ -3702,6 +3692,20 @@ name = "zeroize"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
+dependencies = [
+ "zeroize_derive",
+]
+
+[[package]]
+name = "zeroize_derive"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "zune-core"

@@ -11,7 +11,7 @@ use axum::{
 
 use rs_utils::{
     bytes_to_hex_string, hex_string_to_bytes, http_server::ServerCertificate, log, AuthToken,
-    ResponseVerifier, HMAC,
+    CryptoKey, ResponseVerifier, HMAC,
 };
 
 use crate::Baza;
@@ -24,11 +24,12 @@ pub fn create_shared_network_verifier(baza: &Baza) -> Result<HMAC> {
 
     let app_name = baza.get_app_name();
     let login = conn.get_login()?;
-    let password = conn.get_password()?;
+    let password = conn.get_password()?.into();
 
-    let hmac = HMAC::new_from_password(password, format!("{login}@{app_name}"))?;
+    let key =
+        CryptoKey::derive_from_password_with_argon2(&password, &format!("{login}@{app_name}"))?;
 
-    Ok(hmac)
+    HMAC::new(key)
 }
 
 pub async fn client_authenticator(

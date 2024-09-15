@@ -3,7 +3,8 @@ use std::{fs, io::Write};
 use anyhow::{anyhow, Context, Result};
 
 use rs_utils::{
-    file_exists, log, must_create_file, now, SecretBytes, SecretString, SelfSignedCertificate, HMAC,
+    file_exists, log, must_create_file, now, CryptoKey, SecretBytes, SecretString,
+    SelfSignedCertificate, HMAC,
 };
 
 pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
@@ -41,6 +42,10 @@ fn generate_certificate() -> Result<SelfSignedCertificate> {
     SelfSignedCertificate::new_x509(&certificate_id)
 }
 
-pub fn generate_ui_key_verifier(certificate_private_key: &SecretBytes) -> Result<HMAC> {
-    HMAC::new_from_password(certificate_private_key, "arhiv-server auth token")
+pub fn generate_ui_key_verifier(certificate_private_key: SecretBytes) -> Result<HMAC> {
+    let key = CryptoKey::from_crypto_bytes(certificate_private_key)?;
+
+    let subkey = key.derive_subkey("arhiv-server auth token")?;
+
+    HMAC::new(subkey)
 }

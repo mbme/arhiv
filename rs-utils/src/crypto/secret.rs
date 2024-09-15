@@ -36,6 +36,24 @@ impl From<Vec<u8>> for SecretBytes {
     }
 }
 
+impl From<&[u8]> for SecretBytes {
+    fn from(value: &[u8]) -> Self {
+        Self::new(value.into())
+    }
+}
+
+impl From<&str> for SecretBytes {
+    fn from(value: &str) -> Self {
+        Self::new(value.as_bytes().to_vec())
+    }
+}
+
+impl From<SecretString> for SecretBytes {
+    fn from(value: SecretString) -> Self {
+        value.as_ref().into()
+    }
+}
+
 #[derive(Deserialize)]
 pub struct SecretString(SecUtf8);
 

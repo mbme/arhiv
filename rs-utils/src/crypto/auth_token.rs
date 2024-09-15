@@ -58,11 +58,14 @@ impl AuthToken {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AuthToken, HMAC};
+    use anyhow::Result;
+
+    use crate::{AuthToken, CryptoKey, HMAC};
 
     #[test]
-    fn test_auth_token_parse_serialize() {
-        let hmac = HMAC::new_from_password("test1234", "test1234").unwrap();
+    fn test_auth_token_parse_serialize() -> Result<()> {
+        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice())?;
+        let hmac = HMAC::new(key)?;
 
         let token = AuthToken::generate(&hmac);
 
@@ -71,5 +74,7 @@ mod tests {
         let parsed_token = AuthToken::parse(&token_str).unwrap();
 
         assert_eq!(parsed_token, token);
+
+        Ok(())
     }
 }

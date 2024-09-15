@@ -36,6 +36,7 @@ bytes.workspace = true
 rand.workspace = true
 chrono.workspace = true
 
+argon2 = "0.5.3" # derive secure cryptographic key from password & salt
 blake3 = "1.2" # fast crypto hash, PBKDF, HMAC
 secstr = { version = "0.5", features = ["serde"] } # securely store secrets in memory
 rcgen = "0.13" # generate self-signed certificates

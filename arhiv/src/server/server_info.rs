@@ -32,7 +32,7 @@ impl ServerInfo {
 
         let certificate = read_or_generate_certificate(root_dir)?;
 
-        let ui_hmac = generate_ui_key_verifier(&certificate.private_key_der)?;
+        let ui_hmac = generate_ui_key_verifier(certificate.private_key_der)?;
         let auth_token = AuthToken::generate_with_length(&ui_hmac, 32).serialize();
 
         Ok(Some(Self {

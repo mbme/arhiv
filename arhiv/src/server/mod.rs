@@ -53,7 +53,7 @@ impl ArhivServer {
             middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
         );
 
-        let ui_hmac = generate_ui_key_verifier(&certificate.private_key_der)?;
+        let ui_hmac = generate_ui_key_verifier(certificate.private_key_der.clone())?;
         let ui_router = build_ui_router(ui_hmac).with_state(state.clone());
 
         let router = Router::new()

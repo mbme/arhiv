@@ -1,24 +1,27 @@
-use anyhow::Result;
+use anyhow::{ensure, Result};
 
-use super::PBKDF;
+use super::CryptoKey;
 
 // Sign & verify data
 pub struct HMAC {
-    key: PBKDF,
+    key: CryptoKey,
 }
 
 impl HMAC {
-    pub fn new_from_password(password: impl AsRef<[u8]>, salt: impl AsRef<str>) -> Result<Self> {
-        let key = PBKDF::derive(password.as_ref(), salt.as_ref())?;
+    pub const KEY_SIZE_IN_BYTES: usize = 32;
+
+    pub fn new(key: CryptoKey) -> Result<Self> {
+        ensure!(
+            key.len() >= Self::KEY_SIZE_IN_BYTES,
+            "Crypto key must be {} bytes long, got {} instead",
+            Self::KEY_SIZE_IN_BYTES,
+            key.len()
+        );
 
         Ok(Self { key })
     }
 
-    pub fn new(key: PBKDF) -> Self {
-        Self { key }
-    }
-
-    pub fn sign(&self, msg: &[u8]) -> [u8; 32] {
+    pub fn sign(&self, msg: &[u8]) -> [u8; Self::KEY_SIZE_IN_BYTES] {
         let key = self
             .key
             .get()
@@ -32,11 +35,12 @@ impl HMAC {
     }
 
     pub fn verify(&self, msg: &[u8], tag: &[u8]) -> bool {
-        let original_hash = if let Ok(tag) = TryInto::<&[u8; 32]>::try_into(tag) {
-            blake3::Hash::from_bytes(*tag)
-        } else {
-            return false;
-        };
+        let original_hash =
+            if let Ok(tag) = TryInto::<&[u8; Self::KEY_SIZE_IN_BYTES]>::try_into(tag) {
+                blake3::Hash::from_bytes(*tag)
+            } else {
+                return false;
+            };
 
         let hash = blake3::Hash::from_bytes(self.sign(msg));
 
@@ -46,11 +50,14 @@ impl HMAC {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+
     use super::*;
 
     #[test]
     fn test_hmac() -> Result<()> {
-        let hmac = HMAC::new_from_password(b"12345678", "salt1234")?;
+        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice())?;
+        let hmac = HMAC::new(key)?;
 
         let msg1 = b"message1";
         let tag1 = hmac.sign(msg1);

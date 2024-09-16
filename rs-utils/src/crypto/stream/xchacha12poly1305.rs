@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 
 use anyhow::{anyhow, Result};
 use chacha20poly1305::{
@@ -129,8 +129,8 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
         Self {
             inner,
             decryptor: Some(decryptor),
-            encrypted_buffer: Vec::with_capacity(encrypted_chunk_size),
-            decrypted_buffer: Vec::with_capacity(encrypted_chunk_size),
+            encrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
+            decrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
             is_finished: false,
             encrypted_chunk_size,
         }
@@ -150,15 +150,16 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
         len
     }
 
-    fn read_next_chunk(&mut self) -> std::io::Result<()> {
+    fn fill_encrypted_buffer(&mut self) -> std::io::Result<()> {
         if self.is_finished {
             return Ok(());
         }
 
-        const MARGIN: usize = 1;
-        let mut chunk = vec![0u8; self.encrypted_chunk_size + MARGIN];
+        let buffer_size = self.encrypted_chunk_size * 2;
+        let mut chunk = vec![0u8; buffer_size];
 
-        while self.encrypted_buffer.len() <= self.encrypted_chunk_size {
+        while self.encrypted_buffer.len() < buffer_size {
+            // TODO read directly into encrypted_buffer
             let read_bytes = self.inner.read(&mut chunk)?;
 
             if read_bytes == 0 {
@@ -179,14 +180,11 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
                 return Ok(());
             }
 
-            let has_one_chunk = self.encrypted_buffer.len() == self.encrypted_chunk_size;
-            let has_partial_chunk = self.encrypted_buffer.len() < self.encrypted_chunk_size;
-
-            let is_incomplete_data = has_partial_chunk && !self.is_finished;
-            let is_last_chunk = self.is_finished && (has_one_chunk || has_partial_chunk);
+            let has_many_chunks = self.encrypted_buffer.len() > self.encrypted_chunk_size;
+            let is_last_chunk = self.is_finished && !has_many_chunks;
 
             // not enough data
-            if is_incomplete_data {
+            if !(has_many_chunks || self.is_finished) {
                 return Ok(());
             }
 
@@ -240,12 +238,26 @@ impl<InnerRead: Read> Read for XChaCha12Poly1305Reader<InnerRead> {
             return Ok(len);
         }
 
-        self.read_next_chunk()?;
+        // TODO try to read (buf.len() / chunk_size).ceil() chunks?
+        self.fill_encrypted_buffer()?;
         self.decrypt_buffered_data()?;
 
         let len = self.feed_decrypted_data(buf);
 
         Ok(len)
+    }
+}
+
+impl<InnerRead: Read> BufRead for XChaCha12Poly1305Reader<InnerRead> {
+    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
+        self.fill_encrypted_buffer()?;
+        self.decrypt_buffered_data()?;
+
+        Ok(&self.decrypted_buffer)
+    }
+
+    fn consume(&mut self, amt: usize) {
+        self.decrypted_buffer.drain(0..amt);
     }
 }
 
@@ -311,22 +323,65 @@ mod tests {
 
     #[test]
     fn test_write_read() -> Result<()> {
-        const CHUNK_SIZE: usize = 1024;
-        const CHUNKS_COUNT: usize = 10;
-
         {
-            let original_data = generate_alpanumeric_string(CHUNKS_COUNT * CHUNK_SIZE).into_bytes();
+            let chunk_size = 20;
+            let chunks_count = 10;
+            let original_data = generate_alpanumeric_string(chunks_count * chunk_size).into_bytes();
 
-            encrypt_decrypt(&original_data, CHUNK_SIZE)?;
+            encrypt_decrypt(&original_data, chunk_size)?;
         }
 
         {
+            let chunk_size = 20;
+            let chunks_count = 10;
             let original_data =
-                generate_alpanumeric_string(CHUNKS_COUNT * CHUNK_SIZE + CHUNK_SIZE / 2)
+                generate_alpanumeric_string(chunks_count * chunk_size + chunk_size / 2)
                     .into_bytes();
 
-            encrypt_decrypt(&original_data, CHUNK_SIZE)?;
+            encrypt_decrypt(&original_data, chunk_size)?;
         }
+
+        {
+            let chunk_size = 20;
+            let chunks_count = 1;
+            let original_data = generate_alpanumeric_string(chunks_count * chunk_size).into_bytes();
+
+            encrypt_decrypt(&original_data, chunk_size)?;
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_buf_read() -> Result<()> {
+        let data = r#"test value
+ok go"#;
+
+        let key = [0; KEY_SIZE];
+        let nonce = new_random_byte_array();
+        let chunk_size = 5;
+        let encrypted_data = {
+            let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, chunk_size);
+            writer.write_all(data.as_bytes())?;
+
+            writer.finalize()?
+        };
+
+        let mut reader =
+            XChaCha12Poly1305Reader::new(encrypted_data.as_slice(), &key, &nonce, chunk_size);
+
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
+
+        assert_eq!(line, "test value\n");
+
+        line.clear();
+
+        reader.read_line(&mut line)?;
+        assert_eq!(line, "ok go");
+
+        let bytes_read = reader.read_line(&mut line)?;
+        assert_eq!(bytes_read, 0);
 
         Ok(())
     }

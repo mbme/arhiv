@@ -1,6 +1,6 @@
 use anyhow::{ensure, Result};
 
-use super::CryptoKey;
+use super::crypto_key::CryptoKey;
 
 // Sign & verify data
 pub struct HMAC {
@@ -51,7 +51,8 @@ mod tests {
 
     #[test]
     fn test_hmac() -> Result<()> {
-        let key = CryptoKey::derive_subkey([0; 32].as_slice(), "test1234")?;
+        let key =
+            CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
         let hmac = HMAC::new(key)?;
 
         let msg1 = b"message1";

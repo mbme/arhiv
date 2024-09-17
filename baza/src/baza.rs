@@ -3,7 +3,7 @@ use std::sync::{Arc, OnceLock};
 use anyhow::{ensure, Context, Result};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use rs_utils::{log, CryptoKey, SecretString, MIN_TIMESTAMP};
+use rs_utils::{crypto_key::CryptoKey, log, SecretString, MIN_TIMESTAMP};
 
 pub use crate::events::BazaEvent;
 use crate::{

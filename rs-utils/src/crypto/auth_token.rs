@@ -60,11 +60,12 @@ impl AuthToken {
 mod tests {
     use anyhow::Result;
 
-    use crate::{AuthToken, CryptoKey, HMAC};
+    use crate::{crypto::crypto_key::CryptoKey, AuthToken, HMAC};
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {
-        let key = CryptoKey::derive_subkey([0; 32].as_slice(), "test1234")?;
+        let key =
+            CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
         let hmac = HMAC::new(key)?;
 
         let token = AuthToken::generate(&hmac);

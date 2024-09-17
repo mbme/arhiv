@@ -2,11 +2,12 @@ use anyhow::{anyhow, ensure, Result};
 use argon2::{Argon2, Params};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use super::{new_random_byte_array, SecretBytes};
+use super::{new_random_crypto_byte_array, SecretBytes};
 
-const KEY_SIZE: usize = 32;
+pub const KEY_SIZE: usize = 32;
+pub const SALT_SIZE: usize = 32;
 
-pub type Salt = [u8; 32];
+pub type Salt = [u8; SALT_SIZE];
 pub type Key = [u8; KEY_SIZE];
 
 /// Derive secure key from a password & salt.
@@ -26,7 +27,7 @@ impl CryptoKey {
     }
 
     pub fn random_salt() -> Salt {
-        new_random_byte_array()
+        new_random_crypto_byte_array()
     }
 
     pub fn salt_from_data(salt_material: impl AsRef<[u8]>) -> Result<Salt> {
@@ -64,9 +65,7 @@ impl CryptoKey {
         })
     }
 
-    pub fn derive_subkey(crypto_material: impl Into<SecretBytes>, salt: &str) -> Result<Self> {
-        let crypto_material = crypto_material.into();
-
+    pub fn derive_subkey(crypto_material: &[u8], salt: Salt) -> Result<Self> {
         ensure!(
             crypto_material.len() >= Self::MIN_SUBKEY_CRYPTO_MATERIAL_LEN,
             "Crypto key must be at least {} bytes long, got {} instead",
@@ -74,10 +73,8 @@ impl CryptoKey {
             crypto_material.len()
         );
 
-        let salt = Self::salt_from_data(salt)?;
-
         // HKDF: derive subkey using crypto hash of the cryptographic key material & salt
-        let key = blake3::keyed_hash(&salt, crypto_material.as_bytes()).into();
+        let key = blake3::keyed_hash(&salt, crypto_material).into();
 
         Ok(Self { key, salt })
     }

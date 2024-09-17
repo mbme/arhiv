@@ -5,20 +5,24 @@ use chacha20poly1305::{
     aead::stream::{DecryptorBE32, EncryptorBE32},
     KeyInit, XChaCha12Poly1305,
 };
-use rand::{rngs::OsRng, RngCore};
 
-// key derivation salt size is 32b
-// chunk size is 64kb; chunk tag size is 16b
-// v1[salt][nonce]...([chunk][tag])[last chunk][last tag]
+use crate::new_random_crypto_byte_array;
 
 pub const KEY_SIZE: usize = 32;
+pub type Key = [u8; KEY_SIZE];
 
 /// The last 5 bytes of the nonce are used for a 32 bits counter, and a 1-byte "last block" flag,
 /// so we only need to generate 19 (or in general nonce_size - 5) bytes of random data.
-const NONCE_SIZE: usize = 19;
+pub const NONCE_SIZE: usize = 19;
+pub type Nonce = [u8; NONCE_SIZE];
 
 /// 16b https://docs.rs/chacha20poly1305/latest/chacha20poly1305/type.Tag.html
-const CHUNK_TAG_SIZE: usize = 16;
+pub const CHUNK_TAG_SIZE: usize = 16;
+
+pub fn generate_nonce() -> Nonce {
+    // We can safely generate random nonce for XChaCha (ChaCha with eXtended nonce)
+    new_random_crypto_byte_array()
+}
 
 /// The original “Rogaway-flavored” STREAM as described in the paper "Online Authenticated-Encryption and its Nonce-Reuse Misuse-Resistance".
 /// Uses a 32-bit big endian counter and 1-byte “last block” flag stored as the last 5-bytes of the AEAD nonce.
@@ -30,21 +34,7 @@ pub struct XChaCha12Poly1305Writer<InnerWrite: Write> {
 }
 
 impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
-    #[must_use]
-    pub fn generate_nonce() -> [u8; NONCE_SIZE] {
-        let mut nonce = [0u8; 19];
-        // We can safely generate random nonce for XChaCha (ChaCha with eXtended nonce)
-        OsRng.fill_bytes(&mut nonce);
-
-        nonce
-    }
-
-    pub fn new(
-        inner: InnerWrite,
-        key: &[u8; KEY_SIZE],
-        nonce: &[u8; NONCE_SIZE],
-        chunk_size: usize,
-    ) -> Self {
+    pub fn new(inner: InnerWrite, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
 
         let aead = XChaCha12Poly1305::new(key.into());
@@ -114,12 +104,7 @@ pub struct XChaCha12Poly1305Reader<InnerRead: Read> {
 }
 
 impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
-    pub fn new(
-        inner: InnerRead,
-        key: &[u8; KEY_SIZE],
-        nonce: &[u8; NONCE_SIZE],
-        chunk_size: usize,
-    ) -> Self {
+    pub fn new(inner: InnerRead, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
 
         let aead = XChaCha12Poly1305::new(key.into());
@@ -267,7 +252,7 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{generate_alpanumeric_string, new_random_byte_array};
+    use crate::{generate_alpanumeric_string, new_random_crypto_byte_array};
 
     use super::*;
 
@@ -275,7 +260,7 @@ mod tests {
         let chunks_count = (original_data.len() as f64 / chunk_size as f64).ceil() as usize;
 
         let key = [0; KEY_SIZE];
-        let nonce = new_random_byte_array();
+        let nonce = new_random_crypto_byte_array();
 
         let encrypted_data = {
             let data = Cursor::new(Vec::new());
@@ -358,7 +343,7 @@ mod tests {
 ok go"#;
 
         let key = [0; KEY_SIZE];
-        let nonce = new_random_byte_array();
+        let nonce = new_random_crypto_byte_array();
         let chunk_size = 5;
         let encrypted_data = {
             let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, chunk_size);
@@ -392,7 +377,7 @@ ok go"#;
         let data = generate_alpanumeric_string(CHUNK_SIZE * 1000);
 
         let key = [0; KEY_SIZE];
-        let nonce = new_random_byte_array();
+        let nonce = new_random_crypto_byte_array();
         let encrypted_data = {
             let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
             writer.write_all(data.as_bytes())?;

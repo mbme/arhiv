@@ -141,7 +141,7 @@ impl Baza {
 
         CryptoKey::derive_from_password_with_argon2(
             &password,
-            CryptoKey::salt_from_string(format!("{login}@{app_name}"))?,
+            CryptoKey::salt_from_data(format!("{login}@{app_name}"))?,
         )
     }
 

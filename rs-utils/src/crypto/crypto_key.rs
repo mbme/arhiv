@@ -25,11 +25,11 @@ impl CryptoKey {
         Self { key, salt }
     }
 
-    pub fn generate_salt() -> Salt {
+    pub fn random_salt() -> Salt {
         new_random_byte_array()
     }
 
-    pub fn salt_from_string(salt_material: impl AsRef<[u8]>) -> Result<Salt> {
+    pub fn salt_from_data(salt_material: impl AsRef<[u8]>) -> Result<Salt> {
         let salt_material = salt_material.as_ref();
         ensure!(
             salt_material.len() >= Self::MIN_SALT_MATERIAL_LENGTH,
@@ -74,7 +74,7 @@ impl CryptoKey {
             crypto_material.len()
         );
 
-        let salt = Self::salt_from_string(salt)?;
+        let salt = Self::salt_from_data(salt)?;
 
         // HKDF: derive subkey using crypto hash of the cryptographic key material & salt
         let key = blake3::keyed_hash(&salt, crypto_material.as_bytes()).into();
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn test_crypto_key() -> Result<()> {
         let password = "12345678".into();
-        let salt = CryptoKey::generate_salt();
+        let salt = CryptoKey::random_salt();
         let key1 = CryptoKey::derive_from_password_with_argon2(&password, salt)?;
         let key2 = CryptoKey::derive_from_password_with_argon2(&password, salt)?;
 

@@ -23,7 +23,7 @@ pub struct Credentials {
 
 impl Credentials {
     pub const MIN_LOGIN_LENGTH: usize = 3;
-    pub const MIN_PASSWORD_LENGTH: usize = CryptoKey::MIN_PASSWORD_LENGTH;
+    pub const MIN_PASSWORD_LENGTH: usize = CryptoKey::MIN_PASSWORD_LEN;
 
     pub fn new(login: impl Into<String>, password: impl Into<SecretString>) -> Result<Self> {
         let login = login.into();
@@ -132,19 +132,22 @@ impl Baza {
         Ok(baza)
     }
 
-    fn create_key(&self) -> Result<CryptoKey> {
+    fn create_shared_key(&self) -> Result<CryptoKey> {
         let conn = self.get_connection()?;
 
         let app_name = self.get_app_name();
         let login = conn.get_login()?;
         let password = conn.get_password()?.into();
 
-        CryptoKey::derive_from_password_with_argon2(&password, format!("{login}@{app_name}"))
+        CryptoKey::derive_from_password_with_argon2(
+            &password,
+            CryptoKey::salt_from_string(format!("{login}@{app_name}"))?,
+        )
     }
 
-    pub fn get_key(&self) -> &CryptoKey {
+    pub fn get_shared_key(&self) -> &CryptoKey {
         self.key.get_or_init(|| {
-            self.create_key()
+            self.create_shared_key()
                 .expect("Baza crypto key must be created successfully")
         })
     }

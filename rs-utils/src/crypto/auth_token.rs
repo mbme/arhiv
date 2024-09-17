@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {
-        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice(), None)?;
+        let key = CryptoKey::derive_subkey([0; 32].as_slice(), "test1234")?;
         let hmac = HMAC::new(key)?;
 
         let token = AuthToken::generate(&hmac);

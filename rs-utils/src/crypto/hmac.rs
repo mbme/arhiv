@@ -22,12 +22,7 @@ impl HMAC {
     }
 
     pub fn sign(&self, msg: &[u8]) -> [u8; Self::KEY_SIZE_IN_BYTES] {
-        let key = self
-            .key
-            .get()
-            .as_bytes()
-            .try_into()
-            .expect("key must have correct length");
+        let key = self.key.get();
 
         let hash = blake3::keyed_hash(key, msg);
 
@@ -56,7 +51,7 @@ mod tests {
 
     #[test]
     fn test_hmac() -> Result<()> {
-        let key = CryptoKey::from_crypto_bytes([0; 32].as_slice(), None)?;
+        let key = CryptoKey::derive_subkey([0; 32].as_slice(), "test1234")?;
         let hmac = HMAC::new(key)?;
 
         let msg1 = b"message1";

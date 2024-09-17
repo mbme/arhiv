@@ -20,10 +20,9 @@ pub const CERTIFICATE_HMAC_HEADER: &str = "X-Certificate-HMAC-Tag";
 pub const CLIENT_AUTH_TOKEN_HEADER: &str = "X-Client-Auth-Token";
 
 pub fn create_shared_network_verifier(baza: &Baza) -> Result<HMAC> {
-    let key = baza.get_key();
-    let derived_key = key.derive_subkey("shared network verification key")?;
+    let key = baza.get_shared_key();
 
-    HMAC::new(derived_key)
+    HMAC::new(key.clone())
 }
 
 pub async fn client_authenticator(

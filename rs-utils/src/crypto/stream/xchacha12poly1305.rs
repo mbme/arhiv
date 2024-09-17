@@ -385,4 +385,29 @@ ok go"#;
 
         Ok(())
     }
+
+    #[test]
+    fn test_buf_read_long() -> Result<()> {
+        const CHUNK_SIZE: usize = 10;
+        let data = generate_alpanumeric_string(CHUNK_SIZE * 1000);
+
+        let key = [0; KEY_SIZE];
+        let nonce = new_random_byte_array();
+        let encrypted_data = {
+            let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
+            writer.write_all(data.as_bytes())?;
+
+            writer.finalize()?
+        };
+
+        let mut reader =
+            XChaCha12Poly1305Reader::new(encrypted_data.as_slice(), &key, &nonce, CHUNK_SIZE);
+
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
+
+        assert_eq!(line, data);
+
+        Ok(())
+    }
 }

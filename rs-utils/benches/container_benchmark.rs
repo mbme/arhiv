@@ -1,7 +1,7 @@
 use std::io::{BufRead, Write};
 
 use anyhow::Result;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 use rs_utils::{
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, format_bytes,
@@ -64,7 +64,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let temp1 = TempFile::new();
 
     group.bench_function("text_container_write", |b| {
-        b.iter(|| text_container_write(&temp1.path, black_box(&data)))
+        b.iter(|| text_container_write(&temp1.path, &data))
     });
 
     {
@@ -75,12 +75,12 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
 
         group.bench_function("text_container_read", |b| {
-            b.iter(|| black_box(text_container_read(black_box(&temp1.path))))
+            b.iter(|| text_container_read(&temp1.path))
         });
     }
 
     group.bench_function("gz_container_write", |b| {
-        b.iter(|| gz_container_write(&temp1.path, black_box(&data)))
+        b.iter(|| gz_container_write(&temp1.path, &data))
     });
 
     {
@@ -90,7 +90,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             format_bytes(temp1.size().unwrap())
         );
         group.bench_function("gz_container_read", |b| {
-            b.iter(|| black_box(gz_container_read(black_box(&temp1.path))))
+            b.iter(|| gz_container_read(&temp1.path))
         });
     }
 

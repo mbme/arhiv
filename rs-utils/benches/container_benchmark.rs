@@ -67,21 +67,26 @@ fn confidential1_container_read(reader: impl BufRead, key: &Confidential1Key) ->
 const BLOB_SIZE: usize = 2 * 1024;
 const TOTAL_BLOBS_COUNT: usize = 10_000;
 
-fn criterion_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("container");
-    group.sample_size(10);
-
-    let data = (0..TOTAL_BLOBS_COUNT)
-        .map(|_| generate_alpanumeric_string(BLOB_SIZE))
-        .collect::<Vec<_>>();
-
-    let new_cursor = || {
-        Cursor::new(Vec::<u8>::with_capacity(
-            BLOB_SIZE * TOTAL_BLOBS_COUNT +
+fn new_cursor() -> Cursor<Vec<u8>> {
+    Cursor::new(Vec::<u8>::with_capacity(
+        BLOB_SIZE * TOTAL_BLOBS_COUNT +
             // index overhead
             10 * TOTAL_BLOBS_COUNT,
-        ))
-    };
+    ))
+}
+
+fn gen_data() -> Vec<String> {
+    (0..TOTAL_BLOBS_COUNT)
+        .map(|_| generate_alpanumeric_string(BLOB_SIZE))
+        .collect::<Vec<_>>()
+}
+
+fn bench_text_container(c: &mut Criterion) {
+    let mut group = c.benchmark_group("text_container");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    let data = gen_data();
 
     group.bench_function("text_container_write", |b| {
         b.iter(|| {
@@ -90,17 +95,25 @@ fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
-    {
-        let mut cursor = new_cursor();
-        container_write(&mut cursor, &data);
+    let mut cursor = new_cursor();
+    container_write(&mut cursor, &data);
 
-        group.bench_function("text_container_read", |b| {
-            b.iter(|| {
-                cursor.set_position(0);
-                black_box(container_read(&mut cursor));
-            })
-        });
-    }
+    group.bench_function("text_container_read", |b| {
+        b.iter(|| {
+            cursor.set_position(0);
+            black_box(container_read(&mut cursor));
+        })
+    });
+
+    group.finish();
+}
+
+fn bench_gz_container(c: &mut Criterion) {
+    let mut group = c.benchmark_group("gz_container");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    let data = gen_data();
 
     group.bench_function("gz_container_write", |b| {
         b.iter(|| {
@@ -120,6 +133,16 @@ fn criterion_benchmark(c: &mut Criterion) {
         });
     }
 
+    group.finish();
+}
+
+fn bench_confidential1_container(c: &mut Criterion) {
+    let mut group = c.benchmark_group("confidential1_container");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    let data = gen_data();
+
     let key = Confidential1Key::Key(CryptoKey::new(
         new_random_crypto_byte_array(),
         CryptoKey::random_salt(),
@@ -131,41 +154,59 @@ fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
-    {
-        let mut cursor = new_cursor();
-        confidential1_container_write(&mut cursor, &data, &key);
-        group.bench_function("confidential1_container_read", |b| {
-            b.iter(|| {
-                cursor.set_position(0);
-                black_box(confidential1_container_read(&mut cursor, &key));
-            })
-        });
-    }
-
-    {
-        let temp1 = TempFile::new();
-        group.bench_function("confidential1_container_write to file", |b| {
-            b.iter(|| {
-                let mut writer = create_file_writer(&temp1.path).expect("must create file writer");
-                confidential1_container_write(&mut writer, &data, &key);
-            })
-        });
-
-        println!(
-            "Created confidential1 file size: {}",
-            format_bytes(temp1.size().unwrap()),
-        );
-
-        group.bench_function("confidential1_container_read from file", |b| {
-            b.iter(|| {
-                let reader = create_file_reader(&temp1.path).expect("must create file reader");
-                black_box(confidential1_container_read(reader, &key))
-            })
-        });
-    }
+    let mut cursor = new_cursor();
+    confidential1_container_write(&mut cursor, &data, &key);
+    group.bench_function("confidential1_container_read", |b| {
+        b.iter(|| {
+            cursor.set_position(0);
+            black_box(confidential1_container_read(&mut cursor, &key));
+        })
+    });
 
     group.finish();
 }
 
-criterion_group!(benches, criterion_benchmark);
+fn bench_confidential1_container_file(c: &mut Criterion) {
+    let mut group = c.benchmark_group("confidential1_container_file");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+    group.noise_threshold(6.5);
+
+    let data = gen_data();
+
+    let key = Confidential1Key::Key(CryptoKey::new(
+        new_random_crypto_byte_array(),
+        CryptoKey::random_salt(),
+    ));
+
+    let temp1 = TempFile::new();
+    group.bench_function("confidential1_container_write", |b| {
+        b.iter(|| {
+            let mut writer = create_file_writer(&temp1.path).expect("must create file writer");
+            confidential1_container_write(&mut writer, &data, &key);
+        })
+    });
+
+    println!(
+        "Created confidential1 file size: {}",
+        format_bytes(temp1.size().unwrap()),
+    );
+
+    group.bench_function("confidential1_container_read", |b| {
+        b.iter(|| {
+            let reader = create_file_reader(&temp1.path).expect("must create file reader");
+            black_box(confidential1_container_read(reader, &key))
+        })
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_text_container,
+    bench_gz_container,
+    bench_confidential1_container,
+    bench_confidential1_container_file
+);
 criterion_main!(benches);

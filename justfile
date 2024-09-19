@@ -73,7 +73,7 @@ build-android-libs:
   cd arhiv-android; rm -rf ./app/src/main/jniLibs; ANDROID_NDK_HOME=~/Android/Sdk/ndk/ cargo ndk -t x86_64 -t arm64-v8a -o ./app/src/main/jniLibs build # --release
 
 bench *PARAMS:
-  cd rs-utils; cargo bench {{PARAMS}}
+  cd rs-utils; cargo bench -- {{PARAMS}}
 
 profile-benchmark:
   cargo flamegraph --dev --root --bench container_benchmark -- --bench

@@ -34,14 +34,14 @@ pub fn get_encrypted_stream_size(data_size: usize, chunk_size: usize) -> usize {
 
 /// The original “Rogaway-flavored” STREAM as described in the paper "Online Authenticated-Encryption and its Nonce-Reuse Misuse-Resistance".
 /// Uses a 32-bit big endian counter and 1-byte “last block” flag stored as the last 5-bytes of the AEAD nonce.
-pub struct XChaCha12Poly1305Writer<InnerWrite: Write> {
+pub struct CryptoStreamWriter<InnerWrite: Write> {
     inner: InnerWrite,
     encryptor: EncryptorBE32<XChaCha12Poly1305>,
     buffer: Vec<u8>,
     chunk_size: usize,
 }
 
-impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
+impl<InnerWrite: Write> CryptoStreamWriter<InnerWrite> {
     pub fn new(inner: InnerWrite, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
 
@@ -91,7 +91,7 @@ impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
     }
 }
 
-impl<InnerWrite: Write> Write for XChaCha12Poly1305Writer<InnerWrite> {
+impl<InnerWrite: Write> Write for CryptoStreamWriter<InnerWrite> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.buffer.extend_from_slice(buf);
 
@@ -105,7 +105,7 @@ impl<InnerWrite: Write> Write for XChaCha12Poly1305Writer<InnerWrite> {
     }
 }
 
-pub struct XChaCha12Poly1305Reader<InnerRead: Read> {
+pub struct CryptoStreamReader<InnerRead: Read> {
     inner: InnerRead,
     decryptor: Option<DecryptorBE32<XChaCha12Poly1305>>,
     encrypted_buffer: Vec<u8>,
@@ -115,7 +115,7 @@ pub struct XChaCha12Poly1305Reader<InnerRead: Read> {
     encrypted_chunk_size: usize,
 }
 
-impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
+impl<InnerRead: Read> CryptoStreamReader<InnerRead> {
     pub fn new(inner: InnerRead, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
 
@@ -234,7 +234,7 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
     }
 }
 
-impl<InnerRead: Read> Read for XChaCha12Poly1305Reader<InnerRead> {
+impl<InnerRead: Read> Read for CryptoStreamReader<InnerRead> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if self.decrypted_buffer.len() >= buf.len() {
             let len = self.feed_decrypted_data(buf);
@@ -254,7 +254,7 @@ impl<InnerRead: Read> Read for XChaCha12Poly1305Reader<InnerRead> {
     }
 }
 
-impl<InnerRead: Read> BufRead for XChaCha12Poly1305Reader<InnerRead> {
+impl<InnerRead: Read> BufRead for CryptoStreamReader<InnerRead> {
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         self.fill_encrypted_buffer(None)?;
         self.decrypt_buffered_data()?;
@@ -284,7 +284,7 @@ mod tests {
         let encrypted_data = {
             let data = Cursor::new(Vec::new());
 
-            let mut writer = XChaCha12Poly1305Writer::new(data, &key, &nonce, chunk_size);
+            let mut writer = CryptoStreamWriter::new(data, &key, &nonce, chunk_size);
 
             for chunk in original_data.chunks(100) {
                 writer.write_all(chunk)?;
@@ -301,7 +301,7 @@ mod tests {
         assert_eq!(encrypted_data.get_ref().len(), encrypted_size);
 
         let decrypted_data = {
-            let mut reader = XChaCha12Poly1305Reader::new(encrypted_data, &key, &nonce, chunk_size);
+            let mut reader = CryptoStreamReader::new(encrypted_data, &key, &nonce, chunk_size);
 
             let mut data = Vec::new();
 
@@ -365,14 +365,14 @@ ok go"#;
         let nonce = new_random_crypto_byte_array();
         let chunk_size = 5;
         let encrypted_data = {
-            let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, chunk_size);
+            let mut writer = CryptoStreamWriter::new(Vec::new(), &key, &nonce, chunk_size);
             writer.write_all(data.as_bytes())?;
 
             writer.finish()?
         };
 
         let mut reader =
-            XChaCha12Poly1305Reader::new(encrypted_data.as_slice(), &key, &nonce, chunk_size);
+            CryptoStreamReader::new(encrypted_data.as_slice(), &key, &nonce, chunk_size);
 
         let mut line = String::new();
         reader.read_line(&mut line)?;
@@ -398,14 +398,14 @@ ok go"#;
         let key = [0; KEY_SIZE];
         let nonce = new_random_crypto_byte_array();
         let encrypted_data = {
-            let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
+            let mut writer = CryptoStreamWriter::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
             writer.write_all(data.as_bytes())?;
 
             writer.finish()?
         };
 
         let mut reader =
-            XChaCha12Poly1305Reader::new(encrypted_data.as_slice(), &key, &nonce, CHUNK_SIZE);
+            CryptoStreamReader::new(encrypted_data.as_slice(), &key, &nonce, CHUNK_SIZE);
 
         let mut line = String::new();
         reader.read_line(&mut line)?;

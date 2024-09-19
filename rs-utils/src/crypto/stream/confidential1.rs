@@ -11,9 +11,8 @@ use crate::{
     SecretBytes,
 };
 
-use super::xchacha12poly1305::{
-    generate_nonce, get_encrypted_stream_size, XChaCha12Poly1305Reader, XChaCha12Poly1305Writer,
-    NONCE_SIZE,
+use super::crypto_stream::{
+    generate_nonce, get_encrypted_stream_size, CryptoStreamReader, CryptoStreamWriter, NONCE_SIZE,
 };
 
 pub const CONFIDENTIAL1_MAGIC_STRING: &str = "CONFIDENTIAL-1";
@@ -68,7 +67,7 @@ pub fn create_confidential1_reader(
     let key = confidential1_key.get_crypto_key(salt)?;
 
     let confidential_reader =
-        XChaCha12Poly1305Reader::new(reader, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
+        CryptoStreamReader::new(reader, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
 
     Ok(confidential_reader)
 }
@@ -76,7 +75,7 @@ pub fn create_confidential1_reader(
 pub fn create_confidential1_writer<W: Write>(
     mut writer: W,
     confidential1_key: &Confidential1Key,
-) -> Result<XChaCha12Poly1305Writer<W>> {
+) -> Result<CryptoStreamWriter<W>> {
     let salt = CryptoKey::random_salt();
     let key = confidential1_key.get_crypto_key(salt)?;
     let nonce = generate_nonce();
@@ -91,7 +90,7 @@ pub fn create_confidential1_writer<W: Write>(
 
     writer.write_all(&nonce).context("Failed to write nonce")?;
 
-    let writer = XChaCha12Poly1305Writer::new(writer, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
+    let writer = CryptoStreamWriter::new(writer, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
 
     Ok(writer)
 }

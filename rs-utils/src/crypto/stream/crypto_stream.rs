@@ -236,19 +236,13 @@ impl<InnerRead: Read> CryptoStreamReader<InnerRead> {
         let buffer_size =
             std::cmp::max(2, desired_chunks_count.unwrap_or_default()) * self.encrypted_chunk_size;
 
+        let mut chunk = vec![0u8; buffer_size];
+
         while self.encrypted_buffer.len() < buffer_size {
-            let start = self.encrypted_buffer.len();
-            let end = start + buffer_size;
+            let read_bytes = self.inner.read(&mut chunk)?;
 
-            // grow buffer to fit future data
-            self.encrypted_buffer.resize(end, 0);
-
-            let buf = &mut self.encrypted_buffer[start..end];
-
-            let read_bytes = self.inner.read(buf)?;
-
-            // shrink buffer if necessary
-            self.encrypted_buffer.truncate(start + read_bytes);
+            self.encrypted_buffer
+                .extend_from_slice(&chunk[0..read_bytes]);
 
             if read_bytes == 0 {
                 self.is_finished = true;

@@ -59,14 +59,17 @@ impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
     fn encrypt_and_write_chunks(&mut self) -> std::io::Result<()> {
         // leave last chunk for the .finish() call
         while self.buffer.len() > self.chunk_size {
-            let chunk = self.buffer.drain(0..self.chunk_size).collect::<Vec<_>>();
+            let chunk = &self.buffer[0..self.chunk_size];
 
             let encrypted_chunk = self
                 .encryptor
-                .encrypt_next(chunk.as_slice())
+                .encrypt_next(chunk)
                 .map_err(|err| std::io::Error::other(anyhow!("Failed to encrypt chunk: {err}")))?;
 
             self.inner.write_all(&encrypted_chunk)?;
+
+            // remove the chunk from the buffer
+            self.buffer.drain(0..self.chunk_size);
         }
 
         Ok(())
@@ -149,19 +152,25 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
         }
 
         let buffer_size = self.encrypted_chunk_size * 2;
-        let mut chunk = vec![0u8; buffer_size];
 
         while self.encrypted_buffer.len() < buffer_size {
-            // TODO read directly into encrypted_buffer
-            let read_bytes = self.inner.read(&mut chunk)?;
+            let start = self.encrypted_buffer.len();
+            let end = start + buffer_size;
+
+            // grow buffer
+            self.encrypted_buffer.resize(end, 0);
+
+            let mut buf = &mut self.encrypted_buffer[start..end];
+
+            let read_bytes = self.inner.read(&mut buf)?;
+
+            // shrink buffer if necessary
+            self.encrypted_buffer.truncate(start + read_bytes);
 
             if read_bytes == 0 {
                 self.is_finished = true;
                 break;
             }
-
-            self.encrypted_buffer
-                .extend_from_slice(&chunk[0..read_bytes]);
         }
 
         Ok(())
@@ -199,10 +208,7 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
                 return Ok(());
             }
 
-            let encrypted_chunk = self
-                .encrypted_buffer
-                .drain(0..self.encrypted_chunk_size)
-                .collect::<Vec<_>>();
+            let encrypted_chunk = &self.encrypted_buffer[0..self.encrypted_chunk_size];
 
             let decryptor = self
                 .decryptor
@@ -210,8 +216,11 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
                 .expect("decryptor must be available");
 
             let decrypted_chunk = decryptor
-                .decrypt_next(encrypted_chunk.as_slice())
+                .decrypt_next(encrypted_chunk)
                 .map_err(|err| std::io::Error::other(anyhow!("Failed to decrypt chunk: {err}")))?;
+
+            // remove the chunk from the buffer
+            self.encrypted_buffer.drain(0..self.encrypted_chunk_size);
 
             self.decrypted_buffer.extend_from_slice(&decrypted_chunk);
         }

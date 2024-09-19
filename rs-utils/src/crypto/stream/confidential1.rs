@@ -8,18 +8,18 @@ use anyhow::{ensure, Context, Result};
 
 use crate::{
     crypto::crypto_key::{CryptoKey, Salt, SALT_SIZE},
-    SecretBytes,
+    new_random_crypto_byte_array, SecretBytes,
 };
 
 use super::crypto_stream::{
-    generate_nonce, get_encrypted_stream_size, CryptoStreamReader, CryptoStreamWriter, NONCE_SIZE,
+    get_encrypted_stream_size, CryptoStreamReader, CryptoStreamWriter, X_CHACHA_NONCE_SIZE,
 };
 
 pub const CONFIDENTIAL1_MAGIC_STRING: &str = "CONFIDENTIAL-1";
 pub const CONFIDENTIAL1_CHUNK_SIZE: usize = 64 * 1024; // 64KB like in AGE crypto format
 
 pub const CONFIDENTIAL1_HEADER_SIZE: usize =
-    CONFIDENTIAL1_MAGIC_STRING.as_bytes().len() + SALT_SIZE + NONCE_SIZE;
+    CONFIDENTIAL1_MAGIC_STRING.as_bytes().len() + SALT_SIZE + X_CHACHA_NONCE_SIZE;
 
 pub enum Confidential1Key {
     Password(SecretBytes),
@@ -59,14 +59,14 @@ pub fn create_confidential1_reader(
         .read_exact(&mut salt)
         .context("Failed to read salt")?;
 
-    let mut nonce = [0; NONCE_SIZE];
+    let mut nonce = [0; X_CHACHA_NONCE_SIZE];
     reader
         .read_exact(&mut nonce)
         .context("failed to read nonce")?;
 
     let key = confidential1_key.get_crypto_key(salt)?;
 
-    let confidential_reader = CryptoStreamReader::new_xchacha12poly1305(
+    let confidential_reader = CryptoStreamReader::new_xchacha20poly1305(
         reader,
         key.get(),
         &nonce,
@@ -82,7 +82,7 @@ pub fn create_confidential1_writer<W: Write>(
 ) -> Result<CryptoStreamWriter<W>> {
     let salt = CryptoKey::random_salt();
     let key = confidential1_key.get_crypto_key(salt)?;
-    let nonce = generate_nonce();
+    let nonce = new_random_crypto_byte_array();
 
     writer
         .write_all(CONFIDENTIAL1_MAGIC_STRING.as_bytes())
@@ -94,7 +94,7 @@ pub fn create_confidential1_writer<W: Write>(
 
     writer.write_all(&nonce).context("Failed to write nonce")?;
 
-    let writer = CryptoStreamWriter::new_xchacha12poly1305(
+    let writer = CryptoStreamWriter::new_xchacha20poly1305(
         writer,
         key.get(),
         &nonce,

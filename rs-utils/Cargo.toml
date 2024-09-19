@@ -38,7 +38,7 @@ chrono.workspace = true
 
 argon2 = "0.5.3" # derive secure cryptographic key from password & salt
 blake3 = "1.2" # fast crypto hash, PBKDF, HMAC
-chacha20poly1305 = { version = "0.10", features = ["stream", "reduced-round"]} # fast modern streaming authenticated cypher
+chacha20poly1305 = { version = "0.10", features = ["stream"] } # fast modern streaming authenticated cypher
 zeroize =  { version = "1.8", features = ["zeroize_derive"]}# replace secrets in memory with 0s after use
 rcgen = "0.13" # generate self-signed certificates
 pem = "*" # serialize TLS private key & certificate into PEM file

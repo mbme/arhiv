@@ -12,7 +12,8 @@ use crate::{
 };
 
 use super::xchacha12poly1305::{
-    generate_nonce, XChaCha12Poly1305Reader, XChaCha12Poly1305Writer, NONCE_SIZE,
+    generate_nonce, get_encrypted_stream_size, XChaCha12Poly1305Reader, XChaCha12Poly1305Writer,
+    NONCE_SIZE,
 };
 
 pub const CONFIDENTIAL1_MAGIC_STRING: &str = "CONFIDENTIAL-1";
@@ -95,16 +96,17 @@ pub fn create_confidential1_writer<W: Write>(
     Ok(writer)
 }
 
+pub fn get_confidential1_stream_size(data_size: usize) -> usize {
+    CONFIDENTIAL1_HEADER_SIZE + get_encrypted_stream_size(data_size, CONFIDENTIAL1_CHUNK_SIZE)
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
 
     use anyhow::Result;
 
-    use crate::{
-        crypto::stream::xchacha12poly1305::CHUNK_TAG_SIZE, generate_alpanumeric_string,
-        new_random_crypto_byte_array,
-    };
+    use crate::{generate_alpanumeric_string, new_random_crypto_byte_array};
 
     use super::*;
 
@@ -120,10 +122,9 @@ mod tests {
         let encrypted = {
             let mut writer = create_confidential1_writer(Vec::new(), &key)?;
             writer.write_all(data.as_bytes())?;
-            writer.finalize()?
+            writer.finish()?
         };
-        let expected_len =
-            CONFIDENTIAL1_HEADER_SIZE + 2 * (CONFIDENTIAL1_CHUNK_SIZE + CHUNK_TAG_SIZE);
+        let expected_len = get_confidential1_stream_size(data.len());
 
         assert_eq!(encrypted.len(), expected_len);
 

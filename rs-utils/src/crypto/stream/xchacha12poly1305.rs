@@ -24,6 +24,14 @@ pub fn generate_nonce() -> Nonce {
     new_random_crypto_byte_array()
 }
 
+pub fn get_encrypted_chunks_count(data_size: usize, chunk_size: usize) -> usize {
+    (data_size as f64 / chunk_size as f64).ceil() as usize
+}
+
+pub fn get_encrypted_stream_size(data_size: usize, chunk_size: usize) -> usize {
+    data_size + get_encrypted_chunks_count(data_size, chunk_size) * CHUNK_TAG_SIZE
+}
+
 /// The original “Rogaway-flavored” STREAM as described in the paper "Online Authenticated-Encryption and its Nonce-Reuse Misuse-Resistance".
 /// Uses a 32-bit big endian counter and 1-byte “last block” flag stored as the last 5-bytes of the AEAD nonce.
 pub struct XChaCha12Poly1305Writer<InnerWrite: Write> {
@@ -49,7 +57,7 @@ impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
     }
 
     fn encrypt_and_write_chunks(&mut self) -> std::io::Result<()> {
-        // leave last chunk for the .finalize() call
+        // leave last chunk for the .finish() call
         while self.buffer.len() > self.chunk_size {
             let chunk = self.buffer.drain(0..self.chunk_size).collect::<Vec<_>>();
 
@@ -64,8 +72,8 @@ impl<InnerWrite: Write> XChaCha12Poly1305Writer<InnerWrite> {
         Ok(())
     }
 
-    /// NOTE: finalize **MUST** be called to correctly complete the encryption
-    pub fn finalize(mut self) -> Result<InnerWrite> {
+    /// NOTE: finish() **MUST** be called to correctly complete the encryption
+    pub fn finish(mut self) -> Result<InnerWrite> {
         self.encrypt_and_write_chunks()?;
 
         let encrypted_chunk = self
@@ -257,8 +265,6 @@ mod tests {
     use super::*;
 
     fn encrypt_decrypt(original_data: &[u8], chunk_size: usize) -> Result<()> {
-        let chunks_count = (original_data.len() as f64 / chunk_size as f64).ceil() as usize;
-
         let key = [0; KEY_SIZE];
         let nonce = new_random_crypto_byte_array();
 
@@ -271,15 +277,15 @@ mod tests {
                 writer.write_all(chunk)?;
             }
 
-            let mut inner = writer.finalize()?;
+            let mut inner = writer.finish()?;
 
             inner.set_position(0);
 
             inner
         };
 
-        let overhead = encrypted_data.get_ref().len() - original_data.len();
-        assert_eq!(overhead, chunks_count * CHUNK_TAG_SIZE);
+        let encrypted_size = get_encrypted_stream_size(original_data.len(), chunk_size);
+        assert_eq!(encrypted_data.get_ref().len(), encrypted_size);
 
         let decrypted_data = {
             let mut reader = XChaCha12Poly1305Reader::new(encrypted_data, &key, &nonce, chunk_size);
@@ -349,7 +355,7 @@ ok go"#;
             let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, chunk_size);
             writer.write_all(data.as_bytes())?;
 
-            writer.finalize()?
+            writer.finish()?
         };
 
         let mut reader =
@@ -382,7 +388,7 @@ ok go"#;
             let mut writer = XChaCha12Poly1305Writer::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
             writer.write_all(data.as_bytes())?;
 
-            writer.finalize()?
+            writer.finish()?
         };
 
         let mut reader =

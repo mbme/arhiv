@@ -104,7 +104,7 @@ pub fn read_container_lines(
 }
 
 pub fn write_container_lines<'a>(
-    mut writer: impl Write,
+    mut writer: &mut impl Write,
     index: &LineIndex,
     lines: impl Iterator<Item = &'a str>,
 ) -> Result<()> {

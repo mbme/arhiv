@@ -111,6 +111,7 @@ pub struct XChaCha12Poly1305Reader<InnerRead: Read> {
     encrypted_buffer: Vec<u8>,
     decrypted_buffer: Vec<u8>,
     is_finished: bool,
+    chunk_size: usize,
     encrypted_chunk_size: usize,
 }
 
@@ -128,6 +129,7 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
             encrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
             decrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
             is_finished: false,
+            chunk_size,
             encrypted_chunk_size,
         }
     }
@@ -146,18 +148,23 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
         len
     }
 
-    fn fill_encrypted_buffer(&mut self) -> std::io::Result<()> {
+    fn fill_encrypted_buffer(
+        &mut self,
+        desired_chunks_count: Option<usize>,
+    ) -> std::io::Result<()> {
         if self.is_finished {
             return Ok(());
         }
 
-        let buffer_size = self.encrypted_chunk_size * 2;
+        // read at least 2 chunks or more to be able to determine the last chunk
+        let buffer_size =
+            std::cmp::max(2, desired_chunks_count.unwrap_or_default()) * self.encrypted_chunk_size;
 
         while self.encrypted_buffer.len() < buffer_size {
             let start = self.encrypted_buffer.len();
             let end = start + buffer_size;
 
-            // grow buffer
+            // grow buffer to fit future data
             self.encrypted_buffer.resize(end, 0);
 
             let buf = &mut self.encrypted_buffer[start..end];
@@ -224,12 +231,6 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
 
             self.decrypted_buffer.extend_from_slice(&decrypted_chunk);
         }
-
-        // TODO benchmark this
-        // let chunk = self
-        //     .encrypted_buffer
-        //     .split_off(X_CHACHA_12_POLY_1305_ENCRYPTED_CHUNK_SIZE);
-        // let chunk = std::mem::replace(&mut self.encrypted_buffer, chunk);
     }
 }
 
@@ -240,8 +241,11 @@ impl<InnerRead: Read> Read for XChaCha12Poly1305Reader<InnerRead> {
             return Ok(len);
         }
 
-        // TODO try to read (buf.len() / chunk_size).ceil() chunks?
-        self.fill_encrypted_buffer()?;
+        // attempt to read enough chunks to fill the whole buf
+        let desired_chunks_count =
+            (buf.len() - self.decrypted_buffer.len()).div_ceil(self.chunk_size);
+        self.fill_encrypted_buffer(Some(desired_chunks_count))?;
+
         self.decrypt_buffered_data()?;
 
         let len = self.feed_decrypted_data(buf);
@@ -252,7 +256,7 @@ impl<InnerRead: Read> Read for XChaCha12Poly1305Reader<InnerRead> {
 
 impl<InnerRead: Read> BufRead for XChaCha12Poly1305Reader<InnerRead> {
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
-        self.fill_encrypted_buffer()?;
+        self.fill_encrypted_buffer(None)?;
         self.decrypt_buffered_data()?;
 
         Ok(&self.decrypted_buffer)

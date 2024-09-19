@@ -108,6 +108,8 @@ pub fn write_container_lines<'a>(
     index: &LineIndex,
     lines: impl Iterator<Item = &'a str>,
 ) -> Result<()> {
+    // false positive clippy lint
+    #[allow(clippy::needless_borrows_for_generic_args)]
     serde_json::to_writer(&mut writer, &index)?;
 
     let mut lines_count = 0;

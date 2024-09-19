@@ -160,9 +160,9 @@ impl<InnerRead: Read> XChaCha12Poly1305Reader<InnerRead> {
             // grow buffer
             self.encrypted_buffer.resize(end, 0);
 
-            let mut buf = &mut self.encrypted_buffer[start..end];
+            let buf = &mut self.encrypted_buffer[start..end];
 
-            let read_bytes = self.inner.read(&mut buf)?;
+            let read_bytes = self.inner.read(buf)?;
 
             // shrink buffer if necessary
             self.encrypted_buffer.truncate(start + read_bytes);

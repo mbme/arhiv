@@ -32,21 +32,87 @@ pub fn get_encrypted_stream_size(data_size: usize, chunk_size: usize) -> usize {
     data_size + get_encrypted_chunks_count(data_size, chunk_size) * CHUNK_TAG_SIZE
 }
 
+pub enum Encryptor {
+    XChaCha12Poly1305(EncryptorBE32<XChaCha12Poly1305>),
+}
+
+impl Encryptor {
+    pub fn new_xchacha12poly1305(key: &Key, nonce: &Nonce) -> Self {
+        let aead = XChaCha12Poly1305::new(key.into());
+        let encryptor = EncryptorBE32::from_aead(aead, nonce.into());
+
+        Self::XChaCha12Poly1305(encryptor)
+    }
+
+    pub fn encrypt_next(&mut self, chunk: &[u8]) -> std::io::Result<Vec<u8>> {
+        match self {
+            Encryptor::XChaCha12Poly1305(encryptor) => encryptor
+                .encrypt_next(chunk)
+                .map_err(|err| std::io::Error::other(anyhow!("Failed to encrypt chunk: {err}"))),
+        }
+    }
+
+    pub fn encrypt_last(self, chunk: &[u8]) -> std::io::Result<Vec<u8>> {
+        match self {
+            Encryptor::XChaCha12Poly1305(encryptor) => {
+                encryptor.encrypt_last(chunk).map_err(|err| {
+                    std::io::Error::other(anyhow!("Failed to encrypt last chunk: {err}"))
+                })
+            }
+        }
+    }
+}
+
+pub enum Decryptor {
+    XChaCha12Poly1305(Option<DecryptorBE32<XChaCha12Poly1305>>),
+}
+
+impl Decryptor {
+    pub fn new_xchacha12poly1305(key: &Key, nonce: &Nonce) -> Self {
+        let aead = XChaCha12Poly1305::new(key.into());
+        let decryptor = DecryptorBE32::from_aead(aead, nonce.into());
+
+        Self::XChaCha12Poly1305(Some(decryptor))
+    }
+
+    pub fn decrypt_next(&mut self, chunk: &[u8]) -> std::io::Result<Vec<u8>> {
+        match self {
+            Decryptor::XChaCha12Poly1305(Some(decryptor)) => decryptor
+                .decrypt_next(chunk)
+                .map_err(|err| std::io::Error::other(anyhow!("Failed to decrypt chunk: {err}"))),
+            Decryptor::XChaCha12Poly1305(None) => {
+                Err(std::io::Error::other(anyhow!("Decryptor not available")))
+            }
+        }
+    }
+
+    pub fn decrypt_last(&mut self, chunk: &[u8]) -> std::io::Result<Vec<u8>> {
+        match self {
+            Decryptor::XChaCha12Poly1305(decryptor) => {
+                if let Some(decryptor) = decryptor.take() {
+                    decryptor.decrypt_last(chunk).map_err(|err| {
+                        std::io::Error::other(anyhow!("Failed to decrypt last chunk: {err}"))
+                    })
+                } else {
+                    Err(std::io::Error::other(anyhow!("Decryptor not available")))
+                }
+            }
+        }
+    }
+}
+
 /// The original “Rogaway-flavored” STREAM as described in the paper "Online Authenticated-Encryption and its Nonce-Reuse Misuse-Resistance".
 /// Uses a 32-bit big endian counter and 1-byte “last block” flag stored as the last 5-bytes of the AEAD nonce.
 pub struct CryptoStreamWriter<InnerWrite: Write> {
     inner: InnerWrite,
-    encryptor: EncryptorBE32<XChaCha12Poly1305>,
+    encryptor: Encryptor,
     buffer: Vec<u8>,
     chunk_size: usize,
 }
 
 impl<InnerWrite: Write> CryptoStreamWriter<InnerWrite> {
-    pub fn new(inner: InnerWrite, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
+    pub fn new(inner: InnerWrite, encryptor: Encryptor, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
-
-        let aead = XChaCha12Poly1305::new(key.into());
-        let encryptor = EncryptorBE32::from_aead(aead, nonce.into());
 
         Self {
             inner,
@@ -56,15 +122,23 @@ impl<InnerWrite: Write> CryptoStreamWriter<InnerWrite> {
         }
     }
 
+    pub fn new_xchacha12poly1305(
+        inner: InnerWrite,
+        key: &Key,
+        nonce: &Nonce,
+        chunk_size: usize,
+    ) -> Self {
+        let encryptor = Encryptor::new_xchacha12poly1305(key, nonce);
+
+        Self::new(inner, encryptor, chunk_size)
+    }
+
     fn encrypt_and_write_chunks(&mut self) -> std::io::Result<()> {
         // leave last chunk for the .finish() call
         while self.buffer.len() > self.chunk_size {
             let chunk = &self.buffer[0..self.chunk_size];
 
-            let encrypted_chunk = self
-                .encryptor
-                .encrypt_next(chunk)
-                .map_err(|err| std::io::Error::other(anyhow!("Failed to encrypt chunk: {err}")))?;
+            let encrypted_chunk = self.encryptor.encrypt_next(chunk)?;
 
             self.inner.write_all(&encrypted_chunk)?;
 
@@ -79,10 +153,7 @@ impl<InnerWrite: Write> CryptoStreamWriter<InnerWrite> {
     pub fn finish(mut self) -> Result<InnerWrite> {
         self.encrypt_and_write_chunks()?;
 
-        let encrypted_chunk = self
-            .encryptor
-            .encrypt_last(self.buffer.as_slice())
-            .map_err(|err| std::io::Error::other(anyhow!("Failed to encrypt last chunk: {err}")))?;
+        let encrypted_chunk = self.encryptor.encrypt_last(self.buffer.as_slice())?;
 
         self.inner.write_all(&encrypted_chunk)?;
         self.inner.flush()?;
@@ -107,7 +178,7 @@ impl<InnerWrite: Write> Write for CryptoStreamWriter<InnerWrite> {
 
 pub struct CryptoStreamReader<InnerRead: Read> {
     inner: InnerRead,
-    decryptor: Option<DecryptorBE32<XChaCha12Poly1305>>,
+    decryptor: Decryptor,
     encrypted_buffer: Vec<u8>,
     decrypted_buffer: Vec<u8>,
     is_finished: bool,
@@ -116,22 +187,31 @@ pub struct CryptoStreamReader<InnerRead: Read> {
 }
 
 impl<InnerRead: Read> CryptoStreamReader<InnerRead> {
-    pub fn new(inner: InnerRead, key: &Key, nonce: &Nonce, chunk_size: usize) -> Self {
+    pub fn new(inner: InnerRead, decryptor: Decryptor, chunk_size: usize) -> Self {
         assert!(chunk_size > 0, "chunk size must not be 0");
 
-        let aead = XChaCha12Poly1305::new(key.into());
-        let decryptor = DecryptorBE32::from_aead(aead, nonce.into());
-
         let encrypted_chunk_size = chunk_size + CHUNK_TAG_SIZE;
+
         Self {
             inner,
-            decryptor: Some(decryptor),
+            decryptor,
             encrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
             decrypted_buffer: Vec::with_capacity(encrypted_chunk_size * 2),
             is_finished: false,
             chunk_size,
             encrypted_chunk_size,
         }
+    }
+
+    pub fn new_xchacha12poly1305(
+        inner: InnerRead,
+        key: &Key,
+        nonce: &Nonce,
+        chunk_size: usize,
+    ) -> Self {
+        let decryptor = Decryptor::new_xchacha12poly1305(key, nonce);
+
+        Self::new(inner, decryptor, chunk_size)
     }
 
     fn feed_decrypted_data(&mut self, buf: &mut [u8]) -> usize {
@@ -198,16 +278,9 @@ impl<InnerRead: Read> CryptoStreamReader<InnerRead> {
             }
 
             if is_last_chunk {
-                let last_decryptor = self
+                let decrypted_chunk = self
                     .decryptor
-                    .take()
-                    .expect("decryptor must be available for last chunk");
-
-                let decrypted_chunk = last_decryptor
-                    .decrypt_last(self.encrypted_buffer.as_slice())
-                    .map_err(|err| {
-                        std::io::Error::other(anyhow!("Failed to decrypt last chunk: {err}"))
-                    })?;
+                    .decrypt_last(self.encrypted_buffer.as_slice())?;
 
                 self.decrypted_buffer.extend_from_slice(&decrypted_chunk);
                 self.encrypted_buffer.clear();
@@ -217,14 +290,7 @@ impl<InnerRead: Read> CryptoStreamReader<InnerRead> {
 
             let encrypted_chunk = &self.encrypted_buffer[0..self.encrypted_chunk_size];
 
-            let decryptor = self
-                .decryptor
-                .as_mut()
-                .expect("decryptor must be available");
-
-            let decrypted_chunk = decryptor
-                .decrypt_next(encrypted_chunk)
-                .map_err(|err| std::io::Error::other(anyhow!("Failed to decrypt chunk: {err}")))?;
+            let decrypted_chunk = self.decryptor.decrypt_next(encrypted_chunk)?;
 
             // remove the chunk from the buffer
             self.encrypted_buffer.drain(0..self.encrypted_chunk_size);
@@ -284,7 +350,8 @@ mod tests {
         let encrypted_data = {
             let data = Cursor::new(Vec::new());
 
-            let mut writer = CryptoStreamWriter::new(data, &key, &nonce, chunk_size);
+            let mut writer =
+                CryptoStreamWriter::new_xchacha12poly1305(data, &key, &nonce, chunk_size);
 
             for chunk in original_data.chunks(100) {
                 writer.write_all(chunk)?;
@@ -301,7 +368,8 @@ mod tests {
         assert_eq!(encrypted_data.get_ref().len(), encrypted_size);
 
         let decrypted_data = {
-            let mut reader = CryptoStreamReader::new(encrypted_data, &key, &nonce, chunk_size);
+            let mut reader =
+                CryptoStreamReader::new_xchacha12poly1305(encrypted_data, &key, &nonce, chunk_size);
 
             let mut data = Vec::new();
 
@@ -365,14 +433,19 @@ ok go"#;
         let nonce = new_random_crypto_byte_array();
         let chunk_size = 5;
         let encrypted_data = {
-            let mut writer = CryptoStreamWriter::new(Vec::new(), &key, &nonce, chunk_size);
+            let mut writer =
+                CryptoStreamWriter::new_xchacha12poly1305(Vec::new(), &key, &nonce, chunk_size);
             writer.write_all(data.as_bytes())?;
 
             writer.finish()?
         };
 
-        let mut reader =
-            CryptoStreamReader::new(encrypted_data.as_slice(), &key, &nonce, chunk_size);
+        let mut reader = CryptoStreamReader::new_xchacha12poly1305(
+            encrypted_data.as_slice(),
+            &key,
+            &nonce,
+            chunk_size,
+        );
 
         let mut line = String::new();
         reader.read_line(&mut line)?;
@@ -398,14 +471,19 @@ ok go"#;
         let key = [0; KEY_SIZE];
         let nonce = new_random_crypto_byte_array();
         let encrypted_data = {
-            let mut writer = CryptoStreamWriter::new(Vec::new(), &key, &nonce, CHUNK_SIZE);
+            let mut writer =
+                CryptoStreamWriter::new_xchacha12poly1305(Vec::new(), &key, &nonce, CHUNK_SIZE);
             writer.write_all(data.as_bytes())?;
 
             writer.finish()?
         };
 
-        let mut reader =
-            CryptoStreamReader::new(encrypted_data.as_slice(), &key, &nonce, CHUNK_SIZE);
+        let mut reader = CryptoStreamReader::new_xchacha12poly1305(
+            encrypted_data.as_slice(),
+            &key,
+            &nonce,
+            CHUNK_SIZE,
+        );
 
         let mut line = String::new();
         reader.read_line(&mut line)?;

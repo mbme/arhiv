@@ -66,8 +66,12 @@ pub fn create_confidential1_reader(
 
     let key = confidential1_key.get_crypto_key(salt)?;
 
-    let confidential_reader =
-        CryptoStreamReader::new(reader, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
+    let confidential_reader = CryptoStreamReader::new_xchacha12poly1305(
+        reader,
+        key.get(),
+        &nonce,
+        CONFIDENTIAL1_CHUNK_SIZE,
+    );
 
     Ok(confidential_reader)
 }
@@ -90,7 +94,12 @@ pub fn create_confidential1_writer<W: Write>(
 
     writer.write_all(&nonce).context("Failed to write nonce")?;
 
-    let writer = CryptoStreamWriter::new(writer, key.get(), &nonce, CONFIDENTIAL1_CHUNK_SIZE);
+    let writer = CryptoStreamWriter::new_xchacha12poly1305(
+        writer,
+        key.get(),
+        &nonce,
+        CONFIDENTIAL1_CHUNK_SIZE,
+    );
 
     Ok(writer)
 }

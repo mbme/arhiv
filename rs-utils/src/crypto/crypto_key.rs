@@ -1,7 +1,8 @@
 use anyhow::{anyhow, ensure, Result};
 use argon2::{Argon2, Params};
+use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::new_random_crypto_byte_array;
@@ -9,6 +10,7 @@ use crate::new_random_crypto_byte_array;
 use super::SecretBytes;
 
 type HmacSha256 = Hmac<Sha256>;
+type HkdfSha256 = Hkdf<Sha256>;
 
 pub const KEY_SIZE: usize = 32;
 pub const SALT_SIZE: usize = 32;
@@ -45,7 +47,13 @@ impl CryptoKey {
             salt_material.len()
         );
 
-        Ok(blake3::hash(salt_material).into())
+        let mut hasher = Sha256::new();
+
+        hasher.update(salt_material);
+
+        let hash = hasher.finalize();
+
+        Ok(hash.into())
     }
 
     /// Argon2id v19 (m=19456 (19 MiB), t=2, p=1)
@@ -80,7 +88,10 @@ impl CryptoKey {
         );
 
         // HKDF: derive subkey using crypto hash of the cryptographic key material & salt
-        let key = blake3::keyed_hash(&salt, crypto_material).into();
+        let hkdf = HkdfSha256::new(Some(&salt), crypto_material);
+        let mut key = [0u8; 32];
+        hkdf.expand(&[], &mut key)
+            .map_err(|err| anyhow!("Key derivation failed: {err}"))?;
 
         Ok(Self { key, salt })
     }

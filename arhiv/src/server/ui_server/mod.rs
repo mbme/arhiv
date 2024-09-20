@@ -24,8 +24,9 @@ use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 use baza::{entities::BLOBId, schema::create_attachment, sync::respond_with_blob, Credentials};
 use rs_utils::{
+    crypto_key::CryptoKey,
     http_server::{add_no_cache_headers, ServerError},
-    log, stream_to_file, AuthToken, SecretString, HMAC,
+    log, stream_to_file, AuthToken, SecretString,
 };
 
 use crate::{definitions::get_standard_schema, dto::APIRequest};
@@ -42,7 +43,7 @@ mod state;
 
 pub const UI_BASE_PATH: &str = "/ui";
 
-pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
+pub fn build_ui_router(ui_key: CryptoKey) -> Router<Arc<UIState>> {
     Router::new()
         .route("/", get(index_page))
         .route("/create", post(create_arhiv_handler))
@@ -54,7 +55,7 @@ pub fn build_ui_router(ui_hmac: HMAC) -> Router<Arc<UIState>> {
         .route("/*fileName", get(public_assets_handler))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(client_authenticator))
-        .layer(Extension(Arc::new(ui_hmac)))
+        .layer(Extension(Arc::new(ui_key)))
 }
 
 #[derive(Deserialize)]
@@ -237,7 +238,7 @@ struct AuthTokenQuery {
 async fn client_authenticator(
     jar: CookieJar,
     auth_token_query: Option<Query<AuthTokenQuery>>,
-    Extension(ui_hmac): Extension<Arc<HMAC>>,
+    Extension(ui_key): Extension<Arc<CryptoKey>>,
     request: Request,
     next: Next,
 ) -> Response {
@@ -274,7 +275,7 @@ async fn client_authenticator(
         return (StatusCode::UNAUTHORIZED, "AuthToken is missing").into_response();
     };
 
-    if let Err(err) = auth_token.assert_is_valid(&ui_hmac) {
+    if let Err(err) = auth_token.assert_is_valid(&ui_key) {
         log::warn!("Got unauthenticated client: {err}");
 
         return (StatusCode::UNAUTHORIZED, "Invalid AuthToken").into_response();

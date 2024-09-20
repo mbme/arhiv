@@ -11,7 +11,7 @@ use crate::{
     Baza,
 };
 
-use super::auth::{create_shared_network_verifier, ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
+use super::auth::{ServerCertVerifier, CLIENT_AUTH_TOKEN_HEADER};
 
 #[derive(Clone)]
 pub struct BazaClient {
@@ -25,13 +25,13 @@ impl BazaClient {
     pub fn new(url: &str, baza: &Baza) -> Result<Self> {
         let downloads_dir = baza.get_path_manager().downloads_dir.clone();
 
-        let hmac = create_shared_network_verifier(baza)?;
+        let key = baza.get_shared_key();
 
         let rpc_server_url = Url::from_str(url).context("failed to parse url")?;
 
         let mut default_headers = header::HeaderMap::new();
 
-        let auth_token = AuthToken::generate(&hmac).serialize();
+        let auth_token = AuthToken::generate(key).serialize();
         default_headers.insert(
             CLIENT_AUTH_TOKEN_HEADER,
             header::HeaderValue::from_str(&auth_token)?,
@@ -46,7 +46,7 @@ impl BazaClient {
             .build()
             .context("Failed to build HTTPS client")?;
 
-        let response_verifier = Arc::new(ServerCertVerifier::new(hmac));
+        let response_verifier = Arc::new(ServerCertVerifier::new(key.clone()));
 
         Ok(BazaClient {
             rpc_server_url,

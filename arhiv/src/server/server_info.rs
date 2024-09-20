@@ -4,7 +4,7 @@ use serde::Serialize;
 use baza::entities::Id;
 use rs_utils::AuthToken;
 
-use super::certificate::{generate_ui_key_verifier, read_or_generate_certificate};
+use super::certificate::{generate_ui_crypto_key, read_or_generate_certificate};
 use super::server_lock::ArhivServerLock;
 use super::ui_server::UI_BASE_PATH;
 use super::HEALTH_PATH;
@@ -32,7 +32,7 @@ impl ServerInfo {
 
         let certificate = read_or_generate_certificate(root_dir)?;
 
-        let ui_hmac = generate_ui_key_verifier(certificate.private_key_der)?;
+        let ui_hmac = generate_ui_crypto_key(certificate.private_key_der)?;
         let auth_token = AuthToken::generate_with_length(&ui_hmac, 32).serialize();
 
         Ok(Some(Self {

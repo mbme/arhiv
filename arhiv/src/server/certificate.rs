@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 
 use rs_utils::{
     crypto_key::CryptoKey, file_exists, log, must_create_file, now, SecretBytes, SecretString,
-    SelfSignedCertificate, HMAC,
+    SelfSignedCertificate,
 };
 
 pub fn read_or_generate_certificate(root_dir: &str) -> Result<SelfSignedCertificate> {
@@ -42,11 +42,9 @@ fn generate_certificate() -> Result<SelfSignedCertificate> {
     SelfSignedCertificate::new_x509(&certificate_id)
 }
 
-pub fn generate_ui_key_verifier(certificate_private_key: SecretBytes) -> Result<HMAC> {
-    let key = CryptoKey::derive_subkey(
+pub fn generate_ui_crypto_key(certificate_private_key: SecretBytes) -> Result<CryptoKey> {
+    CryptoKey::derive_subkey(
         certificate_private_key.as_bytes(),
         CryptoKey::salt_from_data("arhiv-server auth token")?,
-    )?;
-
-    HMAC::new(key)
+    )
 }

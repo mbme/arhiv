@@ -9,7 +9,7 @@ use axum::{
     routing::get,
     Router,
 };
-use certificate::generate_ui_key_verifier;
+use certificate::generate_ui_crypto_key;
 use reqwest::StatusCode;
 use tokio::sync::oneshot;
 
@@ -53,8 +53,8 @@ impl ArhivServer {
             middleware::from_fn_with_state(state.clone(), extract_baza_from_state),
         );
 
-        let ui_hmac = generate_ui_key_verifier(certificate.private_key_der.clone())?;
-        let ui_router = build_ui_router(ui_hmac).with_state(state.clone());
+        let ui_key = generate_ui_crypto_key(certificate.private_key_der.clone())?;
+        let ui_router = build_ui_router(ui_key).with_state(state.clone());
 
         let router = Router::new()
             .merge(rpc_router)

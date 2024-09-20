@@ -1,8 +1,14 @@
 use anyhow::{anyhow, ensure, Result};
 use argon2::{Argon2, Params};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use super::{new_random_crypto_byte_array, SecretBytes};
+use crate::new_random_crypto_byte_array;
+
+use super::SecretBytes;
+
+type HmacSha256 = Hmac<Sha256>;
 
 pub const KEY_SIZE: usize = 32;
 pub const SALT_SIZE: usize = 32;
@@ -89,14 +95,21 @@ impl CryptoKey {
         &self.salt
     }
 
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.key.len()
+    pub fn sign(&self, msg: &[u8]) -> [u8; 32] {
+        let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC can take key of any size");
+        mac.update(msg);
+
+        let result = mac.finalize();
+
+        result.into_bytes().into()
     }
 
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.key.is_empty()
+    pub fn verify_signature(&self, msg: &[u8], tag: &[u8]) -> bool {
+        let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC can take key of any size");
+
+        mac.update(msg);
+
+        mac.verify_slice(tag).is_ok()
     }
 }
 
@@ -112,6 +125,26 @@ mod tests {
         let key2 = CryptoKey::derive_from_password_with_argon2(&password, salt)?;
 
         assert_eq!(key1.get(), key2.get());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_hmac() -> Result<()> {
+        let key =
+            CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
+
+        let msg1 = b"message1";
+        let tag1 = key.sign(msg1);
+
+        let msg2 = b"message2";
+        let tag2 = key.sign(msg2);
+
+        assert!(key.verify_signature(msg1, &tag1));
+        assert!(key.verify_signature(msg2, &tag2));
+
+        assert!(!key.verify_signature(msg2, &tag1));
+        assert!(!key.verify_signature(msg1, &tag2));
 
         Ok(())
     }

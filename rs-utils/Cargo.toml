@@ -39,6 +39,7 @@ chrono.workspace = true
 argon2 = "0.5.3" # derive secure cryptographic key from password & salt
 blake3 = "1.2" # fast crypto hash, PBKDF, HMAC
 sha2 = "0.10" # popular crypto hash
+hmac = "0.12" # generic HMAC implementation
 chacha20poly1305 = { version = "0.10", features = ["stream"] } # fast modern streaming authenticated cypher
 zeroize =  { version = "1.8", features = ["zeroize_derive"]}# replace secrets in memory with 0s after use
 rcgen = "0.13" # generate self-signed certificates

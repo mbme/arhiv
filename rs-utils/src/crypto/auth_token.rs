@@ -2,7 +2,7 @@ use anyhow::{ensure, Result};
 
 use crate::{bytes_to_hex_string, generate_alpanumeric_string, hex_string_to_bytes};
 
-use super::HMAC;
+use super::crypto_key::CryptoKey;
 
 #[derive(Debug, PartialEq)]
 pub struct AuthToken {
@@ -11,14 +11,14 @@ pub struct AuthToken {
 }
 
 impl AuthToken {
-    pub fn generate(hmac: &HMAC) -> Self {
-        AuthToken::generate_with_length(hmac, 256)
+    pub fn generate(key: &CryptoKey) -> Self {
+        AuthToken::generate_with_length(key, 256)
     }
 
-    pub fn generate_with_length(hmac: &HMAC, plain_text_length: usize) -> Self {
+    pub fn generate_with_length(key: &CryptoKey, plain_text_length: usize) -> Self {
         let plain_text = generate_alpanumeric_string(plain_text_length);
 
-        let signature = hmac.sign(plain_text.as_bytes());
+        let signature = key.sign(plain_text.as_bytes());
 
         Self {
             plain_text,
@@ -26,8 +26,8 @@ impl AuthToken {
         }
     }
 
-    pub fn assert_is_valid(&self, hmac: &HMAC) -> Result<()> {
-        let is_valid = hmac.verify(self.plain_text.as_bytes(), &self.signature);
+    pub fn assert_is_valid(&self, key: &CryptoKey) -> Result<()> {
+        let is_valid = key.verify_signature(self.plain_text.as_bytes(), &self.signature);
 
         ensure!(is_valid, "Auth token is invalid");
 
@@ -60,15 +60,14 @@ impl AuthToken {
 mod tests {
     use anyhow::Result;
 
-    use crate::{crypto::crypto_key::CryptoKey, AuthToken, HMAC};
+    use crate::{crypto::crypto_key::CryptoKey, AuthToken};
 
     #[test]
     fn test_auth_token_parse_serialize() -> Result<()> {
         let key =
             CryptoKey::derive_subkey([0; 32].as_slice(), CryptoKey::salt_from_data("test1234")?)?;
-        let hmac = HMAC::new(key)?;
 
-        let token = AuthToken::generate(&hmac);
+        let token = AuthToken::generate(&key);
 
         let token_str = token.serialize();
 

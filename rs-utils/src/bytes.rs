@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use data_encoding::{BASE64, BASE64URL, HEXUPPER};
-use rand::{thread_rng, RngCore};
+use rand::{rngs::OsRng, thread_rng, RngCore};
 
 pub fn generate_bytes(n: usize) -> Vec<u8> {
     let mut bytes = vec![0u8; n];
@@ -8,6 +8,15 @@ pub fn generate_bytes(n: usize) -> Vec<u8> {
     let mut rng = thread_rng();
 
     rng.fill_bytes(&mut bytes);
+
+    bytes
+}
+
+#[must_use]
+pub fn new_random_crypto_byte_array<const SIZE: usize>() -> [u8; SIZE] {
+    let mut bytes = [0u8; SIZE];
+
+    OsRng.fill_bytes(&mut bytes);
 
     bytes
 }

@@ -3,7 +3,7 @@ use std::{fmt, ops::Deref};
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{get_file_hash_blake3, is_valid_base64, to_url_safe_base64};
+use rs_utils::{create_file_reader, get_file_hash_blake3, is_valid_base64, to_url_safe_base64};
 
 const BLOB_FILE_PREFIX: &str = "blake3-";
 const BLOB_ID_EXPECTED_LENGTH: usize = 44;
@@ -39,7 +39,8 @@ impl BLOBId {
     }
 
     pub fn from_file(file_path: &str) -> Result<BLOBId> {
-        let hash = get_file_hash_blake3(file_path).context("failed to calculate file hash")?;
+        let reader = create_file_reader(file_path)?;
+        let hash = get_file_hash_blake3(reader).context("failed to calculate file hash")?;
 
         let id = to_url_safe_base64(&hash);
 

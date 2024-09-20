@@ -1,13 +1,14 @@
 use std::{
-    env, fs,
-    io::ErrorKind,
+    env,
+    fs::{self, File},
+    io::{BufRead, BufReader, BufWriter, ErrorKind, Write},
     os::unix::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use crate::{bytes_to_hex_string, get_file_hash_blake3, get_string_hash_blake3};
+use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256};
 
 pub fn path_exists(path: impl AsRef<str>) -> bool {
     fs::metadata(path.as_ref()).is_ok()
@@ -332,7 +333,10 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
         let hash = if fs::metadata(&path)?.is_dir() {
             get_dir_checksum(&path)?
         } else {
-            bytes_to_hex_string(&get_file_hash_blake3(&path)?)
+            let file_reader = create_file_reader(&path)?;
+            let file_hash = get_file_hash_sha256(file_reader)?;
+
+            bytes_to_hex_string(&file_hash)
         };
 
         items.push((name, hash));
@@ -346,7 +350,7 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
         .flat_map(|item| vec![item.0, item.1])
         .collect();
 
-    Ok(get_string_hash_blake3(&result))
+    Ok(get_string_hash_sha256(&result))
 }
 
 pub fn create_dir_if_not_exist(dir_path: impl Into<PathBuf>) -> Result<()> {
@@ -390,6 +394,21 @@ pub fn must_create_file(file_path: &str) -> Result<fs::File> {
         .context("failed to create file")?;
 
     Ok(file)
+}
+
+pub fn create_file_reader(file_path: &str) -> Result<impl BufRead> {
+    let file = File::open(file_path)?;
+
+    let data_reader = BufReader::new(file);
+
+    Ok(data_reader)
+}
+
+pub fn create_file_writer(file_path: &str) -> Result<impl Write> {
+    let new_file = File::create(file_path)?;
+    let data_writer = BufWriter::new(new_file);
+
+    Ok(data_writer)
 }
 
 #[must_use]

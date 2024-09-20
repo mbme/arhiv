@@ -6,8 +6,8 @@ use rs_utils::{
     confidential1::{create_confidential1_reader, create_confidential1_writer, Confidential1Key},
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
-    format_bytes, generate_alpanumeric_string, new_random_crypto_byte_array, ContainerReader,
-    ContainerWriter, TempFile,
+    format_bytes, generate_alpanumeric_string, generate_bytes, get_file_hash_blake3,
+    get_file_hash_sha256, new_random_crypto_byte_array, ContainerReader, ContainerWriter, TempFile,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -182,6 +182,8 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
     ));
 
     let temp1 = TempFile::new();
+    temp1.create_file().unwrap();
+
     group.bench_function("confidential1_container_write", |b| {
         b.iter(|| {
             let mut writer = create_file_writer(&temp1.path).expect("must create file writer");
@@ -204,11 +206,36 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_hashes(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hashes");
+    group.sample_size(10);
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    let mut data = Cursor::new(generate_bytes(20 * 1024 * 1024));
+
+    group.bench_function("sha256", |b| {
+        b.iter(|| {
+            data.set_position(0);
+            black_box(get_file_hash_sha256(&mut data).expect("must hash"));
+        })
+    });
+
+    group.bench_function("blake3", |b| {
+        b.iter(|| {
+            data.set_position(0);
+            black_box(get_file_hash_blake3(&mut data).expect("must hash"));
+        })
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_text_container,
     bench_gz_container,
     bench_confidential1_container,
-    bench_confidential1_container_file
+    bench_confidential1_container_file,
+    bench_hashes
 );
 criterion_main!(benches);

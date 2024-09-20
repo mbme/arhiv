@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{Context, Result};
-use data_encoding::{BASE64, BASE64URL, HEXUPPER};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
 #[must_use]
 pub fn fuzzy_match(needle: &str, haystack: &str) -> bool {
@@ -57,9 +56,6 @@ pub fn capitalize<S: Into<String>>(s: S) -> String {
 
 #[must_use]
 pub fn generate_alpanumeric_string(length: usize) -> String {
-    use rand::distributions::Alphanumeric;
-    use rand::prelude::*;
-
     let mut rng = thread_rng();
 
     std::iter::repeat(())
@@ -96,36 +92,8 @@ pub fn generate_random_id() -> String {
     nanoid::nanoid!(14, &chars)
 }
 
-#[must_use]
-pub fn to_url_safe_base64(bytes: &[u8]) -> String {
-    BASE64URL.encode(bytes)
-}
-
-#[must_use]
-pub fn is_valid_base64(value: &str) -> bool {
-    BASE64URL.decode(value.as_bytes()).is_ok()
-}
-
-pub fn decode_base64(data: &str) -> Result<Vec<u8>> {
-    BASE64
-        .decode(data.as_bytes())
-        .context("Failed to decode base64 string")
-}
-
-pub fn bytes_to_hex_string(bytes: &[u8]) -> String {
-    HEXUPPER.encode(bytes)
-}
-
-pub fn hex_string_to_bytes(hex: &str) -> Result<Vec<u8>> {
-    HEXUPPER
-        .decode(hex.as_bytes())
-        .context("Failed to decode hex string")
-}
-
 #[cfg(test)]
 mod tests {
-    use rand::RngCore;
-
     use super::*;
 
     #[test]
@@ -167,16 +135,5 @@ mod tests {
             assert_eq!(*map.get(&6).unwrap(), 3);
             assert_eq!(*map.get(&8).unwrap(), 4);
         }
-    }
-
-    #[test]
-    fn test_hex_encode_decode() {
-        let mut data = [0u8; 150];
-        rand::thread_rng().fill_bytes(&mut data);
-
-        let result = bytes_to_hex_string(&data);
-        let result = hex_string_to_bytes(&result).unwrap();
-
-        assert_eq!(data, result.as_slice());
     }
 }

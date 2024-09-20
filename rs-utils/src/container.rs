@@ -1,32 +1,14 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
-};
+use std::io::{BufRead, BufReader, Write};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 
 type LineIndex = Vec<String>;
 
-pub fn create_file_reader(file_path: &str) -> Result<impl BufRead> {
-    let file = File::open(file_path)?;
-
-    let data_reader = BufReader::new(file);
-
-    Ok(data_reader)
-}
-
 pub fn create_gz_reader(reader: impl BufRead) -> impl BufRead {
     let gz_reader = GzDecoder::new(reader);
 
     BufReader::new(gz_reader)
-}
-
-pub fn create_file_writer(file_path: &str) -> Result<impl Write> {
-    let new_file = File::create(file_path)?;
-    let data_writer = BufWriter::new(new_file);
-
-    Ok(data_writer)
 }
 
 pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {

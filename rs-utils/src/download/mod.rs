@@ -9,7 +9,7 @@ use url::Url;
 
 use crate::{
     download::file_name_expert::DownloadFileNameExpert,
-    ensure_dir_exists, file_exists, get_downloads_dir, get_file_size, get_string_hash_blake3,
+    ensure_dir_exists, file_exists, get_downloads_dir, get_file_size, get_string_hash_sha256,
     http::{
         parse_content_disposition_header, parse_content_range_header, parse_content_type_header,
     },
@@ -48,7 +48,7 @@ impl Download {
     pub fn new_with_path(url: &str, downloads_dir: &str) -> Result<Self> {
         ensure_dir_exists(downloads_dir).context("dir for downloads doesn't exist")?;
 
-        let url_hash = get_string_hash_blake3(url);
+        let url_hash = get_string_hash_sha256(url);
         let completed_file_path = format!("{downloads_dir}/{url_hash}");
 
         // FIXME better check if download is complete

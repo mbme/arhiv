@@ -7,6 +7,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use gethostname::gethostname;
 use tokio::signal;
 
+pub use bytes::*;
 pub use container::*;
 pub use crypto::*;
 pub use download::*;
@@ -20,6 +21,7 @@ pub use string::*;
 pub use time::*;
 pub use tools::*;
 
+mod bytes;
 mod container;
 mod crypto;
 mod download;

@@ -1,14 +1,13 @@
 use std::io::{BufRead, Cursor, Write};
 
-use anyhow::Result;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rs_utils::{
     confidential1::{create_confidential1_reader, create_confidential1_writer, Confidential1Key},
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
-    format_bytes, generate_alpanumeric_string, new_random_crypto_byte_array, read_container_lines,
-    write_container_lines, TempFile,
+    format_bytes, generate_alpanumeric_string, new_random_crypto_byte_array, ContainerReader,
+    ContainerWriter, TempFile,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -16,7 +15,10 @@ fn container_write(mut writer: &mut impl Write, data: &[String]) {
         .map(|value| value.to_string())
         .collect::<Vec<_>>();
 
-    write_container_lines(&mut writer, &index, data.iter().map(|value| value.as_str()))
+    let writer = ContainerWriter::init(&mut writer, &index).expect("must create container writer");
+
+    writer
+        .write_lines(data.iter().map(|value| value.as_str()))
         .expect("must write");
 }
 
@@ -43,9 +45,9 @@ fn confidential1_container_write(writer: &mut impl Write, data: &[String], key: 
 }
 
 fn container_read(reader: impl BufRead) -> Vec<String> {
-    let (_index, iter) = read_container_lines(reader).expect("must read");
-
-    iter.collect::<Result<Vec<_>>>()
+    ContainerReader::init(reader)
+        .expect("must create container reader")
+        .read_all()
         .expect("must read all lines")
 }
 

@@ -84,53 +84,79 @@ where
     }
 }
 
-pub fn read_container_lines(
-    mut reader: impl BufRead,
-) -> Result<(LineIndex, impl Iterator<Item = Result<String>>)> {
-    let mut line = String::new();
-    reader.read_line(&mut line)?;
-
-    let index: LineIndex =
-        serde_json::from_str(&line).context("Failed to parse container index")?;
-
-    let lines = reader
-        .lines()
-        .enumerate()
-        .map(|(i, result)| result.with_context(|| format!("Failed to read line {i}")));
-
-    let lines = TakeExactly::new(lines, index.len());
-
-    Ok((index, lines))
+pub struct ContainerReader<R: BufRead> {
+    index: LineIndex,
+    reader: R,
 }
 
-pub fn write_container_lines<'a>(
-    mut writer: &mut impl Write,
-    index: &LineIndex,
-    lines: impl Iterator<Item = &'a str>,
-) -> Result<()> {
-    // false positive clippy lint
-    #[allow(clippy::needless_borrows_for_generic_args)]
-    serde_json::to_writer(&mut writer, &index)?;
+impl<R: BufRead> ContainerReader<R> {
+    pub fn init(mut reader: R) -> Result<Self> {
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
 
-    let mut lines_count = 0;
-    for (i, line) in lines.enumerate() {
-        ensure!(i < index.len(), "Expected only {} lines", index.len());
+        let index: LineIndex =
+            serde_json::from_str(&line).context("Failed to parse container index")?;
 
-        lines_count += 1;
-
-        writer.write_all(b"\n")?;
-        writer.write_all(line.as_bytes())?;
+        Ok(Self { index, reader })
     }
 
-    writer.flush()?;
+    pub fn get_index(&self) -> &LineIndex {
+        &self.index
+    }
 
-    ensure!(
-        lines_count == index.len(),
-        "Expected {} lines, got {lines_count}",
-        index.len()
-    );
+    pub fn iter_lines(self) -> impl Iterator<Item = Result<String>> {
+        let lines = self
+            .reader
+            .lines()
+            .enumerate()
+            .map(|(i, result)| result.with_context(|| format!("Failed to read line {i}")));
 
-    Ok(())
+        TakeExactly::new(lines, self.index.len())
+    }
+
+    pub fn read_all(self) -> Result<Vec<String>> {
+        self.iter_lines().collect()
+    }
+}
+
+pub struct ContainerWriter<W: Write> {
+    writer: W,
+    lines: usize,
+}
+
+impl<W: Write> ContainerWriter<W> {
+    pub fn init(mut writer: W, index: &LineIndex) -> Result<Self> {
+        // false positive clippy lint
+        #[allow(clippy::needless_borrows_for_generic_args)]
+        serde_json::to_writer(&mut writer, &index)?;
+
+        Ok(Self {
+            writer,
+            lines: index.len(),
+        })
+    }
+
+    pub fn write_lines<'a>(mut self, lines: impl Iterator<Item = &'a str>) -> Result<()> {
+        let mut lines_count = 0;
+        for (i, line) in lines.enumerate() {
+            ensure!(i < self.lines, "Expected only {} lines", self.lines);
+
+            lines_count += 1;
+
+            self.writer.write_all(b"\n")?;
+            self.writer.write_all(line.as_bytes())?;
+        }
+
+        self.writer.flush()?;
+
+        ensure!(
+            lines_count == self.lines,
+            "Expected {} lines, got {lines_count}",
+            self.lines
+        );
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -140,9 +166,9 @@ mod tests {
     use anyhow::Result;
     use rand::Rng;
 
-    use crate::create_gz_reader;
+    use crate::{create_gz_reader, ContainerWriter};
 
-    use super::{create_gz_writer, read_container_lines, write_container_lines};
+    use super::{create_gz_writer, ContainerReader};
 
     #[test]
     fn test_read_container_lines() -> Result<()> {
@@ -152,11 +178,10 @@ mod tests {
 2
 3"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let (index, iter) = read_container_lines(data)?;
+            let reader = ContainerReader::init(data)?;
+            assert_eq!(*reader.get_index(), vec!["1", "2", "3"]);
 
-            assert_eq!(index, vec!["1", "2", "3"]);
-
-            let new_lines = iter.collect::<Result<Vec<_>>>()?;
+            let new_lines = reader.read_all()?;
             assert_eq!(new_lines, vec!["1", "2", "3"]);
         }
 
@@ -165,9 +190,9 @@ mod tests {
 1
 2"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let (_index, iter) = read_container_lines(data)?;
+            let reader = ContainerReader::init(data)?;
 
-            assert!(iter.collect::<Result<Vec<_>>>().is_err());
+            assert!(reader.read_all().is_err());
         }
 
         {
@@ -177,9 +202,9 @@ mod tests {
 3
 4"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let (_index, iter) = read_container_lines(data)?;
+            let reader = ContainerReader::init(data)?;
 
-            assert!(iter.collect::<Result<Vec<_>>>().is_err());
+            assert!(reader.read_all().is_err());
         }
 
         Ok(())
@@ -192,7 +217,8 @@ mod tests {
 
             let lines = ["3", "2", "1"];
             let index = lines.iter().map(ToString::to_string).collect();
-            write_container_lines(&mut data, &index, lines.into_iter())?;
+            let writer = ContainerWriter::init(&mut data, &index)?;
+            writer.write_lines(lines.into_iter())?;
 
             let data = String::from_utf8(data.into_inner())?;
 
@@ -210,7 +236,8 @@ mod tests {
 
             let index = ["1", "2"].iter().map(ToString::to_string).collect();
             let lines = ["1", "2", "3"];
-            assert!(write_container_lines(&mut data, &index, lines.into_iter()).is_err());
+            let writer = ContainerWriter::init(&mut data, &index)?;
+            assert!(writer.write_lines(lines.into_iter()).is_err());
 
             let data = String::from_utf8(data.into_inner())?;
 
@@ -227,7 +254,8 @@ mod tests {
 
             let index = ["1", "2", "3"].iter().map(ToString::to_string).collect();
             let lines = ["1", "2"];
-            assert!(write_container_lines(&mut data, &index, lines.into_iter()).is_err());
+            let writer = ContainerWriter::init(&mut data, &index)?;
+            assert!(writer.write_lines(lines.into_iter()).is_err());
 
             let data = String::from_utf8(data.into_inner())?;
 
@@ -256,17 +284,18 @@ mod tests {
 
         {
             let iter = lines.iter().map(|value| value.as_str());
-            write_container_lines(&mut data, &lines, iter)?;
+            let writer = ContainerWriter::init(&mut data, &lines)?;
+            writer.write_lines(iter)?;
 
             data.set_position(0);
         }
 
         {
-            let (index, iter) = read_container_lines(&mut data)?;
+            let reader = ContainerReader::init(data)?;
 
-            assert_eq!(index, lines);
+            assert_eq!(*reader.get_index(), lines);
 
-            let new_lines = iter.collect::<Result<Vec<_>>>()?;
+            let new_lines = reader.iter_lines().collect::<Result<Vec<_>>>()?;
             assert_eq!(new_lines, lines);
         }
 
@@ -282,21 +311,23 @@ mod tests {
         {
             let iter = lines.iter().map(|value| value.as_str());
 
-            let mut writer = create_gz_writer(data);
-            write_container_lines(&mut writer, &lines, iter)?;
+            let mut gz_writer = create_gz_writer(data);
 
-            data = writer.finish()?;
+            let writer = ContainerWriter::init(&mut gz_writer, &lines)?;
+            writer.write_lines(iter)?;
+
+            data = gz_writer.finish()?;
 
             data.set_position(0);
         }
 
         {
-            let mut reader = create_gz_reader(&mut data);
-            let (index, iter) = read_container_lines(&mut reader)?;
+            let gz_reader = create_gz_reader(&mut data);
+            let reader = ContainerReader::init(gz_reader)?;
 
-            assert_eq!(index, lines);
+            assert_eq!(*reader.get_index(), lines);
 
-            let new_lines = iter.collect::<Result<Vec<_>>>()?;
+            let new_lines = reader.iter_lines().collect::<Result<Vec<_>>>()?;
             assert_eq!(new_lines, lines);
         }
 

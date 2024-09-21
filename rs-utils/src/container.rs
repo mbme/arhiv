@@ -3,9 +3,11 @@ use std::{
     io::{BufRead, BufReader, Write},
 };
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
+
+use crate::TakeExactly;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(transparent, deny_unknown_fields)]
@@ -73,57 +75,6 @@ pub fn create_gz_reader(reader: impl BufRead) -> impl BufRead {
 
 pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {
     GzEncoder::new(writer, Compression::fast())
-}
-
-struct TakeExactly<I> {
-    iter: I,
-    expected: usize,
-    count: usize,
-}
-
-impl<I> TakeExactly<I> {
-    fn new(iter: I, expected: usize) -> Self {
-        TakeExactly {
-            iter,
-            expected,
-            count: 0,
-        }
-    }
-}
-
-impl<I, V> Iterator for TakeExactly<I>
-where
-    I: Iterator<Item = Result<V>>,
-{
-    type Item = I::Item;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next_value = self.iter.next();
-
-        if let Some(next_value) = next_value {
-            self.count += 1;
-
-            if self.count > self.expected {
-                return Some(Err(anyhow!(
-                    "Expected {} items but got {}",
-                    self.expected,
-                    self.count
-                )));
-            }
-
-            Some(next_value)
-        } else {
-            if self.count < self.expected {
-                return Some(Err(anyhow!(
-                    "Expected {} items but got {}",
-                    self.expected,
-                    self.count
-                )));
-            }
-
-            None
-        }
-    }
 }
 
 pub struct ContainerReader<'i, R: BufRead> {

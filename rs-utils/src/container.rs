@@ -9,11 +9,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(transparent, deny_unknown_fields)]
-pub struct LineIndex<'a> {
+pub struct LinesIndex<'a> {
     index: Vec<Cow<'a, str>>,
 }
 
-impl<'a> LineIndex<'a> {
+impl<'a> LinesIndex<'a> {
     #[must_use]
     pub fn len(&self) -> usize {
         self.index.len()
@@ -25,7 +25,7 @@ impl<'a> LineIndex<'a> {
     }
 }
 
-impl<'a> From<&[&'a str]> for LineIndex<'a> {
+impl<'a> From<&[&'a str]> for LinesIndex<'a> {
     fn from(value: &[&'a str]) -> Self {
         let index = value.iter().map(|line| (*line).into()).collect();
 
@@ -33,7 +33,7 @@ impl<'a> From<&[&'a str]> for LineIndex<'a> {
     }
 }
 
-impl<'a> From<&'a [String]> for LineIndex<'a> {
+impl<'a> From<&'a [String]> for LinesIndex<'a> {
     fn from(value: &'a [String]) -> Self {
         let index = value.iter().map(|value| value.as_str().into()).collect();
 
@@ -41,13 +41,13 @@ impl<'a> From<&'a [String]> for LineIndex<'a> {
     }
 }
 
-impl<'a> From<&'a Vec<String>> for LineIndex<'a> {
+impl<'a> From<&'a Vec<String>> for LinesIndex<'a> {
     fn from(value: &'a Vec<String>) -> Self {
         value.as_slice().into()
     }
 }
 
-impl<'a> PartialEq<Vec<String>> for LineIndex<'a> {
+impl<'a> PartialEq<Vec<String>> for LinesIndex<'a> {
     fn eq(&self, other: &Vec<String>) -> bool {
         self.index
             .iter()
@@ -56,7 +56,7 @@ impl<'a> PartialEq<Vec<String>> for LineIndex<'a> {
     }
 }
 
-impl<'a> PartialEq<Vec<&str>> for LineIndex<'a> {
+impl<'a> PartialEq<Vec<&str>> for LinesIndex<'a> {
     fn eq(&self, other: &Vec<&str>) -> bool {
         self.index
             .iter()
@@ -127,7 +127,7 @@ where
 }
 
 pub struct ContainerReader<'i, R: BufRead> {
-    index: LineIndex<'i>,
+    index: LinesIndex<'i>,
     reader: R,
 }
 
@@ -136,13 +136,13 @@ impl<'i, R: BufRead> ContainerReader<'i, R> {
         let mut line = String::new();
         reader.read_line(&mut line)?;
 
-        let index: LineIndex =
+        let index: LinesIndex =
             serde_json::from_str(&line).context("Failed to parse container index")?;
 
         Ok(Self { index, reader })
     }
 
-    pub fn get_index(&self) -> &LineIndex {
+    pub fn get_index(&self) -> &LinesIndex {
         &self.index
     }
 
@@ -167,7 +167,7 @@ pub struct ContainerWriter<W: Write> {
 }
 
 impl<W: Write> ContainerWriter<W> {
-    pub fn init(mut writer: W, index: &LineIndex) -> Result<Self> {
+    pub fn init(mut writer: W, index: &LinesIndex) -> Result<Self> {
         // false positive clippy lint
         #[allow(clippy::needless_borrows_for_generic_args)]
         serde_json::to_writer(&mut writer, &index)?;
@@ -210,12 +210,12 @@ mod tests {
 
     use crate::{create_gz_reader, ContainerWriter};
 
-    use super::{create_gz_writer, ContainerReader, LineIndex};
+    use super::{create_gz_writer, ContainerReader, LinesIndex};
 
     #[test]
     fn test_line_index_serialization() -> Result<()> {
         let raw_index = r#"["1","2","3"]"#;
-        let index: LineIndex<'_> = serde_json::from_str(raw_index)?;
+        let index: LinesIndex<'_> = serde_json::from_str(raw_index)?;
 
         assert_eq!(index, vec!["1", "2", "3"]);
 

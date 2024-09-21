@@ -1,9 +1,69 @@
-use std::io::{BufRead, BufReader, Write};
+use std::{
+    borrow::Cow,
+    io::{BufRead, BufReader, Write},
+};
 
 use anyhow::{anyhow, ensure, Context, Result};
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
+use serde::{Deserialize, Serialize};
 
-type LineIndex = Vec<String>;
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(transparent, deny_unknown_fields)]
+pub struct LineIndex<'a> {
+    index: Vec<Cow<'a, str>>,
+}
+
+impl<'a> LineIndex<'a> {
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.index.len()
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl<'a> From<&[&'a str]> for LineIndex<'a> {
+    fn from(value: &[&'a str]) -> Self {
+        let index = value.iter().map(|line| (*line).into()).collect();
+
+        Self { index }
+    }
+}
+
+impl<'a> From<&'a [String]> for LineIndex<'a> {
+    fn from(value: &'a [String]) -> Self {
+        let index = value.iter().map(|value| value.as_str().into()).collect();
+
+        Self { index }
+    }
+}
+
+impl<'a> From<&'a Vec<String>> for LineIndex<'a> {
+    fn from(value: &'a Vec<String>) -> Self {
+        value.as_slice().into()
+    }
+}
+
+impl<'a> PartialEq<Vec<String>> for LineIndex<'a> {
+    fn eq(&self, other: &Vec<String>) -> bool {
+        self.index
+            .iter()
+            .map(|cow| cow.as_ref())
+            .eq(other.iter().map(String::as_str))
+    }
+}
+
+impl<'a> PartialEq<Vec<&str>> for LineIndex<'a> {
+    fn eq(&self, other: &Vec<&str>) -> bool {
+        self.index
+            .iter()
+            .map(|cow| cow.as_ref())
+            .eq(other.iter().copied())
+    }
+}
 
 pub fn create_gz_reader(reader: impl BufRead) -> impl BufRead {
     let gz_reader = GzDecoder::new(reader);
@@ -66,12 +126,12 @@ where
     }
 }
 
-pub struct ContainerReader<R: BufRead> {
-    index: LineIndex,
+pub struct ContainerReader<'i, R: BufRead> {
+    index: LineIndex<'i>,
     reader: R,
 }
 
-impl<R: BufRead> ContainerReader<R> {
+impl<'i, R: BufRead> ContainerReader<'i, R> {
     pub fn init(mut reader: R) -> Result<Self> {
         let mut line = String::new();
         reader.read_line(&mut line)?;
@@ -150,7 +210,21 @@ mod tests {
 
     use crate::{create_gz_reader, ContainerWriter};
 
-    use super::{create_gz_writer, ContainerReader};
+    use super::{create_gz_writer, ContainerReader, LineIndex};
+
+    #[test]
+    fn test_line_index_serialization() -> Result<()> {
+        let raw_index = r#"["1","2","3"]"#;
+        let index: LineIndex<'_> = serde_json::from_str(raw_index)?;
+
+        assert_eq!(index, vec!["1", "2", "3"]);
+
+        let serialized_index = serde_json::to_string(&index)?;
+
+        assert_eq!(serialized_index, raw_index);
+
+        Ok(())
+    }
 
     #[test]
     fn test_read_container_lines() -> Result<()> {
@@ -198,7 +272,7 @@ mod tests {
             let mut data = Cursor::new(Vec::new());
 
             let lines = ["3", "2", "1"];
-            let index = lines.iter().map(ToString::to_string).collect();
+            let index = lines.as_slice().into();
             let writer = ContainerWriter::init(&mut data, &index)?;
             writer.write_lines(lines.into_iter())?;
 
@@ -216,7 +290,7 @@ mod tests {
         {
             let mut data = Cursor::new(Vec::new());
 
-            let index = ["1", "2"].iter().map(ToString::to_string).collect();
+            let index = ["1", "2"].as_slice().into();
             let lines = ["1", "2", "3"];
             let writer = ContainerWriter::init(&mut data, &index)?;
             assert!(writer.write_lines(lines.into_iter()).is_err());
@@ -234,7 +308,7 @@ mod tests {
         {
             let mut data = Cursor::new(Vec::new());
 
-            let index = ["1", "2", "3"].iter().map(ToString::to_string).collect();
+            let index = ["1", "2", "3"].as_slice().into();
             let lines = ["1", "2"];
             let writer = ContainerWriter::init(&mut data, &index)?;
             assert!(writer.write_lines(lines.into_iter()).is_err());
@@ -266,7 +340,7 @@ mod tests {
 
         {
             let iter = lines.iter().map(|value| value.as_str());
-            let writer = ContainerWriter::init(&mut data, &lines)?;
+            let writer = ContainerWriter::init(&mut data, &(&lines).into())?;
             writer.write_lines(iter)?;
 
             data.set_position(0);
@@ -291,11 +365,10 @@ mod tests {
         let lines = gen_lines();
 
         {
+            let mut gz_writer = create_gz_writer(data);
             let iter = lines.iter().map(|value| value.as_str());
 
-            let mut gz_writer = create_gz_writer(data);
-
-            let writer = ContainerWriter::init(&mut gz_writer, &lines)?;
+            let writer = ContainerWriter::init(&mut gz_writer, &(&lines).into())?;
             writer.write_lines(iter)?;
 
             data = gz_writer.finish()?;

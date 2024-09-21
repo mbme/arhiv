@@ -15,7 +15,8 @@ fn container_write(mut writer: &mut impl Write, data: &[String]) {
         .map(|value| value.to_string())
         .collect::<Vec<_>>();
 
-    let writer = ContainerWriter::init(&mut writer, &index).expect("must create container writer");
+    let writer =
+        ContainerWriter::init(&mut writer, &(&index).into()).expect("must create container writer");
 
     writer
         .write_lines(data.iter().map(|value| value.as_str()))

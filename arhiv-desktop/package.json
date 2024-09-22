@@ -18,7 +18,7 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^31.0.2",
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.24.0",
     "tsx": "^4.5.0"
   }
 }

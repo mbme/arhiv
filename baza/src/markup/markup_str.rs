@@ -209,12 +209,11 @@ impl<'a> MarkupStr<'a> {
                             children: vec![],
                             range,
                         },
-                        Tag::HtmlBlock => {
-                            break;
-                        }
-                        Tag::MetadataBlock(_) => {
-                            break;
-                        }
+                        Tag::HtmlBlock => break,
+                        Tag::MetadataBlock(_) => break,
+                        Tag::DefinitionList => break,
+                        Tag::DefinitionListTitle => break,
+                        Tag::DefinitionListDefinition => break,
                     };
 
                     stack.push(el);

@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::HashMap,
     io::{BufRead, BufReader, Write},
 };
 
@@ -7,15 +8,41 @@ use anyhow::{ensure, Context, Result};
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 
-use crate::TakeExactly;
+use crate::{TakeExactly, ZipLongest};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub type Patch = HashMap<String, Option<String>>;
+
+pub type LineKey<'a> = Cow<'a, str>;
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(transparent, deny_unknown_fields)]
 pub struct LinesIndex<'a> {
-    index: Vec<Cow<'a, str>>,
+    index: Vec<LineKey<'a>>,
 }
 
 impl<'a> LinesIndex<'a> {
+    fn patch(self, patch: &Patch) -> Self {
+        let patched_index = self
+            .index
+            .into_iter()
+            .filter_map(|key| {
+                if let Some(patched_value) = patch.get(key.as_ref()) {
+                    if patched_value.is_some() {
+                        Some(key)
+                    } else {
+                        None
+                    }
+                } else {
+                    Some(key)
+                }
+            })
+            .collect();
+
+        Self {
+            index: patched_index,
+        }
+    }
+
     #[must_use]
     pub fn len(&self) -> usize {
         self.index.len()
@@ -97,24 +124,69 @@ impl<'i, R: BufRead> ContainerReader<'i, R> {
         &self.index
     }
 
-    pub fn iter_lines(self) -> impl Iterator<Item = Result<String>> {
-        let lines = self
+    pub fn into_lines_iter(self) -> impl Iterator<Item = Result<(LineKey<'i>, String)>> {
+        let index_len = self.index.len();
+
+        let index_iter = self.index.index.into_iter();
+        let lines_iter = self
             .reader
             .lines()
             .enumerate()
             .map(|(i, result)| result.with_context(|| format!("Failed to read line {i}")));
 
-        TakeExactly::new(lines, self.index.len())
+        let zipped = ZipLongest::new(index_iter, lines_iter).map(|(key, line)| {
+            let key = key.context("no key for line")?;
+            let line = line.context("no line for key")??;
+
+            Ok((key, line))
+        });
+
+        TakeExactly::new(zipped, index_len)
     }
 
     pub fn read_all(self) -> Result<Vec<String>> {
-        self.iter_lines().collect()
+        self.into_lines_iter()
+            .map(|result| result.map(|(_key, value)| value))
+            .collect()
+    }
+
+    pub fn patch<W: Write>(self, writer: W, mut patch: Patch) -> Result<()> {
+        let patched_index = self.index.clone().patch(&patch);
+        let iter = self.into_lines_iter();
+
+        let mut writer = ContainerWriter::init(writer, &patched_index)?;
+
+        let patched_iter = iter.filter_map(|result| {
+            let (key, value) = {
+                match result {
+                    Ok((key, value)) => (key, value),
+                    Err(err) => {
+                        return Some(Err(err));
+                    }
+                }
+            };
+
+            if let Some(patched_value) = patch.remove(key.as_ref()) {
+                patched_value.map(Ok)
+            } else {
+                Some(Ok(value))
+            }
+        });
+
+        for line in patched_iter {
+            let line = line?;
+
+            writer.write_line(&line)?;
+        }
+
+        writer.finish()
     }
 }
 
 pub struct ContainerWriter<W: Write> {
     writer: W,
-    lines: usize,
+    expected_lines_count: usize,
+    written_lines_count: usize,
 }
 
 impl<W: Write> ContainerWriter<W> {
@@ -125,27 +197,44 @@ impl<W: Write> ContainerWriter<W> {
 
         Ok(Self {
             writer,
-            lines: index.len(),
+            expected_lines_count: index.len(),
+            written_lines_count: 0,
         })
     }
 
     pub fn write_lines<'a>(mut self, lines: impl Iterator<Item = &'a str>) -> Result<()> {
-        let mut lines_count = 0;
-        for (i, line) in lines.enumerate() {
-            ensure!(i < self.lines, "Expected only {} lines", self.lines);
-
-            lines_count += 1;
-
-            self.writer.write_all(b"\n")?;
-            self.writer.write_all(line.as_bytes())?;
+        for line in lines {
+            self.write_line(line)?;
         }
 
+        self.finish()
+    }
+
+    pub fn write_line(&mut self, line: &str) -> Result<()> {
+        let new_lines_count = self.written_lines_count + 1;
+
+        ensure!(
+            new_lines_count <= self.expected_lines_count,
+            "Expected only {} lines",
+            self.expected_lines_count
+        );
+
+        self.writer.write_all(b"\n")?;
+        self.writer.write_all(line.as_bytes())?;
+
+        self.written_lines_count = new_lines_count;
+
+        Ok(())
+    }
+
+    pub fn finish(mut self) -> Result<()> {
         self.writer.flush()?;
 
         ensure!(
-            lines_count == self.lines,
-            "Expected {} lines, got {lines_count}",
-            self.lines
+            self.written_lines_count == self.expected_lines_count,
+            "Expected {} lines, got {}",
+            self.expected_lines_count,
+            self.written_lines_count,
         );
 
         Ok(())
@@ -161,7 +250,7 @@ mod tests {
 
     use crate::{create_gz_reader, ContainerWriter};
 
-    use super::{create_gz_writer, ContainerReader, LinesIndex};
+    use super::{create_gz_writer, ContainerReader, LinesIndex, Patch};
 
     #[test]
     fn test_line_index_serialization() -> Result<()> {
@@ -302,7 +391,7 @@ mod tests {
 
             assert_eq!(*reader.get_index(), lines);
 
-            let new_lines = reader.iter_lines().collect::<Result<Vec<_>>>()?;
+            let new_lines = reader.read_all()?;
             assert_eq!(new_lines, lines);
         }
 
@@ -333,8 +422,44 @@ mod tests {
 
             assert_eq!(*reader.get_index(), lines);
 
-            let new_lines = reader.iter_lines().collect::<Result<Vec<_>>>()?;
+            let new_lines = reader.read_all()?;
             assert_eq!(new_lines, lines);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_patch_container() -> Result<()> {
+        let mut data = Cursor::new(Vec::new());
+
+        {
+            let lines = ["3", "2", "1"];
+            let index = lines.as_slice().into();
+            let writer = ContainerWriter::init(&mut data, &index)?;
+            writer.write_lines(lines.into_iter())?;
+        }
+
+        {
+            data.set_position(0);
+
+            let reader = ContainerReader::init(&mut data)?;
+
+            let patch: Patch = [
+                ("3".to_string(), None),
+                ("1".to_string(), Some("3".to_string())),
+            ]
+            .into();
+
+            let mut patched_data = Cursor::new(Vec::new());
+            reader.patch(&mut patched_data, patch)?;
+
+            patched_data.set_position(0);
+
+            let reader = ContainerReader::init(&mut patched_data)?;
+
+            let new_lines = reader.read_all()?;
+            assert_eq!(new_lines, vec!["2", "3"]);
         }
 
         Ok(())

@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::HashMap,
     io::{BufRead, BufReader, Write},
 };
@@ -8,25 +7,28 @@ use anyhow::{ensure, Context, Result};
 use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 
-use crate::{TakeExactly, ZipLongest};
+use crate::{
+    confidential1::{create_confidential1_reader, create_confidential1_writer, Confidential1Key},
+    create_file_reader, create_file_writer, TakeExactly, ZipLongest,
+};
 
 pub type Patch = HashMap<String, Option<String>>;
 
-pub type LineKey<'a> = Cow<'a, str>;
+pub type LineKey = String;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(transparent, deny_unknown_fields)]
-pub struct LinesIndex<'a> {
-    index: Vec<LineKey<'a>>,
+pub struct LinesIndex {
+    index: Vec<LineKey>,
 }
 
-impl<'a> LinesIndex<'a> {
+impl LinesIndex {
     fn patch(self, patch: &Patch) -> Self {
         let patched_index = self
             .index
             .into_iter()
             .filter_map(|key| {
-                if let Some(patched_value) = patch.get(key.as_ref()) {
+                if let Some(patched_value) = patch.get(&key) {
                     if patched_value.is_some() {
                         Some(key)
                     } else {
@@ -54,7 +56,7 @@ impl<'a> LinesIndex<'a> {
     }
 }
 
-impl<'a> From<&[&'a str]> for LinesIndex<'a> {
+impl<'a> From<&[&'a str]> for LinesIndex {
     fn from(value: &[&'a str]) -> Self {
         let index = value.iter().map(|line| (*line).into()).collect();
 
@@ -62,34 +64,31 @@ impl<'a> From<&[&'a str]> for LinesIndex<'a> {
     }
 }
 
-impl<'a> From<&'a [String]> for LinesIndex<'a> {
-    fn from(value: &'a [String]) -> Self {
+impl From<&[String]> for LinesIndex {
+    fn from(value: &[String]) -> Self {
         let index = value.iter().map(|value| value.as_str().into()).collect();
 
         Self { index }
     }
 }
 
-impl<'a> From<&'a Vec<String>> for LinesIndex<'a> {
-    fn from(value: &'a Vec<String>) -> Self {
+impl From<&Vec<String>> for LinesIndex {
+    fn from(value: &Vec<String>) -> Self {
         value.as_slice().into()
     }
 }
 
-impl<'a> PartialEq<Vec<String>> for LinesIndex<'a> {
+impl PartialEq<Vec<String>> for LinesIndex {
     fn eq(&self, other: &Vec<String>) -> bool {
-        self.index
-            .iter()
-            .map(|cow| cow.as_ref())
-            .eq(other.iter().map(String::as_str))
+        self.index == *other
     }
 }
 
-impl<'a> PartialEq<Vec<&str>> for LinesIndex<'a> {
+impl PartialEq<Vec<&str>> for LinesIndex {
     fn eq(&self, other: &Vec<&str>) -> bool {
         self.index
             .iter()
-            .map(|cow| cow.as_ref())
+            .map(|value| value.as_str())
             .eq(other.iter().copied())
     }
 }
@@ -104,12 +103,12 @@ pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {
     GzEncoder::new(writer, Compression::fast())
 }
 
-pub struct ContainerReader<'i, R: BufRead> {
-    index: LinesIndex<'i>,
+pub struct ContainerReader<R: BufRead> {
+    index: LinesIndex,
     reader: R,
 }
 
-impl<'i, R: BufRead> ContainerReader<'i, R> {
+impl<R: BufRead> ContainerReader<R> {
     pub fn init(mut reader: R) -> Result<Self> {
         let mut line = String::new();
         reader.read_line(&mut line)?;
@@ -124,7 +123,7 @@ impl<'i, R: BufRead> ContainerReader<'i, R> {
         &self.index
     }
 
-    pub fn into_lines_iter(self) -> impl Iterator<Item = Result<(LineKey<'i>, String)>> {
+    pub fn into_lines_iter(self) -> impl Iterator<Item = Result<(LineKey, String)>> {
         let index_len = self.index.len();
 
         let index_iter = self.index.index.into_iter();
@@ -166,7 +165,7 @@ impl<'i, R: BufRead> ContainerReader<'i, R> {
                 }
             };
 
-            if let Some(patched_value) = patch.remove(key.as_ref()) {
+            if let Some(patched_value) = patch.remove(&key) {
                 patched_value.map(Ok)
             } else {
                 Some(Ok(value))
@@ -241,6 +240,29 @@ impl<W: Write> ContainerWriter<W> {
     }
 }
 
+pub fn create_confidential1_gz_container_reader(
+    file: &str,
+    key: &Confidential1Key,
+) -> Result<ContainerReader<impl BufRead>> {
+    let reader = create_file_reader(file)?;
+    let confidential1_reader = create_confidential1_reader(reader, key)?;
+    let gz_reader = create_gz_reader(confidential1_reader);
+
+    ContainerReader::init(gz_reader)
+}
+
+pub fn create_confidential1_gz_container_writer(
+    file: &str,
+    key: &Confidential1Key,
+    index: &LinesIndex,
+) -> Result<ContainerWriter<impl Write>> {
+    let writer = create_file_writer(file)?;
+    let confidential1_writer = create_confidential1_writer(writer, key)?;
+    let gz_writer = create_gz_writer(confidential1_writer);
+
+    ContainerWriter::init(gz_writer, index)
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
@@ -255,7 +277,7 @@ mod tests {
     #[test]
     fn test_line_index_serialization() -> Result<()> {
         let raw_index = r#"["1","2","3"]"#;
-        let index: LinesIndex<'_> = serde_json::from_str(raw_index)?;
+        let index: LinesIndex = serde_json::from_str(raw_index)?;
 
         assert_eq!(index, vec!["1", "2", "3"]);
 

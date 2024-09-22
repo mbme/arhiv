@@ -54,6 +54,10 @@ impl LinesIndex {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &str> {
+        self.index.iter().map(|value| value.as_str())
+    }
 }
 
 impl<'a> From<&[&'a str]> for LinesIndex {

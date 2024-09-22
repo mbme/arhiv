@@ -149,11 +149,11 @@ impl<R: BufRead> ContainerReader<R> {
             .collect()
     }
 
-    pub fn patch<W: Write>(self, writer: W, mut patch: Patch) -> Result<()> {
+    pub fn patch<W: Write>(self, mut writer: ContainerWriter<W>, mut patch: Patch) -> Result<()> {
         let patched_index = self.index.clone().patch(&patch);
         let iter = self.into_lines_iter();
 
-        let mut writer = ContainerWriter::init(writer, &patched_index)?;
+        writer.write_index(&patched_index)?;
 
         let patched_iter = iter.filter_map(|result| {
             let (key, value) = {
@@ -184,21 +184,32 @@ impl<R: BufRead> ContainerReader<R> {
 
 pub struct ContainerWriter<W: Write> {
     writer: W,
+    index_written: bool,
     expected_lines_count: usize,
     written_lines_count: usize,
 }
 
 impl<W: Write> ContainerWriter<W> {
-    pub fn init(mut writer: W, index: &LinesIndex) -> Result<Self> {
+    pub fn new(writer: W) -> Self {
+        Self {
+            writer,
+            index_written: false,
+            expected_lines_count: 0,
+            written_lines_count: 0,
+        }
+    }
+
+    pub fn write_index(&mut self, index: &LinesIndex) -> Result<()> {
+        ensure!(!self.index_written, "index already written");
+
         // false positive clippy lint
         #[allow(clippy::needless_borrows_for_generic_args)]
-        serde_json::to_writer(&mut writer, &index)?;
+        serde_json::to_writer(&mut self.writer, &index)?;
 
-        Ok(Self {
-            writer,
-            expected_lines_count: index.len(),
-            written_lines_count: 0,
-        })
+        self.index_written = true;
+        self.expected_lines_count = index.len();
+
+        Ok(())
     }
 
     pub fn write_lines<'a>(mut self, lines: impl Iterator<Item = &'a str>) -> Result<()> {
@@ -210,6 +221,8 @@ impl<W: Write> ContainerWriter<W> {
     }
 
     pub fn write_line(&mut self, line: &str) -> Result<()> {
+        ensure!(self.index_written, "index not written");
+
         let new_lines_count = self.written_lines_count + 1;
 
         ensure!(
@@ -227,7 +240,7 @@ impl<W: Write> ContainerWriter<W> {
     }
 
     pub fn finish(mut self) -> Result<()> {
-        self.writer.flush()?;
+        ensure!(self.index_written, "index not written");
 
         ensure!(
             self.written_lines_count == self.expected_lines_count,
@@ -235,6 +248,8 @@ impl<W: Write> ContainerWriter<W> {
             self.expected_lines_count,
             self.written_lines_count,
         );
+
+        self.writer.flush()?;
 
         Ok(())
     }
@@ -254,13 +269,12 @@ pub fn create_confidential1_gz_container_reader(
 pub fn create_confidential1_gz_container_writer(
     file: &str,
     key: &Confidential1Key,
-    index: &LinesIndex,
 ) -> Result<ContainerWriter<impl Write>> {
     let writer = create_file_writer(file)?;
     let confidential1_writer = create_confidential1_writer(writer, key)?;
     let gz_writer = create_gz_writer(confidential1_writer);
 
-    ContainerWriter::init(gz_writer, index)
+    Ok(ContainerWriter::new(gz_writer))
 }
 
 #[cfg(test)]
@@ -335,7 +349,8 @@ mod tests {
 
             let lines = ["3", "2", "1"];
             let index = lines.as_slice().into();
-            let writer = ContainerWriter::init(&mut data, &index)?;
+            let mut writer = ContainerWriter::new(&mut data);
+            writer.write_index(&index)?;
             writer.write_lines(lines.into_iter())?;
 
             let data = String::from_utf8(data.into_inner())?;
@@ -354,7 +369,8 @@ mod tests {
 
             let index = ["1", "2"].as_slice().into();
             let lines = ["1", "2", "3"];
-            let writer = ContainerWriter::init(&mut data, &index)?;
+            let mut writer = ContainerWriter::new(&mut data);
+            writer.write_index(&index)?;
             assert!(writer.write_lines(lines.into_iter()).is_err());
 
             let data = String::from_utf8(data.into_inner())?;
@@ -372,7 +388,8 @@ mod tests {
 
             let index = ["1", "2", "3"].as_slice().into();
             let lines = ["1", "2"];
-            let writer = ContainerWriter::init(&mut data, &index)?;
+            let mut writer = ContainerWriter::new(&mut data);
+            writer.write_index(&index)?;
             assert!(writer.write_lines(lines.into_iter()).is_err());
 
             let data = String::from_utf8(data.into_inner())?;
@@ -402,7 +419,8 @@ mod tests {
 
         {
             let iter = lines.iter().map(|value| value.as_str());
-            let writer = ContainerWriter::init(&mut data, &(&lines).into())?;
+            let mut writer = ContainerWriter::new(&mut data);
+            writer.write_index(&(&lines).into())?;
             writer.write_lines(iter)?;
 
             data.set_position(0);
@@ -430,7 +448,8 @@ mod tests {
             let mut gz_writer = create_gz_writer(data);
             let iter = lines.iter().map(|value| value.as_str());
 
-            let writer = ContainerWriter::init(&mut gz_writer, &(&lines).into())?;
+            let mut writer = ContainerWriter::new(&mut gz_writer);
+            writer.write_index(&(&lines).into())?;
             writer.write_lines(iter)?;
 
             data = gz_writer.finish()?;
@@ -458,7 +477,8 @@ mod tests {
         {
             let lines = ["3", "2", "1"];
             let index = lines.as_slice().into();
-            let writer = ContainerWriter::init(&mut data, &index)?;
+            let mut writer = ContainerWriter::new(&mut data);
+            writer.write_index(&index)?;
             writer.write_lines(lines.into_iter())?;
         }
 
@@ -474,7 +494,7 @@ mod tests {
             .into();
 
             let mut patched_data = Cursor::new(Vec::new());
-            reader.patch(&mut patched_data, patch)?;
+            reader.patch(ContainerWriter::new(&mut patched_data), patch)?;
 
             patched_data.set_position(0);
 

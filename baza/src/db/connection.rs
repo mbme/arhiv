@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashSet, fs, sync::Arc, time::Instant};
+use std::{borrow::Cow, collections::HashSet, sync::Arc, time::Instant};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
@@ -27,7 +27,7 @@ use super::{
     migrations::get_db_version,
     query_builder::QueryBuilder,
     sqlite_connection::{init_functions, open_connection},
-    utils,
+    utils::{self, get_local_blob_ids},
 };
 
 pub enum BazaConnection {
@@ -819,27 +819,7 @@ impl BazaConnection {
     }
 
     pub fn get_local_blob_ids(&self) -> Result<HashSet<BLOBId>> {
-        let items = fs::read_dir(&self.get_path_manager().data_dir)?
-            .map(|item| {
-                let entry = item.context("Failed to read data entry")?;
-
-                let entry_path = entry.path();
-
-                ensure!(
-                    entry_path.is_file(),
-                    "{} isn't a file",
-                    entry_path.to_string_lossy()
-                );
-
-                entry_path
-                    .file_name()
-                    .ok_or_else(|| anyhow!("Failed to read file name"))
-                    .map(|value| value.to_string_lossy().to_string())
-                    .and_then(|value| BLOBId::from_file_name(&value))
-            })
-            .collect::<Result<HashSet<_>>>()?;
-
-        Ok(items)
+        get_local_blob_ids(&self.get_path_manager().data_dir)
     }
 
     pub fn get_missing_blob_ids(&self) -> Result<HashSet<BLOBId>> {

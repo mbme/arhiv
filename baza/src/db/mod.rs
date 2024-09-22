@@ -20,6 +20,7 @@ pub use dto::{BLOBSCount, DocumentsCount, ListPage};
 pub use filter::{Conditions, Filter, OrderBy};
 pub use kvs::{KvsConstKey, KvsEntry, KvsKey};
 pub use locks::Locks;
+pub use utils::get_local_blob_ids;
 
 use migrations::{apply_db_migrations, create_db};
 use sqlite_connection::{open_connection, vacuum};

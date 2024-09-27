@@ -1,2 +1,2 @@
 pub mod confidential1;
-mod crypto_stream;
+pub mod crypto_stream;

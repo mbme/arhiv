@@ -8,6 +8,7 @@ use gethostname::gethostname;
 use tokio::signal;
 
 pub use bytes::*;
+pub use compression::*;
 pub use container::*;
 pub use crypto::*;
 pub use download::*;
@@ -23,6 +24,7 @@ pub use time::*;
 pub use tools::*;
 
 mod bytes;
+mod compression;
 mod container;
 mod crypto;
 mod download;

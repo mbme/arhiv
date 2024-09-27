@@ -1,25 +1,23 @@
 use std::{
     collections::HashMap,
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader, Read, Write},
 };
 
 use anyhow::{ensure, Context, Result};
-use flate2::{bufread::GzDecoder, write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    confidential1::{create_confidential1_reader, create_confidential1_writer, Confidential1Key},
-    create_file_reader, create_file_writer, TakeExactly, ZipLongest,
+    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
+    create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, TakeExactly,
+    ZipLongest,
 };
 
 pub type Patch = HashMap<String, Option<String>>;
 
-pub type LineKey = String;
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(transparent, deny_unknown_fields)]
 pub struct LinesIndex {
-    index: Vec<LineKey>,
+    index: Vec<String>,
 }
 
 impl LinesIndex {
@@ -97,23 +95,19 @@ impl PartialEq<Vec<&str>> for LinesIndex {
     }
 }
 
-pub fn create_gz_reader(reader: impl BufRead) -> impl BufRead {
-    let gz_reader = GzDecoder::new(reader);
-
-    BufReader::new(gz_reader)
-}
-
-pub fn create_gz_writer<W: Write>(writer: W) -> GzEncoder<W> {
-    GzEncoder::new(writer, Compression::fast())
-}
-
 pub struct ContainerReader<R: BufRead> {
     index: LinesIndex,
     reader: R,
 }
 
+impl<R: Read> ContainerReader<BufReader<R>> {
+    pub fn init(reader: R) -> Result<Self> {
+        Self::init_buffered(BufReader::new(reader))
+    }
+}
+
 impl<R: BufRead> ContainerReader<R> {
-    pub fn init(mut reader: R) -> Result<Self> {
+    pub fn init_buffered(mut reader: R) -> Result<Self> {
         let mut line = String::new();
         reader.read_line(&mut line)?;
 
@@ -127,7 +121,7 @@ impl<R: BufRead> ContainerReader<R> {
         &self.index
     }
 
-    pub fn into_lines_iter(self) -> impl Iterator<Item = Result<(LineKey, String)>> {
+    pub fn into_lines_iter(self) -> impl Iterator<Item = Result<(String, String)>> {
         let index_len = self.index.len();
 
         let index_iter = self.index.index.into_iter();
@@ -264,8 +258,11 @@ pub fn create_confidential1_gz_container_reader(
     key: &Confidential1Key,
 ) -> Result<ContainerReader<impl BufRead>> {
     let reader = create_file_reader(file)?;
-    let confidential1_reader = create_confidential1_reader(reader, key)?;
-    let gz_reader = create_gz_reader(confidential1_reader);
+
+    let c1_reader = Confidential1Reader::new(reader, key)?;
+    let c1_buf_reader = BufReader::new(c1_reader);
+
+    let gz_reader = create_gz_reader(c1_buf_reader);
 
     ContainerReader::init(gz_reader)
 }
@@ -275,8 +272,8 @@ pub fn create_confidential1_gz_container_writer(
     key: &Confidential1Key,
 ) -> Result<ContainerWriter<impl Write>> {
     let writer = create_file_writer(file)?;
-    let confidential1_writer = create_confidential1_writer(writer, key)?;
-    let gz_writer = create_gz_writer(confidential1_writer);
+    let c1_writer = Confidential1Writer::new(writer, key)?;
+    let gz_writer = create_gz_writer(c1_writer);
 
     Ok(ContainerWriter::new(gz_writer))
 }
@@ -286,9 +283,8 @@ mod tests {
     use std::io::Cursor;
 
     use anyhow::Result;
-    use rand::Rng;
 
-    use crate::{create_gz_reader, ContainerWriter};
+    use crate::{create_gz_reader, generate_alphanumeric_lines, ContainerWriter};
 
     use super::{create_gz_writer, ContainerReader, LinesIndex, Patch};
 
@@ -314,7 +310,7 @@ mod tests {
 2
 3"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let reader = ContainerReader::init(data)?;
+            let reader = ContainerReader::init_buffered(data)?;
             assert_eq!(*reader.get_index(), vec!["1", "2", "3"]);
 
             let new_lines = reader.read_all()?;
@@ -326,7 +322,7 @@ mod tests {
 1
 2"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let reader = ContainerReader::init(data)?;
+            let reader = ContainerReader::init_buffered(data)?;
 
             assert!(reader.read_all().is_err());
         }
@@ -338,7 +334,7 @@ mod tests {
 3
 4"#;
             let data = Cursor::new(raw_data.as_bytes());
-            let reader = ContainerReader::init(data)?;
+            let reader = ContainerReader::init_buffered(data)?;
 
             assert!(reader.read_all().is_err());
         }
@@ -409,17 +405,11 @@ mod tests {
         Ok(())
     }
 
-    fn gen_lines() -> Vec<String> {
-        let mut rng = rand::thread_rng();
-
-        (0..30).map(|_| rng.gen_range(1..101).to_string()).collect()
-    }
-
     #[test]
     fn test_read_write_container_lines() -> Result<()> {
         let mut data = Cursor::new(Vec::new());
 
-        let lines = gen_lines();
+        let lines = generate_alphanumeric_lines(100, 100);
 
         {
             let iter = lines.iter().map(|value| value.as_str());
@@ -431,7 +421,7 @@ mod tests {
         }
 
         {
-            let reader = ContainerReader::init(data)?;
+            let reader = ContainerReader::init_buffered(data)?;
 
             assert_eq!(*reader.get_index(), lines);
 
@@ -446,7 +436,7 @@ mod tests {
     fn test_read_write_gz_container_lines() -> Result<()> {
         let mut data = Cursor::new(Vec::new());
 
-        let lines = gen_lines();
+        let lines = generate_alphanumeric_lines(30, 100);
 
         {
             let mut gz_writer = create_gz_writer(data);
@@ -489,7 +479,7 @@ mod tests {
         {
             data.set_position(0);
 
-            let reader = ContainerReader::init(&mut data)?;
+            let reader = ContainerReader::init_buffered(&mut data)?;
 
             let patch: Patch = [
                 ("3".to_string(), None),
@@ -502,7 +492,7 @@ mod tests {
 
             patched_data.set_position(0);
 
-            let reader = ContainerReader::init(&mut patched_data)?;
+            let reader = ContainerReader::init_buffered(&mut patched_data)?;
 
             let new_lines = reader.read_all()?;
             assert_eq!(new_lines, vec!["2", "3"]);

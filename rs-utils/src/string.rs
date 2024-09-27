@@ -65,6 +65,13 @@ pub fn generate_alpanumeric_string(length: usize) -> String {
         .collect()
 }
 
+#[must_use]
+pub fn generate_alphanumeric_lines(lines: usize, line_length: usize) -> Vec<String> {
+    (0..lines)
+        .map(|_| generate_alpanumeric_string(line_length))
+        .collect()
+}
+
 pub fn create_byte_pos_to_char_pos_map(value: &str) -> HashMap<usize, usize> {
     let mut map = HashMap::new();
 

@@ -3,7 +3,9 @@ use std::io::{BufRead, BufReader, Cursor, Write};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rs_utils::{
-    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
+    confidential1::{
+        Confidential1AuthReader, Confidential1Key, Confidential1Reader, Confidential1Writer,
+    },
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
     format_bytes, generate_alpanumeric_string, generate_bytes, get_file_hash_blake3,
@@ -61,20 +63,34 @@ fn container_read(reader: impl BufRead) -> Vec<String> {
 
 fn gz_container_read(reader: impl BufRead) -> Vec<String> {
     let gz_reader = create_gz_reader(reader);
-    let gz_reader = BufReader::new(gz_reader);
+    let gz_buf_reader = BufReader::new(gz_reader);
 
-    container_read(gz_reader)
+    container_read(gz_buf_reader)
 }
 
 fn confidential1_gz_container_read(reader: impl BufRead, key: &Confidential1Key) -> Vec<String> {
     let c1_reader =
         Confidential1Reader::new(reader, key).expect("must create confidential1 reader");
-    let c1_reader = BufReader::new(c1_reader);
+    let c1_buf_reader = BufReader::new(c1_reader);
 
-    let gz_reader = create_gz_reader(c1_reader);
-    let gz_reader = BufReader::new(gz_reader);
+    let gz_reader = create_gz_reader(c1_buf_reader);
+    let gz_buf_reader = BufReader::new(gz_reader);
 
-    container_read(gz_reader)
+    container_read(gz_buf_reader)
+}
+
+fn confidential1_auth_gz_container_read(
+    reader: impl BufRead,
+    key: &Confidential1Key,
+) -> Vec<String> {
+    let c1_reader =
+        Confidential1AuthReader::new(reader, key).expect("must create confidential1 auth reader");
+    let c1_buf_reader = BufReader::new(c1_reader);
+
+    let gz_reader = create_gz_reader(c1_buf_reader);
+    let gz_buf_reader = BufReader::new(gz_reader);
+
+    container_read(gz_buf_reader)
 }
 
 const BLOB_SIZE: usize = 2 * 1024;
@@ -176,6 +192,13 @@ fn bench_confidential1_container(c: &mut Criterion) {
         })
     });
 
+    group.bench_function("confidential1_auth_gz_container_read", |b| {
+        b.iter(|| {
+            cursor.set_position(0);
+            black_box(confidential1_auth_gz_container_read(&mut cursor, &key));
+        })
+    });
+
     group.finish();
 }
 
@@ -216,6 +239,13 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
         b.iter(|| {
             let reader = create_file_reader(&temp1.path).expect("must create file reader");
             black_box(confidential1_gz_container_read(reader, &key))
+        })
+    });
+
+    group.bench_function("confidential1_auth_gz_container_read", |b| {
+        b.iter(|| {
+            let reader = create_file_reader(&temp1.path).expect("must create file reader");
+            black_box(confidential1_auth_gz_container_read(reader, &key));
         })
     });
 

@@ -29,27 +29,38 @@ impl FsTransaction {
         FsTransaction { ops: vec![] }
     }
 
-    fn move_to_backup(&mut self, src: impl Into<String>) -> Result<()> {
+    pub fn move_to_backup(&mut self, src: impl Into<String>) -> Result<String> {
         let src = src.into();
         let dest = format!("{}-{}-backup", src, generate_alpanumeric_string(10));
 
         ensure!(!path_exists(&dest), "backup path must not exist");
 
         if let Err(err) = move_file(&src, &dest) {
-            bail!("Failed to Backup {} to {}: {}", &src, &dest, err);
+            bail!("Failed to Backup {src} to {dest}: {err}");
         }
 
-        log::debug!("Backed up {} to {}", &src, &dest);
-        self.ops.push(FsOperation::Backup { src, dest });
+        log::debug!("Backed up {src} to {dest}");
+        self.ops.push(FsOperation::Backup {
+            src,
+            dest: dest.clone(),
+        });
 
-        Ok(())
+        Ok(dest)
     }
 
-    pub fn move_file(&mut self, src: impl Into<String>, dest: impl Into<String>) -> Result<()> {
+    pub fn move_file(
+        &mut self,
+        src: impl Into<String>,
+        dest: impl Into<String>,
+        fail_if_dest_exists: bool,
+    ) -> Result<()> {
         let src = src.into();
         let dest = dest.into();
 
         if path_exists(&dest) {
+            if fail_if_dest_exists {
+                bail!("Can't move file to {dest}: already exists");
+            }
             self.move_to_backup(&dest)?;
         }
 
@@ -309,12 +320,29 @@ mod tests {
             let temp2 = TempFile::new();
 
             let mut fs_tx = FsTransaction::new();
-            fs_tx.move_file(temp1.as_ref(), temp2.as_ref())?;
+            fs_tx.move_file(temp1.as_ref(), temp2.as_ref(), false)?;
             fs_tx.commit()?;
 
             assert!(!temp1.exists());
             assert!(temp2.exists());
             assert_eq!(temp2.str_contents()?, "temp1");
+        }
+
+        // move to existing file
+        {
+            let temp1 = TempFile::new();
+            temp1.write_str("temp1")?;
+
+            let temp2 = TempFile::new();
+            temp2.create_file()?;
+
+            let mut fs_tx = FsTransaction::new();
+            assert!(fs_tx
+                .move_file(temp1.as_ref(), temp2.as_ref(), true)
+                .is_err());
+
+            assert_eq!(temp1.str_contents()?, "temp1");
+            assert_eq!(temp2.str_contents()?, "");
         }
 
         // revert move transaction & restore backup
@@ -326,7 +354,7 @@ mod tests {
             temp2.write_str("temp2")?;
 
             let mut fs_tx = FsTransaction::new();
-            fs_tx.move_file(temp1.as_ref(), temp2.as_ref())?;
+            fs_tx.move_file(temp1.as_ref(), temp2.as_ref(), false)?;
 
             assert!(!temp1.exists());
             assert_eq!(temp2.str_contents()?, "temp1");

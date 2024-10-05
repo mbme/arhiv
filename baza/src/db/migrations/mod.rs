@@ -148,7 +148,7 @@ pub fn apply_db_migrations(root_dir: impl Into<String>) -> Result<bool> {
             new_conn.execute("VACUUM", [])?;
         }
 
-        fs_tx.move_file(&new_db_pm.db_file, &db_pm.db_file)?;
+        fs_tx.move_file(&new_db_pm.db_file, &db_pm.db_file, false)?;
         fs_tx.commit()?;
 
         log::warn!(

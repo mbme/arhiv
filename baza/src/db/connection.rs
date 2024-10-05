@@ -854,7 +854,7 @@ impl BazaConnection {
         let fs_tx = self.get_fs_tx()?;
 
         if move_file {
-            fs_tx.move_file(file_path, blob.file_path)?;
+            fs_tx.move_file(file_path, blob.file_path, false)?;
             log::debug!("Moved new blob {} from {}", blob_id, file_path);
         } else if is_same_filesystem(file_path, &data_dir)? {
             fs_tx.hard_link_file(file_path, blob.file_path)?;

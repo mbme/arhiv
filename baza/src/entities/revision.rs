@@ -239,6 +239,21 @@ impl Revision {
             acc
         })
     }
+
+    #[must_use]
+    pub fn compute_next_rev(revs: &[&Revision], for_instance: &InstanceId) -> Revision {
+        let max_instance_version = revs
+            .iter()
+            .map(|rev| rev.get_version(for_instance))
+            .max()
+            .unwrap_or_default();
+
+        let mut max_rev = Self::merge_all(revs);
+
+        max_rev.set_version(for_instance, max_instance_version + 1);
+
+        max_rev
+    }
 }
 
 impl PartialEq for Revision {
@@ -522,6 +537,44 @@ mod tests {
             assert_eq!(
                 Revision::get_latest_rev(refs.as_slice()),
                 vec![&rev3].into_iter().collect()
+            );
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_revision_compute_next_rev() -> Result<()> {
+        let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
+        let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+        let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+
+        {
+            let refs = vec![&rev1, &rev2, &rev3];
+
+            assert_eq!(
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("1")),
+                Revision::from_value(json!({ "1": 3, "2": 2 }))?
+            );
+        }
+
+        {
+            let refs = vec![&rev1, &rev2, &rev3];
+
+            assert_eq!(
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("0")),
+                Revision::from_value(json!({ "1": 2, "2": 2, "0": 1 }))?
+            );
+        }
+
+        {
+            let rev4 = Revision::from_value(json!({ "1": 1, "2": 1, "0": 2 }))?;
+
+            let refs = vec![&rev1, &rev2, &rev3, &rev4];
+
+            assert_eq!(
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("0")),
+                Revision::from_value(json!({ "1": 2, "2": 2, "0": 3 }))?
             );
         }
 

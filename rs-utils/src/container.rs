@@ -1,16 +1,12 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     io::{BufRead, BufReader, Read, Write},
 };
 
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
-    create_file_reader, create_file_writer, create_gz_reader, create_gz_writer, TakeExactly,
-    ZipLongest,
-};
+use crate::{TakeExactly, ZipLongest};
 
 pub type Patch = HashMap<String, Option<String>>;
 
@@ -21,12 +17,20 @@ pub struct LinesIndex {
 }
 
 impl LinesIndex {
+    pub fn new(index: Vec<String>) -> Self {
+        LinesIndex { index }
+    }
+
     fn patch(self, patch: &Patch) -> Self {
-        let patched_index = self
+        let mut patched = HashSet::new();
+
+        let mut patched_index: Vec<String> = self
             .index
             .into_iter()
             .filter_map(|key| {
                 if let Some(patched_value) = patch.get(&key) {
+                    patched.insert(key.clone());
+
                     if patched_value.is_some() {
                         Some(key)
                     } else {
@@ -37,6 +41,13 @@ impl LinesIndex {
                 }
             })
             .collect();
+
+        let new_keys = patch
+            .iter()
+            .filter(|(key, value)| !patched.contains(*key) && value.is_some())
+            .map(|(key, _value)| key.clone());
+
+        patched_index.extend(new_keys);
 
         Self {
             index: patched_index,
@@ -253,40 +264,15 @@ impl<W: Write> ContainerWriter<W> {
     }
 }
 
-pub fn create_confidential1_gz_container_reader(
-    file: &str,
-    key: &Confidential1Key,
-) -> Result<ContainerReader<impl BufRead>> {
-    let reader = create_file_reader(file)?;
-
-    let c1_reader = Confidential1Reader::new(reader, key)?;
-    let c1_buf_reader = BufReader::new(c1_reader);
-
-    let gz_reader = create_gz_reader(c1_buf_reader);
-
-    ContainerReader::init(gz_reader)
-}
-
-pub fn create_confidential1_gz_container_writer(
-    file: &str,
-    key: &Confidential1Key,
-) -> Result<ContainerWriter<impl Write>> {
-    let writer = create_file_writer(file)?;
-    let c1_writer = Confidential1Writer::new(writer, key)?;
-    let gz_writer = create_gz_writer(c1_writer);
-
-    Ok(ContainerWriter::new(gz_writer))
-}
-
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
 
     use anyhow::Result;
 
-    use crate::{create_gz_reader, generate_alphanumeric_lines, ContainerWriter};
+    use crate::{create_gz_reader, create_gz_writer, generate_alphanumeric_lines, ContainerWriter};
 
-    use super::{create_gz_writer, ContainerReader, LinesIndex, Patch};
+    use super::{ContainerReader, LinesIndex, Patch};
 
     #[test]
     fn test_line_index_serialization() -> Result<()> {
@@ -460,6 +446,24 @@ mod tests {
             let new_lines = reader.read_all()?;
             assert_eq!(new_lines, lines);
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_patch_line_index() -> Result<()> {
+        let index: LinesIndex = ["1", "2"].as_slice().into();
+
+        let patch: Patch = [
+            ("1".to_string(), None),
+            ("4".to_string(), None),
+            ("3".to_string(), Some("3".to_string())),
+        ]
+        .into();
+
+        let index = index.patch(&patch);
+
+        assert_eq!(index.index, vec!["2", "3"]);
 
         Ok(())
     }

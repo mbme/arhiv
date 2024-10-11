@@ -1,7 +1,7 @@
 use std::{
     env,
     fs::{self, File},
-    io::{BufRead, BufReader, BufWriter, ErrorKind, Write},
+    io::{BufReader, BufWriter, ErrorKind, Write},
     os::unix::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
@@ -396,7 +396,7 @@ pub fn must_create_file(file_path: &str) -> Result<fs::File> {
     Ok(file)
 }
 
-pub fn create_file_reader(file_path: &str) -> Result<impl BufRead> {
+pub fn create_file_reader(file_path: &str) -> Result<BufReader<File>> {
     let file = File::open(file_path)?;
 
     let data_reader = BufReader::new(file);

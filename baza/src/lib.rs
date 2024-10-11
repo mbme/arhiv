@@ -1,6 +1,7 @@
 mod auto_commit_service;
 mod backup;
 mod baza;
+pub mod baza2;
 mod db;
 mod document_expert;
 pub mod entities;

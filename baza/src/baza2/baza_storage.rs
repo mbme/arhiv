@@ -1,29 +1,23 @@
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufReader, Read, Write},
+    io::{BufRead, BufReader, Read, Write},
 };
 
 use anyhow::{bail, ensure, Context, Result};
 use rs_utils::{
     confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
-    create_file_reader, create_file_writer, create_gz_reader, create_gz_writer,
+    create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
-    ContainerReader, ContainerWriter, FsTransaction, LinesIndex, Patch,
+    ContainerReader, ContainerWriter, LinesIndex,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    entities::{BLOBId, Document, Id, InstanceId, LatestRevComputer, Revision},
-    get_local_blob_ids,
-    path_manager::PathManager,
-};
+use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
 
 fn create_confidential1_gz_container_reader(
-    file: &str,
+    reader: impl BufRead + 'static,
     key: &Confidential1Key,
 ) -> Result<ContainerReader<BufReader<Box<dyn Read>>>> {
-    let reader = create_file_reader(file)?;
-
     let c1_reader = Confidential1Reader::new(reader, key)?;
     let c1_buf_reader = BufReader::new(c1_reader);
 
@@ -37,10 +31,9 @@ fn create_confidential1_gz_container_reader(
 }
 
 fn create_confidential1_gz_container_writer(
-    file: &str,
+    writer: impl Write,
     key: &Confidential1Key,
 ) -> Result<ContainerWriter<impl Write>> {
-    let writer = create_file_writer(file)?;
     let c1_writer = Confidential1Writer::new(writer, key)?;
     let gz_writer = create_gz_writer(c1_writer);
 
@@ -139,22 +132,25 @@ enum ReaderOrLinesIter {
     Undefined,
 }
 
-pub struct BazaIterator {
+pub struct BazaStorage {
     pub index: DocumentsIndex,
+    key: Confidential1Key,
     inner: ReaderOrLinesIter,
     info: Option<BazaInfo>,
 }
 
-impl BazaIterator {
-    pub fn read(db_file: &str, key: &Confidential1Key) -> Result<Self> {
-        let reader = create_confidential1_gz_container_reader(db_file, key)?;
+impl BazaStorage {
+    pub fn read(reader: impl BufRead + 'static, key: CryptoKey) -> Result<Self> {
+        let c1_key = Confidential1Key::Key(key);
+        let reader = create_confidential1_gz_container_reader(reader, &c1_key)?;
 
         let index = DocumentsIndex::parse(reader.get_index())?;
         let inner = ReaderOrLinesIter::Reader(reader);
 
-        Ok(BazaIterator {
+        Ok(BazaStorage {
             index,
             inner,
+            key: c1_key,
             info: None,
         })
     }
@@ -194,78 +190,16 @@ impl BazaIterator {
         Ok(self.info.as_ref().expect("info is available"))
     }
 
-    pub fn patch(self, new_db_file: &str, key: &Confidential1Key, patch: Patch) -> Result<()> {
-        let c1writer = create_confidential1_gz_container_writer(new_db_file, key)?;
-
-        match self.inner {
-            ReaderOrLinesIter::Reader(reader) => reader.patch(c1writer, patch),
-            _ => bail!("Can only patch Reader"),
-        }
-    }
-}
-
-impl Iterator for BazaIterator {
-    type Item = Result<(BazaDocumentKey, String)>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let line = self.get_lines_iter().next()?;
-
-        match line {
-            Ok((ref key_raw, line)) => {
-                let key = BazaDocumentKey::parse(key_raw).expect("must be valid document key");
-
-                Some(Ok((key, line)))
-            }
-            Err(err) => Some(Err(err)),
-        }
-    }
-}
-
-pub struct BazaStorage {
-    key: Confidential1Key,
-    path_manager: PathManager,
-}
-
-impl BazaStorage {
-    pub fn new(path_manager: PathManager, key: CryptoKey) -> Result<Self> {
-        let c1key = Confidential1Key::Key(key);
-
-        Ok(BazaStorage {
-            key: c1key,
-            path_manager,
-        })
-    }
-
-    pub fn read(&self) -> Result<BazaIterator> {
-        BazaIterator::read(&self.path_manager.db2_file, &self.key)
-    }
-
-    pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
-        let blobs_dir = self.path_manager.db2_data_dir.clone();
-        let ids = get_local_blob_ids(&blobs_dir)?;
-
-        Ok(ids)
-    }
-
     pub fn add(
-        &mut self,
+        self,
         instance_id: &InstanceId,
+        writer: impl Write,
         new_documents: Vec<Document>,
-        new_blobs: HashMap<BLOBId, String>,
-        tx: &mut FsTransaction,
     ) -> Result<()> {
         ensure!(!new_documents.is_empty(), "documents to add not provided");
 
-        // FIXME use read/write locks
-
-        // backup db file
-        let old_db_file = tx.move_to_backup(self.path_manager.db2_file.clone())?;
-
-        // open old db file
-        let baza_iter = BazaIterator::read(&old_db_file, &self.key)?;
-
         // calculate new rev
-        let revs = baza_iter.index.get_all_revs();
+        let revs = self.index.get_all_revs();
         let new_rev = Revision::compute_next_rev(revs.as_slice(), instance_id);
 
         // prepare patch
@@ -285,18 +219,33 @@ impl BazaStorage {
             patch.insert(key, Some(value));
         }
 
-        // move blobs
-        for (new_blob_id, file_path) in new_blobs {
-            tx.move_file(
-                file_path,
-                self.path_manager.get_db2_blob_path(&new_blob_id),
-                true,
-            )?;
-        }
-
         // apply patch & write db
-        baza_iter.patch(&self.path_manager.db2_file, &self.key, patch)?;
+        let c1writer = create_confidential1_gz_container_writer(writer, &self.key)?;
+
+        match self.inner {
+            ReaderOrLinesIter::Reader(reader) => {
+                reader.patch(c1writer, patch)?;
+            }
+            _ => bail!("Can only patch Reader"),
+        };
 
         Ok(())
+    }
+}
+
+impl Iterator for BazaStorage {
+    type Item = Result<(BazaDocumentKey, String)>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let line = self.get_lines_iter().next()?;
+
+        match line {
+            Ok((ref key_raw, line)) => {
+                let key = BazaDocumentKey::parse(key_raw).expect("must be valid document key");
+
+                Some(Ok((key, line)))
+            }
+            Err(err) => Some(Err(err)),
+        }
     }
 }

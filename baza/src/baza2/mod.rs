@@ -1,13 +1,22 @@
-use std::cell::{Ref, RefCell, RefMut};
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    collections::{HashMap, HashSet},
+};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, ensure, Result};
 
-use rs_utils::file_exists;
+use rs_utils::{
+    create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, FsTransaction,
+};
 
 pub use baza_state::BazaState;
 pub use baza_storage::{BazaInfo, BazaStorage};
 
-use crate::{entities::BLOBId, path_manager::PathManager};
+use crate::{
+    entities::{BLOBId, Document, InstanceId},
+    get_local_blob_ids,
+    path_manager::PathManager,
+};
 
 mod baza_state;
 mod baza_storage;
@@ -25,8 +34,10 @@ mod baza_storage;
 // * commit changes
 
 pub struct BazaManager {
+    instance_id: InstanceId,
     state: RefCell<BazaState>,
     path_manager: PathManager,
+    key: CryptoKey,
 }
 
 impl BazaManager {
@@ -36,10 +47,6 @@ impl BazaManager {
 
     pub fn borrow_mut(&self) -> RefMut<'_, BazaState> {
         self.state.borrow_mut()
-    }
-
-    pub fn commit(&mut self) -> Result<()> {
-        todo!()
     }
 
     pub fn get_blob_path(&self, id: &BLOBId) -> Result<String> {
@@ -55,6 +62,52 @@ impl BazaManager {
         }
 
         bail!("Coud't find blob {id}")
+    }
+
+    pub fn list_blobs(&self) -> Result<HashSet<BLOBId>> {
+        let mut ids = get_local_blob_ids(&self.path_manager.db2_data_dir)?;
+        let local_ids = get_local_blob_ids(&self.path_manager.state_data_dir)?;
+
+        ids.extend(local_ids);
+
+        Ok(ids)
+    }
+
+    pub fn commit(
+        &self,
+        // FIXME read from state
+        new_documents: Vec<Document>,
+        new_blobs: HashMap<BLOBId, String>,
+    ) -> Result<()> {
+        ensure!(!new_documents.is_empty(), "documents to add not provided");
+
+        // FIXME use read/write locks
+
+        let mut tx = FsTransaction::new();
+
+        // backup db file
+        let old_db_file = tx.move_to_backup(self.path_manager.db2_file.clone())?;
+
+        // open old db file
+        let reader = create_file_reader(&old_db_file)?;
+        let storage = BazaStorage::read(reader, self.key.clone())?;
+
+        // write changes to db file
+        let writer = create_file_writer(&self.path_manager.db2_file)?;
+        storage.add(&self.instance_id, writer, new_documents)?;
+
+        // move blobs
+        for (new_blob_id, file_path) in new_blobs {
+            tx.move_file(
+                file_path,
+                self.path_manager.get_db2_blob_path(&new_blob_id),
+                true,
+            )?;
+        }
+
+        tx.commit()?;
+
+        Ok(())
     }
 
     // fn update(&mut self, update: BazaUpdate) -> Result<()> {

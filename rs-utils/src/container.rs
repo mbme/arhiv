@@ -122,6 +122,11 @@ impl<R: BufRead> ContainerReader<R> {
         let mut line = String::new();
         reader.read_line(&mut line)?;
 
+        // support reading empty files
+        if line.trim().is_empty() {
+            line.push_str("[]");
+        }
+
         let index: LinesIndex =
             serde_json::from_str(&line).context("Failed to parse container index")?;
 
@@ -290,6 +295,16 @@ mod tests {
 
     #[test]
     fn test_read_container_lines() -> Result<()> {
+        {
+            let raw_data = "";
+            let data = Cursor::new(raw_data.as_bytes());
+            let reader = ContainerReader::init_buffered(data)?;
+            assert!(reader.get_index().is_empty());
+
+            let new_lines = reader.read_all()?;
+            assert_eq!(new_lines, Vec::<&str>::new());
+        }
+
         {
             let raw_data = r#"["1","2","3"]
 1

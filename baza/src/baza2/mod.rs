@@ -13,7 +13,7 @@ pub use baza_state::BazaState;
 pub use baza_storage::{BazaInfo, BazaStorage};
 
 use crate::{
-    entities::{BLOBId, Document, InstanceId},
+    entities::{BLOBId, Document, InstanceId, Revision},
     get_local_blob_ids,
     path_manager::PathManager,
 };
@@ -76,7 +76,7 @@ impl BazaManager {
     pub fn commit(
         &self,
         // FIXME read from state
-        new_documents: Vec<Document>,
+        mut new_documents: Vec<Document>,
         new_blobs: HashMap<BLOBId, String>,
     ) -> Result<()> {
         ensure!(!new_documents.is_empty(), "documents to add not provided");
@@ -92,9 +92,16 @@ impl BazaManager {
         let reader = create_file_reader(&old_db_file)?;
         let storage = BazaStorage::read(reader, self.key.clone())?;
 
+        // calculate new rev for documents
+        let revs = storage.index.get_all_revs();
+        let new_rev = Revision::compute_next_rev(revs.as_slice(), &self.instance_id);
+        for new_document in &mut new_documents {
+            new_document.rev = Some(new_rev.clone());
+        }
+
         // write changes to db file
         let writer = create_file_writer(&self.path_manager.db2_file)?;
-        storage.add(&self.instance_id, writer, new_documents)?;
+        storage.add(writer, new_documents)?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {

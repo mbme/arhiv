@@ -12,7 +12,7 @@ use rs_utils::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
+use crate::entities::{Document, Id, LatestRevComputer, Revision};
 
 fn create_confidential1_gz_container_reader(
     reader: impl BufRead + 'static,
@@ -190,24 +190,15 @@ impl BazaStorage {
         Ok(self.info.as_ref().expect("info is available"))
     }
 
-    pub fn add(
-        self,
-        instance_id: &InstanceId,
-        writer: impl Write,
-        new_documents: Vec<Document>,
-    ) -> Result<()> {
+    pub fn add(self, writer: impl Write, new_documents: Vec<Document>) -> Result<()> {
         ensure!(!new_documents.is_empty(), "documents to add not provided");
-
-        // calculate new rev
-        let revs = self.index.get_all_revs();
-        let new_rev = Revision::compute_next_rev(revs.as_slice(), instance_id);
 
         // prepare patch
         let mut patch = HashMap::with_capacity(new_documents.len());
-        for mut new_document in new_documents {
-            new_document.rev = Some(new_rev.clone());
-
-            let key = BazaDocumentKey::new(new_document.id.clone(), new_rev.clone()).serialize();
+        for new_document in new_documents {
+            let key =
+                BazaDocumentKey::new(new_document.id.clone(), new_document.get_rev()?.clone())
+                    .serialize();
             ensure!(
                 !patch.contains_key(&key),
                 "duplicate new document {}",

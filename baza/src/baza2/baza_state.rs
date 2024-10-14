@@ -8,7 +8,7 @@ use crate::entities::{Document, Id, LatestRevComputer, Revision};
 use super::baza_storage::BazaInfo;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum LatestDocument {
+pub enum DocumentHead {
     Document(Document),
     Conflict(Vec<Document>),
 
@@ -23,23 +23,19 @@ pub enum LatestDocument {
     },
 }
 
-impl LatestDocument {
+impl DocumentHead {
     pub fn is_committed(&self) -> bool {
-        matches!(
-            self,
-            LatestDocument::Document(_) | LatestDocument::Conflict(_)
-        )
+        matches!(self, DocumentHead::Document(_) | DocumentHead::Conflict(_))
     }
 
     pub fn get_revision(&self) -> Result<HashSet<&Revision>> {
         let mut revs = HashSet::new();
 
         match self {
-            LatestDocument::Document(original) | LatestDocument::Updated { original, .. } => {
+            DocumentHead::Document(original) | DocumentHead::Updated { original, .. } => {
                 revs.insert(original.get_rev()?);
             }
-            LatestDocument::Conflict(original)
-            | LatestDocument::ResolvedConflict { original, .. } => {
+            DocumentHead::Conflict(original) | DocumentHead::ResolvedConflict { original, .. } => {
                 let original_revs = original
                     .iter()
                     .map(|document| document.get_rev())
@@ -47,7 +43,7 @@ impl LatestDocument {
 
                 revs.extend(original_revs);
             }
-            LatestDocument::NewDocument(_) => {}
+            DocumentHead::NewDocument(_) => {}
         };
 
         Ok(revs)
@@ -56,16 +52,16 @@ impl LatestDocument {
     pub fn could_reset(&self) -> bool {
         matches!(
             self,
-            LatestDocument::Updated { .. } | LatestDocument::ResolvedConflict { .. }
+            DocumentHead::Updated { .. } | DocumentHead::ResolvedConflict { .. }
         )
     }
 
     pub fn reset(self) -> Option<Self> {
         let result = match self {
-            LatestDocument::Document(_) | LatestDocument::Conflict(_) => self,
-            LatestDocument::Updated { original, .. } => LatestDocument::Document(original),
-            LatestDocument::ResolvedConflict { original, .. } => LatestDocument::Conflict(original),
-            LatestDocument::NewDocument(_) => return None,
+            DocumentHead::Document(_) | DocumentHead::Conflict(_) => self,
+            DocumentHead::Updated { original, .. } => DocumentHead::Document(original),
+            DocumentHead::ResolvedConflict { original, .. } => DocumentHead::Conflict(original),
+            DocumentHead::NewDocument(_) => return None,
         };
 
         Some(result)
@@ -73,23 +69,23 @@ impl LatestDocument {
 
     pub fn update(self, new_document: Document) -> Self {
         match self {
-            LatestDocument::Document(document) => LatestDocument::Updated {
+            DocumentHead::Document(document) => DocumentHead::Updated {
                 original: document,
                 updated: new_document,
             },
-            LatestDocument::Updated { original, .. } => LatestDocument::Updated {
+            DocumentHead::Updated { original, .. } => DocumentHead::Updated {
                 original,
                 updated: new_document,
             },
-            LatestDocument::Conflict(original) => LatestDocument::ResolvedConflict {
+            DocumentHead::Conflict(original) => DocumentHead::ResolvedConflict {
                 original,
                 updated: new_document,
             },
-            LatestDocument::ResolvedConflict { original, .. } => LatestDocument::ResolvedConflict {
+            DocumentHead::ResolvedConflict { original, .. } => DocumentHead::ResolvedConflict {
                 original,
                 updated: new_document,
             },
-            LatestDocument::NewDocument(_document) => LatestDocument::NewDocument(new_document),
+            DocumentHead::NewDocument(_document) => DocumentHead::NewDocument(new_document),
         }
     }
 }
@@ -97,7 +93,7 @@ impl LatestDocument {
 #[derive(Serialize, Deserialize)]
 pub struct BazaState {
     info: BazaInfo,
-    documents: HashMap<Id, LatestDocument>,
+    documents: HashMap<Id, DocumentHead>,
 }
 
 // TODO kvs
@@ -124,7 +120,7 @@ impl BazaState {
         Ok(latest_rev_computer.get())
     }
 
-    pub fn get_document(&self, id: &Id) -> Result<&LatestDocument> {
+    pub fn get_document(&self, id: &Id) -> Result<&DocumentHead> {
         self.documents.get(id).context("can't find document")
     }
 
@@ -135,10 +131,10 @@ impl BazaState {
 
         new_document.stage();
 
-        let updated_document = if let Some(latest_document) = current_value {
-            latest_document.update(new_document)
+        let updated_document = if let Some(document_head) = current_value {
+            document_head.update(new_document)
         } else {
-            LatestDocument::NewDocument(new_document)
+            DocumentHead::NewDocument(new_document)
         };
 
         self.documents.insert(id, updated_document);
@@ -146,11 +142,11 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn iter_documents(&self) -> Result<impl Iterator<Item = &LatestDocument>> {
+    pub fn iter_documents(&self) -> Result<impl Iterator<Item = &DocumentHead>> {
         Ok(self.documents.values())
     }
 
-    pub fn iter_uncommitted_documents(&self) -> Result<impl Iterator<Item = &LatestDocument>> {
+    pub fn iter_uncommitted_documents(&self) -> Result<impl Iterator<Item = &DocumentHead>> {
         Ok(self
             .iter_documents()?
             .filter(|document| !document.is_committed()))
@@ -185,12 +181,4 @@ impl BazaState {
 
         Ok(())
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_baza_state() {}
 }

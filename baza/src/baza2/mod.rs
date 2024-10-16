@@ -1,5 +1,5 @@
 use std::{
-    cell::{Ref, RefCell, RefMut},
+    cell::RefCell,
     collections::{HashMap, HashSet},
 };
 
@@ -41,14 +41,6 @@ pub struct BazaManager {
 }
 
 impl BazaManager {
-    pub fn borrow(&self) -> Ref<'_, BazaState> {
-        self.state.borrow()
-    }
-
-    pub fn borrow_mut(&self) -> RefMut<'_, BazaState> {
-        self.state.borrow_mut()
-    }
-
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
         self.path_manager.get_state_blob_path(id)
     }
@@ -84,7 +76,7 @@ impl BazaManager {
     pub fn commit(self) -> Result<Self> {
         // FIXME use read/write locks
 
-        let mut state = self.borrow_mut();
+        let mut state = self.state.borrow_mut();
 
         ensure!(
             !state.has_unresolved_conflicts(),

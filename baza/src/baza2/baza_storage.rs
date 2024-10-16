@@ -101,13 +101,13 @@ impl DocumentsIndex {
         self.0.extend(more_keys);
     }
 
-    pub fn compute_latest_revision(&self) -> Result<HashSet<&Revision>> {
+    pub fn compute_latest_revision(&self) -> HashSet<&Revision> {
         let mut latest_rev_computer = LatestRevComputer::new();
 
         let revs = self.0.iter().map(|key| &key.rev);
-        latest_rev_computer.update(revs)?;
+        latest_rev_computer.update(revs);
 
-        Ok(latest_rev_computer.get())
+        latest_rev_computer.get()
     }
 
     pub fn compute_latest_document_revision(&self, id: &Id) -> Result<HashSet<&Revision>> {

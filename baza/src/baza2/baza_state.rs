@@ -1,9 +1,12 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    io::{BufRead, Write},
+};
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, Id, LatestRevComputer, Revision};
+use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
 
 use super::baza_storage::BazaInfo;
 
@@ -24,36 +27,34 @@ pub enum DocumentHead {
 }
 
 impl DocumentHead {
-    pub fn is_committed(&self) -> bool {
-        matches!(self, DocumentHead::Document(_) | DocumentHead::Conflict(_))
-    }
-
-    pub fn get_revision(&self) -> Result<HashSet<&Revision>> {
+    pub fn get_revision(&self) -> HashSet<&Revision> {
         let mut revs = HashSet::new();
 
         match self {
             DocumentHead::Document(original) | DocumentHead::Updated { original, .. } => {
-                revs.insert(original.get_rev()?);
+                revs.insert(original.rev.as_ref().unwrap_or_default());
             }
             DocumentHead::Conflict(original) | DocumentHead::ResolvedConflict { original, .. } => {
-                let original_revs = original
-                    .iter()
-                    .map(|document| document.get_rev())
-                    .collect::<Result<Vec<_>>>()?;
-
-                revs.extend(original_revs);
+                original.iter().for_each(|document| {
+                    revs.insert(document.rev.as_ref().unwrap_or_default());
+                });
             }
             DocumentHead::NewDocument(_) => {}
         };
 
-        Ok(revs)
+        revs
     }
 
-    pub fn could_reset(&self) -> bool {
-        matches!(
-            self,
-            DocumentHead::Updated { .. } | DocumentHead::ResolvedConflict { .. }
-        )
+    pub fn is_committed(&self) -> bool {
+        matches!(self, DocumentHead::Document(_) | DocumentHead::Conflict(_))
+    }
+
+    pub fn is_modified(&self) -> bool {
+        !self.is_committed()
+    }
+
+    pub fn is_unresolved_conflict(&self) -> bool {
+        matches!(self, DocumentHead::Conflict(_))
     }
 
     pub fn reset(self) -> Option<Self> {
@@ -62,6 +63,28 @@ impl DocumentHead {
             DocumentHead::Updated { original, .. } => DocumentHead::Document(original),
             DocumentHead::ResolvedConflict { original, .. } => DocumentHead::Conflict(original),
             DocumentHead::NewDocument(_) => return None,
+        };
+
+        Some(result)
+    }
+
+    pub fn into_modified_document(self) -> Option<Document> {
+        let result = match self {
+            DocumentHead::Document(_) | DocumentHead::Conflict(_) => return None,
+            DocumentHead::Updated { updated, .. } => updated,
+            DocumentHead::ResolvedConflict { updated, .. } => updated,
+            DocumentHead::NewDocument(document) => document,
+        };
+
+        Some(result)
+    }
+
+    pub fn get_modified_document(&self) -> Option<&Document> {
+        let result = match self {
+            DocumentHead::Document(_) | DocumentHead::Conflict(_) => return None,
+            DocumentHead::Updated { updated, .. } => updated,
+            DocumentHead::ResolvedConflict { updated, .. } => updated,
+            DocumentHead::NewDocument(document) => document,
         };
 
         Some(result)
@@ -98,26 +121,40 @@ pub struct BazaState {
 
 // TODO kvs
 impl BazaState {
-    pub fn new(info: BazaInfo) -> Self {
-        Self {
-            info,
-            documents: HashMap::new(),
-        }
+    pub fn new(info: BazaInfo, documents: HashMap<Id, DocumentHead>) -> Self {
+        Self { info, documents }
+    }
+
+    pub fn read(reader: impl BufRead) -> Result<Self> {
+        serde_json::from_reader(reader).context("Failed to parse BazaState")
+    }
+
+    pub fn write(&self, writer: impl Write) -> Result<()> {
+        serde_json::to_writer(writer, &self).context("Failed to serialize BazaState")
     }
 
     pub fn get_info(&self) -> Result<&BazaInfo> {
         Ok(&self.info)
     }
 
-    pub fn get_latest_revision(&self) -> Result<HashSet<&Revision>> {
+    pub fn get_latest_revision(&self) -> HashSet<&Revision> {
         let mut latest_rev_computer = LatestRevComputer::new();
 
-        for document in self.iter_documents()? {
-            let document_revs = document.get_revision()?;
-            latest_rev_computer.update(document_revs)?;
+        for document in self.iter_documents() {
+            let document_revs = document.get_revision();
+            latest_rev_computer.update(document_revs);
         }
 
-        Ok(latest_rev_computer.get())
+        latest_rev_computer.get()
+    }
+
+    fn calculate_next_revision(&self, instance_id: &InstanceId) -> Revision {
+        let all_revs = self
+            .iter_documents()
+            .flat_map(|head| head.get_revision())
+            .collect::<Vec<_>>();
+
+        Revision::compute_next_rev(all_revs.as_slice(), instance_id)
     }
 
     pub fn get_document(&self, id: &Id) -> Result<&DocumentHead> {
@@ -142,21 +179,30 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn iter_documents(&self) -> Result<impl Iterator<Item = &DocumentHead>> {
-        Ok(self.documents.values())
+    pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
+        self.documents.values()
     }
 
-    pub fn iter_uncommitted_documents(&self) -> Result<impl Iterator<Item = &DocumentHead>> {
-        Ok(self
-            .iter_documents()?
-            .filter(|document| !document.is_committed()))
+    pub fn iter_modified_documents(&self) -> impl Iterator<Item = &Document> {
+        self.iter_documents()
+            .filter_map(|document_head| document_head.get_modified_document())
+    }
+
+    pub fn is_modified(&self) -> bool {
+        self.iter_documents()
+            .any(|document_head| document_head.is_modified())
+    }
+
+    pub fn has_unresolved_conflicts(&self) -> bool {
+        self.iter_documents()
+            .any(|document_head| document_head.is_unresolved_conflict())
     }
 
     pub fn reset_all_documents(&mut self) {
         let ids = self
             .documents
             .iter()
-            .filter_map(|(id, document)| document.could_reset().then_some(id))
+            .filter_map(|(id, document)| document.is_modified().then_some(id))
             .cloned()
             .collect::<Vec<_>>();
 
@@ -180,5 +226,40 @@ impl BazaState {
         }
 
         Ok(())
+    }
+
+    pub fn commit(&mut self, instance_id: &InstanceId) -> Result<Vec<Document>> {
+        ensure!(
+            !self.has_unresolved_conflicts(),
+            "Can't commit with unresolved conflicts"
+        );
+
+        let ids = self
+            .documents
+            .iter()
+            .filter_map(|(id, document)| document.is_modified().then_some(id))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        ensure!(!ids.is_empty(), "Nothing to commit");
+
+        let new_rev = self.calculate_next_revision(instance_id);
+
+        let mut new_documents = Vec::with_capacity(ids.len());
+
+        for id in ids {
+            let (id, document_head) = self.documents.remove_entry(&id).expect("entry must exist");
+
+            let mut document = document_head
+                .into_modified_document()
+                .expect("document must be modified");
+            document.rev = Some(new_rev.clone());
+
+            new_documents.push(document.clone());
+
+            self.documents.insert(id, DocumentHead::Document(document));
+        }
+
+        Ok(new_documents)
     }
 }

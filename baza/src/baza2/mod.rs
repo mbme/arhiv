@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, Result};
 
 use rs_utils::{
     create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, FsTransaction,
@@ -77,11 +77,6 @@ impl BazaManager {
         // FIXME use read/write locks
 
         let mut state = self.state.borrow_mut();
-
-        ensure!(
-            !state.has_unresolved_conflicts(),
-            "Can't commit with unresolved conflicts"
-        );
 
         if !state.is_modified() {
             drop(state);

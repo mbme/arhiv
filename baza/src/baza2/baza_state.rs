@@ -229,11 +229,6 @@ impl BazaState {
     }
 
     pub fn commit(&mut self, instance_id: &InstanceId) -> Result<Vec<Document>> {
-        ensure!(
-            !self.has_unresolved_conflicts(),
-            "Can't commit with unresolved conflicts"
-        );
-
         let ids = self
             .documents
             .iter()

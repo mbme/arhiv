@@ -242,15 +242,9 @@ impl Revision {
 
     #[must_use]
     pub fn compute_next_rev(revs: &[&Revision], for_instance: &InstanceId) -> Revision {
-        let max_instance_version = revs
-            .iter()
-            .map(|rev| rev.get_version(for_instance))
-            .max()
-            .unwrap_or_default();
-
         let mut max_rev = Self::merge_all(revs);
 
-        max_rev.set_version(for_instance, max_instance_version + 1);
+        max_rev.inc(for_instance);
 
         max_rev
     }
@@ -349,20 +343,20 @@ mod tests {
     fn test_revision_inc() -> Result<()> {
         {
             let mut rev = Revision::from_value(json!({}))?;
-            let instance_id = InstanceId::from_string("1");
+            let instance_id = InstanceId::from_string("a");
 
             rev.inc(&instance_id);
 
-            assert_eq!(rev, Revision::from_value(json!({ "1": 1 }))?);
+            assert_eq!(rev, Revision::from_value(json!({ "a": 1 }))?);
         }
 
         {
-            let mut rev = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let instance_id = InstanceId::from_string("1");
+            let mut rev = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let instance_id = InstanceId::from_string("a");
 
             rev.inc(&instance_id);
 
-            assert_eq!(rev, Revision::from_value(json!({ "1": 2, "2": 2 }))?);
+            assert_eq!(rev, Revision::from_value(json!({ "a": 2, "b": 2 }))?);
         }
         Ok(())
     }
@@ -370,8 +364,8 @@ mod tests {
     #[test]
     fn test_revision_compare_vector_clocks() -> Result<()> {
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
             assert_eq!(
                 rev1.compare_vector_clocks(&rev2),
@@ -384,24 +378,24 @@ mod tests {
         }
 
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
 
             assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Equal);
             assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::Equal);
         }
 
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
 
             assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Before);
             assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
         }
 
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2}))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2}))?;
 
             assert_eq!(rev1.compare_vector_clocks(&rev2), VectorClockOrder::Before);
             assert_eq!(rev2.compare_vector_clocks(&rev1), VectorClockOrder::After);
@@ -414,10 +408,10 @@ mod tests {
     fn test_revision_cmp() -> Result<()> {
         {
             let rev0 = Revision::initial();
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev3 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev4 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev3 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            let rev4 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
             assert!(rev0 < rev1);
             assert!(rev0 < rev2);
@@ -444,9 +438,9 @@ mod tests {
     fn test_revision_is_concurrent_or_newer_than() -> Result<()> {
         {
             let rev0 = Revision::initial();
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
             assert!(!rev0.is_concurrent_or_newer_than(&rev1));
             assert!(rev1.is_concurrent_or_newer_than(&rev0));
@@ -464,9 +458,9 @@ mod tests {
     fn test_revision_is_concurrent_or_older_than() -> Result<()> {
         {
             let rev0 = Revision::initial();
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
             assert!(rev0.is_concurrent_or_older_than(&rev1));
             assert!(!rev1.is_concurrent_or_older_than(&rev0));
@@ -483,18 +477,18 @@ mod tests {
     #[test]
     fn test_revision_serialize() -> Result<()> {
         {
-            let rev = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-            assert_eq!(rev.serialize(), r#"{"1":1,"2":1}"#);
+            let rev = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+            assert_eq!(rev.serialize(), r#"{"a":1,"b":1}"#);
         }
 
         {
-            let rev = Revision::from_value(json!({ "2": 1, "1": 1 }))?;
-            assert_eq!(rev.serialize(), r#"{"1":1,"2":1}"#);
+            let rev = Revision::from_value(json!({ "b": 1, "a": 1 }))?;
+            assert_eq!(rev.serialize(), r#"{"a":1,"b":1}"#);
         }
 
         {
-            let rev = Revision::from_value(json!({ "1": 0, "2": 1 }))?;
-            assert_eq!(rev.serialize(), r#"{"2":1}"#);
+            let rev = Revision::from_value(json!({ "a": 0, "b": 1 }))?;
+            assert_eq!(rev.serialize(), r#"{"b":1}"#);
         }
 
         Ok(())
@@ -503,12 +497,12 @@ mod tests {
     #[test]
     fn test_revision_merge() -> Result<()> {
         {
-            let mut rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev2 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+            let mut rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
             rev1.merge(&rev2);
 
-            assert_eq!(rev1, Revision::from_value(json!({ "1": 2, "2": 2 }))?);
+            assert_eq!(rev1, Revision::from_value(json!({ "a": 2, "b": 2 }))?);
         }
 
         Ok(())
@@ -516,9 +510,9 @@ mod tests {
 
     #[test]
     fn test_revision_get_latest_rev() -> Result<()> {
-        let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-        let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-        let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+        let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+        let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
         {
             let refs = vec![&rev1, &rev2, &rev3];
@@ -543,16 +537,16 @@ mod tests {
 
     #[test]
     fn test_revision_compute_next_rev() -> Result<()> {
-        let rev1 = Revision::from_value(json!({ "1": 1, "2": 1 }))?;
-        let rev2 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-        let rev3 = Revision::from_value(json!({ "1": 2, "2": 1 }))?;
+        let rev1 = Revision::from_value(json!({ "a": 1, "b": 1 }))?;
+        let rev2 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+        let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
         {
             let refs = vec![&rev1, &rev2, &rev3];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("1")),
-                Revision::from_value(json!({ "1": 3, "2": 2 }))?
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("a")),
+                Revision::from_value(json!({ "a": 3, "b": 2 }))?
             );
         }
 
@@ -560,19 +554,19 @@ mod tests {
             let refs = vec![&rev1, &rev2, &rev3];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("0")),
-                Revision::from_value(json!({ "1": 2, "2": 2, "0": 1 }))?
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("c")),
+                Revision::from_value(json!({ "a": 2, "b": 2, "c": 1 }))?
             );
         }
 
         {
-            let rev4 = Revision::from_value(json!({ "1": 1, "2": 1, "0": 2 }))?;
+            let rev4 = Revision::from_value(json!({ "a": 1, "b": 1, "c": 2 }))?;
 
             let refs = vec![&rev1, &rev2, &rev3, &rev4];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("0")),
-                Revision::from_value(json!({ "1": 2, "2": 2, "0": 3 }))?
+                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("c")),
+                Revision::from_value(json!({ "a": 2, "b": 2, "c": 3 }))?
             );
         }
 
@@ -582,8 +576,8 @@ mod tests {
     #[test]
     fn test_revision_to_file_name() -> Result<()> {
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev2 = Revision::from_value(json!({ "2": 2, "1": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
             assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
             assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);
@@ -595,8 +589,8 @@ mod tests {
     #[test]
     fn test_revision_from_file_name() -> Result<()> {
         {
-            let rev1 = Revision::from_value(json!({ "1": 1, "2": 2 }))?;
-            let rev2 = Revision::from_value(json!({ "2": 2, "1": 1 }))?;
+            let rev1 = Revision::from_value(json!({ "a": 1, "b": 2 }))?;
+            let rev2 = Revision::from_value(json!({ "b": 2, "a": 1 }))?;
 
             assert_eq!(Revision::from_file_name(&rev1.to_file_name())?, rev1);
             assert_eq!(Revision::from_file_name(&rev2.to_file_name())?, rev2);

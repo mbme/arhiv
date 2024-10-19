@@ -37,19 +37,13 @@ impl AsRef<str> for InstanceId {
 }
 
 impl InstanceId {
-    pub fn new() -> Self {
+    pub fn generate() -> Self {
         InstanceId(generate_random_id())
     }
 
     #[must_use]
     pub fn from_string(instance_id: impl Into<String>) -> Self {
         InstanceId(instance_id.into())
-    }
-}
-
-impl Default for InstanceId {
-    fn default() -> Self {
-        InstanceId::new()
     }
 }
 

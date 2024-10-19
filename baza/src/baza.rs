@@ -82,7 +82,7 @@ impl Baza {
 
         tx.set_schema_name(&baza.schema.get_app_name().to_string())?;
         tx.set_data_version(baza.schema.get_latest_data_version())?;
-        tx.set_instance_id(&InstanceId::new())?;
+        tx.set_instance_id(&InstanceId::generate())?;
         tx.set_last_sync_time(&MIN_TIMESTAMP)?;
 
         tx.commit()?;

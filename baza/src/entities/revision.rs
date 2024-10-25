@@ -106,6 +106,14 @@ impl Revision {
         )
     }
 
+    #[must_use]
+    pub fn is_concurrent(&self, other: &Self) -> bool {
+        matches!(
+            self.compare_vector_clocks(other),
+            VectorClockOrder::Concurrent
+        )
+    }
+
     pub fn serialize(&self) -> String {
         let mut keys: Vec<_> = self.0.keys().collect();
 

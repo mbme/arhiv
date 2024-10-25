@@ -40,7 +40,7 @@ fn create_confidential1_gz_container_writer(
     Ok(ContainerWriter::new(gz_writer))
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BazaInfo {
     pub name: String,
     pub baza_version: u8,
@@ -74,6 +74,8 @@ impl BazaDocumentKey {
 
 pub struct DocumentsIndex(Vec<BazaDocumentKey>);
 
+pub type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
+
 impl DocumentsIndex {
     pub fn parse(index: &LinesIndex) -> Result<Self> {
         let documents_index = index
@@ -93,34 +95,31 @@ impl DocumentsIndex {
         LinesIndex::new(index)
     }
 
-    pub fn get_all_revs(&self) -> Vec<&Revision> {
-        self.0.iter().map(|key| &key.rev).collect()
-    }
-
     pub fn append_keys(&mut self, more_keys: Vec<BazaDocumentKey>) {
         self.0.extend(more_keys);
     }
 
-    pub fn compute_latest_revision(&self) -> HashSet<&Revision> {
-        let mut latest_rev_computer = LatestRevComputer::new();
+    pub fn as_index_map(&self) -> DocumentsIndexMap {
+        let mut map: DocumentsIndexMap = HashMap::new();
 
-        let revs = self.0.iter().map(|key| &key.rev);
-        latest_rev_computer.update(revs);
+        for key in &self.0 {
+            let entry = map.entry(&key.id).or_default();
 
-        latest_rev_computer.get()
-    }
+            entry.insert(&key.rev);
+        }
 
-    pub fn compute_latest_document_revision(&self, id: &Id) -> Result<HashSet<&Revision>> {
-        let revs = self
-            .0
-            .iter()
-            .filter(|key| key.id == *id)
-            .map(|key| &key.rev)
-            .collect::<Vec<_>>();
+        // calculate max rev per document
+        for value in &mut map.values_mut() {
+            let mut latest_rev_computer = LatestRevComputer::new();
 
-        ensure!(!revs.is_empty(), "document {id} must have revisions");
+            latest_rev_computer.update(value.iter().copied());
 
-        Ok(Revision::get_latest_rev(&revs))
+            let mut latest_rev = latest_rev_computer.get();
+
+            std::mem::swap(value, &mut latest_rev);
+        }
+
+        map
     }
 }
 

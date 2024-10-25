@@ -3,7 +3,7 @@ use std::{
     io::{BufRead, Write},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
@@ -90,7 +90,7 @@ impl DocumentHead {
         Some(result)
     }
 
-    pub fn update(self, new_document: Document) -> Self {
+    pub fn modify(self, new_document: Document) -> Self {
         match self {
             DocumentHead::Document(document) => DocumentHead::Updated {
                 original: document,
@@ -111,10 +111,40 @@ impl DocumentHead {
             DocumentHead::NewDocument(_document) => DocumentHead::NewDocument(new_document),
         }
     }
+
+    pub fn insert(self, new_document: Document) -> Result<Self> {
+        let new_rev = new_document.get_rev()?;
+
+        let new_head = match self {
+            DocumentHead::Document(document) => {
+                let rev = document.get_rev()?;
+
+                if rev.is_concurrent(new_rev) {
+                    DocumentHead::Conflict(vec![document, new_document])
+                } else {
+                    DocumentHead::Document(new_document)
+                }
+            }
+            DocumentHead::Conflict(mut original) => {
+                let rev = original.first().context("must not be empty")?.get_rev()?;
+
+                if rev.is_concurrent(new_rev) {
+                    original.push(new_document);
+                    DocumentHead::Conflict(original)
+                } else {
+                    DocumentHead::Document(new_document)
+                }
+            }
+            _ => bail!("Can't insert into modified document"),
+        };
+
+        Ok(new_head)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BazaState {
+    instance_id: InstanceId,
     info: BazaInfo,
     documents: HashMap<Id, DocumentHead>,
 }
@@ -122,7 +152,13 @@ pub struct BazaState {
 // TODO kvs
 impl BazaState {
     pub fn new(info: BazaInfo, documents: HashMap<Id, DocumentHead>) -> Self {
-        Self { info, documents }
+        let instance_id = InstanceId::generate();
+
+        Self {
+            info,
+            documents,
+            instance_id,
+        }
     }
 
     pub fn read(reader: impl BufRead) -> Result<Self> {
@@ -133,8 +169,8 @@ impl BazaState {
         serde_json::to_writer(writer, &self).context("Failed to serialize BazaState")
     }
 
-    pub fn get_info(&self) -> Result<&BazaInfo> {
-        Ok(&self.info)
+    pub fn get_info(&self) -> &BazaInfo {
+        &self.info
     }
 
     pub fn get_latest_revision(&self) -> HashSet<&Revision> {
@@ -148,30 +184,46 @@ impl BazaState {
         latest_rev_computer.get()
     }
 
-    fn calculate_next_revision(&self, instance_id: &InstanceId) -> Revision {
+    fn calculate_next_revision(&self) -> Revision {
         let all_revs = self
             .iter_documents()
             .flat_map(|head| head.get_revision())
             .collect::<Vec<_>>();
 
-        Revision::compute_next_rev(all_revs.as_slice(), instance_id)
+        Revision::compute_next_rev(all_revs.as_slice(), &self.instance_id)
     }
 
-    pub fn get_document(&self, id: &Id) -> Result<&DocumentHead> {
-        self.documents.get(id).context("can't find document")
+    pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {
+        self.documents.get(id)
     }
 
-    pub fn put_document(&mut self, mut new_document: Document) -> Result<()> {
-        let id = new_document.id.clone();
+    pub fn modify_document(&mut self, mut document: Document) -> Result<()> {
+        let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
 
-        new_document.stage();
+        document.stage();
 
         let updated_document = if let Some(document_head) = current_value {
-            document_head.update(new_document)
+            document_head.modify(document)
         } else {
-            DocumentHead::NewDocument(new_document)
+            DocumentHead::NewDocument(document)
+        };
+
+        self.documents.insert(id, updated_document);
+
+        Ok(())
+    }
+
+    pub(super) fn insert_document(&mut self, document: Document) -> Result<()> {
+        let id = document.id.clone();
+
+        let current_value = self.documents.remove(&id);
+
+        let updated_document = if let Some(document_head) = current_value {
+            document_head.insert(document)?
+        } else {
+            DocumentHead::Document(document)
         };
 
         self.documents.insert(id, updated_document);
@@ -228,7 +280,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn commit(&mut self, instance_id: &InstanceId) -> Result<Vec<Document>> {
+    pub fn commit(&mut self) -> Result<Vec<Document>> {
         let ids = self
             .documents
             .iter()
@@ -238,7 +290,7 @@ impl BazaState {
 
         ensure!(!ids.is_empty(), "Nothing to commit");
 
-        let new_rev = self.calculate_next_revision(instance_id);
+        let new_rev = self.calculate_next_revision();
 
         let mut new_documents = Vec::with_capacity(ids.len());
 

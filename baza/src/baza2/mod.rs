@@ -3,17 +3,18 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use anyhow::{bail, Result};
+use anyhow::{bail, ensure, Context, Result};
 
+use baza_storage::BazaDocumentKey;
 use rs_utils::{
-    create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, FsTransaction,
+    create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, log, FsTransaction,
 };
 
 pub use baza_state::BazaState;
 pub use baza_storage::{BazaInfo, BazaStorage};
 
 use crate::{
-    entities::{BLOBId, InstanceId},
+    entities::{BLOBId, Document, Id, Revision},
     get_local_blob_ids,
     path_manager::PathManager,
 };
@@ -24,6 +25,7 @@ mod baza_storage;
 // create?
 // on startup:
 // * read baza state
+// * merge all baza storage files into 1
 // * read (if no local changes)? baza storage info
 // * what if baza storage is newer than baza state? - pull changes
 // on commit:
@@ -34,13 +36,27 @@ mod baza_storage;
 // * commit changes
 
 pub struct BazaManager {
-    instance_id: InstanceId,
     state: RefCell<BazaState>,
     path_manager: PathManager,
     key: CryptoKey,
 }
 
 impl BazaManager {
+    pub fn new(path_manager: PathManager, key: CryptoKey) -> Result<Self> {
+        let state_reader = create_file_reader(&path_manager.state_file)?;
+        let state = BazaState::read(state_reader)?;
+
+        let mut baza_manager = Self {
+            state: RefCell::new(state),
+            path_manager,
+            key,
+        };
+
+        baza_manager.sync_state_with_storage()?;
+
+        Ok(baza_manager)
+    }
+
     fn get_local_blob_path(&self, id: &BLOBId) -> String {
         self.path_manager.get_state_blob_path(id)
     }
@@ -73,7 +89,7 @@ impl BazaManager {
         Ok(ids)
     }
 
-    pub fn commit(self) -> Result<Self> {
+    pub fn commit(mut self) -> Result<Self> {
         // FIXME use read/write locks
 
         let mut state = self.state.borrow_mut();
@@ -100,15 +116,15 @@ impl BazaManager {
         let old_db_file = tx.move_to_backup(self.path_manager.db2_file.clone())?;
 
         // open old db file
-        let reader = create_file_reader(&old_db_file)?;
-        let storage = BazaStorage::read(reader, self.key.clone())?;
+        let storage_reader = create_file_reader(&old_db_file)?;
+        let storage = BazaStorage::read(storage_reader, self.key.clone())?;
 
         // collect changed documents & update state
-        let new_documents = state.commit(&self.instance_id)?;
+        let new_documents = state.commit()?;
 
         // write changes to db file
-        let writer = create_file_writer(&self.path_manager.db2_file)?;
-        storage.add(writer, new_documents)?;
+        let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
+        storage.add(storage_writer, new_documents)?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {
@@ -123,14 +139,106 @@ impl BazaManager {
         tx.move_to_backup(self.path_manager.state_file.clone())?;
 
         // write changes to state file
-        let writer = create_file_writer(&self.path_manager.state_file)?;
-        state.write(writer)?;
+        let state_writer = create_file_writer(&self.path_manager.state_file)?;
+        state.write(state_writer)?;
 
         tx.commit()?;
 
         drop(state);
 
+        self.sync_state_with_storage()?;
+
         Ok(self)
+    }
+
+    fn sync_state_with_storage(&mut self) -> Result<()> {
+        let mut state = self.state.borrow_mut();
+
+        if state.is_modified() {
+            return Ok(());
+        }
+
+        let storage_reader = create_file_reader(&self.path_manager.db2_file)?;
+        let mut storage = BazaStorage::read(storage_reader, self.key.clone())?;
+
+        let storage_info = storage.get_info()?;
+        ensure!(
+            storage_info == state.get_info(),
+            "state info and storage info must match"
+        );
+
+        let mut latest_snapshot_keys: HashSet<BazaDocumentKey> = HashSet::new();
+
+        // compare storage index with state
+        for (id, index_revs) in storage.index.as_index_map() {
+            let index_rev = index_revs
+                .iter()
+                .next()
+                .context("index revs must not be empty")?;
+
+            let document_head = if let Some(document_head) = state.get_document(id) {
+                document_head
+            } else {
+                add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+                continue;
+            };
+
+            ensure!(
+                document_head.is_committed(),
+                "Document {id} must be committed"
+            );
+
+            let state_revs = document_head.get_revision();
+            let state_rev = state_revs
+                .iter()
+                .next()
+                .context("state revs must not be empty")?;
+
+            if state_rev > index_rev {
+                continue;
+            }
+
+            if state_rev < index_rev {
+                add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+                continue;
+            }
+
+            // conflicting revs
+            add_keys(
+                &mut latest_snapshot_keys,
+                id,
+                index_revs.difference(&state_revs),
+            );
+        }
+
+        let latest_snapshots_count = latest_snapshot_keys.len();
+        if latest_snapshots_count > 0 {
+            log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
+        }
+
+        // read documents from storage & update state if needed
+        while !latest_snapshot_keys.is_empty() {
+            let (ref key, ref raw_document) =
+                storage.next().context("No records in the storage")??;
+
+            if !latest_snapshot_keys.contains(key) {
+                continue;
+            }
+
+            let document: Document =
+                serde_json::from_str(raw_document).context("Failed to parse raw document")?;
+
+            state.insert_document(document)?;
+
+            latest_snapshot_keys.remove(key);
+        }
+
+        if latest_snapshots_count > 0 {
+            let state_writer = create_file_writer(&self.path_manager.state_file)?;
+            state.write(state_writer)?;
+        }
+
+        Ok(())
     }
 
     // fn update(&mut self, update: BazaUpdate) -> Result<()> {
@@ -138,4 +246,12 @@ impl BazaManager {
     // }
 
     // TODO pull changes from Storage into State
+}
+
+fn add_keys<'r>(
+    keys: &mut HashSet<BazaDocumentKey>,
+    id: &Id,
+    revs: impl Iterator<Item = &'r &'r Revision>,
+) {
+    keys.extend(revs.map(|rev| BazaDocumentKey::new(id.clone(), (*rev).clone())));
 }

@@ -47,7 +47,7 @@ pub struct BazaInfo {
     pub data_version: u8,
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Clone)]
 pub struct BazaDocumentKey {
     pub id: Id,
     pub rev: Revision,
@@ -87,8 +87,8 @@ impl DocumentsIndex {
         Ok(DocumentsIndex(documents_index))
     }
 
-    pub fn serialize(&self) -> LinesIndex {
-        let mut index = self.0.iter().map(|key| key.serialize()).collect::<Vec<_>>();
+    pub fn serialize<'k>(items: impl Iterator<Item = &'k BazaDocumentKey>) -> LinesIndex {
+        let mut index = items.map(|key| key.serialize()).collect::<Vec<_>>();
 
         index.insert(0, "info".to_string());
 
@@ -218,6 +218,90 @@ impl BazaStorage {
             }
             _ => bail!("Can only patch Reader"),
         };
+
+        Ok(())
+    }
+
+    pub fn merge_all(storages: Vec<BazaStorage>, writer: impl Write) -> Result<()> {
+        ensure!(!storages.is_empty(), "storages must not be empty");
+
+        let mut keys_per_storage = storages
+            .into_iter()
+            .map(|s| {
+                let keys = HashSet::<BazaDocumentKey>::from_iter(s.index.0.iter().cloned());
+
+                (s, keys)
+            })
+            .collect::<Vec<_>>();
+
+        // Set Cover problem: greedy algorithm
+        for i in 0..keys_per_storage.len() {
+            let (left, right) = keys_per_storage.split_at_mut(i);
+
+            // sort by the number of unique keys, descending
+            right.sort_by(|s1, s2| s2.1.len().cmp(&s1.1.len()));
+
+            if let Some((_, l_keys)) = left.last() {
+                for (_, r_keys) in right {
+                    r_keys.retain(|item| !l_keys.contains(item));
+                }
+            }
+        }
+
+        // ordered unique storage keys
+        let keys_per_storage = keys_per_storage
+            .into_iter()
+            .filter(|(_s, keys_set)| !keys_set.is_empty())
+            .map(|(s, mut keys_set)| {
+                let mut ordered_keys = Vec::with_capacity(keys_set.len());
+
+                for index_key in &s.index.0 {
+                    if let Some(key) = keys_set.take(index_key) {
+                        ordered_keys.push(key);
+                    }
+                }
+
+                if !keys_set.is_empty() {
+                    bail!("{} keys left after ordering", keys_set.len());
+                }
+
+                Ok((s, ordered_keys))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        // build index
+        let index_keys = keys_per_storage.iter().flat_map(|(_s, keys)| keys.iter());
+        let index = DocumentsIndex::serialize(index_keys);
+
+        let key = &keys_per_storage[0].0.key;
+        let mut c1writer = create_confidential1_gz_container_writer(writer, key)?;
+
+        c1writer.write_index(&index)?;
+
+        // write lines
+        for (s, mut keys) in keys_per_storage {
+            for line in s {
+                if keys.is_empty() {
+                    break;
+                }
+
+                let (key, line) = line?;
+
+                if key == keys[0] {
+                    c1writer.write_line(&line)?;
+                    keys.pop();
+                }
+            }
+
+            if !keys.is_empty() {
+                bail!(
+                    "{} keys left after reading all lines from the storage",
+                    keys.len()
+                );
+            }
+        }
+
+        c1writer.finish()?;
 
         Ok(())
     }

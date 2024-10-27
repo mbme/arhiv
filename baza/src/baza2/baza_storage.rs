@@ -222,8 +222,16 @@ impl BazaStorage {
         Ok(())
     }
 
-    pub fn merge_all(storages: Vec<BazaStorage>, writer: impl Write) -> Result<()> {
+    pub fn merge_all(mut storages: Vec<BazaStorage>, writer: impl Write) -> Result<()> {
         ensure!(!storages.is_empty(), "storages must not be empty");
+
+        let same_info = storages
+            .iter_mut()
+            .map(|s| s.get_info())
+            .collect::<Result<Vec<_>>>()?
+            .windows(2)
+            .all(|w| w[0] == w[1]);
+        ensure!(same_info, "all storages must have same info");
 
         let mut keys_per_storage = storages
             .into_iter()

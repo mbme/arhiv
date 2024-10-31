@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 
 use baza_storage::BazaDocumentKey;
 use rs_utils::{
@@ -52,6 +52,7 @@ impl BazaManager {
             key,
         };
 
+        baza_manager.merge_storages()?;
         baza_manager.sync_state_with_storage()?;
 
         Ok(baza_manager)
@@ -91,6 +92,8 @@ impl BazaManager {
 
     pub fn commit(mut self) -> Result<Self> {
         // FIXME use read/write locks
+
+        self.merge_storages()?;
 
         let mut state = self.state.borrow_mut();
 
@@ -241,11 +244,50 @@ impl BazaManager {
         Ok(())
     }
 
+    fn merge_storages(&self) -> Result<()> {
+        let db_files = self.path_manager.list_db2_baza_files()?;
+
+        if db_files.is_empty() {
+            log::debug!("No existing db files found");
+            return Ok(());
+        }
+
+        let main_db_file = &self.path_manager.db2_file;
+        if db_files.len() == 1 && db_files[0] == *main_db_file {
+            log::debug!("There's only main db file");
+            return Ok(());
+        }
+
+        // if more than 1 storage
+        // or if no main storage file
+
+        log::info!("Merging {} db files into one", db_files.len());
+
+        let mut tx = FsTransaction::new();
+
+        // backup db files and open storages
+        let storages = db_files
+            .iter()
+            .map(|db_file| {
+                let new_db_file = tx.move_to_backup(db_file)?;
+                let storage_reader = create_file_reader(&new_db_file)?;
+
+                BazaStorage::read(storage_reader, self.key.clone())
+                    .context(anyhow!("Failed to open storage for db {db_file}"))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let storage_writer = create_file_writer(main_db_file)?;
+        BazaStorage::merge_all(storages, storage_writer)?;
+
+        tx.commit()?;
+
+        Ok(())
+    }
+
     // fn update(&mut self, update: BazaUpdate) -> Result<()> {
     //     todo!()
     // }
-
-    // TODO pull changes from Storage into State
 }
 
 fn add_keys<'r>(

@@ -353,6 +353,21 @@ pub fn get_dir_checksum(path: impl AsRef<str>) -> Result<String> {
     Ok(get_string_hash_sha256(&result))
 }
 
+pub fn list_files(dir: &str) -> Result<Vec<String>> {
+    let mut files = Vec::new();
+
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_file() {
+            files.push(path_to_string(path))
+        }
+    }
+
+    Ok(files)
+}
+
 pub fn create_dir_if_not_exist(dir_path: impl Into<PathBuf>) -> Result<()> {
     let dir_path = dir_path.into();
 
@@ -510,5 +525,15 @@ mod tests {
         assert!(!file_exists(&lock_file).unwrap());
 
         assert!(LockFile::new(&lock_file).is_ok());
+    }
+
+    #[test]
+    fn test_list_files() {
+        let result = list_files(&workspace_relpath("resources/")).unwrap();
+
+        assert_eq!(result.len(), 9);
+        assert!(result
+            .iter()
+            .any(|item| item.ends_with("1382351098-0e4a0ef21c859ccc3aaddfa0ae58dc05.jpg")));
     }
 }

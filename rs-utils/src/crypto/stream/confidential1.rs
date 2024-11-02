@@ -190,17 +190,14 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{generate_alpanumeric_string, new_random_crypto_byte_array, read_all_as_string};
+    use crate::{generate_alpanumeric_string, read_all_as_string};
 
     use super::*;
 
     #[test]
     fn test_write_read() -> Result<()> {
         let data = generate_alpanumeric_string(100 * 1024);
-        let key = Confidential1Key::Key(CryptoKey::new(
-            new_random_crypto_byte_array(),
-            CryptoKey::random_salt(),
-        ));
+        let key = Confidential1Key::Key(CryptoKey::new_random_key());
 
         let encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -222,10 +219,7 @@ mod tests {
     #[test]
     fn test_seek() -> Result<()> {
         let data = generate_alpanumeric_string(100);
-        let key = Confidential1Key::Key(CryptoKey::new(
-            new_random_crypto_byte_array(),
-            CryptoKey::random_salt(),
-        ));
+        let key = Confidential1Key::Key(CryptoKey::new_random_key());
 
         let encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -247,10 +241,7 @@ mod tests {
     #[test]
     fn test_authentication() -> Result<()> {
         let data = generate_alpanumeric_string(100);
-        let key = Confidential1Key::Key(CryptoKey::new(
-            new_random_crypto_byte_array(),
-            CryptoKey::random_salt(),
-        ));
+        let key = Confidential1Key::Key(CryptoKey::new_random_key());
 
         let mut encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;

@@ -9,7 +9,7 @@ use rs_utils::{
     create_file_reader, create_file_writer, create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
     format_bytes, generate_alpanumeric_string, generate_bytes, get_file_hash_blake3,
-    get_file_hash_sha256, new_random_crypto_byte_array, ContainerReader, ContainerWriter, TempFile,
+    get_file_hash_sha256, ContainerReader, ContainerWriter, TempFile,
 };
 
 fn container_write(mut writer: &mut impl Write, data: &[String]) {
@@ -172,10 +172,7 @@ fn bench_confidential1_container(c: &mut Criterion) {
 
     let data = gen_data();
 
-    let key = Confidential1Key::Key(CryptoKey::new(
-        new_random_crypto_byte_array(),
-        CryptoKey::random_salt(),
-    ));
+    let key = Confidential1Key::Key(CryptoKey::new_random_key());
     group.bench_function("confidential1_gz_container_write", |b| {
         b.iter(|| {
             let mut cursor = new_cursor();
@@ -210,10 +207,7 @@ fn bench_confidential1_container_file(c: &mut Criterion) {
 
     let data = gen_data();
 
-    let key = Confidential1Key::Key(CryptoKey::new(
-        new_random_crypto_byte_array(),
-        CryptoKey::random_salt(),
-    ));
+    let key = Confidential1Key::Key(CryptoKey::new_random_key());
 
     let temp1 = TempFile::new();
     temp1.create_file().unwrap();

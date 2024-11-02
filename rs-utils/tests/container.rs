@@ -11,18 +11,11 @@ use rs_utils::{
     read_all_as_string, ContainerReader, ContainerWriter,
 };
 
-fn new_test_key() -> Confidential1Key {
-    Confidential1Key::Key(CryptoKey::new(
-        new_random_crypto_byte_array(),
-        CryptoKey::random_salt(),
-    ))
-}
-
 #[test]
 fn test_c1_gz_read_write() -> Result<()> {
     let data = "ab";
 
-    let key = new_test_key();
+    let key = Confidential1Key::Key(CryptoKey::new_random_key());
 
     let encrypted = {
         let mut c1_writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -93,7 +86,7 @@ fn test_c1_gz_container_read_write() -> Result<()> {
 fn test_crypto_gz_container_read_write() -> Result<()> {
     let lines = generate_alphanumeric_lines(2, 1);
 
-    let key = CryptoKey::new(new_random_crypto_byte_array(), CryptoKey::random_salt());
+    let key = CryptoKey::new_random_key();
     let nonce = new_random_crypto_byte_array();
 
     let encrypted = {
@@ -133,7 +126,7 @@ fn test_crypto_gz_container_read_write() -> Result<()> {
 fn test_crypto_gz_read_write() -> Result<()> {
     let line = generate_alpanumeric_string(100);
 
-    let key = CryptoKey::new(new_random_crypto_byte_array(), CryptoKey::random_salt());
+    let key = CryptoKey::new_random_key();
     let nonce = new_random_crypto_byte_array();
 
     let encrypted = {

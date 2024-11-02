@@ -34,6 +34,10 @@ impl CryptoKey {
         Self { key, salt }
     }
 
+    pub fn new_random_key() -> Self {
+        Self::new(new_random_crypto_byte_array(), Self::random_salt())
+    }
+
     pub fn random_salt() -> Salt {
         new_random_crypto_byte_array()
     }

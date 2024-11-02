@@ -17,6 +17,7 @@ use crate::{
     entities::{BLOBId, Document, Id, Revision},
     get_local_blob_ids,
     path_manager::PathManager,
+    schema::DataSchema,
 };
 
 mod baza_state;
@@ -39,10 +40,11 @@ pub struct BazaManager {
     state: RefCell<BazaState>,
     path_manager: PathManager,
     key: CryptoKey,
+    schema: DataSchema,
 }
 
 impl BazaManager {
-    pub fn new(path_manager: PathManager, key: CryptoKey) -> Result<Self> {
+    pub fn new(path_manager: PathManager, key: CryptoKey, schema: DataSchema) -> Result<Self> {
         let state_reader = create_file_reader(&path_manager.state_file)?;
         let state = BazaState::read(state_reader)?;
 
@@ -50,9 +52,12 @@ impl BazaManager {
             state: RefCell::new(state),
             path_manager,
             key,
+            schema,
         };
 
         baza_manager.merge_storages()?;
+        baza_manager.create_storage_if_necessary()?;
+
         baza_manager.sync_state_with_storage()?;
 
         Ok(baza_manager)
@@ -281,6 +286,28 @@ impl BazaManager {
         BazaStorage::merge_all(storages, storage_writer)?;
 
         tx.commit()?;
+
+        Ok(())
+    }
+
+    fn create_storage_if_necessary(&self) -> Result<()> {
+        if file_exists(&self.path_manager.db2_file)? {
+            return Ok(());
+        }
+
+        // if no db file
+        // create new empty db file
+
+        let info = BazaInfo {
+            name: self.schema.get_app_name().to_string(),
+            data_version: self.schema.get_latest_data_version(),
+            storage_version: BazaStorage::VERSION,
+        };
+
+        let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
+        BazaStorage::create(storage_writer, self.key.clone(), &info)?;
+
+        log::info!("Created new storage");
 
         Ok(())
     }

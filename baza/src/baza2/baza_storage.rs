@@ -43,7 +43,7 @@ fn create_confidential1_gz_container_writer(
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BazaInfo {
     pub name: String,
-    pub baza_version: u8,
+    pub storage_version: u8,
     pub data_version: u8,
 }
 
@@ -85,6 +85,10 @@ impl DocumentsIndex {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(DocumentsIndex(documents_index))
+    }
+
+    pub fn create() -> LinesIndex {
+        Self::serialize([].iter())
     }
 
     pub fn serialize<'k>(items: impl Iterator<Item = &'k BazaDocumentKey>) -> LinesIndex {
@@ -139,6 +143,20 @@ pub struct BazaStorage {
 }
 
 impl BazaStorage {
+    pub const VERSION: u8 = 1;
+
+    pub fn create(writer: impl Write, key: CryptoKey, info: &BazaInfo) -> Result<()> {
+        let c1_key = Confidential1Key::Key(key);
+        let mut c1writer = create_confidential1_gz_container_writer(writer, &c1_key)?;
+
+        let index = DocumentsIndex::create();
+        c1writer.write_index(&index)?;
+        c1writer.write_line(&serde_json::to_string(info)?)?;
+        c1writer.finish()?;
+
+        Ok(())
+    }
+
     pub fn read(reader: impl BufRead + 'static, key: CryptoKey) -> Result<Self> {
         let c1_key = Confidential1Key::Key(key);
         let reader = create_confidential1_gz_container_reader(reader, &c1_key)?;

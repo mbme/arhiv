@@ -135,18 +135,18 @@ enum ReaderOrLinesIter {
     Undefined,
 }
 
-pub struct BazaStorage {
+pub struct BazaStorage<'k> {
     pub index: DocumentsIndex,
-    key: Confidential1Key,
+    key: Confidential1Key<'k>,
     inner: ReaderOrLinesIter,
     info: Option<BazaInfo>,
 }
 
-impl BazaStorage {
+impl<'k> BazaStorage<'k> {
     pub const VERSION: u8 = 1;
 
-    pub fn create(writer: impl Write, key: CryptoKey, info: &BazaInfo) -> Result<()> {
-        let c1_key = Confidential1Key::Key(key);
+    pub fn create(writer: impl Write, key: &'k CryptoKey, info: &BazaInfo) -> Result<()> {
+        let c1_key = Confidential1Key::borrow_key(key);
         let mut c1writer = create_confidential1_gz_container_writer(writer, &c1_key)?;
 
         let index = DocumentsIndex::create();
@@ -157,8 +157,8 @@ impl BazaStorage {
         Ok(())
     }
 
-    pub fn read(reader: impl BufRead + 'static, key: CryptoKey) -> Result<Self> {
-        let c1_key = Confidential1Key::Key(key);
+    pub fn read(reader: impl BufRead + 'static, key: &'k CryptoKey) -> Result<Self> {
+        let c1_key = Confidential1Key::borrow_key(key);
         let reader = create_confidential1_gz_container_reader(reader, &c1_key)?;
 
         let index = DocumentsIndex::parse(reader.get_index())?;
@@ -333,7 +333,7 @@ impl BazaStorage {
     }
 }
 
-impl Iterator for BazaStorage {
+impl<'k> Iterator for BazaStorage<'k> {
     type Item = Result<(BazaDocumentKey, String)>;
 
     fn next(&mut self) -> Option<Self::Item> {

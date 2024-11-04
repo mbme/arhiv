@@ -2,7 +2,10 @@
 /// 1. password -> read salt & derive key using Argon2id v19 (m=19456 (19 MiB), t=2, p=1)
 /// 2. crypto key -> read salt & derive subkey using HKDF-sha256
 use core::str;
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::{
+    borrow::Cow,
+    io::{self, Read, Seek, SeekFrom, Write},
+};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
@@ -20,12 +23,12 @@ pub const CONFIDENTIAL1_MAGIC_STRING_LEN: usize = CONFIDENTIAL1_MAGIC_STRING.as_
 pub const CONFIDENTIAL1_HEADER_SIZE: usize =
     CONFIDENTIAL1_MAGIC_STRING_LEN + SALT_SIZE + CHACHA_NONCE_SIZE;
 
-pub enum Confidential1Key {
+pub enum Confidential1Key<'k> {
     Password(SecretBytes),
-    Key(CryptoKey),
+    Key(Cow<'k, CryptoKey>),
 }
 
-impl Confidential1Key {
+impl<'k> Confidential1Key<'k> {
     pub fn get_crypto_key(&self, salt: Salt) -> Result<CryptoKey> {
         match self {
             Confidential1Key::Password(password) => {
@@ -33,6 +36,14 @@ impl Confidential1Key {
             }
             Confidential1Key::Key(key) => CryptoKey::derive_subkey(key.get(), salt),
         }
+    }
+
+    pub fn new_random_key() -> Self {
+        Confidential1Key::Key(Cow::Owned(CryptoKey::new_random_key()))
+    }
+
+    pub fn borrow_key(key: &'k CryptoKey) -> Self {
+        Confidential1Key::Key(Cow::Borrowed(key))
     }
 }
 
@@ -197,7 +208,7 @@ mod tests {
     #[test]
     fn test_write_read() -> Result<()> {
         let data = generate_alpanumeric_string(100 * 1024);
-        let key = Confidential1Key::Key(CryptoKey::new_random_key());
+        let key = Confidential1Key::new_random_key();
 
         let encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -219,7 +230,7 @@ mod tests {
     #[test]
     fn test_seek() -> Result<()> {
         let data = generate_alpanumeric_string(100);
-        let key = Confidential1Key::Key(CryptoKey::new_random_key());
+        let key = Confidential1Key::new_random_key();
 
         let encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -241,7 +252,7 @@ mod tests {
     #[test]
     fn test_authentication() -> Result<()> {
         let data = generate_alpanumeric_string(100);
-        let key = Confidential1Key::Key(CryptoKey::new_random_key());
+        let key = Confidential1Key::new_random_key();
 
         let mut encrypted = {
             let mut writer = Confidential1Writer::new(Vec::new(), &key)?;

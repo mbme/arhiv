@@ -125,7 +125,7 @@ impl BazaManager {
 
         // open old db file
         let storage_reader = create_file_reader(&old_db_file)?;
-        let storage = BazaStorage::read(storage_reader, self.key.clone())?;
+        let storage = BazaStorage::read(storage_reader, &self.key)?;
 
         // collect changed documents & update state
         let new_documents = state.commit()?;
@@ -167,7 +167,7 @@ impl BazaManager {
         }
 
         let storage_reader = create_file_reader(&self.path_manager.db2_file)?;
-        let mut storage = BazaStorage::read(storage_reader, self.key.clone())?;
+        let mut storage = BazaStorage::read(storage_reader, &self.key)?;
 
         let storage_info = storage.get_info()?;
         ensure!(
@@ -277,7 +277,7 @@ impl BazaManager {
                 let new_db_file = tx.move_to_backup(db_file)?;
                 let storage_reader = create_file_reader(&new_db_file)?;
 
-                BazaStorage::read(storage_reader, self.key.clone())
+                BazaStorage::read(storage_reader, &self.key)
                     .context(anyhow!("Failed to open storage for db {db_file}"))
             })
             .collect::<Result<Vec<_>>>()?;
@@ -305,7 +305,7 @@ impl BazaManager {
         };
 
         let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        BazaStorage::create(storage_writer, self.key.clone(), &info)?;
+        BazaStorage::create(storage_writer, &self.key, &info)?;
 
         log::info!("Created new storage");
 

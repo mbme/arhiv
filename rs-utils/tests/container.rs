@@ -15,7 +15,7 @@ use rs_utils::{
 fn test_c1_gz_read_write() -> Result<()> {
     let data = "ab";
 
-    let key = Confidential1Key::Key(CryptoKey::new_random_key());
+    let key = Confidential1Key::new_random_key();
 
     let encrypted = {
         let mut c1_writer = Confidential1Writer::new(Vec::new(), &key)?;
@@ -44,10 +44,7 @@ fn test_c1_gz_read_write() -> Result<()> {
 fn test_c1_gz_container_read_write() -> Result<()> {
     let lines = generate_alphanumeric_lines(2, 1);
 
-    let key = Confidential1Key::Key(CryptoKey::new(
-        new_random_crypto_byte_array(),
-        CryptoKey::random_salt(),
-    ));
+    let key = Confidential1Key::new_random_key();
 
     let encrypted = {
         let mut data = Vec::with_capacity(lines.iter().map(|line| line.as_bytes().len()).sum());

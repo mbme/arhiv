@@ -163,7 +163,7 @@ impl<R: BufRead> ContainerReader<R> {
             .collect()
     }
 
-    pub fn patch<W: Write>(self, mut writer: ContainerWriter<W>, mut patch: Patch) -> Result<()> {
+    pub fn patch<W: Write>(self, mut writer: ContainerWriter<W>, mut patch: Patch) -> Result<W> {
         let patched_index = self.index.clone().patch(&patch);
         let iter = self.into_lines_iter();
 
@@ -226,7 +226,7 @@ impl<W: Write> ContainerWriter<W> {
         Ok(())
     }
 
-    pub fn write_lines<'a>(mut self, lines: impl Iterator<Item = &'a str>) -> Result<()> {
+    pub fn write_lines<'a>(mut self, lines: impl Iterator<Item = &'a str>) -> Result<W> {
         for line in lines {
             self.write_line(line)?;
         }
@@ -253,7 +253,7 @@ impl<W: Write> ContainerWriter<W> {
         Ok(())
     }
 
-    pub fn finish(mut self) -> Result<()> {
+    pub fn finish(mut self) -> Result<W> {
         ensure!(self.index_written, "index not written");
 
         ensure!(
@@ -265,7 +265,7 @@ impl<W: Write> ContainerWriter<W> {
 
         self.writer.flush()?;
 
-        Ok(())
+        Ok(self.writer)
     }
 }
 

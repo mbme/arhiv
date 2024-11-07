@@ -226,6 +226,21 @@ impl<W: Write> ContainerWriter<W> {
         }
     }
 
+    pub fn write(mut self, patch: ContainerPatch) -> Result<W> {
+        let (keys, values): (Vec<_>, Vec<_>) = patch.into_iter().unzip();
+
+        let index = LinesIndex::new(keys);
+
+        self.write_index(&index)?;
+
+        for value in values {
+            let line = value.context("value is None")?;
+            self.write_line(&line)?;
+        }
+
+        self.finish()
+    }
+
     pub fn write_index(&mut self, index: &LinesIndex) -> Result<()> {
         ensure!(!self.index_written, "index already written");
 
@@ -493,6 +508,31 @@ mod tests {
 
         assert_eq!(index.index, vec!["2", "3"]);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_write_container() -> Result<()> {
+        let mut data = Cursor::new(Vec::new());
+
+        {
+            let patch: ContainerPatch = [
+                ("1".to_string(), Some("1".to_string())),
+                ("2".to_string(), Some("2".to_string())),
+            ]
+            .into();
+
+            let writer = ContainerWriter::new(&mut data);
+            writer.write(patch)?;
+        }
+        {
+            data.set_position(0);
+
+            let reader = ContainerReader::init_buffered(&mut data)?;
+
+            let new_lines = reader.read_all()?;
+            assert_eq!(new_lines, vec!["1", "2"]);
+        }
         Ok(())
     }
 

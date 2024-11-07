@@ -305,7 +305,7 @@ impl BazaManager {
         };
 
         let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        create_storage(storage_writer, &self.key, &info)?;
+        create_storage(storage_writer, &self.key, &info, &[])?;
 
         log::info!("Created new storage");
 

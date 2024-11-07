@@ -42,6 +42,13 @@ impl BazaDocumentKey {
         Self { id, rev }
     }
 
+    pub fn for_document(document: &Document) -> Result<Self> {
+        Ok(BazaDocumentKey::new(
+            document.id.clone(),
+            document.get_rev()?.clone(),
+        ))
+    }
+
     pub fn parse(value: &str) -> Result<Self> {
         let (id_raw, rev_raw) = value.split_once(' ').context("Failed to split value")?;
 
@@ -71,16 +78,18 @@ impl DocumentsIndex {
         Ok(DocumentsIndex(documents_index))
     }
 
-    pub fn create() -> LinesIndex {
-        Self::serialize([].iter())
-    }
-
-    pub fn serialize<'k>(items: impl Iterator<Item = &'k BazaDocumentKey>) -> LinesIndex {
-        let mut index = items.map(|key| key.serialize()).collect::<Vec<_>>();
+    pub fn from_string_keys(keys: impl Iterator<Item = String>) -> LinesIndex {
+        let mut index = keys.collect::<Vec<_>>();
 
         index.insert(0, "info".to_string());
 
         LinesIndex::new(index)
+    }
+
+    pub fn from_baza_document_keys<'k>(
+        items: impl Iterator<Item = &'k BazaDocumentKey>,
+    ) -> LinesIndex {
+        Self::from_string_keys(items.map(|key| key.serialize()))
     }
 
     pub fn append_keys(&mut self, more_keys: Vec<BazaDocumentKey>) {
@@ -186,21 +195,7 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         ensure!(!new_documents.is_empty(), "documents to add not provided");
 
         // prepare patch
-        let mut patch = ContainerPatch::with_capacity(new_documents.len());
-        for new_document in new_documents {
-            let key =
-                BazaDocumentKey::new(new_document.id.clone(), new_document.get_rev()?.clone())
-                    .serialize();
-            ensure!(
-                !patch.contains_key(&key),
-                "duplicate new document {}",
-                new_document.id
-            );
-
-            let value = serde_json::to_string(&new_document)?;
-
-            patch.insert(key, Some(value));
-        }
+        let patch = create_container_patch(new_documents)?;
 
         // apply patch & write db
         let c1writer = C1GzWriter::create(writer, &self.key)?;
@@ -261,15 +256,40 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     }
 }
 
-pub fn create_storage(writer: impl Write, key: &CryptoKey, info: &BazaInfo) -> Result<()> {
+fn create_container_patch(documents: &[Document]) -> Result<ContainerPatch> {
+    let mut patch = ContainerPatch::with_capacity(documents.len());
+    for new_document in documents {
+        let key = BazaDocumentKey::for_document(new_document)?.serialize();
+        ensure!(
+            !patch.contains_key(&key),
+            "duplicate new document {}",
+            new_document.id
+        );
+
+        let value = serde_json::to_string(&new_document)?;
+
+        patch.insert(key, Some(value));
+    }
+
+    Ok(patch)
+}
+
+pub fn create_storage(
+    writer: impl Write,
+    key: &CryptoKey,
+    info: &BazaInfo,
+    new_documents: &[Document],
+) -> Result<()> {
     let c1_key = Confidential1Key::borrow_key(key);
     let c1writer = C1GzWriter::create(writer, &c1_key)?;
-    let mut container_writer = ContainerWriter::new(c1writer);
+    let container_writer = ContainerWriter::new(c1writer);
 
-    let index = DocumentsIndex::create();
-    container_writer.write_index(&index)?;
-    container_writer.write_line(&serde_json::to_string(info)?)?;
-    let c1writer = container_writer.finish()?;
+    let mut patch = create_container_patch(new_documents)?;
+
+    let info = serde_json::to_string(info)?;
+    patch.insert_before(0, "info".to_string(), Some(info));
+
+    let c1writer = container_writer.write(patch)?;
     c1writer.finish()?;
 
     Ok(())
@@ -332,7 +352,7 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
 
     // build index
     let index_keys = keys_per_storage.iter().flat_map(|(_s, keys)| keys.iter());
-    let index = DocumentsIndex::serialize(index_keys);
+    let index = DocumentsIndex::from_baza_document_keys(index_keys);
 
     let key = &keys_per_storage[0].0.key;
     let c1writer = C1GzWriter::create(writer, key)?;
@@ -389,41 +409,45 @@ mod tests {
         // create
         let key = CryptoKey::new_random_key();
         let info = BazaInfo::new_test_info();
-        create_storage(&mut data, &key, &info)?;
+        let mut docs1 = vec![new_document(json!({ "test": "a" })).with_rev(json!({ "1": 1 }))];
+        create_storage(&mut data, &key, &info, &docs1)?;
 
         data.set_position(0);
 
         // read
         {
             let mut storage = BazaStorage::read(&mut data, &key)?;
-            assert_eq!(storage.index.0.len(), 0);
+            assert_eq!(storage.index.0.len(), 1);
             assert_eq!(storage.get_info()?, &info);
-            assert!(storage.next().is_none());
+
+            let all_items = storage.get_all()?;
+            assert_eq!(all_items, docs1);
         }
 
         data.set_position(0);
 
         // add
         let mut data1 = Cursor::new(Vec::<u8>::new());
-        let docs = vec![
-            new_document(json!({ "test": "a" })).with_rev(json!({ "1": 1 })),
+        let docs2 = vec![
             new_document(json!({ "test": "b" })).with_rev(json!({ "1": 2 })),
+            new_document(json!({ "test": "c" })).with_rev(json!({ "1": 3 })),
         ];
         {
             let storage = BazaStorage::read(&mut data, &key)?;
-            storage.add(&mut data1, &docs)?;
+            storage.add(&mut data1, &docs2)?;
         }
 
         data1.set_position(0);
 
         // read
         {
+            docs1.extend(docs2);
             let mut storage = BazaStorage::read(&mut data1, &key)?;
-            assert_eq!(storage.index.0.len(), 2);
+            assert_eq!(storage.index.0.len(), 3);
             assert_eq!(storage.get_info()?, &info);
 
             let all_items = storage.get_all()?;
-            assert_eq!(all_items, docs);
+            assert_eq!(all_items, docs1);
         }
 
         Ok(())

@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use baza_storage::BazaDocumentKey;
+use baza_storage::{create_storage, merge_storages, BazaDocumentKey, STORAGE_VERSION};
 use rs_utils::{
     create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, log, FsTransaction,
 };
@@ -132,7 +132,7 @@ impl BazaManager {
 
         // write changes to db file
         let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        storage.add(storage_writer, new_documents)?;
+        storage.add(storage_writer, &new_documents)?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {
@@ -283,7 +283,7 @@ impl BazaManager {
             .collect::<Result<Vec<_>>>()?;
 
         let storage_writer = create_file_writer(main_db_file)?;
-        BazaStorage::merge_all(storages, storage_writer)?;
+        merge_storages(storages, storage_writer)?;
 
         tx.commit()?;
 
@@ -301,11 +301,11 @@ impl BazaManager {
         let info = BazaInfo {
             name: self.schema.get_app_name().to_string(),
             data_version: self.schema.get_latest_data_version(),
-            storage_version: BazaStorage::VERSION,
+            storage_version: STORAGE_VERSION,
         };
 
         let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        BazaStorage::create(storage_writer, &self.key, &info)?;
+        create_storage(storage_writer, &self.key, &info)?;
 
         log::info!("Created new storage");
 

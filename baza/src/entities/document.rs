@@ -55,6 +55,14 @@ impl Document {
         self.rev.as_ref().context("document revision is missing")
     }
 
+    #[cfg(test)]
+    pub fn with_rev(mut self, rev: serde_json::Value) -> Self {
+        let revision = Revision::from_value(rev).expect("must be valid revision");
+        self.rev = Some(revision);
+
+        self
+    }
+
     pub(crate) fn erase(&mut self) {
         self.document_type = DocumentType::erased();
         self.data = DocumentData::new();

@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     io::{BufReader, Read, Write},
 };
 
@@ -60,6 +60,12 @@ impl BazaDocumentKey {
 
     pub fn serialize(&self) -> String {
         format!("{} {}", self.id, self.rev.to_file_name())
+    }
+}
+
+impl std::fmt::Debug for BazaDocumentKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("[@BazaDocumentKey {}]", &self.serialize()))
     }
 }
 
@@ -136,6 +142,12 @@ pub struct BazaStorage<'i, R: Read + 'i> {
     key: Confidential1Key<'i>,
     inner: ReaderOrLinesIter<'i, R>,
     info: Option<BazaInfo>,
+}
+
+impl<'i, R: Read + 'i> std::fmt::Debug for BazaStorage<'i, R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("@BazaStorage: {:?}", &self.index.0))
+    }
 }
 
 impl<'i, R: Read + 'i> BazaStorage<'i, R> {
@@ -298,13 +310,15 @@ pub fn create_storage(
 pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Write) -> Result<()> {
     ensure!(!storages.is_empty(), "storages must not be empty");
 
-    let same_info = storages
+    let is_same_info = storages
         .iter_mut()
         .map(|s| s.get_info())
         .collect::<Result<Vec<_>>>()?
         .windows(2)
         .all(|w| w[0] == w[1]);
-    ensure!(same_info, "all storages must have same info");
+    ensure!(is_same_info, "all storages must have same info");
+
+    let info = storages[0].get_info()?.clone();
 
     let mut keys_per_storage = storages
         .into_iter()
@@ -334,11 +348,11 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
         .into_iter()
         .filter(|(_s, keys_set)| !keys_set.is_empty())
         .map(|(s, mut keys_set)| {
-            let mut ordered_keys = Vec::with_capacity(keys_set.len());
+            let mut ordered_keys = VecDeque::with_capacity(keys_set.len());
 
             for index_key in &s.index.0 {
                 if let Some(key) = keys_set.take(index_key) {
-                    ordered_keys.push(key);
+                    ordered_keys.push_back(key);
                 }
             }
 
@@ -359,19 +373,20 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
     let mut container_writer = ContainerWriter::new(c1writer);
 
     container_writer.write_index(&index)?;
+    container_writer.write_line(&serde_json::to_string(&info)?)?;
 
     // write lines
-    for (s, mut keys) in keys_per_storage {
-        for line in s {
-            if keys.is_empty() {
+    for (storage, mut keys) in keys_per_storage {
+        for line in storage {
+            if let Some(key) = keys.front() {
+                let (line_key, line) = line?;
+
+                if key == &line_key {
+                    container_writer.write_line(&line)?;
+                    keys.pop_front();
+                }
+            } else {
                 break;
-            }
-
-            let (key, line) = line?;
-
-            if key == keys[0] {
-                container_writer.write_line(&line)?;
-                keys.pop();
             }
         }
 
@@ -400,7 +415,7 @@ mod tests {
 
     use crate::tests::new_document;
 
-    use super::{create_storage, BazaInfo, BazaStorage};
+    use super::{create_storage, merge_storages, BazaInfo, BazaStorage};
 
     #[test]
     fn test_storage() -> Result<()> {
@@ -451,5 +466,54 @@ mod tests {
         }
 
         Ok(())
+    }
+
+    #[test]
+    fn test_merge_storages() {
+        let key = CryptoKey::new_random_key();
+        let info = BazaInfo::new_test_info();
+
+        let doc_a = new_document(json!({ "test": "a" })).with_rev(json!({ "a": 1 }));
+        let doc_b = new_document(json!({ "test": "b" })).with_rev(json!({ "b": 1 }));
+        let doc_c = new_document(json!({ "test": "c" })).with_rev(json!({ "c": 3 }));
+        let doc_d = new_document(json!({ "test": "d" })).with_rev(json!({ "d": 4 }));
+
+        // create storage1
+        let mut data1 = Cursor::new(Vec::<u8>::new());
+        let docs1 = vec![doc_a.clone(), doc_b.clone()];
+        create_storage(&mut data1, &key, &info, &docs1).unwrap();
+        data1.set_position(0);
+        let storage1 = BazaStorage::read(&mut data1, &key).unwrap();
+
+        // create storage2
+        let mut data2 = Cursor::new(Vec::<u8>::new());
+        let docs2 = vec![doc_b.clone(), doc_c.clone()];
+        create_storage(&mut data2, &key, &info, &docs2).unwrap();
+        data2.set_position(0);
+        let storage2 = BazaStorage::read(&mut data2, &key).unwrap();
+
+        // create storage3
+        let mut data3 = Cursor::new(Vec::<u8>::new());
+        let docs3 = vec![doc_a.clone(), doc_c.clone(), doc_d.clone()];
+        create_storage(&mut data3, &key, &info, &docs3).unwrap();
+        data3.set_position(0);
+        let storage3 = BazaStorage::read(&mut data3, &key).unwrap();
+
+        // merge storages
+        let mut result = Cursor::new(Vec::<u8>::new());
+        merge_storages(vec![storage1, storage2, storage3], &mut result).unwrap();
+        result.set_position(0);
+
+        let mut storage = BazaStorage::read(&mut result, &key).unwrap();
+        assert_eq!(storage.index.0.len(), 4);
+        assert_eq!(storage.get_info().unwrap(), &info);
+
+        let mut all_docs = [doc_a, doc_b, doc_c, doc_d];
+        all_docs.sort_by_cached_key(|item| item.id.to_string());
+
+        let mut all_items = storage.get_all().unwrap();
+        all_items.sort_by_cached_key(|item| item.id.to_string());
+
+        assert_eq!(all_items, all_docs);
     }
 }

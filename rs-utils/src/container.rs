@@ -1,14 +1,15 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     io::{BufRead, BufReader, Read, Write},
 };
 
 use anyhow::{ensure, Context, Result};
+use ordermap::OrderMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{TakeExactly, ZipLongest};
 
-pub type Patch = HashMap<String, Option<String>>;
+pub type ContainerPatch = OrderMap<String, Option<String>>;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(transparent, deny_unknown_fields)]
@@ -21,7 +22,7 @@ impl LinesIndex {
         LinesIndex { index }
     }
 
-    fn patch(self, patch: &Patch) -> Self {
+    fn patch(self, patch: &ContainerPatch) -> Self {
         let mut patched = HashSet::new();
 
         let mut patched_index: Vec<String> = self
@@ -163,7 +164,11 @@ impl<R: BufRead> ContainerReader<R> {
             .collect()
     }
 
-    pub fn patch<W: Write>(self, mut writer: ContainerWriter<W>, mut patch: Patch) -> Result<W> {
+    pub fn patch<W: Write>(
+        self,
+        mut writer: ContainerWriter<W>,
+        mut patch: ContainerPatch,
+    ) -> Result<W> {
         let patched_index = self.index.clone().patch(&patch);
         let iter = self.into_lines_iter();
 
@@ -179,6 +184,7 @@ impl<R: BufRead> ContainerReader<R> {
                 }
             };
 
+            // replace existing value
             if let Some(patched_value) = patch.remove(&key) {
                 patched_value.map(Ok)
             } else {
@@ -188,6 +194,13 @@ impl<R: BufRead> ContainerReader<R> {
 
         for line in patched_iter {
             let line = line?;
+
+            writer.write_line(&line)?;
+        }
+
+        // write new values at the end
+        for line in patch.into_values() {
+            let line = line.context("Expected new value, got None")?;
 
             writer.write_line(&line)?;
         }
@@ -277,7 +290,7 @@ mod tests {
 
     use crate::{create_gz_reader, create_gz_writer, generate_alphanumeric_lines, ContainerWriter};
 
-    use super::{ContainerReader, LinesIndex, Patch};
+    use super::{ContainerPatch, ContainerReader, LinesIndex};
 
     #[test]
     fn test_line_index_serialization() -> Result<()> {
@@ -469,7 +482,7 @@ mod tests {
     fn test_patch_line_index() -> Result<()> {
         let index: LinesIndex = ["1", "2"].as_slice().into();
 
-        let patch: Patch = [
+        let patch: ContainerPatch = [
             ("1".to_string(), None),
             ("4".to_string(), None),
             ("3".to_string(), Some("3".to_string())),
@@ -500,9 +513,10 @@ mod tests {
 
             let reader = ContainerReader::init_buffered(&mut data)?;
 
-            let patch: Patch = [
+            let patch: ContainerPatch = [
                 ("3".to_string(), None),
                 ("1".to_string(), Some("3".to_string())),
+                ("4".to_string(), Some("4".to_string())),
             ]
             .into();
 
@@ -514,7 +528,7 @@ mod tests {
             let reader = ContainerReader::init_buffered(&mut patched_data)?;
 
             let new_lines = reader.read_all()?;
-            assert_eq!(new_lines, vec!["2", "3"]);
+            assert_eq!(new_lines, vec!["2", "3", "4"]);
         }
 
         Ok(())

@@ -8,7 +8,7 @@ use rs_utils::{
     confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
     create_gz_reader, create_gz_writer,
     crypto_key::CryptoKey,
-    ContainerReader, ContainerWriter, LinesIndex,
+    ContainerPatch, ContainerReader, ContainerWriter, LinesIndex,
 };
 use serde::{Deserialize, Serialize};
 
@@ -211,7 +211,7 @@ impl<'k> BazaStorage<'k> {
         ensure!(!new_documents.is_empty(), "documents to add not provided");
 
         // prepare patch
-        let mut patch = HashMap::with_capacity(new_documents.len());
+        let mut patch = ContainerPatch::with_capacity(new_documents.len());
         for new_document in new_documents {
             let key =
                 BazaDocumentKey::new(new_document.id.clone(), new_document.get_rev()?.clone())

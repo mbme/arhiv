@@ -60,6 +60,7 @@ gethostname = "0.5" # for MDNS discovery
 rayon = "1.8.0"
 fslock = "0.2"
 flate2 = "1" # for compressed container
+ordermap = "0.5" # hashmap that preserves insertion order, for container patch
 
 [target.'cfg(android)'.dependencies]
 tracing-android = "0.2"

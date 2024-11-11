@@ -53,7 +53,7 @@ impl BazaManager {
         };
 
         let state = if file_exists(&path_manager.state_file)? {
-            let state = BazaState::read_file(&path_manager.state_file)?;
+            let state = BazaState::read_file(&path_manager.state_file, &key)?;
 
             ensure!(state.get_info() == &info, "State info mismatch");
 
@@ -63,7 +63,7 @@ impl BazaManager {
         } else {
             // create state if necessary
             let state = BazaState::new(InstanceId::generate(), info.clone(), HashMap::new());
-            state.write_to_file(&path_manager.state_file)?;
+            state.write_to_file(&path_manager.state_file, &key)?;
 
             log::info!("Created new state file in {}", path_manager.state_file);
 
@@ -167,7 +167,7 @@ impl BazaManager {
         tx.move_to_backup(self.path_manager.state_file.clone())?;
 
         // write changes to state file
-        state.write_to_file(&self.path_manager.state_file)?;
+        state.write_to_file(&self.path_manager.state_file, &self.key)?;
 
         tx.commit()?;
 
@@ -260,7 +260,7 @@ impl BazaManager {
         }
 
         if latest_snapshots_count > 0 {
-            state.write_to_file(&self.path_manager.state_file)?;
+            state.write_to_file(&self.path_manager.state_file, &self.key)?;
         }
 
         Ok(())

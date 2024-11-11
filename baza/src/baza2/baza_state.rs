@@ -6,13 +6,17 @@ use std::{
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use rs_utils::{create_file_reader, create_file_writer};
+use rs_utils::{
+    confidential1::{Confidential1Key, Confidential1Reader, Confidential1Writer},
+    create_file_reader, create_file_writer,
+    crypto_key::CryptoKey,
+};
 
 use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision, VectorClockOrder};
 
 use super::baza_storage::BazaInfo;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum DocumentHead {
     Document(Document),
     Conflict(Vec<Document>),
@@ -203,7 +207,7 @@ impl DocumentHead {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BazaState {
     instance_id: InstanceId,
     info: BazaInfo,
@@ -224,23 +228,33 @@ impl BazaState {
         }
     }
 
-    pub fn read(reader: impl BufRead) -> Result<Self> {
-        serde_json::from_reader(reader).context("Failed to parse BazaState")
+    pub fn read(reader: impl BufRead, key: &CryptoKey) -> Result<Self> {
+        let c1_key = Confidential1Key::borrow_key(key);
+        let c1_reader = Confidential1Reader::new(reader, &c1_key)?;
+
+        serde_json::from_reader(c1_reader).context("Failed to parse BazaState")
     }
 
-    pub fn read_file(file: &str) -> Result<Self> {
+    pub fn read_file(file: &str, key: &CryptoKey) -> Result<Self> {
         let state_reader = create_file_reader(file)?;
-        BazaState::read(state_reader)
+        BazaState::read(state_reader, key)
     }
 
-    pub fn write(&self, writer: impl Write) -> Result<()> {
-        serde_json::to_writer(writer, &self).context("Failed to serialize BazaState")
+    pub fn write(&self, writer: impl Write, key: &CryptoKey) -> Result<()> {
+        let c1_key = Confidential1Key::borrow_key(key);
+        let mut c1_writer = Confidential1Writer::new(writer, &c1_key)?;
+
+        serde_json::to_writer(&mut c1_writer, &self).context("Failed to serialize BazaState")?;
+
+        c1_writer.finish()?;
+
+        Ok(())
     }
 
-    pub fn write_to_file(&self, file: &str) -> Result<()> {
+    pub fn write_to_file(&self, file: &str, key: &CryptoKey) -> Result<()> {
         let mut state_writer = create_file_writer(file)?;
 
-        self.write(&mut state_writer)?;
+        self.write(&mut state_writer, key)?;
 
         state_writer.flush()?;
 
@@ -394,8 +408,9 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, io::Cursor};
 
+    use rs_utils::crypto_key::CryptoKey;
     use serde_json::json;
 
     use crate::{
@@ -541,5 +556,35 @@ mod tests {
         assert!(!state.is_modified());
         assert!(!state.has_unresolved_conflicts());
         assert_eq!(state.get_single_latest_revision(), &new_rev);
+    }
+
+    #[test]
+    fn test_state_read_write() {
+        let key = CryptoKey::new_random_key();
+        let mut state = BazaState::new(
+            InstanceId::from_string("test"),
+            BazaInfo::new_test_info(),
+            HashMap::new(),
+        );
+
+        state
+            .insert_document_revision(
+                new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })),
+            )
+            .unwrap();
+        state
+            .insert_document_revision(
+                new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })),
+            )
+            .unwrap();
+
+        let mut data = Cursor::new(Vec::<u8>::new());
+
+        state.write(&mut data, &key).unwrap();
+        data.set_position(0);
+
+        let state1 = BazaState::read(&mut data, &key).unwrap();
+
+        assert_eq!(state, state1);
     }
 }

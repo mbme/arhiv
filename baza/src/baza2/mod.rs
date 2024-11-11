@@ -254,7 +254,7 @@ impl BazaManager {
             let document: Document =
                 serde_json::from_str(raw_document).context("Failed to parse raw document")?;
 
-            state.insert_document_revision(document)?;
+            state.insert_snapshot(document)?;
 
             latest_snapshot_keys.remove(key);
         }

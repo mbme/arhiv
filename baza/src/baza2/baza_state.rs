@@ -314,7 +314,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn insert_document_revision(&mut self, document: Document) -> Result<()> {
+    pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
         let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
@@ -533,8 +533,8 @@ mod tests {
         let mut doc_a3 = doc_a1.clone();
         doc_a3.stage();
 
-        state.insert_document_revision(doc_a1).unwrap();
-        state.insert_document_revision(doc_a2).unwrap();
+        state.insert_snapshot(doc_a1).unwrap();
+        state.insert_snapshot(doc_a2).unwrap();
         assert!(!state.is_modified());
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);
@@ -568,14 +568,10 @@ mod tests {
         );
 
         state
-            .insert_document_revision(
-                new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })),
-            )
+            .insert_snapshot(new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })))
             .unwrap();
         state
-            .insert_document_revision(
-                new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })),
-            )
+            .insert_snapshot(new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })))
             .unwrap();
 
         let mut data = Cursor::new(Vec::<u8>::new());

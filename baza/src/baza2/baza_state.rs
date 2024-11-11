@@ -6,7 +6,7 @@ use std::{
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
+use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision, VectorClockOrder};
 
 use super::baza_storage::BazaInfo;
 
@@ -154,22 +154,44 @@ impl DocumentHead {
 
         let new_head = match self {
             DocumentHead::Document(document) => {
+                ensure!(
+                    document.id == new_document.id,
+                    "Document id must not change"
+                );
+
                 let rev = document.get_rev()?;
 
-                if rev.is_concurrent(new_rev) {
-                    DocumentHead::Conflict(vec![document, new_document])
-                } else {
-                    DocumentHead::Document(new_document)
+                match rev.compare_vector_clocks(new_rev) {
+                    VectorClockOrder::Before => DocumentHead::Document(new_document),
+                    VectorClockOrder::Concurrent => {
+                        DocumentHead::Conflict(vec![document, new_document])
+                    }
+                    VectorClockOrder::After => bail!("Can't insert document with older rev"),
+                    VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
                 }
             }
             DocumentHead::Conflict(mut original) => {
-                let rev = original.first().context("must not be empty")?.get_rev()?;
+                let document = &original[0];
+                ensure!(
+                    document.id == new_document.id,
+                    "Document id must not change"
+                );
 
-                if rev.is_concurrent(new_rev) {
-                    original.push(new_document);
-                    DocumentHead::Conflict(original)
-                } else {
-                    DocumentHead::Document(new_document)
+                let rev = document.get_rev()?;
+
+                match rev.compare_vector_clocks(new_rev) {
+                    VectorClockOrder::Before => DocumentHead::Document(new_document),
+                    VectorClockOrder::Concurrent => {
+                        let has_rev = original.iter().any(|document| {
+                            document.rev.as_ref().is_some_and(|rev| rev == new_rev)
+                        });
+                        ensure!(!has_rev, "Spcified document rev already exists");
+
+                        original.push(new_document);
+                        DocumentHead::Conflict(original)
+                    }
+                    VectorClockOrder::After => bail!("Can't insert document with older rev"),
+                    VectorClockOrder::Equal => bail!("Can't insert document with the same rev"),
                 }
             }
             _ => bail!("Can't insert into modified document"),
@@ -252,7 +274,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub(super) fn insert_document(&mut self, document: Document) -> Result<()> {
+    pub fn insert_document(&mut self, document: Document) -> Result<()> {
         let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
@@ -372,8 +394,9 @@ mod tests {
             assert!(head.is_committed());
             assert!(!head.is_modified());
 
+            let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
             assert!(matches!(
-                head.clone().insert(doc_a2.clone()).unwrap(),
+                head.clone().insert(doc_c1).unwrap(),
                 DocumentHead::Conflict(_)
             ));
 

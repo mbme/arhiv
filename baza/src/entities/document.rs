@@ -56,6 +56,13 @@ impl Document {
     }
 
     #[cfg(test)]
+    pub fn with_id(mut self, id: Id) -> Self {
+        self.id = id;
+
+        self
+    }
+
+    #[cfg(test)]
     pub fn with_rev(mut self, rev: serde_json::Value) -> Self {
         let revision = Revision::from_value(rev).expect("must be valid revision");
         self.rev = Some(revision);

@@ -10,7 +10,7 @@ use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision};
 
 use super::baza_storage::BazaInfo;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum DocumentHead {
     Document(Document),
     Conflict(Vec<Document>),
@@ -90,26 +90,63 @@ impl DocumentHead {
         Some(result)
     }
 
-    pub fn modify(self, new_document: Document) -> Self {
-        match self {
-            DocumentHead::Document(document) => DocumentHead::Updated {
-                original: document,
-                updated: new_document,
-            },
-            DocumentHead::Updated { original, .. } => DocumentHead::Updated {
-                original,
-                updated: new_document,
-            },
-            DocumentHead::Conflict(original) => DocumentHead::ResolvedConflict {
-                original,
-                updated: new_document,
-            },
-            DocumentHead::ResolvedConflict { original, .. } => DocumentHead::ResolvedConflict {
-                original,
-                updated: new_document,
-            },
-            DocumentHead::NewDocument(_document) => DocumentHead::NewDocument(new_document),
-        }
+    pub fn modify(self, new_document: Document) -> Result<Self> {
+        let result = match self {
+            DocumentHead::Document(document) => {
+                ensure!(
+                    document.id == new_document.id,
+                    "Document id must not change"
+                );
+
+                DocumentHead::Updated {
+                    original: document,
+                    updated: new_document,
+                }
+            }
+            DocumentHead::Updated { original, .. } => {
+                ensure!(
+                    original.id == new_document.id,
+                    "Document id must not change"
+                );
+
+                DocumentHead::Updated {
+                    original,
+                    updated: new_document,
+                }
+            }
+            DocumentHead::Conflict(original) => {
+                ensure!(
+                    original[0].id == new_document.id,
+                    "Document id must not change"
+                );
+
+                DocumentHead::ResolvedConflict {
+                    original,
+                    updated: new_document,
+                }
+            }
+            DocumentHead::ResolvedConflict { original, .. } => {
+                ensure!(
+                    original[0].id == new_document.id,
+                    "Document id must not change"
+                );
+
+                DocumentHead::ResolvedConflict {
+                    original,
+                    updated: new_document,
+                }
+            }
+            DocumentHead::NewDocument(document) => {
+                ensure!(
+                    document.id == new_document.id,
+                    "Document id must not change"
+                );
+
+                DocumentHead::NewDocument(new_document)
+            }
+        };
+
+        Ok(result)
     }
 
     pub fn insert(self, new_document: Document) -> Result<Self> {
@@ -205,7 +242,7 @@ impl BazaState {
         document.stage();
 
         let updated_document = if let Some(document_head) = current_value {
-            document_head.modify(document)
+            document_head.modify(document)?
         } else {
             DocumentHead::NewDocument(document)
         };
@@ -308,5 +345,114 @@ impl BazaState {
         }
 
         Ok(new_documents)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use crate::tests::new_document;
+
+    use super::DocumentHead;
+
+    #[test]
+    fn test_document_head() {
+        let doc_a1 = new_document(json!({ "test": "a1" })).with_rev(json!({ "a": 1 }));
+        let doc_a2 = new_document(json!({ "test": "b2" }))
+            .with_id(doc_a1.id.clone())
+            .with_rev(json!({ "b": 1 }));
+        let doc_a3 = new_document(json!({ "test": "a1b2" }))
+            .with_rev(json!({ "a": 1, "b": 1, "c": 1 }))
+            .with_id(doc_a1.id.clone());
+
+        {
+            let head = DocumentHead::Conflict(vec![doc_a1.clone(), doc_a2.clone()]);
+            assert!(head.is_unresolved_conflict());
+            assert!(head.is_committed());
+            assert!(!head.is_modified());
+
+            assert!(matches!(
+                head.clone().insert(doc_a2.clone()).unwrap(),
+                DocumentHead::Conflict(_)
+            ));
+
+            assert!(matches!(
+                head.clone().insert(doc_a3.clone()).unwrap(),
+                DocumentHead::Document(_)
+            ));
+
+            assert!(matches!(
+                head.clone().modify(doc_a3.clone()).unwrap(),
+                DocumentHead::ResolvedConflict { .. }
+            ));
+        }
+
+        {
+            let head = DocumentHead::Document(doc_a1.clone());
+            assert!(!head.is_unresolved_conflict());
+            assert!(head.is_committed());
+            assert!(!head.is_modified());
+
+            assert!(matches!(
+                head.clone().insert(doc_a2.clone()).unwrap(),
+                DocumentHead::Conflict(_)
+            ));
+
+            assert!(matches!(
+                head.clone().insert(doc_a3.clone()).unwrap(),
+                DocumentHead::Document(_)
+            ));
+
+            assert!(matches!(
+                head.clone().modify(doc_a3.clone()).unwrap(),
+                DocumentHead::Updated { .. }
+            ));
+        }
+
+        {
+            let head = DocumentHead::NewDocument(doc_a1.clone());
+            assert!(!head.is_unresolved_conflict());
+            assert!(!head.is_committed());
+            assert!(head.is_modified());
+            assert!(head.clone().insert(doc_a3.clone()).is_err());
+
+            assert!(matches!(
+                head.clone().modify(doc_a3.clone()).unwrap(),
+                DocumentHead::NewDocument(_)
+            ));
+        }
+
+        {
+            let head = DocumentHead::Updated {
+                original: doc_a1.clone(),
+                updated: doc_a2.clone(),
+            };
+            assert!(!head.is_unresolved_conflict());
+            assert!(!head.is_committed());
+            assert!(head.is_modified());
+            assert!(head.clone().insert(doc_a3.clone()).is_err());
+
+            assert!(matches!(
+                head.clone().modify(doc_a3.clone()).unwrap(),
+                DocumentHead::Updated { .. }
+            ));
+        }
+
+        {
+            let head = DocumentHead::ResolvedConflict {
+                original: vec![doc_a1.clone(), doc_a2.clone()],
+                updated: doc_a3.clone(),
+            };
+            assert!(!head.is_unresolved_conflict());
+            assert!(!head.is_committed());
+            assert!(head.is_modified());
+            assert!(head.clone().insert(doc_a3.clone()).is_err());
+
+            assert!(matches!(
+                head.clone().modify(doc_a3.clone()).unwrap(),
+                DocumentHead::ResolvedConflict { .. }
+            ));
+        }
     }
 }

@@ -149,7 +149,7 @@ impl DocumentHead {
         Ok(result)
     }
 
-    pub fn insert(self, new_document: Document) -> Result<Self> {
+    pub fn insert_revision(self, new_document: Document) -> Result<Self> {
         let new_rev = new_document.get_rev()?;
 
         let new_head = match self {
@@ -210,9 +210,11 @@ pub struct BazaState {
 
 // TODO kvs
 impl BazaState {
-    pub fn new(info: BazaInfo, documents: HashMap<Id, DocumentHead>) -> Self {
-        let instance_id = InstanceId::generate();
-
+    pub fn new(
+        instance_id: InstanceId,
+        info: BazaInfo,
+        documents: HashMap<Id, DocumentHead>,
+    ) -> Self {
         Self {
             info,
             documents,
@@ -241,6 +243,13 @@ impl BazaState {
         }
 
         latest_rev_computer.get()
+    }
+
+    pub fn get_single_latest_revision(&self) -> &Revision {
+        self.get_latest_revision()
+            .into_iter()
+            .next()
+            .expect("revision set must not be empty")
     }
 
     fn calculate_next_revision(&self) -> Revision {
@@ -274,13 +283,13 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn insert_document(&mut self, document: Document) -> Result<()> {
+    pub fn insert_document_revision(&mut self, document: Document) -> Result<()> {
         let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
 
         let updated_document = if let Some(document_head) = current_value {
-            document_head.insert(document)?
+            document_head.insert_revision(document)?
         } else {
             DocumentHead::Document(document)
         };
@@ -317,12 +326,8 @@ impl BazaState {
             .cloned()
             .collect::<Vec<_>>();
 
-        for id in ids {
-            let (id, document) = self.documents.remove_entry(&id).expect("entry must exist");
-
-            if let Some(reset_document) = document.reset() {
-                self.documents.insert(id, reset_document);
-            }
+        for id in &ids {
+            self.reset_document(id).expect("entry must exist");
         }
     }
 
@@ -372,21 +377,23 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use serde_json::json;
 
-    use crate::tests::new_document;
+    use crate::{
+        baza2::BazaInfo,
+        entities::{InstanceId, Revision},
+        tests::new_document,
+    };
 
-    use super::DocumentHead;
+    use super::{BazaState, DocumentHead};
 
     #[test]
     fn test_document_head() {
-        let doc_a1 = new_document(json!({ "test": "a1" })).with_rev(json!({ "a": 1 }));
-        let doc_a2 = new_document(json!({ "test": "b2" }))
-            .with_id(doc_a1.id.clone())
-            .with_rev(json!({ "b": 1 }));
-        let doc_a3 = new_document(json!({ "test": "a1b2" }))
-            .with_rev(json!({ "a": 1, "b": 1, "c": 1 }))
-            .with_id(doc_a1.id.clone());
+        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a2 = doc_a1.clone().with_rev(json!({ "b": 1 }));
+        let doc_a3 = doc_a1.clone().with_rev(json!({ "a": 1, "b": 1, "c": 1 }));
 
         {
             let head = DocumentHead::Conflict(vec![doc_a1.clone(), doc_a2.clone()]);
@@ -396,12 +403,12 @@ mod tests {
 
             let doc_c1 = doc_a1.clone().with_rev(json!({ "c": 1 }));
             assert!(matches!(
-                head.clone().insert(doc_c1).unwrap(),
+                head.clone().insert_revision(doc_c1).unwrap(),
                 DocumentHead::Conflict(_)
             ));
 
             assert!(matches!(
-                head.clone().insert(doc_a3.clone()).unwrap(),
+                head.clone().insert_revision(doc_a3.clone()).unwrap(),
                 DocumentHead::Document(_)
             ));
 
@@ -418,12 +425,12 @@ mod tests {
             assert!(!head.is_modified());
 
             assert!(matches!(
-                head.clone().insert(doc_a2.clone()).unwrap(),
+                head.clone().insert_revision(doc_a2.clone()).unwrap(),
                 DocumentHead::Conflict(_)
             ));
 
             assert!(matches!(
-                head.clone().insert(doc_a3.clone()).unwrap(),
+                head.clone().insert_revision(doc_a3.clone()).unwrap(),
                 DocumentHead::Document(_)
             ));
 
@@ -438,7 +445,7 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_modified());
-            assert!(head.clone().insert(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
 
             assert!(matches!(
                 head.clone().modify(doc_a3.clone()).unwrap(),
@@ -454,7 +461,7 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_modified());
-            assert!(head.clone().insert(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
 
             assert!(matches!(
                 head.clone().modify(doc_a3.clone()).unwrap(),
@@ -470,12 +477,52 @@ mod tests {
             assert!(!head.is_unresolved_conflict());
             assert!(!head.is_committed());
             assert!(head.is_modified());
-            assert!(head.clone().insert(doc_a3.clone()).is_err());
+            assert!(head.clone().insert_revision(doc_a3.clone()).is_err());
 
             assert!(matches!(
                 head.clone().modify(doc_a3.clone()).unwrap(),
                 DocumentHead::ResolvedConflict { .. }
             ));
         }
+    }
+
+    #[test]
+    fn test_state() {
+        let mut state = BazaState::new(
+            InstanceId::from_string("test"),
+            BazaInfo::new_test_info(),
+            HashMap::new(),
+        );
+
+        assert_eq!(state.get_single_latest_revision(), Revision::INITIAL);
+
+        let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a2 = doc_a1.clone().with_rev(json!({ "test": 1 }));
+        let mut doc_a3 = doc_a1.clone();
+        doc_a3.stage();
+
+        state.insert_document_revision(doc_a1).unwrap();
+        state.insert_document_revision(doc_a2).unwrap();
+        assert!(!state.is_modified());
+        assert!(state.has_unresolved_conflicts());
+        assert_eq!(state.get_latest_revision().len(), 2);
+
+        state.modify_document(doc_a3.clone()).unwrap();
+        assert!(state.is_modified());
+        assert!(!state.has_unresolved_conflicts());
+
+        state.reset_all_documents();
+        assert!(!state.is_modified());
+        assert!(state.has_unresolved_conflicts());
+
+        state.modify_document(doc_a3).unwrap();
+        let new_documents = state.commit().unwrap();
+
+        let new_rev = Revision::from_value(json!({ "a": 1, "test": 2 })).unwrap();
+        assert_eq!(new_documents.len(), 1);
+        assert_eq!(*new_documents[0].get_rev().unwrap(), new_rev);
+        assert!(!state.is_modified());
+        assert!(!state.has_unresolved_conflicts());
+        assert_eq!(state.get_single_latest_revision(), &new_rev);
     }
 }

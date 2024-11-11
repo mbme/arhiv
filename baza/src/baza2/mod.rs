@@ -70,6 +70,13 @@ impl BazaManager {
             state
         };
 
+        // create main storage file if necessary
+        if !file_exists(&path_manager.db2_file)? {
+            create_empty_storage_file(&path_manager.db2_file, &key, &info)?;
+
+            log::info!("Created new main storage file {}", path_manager.db2_file);
+        }
+
         let mut baza_manager = Self {
             state: RefCell::new(state),
             path_manager,
@@ -78,8 +85,6 @@ impl BazaManager {
         };
 
         baza_manager.merge_storages()?;
-        baza_manager.create_storage_if_necessary()?;
-
         baza_manager.sync_state_with_storage()?;
 
         Ok(baza_manager)
@@ -301,20 +306,6 @@ impl BazaManager {
         merge_storages_to_file(&self.info, storages, main_db_file)?;
 
         tx.commit()?;
-
-        Ok(())
-    }
-
-    fn create_storage_if_necessary(&self) -> Result<()> {
-        if file_exists(&self.path_manager.db2_file)? {
-            return Ok(());
-        }
-
-        // if no db file
-        // create new empty db file
-        create_empty_storage_file(&self.path_manager.db2_file, &self.key, &self.info)?;
-
-        log::info!("Created new storage");
 
         Ok(())
     }

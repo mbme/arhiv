@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet, VecDeque},
+    fs::File,
     io::{BufReader, Read, Write},
 };
 
@@ -7,8 +8,8 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use rs_utils::{
-    confidential1::Confidential1Key, crypto_key::CryptoKey, C1GzReader, C1GzWriter, ContainerPatch,
-    ContainerReader, ContainerWriter, LinesIndex,
+    confidential1::Confidential1Key, create_file_reader, create_file_writer, crypto_key::CryptoKey,
+    C1GzReader, C1GzWriter, ContainerPatch, ContainerReader, ContainerWriter, LinesIndex,
 };
 
 use crate::entities::{Document, Id, LatestRevComputer, Revision};
@@ -251,6 +252,24 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
     }
 }
 
+impl<'i> BazaStorage<'i, BufReader<File>> {
+    pub fn read_file(file: &str, key: &'i CryptoKey) -> Result<Self> {
+        let storage_reader = create_file_reader(file)?;
+
+        BazaStorage::read(storage_reader, key)
+    }
+
+    pub fn add_to_file(self, file: &str, new_documents: &[Document]) -> Result<()> {
+        let mut storage_writer = create_file_writer(file)?;
+
+        self.add(&mut storage_writer, new_documents)?;
+
+        storage_writer.flush()?;
+
+        Ok(())
+    }
+}
+
 impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     type Item = Result<(BazaDocumentKey, String)>;
 
@@ -307,18 +326,29 @@ pub fn create_storage(
     Ok(())
 }
 
-pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Write) -> Result<()> {
+pub fn create_empty_storage_file(file: &str, key: &CryptoKey, info: &BazaInfo) -> Result<()> {
+    let mut storage_writer = create_file_writer(file)?;
+    create_storage(&mut storage_writer, key, info, &[])?;
+
+    storage_writer.flush()?;
+
+    Ok(())
+}
+
+pub fn merge_storages(
+    info: &BazaInfo,
+    mut storages: Vec<BazaStorage<impl Read>>,
+    writer: impl Write,
+) -> Result<()> {
     ensure!(!storages.is_empty(), "storages must not be empty");
 
     let is_same_info = storages
         .iter_mut()
         .map(|s| s.get_info())
         .collect::<Result<Vec<_>>>()?
-        .windows(2)
-        .all(|w| w[0] == w[1]);
+        .into_iter()
+        .all(|s_info| s_info == info);
     ensure!(is_same_info, "all storages must have same info");
-
-    let info = storages[0].get_info()?.clone();
 
     let mut keys_per_storage = storages
         .into_iter()
@@ -400,6 +430,20 @@ pub fn merge_storages(mut storages: Vec<BazaStorage<impl Read>>, writer: impl Wr
 
     let c1writer = container_writer.finish()?;
     c1writer.finish()?;
+
+    Ok(())
+}
+
+pub fn merge_storages_to_file(
+    info: &BazaInfo,
+    storages: Vec<BazaStorage<impl Read>>,
+    file: &str,
+) -> Result<()> {
+    let mut storage_writer = create_file_writer(file)?;
+
+    merge_storages(info, storages, &mut storage_writer)?;
+
+    storage_writer.flush()?;
 
     Ok(())
 }
@@ -501,7 +545,7 @@ mod tests {
 
         // merge storages
         let mut result = Cursor::new(Vec::<u8>::new());
-        merge_storages(vec![storage1, storage2, storage3], &mut result).unwrap();
+        merge_storages(&info, vec![storage1, storage2, storage3], &mut result).unwrap();
         result.set_position(0);
 
         let mut storage = BazaStorage::read(&mut result, &key).unwrap();

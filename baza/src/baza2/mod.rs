@@ -5,16 +5,17 @@ use std::{
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 
-use baza_storage::{create_storage, merge_storages, BazaDocumentKey, STORAGE_VERSION};
-use rs_utils::{
-    create_file_reader, create_file_writer, crypto_key::CryptoKey, file_exists, log, FsTransaction,
+use rs_utils::{crypto_key::CryptoKey, file_exists, log, FsTransaction};
+
+use baza_storage::{
+    create_empty_storage_file, merge_storages_to_file, BazaDocumentKey, STORAGE_VERSION,
 };
 
 pub use baza_state::BazaState;
 pub use baza_storage::{BazaInfo, BazaStorage};
 
 use crate::{
-    entities::{BLOBId, Document, Id, Revision},
+    entities::{BLOBId, Document, Id, InstanceId, Revision},
     get_local_blob_ids,
     path_manager::PathManager,
     schema::DataSchema,
@@ -40,19 +41,40 @@ pub struct BazaManager {
     state: RefCell<BazaState>,
     path_manager: PathManager,
     key: CryptoKey,
-    schema: DataSchema,
+    info: BazaInfo,
 }
 
 impl BazaManager {
     pub fn new(path_manager: PathManager, key: CryptoKey, schema: DataSchema) -> Result<Self> {
-        let state_reader = create_file_reader(&path_manager.state_file)?;
-        let state = BazaState::read(state_reader)?;
+        let info = BazaInfo {
+            name: schema.get_app_name().to_string(),
+            data_version: schema.get_latest_data_version(),
+            storage_version: STORAGE_VERSION,
+        };
+
+        let state = if file_exists(&path_manager.state_file)? {
+            let state = BazaState::read_file(&path_manager.state_file)?;
+
+            ensure!(state.get_info() == &info, "State info mismatch");
+
+            log::info!("Read state file in {}", path_manager.state_file);
+
+            state
+        } else {
+            // create state if necessary
+            let state = BazaState::new(InstanceId::generate(), info.clone(), HashMap::new());
+            state.write_to_file(&path_manager.state_file)?;
+
+            log::info!("Created new state file in {}", path_manager.state_file);
+
+            state
+        };
 
         let mut baza_manager = Self {
             state: RefCell::new(state),
             path_manager,
             key,
-            schema,
+            info,
         };
 
         baza_manager.merge_storages()?;
@@ -124,15 +146,13 @@ impl BazaManager {
         let old_db_file = tx.move_to_backup(self.path_manager.db2_file.clone())?;
 
         // open old db file
-        let storage_reader = create_file_reader(&old_db_file)?;
-        let storage = BazaStorage::read(storage_reader, &self.key)?;
+        let storage = BazaStorage::read_file(&old_db_file, &self.key)?;
 
         // collect changed documents & update state
         let new_documents = state.commit()?;
 
         // write changes to db file
-        let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        storage.add(storage_writer, &new_documents)?;
+        storage.add_to_file(&self.path_manager.db2_file, &new_documents)?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {
@@ -147,8 +167,7 @@ impl BazaManager {
         tx.move_to_backup(self.path_manager.state_file.clone())?;
 
         // write changes to state file
-        let state_writer = create_file_writer(&self.path_manager.state_file)?;
-        state.write(state_writer)?;
+        state.write_to_file(&self.path_manager.state_file)?;
 
         tx.commit()?;
 
@@ -166,8 +185,7 @@ impl BazaManager {
             return Ok(());
         }
 
-        let storage_reader = create_file_reader(&self.path_manager.db2_file)?;
-        let mut storage = BazaStorage::read(storage_reader, &self.key)?;
+        let mut storage = BazaStorage::read_file(&self.path_manager.db2_file, &self.key)?;
 
         let storage_info = storage.get_info()?;
         ensure!(
@@ -242,8 +260,7 @@ impl BazaManager {
         }
 
         if latest_snapshots_count > 0 {
-            let state_writer = create_file_writer(&self.path_manager.state_file)?;
-            state.write(state_writer)?;
+            state.write_to_file(&self.path_manager.state_file)?;
         }
 
         Ok(())
@@ -275,15 +292,13 @@ impl BazaManager {
             .iter()
             .map(|db_file| {
                 let new_db_file = tx.move_to_backup(db_file)?;
-                let storage_reader = create_file_reader(&new_db_file)?;
 
-                BazaStorage::read(storage_reader, &self.key)
+                BazaStorage::read_file(&new_db_file, &self.key)
                     .context(anyhow!("Failed to open storage for db {db_file}"))
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let storage_writer = create_file_writer(main_db_file)?;
-        merge_storages(storages, storage_writer)?;
+        merge_storages_to_file(&self.info, storages, main_db_file)?;
 
         tx.commit()?;
 
@@ -297,15 +312,7 @@ impl BazaManager {
 
         // if no db file
         // create new empty db file
-
-        let info = BazaInfo {
-            name: self.schema.get_app_name().to_string(),
-            data_version: self.schema.get_latest_data_version(),
-            storage_version: STORAGE_VERSION,
-        };
-
-        let storage_writer = create_file_writer(&self.path_manager.db2_file)?;
-        create_storage(storage_writer, &self.key, &info, &[])?;
+        create_empty_storage_file(&self.path_manager.db2_file, &self.key, &self.info)?;
 
         log::info!("Created new storage");
 

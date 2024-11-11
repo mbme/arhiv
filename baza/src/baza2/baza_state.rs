@@ -6,6 +6,8 @@ use std::{
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
+use rs_utils::{create_file_reader, create_file_writer};
+
 use crate::entities::{Document, Id, InstanceId, LatestRevComputer, Revision, VectorClockOrder};
 
 use super::baza_storage::BazaInfo;
@@ -226,8 +228,23 @@ impl BazaState {
         serde_json::from_reader(reader).context("Failed to parse BazaState")
     }
 
+    pub fn read_file(file: &str) -> Result<Self> {
+        let state_reader = create_file_reader(file)?;
+        BazaState::read(state_reader)
+    }
+
     pub fn write(&self, writer: impl Write) -> Result<()> {
         serde_json::to_writer(writer, &self).context("Failed to serialize BazaState")
+    }
+
+    pub fn write_to_file(&self, file: &str) -> Result<()> {
+        let mut state_writer = create_file_writer(file)?;
+
+        self.write(&mut state_writer)?;
+
+        state_writer.flush()?;
+
+        Ok(())
     }
 
     pub fn get_info(&self) -> &BazaInfo {

@@ -214,8 +214,8 @@ impl Revision {
     }
 
     #[must_use]
-    pub fn merge_all(revs: &[&Revision]) -> Revision {
-        revs.iter().fold(Revision::initial(), |mut acc, rev| {
+    pub fn merge_all<'r>(revs: impl Iterator<Item = &'r Revision>) -> Revision {
+        revs.fold(Revision::initial(), |mut acc, rev| {
             acc.merge(rev);
 
             acc
@@ -249,7 +249,10 @@ impl Revision {
     }
 
     #[must_use]
-    pub fn compute_next_rev(revs: &[&Revision], for_instance: &InstanceId) -> Revision {
+    pub fn compute_next_rev<'r>(
+        revs: impl Iterator<Item = &'r Revision>,
+        for_instance: &InstanceId,
+    ) -> Revision {
         let mut max_rev = Self::merge_all(revs);
 
         max_rev.inc(for_instance);
@@ -546,19 +549,19 @@ mod tests {
         let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 }))?;
 
         {
-            let refs = vec![&rev1, &rev2, &rev3];
+            let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("a")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("a")),
                 Revision::from_value(json!({ "a": 3, "b": 2 }))?
             );
         }
 
         {
-            let refs = vec![&rev1, &rev2, &rev3];
+            let refs = [rev1.clone(), rev2.clone(), rev3.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 1 }))?
             );
         }
@@ -566,10 +569,10 @@ mod tests {
         {
             let rev4 = Revision::from_value(json!({ "a": 1, "b": 1, "c": 2 }))?;
 
-            let refs = vec![&rev1, &rev2, &rev3, &rev4];
+            let refs = [rev1.clone(), rev2.clone(), rev3.clone(), rev4.clone()];
 
             assert_eq!(
-                Revision::compute_next_rev(refs.as_slice(), &InstanceId::from_string("c")),
+                Revision::compute_next_rev(refs.iter(), &InstanceId::from_string("c")),
                 Revision::from_value(json!({ "a": 2, "b": 2, "c": 3 }))?
             );
         }

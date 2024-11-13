@@ -336,12 +336,9 @@ impl BazaState {
     }
 
     fn calculate_next_revision(&self) -> Revision {
-        let all_revs = self
-            .iter_documents()
-            .flat_map(|head| head.get_revision())
-            .collect::<Vec<_>>();
+        let all_revs = self.iter_documents().flat_map(|head| head.get_revision());
 
-        Revision::compute_next_rev(all_revs.as_slice(), &self.instance_id)
+        Revision::compute_next_rev(all_revs, &self.instance_id)
     }
 
     pub fn get_document(&self, id: &Id) -> Option<&DocumentHead> {

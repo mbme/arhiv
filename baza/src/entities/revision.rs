@@ -311,25 +311,19 @@ impl<'r> Default for LatestRevComputer<'r> {
 
 impl<'r> LatestRevComputer<'r> {
     pub fn update(&mut self, new_revs: impl IntoIterator<Item = &'r Revision>) {
-        let mut new_revs = new_revs.into_iter();
-        let new_rev = if let Some(new_rev) = new_revs.next() {
-            new_rev
-        } else {
-            return;
-        };
+        for new_rev in new_revs.into_iter() {
+            let latest_rev = self.0.iter().next().expect("latest revs must not be empty");
 
-        let latest_rev = self.0.iter().next().expect("latest revs must not be empty");
+            if latest_rev > &new_rev {
+                continue;
+            }
 
-        if latest_rev > &new_rev {
-            return;
+            if latest_rev < &new_rev {
+                self.0.clear();
+            }
+
+            self.0.insert(new_rev);
         }
-
-        if latest_rev < &new_rev {
-            self.0.clear();
-        }
-
-        self.0.insert(new_rev); // need to insert the first element since we've removed it from the iterator
-        self.0.extend(new_revs);
     }
 
     #[must_use]
@@ -340,12 +334,14 @@ impl<'r> LatestRevComputer<'r> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use anyhow::Result;
     use serde_json::json;
 
     use crate::entities::{revision::VectorClockOrder, InstanceId};
 
-    use super::Revision;
+    use super::{LatestRevComputer, Revision};
 
     #[test]
     fn test_revision_inc() -> Result<()> {
@@ -605,5 +601,42 @@ mod tests {
         }
 
         Ok(())
+    }
+
+    #[test]
+    fn test_latest_rev_computer() {
+        {
+            let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+            let rev2 = Revision::from_value(json!({ "a": 2 })).unwrap();
+
+            let mut latest_rev_computer = LatestRevComputer::new();
+            latest_rev_computer.update([&rev1, &rev2]);
+
+            assert_eq!(latest_rev_computer.get(), HashSet::from_iter([&rev2]));
+        }
+
+        {
+            let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+            let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
+
+            let mut latest_rev_computer = LatestRevComputer::new();
+            latest_rev_computer.update([&rev1, &rev2]);
+
+            assert_eq!(
+                latest_rev_computer.get(),
+                HashSet::from_iter([&rev1, &rev2])
+            );
+        }
+
+        {
+            let rev1 = Revision::from_value(json!({ "a": 1 })).unwrap();
+            let rev2 = Revision::from_value(json!({ "b": 1 })).unwrap();
+            let rev3 = Revision::from_value(json!({ "a": 2, "b": 1 })).unwrap();
+
+            let mut latest_rev_computer = LatestRevComputer::new();
+            latest_rev_computer.update([&rev1, &rev2, &rev3]);
+
+            assert_eq!(latest_rev_computer.get(), HashSet::from_iter([&rev3]));
+        }
     }
 }

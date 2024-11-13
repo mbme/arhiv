@@ -66,7 +66,7 @@ impl BazaDocumentKey {
 
 impl std::fmt::Debug for BazaDocumentKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("[@BazaDocumentKey {}]", &self.serialize()))
+        f.write_fmt(format_args!("[BazaDocumentKey {}]", &self.serialize()))
     }
 }
 
@@ -106,6 +106,7 @@ impl DocumentsIndex {
     pub fn as_index_map(&self) -> DocumentsIndexMap {
         let mut map: DocumentsIndexMap = HashMap::new();
 
+        // insert all ids & revs into the map
         for key in &self.0 {
             let entry = map.entry(&key.id).or_default();
 
@@ -113,14 +114,14 @@ impl DocumentsIndex {
         }
 
         // calculate max rev per document
-        for value in &mut map.values_mut() {
+        for revs in &mut map.values_mut() {
             let mut latest_rev_computer = LatestRevComputer::new();
 
-            latest_rev_computer.update(value.iter().copied());
+            latest_rev_computer.update(revs.iter().copied());
 
             let mut latest_rev = latest_rev_computer.get();
 
-            std::mem::swap(value, &mut latest_rev);
+            std::mem::swap(revs, &mut latest_rev);
         }
 
         map
@@ -147,7 +148,7 @@ pub struct BazaStorage<'i, R: Read + 'i> {
 
 impl<'i, R: Read + 'i> std::fmt::Debug for BazaStorage<'i, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("@BazaStorage: {:?}", &self.index.0))
+        f.write_fmt(format_args!("BazaStorage: {:?}", &self.index.0))
     }
 }
 
@@ -335,6 +336,22 @@ pub fn create_empty_storage_file(file: &str, key: &CryptoKey, info: &BazaInfo) -
     Ok(())
 }
 
+#[cfg(test)]
+pub fn create_test_storage<'k>(
+    key: &'k CryptoKey,
+    new_documents: &[Document],
+) -> BazaStorage<'k, impl Read> {
+    use std::io::Cursor;
+
+    let info = BazaInfo::new_test_info();
+
+    let mut data = Cursor::new(Vec::<u8>::new());
+    create_storage(&mut data, key, &info, new_documents).unwrap();
+    data.set_position(0);
+
+    BazaStorage::read(data, key).unwrap()
+}
+
 pub fn merge_storages(
     info: &BazaInfo,
     mut storages: Vec<BazaStorage<impl Read>>,
@@ -457,7 +474,7 @@ mod tests {
     use rs_utils::crypto_key::CryptoKey;
     use serde_json::json;
 
-    use crate::tests::new_document;
+    use crate::{baza2::baza_storage::create_test_storage, tests::new_document};
 
     use super::{create_storage, merge_storages, BazaInfo, BazaStorage};
 
@@ -523,25 +540,16 @@ mod tests {
         let doc_d = new_document(json!({ "test": "d" })).with_rev(json!({ "d": 4 }));
 
         // create storage1
-        let mut data1 = Cursor::new(Vec::<u8>::new());
         let docs1 = vec![doc_a.clone(), doc_b.clone()];
-        create_storage(&mut data1, &key, &info, &docs1).unwrap();
-        data1.set_position(0);
-        let storage1 = BazaStorage::read(&mut data1, &key).unwrap();
+        let storage1 = create_test_storage(&key, &docs1);
 
         // create storage2
-        let mut data2 = Cursor::new(Vec::<u8>::new());
         let docs2 = vec![doc_b.clone(), doc_c.clone()];
-        create_storage(&mut data2, &key, &info, &docs2).unwrap();
-        data2.set_position(0);
-        let storage2 = BazaStorage::read(&mut data2, &key).unwrap();
+        let storage2 = create_test_storage(&key, &docs2);
 
         // create storage3
-        let mut data3 = Cursor::new(Vec::<u8>::new());
         let docs3 = vec![doc_a.clone(), doc_c.clone(), doc_d.clone()];
-        create_storage(&mut data3, &key, &info, &docs3).unwrap();
-        data3.set_position(0);
-        let storage3 = BazaStorage::read(&mut data3, &key).unwrap();
+        let storage3 = create_test_storage(&key, &docs3);
 
         // merge storages
         let mut result = Cursor::new(Vec::<u8>::new());

@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
+    io::Read,
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
@@ -186,85 +187,12 @@ impl BazaManager {
     fn sync_state_with_storage(&mut self) -> Result<()> {
         let mut state = self.state.borrow_mut();
 
-        if state.is_modified() {
-            return Ok(());
-        }
-
         let mut storage = BazaStorage::read_file(&self.path_manager.db2_file, &self.key)?;
 
-        let storage_info = storage.get_info()?;
-        ensure!(
-            storage_info == state.get_info(),
-            "state info and storage info must match"
-        );
+        let latest_snapshots_count = sync_state_with_storage(&mut state, &mut storage)?;
 
-        let mut latest_snapshot_keys: HashSet<BazaDocumentKey> = HashSet::new();
-
-        // compare storage index with state
-        for (id, index_revs) in storage.index.as_index_map() {
-            let index_rev = index_revs
-                .iter()
-                .next()
-                .context("index revs must not be empty")?;
-
-            let document_head = if let Some(document_head) = state.get_document(id) {
-                document_head
-            } else {
-                add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
-                continue;
-            };
-
-            ensure!(
-                document_head.is_committed(),
-                "Document {id} must be committed"
-            );
-
-            let state_revs = document_head.get_revision();
-            let state_rev = state_revs
-                .iter()
-                .next()
-                .context("state revs must not be empty")?;
-
-            if state_rev > index_rev {
-                continue;
-            }
-
-            if state_rev < index_rev {
-                add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
-                continue;
-            }
-
-            // conflicting revs
-            add_keys(
-                &mut latest_snapshot_keys,
-                id,
-                index_revs.difference(&state_revs),
-            );
-        }
-
-        let latest_snapshots_count = latest_snapshot_keys.len();
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
-        }
-
-        // read documents from storage & update state if needed
-        while !latest_snapshot_keys.is_empty() {
-            let (ref key, ref raw_document) =
-                storage.next().context("No records in the storage")??;
-
-            if !latest_snapshot_keys.contains(key) {
-                continue;
-            }
-
-            let document: Document =
-                serde_json::from_str(raw_document).context("Failed to parse raw document")?;
-
-            state.insert_snapshot(document)?;
-
-            latest_snapshot_keys.remove(key);
-        }
-
-        if latest_snapshots_count > 0 {
             state.write_to_file(&self.path_manager.state_file, &self.key)?;
         }
 
@@ -321,4 +249,138 @@ fn add_keys<'r>(
     revs: impl Iterator<Item = &'r &'r Revision>,
 ) {
     keys.extend(revs.map(|rev| BazaDocumentKey::new(id.clone(), (*rev).clone())));
+}
+
+fn sync_state_with_storage<R: Read>(
+    state: &mut BazaState,
+    storage: &mut BazaStorage<R>,
+) -> Result<usize> {
+    if state.is_modified() {
+        return Ok(0);
+    }
+
+    let storage_info = storage.get_info()?;
+    ensure!(
+        storage_info == state.get_info(),
+        "state info and storage info must match"
+    );
+
+    let mut latest_snapshot_keys: HashSet<BazaDocumentKey> = HashSet::new();
+
+    // compare storage index with state
+    for (id, index_revs) in storage.index.as_index_map() {
+        let index_rev = index_revs
+            .iter()
+            .next()
+            .context("index revs must not be empty")?;
+
+        let document_head = if let Some(document_head) = state.get_document(id) {
+            document_head
+        } else {
+            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+            continue;
+        };
+
+        ensure!(
+            document_head.is_committed(),
+            "Document {id} must be committed"
+        );
+
+        let state_revs = document_head.get_revision();
+        let state_rev = state_revs
+            .iter()
+            .next()
+            .context("state revs must not be empty")?;
+
+        if state_rev > index_rev {
+            continue;
+        }
+
+        if state_rev < index_rev {
+            add_keys(&mut latest_snapshot_keys, id, index_revs.iter());
+            continue;
+        }
+
+        // conflicting revs
+        add_keys(
+            &mut latest_snapshot_keys,
+            id,
+            index_revs.difference(&state_revs),
+        );
+    }
+
+    let latest_snapshots_count = latest_snapshot_keys.len();
+
+    // read documents from storage & update state if needed
+    while !latest_snapshot_keys.is_empty() {
+        let (ref key, ref raw_document) = storage.next().context("No records in the storage")??;
+
+        if !latest_snapshot_keys.contains(key) {
+            continue;
+        }
+
+        let document: Document =
+            serde_json::from_str(raw_document).context("Failed to parse raw document")?;
+
+        state.insert_snapshot(document)?;
+
+        latest_snapshot_keys.remove(key);
+    }
+
+    Ok(latest_snapshots_count)
+}
+
+#[cfg(test)]
+mod tests {
+    use rs_utils::crypto_key::CryptoKey;
+    use serde_json::json;
+
+    use crate::{baza2::baza_state::DocumentHead, tests::new_document};
+
+    use super::{baza_storage::create_test_storage, sync_state_with_storage, BazaState};
+
+    #[test]
+    fn test_sync_state_with_storage() {
+        let key = CryptoKey::new_random_key();
+
+        let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
+        let doc_a1 = doc_a.clone().with_rev(json!({ "b": 1 }));
+
+        let doc_b = new_document(json!({})).with_rev(json!({ "b": 1 }));
+        let doc_b1 = doc_b.clone().with_rev(json!({ "b": 2 }));
+
+        let doc_c = new_document(json!({})).with_rev(json!({ "c": 3 }));
+
+        let mut state = BazaState::new_test_state();
+        state.insert_snapshots(vec![doc_a.clone(), doc_b.clone()]);
+
+        let mut storage = create_test_storage(
+            &key,
+            &vec![
+                doc_a.clone(),
+                doc_a1.clone(),
+                doc_b.clone(),
+                doc_b1.clone(),
+                doc_c.clone(),
+            ],
+        );
+
+        let changes = sync_state_with_storage(&mut state, &mut storage).unwrap();
+        assert_eq!(changes, 3);
+
+        assert!(matches!(
+            state.get_document(&doc_a.id).unwrap(),
+            DocumentHead::Conflict(_)
+        ));
+
+        assert_eq!(
+            state.get_document(&doc_b.id).unwrap().get_single_document(),
+            &doc_b1
+        );
+
+        assert_eq!(
+            state.get_document(&doc_c.id).unwrap().get_single_document(),
+            &doc_c
+        );
+    }
 }

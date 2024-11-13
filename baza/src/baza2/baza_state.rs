@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
+    fmt,
     io::{BufRead, Write},
 };
 
@@ -94,6 +95,16 @@ impl DocumentHead {
         };
 
         Some(result)
+    }
+
+    pub fn get_single_document(&self) -> &Document {
+        match self {
+            DocumentHead::Document(document) => document,
+            DocumentHead::Conflict(documents) => &documents[0],
+            DocumentHead::NewDocument(document) => document,
+            DocumentHead::Updated { updated, .. } => updated,
+            DocumentHead::ResolvedConflict { updated, .. } => updated,
+        }
     }
 
     pub fn modify(self, new_document: Document) -> Result<Self> {
@@ -207,6 +218,38 @@ impl DocumentHead {
     }
 }
 
+impl fmt::Display for DocumentHead {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DocumentHead::Document(document) => {
+                write!(f, "[DocumentHead/Document {document}]")
+            }
+            DocumentHead::Conflict(documents) => {
+                write!(
+                    f,
+                    "[DocumentHead/Conflict {} revs of {}]",
+                    documents.len(),
+                    documents[0].id
+                )
+            }
+            DocumentHead::NewDocument(document) => {
+                write!(f, "[DocumentHead/NewDocument {document}]")
+            }
+            DocumentHead::Updated { original, .. } => {
+                write!(f, "[DocumentHead/Updated {original}]")
+            }
+            DocumentHead::ResolvedConflict { original, .. } => {
+                write!(
+                    f,
+                    "[DocumentHead/ResolvedConflict {} revs of {}]",
+                    original.len(),
+                    original[0].id
+                )
+            }
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BazaState {
     instance_id: InstanceId,
@@ -226,6 +269,15 @@ impl BazaState {
             documents,
             instance_id,
         }
+    }
+
+    #[cfg(test)]
+    pub fn new_test_state() -> Self {
+        Self::new(
+            InstanceId::from_string("test"),
+            BazaInfo::new_test_info(),
+            HashMap::new(),
+        )
     }
 
     pub fn read(reader: impl BufRead, key: &CryptoKey) -> Result<Self> {
@@ -330,6 +382,14 @@ impl BazaState {
         Ok(())
     }
 
+    #[cfg(test)]
+    pub fn insert_snapshots(&mut self, documents: Vec<Document>) {
+        for document in documents {
+            self.insert_snapshot(document)
+                .expect("must insert document");
+        }
+    }
+
     pub fn iter_documents(&self) -> impl Iterator<Item = &DocumentHead> {
         self.documents.values()
     }
@@ -408,16 +468,12 @@ impl BazaState {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, io::Cursor};
+    use std::io::Cursor;
 
     use rs_utils::crypto_key::CryptoKey;
     use serde_json::json;
 
-    use crate::{
-        baza2::BazaInfo,
-        entities::{InstanceId, Revision},
-        tests::new_document,
-    };
+    use crate::{entities::Revision, tests::new_document};
 
     use super::{BazaState, DocumentHead};
 
@@ -520,11 +576,7 @@ mod tests {
 
     #[test]
     fn test_state() {
-        let mut state = BazaState::new(
-            InstanceId::from_string("test"),
-            BazaInfo::new_test_info(),
-            HashMap::new(),
-        );
+        let mut state = BazaState::new_test_state();
 
         assert_eq!(state.get_single_latest_revision(), Revision::INITIAL);
 
@@ -533,8 +585,7 @@ mod tests {
         let mut doc_a3 = doc_a1.clone();
         doc_a3.stage();
 
-        state.insert_snapshot(doc_a1).unwrap();
-        state.insert_snapshot(doc_a2).unwrap();
+        state.insert_snapshots(vec![doc_a1, doc_a2]);
         assert!(!state.is_modified());
         assert!(state.has_unresolved_conflicts());
         assert_eq!(state.get_latest_revision().len(), 2);
@@ -561,18 +612,12 @@ mod tests {
     #[test]
     fn test_state_read_write() {
         let key = CryptoKey::new_random_key();
-        let mut state = BazaState::new(
-            InstanceId::from_string("test"),
-            BazaInfo::new_test_info(),
-            HashMap::new(),
-        );
+        let mut state = BazaState::new_test_state();
 
-        state
-            .insert_snapshot(new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })))
-            .unwrap();
-        state
-            .insert_snapshot(new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })))
-            .unwrap();
+        state.insert_snapshots(vec![
+            new_document(json!({ "test": 1 })).with_rev(json!({ "a": 1 })),
+            new_document(json!({ "test": 2 })).with_rev(json!({ "a": 2, "b": 2 })),
+        ]);
 
         let mut data = Cursor::new(Vec::<u8>::new());
 

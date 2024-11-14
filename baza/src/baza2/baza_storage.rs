@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use serde::{Deserialize, Serialize};
 
 use rs_utils::{
     confidential1::Confidential1Key, create_file_reader, create_file_writer, crypto_key::CryptoKey,
@@ -14,23 +13,7 @@ use rs_utils::{
 
 use crate::entities::{Document, Id, LatestRevComputer, Revision};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct BazaInfo {
-    pub name: String,
-    pub storage_version: u8,
-    pub data_version: u8,
-}
-
-impl BazaInfo {
-    #[cfg(test)]
-    pub fn new_test_info() -> Self {
-        Self {
-            data_version: 1,
-            name: "test".to_string(),
-            storage_version: STORAGE_VERSION,
-        }
-    }
-}
+use super::BazaInfo;
 
 #[derive(Hash, Eq, PartialEq, Clone)]
 pub struct BazaDocumentKey {

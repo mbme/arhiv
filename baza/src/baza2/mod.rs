@@ -130,7 +130,7 @@ impl BazaManager {
 
         let mut state = self.state.borrow_mut();
 
-        if !state.is_modified() {
+        if !state.has_staged_documents() {
             drop(state);
 
             return Ok(self);
@@ -255,7 +255,7 @@ fn sync_state_with_storage<R: Read>(
     state: &mut BazaState,
     storage: &mut BazaStorage<R>,
 ) -> Result<usize> {
-    if state.is_modified() {
+    if state.has_staged_documents() {
         return Ok(0);
     }
 
@@ -368,19 +368,19 @@ mod tests {
         let changes = sync_state_with_storage(&mut state, &mut storage).unwrap();
         assert_eq!(changes, 3);
 
-        assert!(matches!(
-            state.get_document(&doc_a.id).unwrap(),
-            DocumentHead::Conflict(_)
-        ));
-
         assert_eq!(
-            state.get_document(&doc_b.id).unwrap().get_single_document(),
-            &doc_b1
+            *state.get_document(&doc_a.id).unwrap(),
+            DocumentHead::new_conflict([doc_a.clone(), doc_a1.clone(),].into_iter()).unwrap(),
         );
 
         assert_eq!(
-            state.get_document(&doc_c.id).unwrap().get_single_document(),
-            &doc_c
+            *state.get_document(&doc_b.id).unwrap(),
+            DocumentHead::new(doc_b1),
+        );
+
+        assert_eq!(
+            *state.get_document(&doc_c.id).unwrap(),
+            DocumentHead::new(doc_c),
         );
     }
 }

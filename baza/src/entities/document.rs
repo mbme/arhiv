@@ -7,7 +7,7 @@ use rs_utils::{now, Timestamp};
 
 use super::{DocumentData, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,

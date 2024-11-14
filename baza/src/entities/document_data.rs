@@ -6,7 +6,7 @@ use serde_json::{Map, Value};
 
 use super::Id;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DocumentData(Map<String, Value>);
 
 impl DocumentData {

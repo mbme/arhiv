@@ -14,10 +14,7 @@ pub fn extract_document(row: &Row) -> Result<Document> {
         rev: {
             let rev: Value = row.get("rev")?;
 
-            let rev: Option<Revision> =
-                serde_json::from_value(rev).context("failed to parse document rev")?;
-
-            rev
+            Revision::from_value(rev).context("failed to parse document rev")?
         },
         document_type: DocumentType::new(document_type),
         updated_at: row.get("updated_at")?,

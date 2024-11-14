@@ -30,6 +30,10 @@ impl Revision {
         Revision(BTreeMap::new())
     }
 
+    pub fn is_initial(&self) -> bool {
+        self == Revision::INITIAL
+    }
+
     pub fn get_version(&self, id: &InstanceId) -> u32 {
         self.0.get(id).copied().unwrap_or_default()
     }
@@ -146,10 +150,12 @@ impl Revision {
         result
     }
 
-    pub fn to_string(rev: &Option<Revision>) -> String {
-        rev.as_ref()
-            .map(|rev| rev.serialize())
-            .unwrap_or(Revision::STAGED_STRING.to_string())
+    pub fn to_string(rev: &Revision) -> String {
+        if rev.is_initial() {
+            Revision::STAGED_STRING.to_string()
+        } else {
+            rev.serialize()
+        }
     }
 
     pub fn to_file_name(&self) -> String {
@@ -189,16 +195,12 @@ impl Revision {
     }
 
     pub fn from_value(value: Value) -> Result<Revision> {
-        Revision::try_from_value(value)?.context("expected a valid revision map")
-    }
+        let mut result = serde_json::from_value::<Option<Revision>>(value)
+            .context("failed to convert into Revision")?
+            .unwrap_or_else(Revision::initial);
 
-    pub fn try_from_value(value: Value) -> Result<Option<Revision>> {
-        let mut result: Option<Revision> =
-            serde_json::from_value(value).context("failed to convert into Revision")?;
-
-        if let Some(ref mut rev) = result {
-            rev.0.retain(|_, value| *value > 0);
-        }
+        // leave only non-zero instance versions
+        result.0.retain(|_, value| *value > 0);
 
         Ok(result)
     }

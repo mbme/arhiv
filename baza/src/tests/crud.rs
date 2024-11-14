@@ -41,7 +41,7 @@ fn test_crud_create() -> Result<()> {
         let tx = baza.get_connection()?;
 
         let document = tx.get_document(&Id::from("1"))?.unwrap();
-        assert_eq!(document.rev, None,);
+        assert!(document.rev.is_initial());
     }
 
     Ok(())
@@ -59,8 +59,8 @@ fn test_crud_read() -> Result<()> {
 
         let mut document = tx.get_document(&Id::from("1"))?.unwrap();
         assert_eq!(
-            document.get_rev()?,
-            &Revision::from_value(json!({ "0": 2, "2": 1 }))?
+            document.rev,
+            Revision::from_value(json!({ "0": 2, "2": 1 }))?
         );
 
         tx.stage_document(&mut document, None)?;
@@ -175,8 +175,8 @@ fn test_crud_commit_deduce_version() -> Result<()> {
         let document = tx.must_get_document(&document.id)?;
 
         assert_eq!(
-            document.get_rev()?,
-            &Revision::from_value(json!({ "0": 3, "1": 3 }))?
+            document.rev,
+            Revision::from_value(json!({ "0": 3, "1": 3 }))?
         );
     }
 

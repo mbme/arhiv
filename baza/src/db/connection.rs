@@ -794,7 +794,7 @@ impl BazaConnection {
 
             // the query returns all the revisions that are bigger than, equal to or concurrent to min_rev
             // we don't need documents with revision equal to min_rev
-            if document.get_rev()? == min_rev {
+            if document.rev == *min_rev {
                 continue;
             }
 
@@ -1015,7 +1015,7 @@ impl BazaConnection {
         let mut staged_documents = self.list_staged_documents()?;
 
         for document in &mut staged_documents {
-            document.rev = Some(max_rev.clone());
+            document.rev = max_rev.clone();
 
             self.put_document(document, None)?;
 

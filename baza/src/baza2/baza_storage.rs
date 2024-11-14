@@ -46,7 +46,7 @@ impl BazaDocumentKey {
     pub fn for_document(document: &Document) -> Result<Self> {
         Ok(BazaDocumentKey::new(
             document.id.clone(),
-            document.get_rev()?.clone(),
+            document.rev.clone(),
         ))
     }
 

@@ -11,7 +11,7 @@ use super::{DocumentData, DocumentType, Id, Revision, ERASED_DOCUMENT_TYPE};
 #[serde(deny_unknown_fields)]
 pub struct Document<D = DocumentData> {
     pub id: Id,
-    pub rev: Option<Revision>,
+    pub rev: Revision,
     pub document_type: DocumentType,
     pub updated_at: Timestamp,
     pub data: D,
@@ -22,7 +22,7 @@ impl<D> Document<D> {
     pub fn new_with_data(document_type: DocumentType, data: D) -> Self {
         Document {
             id: Id::new(),
-            rev: None,
+            rev: Revision::initial(),
             document_type,
             updated_at: now(),
             data,
@@ -43,16 +43,12 @@ impl Document {
 
     #[must_use]
     pub fn is_staged(&self) -> bool {
-        self.rev.is_none()
+        self.rev.is_initial()
     }
 
     #[must_use]
     pub fn is_committed(&self) -> bool {
         !self.is_staged()
-    }
-
-    pub fn get_rev(&self) -> Result<&Revision> {
-        self.rev.as_ref().context("document revision is missing")
     }
 
     #[cfg(test)]
@@ -65,7 +61,7 @@ impl Document {
     #[cfg(test)]
     pub fn with_rev(mut self, rev: serde_json::Value) -> Self {
         let revision = Revision::from_value(rev).expect("must be valid revision");
-        self.rev = Some(revision);
+        self.rev = revision;
 
         self
     }
@@ -85,7 +81,7 @@ impl Document {
     }
 
     pub(crate) fn stage(&mut self) {
-        self.rev = None;
+        self.rev = Revision::initial();
     }
 
     pub fn convert<D: DeserializeOwned>(self) -> Result<Document<D>> {

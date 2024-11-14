@@ -39,11 +39,11 @@ impl DocumentHead {
 
         match self {
             DocumentHead::Document(original) | DocumentHead::Updated { original, .. } => {
-                revs.insert(original.rev.as_ref().unwrap_or_default());
+                revs.insert(&original.rev);
             }
             DocumentHead::Conflict(original) | DocumentHead::ResolvedConflict { original, .. } => {
                 original.iter().for_each(|document| {
-                    revs.insert(document.rev.as_ref().unwrap_or_default());
+                    revs.insert(&document.rev);
                 });
             }
             DocumentHead::NewDocument(_) => {}
@@ -167,8 +167,6 @@ impl DocumentHead {
     }
 
     pub fn insert_revision(self, new_document: Document) -> Result<Self> {
-        let new_rev = new_document.get_rev()?;
-
         let new_head = match self {
             DocumentHead::Document(document) => {
                 ensure!(
@@ -176,9 +174,7 @@ impl DocumentHead {
                     "Document id must not change"
                 );
 
-                let rev = document.get_rev()?;
-
-                match rev.compare_vector_clocks(new_rev) {
+                match document.rev.compare_vector_clocks(&new_document.rev) {
                     VectorClockOrder::Before => DocumentHead::Document(new_document),
                     VectorClockOrder::Concurrent => {
                         DocumentHead::Conflict(vec![document, new_document])
@@ -194,14 +190,12 @@ impl DocumentHead {
                     "Document id must not change"
                 );
 
-                let rev = document.get_rev()?;
-
-                match rev.compare_vector_clocks(new_rev) {
+                match document.rev.compare_vector_clocks(&new_document.rev) {
                     VectorClockOrder::Before => DocumentHead::Document(new_document),
                     VectorClockOrder::Concurrent => {
-                        let has_rev = original.iter().any(|document| {
-                            document.rev.as_ref().is_some_and(|rev| rev == new_rev)
-                        });
+                        let has_rev = original
+                            .iter()
+                            .any(|document| document.rev == new_document.rev);
                         ensure!(!has_rev, "Spcified document rev already exists");
 
                         original.push(new_document);
@@ -452,7 +446,7 @@ impl BazaState {
             let mut document = document_head
                 .into_modified_document()
                 .expect("document must be modified");
-            document.rev = Some(new_rev.clone());
+            document.rev = new_rev.clone();
 
             new_documents.push(document.clone());
 
@@ -600,7 +594,7 @@ mod tests {
 
         let new_rev = Revision::from_value(json!({ "a": 1, "test": 2 })).unwrap();
         assert_eq!(new_documents.len(), 1);
-        assert_eq!(*new_documents[0].get_rev().unwrap(), new_rev);
+        assert_eq!(new_documents[0].rev, new_rev);
         assert!(!state.is_modified());
         assert!(!state.has_unresolved_conflicts());
         assert_eq!(state.get_single_latest_revision(), &new_rev);

@@ -63,7 +63,7 @@ impl BazaConnection {
         let document_expert = DocumentExpert::new(&schema);
 
         for document in &changeset.documents {
-            if self.has_snapshot(&document.id, document.get_rev()?)? {
+            if self.has_snapshot(&document.id, &document.rev)? {
                 log::warn!("Got duplicate snapshot of the {}, ignoring", &document);
                 continue;
             }
@@ -73,7 +73,7 @@ impl BazaConnection {
 
             if document.is_erased() {
                 // erase history of erased documents
-                self.erase_document_history(&document.id, document.get_rev()?)?;
+                self.erase_document_history(&document.id, &document.rev)?;
                 summary.erased_documents.insert(document.id.clone());
             }
 

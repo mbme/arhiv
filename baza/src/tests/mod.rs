@@ -121,7 +121,7 @@ pub fn new_document_snapshot(id: impl Into<Id>, revision: Value) -> Document {
     let mut document = new_document(json!({}));
     document.id = id.into();
 
-    document.rev = Revision::try_from_value(revision).expect("must be a valid revision");
+    document.rev = Revision::from_value(revision).expect("must be a valid revision");
 
     document
 }

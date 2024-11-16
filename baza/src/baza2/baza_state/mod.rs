@@ -135,7 +135,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn insert_snapshot(&mut self, document: Document) -> Result<()> {
+    pub(super) fn insert_snapshot(&mut self, document: Document) -> Result<()> {
         let id = document.id.clone();
 
         let current_value = self.documents.remove(&id);
@@ -199,7 +199,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<Vec<Document>> {
+    pub(super) fn commit(&mut self) -> Result<Vec<Document>> {
         let ids = self
             .documents
             .iter()

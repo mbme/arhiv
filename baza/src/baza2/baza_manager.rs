@@ -37,13 +37,6 @@ use super::{
 // * push updated documents to baza storage
 // * commit changes
 
-pub struct BazaManagerOptions {
-    storage_dir: String,
-    state_dir: String,
-    key: CryptoKey,
-    schema: DataSchema,
-}
-
 struct BazaPaths {
     pub storage_dir: String,
     pub storage_main_db_file: String,
@@ -128,8 +121,30 @@ impl Display for BazaPaths {
     }
 }
 
+pub struct BazaManagerOptions {
+    pub storage_dir: String,
+    pub state_dir: String,
+    pub key: CryptoKey,
+    pub schema: DataSchema,
+}
+
+impl BazaManagerOptions {
+    #[cfg(test)]
+    pub fn test_options(test_dir: &str) -> Self {
+        let key = CryptoKey::new_random_key();
+        let schema = DataSchema::new_test_schema();
+
+        Self {
+            storage_dir: format!("{test_dir}/storage"),
+            state_dir: format!("{test_dir}/state"),
+            key,
+            schema,
+        }
+    }
+}
+
 pub struct BazaManager {
-    state: RefCell<BazaState>,
+    pub state: RefCell<BazaState>,
     paths: BazaPaths,
     key: CryptoKey,
     info: BazaInfo,
@@ -218,8 +233,6 @@ impl BazaManager {
     pub fn commit(mut self) -> Result<Self> {
         // FIXME use read/write locks
 
-        self.merge_storages()?;
-
         let mut state = self.state.borrow_mut();
 
         if !state.has_staged_documents() {
@@ -227,6 +240,8 @@ impl BazaManager {
 
             return Ok(self);
         }
+
+        self.merge_storages()?;
 
         let new_blobs = self
             .paths
@@ -248,6 +263,7 @@ impl BazaManager {
         let storage = BazaStorage::read_file(&old_db_file, &self.key)?;
 
         // collect changed documents & update state
+        // FIXME  create sync_storage_with_state - write all documents that are in the state but not in the storage
         let new_documents = state.commit()?;
 
         // write changes to db file
@@ -421,7 +437,7 @@ fn sync_state_with_storage<R: Read>(
 
 #[cfg(test)]
 mod tests {
-    use rs_utils::crypto_key::CryptoKey;
+    use rs_utils::{crypto_key::CryptoKey, dir_exists, file_exists, TempFile};
     use serde_json::json;
 
     use crate::{
@@ -429,7 +445,7 @@ mod tests {
         tests::new_document,
     };
 
-    use super::{sync_state_with_storage, BazaState};
+    use super::{sync_state_with_storage, BazaManager, BazaManagerOptions, BazaState};
 
     #[test]
     fn test_sync_state_with_storage() {
@@ -474,5 +490,42 @@ mod tests {
             *state.get_document(&doc_c.id).unwrap(),
             DocumentHead::new(doc_c),
         );
+    }
+
+    #[test]
+    fn test_baza_manager() {
+        let temp_dir = TempFile::new_with_details("test_baza_manager", "");
+        temp_dir.mkdir().unwrap();
+
+        let options = BazaManagerOptions::test_options(&temp_dir.path);
+        let manager = BazaManager::new(options).unwrap();
+
+        assert!(dir_exists(&manager.paths.storage_dir).unwrap());
+        assert!(dir_exists(&manager.paths.state_dir).unwrap());
+
+        assert!(file_exists(&manager.paths.state_file).unwrap());
+        assert!(file_exists(&manager.paths.storage_main_db_file).unwrap());
+
+        {
+            let mut state = manager.state.borrow_mut();
+
+            let doc_a1 = new_document(json!({})).with_rev(json!({ "a": 1 }));
+            state.modify_document(doc_a1).unwrap();
+
+            assert!(state.has_staged_documents());
+        }
+
+        let manager = manager.commit().unwrap();
+
+        {
+            let state = manager.state.borrow();
+            assert!(!state.has_staged_documents());
+        }
+
+        // TODO check if commits, including BLOBs
+
+        // TODO check if syncs state with storage (if not modified)
+
+        // TODO check if merges storages
     }
 }

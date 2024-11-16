@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 
 use crate::{bytes_to_hex_string, get_file_hash_sha256, get_string_hash_sha256};
 
@@ -29,7 +29,7 @@ pub fn build_path(a: impl AsRef<str>, b: impl AsRef<str>) -> String {
 /// This won't follow symlinks
 pub fn file_exists(path: &str) -> Result<bool> {
     match fs::symlink_metadata(path) {
-        Ok(metadata) if !metadata.is_file() => Err(anyhow!("path isn't a file: {}", path)),
+        Ok(metadata) if !metadata.is_file() => bail!("path isn't a file: {path}"),
 
         Ok(_) => Ok(true),
 
@@ -40,7 +40,7 @@ pub fn file_exists(path: &str) -> Result<bool> {
 /// This won't follow symlinks
 pub fn dir_exists(path: &str) -> Result<bool> {
     match fs::symlink_metadata(path) {
-        Ok(metadata) if !metadata.is_dir() => Err(anyhow!("path isn't a directory: {}", path)),
+        Ok(metadata) if !metadata.is_dir() => bail!("path isn't a directory: {path}"),
 
         Ok(_) => Ok(true),
 
@@ -49,7 +49,7 @@ pub fn dir_exists(path: &str) -> Result<bool> {
 }
 
 pub fn ensure_dir_exists(path: &str) -> Result<()> {
-    ensure!(dir_exists(path)?, "dir doesn't exist {}", path);
+    ensure!(dir_exists(path)?, "dir doesn't exist {path}");
 
     Ok(())
 }
@@ -59,7 +59,7 @@ pub fn is_empty_dir(path: &str) -> Result<bool> {
 }
 
 pub fn ensure_file_exists(path: &str) -> Result<()> {
-    ensure!(file_exists(path)?, "file doesn't exist {}", path);
+    ensure!(file_exists(path)?, "file doesn't exist {path}");
 
     Ok(())
 }
@@ -368,21 +368,17 @@ pub fn list_files(dir: &str) -> Result<Vec<String>> {
     Ok(files)
 }
 
-pub fn create_dir_if_not_exist(dir_path: impl Into<PathBuf>) -> Result<()> {
-    let dir_path = dir_path.into();
-
-    if !dir_path.exists() {
-        fs::create_dir(&dir_path).context(anyhow!("failed to create dir {:?}", dir_path))?;
+pub fn create_dir_if_not_exist(dir_path: &str) -> Result<()> {
+    if !dir_exists(dir_path)? {
+        fs::create_dir(dir_path).context("failed to create dir")?;
     }
 
     Ok(())
 }
 
-pub fn create_file_if_not_exist(file_path: impl Into<PathBuf>) -> Result<()> {
-    let file_path = file_path.into();
-
-    if !file_path.exists() {
-        fs::File::create(&file_path).context(anyhow!("failed to create file {:?}", file_path))?;
+pub fn create_file_if_not_exist(file_path: &str) -> Result<()> {
+    if !file_exists(file_path)? {
+        fs::File::create(file_path).context("failed to create file")?;
     }
 
     Ok(())

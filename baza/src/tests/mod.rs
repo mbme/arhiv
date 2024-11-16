@@ -8,7 +8,7 @@ use rs_utils::{generate_temp_path, SelfSignedCertificate};
 use crate::{
     baza::Credentials,
     entities::{BLOBId, Document, DocumentType, Id, Revision, BLOB},
-    schema::{get_attachment_definition, DataDescription, DataSchema, Field, FieldType},
+    schema::DataSchema,
     sync::Changeset,
     Baza, BazaOptions, Filter, ListPage,
 };
@@ -42,30 +42,7 @@ impl Baza {
     }
 
     pub fn new_test_baza_with_id(id: &str) -> Self {
-        let baza = Baza::new_with_schema(DataSchema::new(
-            "test",
-            vec![
-                DataDescription {
-                    document_type: "test_type",
-                    title_format: "{test}",
-                    fields: vec![
-                        Field {
-                            name: "test",
-                            field_type: FieldType::String {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                        Field {
-                            name: "blob",
-                            field_type: FieldType::BLOBId {},
-                            mandatory: false,
-                            readonly: false,
-                        },
-                    ],
-                },
-                get_attachment_definition(),
-            ],
-        ));
+        let baza = Baza::new_with_schema(DataSchema::new_test_schema());
 
         let tx = baza.get_tx().unwrap();
         let id = id.try_into().unwrap();

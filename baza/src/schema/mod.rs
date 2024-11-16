@@ -35,6 +35,34 @@ impl DataSchema {
         Self::with_migrations(name, modules, vec![])
     }
 
+    #[cfg(test)]
+    pub fn new_test_schema() -> Self {
+        Self::new(
+            "test",
+            vec![
+                DataDescription {
+                    document_type: "test_type",
+                    title_format: "{test}",
+                    fields: vec![
+                        Field {
+                            name: "test",
+                            field_type: FieldType::String {},
+                            mandatory: false,
+                            readonly: false,
+                        },
+                        Field {
+                            name: "blob",
+                            field_type: FieldType::BLOBId {},
+                            mandatory: false,
+                            readonly: false,
+                        },
+                    ],
+                },
+                get_attachment_definition(),
+            ],
+        )
+    }
+
     pub fn with_migrations(
         name: impl Into<String>,
         mut modules: Vec<DataDescription>,

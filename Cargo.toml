@@ -39,7 +39,7 @@ axum-server = { version= "0.7", features = ["tls-rustls-no-provider"]}
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
-
+ordermap = { version = "0.5", features = ["serde"] } # hashmap & hashset that preserve insertion order
 rand = "0.8"
 bytes = "1"
 

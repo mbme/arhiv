@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::{ensure, Context, Result};
-use ordermap::OrderMap;
+use ordermap::{OrderMap, OrderSet};
 use serde::{Deserialize, Serialize};
 
 use crate::{TakeExactly, ZipLongest};
@@ -14,18 +14,20 @@ pub type ContainerPatch = OrderMap<String, Option<String>>;
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(transparent, deny_unknown_fields)]
 pub struct LinesIndex {
-    index: Vec<String>,
+    index: OrderSet<String>,
 }
 
 impl LinesIndex {
-    pub fn new(index: Vec<String>) -> Self {
-        LinesIndex { index }
+    pub fn new(index: impl Iterator<Item = String>) -> Self {
+        LinesIndex {
+            index: index.collect(),
+        }
     }
 
     fn patch(self, patch: &ContainerPatch) -> Self {
         let mut patched = HashSet::new();
 
-        let mut patched_index: Vec<String> = self
+        let mut patched_index: OrderSet<String> = self
             .index
             .into_iter()
             .filter_map(|key| {
@@ -94,7 +96,10 @@ impl From<&Vec<String>> for LinesIndex {
 
 impl PartialEq<Vec<String>> for LinesIndex {
     fn eq(&self, other: &Vec<String>) -> bool {
-        self.index == *other
+        self.index
+            .iter()
+            .map(|value| value.as_str())
+            .eq(other.iter().map(|value| value.as_str()))
     }
 }
 
@@ -491,7 +496,7 @@ mod tests {
 
         let index = index.patch(&patch);
 
-        assert_eq!(index.index, vec!["2", "3"]);
+        assert_eq!(index, vec!["2", "3"]);
 
         Ok(())
     }

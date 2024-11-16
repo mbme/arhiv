@@ -32,11 +32,10 @@ tinytemplate = "1"
 
 rusqlite = { version = "0.32", features = ["chrono", "serde_json", "functions", "collation", "bundled"] }
 
-fslock = "0.2.1"
-
 reqwest.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
+ordermap.workspace = true
 
 rs-utils = { path = "../rs-utils" }
 

@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+use ordermap::OrderSet;
 
 use rs_utils::LinesIndex;
 
@@ -11,7 +12,7 @@ use crate::entities::{Id, LatestRevComputer, Revision};
 
 use super::BazaDocumentKey;
 
-pub struct DocumentsIndex(Vec<BazaDocumentKey>);
+pub struct DocumentsIndex(OrderSet<BazaDocumentKey>);
 
 pub type DocumentsIndexMap<'i> = HashMap<&'i Id, HashSet<&'i Revision>>;
 
@@ -21,7 +22,7 @@ impl DocumentsIndex {
             .iter()
             .skip(1) // skip info file
             .map(BazaDocumentKey::parse)
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<OrderSet<_>>>()?;
 
         Ok(DocumentsIndex(documents_index))
     }
@@ -31,7 +32,7 @@ impl DocumentsIndex {
 
         index.insert(0, "info".to_string());
 
-        LinesIndex::new(index)
+        LinesIndex::new(index.into_iter())
     }
 
     pub fn from_document_keys_refs<'k>(
@@ -81,7 +82,7 @@ impl DocumentsIndex {
     }
 
     pub fn contains(&self, key: &BazaDocumentKey) -> bool {
-        self.0.iter().any(|value| value == key)
+        self.0.contains(key)
     }
 }
 

@@ -202,7 +202,7 @@ impl BazaManager {
         };
 
         baza_manager.merge_storages()?;
-        baza_manager.sync_state_with_storage()?;
+        baza_manager.update_state_from_storage()?;
 
         Ok(baza_manager)
     }
@@ -288,17 +288,17 @@ impl BazaManager {
 
         drop(state);
 
-        self.sync_state_with_storage()?;
+        self.update_state_from_storage()?;
 
         Ok(self)
     }
 
-    fn sync_state_with_storage(&mut self) -> Result<()> {
+    fn update_state_from_storage(&mut self) -> Result<()> {
         let mut state = self.state.borrow_mut();
 
         let mut storage = BazaStorage::read_file(&self.paths.storage_main_db_file, &self.key)?;
 
-        let latest_snapshots_count = sync_state_with_storage(&mut state, &mut storage)?;
+        let latest_snapshots_count = update_state_from_storage(&mut state, &mut storage)?;
 
         if latest_snapshots_count > 0 {
             log::info!("Got {latest_snapshots_count} latest snapshots from the storage");
@@ -356,7 +356,7 @@ fn add_keys<'r>(
     keys.extend(revs.map(|rev| BazaDocumentKey::new(id.clone(), (*rev).clone())));
 }
 
-fn sync_state_with_storage<R: Read>(
+fn update_state_from_storage<R: Read>(
     state: &mut BazaState,
     storage: &mut BazaStorage<R>,
 ) -> Result<usize> {
@@ -445,10 +445,10 @@ mod tests {
         tests::new_document,
     };
 
-    use super::{sync_state_with_storage, BazaManager, BazaManagerOptions, BazaState};
+    use super::{update_state_from_storage, BazaManager, BazaManagerOptions, BazaState};
 
     #[test]
-    fn test_sync_state_with_storage() {
+    fn test_update_state_from_storage() {
         let key = CryptoKey::new_random_key();
 
         let doc_a = new_document(json!({})).with_rev(json!({ "a": 1 }));
@@ -473,7 +473,7 @@ mod tests {
             ],
         );
 
-        let changes = sync_state_with_storage(&mut state, &mut storage).unwrap();
+        let changes = update_state_from_storage(&mut state, &mut storage).unwrap();
         assert_eq!(changes, 3);
 
         assert_eq!(

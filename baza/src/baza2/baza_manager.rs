@@ -262,12 +262,19 @@ impl BazaManager {
         // open old db file
         let storage = BazaStorage::read_file(&old_db_file, &self.key)?;
 
-        // collect changed documents & update state
-        // FIXME  create sync_storage_with_state - write all documents that are in the state but not in the storage
-        let new_documents = state.commit()?;
+        // update state
+        state.commit()?;
+
+        // collect snapshots that are'nt present in the storage
+        let new_documents = state
+            .iter_documents()
+            .flat_map(|head| head.iter_snapshots())
+            .filter(|document| !storage.contains(&BazaDocumentKey::for_document(document)))
+            .collect::<Vec<_>>();
 
         // write changes to db file
-        storage.add_and_save_to_file(&self.paths.storage_main_db_file, &new_documents)?;
+        storage
+            .add_and_save_to_file(&self.paths.storage_main_db_file, new_documents.into_iter())?;
 
         // move blobs
         for (new_blob_id, file_path) in new_blobs {

@@ -79,6 +79,10 @@ impl DocumentsIndex {
     pub fn iter(&self) -> impl Iterator<Item = &BazaDocumentKey> {
         self.0.iter()
     }
+
+    pub fn contains(&self, key: &BazaDocumentKey) -> bool {
+        self.0.iter().any(|value| value == key)
+    }
 }
 
 impl fmt::Debug for DocumentsIndex {

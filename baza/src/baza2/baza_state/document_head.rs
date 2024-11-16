@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{Document, Id, Revision, VectorClockOrder};
@@ -231,6 +231,13 @@ impl DocumentHead {
         }
     }
 
+    pub fn get_single_latest_revision(&self) -> &Revision {
+        self.get_revision()
+            .into_iter()
+            .next()
+            .expect("revision set must not be empty")
+    }
+
     pub fn is_committed(&self) -> bool {
         match self {
             DocumentHead::Document(latest_document) => latest_document.is_committed(),
@@ -281,11 +288,33 @@ impl DocumentHead {
         }
     }
 
-    pub fn into_staged_document(self) -> Option<Document> {
-        match self {
-            DocumentHead::Document(latest_document) => latest_document.into_staged_document(),
-            DocumentHead::Conflict(latest_conflict) => latest_conflict.into_staged_document(),
-        }
+    pub fn commit(self, new_rev: Revision) -> Result<Self> {
+        let staged_document = match self {
+            DocumentHead::Document(latest_document) => {
+                let rev = latest_document.get_revision();
+                ensure!(
+                    new_rev > *rev,
+                    "New revision must be newer than current revision"
+                );
+
+                latest_document.into_staged_document()
+            }
+            DocumentHead::Conflict(latest_conflict) => {
+                let rev = latest_conflict.get_single_revision();
+                ensure!(
+                    new_rev > *rev,
+                    "New revision must be newer than current revision"
+                );
+
+                latest_conflict.into_staged_document()
+            }
+        };
+
+        let mut staged_document = staged_document.context("Expected staged document")?;
+
+        staged_document.rev = new_rev;
+
+        Ok(DocumentHead::new(staged_document))
     }
 
     pub fn modify(&mut self, new_document: Document) -> Result<()> {
@@ -344,6 +373,15 @@ impl DocumentHead {
         };
 
         Ok(new_head)
+    }
+
+    pub fn iter_snapshots<'i>(&'i self) -> Box<dyn Iterator<Item = &'i Document> + 'i> {
+        match self {
+            DocumentHead::Document(latest_document) => {
+                Box::new([&latest_document.original].into_iter())
+            }
+            DocumentHead::Conflict(latest_conflict) => Box::new(latest_conflict.original.iter()),
+        }
     }
 }
 

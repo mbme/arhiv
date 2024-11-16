@@ -99,11 +99,14 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
         Ok(self.info.as_ref().expect("info is available"))
     }
 
-    pub fn add(self, writer: impl Write, new_documents: &[Document]) -> Result<()> {
-        ensure!(!new_documents.is_empty(), "documents to add not provided");
-
+    pub fn add<'d>(
+        self,
+        writer: impl Write,
+        new_documents: impl Iterator<Item = &'d Document>,
+    ) -> Result<()> {
         // prepare patch
         let patch = create_container_patch(new_documents)?;
+        ensure!(!patch.is_empty(), "documents to add not provided");
 
         // apply patch & write db
         let c1writer = C1GzWriter::create(writer, &self.key)?;
@@ -145,6 +148,10 @@ impl<'i, R: Read + 'i> BazaStorage<'i, R> {
 
         Ok(all_items)
     }
+
+    pub fn contains(&self, key: &BazaDocumentKey) -> bool {
+        self.index.contains(key)
+    }
 }
 
 impl<'i> BazaStorage<'i, BufReader<File>> {
@@ -154,7 +161,11 @@ impl<'i> BazaStorage<'i, BufReader<File>> {
         BazaStorage::read(storage_reader, key)
     }
 
-    pub fn add_and_save_to_file(self, file: &str, new_documents: &[Document]) -> Result<()> {
+    pub fn add_and_save_to_file<'d>(
+        self,
+        file: &str,
+        new_documents: impl Iterator<Item = &'d Document>,
+    ) -> Result<()> {
         let mut storage_writer = create_file_writer(file)?;
 
         self.add(&mut storage_writer, new_documents)?;
@@ -182,8 +193,10 @@ impl<'i, R: Read + 'i> Iterator for BazaStorage<'i, R> {
     }
 }
 
-fn create_container_patch(documents: &[Document]) -> Result<ContainerPatch> {
-    let mut patch = ContainerPatch::with_capacity(documents.len());
+fn create_container_patch<'d>(
+    documents: impl Iterator<Item = &'d Document>,
+) -> Result<ContainerPatch> {
+    let mut patch = ContainerPatch::new();
     for new_document in documents {
         let key = BazaDocumentKey::for_document(new_document).serialize();
         ensure!(
@@ -414,7 +427,7 @@ mod tests {
         ];
         {
             let storage = BazaStorage::read(&mut data, &key)?;
-            storage.add(&mut data1, &docs2)?;
+            storage.add(&mut data1, docs2.iter())?;
         }
 
         data1.set_position(0);

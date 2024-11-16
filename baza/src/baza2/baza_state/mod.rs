@@ -163,6 +163,10 @@ impl BazaState {
         self.documents.values()
     }
 
+    pub fn iter_snapshots(&self) -> impl Iterator<Item = &Document> {
+        self.iter_documents().flat_map(|head| head.iter_snapshots())
+    }
+
     pub fn has_staged_documents(&self) -> bool {
         self.iter_documents()
             .any(|document_head| document_head.is_staged())
@@ -199,7 +203,7 @@ impl BazaState {
         Ok(())
     }
 
-    pub(super) fn commit(&mut self) -> Result<Vec<Document>> {
+    pub(super) fn commit(&mut self) -> Result<()> {
         let ids = self
             .documents
             .iter()
@@ -211,22 +215,15 @@ impl BazaState {
 
         let new_rev = self.calculate_next_revision();
 
-        let mut new_documents = Vec::with_capacity(ids.len());
-
         for id in ids {
             let (id, document_head) = self.documents.remove_entry(&id).expect("entry must exist");
 
-            let mut document = document_head
-                .into_staged_document()
-                .expect("document must be modified");
-            document.rev = new_rev.clone();
+            let new_head = document_head.commit(new_rev.clone())?;
 
-            new_documents.push(document.clone());
-
-            self.documents.insert(id, DocumentHead::new(document));
+            self.documents.insert(id, new_head);
         }
 
-        Ok(new_documents)
+        Ok(())
     }
 }
 
@@ -265,12 +262,20 @@ mod tests {
         assert!(!state.has_staged_documents());
         assert!(state.has_unresolved_conflicts());
 
-        state.modify_document(doc_a3).unwrap();
-        let new_documents = state.commit().unwrap();
+        state.modify_document(doc_a3.clone()).unwrap();
+        state.commit().unwrap();
 
         let new_rev = Revision::from_value(json!({ "a": 1, "test": 2 })).unwrap();
-        assert_eq!(new_documents.len(), 1);
-        assert_eq!(new_documents[0].rev, new_rev);
+
+        assert!(state.get_document(&doc_a3.id).unwrap().is_committed());
+        assert_eq!(
+            state
+                .get_document(&doc_a3.id)
+                .unwrap()
+                .get_single_latest_revision(),
+            &new_rev
+        );
+
         assert!(!state.has_staged_documents());
         assert!(!state.has_unresolved_conflicts());
         assert_eq!(state.get_single_latest_revision(), &new_rev);
